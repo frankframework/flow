@@ -1,0 +1,9 @@
+version: ''
+
+services:
+  flow:
+    image: frankframework/flow
+    build: .
+    ports:
+      - "8080:8080"
+

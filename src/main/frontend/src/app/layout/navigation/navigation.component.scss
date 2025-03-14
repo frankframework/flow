@@ -1,0 +1,39 @@
+.navigation {
+  height: 100vh;
+  width: 5em;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  gap: 5em;
+
+  padding: 1em 0;
+
+  box-shadow: inset -1px 0 0 0 var(--ff-color-light-gray);
+
+  &__logo {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    &__label {
+      font-weight: bold;
+      font-size: 1.3em;
+    }
+  }
+
+  &__group {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5em;
+  }
+
+  &__spacer {
+    flex-grow: 1;
+  }
+}
+

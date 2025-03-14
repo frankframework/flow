@@ -1,0 +1,19 @@
+:host {
+  min-width: 0;
+  width: 100%;
+}
+
+.builder {
+  display: flex;
+
+  &__body {
+    flex-grow: 1;
+    min-width: 0;
+  }
+}
+
+.andere-sb {
+  width: 20em;
+  flex-shrink: 0;
+  box-shadow: inset 1px 0 0 0 var(--ff-color-light-gray);
+}
