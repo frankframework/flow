@@ -1,0 +1,27 @@
+<div #tabsElement class="tabs">
+  <!--  <div class="tabs__scroll tabs__scroll&#45;&#45;left svg-icon-hover-parent">-->
+  <!--    <app-icon name="Alt Arrow Down"/>-->
+  <!--  </div>-->
+  <div #shadowLeftElement class="tabs__shadow tabs__shadow--top"></div>
+  <div #shadowRightElement class="tabs__shadow tabs__shadow--bottom"></div>
+  <ul #tabsListElement class="tabs__list">
+    @for (tab of tabs | keyvalue; track tab.key) {
+      <li
+        class="tabs__list__item"
+        [ngClass]="{ 'tabs__list__item--selected': tab.key === selectedTab }"
+        (click)="selectTab(tab.key)"
+      >
+        {{ tab.value }}
+        <app-icon
+          name="Close Square"
+          class="svg-icon-hover-parent"
+          theme="light"
+          (click)="onCloseTab($event, tab.key)"
+        />
+      </li>
+    }
+  </ul>
+  <!--  <div class="tabs__scroll tabs__scroll&#45;&#45;right svg-icon-hover-parent">-->
+  <!--    <app-icon name="Alt Arrow Down"/>-->
+  <!--  </div>-->
+</div>

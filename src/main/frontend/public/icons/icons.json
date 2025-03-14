@@ -1,0 +1,45 @@
+{
+  "iconImageFiles": [
+    {
+      "iconName": "Widget",
+      "iconPath": "/icons/solar/Widget.svg"
+    },
+    {
+      "iconName": "Ruler Cross Pen",
+      "iconPath": "/icons/solar/Ruler Cross Pen.svg"
+    },
+    {
+      "iconName": "Code",
+      "iconPath": "/icons/solar/Code.svg"
+    },
+    {
+      "iconName": "Tuning",
+      "iconPath": "/icons/solar/Tuning.svg"
+    },
+    {
+      "iconName": "Help",
+      "iconPath": "/icons/solar/Help.svg"
+    },
+    {
+      "iconName": "Settings",
+      "iconPath": "/icons/solar/Settings.svg"
+    },
+    {
+      "iconName": "Palette Round",
+      "iconPath": "/icons/solar/Palette Round.svg"
+    },
+    {
+      "iconName": "Filter",
+      "iconPath": "/icons/solar/Filter.svg"
+    },
+    {
+      "iconName": "Alt Arrow Down",
+      "iconPath": "/icons/solar/Alt Arrow Down.svg"
+    },
+    {
+      "iconName": "Close Square",
+      "iconPath": "/icons/solar/Close Square.svg"
+    }
+  ],
+  "customIcons": []
+}

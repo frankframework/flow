@@ -1,0 +1,50 @@
+/* You can add global styles to this file, and also import other style files */
+@use 'sass:meta';
+
+@use '@frankframework/angular-components';
+@use '@frankframework/angular-components/styles/variables';
+
+* {
+  box-sizing: border-box;
+  font-family: Inter, serif;
+  user-select: none;
+
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--ff-color-light);
+}
+
+:root {
+  @each $key, $value in meta.module-variables('variables') {
+    --#{$key}: #{$value};
+  }
+}
+
+/*
+ * Superseded css component isolation
+ */
+.svg-icon-hover-parent:hover {
+  cursor: pointer;
+  & .svg-icon {
+    &--outline {
+      &--default {
+        fill: var(--ff-bgcolor-yellow);
+      }
+      &--light {
+        fill: var(--ff-color-gray);
+      }
+    }
+
+    &--linear {
+      &--default {
+        stroke: var(--ff-bgcolor-yellow);
+      }
+      &--light {
+        stroke: var(--ff-color-gray);
+      }
+    }
+  }
+}
