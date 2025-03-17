@@ -28,24 +28,24 @@ export default [
       prettier: prettierPlugin,
     },
     rules: {
-      // TypeScript
+      // TypeScript: https://typescript-eslint.io/rules/
       ...tsPlugin.configs.recommended.rules,
       ...tsPlugin.configs.stylistic.rules,
       '@typescript-eslint/explicit-function-return-type': 'error',
       '@typescript-eslint/triple-slash-reference': 'warn',
       '@typescript-eslint/member-ordering': 'error',
 
-      // Angular
+      // Angular: https://github.com/angular-eslint/angular-eslint/blob/main/packages/eslint-plugin/README.md
       ...angularPlugin.configs.recommended.rules,
       '@angular-eslint/directive-selector': ['error', { type: 'attribute', prefix: 'app', style: 'camelCase' }],
       '@angular-eslint/component-selector': ['error', { type: 'element', prefix: 'app', style: 'kebab-case' }],
 
-      // EcmaScript
+      // EcmaScript: https://eslint.org/docs/latest/rules/
       ...js.configs.recommended.rules,
       'prefer-template': 'error',
       'no-undef': 'off',
 
-      // Prettier
+      // Prettier: https://github.com/prettier/eslint-config-prettier?tab=readme-ov-file#special-rules
       ...eslintConfigPrettier.rules,
       'prettier/prettier': 'warn',
     },
@@ -61,7 +61,7 @@ export default [
       prettier: prettierPlugin,
     },
     rules: {
-      // Angular template
+      // Angular template: https://github.com/angular-eslint/angular-eslint/blob/main/packages/eslint-plugin-template/README.md
       ...angularTemplate.configs.recommended.rules,
       ...angularTemplate.configs.accessibility.rules,
       '@angular-eslint/template/prefer-self-closing-tags': 'error',
@@ -90,12 +90,12 @@ export default [
         },
       ],
 
-      // Prettier
+      // Prettier: https://github.com/prettier/eslint-config-prettier?tab=readme-ov-file#special-rules
       ...eslintConfigPrettier.rules,
       'prettier/prettier': ['error', { parser: 'angular' }],
     },
   },
-  // Unicorn
+  // Unicorn: https://github.com/sindresorhus/eslint-plugin-unicorn
   eslintPluginUnicorn.configs.recommended,
   {
     rules: {
@@ -107,7 +107,7 @@ export default [
     },
   },
   eslintPluginPrettierRecommended,
-  // SonarSource
+  // SonarJS: https://github.com/SonarSource/SonarJS/blob/master/packages/jsts/src/rules/README.md
   sonarjs.configs.recommended,
   {
     rules: {
