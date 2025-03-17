@@ -8,6 +8,7 @@ import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended'
 import eslintPluginUnicorn from 'eslint-plugin-unicorn';
 import js from '@eslint/js';
 import eslintConfigPrettier from 'eslint-config-prettier';
+import sonarjs from 'eslint-plugin-sonarjs';
 
 export default [
   {
@@ -106,4 +107,12 @@ export default [
     },
   },
   eslintPluginPrettierRecommended,
+  // SonarSource
+  sonarjs.configs.recommended,
+  {
+    rules: {
+      'sonarjs/cognitive-complexity': 'error',
+      'sonarjs/no-duplicate-string': 'error',
+    },
+  },
 ];
