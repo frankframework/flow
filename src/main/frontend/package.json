@@ -20,6 +20,7 @@
     "@angular/platform-browser-dynamic": "^19.2.2",
     "@angular/router": "^19.2.2",
     "@frankframework/angular-components": "^1.1.0",
+    "angular-split": "^19.0.0",
     "angular-svg-icon": "^19.1.1",
     "angular-svg-icon-preloader": "^19.0.0",
     "monaco-editor": "^0.52.2",

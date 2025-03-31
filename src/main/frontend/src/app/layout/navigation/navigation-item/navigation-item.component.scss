@@ -22,5 +22,6 @@ li {
 
   &--active {
     border-right: 1px solid var(--ff-color-dark);
+    font-weight: var(--boldish);
   }
 }

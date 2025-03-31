@@ -7,16 +7,21 @@
   <ul #tabsListElement class="tabs__list">
     @for (tab of tabs | keyvalue; track tab.key) {
       <li
-        class="tabs__list__item"
-        [ngClass]="{ 'tabs__list__item--selected': tab.key === selectedTab }"
-        (click)="selectTab(tab.key)"
+              class="tabs__list__item"
+              [ngClass]="{ 'tabs__list__item--selected': tab.key === selectedTab }"
+              (click)="selectTab(tab.key)"
       >
-        {{ tab.value }}
+        <div class="tabs__list__item__title">
+          @if (tab.value.icon) {
+            <app-icon name="{{ tab.value.icon }}" width="1em" class="tabs__list__item__title__icon" />
+          }
+          {{ tab.value.value }}
+        </div>
         <app-icon
-          name="Close Square"
-          class="svg-icon-hover-parent"
-          theme="light"
-          (click)="onCloseTab($event, tab.key)"
+            name="Close Square"
+            class="tabs__list__item__icon-close svg-icon-hover-parent"
+            theme="light"
+            (click)="onCloseTab($event, tab.key)"
         />
       </li>
     }

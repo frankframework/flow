@@ -23,18 +23,18 @@
     }
   }
 
-  &__scroll {
-    aspect-ratio: 1 / 1;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-
-    background: hotpink;
-
-    &__left {
-
-    }
-  }
+  //&__scroll {
+  //  aspect-ratio: 1 / 1;
+  //  display: flex;
+  //  justify-content: center;
+  //  align-items: center;
+  //
+  //  background: hotpink;
+  //
+  //  &__left {
+  //
+  //  }
+  //}
 
   &__list {
     margin: 0;
@@ -57,30 +57,50 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 2em;
+      gap: 1em;
       color: var(--ff-color-gray);
 
-      app-icon {
+      &__title {
+        display: flex;
+        align-items: center;
+        gap: 0.5em;
+      }
+
+      &__title__icon {
+        opacity: 0.5;
+      }
+
+      &:hover &__title__icon {
+        opacity: 1;
+      }
+
+      &--selected &__title__icon {
+        opacity: 1;
+      }
+
+      &__icon-close {
         opacity: 0;
+      }
+
+      &:hover &__icon-close {
+        opacity: 1;
       }
 
       &:hover {
         background: var(--ff-color-light-gray);
         cursor: pointer;
+        color: var(--ff-color-dark);
+      }
 
-        app-icon {
+      &--selected &__icon-close {
           opacity: 1;
-        }
       }
 
       &--selected {
         color: var(--ff-color-dark);
         border-bottom: 1px solid var(--ff-color-light);
         background: var(--ff-color-light);
-
-        app-icon {
-          opacity: 1;
-        }
+        font-weight: var(--boldish);
 
         &:hover {
           background: var(--ff-color-light);
