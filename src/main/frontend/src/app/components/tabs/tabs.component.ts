@@ -15,6 +15,11 @@ import {
 import { IconComponent } from '../icon/icon.component';
 import { KeyValuePipe, NgClass } from '@angular/common';
 
+export interface Tab {
+  value: string;
+  icon?: string;
+}
+
 @Component({
   selector: 'app-tabs',
   imports: [IconComponent, KeyValuePipe, NgClass],
@@ -22,7 +27,7 @@ import { KeyValuePipe, NgClass } from '@angular/common';
   styleUrl: './tabs.component.scss',
 })
 export class TabsComponent implements AfterViewInit, OnChanges, OnInit {
-  @Input({ required: true }) tabs!: Record<string, string>;
+  @Input({ required: true }) tabs!: Record<string, Tab>;
   @Input() selectedTab?: string;
   @Output() selectedTabEvent = new EventEmitter<string>();
 
@@ -72,16 +77,18 @@ export class TabsComponent implements AfterViewInit, OnChanges, OnInit {
   }
 
   protected closeTab(key: string): void {
+    delete this.tabs[key];
     if (key == this.selectedTab) {
+      this.selectedTab = undefined;
       this.selectPreviousTab();
     }
-    delete this.tabs[key];
     this.calculateScrollShadows();
   }
 
   private selectPreviousTab(): void {
     const previousTab = this.selectedTabHistory.pop();
     if (!previousTab) {
+      this.setPreselectedTab();
       return;
     }
     if (previousTab && this.tabIsSelectable(previousTab)) {

@@ -9,27 +9,27 @@ export const routes: Routes = [
   { path: '', redirectTo: '/projects', pathMatch: 'full' },
   {
     path: 'projects',
-    title: 'FF! Flow | Projects',
+    title: 'FF! Flow 📦 Projects',
     component: ProjectsComponent,
   },
   {
     path: 'builder',
-    title: 'FF! Flow | Builder',
+    title: 'FF! Flow 🏗️ Builder',
     component: BuilderComponent,
   },
   {
     path: 'editor',
-    title: 'FF! Flow | Editor',
+    title: 'FF! Flow ⌨️ Editor',
     component: EditorComponent,
   },
   {
     path: 'help',
-    title: 'FF! Flow | Help',
+    title: 'FF! Flow 🛟 Help',
     component: HelpComponent,
   },
   {
     path: 'settings',
-    title: 'FF! Flow | Settings',
+    title: 'FF! Flow ⚙️ Settings',
     component: SettingsComponent,
   },
 ];

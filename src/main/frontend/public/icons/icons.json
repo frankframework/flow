@@ -39,6 +39,18 @@
     {
       "iconName": "Close Square",
       "iconPath": "/icons/solar/Close Square.svg"
+    },
+    {
+      "iconName": "Folder",
+      "iconPath": "/icons/solar/Folder.svg"
+    },
+    {
+      "iconName": "Alt Arrow Left",
+      "iconPath": "/icons/solar/Alt Arrow Left.svg"
+    },
+    {
+      "iconName": "Alt Arrow Right",
+      "iconPath": "/icons/solar/Alt Arrow Right.svg"
     }
   ],
   "customIcons": []

@@ -21,6 +21,7 @@ html, body {
   @each $key, $value in meta.module-variables('variables') {
     --#{$key}: #{$value};
   }
+  --boldish: 600;
 }
 
 /*

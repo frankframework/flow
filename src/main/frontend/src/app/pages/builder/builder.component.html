@@ -1,9 +1,25 @@
-<div class="builder">
-  <app-builder-sidebar />
-  <div class="builder__body">
-    <app-tabs [tabs]="tabs" />
-    <app-status-bar />
-    <p>builder works!</p>
+<app-sidebars [leftCollapsed]="true">
+  <div leftSidebar>
+    <app-builder-left-sidebar />
   </div>
-  <div class="andere-sb">andere sidebar</div>
-</div>
+  <div content>
+    <app-tabs [tabs]="{
+    tab1: {value: 'tab1', icon: 'Folder'},
+    tab2: {value: 'tab2'},
+    tab3: {value: 'tab3', icon: 'Folder'},
+    tab4: {value: 'tab4', icon: 'Folder'},
+    tab5: {value: 'tab5', icon: 'Folder'},
+    tab6: {value: 'tab6', icon: 'Folder'},
+    tab7: {value: 'tab7', icon: 'Folder'},
+    tab8: {value: 'tab8', icon: 'Folder'},
+    tab9: {value: 'tab9', icon: 'Folder'},
+  }"></app-tabs>
+    <app-status-bar />
+    <div class="canvas">
+      <p>builder works!</p>
+    </div>
+  </div>
+  <div rightSidebar>
+    Hier tools ofzo??
+  </div>
+</app-sidebars>
