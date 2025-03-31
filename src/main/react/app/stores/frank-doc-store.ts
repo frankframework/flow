@@ -1,6 +1,7 @@
 import { create } from 'zustand'
+import variables from '../../environment/environment'
 
-const FRANK_DOC_URL = 'http://localhost:3000/js/frankdoc.json'
+const FRANK_DOC_URL = variables.frankDocJsonUrl
 
 interface FrankDocStoreState {
   frankDocRaw?: any

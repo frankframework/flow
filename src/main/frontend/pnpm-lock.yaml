@@ -102,6 +102,9 @@ importers:
       eslint-plugin-prettier:
         specifier: ^5.2.3
         version: 5.2.3(@types/eslint@9.6.1)(eslint-config-prettier@10.1.1(eslint@9.22.0(jiti@1.21.7)))(eslint@9.22.0(jiti@1.21.7))(prettier@3.5.3)
+      eslint-plugin-react-refresh:
+        specifier: ^0.4.19
+        version: 0.4.19(eslint@9.22.0(jiti@1.21.7))
       eslint-plugin-sonarjs:
         specifier: ^3.0.2
         version: 3.0.2(eslint@9.22.0(jiti@1.21.7))
@@ -2713,6 +2716,11 @@ packages:
         optional: true
       eslint-config-prettier:
         optional: true
+
+  eslint-plugin-react-refresh@0.4.19:
+    resolution: {integrity: sha512-eyy8pcr/YxSYjBoqIFSrlbn9i/xvxUFa8CjzAYo9cFjgGXqq1hyjihcpZvxRLalpaWmueWR81xn7vuKmAFijDQ==}
+    peerDependencies:
+      eslint: '>=8.40'
 
   eslint-plugin-sonarjs@3.0.2:
     resolution: {integrity: sha512-LxjbfwI7ypENeTmGyKmDyNux3COSkMi7H/6Cal5StSLQ6edf0naP45SZR43OclaNR7WfhVTZdhOn63q3/Y6puQ==}
@@ -7998,6 +8006,10 @@ snapshots:
     optionalDependencies:
       '@types/eslint': 9.6.1
       eslint-config-prettier: 10.1.1(eslint@9.22.0(jiti@1.21.7))
+
+  eslint-plugin-react-refresh@0.4.19(eslint@9.22.0(jiti@1.21.7)):
+    dependencies:
+      eslint: 9.22.0(jiti@1.21.7)
 
   eslint-plugin-sonarjs@3.0.2(eslint@9.22.0(jiti@1.21.7)):
     dependencies:
