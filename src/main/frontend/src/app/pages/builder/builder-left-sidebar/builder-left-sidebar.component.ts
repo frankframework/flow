@@ -9,12 +9,6 @@ import { SearchComponent } from '@frankframework/angular-components';
   styleUrl: './builder-left-sidebar.component.scss',
 })
 export class BuilderLeftSidebarComponent {
-  protected sidebarCollapsed = false;
   // protected toolSelected: 'palette' | 'structure' = 'palette';
   protected files = ['file1', 'file2', 'file3', 'file4', 'file5', 'file6', 'file7', 'file8', 'file9'];
-
-  protected toggleSidebar(): void {
-    this.sidebarCollapsed = !this.sidebarCollapsed;
-    globalThis.dispatchEvent(new Event('resize'));
-  }
 }

@@ -13,7 +13,6 @@ import { Subscription } from 'rxjs';
 export class SidebarsComponent implements AfterViewInit, OnDestroy {
   @Input() leftCollapsed = false;
   @Input() rightCollapsed = false;
-  protected readonly window = globalThis;
 
   private readonly splitElement = viewChild(SplitComponent);
   private splitElementSubscription: Subscription | undefined;
