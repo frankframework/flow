@@ -1,0 +1,7 @@
+@import "tailwindcss";
+
+.tab-icon {
+  @apply fill-gray-950
+  h-4
+  w-auto
+}
