@@ -1,10 +1,11 @@
 import { isRouteErrorResponse, Links, Meta, Outlet, Scripts, ScrollRestoration } from 'react-router'
 
 import type { Route } from './+types/root'
-import Navbar from '~/layout/navbar/navbar'
+import Navbar from '~/components/navbar/navbar'
 import 'allotment/dist/style.css'
 import './app.css'
-import React from 'react'
+import React, { useEffect } from 'react'
+import useFrankDocStore from '~/stores/frank-doc-store'
 
 export const links: Route.LinksFunction = () => [
   { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
@@ -54,6 +55,10 @@ export function Layout({ children }: Readonly<{ children: React.ReactNode }>) {
 }
 
 export default function App() {
+  const { fetchFile } = useFrankDocStore()
+  useEffect(() => {
+    fetchFile()
+  }, [])
   return <Outlet />
 }
 

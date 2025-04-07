@@ -1,14 +1,16 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif,
-    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-inter: "Inter", var(--font-sans);
+  --color-brand: #fdc300;
 }
 
 html,
 body {
   /*@apply bg-white dark:bg-gray-950;*/
 	@apply bg-white;
+  @apply select-none;
+  @apply font-inter;
 
   /*@media (prefers-color-scheme: dark) {*/
 	/*color-scheme: dark;*/
@@ -16,7 +18,7 @@ body {
 }
 
 :root {
-  --color-brand: #fdc300;
+  /* Allotment Styling */
   --focus-border: var(--color-brand);
   --separator-border: var(--color-gray-200);
 }

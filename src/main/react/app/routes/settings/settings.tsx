@@ -1,3 +1,3 @@
 export default function Settings() {
-	return <p>it works</p>;
+  return <p>it works</p>
 }

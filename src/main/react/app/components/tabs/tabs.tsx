@@ -129,6 +129,7 @@ export default function Tabs({ initialTabs, initialSelectedTab, onSelectedTabCha
         ref={shadowRightElementReference}
         className="absolute top-0 right-0 bottom-0 z-10 w-4 bg-gradient-to-l from-black/15 to-transparent opacity-0"
       ></div>
+
       <ul
         ref={tabsListElementReference}
         className="m-0 flex rotate-x-180 flex-nowrap overflow-x-auto p-0 whitespace-nowrap"
@@ -139,10 +140,10 @@ export default function Tabs({ initialTabs, initialSelectedTab, onSelectedTabCha
             <li
               key={key}
               className={clsx(
-                'group relative flex h-full rotate-x-180 list-none items-center justify-between gap-4 border-r border-b border-r-gray-200 border-b-gray-200 px-4 text-gray-500',
+                'group relative flex h-full rotate-x-180 list-none items-center justify-between gap-1 border-r border-b border-r-gray-200 border-b-gray-200 px-4 text-gray-500',
                 isSelected
-                  ? 'border-b-white bg-white font-medium text-gray-800 hover:bg-white'
-                  : 'bg-gray-100 hover:cursor-pointer hover:bg-gray-200 hover:text-gray-800',
+                  ? 'border-b-white bg-white font-medium text-gray-950 hover:bg-white'
+                  : 'bg-gray-50 hover:cursor-pointer hover:bg-gray-100 hover:text-gray-800',
               )}
               onClick={() => selectTab(key)}
             >

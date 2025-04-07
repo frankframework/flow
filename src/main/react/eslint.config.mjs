@@ -4,20 +4,19 @@ import tsPlugin from '@typescript-eslint/eslint-plugin'
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended'
 import eslintPluginReact from 'eslint-plugin-react'
 import eslintPluginUnicorn from 'eslint-plugin-unicorn'
-import js from '@eslint/js'
 import eslintConfigPrettier from 'eslint-config-prettier'
 import sonarjs from 'eslint-plugin-sonarjs'
 
 export default [
   {
-    ignores: ['.cache/', '.git/', '.github/', 'node_modules/'],
+    ignores: ['.cache/', '.git/', '.github/', 'node_modules/', '.react-router/', 'vite-env.d.ts'],
   },
   {
     files: ['**/*.{js,ts,jsx,tsx,cjs,cts,mjs,mts,html,vue}'],
     languageOptions: {
       parser: typescriptParser,
       parserOptions: {
-        project: ['./tsconfig.json', './tsconfig.app.json', './tsconfig.spec.json'],
+        project: ['./tsconfig.json'],
       },
     },
     plugins: {
@@ -43,7 +42,16 @@ export default [
   eslintPluginUnicorn.configs.recommended,
   {
     rules: {
-      'unicorn/prevent-abbreviations': 'warn',
+      'unicorn/prevent-abbreviations': [
+        'error',
+        {
+          replacements: {
+            doc: {
+              document: false,
+            },
+          },
+        },
+      ],
       'unicorn/no-array-reduce': 'off',
       'unicorn/prefer-ternary': 'warn',
       'unicorn/no-null': 'off',
