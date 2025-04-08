@@ -3,7 +3,8 @@ import { Allotment } from 'allotment'
 import Tabs, { type TabsList } from '~/components/tabs/tabs'
 import BuilderStructure from '~/routes/builder/builder-structure'
 import SidebarIcon from '/icons/solar/Sidebar Minimalistic.svg?react'
-import BuilderContext from '~/routes/builder/builder-context'
+import BuilderContext from '~/routes/builder/context/builder-context'
+import Flow from "~/routes/builder/canvas/flow";
 
 const tabs = {
   tab1: { value: 'tab1', icon: 'code' },
@@ -119,7 +120,7 @@ export default function Builder() {
               Path: {Object.entries(tabs).find(([key]) => key === selectedTab)?.[1]?.value}
             </div>
             <div className="h-full bg-radial-[2px,transparent_0,var(--color-gray-300),white] bg-[size:40px_40px] bg-[position:-19px_-19px]">
-              canvas
+              <Flow/>
             </div>
           </Allotment.Pane>
           <Allotment.Pane
