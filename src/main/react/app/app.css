@@ -1,0 +1,24 @@
+@import "tailwindcss";
+
+@theme {
+  --font-inter: "Inter", var(--font-sans);
+  --color-brand: #fdc300;
+}
+
+html,
+body {
+  /*@apply bg-white dark:bg-gray-950;*/
+	@apply bg-white;
+  @apply select-none;
+  @apply font-inter;
+
+  /*@media (prefers-color-scheme: dark) {*/
+	/*color-scheme: dark;*/
+  /*}*/
+}
+
+:root {
+  /* Allotment Styling */
+  --focus-border: var(--color-brand);
+  --separator-border: var(--color-gray-200);
+}
