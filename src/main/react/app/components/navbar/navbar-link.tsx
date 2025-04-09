@@ -4,10 +4,11 @@ import clsx from 'clsx'
 
 interface NavbarLinkProperties {
   route: string
-  children: React.ReactNode
+  label: string
+  Icon?: React.FC<React.SVGProps<SVGSVGElement>>
 }
 
-export default function NavbarLink({ route, children }: Readonly<NavbarLinkProperties>) {
+export default function NavbarLink({ route, label, Icon }: Readonly<NavbarLinkProperties>) {
   const location = useLocation()
   const isActive = location.pathname === route
 
@@ -16,11 +17,14 @@ export default function NavbarLink({ route, children }: Readonly<NavbarLinkPrope
       <Link
         to={route}
         className={clsx(
-          'group relative flex flex-col items-center text-center no-underline hover:text-[var(--color-brand)]',
-          isActive && 'font-medium',
+          'group relative flex flex-col items-center text-center no-underline',
+          isActive ? 'font-medium' : 'hover:text-[var(--color-brand)]',
         )}
       >
-        {children}
+        {Icon && (
+          <Icon className={clsx('h-8 w-auto fill-gray-950', !isActive && 'group-hover:fill-[var(--color-brand)]')} />
+        )}
+        {label}
         <div className={clsx('absolute top-0 right-[-1px] h-full w-[1px]', isActive && 'bg-gray-800')}></div>
       </Link>
     </li>

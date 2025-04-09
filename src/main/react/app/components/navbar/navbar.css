@@ -1,8 +1,0 @@
-@import "tailwindcss";
-
-.navbar-link-icon {
-  @apply fill-gray-950;
-  @apply group-hover:fill-[var(--color-brand)];
-  @apply h-8;
-  @apply w-auto;
-}

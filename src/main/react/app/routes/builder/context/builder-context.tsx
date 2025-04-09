@@ -9,11 +9,11 @@ export default function BuilderContext({ onClose }: Readonly<{ onClose: () => vo
     <div className="h-full">
       <div>
         <div className="flex h-12 items-center gap-1 px-4">
+          {/*<div className="grow"></div>*/}
           {/*<PaletteIcon className="fill-gray-950"></PaletteIcon>*/}
           <div className="text-xl">Palette</div>
           <div className="grow"></div>
           <SidebarIcon onClick={onClose} className="fill-gray-950 hover:fill-[var(--color-brand)]"></SidebarIcon>
-          {/*<div className="grow"></div>*/}
         </div>
         <div className="relative px-4">
           <label htmlFor="search" className="absolute top-1/2 left-6 -translate-y-1/2">

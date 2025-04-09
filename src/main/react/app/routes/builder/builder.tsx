@@ -5,9 +5,10 @@ import BuilderStructure from '~/routes/builder/builder-structure'
 import SidebarIcon from '/icons/solar/Sidebar Minimalistic.svg?react'
 import BuilderContext from '~/routes/builder/context/builder-context'
 import Flow from '~/routes/builder/canvas/flow'
+import FolderIcon from '/icons/solar/Folder.svg?react'
 
 const tabs = {
-  tab1: { value: 'tab1', icon: 'code' },
+  tab1: { value: 'tab1', icon: FolderIcon },
   tab2: { value: 'tab2' },
   tab3: { value: 'tab3' },
   tab4: { value: 'tab4' },

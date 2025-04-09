@@ -1,19 +1,17 @@
 import SidebarIcon from '/icons/solar/Sidebar Minimalistic.svg?react'
 import MagnifierIcon from '/icons/solar/Magnifier.svg?react'
-import FolderIcon from '/icons/solar/Folder.svg?react'
 
-export default function BuilderStructure({ onClose }: Readonly<{ onClose: () => void }>) {
+export default function EditorFiles({ onClose }: Readonly<{ onClose: () => void }>) {
   return (
-    <div>
+    <>
       <div>
         <div className="flex h-12 items-center gap-1 px-4">
+          {/*<PaletteIcon className="fill-gray-950"></PaletteIcon>*/}
           <SidebarIcon
             onClick={onClose}
             className="rotate-180 fill-gray-950 hover:fill-[var(--color-brand)]"
           ></SidebarIcon>
-          {/*<div className="grow"></div>*/}
-          {/*<FolderIcon className="fill-gray-950" />*/}
-          <div className="text-xl">Structure</div>
+          <div className="text-xl">Files</div>
           {/*<div className="grow"></div>*/}
         </div>
         <div className="relative px-4">
@@ -28,20 +26,6 @@ export default function BuilderStructure({ onClose }: Readonly<{ onClose: () => 
           />
         </div>
       </div>
-      <div>
-        <ul>
-          <li>file1</li>
-          <li>file2</li>
-          <li>file3</li>
-          <li>file4</li>
-          <li>file5</li>
-          <li>file6</li>
-          <li>file7</li>
-          <li>file8</li>
-          <li>file9</li>
-          <li>file10</li>
-        </ul>
-      </div>
-    </div>
+    </>
   )
 }
