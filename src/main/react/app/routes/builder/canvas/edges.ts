@@ -22,6 +22,12 @@ export const initialEdges = [{
     label: 'SUCCESS'
   },
   type: 'frankEdge'
-},
-
-]
+}, {
+  id: '4-5',
+  source: '4',
+  target: '5',
+  data: {
+    label: 'SUCCESS'
+  },
+  type: 'frankEdge'
+}]

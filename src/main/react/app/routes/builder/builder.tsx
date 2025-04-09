@@ -119,9 +119,7 @@ export default function Builder() {
             <div className="h-12 border-b border-b-gray-200">
               Path: {Object.entries(tabs).find(([key]) => key === selectedTab)?.[1]?.value}
             </div>
-            <div className="h-full bg-radial-[2px,transparent_0,var(--color-gray-300),white] bg-[size:40px_40px] bg-[position:-19px_-19px]">
-              <Flow/>
-            </div>
+            <Flow/>
           </Allotment.Pane>
           <Allotment.Pane
             key="right"

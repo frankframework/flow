@@ -1,22 +1,25 @@
 import {
-  applyNodeChanges,
-  ReactFlow,
-  type NodeChange,
   addEdge,
   applyEdgeChanges,
-  type OnEdgesChange, type OnNodesChange
+  applyNodeChanges,
+  Background,
+  BackgroundVariant,
+  Controls,
+  type OnNodesChange,
+  ReactFlow
 } from "@xyflow/react";
 import '@xyflow/react/dist/style.css';
 import {useCallback, useState} from "react";
 
 import {initialNodes} from "~/routes/builder/canvas/nodes";
 import {initialEdges} from "~/routes/builder/canvas/edges";
-import FrankNodeComponent, {type FrankNode } from "~/routes/builder/canvas/frank-node";
+import FrankNodeComponent, {type FrankNode} from "~/routes/builder/canvas/frank-node";
 import FrankEdgeComponent from "~/routes/builder/canvas/frank-edge";
+import ExitNodeComponent from "~/routes/builder/canvas/exit-node";
 
 export default function Flow() {
 
-  const nodeTypes = {frankNode: FrankNodeComponent}
+  const nodeTypes = {frankNode: FrankNodeComponent, exitNode: ExitNodeComponent}
   const edgeTypes = {frankEdge: FrankEdgeComponent}
 
   const [nodes, setNodes] = useState(initialNodes);
@@ -39,7 +42,10 @@ export default function Flow() {
 
   return (
           <div style={{ height: '100%' }}>
-            <ReactFlow nodes={nodes} edges={edges} onNodesChange={onNodesChange} onEdgesChange={onEdgesChange} onConnect={onConnect} nodeTypes={nodeTypes} edgeTypes={edgeTypes}/>
+            <ReactFlow fitView nodes={nodes} edges={edges} onNodesChange={onNodesChange} onEdgesChange={onEdgesChange} onConnect={onConnect} nodeTypes={nodeTypes} edgeTypes={edgeTypes}>
+              <Controls position="top-left"></Controls>
+              <Background variant={BackgroundVariant.Dots} size={2}></Background>
+            </ReactFlow>
           </div>
   )
 }
