@@ -17,11 +17,11 @@ import FrankNodeComponent, { type FrankNode } from '~/routes/builder/canvas/node
 import FrankEdgeComponent from '~/routes/builder/canvas/frank-edge'
 import ExitNodeComponent from '~/routes/builder/canvas/nodetypes/exit-node'
 import StartNodeComponent, { type StartNode } from '~/routes/builder/canvas/nodetypes/start-node'
-import useFlowStore, {type AppState} from "~/stores/flow-store";
+import useFlowStore, {type FlowState} from "~/stores/flow-store";
 import {useShallow} from "zustand/react/shallow";
 
 export type FlowNode = FrankNode | StartNode | Node
-const selector = (state: AppState) => ({
+const selector = (state: FlowState) => ({
   nodes: state.nodes,
   edges: state.edges,
   onNodesChange: state.onNodesChange,

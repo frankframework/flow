@@ -10,7 +10,7 @@ import { initialNodes } from '~/routes/builder/canvas/nodes';
 import { initialEdges } from '~/routes/builder/canvas/edges';
 import type { FlowNode } from '~/routes/builder/canvas/flow';
 
-export type AppState = {
+export type FlowState = {
   nodes: FlowNode[];
   edges: Edge[];
   onNodesChange: OnNodesChange<FlowNode>;
@@ -21,7 +21,7 @@ export type AppState = {
   updateSrcHandles: (nodeId: string) => void;
 };
 
-const useFlowStore = create<AppState>((set, get) => ({
+const useFlowStore = create<FlowState>((set, get) => ({
   nodes: initialNodes,
   edges: initialEdges,
   onNodesChange: (changes) => {
