@@ -1,5 +1,5 @@
 {
-  "name": "",
+  "name": "Flow",
   "private": true,
   "type": "module",
   "scripts": {
@@ -17,7 +17,7 @@
     "clsx": "^2.1.1",
     "isbot": "^5.1.17",
     "react": "^19.0.0",
-    "react-arborist": "^3.4.3",
+    "react-complex-tree": "^2.6.0",
     "react-dom": "^19.0.0",
     "react-router": "^7.4.1",
     "zustand": "^5.0.3"

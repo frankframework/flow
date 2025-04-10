@@ -4,7 +4,6 @@ import Tabs, { type TabsList } from '~/components/tabs/tabs'
 import SidebarIcon from '/icons/solar/Sidebar Minimalistic.svg?react'
 import { Editor } from '@monaco-editor/react'
 import EditorFiles from '~/routes/editor/editor-files'
-import EditorFilesTree from '~/routes/editor/editor-files-tree'
 import FolderIcon from '/icons/solar/Folder.svg?react'
 
 const tabs = {
@@ -93,8 +92,7 @@ export default function CodeEditor() {
             preferredSize={300}
             visible={visible[SidebarIndex.LEFT]}
           >
-            <EditorFiles onClose={toggleLeftVisible} />
-            <EditorFilesTree></EditorFilesTree>
+            <EditorFiles onClose={toggleLeftVisible}></EditorFiles>
           </Allotment.Pane>
           <Allotment.Pane key="content">
             <div className="flex">

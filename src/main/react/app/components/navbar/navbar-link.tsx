@@ -24,7 +24,13 @@ export default function NavbarLink({ route, label, Icon }: Readonly<NavbarLinkPr
         {Icon && (
           <Icon className={clsx('h-8 w-auto fill-gray-950', !isActive && 'group-hover:fill-[var(--color-brand)]')} />
         )}
-        {label}
+        <span
+          className={clsx(
+            'absolute top-1/2 left-full z-10 ml-2 -translate-y-1/2 rounded bg-gray-800 px-2 py-1 text-sm whitespace-nowrap text-white opacity-0 shadow-md transition-opacity group-hover:opacity-100',
+          )}
+        >
+          {label}
+        </span>
         <div className={clsx('absolute top-0 right-[-1px] h-full w-[1px]', isActive && 'bg-gray-800')}></div>
       </Link>
     </li>
