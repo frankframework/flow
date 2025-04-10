@@ -1,3 +1,6 @@
+import {Handle, type Node, type NodeProps, NodeResizeControl, Position, useUpdateNodeInternals} from '@xyflow/react'
+import {useLayoutEffect, useMemo, useRef, useState} from 'react'
+import useFlowStore from "~/stores/flow-store";
 import { Handle, type Node, type NodeProps, NodeResizeControl, Position } from '@xyflow/react'
 import { useLayoutEffect, useRef, useState } from 'react'
 
@@ -44,20 +47,32 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
   const minNodeWidth = 300
   const minNodeHeight = 200
   const bgColor = translateTypeToColor(properties.data.type)
-
+  const range = (n: number) => Array.from({length: n}, (value, key) => key)
+  const handles = range(properties.data.srcHandleAmount).map((edge) => ({ id: edge.toString() }));
+  const handleSpacing = 20;
   const containerReference = useRef<HTMLDivElement>(null)
+
+  const updateNodeInternals = useUpdateNodeInternals();
+
   const [contentHeight, setContentHeight] = useState(minNodeHeight)
   const [dimensions, setDimensions] = useState({
     width: minNodeWidth, // Initial width
     height: minNodeHeight, // Initial height
   })
 
+  const firstHandlePosition = useMemo(() => {
+    return dimensions.height / 2 - ((handles.length - 1) * handleSpacing) / 2;
+  }, [dimensions.height, handles.length]);
+
   useLayoutEffect(() => {
     if (containerReference.current) {
-      const measuredHeight = containerReference.current.offsetHeight
-      setContentHeight(Math.max(minNodeHeight, measuredHeight))
+      const measuredHeight = containerReference.current.offsetHeight;
+      setContentHeight(Math.max(minNodeHeight, measuredHeight));
+      setDimensions(prev => ({ ...prev, height: measuredHeight }));
     }
-  }, [properties.data.children]) // Re-measure when children change
+  }, [properties.data.children, handles.length]) // Re-measure when children change
+
+  const incrementHandles = useFlowStore((state) => state.incrementSrcHandles)
 
   return (
     <>
@@ -160,22 +175,32 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
         {/* Use inline styling to prevent ReactFlow override on certain properties */}
         <HandleIcon />
       </Handle>
-      <Handle
-        key="1"
-        type="source"
-        position={Position.Right}
-        className="flex items-center justify-center text-white"
-        style={{
-          right: '-10px',
-          width: '10px',
-          height: '10px',
-          backgroundColor: '#3079CC',
-        }}
-      >
-        {' '}
-        {/* Use inline styling to prevent ReactFlow override on certain properties */}
-        <HandleIcon />
-      </Handle>
+      {handles.map((handle, index) => (
+        <Handle type={"source"}
+                position={Position.Right}
+                id={handle.id}
+                className="flex items-center justify-center text-white"
+                style={{
+                  top: `${firstHandlePosition + index * handleSpacing}px`,
+                  right: '-10px',
+                  width: '10px',
+                  height: '10px',
+                  backgroundColor: '#3079CC',
+                }}
+        >
+          <HandleIcon/>
+        </Handle>
+      ))}
+      <div onClick={() => {
+        incrementHandles(properties.id);
+        updateNodeInternals(properties.id);
+      }}
+           className="absolute right-[-14px] w-[8px] h-[8px] rounded-full cursor-pointer text-[4px] font-bold border text-center text-white"
+           style={{
+             top: `${firstHandlePosition + (handles.length - 1) * handleSpacing + 20}px`,
+             backgroundColor: translateTypeToColor(properties.data.type),
+           }}
+      >+</div>
     </>
   )
 }

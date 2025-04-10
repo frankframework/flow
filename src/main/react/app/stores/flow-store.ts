@@ -9,6 +9,7 @@ import {
 import { initialNodes } from '~/routes/builder/canvas/nodes';
 import { initialEdges } from '~/routes/builder/canvas/edges';
 import type { FlowNode } from '~/routes/builder/canvas/flow';
+import type { FrankNode } from '~/routes/builder/canvas/nodetypes/frank-node';
 
 export type FlowState = {
   nodes: FlowNode[];
@@ -18,8 +19,12 @@ export type FlowState = {
   onConnect: OnConnect;
   setNodes: (nodes: FlowNode[]) => void;
   setEdges: (edges: Edge[]) => void;
-  updateSrcHandles: (nodeId: string) => void;
+  incrementSrcHandles: (nodeId: string) => void;
 };
+
+function isFrankNode(node: FlowNode): node is FrankNode {
+  return node.type === 'frankNode'
+}
 
 const useFlowStore = create<FlowState>((set, get) => ({
   nodes: initialNodes,
@@ -45,8 +50,15 @@ const useFlowStore = create<FlowState>((set, get) => ({
   setEdges: (edges) => {
     set({ edges });
   },
-  updateSrcHandles: (nodeId: string) => {
-
+  incrementSrcHandles: (nodeId: string) => {
+    set({
+      nodes: get().nodes.map((node) => {
+        if (node.id === nodeId && isFrankNode(node)) {
+          return {...node, data: {...node.data, srcHandleAmount: node.data.srcHandleAmount + 1}};
+        }
+        return node
+      })
+    })
   }
 }))
 
