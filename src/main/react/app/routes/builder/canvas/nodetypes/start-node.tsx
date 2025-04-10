@@ -1,16 +1,11 @@
-import {Handle, type Node, Position} from "@xyflow/react";
+import { Handle, type Node, Position } from '@xyflow/react'
 
 export type StartNode = Node<{}>
-export default function StartNode(){
-
+export default function StartNode() {
   return (
-          <>
-            <div className="rounded-full w-[10px] h-[10px] bg"
-                 style={{ backgroundColor: '#3079CC' }}
-            >
-            </div>
-            <Handle type={"source"} position={Position.Right} className="invisible">
-            </Handle>
-          </>
+    <>
+      <div className="bg h-[10px] w-[10px] rounded-full" style={{ backgroundColor: 'var(--color-indigo-600)' }}></div>
+      <Handle type={'source'} position={Position.Right} className="invisible"></Handle>
+    </>
   )
 }
