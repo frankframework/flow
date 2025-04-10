@@ -4,7 +4,7 @@ import Tabs, { type TabsList } from '~/components/tabs/tabs'
 import BuilderStructure from '~/routes/builder/builder-structure'
 import SidebarIcon from '/icons/solar/Sidebar Minimalistic.svg?react'
 import BuilderContext from '~/routes/builder/context/builder-context'
-import Flow from "~/routes/builder/canvas/flow";
+import Flow from '~/routes/builder/canvas/flow'
 
 const tabs = {
   tab1: { value: 'tab1', icon: 'code' },
@@ -119,7 +119,7 @@ export default function Builder() {
             <div className="h-12 border-b border-b-gray-200">
               Path: {Object.entries(tabs).find(([key]) => key === selectedTab)?.[1]?.value}
             </div>
-            <Flow/>
+            <Flow />
           </Allotment.Pane>
           <Allotment.Pane
             key="right"
