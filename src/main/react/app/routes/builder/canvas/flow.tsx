@@ -13,19 +13,22 @@ import {useCallback, useState} from "react";
 
 import {initialNodes} from "~/routes/builder/canvas/nodes";
 import {initialEdges} from "~/routes/builder/canvas/edges";
-import FrankNodeComponent, {type FrankNode} from "~/routes/builder/canvas/frank-node";
+import FrankNodeComponent, {type FrankNode} from "~/routes/builder/canvas/nodetypes/frank-node";
 import FrankEdgeComponent from "~/routes/builder/canvas/frank-edge";
-import ExitNodeComponent from "~/routes/builder/canvas/exit-node";
+import ExitNodeComponent from "~/routes/builder/canvas/nodetypes/exit-node";
+import StartNodeComponent, {type StartNode} from "~/routes/builder/canvas/nodetypes/start-node";
+
+type CustomNode = FrankNode | StartNode;
 
 export default function Flow() {
 
-  const nodeTypes = {frankNode: FrankNodeComponent, exitNode: ExitNodeComponent}
+  const nodeTypes = {frankNode: FrankNodeComponent, exitNode: ExitNodeComponent, startNode: StartNodeComponent}
   const edgeTypes = {frankEdge: FrankEdgeComponent}
 
   const [nodes, setNodes] = useState(initialNodes);
   const [edges, setEdges] = useState(initialEdges);
 
-  const onNodesChange: OnNodesChange<FrankNode> = useCallback(
+  const onNodesChange: OnNodesChange<CustomNode> = useCallback(
           (changes) => setNodes((nds) => applyNodeChanges(changes, nds)),
           [],
   );

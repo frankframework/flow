@@ -1,6 +1,12 @@
-import type { FrankNode } from '~/routes/builder/canvas/frank-node';
+import type { Node } from '@xyflow/react';
 
-export const initialNodes: FrankNode[] = [{
+export const initialNodes: Node[] = [
+  {
+    id: '0',
+    position: {x: -450, y: 0},
+    data: {},
+    type: 'startNode'
+  },{
   id: '1',
   position: {x: 0, y: 0},
   data: {
@@ -87,8 +93,6 @@ export const initialNodes: FrankNode[] = [{
     subtype: 'Exit',
     type: 'Exit',
     name: 'Ready',
-    srcHandleAmount: 0,
-    children: []
   },
   type: 'exitNode'
 }]

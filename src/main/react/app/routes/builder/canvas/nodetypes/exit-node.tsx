@@ -1,5 +1,5 @@
 import {Handle, type NodeProps, NodeResizeControl, Position} from "@xyflow/react";
-import {type FrankNode, HandleIcon, ResizeIcon, translateTypeToColor} from "~/routes/builder/canvas/frank-node";
+import {type FrankNode, HandleIcon, ResizeIcon, translateTypeToColor} from "~/routes/builder/canvas/nodetypes/frank-node";
 
 export default function ExitNode(props: NodeProps<FrankNode>) {
 

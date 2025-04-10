@@ -1,4 +1,13 @@
-export const initialEdges = [{
+export const initialEdges = [
+  {
+    id: '0-1',
+    source: '0',
+    target: '1',
+    data: {
+      label: 'START'
+    },
+    type: 'frankEdge'
+  }, {
   id: '1-2',
   source: '1',
   target: '2',
