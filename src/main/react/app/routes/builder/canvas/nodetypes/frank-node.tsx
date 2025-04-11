@@ -120,7 +120,7 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
                     style={{
                       background: `radial-gradient(
                       ellipse at top left,
-                      ${translateTypeToColor(properties.data.type)} 0%,
+                      ${translateTypeToColor(child.type)} 0%,
                       white 70%
                     )`,
                     }}

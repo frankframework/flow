@@ -4,7 +4,7 @@ import {
   applyNodeChanges,
   Background,
   BackgroundVariant,
-  Controls,
+  Controls, type Node,
   type OnNodesChange,
   ReactFlow,
 } from '@xyflow/react'
@@ -17,24 +17,25 @@ import FrankNodeComponent, { type FrankNode } from '~/routes/builder/canvas/node
 import FrankEdgeComponent from '~/routes/builder/canvas/frank-edge'
 import ExitNodeComponent from '~/routes/builder/canvas/nodetypes/exit-node'
 import StartNodeComponent, { type StartNode } from '~/routes/builder/canvas/nodetypes/start-node'
+import useFlowStore, {type FlowState} from "~/stores/flow-store";
+import {useShallow} from "zustand/react/shallow";
 
-type CustomNode = FrankNode | StartNode
+export type FlowNode = FrankNode | StartNode | Node
+const selector = (state: FlowState) => ({
+  nodes: state.nodes,
+  edges: state.edges,
+  onNodesChange: state.onNodesChange,
+  onEdgesChange: state.onEdgesChange,
+  onConnect: state.onConnect,
+});
 
 export default function Flow() {
   const nodeTypes = { frankNode: FrankNodeComponent, exitNode: ExitNodeComponent, startNode: StartNodeComponent }
   const edgeTypes = { frankEdge: FrankEdgeComponent }
 
-  const [nodes, setNodes] = useState(initialNodes)
-  const [edges, setEdges] = useState(initialEdges)
-
-  const onNodesChange: OnNodesChange<CustomNode> = useCallback(
-    (changes) => setNodes((nds) => applyNodeChanges(changes, nds)),
-    [],
-  )
-
-  const onEdgesChange = useCallback((changes: any) => setEdges((eds) => applyEdgeChanges(changes, eds)), [])
-
-  const onConnect = useCallback((parameters: any) => setEdges((eds) => addEdge(parameters, eds)), [])
+  const { nodes, edges, onNodesChange, onEdgesChange, onConnect } = useFlowStore(
+          useShallow(selector),
+  );
 
   return (
     <div style={{ height: '100%' }}>
