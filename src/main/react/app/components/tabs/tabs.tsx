@@ -1,7 +1,4 @@
 import React, { useEffect, useRef, useState } from 'react'
-import clsx from 'clsx'
-import CloseSquareIcon from '/icons/solar/Close Square.svg?react'
-import CodeIcon from '/icons/solar/Code.svg?react'
 import Tab from '~/components/tabs/tab'
 
 export type TabsList = Record<string, TabsItem>

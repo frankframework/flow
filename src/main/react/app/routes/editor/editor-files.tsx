@@ -35,13 +35,11 @@ export default function EditorFiles({ onClose }: Readonly<EditorFilesTreePropert
   return (
     <div className="flex h-full flex-col">
       <div className="flex h-12 items-center gap-1 px-4">
-        {/*<PaletteIcon className="fill-gray-950"></PaletteIcon>*/}
         <SidebarIcon
           onClick={onClose}
           className="rotate-180 fill-gray-950 hover:fill-[var(--color-brand)]"
         ></SidebarIcon>
         <div className="text-xl">Files</div>
-        {/*<div className="grow"></div>*/}
       </div>
       <div className="relative px-4">
         <label htmlFor="search" className="absolute top-1/2 left-6 -translate-y-1/2">

@@ -107,14 +107,6 @@ export default function CodeEditor() {
               <div className="grow overflow-x-auto">
                 <Tabs onSelectedTabChange={setSelectedTab} initialTabs={tabs} />
               </div>
-              {/*{!visible[SidebarIndex.RIGHT] && (*/}
-              {/*  <div className="flex aspect-square h-12 items-center justify-center border-b border-l border-gray-200">*/}
-              {/*    <SidebarIcon*/}
-              {/*      onClick={toggleRightVisible}*/}
-              {/*      className="fill-gray-950 hover:fill-[var(--color-brand)]"*/}
-              {/*    ></SidebarIcon>*/}
-              {/*  </div>*/}
-              {/*)}*/}
             </div>
             <div className="h-12 border-b border-b-gray-200">
               Path: {Object.entries(tabs).find(([key]) => key === selectedTab)?.[1]?.value}
@@ -123,16 +115,6 @@ export default function CodeEditor() {
               <Editor></Editor>
             </div>
           </Allotment.Pane>
-          {/*<Allotment.Pane*/}
-          {/*  key="right"*/}
-          {/*  snap*/}
-          {/*  minSize={200}*/}
-          {/*  maxSize={2000}*/}
-          {/*  preferredSize={300}*/}
-          {/*  visible={visible[SidebarIndex.RIGHT]}*/}
-          {/*>*/}
-          {/*  <p>Sidebar</p>*/}
-          {/*</Allotment.Pane>*/}
         </Allotment>
       )}
     </>

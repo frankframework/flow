@@ -1,4 +1,4 @@
-import type { TreeDataProvider, TreeItem, TreeItemIndex, Disposable } from 'react-complex-tree'
+import type { Disposable, TreeDataProvider, TreeItem, TreeItemIndex } from 'react-complex-tree'
 import items from '~/routes/editor/fake-files'
 
 export default class CustomDataProviderImplementation implements TreeDataProvider {
@@ -28,7 +28,6 @@ export default class CustomDataProviderImplementation implements TreeDataProvide
     this.data[item.index].data = name
   }
 
-  // custom handler for directly manipulating the tree data
   public injectItem(name: string) {
     const rand = `${crypto.getRandomValues(new Uint32Array(1))[0]}`
     this.data[rand] = { data: name, index: rand } as TreeItem
