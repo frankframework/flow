@@ -46,10 +46,10 @@ export default function CodeEditor() {
   )
 
   useEffect(() => {
-    const savedSized = localStorage.getItem('editorSidebarSizes')
+    const savedSizes = localStorage.getItem('editorSidebarSizes')
     const savedVisible = localStorage.getItem('editorSidebarVisible')
-    if (savedSized) {
-      setSizes(JSON.parse(savedSized))
+    if (savedSizes) {
+      setSizes(JSON.parse(savedSizes))
     }
     if (savedVisible) {
       setVisible(JSON.parse(savedVisible))
