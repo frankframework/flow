@@ -1,13 +1,11 @@
-import { useEffect, useRef, useState } from 'react'
-import clsx from 'clsx'
-import CloseSquareIcon from '/icons/solar/Close Square.svg?react'
-import TabIcon, { type TabIconType } from './tab-icon'
+import React, { useEffect, useRef, useState } from 'react'
+import Tab from '~/components/tabs/tab'
 
-export type TabsList = Record<string, Tab>
+export type TabsList = Record<string, TabsItem>
 
-export interface Tab {
+export interface TabsItem {
   value: string
-  icon?: TabIconType
+  icon?: React.FC<React.SVGProps<SVGSVGElement>>
 }
 
 export interface TabsProperties {
@@ -17,7 +15,7 @@ export interface TabsProperties {
 }
 
 export default function Tabs({ initialTabs, initialSelectedTab, onSelectedTabChange }: Readonly<TabsProperties>) {
-  const [tabs, setTabs] = useState<Record<string, Tab>>(initialTabs)
+  const [tabs, setTabs] = useState<TabsList>(initialTabs)
   const [selectedTab, setSelectedTab] = useState<string | undefined>(initialSelectedTab)
   const [selectedTabHistory, setSelectedTabHistory] = useState<string[]>([])
   const tabsElementReference = useRef<HTMLDivElement>(null)
@@ -123,39 +121,27 @@ export default function Tabs({ initialTabs, initialSelectedTab, onSelectedTabCha
     <div ref={tabsElementReference} className="relative flex h-12" onWheel={handleWheel}>
       <div
         ref={shadowLeftElementReference}
-        className="absolute top-0 bottom-0 left-0 z-10 w-4 bg-gradient-to-r from-black/15 to-transparent opacity-0"
+        className="absolute top-0 bottom-0 left-0 z-10 w-2 bg-gradient-to-r from-black/15 to-transparent opacity-0"
       ></div>
       <div
         ref={shadowRightElementReference}
-        className="absolute top-0 right-0 bottom-0 z-10 w-4 bg-gradient-to-l from-black/15 to-transparent opacity-0"
+        className="absolute top-0 right-0 bottom-0 z-10 w-2 bg-gradient-to-l from-black/15 to-transparent opacity-0"
       ></div>
 
       <ul
         ref={tabsListElementReference}
         className="m-0 flex rotate-x-180 flex-nowrap overflow-x-auto p-0 whitespace-nowrap"
       >
-        {Object.entries(tabs).map(([key, tab]) => {
-          const isSelected = selectedTab === key
-          return (
-            <li
-              key={key}
-              className={clsx(
-                'group relative flex h-full rotate-x-180 list-none items-center justify-between gap-1 border-r border-b border-r-gray-200 border-b-gray-200 px-4 text-gray-500',
-                isSelected
-                  ? 'border-b-white bg-white font-medium text-gray-950 hover:bg-white'
-                  : 'bg-gray-50 hover:cursor-pointer hover:bg-gray-100 hover:text-gray-800',
-              )}
-              onClick={() => selectTab(key)}
-            >
-              {tab.icon && <TabIcon icon={tab.icon} />}
-              {tab.value}
-              <CloseSquareIcon
-                className={clsx('h-5 hover:fill-gray-500', isSelected ? 'fill-gray-400' : 'group-hover:fill-gray-400')}
-                onClick={(event) => closeTab(key, event)}
-              />
-            </li>
-          )
-        })}
+        {Object.entries(tabs).map(([key, tab]) => (
+          <Tab
+            key={key}
+            value={tab.value}
+            isSelected={selectedTab === key}
+            onSelect={() => selectTab(key)}
+            onClose={(event) => closeTab(key, event)}
+            icon={tab.icon}
+          />
+        ))}
       </ul>
       <div className="flex-grow border-b border-b-gray-200"></div>
     </div>

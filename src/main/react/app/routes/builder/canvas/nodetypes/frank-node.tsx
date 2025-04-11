@@ -1,4 +1,4 @@
-import { NodeResizeControl, type Node, type NodeProps, Handle, Position } from '@xyflow/react'
+import { Handle, type Node, type NodeProps, NodeResizeControl, Position } from '@xyflow/react'
 import { useLayoutEffect, useRef, useState } from 'react'
 
 export interface ChildNode {

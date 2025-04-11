@@ -11,6 +11,7 @@ body {
 	@apply bg-white;
   @apply select-none;
   @apply font-inter;
+  @apply text-gray-950;
 
   /*@media (prefers-color-scheme: dark) {*/
 	/*color-scheme: dark;*/
