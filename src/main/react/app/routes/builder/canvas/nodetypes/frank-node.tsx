@@ -10,8 +10,6 @@ import {
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import useFlowStore from '~/stores/flow-store'
 import { CustomHandle } from '~/components/flow/handle'
-import { Handle, type Node, type NodeProps, NodeResizeControl, Position } from '@xyflow/react'
-import { useLayoutEffect, useRef, useState } from 'react'
 
 export interface ChildNode {
   subtype: string
