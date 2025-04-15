@@ -5,7 +5,7 @@ import {
   NodeResizeControl,
   Position,
   useReactFlow,
-  useUpdateNodeInternals
+  useUpdateNodeInternals,
 } from '@xyflow/react'
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import useFlowStore from '~/stores/flow-store'
@@ -98,14 +98,12 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
 
   const openMenu = (event: React.MouseEvent) => {
     const { clientX, clientY } = event
-
     const { screenToFlowPosition } = reactFlow
     const flowPosition = screenToFlowPosition({ x: clientX, y: clientY })
-    setMenuPosition({
-      x: flowPosition.x + 10,
-      y: flowPosition.y,
-    })
+    const adjustedX = flowPosition.x - properties.positionAbsoluteX
+    const adjustedY = flowPosition.y - properties.positionAbsoluteY
 
+    setMenuPosition({ x: adjustedX, y: adjustedY })
     setIsMenuOpen(true)
   }
 
@@ -234,11 +232,14 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
           className="absolute rounded-md border bg-white shadow-md"
           style={{
             left: `${menuPosition.x + 10}px`, // Positioning to the right of the cursor
-            top: `${menuPosition.y}px`, // Align vertically with the cursor
+            top: `${menuPosition.y}px`,
           }}
         >
           <ul>
-            <li className="cursor-pointer p-2 hover:bg-gray-200" onClick={() => handleMenuClick('success')}>
+            <li
+              className="cursor-pointer rounded-t-md p-2 hover:bg-gray-200"
+              onClick={() => handleMenuClick('success')}
+            >
               Success
             </li>
             <li className="cursor-pointer p-2 hover:bg-gray-200" onClick={() => handleMenuClick('failure')}>
@@ -247,7 +248,7 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
             <li className="cursor-pointer p-2 hover:bg-gray-200" onClick={() => handleMenuClick('exception')}>
               Exception
             </li>
-            <li className="cursor-pointer p-2 hover:bg-gray-200" onClick={() => handleMenuClick('custom')}>
+            <li className="cursor-pointer rounded-b-md p-2 hover:bg-gray-200" onClick={() => handleMenuClick('custom')}>
               Custom
             </li>
           </ul>
