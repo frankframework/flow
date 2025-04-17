@@ -31,7 +31,15 @@ export default function BuilderContext({ onClose }: Readonly<{ onClose: () => vo
           {error && <li>Error: {error}</li>}
           {!isLoading &&
             Object.entries(frankDocRaw?.elements).map(([key, value]: [string, any]) => (
-              <li className="m-2 rounded border border-gray-400 p-4" key={value.name}>
+              <li
+                className="m-2 cursor-move rounded border border-gray-400 p-4"
+                key={value.name}
+                draggable
+                onDragStart={(event) => {
+                  event.dataTransfer.setData('application/reactflow', JSON.stringify(value))
+                  event.dataTransfer.effectAllowed = 'move'
+                }}
+              >
                 {value.name}
               </li>
             ))}
