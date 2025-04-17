@@ -6,6 +6,8 @@ import SidebarIcon from '/icons/solar/Sidebar Minimalistic.svg?react'
 import BuilderContext from '~/routes/builder/context/builder-context'
 import Flow from '~/routes/builder/canvas/flow'
 import FolderIcon from '/icons/solar/Folder.svg?react'
+import NodeContext from "~/routes/builder/context/node-context";
+import useNodeContextStore from "~/stores/node-context-store";
 
 const tabs = {
   tab1: { value: 'tab1', icon: FolderIcon },
@@ -33,6 +35,7 @@ export default function Builder() {
   const [selectedTab, setSelectedTab] = useState<string | undefined>()
 
   const [visible, setVisible] = useState([true, true, true])
+  const [showNodeContext, setShowNodeContext] = useState(false)
   const [hasReadFromLocalStorage, setHasReadFromLocalStorage] = useState(false)
   const [sizes, setSizes] = useState<number[]>([])
 
@@ -75,6 +78,8 @@ export default function Builder() {
   const toggleIndexVisible = (index: SidebarIndex) => {
     onVisibleChangeHandler(index, !visible[index])
   }
+
+  const nodeId = useNodeContextStore((state) => state.nodeId)
 
   return (
     <>
@@ -120,7 +125,7 @@ export default function Builder() {
             <div className="h-12 border-b border-b-gray-200">
               Path: {Object.entries(tabs).find(([key]) => key === selectedTab)?.[1]?.value}
             </div>
-            <Flow />
+            <Flow onDragEnd={setShowNodeContext} />
           </Allotment.Pane>
           <Allotment.Pane
             key="right"
@@ -130,7 +135,11 @@ export default function Builder() {
             preferredSize={300}
             visible={visible[SidebarIndex.RIGHT]}
           >
-            <BuilderContext onClose={toggleRightVisible} />
+            {showNodeContext ? (
+              <NodeContext nodeId={nodeId} setShowNodeContext={setShowNodeContext} />
+            ) : (
+              <BuilderContext onClose={toggleRightVisible} />
+            )}
           </Allotment.Pane>
         </Allotment>
       )}

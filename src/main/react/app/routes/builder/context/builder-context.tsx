@@ -1,9 +1,25 @@
 import SidebarIcon from '/icons/solar/Sidebar Minimalistic.svg?react'
 import MagnifierIcon from '/icons/solar/Magnifier.svg?react'
 import useFrankDocStore from '~/stores/frank-doc-store'
+import useNodeContextStore from '~/stores/node-context-store'
+import {useReactFlow} from "@xyflow/react";
+import useFlowStore from "~/stores/flow-store";
 
 export default function BuilderContext({ onClose }: Readonly<{ onClose: () => void }>) {
   const { frankDocRaw, isLoading, error } = useFrankDocStore()
+  const { setAttributes, setNodeId } = useNodeContextStore((state) => state)
+  const nodes = useFlowStore((state) => state.nodes)
+
+  const onDragStart = (value: { attributes: any[] }) => {
+    return (event: {
+      dataTransfer: { setData: (argument0: string, argument1: string) => void; effectAllowed: string }
+    }) => {
+      setAttributes(value.attributes)
+      setNodeId(nodes.length)
+      event.dataTransfer.setData('application/reactflow', JSON.stringify(value))
+      event.dataTransfer.effectAllowed = 'move'
+    }
+  }
 
   return (
     <div className="h-full">
@@ -35,10 +51,7 @@ export default function BuilderContext({ onClose }: Readonly<{ onClose: () => vo
                 className="m-2 cursor-move rounded border border-gray-400 p-4"
                 key={value.name}
                 draggable
-                onDragStart={(event) => {
-                  event.dataTransfer.setData('application/reactflow', JSON.stringify(value))
-                  event.dataTransfer.effectAllowed = 'move'
-                }}
+                onDragStart={onDragStart(value)}
               >
                 {value.name}
               </li>

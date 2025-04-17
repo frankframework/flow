@@ -10,14 +10,14 @@ import {
 import '@xyflow/react/dist/style.css'
 import FrankNodeComponent, { type FrankNode } from '~/routes/builder/canvas/nodetypes/frank-node'
 import FrankEdgeComponent from '~/routes/builder/canvas/frank-edge'
-import ExitNodeComponent from '~/routes/builder/canvas/nodetypes/exit-node'
+import ExitNodeComponent, { type ExitNode } from '~/routes/builder/canvas/nodetypes/exit-node'
 import StartNodeComponent, { type StartNode } from '~/routes/builder/canvas/nodetypes/start-node'
 import useFlowStore, { type FlowState } from '~/stores/flow-store'
 import { useShallow } from 'zustand/react/shallow'
 import { FlowConfig } from '~/routes/builder/canvas/flow.config'
 import { getElementTypeFromName } from '~/routes/builder/node-translator-module'
 
-export type FlowNode = FrankNode | StartNode | Node
+export type FlowNode = FrankNode | StartNode | ExitNode | Node
 const selector = (state: FlowState) => ({
   nodes: state.nodes,
   edges: state.edges,
@@ -26,7 +26,7 @@ const selector = (state: FlowState) => ({
   onConnect: state.onConnect,
 })
 
-function FlowCanvas() {
+function FlowCanvas({ onDragEnd }: Readonly<{ onDragEnd: (b: boolean) => void }>) {
   const nodeTypes = { frankNode: FrankNodeComponent, exitNode: ExitNodeComponent, startNode: StartNodeComponent }
   const edgeTypes = { frankEdge: FrankEdgeComponent }
   const reactFlow = useReactFlow()
@@ -40,6 +40,7 @@ function FlowCanvas() {
 
   const onDrop = (event: React.DragEvent) => {
     event.preventDefault()
+    onDragEnd(true)
 
     const data = event.dataTransfer.getData('application/reactflow')
     if (!data) return
@@ -60,13 +61,12 @@ function FlowCanvas() {
       data: {
         subtype: parsedData.name,
         type: elementType,
-        name: `Placeholder Name For ${parsedData.name}`,
+        name: ``,
         sourceHandles: [{ type: 'success', index: 1 }],
         children: [],
       },
       type: nodeType,
     }
-
     useFlowStore.getState().setNodes([...nodes, newNode])
   }
 
@@ -89,10 +89,10 @@ function FlowCanvas() {
   )
 }
 
-export default function Flow() {
+export default function Flow({ onDragEnd }: Readonly<{ onDragEnd: (b: boolean) => void }>) {
   return (
     <ReactFlowProvider>
-      <FlowCanvas />
+      <FlowCanvas onDragEnd={onDragEnd} />
     </ReactFlowProvider>
   )
 }
