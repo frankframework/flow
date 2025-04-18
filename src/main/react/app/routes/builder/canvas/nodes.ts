@@ -1,5 +1,4 @@
 import type { Node } from '@xyflow/react'
-
 export const initialNodes: Node[] = [
   {
     id: '0',
@@ -14,7 +13,7 @@ export const initialNodes: Node[] = [
       subtype: 'Receiver',
       type: 'Receiver',
       name: 'Update Temperature',
-      srcHandleAmount: 1,
+      sourceHandles: [{ type: 'success', index: 1 }],
       children: [
         {
           subtype: 'JavaListener',
@@ -32,7 +31,7 @@ export const initialNodes: Node[] = [
       subtype: 'Senderpipe',
       type: 'Pipe',
       name: 'Get temperature from OpenWeather',
-      srcHandleAmount: 1,
+      sourceHandles: [{ type: 'success', index: 1 }],
       children: [
         {
           subtype: 'HttpSender',
@@ -52,7 +51,10 @@ export const initialNodes: Node[] = [
       subtype: 'XsltPipe',
       type: 'Pipe',
       name: 'Xml to Json',
-      srcHandleAmount: 1,
+      sourceHandles: [
+        { type: 'success', index: 1 },
+        { type: 'failure', index: 2 },
+      ],
       attributes: {
         xpathExpression: "concat('{&quot;temperature&quot;:', /current/temperature/@value, '}')",
       },
@@ -62,22 +64,13 @@ export const initialNodes: Node[] = [
   },
   {
     id: '4',
-    position: { x: 1350, y: 0 },
+    position: { x: 1350, y: -200 },
     data: {
       subtype: 'SenderPipe',
       type: 'Pipe',
       name: 'Post temperature to ThingsBoard',
-      srcHandleAmount: 1,
+      sourceHandles: [{ type: 'success', index: 1 }],
       children: [
-        {
-          subtype: 'HttpSender',
-          type: 'Sender',
-          attributes: {
-            url: 'https://demo.thingsboard.io/api/v1/${thingsboard.apikey}/telemetry',
-            methodType: 'POST',
-            contentType: 'application/json',
-          },
-        },
         {
           subtype: 'HttpSender',
           type: 'Sender',
@@ -94,6 +87,16 @@ export const initialNodes: Node[] = [
   {
     id: '5',
     position: { x: 1800, y: 0 },
+    data: {
+      subtype: 'Exit',
+      type: 'Exit',
+      name: 'Ready',
+    },
+    type: 'exitNode',
+  },
+  {
+    id: '6',
+    position: { x: 1800, y: 200 },
     data: {
       subtype: 'Exit',
       type: 'Exit',

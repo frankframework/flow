@@ -1,10 +1,5 @@
 import { Handle, type NodeProps, NodeResizeControl, Position } from '@xyflow/react'
-import {
-  type FrankNode,
-  HandleIcon,
-  ResizeIcon,
-  translateTypeToColor,
-} from '~/routes/builder/canvas/nodetypes/frank-node'
+import { type FrankNode, ResizeIcon, translateTypeToColor } from '~/routes/builder/canvas/nodetypes/frank-node'
 
 export default function ExitNode(properties: NodeProps<FrankNode>) {
   const minNodeWidth = 150
@@ -52,16 +47,12 @@ export default function ExitNode(properties: NodeProps<FrankNode>) {
         position={Position.Left}
         className="flex items-center justify-center text-white"
         style={{
-          left: '-10px',
-          width: '10px',
-          height: '10px',
-          backgroundColor: '#3079CC',
+          left: '-15px',
+          width: '15px',
+          height: '15px',
+          backgroundColor: '#B2B2B2',
         }}
-      >
-        {' '}
-        {/* Use inline styling to prevent ReactFlow override on certain properties */}
-        <HandleIcon />
-      </Handle>
+      />
     </>
   )
 }

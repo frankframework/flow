@@ -44,4 +44,14 @@ export const initialEdges = [
     },
     type: 'frankEdge',
   },
+  {
+    id: '3-6',
+    source: '3',
+    sourceHandle: '2',
+    target: '6',
+    data: {
+      label: 'FAILURE',
+    },
+    type: 'frankEdge',
+  },
 ]
