@@ -38,7 +38,7 @@ export default function NodeContext({
   function resolveFilledAttributes() {
     const filledAttributes = Object.entries(inputReferences.current)
       .map(([indexString, input]) => {
-        const index = Number(indexString)
+        const index = +indexString
         const value = input?.value?.trim()
         if (value) {
           return {
