@@ -16,8 +16,13 @@ import useFlowStore, { type FlowState } from '~/stores/flow-store'
 import { useShallow } from 'zustand/react/shallow'
 import { FlowConfig } from '~/routes/builder/canvas/flow.config'
 import { getElementTypeFromName } from '~/routes/builder/node-translator-module'
+import { createContext, useContext } from 'react'
 
 export type FlowNode = FrankNode | StartNode | ExitNode | Node
+
+const NodeContextMenuContext = createContext<(visible: boolean) => void>(() => {})
+export const useNodeContextMenu = () => useContext(NodeContextMenuContext)
+
 const selector = (state: FlowState) => ({
   nodes: state.nodes,
   edges: state.edges,
@@ -26,7 +31,7 @@ const selector = (state: FlowState) => ({
   onConnect: state.onConnect,
 })
 
-function FlowCanvas({ onDragEnd }: Readonly<{ onDragEnd: (b: boolean) => void }>) {
+function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b: boolean) => void }>) {
   const nodeTypes = { frankNode: FrankNodeComponent, exitNode: ExitNodeComponent, startNode: StartNodeComponent }
   const edgeTypes = { frankEdge: FrankEdgeComponent }
   const reactFlow = useReactFlow()
@@ -40,7 +45,7 @@ function FlowCanvas({ onDragEnd }: Readonly<{ onDragEnd: (b: boolean) => void }>
 
   const onDrop = (event: React.DragEvent) => {
     event.preventDefault()
-    onDragEnd(true)
+    showNodeContextMenu(true)
 
     const data = event.dataTransfer.getData('application/reactflow')
     if (!data) return
@@ -49,7 +54,7 @@ function FlowCanvas({ onDragEnd }: Readonly<{ onDragEnd: (b: boolean) => void }>
     const { screenToFlowPosition } = reactFlow
 
     const position = screenToFlowPosition({ x: event.clientX, y: event.clientY })
-    const newId = useFlowStore.getState().nodes.length
+    const newId = useFlowStore.getState().getNextNodeId()
     const elementType = getElementTypeFromName(parsedData.name)
     const nodeType = elementType == 'exit' ? 'exitNode' : 'frankNode'
     const newNode: FrankNode = {
@@ -67,7 +72,7 @@ function FlowCanvas({ onDragEnd }: Readonly<{ onDragEnd: (b: boolean) => void }>
       },
       type: nodeType,
     }
-    useFlowStore.getState().setNodes([...nodes, newNode])
+    useFlowStore.getState().addNode(newNode)
   }
 
   return (
@@ -89,10 +94,12 @@ function FlowCanvas({ onDragEnd }: Readonly<{ onDragEnd: (b: boolean) => void }>
   )
 }
 
-export default function Flow({ onDragEnd }: Readonly<{ onDragEnd: (b: boolean) => void }>) {
+export default function Flow({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b: boolean) => void }>) {
   return (
-    <ReactFlowProvider>
-      <FlowCanvas onDragEnd={onDragEnd} />
-    </ReactFlowProvider>
+    <NodeContextMenuContext.Provider value={showNodeContextMenu}>
+      <ReactFlowProvider>
+        <FlowCanvas showNodeContextMenu={showNodeContextMenu} />
+      </ReactFlowProvider>
+    </NodeContextMenuContext.Provider>
   )
 }
