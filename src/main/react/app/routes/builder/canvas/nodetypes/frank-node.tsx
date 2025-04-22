@@ -11,7 +11,6 @@ import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import useFlowStore from '~/stores/flow-store'
 import { CustomHandle } from '~/components/flow/handle'
 import { FlowConfig } from '~/routes/builder/canvas/flow.config'
-import { getColorFromType } from '~/routes/builder/node-translator-module'
 
 export interface ChildNode {
   subtype: string
@@ -32,7 +31,8 @@ export type FrankNode = Node<{
 export default function FrankNode(properties: NodeProps<FrankNode>) {
   const minNodeWidth = FlowConfig.NODE_DEFAULT_WIDTH
   const minNodeHeight = FlowConfig.NODE_DEFAULT_HEIGHT
-  const bgColor = getColorFromType(properties.data.type)
+  const type = properties.data.type.toLowerCase()
+  const colorVariable = `--type-${type}`
   const handleSpacing = 20
   const containerReference = useRef<HTMLDivElement>(null)
 
@@ -115,7 +115,7 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
           style={{
             background: `radial-gradient(
               ellipse at top left,
-              ${bgColor} 0%,
+              var(${colorVariable}) 0%,
               white 70%
             )`,
           }}
@@ -146,9 +146,9 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
                     style={{
                       background: `radial-gradient(
                       ellipse at top left,
-                      ${getColorFromType(child.type)} 0%,
+                      var(--type-${child.type?.toLowerCase?.() || 'default'}) 0%,
                       white 70%
-                    )`,
+                      )`,
                     }}
                   >
                     <h1 className="font-bold">{child.subtype}</h1>

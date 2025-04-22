@@ -2,7 +2,6 @@ import { Handle, type Node, type NodeProps, NodeResizeControl, Position } from '
 import { ResizeIcon } from '~/routes/builder/canvas/nodetypes/frank-node'
 import { FlowConfig } from '~/routes/builder/canvas/flow.config'
 import { useState } from 'react'
-import { getColorFromType } from '~/routes/builder/node-translator-module'
 
 export type ExitNode = Node<{
   subtype: string
@@ -49,7 +48,7 @@ export default function ExitNode(properties: NodeProps<ExitNode>) {
           style={{
             background: `radial-gradient(
               ellipse at top left,
-              ${getColorFromType(properties.data.type)} 0%,
+              var(--type-exit) 0%,
               white 70%
             )`,
           }}

@@ -34,7 +34,8 @@ export default function NodeContext({
     validateForm()
   }, [attributes])
 
-  const handleSave = () => {
+  // Checks input fields for values and returns only those values and their labels
+  function resolveFilledAttributes() {
     const filledAttributes = Object.entries(inputReferences.current)
       .map(([indexString, input]) => {
         const index = Number(indexString)
@@ -48,7 +49,11 @@ export default function NodeContext({
         return null
       })
       .filter(Boolean) as { name: string; value: string }[]
+    return filledAttributes
+  }
 
+  const handleSave = () => {
+    const filledAttributes = resolveFilledAttributes()
     const nameField = filledAttributes.find((attribute) => attribute.name === 'name')
     const filteredAttributes = filledAttributes.filter((attribute) => attribute.name !== 'name')
     const newAttributesObject = Object.fromEntries(filteredAttributes.map(({ name, value }) => [name, value]))
