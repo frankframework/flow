@@ -88,6 +88,22 @@ const useFlowStore = create<FlowState>((set, get) => ({
       edges: get().edges.filter((edge) => edge.source !== nodeId && edge.target !== nodeId),
     })
   },
+  getNextNodeId: () => {
+    const current = get().nodeIdCounter
+    set({ nodeIdCounter: current + 1 })
+    return current.toString()
+  },
+  addNode: (newNode: FlowNode) => {
+    set({
+      nodes: [...get().nodes, newNode],
+    })
+  },
+  deleteNode: (nodeId: string) => {
+    set({
+      nodes: get().nodes.filter((node) => node.id !== nodeId),
+      edges: get().edges.filter((edge) => edge.source !== nodeId && edge.target !== nodeId),
+    })
+  },
   setAttributes: (nodeId, attributes) => {
     set({
       nodes: get().nodes.map((node) => {
@@ -126,6 +142,13 @@ const useFlowStore = create<FlowState>((set, get) => ({
         return node
       }),
     })
+  },
+  getAttributes: (nodeId: string) => {
+    const node = get().nodes.find((node) => node.id === nodeId)
+    if (node && isFrankNode(node)) {
+      return node.data.attributes || null
+    }
+    return null
   },
   setNodeName: (nodeId, name) => {
     set({
