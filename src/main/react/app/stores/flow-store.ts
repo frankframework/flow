@@ -14,6 +14,7 @@ import { initialEdges } from '~/routes/builder/canvas/edges'
 import type { FlowNode } from '~/routes/builder/canvas/flow'
 import type { FrankNode } from '~/routes/builder/canvas/nodetypes/frank-node'
 import type { ExitNode } from '~/routes/builder/canvas/nodetypes/exit-node'
+import type { StickyNote } from '~/routes/builder/canvas/nodetypes/sticky-note'
 
 export interface FlowState {
   nodes: FlowNode[]
@@ -29,6 +30,7 @@ export interface FlowState {
   deleteNode: (nodeId: string) => void
   setAttributes: (nodeId: string, attributes: Record<string, string>) => void
   getAttributes: (nodeId: string) => Record<string, string> | null
+  setStickyText: (nodeId: string, text: string) => void
   setNodeName: (nodeId: string, name: string) => void
   addHandle: (nodeId: string, handle: { type: string; index: number }) => void
 }
@@ -39,6 +41,10 @@ function isFrankNode(node: FlowNode): node is FrankNode {
 
 function isExitNode(node: FlowNode): node is ExitNode {
   return node.type === 'exitNode'
+}
+
+function isStickyNote(node: FlowNode): node is StickyNote {
+  return node.type === 'stickyNote'
 }
 
 const useFlowStore = create<FlowState>((set, get) => ({
@@ -104,6 +110,22 @@ const useFlowStore = create<FlowState>((set, get) => ({
       return node.data.attributes || null
     }
     return null
+  },
+  setStickyText: (nodeId, text) => {
+    set({
+      nodes: get().nodes.map((node) => {
+        if (node.id === nodeId && isStickyNote(node)) {
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              content: text,
+            },
+          }
+        }
+        return node
+      }),
+    })
   },
   setNodeName: (nodeId, name) => {
     set({
