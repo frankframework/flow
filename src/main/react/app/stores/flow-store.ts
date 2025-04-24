@@ -150,6 +150,22 @@ const useFlowStore = create<FlowState>((set, get) => ({
     }
     return null
   },
+  setStickyText: (nodeId, text) => {
+    set({
+      nodes: get().nodes.map((node) => {
+        if (node.id === nodeId && isStickyNote(node)) {
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              content: text,
+            },
+          }
+        }
+        return node
+      }),
+    })
+  },
   setNodeName: (nodeId, name) => {
     set({
       nodes: get().nodes.map((node) => {
