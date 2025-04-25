@@ -28,6 +28,7 @@ export interface FlowState {
   getNextNodeId: () => string
   addNode: (newNode: FlowNode) => void
   deleteNode: (nodeId: string) => void
+  deleteEdge: (edgeId: string) => void
   setAttributes: (nodeId: string, attributes: Record<string, string>) => void
   getAttributes: (nodeId: string) => Record<string, string> | null
   setStickyText: (nodeId: string, text: string) => void
@@ -62,8 +63,12 @@ const useFlowStore = create<FlowState>((set, get) => ({
     })
   },
   onConnect: (connection) => {
+    const newEdge = {
+      ...connection,
+      type: 'frankEdge',
+    }
     set({
-      edges: addEdge(connection, get().edges),
+      edges: addEdge(newEdge, get().edges),
     })
   },
   setNodes: (nodes) => {
@@ -86,6 +91,11 @@ const useFlowStore = create<FlowState>((set, get) => ({
     set({
       nodes: get().nodes.filter((node) => node.id !== nodeId),
       edges: get().edges.filter((edge) => edge.source !== nodeId && edge.target !== nodeId),
+    })
+  },
+  deleteEdge: (edgeId: string) => {
+    set({
+      edges: get().edges.filter((edge) => edge.id !== edgeId),
     })
   },
   getNextNodeId: () => {
