@@ -32,6 +32,7 @@ const selector = (state: FlowState) => ({
 })
 
 function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b: boolean) => void }>) {
+
   const nodeTypes = { frankNode: FrankNodeComponent, exitNode: ExitNodeComponent, startNode: StartNodeComponent }
   const edgeTypes = { frankEdge: FrankEdgeComponent }
   const reactFlow = useReactFlow()
@@ -47,6 +48,7 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
     event.preventDefault()
     showNodeContextMenu(true)
 
+
     const data = event.dataTransfer.getData('application/reactflow')
     if (!data) return
 
@@ -55,6 +57,7 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
 
     const position = screenToFlowPosition({ x: event.clientX, y: event.clientY })
     const newId = useFlowStore.getState().getNextNodeId()
+
     const elementType = getElementTypeFromName(parsedData.name)
     const nodeType = elementType == 'exit' ? 'exitNode' : 'frankNode'
     const newNode: FrankNode = {
@@ -73,6 +76,7 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
       type: nodeType,
     }
     useFlowStore.getState().addNode(newNode)
+
   }
 
   return (
@@ -101,5 +105,6 @@ export default function Flow({ showNodeContextMenu }: Readonly<{ showNodeContext
         <FlowCanvas showNodeContextMenu={showNodeContextMenu} />
       </ReactFlowProvider>
     </NodeContextMenuContext.Provider>
+
   )
 }

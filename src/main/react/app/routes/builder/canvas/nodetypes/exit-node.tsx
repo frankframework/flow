@@ -7,6 +7,7 @@ import useFrankDocStore from '~/stores/frank-doc-store'
 import useNodeContextStore from '~/stores/node-context-store'
 import { useNodeContextMenu } from '~/routes/builder/canvas/flow'
 
+
 export type ExitNode = Node<{
   subtype: string
   type: string
@@ -21,11 +22,12 @@ export default function ExitNode(properties: NodeProps<ExitNode>) {
   const { setNodeId, setAttributes } = useNodeContextStore()
 
   const [isContextMenuOpen, setIsContextMenuOpen] = useState(false)
+
   const [dimensions, setDimensions] = useState({
     width: minNodeWidth, // Initial width
     height: minNodeHeight, // Initial height
   })
-
+  
   const toggleContextMenu = () => {
     setIsContextMenuOpen(!isContextMenuOpen)
   }
@@ -42,6 +44,7 @@ export default function ExitNode(properties: NodeProps<ExitNode>) {
     showNodeContextMenu(true)
     setIsContextMenuOpen(false)
   }
+
 
   return (
     <>

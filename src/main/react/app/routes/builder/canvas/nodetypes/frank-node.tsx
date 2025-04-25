@@ -15,6 +15,7 @@ import { useNodeContextMenu } from '~/routes/builder/canvas/flow'
 import useNodeContextStore from '~/stores/node-context-store'
 import useFrankDocStore from '~/stores/frank-doc-store'
 
+
 export interface ChildNode {
   subtype: string
   type: string
@@ -81,6 +82,7 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
   )
 
   const toggleHandleMenu = (event: React.MouseEvent) => {
+
     const { clientX, clientY } = event
     const { screenToFlowPosition } = reactFlow
     const flowPosition = screenToFlowPosition({ x: clientX, y: clientY })
@@ -106,6 +108,7 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
     setAttributes(attributes)
     showNodeContextMenu(true)
     setIsContextMenuOpen(false)
+
   }
 
   return (

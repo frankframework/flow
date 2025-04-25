@@ -4,6 +4,7 @@ import useFrankDocStore from '~/stores/frank-doc-store'
 import useNodeContextStore from '~/stores/node-context-store'
 import useFlowStore from "~/stores/flow-store"
 
+
 export default function BuilderContext({ onClose }: Readonly<{ onClose: () => void }>) {
   const { frankDocRaw, isLoading, error } = useFrankDocStore()
   const { setAttributes, setNodeId } = useNodeContextStore((state) => state)
@@ -14,6 +15,7 @@ export default function BuilderContext({ onClose }: Readonly<{ onClose: () => vo
     }) => {
       setAttributes(value.attributes)
       setNodeId(+useFlowStore.getState().nodeIdCounter)
+
       event.dataTransfer.setData('application/reactflow', JSON.stringify(value))
       event.dataTransfer.effectAllowed = 'move'
     }

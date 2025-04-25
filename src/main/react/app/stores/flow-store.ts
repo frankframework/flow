@@ -15,6 +15,7 @@ import type { FlowNode } from '~/routes/builder/canvas/flow'
 import type { FrankNode } from '~/routes/builder/canvas/nodetypes/frank-node'
 import type { ExitNode } from '~/routes/builder/canvas/nodetypes/exit-node'
 
+
 export interface FlowState {
   nodes: FlowNode[]
   edges: Edge[]
@@ -29,6 +30,7 @@ export interface FlowState {
   deleteNode: (nodeId: string) => void
   setAttributes: (nodeId: string, attributes: Record<string, string>) => void
   getAttributes: (nodeId: string) => Record<string, string> | null
+
   setNodeName: (nodeId: string, name: string) => void
   addHandle: (nodeId: string, handle: { type: string; index: number }) => void
 }
@@ -82,6 +84,7 @@ const useFlowStore = create<FlowState>((set, get) => ({
       edges: get().edges.filter((edge) => edge.source !== nodeId && edge.target !== nodeId),
     })
   },
+
   setAttributes: (nodeId, attributes) => {
     set({
       nodes: get().nodes.map((node) => {
@@ -105,6 +108,7 @@ const useFlowStore = create<FlowState>((set, get) => ({
     }
     return null
   },
+
   setNodeName: (nodeId, name) => {
     set({
       nodes: get().nodes.map((node) => {
