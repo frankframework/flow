@@ -48,7 +48,6 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
   const [isHandleMenuOpen, setIsHandleMenuOpen] = useState(false)
   const [handleMenuPosition, setHandleMenuPosition] = useState({ x: 0, y: 0 })
   const [isContextMenuOpen, setIsContextMenuOpen] = useState(false)
-  const [contentHeight, setContentHeight] = useState(minNodeHeight)
   const [dimensions, setDimensions] = useState({
     width: minNodeWidth, // Initial width
     height: minNodeHeight, // Initial height
@@ -61,7 +60,6 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
   useLayoutEffect(() => {
     if (containerReference.current) {
       const measuredHeight = containerReference.current.offsetHeight
-      setContentHeight(Math.max(minNodeHeight, measuredHeight))
       setDimensions((previous) => ({ ...previous, height: measuredHeight }))
     }
   }, [properties.data.children, properties.data.sourceHandles.length]) // Re-measure when children change
@@ -112,7 +110,7 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
     <>
       <NodeResizeControl
         minWidth={minNodeWidth}
-        minHeight={contentHeight}
+        minHeight={minNodeWidth}
         onResize={(event, data) => {
           setDimensions({ width: data.width, height: data.height })
         }}
@@ -126,7 +124,7 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
         <ResizeIcon />
       </NodeResizeControl>
       <div
-        className="flex h-full w-full flex-col items-center rounded-md border-1 border-gray-200 bg-white"
+        className="flex h-full w-full flex-col items-center overflow-hidden rounded-md border-1 border-gray-200 bg-white"
         style={{
           minHeight: `${minNodeHeight}px`,
           minWidth: `${minNodeWidth}px`,
