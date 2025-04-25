@@ -65,7 +65,6 @@ export default function ExitNode(properties: NodeProps<ExitNode>) {
         style={{
           minHeight: `${minNodeHeight}px`,
           minWidth: `${minNodeWidth}px`,
-          width: `${dimensions.width}px`,
         }}
       >
         <div className="nodrag absolute right-0 px-2 hover:cursor-pointer hover:opacity-50" onClick={toggleContextMenu}>
