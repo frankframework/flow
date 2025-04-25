@@ -10,6 +10,7 @@ import {
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import useFlowStore from '~/stores/flow-store'
 import { CustomHandle } from '~/components/flow/handle'
+import { FlowConfig } from '~/routes/builder/canvas/flow.config'
 
 export interface ChildNode {
   subtype: string
@@ -27,33 +28,11 @@ export type FrankNode = Node<{
   children: ChildNode[]
 }>
 
-export function translateTypeToColor(type: string): string {
-  switch (type.toLowerCase()) {
-    case 'pipe': {
-      return '#68D250'
-    }
-    case 'listener': {
-      return '#D250BF'
-    }
-    case 'receiver': {
-      return '#D250BF'
-    }
-    case 'sender': {
-      return '#30CCAF'
-    }
-    case 'exit': {
-      return '#E84E4E'
-    }
-    default: {
-      return '#FDC300'
-    }
-  }
-}
-
 export default function FrankNode(properties: NodeProps<FrankNode>) {
-  const minNodeWidth = 300
-  const minNodeHeight = 200
-  const bgColor = translateTypeToColor(properties.data.type)
+  const minNodeWidth = FlowConfig.NODE_DEFAULT_WIDTH
+  const minNodeHeight = FlowConfig.NODE_DEFAULT_HEIGHT
+  const type = properties.data.type.toLowerCase()
+  const colorVariable = `--type-${type}`
   const handleSpacing = 20
   const containerReference = useRef<HTMLDivElement>(null)
 
@@ -94,7 +73,7 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
     [properties.id, properties.data.sourceHandles.length],
   )
 
-  const openMenu = (event: React.MouseEvent) => {
+  const toggleMenu = (event: React.MouseEvent) => {
     const { clientX, clientY } = event
     const { screenToFlowPosition } = reactFlow
     const flowPosition = screenToFlowPosition({ x: clientX, y: clientY })
@@ -102,7 +81,7 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
     const adjustedY = flowPosition.y - properties.positionAbsoluteY
 
     setMenuPosition({ x: adjustedX, y: adjustedY })
-    setIsMenuOpen(true)
+    setIsMenuOpen(!isMenuOpen)
   }
 
   return (
@@ -136,7 +115,7 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
           style={{
             background: `radial-gradient(
               ellipse at top left,
-              ${bgColor} 0%,
+              var(${colorVariable}) 0%,
               white 70%
             )`,
           }}
@@ -167,9 +146,9 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
                     style={{
                       background: `radial-gradient(
                       ellipse at top left,
-                      ${translateTypeToColor(child.type)} 0%,
+                      var(--type-${child.type?.toLowerCase?.() || 'default'}) 0%,
                       white 70%
-                    )`,
+                      )`,
                     }}
                   >
                     <h1 className="font-bold">{child.subtype}</h1>
@@ -216,7 +195,7 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
       ))}
       <div
         onClick={(event) => {
-          openMenu(event)
+          toggleMenu(event)
         }}
         className="absolute right-[-23px] h-[15px] w-[15px] cursor-pointer justify-center rounded-full border bg-gray-400 text-center text-[8px] font-bold text-white"
         style={{

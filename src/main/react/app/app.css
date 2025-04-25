@@ -22,4 +22,14 @@ body {
   /* Allotment Styling */
   --focus-border: var(--color-brand);
   --separator-border: var(--color-gray-200);
+  /* Node Styling */
+  --type-pipe: #68D250;
+  --type-listener: #D250BF;
+  --type-receiver: #D250BF;
+  --type-sender: #30CCAF;
+  --type-validator: #3079CC;
+  --type-wrapper: #4A30CC;
+  --type-job: #E0DE54;
+  --type-exit: #E84E4E;
+  --type-default: #FDC300;
 }

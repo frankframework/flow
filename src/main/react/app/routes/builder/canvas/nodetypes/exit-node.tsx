@@ -1,15 +1,31 @@
-import { Handle, type NodeProps, NodeResizeControl, Position } from '@xyflow/react'
-import { type FrankNode, ResizeIcon, translateTypeToColor } from '~/routes/builder/canvas/nodetypes/frank-node'
+import { Handle, type Node, type NodeProps, NodeResizeControl, Position } from '@xyflow/react'
+import { ResizeIcon } from '~/routes/builder/canvas/nodetypes/frank-node'
+import { FlowConfig } from '~/routes/builder/canvas/flow.config'
+import { useState } from 'react'
 
-export default function ExitNode(properties: NodeProps<FrankNode>) {
-  const minNodeWidth = 150
-  const minNodeHeight = 100
+export type ExitNode = Node<{
+  subtype: string
+  type: string
+  name: string
+}>
+
+export default function ExitNode(properties: NodeProps<ExitNode>) {
+  const minNodeWidth = FlowConfig.EXIT_DEFAULT_WIDTH
+  const minNodeHeight = FlowConfig.EXIT_DEFAULT_HEIGHT
+
+  const [dimensions, setDimensions] = useState({
+    width: minNodeWidth, // Initial width
+    height: minNodeHeight, // Initial height
+  })
 
   return (
     <>
       <NodeResizeControl
         minWidth={minNodeWidth}
         minHeight={minNodeHeight}
+        onResize={(event, data) => {
+          setDimensions({ width: data.width, height: data.height })
+        }}
         style={{
           background: 'transparent',
           border: 'none',
@@ -24,6 +40,7 @@ export default function ExitNode(properties: NodeProps<FrankNode>) {
         style={{
           minHeight: `${minNodeHeight}px`,
           minWidth: `${minNodeWidth}px`,
+          width: `${dimensions.width}px`,
         }}
       >
         <div
@@ -31,7 +48,7 @@ export default function ExitNode(properties: NodeProps<FrankNode>) {
           style={{
             background: `radial-gradient(
               ellipse at top left,
-              ${translateTypeToColor(properties.data.type)} 0%,
+              var(--type-exit) 0%,
               white 70%
             )`,
           }}
