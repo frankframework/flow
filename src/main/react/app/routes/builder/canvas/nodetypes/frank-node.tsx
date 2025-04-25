@@ -126,11 +126,10 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
         <ResizeIcon />
       </NodeResizeControl>
       <div
-        className="flex h-full flex-col items-center rounded-md border-1 border-gray-200 bg-white"
+        className="flex h-full w-full flex-col items-center rounded-md border-1 border-gray-200 bg-white"
         style={{
           minHeight: `${minNodeHeight}px`,
           minWidth: `${minNodeWidth}px`,
-          width: `${dimensions.width}px`,
         }}
         ref={containerReference}
       >
