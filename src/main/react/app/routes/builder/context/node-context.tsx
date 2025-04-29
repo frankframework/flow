@@ -11,7 +11,8 @@ export default function NodeContext({
 }>) {
   const attributes = useNodeContextStore((state) => state.attributes)
   const inputReferences = useRef<Record<number, HTMLInputElement | null>>({})
-  const { setAttributes, setNodeName } = useFlowStore((state) => state)
+  const { setAttributes, getAttributes, setNodeName, deleteNode } = useFlowStore((state) => state)
+
   const [canSave, setCanSave] = useState(false)
 
   const validateForm = () => {
@@ -25,6 +26,22 @@ export default function NodeContext({
     })
     setCanSave(allValid)
   }
+
+  // Fills out input fields with already existing attributes when editing a node
+  useEffect(() => {
+    const currentAttributes = getAttributes(nodeId.toString())
+    if (currentAttributes && attributes) {
+      for (const [index, attribute] of attributes.entries()) {
+        const value = currentAttributes[attribute.name]
+        const currentInputReferance = inputReferences.current[index]
+        if (value && currentInputReferance) {
+          currentInputReferance.value = value
+        }
+      }
+    }
+    validateForm()
+  }, [attributes, getAttributes, nodeId])
+
 
   useEffect(() => {
     if (!attributes) {
@@ -66,6 +83,12 @@ export default function NodeContext({
     setShowNodeContext(false)
   }
 
+  const handleDiscard = () => {
+    deleteNode(nodeId.toString())
+    setShowNodeContext(false)
+  }
+
+
   return (
     <div className="flex h-full flex-col">
       <div className="flex h-12 items-center gap-1 px-4">
@@ -99,15 +122,24 @@ export default function NodeContext({
                 />
               </div>
             ))}
-          <button
-            onClick={handleSave}
-            disabled={!canSave}
-            className={`mt-4 rounded border border-gray-300 px-3 py-2 shadow-sm sm:text-sm ${
-              canSave ? 'hover:cursor-pointer hover:bg-gray-100' : 'cursor-not-allowed bg-gray-200 text-gray-400'
-            }`}
-          >
-            Save & Close
-          </button>
+          <div className="flex w-full justify-between pr-2">
+            <button
+              onClick={handleSave}
+              disabled={!canSave}
+              className={`mt-4 rounded border border-gray-300 px-3 py-2 shadow-sm sm:text-sm ${
+                canSave ? 'hover:cursor-pointer hover:bg-gray-100' : 'cursor-not-allowed bg-gray-200 text-gray-400'
+              }`}
+            >
+              Save & Close
+            </button>
+            <button
+              onClick={handleDiscard}
+              className="mt-4 ml-2 rounded border border-gray-300 px-3 py-2 shadow-sm hover:cursor-pointer hover:bg-gray-100 sm:text-sm"
+            >
+              Delete
+            </button>
+          </div>
+
         </div>
       </div>
     </div>

@@ -6,8 +6,8 @@ import SidebarIcon from '/icons/solar/Sidebar Minimalistic.svg?react'
 import BuilderContext from '~/routes/builder/context/builder-context'
 import Flow from '~/routes/builder/canvas/flow'
 import FolderIcon from '/icons/solar/Folder.svg?react'
-import NodeContext from "~/routes/builder/context/node-context";
-import useNodeContextStore from "~/stores/node-context-store";
+import NodeContext from '~/routes/builder/context/node-context'
+import useNodeContextStore from '~/stores/node-context-store'
 
 const tabs = {
   tab1: { value: 'tab1', icon: FolderIcon },
@@ -125,7 +125,7 @@ export default function Builder() {
             <div className="h-12 border-b border-b-gray-200">
               Path: {Object.entries(tabs).find(([key]) => key === selectedTab)?.[1]?.value}
             </div>
-            <Flow onDragEnd={setShowNodeContext} />
+            <Flow showNodeContextMenu={setShowNodeContext} />
           </Allotment.Pane>
           <Allotment.Pane
             key="right"

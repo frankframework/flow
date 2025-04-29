@@ -11,6 +11,10 @@ import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import useFlowStore from '~/stores/flow-store'
 import { CustomHandle } from '~/components/flow/handle'
 import { FlowConfig } from '~/routes/builder/canvas/flow.config'
+import { useNodeContextMenu } from '~/routes/builder/canvas/flow'
+import useNodeContextStore from '~/stores/node-context-store'
+import useFrankDocStore from '~/stores/frank-doc-store'
+
 
 export interface ChildNode {
   subtype: string
@@ -35,12 +39,16 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
   const colorVariable = `--type-${type}`
   const handleSpacing = 20
   const containerReference = useRef<HTMLDivElement>(null)
+  const showNodeContextMenu = useNodeContextMenu()
+  const { frankDocRaw } = useFrankDocStore()
+  const { setNodeId, setAttributes } = useNodeContextStore()
 
   const updateNodeInternals = useUpdateNodeInternals()
 
   const reactFlow = useReactFlow()
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 })
+  const [isHandleMenuOpen, setIsHandleMenuOpen] = useState(false)
+  const [handleMenuPosition, setHandleMenuPosition] = useState({ x: 0, y: 0 })
+  const [isContextMenuOpen, setIsContextMenuOpen] = useState(false)
   const [contentHeight, setContentHeight] = useState(minNodeHeight)
   const [dimensions, setDimensions] = useState({
     width: minNodeWidth, // Initial width
@@ -68,20 +76,39 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
         index: properties.data.sourceHandles.length + 1,
       })
       updateNodeInternals(properties.id) // Update the edge
-      setIsMenuOpen(false) // Close the menu after selection
+      setIsHandleMenuOpen(false) // Close the menu after selection
     },
     [properties.id, properties.data.sourceHandles.length],
   )
 
-  const toggleMenu = (event: React.MouseEvent) => {
+  const toggleHandleMenu = (event: React.MouseEvent) => {
+
     const { clientX, clientY } = event
     const { screenToFlowPosition } = reactFlow
     const flowPosition = screenToFlowPosition({ x: clientX, y: clientY })
     const adjustedX = flowPosition.x - properties.positionAbsoluteX
     const adjustedY = flowPosition.y - properties.positionAbsoluteY
 
-    setMenuPosition({ x: adjustedX, y: adjustedY })
-    setIsMenuOpen(!isMenuOpen)
+    setHandleMenuPosition({ x: adjustedX, y: adjustedY })
+    setIsHandleMenuOpen(!isHandleMenuOpen)
+  }
+
+  const toggleContextMenu = () => {
+    setIsContextMenuOpen(!isContextMenuOpen)
+  }
+
+  const deleteNode = () => {
+    useFlowStore.getState().deleteNode(properties.id)
+  }
+
+  const editNode = () => {
+    const elements = frankDocRaw.elements as Record<string, { name: string; [key: string]: any }>
+    const attributes = Object.values(elements).find((element) => element.name === properties.data.subtype)?.attributes
+    setNodeId(+properties.id)
+    setAttributes(attributes)
+    showNodeContextMenu(true)
+    setIsContextMenuOpen(false)
+
   }
 
   return (
@@ -110,6 +137,46 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
         }}
         ref={containerReference}
       >
+        <div className="nodrag absolute right-0 px-2 hover:cursor-pointer hover:opacity-50" onClick={toggleContextMenu}>
+          <MeatballMenu />
+        </div>
+        {isContextMenuOpen && (
+          <div
+            className="nodrag absolute rounded-md border bg-white shadow-md"
+            style={{
+              left: 'calc(100% + 10px)',
+              top: '0',
+              zIndex: 100,
+            }}
+          >
+            <button
+              className="absolute -top-1 -right-1 rounded-full border border-gray-300 bg-white text-gray-400 shadow-sm hover:border-red-400 hover:text-red-400"
+              onClick={() => setIsContextMenuOpen(false)}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-3 w-3"
+                width="10"
+                height="10"
+                viewBox="0 0 10 10"
+                strokeWidth="1"
+                stroke="currentColor"
+                strokeLinecap="round"
+              >
+                <line x1="3" y1="3" x2="7" y2="7" />
+                <line x1="3" y1="7" x2="7" y2="3" />
+              </svg>
+            </button>
+            <ul>
+              <li className="cursor-pointer rounded-t-md p-2 hover:bg-gray-200" onClick={editNode}>
+                Edit
+              </li>
+              <li className="cursor-pointer rounded-b-md p-2 hover:bg-gray-200" onClick={deleteNode}>
+                Delete
+              </li>
+            </ul>
+          </div>
+        )}
         <div
           className="box-border w-full rounded-t-md p-1"
           style={{
@@ -195,24 +262,42 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
       ))}
       <div
         onClick={(event) => {
-          toggleMenu(event)
+          toggleHandleMenu(event)
         }}
-        className="absolute right-[-23px] h-[15px] w-[15px] cursor-pointer justify-center rounded-full border bg-gray-400 text-center text-[8px] font-bold text-white"
+        className="nodrag absolute right-[-23px] h-[15px] w-[15px] cursor-pointer justify-center rounded-full border bg-gray-400 text-center text-[8px] font-bold text-white"
         style={{
           top: `${firstHandlePosition + properties.data.sourceHandles.length * handleSpacing + handleSpacing}px`,
         }}
       >
         +
       </div>
-      {isMenuOpen && (
+      {isHandleMenuOpen && (
         <div
-          className="absolute rounded-md border bg-white shadow-md"
+          className="nodrag absolute rounded-md border bg-white shadow-md"
           style={{
-            left: `${menuPosition.x + 10}px`, // Positioning to the right of the cursor
-            top: `${menuPosition.y}px`,
+            left: `${handleMenuPosition.x + 10}px`, // Positioning to the right of the cursor
+            top: `${handleMenuPosition.y}px`,
           }}
         >
           <ul>
+            <button
+              className="absolute -top-1 -right-1 rounded-full border border-gray-300 bg-white text-gray-400 shadow-sm hover:border-red-400 hover:text-red-400"
+              onClick={() => setIsHandleMenuOpen(false)}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-3 w-3"
+                width="10"
+                height="10"
+                viewBox="0 0 10 10"
+                strokeWidth="1"
+                stroke="currentColor"
+                strokeLinecap="round"
+              >
+                <line x1="3" y1="3" x2="7" y2="7" />
+                <line x1="3" y1="7" x2="7" y2="3" />
+              </svg>
+            </button>
             <li
               className="cursor-pointer rounded-t-md p-2 hover:bg-gray-200"
               onClick={() => handleMenuClick('success')}
@@ -250,6 +335,16 @@ export function ResizeIcon() {
       <line x1="19" y1="20" x2="20" y2="19" />
       <line x1="14" y1="20" x2="20" y2="14" />
       <line x1="9" y1="20" x2="20" y2="9" />
+    </svg>
+  )
+}
+
+export function MeatballMenu() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
+      <circle cx="6" cy="12" r="1.5" />
+      <circle cx="12" cy="12" r="1.5" />
+      <circle cx="18" cy="12" r="1.5" />
     </svg>
   )
 }

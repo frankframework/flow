@@ -13,17 +13,24 @@ import { initialNodes } from '~/routes/builder/canvas/nodes'
 import { initialEdges } from '~/routes/builder/canvas/edges'
 import type { FlowNode } from '~/routes/builder/canvas/flow'
 import type { FrankNode } from '~/routes/builder/canvas/nodetypes/frank-node'
-import type { ExitNode } from '~/routes/builder/canvas/nodetypes/exit-node';
+import type { ExitNode } from '~/routes/builder/canvas/nodetypes/exit-node'
+
 
 export interface FlowState {
   nodes: FlowNode[]
   edges: Edge[]
+  nodeIdCounter: number
   onNodesChange: OnNodesChange<FlowNode>
   onEdgesChange: OnEdgesChange
   onConnect: OnConnect
   setNodes: (nodes: FlowNode[]) => void
   setEdges: (edges: Edge[]) => void
+  getNextNodeId: () => string
+  addNode: (newNode: FlowNode) => void
+  deleteNode: (nodeId: string) => void
   setAttributes: (nodeId: string, attributes: Record<string, string>) => void
+  getAttributes: (nodeId: string) => Record<string, string> | null
+
   setNodeName: (nodeId: string, name: string) => void
   addHandle: (nodeId: string, handle: { type: string; index: number }) => void
 }
@@ -39,6 +46,7 @@ function isExitNode(node: FlowNode): node is ExitNode {
 const useFlowStore = create<FlowState>((set, get) => ({
   nodes: initialNodes,
   edges: initialEdges,
+  nodeIdCounter: initialNodes.length,
   onNodesChange: (changes) => {
     set({
       nodes: applyNodeChanges(changes, get().nodes),
@@ -60,6 +68,23 @@ const useFlowStore = create<FlowState>((set, get) => ({
   setEdges: (edges) => {
     set({ edges })
   },
+  getNextNodeId: () => {
+    const current = get().nodeIdCounter
+    set({ nodeIdCounter: current + 1 })
+    return current.toString()
+  },
+  addNode: (newNode: FlowNode) => {
+    set({
+      nodes: [...get().nodes, newNode],
+    })
+  },
+  deleteNode: (nodeId: string) => {
+    set({
+      nodes: get().nodes.filter((node) => node.id !== nodeId),
+      edges: get().edges.filter((edge) => edge.source !== nodeId && edge.target !== nodeId),
+    })
+  },
+
   setAttributes: (nodeId, attributes) => {
     set({
       nodes: get().nodes.map((node) => {
@@ -76,6 +101,14 @@ const useFlowStore = create<FlowState>((set, get) => ({
       }),
     })
   },
+  getAttributes: (nodeId: string) => {
+    const node = get().nodes.find((node) => node.id === nodeId)
+    if (node && isFrankNode(node)) {
+      return node.data.attributes || null
+    }
+    return null
+  },
+
   setNodeName: (nodeId, name) => {
     set({
       nodes: get().nodes.map((node) => {
