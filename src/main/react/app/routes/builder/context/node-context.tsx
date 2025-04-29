@@ -32,8 +32,9 @@ export default function NodeContext({
     if (currentAttributes && attributes) {
       for (const [index, attribute] of attributes.entries()) {
         const value = currentAttributes[attribute.name]
-        if (value && inputReferences.current[index]) {
-          inputReferences.current[index]!.value = value
+        const currentInputReferance = inputReferences.current[index]
+        if (value && currentInputReferance) {
+          currentInputReferance.value = value
         }
       }
     }
