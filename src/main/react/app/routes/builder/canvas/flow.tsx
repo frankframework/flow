@@ -30,6 +30,7 @@ const selector = (state: FlowState) => ({
   onNodesChange: state.onNodesChange,
   onEdgesChange: state.onEdgesChange,
   onConnect: state.onConnect,
+  onReconnect: state.onReconnect,
 })
 
 function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b: boolean) => void }>) {
@@ -42,7 +43,7 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
   const edgeTypes = { frankEdge: FrankEdgeComponent }
   const reactFlow = useReactFlow()
 
-  const { nodes, edges, onNodesChange, onEdgesChange, onConnect } = useFlowStore(useShallow(selector))
+  const { nodes, edges, onNodesChange, onEdgesChange, onConnect, onReconnect } = useFlowStore(useShallow(selector))
 
   const onDragOver = (event: React.DragEvent) => {
     event.preventDefault()
@@ -110,6 +111,7 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
+        onReconnect={onReconnect}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
       >

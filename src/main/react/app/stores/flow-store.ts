@@ -7,6 +7,7 @@ import {
   applyNodeChanges,
   applyEdgeChanges,
   addEdge,
+  type OnReconnect,
 } from '@xyflow/react'
 
 import { initialNodes } from '~/routes/builder/canvas/nodes'
@@ -23,6 +24,7 @@ export interface FlowState {
   onNodesChange: OnNodesChange<FlowNode>
   onEdgesChange: OnEdgesChange
   onConnect: OnConnect
+  onReconnect: OnReconnect
   setNodes: (nodes: FlowNode[]) => void
   setEdges: (edges: Edge[]) => void
   getNextNodeId: () => string
@@ -70,6 +72,17 @@ const useFlowStore = create<FlowState>((set, get) => ({
     }
     set({
       edges: addEdge(newEdge, get().edges),
+    })
+  },
+  onReconnect: (oldEdge, newConnection) => {
+    set({
+      edges: get()
+        .edges.filter((edge) => edge.id !== oldEdge.id)
+        .concat({
+          ...newConnection,
+          id: oldEdge.id,
+          type: 'frankEdge',
+        }),
     })
   },
   setNodes: (nodes) => {
