@@ -25,6 +25,24 @@ export default function ExitNode(properties: NodeProps<ExitNode>) {
     width: minNodeWidth, // Initial width
     height: minNodeHeight, // Initial height
   })
+  
+  const toggleContextMenu = () => {
+    setIsContextMenuOpen(!isContextMenuOpen)
+  }
+
+  const deleteNode = () => {
+    useFlowStore.getState().deleteNode(properties.id)
+  }
+
+  const editNode = () => {
+    const elements = frankDocRaw.elements as Record<string, { name: string; [key: string]: any }>
+    const attributes = Object.values(elements).find((element) => element.name === properties.data.subtype)?.attributes
+    setNodeId(+properties.id)
+    setAttributes(attributes)
+    showNodeContextMenu(true)
+    setIsContextMenuOpen(false)
+  }
+
 
   const toggleContextMenu = () => {
     setIsContextMenuOpen(!isContextMenuOpen)
