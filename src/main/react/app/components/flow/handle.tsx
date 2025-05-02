@@ -1,4 +1,4 @@
-import { Handle, Position, useReactFlow } from '@xyflow/react'
+import { Handle, Position, useNodeConnections, useReactFlow } from '@xyflow/react'
 import { useState } from 'react'
 
 interface HandleProperties {
@@ -31,6 +31,7 @@ function translateHandleTypeToColour(type: string): string {
 }
 
 export function CustomHandle(properties: Readonly<HandleProperties>) {
+  const connections = useNodeConnections({ handleType: 'source', handleId: properties.index.toString() })
   const [type, setType] = useState(properties.type)
   const reactFlow = useReactFlow()
 
@@ -55,22 +56,28 @@ export function CustomHandle(properties: Readonly<HandleProperties>) {
 
   return (
     <div>
-      <Handle
-        type={'source'}
-        position={Position.Right}
-        key={properties.index}
-        id={properties.index.toString()}
-        className="flex items-center justify-center text-white"
-        onClick={handleClick}
-        style={{
-          top: `${properties.firstHandlePosition + properties.index * properties.handleSpacing}px`,
-          right: '-15px',
-          width: '15px',
-          height: '15px',
-          backgroundColor: translateHandleTypeToColour(type),
-          border: '1px solid rgba(107, 114, 128, 0.5)',
-        }}
-      />
+      <div>
+        <Handle
+          type={'source'}
+          position={Position.Right}
+          key={properties.index}
+          id={properties.index.toString()}
+          className="flex cursor-pointer items-center justify-center text-white"
+          isConnectableStart={connections.length === 0}
+          isConnectableEnd={connections.length === 0}
+          onClick={handleClick}
+          style={{
+            top: `${properties.firstHandlePosition + properties.index * properties.handleSpacing}px`,
+            right: '-15px',
+            width: '15px',
+            height: '15px',
+            backgroundColor: translateHandleTypeToColour(type),
+            border: '1px solid rgba(107, 114, 128, 0.5)',
+            pointerEvents: 'all',
+          }}
+        />
+      </div>
+
       {isMenuOpen && (
         <div
           className="nodrag absolute rounded-md border bg-white shadow-md"
