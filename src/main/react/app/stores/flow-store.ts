@@ -34,6 +34,7 @@ export interface FlowState {
   setStickyText: (nodeId: string, text: string) => void
   setNodeName: (nodeId: string, name: string) => void
   addHandle: (nodeId: string, handle: { type: string; index: number }) => void
+  updateHandle: (nodeId: string, handleIndex: number, newHandle: { type: string; index: number }) => void
 }
 
 function isFrankNode(node: FlowNode): node is FrankNode {
@@ -98,22 +99,6 @@ const useFlowStore = create<FlowState>((set, get) => ({
       edges: get().edges.filter((edge) => edge.id !== edgeId),
     })
   },
-  getNextNodeId: () => {
-    const current = get().nodeIdCounter
-    set({ nodeIdCounter: current + 1 })
-    return current.toString()
-  },
-  addNode: (newNode: FlowNode) => {
-    set({
-      nodes: [...get().nodes, newNode],
-    })
-  },
-  deleteNode: (nodeId: string) => {
-    set({
-      nodes: get().nodes.filter((node) => node.id !== nodeId),
-      edges: get().edges.filter((edge) => edge.source !== nodeId && edge.target !== nodeId),
-    })
-  },
   setAttributes: (nodeId, attributes) => {
     set({
       nodes: get().nodes.map((node) => {
@@ -123,29 +108,6 @@ const useFlowStore = create<FlowState>((set, get) => ({
             data: {
               ...node.data,
               attributes: attributes,
-            },
-          }
-        }
-        return node
-      }),
-    })
-  },
-  getAttributes: (nodeId: string) => {
-    const node = get().nodes.find((node) => node.id === nodeId)
-    if (node && isFrankNode(node)) {
-      return node.data.attributes || null
-    }
-    return null
-  },
-  setStickyText: (nodeId, text) => {
-    set({
-      nodes: get().nodes.map((node) => {
-        if (node.id === nodeId && isStickyNote(node)) {
-          return {
-            ...node,
-            data: {
-              ...node.data,
-              content: text,
             },
           }
         }
@@ -201,6 +163,25 @@ const useFlowStore = create<FlowState>((set, get) => ({
             data: {
               ...node.data,
               sourceHandles: [...node.data.sourceHandles, handle],
+            },
+          }
+        }
+        return node
+      }),
+    })
+  },
+  updateHandle: (nodeId: string, handleIndex: number, newHandle: { type: string; index: number }) => {
+    set({
+      nodes: get().nodes.map((node) => {
+        if (node.id === nodeId && isFrankNode(node)) {
+          const updatedHandles = node.data.sourceHandles.map((handle) =>
+            handle.index === handleIndex ? newHandle : handle,
+          )
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              sourceHandles: updatedHandles,
             },
           }
         }

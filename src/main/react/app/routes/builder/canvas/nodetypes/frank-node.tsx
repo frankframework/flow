@@ -106,11 +106,19 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
     setIsContextMenuOpen(false)
   }
 
+  const changeHandleType = (handleIndex: number, newType: string) => {
+    useFlowStore.getState().updateHandle(properties.id, handleIndex, { type: newType, index: handleIndex })
+    // Timeout to prevent bug from edgelabel not properly updating
+    setTimeout(() => {
+      updateNodeInternals(properties.id)
+    }, 0)
+  }
+
   return (
     <>
       <NodeResizeControl
         minWidth={minNodeWidth}
-        minHeight={minNodeWidth}
+        minHeight={minNodeHeight}
         onResize={(event, data) => {
           setDimensions({ width: data.width, height: data.height })
         }}
@@ -252,6 +260,8 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
           index={handle.index}
           firstHandlePosition={firstHandlePosition}
           handleSpacing={handleSpacing}
+          onChangeType={(newType) => changeHandleType(handle.index, newType)}
+          absolutePosition={{ x: properties.positionAbsoluteX, y: properties.positionAbsoluteY }}
         />
       ))}
       <div
