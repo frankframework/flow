@@ -17,8 +17,9 @@ import { useShallow } from 'zustand/react/shallow'
 import { FlowConfig } from '~/routes/builder/canvas/flow.config'
 import { getElementTypeFromName } from '~/routes/builder/node-translator-module'
 import { createContext, useContext } from 'react'
+import StickyNoteComponent, { type StickyNote } from '~/routes/builder/canvas/nodetypes/sticky-note'
 
-export type FlowNode = FrankNode | StartNode | ExitNode | Node
+export type FlowNode = FrankNode | StartNode | ExitNode | StickyNote | Node
 
 const NodeContextMenuContext = createContext<(visible: boolean) => void>(() => {})
 export const useNodeContextMenu = () => useContext(NodeContextMenuContext)
@@ -32,8 +33,12 @@ const selector = (state: FlowState) => ({
 })
 
 function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b: boolean) => void }>) {
-
-  const nodeTypes = { frankNode: FrankNodeComponent, exitNode: ExitNodeComponent, startNode: StartNodeComponent }
+  const nodeTypes = {
+    frankNode: FrankNodeComponent,
+    exitNode: ExitNodeComponent,
+    startNode: StartNodeComponent,
+    stickyNote: StickyNoteComponent,
+  }
   const edgeTypes = { frankEdge: FrankEdgeComponent }
   const reactFlow = useReactFlow()
 
@@ -48,7 +53,6 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
     event.preventDefault()
     showNodeContextMenu(true)
 
-
     const data = event.dataTransfer.getData('application/reactflow')
     if (!data) return
 
@@ -57,7 +61,6 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
 
     const position = screenToFlowPosition({ x: event.clientX, y: event.clientY })
     const newId = useFlowStore.getState().getNextNodeId()
-
     const elementType = getElementTypeFromName(parsedData.name)
     const nodeType = elementType == 'exit' ? 'exitNode' : 'frankNode'
     const newNode: FrankNode = {
@@ -76,11 +79,30 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
       type: nodeType,
     }
     useFlowStore.getState().addNode(newNode)
+  }
 
+  const handleRightMouseButtonClick = (event) => {
+    event.preventDefault()
+    const { screenToFlowPosition } = reactFlow
+    const position = screenToFlowPosition({ x: event.clientX, y: event.clientY })
+    const newId = useFlowStore.getState().getNextNodeId()
+
+    const stickyNote: StickyNote = {
+      id: newId,
+      position: {
+        x: position.x - FlowConfig.STICKY_NOTE_DEFAULT_WIDTH / 2,
+        y: position.y - FlowConfig.STICKY_NOTE_DEFAULT_HEIGHT / 2,
+      },
+      data: {
+        content: 'New Sticky Note',
+      },
+      type: 'stickyNote',
+    }
+    useFlowStore.getState().addNode(stickyNote)
   }
 
   return (
-    <div style={{ height: '100%' }} onDrop={onDrop} onDragOver={onDragOver}>
+    <div style={{ height: '100%' }} onDrop={onDrop} onDragOver={onDragOver} onContextMenu={handleRightMouseButtonClick}>
       <ReactFlow
         fitView
         nodes={nodes}
@@ -105,6 +127,5 @@ export default function Flow({ showNodeContextMenu }: Readonly<{ showNodeContext
         <FlowCanvas showNodeContextMenu={showNodeContextMenu} />
       </ReactFlowProvider>
     </NodeContextMenuContext.Provider>
-
   )
 }

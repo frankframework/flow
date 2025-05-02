@@ -7,7 +7,6 @@ import useFrankDocStore from '~/stores/frank-doc-store'
 import useNodeContextStore from '~/stores/node-context-store'
 import { useNodeContextMenu } from '~/routes/builder/canvas/flow'
 
-
 export type ExitNode = Node<{
   subtype: string
   type: string
@@ -22,7 +21,6 @@ export default function ExitNode(properties: NodeProps<ExitNode>) {
   const { setNodeId, setAttributes } = useNodeContextStore()
 
   const [isContextMenuOpen, setIsContextMenuOpen] = useState(false)
-
   const [dimensions, setDimensions] = useState({
     width: minNodeWidth, // Initial width
     height: minNodeHeight, // Initial height
@@ -46,6 +44,23 @@ export default function ExitNode(properties: NodeProps<ExitNode>) {
   }
 
 
+  const toggleContextMenu = () => {
+    setIsContextMenuOpen(!isContextMenuOpen)
+  }
+
+  const deleteNode = () => {
+    useFlowStore.getState().deleteNode(properties.id)
+  }
+
+  const editNode = () => {
+    const elements = frankDocRaw.elements as Record<string, { name: string; [key: string]: any }>
+    const attributes = Object.values(elements).find((element) => element.name === properties.data.subtype)?.attributes
+    setNodeId(+properties.id)
+    setAttributes(attributes)
+    showNodeContextMenu(true)
+    setIsContextMenuOpen(false)
+  }
+
   return (
     <>
       <NodeResizeControl
@@ -64,11 +79,10 @@ export default function ExitNode(properties: NodeProps<ExitNode>) {
         <ResizeIcon />
       </NodeResizeControl>
       <div
-        className="flex h-full flex-col items-center rounded-md border-1 border-gray-200 bg-white"
+        className="flex h-full w-full flex-col items-center rounded-md border-1 border-gray-200 bg-white"
         style={{
           minHeight: `${minNodeHeight}px`,
           minWidth: `${minNodeWidth}px`,
-          width: `${dimensions.width}px`,
         }}
       >
         <div className="nodrag absolute right-0 px-2 hover:cursor-pointer hover:opacity-50" onClick={toggleContextMenu}>

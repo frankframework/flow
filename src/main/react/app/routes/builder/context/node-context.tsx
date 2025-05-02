@@ -12,7 +12,6 @@ export default function NodeContext({
   const attributes = useNodeContextStore((state) => state.attributes)
   const inputReferences = useRef<Record<number, HTMLInputElement | null>>({})
   const { setAttributes, getAttributes, setNodeName, deleteNode } = useFlowStore((state) => state)
-
   const [canSave, setCanSave] = useState(false)
 
   const validateForm = () => {
@@ -41,7 +40,6 @@ export default function NodeContext({
     }
     validateForm()
   }, [attributes, getAttributes, nodeId])
-
 
   useEffect(() => {
     if (!attributes) {
@@ -87,7 +85,6 @@ export default function NodeContext({
     deleteNode(nodeId.toString())
     setShowNodeContext(false)
   }
-
 
   return (
     <div className="flex h-full flex-col">
@@ -139,7 +136,6 @@ export default function NodeContext({
               Delete
             </button>
           </div>
-
         </div>
       </div>
     </div>

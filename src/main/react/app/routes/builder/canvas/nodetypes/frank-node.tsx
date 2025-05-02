@@ -15,7 +15,6 @@ import { useNodeContextMenu } from '~/routes/builder/canvas/flow'
 import useNodeContextStore from '~/stores/node-context-store'
 import useFrankDocStore from '~/stores/frank-doc-store'
 
-
 export interface ChildNode {
   subtype: string
   type: string
@@ -82,7 +81,6 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
   )
 
   const toggleHandleMenu = (event: React.MouseEvent) => {
-
     const { clientX, clientY } = event
     const { screenToFlowPosition } = reactFlow
     const flowPosition = screenToFlowPosition({ x: clientX, y: clientY })
@@ -108,7 +106,6 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
     setAttributes(attributes)
     showNodeContextMenu(true)
     setIsContextMenuOpen(false)
-
   }
 
   return (
@@ -129,11 +126,10 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
         <ResizeIcon />
       </NodeResizeControl>
       <div
-        className="flex h-full flex-col items-center rounded-md border-1 border-gray-200 bg-white"
+        className="flex h-full w-full flex-col items-center rounded-md border-1 border-gray-200 bg-white"
         style={{
           minHeight: `${minNodeHeight}px`,
           minWidth: `${minNodeWidth}px`,
-          width: `${dimensions.width}px`,
         }}
         ref={containerReference}
       >
