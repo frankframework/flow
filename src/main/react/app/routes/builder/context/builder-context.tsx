@@ -125,7 +125,7 @@ export default function BuilderContext({ onClose }: Readonly<{ onClose: () => vo
                       <div className="mt-2 space-y-2">
                         {items.map((value) => (
                           <li
-                            className="m-2 cursor-move list-none rounded border border-gray-400 p-4"
+                            className="m-2 cursor-move list-none overflow-hidden rounded border border-gray-400 p-4 overflow-ellipsis"
                             key={value.name}
                             draggable
                             onDragStart={onDragStart(value)}
