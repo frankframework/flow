@@ -59,7 +59,7 @@ export default function StickyNote(properties: NodeProps<StickyNote>) {
         <ResizeIcon />
       </NodeResizeControl>
       <div
-        className="h-full w-full overflow-hidden p-5 text-xs"
+        className={`h-full w-full overflow-hidden p-5 text-xs ${properties.selected ? 'border-2 border-black' : ''}`}
         style={{
           minHeight: `${minHeight}px`,
           minWidth: `${minWidth}px`,

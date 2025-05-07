@@ -2,7 +2,7 @@ import type { Node } from '@xyflow/react'
 export const initialNodes: Node[] = [
   {
     id: '0',
-    position: { x: -450, y: 0 },
+    position: { x: 0, y: 0 },
     data: {},
     type: 'startNode',
   },
@@ -26,7 +26,7 @@ export const initialNodes: Node[] = [
   },
   {
     id: '2',
-    position: { x: 450, y: 0 },
+    position: { x: 0, y: 0 },
     data: {
       subtype: 'Senderpipe',
       type: 'Pipe',
@@ -46,7 +46,7 @@ export const initialNodes: Node[] = [
   },
   {
     id: '3',
-    position: { x: 900, y: 0 },
+    position: { x: 0, y: 0 },
     data: {
       subtype: 'XsltPipe',
       type: 'Pipe',
@@ -64,7 +64,7 @@ export const initialNodes: Node[] = [
   },
   {
     id: '4',
-    position: { x: 1350, y: -200 },
+    position: { x: 0, y: 0 },
     data: {
       subtype: 'SenderPipe',
       type: 'Pipe',
@@ -86,7 +86,7 @@ export const initialNodes: Node[] = [
   },
   {
     id: '5',
-    position: { x: 1800, y: 0 },
+    position: { x: 0, y: 0 },
     data: {
       subtype: 'Exit',
       type: 'Exit',
@@ -96,7 +96,7 @@ export const initialNodes: Node[] = [
   },
   {
     id: '6',
-    position: { x: 1800, y: 200 },
+    position: { x: 0, y: 0 },
     data: {
       subtype: 'Exit',
       type: 'Exit',

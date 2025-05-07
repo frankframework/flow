@@ -25,24 +25,6 @@ export default function ExitNode(properties: NodeProps<ExitNode>) {
     width: minNodeWidth, // Initial width
     height: minNodeHeight, // Initial height
   })
-  
-  const toggleContextMenu = () => {
-    setIsContextMenuOpen(!isContextMenuOpen)
-  }
-
-  const deleteNode = () => {
-    useFlowStore.getState().deleteNode(properties.id)
-  }
-
-  const editNode = () => {
-    const elements = frankDocRaw.elements as Record<string, { name: string; [key: string]: any }>
-    const attributes = Object.values(elements).find((element) => element.name === properties.data.subtype)?.attributes
-    setNodeId(+properties.id)
-    setAttributes(attributes)
-    showNodeContextMenu(true)
-    setIsContextMenuOpen(false)
-  }
-
 
   const toggleContextMenu = () => {
     setIsContextMenuOpen(!isContextMenuOpen)
@@ -79,7 +61,9 @@ export default function ExitNode(properties: NodeProps<ExitNode>) {
         <ResizeIcon />
       </NodeResizeControl>
       <div
-        className="flex h-full w-full flex-col items-center rounded-md border-1 border-gray-200 bg-white"
+        className={`flex h-full w-full flex-col items-center rounded-md bg-white ${
+          properties.selected ? 'border-2 border-black' : 'border border-gray-200'
+        }`}
         style={{
           minHeight: `${minNodeHeight}px`,
           minWidth: `${minNodeWidth}px`,
