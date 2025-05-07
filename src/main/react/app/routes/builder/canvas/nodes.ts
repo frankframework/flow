@@ -56,7 +56,7 @@ export const initialNodes: Node[] = [
         { type: 'failure', index: 2 },
       ],
       attributes: {
-          xpathExpression: "concat('{&quot;temperature&quot;:', /current/temperature/@value, '}')",
+        xpathExpression: "concat('{&quot;temperature&quot;:', /current/temperature/@value, '}')",
       },
       children: [],
     },

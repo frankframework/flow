@@ -7,6 +7,7 @@ import {
   applyNodeChanges,
   applyEdgeChanges,
   addEdge,
+  type OnReconnect,
 } from '@xyflow/react'
 
 import { initialNodes } from '~/routes/builder/canvas/nodes'
@@ -23,16 +24,19 @@ export interface FlowState {
   onNodesChange: OnNodesChange<FlowNode>
   onEdgesChange: OnEdgesChange
   onConnect: OnConnect
+  onReconnect: OnReconnect
   setNodes: (nodes: FlowNode[]) => void
   setEdges: (edges: Edge[]) => void
   getNextNodeId: () => string
   addNode: (newNode: FlowNode) => void
   deleteNode: (nodeId: string) => void
+  deleteEdge: (edgeId: string) => void
   setAttributes: (nodeId: string, attributes: Record<string, string>) => void
   getAttributes: (nodeId: string) => Record<string, string> | null
   setStickyText: (nodeId: string, text: string) => void
   setNodeName: (nodeId: string, name: string) => void
   addHandle: (nodeId: string, handle: { type: string; index: number }) => void
+  updateHandle: (nodeId: string, handleIndex: number, newHandle: { type: string; index: number }) => void
 }
 
 function isFrankNode(node: FlowNode): node is FrankNode {
@@ -62,8 +66,23 @@ const useFlowStore = create<FlowState>((set, get) => ({
     })
   },
   onConnect: (connection) => {
+    const newEdge = {
+      ...connection,
+      type: 'frankEdge',
+    }
     set({
-      edges: addEdge(connection, get().edges),
+      edges: addEdge(newEdge, get().edges),
+    })
+  },
+  onReconnect: (oldEdge, newConnection) => {
+    set({
+      edges: get()
+        .edges.filter((edge) => edge.id !== oldEdge.id)
+        .concat({
+          ...newConnection,
+          id: oldEdge.id,
+          type: 'frankEdge',
+        }),
     })
   },
   setNodes: (nodes) => {
@@ -86,6 +105,11 @@ const useFlowStore = create<FlowState>((set, get) => ({
     set({
       nodes: get().nodes.filter((node) => node.id !== nodeId),
       edges: get().edges.filter((edge) => edge.source !== nodeId && edge.target !== nodeId),
+    })
+  },
+  deleteEdge: (edgeId: string) => {
+    set({
+      edges: get().edges.filter((edge) => edge.id !== edgeId),
     })
   },
   setAttributes: (nodeId, attributes) => {
@@ -152,6 +176,25 @@ const useFlowStore = create<FlowState>((set, get) => ({
             data: {
               ...node.data,
               sourceHandles: [...node.data.sourceHandles, handle],
+            },
+          }
+        }
+        return node
+      }),
+    })
+  },
+  updateHandle: (nodeId: string, handleIndex: number, newHandle: { type: string; index: number }) => {
+    set({
+      nodes: get().nodes.map((node) => {
+        if (node.id === nodeId && isFrankNode(node)) {
+          const updatedHandles = node.data.sourceHandles.map((handle) =>
+            handle.index === handleIndex ? newHandle : handle,
+          )
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              sourceHandles: updatedHandles,
             },
           }
         }
