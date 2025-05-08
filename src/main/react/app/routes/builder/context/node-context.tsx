@@ -101,8 +101,7 @@ export default function NodeContext({
                 <label htmlFor={`input-${index}`} className="group font-small relative block text-sm text-gray-700">
                   {attribute.name}
                   {attribute.mandatory && '*'}
-
-                  <span className="absolute top-1/2 left-1/2 z-10 mr-2 hidden w-max max-w-[250px] -translate-y-1/2 rounded bg-gray-950 px-2 py-1 text-sm whitespace-normal text-white shadow-md group-hover:block">
+                  <span className="absolute top-full left-0 z-10 mt-1 hidden w-full max-w-xs rounded bg-gray-950 px-2 py-1 text-sm break-words text-white shadow-md group-hover:block">
                     {attribute.description}
                   </span>
                 </label>
@@ -119,23 +118,25 @@ export default function NodeContext({
                 />
               </div>
             ))}
-          <div className="flex w-full justify-between pr-2">
-            <button
-              onClick={handleSave}
-              disabled={!canSave}
-              className={`mt-4 rounded border border-gray-300 px-3 py-2 shadow-sm sm:text-sm ${
-                canSave ? 'hover:cursor-pointer hover:bg-gray-100' : 'cursor-not-allowed bg-gray-200 text-gray-400'
-              }`}
-            >
-              Save & Close
-            </button>
-            <button
-              onClick={handleDiscard}
-              className="mt-4 ml-2 rounded border border-gray-300 px-3 py-2 shadow-sm hover:cursor-pointer hover:bg-gray-100 sm:text-sm"
-            >
-              Delete
-            </button>
-          </div>
+        </div>
+      </div>
+      <div className="sticky bottom-0 z-10 bg-white px-4 py-3 shadow-inner">
+        <div className="flex w-full max-w-sm justify-around">
+          <button
+            onClick={handleSave}
+            disabled={!canSave}
+            className={`rounded border border-gray-300 px-3 py-2 shadow-sm sm:text-sm ${
+              canSave ? 'hover:cursor-pointer hover:bg-gray-100' : 'cursor-not-allowed bg-gray-200 text-gray-400'
+            }`}
+          >
+            Save & Close
+          </button>
+          <button
+            onClick={handleDiscard}
+            className="ml-2 rounded border border-gray-300 px-3 py-2 shadow-sm hover:cursor-pointer hover:bg-gray-100 sm:text-sm"
+          >
+            Delete
+          </button>
         </div>
       </div>
     </div>
