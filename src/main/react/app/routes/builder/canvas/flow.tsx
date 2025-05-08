@@ -4,6 +4,7 @@ import {
   Controls,
   type Edge,
   type Node,
+  Panel,
   ReactFlow,
   ReactFlowProvider,
   useReactFlow,
@@ -139,6 +140,42 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
     useFlowStore.getState().addNode(stickyNote)
   }
 
+  const groupSelectedNodes = () => {
+    const selectedNodes = nodes.filter((node) => node.selected)
+    const minX = Math.min(...selectedNodes.map((node) => node.position.x))
+    const minY = Math.min(...selectedNodes.map((node) => node.position.y))
+    const maxX = Math.max(...selectedNodes.map((node) => node.position.x + (node.width ?? 0)))
+    const maxY = Math.max(...selectedNodes.map((node) => node.position.y + (node.height ?? 0)))
+
+    const width = maxX - minX
+    const height = maxY - minY
+
+    const newGroupId = useFlowStore.getState().getNextNodeId()
+
+    const groupNode: FlowNode = {
+      id: newGroupId,
+      position: { x: minX, y: minY },
+      type: 'group',
+      data: { label: 'Group' },
+      style: { width, height, zIndex: 0 },
+    }
+
+    const updatedSelectedNodes: FlowNode[] = selectedNodes.map((node) => ({
+      ...node,
+      position: {
+        x: node.position.x - minX,
+        y: node.position.y - minY,
+      },
+      parentId: newGroupId,
+      extent: 'parent',
+      selected: false,
+    }))
+
+    const allNodes = [...nodes.filter((node) => !node.selected), groupNode, ...updatedSelectedNodes]
+
+    useFlowStore.getState().setNodes(allNodes)
+  }
+
   return (
     <div style={{ height: '100%' }} onDrop={onDrop} onDragOver={onDragOver} onContextMenu={handleRightMouseButtonClick}>
       <ReactFlow
@@ -155,6 +192,9 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
       >
         <Controls position="top-left"></Controls>
         <Background variant={BackgroundVariant.Dots} size={2}></Background>
+        <Panel position="top-right" onClick={groupSelectedNodes} className="cursor-pointer border">
+          Group Nodes!
+        </Panel>
       </ReactFlow>
     </div>
   )
