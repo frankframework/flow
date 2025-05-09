@@ -19,7 +19,7 @@ import useFlowStore, { type FlowState } from '~/stores/flow-store'
 import { useShallow } from 'zustand/react/shallow'
 import { FlowConfig } from '~/routes/builder/canvas/flow.config'
 import { getElementTypeFromName } from '~/routes/builder/node-translator-module'
-import {createContext, useContext, useEffect} from 'react'
+import { createContext, useContext, useEffect } from 'react'
 import StickyNoteComponent, { type StickyNote } from '~/routes/builder/canvas/nodetypes/sticky-note'
 
 export type FlowNode = FrankNode | StartNode | ExitNode | StickyNote | GroupNode | Node
@@ -87,6 +87,10 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
+      const tagName = (event.target as HTMLElement).tagName
+      const isTyping = ['INPUT', 'TEXTAREA'].includes(tagName) || (event.target as HTMLElement).isContentEditable
+      if (isTyping) return
+
       if (event.key === 'g' || event.key === 'G') {
         event.preventDefault()
         groupSelectedNodes()
@@ -100,12 +104,19 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
   const groupSelectedNodes = () => {
     const selectedNodes = nodes.filter((node) => node.selected)
     if (selectedNodes.length < 2) return // Do not group if 1 or no nodes are selected
+
+    const allInSameGroup = selectedNodes.every((node) => node.parentId && node.parentId === selectedNodes[0].parentId)
+    if (allInSameGroup) {
+      ungroupNodes(selectedNodes, nodes)
+      return
+    }
+
     const minX = Math.min(...selectedNodes.map((node) => node.position.x))
     const minY = Math.min(...selectedNodes.map((node) => node.position.y))
-    const maxX = Math.max(...selectedNodes.map((node) => node.position.x + (node.width ?? 0)))
-    const maxY = Math.max(...selectedNodes.map((node) => node.position.y + (node.height ?? 0)))
+    const maxX = Math.max(...selectedNodes.map((node) => node.position.x + (node.measured?.width ?? 0)))
+    const maxY = Math.max(...selectedNodes.map((node) => node.position.y + (node.measured?.height ?? 0)))
 
-    const padding = 10
+    const padding = 30
     const width = maxX - minX + padding * 2
     const height = maxY - minY + padding * 2
 
@@ -115,8 +126,9 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
       id: newGroupId,
       position: { x: minX - padding, y: minY - padding },
       type: 'groupNode',
-      data: { label: 'Group', width: width, height: height },
+      data: { label: 'New Group', width: width, height: height },
       dragHandle: '.drag-handle',
+      selectable: false,
     }
 
     const updatedSelectedNodes: FlowNode[] = selectedNodes.map((node) => ({
@@ -133,6 +145,40 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
     const allNodes = [...nodes.filter((node) => !node.selected), groupNode, ...updatedSelectedNodes]
 
     useFlowStore.getState().setNodes(allNodes)
+  }
+
+  const ungroupNodes = (selectedNodes: FlowNode[], nodes: FlowNode[]) => {
+    const groupIdToRemove = selectedNodes[0].parentId
+    const groupNode = nodes.find((node) => node.id === groupIdToRemove)
+
+    if (!groupNode) return
+
+    const groupX = groupNode.position.x
+    const groupY = groupNode.position.y
+
+    const updatedNodes = nodes
+      .map((node) => {
+        if (node.id === groupIdToRemove) {
+          return null // remove group node
+        }
+
+        if (selectedNodes.includes(node)) {
+          return {
+            ...node,
+            parentId: undefined,
+            extent: undefined,
+            position: {
+              x: node.position.x + groupX,
+              y: node.position.y + groupY,
+            },
+          }
+        }
+
+        return node
+      })
+      .filter((node): node is FlowNode => node !== null)
+
+    useFlowStore.getState().setNodes(updatedNodes)
   }
 
   const onDragOver = (event: React.DragEvent) => {
