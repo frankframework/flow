@@ -4,7 +4,6 @@ import {
   Controls,
   type Edge,
   type Node,
-  Panel,
   ReactFlow,
   ReactFlowProvider,
   useReactFlow,
@@ -15,6 +14,7 @@ import FrankNodeComponent, { type FrankNode } from '~/routes/builder/canvas/node
 import FrankEdgeComponent from '~/routes/builder/canvas/edgetypes/frank-edge'
 import ExitNodeComponent, { type ExitNode } from '~/routes/builder/canvas/nodetypes/exit-node'
 import StartNodeComponent, { type StartNode } from '~/routes/builder/canvas/nodetypes/start-node'
+import GroupNodeComponent, { type GroupNode } from '~/routes/builder/canvas/nodetypes/group-node'
 import useFlowStore, { type FlowState } from '~/stores/flow-store'
 import { useShallow } from 'zustand/react/shallow'
 import { FlowConfig } from '~/routes/builder/canvas/flow.config'
@@ -22,7 +22,7 @@ import { getElementTypeFromName } from '~/routes/builder/node-translator-module'
 import {createContext, useContext, useEffect} from 'react'
 import StickyNoteComponent, { type StickyNote } from '~/routes/builder/canvas/nodetypes/sticky-note'
 
-export type FlowNode = FrankNode | StartNode | ExitNode | StickyNote | Node
+export type FlowNode = FrankNode | StartNode | ExitNode | StickyNote | GroupNode | Node
 
 const NodeContextMenuContext = createContext<(visible: boolean) => void>(() => {})
 export const useNodeContextMenu = () => useContext(NodeContextMenuContext)
@@ -42,8 +42,10 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
     exitNode: ExitNodeComponent,
     startNode: StartNodeComponent,
     stickyNote: StickyNoteComponent,
+    groupNode: GroupNodeComponent,
   }
   const edgeTypes = { frankEdge: FrankEdgeComponent }
+  const defaultEdgeOptions = { zIndex: 1001 } // Greater index than 1000, the default for a node when it is selected. Enables clicking on edges always
   const reactFlow = useReactFlow()
 
   const { nodes, edges, onNodesChange, onEdgesChange, onConnect, onReconnect } = useFlowStore(useShallow(selector))
@@ -81,6 +83,56 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
         },
       }
     })
+  }
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'g' || event.key === 'G') {
+        event.preventDefault()
+        groupSelectedNodes()
+      }
+    }
+
+    globalThis.addEventListener('keydown', handleKeyDown)
+    return () => globalThis.removeEventListener('keydown', handleKeyDown)
+  }, [nodes])
+
+  const groupSelectedNodes = () => {
+    const selectedNodes = nodes.filter((node) => node.selected)
+    if (selectedNodes.length < 2) return // Do not group if 1 or no nodes are selected
+    const minX = Math.min(...selectedNodes.map((node) => node.position.x))
+    const minY = Math.min(...selectedNodes.map((node) => node.position.y))
+    const maxX = Math.max(...selectedNodes.map((node) => node.position.x + (node.width ?? 0)))
+    const maxY = Math.max(...selectedNodes.map((node) => node.position.y + (node.height ?? 0)))
+
+    const padding = 10
+    const width = maxX - minX + padding * 2
+    const height = maxY - minY + padding * 2
+
+    const newGroupId = useFlowStore.getState().getNextNodeId()
+
+    const groupNode: FlowNode = {
+      id: newGroupId,
+      position: { x: minX - padding, y: minY - padding },
+      type: 'groupNode',
+      data: { label: 'Group', width: width, height: height },
+      dragHandle: '.drag-handle',
+    }
+
+    const updatedSelectedNodes: FlowNode[] = selectedNodes.map((node) => ({
+      ...node,
+      position: {
+        x: node.position.x - minX + padding,
+        y: node.position.y - minY + padding,
+      },
+      parentId: newGroupId,
+      extent: 'parent',
+      selected: false,
+    }))
+
+    const allNodes = [...nodes.filter((node) => !node.selected), groupNode, ...updatedSelectedNodes]
+
+    useFlowStore.getState().setNodes(allNodes)
   }
 
   const onDragOver = (event: React.DragEvent) => {
@@ -140,42 +192,6 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
     useFlowStore.getState().addNode(stickyNote)
   }
 
-  const groupSelectedNodes = () => {
-    const selectedNodes = nodes.filter((node) => node.selected)
-    const minX = Math.min(...selectedNodes.map((node) => node.position.x))
-    const minY = Math.min(...selectedNodes.map((node) => node.position.y))
-    const maxX = Math.max(...selectedNodes.map((node) => node.position.x + (node.width ?? 0)))
-    const maxY = Math.max(...selectedNodes.map((node) => node.position.y + (node.height ?? 0)))
-
-    const width = maxX - minX
-    const height = maxY - minY
-
-    const newGroupId = useFlowStore.getState().getNextNodeId()
-
-    const groupNode: FlowNode = {
-      id: newGroupId,
-      position: { x: minX, y: minY },
-      type: 'group',
-      data: { label: 'Group' },
-      style: { width, height, zIndex: 0 },
-    }
-
-    const updatedSelectedNodes: FlowNode[] = selectedNodes.map((node) => ({
-      ...node,
-      position: {
-        x: node.position.x - minX,
-        y: node.position.y - minY,
-      },
-      parentId: newGroupId,
-      extent: 'parent',
-      selected: false,
-    }))
-
-    const allNodes = [...nodes.filter((node) => !node.selected), groupNode, ...updatedSelectedNodes]
-
-    useFlowStore.getState().setNodes(allNodes)
-  }
-
   return (
     <div style={{ height: '100%' }} onDrop={onDrop} onDragOver={onDragOver} onContextMenu={handleRightMouseButtonClick}>
       <ReactFlow
@@ -188,13 +204,11 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
         onReconnect={onReconnect}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
+        defaultEdgeOptions={defaultEdgeOptions}
         deleteKeyCode={'Delete'}
       >
         <Controls position="top-left"></Controls>
         <Background variant={BackgroundVariant.Dots} size={2}></Background>
-        <Panel position="top-right" onClick={groupSelectedNodes} className="cursor-pointer border">
-          Group Nodes!
-        </Panel>
       </ReactFlow>
     </div>
   )
