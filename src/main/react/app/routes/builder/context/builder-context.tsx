@@ -1,14 +1,13 @@
-import SidebarIcon from '/icons/solar/Sidebar Minimalistic.svg?react'
 import MagnifierIcon from '/icons/solar/Magnifier.svg?react'
 import useFrankDocStore from '~/stores/frank-doc-store'
 import useNodeContextStore from '~/stores/node-context-store'
 import useFlowStore from '~/stores/flow-store'
-import { getElementTypeFromName } from '~/routes/builder/node-translator-module'
+import {getElementTypeFromName} from '~/routes/builder/node-translator-module'
 
-import { useEffect, useState } from 'react'
+import {useEffect, useState} from 'react'
 import SortedElements from '~/routes/builder/context/sorted-elements'
 
-export default function BuilderContext({ onClose }: Readonly<{ onClose: () => void }>) {
+export default function BuilderContext() {
   const { frankDocRaw, isLoading, error } = useFrankDocStore()
   const { setAttributes, setNodeId } = useNodeContextStore((state) => state)
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({})
@@ -70,11 +69,6 @@ export default function BuilderContext({ onClose }: Readonly<{ onClose: () => vo
   return (
     <div className="h-full">
       <div>
-        <div className="flex h-12 items-center gap-1 px-4">
-          <div className="text-xl">Palette</div>
-          <div className="grow"></div>
-          <SidebarIcon onClick={onClose} className="fill-gray-950 hover:fill-[var(--color-brand)]" />
-        </div>
         <div className="relative px-4">
           <label htmlFor="search" className="absolute top-1/2 left-6 -translate-y-1/2">
             <MagnifierIcon className="h-auto w-4 fill-gray-400" />
