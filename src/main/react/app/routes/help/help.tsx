@@ -1,4 +1,3 @@
-import React from 'react'
 import '/styles/markdown.css'
 import helpTopicTreeItems, { type HelpTopicTreeItem } from './help-topic-tree-items'
 import { useParams } from 'react-router'
@@ -16,6 +15,8 @@ export default function Help() {
   const { topic } = useParams<{ topic?: string }>()
   const helpTopicKey = topic ?? firstTopic
   const helpTopic: HelpTopicTreeItem | undefined = helpTopicTreeItems[helpTopicKey]
+
+  const MarkdownContent = helpTopic?.data.content
 
   const LeftSidebar = () => (
     <>
@@ -36,14 +37,11 @@ export default function Help() {
         </div>
       </div>
       <div className="markdown-body h-full overflow-auto p-4">
-        {React.createElement(
-          helpTopic?.data.content ??
-            (() => (
-              <div>
-                The topic with id: <code>{topic}</code> does not seem to exist, it might have been moved or deleted.
-                Please select a different topic from the left sidebar.
-              </div>
-            )),
+        {(MarkdownContent && <MarkdownContent />) || (
+          <div>
+            The topic with id: <code>{topic}</code> does not seem to exist, it might have been moved or deleted. Please
+            select a different topic from the left sidebar.
+          </div>
         )}
       </div>
     </>

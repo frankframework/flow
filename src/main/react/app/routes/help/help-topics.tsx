@@ -1,7 +1,13 @@
-import { StaticTreeDataProvider, Tree, type TreeRef, UncontrolledTreeEnvironment } from 'react-complex-tree'
+import {
+  StaticTreeDataProvider,
+  Tree,
+  type TreeItemRenderContext,
+  type TreeRef,
+  UncontrolledTreeEnvironment,
+} from 'react-complex-tree'
 import AltArrowRightIcon from '/icons/solar/Alt Arrow Right.svg?react'
 import AltArrowDownIcon from '/icons/solar/Alt Arrow Down.svg?react'
-import React, { useRef } from 'react'
+import { useRef } from 'react'
 import helpTopics, { type HelpTopicTreeItem } from './help-topic-tree-items'
 import '/styles/editor-files.css'
 import { useNavigate } from 'react-router'
@@ -16,31 +22,34 @@ export default function HelpTopics({ selectedTopic }: Readonly<HelpCategoriesPro
   const navigate = useNavigate()
   const tree = useRef<TreeRef>(null)
 
+  const renderItemArrow = ({ item, context }: { item: HelpTopicTreeItem; context: TreeItemRenderContext }) => {
+    if (!item.isFolder) return null
+
+    const Icon = context.isExpanded ? AltArrowDownIcon : AltArrowRightIcon
+    return (
+      <Icon
+        onClick={context.toggleExpandedState}
+        className="rct-tree-item-arrow-isFolder rct-tree-item-arrow fill-gray-950"
+      />
+    )
+  }
+
+  const renderItemTitle = ({ title }: { title: string }) => (
+    <span className="font-inter ml-1 overflow-hidden text-nowrap text-ellipsis">{title}</span>
+  )
+
   return (
     <>
       <div className="overflow-auto px-2">
         <UncontrolledTreeEnvironment
           dataProvider={new StaticTreeDataProvider(helpTopics)}
-          getItemTitle={(item: HelpTopicTreeItem): string => item.data.title}
+          getItemTitle={({ data }: HelpTopicTreeItem): string => data.title}
           viewState={{ [TREE_ID]: { selectedItems: [selectedTopic] } }}
           disableMultiselect={true}
-          onSelectItems={(items) => navigate(`/help/${items[0]}`)}
+          onSelectItems={([item]) => navigate(`/help/${item}`)}
           canSearch={false}
-          renderItemArrow={({ item, context }) => {
-            if (!item.isFolder) {
-              return null
-            }
-            const Icon = context.isExpanded ? AltArrowDownIcon : AltArrowRightIcon
-            return (
-              <Icon
-                onClick={context.toggleExpandedState}
-                className="rct-tree-item-arrow-isFolder rct-tree-item-arrow fill-gray-950"
-              />
-            )
-          }}
-          renderItemTitle={({ title }) => {
-            return <span className="font-inter ml-1 overflow-hidden text-nowrap text-ellipsis">{title}</span>
-          }}
+          renderItemArrow={renderItemArrow}
+          renderItemTitle={renderItemTitle}
         >
           <Tree treeId={TREE_ID} rootItem="root" ref={tree} treeLabel="Tree Example" />
         </UncontrolledTreeEnvironment>
