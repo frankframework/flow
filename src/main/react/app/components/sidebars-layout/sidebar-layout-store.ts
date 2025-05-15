@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
-export enum SidebarIndex {
+export enum SidebarSide {
   LEFT = 0,
   RIGHT = 2,
 }
@@ -16,10 +16,10 @@ interface SideBarInstance {
 interface SidebarState {
   instances: Record<string, SideBarInstance>
 
-  initializeInstance: (instanceId: string, defaultVisible?: VisibilityState) => void
-  toggleSidebar: (instanceId: string, index: SidebarIndex) => void
-  setSizes: (instanceId: string, sizes: number[]) => void
-  setVisible: (instanceId: string, index: SidebarIndex, value: boolean) => void
+  initializeInstance: (name: string, defaultVisible?: VisibilityState) => void
+  toggleSidebar: (name: string, side: SidebarSide) => void
+  setSizes: (name: string, sizes: number[]) => void
+  setVisible: (name: string, side: SidebarSide, value: boolean) => void
 }
 
 const DEFAULT_VISIBILITY: VisibilityState = [true, true, true]
@@ -29,17 +29,17 @@ export const useSidebarStore = create<SidebarState>()(
     (set) => ({
       instances: {},
 
-      initializeInstance: (instanceId, defaultVisible = DEFAULT_VISIBILITY) =>
+      initializeInstance: (name, defaultVisible = DEFAULT_VISIBILITY) =>
         set((state) => {
           // Don't modify state if instance already exists
-          if (state.instances[instanceId]) {
+          if (state.instances[name]) {
             return state
           }
 
           return {
             instances: {
               ...state.instances,
-              [instanceId]: {
+              [name]: {
                 visible: defaultVisible,
                 sizes: [],
               },
@@ -47,36 +47,36 @@ export const useSidebarStore = create<SidebarState>()(
           }
         }),
 
-      toggleSidebar: (instanceId, index) =>
+      toggleSidebar: (name, side) =>
         set((state) => {
-          const instance = state.instances[instanceId]
+          const instance = state.instances[name]
           if (!instance) return state
 
           // Create a new visibility array with the toggled value
           const newVisible: VisibilityState = [...instance.visible]
-          newVisible[index] = !newVisible[index]
+          newVisible[side] = !newVisible[side]
 
-          return updateInstanceState(state, instanceId, { visible: newVisible })
+          return updateInstanceState(state, name, { visible: newVisible })
         }),
 
-      setSizes: (instanceId, sizes) =>
+      setSizes: (name, sizes) =>
         set((state) => {
-          const instance = state.instances[instanceId]
+          const instance = state.instances[name]
           if (!instance) return state
 
-          return updateInstanceState(state, instanceId, { sizes })
+          return updateInstanceState(state, name, { sizes })
         }),
 
-      setVisible: (instanceId, index, value) =>
+      setVisible: (name, side, value) =>
         set((state) => {
-          const instance = state.instances[instanceId]
+          const instance = state.instances[name]
           if (!instance) return state
 
           // Create a new visibility array with the changed value
           const newVisible: VisibilityState = [...instance.visible]
-          newVisible[index] = value
+          newVisible[side] = value
 
-          return updateInstanceState(state, instanceId, { visible: newVisible })
+          return updateInstanceState(state, name, { visible: newVisible })
         }),
     }),
     {
@@ -87,14 +87,14 @@ export const useSidebarStore = create<SidebarState>()(
 
 function updateInstanceState(
   state: SidebarState,
-  instanceId: string,
+  name: string,
   updates: Partial<SideBarInstance>,
 ): Partial<SidebarState> {
   return {
     instances: {
       ...state.instances,
-      [instanceId]: {
-        ...state.instances[instanceId],
+      [name]: {
+        ...state.instances[name],
         ...updates,
       },
     },

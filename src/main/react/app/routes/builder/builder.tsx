@@ -6,10 +6,10 @@ import Flow from '~/routes/builder/canvas/flow'
 import FolderIcon from '/icons/solar/Folder.svg?react'
 import NodeContext from '~/routes/builder/context/node-context'
 import useNodeContextStore from '~/stores/node-context-store'
-import SidebarsContentClose from '~/components/sidebars/sidebars-content-close'
-import SidebarsHeader from '~/components/sidebars/sidebars-header'
-import { SidebarIndex } from '~/components/sidebars/sidebars-store'
-import Sidebars from '~/components/sidebars/sidebars'
+import SidebarContentClose from '~/components/sidebars-layout/sidebar-content-close'
+import SidebarHeader from '~/components/sidebars-layout/sidebar-header'
+import { SidebarSide } from '~/components/sidebars-layout/sidebar-layout-store'
+import SidebarLayout from '~/components/sidebars-layout/sidebar-layout'
 
 const tabs = {
   tab1: { value: 'tab1', icon: FolderIcon },
@@ -24,55 +24,35 @@ const tabs = {
   tab10: { value: 'tab10' },
 } as TabsList
 
-const SIDEBARS_ID = 'builder'
-
 export default function Builder() {
   const [selectedTab, setSelectedTab] = useState<string | undefined>()
   const [showNodeContext, setShowNodeContext] = useState(false)
 
   const nodeId = useNodeContextStore((state) => state.nodeId)
 
-  const LeftSidebar = () => (
-    <>
-      <SidebarsHeader sidebarId={SIDEBARS_ID} index={SidebarIndex.LEFT} title="Structure" />
-      <BuilderStructure />
-    </>
-  )
-
-  const Content = () => (
-    <>
-      <div className="flex">
-        <SidebarsContentClose sidebarId={SIDEBARS_ID} index={SidebarIndex.LEFT} />
-        <div className="grow overflow-x-auto">
-          <Tabs onSelectedTabChange={setSelectedTab} initialTabs={tabs} />
-        </div>
-        <SidebarsContentClose sidebarId={SIDEBARS_ID} index={SidebarIndex.RIGHT} />
-      </div>
-      <div className="h-12 border-b border-b-gray-200">
-        Path: {Object.entries(tabs).find(([key]) => key === selectedTab)?.[1]?.value}
-      </div>
-      <Flow showNodeContextMenu={setShowNodeContext} />
-    </>
-  )
-
-  const RightSidebar = () => (
-    <>
-      <SidebarsHeader
-        sidebarId={SIDEBARS_ID}
-        index={SidebarIndex.RIGHT}
-        title={showNodeContext ? 'Edit node iets' : 'Palette'}
-      />
-      {showNodeContext ? <NodeContext nodeId={nodeId} setShowNodeContext={setShowNodeContext} /> : <BuilderContext />}
-    </>
-  )
-
   return (
-    <Sidebars
-      sidebarsId={SIDEBARS_ID}
-      leftSidebar={LeftSidebar}
-      content={Content}
-      rightSidebar={RightSidebar}
-      windowResizeOnChange={true}
-    />
+    <SidebarLayout name="studio">
+      <SidebarLayout.Left>
+        <SidebarHeader side={SidebarSide.LEFT} title="Structure" />
+        <BuilderStructure />
+      </SidebarLayout.Left>
+      <SidebarLayout.Content>
+        <div className="flex">
+          <SidebarContentClose side={SidebarSide.LEFT} />
+          <div className="grow overflow-x-auto">
+            <Tabs onSelectedTabChange={setSelectedTab} initialTabs={tabs} />
+          </div>
+          <SidebarContentClose side={SidebarSide.RIGHT} />
+        </div>
+        <div className="h-12 border-b border-b-gray-200">
+          Path: {Object.entries(tabs).find(([key]) => key === selectedTab)?.[1]?.value}
+        </div>
+        <Flow showNodeContextMenu={setShowNodeContext} />
+      </SidebarLayout.Content>
+      <SidebarLayout.Right>
+        <SidebarHeader side={SidebarSide.RIGHT} title={showNodeContext ? 'Edit node' : 'Palette'} />
+        {showNodeContext ? <NodeContext nodeId={nodeId} setShowNodeContext={setShowNodeContext} /> : <BuilderContext />}
+      </SidebarLayout.Right>
+    </SidebarLayout>
   )
 }
