@@ -1,6 +1,7 @@
 import {
   StaticTreeDataProvider,
   Tree,
+  type TreeItemIndex,
   type TreeItemRenderContext,
   type TreeRef,
   UncontrolledTreeEnvironment,
@@ -21,6 +22,8 @@ const TREE_ID = 'help-topics-tree'
 export default function HelpTopics({ selectedTopic }: Readonly<HelpCategoriesProperties>) {
   const navigate = useNavigate()
   const tree = useRef<TreeRef>(null)
+
+  const navigateToTopic = (items: TreeItemIndex[]) => navigate(`/help/${items[0]}`)
 
   const renderItemArrow = ({ item, context }: { item: HelpTopicTreeItem; context: TreeItemRenderContext }) => {
     if (!item.isFolder) return null
@@ -43,10 +46,10 @@ export default function HelpTopics({ selectedTopic }: Readonly<HelpCategoriesPro
       <div className="overflow-auto px-2">
         <UncontrolledTreeEnvironment
           dataProvider={new StaticTreeDataProvider(helpTopics)}
-          getItemTitle={({ data }: HelpTopicTreeItem): string => data.title}
+          getItemTitle={({ data }) => data.title}
           viewState={{ [TREE_ID]: { selectedItems: [selectedTopic] } }}
           disableMultiselect={true}
-          onSelectItems={([item]) => navigate(`/help/${item}`)}
+          onSelectItems={navigateToTopic}
           canSearch={false}
           renderItemArrow={renderItemArrow}
           renderItemTitle={renderItemTitle}

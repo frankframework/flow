@@ -1,4 +1,10 @@
-import { Tree, type TreeRef, UncontrolledTreeEnvironment } from 'react-complex-tree'
+import {
+  Tree,
+  type TreeItem,
+  type TreeItemRenderContext,
+  type TreeRef,
+  UncontrolledTreeEnvironment,
+} from 'react-complex-tree'
 import '/styles/editor-files.css'
 import FolderIcon from '/icons/solar/Folder.svg?react'
 import FolderOpenIcon from '/icons/solar/Folder Open.svg?react'
@@ -30,6 +36,37 @@ export default function EditorFiles({}: Readonly<EditorFilesTreeProperties>) {
     tree.current?.focusTree(focus)
   }
 
+  const renderItemArrow = ({ item, context }: { item: TreeItem<unknown>; context: TreeItemRenderContext }) => {
+    if (!item.isFolder) {
+      return null
+    }
+    const Icon = context.isExpanded ? AltArrowDownIcon : AltArrowRightIcon
+    return (
+      <Icon
+        onClick={context.toggleExpandedState}
+        className="rct-tree-item-arrow-isFolder rct-tree-item-arrow fill-gray-950"
+      />
+    )
+  }
+
+  const renderItemTitle = ({
+    title,
+    item,
+    context,
+  }: {
+    title: string
+    item: TreeItem<unknown>
+    context: TreeItemRenderContext
+  }) => {
+    const Icon = (item.isFolder && (context.isExpanded ? FolderOpenIcon : FolderIcon)) || CodeIcon
+    return (
+      <>
+        <Icon className="w-4 flex-shrink-0 fill-gray-950" />
+        <span className="font-inter ml-1 overflow-hidden text-nowrap text-ellipsis">{title}</span>
+      </>
+    )
+  }
+
   return (
     <>
       <div className="relative px-4">
@@ -55,27 +92,8 @@ export default function EditorFiles({}: Readonly<EditorFilesTreeProperties>) {
           canDropOnFolder={true}
           canSearch={false}
           autoFocus={autoFocus}
-          renderItemArrow={({ item, context }) => {
-            if (!item.isFolder) {
-              return null
-            }
-            const Icon = context.isExpanded ? AltArrowDownIcon : AltArrowRightIcon
-            return (
-              <Icon
-                onClick={context.toggleExpandedState}
-                className="rct-tree-item-arrow-isFolder rct-tree-item-arrow fill-gray-950"
-              />
-            )
-          }}
-          renderItemTitle={({ title, item, context }) => {
-            const Icon = item.isFolder ? (context.isExpanded ? FolderOpenIcon : FolderIcon) : CodeIcon
-            return (
-              <>
-                <Icon className="w-4 flex-shrink-0 fill-gray-950" />
-                <span className="font-inter ml-1 overflow-hidden text-nowrap text-ellipsis">{title}</span>
-              </>
-            )
-          }}
+          renderItemArrow={renderItemArrow}
+          renderItemTitle={renderItemTitle}
         >
           <Tree treeId={TREE_ID} rootItem="root" ref={tree} treeLabel="Tree Example" />
         </UncontrolledTreeEnvironment>

@@ -32,10 +32,7 @@ export const useSidebarStore = create<SidebarState>()(
 
       initializeInstance: (name, defaultVisible = DEFAULT_VISIBILITY) =>
         set((state) => {
-          // Don't modify state if instance already exists
-          if (state.instances[name]) {
-            return state
-          }
+          if (state.instances[name]) return state
 
           return {
             instances: {
@@ -53,7 +50,6 @@ export const useSidebarStore = create<SidebarState>()(
           const instance = state.instances[name]
           if (!instance) return state
 
-          // Create a new visibility array with the toggled value
           const newVisible: VisibilityState = [...instance.visible]
           newVisible[side] = !newVisible[side]
 
@@ -73,7 +69,6 @@ export const useSidebarStore = create<SidebarState>()(
           const instance = state.instances[name]
           if (!instance) return state
 
-          // Create a new visibility array with the changed value
           const newVisible: VisibilityState = [...instance.visible]
           newVisible[side] = value
 

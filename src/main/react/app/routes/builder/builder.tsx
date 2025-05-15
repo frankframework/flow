@@ -27,7 +27,6 @@ const tabs = {
 export default function Builder() {
   const [selectedTab, setSelectedTab] = useState<string | undefined>()
   const [showNodeContext, setShowNodeContext] = useState(false)
-
   const nodeId = useNodeContextStore((state) => state.nodeId)
 
   return (

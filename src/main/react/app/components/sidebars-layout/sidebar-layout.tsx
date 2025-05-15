@@ -26,7 +26,7 @@ export default function SidebarLayout({
     initializeInstance(name, defaultVisible)
   }, [])
 
-  const onVisibleChangeHandler = (index: SidebarSide, value: boolean) => {
+  const saveVisible = (index: SidebarSide, value: boolean) => {
     setVisible(name, index, value)
   }
 
@@ -43,12 +43,7 @@ export default function SidebarLayout({
   return (
     <SidebarContext.Provider value={name}>
       {sizes && visible && (
-        <Allotment
-          onChange={() => onChangeHandler()}
-          onDragEnd={saveSizes}
-          defaultSizes={sizes}
-          onVisibleChange={(index, value) => onVisibleChangeHandler(index, value)}
-        >
+        <Allotment onChange={onChangeHandler} onDragEnd={saveSizes} onVisibleChange={saveVisible} defaultSizes={sizes}>
           <Allotment.Pane
             snap
             minSize={200}
