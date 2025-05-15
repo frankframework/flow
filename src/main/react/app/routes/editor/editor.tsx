@@ -3,10 +3,10 @@ import Tabs, { type TabsList } from '~/components/tabs/tabs'
 import { Editor } from '@monaco-editor/react'
 import EditorFiles from '~/routes/editor/editor-files'
 import FolderIcon from '/icons/solar/Folder.svg?react'
-import SidebarsHeader from '~/components/sidebars/sidebars-header'
-import Sidebars from '~/components/sidebars/sidebars'
-import { SidebarIndex } from '~/components/sidebars/sidebars-store'
-import SidebarsContentClose from '~/components/sidebars/sidebars-content-close'
+import SidebarHeader from '~/components/sidebars-layout/sidebar-header'
+import SidebarLayout from '~/components/sidebars-layout/sidebar-layout'
+import { SidebarSide } from '~/components/sidebars-layout/sidebar-layout-store'
+import SidebarContentClose from '~/components/sidebars-layout/sidebar-content-close'
 
 const tabs = {
   tab1: { value: 'tab1', icon: FolderIcon },
@@ -21,35 +21,33 @@ const tabs = {
   tab10: { value: 'tab10' },
 } as TabsList
 
-const SIDEBARS_ID = 'editor'
-
 export default function CodeEditor() {
   const [selectedTab, setSelectedTab] = useState<string | undefined>()
 
-  const LeftSidebar = () => (
-    <>
-      <SidebarsHeader sidebarId={SIDEBARS_ID} index={SidebarIndex.LEFT} title="Files" />
-      <EditorFiles></EditorFiles>
-    </>
-  )
-
-  const Content = () => (
-    <>
-      <div className="flex">
-        <SidebarsContentClose sidebarId={SIDEBARS_ID} index={SidebarIndex.LEFT} />
-        <div className="grow overflow-x-auto">
-          <Tabs onSelectedTabChange={setSelectedTab} initialTabs={tabs} />
+  return (
+    <SidebarLayout name="editor">
+      <SidebarLayout.Left>
+        <SidebarHeader side={SidebarSide.LEFT} title="Files" />
+        <EditorFiles></EditorFiles>
+      </SidebarLayout.Left>
+      <SidebarLayout.Content>
+        <div className="flex">
+          <SidebarContentClose side={SidebarSide.LEFT} />
+          <div className="grow overflow-x-auto">
+            <Tabs onSelectedTabChange={setSelectedTab} initialTabs={tabs} />
+          </div>
         </div>
-      </div>
-      <div className="h-12 border-b border-b-gray-200">
-        Path: {Object.entries(tabs).find(([key]) => key === selectedTab)?.[1]?.value}
-      </div>
-      <div className="h-full">
-        <Editor></Editor>
-      </div>
-      )
-    </>
+        <div className="h-12 border-b border-b-gray-200">
+          Path: {Object.entries(tabs).find(([key]) => key === selectedTab)?.[1]?.value}
+        </div>
+        <div className="h-full">
+          <Editor></Editor>
+        </div>
+      </SidebarLayout.Content>
+      <SidebarLayout.Right>
+        <SidebarHeader side={SidebarSide.RIGHT} title="Preview" />
+        <div className="h-full">Preview</div>
+      </SidebarLayout.Right>
+    </SidebarLayout>
   )
-
-  return <Sidebars sidebarsId={SIDEBARS_ID} leftSidebar={LeftSidebar} content={Content} windowResizeOnChange={true} />
 }
