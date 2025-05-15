@@ -1,5 +1,5 @@
 {
-  "name": "Flow",
+  "name": "flow",
   "private": true,
   "type": "module",
   "scripts": {
@@ -9,6 +9,7 @@
     "typecheck": "react-router typegen && tsc"
   },
   "dependencies": {
+    "@mdx-js/rollup": "^3.1.0",
     "@monaco-editor/react": "4.7.0-rc.0",
     "@react-router/node": "^7.4.1",
     "@react-router/serve": "^7.4.1",
@@ -23,8 +24,10 @@
     "zustand": "^5.0.3"
   },
   "devDependencies": {
+    "@mdx-js/react": "^3.1.0",
     "@react-router/dev": "^7.4.1",
     "@tailwindcss/vite": "^4.0.0",
+    "@types/mdx": "^2.0.13",
     "@types/node": "^20",
     "@types/react": "^19.0.1",
     "@types/react-dom": "^19.0.1",

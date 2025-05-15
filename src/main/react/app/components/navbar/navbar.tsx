@@ -13,13 +13,13 @@ export default function Navbar() {
         <FfIcon className="h-auto w-[48px]" />
         <div className="text-xl font-bold">Flow</div>
       </div>
-      <ul className="m-0 flex w-full flex-col gap-6 p-0">
+      <ul className="flex w-full flex-col">
         <NavbarLink route="/" label="Overview" Icon={ProjectsIcon} />
         <NavbarLink route="/builder" label="Studio" Icon={RulerCrossPenIcon} />
         <NavbarLink route="/editor" label="Editor" Icon={CodeIcon} />
       </ul>
       <div className="flex-grow"></div>
-      <ul className="flex w-full flex-col gap-6">
+      <ul className="flex w-full flex-col">
         <NavbarLink route="/help" label="Help" Icon={HelpIcon} />
         <NavbarLink route="/settings" label="Settings" Icon={SettingsIcon} />
       </ul>

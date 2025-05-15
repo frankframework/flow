@@ -704,11 +704,6 @@ const items = {
     children: ['reception.jpg', 'workspace.jpg', 'meeting_rooms.jpg', 'cafeteria.jpg'],
     data: 'Office Environment Photography - Careers Page',
   },
-  'reception.jpg': {
-    index: 'reception.jpg',
-    children: [],
-    data: 'Reception Area - Main Entrance',
-  },
   'workspace.jpg': {
     index: 'workspace.jpg',
     children: [],

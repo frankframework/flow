@@ -10,19 +10,29 @@ interface NavbarLinkProperties {
 
 export default function NavbarLink({ route, label, Icon }: Readonly<NavbarLinkProperties>) {
   const location = useLocation()
-  const isActive = location.pathname === route
+  const isActive = location.pathname === route || (route !== '/' && location.pathname.startsWith(route))
 
   return (
     <li className="m-0 list-none p-0">
       <Link
         to={route}
         className={clsx(
-          'group relative flex flex-col items-center text-center no-underline',
-          isActive ? 'font-medium' : 'hover:text-[var(--color-brand)]',
+          'group relative flex flex-col items-center p-4 text-center no-underline hover:bg-[var(--color-gray-50)]',
         )}
       >
+        <div
+          className={clsx(
+            'absolute top-1/2 left-1 h-10/12 w-[2px] -translate-y-1/2 rounded',
+            isActive && 'bg-[var(--color-brand)]',
+          )}
+        ></div>
         {Icon && (
-          <Icon className={clsx('h-8 w-auto fill-gray-950', !isActive && 'group-hover:fill-[var(--color-brand)]')} />
+          <Icon
+            className={clsx(
+              'h-8 w-auto group-hover:fill-[var(--color-brand)]',
+              isActive ? 'fill-[var(--color-brand)]' : 'fill-gray-950',
+            )}
+          />
         )}
         <span
           className={clsx(
@@ -31,7 +41,6 @@ export default function NavbarLink({ route, label, Icon }: Readonly<NavbarLinkPr
         >
           {label}
         </span>
-        <div className={clsx('absolute top-0 right-[-1px] h-full w-[1px]', isActive && 'bg-gray-800')}></div>
       </Link>
     </li>
   )

@@ -4,6 +4,6 @@ export default [
   index('routes/projects/projects.tsx'),
   route('builder', 'routes/builder/builder.tsx'),
   route('editor', 'routes/editor/editor.tsx'),
-  route('help', 'routes/help/help.tsx'),
+  route('help/:topic?', 'routes/help/help.tsx'),
   route('settings', 'routes/settings/settings.tsx'),
 ] satisfies RouteConfig
