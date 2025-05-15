@@ -11,7 +11,7 @@ import {
 import Dagre from '@dagrejs/dagre'
 import '@xyflow/react/dist/style.css'
 import FrankNodeComponent, { type FrankNode } from '~/routes/builder/canvas/nodetypes/frank-node'
-import FrankEdgeComponent from '~/routes/builder/canvas/frank-edge'
+import FrankEdgeComponent from '~/routes/builder/canvas/edgetypes/frank-edge'
 import ExitNodeComponent, { type ExitNode } from '~/routes/builder/canvas/nodetypes/exit-node'
 import StartNodeComponent, { type StartNode } from '~/routes/builder/canvas/nodetypes/start-node'
 import useFlowStore, { type FlowState } from '~/stores/flow-store'
@@ -32,6 +32,7 @@ const selector = (state: FlowState) => ({
   onNodesChange: state.onNodesChange,
   onEdgesChange: state.onEdgesChange,
   onConnect: state.onConnect,
+  onReconnect: state.onReconnect,
 })
 
 function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b: boolean) => void }>) {
@@ -44,7 +45,7 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
   const edgeTypes = { frankEdge: FrankEdgeComponent }
   const reactFlow = useReactFlow()
 
-  const { nodes, edges, onNodesChange, onEdgesChange, onConnect } = useFlowStore(useShallow(selector))
+  const { nodes, edges, onNodesChange, onEdgesChange, onConnect, onReconnect } = useFlowStore(useShallow(selector))
 
   useEffect(() => {
     const laidOutNodes = layoutGraph(nodes, edges, 'LR')
@@ -147,6 +148,7 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
+        onReconnect={onReconnect}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         deleteKeyCode={'Delete'}
