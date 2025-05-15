@@ -87,11 +87,7 @@ export default function NodeContext({
   }
 
   return (
-    <div className="flex h-full flex-col">
-      <div className="flex h-12 items-center gap-1 px-4">
-        <div className="text-xl">Attributes</div>
-        <div className="grow" />
-      </div>
+    <>
       <div className="flex-1 overflow-y-auto px-4">
         <div className="w-full max-w-sm space-y-4 rounded-lg bg-white p-6 shadow-md">
           <h1>For node with id: {nodeId}</h1>
@@ -138,6 +134,6 @@ export default function NodeContext({
           </div>
         </div>
       </div>
-    </div>
+    </>
   )
 }

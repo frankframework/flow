@@ -26,9 +26,9 @@ export default function Help() {
 
   const Content = () => (
     <>
-      <div className="flex h-12">
+      <div className="flex">
         <SidebarsContentClose sidebarId={SIDEBARS_ID} index={SidebarIndex.LEFT} />
-        <div className="flex grow items-center border-b border-b-gray-200 px-4">
+        <div className="flex h-12 grow items-center border-b border-b-gray-200 px-4">
           <div className="flex h-max items-end gap-4">
             <h1 className="text-xl font-medium">{helpTopic?.data.title ?? 'Oops'}</h1>
             <p>{helpTopic?.data.description ?? "Topic can't be retrieved"}</p>
