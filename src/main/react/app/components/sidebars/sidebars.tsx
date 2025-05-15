@@ -8,6 +8,7 @@ interface SidebarsProperties {
   content: React.FC
   rightSidebar?: React.FC
   defaultVisible?: VisibilityState
+  windowResizeOnChange?: boolean
 }
 
 export default function Sidebars({
@@ -16,6 +17,7 @@ export default function Sidebars({
   content,
   rightSidebar,
   defaultVisible,
+  windowResizeOnChange,
 }: Readonly<SidebarsProperties>) {
   const { initializeInstance, setSizes, setVisible, instances } = useSidebarStore()
 
@@ -35,6 +37,12 @@ export default function Sidebars({
     setSizes(sidebarsId, sizes)
   }
 
+  const onChangeHandler = () => {
+    if (windowResizeOnChange) {
+      globalThis.dispatchEvent(new Event('resize'))
+    }
+  }
+
   const LeftSidebar = leftSidebar
   const Content = content
   const RightSidebar = rightSidebar as React.FC | undefined
@@ -43,6 +51,7 @@ export default function Sidebars({
     <>
       {instances[sidebarsId] && (
         <Allotment
+          onChange={() => onChangeHandler()}
           onDragEnd={saveSizes}
           defaultSizes={sizes}
           onVisibleChange={(index, value) => onVisibleChangeHandler(index, value)}

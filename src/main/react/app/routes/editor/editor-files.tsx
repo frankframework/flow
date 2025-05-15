@@ -6,7 +6,6 @@ import CodeIcon from '/icons/solar/Code.svg?react'
 import AltArrowRightIcon from '/icons/solar/Alt Arrow Right.svg?react'
 import AltArrowDownIcon from '/icons/solar/Alt Arrow Down.svg?react'
 import React, { type RefObject, useRef } from 'react'
-import SidebarIcon from '/icons/solar/Sidebar Minimalistic.svg?react'
 import MagnifierIcon from '/icons/solar/Magnifier.svg?react'
 import EditorFilesDataProvider from '~/routes/editor/editor-files-data-provider'
 
@@ -15,10 +14,9 @@ const TREE_ID = 'editor-files-tree'
 interface EditorFilesTreeProperties {
   search?: string
   ref?: RefObject<unknown>
-  onClose: () => void
 }
 
-export default function EditorFiles({ onClose }: Readonly<EditorFilesTreeProperties>) {
+export default function EditorFiles({}: Readonly<EditorFilesTreeProperties>) {
   const tree = useRef<TreeRef>(null)
   const [autoFocus, setAutoFocus] = React.useState(false)
 
@@ -33,14 +31,7 @@ export default function EditorFiles({ onClose }: Readonly<EditorFilesTreePropert
   }
 
   return (
-    <div className="flex h-full flex-col">
-      <div className="flex h-12 items-center gap-1 px-4">
-        <SidebarIcon
-          onClick={onClose}
-          className="rotate-180 fill-gray-950 hover:fill-[var(--color-brand)]"
-        ></SidebarIcon>
-        <div className="text-xl">Files</div>
-      </div>
+    <>
       <div className="relative px-4">
         <label htmlFor="search" className="absolute top-1/2 left-6 -translate-y-1/2">
           <MagnifierIcon className="h-auto w-4 fill-gray-400" />
@@ -89,6 +80,6 @@ export default function EditorFiles({ onClose }: Readonly<EditorFilesTreePropert
           <Tree treeId={TREE_ID} rootItem="root" ref={tree} treeLabel="Tree Example" />
         </UncontrolledTreeEnvironment>
       </div>
-    </div>
+    </>
   )
 }
