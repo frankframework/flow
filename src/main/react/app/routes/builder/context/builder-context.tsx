@@ -6,6 +6,7 @@ import useFlowStore from '~/stores/flow-store'
 import { getElementTypeFromName } from '~/routes/builder/node-translator-module'
 
 import { useEffect, useState } from 'react'
+import SortedElements from '~/routes/builder/context/sorted-elements'
 
 export default function BuilderContext({ onClose }: Readonly<{ onClose: () => void }>) {
   const { frankDocRaw, isLoading, error } = useFrankDocStore()
@@ -26,13 +27,6 @@ export default function BuilderContext({ onClose }: Readonly<{ onClose: () => vo
       setExpandedGroups((previous) => ({ ...previous, ...initialState }))
     }
   }, [frankDocRaw])
-
-  const toggleGroup = (type: string) => {
-    setExpandedGroups((previous) => ({
-      ...previous,
-      [type]: !previous[type],
-    }))
-  }
 
   const onDragStart = (value: { attributes: any[] }) => {
     return (event: {
@@ -91,12 +85,12 @@ export default function BuilderContext({ onClose }: Readonly<{ onClose: () => vo
             type="search"
             placeholder="Search"
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(event) => setSearchTerm(event.target.value)}
           />
         </div>
       </div>
-      <div className="h-full overflow-y-auto">
-        <ul className="p-4">
+      <div className="h-full">
+        <ul className="h-[calc(100vh-100px)] overflow-y-auto p-4">
           {isLoading && <li>Loading...</li>}
           {error && <li>Error: {error}</li>}
           {!isLoading && Object.keys(elementsToRender).length === 0 && (
@@ -105,46 +99,15 @@ export default function BuilderContext({ onClose }: Readonly<{ onClose: () => vo
           {!isLoading &&
             Object.entries(elementsToRender)
               .sort(([typeA], [typeB]) => typeA.localeCompare(typeB))
-              .map(([type, items]) => {
-                const isExpanded = searchTerm ? true : (expandedGroups[type] ?? true)
-                return (
-                  <div
-                    key={type}
-                    className="mb-4 border-t-2 p-2 shadow-md"
-                    style={{
-                      borderColor: `var(--type-${type}`,
-                    }}
-                  >
-                    <button
-                      onClick={() => toggleGroup(type)}
-                      className="w-full cursor-pointer text-left text-sm font-semibold text-gray-600 capitalize hover:text-gray-900"
-                    >
-                      {isExpanded ? '▾' : '▸'} {type === 'other' ? type : `${type}s`}
-                    </button>
-                    {isExpanded && (
-                      <div className="mt-2 space-y-2">
-                        {items.map((value) => (
-                          <li
-                            className="m-2 cursor-move list-none overflow-hidden rounded border border-gray-400 p-4 overflow-ellipsis"
-                            key={value.name}
-                            draggable
-                            onDragStart={onDragStart(value)}
-                            style={{
-                              background: `radial-gradient(
-                        ellipse at top left,
-                        var(--type-${type}) 0%,
-                        white 60%
-                      )`,
-                            }}
-                          >
-                            {value.name}
-                          </li>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
+              .map(([type, items]) => (
+                <SortedElements
+                  key={type}
+                  type={type}
+                  items={items}
+                  onDragStart={onDragStart}
+                  searchTerm={searchTerm}
+                />
+              ))}
         </ul>
       </div>
     </div>
