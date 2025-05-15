@@ -32,11 +32,11 @@ export default function Builder() {
 
   return (
     <SidebarLayout name="studio">
-      <SidebarLayout.Left>
+      <div>
         <SidebarHeader side={SidebarSide.LEFT} title="Structure" />
         <BuilderStructure />
-      </SidebarLayout.Left>
-      <SidebarLayout.Content>
+      </div>
+      <div>
         <div className="flex">
           <SidebarContentClose side={SidebarSide.LEFT} />
           <div className="grow overflow-x-auto">
@@ -48,11 +48,11 @@ export default function Builder() {
           Path: {Object.entries(tabs).find(([key]) => key === selectedTab)?.[1]?.value}
         </div>
         <Flow showNodeContextMenu={setShowNodeContext} />
-      </SidebarLayout.Content>
-      <SidebarLayout.Right>
+      </div>
+      <div>
         <SidebarHeader side={SidebarSide.RIGHT} title={showNodeContext ? 'Edit node' : 'Palette'} />
         {showNodeContext ? <NodeContext nodeId={nodeId} setShowNodeContext={setShowNodeContext} /> : <BuilderContext />}
-      </SidebarLayout.Right>
+      </div>
     </SidebarLayout>
   )
 }

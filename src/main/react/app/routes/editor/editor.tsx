@@ -26,11 +26,11 @@ export default function CodeEditor() {
 
   return (
     <SidebarLayout name="editor">
-      <SidebarLayout.Left>
+      <div>
         <SidebarHeader side={SidebarSide.LEFT} title="Files" />
         <EditorFiles></EditorFiles>
-      </SidebarLayout.Left>
-      <SidebarLayout.Content>
+      </div>
+      <div>
         <div className="flex">
           <SidebarContentClose side={SidebarSide.LEFT} />
           <div className="grow overflow-x-auto">
@@ -43,11 +43,11 @@ export default function CodeEditor() {
         <div className="h-full">
           <Editor></Editor>
         </div>
-      </SidebarLayout.Content>
-      <SidebarLayout.Right>
+      </div>
+      <div>
         <SidebarHeader side={SidebarSide.RIGHT} title="Preview" />
         <div className="h-full">Preview</div>
-      </SidebarLayout.Right>
+      </div>
     </SidebarLayout>
   )
 }
