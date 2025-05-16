@@ -3,7 +3,7 @@ import {
   BackgroundVariant,
   Controls,
   type Edge,
-  type Node,
+  type Node, Panel,
   ReactFlow,
   ReactFlowProvider,
   useReactFlow,
@@ -20,6 +20,7 @@ import { FlowConfig } from '~/routes/builder/canvas/flow.config'
 import { getElementTypeFromName } from '~/routes/builder/node-translator-module'
 import {createContext, useContext, useEffect} from 'react'
 import StickyNoteComponent, { type StickyNote } from '~/routes/builder/canvas/nodetypes/sticky-note'
+import useTabStore from "~/stores/tab-store";
 
 export type FlowNode = FrankNode | StartNode | ExitNode | StickyNote | Node
 
@@ -139,6 +140,21 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
     useFlowStore.getState().addNode(stickyNote)
   }
 
+  const handleSave = () => {
+    const activeTab = useTabStore.getState().activeTab
+    const flowData = reactFlow.toObject()
+    useTabStore.getState().setTab(activeTab, flowData)
+  }
+
+  const handleRestore = () => {
+    const activeTab = useTabStore.getState().activeTab
+    const flowData = useTabStore.getState().getTab(activeTab)
+    if (flowData) {
+      useFlowStore.getState().setNodes(flowData.nodes || [])
+      useFlowStore.getState().setEdges(flowData.edges || [])
+    }
+  }
+
   return (
     <div style={{ height: '100%' }} onDrop={onDrop} onDragOver={onDragOver} onContextMenu={handleRightMouseButtonClick}>
       <ReactFlow
@@ -155,6 +171,10 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
       >
         <Controls position="top-left"></Controls>
         <Background variant={BackgroundVariant.Dots} size={2}></Background>
+        <Panel position="top-right" className="bg-gray-200 p-4">
+          <div onClick={handleSave}>Click me to save</div>
+          <div onClick={handleRestore}>Click me to restore</div>
+        </Panel>
       </ReactFlow>
     </div>
   )

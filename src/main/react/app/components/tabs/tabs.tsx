@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import Tab from '~/components/tabs/tab'
+import useTabStore from "~/stores/tab-store";
 
 export type TabsList = Record<string, TabsItem>
 
@@ -47,6 +48,7 @@ export default function Tabs({ initialTabs, initialSelectedTab, onSelectedTabCha
   const selectTab = (key: string) => {
     setSelectedTab(key)
     setSelectedTabHistory([...selectedTabHistory, key])
+    useTabStore.getState().activeTab = key
     onSelectedTabChange(key)
   }
 
