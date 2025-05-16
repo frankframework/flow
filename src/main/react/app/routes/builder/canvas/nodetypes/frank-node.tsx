@@ -132,7 +132,9 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
         <ResizeIcon />
       </NodeResizeControl>
       <div
-        className="flex h-full w-full flex-col items-center overflow-hidden rounded-md border-1 border-gray-200 bg-white"
+        className={`flex h-full w-full flex-col items-center rounded-md bg-white ${
+          properties.selected ? 'border-2 border-black' : 'border border-gray-200'
+        }`}
         style={{
           minHeight: `${minNodeHeight}px`,
           minWidth: `${minNodeWidth}px`,

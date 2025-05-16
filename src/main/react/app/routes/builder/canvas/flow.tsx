@@ -2,11 +2,13 @@ import {
   Background,
   BackgroundVariant,
   Controls,
+  type Edge,
   type Node,
   ReactFlow,
   ReactFlowProvider,
   useReactFlow,
 } from '@xyflow/react'
+import Dagre from '@dagrejs/dagre'
 import '@xyflow/react/dist/style.css'
 import FrankNodeComponent, { type FrankNode } from '~/routes/builder/canvas/nodetypes/frank-node'
 import FrankEdgeComponent from '~/routes/builder/canvas/edgetypes/frank-edge'
@@ -16,7 +18,7 @@ import useFlowStore, { type FlowState } from '~/stores/flow-store'
 import { useShallow } from 'zustand/react/shallow'
 import { FlowConfig } from '~/routes/builder/canvas/flow.config'
 import { getElementTypeFromName } from '~/routes/builder/node-translator-module'
-import { createContext, useContext } from 'react'
+import {createContext, useContext, useEffect} from 'react'
 import StickyNoteComponent, { type StickyNote } from '~/routes/builder/canvas/nodetypes/sticky-note'
 
 export type FlowNode = FrankNode | StartNode | ExitNode | StickyNote | Node
@@ -44,6 +46,41 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
   const reactFlow = useReactFlow()
 
   const { nodes, edges, onNodesChange, onEdgesChange, onConnect, onReconnect } = useFlowStore(useShallow(selector))
+
+  useEffect(() => {
+    const laidOutNodes = layoutGraph(nodes, edges, 'LR')
+    useFlowStore.getState().setNodes(laidOutNodes)
+  }, [])
+
+  const layoutGraph = (nodes: Node[], edges: Edge[], direction: 'TB' | 'LR' = 'LR'): Node[] => {
+    const dagreGraph = new Dagre.graphlib.Graph()
+    dagreGraph.setDefaultEdgeLabel(() => ({}))
+    dagreGraph.setGraph({ rankdir: direction })
+
+    for (const node of nodes) {
+      dagreGraph.setNode(node.id, {
+        width: FlowConfig.NODE_DEFAULT_WIDTH * 1.5,
+        height: FlowConfig.NODE_DEFAULT_HEIGHT * 1.5,
+      })
+    }
+
+    for (const edge of edges) {
+      dagreGraph.setEdge(edge.source, edge.target)
+    }
+
+    Dagre.layout(dagreGraph)
+
+    return nodes.map((node) => {
+      const nodeWithPosition = dagreGraph.node(node.id)
+      return {
+        ...node,
+        position: {
+          x: nodeWithPosition.x,
+          y: nodeWithPosition.y,
+        },
+      }
+    })
+  }
 
   const onDragOver = (event: React.DragEvent) => {
     event.preventDefault()
@@ -114,6 +151,7 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
         onReconnect={onReconnect}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
+        deleteKeyCode={'Delete'}
       >
         <Controls position="top-left"></Controls>
         <Background variant={BackgroundVariant.Dots} size={2}></Background>
