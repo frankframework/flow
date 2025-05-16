@@ -1,5 +1,5 @@
 import { Tree, type TreeRef, UncontrolledTreeEnvironment } from 'react-complex-tree'
-import './editor-files.css'
+import '/styles/editor-files.css'
 import FolderIcon from '/icons/solar/Folder.svg?react'
 import FolderOpenIcon from '/icons/solar/Folder Open.svg?react'
 import CodeIcon from '/icons/solar/Code.svg?react'
@@ -8,7 +8,7 @@ import AltArrowDownIcon from '/icons/solar/Alt Arrow Down.svg?react'
 import React, { type RefObject, useRef } from 'react'
 import SidebarIcon from '/icons/solar/Sidebar Minimalistic.svg?react'
 import MagnifierIcon from '/icons/solar/Magnifier.svg?react'
-import CustomDataProviderImplementation from '~/routes/editor/editor-files-data-provider'
+import EditorFilesDataProvider from '~/routes/editor/editor-files-data-provider'
 
 const TREE_ID = 'editor-files-tree'
 
@@ -57,7 +57,7 @@ export default function EditorFiles({ onClose }: Readonly<EditorFilesTreePropert
 
       <div className="overflow-auto pr-2">
         <UncontrolledTreeEnvironment
-          dataProvider={new CustomDataProviderImplementation()}
+          dataProvider={new EditorFilesDataProvider()}
           getItemTitle={(item) => item.data}
           viewState={{}}
           canDragAndDrop={true}

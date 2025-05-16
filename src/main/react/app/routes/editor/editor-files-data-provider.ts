@@ -1,7 +1,7 @@
 import type { Disposable, TreeDataProvider, TreeItem, TreeItemIndex } from 'react-complex-tree'
 import items from '~/routes/editor/fake-files'
 
-export default class CustomDataProviderImplementation implements TreeDataProvider {
+export default class EditorFilesDataProvider implements TreeDataProvider {
   private data: Record<TreeItemIndex, TreeItem> = { ...items }
 
   private treeChangeListeners: ((changedItemIds: TreeItemIndex[]) => void)[] = []
