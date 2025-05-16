@@ -2,9 +2,9 @@ import MagnifierIcon from '/icons/solar/Magnifier.svg?react'
 import useFrankDocStore from '~/stores/frank-doc-store'
 import useNodeContextStore from '~/stores/node-context-store'
 import useFlowStore from '~/stores/flow-store'
-import {getElementTypeFromName} from '~/routes/builder/node-translator-module'
+import { getElementTypeFromName } from '~/routes/builder/node-translator-module'
 
-import {useEffect, useState} from 'react'
+import { useEffect, useState } from 'react'
 import SortedElements from '~/routes/builder/context/sorted-elements'
 
 export default function BuilderContext() {
@@ -67,43 +67,33 @@ export default function BuilderContext() {
   const elementsToRender = searchTerm ? filteredGroupedElements : groupedElements
 
   return (
-    <div className="h-full">
-      <div>
-        <div className="relative px-4">
-          <label htmlFor="search" className="absolute top-1/2 left-6 -translate-y-1/2">
-            <MagnifierIcon className="h-auto w-4 fill-gray-400" />
-          </label>
-          <input
-            id="search"
-            className="w-full rounded-full border border-gray-200 bg-gray-50 py-1 pr-4 pl-7"
-            type="search"
-            placeholder="Search"
-            value={searchTerm}
-            onChange={(event) => setSearchTerm(event.target.value)}
-          />
-        </div>
+    <div className="flex h-full flex-col overflow-hidden">
+      <div className="relative px-4 py-2">
+        <label htmlFor="search" className="absolute top-1/2 left-6 -translate-y-1/2">
+          <MagnifierIcon className="h-auto w-4 fill-gray-400" />
+        </label>
+        <input
+          id="search"
+          className="w-full rounded-full border border-gray-200 bg-gray-50 py-1 pr-4 pl-7"
+          type="search"
+          placeholder="Search"
+          value={searchTerm}
+          onChange={(event) => setSearchTerm(event.target.value)}
+        />
       </div>
-      <div className="h-full">
-        <ul className="h-[calc(100vh-100px)] overflow-y-auto p-4">
-          {isLoading && <li>Loading...</li>}
-          {error && <li>Error: {error}</li>}
-          {!isLoading && Object.keys(elementsToRender).length === 0 && (
-            <li className="text-gray-500 italic">No results found.</li>
-          )}
-          {!isLoading &&
-            Object.entries(elementsToRender)
-              .sort(([typeA], [typeB]) => typeA.localeCompare(typeB))
-              .map(([type, items]) => (
-                <SortedElements
-                  key={type}
-                  type={type}
-                  items={items}
-                  onDragStart={onDragStart}
-                  searchTerm={searchTerm}
-                />
-              ))}
-        </ul>
-      </div>
+      <ul className="flex-1 overflow-y-auto p-4">
+        {isLoading && <li>Loading...</li>}
+        {error && <li>Error: {error}</li>}
+        {!isLoading && Object.keys(elementsToRender).length === 0 && (
+          <li className="text-gray-500 italic">No results found.</li>
+        )}
+        {!isLoading &&
+          Object.entries(elementsToRender)
+            .sort(([typeA], [typeB]) => typeA.localeCompare(typeB))
+            .map(([type, items]) => (
+              <SortedElements key={type} type={type} items={items} onDragStart={onDragStart} searchTerm={searchTerm} />
+            ))}
+      </ul>
     </div>
   )
 }

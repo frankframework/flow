@@ -18,11 +18,11 @@ export default function Help() {
 
   return (
     <SidebarLayout name="help">
-      <div>
+      <>
         <SidebarHeader side={SidebarSide.LEFT} title="Topics" />
         <HelpTopics selectedTopic={helpTopicKey} />
-      </div>
-      <div>
+      </>
+      <>
         <div className="flex">
           <SidebarContentClose side={SidebarSide.LEFT} />
           <div className="flex h-12 grow items-center border-b border-b-gray-200 px-4">
@@ -40,7 +40,7 @@ export default function Help() {
             </div>
           )}
         </div>
-      </div>
+      </>
     </SidebarLayout>
   )
 }

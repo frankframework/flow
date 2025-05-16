@@ -30,12 +30,12 @@ export default function Builder() {
   const nodeId = useNodeContextStore((state) => state.nodeId)
 
   return (
-    <SidebarLayout name="studio">
-      <div>
+    <SidebarLayout name="studio" windowResizeOnChange={true}>
+      <>
         <SidebarHeader side={SidebarSide.LEFT} title="Structure" />
         <BuilderStructure />
-      </div>
-      <div>
+      </>
+      <>
         <div className="flex">
           <SidebarContentClose side={SidebarSide.LEFT} />
           <div className="grow overflow-x-auto">
@@ -47,11 +47,11 @@ export default function Builder() {
           Path: {Object.entries(tabs).find(([key]) => key === selectedTab)?.[1]?.value}
         </div>
         <Flow showNodeContextMenu={setShowNodeContext} />
-      </div>
-      <div>
+      </>
+      <>
         <SidebarHeader side={SidebarSide.RIGHT} title={showNodeContext ? 'Edit node' : 'Palette'} />
         {showNodeContext ? <NodeContext nodeId={nodeId} setShowNodeContext={setShowNodeContext} /> : <BuilderContext />}
-      </div>
+      </>
     </SidebarLayout>
   )
 }

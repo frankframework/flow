@@ -25,12 +25,12 @@ export default function CodeEditor() {
   const [selectedTab, setSelectedTab] = useState<string | undefined>()
 
   return (
-    <SidebarLayout name="editor">
-      <div>
+    <SidebarLayout name="editor" windowResizeOnChange={true}>
+      <>
         <SidebarHeader side={SidebarSide.LEFT} title="Files" />
         <EditorFiles></EditorFiles>
-      </div>
-      <div>
+      </>
+      <>
         <div className="flex">
           <SidebarContentClose side={SidebarSide.LEFT} />
           <div className="grow overflow-x-auto">
@@ -43,11 +43,11 @@ export default function CodeEditor() {
         <div className="h-full">
           <Editor></Editor>
         </div>
-      </div>
-      <div>
+      </>
+      <>
         <SidebarHeader side={SidebarSide.RIGHT} title="Preview" />
         <div className="h-full">Preview</div>
-      </div>
+      </>
     </SidebarLayout>
   )
 }
