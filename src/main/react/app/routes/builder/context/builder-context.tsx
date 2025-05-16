@@ -1,4 +1,3 @@
-import SidebarIcon from '/icons/solar/Sidebar Minimalistic.svg?react'
 import MagnifierIcon from '/icons/solar/Magnifier.svg?react'
 import useFrankDocStore from '~/stores/frank-doc-store'
 import useNodeContextStore from '~/stores/node-context-store'
@@ -8,7 +7,7 @@ import { getElementTypeFromName } from '~/routes/builder/node-translator-module'
 import { useEffect, useState } from 'react'
 import SortedElements from '~/routes/builder/context/sorted-elements'
 
-export default function BuilderContext({ onClose }: Readonly<{ onClose: () => void }>) {
+export default function BuilderContext() {
   const { frankDocRaw, isLoading, error } = useFrankDocStore()
   const { setAttributes, setNodeId } = useNodeContextStore((state) => state)
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({})
@@ -68,48 +67,33 @@ export default function BuilderContext({ onClose }: Readonly<{ onClose: () => vo
   const elementsToRender = searchTerm ? filteredGroupedElements : groupedElements
 
   return (
-    <div className="h-full">
-      <div>
-        <div className="flex h-12 items-center gap-1 px-4">
-          <div className="text-xl">Palette</div>
-          <div className="grow"></div>
-          <SidebarIcon onClick={onClose} className="fill-gray-950 hover:fill-[var(--color-brand)]" />
-        </div>
-        <div className="relative px-4">
-          <label htmlFor="search" className="absolute top-1/2 left-6 -translate-y-1/2">
-            <MagnifierIcon className="h-auto w-4 fill-gray-400" />
-          </label>
-          <input
-            id="search"
-            className="w-full rounded-full border border-gray-200 bg-gray-50 py-1 pr-4 pl-7"
-            type="search"
-            placeholder="Search"
-            value={searchTerm}
-            onChange={(event) => setSearchTerm(event.target.value)}
-          />
-        </div>
+    <div className="flex h-full flex-col overflow-hidden">
+      <div className="relative px-4 py-2">
+        <label htmlFor="search" className="absolute top-1/2 left-6 -translate-y-1/2">
+          <MagnifierIcon className="h-auto w-4 fill-gray-400" />
+        </label>
+        <input
+          id="search"
+          className="w-full rounded-full border border-gray-200 bg-gray-50 py-1 pr-4 pl-7"
+          type="search"
+          placeholder="Search"
+          value={searchTerm}
+          onChange={(event) => setSearchTerm(event.target.value)}
+        />
       </div>
-      <div className="h-full">
-        <ul className="h-[calc(100vh-100px)] overflow-y-auto p-4">
-          {isLoading && <li>Loading...</li>}
-          {error && <li>Error: {error}</li>}
-          {!isLoading && Object.keys(elementsToRender).length === 0 && (
-            <li className="text-gray-500 italic">No results found.</li>
-          )}
-          {!isLoading &&
-            Object.entries(elementsToRender)
-              .sort(([typeA], [typeB]) => typeA.localeCompare(typeB))
-              .map(([type, items]) => (
-                <SortedElements
-                  key={type}
-                  type={type}
-                  items={items}
-                  onDragStart={onDragStart}
-                  searchTerm={searchTerm}
-                />
-              ))}
-        </ul>
-      </div>
+      <ul className="flex-1 overflow-y-auto p-4">
+        {isLoading && <li>Loading...</li>}
+        {error && <li>Error: {error}</li>}
+        {!isLoading && Object.keys(elementsToRender).length === 0 && (
+          <li className="text-gray-500 italic">No results found.</li>
+        )}
+        {!isLoading &&
+          Object.entries(elementsToRender)
+            .sort(([typeA], [typeB]) => typeA.localeCompare(typeB))
+            .map(([type, items]) => (
+              <SortedElements key={type} type={type} items={items} onDragStart={onDragStart} searchTerm={searchTerm} />
+            ))}
+      </ul>
     </div>
   )
 }

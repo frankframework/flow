@@ -1,60 +1,62 @@
-import SidebarIcon from '/icons/solar/Sidebar Minimalistic.svg?react'
-import { StaticTreeDataProvider, Tree, type TreeRef, UncontrolledTreeEnvironment } from 'react-complex-tree'
+import {
+  StaticTreeDataProvider,
+  Tree,
+  type TreeItemIndex,
+  type TreeItemRenderContext,
+  type TreeRef,
+  UncontrolledTreeEnvironment,
+} from 'react-complex-tree'
 import AltArrowRightIcon from '/icons/solar/Alt Arrow Right.svg?react'
 import AltArrowDownIcon from '/icons/solar/Alt Arrow Down.svg?react'
 import { useRef } from 'react'
 import helpTopics, { type HelpTopicTreeItem } from './help-topic-tree-items'
 import '/styles/editor-files.css'
-import { redirect, useNavigate } from 'react-router'
+import { useNavigate } from 'react-router'
 
 interface HelpCategoriesProperties {
   selectedTopic: keyof typeof helpTopics
-  onClose: () => void
 }
 
 const TREE_ID = 'help-topics-tree'
 
-export default function HelpTopics({ selectedTopic, onClose }: Readonly<HelpCategoriesProperties>) {
+export default function HelpTopics({ selectedTopic }: Readonly<HelpCategoriesProperties>) {
   const navigate = useNavigate()
   const tree = useRef<TreeRef>(null)
 
-  return (
-    <div className="flex h-full flex-col">
-      <div className="flex h-12 items-center gap-1 px-4">
-        <SidebarIcon
-          onClick={onClose}
-          className="rotate-180 fill-gray-950 hover:fill-[var(--color-brand)]"
-        ></SidebarIcon>
-        <div className="text-xl">Topics</div>
-      </div>
+  const navigateToTopic = (items: TreeItemIndex[]) => navigate(`/help/${items[0]}`)
 
-      <div className="overflow-auto pr-2">
+  const renderItemArrow = ({ item, context }: { item: HelpTopicTreeItem; context: TreeItemRenderContext }) => {
+    if (!item.isFolder) return null
+
+    const Icon = context.isExpanded ? AltArrowDownIcon : AltArrowRightIcon
+    return (
+      <Icon
+        onClick={context.toggleExpandedState}
+        className="rct-tree-item-arrow-isFolder rct-tree-item-arrow fill-gray-950"
+      />
+    )
+  }
+
+  const renderItemTitle = ({ title }: { title: string }) => (
+    <span className="font-inter ml-1 overflow-hidden text-nowrap text-ellipsis">{title}</span>
+  )
+
+  return (
+    <>
+      <div className="overflow-auto px-2">
         <UncontrolledTreeEnvironment
           dataProvider={new StaticTreeDataProvider(helpTopics)}
-          getItemTitle={(item: HelpTopicTreeItem): string => item.data.title}
+          getItemTitle={({ data }) => data.title}
           viewState={{ [TREE_ID]: { selectedItems: [selectedTopic] } }}
           disableMultiselect={true}
-          onSelectItems={(items) => navigate(`/help/${items[0]}`)}
+          onSelectItems={navigateToTopic}
           canSearch={false}
-          renderItemArrow={({ item, context }) => {
-            if (!item.isFolder) {
-              return null
-            }
-            const Icon = context.isExpanded ? AltArrowDownIcon : AltArrowRightIcon
-            return (
-              <Icon
-                onClick={context.toggleExpandedState}
-                className="rct-tree-item-arrow-isFolder rct-tree-item-arrow fill-gray-950"
-              />
-            )
-          }}
-          renderItemTitle={({ title }) => {
-            return <span className="font-inter ml-1 overflow-hidden text-nowrap text-ellipsis">{title}</span>
-          }}
+          renderItemArrow={renderItemArrow}
+          renderItemTitle={renderItemTitle}
         >
           <Tree treeId={TREE_ID} rootItem="root" ref={tree} treeLabel="Tree Example" />
         </UncontrolledTreeEnvironment>
       </div>
-    </div>
+    </>
   )
 }
