@@ -13,7 +13,6 @@ import '@xyflow/react/dist/style.css'
 import FrankNodeComponent, { type FrankNode } from '~/routes/builder/canvas/nodetypes/frank-node'
 import FrankEdgeComponent from '~/routes/builder/canvas/edgetypes/frank-edge'
 import ExitNodeComponent, { type ExitNode } from '~/routes/builder/canvas/nodetypes/exit-node'
-import StartNodeComponent, { type StartNode } from '~/routes/builder/canvas/nodetypes/start-node'
 import GroupNodeComponent, { type GroupNode } from '~/routes/builder/canvas/nodetypes/group-node'
 import useFlowStore, { type FlowState } from '~/stores/flow-store'
 import { useShallow } from 'zustand/react/shallow'
@@ -22,7 +21,7 @@ import { getElementTypeFromName } from '~/routes/builder/node-translator-module'
 import { createContext, useContext, useEffect } from 'react'
 import StickyNoteComponent, { type StickyNote } from '~/routes/builder/canvas/nodetypes/sticky-note'
 
-export type FlowNode = FrankNode | StartNode | ExitNode | StickyNote | GroupNode | Node
+export type FlowNode = FrankNode | ExitNode | StickyNote | GroupNode | Node
 
 const NodeContextMenuContext = createContext<(visible: boolean) => void>(() => {})
 export const useNodeContextMenu = () => useContext(NodeContextMenuContext)
@@ -40,7 +39,6 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
   const nodeTypes = {
     frankNode: FrankNodeComponent,
     exitNode: ExitNodeComponent,
-    startNode: StartNodeComponent,
     stickyNote: StickyNoteComponent,
     groupNode: GroupNodeComponent,
   }
@@ -93,7 +91,7 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
 
       if (event.key === 'g' || event.key === 'G') {
         event.preventDefault()
-        groupSelectedNodes()
+        handleGrouping()
       }
     }
 
@@ -101,20 +99,41 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
     return () => globalThis.removeEventListener('keydown', handleKeyDown)
   }, [nodes])
 
-  const groupSelectedNodes = () => {
+  const handleGrouping = () => {
     const selectedNodes = nodes.filter((node) => node.selected)
     if (selectedNodes.length < 2) return // Do not group if 1 or no nodes are selected
 
+    // Degroup if all nodes are already in same group
     const allInSameGroup = selectedNodes.every((node) => node.parentId && node.parentId === selectedNodes[0].parentId)
     if (allInSameGroup) {
-      ungroupNodes(selectedNodes, nodes)
+      const parentId = selectedNodes[0].parentId!
+      const updatedNodes = degroupNodes(selectedNodes, parentId)
+      useFlowStore.getState().setNodes(updatedNodes)
       return
     }
 
-    const minX = Math.min(...selectedNodes.map((node) => node.position.x))
-    const minY = Math.min(...selectedNodes.map((node) => node.position.y))
-    const maxX = Math.max(...selectedNodes.map((node) => node.position.x + (node.measured?.width ?? 0)))
-    const maxY = Math.max(...selectedNodes.map((node) => node.position.y + (node.measured?.height ?? 0)))
+    // Add outsider nodes to existing group
+    const ungroupedNodes = selectedNodes.filter((n) => !n.parentId)
+    const parentGroups = new Set(selectedNodes.map((n) => n.parentId).filter(Boolean))
+
+    if (parentGroups.size === 1 && ungroupedNodes.length > 0) {
+      const parentId = [...parentGroups][0]!
+      const updatedNodes = degroupNodes(selectedNodes, parentId)
+      const updatedSelectedNodes = updatedNodes.filter((node) =>
+        selectedNodes.some((selectedNode) => selectedNode.id === node.id),
+      )
+      groupNodes(updatedSelectedNodes, updatedNodes)
+      return
+    }
+
+    groupNodes(selectedNodes, nodes)
+  }
+
+  const groupNodes = (nodesToGroup: FlowNode[], currentNodes: FlowNode[]) => {
+    const minX = Math.min(...nodesToGroup.map((node) => node.position.x))
+    const minY = Math.min(...nodesToGroup.map((node) => node.position.y))
+    const maxX = Math.max(...nodesToGroup.map((node) => node.position.x + (node.measured?.width ?? 0)))
+    const maxY = Math.max(...nodesToGroup.map((node) => node.position.y + (node.measured?.height ?? 0)))
 
     const padding = 30
     const width = maxX - minX + padding * 2
@@ -131,7 +150,7 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
       selectable: false,
     }
 
-    const updatedSelectedNodes: FlowNode[] = selectedNodes.map((node) => ({
+    const updatedSelectedNodes: FlowNode[] = nodesToGroup.map((node) => ({
       ...node,
       position: {
         x: node.position.x - minX + padding,
@@ -142,27 +161,25 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
       selected: false,
     }))
 
-    const allNodes = [...nodes.filter((node) => !node.selected), groupNode, ...updatedSelectedNodes]
+    const allNodes = [...currentNodes.filter((node) => !node.selected), groupNode, ...updatedSelectedNodes]
 
     useFlowStore.getState().setNodes(allNodes)
   }
 
-  const ungroupNodes = (selectedNodes: FlowNode[], nodes: FlowNode[]) => {
-    const groupIdToRemove = selectedNodes[0].parentId
-    const groupNode = nodes.find((node) => node.id === groupIdToRemove)
-
-    if (!groupNode) return
+  const degroupNodes = (selectedNodes: FlowNode[], parentId: string): FlowNode[] => {
+    const groupNode = nodes.find((node) => node.id === parentId)
+    if (!groupNode) return nodes
 
     const groupX = groupNode.position.x
     const groupY = groupNode.position.y
 
     const updatedNodes = nodes
       .map((node) => {
-        if (node.id === groupIdToRemove) {
+        if (node.id === parentId) {
           return null // remove group node
         }
 
-        if (selectedNodes.includes(node)) {
+        if (selectedNodes.includes(node) && node.parentId === parentId) {
           return {
             ...node,
             parentId: undefined,
@@ -178,7 +195,7 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
       })
       .filter((node): node is FlowNode => node !== null)
 
-    useFlowStore.getState().setNodes(updatedNodes)
+    return updatedNodes
   }
 
   const onDragOver = (event: React.DragEvent) => {
