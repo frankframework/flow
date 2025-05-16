@@ -5,11 +5,8 @@ import { SidebarContext } from '~/components/sidebars-layout/sidebar-layout'
 
 export default function SidebarContentClose(properties: Readonly<SidebarsCloseProperties>) {
   const layoutName = useContext(SidebarContext)
-  const visible = useSidebarStore((sate) => sate.instances[layoutName].visible[properties.side])
-
-  if (!layoutName) {
-    throw new Error('SidebarsClose must be used within a SidebarLayout or be provided a layoutName prop')
-  }
+  if (!layoutName) throw new Error('SidebarsClose must be used within a SidebarLayout or be provided a layoutName prop')
+  const visible = useSidebarStore((sate) => sate.instances[layoutName]?.visible[properties.side])
 
   if (!visible) {
     return (
@@ -18,4 +15,5 @@ export default function SidebarContentClose(properties: Readonly<SidebarsClosePr
       </div>
     )
   }
+  return null
 }
