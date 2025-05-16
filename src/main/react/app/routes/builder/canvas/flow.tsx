@@ -112,21 +112,63 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
       return
     }
 
-    // Add outsider nodes to existing group
+    // Add outsider nodes to existing group or form new group of selected nodes
     const ungroupedNodes = selectedNodes.filter((n) => !n.parentId)
     const parentGroups = new Set(selectedNodes.map((n) => n.parentId).filter(Boolean))
 
     if (parentGroups.size === 1 && ungroupedNodes.length > 0) {
       const parentId = [...parentGroups][0]!
-      const updatedNodes = degroupNodes(selectedNodes, parentId)
-      const updatedSelectedNodes = updatedNodes.filter((node) =>
-        selectedNodes.some((selectedNode) => selectedNode.id === node.id),
+      const parentChildren = nodes.filter((n) => n.parentId === parentId)
+      const allChildrenSelected = parentChildren.every((child) =>
+        selectedNodes.some((selected) => selected.id === child.id),
       )
-      groupNodes(updatedSelectedNodes, updatedNodes)
-      return
+
+      // If all nodes within a group are selected -> Add the nodes outside of the group to the existing group
+      if (allChildrenSelected) {
+        const updatedNodes = degroupNodes(selectedNodes, parentId)
+        const updatedSelectedNodes = updatedNodes.filter((node) =>
+          selectedNodes.some((selectedNode) => selectedNode.id === node.id),
+        )
+        groupNodes(updatedSelectedNodes, updatedNodes)
+        return
+      }
+
+      // If not, it will group the selected nodes as normal, detaching any already grouped nodes from their former group
     }
 
     groupNodes(selectedNodes, nodes)
+  }
+
+  const degroupNodes = (selectedNodes: FlowNode[], parentId: string): FlowNode[] => {
+    const groupNode = nodes.find((node) => node.id === parentId)
+    if (!groupNode) return nodes
+
+    const groupX = groupNode.position.x
+    const groupY = groupNode.position.y
+
+    const updatedNodes = nodes
+      .map((node) => {
+        if (node.id === parentId) {
+          return null // remove group node
+        }
+
+        if (selectedNodes.includes(node) && node.parentId === parentId) {
+          return {
+            ...node,
+            parentId: undefined,
+            extent: undefined,
+            position: {
+              x: node.position.x + groupX,
+              y: node.position.y + groupY,
+            },
+          }
+        }
+
+        return node
+      })
+      .filter((node): node is FlowNode => node !== null)
+
+    return updatedNodes
   }
 
   const groupNodes = (nodesToGroup: FlowNode[], currentNodes: FlowNode[]) => {
@@ -164,38 +206,6 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
     const allNodes = [...currentNodes.filter((node) => !node.selected), groupNode, ...updatedSelectedNodes]
 
     useFlowStore.getState().setNodes(allNodes)
-  }
-
-  const degroupNodes = (selectedNodes: FlowNode[], parentId: string): FlowNode[] => {
-    const groupNode = nodes.find((node) => node.id === parentId)
-    if (!groupNode) return nodes
-
-    const groupX = groupNode.position.x
-    const groupY = groupNode.position.y
-
-    const updatedNodes = nodes
-      .map((node) => {
-        if (node.id === parentId) {
-          return null // remove group node
-        }
-
-        if (selectedNodes.includes(node) && node.parentId === parentId) {
-          return {
-            ...node,
-            parentId: undefined,
-            extent: undefined,
-            position: {
-              x: node.position.x + groupX,
-              y: node.position.y + groupY,
-            },
-          }
-        }
-
-        return node
-      })
-      .filter((node): node is FlowNode => node !== null)
-
-    return updatedNodes
   }
 
   const onDragOver = (event: React.DragEvent) => {
