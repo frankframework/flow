@@ -1,6 +1,6 @@
 import React from 'react'
 import clsx from 'clsx'
-import CloseSquareIcon from '/icons/solar/Close Square.svg?react'
+import CloseIcon from '/icons/custom/Close.svg?react'
 import type { TabsItem } from '~/components/tabs/tabs'
 import CodeIcon from '/icons/solar/Code.svg?react'
 
@@ -24,8 +24,11 @@ export default function Tab({ value, icon, isSelected, onSelect, onClose }: Read
     >
       <Icon className={'h-4 w-auto fill-gray-950'} />
       {value}
-      <CloseSquareIcon
-        className={clsx('h-5 hover:fill-gray-500', isSelected ? 'fill-gray-400' : 'group-hover:fill-gray-400')}
+      <CloseIcon
+        className={clsx(
+          'h-8 w-auto hover:cursor-pointer hover:fill-gray-600',
+          isSelected ? 'fill-gray-400' : 'group-hover:fill-gray-400',
+        )}
         onClick={(event) => onClose(event)}
       />
     </li>
