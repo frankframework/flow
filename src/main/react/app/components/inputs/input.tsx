@@ -10,7 +10,7 @@ type BaseInputFieldProperties = {
   placeholder?: string
   patterns?: Record<string, RegExp>
   onValidChange?: (isValid: boolean) => void
-} & React.InputHTMLAttributes<HTMLInputElement>
+} & Omit<React.InputHTMLAttributes<HTMLInputElement>, 'placeholder' | 'value' | 'onChange'>
 
 export default function Input({ onChange, patterns, value, onValidChange, ...properties }: BaseInputFieldProperties) {
   const [isValid, setIsValid] = useState(true)
