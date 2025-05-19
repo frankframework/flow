@@ -4,10 +4,17 @@ import CheckSquareIcon from '/icons/custom/Check.svg?react'
 
 type CheckboxProperties = {
   checked?: boolean
+  disabled?: boolean
   onChange: (event: React.ChangeEvent<HTMLInputElement>) => void
-} & Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type'>
+} & Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type' | 'disabled'>
 
-export default function Checkbox({ checked = false, onChange, className, ...properties }: CheckboxProperties) {
+export default function Checkbox({
+  checked = false,
+  disabled = false,
+  onChange,
+  className,
+  ...properties
+}: CheckboxProperties) {
   const [isChecked, setIsChecked] = useState(checked)
 
   useEffect(() => {
@@ -15,21 +22,27 @@ export default function Checkbox({ checked = false, onChange, className, ...prop
   }, [checked])
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setIsChecked(event.target.checked)
-    onChange(event)
+    if (!disabled) {
+      setIsChecked(event.target.checked)
+      onChange(event)
+    }
   }
 
   return (
-    <div className={clsx('flex items-start gap-3', className)}>
-      <div className="relative flex h-5 items-center">
+    <div className={clsx('flex items-start gap-3', disabled && 'opacity-50', className)}>
+      <div className="relative flex aspect-square h-6 items-center">
         <input
           type="checkbox"
           checked={isChecked}
+          disabled={disabled}
           onChange={handleChange}
-          className="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-200 transition-colors checked:border-[var(--color-brand)] checked:bg-[var(--color-brand)]"
+          className={clsx(
+            'peer h-full w-full appearance-none rounded-md border border-gray-200 checked:border-[var(--color-brand)] checked:bg-[var(--color-brand)]',
+            disabled ? 'cursor-not-allowed' : 'cursor-pointer',
+          )}
           {...properties}
         />
-        <CheckSquareIcon className="pointer-events-none absolute left-0 h-5 w-5 fill-white opacity-0 peer-checked:opacity-100" />
+        <CheckSquareIcon className="pointer-events-none absolute left-0 h-full w-full fill-white opacity-0 peer-checked:opacity-100" />
       </div>
     </div>
   )

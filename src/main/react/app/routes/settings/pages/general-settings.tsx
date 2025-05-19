@@ -1,7 +1,8 @@
 import React from 'react'
 import { useSettingsStore } from '../settings-store'
-import Input from '~/components/inputs/input'
-import Checkbox from "~/components/inputs/checkbox";
+import ValidatedInput from '~/components/inputs/validatedInput'
+import Checkbox from '~/components/inputs/checkbox'
+import Toggle from '~/components/inputs/toggle'
 
 export default function GeneralSettings() {
   const { general, setGeneralSettings } = useSettingsStore()
@@ -21,8 +22,11 @@ export default function GeneralSettings() {
   return (
     <div className="p-6">
       <h2 className="mb-6 text-2xl font-semibold">General Settings</h2>
-      <Checkbox />
-      <Input
+      <div className="flex">
+        <Toggle onChange={console.log} />
+        <Checkbox onChange={console.log} />
+      </div>
+      <ValidatedInput
         onChange={console.log}
         patterns={{ 'This field can not be empty': /.+/, 'This field must be S only': /s/ }}
       />
