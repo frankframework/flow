@@ -3,7 +3,7 @@ import clsx from 'clsx'
 
 type ToggleProperties = {
   checked?: boolean
-  onChange: (event: React.ChangeEvent<HTMLInputElement>) => void
+  onChange: (checked: boolean) => void
   disabled?: boolean
 } & Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type' | 'checked' | 'onChange'>
 
@@ -22,8 +22,7 @@ export default function Toggle({
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (!disabled) {
-      setIsChecked(event.target.checked)
-      onChange(event)
+      onChange?.(event.target.checked)
     }
   }
 
