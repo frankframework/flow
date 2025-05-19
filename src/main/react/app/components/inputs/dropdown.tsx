@@ -139,6 +139,10 @@ export default function Dropdown({
     }
   }
 
+  const setOptionReference = (index: number) => (element: HTMLLIElement | null) => {
+    optionsReference.current[index] = element
+  }
+
   return (
     <div
       ref={dropdownReference}
