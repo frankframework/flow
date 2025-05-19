@@ -18,8 +18,8 @@ export default function SidebarLayout({
   windowResizeOnChange,
 }: Readonly<SidebarLayoutProperties>) {
   const { initializeInstance, setSizes, setVisible } = useSidebarStore()
-  const sizes = useSidebarStore((state) => state.instances[name]?.sizes) || []
-  const visible = useSidebarStore((state) => state.instances[name].visible)
+  const sizes = useSidebarStore((state) => state.instances[name]?.sizes) ?? []
+  const visible = useSidebarStore((state) => state.instances[name]?.visible) ?? []
   const childrenArray = React.Children.toArray(children)
 
   useEffect(() => {
