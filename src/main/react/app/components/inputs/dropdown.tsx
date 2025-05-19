@@ -139,6 +139,10 @@ export default function Dropdown({
     }
   }
 
+  const setOptionReference = (index: number) => (element: HTMLLIElement | null) => {
+    optionsReference.current[index] = element
+  }
+
   return (
     <div
       ref={dropdownReference}
@@ -170,7 +174,7 @@ export default function Dropdown({
             Object.entries(options).map(([value, label], index) => (
               <li
                 key={value}
-                ref={(element) => (optionsReference.current[index] = element)}
+                ref={setOptionReference(index)}
                 onClick={() => handleOptionClick(value)}
                 className={clsx(
                   'relative cursor-pointer px-3 py-2 sm:text-sm',
