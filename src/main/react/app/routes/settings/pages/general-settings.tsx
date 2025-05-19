@@ -3,6 +3,7 @@ import { useSettingsStore } from '../settings-store'
 import ValidatedInput from '~/components/inputs/validatedInput'
 import Checkbox from '~/components/inputs/checkbox'
 import Toggle from '~/components/inputs/toggle'
+import Dropdown from '~/components/inputs/dropdown'
 
 export default function GeneralSettings() {
   const { general, setGeneralSettings } = useSettingsStore()
@@ -26,6 +27,22 @@ export default function GeneralSettings() {
         <Toggle onChange={console.log} />
         <Checkbox onChange={console.log} />
       </div>
+      <Dropdown
+        options={{
+          label1: 'value1',
+          label2: 'value2',
+          label3: 'value3',
+          label4: 'value4',
+          label5: 'value5',
+          label6: 'value6',
+          label7: 'value7',
+          label8: 'value8',
+          label9: 'value9',
+          label0: 'value0',
+          value: 'value',
+        }}
+        onChange={console.log}
+      />
       <ValidatedInput
         onChange={console.log}
         patterns={{ 'This field can not be empty': /.+/, 'This field must be S only': /s/ }}
