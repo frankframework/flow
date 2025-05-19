@@ -1,5 +1,7 @@
 import React from 'react'
 import { useSettingsStore } from '../settings-store'
+import Input from '~/components/inputs/input'
+import Checkbox from "~/components/inputs/checkbox";
 
 export default function GeneralSettings() {
   const { general, setGeneralSettings } = useSettingsStore()
@@ -19,7 +21,11 @@ export default function GeneralSettings() {
   return (
     <div className="p-6">
       <h2 className="mb-6 text-2xl font-semibold">General Settings</h2>
-
+      <Checkbox />
+      <Input
+        onChange={console.log}
+        patterns={{ 'This field can not be empty': /.+/, 'This field must be S only': /s/ }}
+      />
       <div className="space-y-6">
         <div className="flex flex-col gap-2">
           <label className="font-medium">Application Language</label>
