@@ -11,6 +11,7 @@ export interface DropdownProperties {
   placeholder?: string
   className?: string
   disabled?: boolean
+  labelId?: string
 }
 
 export default function Dropdown({
@@ -20,6 +21,7 @@ export default function Dropdown({
   placeholder = 'Select an option',
   className,
   disabled = false,
+  labelId,
 }: Readonly<DropdownProperties>) {
   const [isOpen, setIsOpen] = useState(false)
   const [selectedValue, setSelectedValue] = useState<string | undefined>(value)
@@ -34,19 +36,6 @@ export default function Dropdown({
   useEffect(() => {
     setSelectedValue(value)
   }, [value])
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownReference.current && !dropdownReference.current.contains(event.target as Node)) {
-        setIsOpen(false)
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside)
-    }
-  }, [])
 
   useEffect(() => {
     if (isOpen) {
@@ -68,6 +57,18 @@ export default function Dropdown({
     optionsReference.current = optionsReference.current.slice(0, optionsArray.length)
   }, [options])
 
+  useEffect(() => {
+    if (!labelId) return
+
+    const labelElement = document.querySelector(`#${labelId}`)
+
+    labelElement?.addEventListener('click', toggleDropdown)
+
+    return () => {
+      labelElement?.removeEventListener('click', toggleDropdown)
+    }
+  }, [labelId, disabled])
+
   const getSelectedIndex = () => {
     const index = optionsArray.indexOf(selectedValue ?? '')
     return index === -1 ? 0 : index
@@ -86,7 +87,12 @@ export default function Dropdown({
   const handleOptionClick = (optionValue: string) => {
     setSelectedValue(optionValue)
     onChange(optionValue)
+    closeDropdown()
+  }
+
+  const closeDropdown = () => {
     setIsOpen(false)
+    setHighlightedIndex(-1)
   }
 
   const handleKeyDown = (event: React.KeyboardEvent) => {
@@ -151,6 +157,8 @@ export default function Dropdown({
       onKeyDown={handleKeyDown}
       aria-expanded={isOpen}
       role="combobox"
+      onBlur={closeDropdown}
+      id={labelId ? `dropdown-for-${labelId}` : undefined} // Associate dropdown with label
     >
       <div
         onClick={toggleDropdown}
