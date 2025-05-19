@@ -1,4 +1,4 @@
-import { useSettingsStore } from '../settings-store'
+import {type GeneralSettings, useSettingsStore} from '../settings-store'
 import Dropdown from '~/components/inputs/dropdown'
 import CheckboxWithLabel from '~/components/inputs/checkbox-with-label'
 import InputWithLabel from '~/components/inputs/input-with-label'
@@ -16,6 +16,23 @@ export default function GeneralSettings() {
   return (
     <div className="space-y-6 p-6">
       <p>Introduction to general settings</p>
+
+      <InputWithLabel
+        side="right"
+        id="theme"
+        label="Application Theme"
+        description="Select your preferred theme for the application"
+        grow
+      >
+        <Dropdown
+          labelId="theme"
+          value={general.theme}
+          onChange={(theme) => setGeneralSettings({ theme: theme as GeneralSettings['theme'] })}
+          options={{ light: 'Light', dark: 'Dark', system: 'System' }}
+          className="w-100!"
+        />
+      </InputWithLabel>
+
       <InputWithLabel
         side="right"
         id="language"
