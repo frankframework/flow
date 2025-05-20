@@ -103,11 +103,37 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
     const selectedNodes = nodes.filter((node) => node.selected)
     if (selectedNodes.length < 2) return // Do not group if 1 or no nodes are selected
 
+    const parentIds = [...new Set(selectedNodes.map((node) => node.parentId).filter(Boolean))]
+
+    // Check if all children in each group are selected
+    const fullySelectedGroupsIds = parentIds.filter((parentId) => {
+      const children = nodes.filter((node) => node.parentId === parentId)
+      return children.every((child) => selectedNodes.some((sn) => sn.id === child.id))
+    })
+
+    if (fullySelectedGroupsIds.length > 1) {
+      let updatedNodes = [...nodes]
+
+      for (const parentId of fullySelectedGroupsIds) {
+        const groupChildren = updatedNodes.filter((node) => node.parentId === parentId)
+        updatedNodes = degroupNodes(groupChildren, parentId!, updatedNodes)
+      }
+
+      // Get newly degrouped nodes (which used to be selected)
+      const degroupedSelectedNodes = updatedNodes.filter((node) =>
+        selectedNodes.some((selected) => selected.id === node.id),
+      )
+
+      // Group them into one new group
+      groupNodes(degroupedSelectedNodes, updatedNodes)
+      return
+    }
+
     // Degroup if all nodes are already in same group
     const allInSameGroup = selectedNodes.every((node) => node.parentId && node.parentId === selectedNodes[0].parentId)
     if (allInSameGroup) {
       const parentId = selectedNodes[0].parentId!
-      const updatedNodes = degroupNodes(selectedNodes, parentId)
+      const updatedNodes = degroupNodes(selectedNodes, parentId, nodes)
       useFlowStore.getState().setNodes(updatedNodes)
       return
     }
@@ -125,7 +151,7 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
 
       // If all nodes within a group are selected -> Add the nodes outside of the group to the existing group
       if (allChildrenSelected) {
-        const updatedNodes = degroupNodes(selectedNodes, parentId)
+        const updatedNodes = degroupNodes(selectedNodes, parentId, nodes)
         const updatedSelectedNodes = updatedNodes.filter((node) =>
           selectedNodes.some((selectedNode) => selectedNode.id === node.id),
         )
@@ -139,14 +165,14 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
     groupNodes(selectedNodes, nodes)
   }
 
-  const degroupNodes = (selectedNodes: FlowNode[], parentId: string): FlowNode[] => {
-    const groupNode = nodes.find((node) => node.id === parentId)
+  const degroupNodes = (selectedNodes: FlowNode[], parentId: string, allNodes: FlowNode[]): FlowNode[] => {
+    const groupNode = allNodes.find((node) => node.id === parentId)
     if (!groupNode) return nodes
 
     const groupX = groupNode.position.x
     const groupY = groupNode.position.y
 
-    const updatedNodes = nodes
+    const updatedNodes = allNodes
       .map((node) => {
         if (node.id === parentId) {
           return null // remove group node
