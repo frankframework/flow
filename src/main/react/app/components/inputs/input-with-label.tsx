@@ -1,7 +1,7 @@
 import React from 'react'
 
 interface InputWithLabelProperties {
-  id: string
+  htmlFor: string
   label: string
   description?: string
   side?: 'left' | 'right'
@@ -9,7 +9,7 @@ interface InputWithLabelProperties {
 }
 
 export default function InputWithLabel({
-  id,
+  htmlFor,
   label,
   description,
   side = 'left',
@@ -21,12 +21,10 @@ export default function InputWithLabel({
     <div className="flex items-center gap-4">
       {isLeft && children}
       {isLeft && grow && <div className="grow" />}
-      <div>
-        <label className="font-medium cursor-pointer" htmlFor={id} id={id}>
-          {label}
-        </label>
-        {description && <div>{description}</div>}
-      </div>
+      <label className="cursor-pointer" htmlFor={htmlFor}>
+        <span className="font-medium">{label}</span>
+        {description && <div className="text-sm">{description}</div>}
+      </label>
       {!isLeft && grow && <div className="grow" />}
       {!isLeft && children}
     </div>
