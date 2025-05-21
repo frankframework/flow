@@ -12,7 +12,7 @@ export default function CheckboxWithLabel({ id, label, description, ...propertie
   const uniqueId = id ?? useId()
 
   return (
-    <InputWithLabel id={uniqueId} label={label} description={description}>
+    <InputWithLabel htmlFor={uniqueId} label={label} description={description}>
       <Checkbox id={uniqueId} {...properties} />
     </InputWithLabel>
   )

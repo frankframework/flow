@@ -60,7 +60,7 @@ export default function Dropdown({
   useEffect(() => {
     if (!labelId) return
 
-    const labelElement = document.querySelector(`#${labelId}`)
+    const labelElement = document.querySelector(`[for=${labelId}]`)
 
     labelElement?.addEventListener('click', toggleDropdown)
 
@@ -158,7 +158,9 @@ export default function Dropdown({
       aria-expanded={isOpen}
       role="combobox"
       onBlur={closeDropdown}
-      id={labelId ? `dropdown-for-${labelId}` : undefined} // Associate dropdown with label
+      id={labelId}
+      aria-controls="listbox"
+      aria-haspopup="listbox"
     >
       <div
         onClick={toggleDropdown}
