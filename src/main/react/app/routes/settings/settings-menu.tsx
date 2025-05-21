@@ -34,7 +34,7 @@ export default function SettingsMenu({ selectedCategory, onSelectedCategory }: R
     return (
       <Icon
         onClick={context.toggleExpandedState}
-        className="rct-tree-item-arrow-isFolder rct-tree-item-arrow fill-gray-950"
+        className="rct-tree-item-arrow-isFolder rct-tree-item-arrow fill-icon"
       />
     )
   }
@@ -43,7 +43,7 @@ export default function SettingsMenu({ selectedCategory, onSelectedCategory }: R
     const Icon = item.data.icon || SettingsIcon
     return (
       <>
-        {Icon && <Icon className="w-4 flex-shrink-0 fill-gray-950" />}
+        {Icon && <Icon className="w-4 flex-shrink-0 fill-icon" />}
         <span className="font-inter ml-1 overflow-hidden text-nowrap text-ellipsis">{title}</span>
       </>
     )

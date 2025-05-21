@@ -14,11 +14,11 @@
   --rct-bar-color: var(--color-brand);
   --rct-focus-outline: var(--color-brand);
 
-  --rct-color-focustree-item-selected-bg: var(--color-gray-100);
-  --rct-color-focustree-item-hover-bg: var(--color-gray-50);
+  --rct-color-focustree-item-selected-bg: var(--color-selected);
+  --rct-color-focustree-item-hover-bg: var(--color-hover);
   --rct-color-focustree-item-hover-text: inherit;
-  --rct-color-focustree-item-active-bg: var(--color-gray-200);
-  --rct-color-focustree-item-active-text: var(--color-gray-950);
+  --rct-color-focustree-item-active-bg: var(--color-selected);
+  --rct-color-focustree-item-active-text: var(--color-text);
 
   --rct-arrow-size: 10px;
   --rct-arrow-container-size: 16px;
@@ -31,7 +31,7 @@
   --rct-search-padding: 8px;
   --rct-search-border: var(--color-brand);
   --rct-search-border-bottom: var(--color-brand);
-  --rct-search-bg: var(--color-gray-200);
-  --rct-search-text: var(--color-gray-950);
+  --rct-search-bg: var(--color-border);
+  --rct-search-text: var(--color-text);
   --rct-search-text-offset: calc(var(--rct-search-padding) * 2 + 16px);
 }

@@ -43,7 +43,7 @@ export default function Builder() {
           </div>
           <SidebarContentClose side={SidebarSide.RIGHT} />
         </div>
-        <div className="h-12 border-b border-b-gray-200">
+        <div className="h-12 border-b border-b-border">
           Path: {Object.entries(tabs).find(([key]) => key === selectedTab)?.[1]?.value}
         </div>
         <Flow showNodeContextMenu={setShowNodeContext} />

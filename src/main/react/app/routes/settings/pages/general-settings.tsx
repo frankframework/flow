@@ -18,7 +18,7 @@ export default function GeneralSettings() {
 
   return (
     <div className="space-y-3 p-6">
-      <div className="space-y-6 rounded-md border border-gray-200 p-6">
+      <div className="space-y-6 rounded-md border border-border p-6">
         <Button>Button</Button>
         <br />
         <RadioList
@@ -33,7 +33,7 @@ export default function GeneralSettings() {
         <br />
         <Input onChange={console.log} />
       </div>
-      <div className="space-y-6 rounded-md border border-gray-200 p-6">
+      <div className="space-y-6 rounded-md border border-border p-6">
         <p>Introduction to general settings</p>
 
         <InputWithLabel

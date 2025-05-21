@@ -37,7 +37,7 @@ export default function Checkbox({
         disabled={disabled}
         onChange={handleChange}
         className={clsx(
-          'peer h-full w-full appearance-none rounded-md border border-gray-200 checked:border-[var(--color-brand)] checked:bg-[var(--color-brand)]',
+          'peer h-full w-full appearance-none rounded-md border border-border checked:border-brand checked:bg-brand',
           disabled ? 'cursor-not-allowed' : 'cursor-pointer',
         )}
         {...properties}

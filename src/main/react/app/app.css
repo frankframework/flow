@@ -2,7 +2,17 @@
 
 @theme {
   --font-inter: "Inter", var(--font-sans);
+
   --color-brand: #fdc300;
+  --color-hover: var(--color-gray-100);
+  --color-selected: var(--color-gray-200);
+  --color-border: var(--color-gray-300);
+
+  --color-text: var(--color-gray-950);
+
+  --color-icon: var(--color-gray-950);
+  --color-icon-muted: var(--color-gray-400);
+  --color-icon-active: var(--color-brand);
 }
 
 html,
@@ -11,7 +21,7 @@ body {
 	@apply bg-white;
   @apply select-none;
   @apply font-inter;
-  @apply text-gray-950;
+  @apply text-text;
 
   /*@media (prefers-color-scheme: dark) {*/
 	/*color-scheme: dark;*/
@@ -21,7 +31,7 @@ body {
 :root {
   /* Allotment Styling */
   --focus-border: var(--color-brand);
-  --separator-border: var(--color-gray-200);
+  --separator-border: var(--color-border);
   /* Node Styling */
   --type-pipe: #68D250;
   --type-listener: #D250BF;

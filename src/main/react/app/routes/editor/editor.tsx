@@ -37,7 +37,7 @@ export default function CodeEditor() {
             <Tabs onSelectedTabChange={setSelectedTab} initialTabs={tabs} />
           </div>
         </div>
-        <div className="h-12 border-b border-b-gray-200">
+        <div className="h-12 border-b border-b-border">
           Path: {Object.entries(tabs).find(([key]) => key === selectedTab)?.[1]?.value}
         </div>
         <div className="h-full">

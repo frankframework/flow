@@ -37,7 +37,7 @@ export default function Toggle({
           className="absolute h-0 w-0 opacity-0"
           {...properties}
         />
-        <span className={clsx('absolute inset-0 rounded-full', isChecked ? 'bg-[var(--color-brand)]' : 'bg-gray-200')}>
+        <span className={clsx('absolute inset-0 rounded-full', isChecked ? 'bg-brand' : 'bg-border')}>
           <span
             className={clsx(
               'absolute top-[50%] h-5 w-5 -translate-y-1/2 transform rounded-full bg-white',
