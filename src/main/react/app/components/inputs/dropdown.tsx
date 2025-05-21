@@ -60,7 +60,7 @@ export default function Dropdown({
   useEffect(() => {
     if (!id) return
 
-    const labelElement = document.querySelector(`[for=${id}]`)
+    const labelElement = document.querySelector(`[for="${id}"]`) as HTMLLabelElement | null
 
     labelElement?.addEventListener('click', toggleDropdown)
 
