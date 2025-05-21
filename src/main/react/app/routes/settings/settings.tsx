@@ -7,9 +7,12 @@ import SidebarHeader from '~/components/sidebars-layout/sidebar-header'
 import SettingsMenu from '~/routes/settings/settings-menu'
 import React, { useEffect, useState } from 'react'
 
+const firstSettingsCategoryKey = SettingsMenuItems['root' as keyof SettingsMenuItem]?.children?.[0]
+
 export default function Settings() {
-  const settingsCategoryKey = Object.keys(SettingsMenuItems)[1]
-  const [settingsCategory, setSettingsCategory] = useState<SettingsMenuItem>(SettingsMenuItems[settingsCategoryKey])
+  const [settingsCategory, setSettingsCategory] = useState<SettingsMenuItem>(
+    SettingsMenuItems[firstSettingsCategoryKey as keyof SettingsMenuItem],
+  )
 
   const setCategory = (category: string) => {
     const selectedCategory = SettingsMenuItems[category]
