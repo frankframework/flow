@@ -48,10 +48,10 @@ export default function RadioButton({
         />
         <span
           className={clsx(
-            'relative mr-4 inline-block h-6 w-6 rounded-full border align-top peer-focus:border-[var(--color-pink-500)]',
+            'relative mr-4 inline-block h-6 w-6 rounded-full border border-gray-200 align-top peer-focus:border-[var(--color-brand)]',
             isSelected
-              ? 'border-[var(--color-brand)] bg-[var(--color-brand)] shadow-[inset_0_0_0_2px_var(--color-white)]'
-              : 'border-gray-200 bg-[var(--color-white)]',
+              ? 'bg-[var(--color-brand)] shadow-[inset_0_0_0_3px_var(--color-white)]'
+              : 'bg-[var(--color-white)]',
           )}
         />
       </label>
