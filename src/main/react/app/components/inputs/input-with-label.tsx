@@ -4,7 +4,7 @@ interface InputWithLabelProperties {
   htmlFor: string
   label: string
   description?: string
-  side?: 'left' | 'right'
+  inputSide?: 'left' | 'right'
   grow?: boolean
 }
 
@@ -12,11 +12,11 @@ export default function InputWithLabel({
   htmlFor,
   label,
   description,
-  side = 'left',
+  inputSide = 'left',
   grow = false,
   children,
 }: React.PropsWithChildren<Readonly<InputWithLabelProperties>>) {
-  const isLeft = side === 'left'
+  const isLeft = inputSide === 'left'
   return (
     <div className="flex items-center gap-4">
       {isLeft && children}

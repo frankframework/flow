@@ -3,8 +3,8 @@ import Dropdown from '~/components/inputs/dropdown'
 import CheckboxWithLabel from '~/components/inputs/checkbox-with-label'
 import InputWithLabel from '~/components/inputs/input-with-label'
 import Button from '~/components/inputs/button'
-import RadioButton from '~/components/inputs/radio-button'
-import Input from "~/components/inputs/input";
+import Input from '~/components/inputs/input'
+import RadioList from '~/components/inputs/radio-list'
 
 export default function GeneralSettings() {
   const { general, setGeneralSettings } = useSettingsStore()
@@ -21,7 +21,14 @@ export default function GeneralSettings() {
       <div className="space-y-6 rounded-md border border-gray-200 p-6">
         <Button>Button</Button>
         <br />
-        <RadioButton onChange={console.log} />
+        <RadioList
+          options={{
+            light: { Light: 'Wit enzo' },
+            dark: { Dark: 'Zwart enzo' },
+            system: { System: 'Zelfde als je hebt' },
+          }}
+          onChange={console.log}
+        />
         <br />
         <Input onChange={console.log} />
       </div>
@@ -29,7 +36,7 @@ export default function GeneralSettings() {
         <p>Introduction to general settings</p>
 
         <InputWithLabel
-          side="right"
+          inputSide="right"
           htmlFor="theme"
           label="Application Theme"
           description="Select your preferred theme for the application"
@@ -45,7 +52,7 @@ export default function GeneralSettings() {
         </InputWithLabel>
 
         <InputWithLabel
-          side="right"
+          inputSide="right"
           htmlFor="language"
           label="Application Language"
           description="Select your preferred language for the application"
