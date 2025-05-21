@@ -11,7 +11,7 @@ export interface DropdownProperties {
   placeholder?: string
   className?: string
   disabled?: boolean
-  labelId?: string
+  id?: string
 }
 
 export default function Dropdown({
@@ -21,7 +21,7 @@ export default function Dropdown({
   placeholder = 'Select an option',
   className,
   disabled = false,
-  labelId,
+  id,
 }: Readonly<DropdownProperties>) {
   const [isOpen, setIsOpen] = useState(false)
   const [selectedValue, setSelectedValue] = useState<string | undefined>(value)
@@ -58,16 +58,16 @@ export default function Dropdown({
   }, [options])
 
   useEffect(() => {
-    if (!labelId) return
+    if (!id) return
 
-    const labelElement = document.querySelector(`[for=${labelId}]`)
+    const labelElement = document.querySelector(`[for=${id}]`)
 
     labelElement?.addEventListener('click', toggleDropdown)
 
     return () => {
       labelElement?.removeEventListener('click', toggleDropdown)
     }
-  }, [labelId, disabled])
+  }, [id, disabled])
 
   const getSelectedIndex = () => {
     const index = optionsArray.indexOf(selectedValue ?? '')
@@ -158,7 +158,7 @@ export default function Dropdown({
       aria-expanded={isOpen}
       role="combobox"
       onBlur={closeDropdown}
-      id={labelId}
+      id={id}
       aria-controls="listbox"
       aria-haspopup="listbox"
     >
