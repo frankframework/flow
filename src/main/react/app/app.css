@@ -4,8 +4,8 @@
   --font-inter: "Inter", var(--font-sans);
 
   --color-brand: #fdc300;
-  --color-hover: var(--color-gray-100);
-  --color-selected: var(--color-gray-200);
+  --color-hover: var(--color-gray-50);
+  --color-selected: var(--color-gray-100);
   --color-border: var(--color-gray-300);
 
   --color-text: var(--color-gray-950);
