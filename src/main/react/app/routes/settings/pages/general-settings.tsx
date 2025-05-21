@@ -36,7 +36,7 @@ export default function GeneralSettings() {
           grow
         >
           <Dropdown
-            labelId="theme"
+            id="theme"
             value={general.theme}
             onChange={(theme) => setGeneralSettings({ theme: theme as GeneralSettings['theme'] })}
             options={{ light: 'Light', dark: 'Dark', system: 'System' }}
@@ -52,7 +52,7 @@ export default function GeneralSettings() {
           grow
         >
           <Dropdown
-            labelId="language"
+            id="language"
             value={general.language}
             onChange={(language) => setGeneralSettings({ language })}
             options={languageOptions}
