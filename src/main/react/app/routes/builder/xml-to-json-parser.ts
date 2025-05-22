@@ -1,5 +1,7 @@
 import type { FlowNode } from '~/routes/builder/canvas/flow'
 import { getElementTypeFromName } from '~/routes/builder/node-translator-module'
+import type { ExitNode } from '~/routes/builder/canvas/nodetypes/exit-node'
+import type { FrankNode } from '~/routes/builder/canvas/nodetypes/frank-node'
 
 export async function getXmlString(filename: string): Promise<string> {
   try {
@@ -20,7 +22,7 @@ export async function convertXmlToJson(filename: string) {
   const xmlDoc = parser.parseFromString(xmlString, 'text/xml')
 
   const adapterList = xmlDoc.querySelectorAll('Adapter')
-  convertAdapterToFlowNodes(adapterList[0])
+  convertAdapterToFlowNodes(adapterList[2])
 
   return 'adapterJsonList'
 }
@@ -59,25 +61,41 @@ function convertAdapterToFlowNodes(adapter: any): FlowNode[] {
   for (const [index, element] of elements.entries()) {
     if (element.tagName === 'Exits') {
       const exits = [...element.children]
+      console.log(exits)
       for (const [exitId, exit] of exits.entries()) {
-        nodes.push({
+        const exitNode: ExitNode = {
           id: index.toString() + exitId.toString(),
-          type: 'Exit',
-          name: exit.getAttribute('name') || '',
-          children: [],
-        })
+          type: 'exitNode',
+          position: { x: 0, y: 0 },
+          data: {
+            name: exit.getAttribute('name') || '',
+            type: 'Exit',
+            subtype: 'Exit',
+          },
+        }
+        nodes.push(exitNode)
       }
       continue
     }
-    nodes.push({
-      id: index,
-      to: [],
-      type: getElementTypeFromName(element.tagName),
-      subtype: element.tagName,
-      name: element.getAttribute('name') || '',
-      children: element.children,
-    })
+    const frankNode: FrankNode = {
+      id: index.toString(),
+      type: 'frankNode',
+      position: { x: 0, y: 0 },
+      data: {
+        name: element.getAttribute('name') || '',
+        type: getElementTypeFromName(element.tagName),
+        subtype: element.tagName,
+        children: [],
+        sourceHandles: [
+          {
+            type: 'success',
+            index: 1,
+          },
+        ],
+      },
+    }
+    nodes.push(frankNode)
   }
 
-  console.log(elements)
+  console.log(nodes)
 }
