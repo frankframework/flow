@@ -1,37 +1,59 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
+
 @theme {
   --font-inter: "Inter", var(--font-sans);
 
   --color-brand: #fdc300;
-  --color-hover: var(--color-gray-50);
-  --color-selected: var(--color-gray-100);
-  --color-border: var(--color-gray-300);
+  --color-hover: var(--color-neutral-100);
+  --color-selected: var(--color-neutral-200);
+  --color-border: var(--color-neutral-300);
+  --color-background: var(--color-white);
+  --color-foreground: var(--color-neutral-950);
+  --color-foreground-muted: var(--color-neutral-600);
+  --color-foreground-active: var(--color-brand);
+}
 
-  --color-text: var(--color-gray-950);
+@layer base {
+  [data-theme="light"] {
+    --color-hover: var(--color-neutral-50);
+    --color-selected: var(--color-neutral-100);
+    --color-border: var(--color-neutral-300);
+    --color-background: var(--color-white);
+    --color-foreground: var(--color-neutral-950);
+    --color-foreground-muted: var(--color-neutral-600);
+    --color-foreground-active: var(--color-brand);
+  }
 
-  --color-icon: var(--color-gray-950);
-  --color-icon-muted: var(--color-gray-400);
-  --color-icon-active: var(--color-brand);
+  [data-theme="dark"] {
+    --color-hover: var(--color-neutral-700);
+    --color-selected: var(--color-neutral-600);
+    --color-border: var(--color-neutral-500); /* 950 also looks good, but less for inputs and stuff */
+    --color-background: var(--color-neutral-800);
+    --color-foreground: var(--color-white);
+    --color-foreground-muted: var(--color-neutral-400);
+    --color-foreground-active: var(--color-brand);
+  }
+
 }
 
 html,
 body {
-  /*@apply bg-white dark:bg-gray-950;*/
-	@apply bg-white;
+  @apply bg-background;
   @apply select-none;
   @apply font-inter;
-  @apply text-text;
-
-  /*@media (prefers-color-scheme: dark) {*/
-	/*color-scheme: dark;*/
-  /*}*/
+  @apply text-foreground;
+  @media (prefers-color-scheme: dark) {
+    color-scheme: dark;
+  }
 }
 
 :root {
   /* Allotment Styling */
   --focus-border: var(--color-brand);
   --separator-border: var(--color-border);
+
   /* Node Styling */
   --type-pipe: #68D250;
   --type-listener: #D250BF;

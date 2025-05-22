@@ -10,7 +10,7 @@ export default function Search({ onChange, onKeyDown }: Readonly<SearchPropertie
   return (
     <div className="relative px-4">
       <label htmlFor="search" className="absolute top-1/2 left-6 -translate-y-1/2">
-        <MagnifierIcon className="h-auto w-4 fill-icon-muted" />
+        <MagnifierIcon className="h-auto w-4 fill-foreground-muted" />
       </label>
       <input
         id="search"

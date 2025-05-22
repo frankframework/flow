@@ -35,7 +35,7 @@ export default function SortedElements({ type, items, onDragStart, searchTerm }:
         onClick={toggleExpansion}
         className="flex w-full cursor-pointer items-center gap-1 text-left text-sm font-semibold text-gray-600 capitalize hover:text-gray-900"
       >
-        {shouldExpand ? <ArrowDownIcon className="fill-icon-muted" /> : <ArrowRightIcon className="fill-icon-muted" />}
+        {shouldExpand ? <ArrowDownIcon className="fill-foreground-muted" /> : <ArrowRightIcon className="fill-foreground-muted" />}
         {type === 'other' ? type : `${type}s`}
       </button>
 

@@ -22,12 +22,14 @@ export default function Toggle({
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (!disabled) {
-      onChange?.(event.target.checked)
+      const newIsChecked = event.target.checked
+      setIsChecked(newIsChecked)
+      onChange?.(newIsChecked)
     }
   }
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 group">
       <label className={clsx('relative inline-block h-6 w-12', disabled && 'cursor-not-allowed opacity-50', className)}>
         <input
           type="checkbox"
@@ -40,7 +42,7 @@ export default function Toggle({
         <span className={clsx('absolute inset-0 rounded-full', isChecked ? 'bg-brand' : 'bg-border')}>
           <span
             className={clsx(
-              'absolute top-[50%] h-5 w-5 -translate-y-1/2 transform rounded-full bg-white',
+              'absolute top-[50%] h-5 w-5 -translate-y-1/2 transform rounded-full bg-background group-hover:bg-hover',
               isChecked ? 'right-0.5' : 'left-0.5',
             )}
           />

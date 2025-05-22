@@ -29,14 +29,14 @@ export default function NavbarLink({ route, label, Icon }: Readonly<NavbarLinkPr
         {Icon && (
           <Icon
             className={clsx(
-              'h-8 w-auto group-hover:fill-icon-active',
-              isActive ? 'fill-icon-active' : 'fill-icon',
+              'h-8 w-auto group-hover:fill-brand',
+              isActive ? 'fill-brand' : 'fill-foreground',
             )}
           />
         )}
         <span
           className={clsx(
-            'absolute top-1/2 left-full z-10 ml-2 hidden -translate-y-1/2 rounded bg-text px-2 py-1 text-sm whitespace-nowrap text-white shadow-md group-hover:block',
+            'absolute top-1/2 left-full z-10 ml-2 hidden -translate-y-1/2 rounded bg-foreground px-2 py-1 text-sm whitespace-nowrap text-background shadow-md group-hover:block',
           )}
         >
           {label}

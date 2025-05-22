@@ -165,20 +165,21 @@ export default function Dropdown({
       <div
         onClick={toggleDropdown}
         className={clsx(
-          'border-border flex items-center justify-between rounded-md border px-3 py-2',
+          'border-border flex items-center justify-between rounded-md border px-3 py-2 bg-background',
           disabled ? 'cursor-not-allowed' : 'cursor-pointer',
+          isOpen ? 'bg-selected' : 'hover:bg-hover',
         )}
       >
-        <span className={clsx('text-text block truncate sm:text-sm', !selectedValue && 'text-gray-400')}>
+        <span className={clsx('text-foreground block truncate sm:text-sm', !selectedValue && 'text-gray-400')}>
           {getSelectedLabel()}
         </span>
-        <AltArrowDownIcon className={clsx('fill-icon h-4 w-4', isOpen && 'rotate-180')} />
+        <AltArrowDownIcon className={clsx('fill-foreground h-4 w-4', isOpen && 'rotate-180')} />
       </div>
 
       {isOpen && !disabled && (
         <ul
           ref={listReference}
-          className="border-border text-text absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md border bg-white py-1 shadow-lg"
+          className="border-border text-foreground absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md border bg-background py-1 shadow-lg"
         >
           {optionsArray.length > 0 ? (
             Object.entries(options).map(([value, label], index) => (
@@ -203,7 +204,7 @@ export default function Dropdown({
               </li>
             ))
           ) : (
-            <li className="px-3 py-2 text-gray-400 sm:text-sm">No options available</li>
+            <li className="px-3 py-2 text-foreground-muted sm:text-sm">No options available</li>
           )}
         </ul>
       )}
