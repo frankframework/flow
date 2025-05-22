@@ -32,13 +32,15 @@ export default function Help() {
             </div>
           </div>
         </div>
-        <div className="markdown-body h-full overflow-auto p-4">
-          {(MarkdownContent && <MarkdownContent />) || (
-            <div>
-              The topic with id: <code>{topic}</code> does not seem to exist, it might have been moved or deleted.
-              Please select a different topic from the left sidebar.
-            </div>
-          )}
+        <div className="markdown-body h-full overflow-auto p-6">
+          <div className="border-border rounded-md border p-6">
+            {(MarkdownContent && <MarkdownContent />) || (
+              <div>
+                The topic with id: <code>{topic}</code> does not seem to exist, it might have been moved or deleted.
+                Please select a different topic from the left sidebar.
+              </div>
+            )}
+          </div>
         </div>
       </>
     </SidebarLayout>
