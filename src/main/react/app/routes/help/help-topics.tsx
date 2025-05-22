@@ -54,7 +54,7 @@ export default function HelpTopics({ selectedTopic }: Readonly<HelpCategoriesPro
           renderItemArrow={renderItemArrow}
           renderItemTitle={renderItemTitle}
         >
-          <Tree treeId={TREE_ID} rootItem="root" ref={tree} treeLabel="Tree Example" />
+          <Tree treeId={TREE_ID} rootItem="root" ref={tree} treeLabel="Help Topics" />
         </UncontrolledTreeEnvironment>
       </div>
     </>

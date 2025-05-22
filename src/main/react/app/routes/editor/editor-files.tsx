@@ -12,8 +12,8 @@ import CodeIcon from '/icons/solar/Code.svg?react'
 import AltArrowRightIcon from '/icons/solar/Alt Arrow Right.svg?react'
 import AltArrowDownIcon from '/icons/solar/Alt Arrow Down.svg?react'
 import React, { type RefObject, useRef } from 'react'
-import MagnifierIcon from '/icons/solar/Magnifier.svg?react'
 import EditorFilesDataProvider from '~/routes/editor/editor-files-data-provider'
+import Search from "~/components/search/search";
 
 const TREE_ID = 'editor-files-tree'
 
@@ -69,20 +69,7 @@ export default function EditorFiles({}: Readonly<EditorFilesTreeProperties>) {
 
   return (
     <>
-      <div className="relative px-4">
-        <label htmlFor="search" className="absolute top-1/2 left-6 -translate-y-1/2">
-          <MagnifierIcon className="h-auto w-4 fill-gray-400" />
-        </label>
-        <input
-          id="search"
-          className="w-full rounded-full border border-gray-200 bg-gray-50 py-1 pr-4 pl-7"
-          type="search"
-          placeholder="Search"
-          onChange={handleInputChange}
-          onKeyDown={handleKeyPress}
-        />
-      </div>
-
+      <Search onChange={handleInputChange} onKeyDown={handleKeyPress}></Search>
       <div className="overflow-auto pr-2">
         <UncontrolledTreeEnvironment
           dataProvider={new EditorFilesDataProvider()}
@@ -95,7 +82,7 @@ export default function EditorFiles({}: Readonly<EditorFilesTreeProperties>) {
           renderItemArrow={renderItemArrow}
           renderItemTitle={renderItemTitle}
         >
-          <Tree treeId={TREE_ID} rootItem="root" ref={tree} treeLabel="Tree Example" />
+          <Tree treeId={TREE_ID} rootItem="root" ref={tree} treeLabel="Editor Files" />
         </UncontrolledTreeEnvironment>
       </div>
     </>

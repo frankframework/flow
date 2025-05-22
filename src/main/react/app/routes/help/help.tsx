@@ -1,5 +1,5 @@
 import '/styles/markdown.css'
-import helpTopicTreeItems, { type HelpTopicTreeItem } from './help-topic-tree-items'
+import HelpTopicTreeItems, { type HelpTopicTreeItem } from './help-topic-tree-items'
 import { useParams } from 'react-router'
 import SidebarContentClose from '~/components/sidebars-layout/sidebar-content-close'
 import { SidebarSide } from '~/components/sidebars-layout/sidebar-layout-store'
@@ -7,12 +7,12 @@ import SidebarLayout from '~/components/sidebars-layout/sidebar-layout'
 import SidebarHeader from '~/components/sidebars-layout/sidebar-header'
 import HelpTopics from '~/routes/help/help-topics'
 
-const firstTopic = Object.keys(helpTopicTreeItems)[1]
+const firstTopic = HelpTopicTreeItems['root']?.children?.[0] as string
 
 export default function Help() {
   const { topic } = useParams<{ topic?: string }>()
   const helpTopicKey = topic ?? firstTopic
-  const helpTopic: HelpTopicTreeItem | undefined = helpTopicTreeItems[helpTopicKey]
+  const helpTopic: HelpTopicTreeItem | undefined = HelpTopicTreeItems[helpTopicKey]
 
   const MarkdownContent = helpTopic?.data.content
 
