@@ -1,13 +1,15 @@
 import Tabs from '~/components/tabs/tabs'
-import { Editor } from '@monaco-editor/react'
+import Editor from '@monaco-editor/react'
 import EditorFiles from '~/routes/editor/editor-files'
 import SidebarHeader from '~/components/sidebars-layout/sidebar-header'
 import SidebarLayout from '~/components/sidebars-layout/sidebar-layout'
 import { SidebarSide } from '~/components/sidebars-layout/sidebar-layout-store'
 import SidebarContentClose from '~/components/sidebars-layout/sidebar-content-close'
 import useTabStore from '~/stores/tab-store'
+import { useTheme } from '~/hooks/use-theme'
 
 export default function CodeEditor() {
+  const theme = useTheme()
   const activeTab = useTabStore((state) => state.activeTab)
 
   return (
@@ -23,11 +25,9 @@ export default function CodeEditor() {
             <Tabs />
           </div>
         </div>
-        <div className="h-12 border-b border-b-gray-200">
-          Path: {activeTab}
-        </div>
+        <div className="border-b-border h-12 border-b">Path: {activeTab}</div>
         <div className="h-full">
-          <Editor></Editor>
+          <Editor language="xml" theme={`vs-${theme}`}></Editor>
         </div>
       </>
       <>

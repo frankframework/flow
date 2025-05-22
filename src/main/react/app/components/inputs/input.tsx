@@ -13,13 +13,13 @@ export default function Input({ className, onChange, value, disabled = false, ..
   return (
     <div
       className={clsx(
-        'inline-block w-full rounded-md border border-gray-200',
+        'border-border bg-background hover:not-focus-within:bg-hover focus-within:bg-selected inline-block w-full rounded-md border',
         disabled && 'cursor-not-allowed opacity-50',
       )}
     >
       <input
         className={clsx(
-          'w-full rounded-sm border-b-[2px] border-transparent px-3 py-2 text-gray-950 outline-none focus:border-b-[var(--color-brand)] sm:text-sm',
+          'text-foreground focus:border-b-brand w-full rounded-sm border-b-[2px] border-transparent px-3 py-2 outline-none sm:text-sm',
           disabled && 'cursor-not-allowed',
           className,
         )}

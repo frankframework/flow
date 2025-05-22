@@ -32,7 +32,7 @@ export default function HelpTopics({ selectedTopic }: Readonly<HelpCategoriesPro
     return (
       <Icon
         onClick={context.toggleExpandedState}
-        className="rct-tree-item-arrow-isFolder rct-tree-item-arrow fill-gray-950"
+        className="rct-tree-item-arrow-isFolder rct-tree-item-arrow fill-foreground"
       />
     )
   }

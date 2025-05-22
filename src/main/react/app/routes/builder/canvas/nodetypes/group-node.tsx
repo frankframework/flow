@@ -1,4 +1,4 @@
-import { type NodeProps, type Node, NodeResizeControl } from '@xyflow/react'
+import { type Node, type NodeProps, NodeResizeControl } from '@xyflow/react'
 import { useState } from 'react'
 import { ResizeIcon } from '~/routes/builder/canvas/nodetypes/frank-node'
 

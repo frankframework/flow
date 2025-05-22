@@ -165,20 +165,21 @@ export default function Dropdown({
       <div
         onClick={toggleDropdown}
         className={clsx(
-          'flex items-center justify-between rounded-md border border-gray-200 px-3 py-2',
+          'border-border bg-background flex items-center justify-between rounded-md border px-3 py-2',
           disabled ? 'cursor-not-allowed' : 'cursor-pointer',
+          isOpen ? 'bg-selected' : 'hover:bg-hover',
         )}
       >
-        <span className={clsx('block truncate text-gray-950 sm:text-sm', !selectedValue && 'text-gray-400')}>
+        <span className={clsx('text-foreground block truncate sm:text-sm', !selectedValue && 'text-gray-400')}>
           {getSelectedLabel()}
         </span>
-        <AltArrowDownIcon className={clsx('h-4 w-4 fill-gray-500', isOpen && 'rotate-180')} />
+        <AltArrowDownIcon className={clsx('fill-foreground h-4 w-4', isOpen && 'rotate-180')} />
       </div>
 
       {isOpen && !disabled && (
         <ul
           ref={listReference}
-          className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md border border-gray-200 bg-white py-1 text-gray-950 shadow-lg"
+          className="border-border text-foreground bg-background absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md border py-1 shadow-lg"
         >
           {optionsArray.length > 0 ? (
             Object.entries(options).map(([value, label], index) => (
@@ -189,21 +190,21 @@ export default function Dropdown({
                 className={clsx(
                   'relative cursor-pointer px-3 py-2 sm:text-sm',
                   value === selectedValue && 'font-medium',
-                  highlightedIndex === index && 'bg-gray-50',
-                  value === selectedValue || highlightedIndex === index ? 'hover:bg-gray-100' : 'hover:bg-gray-50',
+                  highlightedIndex === index && 'bg-selected',
+                  highlightedIndex === index ? 'hover:bg-selected' : 'hover:bg-hover',
                 )}
               >
                 {label}
                 <div
                   className={clsx(
                     'absolute top-1/2 left-1 h-5 w-[2px] -translate-y-1/2 rounded',
-                    value === selectedValue && 'bg-[var(--color-brand)]',
+                    value === selectedValue && 'bg-brand',
                   )}
                 ></div>
               </li>
             ))
           ) : (
-            <li className="px-3 py-2 text-gray-400 sm:text-sm">No options available</li>
+            <li className="text-foreground-muted px-3 py-2 sm:text-sm">No options available</li>
           )}
         </ul>
       )}
