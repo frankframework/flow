@@ -364,6 +364,16 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
     }
   }
 
+  const printXmlString = async () => {
+    try {
+      const adapters = await convertXmlToJson('Configuration.xml')
+      const adapter1 = adapters[0]
+      console.log(adapter1)
+    } catch (error) {
+      console.error('Error fetching XML:', error)
+    }
+  }
+
   return (
     <div style={{ height: '100%' }} onDrop={onDrop} onDragOver={onDragOver} onContextMenu={handleRightMouseButtonClick}>
       <ReactFlow
