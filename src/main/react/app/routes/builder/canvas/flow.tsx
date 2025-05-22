@@ -101,68 +101,80 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
 
   const handleGrouping = () => {
     const selectedNodes = nodes.filter((node) => node.selected)
-    if (selectedNodes.length < 2) return // Do not group if 1 or no nodes are selected
+    if (selectedNodes.length < 2) return
 
     const parentIds = [...new Set(selectedNodes.map((node) => node.parentId).filter(Boolean))]
+    const fullySelectedGroupIds = getFullySelectedGroupIds(parentIds, selectedNodes)
 
-    // Check if all children in each group are selected
-    const fullySelectedGroupsIds = parentIds.filter((parentId) => {
-      const children = nodes.filter((node) => node.parentId === parentId)
-      return children.every((child) => selectedNodes.some((sn) => sn.id === child.id))
-    })
-
-    if (fullySelectedGroupsIds.length > 1) {
-      let updatedNodes = [...nodes]
-
-      for (const parentId of fullySelectedGroupsIds) {
-        const groupChildren = updatedNodes.filter((node) => node.parentId === parentId)
-        updatedNodes = degroupNodes(groupChildren, parentId!, updatedNodes)
-      }
-
-      // Get newly degrouped nodes (which used to be selected)
-      const degroupedSelectedNodes = updatedNodes.filter((node) =>
-        selectedNodes.some((selected) => selected.id === node.id),
-      )
-
-      // Group them into one new group
-      groupNodes(degroupedSelectedNodes, updatedNodes)
+    if (fullySelectedGroupIds.length > 1) {
+      handleMultiGroupMerge(fullySelectedGroupIds, selectedNodes)
       return
     }
 
-    // Degroup if all nodes are already in same group
-    const allInSameGroup = selectedNodes.every((node) => node.parentId && node.parentId === selectedNodes[0].parentId)
-    if (allInSameGroup) {
-      const parentId = selectedNodes[0].parentId!
-      const updatedNodes = degroupNodes(selectedNodes, parentId, nodes)
-      useFlowStore.getState().setNodes(updatedNodes)
+    if (allSelectedInSameGroup(selectedNodes)) {
+      handleDegroupSingleGroup(selectedNodes)
       return
     }
 
-    // Add outsider nodes to existing group or form new group of selected nodes
-    const ungroupedNodes = selectedNodes.filter((n) => !n.parentId)
-    const parentGroups = new Set(selectedNodes.map((n) => n.parentId).filter(Boolean))
-
-    if (parentGroups.size === 1 && ungroupedNodes.length > 0) {
-      const parentId = [...parentGroups][0]!
-      const parentChildren = nodes.filter((n) => n.parentId === parentId)
-      const allChildrenSelected = parentChildren.every((child) =>
-        selectedNodes.some((selected) => selected.id === child.id),
-      )
-
-      // If all nodes within a group are selected -> Add the nodes outside of the group to the existing group
-      if (allChildrenSelected) {
-        const updatedNodes = degroupNodes(selectedNodes, parentId, nodes)
-        const updatedSelectedNodes = updatedNodes.filter((node) =>
-          selectedNodes.some((selectedNode) => selectedNode.id === node.id),
-        )
-        groupNodes(updatedSelectedNodes, updatedNodes)
-        return
-      }
-
-      // If not, it will group the selected nodes as normal, detaching any already grouped nodes from their former group
+    if (shouldMergeUngroupedIntoGroup(selectedNodes)) {
+      handleMergeUngroupedIntoGroup(selectedNodes)
+      return
     }
 
     groupNodes(selectedNodes, nodes)
+  }
+
+  // Helpers
+
+  const getFullySelectedGroupIds = (parentIds: string[], selectedNodes: FlowNode[]) => {
+    return parentIds.filter((parentId) => {
+      const children = nodes.filter((node) => node.parentId === parentId)
+      return children.every((child) => selectedNodes.some((sn) => sn.id === child.id))
+    })
+  }
+
+  const handleMultiGroupMerge = (groupIds: string[], selectedNodes: FlowNode[]) => {
+    let updatedNodes = [...nodes]
+    for (const parentId of groupIds) {
+      const groupChildren = updatedNodes.filter((node) => node.parentId === parentId)
+      updatedNodes = degroupNodes(groupChildren, parentId!, updatedNodes)
+    }
+
+    const degroupedSelectedNodes = updatedNodes.filter((node) =>
+      selectedNodes.some((selected) => selected.id === node.id),
+    )
+
+    groupNodes(degroupedSelectedNodes, updatedNodes)
+  }
+
+  const allSelectedInSameGroup = (selectedNodes: FlowNode[]) => {
+    return selectedNodes.every((node) => node.parentId && node.parentId === selectedNodes[0].parentId)
+  }
+
+  const handleDegroupSingleGroup = (selectedNodes: FlowNode[]) => {
+    const parentId = selectedNodes[0].parentId!
+    const updatedNodes = degroupNodes(selectedNodes, parentId, nodes)
+    useFlowStore.getState().setNodes(updatedNodes)
+  }
+
+  const shouldMergeUngroupedIntoGroup = (selectedNodes: FlowNode[]) => {
+    const ungroupedNodes = selectedNodes.filter((n) => !n.parentId)
+    const parentGroups = new Set(selectedNodes.map((n) => n.parentId).filter(Boolean))
+    if (parentGroups.size === 1 && ungroupedNodes.length > 0) {
+      const parentId = [...parentGroups][0]!
+      const parentChildren = nodes.filter((n) => n.parentId === parentId)
+      return parentChildren.every((child) => selectedNodes.some((s) => s.id === child.id))
+    }
+    return false
+  }
+
+  const handleMergeUngroupedIntoGroup = (selectedNodes: FlowNode[]) => {
+    const parentId = selectedNodes.find((n) => n.parentId)?.parentId
+    const updatedNodes = degroupNodes(selectedNodes, parentId, nodes)
+    const updatedSelectedNodes = updatedNodes.filter((node) =>
+      selectedNodes.some((selectedNode) => selectedNode.id === node.id),
+    )
+    groupNodes(updatedSelectedNodes, updatedNodes)
   }
 
   const degroupNodes = (selectedNodes: FlowNode[], parentId: string, allNodes: FlowNode[]): FlowNode[] => {
