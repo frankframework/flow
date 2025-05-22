@@ -4,6 +4,7 @@ import {
   Controls,
   type Edge,
   type Node,
+  Panel,
   ReactFlow,
   ReactFlowProvider,
   useReactFlow,
@@ -18,8 +19,9 @@ import useFlowStore, { type FlowState } from '~/stores/flow-store'
 import { useShallow } from 'zustand/react/shallow'
 import { FlowConfig } from '~/routes/builder/canvas/flow.config'
 import { getElementTypeFromName } from '~/routes/builder/node-translator-module'
-import {createContext, useContext, useEffect} from 'react'
+import { createContext, useContext, useEffect } from 'react'
 import StickyNoteComponent, { type StickyNote } from '~/routes/builder/canvas/nodetypes/sticky-note'
+import useTabStore from '~/stores/tab-store'
 
 export type FlowNode = FrankNode | StartNode | ExitNode | StickyNote | Node
 
@@ -29,6 +31,7 @@ export const useNodeContextMenu = () => useContext(NodeContextMenuContext)
 const selector = (state: FlowState) => ({
   nodes: state.nodes,
   edges: state.edges,
+  viewport: state.viewport,
   onNodesChange: state.onNodesChange,
   onEdgesChange: state.onEdgesChange,
   onConnect: state.onConnect,
@@ -45,7 +48,9 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
   const edgeTypes = { frankEdge: FrankEdgeComponent }
   const reactFlow = useReactFlow()
 
-  const { nodes, edges, onNodesChange, onEdgesChange, onConnect, onReconnect } = useFlowStore(useShallow(selector))
+  const { nodes, edges, viewport, onNodesChange, onEdgesChange, onConnect, onReconnect } = useFlowStore(
+    useShallow(selector),
+  )
 
   useEffect(() => {
     const laidOutNodes = layoutGraph(nodes, edges, 'LR')
@@ -139,12 +144,61 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
     useFlowStore.getState().addNode(stickyNote)
   }
 
+  useEffect(() => {
+    const unsubscribe = useTabStore.subscribe(
+      (state) => state.activeTab,
+      (newTab, oldTab) => {
+        if (oldTab) saveFlowToTab(oldTab)
+        restoreFlowFromTab(newTab)
+      },
+    )
+    return () => unsubscribe()
+  }, [])
+
+  const saveFlowToTab = (tabId: string) => {
+    const tabStore = useTabStore.getState()
+    const flowStore = useFlowStore.getState()
+
+    const flowData = reactFlow.toObject()
+    const viewport = flowStore.viewport
+
+    tabStore.setTabData(tabId, {
+      value: tabId,
+      flowJson: {
+        ...flowData,
+        viewport,
+      },
+    })
+  }
+
+  const restoreFlowFromTab = (tabId: string) => {
+    const tabStore = useTabStore.getState()
+    const flowStore = useFlowStore.getState()
+
+    const tabData = tabStore.getTab(tabId)
+    const flowJson = tabData?.flowJson
+
+    if (flowJson) {
+      flowStore.setNodes(flowJson.nodes || [])
+      flowStore.setEdges(flowJson.edges || [])
+      flowStore.setViewport(flowJson.viewport || { x: 0, y: 0, zoom: 1 })
+    } else {
+      flowStore.setNodes([])
+      flowStore.setEdges([])
+      flowStore.setViewport({ x: 0, y: 0, zoom: 1 })
+    }
+  }
+
   return (
     <div style={{ height: '100%' }} onDrop={onDrop} onDragOver={onDragOver} onContextMenu={handleRightMouseButtonClick}>
       <ReactFlow
         fitView
         nodes={nodes}
         edges={edges}
+        viewport={viewport}
+        onMove={(event, viewport) => {
+          useFlowStore.getState().setViewport(viewport)
+        }}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
@@ -155,6 +209,7 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
       >
         <Controls position="top-left"></Controls>
         <Background variant={BackgroundVariant.Dots} size={2}></Background>
+        <Panel position="top-right" className="bg-gray-200 p-4"></Panel>
       </ReactFlow>
     </div>
   )
