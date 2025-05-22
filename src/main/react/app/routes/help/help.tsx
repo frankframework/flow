@@ -7,7 +7,7 @@ import SidebarLayout from '~/components/sidebars-layout/sidebar-layout'
 import SidebarHeader from '~/components/sidebars-layout/sidebar-header'
 import HelpTopics from '~/routes/help/help-topics'
 
-const firstTopic = HelpTopicTreeItems['root']?.children?.[0] ?? ''
+const firstTopic = HelpTopicTreeItems['root']?.children?.[0] as string
 
 export default function Help() {
   const { topic } = useParams<{ topic?: string }>()

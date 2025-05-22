@@ -12,6 +12,7 @@ import { useRef } from 'react'
 import settingsCategories, { type SettingsMenuItem } from './settings-menu-items'
 import '/styles/editor-files.css'
 import SettingsIcon from '/icons/solar/Settings.svg?react'
+import helpTopics from '~/routes/help/help-topic-tree-items'
 
 interface SettingsMenuProperties {
   selectedCategory: keyof typeof settingsCategories
@@ -61,7 +62,7 @@ export default function SettingsMenu({ selectedCategory, onSelectedCategory }: R
           renderItemArrow={renderItemArrow}
           renderItemTitle={renderItemTitle}
         >
-          <Tree treeId={TREE_ID} rootItem="root" ref={tree} treeLabel="Tree Example" />
+          <Tree treeId={TREE_ID} rootItem="root" ref={tree} treeLabel="Settings Menu" />
         </UncontrolledTreeEnvironment>
       </div>
     </>

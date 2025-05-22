@@ -25,7 +25,7 @@ export default function RadioList({
   const uniqueId = id ?? useId()
   const [selectedValue, setSelectedValue] = useState<string | undefined>(value)
 
-  const optionsArray = Object.keys(options)
+  const optionsArray = Object.entries(options)
 
   useEffect(() => {
     setSelectedValue(value)
@@ -39,7 +39,7 @@ export default function RadioList({
   return (
     <div className={clsx('flex flex-col gap-2', className)} role="radiogroup">
       {optionsArray.length > 0 ? (
-        Object.entries(options).map(([optionValue, optionData]) => {
+        optionsArray.map(([optionValue, optionData]) => {
           const isSelected = selectedValue === optionValue
           const [label, description] =
             typeof optionData === 'string' ? [optionData, undefined] : Object.entries(optionData)[0]

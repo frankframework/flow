@@ -7,7 +7,7 @@ import SidebarHeader from '~/components/sidebars-layout/sidebar-header'
 import SettingsMenu from '~/routes/settings/settings-menu'
 import React, { useEffect, useState } from 'react'
 
-const firstSettingsCategoryKey = SettingsMenuItems['root' as keyof SettingsMenuItem]?.children?.[0]
+const firstSettingsCategoryKey = SettingsMenuItems['root']?.children?.[0] as string
 
 export default function Settings() {
   const [settingsCategory, setSettingsCategory] = useState<SettingsMenuItem>(
@@ -27,7 +27,7 @@ export default function Settings() {
     <SidebarLayout name="settings">
       <>
         <SidebarHeader side={SidebarSide.LEFT} title="Settings" />
-        <SettingsMenu selectedCategory={'general'} onSelectedCategory={setCategory} />
+        <SettingsMenu selectedCategory={firstSettingsCategoryKey} onSelectedCategory={setCategory} />
       </>
       <>
         <div className="flex">
