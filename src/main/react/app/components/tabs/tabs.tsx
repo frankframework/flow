@@ -24,6 +24,15 @@ export default function Tabs({ initialSelectedTab }: Readonly<TabsProperties>) {
   const shadowRightElementReference = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
+    const unsubscribe = useTabStore.subscribe((state) => {
+      setTabs(state.tabs as TabsList)
+    })
+    return () => {
+      unsubscribe()
+    }
+  }, [])
+
+  useEffect(() => {
     if (!selectedTab) {
       setPreselectedTab()
     }
