@@ -27,7 +27,8 @@ export default function GeneralSettings() {
             dark: { Dark: 'Zwart enzo' },
             system: { System: 'Zelfde als je hebt' },
           }}
-          onChange={console.log}
+          value={general.theme}
+          onChange={(theme) => setGeneralSettings({ theme: theme as GeneralSettings['theme'] })}
         />
         <br />
         <Input onChange={console.log} />
