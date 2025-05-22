@@ -110,7 +110,7 @@ export default function NodeContext({
                     inputReferences.current[index] = element
                   }}
                   onInput={validateForm}
-                  className="mt-1 w-full rounded-md border border-border px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                  className="border-border mt-1 w-full rounded-md border px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                 />
               </div>
             ))}
@@ -121,15 +121,15 @@ export default function NodeContext({
           <button
             onClick={handleSave}
             disabled={!canSave}
-            className={`rounded border border-border px-3 py-2 shadow-sm sm:text-sm ${
-              canSave ? 'hover:cursor-pointer hover:bg-gray-100' : 'cursor-not-allowed bg-border text-gray-400'
+            className={`border-border rounded border px-3 py-2 shadow-sm sm:text-sm ${
+              canSave ? 'hover:cursor-pointer hover:bg-gray-100' : 'bg-border cursor-not-allowed text-gray-400'
             }`}
           >
             Save & Close
           </button>
           <button
             onClick={handleDiscard}
-            className="ml-2 rounded border border-border px-3 py-2 shadow-sm hover:cursor-pointer hover:bg-gray-100 sm:text-sm"
+            className="border-border ml-2 rounded border px-3 py-2 shadow-sm hover:cursor-pointer hover:bg-gray-100 sm:text-sm"
           >
             Delete
           </button>

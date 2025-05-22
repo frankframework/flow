@@ -15,18 +15,18 @@ export default function Tab({ value, icon, isSelected, onSelect, onClose }: Read
   return (
     <li
       className={clsx(
-        'group relative flex h-full rotate-x-180 list-none items-center justify-between gap-1 border-r border-b border-r-border  px-4 text-text',
+        'group border-r-border text-text relative flex h-full rotate-x-180 list-none items-center justify-between gap-1 border-r border-b px-4',
         isSelected
-          ? 'border-t-3 border-t-brand border-b-background bg-background font-medium text-foreground hover:bg-background'
-          : 'border-t-3 border-t-transparent bg-hover hover:cursor-pointer hover:bg-selected text-foreground-muted border-b-border',
+          ? 'border-t-brand border-b-background bg-background text-foreground hover:bg-background border-t-3 font-medium'
+          : 'bg-hover hover:bg-selected text-foreground-muted border-b-border border-t-3 border-t-transparent hover:cursor-pointer',
       )}
       onClick={onSelect}
     >
-      <Icon className={'h-4 w-auto fill-foreground-muted'} />
+      <Icon className={'fill-foreground-muted h-4 w-auto'} />
       {value}
       <CloseIcon
         className={clsx(
-          'h-8 w-auto hover:cursor-pointer hover:fill-foreground',
+          'hover:fill-foreground h-8 w-auto hover:cursor-pointer',
           isSelected ? 'fill-foreground-muted' : 'group-hover:fill-foreground-muted',
         )}
         onClick={(event) => onClose(event)}

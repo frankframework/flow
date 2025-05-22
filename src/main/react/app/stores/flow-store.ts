@@ -1,12 +1,12 @@
 import { create } from 'zustand'
 import {
-  type Edge,
-  type OnNodesChange,
-  type OnEdgesChange,
-  type OnConnect,
-  applyNodeChanges,
-  applyEdgeChanges,
   addEdge,
+  applyEdgeChanges,
+  applyNodeChanges,
+  type Edge,
+  type OnConnect,
+  type OnEdgesChange,
+  type OnNodesChange,
   type OnReconnect,
 } from '@xyflow/react'
 

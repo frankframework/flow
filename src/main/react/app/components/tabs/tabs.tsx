@@ -156,7 +156,7 @@ export default function Tabs({ initialSelectedTab }: Readonly<TabsProperties>) {
           />
         ))}
       </ul>
-      <div className="flex-grow border-b border-b-border"></div>
+      <div className="border-b-border flex-grow border-b"></div>
     </div>
   )
 }

@@ -25,9 +25,7 @@ export default function CodeEditor() {
             <Tabs />
           </div>
         </div>
-        <div className="border-b-border h-12 border-b">
-          Path: {activeTab}
-        </div>
+        <div className="border-b-border h-12 border-b">Path: {activeTab}</div>
         <div className="h-full">
           <Editor language="xml" theme={`vs-${theme}`}></Editor>
         </div>

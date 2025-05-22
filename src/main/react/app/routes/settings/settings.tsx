@@ -5,7 +5,7 @@ import { SidebarSide } from '~/components/sidebars-layout/sidebar-layout-store'
 import SidebarLayout from '~/components/sidebars-layout/sidebar-layout'
 import SidebarHeader from '~/components/sidebars-layout/sidebar-header'
 import SettingsMenu from '~/routes/settings/settings-menu'
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 
 const firstSettingsCategoryKey = SettingsMenuItems['root']?.children?.[0] as string
 

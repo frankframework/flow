@@ -13,7 +13,7 @@ import AltArrowRightIcon from '/icons/solar/Alt Arrow Right.svg?react'
 import AltArrowDownIcon from '/icons/solar/Alt Arrow Down.svg?react'
 import React, { type RefObject, useRef } from 'react'
 import EditorFilesDataProvider from '~/routes/editor/editor-files-data-provider'
-import Search from "~/components/search/search";
+import Search from '~/components/search/search'
 
 const TREE_ID = 'editor-files-tree'
 
@@ -61,7 +61,7 @@ export default function EditorFiles({}: Readonly<EditorFilesTreeProperties>) {
     const Icon = (item.isFolder && (context.isExpanded ? FolderOpenIcon : FolderIcon)) || CodeIcon
     return (
       <>
-        <Icon className="w-4 flex-shrink-0 fill-foreground" />
+        <Icon className="fill-foreground w-4 flex-shrink-0" />
         <span className="font-inter ml-1 overflow-hidden text-nowrap text-ellipsis">{title}</span>
       </>
     )

@@ -30,7 +30,7 @@ export default function Builder() {
           </div>
           <SidebarContentClose side={SidebarSide.RIGHT} />
         </div>
-        <div className="h-12 border-b border-b-border">Path: {activeTab}</div>
+        <div className="border-b-border h-12 border-b">Path: {activeTab}</div>
         <Flow showNodeContextMenu={setShowNodeContext} />
       </>
       <>

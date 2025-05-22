@@ -10,7 +10,7 @@ export default function SidebarContentClose(properties: Readonly<SidebarsClosePr
 
   if (!visible) {
     return (
-      <div className="flex aspect-square h-12 items-center justify-center border border-border">
+      <div className="border-border flex aspect-square h-12 items-center justify-center border">
         <SidebarClose {...properties} />
       </div>
     )

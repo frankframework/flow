@@ -165,7 +165,7 @@ export default function Dropdown({
       <div
         onClick={toggleDropdown}
         className={clsx(
-          'border-border flex items-center justify-between rounded-md border px-3 py-2 bg-background',
+          'border-border bg-background flex items-center justify-between rounded-md border px-3 py-2',
           disabled ? 'cursor-not-allowed' : 'cursor-pointer',
           isOpen ? 'bg-selected' : 'hover:bg-hover',
         )}
@@ -179,7 +179,7 @@ export default function Dropdown({
       {isOpen && !disabled && (
         <ul
           ref={listReference}
-          className="border-border text-foreground absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md border bg-background py-1 shadow-lg"
+          className="border-border text-foreground bg-background absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md border py-1 shadow-lg"
         >
           {optionsArray.length > 0 ? (
             Object.entries(options).map(([value, label], index) => (
@@ -204,7 +204,7 @@ export default function Dropdown({
               </li>
             ))
           ) : (
-            <li className="px-3 py-2 text-foreground-muted sm:text-sm">No options available</li>
+            <li className="text-foreground-muted px-3 py-2 sm:text-sm">No options available</li>
           )}
         </ul>
       )}

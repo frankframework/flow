@@ -12,7 +12,6 @@ import { useRef } from 'react'
 import settingsCategories, { type SettingsMenuItem } from './settings-menu-items'
 import '/styles/editor-files.css'
 import SettingsIcon from '/icons/solar/Settings.svg?react'
-import helpTopics from '~/routes/help/help-topic-tree-items'
 
 interface SettingsMenuProperties {
   selectedCategory: keyof typeof settingsCategories
@@ -43,7 +42,7 @@ export default function SettingsMenu({ selectedCategory, onSelectedCategory }: R
     const Icon = item.data.icon || SettingsIcon
     return (
       <>
-        {Icon && <Icon className="w-4 flex-shrink-0 fill-foreground" />}
+        {Icon && <Icon className="fill-foreground w-4 flex-shrink-0" />}
         <span className="font-inter ml-1 overflow-hidden text-nowrap text-ellipsis">{title}</span>
       </>
     )

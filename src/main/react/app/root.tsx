@@ -4,9 +4,8 @@ import type { Route } from './+types/root'
 import Navbar from '~/components/navbar/navbar'
 import 'allotment/dist/style.css'
 import './app.css'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect } from 'react'
 import useFrankDocStore from '~/stores/frank-doc-store'
-import { type GeneralSettings, useSettingsStore } from '~/routes/settings/settings-store'
 import { useTheme } from '~/hooks/use-theme'
 
 export const links: Route.LinksFunction = () => [
