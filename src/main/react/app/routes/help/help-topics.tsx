@@ -32,7 +32,7 @@ export default function HelpTopics({ selectedTopic }: Readonly<HelpCategoriesPro
     return (
       <Icon
         onClick={context.toggleExpandedState}
-        className="rct-tree-item-arrow-isFolder rct-tree-item-arrow fill-gray-950"
+        className="rct-tree-item-arrow-isFolder rct-tree-item-arrow fill-foreground"
       />
     )
   }
@@ -54,7 +54,7 @@ export default function HelpTopics({ selectedTopic }: Readonly<HelpCategoriesPro
           renderItemArrow={renderItemArrow}
           renderItemTitle={renderItemTitle}
         >
-          <Tree treeId={TREE_ID} rootItem="root" ref={tree} treeLabel="Tree Example" />
+          <Tree treeId={TREE_ID} rootItem="root" ref={tree} treeLabel="Help Topics" />
         </UncontrolledTreeEnvironment>
       </div>
     </>

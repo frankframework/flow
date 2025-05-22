@@ -143,7 +143,7 @@ export default function Tabs({ initialTabs, initialSelectedTab, onSelectedTabCha
           />
         ))}
       </ul>
-      <div className="flex-grow border-b border-b-gray-200"></div>
+      <div className="flex-grow border-b border-b-border"></div>
     </div>
   )
 }

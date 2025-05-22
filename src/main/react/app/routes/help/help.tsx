@@ -1,5 +1,5 @@
 import '/styles/markdown.css'
-import helpTopicTreeItems, { type HelpTopicTreeItem } from './help-topic-tree-items'
+import HelpTopicTreeItems, { type HelpTopicTreeItem } from './help-topic-tree-items'
 import { useParams } from 'react-router'
 import SidebarContentClose from '~/components/sidebars-layout/sidebar-content-close'
 import { SidebarSide } from '~/components/sidebars-layout/sidebar-layout-store'
@@ -7,12 +7,12 @@ import SidebarLayout from '~/components/sidebars-layout/sidebar-layout'
 import SidebarHeader from '~/components/sidebars-layout/sidebar-header'
 import HelpTopics from '~/routes/help/help-topics'
 
-const firstTopic = Object.keys(helpTopicTreeItems)[1]
+const firstTopic = HelpTopicTreeItems['root']?.children?.[0] as string
 
 export default function Help() {
   const { topic } = useParams<{ topic?: string }>()
   const helpTopicKey = topic ?? firstTopic
-  const helpTopic: HelpTopicTreeItem | undefined = helpTopicTreeItems[helpTopicKey]
+  const helpTopic: HelpTopicTreeItem | undefined = HelpTopicTreeItems[helpTopicKey]
 
   const MarkdownContent = helpTopic?.data.content
 
@@ -25,7 +25,7 @@ export default function Help() {
       <>
         <div className="flex">
           <SidebarContentClose side={SidebarSide.LEFT} />
-          <div className="flex h-12 grow items-center border-b border-b-gray-200 px-4">
+          <div className="flex h-12 grow items-center border-b border-b-border px-4">
             <div className="flex h-max items-end gap-4">
               <h1 className="text-xl font-medium">{helpTopic?.data.title ?? 'Oops'}</h1>
               <p>{helpTopic?.data.description ?? "Topic can't be retrieved"}</p>

@@ -55,7 +55,7 @@ export default [
       'unicorn/no-array-reduce': 'off',
       'unicorn/prefer-ternary': 'warn',
       'unicorn/no-null': 'off',
-      'unicorn/prefer-dom-node-text-content': 'warn',
+      'unicorn/prefer-dom-node-foreground-content': 'warn',
     },
   },
   // SonarJS: https://github.com/SonarSource/SonarJS/blob/master/packages/jsts/src/rules/README.md

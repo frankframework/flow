@@ -4,8 +4,10 @@ import type { Route } from './+types/root'
 import Navbar from '~/components/navbar/navbar'
 import 'allotment/dist/style.css'
 import './app.css'
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import useFrankDocStore from '~/stores/frank-doc-store'
+import { type GeneralSettings, useSettingsStore } from '~/routes/settings/settings-store'
+import { useTheme } from '~/hooks/use-theme'
 
 export const links: Route.LinksFunction = () => [
   { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
@@ -35,8 +37,10 @@ export const links: Route.LinksFunction = () => [
 ]
 
 export function Layout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const theme = useTheme()
+
   return (
-    <html lang="en">
+    <html lang="en" data-theme={theme}>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
