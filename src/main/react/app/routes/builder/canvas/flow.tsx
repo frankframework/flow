@@ -167,7 +167,7 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
 
   const degroupNodes = (selectedNodes: FlowNode[], parentId: string, allNodes: FlowNode[]): FlowNode[] => {
     const groupNode = allNodes.find((node) => node.id === parentId)
-    if (!groupNode) return nodes
+    if (!groupNode) return allNodes
 
     const groupX = groupNode.position.x
     const groupY = groupNode.position.y
