@@ -22,6 +22,7 @@ import { getElementTypeFromName } from '~/routes/builder/node-translator-module'
 import { createContext, useContext, useEffect } from 'react'
 import StickyNoteComponent, { type StickyNote } from '~/routes/builder/canvas/nodetypes/sticky-note'
 import useTabStore from '~/stores/tab-store'
+import {convertXmlToJson, getXmlString} from '~/routes/builder/xml-to-json-parser'
 
 export type FlowNode = FrankNode | ExitNode | StickyNote | GroupNode | Node
 
@@ -353,6 +354,16 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
     }
   }
 
+  const printXmlString = async () => {
+    try {
+      const adapters = await convertXmlToJson('Configuration.xml')
+      const adapter1 = adapters[0]
+      console.log(adapter1)
+    } catch (error) {
+      console.error('Error fetching XML:', error)
+    }
+  }
+
   return (
     <div style={{ height: '100%' }} onDrop={onDrop} onDragOver={onDragOver} onContextMenu={handleRightMouseButtonClick}>
       <ReactFlow
@@ -374,7 +385,9 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
       >
         <Controls position="top-left"></Controls>
         <Background variant={BackgroundVariant.Dots} size={3} gap={100}></Background>
-        <Panel position="top-right" className="bg-gray-200 p-4"></Panel>
+        <Panel position="top-right" onClick={printXmlString}>
+          Load Xml
+        </Panel>
       </ReactFlow>
     </div>
   )
