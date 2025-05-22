@@ -5,6 +5,7 @@ import InputWithLabel from '~/components/inputs/input-with-label'
 import Button from '~/components/inputs/button'
 import Input from '~/components/inputs/input'
 import RadioList from '~/components/inputs/radio-list'
+import Toggle from '~/components/inputs/toggle'
 
 export default function GeneralSettings() {
   const { general, setGeneralSettings } = useSettingsStore()
@@ -18,9 +19,10 @@ export default function GeneralSettings() {
 
   return (
     <div className="space-y-3 p-6">
-      <div className="space-y-6 rounded-md border border-gray-200 p-6">
+      <div className="space-y-6 rounded-md border border-border p-6">
         <Button>Button</Button>
         <br />
+        <Toggle onChange={console.log} />
         <RadioList
           options={{
             light: { Light: 'Wit enzo' },
@@ -33,7 +35,7 @@ export default function GeneralSettings() {
         <br />
         <Input onChange={console.log} />
       </div>
-      <div className="space-y-6 rounded-md border border-gray-200 p-6">
+      <div className="space-y-6 rounded-md border border-border p-6">
         <p>Introduction to general settings</p>
 
         <InputWithLabel

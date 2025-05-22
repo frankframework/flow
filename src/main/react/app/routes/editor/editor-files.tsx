@@ -44,7 +44,7 @@ export default function EditorFiles({}: Readonly<EditorFilesTreeProperties>) {
     return (
       <Icon
         onClick={context.toggleExpandedState}
-        className="rct-tree-item-arrow-isFolder rct-tree-item-arrow fill-gray-950"
+        className="rct-tree-item-arrow-isFolder rct-tree-item-arrow fill-foreground"
       />
     )
   }
@@ -61,7 +61,7 @@ export default function EditorFiles({}: Readonly<EditorFilesTreeProperties>) {
     const Icon = (item.isFolder && (context.isExpanded ? FolderOpenIcon : FolderIcon)) || CodeIcon
     return (
       <>
-        <Icon className="w-4 flex-shrink-0 fill-gray-950" />
+        <Icon className="w-4 flex-shrink-0 fill-foreground" />
         <span className="font-inter ml-1 overflow-hidden text-nowrap text-ellipsis">{title}</span>
       </>
     )

@@ -25,7 +25,7 @@ export default function Help() {
       <>
         <div className="flex">
           <SidebarContentClose side={SidebarSide.LEFT} />
-          <div className="flex h-12 grow items-center border-b border-b-gray-200 px-4">
+          <div className="flex h-12 grow items-center border-b border-b-border px-4">
             <div className="flex h-max items-end gap-4">
               <h1 className="text-xl font-medium">{helpTopic?.data.title ?? 'Oops'}</h1>
               <p>{helpTopic?.data.description ?? "Topic can't be retrieved"}</p>

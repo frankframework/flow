@@ -48,10 +48,8 @@ export default function RadioButton({
         />
         <span
           className={clsx(
-            'relative mr-4 inline-block h-6 w-6 rounded-full border border-gray-200 align-top peer-focus:border-[var(--color-brand)]',
-            isSelected
-              ? 'bg-[var(--color-brand)] shadow-[inset_0_0_0_3px_var(--color-white)]'
-              : 'bg-[var(--color-white)]',
+            'peer-focus:border-brand relative mr-4 inline-block h-6 w-6 rounded-full border border-border align-top',
+            isSelected ? 'bg-brand shadow-[inset_0_0_0_3px_var(--color-background)]' : 'bg-background hover:bg-hover',
           )}
         />
       </label>

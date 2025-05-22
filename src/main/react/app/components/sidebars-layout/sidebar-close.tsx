@@ -22,7 +22,7 @@ export default function SidebarClose({ side }: Readonly<SidebarsCloseProperties>
   return (
     <SidebarIcon
       onClick={toggleVisible}
-      className={clsx('fill-gray-950 hover:fill-[var(--color-brand)]', isLeft && 'rotate-180')}
+      className={clsx('fill-foreground hover:fill-brand', isLeft && 'rotate-180')}
     ></SidebarIcon>
   )
 }

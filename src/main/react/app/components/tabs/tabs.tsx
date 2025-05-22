@@ -1,36 +1,27 @@
 import React, { useEffect, useRef, useState } from 'react'
 import Tab from '~/components/tabs/tab'
-import useTabStore from '~/stores/tab-store'
 
 export type TabsList = Record<string, TabsItem>
 
 export interface TabsItem {
   value: string
   icon?: React.FC<React.SVGProps<SVGSVGElement>>
-  flowJson?: Record<string, any>
 }
 
 export interface TabsProperties {
+  initialTabs: TabsList
   initialSelectedTab?: string
+  onSelectedTabChange: (tabKey: string) => void
 }
 
-export default function Tabs({ initialSelectedTab }: Readonly<TabsProperties>) {
-  const [tabs, setTabs] = useState<TabsList>(useTabStore.getState().tabs as TabsList)
+export default function Tabs({ initialTabs, initialSelectedTab, onSelectedTabChange }: Readonly<TabsProperties>) {
+  const [tabs, setTabs] = useState<TabsList>(initialTabs)
   const [selectedTab, setSelectedTab] = useState<string | undefined>(initialSelectedTab)
   const [selectedTabHistory, setSelectedTabHistory] = useState<string[]>([])
   const tabsElementReference = useRef<HTMLDivElement>(null)
   const tabsListElementReference = useRef<HTMLUListElement>(null)
   const shadowLeftElementReference = useRef<HTMLDivElement>(null)
   const shadowRightElementReference = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    const unsubscribe = useTabStore.subscribe((state) => {
-      setTabs(state.tabs as TabsList)
-    })
-    return () => {
-      unsubscribe()
-    }
-  }, [])
 
   useEffect(() => {
     if (!selectedTab) {
@@ -50,14 +41,13 @@ export default function Tabs({ initialSelectedTab }: Readonly<TabsProperties>) {
     if (Object.keys(tabs).length > 0) {
       const firstTab = Object.keys(tabs)[0]
       selectTab(firstTab)
-      useTabStore.getState().setActiveTab(firstTab)
     }
   }
 
   const selectTab = (key: string) => {
     setSelectedTab(key)
     setSelectedTabHistory([...selectedTabHistory, key])
-    useTabStore.getState().setActiveTab(key)
+    onSelectedTabChange(key)
   }
 
   const closeTab = (key: string, event?: React.MouseEvent) => {
@@ -65,8 +55,6 @@ export default function Tabs({ initialSelectedTab }: Readonly<TabsProperties>) {
 
     delete tabs[key]
     setTabs({ ...tabs })
-
-    useTabStore.getState().removeTab(key)
 
     if (key === selectedTab) {
       setSelectedTab(undefined)
@@ -87,7 +75,6 @@ export default function Tabs({ initialSelectedTab }: Readonly<TabsProperties>) {
 
     if (tabIsSelectable(previousTab)) {
       selectTab(previousTab)
-      useTabStore.getState().setActiveTab(previousTab)
     } else {
       selectPreviousTab()
     }
@@ -156,7 +143,7 @@ export default function Tabs({ initialSelectedTab }: Readonly<TabsProperties>) {
           />
         ))}
       </ul>
-      <div className="flex-grow border-b border-b-gray-200"></div>
+      <div className="flex-grow border-b border-b-border"></div>
     </div>
   )
 }

@@ -20,7 +20,6 @@ import type { StickyNote } from '~/routes/builder/canvas/nodetypes/sticky-note'
 export interface FlowState {
   nodes: FlowNode[]
   edges: Edge[]
-  viewport: { x: number; y: number; zoom: number }
   nodeIdCounter: number
   onNodesChange: OnNodesChange<FlowNode>
   onEdgesChange: OnEdgesChange
@@ -28,7 +27,6 @@ export interface FlowState {
   onReconnect: OnReconnect
   setNodes: (nodes: FlowNode[]) => void
   setEdges: (edges: Edge[]) => void
-  setViewport: (viewport: { x: number; y: number; zoom: number }) => void
   getNextNodeId: () => string
   addNode: (newNode: FlowNode) => void
   deleteNode: (nodeId: string) => void
@@ -56,7 +54,6 @@ function isStickyNote(node: FlowNode): node is StickyNote {
 const useFlowStore = create<FlowState>((set, get) => ({
   nodes: initialNodes,
   edges: initialEdges,
-  viewport: { x: 0, y: 0, zoom: 1 },
   nodeIdCounter: initialNodes.length,
   onNodesChange: (changes) => {
     set({
@@ -93,9 +90,6 @@ const useFlowStore = create<FlowState>((set, get) => ({
   },
   setEdges: (edges) => {
     set({ edges })
-  },
-  setViewport: (viewport) => {
-    set({ viewport })
   },
   getNextNodeId: () => {
     const current = get().nodeIdCounter

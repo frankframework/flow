@@ -60,7 +60,7 @@ export default function RadioList({
           )
         })
       ) : (
-        <div className="text-sm text-gray-400">No options available</div>
+        <div className="text-sm text-foreground-muted">No options available</div>
       )}
     </div>
   )
