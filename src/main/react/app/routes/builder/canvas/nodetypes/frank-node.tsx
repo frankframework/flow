@@ -326,7 +326,7 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
   )
 }
 
-export function ResizeIcon() {
+export function ResizeIcon({ color = '#999999' }: Readonly<{ color?: string }>) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -334,7 +334,7 @@ export function ResizeIcon() {
       height="20"
       viewBox="0 0 24 24"
       strokeWidth="1"
-      stroke="#999999"
+      stroke={color}
       strokeLinecap="round"
       className={'absolute right-[5px] bottom-[5px]'}
     >
