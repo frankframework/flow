@@ -14,7 +14,6 @@ import AltArrowDownIcon from '/icons/solar/Alt Arrow Down.svg?react'
 import React, { type RefObject, useRef } from 'react'
 import EditorFilesDataProvider from '~/routes/editor/editor-files-data-provider'
 import Search from "~/components/search/search";
-import {SearchInput} from "react-complex-tree/lib/esnext/search/SearchInput";
 
 const TREE_ID = 'editor-files-tree'
 
@@ -83,7 +82,7 @@ export default function EditorFiles({}: Readonly<EditorFilesTreeProperties>) {
           renderItemArrow={renderItemArrow}
           renderItemTitle={renderItemTitle}
         >
-          <Tree treeId={TREE_ID} rootItem="root" ref={tree} treeLabel="Tree Example" />
+          <Tree treeId={TREE_ID} rootItem="root" ref={tree} treeLabel="Editor Files" />
         </UncontrolledTreeEnvironment>
       </div>
     </>
