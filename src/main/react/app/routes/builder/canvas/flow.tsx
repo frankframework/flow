@@ -4,6 +4,7 @@ import {
   Controls,
   type Edge,
   type Node,
+  Panel,
   ReactFlow,
   ReactFlowProvider,
   useReactFlow,
@@ -18,8 +19,9 @@ import useFlowStore, { type FlowState } from '~/stores/flow-store'
 import { useShallow } from 'zustand/react/shallow'
 import { FlowConfig } from '~/routes/builder/canvas/flow.config'
 import { getElementTypeFromName } from '~/routes/builder/node-translator-module'
-import {createContext, useContext, useEffect} from 'react'
+import { createContext, useContext, useEffect } from 'react'
 import StickyNoteComponent, { type StickyNote } from '~/routes/builder/canvas/nodetypes/sticky-note'
+import {convertXmlToJson, getXmlString} from '~/routes/builder/xml-to-json-parser'
 
 export type FlowNode = FrankNode | StartNode | ExitNode | StickyNote | Node
 
@@ -139,6 +141,16 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
     useFlowStore.getState().addNode(stickyNote)
   }
 
+  const printXmlString = async () => {
+    try {
+      const adapters = await convertXmlToJson('Configuration.xml')
+      const adapter1 = adapters[0]
+      console.log(adapter1)
+    } catch (error) {
+      console.error('Error fetching XML:', error)
+    }
+  }
+
   return (
     <div style={{ height: '100%' }} onDrop={onDrop} onDragOver={onDragOver} onContextMenu={handleRightMouseButtonClick}>
       <ReactFlow
@@ -155,6 +167,9 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
       >
         <Controls position="top-left"></Controls>
         <Background variant={BackgroundVariant.Dots} size={2}></Background>
+        <Panel position="top-right" onClick={printXmlString}>
+          Load Xml
+        </Panel>
       </ReactFlow>
     </div>
   )
