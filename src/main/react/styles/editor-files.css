@@ -19,6 +19,7 @@
   --rct-color-focustree-item-hover-foreground: inherit;
   --rct-color-focustree-item-active-bg: var(--color-selected);
   --rct-color-focustree-item-active-foreground: var(--color-foreground);
+  --rct-color-focustree-item-active-text: var(--color-foreground);
 
   --rct-arrow-size: 10px;
   --rct-arrow-container-size: 16px;

@@ -9,6 +9,7 @@
   --color-hover: var(--color-neutral-100);
   --color-selected: var(--color-neutral-200);
   --color-border: var(--color-neutral-300);
+  --color-backdrop: var(--color-neutral-50);
   --color-background: var(--color-white);
   --color-foreground: var(--color-neutral-950);
   --color-foreground-muted: var(--color-neutral-600);
@@ -17,9 +18,10 @@
 
 @layer base {
   [data-theme="light"] {
-    --color-hover: var(--color-neutral-50);
-    --color-selected: var(--color-neutral-100);
+    --color-hover: var(--color-neutral-100);
+    --color-selected: var(--color-neutral-200);
     --color-border: var(--color-neutral-300);
+    --color-backdrop: var(--color-neutral-50);
     --color-background: var(--color-white);
     --color-foreground: var(--color-neutral-950);
     --color-foreground-muted: var(--color-neutral-600);
@@ -27,11 +29,12 @@
   }
 
   [data-theme="dark"] {
-    --color-hover: var(--color-neutral-700);
-    --color-selected: var(--color-neutral-600);
-    --color-border: var(--color-neutral-500); /* 950 also looks good, but less for inputs and stuff */
-    --color-background: var(--color-neutral-800);
-    --color-foreground: var(--color-white);
+    --color-hover: var(--color-neutral-800);
+    --color-selected: var(--color-neutral-700);
+    --color-border: var(--color-neutral-600); /* 950 also looks good, but less for inputs and stuff */
+    --color-backdrop: var(--color-neutral-950);
+    --color-background: var(--color-neutral-900);
+    --color-foreground: var(--color-neutral-100);
     --color-foreground-muted: var(--color-neutral-400);
     --color-foreground-active: var(--color-brand);
   }
@@ -65,3 +68,72 @@ body {
   --type-exit: #E84E4E;
   --type-other: #FDC300;
 }
+
+
+/*@import "tailwindcss";*/
+
+/*@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));*/
+
+/*@theme {*/
+/*  --font-inter: "Inter", var(--font-sans);*/
+
+/*  --color-brand: #fdc300;*/
+/*  --color-hover: var(--color-neutral-100);*/
+/*  --color-selected: var(--color-neutral-200);*/
+/*  --color-border: var(--color-neutral-300);*/
+/*  --color-background: var(--color-white);*/
+/*  --color-foreground: var(--color-neutral-950);*/
+/*  --color-foreground-muted: var(--color-neutral-600);*/
+/*  --color-foreground-active: var(--color-brand);*/
+/*}*/
+
+/*@layer base {*/
+/*  [data-theme="light"] {*/
+/*    --color-hover: var(--color-neutral-50);*/
+/*    --color-selected: var(--color-neutral-100);*/
+/*    --color-border: var(--color-neutral-300);*/
+/*    --color-background: var(--color-white);*/
+/*    --color-foreground: var(--color-neutral-950);*/
+/*    --color-foreground-muted: var(--color-neutral-600);*/
+/*    --color-foreground-active: var(--color-brand);*/
+/*  }*/
+
+/*  [data-theme="dark"] {*/
+/*    --color-hover: var(--color-neutral-700);*/
+/*    --color-selected: var(--color-neutral-600);*/
+/*    --color-border: var(--color-neutral-500); !* 950 also looks good, but less for inputs and stuff *!*/
+/*    --color-background: var(--color-neutral-800);*/
+/*    --color-foreground: var(--color-white);*/
+/*    --color-foreground-muted: var(--color-neutral-400);*/
+/*    --color-foreground-active: var(--color-brand);*/
+/*  }*/
+
+/*}*/
+
+/*html,*/
+/*body {*/
+/*  @apply bg-background;*/
+/*  @apply select-none;*/
+/*  @apply font-inter;*/
+/*  @apply text-foreground;*/
+/*  @media (prefers-color-scheme: dark) {*/
+/*    color-scheme: dark;*/
+/*  }*/
+/*}*/
+
+/*:root {*/
+/*  !* Allotment Styling *!*/
+/*  --focus-border: var(--color-brand);*/
+/*  --separator-border: var(--color-border);*/
+
+/*  !* Node Styling *!*/
+/*  --type-pipe: #68D250;*/
+/*  --type-listener: #D250BF;*/
+/*  --type-receiver: #D250BF;*/
+/*  --type-sender: #30CCAF;*/
+/*  --type-validator: #3079CC;*/
+/*  --type-wrapper: #4A30CC;*/
+/*  --type-job: #E0DE54;*/
+/*  --type-exit: #E84E4E;*/
+/*  --type-other: #FDC300;*/
+/*}*/

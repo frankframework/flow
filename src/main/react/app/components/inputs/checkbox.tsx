@@ -38,12 +38,12 @@ export default function Checkbox({
         onChange={handleChange}
         className={clsx(
           'peer border-border h-full w-full appearance-none rounded-md border',
-          isChecked ? 'border-brand bg-brand' : 'border-border hover:bg-hover bg-background',
+          isChecked ? 'border-brand bg-brand' : 'border-border hover:bg-hover bg-backdrop',
           disabled ? 'cursor-not-allowed' : 'cursor-pointer',
         )}
         {...properties}
       />
-      <CheckSquareIcon className="fill-selected pointer-events-none absolute left-0 h-full w-full opacity-0 peer-checked:opacity-100" />
+      <CheckSquareIcon className="fill-background pointer-events-none absolute left-0 h-full w-full opacity-0 peer-checked:opacity-100" />
     </div>
   )
 }

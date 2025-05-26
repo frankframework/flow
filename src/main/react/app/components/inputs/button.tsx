@@ -8,8 +8,9 @@ export default function Button({
 }: React.PropsWithChildren<Readonly<React.ButtonHTMLAttributes<HTMLButtonElement>>>) {
   return (
     <button
+            autoFocus
       className={clsx(
-        'hover:bg-brand hover:text-foreground focus:ring-brand rounded-md bg-gray-950 px-4 py-2 text-sm font-medium text-white focus:ring-2 focus:ring-offset-2 focus:outline-none',
+              'border border-border py-2 px-4 rounded-md hover:bg-hover active:bg-selected text-foreground bg-backdrop',
         className,
       )}
       {...properties}

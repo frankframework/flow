@@ -32,7 +32,7 @@ export default function Settings() {
       <>
         <div className="flex">
           <SidebarContentClose side={SidebarSide.LEFT} />
-          <div className="border-b-border flex h-12 grow items-center border-b px-4">
+          <div className="border-b-border flex h-12 grow items-center border-b px-4 bg-background">
             <div className="flex h-max items-end gap-4">
               <h1 className="text-xl font-medium">{settingsCategory?.data.title ?? 'Oops'}</h1>
               <p>{settingsCategory?.data.description ?? "Topic can't be retrieved"}</p>
