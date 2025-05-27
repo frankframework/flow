@@ -79,17 +79,17 @@ function convertAdapterToFlowNodes(adapter: any): FlowNode[] {
     // Extract source handles from <Forward> children
     const forwardElements = [...element.querySelectorAll('Forward')]
     const sourceHandles =
-            forwardElements.length > 0
-                    ? forwardElements.map((forward, index) => ({
-                      type: forward.getAttribute('name') || `forward${index + 1}`,
-                      index: index + 1,
-                    }))
-                    : [
-                      {
-                        type: 'success',
-                        index: 1,
-                      },
-                    ]
+      forwardElements.length > 0
+        ? forwardElements.map((forward, index) => ({
+            type: forward.getAttribute('name') || `forward${index + 1}`,
+            index: index + 1,
+          }))
+        : [
+            {
+              type: 'success',
+              index: 1,
+            },
+          ]
 
     const frankNode: FrankNode = convertElementToNode(element, id, sourceHandles)
     nodes.push(frankNode)
@@ -109,9 +109,9 @@ function convertAdapterToFlowNodes(adapter: any): FlowNode[] {
 function convertElementToNode(element: Element, id: number, sourceHandles: any): FrankNode {
   // Extract attributes for this element except "name"
   const attributes: Record<string, string> = {}
-  for (const attr of element.attributes) {
-    if (attr.name !== 'name') {
-      attributes[attr.name] = attr.value
+  for (const attribute of element.attributes) {
+    if (attribute.name !== 'name') {
+      attributes[attribute.name] = attribute.value
     }
   }
 
@@ -134,28 +134,25 @@ function convertElementToNode(element: Element, id: number, sourceHandles: any):
 
 function convertChildren(elements: Element[]): any[] {
   return elements
-          .filter((child) => child.tagName !== 'Forward') // skip 'Forward' elements
-          .map((child) => {
-            // Extract child's attributes except 'name'
-            const childAttributes: Record<string, string> = {}
-            for (const attr of child.attributes) {
-              if (attr.name !== 'name') {
-                childAttributes[attr.name] = attr.value
-              }
-            }
+    .filter((child) => child.tagName !== 'Forward') // skip 'Forward' elements
+    .map((child) => {
+      // Extract child's attributes except 'name'
+      const childAttributes: Record<string, string> = {}
+      for (const attribute of child.attributes) {
+        if (attribute.name !== 'name') {
+          childAttributes[attribute.name] = attribute.value
+        }
+      }
 
-            return {
-              name: child.getAttribute('name'),
-              subtype: child.tagName,
-              type: getElementTypeFromName(child.tagName),
-              attributes: Object.keys(childAttributes).length > 0 ? childAttributes : undefined,
-              children: convertChildren([...child.children]),
-            }
-          })
+      return {
+        name: child.getAttribute('name'),
+        subtype: child.tagName,
+        type: getElementTypeFromName(child.tagName),
+        attributes: Object.keys(childAttributes).length > 0 ? childAttributes : undefined,
+        children: convertChildren([...child.children]),
+      }
+    })
 }
-
-
-
 
 interface FrankEdge {
   id: string
