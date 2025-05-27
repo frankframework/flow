@@ -133,7 +133,7 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
       </NodeResizeControl>
       <div
         className={`flex h-full w-full flex-col items-center rounded-md bg-white ${
-          properties.selected ? 'border-2 border-black' : 'border border-gray-200'
+          properties.selected ? 'border-2 border-black' : 'border-border border'
         }`}
         style={{
           minHeight: `${minNodeHeight}px`,
@@ -154,7 +154,7 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
             }}
           >
             <button
-              className="absolute -top-1 -right-1 rounded-full border border-gray-300 bg-white text-gray-400 shadow-sm hover:border-red-400 hover:text-red-400"
+              className="border-border absolute -top-1 -right-1 rounded-full border bg-white text-gray-400 shadow-sm hover:border-red-400 hover:text-red-400"
               onClick={() => setIsContextMenuOpen(false)}
             >
               <svg
@@ -172,10 +172,10 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
               </svg>
             </button>
             <ul>
-              <li className="cursor-pointer rounded-t-md p-2 hover:bg-gray-200" onClick={editNode}>
+              <li className="hover:bg-border cursor-pointer rounded-t-md p-2" onClick={editNode}>
                 Edit
               </li>
-              <li className="cursor-pointer rounded-b-md p-2 hover:bg-gray-200" onClick={deleteNode}>
+              <li className="hover:bg-border cursor-pointer rounded-b-md p-2" onClick={deleteNode}>
                 Delete
               </li>
             </ul>
@@ -199,17 +199,17 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
         {properties.data.attributes &&
           Object.entries(properties.data.attributes).map(([key, value]) => (
             <div key={key} className="my-1 w-full max-w-full px-1">
-              <p className="overflow-hidden text-sm overflow-ellipsis whitespace-nowrap text-gray-500">{key}</p>
+              <p className="text-gray-1000 overflow-hidden text-sm overflow-ellipsis whitespace-nowrap">{key}</p>
               <p className="overflow-hidden text-sm overflow-ellipsis whitespace-nowrap">{value}</p>
             </div>
           ))}
         {properties.data.children.length > 0 && (
           <div className="w-full p-4">
-            <div className="w-full rounded-md border-gray-200 bg-white p-4 shadow-[inset_0px_2px_4px_rgba(0,0,0,0.1)]">
+            <div className="border-border w-full rounded-md bg-white p-4 shadow-[inset_0px_2px_4px_rgba(0,0,0,0.1)]">
               {properties.data.children.map((child) => (
                 <div
                   key={child.type}
-                  className="mb-1 max-w-max rounded-md border-1 border-gray-200 bg-white"
+                  className="border-border mb-1 max-w-max rounded-md border-1 bg-white"
                   style={{ minHeight: `${minNodeHeight / 2}px` }}
                 >
                   <div
@@ -230,7 +230,7 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
                   {child.attributes &&
                     Object.entries(child.attributes).map(([key, value]) => (
                       <div key={key} className="my-1 px-1">
-                        <p className="overflow-hidden text-sm overflow-ellipsis whitespace-nowrap text-gray-500">
+                        <p className="text-gray-1000 overflow-hidden text-sm overflow-ellipsis whitespace-nowrap">
                           {key}
                         </p>
                         <p className="overflow-hidden text-sm overflow-ellipsis whitespace-nowrap">{value}</p>
@@ -287,7 +287,7 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
         >
           <ul>
             <button
-              className="absolute -top-1 -right-1 rounded-full border border-gray-300 bg-white text-gray-400 shadow-sm hover:border-red-400 hover:text-red-400"
+              className="border-border absolute -top-1 -right-1 rounded-full border bg-white text-gray-400 shadow-sm hover:border-red-400 hover:text-red-400"
               onClick={() => setIsHandleMenuOpen(false)}
             >
               <svg
@@ -304,19 +304,16 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
                 <line x1="3" y1="7" x2="7" y2="3" />
               </svg>
             </button>
-            <li
-              className="cursor-pointer rounded-t-md p-2 hover:bg-gray-200"
-              onClick={() => handleMenuClick('success')}
-            >
+            <li className="hover:bg-border cursor-pointer rounded-t-md p-2" onClick={() => handleMenuClick('success')}>
               Success
             </li>
-            <li className="cursor-pointer p-2 hover:bg-gray-200" onClick={() => handleMenuClick('failure')}>
+            <li className="hover:bg-border cursor-pointer p-2" onClick={() => handleMenuClick('failure')}>
               Failure
             </li>
-            <li className="cursor-pointer p-2 hover:bg-gray-200" onClick={() => handleMenuClick('exception')}>
+            <li className="hover:bg-border cursor-pointer p-2" onClick={() => handleMenuClick('exception')}>
               Exception
             </li>
-            <li className="cursor-pointer rounded-b-md p-2 hover:bg-gray-200" onClick={() => handleMenuClick('custom')}>
+            <li className="hover:bg-border cursor-pointer rounded-b-md p-2" onClick={() => handleMenuClick('custom')}>
               Custom
             </li>
           </ul>
@@ -326,7 +323,7 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
   )
 }
 
-export function ResizeIcon() {
+export function ResizeIcon({ color = '#999999' }: Readonly<{ color?: string }>) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -334,7 +331,7 @@ export function ResizeIcon() {
       height="20"
       viewBox="0 0 24 24"
       strokeWidth="1"
-      stroke="#999999"
+      stroke={color}
       strokeLinecap="round"
       className={'absolute right-[5px] bottom-[5px]'}
     >

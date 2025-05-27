@@ -88,7 +88,7 @@ export function CustomHandle(properties: Readonly<HandleProperties>) {
         >
           <ul>
             <button
-              className="absolute -top-1 -right-1 rounded-full border border-gray-300 bg-white text-gray-400 shadow-sm hover:border-red-400 hover:text-red-400"
+              className="border-border absolute -top-1 -right-1 rounded-full border bg-white text-gray-400 shadow-sm hover:border-red-400 hover:text-red-400"
               onClick={() => setIsMenuOpen(false)}
             >
               <svg
@@ -105,19 +105,16 @@ export function CustomHandle(properties: Readonly<HandleProperties>) {
                 <line x1="3" y1="7" x2="7" y2="3" />
               </svg>
             </button>
-            <li
-              className="cursor-pointer rounded-t-md p-2 hover:bg-gray-200"
-              onClick={() => handleMenuClick('success')}
-            >
+            <li className="hover:bg-border cursor-pointer rounded-t-md p-2" onClick={() => handleMenuClick('success')}>
               Success
             </li>
-            <li className="cursor-pointer p-2 hover:bg-gray-200" onClick={() => handleMenuClick('failure')}>
+            <li className="hover:bg-border cursor-pointer p-2" onClick={() => handleMenuClick('failure')}>
               Failure
             </li>
-            <li className="cursor-pointer p-2 hover:bg-gray-200" onClick={() => handleMenuClick('exception')}>
+            <li className="hover:bg-border cursor-pointer p-2" onClick={() => handleMenuClick('exception')}>
               Exception
             </li>
-            <li className="cursor-pointer rounded-b-md p-2 hover:bg-gray-200" onClick={() => handleMenuClick('custom')}>
+            <li className="hover:bg-border cursor-pointer rounded-b-md p-2" onClick={() => handleMenuClick('custom')}>
               Custom
             </li>
           </ul>

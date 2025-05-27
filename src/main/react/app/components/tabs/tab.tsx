@@ -1,6 +1,6 @@
 import React from 'react'
 import clsx from 'clsx'
-import CloseSquareIcon from '/icons/solar/Close Square.svg?react'
+import CloseIcon from '/icons/custom/Close.svg?react'
 import type { TabsItem } from '~/components/tabs/tabs'
 import CodeIcon from '/icons/solar/Code.svg?react'
 
@@ -15,17 +15,20 @@ export default function Tab({ value, icon, isSelected, onSelect, onClose }: Read
   return (
     <li
       className={clsx(
-        'group relative flex h-full rotate-x-180 list-none items-center justify-between gap-1 border-r border-b border-r-gray-200 border-b-gray-200 px-4 text-gray-500',
+        'group border-r-border text-text relative flex h-full rotate-x-180 list-none items-center justify-between gap-1 border-r border-b px-4',
         isSelected
-          ? 'border-b-white bg-white font-medium text-gray-950 hover:bg-white'
-          : 'bg-gray-50 hover:cursor-pointer hover:bg-gray-100 hover:text-gray-800',
+          ? 'border-t-brand border-b-background bg-background text-foreground hover:bg-background border-t-3 font-medium'
+          : 'bg-hover hover:bg-selected text-foreground-muted border-b-border border-t-3 border-t-transparent hover:cursor-pointer',
       )}
       onClick={onSelect}
     >
-      <Icon className={'h-4 w-auto fill-gray-950'} />
+      <Icon className={'fill-foreground-muted h-4 w-auto'} />
       {value}
-      <CloseSquareIcon
-        className={clsx('h-5 hover:fill-gray-500', isSelected ? 'fill-gray-400' : 'group-hover:fill-gray-400')}
+      <CloseIcon
+        className={clsx(
+          'hover:fill-foreground h-8 w-auto hover:cursor-pointer',
+          isSelected ? 'fill-foreground-muted' : 'group-hover:fill-foreground-muted',
+        )}
         onClick={(event) => onClose(event)}
       />
     </li>
