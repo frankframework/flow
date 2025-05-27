@@ -206,9 +206,9 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
         {properties.data.children.length > 0 && (
           <div className="w-full p-4">
             <div className="border-border w-full rounded-md bg-white p-4 shadow-[inset_0px_2px_4px_rgba(0,0,0,0.1)]">
-              {properties.data.children.map((child) => (
+              {properties.data.children.map((child, index) => (
                 <div
-                  key={child.type}
+                  key={child.type + index.toString()}
                   className="border-border mb-1 max-w-max rounded-md border-1 bg-white"
                   style={{ minHeight: `${minNodeHeight / 2}px` }}
                 >

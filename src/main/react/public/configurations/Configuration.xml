@@ -42,16 +42,33 @@
           statusValueInProcess="I"
       />
     </Receiver>
-    <Pipeline>
+    <Pipeline firstPipe="SendFirst">
       <Exits>
-        <Exit path="READY" state="success" />
+        <Exit name="Exit" state="success" />
+        <Exit name="BadRequest" state="error" />
       </Exits>
       <SenderPipe name="Send">
+        <IbisLocalSender
+            name="sending it"
+            javaListener="04 JavaListener"
+            dependencyTimeOut="0"
+        />
+        <IbisLocalSender
+            name="sending it again"
+            javaListener="04 JavaListener"
+            dependencyTimeOut="0"
+        />
+      </SenderPipe>
+      <SenderPipe name="SendFirst">
         <IbisLocalSender
             javaListener="04 JavaListener"
             dependencyTimeOut="0"
         />
       </SenderPipe>
+      <XmlValidatorPipe name="checkInput" root="booking" schema="booking.xsd">
+        <Forward name="failure" path="BadRequest" />
+        <Forward name="success" path="Exit" />
+      </XmlValidatorPipe>
     </Pipeline>
   </Adapter>
 

@@ -23,6 +23,7 @@ import { createContext, useContext, useEffect } from 'react'
 import StickyNoteComponent, { type StickyNote } from '~/routes/builder/canvas/nodetypes/sticky-note'
 import useTabStore from '~/stores/tab-store'
 import {convertXmlToJson, getXmlString} from '~/routes/builder/xml-to-json-parser'
+import flowStore from "~/stores/flow-store";
 
 export type FlowNode = FrankNode | ExitNode | StickyNote | GroupNode | Node
 
@@ -355,10 +356,13 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
   }
 
   const printXmlString = async () => {
+    const flowStore = useFlowStore.getState()
     try {
-      const adapters = await convertXmlToJson('Configuration.xml')
-      const adapter1 = adapters[0]
-      console.log(adapter1)
+      const adapter = await convertXmlToJson('Configuration.xml')
+      flowStore.setEdges(adapter.edges)
+      flowStore.setViewport({ x: 0, y: 0, zoom: 1 })
+      const laidOutNodes = layoutGraph(adapter.nodes, adapter.edges, 'LR')
+      useFlowStore.getState().setNodes(laidOutNodes)
     } catch (error) {
       console.error('Error fetching XML:', error)
     }
