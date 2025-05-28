@@ -16,16 +16,113 @@ export async function getXmlString(filename: string): Promise<string> {
   }
 }
 
-export async function convertXmlToJson(filename: string) {
+export async function getAdapterNamesFromConfiguration(filename: string): Promise<string[]> {
   const xmlString = await getXmlString(filename)
   const parser = new DOMParser()
   const xmlDoc = parser.parseFromString(xmlString, 'text/xml')
 
   const adapterList = xmlDoc.querySelectorAll('Adapter')
-  const nodes = convertAdapterToFlowNodes(adapterList[2])
-  const edges = extractEdgesFromAdapter(adapterList[2], nodes)
+  let adapterNames = []
+  for (const adapter of adapterList) {
+    if (adapter.getAttribute('name') !== null) {
+      adapterNames.push(adapter.getAttribute('name')!)
+    }
+  }
+  return adapterNames
+}
 
-  return { nodes: nodes, edges: edges }
+export async function getAdapterFromConfiguration(filename: string, adapterName: string): Promise<Element | null> {
+  const xmlString = await getXmlString(filename)
+  const parser = new DOMParser()
+  const xmlDoc = parser.parseFromString(xmlString, 'text/xml')
+
+  const adapterList = xmlDoc.querySelectorAll('Adapter')
+  for (const adapter of adapterList) {
+    if (adapter.getAttribute('name') === adapterName) {
+      return adapter
+    }
+  }
+
+  return null
+}
+
+export async function convertAdapterXmlToJson(adapter: Element) {
+  const nodes = convertAdapterToFlowNodes(adapter)
+  const adapterJson = { nodes: nodes, edges: extractEdgesFromAdapter(adapter, nodes) }
+
+  return adapterJson
+}
+
+function extractEdgesFromAdapter(adapter: Element, nodes: FlowNode[]): FrankEdge[] {
+  const edges: FrankEdge[] = []
+  const pipelineElement = adapter.querySelector('Pipeline')
+  if (!pipelineElement) return edges
+
+  // Map node names to their IDs
+  const nameToId = new Map<string, string>()
+  for (const node of nodes) {
+    if ('name' in node.data && typeof node.data.name === 'string') {
+      nameToId.set(node.data.name, node.id)
+    }
+  }
+
+  // Track which nodes already have custom forwards
+  const nodesWithExplicitTargets = new Set<string>()
+  const forwardIndexBySourceId = new Map<string, number>()
+
+  const pipelineChildren = [...pipelineElement.children]
+  for (const element of pipelineChildren) {
+    const sourceName = element.getAttribute('name')
+    if (!sourceName) continue
+
+    const sourceId = nameToId.get(sourceName)
+    if (!sourceId) continue
+
+    const forwards = element.querySelectorAll('Forward')
+    for (const forward of forwards) {
+      const targetName = forward.getAttribute('path')
+      if (!targetName) continue
+
+      const targetId = nameToId.get(targetName)
+      if (!targetId) {
+        console.warn(`Target node with name "${targetName}" not found.`)
+        continue
+      }
+
+      // Assign a numeric sourceHandle per forward per source node
+      const currentIndex = forwardIndexBySourceId.get(sourceId) ?? 1
+      forwardIndexBySourceId.set(sourceId, currentIndex + 1)
+
+      edges.push({
+        id: `${sourceId}-${targetId}`,
+        source: sourceId,
+        target: targetId,
+        type: 'frankEdge',
+        sourceHandle: currentIndex.toString(),
+      })
+
+      nodesWithExplicitTargets.add(sourceId)
+    }
+  }
+
+  // Fallback: connect sequential nodes unless current is an exitNode or has explicit forwards
+  for (let index = 0; index < nodes.length - 1; index++) {
+    const current = nodes[index]
+    const next = nodes[index + 1]
+
+    if (current.type === 'exitNode') continue
+    if (nodesWithExplicitTargets.has(current.id)) continue
+
+    edges.push({
+      id: `${current.id}-${next.id}`,
+      source: current.id,
+      target: next.id,
+      type: 'frankEdge',
+      sourceHandle: '1',
+    })
+  }
+
+  return edges
 }
 
 function convertAdapterToFlowNodes(adapter: any): FlowNode[] {
@@ -160,76 +257,4 @@ interface FrankEdge {
   target: string
   sourceHandle?: string
   type: 'frankEdge'
-}
-
-function extractEdgesFromAdapter(adapter: Element, nodes: FlowNode[]): FrankEdge[] {
-  const edges: FrankEdge[] = []
-  const pipelineElement = adapter.querySelector('Pipeline')
-  if (!pipelineElement) return edges
-
-  // Map node names to their IDs
-  const nameToId = new Map<string, string>()
-  for (const node of nodes) {
-    if ('name' in node.data && typeof node.data.name === 'string') {
-      nameToId.set(node.data.name, node.id)
-    }
-  }
-
-  // Track which nodes already have custom forwards
-  const nodesWithExplicitTargets = new Set<string>()
-  const forwardIndexBySourceId = new Map<string, number>()
-
-  const pipelineChildren = [...pipelineElement.children]
-  for (const element of pipelineChildren) {
-    const sourceName = element.getAttribute('name')
-    if (!sourceName) continue
-
-    const sourceId = nameToId.get(sourceName)
-    if (!sourceId) continue
-
-    const forwards = element.querySelectorAll('Forward')
-    for (const forward of forwards) {
-      const targetName = forward.getAttribute('path')
-      if (!targetName) continue
-
-      const targetId = nameToId.get(targetName)
-      if (!targetId) {
-        console.warn(`Target node with name "${targetName}" not found.`)
-        continue
-      }
-
-      // Assign a numeric sourceHandle per forward per source node
-      const currentIndex = forwardIndexBySourceId.get(sourceId) ?? 1
-      forwardIndexBySourceId.set(sourceId, currentIndex + 1)
-
-      edges.push({
-        id: `${sourceId}-${targetId}`,
-        source: sourceId,
-        target: targetId,
-        type: 'frankEdge',
-        sourceHandle: currentIndex.toString(),
-      })
-
-      nodesWithExplicitTargets.add(sourceId)
-    }
-  }
-
-  // Fallback: connect sequential nodes unless current is an exitNode or has explicit forwards
-  for (let index = 0; index < nodes.length - 1; index++) {
-    const current = nodes[index]
-    const next = nodes[index + 1]
-
-    if (current.type === 'exitNode') continue
-    if (nodesWithExplicitTargets.has(current.id)) continue
-
-    edges.push({
-      id: `${current.id}-${next.id}`,
-      source: current.id,
-      target: next.id,
-      type: 'frankEdge',
-      sourceHandle: '1',
-    })
-  }
-
-  return edges
 }
