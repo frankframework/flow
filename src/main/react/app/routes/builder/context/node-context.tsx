@@ -1,6 +1,8 @@
 import useNodeContextStore from '~/stores/node-context-store'
 import { useEffect, useRef, useState } from 'react'
 import useFlowStore from '~/stores/flow-store'
+import Button from '~/components/inputs/button'
+import ValidatedInput from '~/components/inputs/validatedInput'
 
 export default function NodeContext({
   nodeId,
@@ -89,12 +91,12 @@ export default function NodeContext({
   return (
     <>
       <div className="flex-1 overflow-y-auto px-4">
-        <div className="w-full max-w-sm space-y-4 rounded-lg bg-white p-6 shadow-md">
+        <div className="bg-background w-full space-y-4 rounded-md p-6">
           <h1>For node with id: {nodeId}</h1>
           {attributes &&
             attributes.map((attribute: any, index: number) => (
               <div key={index}>
-                <label htmlFor={`input-${index}`} className="group font-small relative block text-sm text-gray-700">
+                <label htmlFor={`input-${index}`} className="group font-small text-foreground relative block text-sm">
                   {attribute.name}
                   {attribute.mandatory && '*'}
                   <span className="absolute top-full left-0 z-10 mt-1 hidden w-full max-w-xs rounded bg-gray-950 px-2 py-1 text-sm break-words text-white shadow-md group-hover:block">
@@ -112,29 +114,32 @@ export default function NodeContext({
                   onInput={validateForm}
                   className="border-border mt-1 w-full rounded-md border px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                 />
+                {/*{JSON.stringify(attribute)}*/}
+                {/*<ValidatedInput*/}
+                {/*  placeholder={attribute.default || ''}*/}
+                {/*  type="text"*/}
+                {/*  id={`input-${index}-2`}*/}
+                {/*  name={`input-${index}`}*/}
+                {/*  ref={(element) => {*/}
+                {/*    inputReferences.current[index] = element*/}
+                {/*  }}*/}
+                {/*  pattern={attribute.mandatory && ({'No empty': /.+/})}*/}
+                {/*  onInput={validateForm}*/}
+                {/*/>*/}
               </div>
             ))}
         </div>
       </div>
-      <div className="sticky bottom-0 z-10 bg-white px-4 py-3 shadow-inner">
-        <div className="flex w-full max-w-sm justify-around">
-          <button
+        <div className="flex w-full justify-end border-t-border gap-4 bg-background border-t p-4">
+          <Button
             onClick={handleSave}
             disabled={!canSave}
-            className={`border-border rounded border px-3 py-2 shadow-sm sm:text-sm ${
-              canSave ? 'hover:cursor-pointer hover:bg-gray-100' : 'bg-border cursor-not-allowed text-gray-400'
-            }`}
+            className={` ${canSave ? '' : 'cursor-not-allowed opacity-50'}`}
           >
             Save & Close
-          </button>
-          <button
-            onClick={handleDiscard}
-            className="border-border ml-2 rounded border px-3 py-2 shadow-sm hover:cursor-pointer hover:bg-gray-100 sm:text-sm"
-          >
-            Delete
-          </button>
+          </Button>
+          <Button onClick={handleDiscard}>Delete</Button>
         </div>
-      </div>
     </>
   )
 }

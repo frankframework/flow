@@ -373,7 +373,7 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
         deleteKeyCode={'Delete'}
       >
         <Controls position="top-left"></Controls>
-        <Background variant={BackgroundVariant.Dots} size={2}></Background>
+        <Background variant={BackgroundVariant.Dots} size={3} gap={100}></Background>
         <Panel position="top-right" className="bg-gray-200 p-4"></Panel>
       </ReactFlow>
     </div>

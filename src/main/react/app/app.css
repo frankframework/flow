@@ -6,20 +6,24 @@
   --font-inter: "Inter", var(--font-sans);
 
   --color-brand: #fdc300;
-  --color-hover: var(--color-neutral-100);
-  --color-selected: var(--color-neutral-200);
-  --color-border: var(--color-neutral-300);
-  --color-background: var(--color-white);
-  --color-foreground: var(--color-neutral-950);
-  --color-foreground-muted: var(--color-neutral-600);
-  --color-foreground-active: var(--color-brand);
+
+  /* Define colors in theme variables (these are overwritten in themes) */
+  --color-hover: inherit;
+  --color-selected: inherit;
+  --color-border: inherit;
+  --color-backdrop: inherit;
+  --color-background: inherit;
+  --color-foreground: inherit;
+  --color-foreground-muted: inherit;
+  --color-foreground-active: inherit;
 }
 
 @layer base {
   [data-theme="light"] {
-    --color-hover: var(--color-neutral-50);
-    --color-selected: var(--color-neutral-100);
+    --color-hover: var(--color-neutral-100);
+    --color-selected: var(--color-neutral-200);
     --color-border: var(--color-neutral-300);
+    --color-backdrop: var(--color-neutral-50);
     --color-background: var(--color-white);
     --color-foreground: var(--color-neutral-950);
     --color-foreground-muted: var(--color-neutral-600);
@@ -27,11 +31,12 @@
   }
 
   [data-theme="dark"] {
-    --color-hover: var(--color-neutral-700);
-    --color-selected: var(--color-neutral-600);
-    --color-border: var(--color-neutral-500); /* 950 also looks good, but less for inputs and stuff */
-    --color-background: var(--color-neutral-800);
-    --color-foreground: var(--color-white);
+    --color-hover: var(--color-neutral-800);
+    --color-selected: var(--color-neutral-700);
+    --color-border: var(--color-neutral-600); /* 950 also looks good, but less for inputs and stuff */
+    --color-backdrop: var(--color-neutral-950);
+    --color-background: var(--color-neutral-900);
+    --color-foreground: var(--color-neutral-100);
     --color-foreground-muted: var(--color-neutral-400);
     --color-foreground-active: var(--color-brand);
   }

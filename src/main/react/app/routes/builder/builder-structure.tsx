@@ -1,19 +1,10 @@
 import MagnifierIcon from '/icons/solar/Magnifier.svg?react'
+import Search from '~/components/search/search'
 
 export default function BuilderStructure() {
   return (
     <>
-      <div className="relative px-4">
-        <label htmlFor="search" className="absolute top-1/2 left-6 -translate-y-1/2">
-          <MagnifierIcon className="fill-foreground-muted h-auto w-4" />
-        </label>
-        <input
-          id="search"
-          className="border-border w-full rounded-full border bg-gray-100 py-1 pr-4 pl-7"
-          type="search"
-          placeholder="Search"
-        />
-      </div>
+      <Search onChange={console.log} />
       <ul>
         <li>file1</li>
         <li>file2</li>

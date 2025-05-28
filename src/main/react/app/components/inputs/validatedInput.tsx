@@ -57,14 +57,14 @@ export default function ValidatedInput({
   return (
     <div className="relative">
       <Input
-        className={clsx(!isValid && 'focus:border-b-red-500')}
+        inputClassName={clsx(!isValid && 'focus:border-b-red-500')}
         onChange={handleChange}
         value={inputValue}
         {...properties}
       />
       {patterns && (
         <div className="group absolute top-1/2 right-2 -translate-y-1/2">
-          <HelpIcon className={clsx('fill-border', isValid ? 'fill-brand' : 'fill-red-500')} />
+          <HelpIcon className={clsx('fill-border', isValid ? 'fill-border' : 'fill-red-500')} />
           <span
             className={clsx(
               'absolute top-1/2 right-full z-10 mr-2 ml-2 hidden -translate-y-1/2 rounded bg-gray-950 px-2 py-1 text-sm whitespace-nowrap text-white shadow-md group-hover:block',

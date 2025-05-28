@@ -61,7 +61,7 @@ export default function ExitNode(properties: NodeProps<ExitNode>) {
         <ResizeIcon />
       </NodeResizeControl>
       <div
-        className={`flex h-full w-full flex-col items-center rounded-md bg-white ${
+        className={`flex h-full w-full flex-col items-center rounded-md bg-background ${
           properties.selected ? 'border-2 border-black' : 'border-border border'
         }`}
         style={{
@@ -74,7 +74,7 @@ export default function ExitNode(properties: NodeProps<ExitNode>) {
         </div>
         {isContextMenuOpen && (
           <div
-            className="nodrag absolute rounded-md border bg-white shadow-md"
+            className="nodrag absolute rounded-md border bg-background shadow-md"
             style={{
               left: 'calc(100% + 10px)',
               top: '0',
@@ -82,7 +82,7 @@ export default function ExitNode(properties: NodeProps<ExitNode>) {
             }}
           >
             <button
-              className="border-border absolute -top-1 -right-1 rounded-full border bg-white text-gray-400 shadow-sm hover:border-red-400 hover:text-red-400"
+              className="border-border absolute -top-1 -right-1 rounded-full border bg-background text-gray-400 shadow-sm hover:border-red-400 hover:text-red-400"
               onClick={() => setIsContextMenuOpen(false)}
             >
               <svg
@@ -110,13 +110,13 @@ export default function ExitNode(properties: NodeProps<ExitNode>) {
           </div>
         )}
         <div
-          className="box-border w-full rounded-t-md p-1"
+          className="box-border w-full rounded-t-md p-1 border-b border-b-border"
           style={{
             background: `radial-gradient(
-              ellipse at top left,
-              var(--type-exit) 0%,
-              white 70%
-            )`,
+                ellipse farthest-corner at 20% 20%,
+                var(--type-exit) 0%,
+                var(--color-background) 100%
+              )`,
           }}
         >
           <h1 className="font-bold">{properties.data.subtype}</h1>
