@@ -5,7 +5,7 @@ import useTabStore from '~/stores/tab-store'
 export type TabsList = Record<string, TabsItem>
 
 export interface TabsItem {
-  value: string
+  adapterName: string
   icon?: React.FC<React.SVGProps<SVGSVGElement>>
   flowJson?: Record<string, any>
 }
@@ -40,6 +40,17 @@ export default function Tabs({ initialSelectedTab }: Readonly<TabsProperties>) {
     return () => {
       globalThis.removeEventListener('resize', calculateScrollShadows)
     }
+  }, [])
+
+  useEffect(() => {
+    const unsubscribe = useTabStore.subscribe(
+      (state) => state.activeTab,
+      (newActiveTab) => {
+        setSelectedTab(newActiveTab)
+        setSelectedTabHistory((previous) => [...previous, newActiveTab])
+      },
+    )
+    return () => unsubscribe()
   }, [])
 
   useEffect(() => {
@@ -148,7 +159,7 @@ export default function Tabs({ initialSelectedTab }: Readonly<TabsProperties>) {
         {Object.entries(tabs).map(([key, tab]) => (
           <Tab
             key={key}
-            value={tab.value}
+            value={tab.adapterName}
             isSelected={selectedTab === key}
             onSelect={() => selectTab(key)}
             onClose={(event) => closeTab(key, event)}
