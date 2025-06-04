@@ -3,7 +3,7 @@ import { subscribeWithSelector } from 'zustand/middleware'
 import FolderIcon from '/icons/solar/Folder.svg?react'
 
 interface TabData {
-  adapterName: string
+  value: string
   icon?: React.ComponentType<any>
   flowJson?: Record<string, any>
   configurationName: string
@@ -21,7 +21,7 @@ interface TabStoreState {
 const useTabStore = create<TabStoreState>()(
   subscribeWithSelector((set, get) => ({
     tabs: {
-      tab1: { adapterName: 'tab1', configurationName: 'Config1', icon: FolderIcon },
+      tab1: { value: 'tab1', configurationName: 'Config1', icon: FolderIcon },
     },
     activeTab: 'tab1',
     setTabData: (tabId, data) =>

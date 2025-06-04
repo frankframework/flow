@@ -42,7 +42,7 @@ export default function BuilderStructure() {
   const openNewTab = (adapterName: string, configName: string) => {
     if (!getTab(adapterName)) {
       setTabData(adapterName, {
-        adapterName: adapterName,
+        value: adapterName,
         configurationName: configName,
         flowJson: {},
       })

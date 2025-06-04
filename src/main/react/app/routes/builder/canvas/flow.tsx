@@ -322,10 +322,10 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
         if (activeTab.flowJson && Object.keys(activeTab.flowJson).length > 0) {
           // Restore from existing flowJson if present
           restoreFlowFromTab(newTab)
-        } else if (activeTab.configurationName && activeTab.adapterName) {
+        } else if (activeTab.configurationName && activeTab.value) {
           // Load from XML if flowJson doesn't exist
           try {
-            const adapter = await getAdapterFromConfiguration(activeTab.configurationName, activeTab.adapterName)
+            const adapter = await getAdapterFromConfiguration(activeTab.configurationName, activeTab.value)
             if (!adapter) return
             const adapterJson = await convertAdapterXmlToJson(adapter)
             useFlowStore.getState().setEdges(adapterJson.edges)
