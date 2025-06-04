@@ -50,6 +50,9 @@ importers:
       react-router:
         specifier: ^7.5.2
         version: 7.5.2(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      sax-ts:
+        specifier: ^1.2.13
+        version: 1.2.13
       tailwind-merge:
         specifier: ^3.3.0
         version: 3.3.0
@@ -3363,6 +3366,10 @@ packages:
 
   safer-buffer@2.1.2:
     resolution: {integrity: sha512-YZo3K82SD7Riyi0E1EQPojLz7kpepnSQI9IyPbHHg1XXXevb5dJI7tpyN2ADxGcQbHG7vcyRHk0cbwqcQriUtg==}
+
+  sax-ts@1.2.13:
+    resolution: {integrity: sha512-0gQHhYRpl/SwsJtjrG++WJXnkkfp2QIsDB9NpJjM2ddcnCsxdMT4DWX2CMuSPv2qjASdDVCCw5qTkeKOrY7E3Q==}
+    engines: {node: '>=12.19.0', npm: '>=6.14.8'}
 
   scheduler@0.26.0:
     resolution: {integrity: sha512-NlHwttCI/l5gCPR3D1nNXtWABUmBwvZpEQiD4IXSbIDq8BzLIK/7Ir5gTFSGZDUu37K5cMNp0hFtzO38sC7gWA==}
@@ -7599,6 +7606,8 @@ snapshots:
       is-regex: 1.2.1
 
   safer-buffer@2.1.2: {}
+
+  sax-ts@1.2.13: {}
 
   scheduler@0.26.0: {}
 
