@@ -33,7 +33,7 @@ export default function Help() {
           </div>
         </div>
         <div className="markdown-body h-full overflow-auto p-6">
-          <div className="border-border rounded-md border p-6">
+          <div className="border-border rounded-md border p-6 bg-background">
             {(MarkdownContent && <MarkdownContent />) || (
               <div>
                 The topic with id: <code>{topic}</code> does not seem to exist, it might have been moved or deleted.

@@ -42,7 +42,7 @@ export default function Toggle({
         <span className={clsx('absolute inset-0 rounded-full', isChecked ? 'bg-brand' : 'bg-border')}>
           <span
             className={clsx(
-              'bg-background group-hover:bg-hover absolute top-[50%] h-5 w-5 -translate-y-1/2 transform rounded-full',
+              'bg-backdrop group-hover:bg-hover absolute top-[50%] h-5 w-5 -translate-y-1/2 transform rounded-full',
               isChecked ? 'right-0.5' : 'left-0.5',
             )}
           />

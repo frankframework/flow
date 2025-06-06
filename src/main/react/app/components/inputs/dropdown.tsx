@@ -165,7 +165,7 @@ export default function Dropdown({
       <div
         onClick={toggleDropdown}
         className={clsx(
-          'border-border bg-background flex items-center justify-between rounded-md border px-3 py-2',
+          'border-border  bg-backdrop flex items-center justify-between rounded-md border px-3 py-2',
           disabled ? 'cursor-not-allowed' : 'cursor-pointer',
           isOpen ? 'bg-selected' : 'hover:bg-hover',
         )}
