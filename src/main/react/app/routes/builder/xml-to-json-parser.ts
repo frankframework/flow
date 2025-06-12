@@ -2,6 +2,7 @@ import type { FlowNode } from '~/routes/builder/canvas/flow'
 import { getElementTypeFromName } from '~/routes/builder/node-translator-module'
 import type { ExitNode } from '~/routes/builder/canvas/nodetypes/exit-node'
 import type { FrankNode } from '~/routes/builder/canvas/nodetypes/frank-node'
+import { SAXParser } from 'sax-ts'
 
 export async function getXmlString(filename: string): Promise<string> {
   try {
@@ -18,17 +19,31 @@ export async function getXmlString(filename: string): Promise<string> {
 
 export async function getAdapterNamesFromConfiguration(filename: string): Promise<string[]> {
   const xmlString = await getXmlString(filename)
-  const parser = new DOMParser()
-  const xmlDoc = parser.parseFromString(xmlString, 'text/xml')
 
-  const adapterList = xmlDoc.querySelectorAll('Adapter')
-  let adapterNames = []
-  for (const adapter of adapterList) {
-    if (adapter.getAttribute('name') !== null) {
-      adapterNames.push(adapter.getAttribute('name')!)
+  return new Promise((resolve, reject) => {
+    const adapterNames: string[] = []
+    const parser = new SAXParser(true, {}) // strict mode
+
+    parser.onopentag = (node) => {
+      if (node.name === 'Adapter' && typeof node.attributes.name === 'string') {
+        adapterNames.push(node.attributes.name)
+      }
     }
-  }
-  return adapterNames
+
+    parser.onerror = (error) => {
+      reject(new Error(`SAX parsing error: ${error.message}`))
+    }
+
+    parser.onend = () => {
+      resolve(adapterNames)
+    }
+
+    try {
+      parser.write(xmlString).close()
+    } catch (error) {
+      reject(new Error(`Failed to parse XML: ${(error as Error).message}`))
+    }
+  })
 }
 
 export async function getAdapterFromConfiguration(filename: string, adapterName: string): Promise<Element | null> {
