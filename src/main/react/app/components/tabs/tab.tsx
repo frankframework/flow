@@ -5,7 +5,6 @@ import type { TabsItem } from '~/components/tabs/tabs'
 import CodeIcon from '/icons/solar/Code.svg?react'
 
 export type TabProperties = {
-  value: string
   isSelected: boolean
   onSelect: () => void
   onClose: (event: React.MouseEvent) => void

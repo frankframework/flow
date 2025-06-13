@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import Tabs, { type TabsList } from '~/components/tabs/tabs'
+import { useState } from 'react'
+import Tabs from '~/components/tabs/tabs'
 import BuilderStructure from '~/routes/builder/builder-structure'
 import BuilderContext from '~/routes/builder/context/builder-context'
 import Flow from '~/routes/builder/canvas/flow'
@@ -14,45 +14,7 @@ import useTabStore from '~/stores/tab-store'
 export default function Builder() {
   const [showNodeContext, setShowNodeContext] = useState(false)
   const nodeId = useNodeContextStore((state) => state.nodeId)
-  const [tabs, setTabs] = useState<TabsList>(useTabStore.getState().tabs)
-  const [selectedTab, setSelectedTab] = useState<string | undefined>(useTabStore.getState().activeTab)
-
-  useEffect(() => {
-    const unsubscribe = useTabStore.subscribe((state) => {
-      setTabs(state.tabs)
-    })
-    return () => unsubscribe()
-  }, [])
-
-  useEffect(() => {
-    const unsubscribe = useTabStore.subscribe(
-            (state) => state.activeTab,
-            (activeTab) => setSelectedTab(activeTab)
-    )
-    return () => unsubscribe()
-  }, [])
-
-  const handleSelectTab = (key: string) => {
-    setSelectedTab(key)
-    useTabStore.getState().setActiveTab(key)
-  }
-
-  const handleCloseTab = (key: string) => {
-    const newTabs = { ...tabs }
-    delete newTabs[key]
-    setTabs(newTabs)
-    useTabStore.getState().removeTab(key)
-
-    if (key === selectedTab) {
-      const remainingKeys = Object.keys(newTabs)
-      const fallbackKey = remainingKeys.at(-1) // select last one or change logic
-      if (fallbackKey) {
-        handleSelectTab(fallbackKey)
-      } else {
-        setSelectedTab(undefined)
-      }
-    }
-  }
+  const activeTab = useTabStore((state) => state.activeTab)
 
   return (
     <SidebarLayout name="studio" windowResizeOnChange={true}>
@@ -64,16 +26,11 @@ export default function Builder() {
         <div className="flex">
           <SidebarContentClose side={SidebarSide.LEFT} />
           <div className="grow overflow-x-auto">
-            <Tabs
-                    tabs={tabs}
-                    selectedTab={selectedTab}
-                    onSelectTab={handleSelectTab}
-                    onCloseTab={handleCloseTab}
-            />
+            <Tabs />
           </div>
           <SidebarContentClose side={SidebarSide.RIGHT} />
         </div>
-        <div className="border-b-border h-12 border-b bg-background flex p-4 items-center">Path: {selectedTab}</div>
+        <div className="border-b-border h-12 border-b bg-background flex p-4 items-center">Path: {activeTab}</div>
         <Flow showNodeContextMenu={setShowNodeContext} />
       </>
       <>
