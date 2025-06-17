@@ -14,6 +14,7 @@ import { FlowConfig } from '~/routes/builder/canvas/flow.config'
 import { useNodeContextMenu } from '~/routes/builder/canvas/flow'
 import useNodeContextStore from '~/stores/node-context-store'
 import useFrankDocStore from '~/stores/frank-doc-store'
+import { getElementTypeFromName } from '~/routes/builder/node-translator-module'
 
 export interface ChildNode {
   subtype: string
@@ -39,6 +40,7 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
   const handleSpacing = 20
   const containerReference = useRef<HTMLDivElement>(null)
   const [dragOver, setDragOver] = useState(false)
+  const [placeholderType, setPlaceholderType] = useState('other')
   const showNodeContextMenu = useNodeContextMenu()
   const { frankDocRaw } = useFrankDocStore()
   const { setNodeId, setAttributes } = useNodeContextStore()
@@ -66,6 +68,7 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
   }, [properties.data.children, properties.data.sourceHandles.length]) // Re-measure when children change
 
   const addHandle = useFlowStore.getState().addHandle
+  const addChild = useFlowStore((state) => state.addChild)
 
   const handleMenuClick = useCallback(
     (handleType: string) => {
@@ -115,23 +118,42 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
     }, 0)
   }
 
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault()           // a must, otherwise the browser won’t fire onDrop
-    if (!dragOver) setDragOver(true)
+  const handleDragOver = (event: React.DragEvent) => {
+    event.preventDefault() // ⬅ keep default behaviour cancelled
+    setDragOver(true)
+    const data = event.dataTransfer.getData('application/reactflow')
+    if (!data) return
+
+    const parsed = JSON.parse(data) // your palette item
+    const elementType = getElementTypeFromName(parsed.name)
+    setPlaceholderType(elementType)
   }
 
   const handleDragLeave = () => setDragOver(false)
 
-  const handleDropOnNode = (e: React.DragEvent) => {
-    e.preventDefault()
-    setDragOver(false)
-    /*                     ─────────────
-       If you actually want to create a
-       child here, do that logic now.
-       Otherwise just let Flow’s global
-       onDrop run as usual.
-    */
-  }
+  const handleDropOnNode = useCallback(
+    (event: React.DragEvent) => {
+      event.preventDefault()
+      event.stopPropagation()
+      setDragOver(false)
+
+      const raw = event.dataTransfer.getData('application/reactflow')
+      if (!raw) return
+      const dropped = JSON.parse(raw) // e.g. { name:"HttpSender", attributes:{…} }
+
+      console.log(dropped)
+      const child: ChildNode = {
+        subtype: dropped.name,
+        type: getElementTypeFromName(dropped.name),
+        name: '',
+        attributes: {},
+      }
+
+      addChild(properties.id, child)
+
+    },
+    [addChild, properties.id, updateNodeInternals],
+  )
 
   return (
     <>
@@ -225,7 +247,7 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
               <p className="overflow-hidden text-sm overflow-ellipsis whitespace-nowrap">{value}</p>
             </div>
           ))}
-        {properties.data.children.length > 0 && (
+        {(properties.data.children.length > 0 || dragOver) && (
           <div className="w-full p-4">
             <div className="border-border bg-background w-full rounded-md p-4 shadow-[inset_0px_2px_4px_rgba(0,0,0,0.1)]">
               {properties.data.children.map((child, index) => (
@@ -238,10 +260,10 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
                     className="border-b-border box-border w-full rounded-t-md border-b p-1"
                     style={{
                       background: `radial-gradient(
-                        ellipse farthest-corner at 20% 20%,
-                        var(--type-${child.type?.toLowerCase?.() || 'default'}) 0%,
-                        var(--color-background) 100%
-                      )`,
+                ellipse farthest-corner at 20% 20%,
+                var(--type-${child.type?.toLowerCase?.() || 'default'}) 0%,
+                var(--color-background) 100%
+              )`,
                     }}
                   >
                     <h1 className="font-bold">{child.subtype}</h1>
@@ -260,6 +282,20 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
                     ))}
                 </div>
               ))}
+
+              {dragOver && (
+                <div
+                  className="flex items-center justify-center border-2 border-dashed border-gray-400 bg-gray-100/50 text-center text-xs text-gray-600 italic"
+                  style={{
+                    height: '100px',
+                    width: '200px',
+                    marginTop: '8px',
+                    borderRadius: '6px',
+                  }}
+                >
+                  Drop to add <span className="ml-1 font-semibold">{placeholderType} </span> child
+                </div>
+              )}
             </div>
           </div>
         )}

@@ -13,7 +13,7 @@ import {
 import { initialNodes } from '~/routes/builder/canvas/nodes'
 import { initialEdges } from '~/routes/builder/canvas/edges'
 import type { FlowNode } from '~/routes/builder/canvas/flow'
-import type { FrankNode } from '~/routes/builder/canvas/nodetypes/frank-node'
+import type { ChildNode, FrankNode } from '~/routes/builder/canvas/nodetypes/frank-node'
 import type { ExitNode } from '~/routes/builder/canvas/nodetypes/exit-node'
 import type { StickyNote } from '~/routes/builder/canvas/nodetypes/sticky-note'
 
@@ -35,6 +35,7 @@ export interface FlowState {
   deleteEdge: (edgeId: string) => void
   setAttributes: (nodeId: string, attributes: Record<string, string>) => void
   getAttributes: (nodeId: string) => Record<string, string> | null
+  addChild: (nodeId: string, child: ChildNode) => void
   setStickyText: (nodeId: string, text: string) => void
   setNodeName: (nodeId: string, name: string) => void
   addHandle: (nodeId: string, handle: { type: string; index: number }) => void
@@ -140,6 +141,22 @@ const useFlowStore = create<FlowState>((set, get) => ({
       return node.data.attributes || null
     }
     return null
+  },
+  addChild: (nodeId, child) => {
+    set({
+      nodes: get().nodes.map((node) => {
+        if (node.id === nodeId && isFrankNode(node)) {
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              children: [...node.data.children, child],
+            },
+          }
+        }
+        return node
+      }),
+    })
   },
   setStickyText: (nodeId, text) => {
     set({

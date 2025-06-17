@@ -331,7 +331,7 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
         const activeTab = tabStore.getTab(newTab)
         if (!activeTab) return
 
-        setLoading(true) // START loading
+        setLoading(true)
 
         try {
           if (activeTab.flowJson && Object.keys(activeTab.flowJson).length > 0) {
@@ -350,7 +350,7 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
         } catch (error) {
           console.error('Error loading adapter from XML:', error)
         } finally {
-          setLoading(false) // STOP loading
+          setLoading(false)
         }
       },
     )

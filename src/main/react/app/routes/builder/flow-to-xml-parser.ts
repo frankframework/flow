@@ -34,12 +34,17 @@ export function exportFlowToXml(json: ReactFlowJson, adaptername: string): strin
   const receiverNodes = validNodes.filter((n) => n.data.type?.toLowerCase() === 'receiver')
   const startNodes = receiverNodes.filter((n) => !incoming[n.id])
   const sortedIds =
-    startNodes.length > 0 ? topologicalSort([startNodes[0].id], outgoing) : validNodes.map((node) => node.id)
+    startNodes.length > 0
+      ? topologicalSort(
+          startNodes.map((n) => n.id),
+          outgoing,
+        )
+      : validNodes.map((node) => node.id)
 
   const exitNodes = validNodes.filter((n) => n.data.type?.toLowerCase() === 'exit')
   const exitNodeIds = new Set(exitNodes.map((n) => n.id))
 
-  const adapterParts: string[] = []
+  const receivers: string[] = []
   const pipelineParts: string[] = []
 
   for (const id of sortedIds) {
@@ -48,7 +53,7 @@ export function exportFlowToXml(json: ReactFlowJson, adaptername: string): strin
 
     const type = node.data.type?.toLowerCase()
     if (type === 'receiver') {
-      adapterParts.push(generateXmlElement(node, edgeMap, exitNodeIds, nodeMap))
+      receivers.push(generateXmlElement(node, edgeMap, exitNodeIds, nodeMap))
     } else if (type === 'pipe') {
       pipelineParts.push(generateXmlElement(node, edgeMap, exitNodeIds, nodeMap))
     }
@@ -58,7 +63,7 @@ export function exportFlowToXml(json: ReactFlowJson, adaptername: string): strin
 
   return `<Configuration>
   <Adapter name="${adaptername}" description="Auto-generated from React Flow JSON">
-${adapterParts.join('\n')}
+${receivers.join('\n')}
     <Pipeline>
 ${exitsXml}
 ${pipelineParts.join('\n')}
