@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import useFlowStore from '~/stores/flow-store'
 import Button from '~/components/inputs/button'
 import ValidatedInput from '~/components/inputs/validatedInput'
+import { useShallow } from 'zustand/react/shallow'
 
 export default function NodeContext({
   nodeId,
@@ -15,6 +16,11 @@ export default function NodeContext({
   const inputReferences = useRef<Record<number, HTMLInputElement | null>>({})
   const { setAttributes, getAttributes, setNodeName, deleteNode } = useFlowStore((state) => state)
   const [canSave, setCanSave] = useState(false)
+  const { setIsEditing } = useNodeContextStore(
+    useShallow((s) => ({
+      setIsEditing: s.setIsEditing,
+    })),
+  )
 
   const validateForm = () => {
     if (!attributes) return false
@@ -80,11 +86,13 @@ export default function NodeContext({
       setNodeName(nodeId.toString(), nameField.value)
     }
 
+    setIsEditing(false)
     setShowNodeContext(false)
   }
 
   const handleDiscard = () => {
     deleteNode(nodeId.toString())
+    setIsEditing(false)
     setShowNodeContext(false)
   }
 
@@ -130,16 +138,16 @@ export default function NodeContext({
             ))}
         </div>
       </div>
-        <div className="flex w-full justify-end border-t-border gap-4 bg-background border-t p-4">
-          <Button
-            onClick={handleSave}
-            disabled={!canSave}
-            className={` ${canSave ? '' : 'cursor-not-allowed opacity-50'}`}
-          >
-            Save & Close
-          </Button>
-          <Button onClick={handleDiscard}>Delete</Button>
-        </div>
+      <div className="border-t-border bg-background flex w-full justify-end gap-4 border-t p-4">
+        <Button
+          onClick={handleSave}
+          disabled={!canSave}
+          className={` ${canSave ? '' : 'cursor-not-allowed opacity-50'}`}
+        >
+          Save & Close
+        </Button>
+        <Button onClick={handleDiscard}>Delete</Button>
+      </div>
     </>
   )
 }

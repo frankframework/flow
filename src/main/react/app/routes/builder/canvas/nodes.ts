@@ -95,7 +95,7 @@ export const initialNodes: Node[] = [
     data: {
       subtype: 'Exit',
       type: 'Exit',
-      name: 'Ready',
+      name: 'Failure',
     },
     type: 'exitNode',
   },

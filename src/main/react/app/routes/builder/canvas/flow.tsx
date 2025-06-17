@@ -19,9 +19,12 @@ import useFlowStore, { type FlowState } from '~/stores/flow-store'
 import { useShallow } from 'zustand/react/shallow'
 import { FlowConfig } from '~/routes/builder/canvas/flow.config'
 import { getElementTypeFromName } from '~/routes/builder/node-translator-module'
-import { createContext, useContext, useEffect } from 'react'
+import { createContext, useContext, useEffect, useState } from 'react'
 import StickyNoteComponent, { type StickyNote } from '~/routes/builder/canvas/nodetypes/sticky-note'
 import useTabStore from '~/stores/tab-store'
+import { convertAdapterXmlToJson, getAdapterFromConfiguration } from '~/routes/builder/xml-to-json-parser'
+import { exportFlowToXml } from '~/routes/builder/flow-to-xml-parser'
+import useNodeContextStore from '~/stores/node-context-store'
 
 export type FlowNode = FrankNode | ExitNode | StickyNote | GroupNode | Node
 
@@ -39,6 +42,14 @@ const selector = (state: FlowState) => ({
 })
 
 function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b: boolean) => void }>) {
+  const [loading, setLoading] = useState(false)
+  const { isEditing, setIsEditing } = useNodeContextStore(
+    useShallow((s) => ({
+      isEditing: s.isEditing,
+      setIsEditing: s.setIsEditing,
+    })),
+  )
+
   const nodeTypes = {
     frankNode: FrankNodeComponent,
     exitNode: ExitNodeComponent,
@@ -286,6 +297,7 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
       type: nodeType,
     }
     useFlowStore.getState().addNode(newNode)
+    setIsEditing(true)
   }
 
   const handleRightMouseButtonClick = (event) => {
@@ -311,11 +323,38 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
   useEffect(() => {
     const unsubscribe = useTabStore.subscribe(
       (state) => state.activeTab,
-      (newTab, oldTab) => {
+      async (newTab, oldTab) => {
+        const tabStore = useTabStore.getState()
+
         if (oldTab) saveFlowToTab(oldTab)
-        restoreFlowFromTab(newTab)
+
+        const activeTab = tabStore.getTab(newTab)
+        if (!activeTab) return
+
+        setLoading(true) // START loading
+
+        try {
+          if (activeTab.flowJson && Object.keys(activeTab.flowJson).length > 0) {
+            restoreFlowFromTab(newTab)
+          } else if (activeTab.configurationName && activeTab.value) {
+            const adapter = await getAdapterFromConfiguration(activeTab.configurationName, activeTab.value)
+            if (!adapter) return
+
+            const adapterJson = await convertAdapterXmlToJson(adapter)
+            useFlowStore.getState().setEdges(adapterJson.edges)
+            useFlowStore.getState().setViewport({ x: 0, y: 0, zoom: 1 })
+
+            const laidOutNodes = layoutGraph(adapterJson.nodes, adapterJson.edges, 'LR')
+            useFlowStore.getState().setNodes(laidOutNodes)
+          }
+        } catch (error) {
+          console.error('Error loading adapter from XML:', error)
+        } finally {
+          setLoading(false) // STOP loading
+        }
       },
     )
+
     return () => unsubscribe()
   }, [])
 
@@ -325,9 +364,12 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
 
     const flowData = reactFlow.toObject()
     const viewport = flowStore.viewport
+    const tabData = tabStore.getTab(tabId)
+
+    if (!tabData) return
 
     tabStore.setTabData(tabId, {
-      value: tabId,
+      ...tabData,
       flowJson: {
         ...flowData,
         viewport,
@@ -353,8 +395,38 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
     }
   }
 
+  const exportToXml = () => {
+    const flowData = reactFlow.toObject()
+    const activeTabName = useTabStore.getState().activeTab
+    const xmlString = exportFlowToXml(flowData, activeTabName)
+    const fileName = 'FlowConfiguration.xml'
+    const blob = new Blob([xmlString], { type: 'application/xml' })
+    const url = URL.createObjectURL(blob)
+
+    const link = document.createElement('a')
+    link.href = url
+    link.download = fileName
+    link.click()
+
+    URL.revokeObjectURL(url)
+  }
+
   return (
-    <div style={{ height: '100%' }} onDrop={onDrop} onDragOver={onDragOver} onContextMenu={handleRightMouseButtonClick}>
+    <div
+      className="relative h-full w-full"
+      onDrop={onDrop}
+      onDragOver={onDragOver}
+      onContextMenu={handleRightMouseButtonClick}
+    >
+      {loading && (
+        <div className="bg-opacity-80 absolute inset-0 z-50 flex items-center justify-center bg-white">
+          <div className="h-10 w-10 animate-spin rounded-full border-t-2 border-b-2 border-black"></div>
+        </div>
+      )}
+      {!isEditing || (
+              <div className="absolute inset-0 z-50 bg-black/20 cursor-not-allowed" />
+      )}
+
       <ReactFlow
         fitView
         nodes={nodes}
@@ -371,10 +443,18 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
         edgeTypes={edgeTypes}
         defaultEdgeOptions={defaultEdgeOptions}
         deleteKeyCode={'Delete'}
+        minZoom={0.2}
       >
-        <Controls position="top-left"></Controls>
+        <Controls position="top-left" style={{ color: '#000' }}></Controls>
         <Background variant={BackgroundVariant.Dots} size={3} gap={100}></Background>
-        <Panel position="top-right" className="bg-gray-200 p-4"></Panel>
+        <Panel position="top-center">
+          <button
+            className="border-border hover:bg-hover bg-background border p-2 hover:cursor-pointer"
+            onClick={exportToXml}
+          >
+            Export To XML
+          </button>
+        </Panel>
       </ReactFlow>
     </div>
   )

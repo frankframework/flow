@@ -38,6 +38,7 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
   const colorVariable = `--type-${type}`
   const handleSpacing = 20
   const containerReference = useRef<HTMLDivElement>(null)
+  const [dragOver, setDragOver] = useState(false)
   const showNodeContextMenu = useNodeContextMenu()
   const { frankDocRaw } = useFrankDocStore()
   const { setNodeId, setAttributes } = useNodeContextStore()
@@ -114,6 +115,24 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
     }, 0)
   }
 
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()           // a must, otherwise the browser won’t fire onDrop
+    if (!dragOver) setDragOver(true)
+  }
+
+  const handleDragLeave = () => setDragOver(false)
+
+  const handleDropOnNode = (e: React.DragEvent) => {
+    e.preventDefault()
+    setDragOver(false)
+    /*                     ─────────────
+       If you actually want to create a
+       child here, do that logic now.
+       Otherwise just let Flow’s global
+       onDrop run as usual.
+    */
+  }
+
   return (
     <>
       <NodeResizeControl
@@ -132,7 +151,7 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
         <ResizeIcon />
       </NodeResizeControl>
       <div
-        className={`flex h-full w-full flex-col items-center rounded-md bg-background ${
+        className={`bg-background flex h-full w-full flex-col items-center overflow-hidden rounded-md ${
           properties.selected ? 'border-2 border-black' : 'border-border border'
         }`}
         style={{
@@ -140,13 +159,16 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
           minWidth: `${minNodeWidth}px`,
         }}
         ref={containerReference}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDropOnNode}
       >
         <div className="nodrag absolute right-0 px-2 hover:cursor-pointer hover:opacity-50" onClick={toggleContextMenu}>
           <MeatballMenu />
         </div>
         {isContextMenuOpen && (
           <div
-            className="nodrag absolute rounded-md border bg-background shadow-md"
+            className="nodrag bg-background absolute rounded-md border shadow-md"
             style={{
               left: 'calc(100% + 10px)',
               top: '0',
@@ -154,7 +176,7 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
             }}
           >
             <button
-              className="border-border absolute -top-1 -right-1 rounded-full border bg-background text-gray-400 shadow-sm hover:border-red-400 hover:text-red-400"
+              className="border-border bg-background absolute -top-1 -right-1 rounded-full border text-gray-400 shadow-sm hover:border-red-400 hover:text-red-400"
               onClick={() => setIsContextMenuOpen(false)}
             >
               <svg
@@ -205,11 +227,11 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
           ))}
         {properties.data.children.length > 0 && (
           <div className="w-full p-4">
-            <div className="border-border w-full rounded-md bg-background p-4 shadow-[inset_0px_2px_4px_rgba(0,0,0,0.1)]">
-              {properties.data.children.map((child) => (
+            <div className="border-border bg-background w-full rounded-md p-4 shadow-[inset_0px_2px_4px_rgba(0,0,0,0.1)]">
+              {properties.data.children.map((child, index) => (
                 <div
-                  key={child.type}
-                  className="border-border mb-1 max-w-max rounded-md border-1 bg-background"
+                  key={child.type + index.toString()}
+                  className="border-border bg-background mb-1 max-w-max rounded-md border-1"
                   style={{ minHeight: `${minNodeHeight / 2}px` }}
                 >
                   <div
@@ -279,7 +301,7 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
       </div>
       {isHandleMenuOpen && (
         <div
-          className="nodrag absolute rounded-md border bg-background shadow-md"
+          className="nodrag bg-background absolute rounded-md border shadow-md"
           style={{
             left: `${handleMenuPosition.x + 10}px`, // Positioning to the right of the cursor
             top: `${handleMenuPosition.y}px`,
@@ -287,7 +309,7 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
         >
           <ul>
             <button
-              className="border-border absolute -top-1 -right-1 rounded-full border bg-background text-gray-400 shadow-sm hover:border-red-400 hover:text-red-400"
+              className="border-border bg-background absolute -top-1 -right-1 rounded-full border text-gray-400 shadow-sm hover:border-red-400 hover:text-red-400"
               onClick={() => setIsHandleMenuOpen(false)}
             >
               <svg
