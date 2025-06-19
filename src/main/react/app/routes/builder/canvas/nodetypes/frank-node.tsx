@@ -7,7 +7,7 @@ import {
   useReactFlow,
   useUpdateNodeInternals,
 } from '@xyflow/react'
-import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import useFlowStore from '~/stores/flow-store'
 import { CustomHandle } from '~/components/flow/handle'
 import { FlowConfig } from '~/routes/builder/canvas/flow.config'
@@ -17,6 +17,7 @@ import useFrankDocStore from '~/stores/frank-doc-store'
 import { getElementTypeFromName } from '~/routes/builder/node-translator-module'
 
 export interface ChildNode {
+  id: string
   subtype: string
   type: string
   name?: string
@@ -40,10 +41,9 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
   const handleSpacing = 20
   const containerReference = useRef<HTMLDivElement>(null)
   const [dragOver, setDragOver] = useState(false)
-  const [placeholderType, setPlaceholderType] = useState('other')
   const showNodeContextMenu = useNodeContextMenu()
   const { frankDocRaw } = useFrankDocStore()
-  const { setNodeId, setAttributes } = useNodeContextStore()
+  const { setNodeId, setAttributes, setParentId, setIsEditing } = useNodeContextStore()
 
   const updateNodeInternals = useUpdateNodeInternals()
 
@@ -60,12 +60,26 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
     return (dimensions.height - (properties.data.sourceHandles.length - 1) * handleSpacing) / 2
   }, [dimensions.height, properties.data.sourceHandles.length])
 
+  useEffect(() => {
+    if (dragOver && containerReference.current) {
+      updateNodeInternals(properties.id)
+
+      const newHeight = containerReference.current.offsetHeight
+      setDimensions((previous) => ({ ...previous, height: newHeight }))
+    }
+  }, [dragOver])
+
   useLayoutEffect(() => {
     if (containerReference.current) {
       const measuredHeight = containerReference.current.offsetHeight
-      setDimensions((previous) => ({ ...previous, height: measuredHeight }))
+      setDimensions((previous) => {
+        if (Math.abs(previous.height - measuredHeight) > 2) {
+          return { ...previous, height: measuredHeight }
+        }
+        return previous
+      })
     }
-  }, [properties.data.children, properties.data.sourceHandles.length]) // Re-measure when children change
+  }, [properties.data.children, properties.data.sourceHandles.length, dragOver])
 
   const addHandle = useFlowStore.getState().addHandle
   const addChild = useFlowStore((state) => state.addChild)
@@ -121,12 +135,6 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
   const handleDragOver = (event: React.DragEvent) => {
     event.preventDefault() // ⬅ keep default behaviour cancelled
     setDragOver(true)
-    const data = event.dataTransfer.getData('application/reactflow')
-    if (!data) return
-
-    const parsed = JSON.parse(data) // your palette item
-    const elementType = getElementTypeFromName(parsed.name)
-    setPlaceholderType(elementType)
   }
 
   const handleDragLeave = () => setDragOver(false)
@@ -134,15 +142,20 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
   const handleDropOnNode = useCallback(
     (event: React.DragEvent) => {
       event.preventDefault()
-      event.stopPropagation()
+      event.stopPropagation() // No bubbling to prevent also dropping onto the canvas
+      showNodeContextMenu(true)
+      setIsEditing(true)
       setDragOver(false)
+      setParentId(properties.id)
 
       const raw = event.dataTransfer.getData('application/reactflow')
       if (!raw) return
-      const dropped = JSON.parse(raw) // e.g. { name:"HttpSender", attributes:{…} }
 
-      console.log(dropped)
+      const dropped = JSON.parse(raw) // e.g. { name:"HttpSender", attributes:{…} }
+      const newId = useFlowStore.getState().getNextNodeId()
+
       const child: ChildNode = {
+        id: newId,
         subtype: dropped.name,
         type: getElementTypeFromName(dropped.name),
         name: '',
@@ -150,7 +163,6 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
       }
 
       addChild(properties.id, child)
-
     },
     [addChild, properties.id, updateNodeInternals],
   )
@@ -243,7 +255,9 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
         {properties.data.attributes &&
           Object.entries(properties.data.attributes).map(([key, value]) => (
             <div key={key} className="my-1 w-full max-w-full px-1">
-              <p className="text-gray-1000 overflow-hidden text-sm overflow-ellipsis whitespace-nowrap">{key}</p>
+              <p className="text-gray-1000 overflow-hidden text-sm font-bold overflow-ellipsis whitespace-nowrap">
+                {key}
+              </p>
               <p className="overflow-hidden text-sm overflow-ellipsis whitespace-nowrap">{value}</p>
             </div>
           ))}
@@ -274,7 +288,7 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
                   {child.attributes &&
                     Object.entries(child.attributes).map(([key, value]) => (
                       <div key={key} className="my-1 px-1">
-                        <p className="text-gray-1000 overflow-hidden text-sm overflow-ellipsis whitespace-nowrap">
+                        <p className="text-gray-1000 overflow-hidden text-sm font-bold overflow-ellipsis whitespace-nowrap">
                           {key}
                         </p>
                         <p className="overflow-hidden text-sm overflow-ellipsis whitespace-nowrap">{value}</p>
@@ -293,7 +307,7 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
                     borderRadius: '6px',
                   }}
                 >
-                  Drop to add <span className="ml-1 font-semibold">{placeholderType} </span> child
+                  Drop to add child
                 </div>
               )}
             </div>

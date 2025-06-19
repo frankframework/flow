@@ -11,6 +11,7 @@ export const initialNodes: Node[] = [
       sourceHandles: [{ type: 'success', index: 1 }],
       children: [
         {
+          id: '6',
           subtype: 'JavaListener',
           type: 'Listener',
           name: 'Update Temperature',
@@ -29,6 +30,7 @@ export const initialNodes: Node[] = [
       sourceHandles: [{ type: 'success', index: 1 }],
       children: [
         {
+          id: '7',
           subtype: 'HttpSender',
           type: 'Sender',
           attributes: {
@@ -67,6 +69,7 @@ export const initialNodes: Node[] = [
       sourceHandles: [{ type: 'success', index: 1 }],
       children: [
         {
+          id: '8',
           subtype: 'HttpSender',
           type: 'Sender',
           attributes: {

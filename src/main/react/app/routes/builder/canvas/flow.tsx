@@ -43,10 +43,11 @@ const selector = (state: FlowState) => ({
 
 function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b: boolean) => void }>) {
   const [loading, setLoading] = useState(false)
-  const { isEditing, setIsEditing } = useNodeContextStore(
+  const { isEditing, setIsEditing, setParentId } = useNodeContextStore(
     useShallow((s) => ({
       isEditing: s.isEditing,
       setIsEditing: s.setIsEditing,
+      setParentId: s.setParentId,
     })),
   )
 
@@ -270,6 +271,7 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
   const onDrop = (event: React.DragEvent) => {
     event.preventDefault()
     showNodeContextMenu(true)
+    setParentId(null)
 
     const data = event.dataTransfer.getData('application/reactflow')
     if (!data) return

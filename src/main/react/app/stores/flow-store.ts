@@ -40,9 +40,11 @@ export interface FlowState {
   setNodeName: (nodeId: string, name: string) => void
   addHandle: (nodeId: string, handle: { type: string; index: number }) => void
   updateHandle: (nodeId: string, handleIndex: number, newHandle: { type: string; index: number }) => void
+  updateChild: (parentNodeId: string, updatedChild: ChildNode) => void
+  deleteChild: (parentId: string, childId: string) => void
 }
 
-function isFrankNode(node: FlowNode): node is FrankNode {
+export function isFrankNode(node: FlowNode): node is FrankNode {
   return node.type === 'frankNode'
 }
 
@@ -54,11 +56,25 @@ function isStickyNote(node: FlowNode): node is StickyNote {
   return node.type === 'stickyNote'
 }
 
+function nextFreeNumericId(nodes: FlowNode[]): number {
+  let max = -1
+
+  const scan = (ns: any[]) => {
+    for (const n of ns) {
+      max = Math.max(max, Number(n.id) || 0)
+      if (n.data?.children?.length) scan(n.data.children)
+    }
+  }
+
+  scan(nodes)
+  return max + 1
+}
+
 const useFlowStore = create<FlowState>((set, get) => ({
   nodes: initialNodes,
   edges: initialEdges,
   viewport: { x: 0, y: 0, zoom: 1 },
-  nodeIdCounter: initialNodes.length,
+  nodeIdCounter: nextFreeNumericId(initialNodes),
   onNodesChange: (changes) => {
     set({
       nodes: applyNodeChanges(changes, get().nodes),
@@ -218,6 +234,41 @@ const useFlowStore = create<FlowState>((set, get) => ({
             data: {
               ...node.data,
               sourceHandles: updatedHandles,
+            },
+          }
+        }
+        return node
+      }),
+    })
+  },
+  updateChild: (parentNodeId: string, updatedChild: ChildNode) => {
+    set({
+      nodes: get().nodes.map((node) => {
+        if (node.id === parentNodeId && isFrankNode(node)) {
+          const updatedChildren = node.data.children.map((child) =>
+            child.id === updatedChild.id ? { ...child, ...updatedChild } : child,
+          )
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              children: updatedChildren,
+            },
+          }
+        }
+        return node
+      }),
+    })
+  },
+  deleteChild: (parentId, childId) => {
+    set({
+      nodes: get().nodes.map((node) => {
+        if (node.id === parentId && isFrankNode(node)) {
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              children: node.data.children.filter((child) => child.id !== childId),
             },
           }
         }

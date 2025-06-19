@@ -1,8 +1,7 @@
 import useNodeContextStore from '~/stores/node-context-store'
 import { useEffect, useRef, useState } from 'react'
-import useFlowStore from '~/stores/flow-store'
+import useFlowStore, { isFrankNode } from '~/stores/flow-store'
 import Button from '~/components/inputs/button'
-import ValidatedInput from '~/components/inputs/validatedInput'
 import { useShallow } from 'zustand/react/shallow'
 
 export default function NodeContext({
@@ -14,11 +13,14 @@ export default function NodeContext({
 }>) {
   const attributes = useNodeContextStore((state) => state.attributes)
   const inputReferences = useRef<Record<number, HTMLInputElement | null>>({})
-  const { setAttributes, getAttributes, setNodeName, deleteNode } = useFlowStore((state) => state)
+  const { nodes, setAttributes, getAttributes, setNodeName, deleteNode, updateChild, deleteChild } = useFlowStore(
+    (state) => state,
+  )
   const [canSave, setCanSave] = useState(false)
-  const { setIsEditing } = useNodeContextStore(
+  const { setIsEditing, parentId } = useNodeContextStore(
     useShallow((s) => ({
       setIsEditing: s.setIsEditing,
+      parentId: s.parentId,
     })),
   )
 
@@ -81,6 +83,25 @@ export default function NodeContext({
     const filteredAttributes = filledAttributes.filter((attribute) => attribute.name !== 'name')
     const newAttributesObject = Object.fromEntries(filteredAttributes.map(({ name, value }) => [name, value]))
 
+    if (parentId) {
+      const parentNode = nodes.find((n) => n.id === parentId)
+      if (!isFrankNode(parentNode!)) return
+      const existingChild = parentNode?.data?.children?.find((c) => c.id === nodeId.toString())
+
+      const childNode = {
+        id: nodeId.toString(),
+        type: existingChild?.type ?? 'defaultType',
+        subtype: existingChild?.subtype ?? 'defaultSubtype',
+        ...(nameField && { name: nameField.value }),
+        attributes: newAttributesObject,
+      }
+
+      updateChild(parentId.toString(), childNode)
+      setIsEditing(false)
+      setShowNodeContext(false)
+      return
+    }
+
     setAttributes(nodeId.toString(), newAttributesObject)
     if (nameField) {
       setNodeName(nodeId.toString(), nameField.value)
@@ -91,6 +112,12 @@ export default function NodeContext({
   }
 
   const handleDiscard = () => {
+    if (parentId) {
+      deleteChild(parentId, nodeId.toString())
+      setIsEditing(false)
+      setShowNodeContext(false)
+      return
+    }
     deleteNode(nodeId.toString())
     setIsEditing(false)
     setShowNodeContext(false)
@@ -122,18 +149,6 @@ export default function NodeContext({
                   onInput={validateForm}
                   className="border-border mt-1 w-full rounded-md border px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                 />
-                {/*{JSON.stringify(attribute)}*/}
-                {/*<ValidatedInput*/}
-                {/*  placeholder={attribute.default || ''}*/}
-                {/*  type="text"*/}
-                {/*  id={`input-${index}-2`}*/}
-                {/*  name={`input-${index}`}*/}
-                {/*  ref={(element) => {*/}
-                {/*    inputReferences.current[index] = element*/}
-                {/*  }}*/}
-                {/*  pattern={attribute.mandatory && ({'No empty': /.+/})}*/}
-                {/*  onInput={validateForm}*/}
-                {/*/>*/}
               </div>
             ))}
         </div>
