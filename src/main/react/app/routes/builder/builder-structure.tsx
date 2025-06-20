@@ -1,18 +1,45 @@
-import MagnifierIcon from '/icons/solar/Magnifier.svg?react'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import useConfigurationStore from '~/stores/configuration-store'
 import { getAdapterNamesFromConfiguration } from '~/routes/builder/xml-to-json-parser'
 import useTabStore from '~/stores/tab-store'
 import Search from '~/components/search/search'
+import FolderIcon from '/icons/solar/Folder.svg?react'
+import FolderOpenIcon from '/icons/solar/Folder Open.svg?react'
+import CodeIcon from '/icons/solar/Code.svg?react'
+import AltArrowRightIcon from '/icons/solar/Alt Arrow Right.svg?react'
+import AltArrowDownIcon from '/icons/solar/Alt Arrow Down.svg?react'
+
+import {
+  Tree,
+  type TreeItem,
+  type TreeItemRenderContext,
+  type TreeRef,
+  UncontrolledTreeEnvironment,
+} from 'react-complex-tree'
+import BuilderFilesDataProvider from '~/routes/builder/builder-files-data-provider'
 
 interface ConfigWithAdapters {
   configName: string
   adapterNames: string[]
 }
 
+const TREE_ID = 'builder-files-tree'
+
+function getItemTitle(item: TreeItem<unknown>): string {
+  // item.data is either a string (for folders) or object (for leaf nodes)
+  if (typeof item.data === 'string') {
+    return item.data
+  } else if (typeof item.data === 'object' && item.data !== null && 'adapterName' in item.data) {
+    return (item.data as { adapterName: string }).adapterName
+  }
+  return 'Unnamed'
+}
+
 export default function BuilderStructure() {
   const [configs, setConfigs] = useState<ConfigWithAdapters[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const tree = useRef<TreeRef>(null)
+  const dataProviderReference = useRef<BuilderFilesDataProvider | null>(null)
 
   const configurationNames = useConfigurationStore((state) => state.configurationNames)
   const setTabData = useTabStore((state) => state.setTabData)
@@ -35,9 +62,30 @@ export default function BuilderStructure() {
         setIsLoading(false)
       }
     }
-
     loadAdapters()
   }, [configurationNames])
+
+  useEffect(() => {
+    if (!dataProviderReference.current) {
+      dataProviderReference.current = new BuilderFilesDataProvider([])
+    }
+    dataProviderReference.current.updateData(configs)
+  }, [configs])
+
+  const handleItemClick = async (itemIds: string[]) => {
+    if (!dataProviderReference.current || itemIds.length === 0) return
+
+    const itemId = itemIds[0]
+    const item = await dataProviderReference.current.getTreeItem(itemId)
+
+    if (!item || item.isFolder) return
+
+    const data = item.data
+    if (typeof data === 'object' && data !== null && 'adapterName' in data && 'configName' in data) {
+      const { adapterName, configName } = data as { adapterName: string; configName: string }
+      openNewTab(adapterName, configName)
+    }
+  }
 
   const openNewTab = (adapterName: string, configName: string) => {
     if (!getTab(adapterName)) {
@@ -51,30 +99,58 @@ export default function BuilderStructure() {
     setActiveTab(adapterName)
   }
 
+  const renderItemArrow = ({ item, context }: { item: TreeItem<unknown>; context: TreeItemRenderContext }) => {
+    if (!item.isFolder) {
+      return null
+    }
+    const Icon = context.isExpanded ? AltArrowDownIcon : AltArrowRightIcon
+    return (
+      <Icon
+        onClick={context.toggleExpandedState}
+        className="rct-tree-item-arrow-isFolder rct-tree-item-arrow fill-foreground"
+      />
+    )
+  }
+
+  const renderItemTitle = ({
+    title,
+    item,
+    context,
+  }: {
+    title: string
+    item: TreeItem<unknown>
+    context: TreeItemRenderContext
+  }) => {
+    const Icon = (item.isFolder && (context.isExpanded ? FolderOpenIcon : FolderIcon)) || CodeIcon
+    return (
+      <>
+        <Icon className="fill-foreground w-4 flex-shrink-0" />
+        <span className="font-inter ml-1 overflow-hidden text-nowrap text-ellipsis">{title}</span>
+      </>
+    )
+  }
+
   return (
     <>
       <Search onChange={console.log} />
       {isLoading ? (
         <p>Loading configurations...</p>
       ) : (
-        <ul className="px-4">
-          {configs.map(({ configName, adapterNames }) => (
-            <li key={configName} className="mb-2">
-              <strong className="text-foreground">{configName}</strong>
-              <ul className="text-foreground ml-6 text-sm">
-                {adapterNames.map((adapter) => (
-                  <li
-                    key={adapter}
-                    onDoubleClick={() => openNewTab(adapter, configName)}
-                    className="hover:text-foreground-active selected:text-foreground-active overflow-ellipsis whitespace-nowrap"
-                  >
-                    - {adapter}
-                  </li>
-                ))}
-              </ul>
-            </li>
-          ))}
-        </ul>
+        <div className="overflow-auto pr-2">
+          <UncontrolledTreeEnvironment
+            viewState={{}}
+            getItemTitle={getItemTitle}
+            dataProvider={dataProviderReference.current}
+            onSelectItems={handleItemClick}
+            canDragAndDrop={true}
+            canDropOnFolder={true}
+            canSearch={false}
+            renderItemArrow={renderItemArrow}
+            renderItemTitle={renderItemTitle}
+          >
+            <Tree treeId={TREE_ID} rootItem="root" ref={tree} treeLabel="Builder Files" />
+          </UncontrolledTreeEnvironment>
+        </div>
       )}
     </>
   )
