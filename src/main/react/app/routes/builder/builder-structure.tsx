@@ -107,7 +107,7 @@ export default function BuilderStructure() {
     return (
       <Icon
         onClick={context.toggleExpandedState}
-        className="rct-tree-item-arrow-isFolder rct-tree-item-arrow fill-background"
+        className="rct-tree-item-arrow-isFolder rct-tree-item-arrow fill-foreground"
       />
     )
   }

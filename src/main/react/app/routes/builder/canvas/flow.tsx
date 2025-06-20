@@ -421,13 +421,11 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
       onContextMenu={handleRightMouseButtonClick}
     >
       {loading && (
-        <div className="bg-opacity-80 absolute inset-0 z-50 flex items-center justify-center bg-white">
-          <div className="h-10 w-10 animate-spin rounded-full border-t-2 border-b-2 border-black"></div>
+        <div className="bg-opacity-80 bg-background absolute inset-0 z-50 flex items-center justify-center">
+          <div className="border-border h-10 w-10 animate-spin rounded-full border-t-2 border-b-2"></div>
         </div>
       )}
-      {!isEditing || (
-              <div className="absolute inset-0 z-50 bg-black/20 cursor-not-allowed" />
-      )}
+      {!isEditing || <div className="absolute inset-0 z-50 cursor-not-allowed bg-black/20" />}
 
       <ReactFlow
         fitView
