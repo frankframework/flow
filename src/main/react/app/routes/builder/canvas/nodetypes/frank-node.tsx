@@ -15,6 +15,7 @@ import { useNodeContextMenu } from '~/routes/builder/canvas/flow'
 import useNodeContextStore from '~/stores/node-context-store'
 import useFrankDocStore from '~/stores/frank-doc-store'
 import { getElementTypeFromName } from '~/routes/builder/node-translator-module'
+import ChildContextMenu from '~/components/flow/child-context-menu'
 
 export interface ChildNode {
   id: string
@@ -32,6 +33,8 @@ export type FrankNode = Node<{
   attributes?: Record<string, string>
   children: ChildNode[]
 }>
+
+type AnchorMap = Record<string, HTMLElement | null>
 
 export default function FrankNode(properties: NodeProps<FrankNode>) {
   const minNodeWidth = FlowConfig.NODE_DEFAULT_WIDTH
@@ -51,6 +54,8 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
   const [isHandleMenuOpen, setIsHandleMenuOpen] = useState(false)
   const [handleMenuPosition, setHandleMenuPosition] = useState({ x: 0, y: 0 })
   const [isContextMenuOpen, setIsContextMenuOpen] = useState(false)
+  const [anchorMap, setAnchorMap] = useState<AnchorMap>({})
+
   const [dimensions, setDimensions] = useState({
     width: minNodeWidth, // Initial width
     height: minNodeHeight, // Initial height
@@ -115,6 +120,11 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
     useFlowStore.getState().deleteNode(properties.id)
   }
 
+  const deleteChildNode = (childId: string) => {
+    useFlowStore.getState().deleteChild(properties.id, childId)
+    setAnchorMap({})
+  }
+
   const editNode = () => {
     const elements = frankDocRaw.elements as Record<string, { name: string; [key: string]: any }>
     const attributes = Object.values(elements).find((element) => element.name === properties.data.subtype)?.attributes
@@ -122,6 +132,20 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
     setAttributes(attributes)
     showNodeContextMenu(true)
     setIsContextMenuOpen(false)
+  }
+
+  const editChild = (childId: string) => {
+    const child = properties.data.children.find((c) => c.id === childId)
+    if (!child) return
+
+    const elements = frankDocRaw.elements as Record<string, { name: string; [key: string]: any }>
+    const attributes = Object.values(elements).find((element) => element.name === child.subtype)?.attributes
+
+    setParentId(properties.id)
+    setNodeId(+childId)
+    setAttributes(attributes)
+    showNodeContextMenu(true)
+    setAnchorMap({})
   }
 
   const changeHandleType = (handleIndex: number, newType: string) => {
@@ -185,7 +209,7 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
         <ResizeIcon />
       </NodeResizeControl>
       <div
-        className={`bg-background flex h-full w-full flex-col items-center overflow-hidden rounded-md ${
+        className={`bg-background flex h-full w-full flex-col items-center overflow-x-visible overflow-y-hidden rounded-md ${
           properties.selected ? 'border-2 border-black' : 'border-border border'
         }`}
         style={{
@@ -267,9 +291,34 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
               {properties.data.children.map((child, index) => (
                 <div
                   key={child.type + index.toString()}
-                  className="border-border bg-background mb-1 max-w-max rounded-md border-1"
+                  className="border-border bg-background relative mb-1 max-w-max rounded-md border-1"
                   style={{ minHeight: `${minNodeHeight / 2}px` }}
                 >
+                  <div
+                    className="nodrag absolute right-0 px-2 hover:cursor-pointer hover:opacity-50"
+                    onClick={(event) => {
+                      const target = event.currentTarget as HTMLElement
+
+                      setAnchorMap((previous) => {
+                        // if this child is already open, close it
+                        if (previous[child.id]) return {}
+
+                        // otherwise open this one (and implicitly close any others)
+                        return { [child.id]: target }
+                      })
+                    }}
+                  >
+                    <MeatballMenu />
+                  </div>
+
+                  {anchorMap[child.id] && (
+                    <ChildContextMenu
+                      anchorElement={anchorMap[child.id]!}
+                      onClose={() => setAnchorMap({})}
+                      onEdit={() => editChild(child.id)}
+                      onDelete={() => deleteChildNode(child.id)}
+                    />
+                  )}
                   <div
                     className="border-b-border box-border w-full rounded-t-md border-b p-1"
                     style={{
@@ -285,6 +334,7 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
                       {child.name?.toUpperCase()}
                     </p>
                   </div>
+
                   {child.attributes &&
                     Object.entries(child.attributes).map(([key, value]) => (
                       <div key={key} className="my-1 px-1">

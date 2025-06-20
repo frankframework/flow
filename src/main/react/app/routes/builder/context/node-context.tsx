@@ -11,16 +11,17 @@ export default function NodeContext({
   setShowNodeContext: (b: boolean) => void
   nodeId: number
 }>) {
-  const attributes = useNodeContextStore((state) => state.attributes)
   const inputReferences = useRef<Record<number, HTMLInputElement | null>>({})
   const { nodes, setAttributes, getAttributes, setNodeName, deleteNode, updateChild, deleteChild } = useFlowStore(
     (state) => state,
   )
   const [canSave, setCanSave] = useState(false)
-  const { setIsEditing, parentId } = useNodeContextStore(
+  const { attributes, setIsEditing, parentId, setParentId } = useNodeContextStore(
     useShallow((s) => ({
+      attributes: s.attributes,
       setIsEditing: s.setIsEditing,
       parentId: s.parentId,
+      setParentId: s.setParentId,
     })),
   )
 
@@ -38,18 +39,39 @@ export default function NodeContext({
 
   // Fills out input fields with already existing attributes when editing a node
   useEffect(() => {
-    const currentAttributes = getAttributes(nodeId.toString())
-    if (currentAttributes && attributes) {
-      for (const [index, attribute] of attributes.entries()) {
-        const value = currentAttributes[attribute.name]
-        const currentInputReferance = inputReferences.current[index]
-        if (value && currentInputReferance) {
-          currentInputReferance.value = value
+    if (!attributes || Number.isNaN(nodeId)) return
+
+    let currentAttributes: Record<string, string> | undefined
+
+    if (parentId) {
+      // Editing a child node → look inside its parent
+      const parent = nodes.find((n) => n.id === parentId.toString())
+      if (isFrankNode(parent!)) {
+        const child = parent.data.children.find((c) => c.id === nodeId.toString())
+        if (child) {
+          currentAttributes = {
+            ...(child.name ? { name: child.name } : {}),
+            ...(child.attributes ?? {}),
+          }
+        }
+      }
+    } else {
+      // Editing a top-level node → pull from store
+      currentAttributes = getAttributes(nodeId.toString())
+    }
+
+    if (currentAttributes) {
+      for (const [index, attrDef] of attributes.entries()) {
+        const value = currentAttributes[attrDef.name]
+        const input = inputReferences.current[index]
+        if (input) {
+          input.value = value ?? ''
         }
       }
     }
+
     validateForm()
-  }, [attributes, getAttributes, nodeId])
+  }, [attributes, nodeId, parentId])
 
   useEffect(() => {
     if (!attributes) {
@@ -77,6 +99,13 @@ export default function NodeContext({
     return filledAttributes
   }
 
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === 'Enter') {
+      event.preventDefault()
+      handleSave()
+    }
+  }
+
   const handleSave = () => {
     const filledAttributes = resolveFilledAttributes()
     const nameField = filledAttributes.find((attribute) => attribute.name === 'name')
@@ -99,6 +128,7 @@ export default function NodeContext({
       updateChild(parentId.toString(), childNode)
       setIsEditing(false)
       setShowNodeContext(false)
+      setParentId(null)
       return
     }
 
@@ -116,6 +146,7 @@ export default function NodeContext({
       deleteChild(parentId, nodeId.toString())
       setIsEditing(false)
       setShowNodeContext(false)
+      setParentId(null)
       return
     }
     deleteNode(nodeId.toString())
@@ -147,6 +178,7 @@ export default function NodeContext({
                     inputReferences.current[index] = element
                   }}
                   onInput={validateForm}
+                  onKeyDown={(event) => handleKeyDown(event)}
                   className="border-border mt-1 w-full rounded-md border px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                 />
               </div>
