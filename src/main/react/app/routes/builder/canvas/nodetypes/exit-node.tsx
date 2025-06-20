@@ -61,7 +61,7 @@ export default function ExitNode(properties: NodeProps<ExitNode>) {
         <ResizeIcon />
       </NodeResizeControl>
       <div
-        className={`flex h-full w-full flex-col items-center rounded-md bg-background ${
+        className={`bg-background flex h-full w-full flex-col items-center rounded-md ${
           properties.selected ? 'border-2 border-black' : 'border-border border'
         }`}
         style={{
@@ -74,7 +74,7 @@ export default function ExitNode(properties: NodeProps<ExitNode>) {
         </div>
         {isContextMenuOpen && (
           <div
-            className="nodrag absolute rounded-md border bg-background shadow-md"
+            className="nodrag bg-background absolute rounded-md border shadow-md"
             style={{
               left: 'calc(100% + 10px)',
               top: '0',
@@ -82,7 +82,7 @@ export default function ExitNode(properties: NodeProps<ExitNode>) {
             }}
           >
             <button
-              className="border-border absolute -top-1 -right-1 rounded-full border bg-background text-gray-400 shadow-sm hover:border-red-400 hover:text-red-400"
+              className="border-border bg-background absolute -top-1 -right-1 rounded-full border text-gray-400 shadow-sm hover:border-red-400 hover:text-red-400"
               onClick={() => setIsContextMenuOpen(false)}
             >
               <svg
@@ -110,7 +110,7 @@ export default function ExitNode(properties: NodeProps<ExitNode>) {
           </div>
         )}
         <div
-          className="box-border w-full rounded-t-md p-1 border-b border-b-border"
+          className="border-b-border box-border w-full rounded-t-md border-b p-1"
           style={{
             background: `radial-gradient(
                 ellipse farthest-corner at 20% 20%,

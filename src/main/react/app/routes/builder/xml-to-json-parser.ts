@@ -4,7 +4,9 @@ import type { ExitNode } from '~/routes/builder/canvas/nodetypes/exit-node'
 import type { FrankNode } from '~/routes/builder/canvas/nodetypes/frank-node'
 import { SAXParser } from 'sax-ts'
 
-interface IdCounter { current: number }
+interface IdCounter {
+  current: number
+}
 
 export async function getXmlString(filename: string): Promise<string> {
   try {
@@ -221,7 +223,6 @@ function convertAdapterToFlowNodes(adapter: any): FlowNode[] {
 
 function convertElementToNode(element: Element, idCounter: IdCounter, sourceHandles: any): FrankNode {
   const thisId = (idCounter.current++).toString()
-  console.log(thisId)
   // Extract attributes for this element except "name"
   const attributes: Record<string, string> = {}
   for (const attribute of element.attributes) {
@@ -254,7 +255,6 @@ function convertChildren(elements: Element[], idCounter: IdCounter): any[] {
       // Extract child's attributes except 'name'
       const childAttributes: Record<string, string> = {}
       const childId = (idCounter.current++).toString()
-      console.log(childId)
       for (const attribute of child.attributes) {
         if (attribute.name !== 'name') {
           childAttributes[attribute.name] = attribute.value
