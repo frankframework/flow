@@ -4,7 +4,6 @@ import {
   Controls,
   type Edge,
   type Node,
-  Panel,
   ReactFlow,
   ReactFlowProvider,
   useReactFlow,
@@ -22,6 +21,7 @@ import { getElementTypeFromName } from '~/routes/builder/node-translator-module'
 import { createContext, useContext, useEffect } from 'react'
 import StickyNoteComponent, { type StickyNote } from '~/routes/builder/canvas/nodetypes/sticky-note'
 import useTabStore from '~/stores/tab-store'
+import { convertAdapterXmlToJson, getAdapterFromConfiguration } from '~/routes/builder/xml-to-json-parser'
 
 export type FlowNode = FrankNode | ExitNode | StickyNote | GroupNode | Node
 
@@ -311,11 +311,35 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
   useEffect(() => {
     const unsubscribe = useTabStore.subscribe(
       (state) => state.activeTab,
-      (newTab, oldTab) => {
+      async (newTab, oldTab) => {
+        const tabStore = useTabStore.getState()
+
         if (oldTab) saveFlowToTab(oldTab)
-        restoreFlowFromTab(newTab)
+
+        const activeTab = tabStore.getTab(newTab)
+        if (!activeTab) return
+
+        if (activeTab.flowJson && Object.keys(activeTab.flowJson).length > 0) {
+          // Restore from existing flowJson if present
+          restoreFlowFromTab(newTab)
+        } else if (activeTab.configurationName && activeTab.value) {
+          // Load from XML if flowJson doesn't exist
+          try {
+            const adapter = await getAdapterFromConfiguration(activeTab.configurationName, activeTab.value)
+            if (!adapter) return
+            const adapterJson = await convertAdapterXmlToJson(adapter)
+            useFlowStore.getState().setEdges(adapterJson.edges)
+            useFlowStore.getState().setViewport({ x: 0, y: 0, zoom: 1 })
+
+            const laidOutNodes = layoutGraph(adapterJson.nodes, adapterJson.edges, 'LR')
+            useFlowStore.getState().setNodes(laidOutNodes)
+          } catch (error) {
+            console.error('Error loading adapter from XML:', error)
+          }
+        }
       },
     )
+
     return () => unsubscribe()
   }, [])
 
@@ -325,9 +349,12 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
 
     const flowData = reactFlow.toObject()
     const viewport = flowStore.viewport
+    const tabData = tabStore.getTab(tabId)
+
+    if (!tabData) return
 
     tabStore.setTabData(tabId, {
-      value: tabId,
+      ...tabData,
       flowJson: {
         ...flowData,
         viewport,
@@ -372,9 +399,8 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
         defaultEdgeOptions={defaultEdgeOptions}
         deleteKeyCode={'Delete'}
       >
-        <Controls position="top-left"></Controls>
+        <Controls position="top-left" style={{ color: '#000' }}></Controls>
         <Background variant={BackgroundVariant.Dots} size={3} gap={100}></Background>
-        <Panel position="top-right" className="bg-gray-200 p-4"></Panel>
       </ReactFlow>
     </div>
   )
