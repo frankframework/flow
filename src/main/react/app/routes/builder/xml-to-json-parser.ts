@@ -4,6 +4,8 @@ import type { ExitNode } from '~/routes/builder/canvas/nodetypes/exit-node'
 import type { FrankNode } from '~/routes/builder/canvas/nodetypes/frank-node'
 import { SAXParser } from 'sax-ts'
 
+interface IdCounter { current: number }
+
 export async function getXmlString(filename: string): Promise<string> {
   try {
     const response = await fetch(`/configurations/${filename}`)
@@ -235,7 +237,7 @@ function convertElementToNode(element: Element, id: number, sourceHandles: any):
       name: element.getAttribute('name') || '',
       type: getElementTypeFromName(element.tagName),
       subtype: element.tagName,
-      children: convertChildren([...element.children]),
+      children: convertChildren([...element.children], id),
       sourceHandles,
       attributes: Object.keys(attributes).length > 0 ? attributes : undefined,
     },
@@ -244,7 +246,7 @@ function convertElementToNode(element: Element, id: number, sourceHandles: any):
   return frankNode
 }
 
-function convertChildren(elements: Element[]): any[] {
+function convertChildren(elements: Element[], id: number): any[] {
   return elements
     .filter((child) => child.tagName !== 'Forward') // skip 'Forward' elements
     .map((child) => {
@@ -257,11 +259,12 @@ function convertChildren(elements: Element[]): any[] {
       }
 
       return {
+        id,
         name: child.getAttribute('name'),
         subtype: child.tagName,
         type: getElementTypeFromName(child.tagName),
         attributes: Object.keys(childAttributes).length > 0 ? childAttributes : undefined,
-        children: convertChildren([...child.children]),
+        children: convertChildren([...child.children], id),
       }
     })
 }

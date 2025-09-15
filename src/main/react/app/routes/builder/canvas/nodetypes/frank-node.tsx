@@ -7,15 +7,18 @@ import {
   useReactFlow,
   useUpdateNodeInternals,
 } from '@xyflow/react'
-import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import useFlowStore from '~/stores/flow-store'
 import { CustomHandle } from '~/components/flow/handle'
 import { FlowConfig } from '~/routes/builder/canvas/flow.config'
 import { useNodeContextMenu } from '~/routes/builder/canvas/flow'
 import useNodeContextStore from '~/stores/node-context-store'
 import useFrankDocStore from '~/stores/frank-doc-store'
+import { getElementTypeFromName } from '~/routes/builder/node-translator-module'
+import ChildContextMenu from '~/components/flow/child-context-menu'
 
 export interface ChildNode {
+  id: string
   subtype: string
   type: string
   name?: string
@@ -31,6 +34,8 @@ export type FrankNode = Node<{
   children: ChildNode[]
 }>
 
+type AnchorMap = Record<string, HTMLElement | null>
+
 export default function FrankNode(properties: NodeProps<FrankNode>) {
   const minNodeWidth = FlowConfig.NODE_DEFAULT_WIDTH
   const minNodeHeight = FlowConfig.NODE_DEFAULT_HEIGHT
@@ -38,9 +43,10 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
   const colorVariable = `--type-${type}`
   const handleSpacing = 20
   const containerReference = useRef<HTMLDivElement>(null)
+  const [dragOver, setDragOver] = useState(false)
   const showNodeContextMenu = useNodeContextMenu()
   const { frankDocRaw } = useFrankDocStore()
-  const { setNodeId, setAttributes } = useNodeContextStore()
+  const { setNodeId, setAttributes, setParentId, setIsEditing } = useNodeContextStore()
 
   const updateNodeInternals = useUpdateNodeInternals()
 
@@ -48,6 +54,8 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
   const [isHandleMenuOpen, setIsHandleMenuOpen] = useState(false)
   const [handleMenuPosition, setHandleMenuPosition] = useState({ x: 0, y: 0 })
   const [isContextMenuOpen, setIsContextMenuOpen] = useState(false)
+  const [anchorMap, setAnchorMap] = useState<AnchorMap>({})
+
   const [dimensions, setDimensions] = useState({
     width: minNodeWidth, // Initial width
     height: minNodeHeight, // Initial height
@@ -57,14 +65,29 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
     return (dimensions.height - (properties.data.sourceHandles.length - 1) * handleSpacing) / 2
   }, [dimensions.height, properties.data.sourceHandles.length])
 
+  useEffect(() => {
+    if (dragOver && containerReference.current) {
+      updateNodeInternals(properties.id)
+
+      const newHeight = containerReference.current.offsetHeight
+      setDimensions((previous) => ({ ...previous, height: newHeight }))
+    }
+  }, [dragOver])
+
   useLayoutEffect(() => {
     if (containerReference.current) {
       const measuredHeight = containerReference.current.offsetHeight
-      setDimensions((previous) => ({ ...previous, height: measuredHeight }))
+      setDimensions((previous) => {
+        if (Math.abs(previous.height - measuredHeight) > 2) {
+          return { ...previous, height: measuredHeight }
+        }
+        return previous
+      })
     }
-  }, [properties.data.children, properties.data.sourceHandles.length]) // Re-measure when children change
+  }, [properties.data.children, properties.data.sourceHandles.length, dragOver])
 
   const addHandle = useFlowStore.getState().addHandle
+  const addChild = useFlowStore((state) => state.addChild)
 
   const handleMenuClick = useCallback(
     (handleType: string) => {
@@ -97,6 +120,11 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
     useFlowStore.getState().deleteNode(properties.id)
   }
 
+  const deleteChildNode = (childId: string) => {
+    useFlowStore.getState().deleteChild(properties.id, childId)
+    setAnchorMap({})
+  }
+
   const editNode = () => {
     const elements = frankDocRaw.elements as Record<string, { name: string; [key: string]: any }>
     const attributes = Object.values(elements).find((element) => element.name === properties.data.subtype)?.attributes
@@ -106,6 +134,20 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
     setIsContextMenuOpen(false)
   }
 
+  const editChild = (childId: string) => {
+    const child = properties.data.children.find((c) => c.id === childId)
+    if (!child) return
+
+    const elements = frankDocRaw.elements as Record<string, { name: string; [key: string]: any }>
+    const attributes = Object.values(elements).find((element) => element.name === child.subtype)?.attributes
+
+    setParentId(properties.id)
+    setNodeId(+childId)
+    setAttributes(attributes)
+    showNodeContextMenu(true)
+    setAnchorMap({})
+  }
+
   const changeHandleType = (handleIndex: number, newType: string) => {
     useFlowStore.getState().updateHandle(properties.id, handleIndex, { type: newType, index: handleIndex })
     // Timeout to prevent bug from edgelabel not properly updating
@@ -113,6 +155,41 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
       updateNodeInternals(properties.id)
     }, 0)
   }
+
+  const handleDragOver = (event: React.DragEvent) => {
+    event.preventDefault() // ⬅ keep default behaviour cancelled
+    setDragOver(true)
+  }
+
+  const handleDragLeave = () => setDragOver(false)
+
+  const handleDropOnNode = useCallback(
+    (event: React.DragEvent) => {
+      event.preventDefault()
+      event.stopPropagation() // No bubbling to prevent also dropping onto the canvas
+      showNodeContextMenu(true)
+      setIsEditing(true)
+      setDragOver(false)
+      setParentId(properties.id)
+
+      const raw = event.dataTransfer.getData('application/reactflow')
+      if (!raw) return
+
+      const dropped = JSON.parse(raw) // e.g. { name:"HttpSender", attributes:{…} }
+      const newId = useFlowStore.getState().getNextNodeId()
+
+      const child: ChildNode = {
+        id: newId,
+        subtype: dropped.name,
+        type: getElementTypeFromName(dropped.name),
+        name: '',
+        attributes: {},
+      }
+
+      addChild(properties.id, child)
+    },
+    [addChild, properties.id, updateNodeInternals],
+  )
 
   return (
     <>
@@ -132,7 +209,7 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
         <ResizeIcon />
       </NodeResizeControl>
       <div
-        className={`flex h-full w-full flex-col items-center rounded-md bg-background ${
+        className={`bg-background flex h-full w-full flex-col items-center overflow-x-visible overflow-y-hidden rounded-md ${
           properties.selected ? 'border-2 border-black' : 'border-border border'
         }`}
         style={{
@@ -140,13 +217,16 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
           minWidth: `${minNodeWidth}px`,
         }}
         ref={containerReference}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDropOnNode}
       >
         <div className="nodrag absolute right-0 px-2 hover:cursor-pointer hover:opacity-50" onClick={toggleContextMenu}>
           <MeatballMenu />
         </div>
         {isContextMenuOpen && (
           <div
-            className="nodrag absolute rounded-md border bg-background shadow-md"
+            className="nodrag bg-background absolute rounded-md border shadow-md"
             style={{
               left: 'calc(100% + 10px)',
               top: '0',
@@ -154,7 +234,7 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
             }}
           >
             <button
-              className="border-border absolute -top-1 -right-1 rounded-full border bg-background text-gray-400 shadow-sm hover:border-red-400 hover:text-red-400"
+              className="border-border bg-background absolute -top-1 -right-1 rounded-full border text-gray-400 shadow-sm hover:border-red-400 hover:text-red-400"
               onClick={() => setIsContextMenuOpen(false)}
             >
               <svg
@@ -199,27 +279,54 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
         {properties.data.attributes &&
           Object.entries(properties.data.attributes).map(([key, value]) => (
             <div key={key} className="my-1 w-full max-w-full px-1">
-              <p className="text-gray-1000 overflow-hidden text-sm overflow-ellipsis whitespace-nowrap">{key}</p>
+              <p className="text-gray-1000 overflow-hidden text-sm font-bold overflow-ellipsis whitespace-nowrap">
+                {key}
+              </p>
               <p className="overflow-hidden text-sm overflow-ellipsis whitespace-nowrap">{value}</p>
             </div>
           ))}
-        {properties.data.children.length > 0 && (
+        {(properties.data.children.length > 0 || dragOver) && (
           <div className="w-full p-4">
-            <div className="border-border w-full rounded-md bg-background p-4 shadow-[inset_0px_2px_4px_rgba(0,0,0,0.1)]">
+            <div className="border-border bg-background w-full rounded-md p-4 shadow-[inset_0px_2px_4px_rgba(0,0,0,0.1)]">
               {properties.data.children.map((child, index) => (
                 <div
                   key={child.type + index.toString()}
-                  className="border-border mb-1 max-w-max rounded-md border-1 bg-background"
+                  className="border-border bg-background relative mb-1 max-w-max rounded-md border-1"
                   style={{ minHeight: `${minNodeHeight / 2}px` }}
                 >
+                  <div
+                    className="nodrag absolute right-0 px-2 hover:cursor-pointer hover:opacity-50"
+                    onClick={(event) => {
+                      const target = event.currentTarget as HTMLElement
+
+                      setAnchorMap((previous) => {
+                        // if this child is already open, close it
+                        if (previous[child.id]) return {}
+
+                        // otherwise open this one (and implicitly close any others)
+                        return { [child.id]: target }
+                      })
+                    }}
+                  >
+                    <MeatballMenu />
+                  </div>
+
+                  {anchorMap[child.id] && (
+                    <ChildContextMenu
+                      anchorElement={anchorMap[child.id]!}
+                      onClose={() => setAnchorMap({})}
+                      onEdit={() => editChild(child.id)}
+                      onDelete={() => deleteChildNode(child.id)}
+                    />
+                  )}
                   <div
                     className="border-b-border box-border w-full rounded-t-md border-b p-1"
                     style={{
                       background: `radial-gradient(
-                        ellipse farthest-corner at 20% 20%,
-                        var(--type-${child.type?.toLowerCase?.() || 'default'}) 0%,
-                        var(--color-background) 100%
-                      )`,
+                ellipse farthest-corner at 20% 20%,
+                var(--type-${child.type?.toLowerCase?.() || 'default'}) 0%,
+                var(--color-background) 100%
+              )`,
                     }}
                   >
                     <h1 className="font-bold">{child.subtype}</h1>
@@ -227,10 +334,11 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
                       {child.name?.toUpperCase()}
                     </p>
                   </div>
+
                   {child.attributes &&
                     Object.entries(child.attributes).map(([key, value]) => (
                       <div key={key} className="my-1 px-1">
-                        <p className="text-gray-1000 overflow-hidden text-sm overflow-ellipsis whitespace-nowrap">
+                        <p className="text-gray-1000 overflow-hidden text-sm font-bold overflow-ellipsis whitespace-nowrap">
                           {key}
                         </p>
                         <p className="overflow-hidden text-sm overflow-ellipsis whitespace-nowrap">{value}</p>
@@ -238,6 +346,20 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
                     ))}
                 </div>
               ))}
+
+              {dragOver && (
+                <div
+                  className="flex items-center justify-center border-2 border-dashed border-gray-400 bg-gray-100/50 text-center text-xs text-gray-600 italic"
+                  style={{
+                    height: '100px',
+                    width: '200px',
+                    marginTop: '8px',
+                    borderRadius: '6px',
+                  }}
+                >
+                  Drop to add child
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -279,7 +401,7 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
       </div>
       {isHandleMenuOpen && (
         <div
-          className="nodrag absolute rounded-md border bg-background shadow-md"
+          className="nodrag bg-background absolute rounded-md border shadow-md"
           style={{
             left: `${handleMenuPosition.x + 10}px`, // Positioning to the right of the cursor
             top: `${handleMenuPosition.y}px`,
@@ -287,7 +409,7 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
         >
           <ul>
             <button
-              className="border-border absolute -top-1 -right-1 rounded-full border bg-background text-gray-400 shadow-sm hover:border-red-400 hover:text-red-400"
+              className="border-border bg-background absolute -top-1 -right-1 rounded-full border text-gray-400 shadow-sm hover:border-red-400 hover:text-red-400"
               onClick={() => setIsHandleMenuOpen(false)}
             >
               <svg

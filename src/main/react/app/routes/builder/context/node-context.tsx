@@ -1,8 +1,8 @@
 import useNodeContextStore from '~/stores/node-context-store'
 import { useEffect, useRef, useState } from 'react'
-import useFlowStore from '~/stores/flow-store'
+import useFlowStore, { isFrankNode } from '~/stores/flow-store'
 import Button from '~/components/inputs/button'
-import ValidatedInput from '~/components/inputs/validatedInput'
+import { useShallow } from 'zustand/react/shallow'
 
 export default function NodeContext({
   nodeId,
@@ -11,10 +11,19 @@ export default function NodeContext({
   setShowNodeContext: (b: boolean) => void
   nodeId: number
 }>) {
-  const attributes = useNodeContextStore((state) => state.attributes)
   const inputReferences = useRef<Record<number, HTMLInputElement | null>>({})
-  const { setAttributes, getAttributes, setNodeName, deleteNode } = useFlowStore((state) => state)
+  const { nodes, setAttributes, getAttributes, setNodeName, deleteNode, updateChild, deleteChild } = useFlowStore(
+    (state) => state,
+  )
   const [canSave, setCanSave] = useState(false)
+  const { attributes, setIsEditing, parentId, setParentId } = useNodeContextStore(
+    useShallow((s) => ({
+      attributes: s.attributes,
+      setIsEditing: s.setIsEditing,
+      parentId: s.parentId,
+      setParentId: s.setParentId,
+    })),
+  )
 
   const validateForm = () => {
     if (!attributes) return false
@@ -30,18 +39,39 @@ export default function NodeContext({
 
   // Fills out input fields with already existing attributes when editing a node
   useEffect(() => {
-    const currentAttributes = getAttributes(nodeId.toString())
-    if (currentAttributes && attributes) {
-      for (const [index, attribute] of attributes.entries()) {
-        const value = currentAttributes[attribute.name]
-        const currentInputReferance = inputReferences.current[index]
-        if (value && currentInputReferance) {
-          currentInputReferance.value = value
+    if (!attributes || Number.isNaN(nodeId)) return
+
+    let currentAttributes: Record<string, string> | undefined
+
+    if (parentId) {
+      // Editing a child node → look inside its parent
+      const parent = nodes.find((n) => n.id === parentId.toString())
+      if (isFrankNode(parent!)) {
+        const child = parent.data.children.find((c) => c.id === nodeId.toString())
+        if (child) {
+          currentAttributes = {
+            ...(child.name ? { name: child.name } : {}),
+            ...(child.attributes ?? {}),
+          }
+        }
+      }
+    } else {
+      // Editing a top-level node → pull from store
+      currentAttributes = getAttributes(nodeId.toString())
+    }
+
+    if (currentAttributes) {
+      for (const [index, attrDef] of attributes.entries()) {
+        const value = currentAttributes[attrDef.name]
+        const input = inputReferences.current[index]
+        if (input) {
+          input.value = value ?? ''
         }
       }
     }
+
     validateForm()
-  }, [attributes, getAttributes, nodeId])
+  }, [attributes, nodeId, parentId])
 
   useEffect(() => {
     if (!attributes) {
@@ -69,22 +99,58 @@ export default function NodeContext({
     return filledAttributes
   }
 
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === 'Enter') {
+      event.preventDefault()
+      handleSave()
+    }
+  }
+
   const handleSave = () => {
     const filledAttributes = resolveFilledAttributes()
     const nameField = filledAttributes.find((attribute) => attribute.name === 'name')
     const filteredAttributes = filledAttributes.filter((attribute) => attribute.name !== 'name')
     const newAttributesObject = Object.fromEntries(filteredAttributes.map(({ name, value }) => [name, value]))
 
+    if (parentId) {
+      const parentNode = nodes.find((n) => n.id === parentId)
+      if (!isFrankNode(parentNode!)) return
+      const existingChild = parentNode?.data?.children?.find((c) => c.id === nodeId.toString())
+
+      const childNode = {
+        id: nodeId.toString(),
+        type: existingChild?.type ?? 'defaultType',
+        subtype: existingChild?.subtype ?? 'defaultSubtype',
+        ...(nameField && { name: nameField.value }),
+        attributes: newAttributesObject,
+      }
+
+      updateChild(parentId.toString(), childNode)
+      setIsEditing(false)
+      setShowNodeContext(false)
+      setParentId(null)
+      return
+    }
+
     setAttributes(nodeId.toString(), newAttributesObject)
     if (nameField) {
       setNodeName(nodeId.toString(), nameField.value)
     }
 
+    setIsEditing(false)
     setShowNodeContext(false)
   }
 
   const handleDiscard = () => {
+    if (parentId) {
+      deleteChild(parentId, nodeId.toString())
+      setIsEditing(false)
+      setShowNodeContext(false)
+      setParentId(null)
+      return
+    }
     deleteNode(nodeId.toString())
+    setIsEditing(false)
     setShowNodeContext(false)
   }
 
@@ -112,34 +178,23 @@ export default function NodeContext({
                     inputReferences.current[index] = element
                   }}
                   onInput={validateForm}
+                  onKeyDown={(event) => handleKeyDown(event)}
                   className="border-border mt-1 w-full rounded-md border px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                 />
-                {/*{JSON.stringify(attribute)}*/}
-                {/*<ValidatedInput*/}
-                {/*  placeholder={attribute.default || ''}*/}
-                {/*  type="text"*/}
-                {/*  id={`input-${index}-2`}*/}
-                {/*  name={`input-${index}`}*/}
-                {/*  ref={(element) => {*/}
-                {/*    inputReferences.current[index] = element*/}
-                {/*  }}*/}
-                {/*  pattern={attribute.mandatory && ({'No empty': /.+/})}*/}
-                {/*  onInput={validateForm}*/}
-                {/*/>*/}
               </div>
             ))}
         </div>
       </div>
-        <div className="flex w-full justify-end border-t-border gap-4 bg-background border-t p-4">
-          <Button
-            onClick={handleSave}
-            disabled={!canSave}
-            className={` ${canSave ? '' : 'cursor-not-allowed opacity-50'}`}
-          >
-            Save & Close
-          </Button>
-          <Button onClick={handleDiscard}>Delete</Button>
-        </div>
+      <div className="border-t-border bg-background flex w-full justify-end gap-4 border-t p-4">
+        <Button
+          onClick={handleSave}
+          disabled={!canSave}
+          className={` ${canSave ? '' : 'cursor-not-allowed opacity-50'}`}
+        >
+          Save & Close
+        </Button>
+        <Button onClick={handleDiscard}>Delete</Button>
+      </div>
     </>
   )
 }

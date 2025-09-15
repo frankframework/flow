@@ -23,7 +23,7 @@ export default function Help() {
         <HelpTopics selectedTopic={helpTopicKey} />
       </>
       <>
-        <div className="flex">
+        <div className="bg-background flex">
           <SidebarContentClose side={SidebarSide.LEFT} />
           <div className="border-b-border flex h-12 grow items-center border-b px-4">
             <div className="flex h-max items-end gap-4">
@@ -33,7 +33,7 @@ export default function Help() {
           </div>
         </div>
         <div className="markdown-body h-full overflow-auto p-6">
-          <div className="border-border rounded-md border p-6 bg-background">
+          <div className="border-border bg-background rounded-md border p-6">
             {(MarkdownContent && <MarkdownContent />) || (
               <div>
                 The topic with id: <code>{topic}</code> does not seem to exist, it might have been moved or deleted.
