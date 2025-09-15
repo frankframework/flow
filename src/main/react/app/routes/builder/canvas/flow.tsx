@@ -4,6 +4,7 @@ import {
   Controls,
   type Edge,
   type Node,
+  Panel,
   ReactFlow,
   ReactFlowProvider,
   useReactFlow,

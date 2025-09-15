@@ -26,8 +26,8 @@ export default function Builder() {
 
   useEffect(() => {
     const unsubscribe = useTabStore.subscribe(
-            (state) => state.activeTab,
-            (activeTab) => setSelectedTab(activeTab)
+      (state) => state.activeTab,
+      (activeTab) => setSelectedTab(activeTab),
     )
     return () => unsubscribe()
   }, [])
@@ -64,16 +64,11 @@ export default function Builder() {
         <div className="flex">
           <SidebarContentClose side={SidebarSide.LEFT} />
           <div className="grow overflow-x-auto">
-            <Tabs
-                    tabs={tabs}
-                    selectedTab={selectedTab}
-                    onSelectTab={handleSelectTab}
-                    onCloseTab={handleCloseTab}
-            />
+            <Tabs tabs={tabs} selectedTab={selectedTab} onSelectTab={handleSelectTab} onCloseTab={handleCloseTab} />
           </div>
           <SidebarContentClose side={SidebarSide.RIGHT} />
         </div>
-        <div className="border-b-border h-12 border-b bg-background flex p-4 items-center">Path: {selectedTab}</div>
+        <div className="border-b-border bg-background flex h-12 items-center border-b p-4">Path: {selectedTab}</div>
         <Flow showNodeContextMenu={setShowNodeContext} />
       </>
       <>
