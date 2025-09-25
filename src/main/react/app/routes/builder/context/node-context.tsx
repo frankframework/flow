@@ -51,7 +51,7 @@ export default function NodeContext({
         if (child) {
           currentAttributes = {
             ...(child.name ? { name: child.name } : {}),
-            ...(child.attributes ?? {}),
+            ...child.attributes,
           }
         }
       }

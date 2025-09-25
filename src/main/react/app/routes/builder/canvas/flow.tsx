@@ -335,25 +335,25 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
 
         setLoading(true)
 
-        if (activeTab.flowJson && Object.keys(activeTab.flowJson).length > 0) {
-          // Restore from existing flowJson if present
-          restoreFlowFromTab(newTab)
-        } else if (activeTab.configurationName && activeTab.value) {
-          // Load from XML if flowJson doesn't exist
-          try {
+        try {
+          if (activeTab.flowJson && Object.keys(activeTab.flowJson).length > 0) {
+            restoreFlowFromTab(newTab)
+          } else if (activeTab.configurationName && activeTab.value) {
             const adapter = await getAdapterFromConfiguration(activeTab.configurationName, activeTab.value)
             if (!adapter) return
+
             const adapterJson = await convertAdapterXmlToJson(adapter)
             useFlowStore.getState().setEdges(adapterJson.edges)
             useFlowStore.getState().setViewport({ x: 0, y: 0, zoom: 1 })
 
             const laidOutNodes = layoutGraph(adapterJson.nodes, adapterJson.edges, 'LR')
             useFlowStore.getState().setNodes(laidOutNodes)
-          } catch (error) {
-            console.error('Error loading adapter from XML:', error)
           }
+        } catch (error) {
+          console.error('Error loading adapter from XML:', error)
+        } finally {
+          setLoading(false)
         }
-        setLoading(false)
       },
     )
 
@@ -421,13 +421,11 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
       onContextMenu={handleRightMouseButtonClick}
     >
       {loading && (
-        <div className="bg-opacity-80 absolute inset-0 z-50 flex items-center justify-center bg-white">
-          <div className="h-10 w-10 animate-spin rounded-full border-t-2 border-b-2 border-black"></div>
+        <div className="bg-opacity-80 bg-background absolute inset-0 z-50 flex items-center justify-center">
+          <div className="border-border h-10 w-10 animate-spin rounded-full border-t-2 border-b-2"></div>
         </div>
       )}
-      {!isEditing || (
-              <div className="absolute inset-0 z-50 bg-black/20 cursor-not-allowed" />
-      )}
+      {!isEditing || <div className="absolute inset-0 z-50 cursor-not-allowed bg-black/20" />}
 
       <ReactFlow
         fitView

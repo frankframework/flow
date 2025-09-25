@@ -4,7 +4,9 @@ import type { ExitNode } from '~/routes/builder/canvas/nodetypes/exit-node'
 import type { FrankNode } from '~/routes/builder/canvas/nodetypes/frank-node'
 import { SAXParser } from 'sax-ts'
 
-interface IdCounter { current: number }
+interface IdCounter {
+  current: number
+}
 
 export async function getXmlString(filename: string): Promise<string> {
   try {
@@ -146,6 +148,7 @@ function convertAdapterToFlowNodes(adapter: any): FlowNode[] {
   let elements: Element[] = []
   let nodes: FlowNode[] = []
   let exitNodes: ExitNode[] = []
+  const idCounter: IdCounter = { current: 0 }
 
   const receiverElements = adapter.querySelectorAll('Adapter > Receiver')
   for (const receiver of receiverElements) elements.push(receiver)
@@ -170,7 +173,6 @@ function convertAdapterToFlowNodes(adapter: any): FlowNode[] {
     elements.push(...pipeArray)
   }
 
-  let id = 0
   for (const element of elements) {
     if (element.tagName === 'Exits') {
       const exits = [...element.children]
@@ -205,22 +207,22 @@ function convertAdapterToFlowNodes(adapter: any): FlowNode[] {
             },
           ]
 
-    const frankNode: FrankNode = convertElementToNode(element, id, sourceHandles)
+    const frankNode: FrankNode = convertElementToNode(element, idCounter, sourceHandles)
     nodes.push(frankNode)
-    id++
   }
 
   // Now assign IDs to exitNodes starting from current id
   for (const exitNode of exitNodes) {
-    exitNode.id = id.toString()
+    exitNode.id = idCounter.current.toString()
     nodes.push(exitNode)
-    id++
+    idCounter.current++
   }
 
   return nodes
 }
 
-function convertElementToNode(element: Element, id: number, sourceHandles: any): FrankNode {
+function convertElementToNode(element: Element, idCounter: IdCounter, sourceHandles: any): FrankNode {
+  const thisId = (idCounter.current++).toString()
   // Extract attributes for this element except "name"
   const attributes: Record<string, string> = {}
   for (const attribute of element.attributes) {
@@ -230,14 +232,14 @@ function convertElementToNode(element: Element, id: number, sourceHandles: any):
   }
 
   const frankNode: FrankNode = {
-    id: id.toString(),
+    id: thisId,
     type: 'frankNode',
     position: { x: 0, y: 0 },
     data: {
       name: element.getAttribute('name') || '',
       type: getElementTypeFromName(element.tagName),
       subtype: element.tagName,
-      children: convertChildren([...element.children], id),
+      children: convertChildren([...element.children], idCounter),
       sourceHandles,
       attributes: Object.keys(attributes).length > 0 ? attributes : undefined,
     },
@@ -246,12 +248,13 @@ function convertElementToNode(element: Element, id: number, sourceHandles: any):
   return frankNode
 }
 
-function convertChildren(elements: Element[], id: number): any[] {
+function convertChildren(elements: Element[], idCounter: IdCounter): any[] {
   return elements
     .filter((child) => child.tagName !== 'Forward') // skip 'Forward' elements
     .map((child) => {
       // Extract child's attributes except 'name'
       const childAttributes: Record<string, string> = {}
+      const childId = (idCounter.current++).toString()
       for (const attribute of child.attributes) {
         if (attribute.name !== 'name') {
           childAttributes[attribute.name] = attribute.value
@@ -259,12 +262,12 @@ function convertChildren(elements: Element[], id: number): any[] {
       }
 
       return {
-        id,
+        id: childId,
         name: child.getAttribute('name'),
         subtype: child.tagName,
         type: getElementTypeFromName(child.tagName),
         attributes: Object.keys(childAttributes).length > 0 ? childAttributes : undefined,
-        children: convertChildren([...child.children], id),
+        children: convertChildren([...child.children], idCounter),
       }
     })
 }
