@@ -1,4 +1,5 @@
 import {
+  addEdge,
   Background,
   BackgroundVariant,
   Controls,
@@ -19,7 +20,7 @@ import useFlowStore, { type FlowState } from '~/stores/flow-store'
 import { useShallow } from 'zustand/react/shallow'
 import { FlowConfig } from '~/routes/builder/canvas/flow.config'
 import { getElementTypeFromName } from '~/routes/builder/node-translator-module'
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import StickyNoteComponent, { type StickyNote } from '~/routes/builder/canvas/nodetypes/sticky-note'
 import useTabStore from '~/stores/tab-store'
 import { convertAdapterXmlToJson, getAdapterFromConfiguration } from '~/routes/builder/xml-to-json-parser'
@@ -64,6 +65,66 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
   const { nodes, edges, viewport, onNodesChange, onEdgesChange, onConnect, onReconnect } = useFlowStore(
     useShallow(selector),
   )
+
+  const sourceInfoReference = useRef<{
+    nodeId: string | null
+    handleId: string | null
+    handleType: 'source' | 'target' | null
+  }>({ nodeId: null, handleId: null, handleType: null })
+
+  const handleConnectStart = (_: any, { nodeId, handleId, handleType }) => {
+    sourceInfoReference.current = { nodeId, handleId, handleType }
+  }
+
+  const handleConnectEnd = (event: MouseEvent, connectionState) => {
+    if (!connectionState.isValid) {
+      let x: number, y: number
+      x = event.clientX
+      y = event.clientY
+      handleEdgeDropOnCanvas(x, y)
+    }
+
+    sourceInfoReference.current = { nodeId: null, handleId: null, handleType: null }
+  }
+
+  const handleEdgeDropOnCanvas = (x: number, y: number) => {
+    const { screenToFlowPosition } = reactFlow
+    const flowPositions = screenToFlowPosition({ x: x, y: y })
+
+    const newId = useFlowStore.getState().getNextNodeId()
+    const newNode: ExitNode = {
+      id: newId.toString(),
+      position: {
+        x: flowPositions.x - FlowConfig.EXIT_DEFAULT_WIDTH / 2, // Centers node on top of cursor
+        y: flowPositions.y - FlowConfig.EXIT_DEFAULT_HEIGHT / 2,
+      },
+      data: {
+        subtype: 'Exit',
+        type: 'Exit',
+        name: `Success`,
+      },
+      type: 'exitNode',
+    }
+
+    const flowStore = useFlowStore.getState()
+    flowStore.addNode(newNode)
+
+    const sourceNodeId = sourceInfoReference.current.nodeId
+    const sourceHandleId = sourceInfoReference.current.handleId
+
+    if (sourceNodeId) {
+      const newEdge: Edge = {
+        id: `e${sourceNodeId}-${newId}`,
+        source: sourceNodeId,
+        sourceHandle: sourceHandleId ?? undefined,
+        target: newId.toString(),
+        type: 'frankEdge',
+        data: {},
+      }
+
+      flowStore.setEdges(addEdge(newEdge, flowStore.edges))
+    }
+  }
 
   useEffect(() => {
     const laidOutNodes = layoutGraph(nodes, edges, 'LR')
@@ -439,6 +500,8 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         onReconnect={onReconnect}
+        onConnectStart={handleConnectStart}
+        onConnectEnd={handleConnectEnd}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         defaultEdgeOptions={defaultEdgeOptions}
