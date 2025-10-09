@@ -3,9 +3,10 @@ import { MeatballMenu, ResizeIcon } from '~/routes/builder/canvas/nodetypes/fran
 import { FlowConfig } from '~/routes/builder/canvas/flow.config'
 import { useState } from 'react'
 import useFlowStore from '~/stores/flow-store'
-import useFrankDocStore from '~/stores/frank-doc-store'
 import useNodeContextStore from '~/stores/node-context-store'
 import { useNodeContextMenu } from '~/routes/builder/canvas/flow'
+import { useFFDoc } from '~/hooks/ffdoc/ff-doc-hook'
+import variables from '../../../../../environment/environment'
 
 export type ExitNode = Node<{
   subtype: string
@@ -17,7 +18,8 @@ export default function ExitNode(properties: NodeProps<ExitNode>) {
   const minNodeWidth = FlowConfig.EXIT_DEFAULT_WIDTH
   const minNodeHeight = FlowConfig.EXIT_DEFAULT_HEIGHT
   const showNodeContextMenu = useNodeContextMenu()
-  const { frankDocRaw } = useFrankDocStore()
+  const FRANK_DOC_URL = variables.frankDocJsonUrl
+  const { elements } = useFFDoc(FRANK_DOC_URL)
   const { setNodeId, setAttributes } = useNodeContextStore()
 
   const [isContextMenuOpen, setIsContextMenuOpen] = useState(false)
@@ -35,8 +37,10 @@ export default function ExitNode(properties: NodeProps<ExitNode>) {
   }
 
   const editNode = () => {
-    const elements = frankDocRaw.elements as Record<string, { name: string; [key: string]: any }>
-    const attributes = Object.values(elements).find((element) => element.name === properties.data.subtype)?.attributes
+    const recordElements = elements as Record<string, { name: string; [key: string]: any }>
+    const attributes = Object.values(recordElements).find(
+      (element) => element.name === properties.data.subtype,
+    )?.attributes
     setNodeId(+properties.id)
     setAttributes(attributes)
     showNodeContextMenu(true)

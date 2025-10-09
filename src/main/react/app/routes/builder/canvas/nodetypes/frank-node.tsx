@@ -13,9 +13,10 @@ import { CustomHandle } from '~/components/flow/handle'
 import { FlowConfig } from '~/routes/builder/canvas/flow.config'
 import { useNodeContextMenu } from '~/routes/builder/canvas/flow'
 import useNodeContextStore from '~/stores/node-context-store'
-import useFrankDocStore from '~/stores/frank-doc-store'
 import { getElementTypeFromName } from '~/routes/builder/node-translator-module'
 import ChildContextMenu from '~/components/flow/child-context-menu'
+import { useFFDoc } from '~/hooks/ffdoc/ff-doc-hook'
+import variables from '../../../../../environment/environment'
 
 export interface ChildNode {
   id: string
@@ -45,7 +46,8 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
   const containerReference = useRef<HTMLDivElement>(null)
   const [dragOver, setDragOver] = useState(false)
   const showNodeContextMenu = useNodeContextMenu()
-  const { frankDocRaw } = useFrankDocStore()
+  const FRANK_DOC_URL = variables.frankDocJsonUrl
+  const { elements } = useFFDoc(FRANK_DOC_URL)
   const { setNodeId, setAttributes, setParentId, setIsEditing } = useNodeContextStore()
 
   const updateNodeInternals = useUpdateNodeInternals()
@@ -126,8 +128,8 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
   }
 
   const editNode = () => {
-    const elements = frankDocRaw.elements as Record<string, { name: string; [key: string]: any }>
-    const attributes = Object.values(elements).find((element) => element.name === properties.data.subtype)?.attributes
+    const recordElements = elements as Record<string, { name: string; [key: string]: any }>
+    const attributes = Object.values(recordElements).find((element) => element.name === properties.data.subtype)?.attributes
     setNodeId(+properties.id)
     setAttributes(attributes)
     showNodeContextMenu(true)
@@ -138,8 +140,8 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
     const child = properties.data.children.find((c) => c.id === childId)
     if (!child) return
 
-    const elements = frankDocRaw.elements as Record<string, { name: string; [key: string]: any }>
-    const attributes = Object.values(elements).find((element) => element.name === child.subtype)?.attributes
+    const recordElements = elements as Record<string, { name: string; [key: string]: any }>
+    const attributes = Object.values(recordElements).find((element) => element.name === child.subtype)?.attributes
 
     setParentId(properties.id)
     setNodeId(+childId)

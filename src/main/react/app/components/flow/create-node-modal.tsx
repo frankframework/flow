@@ -1,7 +1,7 @@
 import { useFFDoc } from '~/hooks/ffdoc/ff-doc-hook'
 import variables from '../../../environment/environment'
 import type { ElementDetails } from '~/hooks/ffdoc/ff-doc-base'
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type ChangeEvent } from 'react'
 
 interface CreateNodeModalProperties {
   isOpen: boolean
@@ -39,14 +39,31 @@ function CreateNodeModal({
   const [selectedElement, setSelectedElement] = useState<string>('')
 
   // Convert elements (object) into an array for easy iteration
-  const elementArray = useMemo(() => {
-    return elements ? Object.values(elements) : []
-  }, [elements])
 
+  const elementArray = useMemo(() => {
+    if (!elements) return []
+    return Object.values(elements).sort((a, b) => a.name.localeCompare(b.name))
+  }, [elements])
   // Filter based on search input
+
   const filteredElements = useMemo(() => {
     return elementArray.filter((element) => element.name.toLowerCase().includes(search.toLowerCase()))
   }, [elementArray, search])
+
+  const handleOnChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const newSearch = event.target.value
+    setSearch(newSearch)
+    const filtered = elementArray
+      .filter((element) => element.name.toLowerCase().includes(newSearch.toLowerCase()))
+      .sort((a, b) => a.name.localeCompare(b.name))
+
+    // Automatically select the first match (if any)
+    if (filtered.length > 0) {
+      setSelectedElement(filtered[0].name)
+    } else {
+      setSelectedElement('') // No matches → clear selection
+    }
+  }
 
   const handleCreateNode = () => {
     if (!selectedElement || !positions || !sourceInfo) return
@@ -63,7 +80,7 @@ function CreateNodeModal({
           type="text"
           placeholder="Search elements..."
           value={search}
-          onChange={(event) => setSearch(event.target.value)}
+          onChange={(event) => handleOnChange(event)}
           className="border-border mb-3 w-full rounded border px-3 py-2 focus:ring focus:ring-blue-200 focus:outline-none"
         />
         <div className="relative">
@@ -92,7 +109,7 @@ function CreateNodeModal({
         </button>
         <button
           onClick={handleCreateNode}
-          className="bg-foreground-active/75 hover:bg-foreground-active cursor-pointer rounded px-3 py-1"
+          className="bg-foreground-active/75 hover:bg-foreground-active my-2 cursor-pointer rounded px-3 py-1"
         >
           Create Node
         </button>

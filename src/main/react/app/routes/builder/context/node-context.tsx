@@ -63,8 +63,11 @@ export default function NodeContext({
     }
 
     if (currentAttributes) {
-      for (const [index, attrDef] of attributes.entries()) {
-        const value = currentAttributes[attrDef.name]
+      // Iterate through attributes as object entries
+      const entries = Object.entries(attributes)
+
+      for (const [index, [key, _attribute]] of entries.entries()) {
+        const value = currentAttributes?.[key]
         const input = inputReferences.current[index]
         if (input) {
           input.value = value ?? ''

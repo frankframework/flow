@@ -346,10 +346,8 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
     }
 
     flowStore.addNode(newNode)
-    console.log(sourceInfo)
     // If there’s a source node, create an edge from it
     if (sourceInfo?.nodeId && sourceInfo.handleType === 'source') {
-      console.log(`Creating edge between node: ${sourceInfo.nodeId} and node: ${newId}`)
       const newEdge: Edge = {
         id: `e${sourceInfo.nodeId}-${newId}`,
         source: sourceInfo.nodeId,
