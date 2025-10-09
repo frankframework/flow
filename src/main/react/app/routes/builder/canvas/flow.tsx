@@ -26,6 +26,7 @@ import useTabStore from '~/stores/tab-store'
 import { convertAdapterXmlToJson, getAdapterFromConfiguration } from '~/routes/builder/xml-to-json-parser'
 import { exportFlowToXml } from '~/routes/builder/flow-to-xml-parser'
 import useNodeContextStore from '~/stores/node-context-store'
+import CreateNodeModal from '~/components/flow/create-node-modal'
 
 export type FlowNode = FrankNode | ExitNode | StickyNote | GroupNode | Node
 
@@ -51,6 +52,8 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
       setParentId: s.setParentId,
     })),
   )
+  const [showModal, setShowModal] = useState(false)
+  const [edgeDropPositions, setEdgeDropPositions] = useState<{ x: number; y: number } | null>(null)
 
   const nodeTypes = {
     frankNode: FrankNodeComponent,
@@ -83,47 +86,14 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
       y = event.clientY
       handleEdgeDropOnCanvas(x, y)
     }
-
-    sourceInfoReference.current = { nodeId: null, handleId: null, handleType: null }
   }
 
   const handleEdgeDropOnCanvas = (x: number, y: number) => {
     const { screenToFlowPosition } = reactFlow
     const flowPositions = screenToFlowPosition({ x: x, y: y })
 
-    const newId = useFlowStore.getState().getNextNodeId()
-    const newNode: ExitNode = {
-      id: newId.toString(),
-      position: {
-        x: flowPositions.x - FlowConfig.EXIT_DEFAULT_WIDTH / 2, // Centers node on top of cursor
-        y: flowPositions.y - FlowConfig.EXIT_DEFAULT_HEIGHT / 2,
-      },
-      data: {
-        subtype: 'Exit',
-        type: 'Exit',
-        name: `Success`,
-      },
-      type: 'exitNode',
-    }
-
-    const flowStore = useFlowStore.getState()
-    flowStore.addNode(newNode)
-
-    const sourceNodeId = sourceInfoReference.current.nodeId
-    const sourceHandleId = sourceInfoReference.current.handleId
-
-    if (sourceNodeId) {
-      const newEdge: Edge = {
-        id: `e${sourceNodeId}-${newId}`,
-        source: sourceNodeId,
-        sourceHandle: sourceHandleId ?? undefined,
-        target: newId.toString(),
-        type: 'frankEdge',
-        data: {},
-      }
-
-      flowStore.setEdges(addEdge(newEdge, flowStore.edges))
-    }
+    setEdgeDropPositions(flowPositions)
+    setShowModal(true)
   }
 
   useEffect(() => {
@@ -341,17 +311,32 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
     const { screenToFlowPosition } = reactFlow
 
     const position = screenToFlowPosition({ x: event.clientX, y: event.clientY })
-    const newId = useFlowStore.getState().getNextNodeId()
-    const elementType = getElementTypeFromName(parsedData.name)
-    const nodeType = elementType == 'exit' ? 'exitNode' : 'frankNode'
+    addNodeAtPosition(position, parsedData.name)
+    setIsEditing(true)
+  }
+
+  function addNodeAtPosition(
+    position: { x: number; y: number },
+    elementName: string,
+    sourceInfo?: { nodeId: string | null; handleId: string | null; handleType: 'source' | 'target' | null },
+  ) {
+    const flowStore = useFlowStore.getState()
+    const newId = flowStore.getNextNodeId()
+
+    const elementType = getElementTypeFromName(elementName)
+    const nodeType = elementType === 'exit' ? 'exitNode' : 'frankNode'
+
+    const width = nodeType === 'exitNode' ? FlowConfig.EXIT_DEFAULT_WIDTH : FlowConfig.NODE_DEFAULT_WIDTH
+    const height = nodeType === 'exitNode' ? FlowConfig.EXIT_DEFAULT_HEIGHT : FlowConfig.NODE_DEFAULT_HEIGHT
+
     const newNode: FrankNode = {
       id: newId.toString(),
       position: {
-        x: position.x - (nodeType == 'exitNode' ? FlowConfig.EXIT_DEFAULT_WIDTH : FlowConfig.NODE_DEFAULT_WIDTH) / 2, // Centers node on top of cursor
-        y: position.y - (nodeType == 'exitNode' ? FlowConfig.EXIT_DEFAULT_HEIGHT : FlowConfig.NODE_DEFAULT_HEIGHT) / 2,
+        x: position.x - width / 2, // Center on cursor
+        y: position.y - height / 2,
       },
       data: {
-        subtype: parsedData.name,
+        subtype: elementName,
         type: elementType,
         name: ``,
         sourceHandles: [{ type: 'success', index: 1 }],
@@ -359,8 +344,24 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
       },
       type: nodeType,
     }
-    useFlowStore.getState().addNode(newNode)
-    setIsEditing(true)
+
+    flowStore.addNode(newNode)
+    console.log(sourceInfo)
+    // If there’s a source node, create an edge from it
+    if (sourceInfo?.nodeId && sourceInfo.handleType === 'source') {
+      console.log(`Creating edge between node: ${sourceInfo.nodeId} and node: ${newId}`)
+      const newEdge: Edge = {
+        id: `e${sourceInfo.nodeId}-${newId}`,
+        source: sourceInfo.nodeId,
+        sourceHandle: sourceInfo.handleId ?? undefined,
+        target: newId.toString(),
+        type: 'frankEdge',
+        data: {},
+      }
+
+      flowStore.setEdges(addEdge(newEdge, flowStore.edges))
+      sourceInfoReference.current = { nodeId: null, handleId: null, handleType: null }
+    }
   }
 
   const handleRightMouseButtonClick = (event) => {
@@ -519,6 +520,13 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
           </button>
         </Panel>
       </ReactFlow>
+      <CreateNodeModal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        addNodeAtPosition={addNodeAtPosition}
+        positions={edgeDropPositions}
+        sourceInfo={sourceInfoReference.current}
+      />
     </div>
   )
 }

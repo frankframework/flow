@@ -1,5 +1,3 @@
-import MagnifierIcon from '/icons/solar/Magnifier.svg?react'
-import useFrankDocStore from '~/stores/frank-doc-store'
 import useNodeContextStore from '~/stores/node-context-store'
 import useFlowStore from '~/stores/flow-store'
 import { getElementTypeFromName } from '~/routes/builder/node-translator-module'
@@ -7,16 +5,19 @@ import { getElementTypeFromName } from '~/routes/builder/node-translator-module'
 import { useEffect, useState } from 'react'
 import SortedElements from '~/routes/builder/context/sorted-elements'
 import Search from '~/components/search/search'
+import variables from '../../../../environment/environment'
+import { useFFDoc } from '~/hooks/ffdoc/ff-doc-hook'
 
 export default function BuilderContext() {
-  const { frankDocRaw, isLoading, error } = useFrankDocStore()
   const { setAttributes, setNodeId } = useNodeContextStore((state) => state)
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({})
   const [searchTerm, setSearchTerm] = useState('')
+  const FRANK_DOC_URL = variables.frankDocJsonUrl
+  const { elements } = useFFDoc(FRANK_DOC_URL)
 
   useEffect(() => {
-    if (!frankDocRaw?.elements) return
-    const types = Object.values(frankDocRaw.elements).map((element: any) => getElementTypeFromName(element.name))
+    if (!elements) return
+    const types = Object.values(elements).map((element: any) => getElementTypeFromName(element.name))
     const initialState: Record<string, boolean> = {}
     for (const type of types) {
       if (!(type in expandedGroups)) {
@@ -26,7 +27,7 @@ export default function BuilderContext() {
     if (Object.keys(initialState).length > 0) {
       setExpandedGroups((previous) => ({ ...previous, ...initialState }))
     }
-  }, [frankDocRaw])
+  })
 
   const onDragStart = (value: { attributes: any[] }) => {
     return (event: {
@@ -54,7 +55,7 @@ export default function BuilderContext() {
     return grouped
   }
 
-  const groupedElements = frankDocRaw?.elements ? groupElementsByType(frankDocRaw.elements) : {}
+  const groupedElements = elements ? groupElementsByType(elements) : {}
 
   const filteredGroupedElements = Object.entries(groupedElements).reduce(
     (accumulator, [type, items]) => {
@@ -69,23 +70,22 @@ export default function BuilderContext() {
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
-        <Search id="search"
-                type="search"
-                placeholder="Search"
-                value={searchTerm}
-                onChange={(event) => setSearchTerm(event.target.value)} />
+      <Search
+        id="search"
+        type="search"
+        placeholder="Search"
+        value={searchTerm}
+        onChange={(event) => setSearchTerm(event.target.value)}
+      />
       <ul className="flex-1 overflow-y-auto p-4">
-        {isLoading && <li>Loading...</li>}
-        {error && <li>Error: {error}</li>}
-        {!isLoading && Object.keys(elementsToRender).length === 0 && (
+        {Object.keys(elementsToRender).length === 0 && (
           <li className="text-foreground-muted italic">No results found.</li>
         )}
-        {!isLoading &&
-          Object.entries(elementsToRender)
-            .sort(([typeA], [typeB]) => typeA.localeCompare(typeB))
-            .map(([type, items]) => (
-              <SortedElements key={type} type={type} items={items} onDragStart={onDragStart} searchTerm={searchTerm} />
-            ))}
+        {Object.entries(elementsToRender)
+          .sort(([typeA], [typeB]) => typeA.localeCompare(typeB))
+          .map(([type, items]) => (
+            <SortedElements key={type} type={type} items={items} onDragStart={onDragStart} searchTerm={searchTerm} />
+          ))}
       </ul>
     </div>
   )

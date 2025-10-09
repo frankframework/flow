@@ -27,13 +27,15 @@ export default function NodeContext({
 
   const validateForm = () => {
     if (!attributes) return false
-    const allValid = attributes.every((attribute: any, index: number) => {
+
+    const allValid = Object.entries(attributes).every(([key, attribute]: [string, any], index: number) => {
       if (attribute.mandatory) {
         const value = inputReferences.current[index]?.value?.trim()
         return !!value
       }
       return true
     })
+
     setCanSave(allValid)
   }
 
@@ -83,19 +85,23 @@ export default function NodeContext({
 
   // Checks input fields for values and returns only those values and their labels
   function resolveFilledAttributes() {
+    const entries = Object.entries(attributes) // [ [key, value], ... ]
+
     const filledAttributes = Object.entries(inputReferences.current)
       .map(([indexString, input]) => {
         const index = +indexString
         const value = input?.value?.trim()
-        if (value) {
+        const [key] = entries[index] || []
+        if (key && value) {
           return {
-            name: attributes[index]?.name,
+            name: key,
             value,
           }
         }
         return null
       })
       .filter(Boolean) as { name: string; value: string }[]
+
     return filledAttributes
   }
 
@@ -160,14 +166,16 @@ export default function NodeContext({
         <div className="bg-background w-full space-y-4 rounded-md p-6">
           <h1>For node with id: {nodeId}</h1>
           {attributes &&
-            attributes.map((attribute: any, index: number) => (
+            Object.entries(attributes).map(([key, attribute]: [string, any], index: number) => (
               <div key={index}>
                 <label htmlFor={`input-${index}`} className="group font-small text-foreground relative block text-sm">
-                  {attribute.name}
+                  {key}
                   {attribute.mandatory && '*'}
-                  <span className="absolute top-full left-0 z-10 mt-1 hidden w-full max-w-xs rounded bg-gray-950 px-2 py-1 text-sm break-words text-white shadow-md group-hover:block">
-                    {attribute.description}
-                  </span>
+                  {attribute.description && (
+                    <span className="absolute top-full left-0 z-10 mt-1 hidden w-full max-w-xs rounded bg-gray-950 px-2 py-1 text-sm break-words text-white shadow-md group-hover:block">
+                      {attribute.description}
+                    </span>
+                  )}
                 </label>
 
                 <input
@@ -178,7 +186,7 @@ export default function NodeContext({
                     inputReferences.current[index] = element
                   }}
                   onInput={validateForm}
-                  onKeyDown={(event) => handleKeyDown(event)}
+                  onKeyDown={handleKeyDown}
                   className="border-border mt-1 w-full rounded-md border px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                 />
               </div>
