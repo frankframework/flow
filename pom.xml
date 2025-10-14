@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.4.3</version>
+		<version>3.5.5</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 
@@ -18,9 +18,19 @@
 	<description>Graphical editor for the Frank!Framework Configurations</description>
 
 	<properties>
-		<java.version>17</java.version>
-		<frankframework.version>9.1.0-SNAPSHOT</frankframework.version>
+		<java.version>21</java.version>
+		<maven.compiler.source>21</maven.compiler.source>
+		<maven.compiler.target>21</maven.compiler.target>
 	</properties>
+
+	<developers>
+		<developer>
+			<name>Daan van Maldegem</name>
+			<email>daan.van.maldegem@frankframework.org</email>
+			<organization>Frank!Framework</organization>
+			<organizationUrl>https://frankframework.org</organizationUrl>
+		</developer>
+	</developers>
 
 	<dependencies>
 		<!-- Spring Boot starters -->
@@ -62,21 +72,111 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
-
-		<!-- Frank!Framework dependencies -->
 		<dependency>
-			<groupId>org.frankframework</groupId>
-			<artifactId>frankframework-management-gateway</artifactId>
-			<version>${frankframework.version}</version>
+			<groupId>io.github.wimdeblauwe</groupId>
+			<artifactId>testcontainers-cypress</artifactId>
+			<version>1.9.1</version>
+			<scope>test</scope>
+			<exclusions>
+				<exclusion>
+					<groupId>com.google.code.findbugs</groupId>
+					<artifactId>jsr305</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
-    </dependencies>
+	</dependencies>
 
 	<build>
+		<testResources>
+			<testResource>
+				<directory>src/test/resources</directory>
+			</testResource>
+		</testResources>
 		<plugins>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+				<executions>
+					<execution>
+						<goals>
+							<goal>repackage</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
+
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>exec-maven-plugin</artifactId>
+				<version>3.5.1</version>
+				<executions>
+					<execution>
+						<id>pnpm install</id>
+						<goals>
+							<goal>exec</goal>
+						</goals>
+						<phase>generate-resources</phase>
+						<configuration>
+							<workingDirectory>src/main/frontend</workingDirectory>
+							<executable>pnpm</executable>
+							<arguments>
+								<argument>i</argument>
+								<argument>--frozen-lockfile</argument>
+							</arguments>
+							<environmentVariables>
+								<CI>true</CI>
+							</environmentVariables>
+						</configuration>
+					</execution>
+					<execution>
+						<id>pnpm build</id>
+						<goals>
+							<goal>exec</goal>
+						</goals>
+						<phase>generate-resources</phase>
+						<configuration>
+							<workingDirectory>src/main/frontend</workingDirectory>
+							<executable>pnpm</executable>
+							<arguments>
+								<argument>run</argument>
+								<argument>build</argument>
+							</arguments>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-resources-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>copy-frontend-to-TestClasses</id>
+						<phase>process-test-resources</phase>
+						<goals>
+							<goal>copy-resources</goal>
+						</goals>
+						<configuration>
+							<outputDirectory>${project.build.testOutputDirectory}</outputDirectory>
+							<resources>
+								<!-- Copy the Cypress tests and configuration to the test output directory -->
+								<resource>
+									<directory>${project.basedir}/src/main/frontend</directory>
+									<filtering>false</filtering>
+									<targetPath>e2e</targetPath>
+									<includes>
+										<include>tsconfig.json</include>
+										<include>cypress/**</include>
+									</includes>
+									<excludes>
+										<exclude>cypress/test-results/**</exclude>
+									</excludes>
+								</resource>
+							</resources>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
 		</plugins>
 	</build>
 

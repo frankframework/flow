@@ -14,6 +14,14 @@ export default defineConfig({
         target: 'https://frankdoc.frankframework.org',
         changeOrigin: true,
       },
+      '/test': {
+        target: 'http://localhost:8080', // Spring Boot backend
+        changeOrigin: true,
+      },
+      '/configurations': {
+        target: 'http://localhost:8080', // Spring Boot backend
+        changeOrigin: true,
+      },
     },
   },
 })

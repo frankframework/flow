@@ -1,4 +1,4 @@
-package org.frankframework.flow.configurations;
+package org.frankframework.flow.configuration;
 
 public class ConfigurationDTO {
 	public String name;
