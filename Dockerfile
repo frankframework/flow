@@ -1,6 +1,6 @@
-FROM eclipse-temurin:17-jre-alpine
+FROM eclipse-temurin:21-jre-alpine
 
-COPY webapp/target/flow-webapp-*.war /app/flow-webapp.war
+COPY target/flow-*.war /app/flow-webapp.war
 
 EXPOSE 8080
 
