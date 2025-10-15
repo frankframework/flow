@@ -38,8 +38,10 @@ function getItemTitle(item: TreeItem<unknown>): string {
 export default function BuilderStructure() {
   const [configs, setConfigs] = useState<ConfigWithAdapters[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [firstMatchIndex, setFirstMatchIndex] = useState<string | null>(null)
   const tree = useRef<TreeRef>(null)
-  const dataProviderReference = useRef<BuilderFilesDataProvider | null>(null)
+  const dataProviderReference = useRef(new BuilderFilesDataProvider([]))
 
   const configurationNames = useConfigurationStore((state) => state.configurationNames)
   const setTabData = useTabStore((state) => state.setTabData)
@@ -66,11 +68,65 @@ export default function BuilderStructure() {
   }, [configurationNames])
 
   useEffect(() => {
-    if (!dataProviderReference.current) {
-      dataProviderReference.current = new BuilderFilesDataProvider([])
-    }
     dataProviderReference.current.updateData(configs)
   }, [configs])
+
+  useEffect(() => {
+    if (!searchTerm) {
+      setFirstMatchIndex(null)
+      return
+    }
+
+    const provider = dataProviderReference.current
+    if (!provider) return
+
+    const searchLower = searchTerm.toLowerCase()
+
+    // Find the first matching item (folder or leaf)
+    const firstMatch = Object.values(provider['data']).find((item) => {
+      if (!item) return false
+
+      // Folder matches if its name includes search term
+      if (item.isFolder && typeof item.data === 'string') {
+        return item.data.toLowerCase().includes(searchLower)
+      }
+
+      // Leaf node match
+      if (!item.isFolder && typeof item.data === 'object' && item.data !== null) {
+        return (
+          ('adapterName' in item.data && item.data.adapterName.toLowerCase().includes(searchLower)) ||
+          ('configName' in item.data && item.data.configName.toLowerCase().includes(searchLower))
+        )
+      }
+
+      return false
+    })
+
+    setFirstMatchIndex(firstMatch ? String(firstMatch.index) : null)
+  }, [searchTerm])
+
+  useEffect(() => {
+    // Collapse all folders when no search term is entered
+    if (!searchTerm) {
+      collapseAllFolders()
+      return
+    }
+
+    // expand all folders when search term is not empty
+    expandAllFolders()
+  }, [searchTerm])
+
+  const collapseAllFolders = () => {
+    const treeReference = tree.current
+    if (!treeReference) return
+    treeReference.collapseAll()
+  }
+
+  const expandAllFolders = () => {
+    const treeReference = tree.current
+    if (!treeReference) return
+    treeReference.expandAll()
+  }
 
   const handleItemClick = async (itemIds: string[]) => {
     if (!dataProviderReference.current || itemIds.length === 0) return
@@ -122,17 +178,26 @@ export default function BuilderStructure() {
     context: TreeItemRenderContext
   }) => {
     const Icon = (item.isFolder && (context.isExpanded ? FolderOpenIcon : FolderIcon)) || CodeIcon
+
+    const isFirstMatch = item.index == firstMatchIndex
+
     return (
       <>
         <Icon className="fill-foreground w-4 flex-shrink-0" />
-        <span className="font-inter ml-1 overflow-hidden text-nowrap text-ellipsis">{title}</span>
+        <span
+          className={`font-inter ml-1 overflow-hidden text-nowrap text-ellipsis ${
+            isFirstMatch ? 'border-foreground-active rounded border px-1' : ''
+          }`}
+        >
+          {title}
+        </span>
       </>
     )
   }
 
   return (
     <>
-      <Search onChange={console.log} />
+      <Search onChange={(event) => setSearchTerm(event.target.value)} />
       {isLoading ? (
         <p>Loading configurations...</p>
       ) : configs.length === 0 ? (
