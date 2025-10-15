@@ -10,12 +10,12 @@ interface IdCounter {
 
 export async function getXmlString(filename: string): Promise<string> {
   try {
-    const response = await fetch(`/static-configurations/${filename}`)
+    const response = await fetch(`/configurations/${filename}`)
     if (!response.ok) {
       throw new Error(`HTTP error! Status: ${response.status}`)
     }
-    const xmlString = await response.text()
-    return xmlString
+    const data = await response.json()
+    return data.xmlContent
   } catch (error) {
     throw new Error(`Failed to fetch XML file: ${error}`)
   }
