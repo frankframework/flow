@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { type JSX, useEffect, useRef, useState } from 'react'
 import useConfigurationStore from '~/stores/configuration-store'
 import { getAdapterNamesFromConfiguration } from '~/routes/builder/xml-to-json-parser'
 import useTabStore from '~/stores/tab-store'
@@ -39,7 +39,6 @@ export default function BuilderStructure() {
   const [configs, setConfigs] = useState<ConfigWithAdapters[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
-  const [firstMatchIndex, setFirstMatchIndex] = useState<string | null>(null)
   const tree = useRef<TreeRef>(null)
   const dataProviderReference = useRef(new BuilderFilesDataProvider([]))
 
@@ -70,40 +69,6 @@ export default function BuilderStructure() {
   useEffect(() => {
     dataProviderReference.current.updateData(configs)
   }, [configs])
-
-  useEffect(() => {
-    if (!searchTerm) {
-      setFirstMatchIndex(null)
-      return
-    }
-
-    const provider = dataProviderReference.current
-    if (!provider) return
-
-    const searchLower = searchTerm.toLowerCase()
-
-    // Find the first matching item (folder or leaf)
-    const firstMatch = Object.values(provider['data']).find((item) => {
-      if (!item) return false
-
-      // Folder matches if its name includes search term
-      if (item.isFolder && typeof item.data === 'string') {
-        return item.data.toLowerCase().includes(searchLower)
-      }
-
-      // Leaf node match
-      if (!item.isFolder && typeof item.data === 'object' && item.data !== null) {
-        return (
-          ('adapterName' in item.data && item.data.adapterName.toLowerCase().includes(searchLower)) ||
-          ('configName' in item.data && item.data.configName.toLowerCase().includes(searchLower))
-        )
-      }
-
-      return false
-    })
-
-    setFirstMatchIndex(firstMatch ? String(firstMatch.index) : null)
-  }, [searchTerm])
 
   useEffect(() => {
     // Collapse all folders when no search term is entered
@@ -179,18 +144,33 @@ export default function BuilderStructure() {
   }) => {
     const Icon = (item.isFolder && (context.isExpanded ? FolderOpenIcon : FolderIcon)) || CodeIcon
 
-    const isFirstMatch = item.index == firstMatchIndex
+    const searchLower = searchTerm.toLowerCase()
+    const titleLower = title.toLowerCase()
+
+    // Highlight only the substring(s) that match the search term
+    let highlightedTitle: JSX.Element | string = title
+
+    if (searchTerm && titleLower.includes(searchLower)) {
+      const parts = title.split(new RegExp(`(${searchTerm})`, 'gi')) // keep matched pieces
+      highlightedTitle = (
+        <>
+          {parts.map((part, index) =>
+            part.toLowerCase() === searchLower ? (
+              <mark key={index} className="text-foreground bg-foreground-active rounded-sm">
+                {part}
+              </mark>
+            ) : (
+              <span key={index}>{part}</span>
+            ),
+          )}
+        </>
+      )
+    }
 
     return (
       <>
         <Icon className="fill-foreground w-4 flex-shrink-0" />
-        <span
-          className={`font-inter ml-1 overflow-hidden text-nowrap text-ellipsis ${
-            isFirstMatch ? 'border-foreground-active rounded border px-1' : ''
-          }`}
-        >
-          {title}
-        </span>
+        <span className={`font-inter ml-1 overflow-hidden text-nowrap text-ellipsis`}>{highlightedTitle}</span>
       </>
     )
   }

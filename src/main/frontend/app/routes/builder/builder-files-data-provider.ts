@@ -7,7 +7,6 @@ interface ConfigWithAdapters {
 
 export default class BuilderFilesDataProvider implements TreeDataProvider {
   private data: Record<TreeItemIndex, TreeItem> = {}
-  private originalConfigs: ConfigWithAdapters[] = []
   private treeChangeListeners: ((changedItemIds: TreeItemIndex[]) => void)[] = []
 
   constructor(configs: ConfigWithAdapters[]) {
@@ -15,7 +14,6 @@ export default class BuilderFilesDataProvider implements TreeDataProvider {
   }
 
   public updateData(configs: ConfigWithAdapters[]) {
-    this.originalConfigs = configs
     this.buildTree(configs)
     this.notifyListeners(['root'])
   }
