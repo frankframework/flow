@@ -301,7 +301,6 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
 
   const onDrop = (event: React.DragEvent) => {
     event.preventDefault()
-    showNodeContextMenu(true)
     setParentId(null)
 
     const data = event.dataTransfer.getData('application/reactflow')
@@ -312,7 +311,6 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
 
     const position = screenToFlowPosition({ x: event.clientX, y: event.clientY })
     addNodeAtPosition(position, parsedData.name)
-    setIsEditing(true)
   }
 
   function addNodeAtPosition(
@@ -320,6 +318,9 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
     elementName: string,
     sourceInfo?: { nodeId: string | null; handleId: string | null; handleType: 'source' | 'target' | null },
   ) {
+    showNodeContextMenu(true)
+    setIsEditing(true)
+
     const flowStore = useFlowStore.getState()
     const newId = flowStore.getNextNodeId()
 
