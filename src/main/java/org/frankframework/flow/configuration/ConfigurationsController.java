@@ -1,8 +1,13 @@
 package org.frankframework.flow.configuration;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -25,11 +30,7 @@ public class ConfigurationsController {
 		for (int i = 1; i <= 10; i++) {
 			ConfigurationDTO config = new ConfigurationDTO();
 			config.name = "Config" + i;
-			config.version = "1.0." + i;
-			config.stubbed = i % 2 == 0;
-			config.type = "Type" + i;
-			config.directory = "/path/to/config" + i;
-			config.parent = "Parent" + i;
+			config.xmlContent = "1.0." + i;
 			configurations.add(config);
 		}
 	}
@@ -40,14 +41,23 @@ public class ConfigurationsController {
 		return configuration;
 	}
 
-	@GetMapping("/{name}")
-	public ConfigurationDTO getById(@PathVariable String name) {
-		for (ConfigurationDTO config : configurations) {
-			if (config.name.equals(name)) {
-				return config;
-			}
+	@GetMapping("/{filename}")
+	public ResponseEntity<ConfigurationDTO> getById(@PathVariable String filename) {
+		String resourcePath = "configuration/" + filename;
+		ClassPathResource resource = new ClassPathResource(resourcePath);
+		if  (!resource.exists()) {
+			return ResponseEntity.notFound().build();
 		}
-		return null;
+
+		try (InputStream inputStream = resource.getInputStream()) {
+			String xmlContent = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+			ConfigurationDTO configuration = new ConfigurationDTO();
+			configuration.name = filename;
+			configuration.xmlContent = xmlContent;
+			return ResponseEntity.ok(configuration);
+		} catch (IOException exception) {
+			return ResponseEntity.internalServerError().build();
+		}
 	}
 
 	@PutMapping("/{name}")

@@ -13,9 +13,9 @@ export default function Projects() {
       })
       .then((data) => setMessage(data.data))
       .catch(() => setMessage('Can not connect to Flow backend...'))
-
-    const configNumber = '10'
-    fetch(`configurations/Config${configNumber}`)
+    
+    const configNumber = '1'
+    fetch(`configurations/Configuration${configNumber}.xml`)
       .then((response) => {
         if (!response.ok) throw new Error(`Can not find configuration with name: Config${configNumber}`)
         return response.json()

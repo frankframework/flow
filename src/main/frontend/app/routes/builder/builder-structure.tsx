@@ -135,6 +135,8 @@ export default function BuilderStructure() {
       <Search onChange={console.log} />
       {isLoading ? (
         <p>Loading configurations...</p>
+      ) : configs.length === 0 ? (
+        <p className="p-2 text-center">No configurations found.</p>
       ) : (
         <div className="overflow-auto pr-2">
           <UncontrolledTreeEnvironment
