@@ -13,7 +13,7 @@ export default function Projects() {
       })
       .then((data) => setMessage(data.data))
       .catch(() => setMessage('Can not connect to Flow backend...'))
-    
+
     const configNumber = '1'
     fetch(`configurations/Configuration${configNumber}.xml`)
       .then((response) => {
