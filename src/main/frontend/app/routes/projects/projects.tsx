@@ -1,45 +1,65 @@
 import { useEffect, useState } from 'react'
+import RulerCrossPenIcon from '/icons/solar/Ruler Cross Pen.svg?react'
+import CodeIcon from '/icons/solar/Code.svg?react'
 
 export default function Projects() {
-  const [message, setMessage] = useState('Loading...')
-  const [config, setConfig] = useState(null)
+  const [projects, setProjects] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
-    // Adjust the URL depending on your setup
-    fetch('test')
-      .then((response) => {
-        if (!response.ok) throw new Error('Network response was not ok')
-        return response.json()
-      })
-      .then((data) => setMessage(data.data))
-      .catch(() => setMessage('Can not connect to Flow backend...'))
-    
-    const configNumber = '1'
-    fetch(`configurations/Configuration${configNumber}.xml`)
-      .then((response) => {
-        if (!response.ok) throw new Error(`Can not find configuration with name: Config${configNumber}`)
-        return response.json()
-      })
-      .then((data) => {
-        setConfig(data)
-      })
-      .catch(() => setConfig(null))
+    const fetchProjects = async () => {
+      try {
+        const response = await fetch('http://localhost:8080/projects')
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`)
+        }
+        const data = await response.json()
+        setProjects(data)
+      } catch (error_) {
+        setError(error_.message)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchProjects()
   }, [])
 
+  if (loading) return <p>Loading projects...</p>
+  if (error) return <p>Error: {error}</p>
+
   return (
-    <div>
-      <p>{message}</p>
-      {config ? (
-        <ul>
-          {Object.entries(config).map(([key, value]) => (
-            <li key={key}>
-              <strong>{key}:</strong> {value?.toString() ?? 'null'}
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p>Configuration not found</p>
-      )}
+    <div className="p-4">
+      <h1 className="mb-4 text-xl font-semibold">Available Projects</h1>
+
+      <div className="flex flex-wrap gap-4">
+        {projects.length > 0 ? (
+          projects.map((project, index) => (
+            <div
+              key={index}
+              className="border-border bg-background flex h-40 w-56 flex-col justify-between rounded-2xl border shadow-md transition-shadow duration-200 hover:shadow-lg"
+            >
+              <div className="flex flex-1 items-center justify-center px-2">
+                <h2 className="text-center text-lg font-semibold break-words">{project.name}</h2>
+              </div>
+
+              <div className="flex divide-x divide-gray-200 border-t border-gray-200">
+                <button className="hover:text-foreground-active flex flex-1 items-center justify-center p-2 hover:cursor-pointer">
+                  <RulerCrossPenIcon className="h-8 w-auto fill-current" />
+                  <span className="text-sm font-medium">Open in Builder</span>
+                </button>
+                <button className="hover:text-foreground-active flex flex-1 items-center justify-center p-2 hover:cursor-pointer">
+                  <CodeIcon className="h-8 w-auto fill-current" />
+                  <span className="text-sm font-medium">Open in Editor</span>
+                </button>
+              </div>
+            </div>
+          ))
+        ) : (
+          <p>No projects found.</p>
+        )}
+      </div>
     </div>
   )
 }
