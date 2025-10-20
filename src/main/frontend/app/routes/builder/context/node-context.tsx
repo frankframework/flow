@@ -172,8 +172,8 @@ export default function NodeContext({
             Object.entries(attributes).map(([key, attribute]: [string, any], index: number) => (
               <div key={index}>
                 <label htmlFor={`input-${index}`} className="group font-small text-foreground relative block text-sm">
-                  {key}
                   {attribute.mandatory && '*'}
+                  {key}
                   {attribute.description && (
                     <span className="absolute top-full left-0 z-10 mt-1 hidden w-full max-w-xs rounded bg-gray-950 px-2 py-1 text-sm break-words text-white shadow-md group-hover:block">
                       {attribute.description}
