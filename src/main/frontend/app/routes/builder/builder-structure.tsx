@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
+import { type JSX, useEffect, useRef, useState } from 'react'
+import useConfigurationStore from '~/stores/configuration-store'
 import { getAdapterNamesFromConfiguration } from '~/routes/builder/xml-to-json-parser'
 import useTabStore from '~/stores/tab-store'
 import Search from '~/components/search/search'
@@ -38,8 +40,9 @@ function getItemTitle(item: TreeItem<unknown>): string {
 export default function BuilderStructure() {
   const [configs, setConfigs] = useState<ConfigWithAdapters[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState('')
   const tree = useRef<TreeRef>(null)
-  const dataProviderReference = useRef<BuilderFilesDataProvider | null>(null)
+  const dataProviderReference = useRef(new BuilderFilesDataProvider([]))
 
   const configurationNames = useProjectStore((state) => state.project?.filenames)
   const setTabData = useTabStore((state) => state.setTabData)
@@ -66,11 +69,31 @@ export default function BuilderStructure() {
   }, [configurationNames])
 
   useEffect(() => {
-    if (!dataProviderReference.current) {
-      dataProviderReference.current = new BuilderFilesDataProvider([])
-    }
     dataProviderReference.current.updateData(configs)
   }, [configs])
+
+  useEffect(() => {
+    // Collapse all folders when no search term is entered
+    if (!searchTerm) {
+      collapseAllFolders()
+      return
+    }
+
+    // expand all folders when search term is not empty
+    expandAllFolders()
+  }, [searchTerm])
+
+  const collapseAllFolders = () => {
+    const treeReference = tree.current
+    if (!treeReference) return
+    treeReference.collapseAll()
+  }
+
+  const expandAllFolders = () => {
+    const treeReference = tree.current
+    if (!treeReference) return
+    treeReference.expandAll()
+  }
 
   const handleItemClick = async (itemIds: string[]) => {
     if (!dataProviderReference.current || itemIds.length === 0) return
@@ -122,17 +145,41 @@ export default function BuilderStructure() {
     context: TreeItemRenderContext
   }) => {
     const Icon = (item.isFolder && (context.isExpanded ? FolderOpenIcon : FolderIcon)) || CodeIcon
+
+    const searchLower = searchTerm.toLowerCase()
+    const titleLower = title.toLowerCase()
+
+    // Highlight only the substring(s) that match the search term
+    let highlightedTitle: JSX.Element | string = title
+
+    if (searchTerm && titleLower.includes(searchLower)) {
+      const parts = title.split(new RegExp(`(${searchTerm})`, 'gi')) // keep matched pieces
+      highlightedTitle = (
+        <>
+          {parts.map((part, index) =>
+            part.toLowerCase() === searchLower ? (
+              <mark key={index} className="text-foreground bg-foreground-active rounded-sm">
+                {part}
+              </mark>
+            ) : (
+              <span key={index}>{part}</span>
+            ),
+          )}
+        </>
+      )
+    }
+
     return (
       <>
         <Icon className="fill-foreground w-4 flex-shrink-0" />
-        <span className="font-inter ml-1 overflow-hidden text-nowrap text-ellipsis">{title}</span>
+        <span className={`font-inter ml-1 overflow-hidden text-nowrap text-ellipsis`}>{highlightedTitle}</span>
       </>
     )
   }
 
   return (
     <>
-      <Search onChange={console.log} />
+      <Search onChange={(event) => setSearchTerm(event.target.value)} />
       {isLoading ? (
         <p>Loading configurations...</p>
       ) : configs.length === 0 ? (

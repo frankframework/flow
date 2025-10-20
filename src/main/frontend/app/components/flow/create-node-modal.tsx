@@ -2,6 +2,8 @@ import { useFFDoc } from '~/hooks/ffdoc/ff-doc-hook'
 import variables from '../../../environment/environment'
 import type { ElementDetails } from '~/hooks/ffdoc/ff-doc-base'
 import { useMemo, useState, type ChangeEvent } from 'react'
+import useFlowStore from '~/stores/flow-store'
+import useNodeContextStore from '~/stores/node-context-store'
 
 interface CreateNodeModalProperties {
   isOpen: boolean
@@ -34,7 +36,7 @@ function CreateNodeModal({
   const FRANK_DOC_URL = variables.frankDocJsonUrl
 
   const { elements } = useFFDoc(FRANK_DOC_URL)
-
+  const { setAttributes, setNodeId } = useNodeContextStore((state) => state)
   const [search, setSearch] = useState('')
   const [selectedElement, setSelectedElement] = useState<string>('')
 
@@ -66,7 +68,13 @@ function CreateNodeModal({
   }
 
   const handleCreateNode = () => {
-    if (!selectedElement || !positions || !sourceInfo) return
+    if (!selectedElement || !positions || !sourceInfo || !elements) return
+
+    const elementData = elements[selectedElement]
+    if (!elementData) return
+
+    setAttributes(elementData.attributes)
+    setNodeId(+useFlowStore.getState().nodeIdCounter)
     addNodeAtPosition(positions, selectedElement, sourceInfo)
     onClose()
   }
