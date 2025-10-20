@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react'
-import useConfigurationStore from '~/stores/configuration-store'
 import { getAdapterNamesFromConfiguration } from '~/routes/builder/xml-to-json-parser'
 import useTabStore from '~/stores/tab-store'
 import Search from '~/components/search/search'
@@ -17,6 +16,7 @@ import {
   UncontrolledTreeEnvironment,
 } from 'react-complex-tree'
 import BuilderFilesDataProvider from '~/routes/builder/builder-files-data-provider'
+import { useProjectStore } from '~/stores/project-store'
 
 interface ConfigWithAdapters {
   configName: string
@@ -41,7 +41,7 @@ export default function BuilderStructure() {
   const tree = useRef<TreeRef>(null)
   const dataProviderReference = useRef<BuilderFilesDataProvider | null>(null)
 
-  const configurationNames = useConfigurationStore((state) => state.configurationNames)
+  const configurationNames = useProjectStore((state) => state.project?.filenames)
   const setTabData = useTabStore((state) => state.setTabData)
   const setActiveTab = useTabStore((state) => state.setActiveTab)
   const getTab = useTabStore((state) => state.getTab)
