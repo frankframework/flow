@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react'
 import Tab from '~/components/tabs/tab'
+import useTabStore from "~/stores/tab-store";
 
 export type TabsList = Record<string, TabsItem>
 
