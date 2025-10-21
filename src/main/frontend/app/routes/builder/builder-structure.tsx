@@ -1,12 +1,11 @@
-import { useEffect, useRef, useState } from 'react'
 import { type JSX, useEffect, useRef, useState } from 'react'
-import useConfigurationStore from '~/stores/configuration-store'
 import { getAdapterNamesFromConfiguration } from '~/routes/builder/xml-to-json-parser'
 import useTabStore from '~/stores/tab-store'
 import Search from '~/components/search/search'
 import FolderIcon from '/icons/solar/Folder.svg?react'
 import FolderOpenIcon from '/icons/solar/Folder Open.svg?react'
 import CodeIcon from '/icons/solar/Code.svg?react'
+import 'react-complex-tree/lib/style-modern.css'
 import AltArrowRightIcon from '/icons/solar/Alt Arrow Right.svg?react'
 import AltArrowDownIcon from '/icons/solar/Alt Arrow Down.svg?react'
 
@@ -19,8 +18,11 @@ import {
 } from 'react-complex-tree'
 import BuilderFilesDataProvider from '~/routes/builder/builder-files-data-provider'
 import { useProjectStore } from '~/stores/project-store'
+import { Link } from 'react-router'
+import { useTreeStore } from '~/stores/tree-store'
+import { useShallow } from 'zustand/react/shallow'
 
-interface ConfigWithAdapters {
+export interface ConfigWithAdapters {
   configName: string
   adapterNames: string[]
 }
@@ -38,8 +40,14 @@ function getItemTitle(item: TreeItem<unknown>): string {
 }
 
 export default function BuilderStructure() {
-  const [configs, setConfigs] = useState<ConfigWithAdapters[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const { configs, isLoading, setConfigs, setIsLoading } = useTreeStore(
+    useShallow((state) => ({
+      configs: state.configs,
+      isLoading: state.isLoading,
+      setConfigs: state.setConfigs,
+      setIsLoading: state.setIsLoading,
+    })),
+  )
   const [searchTerm, setSearchTerm] = useState('')
   const tree = useRef<TreeRef>(null)
   const dataProviderReference = useRef(new BuilderFilesDataProvider([]))
@@ -51,6 +59,11 @@ export default function BuilderStructure() {
 
   useEffect(() => {
     const loadAdapters = async () => {
+      if (!isLoading) {
+        // skip fetching if already loaded
+        return
+      }
+
       try {
         const loaded: ConfigWithAdapters[] = await Promise.all(
           configurationNames.map(async (configName) => {
@@ -183,7 +196,13 @@ export default function BuilderStructure() {
       {isLoading ? (
         <p>Loading configurations...</p>
       ) : configs.length === 0 ? (
-        <p className="p-2 text-center">No configurations found.</p>
+        <p className="p-2 text-center">
+          No configurations found, load in a project through the&nbsp;
+          <Link to="/" className="font-medium text-blue-600 hover:underline">
+            dashboard overview
+          </Link>
+          .
+        </p>
       ) : (
         <div className="overflow-auto pr-2">
           <UncontrolledTreeEnvironment

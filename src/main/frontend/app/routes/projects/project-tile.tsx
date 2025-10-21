@@ -3,6 +3,7 @@ import CodeIcon from '/icons/solar/Code.svg?react'
 import type { Project } from './projects'
 import { useNavigate } from 'react-router'
 import { useProjectStore } from '~/stores/project-store'
+import {useTreeStore} from "~/stores/tree-store";
 
 interface ProjectTileProperties {
   project: Project
@@ -12,6 +13,7 @@ export default function ProjectTile({ project }: Readonly<ProjectTileProperties>
   const navigate = useNavigate()
 
   const setProject = useProjectStore((state) => state.setProject)
+  const clearConfigs = useTreeStore((state) => state.clearConfigs)
 
   return (
     <div className="border-border bg-background flex h-40 w-56 flex-col justify-between rounded-2xl border shadow-md">
@@ -24,6 +26,7 @@ export default function ProjectTile({ project }: Readonly<ProjectTileProperties>
       <div className="flex divide-x divide-gray-200 border-t border-gray-200">
         <button
           onClick={() => {
+            clearConfigs()
             setProject(project)
             navigate('/builder')
           }}
@@ -35,6 +38,7 @@ export default function ProjectTile({ project }: Readonly<ProjectTileProperties>
 
         <button
           onClick={() => {
+            clearConfigs()
             setProject(project)
             navigate('/editor')
           }}
