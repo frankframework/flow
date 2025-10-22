@@ -1,6 +1,6 @@
-import { useFFDoc } from '~/hooks/ffdoc/ff-doc-hook'
+import { useFFDoc } from '@frankframework/ff-doc/react'
+import type { ElementDetails } from '@frankframework/ff-doc'
 import variables from '../../../environment/environment'
-import type { ElementDetails } from '~/hooks/ffdoc/ff-doc-base'
 import { useMemo, useState, type ChangeEvent } from 'react'
 import useFlowStore from '~/stores/flow-store'
 import useNodeContextStore from '~/stores/node-context-store'
