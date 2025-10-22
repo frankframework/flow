@@ -16,22 +16,11 @@ export default function Builder() {
   const [showNodeContext, setShowNodeContext] = useState(false)
   const nodeId = useNodeContextStore((state) => state.nodeId)
 
-  const { tabs, activeTab, setActiveTab, removeTabAndSelectFallback } = useTabStore(
+  const { activeTab } = useTabStore(
     useShallow((state) => ({
-      tabs: state.tabs,
       activeTab: state.activeTab,
-      setActiveTab: state.setActiveTab,
-      removeTabAndSelectFallback: state.removeTabAndSelectFallback,
     })),
   )
-
-  const handleSelectTab = (key: string) => {
-    setActiveTab(key)
-  }
-
-  const handleCloseTab = (key: string) => {
-    removeTabAndSelectFallback(key)
-  }
 
   return (
     <SidebarLayout name="studio" windowResizeOnChange={true}>
@@ -43,7 +32,7 @@ export default function Builder() {
         <div className="flex">
           <SidebarContentClose side={SidebarSide.LEFT} />
           <div className="grow overflow-x-auto">
-            <Tabs tabs={tabs} selectedTab={activeTab} onSelectTab={handleSelectTab} onCloseTab={handleCloseTab} />
+            <Tabs />
           </div>
           <SidebarContentClose side={SidebarSide.RIGHT} />
         </div>
