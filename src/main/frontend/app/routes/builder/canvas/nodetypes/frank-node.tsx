@@ -50,7 +50,7 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
   const FRANK_DOC_URL = variables.frankDocJsonUrl
   const { elements } = useFFDoc(FRANK_DOC_URL)
   const { setNodeId, setAttributes, setParentId, setIsEditing } = useNodeContextStore()
-  const gradientEnabled = useSettingsStore((state) => state.general.gradient)
+  const gradientEnabled = useSettingsStore((state) => state.studio.gradient)
 
   const updateNodeInternals = useUpdateNodeInternals()
 

@@ -65,7 +65,7 @@ export default function StickyNote(properties: NodeProps<StickyNote>) {
           minWidth: `${minWidth}px`,
           background: `
       linear-gradient(to left bottom, transparent 50%, rgba(0,0,0,0.4) 0) no-repeat 100% 0 / 2em 2em,
-      linear-gradient(-135deg, transparent 1.41em, #facc15 0)
+      linear-gradient(-135deg, transparent 1.41em, var(--type-sticky-note) 0)
     `,
         }}
       >

@@ -11,6 +11,7 @@ export interface EditorSettings {
 export interface StudioSettings {
   previewOnSave: boolean
   autoRefresh: boolean
+  gradient: boolean
 }
 
 export interface ProjectSettings {
@@ -23,7 +24,6 @@ export interface GeneralSettings {
   language: string
   telemetry: boolean
   autoUpdates: boolean
-  gradient: boolean
 }
 
 export interface SettingsState {
@@ -57,6 +57,7 @@ const defaultEditorSettings: EditorSettings = {
 const defaultStudioSettings: StudioSettings = {
   previewOnSave: true,
   autoRefresh: true,
+  gradient: true,
 }
 
 const defaultProjectSettings: ProjectSettings = {
@@ -69,7 +70,6 @@ const defaultGeneralSettings: GeneralSettings = {
   telemetry: true,
   theme: 'system',
   autoUpdates: true,
-  gradient: true,
 }
 
 export const useSettingsStore = create<SettingsState>()(

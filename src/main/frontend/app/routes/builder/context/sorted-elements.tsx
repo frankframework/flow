@@ -17,7 +17,7 @@ interface Properties {
 
 export default function SortedElements({ type, items, onDragStart, searchTerm }: Readonly<Properties>) {
   const [isExpanded, setIsExpanded] = useState(true)
-  const gradientEnabled = useSettingsStore((state) => state.general.gradient)
+  const gradientEnabled = useSettingsStore((state) => state.studio.gradient)
 
   const toggleExpansion = () => {
     setIsExpanded(!isExpanded)
