@@ -59,7 +59,7 @@ export default function BuilderStructure() {
 
   useEffect(() => {
     const loadAdapters = async () => {
-      if (!isLoading) {
+      if (configs.length > 0) {
         // skip fetching if already loaded
         return
       }
