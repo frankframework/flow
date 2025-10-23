@@ -510,14 +510,6 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
       >
         <Controls position="top-left" style={{ color: '#000' }}></Controls>
         <Background variant={BackgroundVariant.Dots} size={3} gap={100}></Background>
-        <Panel position="top-center">
-          <button
-            className="border-border hover:bg-hover bg-background border p-2 hover:cursor-pointer"
-            onClick={exportToXml}
-          >
-            Export To XML
-          </button>
-        </Panel>
       </ReactFlow>
       <CreateNodeModal
         isOpen={showModal}
