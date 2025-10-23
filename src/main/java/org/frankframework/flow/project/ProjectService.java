@@ -17,8 +17,9 @@ public class ProjectService {
 	}
 
 	public Project createProject(String name){
-		projects.add(new Project(name));
-		return new Project(name);
+		Project project = new Project(name);
+		projects.add(project);
+		return project;
 	}
 
 	public Project getProject(String name){
