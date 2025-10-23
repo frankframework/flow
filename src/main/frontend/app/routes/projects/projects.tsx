@@ -1,45 +1,49 @@
 import { useEffect, useState } from 'react'
+import ProjectTile from '~/routes/projects/project-tile'
+
+export interface Project {
+  name: string
+  filenames: string[]
+}
 
 export default function Projects() {
-  const [message, setMessage] = useState('Loading...')
-  const [config, setConfig] = useState(null)
+  const [projects, setProjects] = useState<Project[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
-    // Adjust the URL depending on your setup
-    fetch('test')
-      .then((response) => {
-        if (!response.ok) throw new Error('Network response was not ok')
-        return response.json()
-      })
-      .then((data) => setMessage(data.data))
-      .catch(() => setMessage('Can not connect to Flow backend...'))
+    const fetchProjects = async () => {
+      try {
+        const response = await fetch('http://localhost:8080/projects')
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`)
+        }
+        const data = await response.json()
+        setProjects(data)
+      } catch (error_) {
+        setError(error_.message)
+      } finally {
+        setLoading(false)
+      }
+    }
 
-    const configNumber = '1'
-    fetch(`configurations/Configuration${configNumber}.xml`)
-      .then((response) => {
-        if (!response.ok) throw new Error(`Can not find configuration with name: Config${configNumber}`)
-        return response.json()
-      })
-      .then((data) => {
-        setConfig(data)
-      })
-      .catch(() => setConfig(null))
+    fetchProjects()
   }, [])
 
+  if (loading) return <p>Loading projects...</p>
+  if (error) return <p>Error: {error}</p>
+
   return (
-    <div>
-      <p>{message}</p>
-      {config ? (
-        <ul>
-          {Object.entries(config).map(([key, value]) => (
-            <li key={key}>
-              <strong>{key}:</strong> {value?.toString() ?? 'null'}
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p>Configuration not found</p>
-      )}
+    <div className="p-4">
+      <h1 className="mb-4 text-xl font-semibold">Available Projects</h1>
+
+      <div className="flex flex-wrap gap-4">
+        {projects.length > 0 ? (
+          projects.map((project, index) => <ProjectTile key={index} project={project} />)
+        ) : (
+          <p>No projects found.</p>
+        )}
+      </div>
     </div>
   )
 }
