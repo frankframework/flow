@@ -1,5 +1,5 @@
 import useNodeContextStore from '~/stores/node-context-store'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import useFlowStore, { isFrankNode } from '~/stores/flow-store'
 import Button from '~/components/inputs/button'
 import { useShallow } from 'zustand/react/shallow'
@@ -11,11 +11,13 @@ export default function NodeContext({
   setShowNodeContext: (b: boolean) => void
   nodeId: number
 }>) {
-  const inputReferences = useRef<Record<number, HTMLInputElement | null>>({})
   const { nodes, setAttributes, getAttributes, setNodeName, deleteNode, updateChild, deleteChild } = useFlowStore(
     (state) => state,
   )
   const [canSave, setCanSave] = useState(false)
+  const [showAll, setShowAll] = useState(false)
+  const [inputValues, setInputValues] = useState<Record<number, string>>({})
+
   const { attributes, setIsEditing, parentId, setParentId } = useNodeContextStore(
     useShallow((s) => ({
       attributes: s.attributes,
@@ -26,11 +28,17 @@ export default function NodeContext({
   )
 
   const validateForm = () => {
-    if (!attributes) return false
+    if (!attributes) {
+      setCanSave(true)
+      return
+    }
 
-    const allValid = Object.entries(attributes).every(([key, attribute]: [string, any], index: number) => {
+    const entries = Object.entries(attributes) // stable ordering
+    const allValid = entries.every(([_, attribute]: [string, any], index: number) => {
       if (attribute.mandatory) {
-        const value = inputReferences.current[index]?.value?.trim()
+        // use value cache first (works when inputs are unmounted); fallback to ref if present
+        const raw = inputValues[index] ?? inputValues[index]
+        const value = raw?.toString().trim()
         return !!value
       }
       return true
@@ -63,16 +71,12 @@ export default function NodeContext({
     }
 
     if (currentAttributes) {
-      // Iterate through attributes as object entries
       const entries = Object.entries(attributes)
-
-      for (const [index, [key, _attribute]] of entries.entries()) {
-        const value = currentAttributes?.[key]
-        const input = inputReferences.current[index]
-        if (input) {
-          input.value = value ?? ''
-        }
+      const newValues: Record<number, string> = {}
+      for (const [index, [key]] of entries.entries()) {
+        newValues[index] = currentAttributes?.[key] ?? ''
       }
+      setInputValues(newValues)
     }
 
     validateForm()
@@ -88,19 +92,15 @@ export default function NodeContext({
 
   // Checks input fields for values and returns only those values and their labels
   function resolveFilledAttributes() {
-    const entries = Object.entries(attributes) // [ [key, value], ... ]
+    if (!attributes) return []
 
-    const filledAttributes = Object.entries(inputReferences.current)
-      .map(([indexString, input]) => {
-        const index = +indexString
-        const value = input?.value?.trim()
-        const [key] = entries[index] || []
-        if (key && value) {
-          return {
-            name: key,
-            value,
-          }
-        }
+    const entries = Object.entries(attributes) // stable ordering [ [key, attr], ... ]
+    const filledAttributes = entries
+      .map(([key], index) => {
+        // read from value cache first (works whether mounted or not)
+        const raw = inputValues[index] ?? inputValues[index]
+        const value = raw?.toString().trim()
+        if (value) return { name: key, value }
         return null
       })
       .filter(Boolean) as { name: string; value: string }[]
@@ -163,44 +163,63 @@ export default function NodeContext({
     setShowNodeContext(false)
   }
 
+  // Keep original attribute index so refs are stable
+  const entriesWithIndex: [string, any, number][] = attributes
+    ? Object.entries(attributes).map(([k, v], index) => [k, v, index])
+    : []
+
+  const displayedAttributes = entriesWithIndex.filter(([_, attribute]) => showAll || attribute.mandatory)
+
   return (
     <>
       <div className="flex-1 overflow-y-auto px-4">
         <div className="bg-background w-full space-y-4 rounded-md p-6">
           <h1>For node with id: {nodeId}</h1>
-          {attributes &&
-            Object.entries(attributes).map(([key, attribute]: [string, any], index: number) => (
-              <div key={index}>
-                <label htmlFor={`input-${index}`} className="group font-small text-foreground relative block text-sm">
-                  {attribute.mandatory && '*'}
-                  {key}
-                  {attribute.description && (
-                    <span className="absolute top-full left-0 z-10 mt-1 hidden w-full max-w-xs rounded bg-gray-950 px-2 py-1 text-sm break-words text-white shadow-md group-hover:block">
-                      {attribute.description}
-                    </span>
-                  )}
-                </label>
 
-                <input
-                  type="text"
-                  id={`input-${index}`}
-                  name={`input-${index}`}
-                  ref={(element) => {
-                    inputReferences.current[index] = element
-                  }}
-                  onInput={validateForm}
-                  onKeyDown={handleKeyDown}
-                  className="border-border mt-1 w-full rounded-md border px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                />
-              </div>
-            ))}
+          {displayedAttributes.map(([key, attribute, originalIndex]: [string, any, number]) => (
+            <div key={originalIndex}>
+              <label
+                htmlFor={`input-${originalIndex}`}
+                className="group font-small text-foreground relative block text-sm"
+              >
+                {attribute.mandatory && '*'}
+                {key}
+                {attribute.description && (
+                  <span className="absolute top-full left-0 z-10 mt-1 hidden w-full max-w-xs rounded bg-gray-950 px-2 py-1 text-sm break-words text-white shadow-md group-hover:block">
+                    {attribute.description}
+                  </span>
+                )}
+              </label>
+
+              <input
+                type="text"
+                id={`input-${originalIndex}`}
+                name={`input-${originalIndex}`}
+                value={inputValues[originalIndex] ?? ''}
+                onInput={(event) => {
+                  const value = event.currentTarget.value
+                  setInputValues((previous) => ({ ...previous, [originalIndex]: value }))
+                  validateForm()
+                }}
+                onKeyDown={handleKeyDown}
+                className="border-border focus:border-foreground-active focus:ring-foreground-active mt-1 w-full rounded-md border px-3 py-2 shadow-sm sm:text-sm"
+              />
+            </div>
+          ))}
+
+          <div className="pt-4">
+            <Button onClick={() => setShowAll((p) => !p)} className="w-full">
+              {showAll ? 'Hide optional attributes' : 'Show all attributes'}
+            </Button>
+          </div>
         </div>
       </div>
+
       <div className="border-t-border bg-background flex w-full justify-end gap-4 border-t p-4">
         <Button
           onClick={handleSave}
           disabled={!canSave}
-          className={` ${canSave ? '' : 'cursor-not-allowed opacity-50'}`}
+          className={`${canSave ? '' : 'cursor-not-allowed opacity-50'}`}
         >
           Save & Close
         </Button>

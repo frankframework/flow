@@ -60,7 +60,7 @@ export default function SidebarLayout({
               snap
               minSize={200}
               maxSize={1000}
-              preferredSize={300}
+              preferredSize={500}
               visible={visible[SidebarSide.RIGHT]}
               className="flex h-full flex-col"
             >

@@ -23,6 +23,7 @@ export interface GeneralSettings {
   language: string
   telemetry: boolean
   autoUpdates: boolean
+  gradient: boolean
 }
 
 export interface SettingsState {
@@ -68,6 +69,7 @@ const defaultGeneralSettings: GeneralSettings = {
   telemetry: true,
   theme: 'system',
   autoUpdates: true,
+  gradient: true,
 }
 
 export const useSettingsStore = create<SettingsState>()(
