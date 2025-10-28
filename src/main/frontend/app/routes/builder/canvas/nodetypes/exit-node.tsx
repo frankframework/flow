@@ -5,7 +5,7 @@ import { useState } from 'react'
 import useFlowStore from '~/stores/flow-store'
 import useNodeContextStore from '~/stores/node-context-store'
 import { useNodeContextMenu } from '~/routes/builder/canvas/flow'
-import { useFFDoc } from '~/hooks/ffdoc/ff-doc-hook'
+import { useFFDoc } from '@frankframework/ff-doc/react'
 import variables from '../../../../../environment/environment'
 
 export type ExitNode = Node<{
