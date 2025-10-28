@@ -2,7 +2,10 @@ import useNodeContextStore from '~/stores/node-context-store'
 import { useEffect, useState } from 'react'
 import useFlowStore, { isFrankNode } from '~/stores/flow-store'
 import Button from '~/components/inputs/button'
+import HelpIcon from '/icons/solar/Help.svg?react'
 import { useShallow } from 'zustand/react/shallow'
+import { useJavadocTransform, useFFDoc } from '@frankframework/ff-doc/react'
+import variables from '../../../../environment/environment'
 
 export default function NodeContext({
   nodeId,
@@ -18,6 +21,8 @@ export default function NodeContext({
   const [showAll, setShowAll] = useState(false)
   const [inputValues, setInputValues] = useState<Record<number, string>>({})
 
+  const FRANK_DOC_URL = variables.frankDocJsonUrl
+  const { elements } = useFFDoc(FRANK_DOC_URL)
   const { attributes, setIsEditing, parentId, setParentId } = useNodeContextStore(
     useShallow((s) => ({
       attributes: s.attributes,
@@ -185,9 +190,7 @@ export default function NodeContext({
                 {attribute.mandatory && '*'}
                 {key}
                 {attribute.description && (
-                  <span className="absolute top-full left-0 z-10 mt-1 hidden w-full max-w-xs rounded bg-gray-950 px-2 py-1 text-sm break-words text-white shadow-md group-hover:block">
-                    {attribute.description}
-                  </span>
+                        <DescriptionHelpIcon description={attribute.description} elements={elements} />
                 )}
               </label>
 
@@ -226,5 +229,36 @@ export default function NodeContext({
         <Button onClick={handleDiscard}>Delete</Button>
       </div>
     </>
+  )
+}
+
+function DescriptionHelpIcon({
+  description,
+  elements,
+}: Readonly<{ description: string; elements: Record<string, any> | null }>) {
+  const [show, setShow] = useState(false)
+  const transformed = useJavadocTransform(
+    description,
+    elements,
+  )
+
+  return (
+    <div className="relative inline-block px-2">
+      <button
+        type="button"
+        onClick={() => setShow((previous) => !previous)}
+        className="text-blue-500 hover:text-blue-700 focus:outline-none"
+        title="Show help"
+      >
+        <HelpIcon className="h-auto w-[12px] fill-current" />
+      </button>
+
+      {show && (
+        <div
+          className="bg-background border-border absolute top-0 left-6 z-20 mt-0 w-84 rounded-md border px-3 py-2 text-sm shadow-lg"
+          dangerouslySetInnerHTML={transformed}
+        />
+      )}
+    </div>
   )
 }

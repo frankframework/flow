@@ -15,7 +15,7 @@ import { useNodeContextMenu } from '~/routes/builder/canvas/flow'
 import useNodeContextStore from '~/stores/node-context-store'
 import { getElementTypeFromName } from '~/routes/builder/node-translator-module'
 import ChildContextMenu from '~/components/flow/child-context-menu'
-import { useFFDoc } from '~/hooks/ffdoc/ff-doc-hook'
+import { useFFDoc } from '@frankframework/ff-doc/react'
 import variables from '../../../../../environment/environment'
 import { useSettingsStore } from '~/routes/settings/settings-store'
 
