@@ -218,7 +218,10 @@ function DescriptionHelpIcon({
   elements,
 }: Readonly<{ description: string; elements: Record<string, any> | null }>) {
   const [show, setShow] = useState(false)
-  const transformed = useJavadocTransform(description, elements, false)
+  const transformed = useJavadocTransform(
+    description,
+    elements,
+  )
 
   return (
     <div className="relative inline-block px-2">
