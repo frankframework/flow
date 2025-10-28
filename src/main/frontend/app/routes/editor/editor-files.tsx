@@ -1,5 +1,5 @@
 import { type JSX, useEffect, useRef, useState } from 'react'
-import { getAdapterNamesFromConfiguration } from '~/routes/builder/xml-to-json-parser'
+import { getAdapterNamesFromConfiguration } from '~/routes/studio/xml-to-json-parser'
 import useTabStore from '~/stores/tab-store'
 import Search from '~/components/search/search'
 import FolderIcon from '/icons/solar/Folder.svg?react'
@@ -16,7 +16,7 @@ import {
   type TreeRef,
   UncontrolledTreeEnvironment,
 } from 'react-complex-tree'
-import BuilderFilesDataProvider from '~/routes/builder/builder-files-data-provider'
+import StudioFilesDataProvider from '~/routes/studio/studio-files-data-provider'
 import { useProjectStore } from '~/stores/project-store'
 import { Link } from 'react-router'
 import { useTreeStore } from '~/stores/tree-store'
@@ -50,7 +50,7 @@ export default function EditorFiles() {
   )
   const [searchTerm, setSearchTerm] = useState('')
   const tree = useRef<TreeRef>(null)
-  const dataProviderReference = useRef(new BuilderFilesDataProvider([]))
+  const dataProviderReference = useRef(new StudioFilesDataProvider([]))
 
   const configurationNames = useProjectStore((state) => state.project?.filenames)
   const setTabData = useTabStore((state) => state.setTabData)

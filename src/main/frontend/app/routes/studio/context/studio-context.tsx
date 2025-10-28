@@ -1,13 +1,13 @@
 import useNodeContextStore from '~/stores/node-context-store'
 import useFlowStore from '~/stores/flow-store'
-import { getElementTypeFromName } from '~/routes/builder/node-translator-module'
+import { getElementTypeFromName } from '~/routes/studio/node-translator-module'
 import { useEffect, useState } from 'react'
-import SortedElements from '~/routes/builder/context/sorted-elements'
+import SortedElements from '~/routes/studio/context/sorted-elements'
 import Search from '~/components/search/search'
 import variables from '../../../../environment/environment'
 import { useFFDoc } from '@frankframework/ff-doc/react'
 
-export default function BuilderContext() {
+export default function StudioContext() {
   const { setAttributes, setNodeId } = useNodeContextStore((state) => state)
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({})
   const [searchTerm, setSearchTerm] = useState('')

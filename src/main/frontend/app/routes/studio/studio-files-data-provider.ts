@@ -5,7 +5,7 @@ interface ConfigWithAdapters {
   adapterNames: string[]
 }
 
-export default class BuilderFilesDataProvider implements TreeDataProvider {
+export default class StudioFilesDataProvider implements TreeDataProvider {
   private data: Record<TreeItemIndex, TreeItem> = {}
   private treeChangeListeners: ((changedItemIds: TreeItemIndex[]) => void)[] = []
 
@@ -60,9 +60,10 @@ export default class BuilderFilesDataProvider implements TreeDataProvider {
 
     // Config folders and adapters
     for (const { configName, adapterNames } of configs) {
+      const folderName = configName.replace(/\.xml$/i, '')
       newData[configName] = {
         index: configName,
-        data: configName,
+        data: folderName,
         children: adapterNames, // only matching adapters
         isFolder: true,
       }

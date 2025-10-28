@@ -1,5 +1,5 @@
 import { type JSX, useEffect, useRef, useState } from 'react'
-import { getAdapterNamesFromConfiguration } from '~/routes/builder/xml-to-json-parser'
+import { getAdapterNamesFromConfiguration } from '~/routes/studio/xml-to-json-parser'
 import useTabStore from '~/stores/tab-store'
 import Search from '~/components/search/search'
 import FolderIcon from '/icons/solar/Folder.svg?react'
@@ -16,7 +16,7 @@ import {
   type TreeRef,
   UncontrolledTreeEnvironment,
 } from 'react-complex-tree'
-import BuilderFilesDataProvider from '~/routes/builder/builder-files-data-provider'
+import StudioFilesDataProvider from '~/routes/studio/studio-files-data-provider'
 import { useProjectStore } from '~/stores/project-store'
 import { Link } from 'react-router'
 import { useTreeStore } from '~/stores/tree-store'
@@ -27,7 +27,7 @@ export interface ConfigWithAdapters {
   adapterNames: string[]
 }
 
-const TREE_ID = 'builder-files-tree'
+const TREE_ID = 'studio-files-tree'
 
 function getItemTitle(item: TreeItem<unknown>): string {
   // item.data is either a string (for folders) or object (for leaf nodes)
@@ -39,7 +39,7 @@ function getItemTitle(item: TreeItem<unknown>): string {
   return 'Unnamed'
 }
 
-export default function BuilderStructure() {
+export default function StudioStructure() {
   const { configs, isLoading, setConfigs, setIsLoading } = useTreeStore(
     useShallow((state) => ({
       configs: state.configs,
@@ -50,7 +50,7 @@ export default function BuilderStructure() {
   )
   const [searchTerm, setSearchTerm] = useState('')
   const tree = useRef<TreeRef>(null)
-  const dataProviderReference = useRef(new BuilderFilesDataProvider([]))
+  const dataProviderReference = useRef(new StudioFilesDataProvider([]))
 
   const configurationNames = useProjectStore((state) => state.project?.filenames)
   const setTabData = useTabStore((state) => state.setTabData)
@@ -216,7 +216,7 @@ export default function BuilderStructure() {
             renderItemArrow={renderItemArrow}
             renderItemTitle={renderItemTitle}
           >
-            <Tree treeId={TREE_ID} rootItem="root" ref={tree} treeLabel="Builder Files" />
+            <Tree treeId={TREE_ID} rootItem="root" ref={tree} treeLabel="Studio Files" />
           </UncontrolledTreeEnvironment>
         </div>
       )}
