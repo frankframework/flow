@@ -389,7 +389,6 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
 
     // Handle the case where the tab was already set before mount
     if (currentActiveTabKey) {
-      console.log('Initial load detected:', currentActiveTabKey)
       const activeTab = tabStore.getTab(currentActiveTabKey)
       if (activeTab) {
         loadFlowFromTab(activeTab)
@@ -400,7 +399,6 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
     const unsubscribe = useTabStore.subscribe(
       (state) => state.activeTab,
       async (newTab, oldTab) => {
-        console.log('Subscription triggered:', { oldTab, newTab })
         if (!newTab) {
           clearFlow()
           return
