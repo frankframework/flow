@@ -11,7 +11,6 @@ import { useEffect, useRef, useState } from 'react'
 import { getXmlString } from '~/routes/builder/xml-to-json-parser'
 import variables from '../../../environment/environment'
 import { useFFDoc } from '@frankframework/ff-doc/react'
-import * as monaco from 'monaco-editor'
 
 export default function CodeEditor() {
   const theme = useTheme()
@@ -96,31 +95,86 @@ export default function CodeEditor() {
   }, [xmlContent, activeTab])
 
   useEffect(() => {
-    if (!elements || !editorReference.current) return
-
+    if (!editorReference.current) return
     const monacoInstance = (globalThis as any).monaco
     if (!monacoInstance) return
-    console.log(elements)
 
-    // Dispose previous provider if needed
-    const disposable = monacoInstance.languages.registerCompletionItemProvider('xml', {
-      triggerCharacters: ['<', ' '],
+    // Keep latest elements in a ref so provider callbacks always see current data
+    const elementsReference = { current: elements }
+
+    // Element suggestions
+    const elementProvider = monacoInstance.languages.registerCompletionItemProvider('xml', {
+      triggerCharacters: ['<'],
       provideCompletionItems: () => {
         return {
-          suggestions: [
-            {
-              label: 'ABCJobListener',
+          suggestions: Object.values(elementsReference.current).map((element: any) => {
+            // Mandatory attributes
+            const mandatoryAttributes = Object.entries(element.attributes || {})
+              .filter(([_, attribute]) => attribute.mandatory)
+              .map(([name]) => `${name}="\${${name}}"`)
+
+            // Snippet for tag + mandatory attributes
+            // eslint-disable-next-line sonarjs/no-nested-template-literals
+            const insertText = `${element.name}${mandatoryAttributes.length > 0 ? ` ${mandatoryAttributes.join(' ')}` : ''}>$0</${element.name}`
+
+            return {
+              label: element.name,
               kind: monacoInstance.languages.CompletionItemKind.Class,
-              insertText: 'ABCJobListener>',
-              documentation: 'This is a custom suggestion for ABCJobListener',
-            },
-          ],
+              insertText,
+              insertTextRules: monacoInstance.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+              documentation: element.description || '',
+            }
+          }),
         }
       },
     })
 
-    return () => disposable.dispose() // cleanup on unmount or elements change
-  }, [elements])
+    // Attribute suggestions
+    const attributeProvider = monacoInstance.languages.registerCompletionItemProvider('xml', {
+      triggerCharacters: [' '],
+      provideCompletionItems: (model, position) => {
+        const line = model.getLineContent(position.lineNumber)
+        const tagMatch = line.slice(0, position.column - 1).match(/<(\w+)/)
+        if (!tagMatch) return { suggestions: [] }
+
+        const tagName = tagMatch[1]
+        const element = (elementsReference.current as any)[tagName]
+        if (!element || !element.attributes) return { suggestions: [] }
+
+        const attributeSuggestions = Object.entries(element.attributes).flatMap(
+          ([attributeName, attributeValue]: [string, any]) => {
+            // Suggest enum values if defined
+            const enumValues = attributeValue?.enum ? Object.keys(attributeValue.enum) : []
+
+            return enumValues.length > 0
+              ? enumValues.map((value, index) => ({
+                  label: `${attributeName}="${value}"`,
+                  kind: monacoInstance.languages.CompletionItemKind.Enum,
+                  insertText: `${attributeName}="${value}"`,
+                  documentation: attributeValue?.enum[value]?.description || '',
+                }))
+              : {
+                  label: attributeName,
+                  kind: monacoInstance.languages.CompletionItemKind.Property,
+                  insertText: `${attributeName}="\${1}"`,
+                  insertTextRules: monacoInstance.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+                  documentation: attributeValue?.description || '',
+                }
+          },
+        )
+
+        return { suggestions: attributeSuggestions }
+      },
+    })
+
+    // -------------------------------
+    // 3️⃣ Cleanup
+    // -------------------------------
+    return () => {
+      elementProvider.dispose()
+      attributeProvider.dispose()
+    }
+  }, [editorReference.current, elements])
 
   const handleSelectTab = (key: string) => {
     useTabStore.getState().setActiveTab(key)
