@@ -58,6 +58,7 @@ export default function CodeEditor() {
   }, [activeTab])
 
   useEffect(() => {
+    // Highlights the line of the adapter which is selected
     if (!xmlContent || !activeTab || !editorReference.current) return
 
     const editor = editorReference.current
@@ -95,6 +96,7 @@ export default function CodeEditor() {
   }, [xmlContent, activeTab])
 
   useEffect(() => {
+    // Handles all the suggestions
     if (!editorReference.current) return
     const monacoInstance = (globalThis as any).monaco
     if (!monacoInstance) return
@@ -134,6 +136,15 @@ export default function CodeEditor() {
       triggerCharacters: [' '],
       provideCompletionItems: (model, position) => {
         const line = model.getLineContent(position.lineNumber)
+        const textBeforeCursor = line.slice(0, position.column - 1)
+
+        // Don't show suggestions if cursor is inside quotes
+        const quotesBefore = (textBeforeCursor.match(/"/g) || []).length
+        if (quotesBefore % 2 === 1) {
+          // Odd number of quotes → cursor is inside an attribute value
+          return { suggestions: [] }
+        }
+
         const tagMatch = line.slice(0, position.column - 1).match(/<(\w+)/)
         if (!tagMatch) return { suggestions: [] }
 
