@@ -23,6 +23,8 @@ export default function CodeEditor() {
   const [xmlContent, setXmlContent] = useState<string>('')
   const editorReference = useRef<any>(null)
   const decorationIdsReference = useRef<string[]>([])
+  const [isSaving, setIsSaving] = useState(false)
+  const [saveMessage, setSaveMessage] = useState<string | null>(null)
 
   const handleEditorMount = (editor: any, monaco: any) => {
     editorReference.current = editor
@@ -206,6 +208,36 @@ export default function CodeEditor() {
     }
   }
 
+  const handleSave = async () => {
+    if (!project || !activeTab) return
+    const configName = useTabStore.getState().getTab(activeTab)?.configurationName
+    if (!configName) return
+
+    const editor = editorReference.current
+    const updatedXml = editor?.getValue?.()
+    if (!updatedXml) return
+
+    setIsSaving(true)
+    setSaveMessage(null)
+
+    try {
+      const response = await fetch(`/projects/${project.name}/${configName}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ xmlContent: updatedXml }),
+      })
+
+      if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`)
+      setSaveMessage('✅ Saved successfully')
+    } catch (err) {
+      console.error('Failed to save XML:', err)
+      setSaveMessage('❌ Failed to save configuration')
+    } finally {
+      setIsSaving(false)
+      setTimeout(() => setSaveMessage(null), 3000)
+    }
+  }
+
   return (
     <SidebarLayout name="editor" windowResizeOnChange={true}>
       <>
@@ -217,6 +249,16 @@ export default function CodeEditor() {
           <SidebarContentClose side={SidebarSide.LEFT} />
           <div className="grow overflow-x-auto">
             <Tabs tabs={tabs} selectedTab={activeTab} onSelectTab={handleSelectTab} onCloseTab={handleCloseTab} />
+          </div>
+          <div className="flex items-center space-x-2">
+            <button
+                    onClick={handleSave}
+                    disabled={isSaving || !activeTab}
+                    className="rounded bg-blue-600 px-3 py-1 text-white hover:bg-blue-700 disabled:opacity-50"
+            >
+              {isSaving ? 'Saving...' : '💾 Save'}
+            </button>
+            {saveMessage && <span className="text-sm text-gray-600">{saveMessage}</span>}
           </div>
         </div>
         <div className="border-b-border bg-background flex h-12 items-center border-b p-4">Path: {activeTab}</div>

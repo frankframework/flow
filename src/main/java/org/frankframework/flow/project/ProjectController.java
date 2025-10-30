@@ -3,17 +3,16 @@ package org.frankframework.flow.project;
 import org.frankframework.flow.configuration.Configuration;
 import org.frankframework.flow.configuration.ConfigurationDTO;
 
-import org.springframework.core.io.ClassPathResource;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -85,6 +84,26 @@ public class ProjectController {
 		}
 
 		return ResponseEntity.notFound().build(); // No matching config found
+	}
+
+	@PutMapping("/{projectName}/{filename}")
+	public ResponseEntity<Void> updateConfiguration(
+			@PathVariable String projectName,
+			@PathVariable String filename,
+			@RequestBody ConfigurationDTO configurationDTO) {
+		try {
+			boolean updated = projectService.updateConfigurationXml(
+					projectName, filename, configurationDTO.xmlContent);
+
+			if (!updated) {
+				return ResponseEntity.notFound().build(); // Project or config not found
+			}
+
+			return ResponseEntity.ok().build();
+		} catch (Exception e) {
+			e.printStackTrace();
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+		}
 	}
 
 	@PostMapping("/{projectname}")

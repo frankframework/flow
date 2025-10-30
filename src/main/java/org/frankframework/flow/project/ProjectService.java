@@ -43,6 +43,22 @@ public class ProjectService {
 		return projects;
 	}
 
+	public boolean updateConfigurationXml(String projectName, String filename, String xmlContent) {
+		Project project = getProject(projectName);
+		if (project == null) {
+			return false; // Project not found
+		}
+
+		for (Configuration config : project.getConfigurations()) {
+			if (config.getFilename().equals(filename)) {
+				config.setXmlContent(xmlContent);
+				return true; // Successfully updated
+			}
+		}
+
+		return false; // Configuration not found
+	}
+
 	/**
 	 * Dynamically scan all project folders under /resources/project/
 	 * Each subdirectory = a project
