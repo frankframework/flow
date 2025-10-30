@@ -1,5 +1,7 @@
 import React, { useEffect, useRef } from 'react'
 import Tab from '~/components/tabs/tab'
+import useTabStore from '~/stores/tab-store'
+import { useShallow } from 'zustand/react/shallow'
 
 export type TabsList = Record<string, TabsItem>
 
@@ -9,18 +11,19 @@ export interface TabsItem {
   flowJson?: Record<string, any>
 }
 
-export interface TabsProperties {
-  tabs: TabsList
-  selectedTab?: string
-  onSelectTab: (key: string) => void
-  onCloseTab: (key: string, event?: React.MouseEvent) => void
-}
-
-export default function Tabs({ tabs, selectedTab, onSelectTab, onCloseTab }: Readonly<TabsProperties>) {
+export default function Tabs() {
   const tabsElementReference = useRef<HTMLDivElement>(null)
   const tabsListReference = useRef<HTMLUListElement>(null)
   const shadowLeftReference = useRef<HTMLDivElement>(null)
   const shadowRightReference = useRef<HTMLDivElement>(null)
+  const { tabs, activeTab, setActiveTab, removeTabAndSelectFallback } = useTabStore(
+    useShallow((state) => ({
+      tabs: state.tabs,
+      activeTab: state.activeTab,
+      setActiveTab: state.setActiveTab,
+      removeTabAndSelectFallback: state.removeTabAndSelectFallback,
+    })),
+  )
 
   useEffect(() => {
     calculateScrollShadows()
@@ -78,9 +81,9 @@ export default function Tabs({ tabs, selectedTab, onSelectTab, onCloseTab }: Rea
           <Tab
             key={key}
             value={tab.value}
-            isSelected={selectedTab === key}
-            onSelect={() => onSelectTab(key)}
-            onClose={(event) => onCloseTab(key, event)}
+            isSelected={activeTab === key}
+            onSelect={() => setActiveTab(key)}
+            onClose={() => removeTabAndSelectFallback(key)}
             icon={tab.icon}
           />
         ))}
