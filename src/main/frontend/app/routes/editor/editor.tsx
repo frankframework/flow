@@ -11,7 +11,7 @@ import { useEffect, useRef, useState } from 'react'
 import { getXmlString } from '~/routes/builder/xml-to-json-parser'
 import variables from '../../../environment/environment'
 import { useFFDoc } from '@frankframework/ff-doc/react'
-import {useProjectStore} from "~/stores/project-store";
+import { useProjectStore } from '~/stores/project-store'
 
 export default function CodeEditor() {
   const theme = useTheme()
@@ -24,7 +24,6 @@ export default function CodeEditor() {
   const editorReference = useRef<any>(null)
   const decorationIdsReference = useRef<string[]>([])
   const [isSaving, setIsSaving] = useState(false)
-  const [saveMessage, setSaveMessage] = useState<string | null>(null)
 
   const handleEditorMount = (editor: any, monaco: any) => {
     editorReference.current = editor
@@ -218,7 +217,6 @@ export default function CodeEditor() {
     if (!updatedXml) return
 
     setIsSaving(true)
-    setSaveMessage(null)
 
     try {
       const response = await fetch(`/projects/${project.name}/${configName}`, {
@@ -228,13 +226,10 @@ export default function CodeEditor() {
       })
 
       if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`)
-      setSaveMessage('✅ Saved successfully')
-    } catch (err) {
-      console.error('Failed to save XML:', err)
-      setSaveMessage('❌ Failed to save configuration')
+    } catch (error) {
+      console.error('Failed to save XML:', error)
     } finally {
       setIsSaving(false)
-      setTimeout(() => setSaveMessage(null), 3000)
     }
   }
 
@@ -250,31 +245,41 @@ export default function CodeEditor() {
           <div className="grow overflow-x-auto">
             <Tabs tabs={tabs} selectedTab={activeTab} onSelectTab={handleSelectTab} onCloseTab={handleCloseTab} />
           </div>
-          <div className="flex items-center space-x-2">
-            <button
-                    onClick={handleSave}
-                    disabled={isSaving || !activeTab}
-                    className="rounded bg-blue-600 px-3 py-1 text-white hover:bg-blue-700 disabled:opacity-50"
-            >
-              {isSaving ? 'Saving...' : '💾 Save'}
-            </button>
-            {saveMessage && <span className="text-sm text-gray-600">{saveMessage}</span>}
+          <SidebarContentClose side={SidebarSide.RIGHT} />
+        </div>
+        {activeTab ? (
+          <>
+            <div className="border-b-border bg-background flex h-12 items-center border-b p-4">Path: {activeTab}</div>
+            <div className="h-full">
+              <Editor
+                language="xml"
+                theme={`vs-${theme}`}
+                value={xmlContent}
+                onMount={handleEditorMount}
+                options={{ automaticLayout: true }}
+              />
+            </div>
+          </>
+        ) : (
+          <div className="text-muted-foreground flex h-full flex-col items-center justify-center p-8 text-center">
+            <div className="border-border bg-background/40 max-w-md rounded-2xl border border-dashed p-10 shadow-inner backdrop-blur-sm">
+              <h2 className="mb-2 text-xl font-semibold">No file selected</h2>
+              <p className="text-sm">Select an adapter from the file structure on the left to start editing.</p>
+            </div>
           </div>
-        </div>
-        <div className="border-b-border bg-background flex h-12 items-center border-b p-4">Path: {activeTab}</div>
-        <div className="h-full">
-          <Editor
-            language="xml"
-            theme={`vs-${theme}`}
-            value={xmlContent}
-            onMount={handleEditorMount}
-            options={{ automaticLayout: true }}
-          />
-        </div>
+        )}
       </>
       <>
         <SidebarHeader side={SidebarSide.RIGHT} title="Preview" />
-        <div className="h-full">Preview</div>
+        <div className="flex w-full items-center justify-center">
+          <button
+            onClick={handleSave}
+            disabled={isSaving || !activeTab}
+            className="border-border bg-background hover:bg-foreground-active my-2 rounded border px-3 py-1 disabled:opacity-50"
+          >
+            {isSaving ? 'Saving...' : 'Save XML'}
+          </button>
+        </div>
       </>
     </SidebarLayout>
   )
