@@ -48,6 +48,7 @@ export default function BuilderStructure() {
       setIsLoading: state.setIsLoading,
     })),
   )
+  const project = useProjectStore.getState().project
   const [searchTerm, setSearchTerm] = useState('')
   const tree = useRef<TreeRef>(null)
   const dataProviderReference = useRef(new BuilderFilesDataProvider([]))
@@ -67,7 +68,7 @@ export default function BuilderStructure() {
       try {
         const loaded: ConfigWithAdapters[] = await Promise.all(
           configurationNames.map(async (configName) => {
-            const adapterNames = await getAdapterNamesFromConfiguration(configName)
+            const adapterNames = await getAdapterNamesFromConfiguration(project!.name, configName)
             return { configName, adapterNames }
           }),
         )

@@ -1,14 +1,16 @@
 package org.frankframework.flow.project;
 
+import org.frankframework.flow.configuration.Configuration;
+
 import java.util.ArrayList;
 
 public class Project {
 	private String name;
-	private ArrayList<String> filenames;
+	private ArrayList<Configuration> configurations;
 
 	public Project(String name) {
 		this.name = name;
-		this.filenames = new ArrayList<>();
+		this.configurations = new ArrayList<>();
 	}
 
 	public String getName() {
@@ -18,11 +20,20 @@ public class Project {
 		this.name = name;
 	}
 
-	public ArrayList<String> getFilenames() {
-		return filenames;
+	public ArrayList<Configuration> getConfigurations() {
+		return configurations;
 	}
 
-	public void addFilenames(String filename) {
-		this.filenames.add(filename);
+	public void addConfiguration(Configuration configuration) {
+		this.configurations.add(configuration);
+	}
+
+	public void setConfigurationXml(String filename, String xmlContent) {
+		for (Configuration c : this.configurations) {
+			if (c.getFilename().equals(filename)) {
+				c.setXmlContent(xmlContent);
+				return;
+			}
+		}
 	}
 }
