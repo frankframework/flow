@@ -386,46 +386,70 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
   }
 
   useEffect(() => {
+    const tabStore = useTabStore.getState()
+    const currentActiveTabKey = tabStore.activeTab
+
+    // Handle the case where the tab was already set before mount
+    if (currentActiveTabKey) {
+      const activeTab = tabStore.getTab(currentActiveTabKey)
+      if (activeTab) {
+        loadFlowFromTab(activeTab)
+      }
+    }
+
+    // Subscribe to future tab changes
     const unsubscribe = useTabStore.subscribe(
       (state) => state.activeTab,
       async (newTab, oldTab) => {
-        const tabStore = useTabStore.getState()
+        if (!newTab) {
+          clearFlow()
+          return
+        }
 
         if (oldTab) saveFlowToTab(oldTab)
 
-        const activeTab = tabStore.getTab(newTab)
+        const activeTab = useTabStore.getState().getTab(newTab)
         if (!activeTab) return
 
-        setLoading(true)
-
-        try {
-          if (activeTab.flowJson && Object.keys(activeTab.flowJson).length > 0) {
-            restoreFlowFromTab(newTab)
-          } else if (activeTab.configurationName && activeTab.value) {
-            const adapter = await getAdapterFromConfiguration(
-              project!.name,
-              activeTab.configurationName,
-              activeTab.value,
-            )
-            if (!adapter) return
-
-            const adapterJson = await convertAdapterXmlToJson(adapter)
-            useFlowStore.getState().setEdges(adapterJson.edges)
-            useFlowStore.getState().setViewport({ x: 0, y: 0, zoom: 1 })
-
-            const laidOutNodes = layoutGraph(adapterJson.nodes, adapterJson.edges, 'LR')
-            useFlowStore.getState().setNodes(laidOutNodes)
-          }
-        } catch (error) {
-          console.error('Error loading adapter from XML:', error)
-        } finally {
-          setLoading(false)
-        }
+        await loadFlowFromTab(activeTab)
       },
     )
 
     return () => unsubscribe()
   }, [])
+
+  function clearFlow() {
+    const flowStore = useFlowStore.getState()
+    flowStore.setNodes([])
+    flowStore.setEdges([])
+    flowStore.setViewport({ x: 0, y: 0, zoom: 1 })
+  }
+
+  async function loadFlowFromTab(tab) {
+    const flowStore = useFlowStore.getState()
+    setLoading(true)
+    try {
+      if (tab.flowJson && Object.keys(tab.flowJson).length > 0) {
+        restoreFlowFromTab(tab.value)
+      } else if (tab.configurationName && tab.value) {
+        const adapter = await getAdapterFromConfiguration(
+                project!.name,
+                tab.configurationName,
+                tab.value,
+        )
+        if (!adapter) return
+        const adapterJson = await convertAdapterXmlToJson(adapter)
+        flowStore.setEdges(adapterJson.edges)
+        flowStore.setViewport({ x: 0, y: 0, zoom: 1 })
+        const laidOutNodes = layoutGraph(adapterJson.nodes, adapterJson.edges, 'LR')
+        flowStore.setNodes(laidOutNodes)
+      }
+    } catch (error) {
+      console.error('Error loading tab flow:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const saveFlowToTab = (tabId: string) => {
     const tabStore = useTabStore.getState()

@@ -16,13 +16,12 @@ interface TabStoreState {
   getTab: (tabId: string) => TabData | undefined
   setActiveTab: (tabId: string) => void
   removeTab: (tabId: string) => void
+  removeTabAndSelectFallback: (tabId: string) => void
 }
 
 const useTabStore = create<TabStoreState>()(
   subscribeWithSelector((set, get) => ({
-    tabs: {
-      tab1: { value: 'tab1', configurationName: 'Config1', icon: FolderIcon },
-    },
+    tabs: { tab1: { value: 'tab1', configurationName: 'Config1', icon: FolderIcon } },
     activeTab: 'tab1',
     setTabData: (tabId, data) =>
       set((state) => ({
@@ -41,6 +40,16 @@ const useTabStore = create<TabStoreState>()(
         const newTabs = { ...state.tabs }
         delete newTabs[tabId]
         return { tabs: newTabs }
+      }),
+    removeTabAndSelectFallback: (tabId) =>
+      set((state) => {
+        const newTabs = { ...state.tabs }
+        delete newTabs[tabId]
+        const remainingKeys = Object.keys(newTabs)
+        return {
+          tabs: newTabs,
+          activeTab: remainingKeys.includes(state.activeTab) ? state.activeTab : (remainingKeys.at(-1) ?? ''),
+        }
       }),
   })),
 )

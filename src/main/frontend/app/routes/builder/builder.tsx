@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import Tabs, { type TabsList } from '~/components/tabs/tabs'
+import { useState } from 'react'
+import Tabs from '~/components/tabs/tabs'
 import BuilderStructure from '~/routes/builder/builder-structure'
 import BuilderContext from '~/routes/builder/context/builder-context'
 import Flow from '~/routes/builder/canvas/flow'
@@ -10,49 +10,17 @@ import SidebarHeader from '~/components/sidebars-layout/sidebar-header'
 import { SidebarSide } from '~/components/sidebars-layout/sidebar-layout-store'
 import SidebarLayout from '~/components/sidebars-layout/sidebar-layout'
 import useTabStore from '~/stores/tab-store'
+import { useShallow } from 'zustand/react/shallow'
 
 export default function Builder() {
   const [showNodeContext, setShowNodeContext] = useState(false)
   const nodeId = useNodeContextStore((state) => state.nodeId)
-  const [tabs, setTabs] = useState<TabsList>(useTabStore.getState().tabs)
-  const [selectedTab, setSelectedTab] = useState<string | undefined>(useTabStore.getState().activeTab)
 
-  useEffect(() => {
-    const unsubscribe = useTabStore.subscribe((state) => {
-      setTabs(state.tabs)
-    })
-    return () => unsubscribe()
-  }, [])
-
-  useEffect(() => {
-    const unsubscribe = useTabStore.subscribe(
-      (state) => state.activeTab,
-      (activeTab) => setSelectedTab(activeTab),
-    )
-    return () => unsubscribe()
-  }, [])
-
-  const handleSelectTab = (key: string) => {
-    setSelectedTab(key)
-    useTabStore.getState().setActiveTab(key)
-  }
-
-  const handleCloseTab = (key: string) => {
-    const newTabs = { ...tabs }
-    delete newTabs[key]
-    setTabs(newTabs)
-    useTabStore.getState().removeTab(key)
-
-    if (key === selectedTab) {
-      const remainingKeys = Object.keys(newTabs)
-      const fallbackKey = remainingKeys.at(-1) // select last one or change logic
-      if (fallbackKey) {
-        handleSelectTab(fallbackKey)
-      } else {
-        setSelectedTab(undefined)
-      }
-    }
-  }
+  const { activeTab } = useTabStore(
+    useShallow((state) => ({
+      activeTab: state.activeTab,
+    })),
+  )
 
   return (
     <SidebarLayout name="studio" windowResizeOnChange={true}>
@@ -64,12 +32,24 @@ export default function Builder() {
         <div className="flex">
           <SidebarContentClose side={SidebarSide.LEFT} />
           <div className="grow overflow-x-auto">
-            <Tabs tabs={tabs} selectedTab={selectedTab} onSelectTab={handleSelectTab} onCloseTab={handleCloseTab} />
+            <Tabs />
           </div>
           <SidebarContentClose side={SidebarSide.RIGHT} />
         </div>
-        <div className="border-b-border bg-background flex h-12 items-center border-b p-4">Path: {selectedTab}</div>
-        <Flow showNodeContextMenu={setShowNodeContext} />
+        <div className="border-b-border bg-background flex h-12 items-center border-b p-4">Path: {activeTab}</div>
+
+        {activeTab ? (
+          <Flow showNodeContextMenu={setShowNodeContext} />
+        ) : (
+          <div className="text-muted-foreground flex h-full flex-col items-center justify-center p-8 text-center">
+            <div className="border-border bg-background/40 max-w-md rounded-2xl border border-dashed p-10 shadow-inner backdrop-blur-sm">
+              <h2 className="mb-2 text-xl font-semibold">No file selected</h2>
+              <p className="text-sm">
+                Select an adapter from the file structure on the left to start building your flow.
+              </p>
+            </div>
+          </div>
+        )}
       </>
       <>
         <SidebarHeader side={SidebarSide.RIGHT} title={showNodeContext ? 'Edit node' : 'Palette'} />

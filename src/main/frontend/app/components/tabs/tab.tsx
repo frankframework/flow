@@ -13,6 +13,12 @@ export type TabProperties = {
 
 export default function Tab({ value, icon, isSelected, onSelect, onClose }: Readonly<TabProperties>) {
   const Icon = icon ?? CodeIcon
+
+  const handleClose = (event: React.MouseEvent<Element, MouseEvent>) => {
+    event.stopPropagation()
+    onClose(event)
+  }
+
   return (
     <li
       className={clsx(
@@ -30,7 +36,7 @@ export default function Tab({ value, icon, isSelected, onSelect, onClose }: Read
           'hover:fill-foreground h-8 w-auto hover:cursor-pointer',
           isSelected ? 'fill-foreground-muted' : 'group-hover:fill-foreground-muted',
         )}
-        onClick={(event) => onClose(event)}
+        onClick={handleClose}
       />
     </li>
   )
