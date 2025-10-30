@@ -11,11 +11,13 @@ import { useEffect, useRef, useState } from 'react'
 import { getXmlString } from '~/routes/builder/xml-to-json-parser'
 import variables from '../../../environment/environment'
 import { useFFDoc } from '@frankframework/ff-doc/react'
+import {useProjectStore} from "~/stores/project-store";
 
 export default function CodeEditor() {
   const theme = useTheme()
   const FRANK_DOC_URL = variables.frankDocJsonUrl
   const { elements } = useFFDoc(FRANK_DOC_URL)
+  const project = useProjectStore.getState().project
   const [tabs, setTabs] = useState<TabsList>(useTabStore.getState().tabs as TabsList)
   const [activeTab, setActiveTab] = useState<string | undefined>(useTabStore.getState().activeTab)
   const [xmlContent, setXmlContent] = useState<string>('')
@@ -47,7 +49,7 @@ export default function CodeEditor() {
       try {
         const configName = useTabStore.getState().getTab(activeTab)?.configurationName
         if (!configName) return
-        const xmlString = await getXmlString(configName)
+        const xmlString = await getXmlString(project!.name, configName)
         setXmlContent(xmlString)
       } catch (error) {
         console.error('Failed to load XML:', error)
@@ -141,7 +143,7 @@ export default function CodeEditor() {
         // Don't show suggestions if cursor is inside quotes
         const quotesBefore = (textBeforeCursor.match(/"/g) || []).length
         if (quotesBefore % 2 === 1) {
-          // Odd number of quotes → cursor is inside an attribute value
+          // Odd number of quotes -> cursor is inside an attribute value
           return { suggestions: [] }
         }
 
@@ -178,9 +180,7 @@ export default function CodeEditor() {
       },
     })
 
-    // -------------------------------
-    // 3️⃣ Cleanup
-    // -------------------------------
+    // Cleanup
     return () => {
       elementProvider.dispose()
       attributeProvider.dispose()
