@@ -90,19 +90,28 @@ export default function BuilderStructure() {
       if (!searchTerm) {
         setMatchingItemIds([])
         setActiveMatchIndex(-1)
+        setHighlightedItemId(null)
         return
       }
 
-      const allItems = await dataProviderReference.current.getAllItems?.() // if you have a helper
+      const allItems = await dataProviderReference.current.getAllItems?.()
       if (!allItems) return
 
       const lower = searchTerm.toLowerCase()
       const matches = allItems
         .filter((item: TreeItem<unknown>) => getItemTitle(item).toLowerCase().includes(lower))
-        .map((item: TreeItem<unknown>) => item.index) // or `item.id` depending on your data provider
+        .map((item: TreeItem<unknown>) => item.index)
 
       setMatchingItemIds(matches)
-      setActiveMatchIndex(matches.length > 0 ? 0 : -1)
+
+      // Always reset highlight to the first match (or clear)
+      if (matches.length > 0) {
+        setActiveMatchIndex(0)
+        setHighlightedItemId(matches[0])
+      } else {
+        setActiveMatchIndex(-1)
+        setHighlightedItemId(null)
+      }
     }
 
     findMatchingItems()
@@ -115,19 +124,30 @@ export default function BuilderStructure() {
   // Listener for tab and enter keys
   useEffect(() => {
     const handleKeyDown = async (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        // ✅ Clear search and highlight
+        setSearchTerm('')
+        setHighlightedItemId(null)
+        setMatchingItemIds([])
+        setActiveMatchIndex(-1)
+        return
+      }
+
       if (matchingItemIds.length === 0) return
 
       if (event.key === 'Tab' && !event.shiftKey) {
         event.preventDefault()
-        setActiveMatchIndex((previous) => (previous + 1) % matchingItemIds.length)
+        setActiveMatchIndex((prev) => (prev + 1) % matchingItemIds.length)
       } else if (event.key === 'Tab' && event.shiftKey) {
         event.preventDefault()
-        setActiveMatchIndex((previous) => (previous - 1 < 0 ? matchingItemIds.length - 1 : previous - 1))
+        setActiveMatchIndex((prev) => (prev - 1 < 0 ? matchingItemIds.length - 1 : prev - 1))
       } else if (event.key === 'Enter') {
         event.preventDefault()
-        if (highlightedItemId) {
-          // Manually trigger selection
-          handleItemClick([highlightedItemId])
+
+        // If nothing highlighted yet, select the first match
+        const targetItemId = highlightedItemId || matchingItemIds[0]
+        if (targetItemId) {
+          handleItemClick([targetItemId])
         }
       }
     }
@@ -147,8 +167,6 @@ export default function BuilderStructure() {
     // set visual highlight only
     setHighlightedItemId(itemId)
   }, [activeMatchIndex])
-
-
 
   useEffect(() => {
     // Collapse all folders when no search term is entered
@@ -253,9 +271,8 @@ export default function BuilderStructure() {
       <>
         <Icon className="fill-foreground w-4 flex-shrink-0" />
         <span
-          className={`font-inter ml-1 overflow-hidden text-nowrap text-ellipsis ${
-            isHighlighted ? 'outline-foreground-active rounded-sm px-1 outline outline-2' : ''
-          }`}
+          className={`font-inter ml-1 overflow-hidden text-nowrap text-ellipsis ${isHighlighted ? 'outline-foreground-active rounded-sm px-1 outline outline-2' : ''
+            }`}
         >
           {highlightedTitle}
         </span>
