@@ -247,7 +247,7 @@ export default function BuilderStructure() {
       )
     }
 
-    const isHighlighted = highlightedItemId === item.index
+    const isHighlighted = highlightedItemId == item.index
 
     return (
       <>
