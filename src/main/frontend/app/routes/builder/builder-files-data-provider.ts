@@ -18,6 +18,10 @@ export default class BuilderFilesDataProvider implements TreeDataProvider {
     this.notifyListeners(['root'])
   }
 
+  public async getAllItems(): Promise<TreeItem[]> {
+    return Object.values(this.data)
+  }
+
   public async getTreeItem(itemId: TreeItemIndex) {
     return this.data[itemId]
   }

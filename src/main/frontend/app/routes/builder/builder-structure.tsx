@@ -49,6 +49,10 @@ export default function BuilderStructure() {
     })),
   )
   const [searchTerm, setSearchTerm] = useState('')
+  const [matchingItemIds, setMatchingItemIds] = useState<string[]>([])
+  const [activeMatchIndex, setActiveMatchIndex] = useState<number>(-1)
+  const [highlightedItemId, setHighlightedItemId] = useState<string | null>(null)
+
   const tree = useRef<TreeRef>(null)
   const dataProviderReference = useRef(new BuilderFilesDataProvider([]))
 
@@ -82,8 +86,69 @@ export default function BuilderStructure() {
   }, [configurationNames])
 
   useEffect(() => {
+    const findMatchingItems = async () => {
+      if (!searchTerm) {
+        setMatchingItemIds([])
+        setActiveMatchIndex(-1)
+        return
+      }
+
+      const allItems = await dataProviderReference.current.getAllItems?.() // if you have a helper
+      if (!allItems) return
+
+      const lower = searchTerm.toLowerCase()
+      const matches = allItems
+        .filter((item: TreeItem<unknown>) => getItemTitle(item).toLowerCase().includes(lower))
+        .map((item: TreeItem<unknown>) => item.index) // or `item.id` depending on your data provider
+
+      setMatchingItemIds(matches)
+      setActiveMatchIndex(matches.length > 0 ? 0 : -1)
+    }
+
+    findMatchingItems()
+  }, [searchTerm, configs])
+
+  useEffect(() => {
     dataProviderReference.current.updateData(configs)
   }, [configs])
+
+  // Listener for tab and enter keys
+  useEffect(() => {
+    const handleKeyDown = async (event: KeyboardEvent) => {
+      if (matchingItemIds.length === 0) return
+
+      if (event.key === 'Tab' && !event.shiftKey) {
+        event.preventDefault()
+        setActiveMatchIndex((previous) => (previous + 1) % matchingItemIds.length)
+      } else if (event.key === 'Tab' && event.shiftKey) {
+        event.preventDefault()
+        setActiveMatchIndex((previous) => (previous - 1 < 0 ? matchingItemIds.length - 1 : previous - 1))
+      } else if (event.key === 'Enter') {
+        event.preventDefault()
+        if (highlightedItemId) {
+          // Manually trigger selection
+          handleItemClick([highlightedItemId])
+        }
+      }
+    }
+
+    globalThis.addEventListener('keydown', handleKeyDown)
+    return () => globalThis.removeEventListener('keydown', handleKeyDown)
+  }, [matchingItemIds, highlightedItemId])
+
+
+
+  useEffect(() => {
+    if (activeMatchIndex === -1 || !tree.current) return
+
+    const itemId = matchingItemIds[activeMatchIndex]
+    if (!itemId) return
+
+    // set visual highlight only
+    setHighlightedItemId(itemId)
+  }, [activeMatchIndex])
+
+
 
   useEffect(() => {
     // Collapse all folders when no search term is entered
@@ -182,10 +247,18 @@ export default function BuilderStructure() {
       )
     }
 
+    const isHighlighted = highlightedItemId === item.index
+
     return (
       <>
         <Icon className="fill-foreground w-4 flex-shrink-0" />
-        <span className={`font-inter ml-1 overflow-hidden text-nowrap text-ellipsis`}>{highlightedTitle}</span>
+        <span
+          className={`font-inter ml-1 overflow-hidden text-nowrap text-ellipsis ${
+            isHighlighted ? 'outline-foreground-active rounded-sm px-1 outline outline-2' : ''
+          }`}
+        >
+          {highlightedTitle}
+        </span>
       </>
     )
   }
