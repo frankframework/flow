@@ -16,7 +16,7 @@ import {
   type TreeRef,
   UncontrolledTreeEnvironment,
 } from 'react-complex-tree'
-import BuilderFilesDataProvider from '~/routes/builder/builder-files-data-provider'
+import FilesDataProvider from '~/components/file-structure/files-data-provider'
 import { useProjectStore } from '~/stores/project-store'
 import { Link } from 'react-router'
 import { useTreeStore } from '~/stores/tree-store'
@@ -39,7 +39,7 @@ function getItemTitle(item: TreeItem<unknown>): string {
   return 'Unnamed'
 }
 
-export default function BuilderStructure() {
+export default function FileStructure() {
   const { configs, isLoading, setConfigs, setIsLoading } = useTreeStore(
     useShallow((state) => ({
       configs: state.configs,
@@ -54,7 +54,7 @@ export default function BuilderStructure() {
   const [highlightedItemId, setHighlightedItemId] = useState<string | null>(null)
 
   const tree = useRef<TreeRef>(null)
-  const dataProviderReference = useRef(new BuilderFilesDataProvider([]))
+  const dataProviderReference = useRef(new FilesDataProvider([]))
 
   const configurationNames = useProjectStore((state) => state.project?.filenames)
   const setTabData = useTabStore((state) => state.setTabData)
@@ -104,7 +104,6 @@ export default function BuilderStructure() {
 
       setMatchingItemIds(matches)
 
-      // Always reset highlight to the first match (or clear)
       if (matches.length > 0) {
         setActiveMatchIndex(0)
         setHighlightedItemId(matches[0])

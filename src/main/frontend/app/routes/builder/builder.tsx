@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import Tabs from '~/components/tabs/tabs'
-import BuilderStructure from '~/routes/builder/builder-structure'
+import FileStructure from '~/components/file-structure/file-structure'
 import BuilderContext from '~/routes/builder/context/builder-context'
 import Flow from '~/routes/builder/canvas/flow'
 import NodeContext from '~/routes/builder/context/node-context'
@@ -26,7 +26,7 @@ export default function Builder() {
     <SidebarLayout name="studio" windowResizeOnChange={true}>
       <>
         <SidebarHeader side={SidebarSide.LEFT} title="Structure" />
-        <BuilderStructure />
+        <FileStructure />
       </>
       <>
         <div className="flex">

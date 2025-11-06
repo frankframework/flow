@@ -5,7 +5,7 @@ interface ConfigWithAdapters {
   adapterNames: string[]
 }
 
-export default class BuilderFilesDataProvider implements TreeDataProvider {
+export default class FilesDataProvider implements TreeDataProvider {
   private data: Record<TreeItemIndex, TreeItem> = {}
   private treeChangeListeners: ((changedItemIds: TreeItemIndex[]) => void)[] = []
 

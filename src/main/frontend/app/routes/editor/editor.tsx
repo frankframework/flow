@@ -1,13 +1,13 @@
-import Tabs, {type TabsList} from '~/components/tabs/tabs'
+import Tabs, { type TabsList } from '~/components/tabs/tabs'
 import Editor from '@monaco-editor/react'
-import EditorFiles from '~/routes/editor/editor-files'
 import SidebarHeader from '~/components/sidebars-layout/sidebar-header'
 import SidebarLayout from '~/components/sidebars-layout/sidebar-layout'
 import { SidebarSide } from '~/components/sidebars-layout/sidebar-layout-store'
 import SidebarContentClose from '~/components/sidebars-layout/sidebar-content-close'
 import useTabStore from '~/stores/tab-store'
 import { useTheme } from '~/hooks/use-theme'
-import {useEffect, useState} from "react";
+import { useEffect, useState } from 'react'
+import FileStructure from '../../components/file-structure/file-structure'
 
 export default function CodeEditor() {
   const theme = useTheme()
@@ -53,7 +53,7 @@ export default function CodeEditor() {
     <SidebarLayout name="editor" windowResizeOnChange={true}>
       <>
         <SidebarHeader side={SidebarSide.LEFT} title="Files" />
-        <EditorFiles />
+        <FileStructure />
       </>
       <>
         <div className="flex">
