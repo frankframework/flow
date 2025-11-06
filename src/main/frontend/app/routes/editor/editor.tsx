@@ -1,5 +1,5 @@
 import Tabs, { type TabsList } from '~/components/tabs/tabs'
-import Editor from '@monaco-editor/react'
+import Editor, { type OnMount } from '@monaco-editor/react'
 import EditorFiles from '~/routes/editor/editor-files'
 import SidebarHeader from '~/components/sidebars-layout/sidebar-header'
 import SidebarLayout from '~/components/sidebars-layout/sidebar-layout'
@@ -21,11 +21,11 @@ export default function CodeEditor() {
   const [tabs, setTabs] = useState<TabsList>(useTabStore.getState().tabs as TabsList)
   const [activeTab, setActiveTab] = useState<string | undefined>(useTabStore.getState().activeTab)
   const [xmlContent, setXmlContent] = useState<string>('')
-  const editorReference = useRef<any>(null)
+  const editorReference = useRef<Parameters<OnMount>[0] | null>(null)
   const decorationIdsReference = useRef<string[]>([])
   const [isSaving, setIsSaving] = useState(false)
 
-  const handleEditorMount = (editor: any, monaco: any) => {
+  const handleEditorMount: OnMount = (editor, monacoInstance) => {
     editorReference.current = editor
   }
 
@@ -49,8 +49,8 @@ export default function CodeEditor() {
     async function fetchXml() {
       try {
         const configName = useTabStore.getState().getTab(activeTab)?.configurationName
-        if (!configName) return
-        const xmlString = await getXmlString(project!.name, configName)
+        if (!configName || !project) return
+        const xmlString = await getXmlString(project.name, configName)
         setXmlContent(xmlString)
       } catch (error) {
         console.error('Failed to load XML:', error)
@@ -61,41 +61,42 @@ export default function CodeEditor() {
   }, [activeTab])
 
   useEffect(() => {
-    // Highlights the line of the adapter which is selected
     if (!xmlContent || !activeTab || !editorReference.current) return
 
     const editor = editorReference.current
+
+    // Wait for the editor to have a model
+    const model = editor.getModel()
+    if (!model) return
+
     const lines = xmlContent.split('\n')
     const matchIndex = lines.findIndex((line) => line.includes('<Adapter') && line.includes(activeTab))
     if (matchIndex === -1) return
 
     const lineNumber = matchIndex + 1
 
-    // reveal and position
-    setTimeout(() => {
-      editor.revealLineNearTop(lineNumber)
-      editor.setPosition({ lineNumber, column: 1 })
-      editor.focus()
+    // Reveal & highlight immediately if model exists
+    editor.revealLineNearTop(lineNumber)
+    editor.setPosition({ lineNumber, column: 1 })
+    editor.focus()
 
-      // apply highlight decoration
-      decorationIdsReference.current = editor.deltaDecorations(decorationIdsReference.current, [
-        {
-          range: { startLineNumber: lineNumber, startColumn: 1, endLineNumber: lineNumber, endColumn: 1 },
-          options: {
-            isWholeLine: true,
-            className: 'highlight-line',
-          },
+    decorationIdsReference.current = editor.deltaDecorations(decorationIdsReference.current, [
+      {
+        range: { startLineNumber: lineNumber, startColumn: 1, endLineNumber: lineNumber, endColumn: 1 },
+        options: {
+          isWholeLine: true,
+          className: 'highlight-line',
         },
-      ])
+      },
+    ])
 
-      // remove highlight after 2s
-      const t = setTimeout(() => {
-        decorationIdsReference.current = editor.deltaDecorations(decorationIdsReference.current, [])
-      }, 2000)
+    // Remove highlight after 2s
+    const timeout = setTimeout(() => {
+      decorationIdsReference.current = editor.deltaDecorations(decorationIdsReference.current, [])
+    }, 2000)
 
-      // optional cleanup if component unmounts before timeout
-      return () => clearTimeout(t)
-    }, 50)
+    // Optional cleanup if component unmounts before timeout
+    return () => clearTimeout(timeout)
   }, [xmlContent, activeTab])
 
   useEffect(() => {
@@ -104,23 +105,24 @@ export default function CodeEditor() {
     const monacoInstance = (globalThis as any).monaco
     if (!monacoInstance) return
 
-    // Keep latest elements in a ref so provider callbacks always see current data
-    const elementsReference = { current: elements }
-
     // Element suggestions
     const elementProvider = monacoInstance.languages.registerCompletionItemProvider('xml', {
       triggerCharacters: ['<'],
       provideCompletionItems: () => {
+        if (!elements) return { suggestions: [] }
         return {
-          suggestions: Object.values(elementsReference.current).map((element: any) => {
+          suggestions: Object.values(elements).map((element: any) => {
             // Mandatory attributes
             const mandatoryAttributes = Object.entries(element.attributes || {})
               .filter(([_, attribute]) => attribute.mandatory)
               .map(([name]) => `${name}="\${${name}}"`)
+              .join(' ')
 
             // Snippet for tag + mandatory attributes
-            // eslint-disable-next-line sonarjs/no-nested-template-literals
-            const insertText = `${element.name}${mandatoryAttributes.length > 0 ? ` ${mandatoryAttributes.join(' ')}` : ''}>$0</${element.name}`
+            const mandatoryAttributesWithSpace = mandatoryAttributes ? ` ${mandatoryAttributes}` : ''
+            const openingTag = `${element.name}${mandatoryAttributesWithSpace}>`
+            const closingTag = `</${element.name}`
+            const insertText = `${openingTag}$0${closingTag}`
 
             return {
               label: element.name,
@@ -148,11 +150,12 @@ export default function CodeEditor() {
           return { suggestions: [] }
         }
 
-        const tagMatch = line.slice(0, position.column - 1).match(/<(\w+)/)
+        const tagMatch = textBeforeCursor.match(/<(\w+)/)
         if (!tagMatch) return { suggestions: [] }
 
         const tagName = tagMatch[1]
-        const element = (elementsReference.current as any)[tagName]
+        if (!elements) return
+        const element = elements[tagName]
         if (!element || !element.attributes) return { suggestions: [] }
 
         const attributeSuggestions = Object.entries(element.attributes).flatMap(
@@ -162,18 +165,18 @@ export default function CodeEditor() {
 
             return enumValues.length > 0
               ? enumValues.map((value, index) => ({
-                  label: `${attributeName}="${value}"`,
-                  kind: monacoInstance.languages.CompletionItemKind.Enum,
-                  insertText: `${attributeName}="${value}"`,
-                  documentation: attributeValue?.enum[value]?.description || '',
-                }))
+                label: `${attributeName}="${value}"`,
+                kind: monacoInstance.languages.CompletionItemKind.Enum,
+                insertText: `${attributeName}="${value}"`,
+                documentation: attributeValue?.enum[value]?.description || '',
+              }))
               : {
-                  label: attributeName,
-                  kind: monacoInstance.languages.CompletionItemKind.Property,
-                  insertText: `${attributeName}="\${1}"`,
-                  insertTextRules: monacoInstance.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-                  documentation: attributeValue?.description || '',
-                }
+                label: attributeName,
+                kind: monacoInstance.languages.CompletionItemKind.Property,
+                insertText: `${attributeName}="\${1}"`,
+                insertTextRules: monacoInstance.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+                documentation: attributeValue?.description || '',
+              }
           },
         )
 

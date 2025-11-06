@@ -27,11 +27,11 @@ import { convertAdapterXmlToJson, getAdapterFromConfiguration } from '~/routes/b
 import { exportFlowToXml } from '~/routes/builder/flow-to-xml-parser'
 import useNodeContextStore from '~/stores/node-context-store'
 import CreateNodeModal from '~/components/flow/create-node-modal'
-import {useProjectStore} from "~/stores/project-store";
+import { useProjectStore } from "~/stores/project-store";
 
 export type FlowNode = FrankNode | ExitNode | StickyNote | GroupNode | Node
 
-const NodeContextMenuContext = createContext<(visible: boolean) => void>(() => {})
+const NodeContextMenuContext = createContext<(visible: boolean) => void>(() => { })
 export const useNodeContextMenu = () => useContext(NodeContextMenuContext)
 
 const selector = (state: FlowState) => ({
@@ -432,11 +432,8 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
       if (tab.flowJson && Object.keys(tab.flowJson).length > 0) {
         restoreFlowFromTab(tab.value)
       } else if (tab.configurationName && tab.value) {
-        const adapter = await getAdapterFromConfiguration(
-                project!.name,
-                tab.configurationName,
-                tab.value,
-        )
+        if (!project) return
+        const adapter = await getAdapterFromConfiguration(project.name, tab.configurationName, tab.value)
         if (!adapter) return
         const adapterJson = await convertAdapterXmlToJson(adapter)
         flowStore.setEdges(adapterJson.edges)
