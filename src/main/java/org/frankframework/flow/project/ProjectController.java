@@ -1,7 +1,9 @@
 package org.frankframework.flow.project;
 
+import org.frankframework.flow.projectsettings.FilterType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -9,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @RestController()
 @RequestMapping("/projects")
@@ -28,6 +31,7 @@ public class ProjectController {
 			ProjectDTO projectDTO = new ProjectDTO();
 			projectDTO.name = project.getName();
 			projectDTO.filenames = project.getFilenames();
+			projectDTO.filters = project.getProjectSettings().getFilters();
 			projectDTOList.add(projectDTO);
 		}
 		return ResponseEntity.ok(projectDTOList);
@@ -43,6 +47,7 @@ public class ProjectController {
 			ProjectDTO projectDTO = new ProjectDTO();
 			projectDTO.name = project.getName();
 			projectDTO.filenames = project.getFilenames();
+			projectDTO.filters = project.getProjectSettings().getFilters();
 			return ResponseEntity.ok(projectDTO);
 		} catch (Exception e) {
 			return ResponseEntity.badRequest().build();
@@ -58,6 +63,39 @@ public class ProjectController {
 			return ResponseEntity.ok(projectDTO);
 		} catch (Exception e) {
 			return ResponseEntity.badRequest().build();
+		}
+	}
+
+	@PatchMapping("/{projectname}/filters/{type}/toggle")
+	public ResponseEntity<ProjectDTO> toggleFilter(
+			@PathVariable String projectname,
+			@PathVariable String type) {
+
+		try {
+			Project project = projectService.getProject(projectname);
+			if (project == null) {
+				return ResponseEntity.notFound().build();
+			}
+
+			// Parse enum safely
+			FilterType filterType = FilterType.valueOf(type.toUpperCase());
+
+			// Toggle the filter
+			project.toggleFilter(filterType);
+
+			// Return updated DTO
+			ProjectDTO dto = new ProjectDTO();
+			dto.name = project.getName();
+			dto.filenames = project.getFilenames();
+			dto.filters = project.getProjectSettings().getFilters();
+
+			return ResponseEntity.ok(dto);
+
+		} catch (IllegalArgumentException e) {
+			// thrown if invalid type string
+			return ResponseEntity.badRequest().body(null);
+		} catch (Exception e) {
+			return ResponseEntity.internalServerError().build();
 		}
 	}
 }
