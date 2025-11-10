@@ -8,7 +8,7 @@ public class ProjectSettings {
 
     public ProjectSettings() {
         for (FilterType type : FilterType.values()) {
-            filters.put(type, true);
+            filters.put(type, false);
         }
     }
 
