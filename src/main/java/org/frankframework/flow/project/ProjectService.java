@@ -43,9 +43,9 @@ public class ProjectService {
 
 		Project testProject2 = new Project("testproject_2");
 		testProject2.addFilenames("Configuration3.xml");
-		testProject2.toggleFilter(FilterType.JDBC);
-		testProject2.toggleFilter(FilterType.ADAPTER);
-		testProject2.toggleFilter(FilterType.CMIS);
+		testProject2.enableFilter(FilterType.JDBC);
+		testProject2.enableFilter(FilterType.ADAPTER);
+		testProject2.enableFilter(FilterType.CMIS);
 		projects.add(testProject2);
 	}
 }

@@ -26,7 +26,7 @@ public class ProjectController {
 		List<ProjectDTO> projectDTOList = new ArrayList<>();
 		List<Project> projects = projectService.getProjects();
 
-		for (Project project : projects){
+		for (Project project : projects) {
 			ProjectDTO projectDTO = new ProjectDTO();
 			projectDTO.name = project.getName();
 			projectDTO.filenames = project.getFilenames();
@@ -37,7 +37,7 @@ public class ProjectController {
 	}
 
 	@GetMapping("/{projectname}")
-	public ResponseEntity<ProjectDTO> getProject(@PathVariable String projectname){
+	public ResponseEntity<ProjectDTO> getProject(@PathVariable String projectname) {
 		try {
 			Project project = projectService.getProject(projectname);
 			if (project == null) {
@@ -54,7 +54,7 @@ public class ProjectController {
 	}
 
 	@PostMapping("/{projectname}")
-	public ResponseEntity<ProjectDTO> createProject(@PathVariable String projectname){
+	public ResponseEntity<ProjectDTO> createProject(@PathVariable String projectname) {
 		try {
 			projectService.createProject(projectname);
 			ProjectDTO projectDTO = new ProjectDTO();
@@ -65,12 +65,11 @@ public class ProjectController {
 		}
 	}
 
-	@PatchMapping("/{projectname}/filters/{type}/toggle")
-	public ResponseEntity<ProjectDTO> toggleFilter(
+	@PatchMapping("/{projectname}/filters/{type}/enable")
+	public ResponseEntity<ProjectDTO> enableFilter(
 			@PathVariable String projectname,
 			@PathVariable String type) {
-
-		try {
+				try {
 			Project project = projectService.getProject(projectname);
 			if (project == null) {
 				return ResponseEntity.notFound().build();
@@ -79,8 +78,40 @@ public class ProjectController {
 			// Parse enum safely
 			FilterType filterType = FilterType.valueOf(type.toUpperCase());
 
-			// Toggle the filter
-			project.toggleFilter(filterType);
+			// Enable the filter
+			project.enableFilter(filterType);
+
+			// Return updated DTO
+			ProjectDTO dto = new ProjectDTO();
+			dto.name = project.getName();
+			dto.filenames = project.getFilenames();
+			dto.filters = project.getProjectSettings().getFilters();
+
+			return ResponseEntity.ok(dto);
+
+		} catch (IllegalArgumentException e) {
+			// thrown if invalid type string
+			return ResponseEntity.badRequest().body(null);
+		} catch (Exception e) {
+			return ResponseEntity.internalServerError().build();
+		}
+	}
+
+	@PatchMapping("/{projectname}/filters/{type}/disable")
+	public ResponseEntity<ProjectDTO> disableFilter(
+			@PathVariable String projectname,
+			@PathVariable String type) {
+				try {
+			Project project = projectService.getProject(projectname);
+			if (project == null) {
+				return ResponseEntity.notFound().build();
+			}
+
+			// Parse enum safely
+			FilterType filterType = FilterType.valueOf(type.toUpperCase());
+
+			// Disable the filter
+			project.disableFilter(filterType);
 
 			// Return updated DTO
 			ProjectDTO dto = new ProjectDTO();

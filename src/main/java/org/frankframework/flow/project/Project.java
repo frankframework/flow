@@ -35,11 +35,15 @@ public class Project {
 		return this.projectSettings;
 	}
 
-	public void toggleFilter(FilterType type) {
-		projectSettings.toggleEnabled(type);
-	}
-
 	public boolean isFilterEnabled(FilterType type) {
 		return projectSettings.isEnabled(type);
+	}
+
+	public void enableFilter(FilterType type){
+		projectSettings.setEnabled(type, true);
+	}
+
+	public void disableFilter(FilterType type){
+		projectSettings.setEnabled(type, false);
 	}
 }

@@ -19,7 +19,7 @@ export default function RoundedToggle({
       className={clsx(
         'cursor-pointer rounded-full border px-3 py-1 text-sm font-medium select-none',
         enabled
-          ? 'border-border hover:bg-foreground-active' // active
+          ? 'border-foreground-active hover:bg-foreground-active' // active
           : 'border-border/30 text-foreground/30 hover:border-border', // disabled/faded
         className,
       )}
