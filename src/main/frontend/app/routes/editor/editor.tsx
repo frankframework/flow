@@ -1,5 +1,6 @@
 import Tabs, { type TabsList } from '~/components/tabs/tabs'
 import Editor, { type OnMount } from '@monaco-editor/react'
+import { toast, ToastContainer } from 'react-toastify'
 import EditorFiles from '~/routes/editor/editor-files'
 import SidebarHeader from '~/components/sidebars-layout/sidebar-header'
 import SidebarLayout from '~/components/sidebars-layout/sidebar-layout'
@@ -233,19 +234,20 @@ export default function CodeEditor() {
         const contentType = response.headers.get('content-type')
         if (contentType && contentType.includes('application/json')) {
           const errorData = await response.json()
-          console.error(
-            `Error saving configuration: ${errorData.title || errorData.error}\nDetails: ${errorData.details}`
+          toast.error(
+            `Error saving configuration: ${errorData.title || errorData.error}\nDetails: ${errorData.details}`,
           )
         } else {
-          console.error(`Error saving configuration. HTTP status: ${response.status}`)
+          toast.error(`Error saving configuration. HTTP status: ${response.status}`)
         }
         return
       }
     } catch (error) {
-      console.error('Network or unexpected error:', error)
+      toast.error(`Network or unexpected error: ${error}`)
     } finally {
       setIsSaving(false)
     }
+    toast.success('Succesfully saved content')
   }
 
   return (
@@ -273,6 +275,7 @@ export default function CodeEditor() {
                 onMount={handleEditorMount}
                 options={{ automaticLayout: true }}
               />
+              <ToastContainer position="bottom-right" theme={theme} />
             </div>
           </>
         ) : (
