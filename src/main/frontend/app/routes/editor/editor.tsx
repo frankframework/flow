@@ -228,9 +228,21 @@ export default function CodeEditor() {
         body: JSON.stringify({ xmlContent: updatedXml }),
       })
 
-      if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`)
+      // Parse JSON response body if it's not OK
+      if (!response.ok) {
+        const contentType = response.headers.get('content-type')
+        if (contentType && contentType.includes('application/json')) {
+          const errorData = await response.json()
+          console.error(
+            `Error saving configuration: ${errorData.title || errorData.error}\nDetails: ${errorData.details}`
+          )
+        } else {
+          console.error(`Error saving configuration. HTTP status: ${response.status}`)
+        }
+        return
+      }
     } catch (error) {
-      console.error('Failed to save XML:', error)
+      console.error('Network or unexpected error:', error)
     } finally {
       setIsSaving(false)
     }

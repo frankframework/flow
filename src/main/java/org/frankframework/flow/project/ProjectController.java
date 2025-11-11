@@ -2,7 +2,7 @@ package org.frankframework.flow.project;
 
 import org.frankframework.flow.configuration.Configuration;
 import org.frankframework.flow.configuration.ConfigurationDTO;
-
+import org.frankframework.flow.utility.XmlValidator;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @RestController()
 @RequestMapping("/projects")
@@ -30,11 +31,11 @@ public class ProjectController {
 		List<ProjectDTO> projectDTOList = new ArrayList<>();
 		List<Project> projects = projectService.getProjects();
 
-		for (Project project : projects){
+		for (Project project : projects) {
 			ProjectDTO projectDTO = new ProjectDTO();
 			projectDTO.name = project.getName();
 			ArrayList<String> filenames = new ArrayList<>();
-			for (Configuration c :  project.getConfigurations()) {
+			for (Configuration c : project.getConfigurations()) {
 				filenames.add(c.getFilename());
 			}
 			projectDTO.filenames = filenames;
@@ -44,7 +45,7 @@ public class ProjectController {
 	}
 
 	@GetMapping("/{projectname}")
-	public ResponseEntity<ProjectDTO> getProject(@PathVariable String projectname){
+	public ResponseEntity<ProjectDTO> getProject(@PathVariable String projectname) {
 		try {
 			Project project = projectService.getProject(projectname);
 			if (project == null) {
@@ -53,7 +54,7 @@ public class ProjectController {
 			ProjectDTO projectDTO = new ProjectDTO();
 			projectDTO.name = project.getName();
 			ArrayList<String> filenames = new ArrayList<>();
-			for (Configuration c :  project.getConfigurations()) {
+			for (Configuration c : project.getConfigurations()) {
 				filenames.add(c.getFilename());
 			}
 			projectDTO.filenames = filenames;
@@ -87,27 +88,40 @@ public class ProjectController {
 	}
 
 	@PutMapping("/{projectName}/{filename}")
-	public ResponseEntity<Void> updateConfiguration(
+	public ResponseEntity<Object> updateConfiguration(
 			@PathVariable String projectName,
 			@PathVariable String filename,
 			@RequestBody ConfigurationDTO configurationDTO) {
 		try {
+			String validationError = XmlValidator.validateXml(configurationDTO.xmlContent);
+			if (validationError != null) {
+				return ResponseEntity
+						.badRequest()
+						.body(new ErrorDTO("Invalid XML Content", validationError));
+			}
+
 			boolean updated = projectService.updateConfigurationXml(
 					projectName, filename, configurationDTO.xmlContent);
 
 			if (!updated) {
-				return ResponseEntity.notFound().build(); // Project or config not found
+				String notFoundMessage = String.format("Project with name %s or file with name $s can not be found", projectName, filename);
+				return ResponseEntity
+						.status(HttpStatus.NOT_FOUND)
+						.body(new ErrorDTO("Not found", notFoundMessage));
 			}
 
 			return ResponseEntity.ok().build();
 		} catch (Exception e) {
 			e.printStackTrace();
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+			return ResponseEntity
+					.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body(new ErrorDTO("Invalid XML", e.getMessage()));
 		}
+
 	}
 
 	@PostMapping("/{projectname}")
-	public ResponseEntity<ProjectDTO> createProject(@PathVariable String projectname){
+	public ResponseEntity<ProjectDTO> createProject(@PathVariable String projectname) {
 		try {
 			projectService.createProject(projectname);
 			ProjectDTO projectDTO = new ProjectDTO();
