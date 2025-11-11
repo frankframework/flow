@@ -68,7 +68,8 @@ export default function BuilderStructure() {
       try {
         const loaded: ConfigWithAdapters[] = await Promise.all(
           configurationNames.map(async (configName) => {
-            const adapterNames = await getAdapterNamesFromConfiguration(project!.name, configName)
+            if (!project) return
+            const adapterNames = await getAdapterNamesFromConfiguration(project.name, configName)
             return { configName, adapterNames }
           }),
         )
