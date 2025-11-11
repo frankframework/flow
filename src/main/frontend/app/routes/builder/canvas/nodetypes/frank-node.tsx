@@ -9,14 +9,16 @@ import {
 } from '@xyflow/react'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import useFlowStore from '~/stores/flow-store'
-import { CustomHandle } from '~/components/flow/handle'
+import { CustomHandle } from '~/routes/builder/canvas/nodetypes/components/handle'
 import { FlowConfig } from '~/routes/builder/canvas/flow.config'
 import { useNodeContextMenu } from '~/routes/builder/canvas/flow'
 import useNodeContextStore from '~/stores/node-context-store'
 import { getElementTypeFromName } from '~/routes/builder/node-translator-module'
-import ChildContextMenu from '~/components/flow/child-context-menu'
+import ChildContextMenu from '~/routes/builder/canvas/nodetypes/components/child-context-menu'
 import { useFFDoc } from '@frankframework/ff-doc/react'
 import variables from '../../../../../environment/environment'
+import HandleMenu from './components/handle-menu'
+import HandleMenuItem from './components/handle-menu-item'
 
 export interface ChildNode {
   id: string
@@ -129,7 +131,9 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
 
   const editNode = () => {
     const recordElements = elements as Record<string, { name: string; [key: string]: any }>
-    const attributes = Object.values(recordElements).find((element) => element.name === properties.data.subtype)?.attributes
+    const attributes = Object.values(recordElements).find(
+      (element) => element.name === properties.data.subtype,
+    )?.attributes
     setNodeId(+properties.id)
     setAttributes(attributes)
     showNodeContextMenu(true)
@@ -228,11 +232,11 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
         </div>
         {isContextMenuOpen && (
           <div
-            className="nodrag bg-background absolute rounded-md border shadow-md"
+            className="nodrag bg-background border-border absolute border shadow-md w-30"
             style={{
               left: 'calc(100% + 10px)',
-              top: '0',
-              zIndex: 100,
+              top: 'calc(0% - 5px)',
+              zIndex: 2,
             }}
           >
             <button
@@ -253,13 +257,10 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
                 <line x1="3" y1="7" x2="7" y2="3" />
               </svg>
             </button>
+            <div className="border-border bg-muted border-b px-3 py-1 text-xs font-bold">Update Element</div>
             <ul>
-              <li className="hover:bg-border cursor-pointer rounded-t-md p-2" onClick={editNode}>
-                Edit
-              </li>
-              <li className="hover:bg-border cursor-pointer rounded-b-md p-2" onClick={deleteNode}>
-                Delete
-              </li>
+              <HandleMenuItem label="Edit" onClick={editNode} />
+              <HandleMenuItem label="Delete" onClick={deleteNode} />
             </ul>
           </div>
         )}
@@ -402,46 +403,11 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
         +
       </div>
       {isHandleMenuOpen && (
-        <div
-          className="nodrag bg-background absolute rounded-md border shadow-md"
-          style={{
-            left: `${handleMenuPosition.x + 10}px`, // Positioning to the right of the cursor
-            top: `${handleMenuPosition.y}px`,
-          }}
-        >
-          <ul>
-            <button
-              className="border-border bg-background absolute -top-1 -right-1 rounded-full border text-gray-400 shadow-sm hover:border-red-400 hover:text-red-400"
-              onClick={() => setIsHandleMenuOpen(false)}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-3 w-3"
-                width="10"
-                height="10"
-                viewBox="0 0 10 10"
-                strokeWidth="1"
-                stroke="currentColor"
-                strokeLinecap="round"
-              >
-                <line x1="3" y1="3" x2="7" y2="7" />
-                <line x1="3" y1="7" x2="7" y2="3" />
-              </svg>
-            </button>
-            <li className="hover:bg-border cursor-pointer rounded-t-md p-2" onClick={() => handleMenuClick('success')}>
-              Success
-            </li>
-            <li className="hover:bg-border cursor-pointer p-2" onClick={() => handleMenuClick('failure')}>
-              Failure
-            </li>
-            <li className="hover:bg-border cursor-pointer p-2" onClick={() => handleMenuClick('exception')}>
-              Exception
-            </li>
-            <li className="hover:bg-border cursor-pointer rounded-b-md p-2" onClick={() => handleMenuClick('custom')}>
-              Custom
-            </li>
-          </ul>
-        </div>
+        <HandleMenu
+          position={handleMenuPosition}
+          onClose={() => setIsHandleMenuOpen(false)}
+          onSelect={handleMenuClick}
+        />
       )}
     </>
   )
