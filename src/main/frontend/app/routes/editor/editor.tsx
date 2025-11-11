@@ -275,7 +275,7 @@ export default function CodeEditor() {
                 onMount={handleEditorMount}
                 options={{ automaticLayout: true }}
               />
-              <ToastContainer position="bottom-right" theme={theme} />
+              <ToastContainer position="bottom-right" theme={theme} closeOnClick={true} />
             </div>
           </>
         ) : (
