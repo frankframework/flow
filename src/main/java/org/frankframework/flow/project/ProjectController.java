@@ -4,8 +4,10 @@ import org.frankframework.flow.configuration.Configuration;
 import org.frankframework.flow.configuration.ConfigurationDTO;
 
 import org.springframework.http.HttpStatus;
+import org.frankframework.flow.projectsettings.FilterType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -30,7 +32,7 @@ public class ProjectController {
 		List<ProjectDTO> projectDTOList = new ArrayList<>();
 		List<Project> projects = projectService.getProjects();
 
-		for (Project project : projects){
+		for (Project project : projects) {
 			ProjectDTO projectDTO = new ProjectDTO();
 			projectDTO.name = project.getName();
 			ArrayList<String> filenames = new ArrayList<>();
@@ -38,13 +40,14 @@ public class ProjectController {
 				filenames.add(c.getFilename());
 			}
 			projectDTO.filenames = filenames;
+			projectDTO.filters = project.getProjectSettings().getFilters();
 			projectDTOList.add(projectDTO);
 		}
 		return ResponseEntity.ok(projectDTOList);
 	}
 
 	@GetMapping("/{projectname}")
-	public ResponseEntity<ProjectDTO> getProject(@PathVariable String projectname){
+	public ResponseEntity<ProjectDTO> getProject(@PathVariable String projectname) {
 		try {
 			Project project = projectService.getProject(projectname);
 			if (project == null) {
@@ -57,6 +60,7 @@ public class ProjectController {
 				filenames.add(c.getFilename());
 			}
 			projectDTO.filenames = filenames;
+			projectDTO.filters = project.getProjectSettings().getFilters();
 			return ResponseEntity.ok(projectDTO);
 		} catch (Exception e) {
 			return ResponseEntity.badRequest().build();
@@ -107,7 +111,7 @@ public class ProjectController {
 	}
 
 	@PostMapping("/{projectname}")
-	public ResponseEntity<ProjectDTO> createProject(@PathVariable String projectname){
+	public ResponseEntity<ProjectDTO> createProject(@PathVariable String projectname) {
 		try {
 			projectService.createProject(projectname);
 			ProjectDTO projectDTO = new ProjectDTO();
@@ -115,6 +119,78 @@ public class ProjectController {
 			return ResponseEntity.ok(projectDTO);
 		} catch (Exception e) {
 			return ResponseEntity.badRequest().build();
+		}
+	}
+
+	@PatchMapping("/{projectname}/filters/{type}/enable")
+	public ResponseEntity<ProjectDTO> enableFilter(
+			@PathVariable String projectname,
+			@PathVariable String type) {
+				try {
+			Project project = projectService.getProject(projectname);
+			if (project == null) {
+				return ResponseEntity.notFound().build();
+			}
+
+			// Parse enum safely
+			FilterType filterType = FilterType.valueOf(type.toUpperCase());
+
+			// Enable the filter
+			project.enableFilter(filterType);
+
+			// Return updated DTO
+			ProjectDTO dto = new ProjectDTO();
+			dto.name = project.getName();
+			ArrayList<String> filenames = new ArrayList<>();
+			for (Configuration c :  project.getConfigurations()) {
+				filenames.add(c.getFilename());
+			}
+			dto.filenames = filenames;
+			dto.filters = project.getProjectSettings().getFilters();
+
+			return ResponseEntity.ok(dto);
+
+		} catch (IllegalArgumentException e) {
+			// thrown if invalid type string
+			return ResponseEntity.badRequest().body(null);
+		} catch (Exception e) {
+			return ResponseEntity.internalServerError().build();
+		}
+	}
+
+	@PatchMapping("/{projectname}/filters/{type}/disable")
+	public ResponseEntity<ProjectDTO> disableFilter(
+			@PathVariable String projectname,
+			@PathVariable String type) {
+				try {
+			Project project = projectService.getProject(projectname);
+			if (project == null) {
+				return ResponseEntity.notFound().build();
+			}
+
+			// Parse enum safely
+			FilterType filterType = FilterType.valueOf(type.toUpperCase());
+
+			// Disable the filter
+			project.disableFilter(filterType);
+
+			// Return updated DTO
+			ProjectDTO dto = new ProjectDTO();
+			dto.name = project.getName();
+			ArrayList<String> filenames = new ArrayList<>();
+			for (Configuration c :  project.getConfigurations()) {
+				filenames.add(c.getFilename());
+			}
+			dto.filenames = filenames;
+			dto.filters = project.getProjectSettings().getFilters();
+
+			return ResponseEntity.ok(dto);
+
+		} catch (IllegalArgumentException e) {
+			// thrown if invalid type string
+			return ResponseEntity.badRequest().body(null);
+		} catch (Exception e) {
+			return ResponseEntity.internalServerError().build();
 		}
 	}
 }

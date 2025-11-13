@@ -1,10 +1,13 @@
-import { type JSX, useEffect, useRef, useState } from 'react'
-import { getAdapterNamesFromConfiguration } from '~/routes/builder/xml-to-json-parser'
+import React, { type JSX, useEffect, useRef, useState } from 'react'
+import { getAdapterListenerType, getAdapterNamesFromConfiguration } from '~/routes/builder/xml-to-json-parser'
 import useTabStore from '~/stores/tab-store'
 import Search from '~/components/search/search'
 import FolderIcon from '/icons/solar/Folder.svg?react'
 import FolderOpenIcon from '/icons/solar/Folder Open.svg?react'
 import CodeIcon from '/icons/solar/Code.svg?react'
+import JavaIcon from '/icons/solar/Cup Hot.svg?react'
+import MessageIcon from '/icons/solar/Chat Dots.svg?react'
+import MailIcon from '/icons/solar/Mailbox.svg?react'
 import 'react-complex-tree/lib/style-modern.css'
 import AltArrowRightIcon from '/icons/solar/Alt Arrow Right.svg?react'
 import AltArrowDownIcon from '/icons/solar/Alt Arrow Down.svg?react'
@@ -16,7 +19,7 @@ import {
   type TreeRef,
   UncontrolledTreeEnvironment,
 } from 'react-complex-tree'
-import BuilderFilesDataProvider from '~/routes/builder/builder-files-data-provider'
+import BuilderFilesDataProvider, { type AdapterNodeData } from '~/routes/builder/builder-files-data-provider'
 import { useProjectStore } from '~/stores/project-store'
 import { Link } from 'react-router'
 import { useTreeStore } from '~/stores/tree-store'
@@ -24,7 +27,10 @@ import { useShallow } from 'zustand/react/shallow'
 
 export interface ConfigWithAdapters {
   configName: string
-  adapterNames: string[]
+  adapters: {
+    adapterName: string
+    listenerName: string | null
+  }[]
 }
 
 const TREE_ID = 'builder-files-tree'
@@ -70,9 +76,20 @@ export default function BuilderStructure() {
           configurationNames.map(async (configName) => {
             if (!project) return
             const adapterNames = await getAdapterNamesFromConfiguration(project.name, configName)
-            return { configName, adapterNames }
+
+            // Fetch listener name for each adapter
+            const adapters = await Promise.all(
+              adapterNames.map(async (adapterName) => {
+                const listenerName = await getAdapterListenerType(project.name, configName, adapterName)
+                console.log(listenerName)
+                return { adapterName, listenerName }
+              }),
+            )
+
+            return { configName, adapters }
           }),
         )
+
         setConfigs(loaded)
       } catch (error) {
         console.error('Failed to load adapter names:', error)
@@ -80,6 +97,7 @@ export default function BuilderStructure() {
         setIsLoading(false)
       }
     }
+
     loadAdapters()
   }, [configurationNames])
 
@@ -159,10 +177,13 @@ export default function BuilderStructure() {
     item: TreeItem<unknown>
     context: TreeItemRenderContext
   }) => {
-    const Icon = (item.isFolder && (context.isExpanded ? FolderOpenIcon : FolderIcon)) || CodeIcon
-
     const searchLower = searchTerm.toLowerCase()
     const titleLower = title.toLowerCase()
+    const listenerType =
+      !item.isFolder && typeof item.data === 'object' && item.data && 'listenerName' in item.data
+        ? (item.data as { listenerName: string | null }).listenerName
+        : null
+    const Icon = item.isFolder ? (context.isExpanded ? FolderOpenIcon : FolderIcon) : getListenerIcon(listenerType)
 
     // Highlight only the substring(s) that match the search term
     let highlightedTitle: JSX.Element | string = title
@@ -190,6 +211,20 @@ export default function BuilderStructure() {
         <span className={`font-inter ml-1 overflow-hidden text-nowrap text-ellipsis`}>{highlightedTitle}</span>
       </>
     )
+  }
+
+  function getListenerIcon(listenerType: string | null) {
+    if (!listenerType) return CodeIcon
+
+    // TODO: Add more icons for more important listener types
+    const listenerIconMap: Record<string, React.FC<React.SVGProps<SVGSVGElement>>> = {
+      JavaListener: JavaIcon,
+      MessageStoreListener: MessageIcon,
+      FtpFileSystemListener: FolderIcon,
+      ExchangeMailListener: MailIcon,
+    }
+
+    return listenerIconMap[listenerType] ?? CodeIcon
   }
 
   return (

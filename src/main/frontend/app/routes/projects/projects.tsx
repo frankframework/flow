@@ -4,6 +4,7 @@ import ProjectTile from '~/routes/projects/project-tile'
 export interface Project {
   name: string
   filenames: string[]
+  filters: Record<string, boolean> // key = filter name (e.g. "HTTP"), value = true/false
 }
 
 export default function Projects() {
