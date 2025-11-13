@@ -54,6 +54,10 @@ body {
   }
 }
 
+.monaco-editor .highlight-line {
+  @apply bg-yellow-200/30 border-l-4 border-yellow-400 transition-colors;
+}
+
 :root {
   /* Allotment Styling */
   --focus-border: var(--color-brand);

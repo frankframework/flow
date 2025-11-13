@@ -22,6 +22,10 @@ export default defineConfig({
         target: 'http://localhost:8080', // Spring Boot backend
         changeOrigin: true,
       },
+      '/projects': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+      },
     },
   },
 })
