@@ -4,13 +4,18 @@ import org.frankframework.flow.configuration.Configuration;
 
 import java.util.ArrayList;
 
+import org.frankframework.flow.projectsettings.FilterType;
+import org.frankframework.flow.projectsettings.ProjectSettings;
+
 public class Project {
 	private String name;
 	private ArrayList<Configuration> configurations;
+	private ProjectSettings projectSettings;
 
 	public Project(String name) {
 		this.name = name;
 		this.configurations = new ArrayList<>();
+		this.projectSettings = new ProjectSettings();
 	}
 
 	public String getName() {
@@ -35,5 +40,21 @@ public class Project {
 				return;
 			}
 		}
+	}
+
+	public ProjectSettings getProjectSettings(){
+		return this.projectSettings;
+	}
+
+	public boolean isFilterEnabled(FilterType type) {
+		return projectSettings.isEnabled(type);
+	}
+
+	public void enableFilter(FilterType type){
+		projectSettings.setEnabled(type, true);
+	}
+
+	public void disableFilter(FilterType type){
+		projectSettings.setEnabled(type, false);
 	}
 }

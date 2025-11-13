@@ -3,7 +3,7 @@ import CodeIcon from '/icons/solar/Code.svg?react'
 import type { Project } from './projects'
 import { useNavigate } from 'react-router'
 import { useProjectStore } from '~/stores/project-store'
-import {useTreeStore} from '~/stores/tree-store';
+import { useTreeStore } from '~/stores/tree-store'
 
 interface ProjectTileProperties {
   project: Project
