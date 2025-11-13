@@ -80,7 +80,7 @@ export default function BuilderStructure() {
             // Fetch listener name for each adapter
             const adapters = await Promise.all(
               adapterNames.map(async (adapterName) => {
-                const listenerName = await getAdapterListenerType(configName, adapterName)
+                const listenerName = await getAdapterListenerType(project.name, configName, adapterName)
                 return { adapterName, listenerName }
               }),
             )

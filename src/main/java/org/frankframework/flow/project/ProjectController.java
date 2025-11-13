@@ -155,7 +155,11 @@ public class ProjectController {
 			// Return updated DTO
 			ProjectDTO dto = new ProjectDTO();
 			dto.name = project.getName();
-			dto.filenames = project.getFilenames();
+			ArrayList<String> filenames = new ArrayList<>();
+			for (Configuration c : project.getConfigurations()) {
+				filenames.add(c.getFilename());
+			}
+			dto.filenames = filenames;
 			dto.filters = project.getProjectSettings().getFilters();
 
 			return ResponseEntity.ok(dto);
@@ -187,7 +191,11 @@ public class ProjectController {
 			// Return updated DTO
 			ProjectDTO dto = new ProjectDTO();
 			dto.name = project.getName();
-			dto.filenames = project.getFilenames();
+			ArrayList<String> filenames = new ArrayList<>();
+			for (Configuration c : project.getConfigurations()) {
+				filenames.add(c.getFilename());
+			}
+			dto.filenames = filenames;
 			dto.filters = project.getProjectSettings().getFilters();
 
 			return ResponseEntity.ok(dto);

@@ -66,8 +66,12 @@ export async function getAdapterFromConfiguration(projectname: string, filename:
   return null
 }
 
-export async function getAdapterListenerType(filename: string, adapterName: string): Promise<string | null> {
-  const adapterElement = await getAdapterFromConfiguration(filename, adapterName)
+export async function getAdapterListenerType(
+  projectName: string,
+  filename: string,
+  adapterName: string,
+): Promise<string | null> {
+  const adapterElement = await getAdapterFromConfiguration(projectName, filename, adapterName)
   if (!adapterElement) return null
   // Look through all child elements inside the adapter
   const children = adapterElement.querySelectorAll('*')
