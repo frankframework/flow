@@ -81,7 +81,6 @@ export default function BuilderStructure() {
             const adapters = await Promise.all(
               adapterNames.map(async (adapterName) => {
                 const listenerName = await getAdapterListenerType(project.name, configName, adapterName)
-                console.log(listenerName)
                 return { adapterName, listenerName }
               }),
             )

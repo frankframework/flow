@@ -501,6 +501,33 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
     URL.revokeObjectURL(url)
   }
 
+  const saveFlow = async () => {
+    const flowData = reactFlow.toObject()
+    const activeTabName = useTabStore.getState().activeTab
+    const configName = useTabStore.getState().getTab(activeTabName)?.configurationName
+    if (!configName) return
+
+    const xmlString = exportFlowToXml(flowData, activeTabName)
+
+    try {
+      if (!project) return
+      const response = await fetch(
+      `/projects/${encodeURIComponent(project.name)}/${encodeURIComponent(configName)}/adapters/${encodeURIComponent(activeTabName)}`,
+      {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adapterXml: xmlString }), // matches DTO field name on backend
+      }
+    )
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`)
+    }
+    } catch (error) {
+      console.error('Failed to save XML:', error)
+    }
+  }
+
   return (
     <div
       className="relative h-full w-full"
@@ -540,9 +567,9 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
         <Panel position="top-center">
           <button
             className="border-border hover:bg-hover bg-background border p-2 hover:cursor-pointer"
-            onClick={exportToXml}
+            onClick={saveFlow}
           >
-            Export To XML
+            Save XML
           </button>
         </Panel>
       </ReactFlow>
