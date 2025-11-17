@@ -10,7 +10,7 @@ export default function StudioSettings() {
       <div className="border-border bg-background space-y-6 rounded-md border p-6">
         <InputWithLabel
           htmlFor="gradient-toggle"
-          label="Zoomer Mode"
+          label="Display Gradient"
           description="Toggle gradient backgrounds in the app"
         >
           <Toggle
