@@ -4,8 +4,9 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.util.ArrayList;
+import java.util.List;
 
+import org.frankframework.flow.configuration.Configuration;
 import org.frankframework.flow.projectsettings.FilterType;
 import org.junit.jupiter.api.BeforeEach;
 
@@ -51,12 +52,14 @@ class ProjectTest {
     }
 
     @Test
-    void testAddFileToProject() {
-        assertTrue(project.getFilenames().isEmpty());
+    void testAddConfigurationToProject() {
+        assertTrue(project.getConfigurations().isEmpty());
 
-        project.addFilename("new_file");
+        Configuration configuration = new Configuration("new_file");
+        project.addConfiguration(configuration);
 
-        assertEquals(1, project.getFilenames().size());
-        assertTrue(project.getFilenames().contains("new_file"));
+        List<Configuration> configurations = project.getConfigurations();
+        assertEquals(1, configurations.size());
+        assertTrue(configurations.contains(configuration));
     }
 }
