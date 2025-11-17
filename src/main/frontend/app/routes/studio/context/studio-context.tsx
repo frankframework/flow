@@ -6,13 +6,20 @@ import SortedElements from '~/routes/studio/context/sorted-elements'
 import Search from '~/components/search/search'
 import variables from '../../../../environment/environment'
 import { useFFDoc } from '@frankframework/ff-doc/react'
+import { useProjectStore } from '~/stores/project-store'
 
 export default function StudioContext() {
   const { setAttributes, setNodeId } = useNodeContextStore((state) => state)
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({})
   const [searchTerm, setSearchTerm] = useState('')
+  const project = useProjectStore((state) => state.project)
   const FRANK_DOC_URL = variables.frankDocJsonUrl
-  const { elements } = useFFDoc(FRANK_DOC_URL)
+  const { filters, elements } = useFFDoc(FRANK_DOC_URL)
+  const enabledFilters = project
+    ? Object.entries(project.filters)
+        .filter(([_, enabled]) => enabled)
+        .map(([filterName]) => filterName)
+    : []
 
   useEffect(() => {
     if (!elements) return
@@ -39,6 +46,27 @@ export default function StudioContext() {
     }
   }
 
+  const shouldShowElement = (elementName: string) => {
+    // Show all elements if no filters are applied
+    if (!filters || enabledFilters.length === 0) return true
+    if (!filters.TYPE || enabledFilters.length === 0) return true
+
+    // Check if element exists in any TYPE category
+    const foundInFilters = Object.values(filters).some((categoryGroup) =>
+      Object.values(categoryGroup).some((items) => items.includes(elementName)),
+    )
+
+    // If the element is not part of any category then its always visible, this would apply for things like Exits, jobs etc.
+    if (!foundInFilters) return true
+
+    // Otherwise, only show if its category is enabled
+    return Object.values(filters).some((categoryGroup) =>
+      Object.entries(categoryGroup).some(
+        ([categoryName, items]) => enabledFilters.includes(categoryName) && items.includes(elementName),
+      ),
+    )
+  }
+
   const groupElementsByType = (elements: Record<string, any>) => {
     const grouped: Record<string, any[]> = {}
     const seen = new Set<string>()
@@ -54,7 +82,11 @@ export default function StudioContext() {
     return grouped
   }
 
-  const groupedElements = elements ? groupElementsByType(elements) : {}
+  const visibleElements = Object.fromEntries(
+    Object.entries(elements || {}).filter(([_, value]) => shouldShowElement(value.name)),
+  )
+
+  const groupedElements = elements ? groupElementsByType(visibleElements) : {}
 
   const filteredGroupedElements = Object.entries(groupedElements).reduce(
     (accumulator, [type, items]) => {

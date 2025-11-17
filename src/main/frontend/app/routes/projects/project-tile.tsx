@@ -3,7 +3,7 @@ import CodeIcon from '/icons/solar/Code.svg?react'
 import type { Project } from './projects'
 import { useNavigate } from 'react-router'
 import { useProjectStore } from '~/stores/project-store'
-import {useTreeStore} from '~/stores/tree-store';
+import { useTreeStore } from '~/stores/tree-store'
 
 interface ProjectTileProperties {
   project: Project
@@ -23,7 +23,7 @@ export default function ProjectTile({ project }: Readonly<ProjectTileProperties>
       </div>
 
       {/* Bottom Action Bar */}
-      <div className="flex divide-x divide-gray-200 border-t border-gray-200">
+      <div className="flex divide-x divide-border border-t border-border">
         <button
           onClick={() => {
             clearConfigs()

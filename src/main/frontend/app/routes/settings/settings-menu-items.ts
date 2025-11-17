@@ -5,6 +5,7 @@ import RulerCrossPenIcon from '/icons/solar/Ruler Cross Pen.svg?react'
 import CodeIcon from '/icons/solar/Code.svg?react'
 import GeneralSettings from '~/routes/settings/pages/general-settings'
 import StudioSettings from '~/routes/settings/pages/studio-settings';
+import ProjectSettings from './pages/project-settings'
 
 export type SettingsMenuItem = TreeItem<SettingsMenuItemData>
 
@@ -38,6 +39,7 @@ const SettingsMenuItems = {
       title: 'Projects',
       description: 'Project settings',
       icon: WidgetIcon,
+      content: ProjectSettings,
     },
   },
   studio: {

@@ -65,6 +65,21 @@ export async function getAdapterFromConfiguration(filename: string, adapterName:
   return null
 }
 
+export async function getAdapterListenerType(filename: string, adapterName: string): Promise<string | null> {
+  const adapterElement = await getAdapterFromConfiguration(filename, adapterName)
+  if (!adapterElement) return null
+  // Look through all child elements inside the adapter
+  const children = adapterElement.querySelectorAll('*')
+  for (const child of children) {
+    if (child.tagName.includes('Listener')) {
+      return child.tagName // Return the tag name, e.g., "JavaListener"
+    }
+  }
+
+  // No listener element found
+  return null
+}
+
 export async function convertAdapterXmlToJson(adapter: Element) {
   const nodes = convertAdapterToFlowNodes(adapter)
   const adapterJson = { nodes: nodes, edges: extractEdgesFromAdapter(adapter, nodes) }
