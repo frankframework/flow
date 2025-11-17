@@ -27,7 +27,7 @@ public class Project {
 		return filenames;
 	}
 
-	public void addFilenames(String filename) {
+	public void addFilename(String filename) {
 		this.filenames.add(filename);
 	}
 

@@ -37,12 +37,12 @@ public class ProjectService {
 	private void initiateProjects(){
 		Project testProject = new Project("testproject");
 		for (int i = 0; i < 3; i++){
-			testProject.addFilenames(String.format("Configuration%d.xml", i+1));
+			testProject.addFilename(String.format("Configuration%d.xml", i+1));
 		}
 		projects.add(testProject);
 
 		Project testProject2 = new Project("testproject_2");
-		testProject2.addFilenames("Configuration3.xml");
+		testProject2.addFilename("Configuration3.xml");
 		testProject2.enableFilter(FilterType.JDBC);
 		testProject2.enableFilter(FilterType.ADAPTER);
 		testProject2.enableFilter(FilterType.CMIS);
