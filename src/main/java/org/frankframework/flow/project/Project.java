@@ -1,5 +1,7 @@
 package org.frankframework.flow.project;
 
+import org.frankframework.flow.configuration.Configuration;
+
 import java.util.ArrayList;
 
 import org.frankframework.flow.projectsettings.FilterType;
@@ -7,12 +9,12 @@ import org.frankframework.flow.projectsettings.ProjectSettings;
 
 public class Project {
 	private String name;
-	private ArrayList<String> filenames;
+	private ArrayList<Configuration> configurations;
 	private ProjectSettings projectSettings;
 
 	public Project(String name) {
 		this.name = name;
-		this.filenames = new ArrayList<>();
+		this.configurations = new ArrayList<>();
 		this.projectSettings = new ProjectSettings();
 	}
 
@@ -23,12 +25,21 @@ public class Project {
 		this.name = name;
 	}
 
-	public ArrayList<String> getFilenames() {
-		return filenames;
+	public ArrayList<Configuration> getConfigurations() {
+		return configurations;
 	}
 
-	public void addFilename(String filename) {
-		this.filenames.add(filename);
+	public void addConfiguration(Configuration configuration) {
+		this.configurations.add(configuration);
+	}
+
+	public void setConfigurationXml(String filename, String xmlContent) {
+		for (Configuration c : this.configurations) {
+			if (c.getFilename().equals(filename)) {
+				c.setXmlContent(xmlContent);
+				return;
+			}
+		}
 	}
 
 	public ProjectSettings getProjectSettings(){
