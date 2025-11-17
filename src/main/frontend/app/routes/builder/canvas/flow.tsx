@@ -516,7 +516,7 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
       {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ adapterXml: xmlString }), // matches DTO field name on backend
+        body: JSON.stringify({ adapterXml: xmlString }),
       }
     )
 
