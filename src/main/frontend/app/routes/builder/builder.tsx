@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import Tabs from '~/components/tabs/tabs'
-import BuilderStructure from '~/routes/builder/builder-structure'
+import BuilderStructure from '~/routes/builder/filetree/builder-structure'
 import BuilderContext from '~/routes/builder/context/builder-context'
 import Flow from '~/routes/builder/canvas/flow'
 import NodeContext from '~/routes/builder/context/node-context'

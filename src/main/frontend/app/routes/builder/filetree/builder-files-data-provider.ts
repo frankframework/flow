@@ -1,5 +1,5 @@
 import type { Disposable, TreeDataProvider, TreeItem, TreeItemIndex } from 'react-complex-tree'
-import type { ConfigWithAdapters } from '~/routes/builder/builder-structure';
+import type { ConfigWithAdapters } from '~/routes/builder/filetree/builder-structure';
 
 export interface AdapterNodeData {
   adapterName: string

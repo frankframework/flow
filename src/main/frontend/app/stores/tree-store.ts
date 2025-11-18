@@ -1,4 +1,4 @@
-import type { ConfigWithAdapters } from '~/routes/builder/builder-structure';
+import type { ConfigWithAdapters } from '~/routes/builder/filetree/builder-structure';
 import { create } from 'zustand';
 
 interface TreestoreState {
