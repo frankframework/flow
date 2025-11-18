@@ -2,7 +2,7 @@ package org.frankframework.flow.project;
 
 import org.frankframework.flow.configuration.Configuration;
 import org.frankframework.flow.configuration.ConfigurationDTO;
-
+import org.frankframework.flow.configuration.ConfigurationNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.frankframework.flow.projectsettings.FilterType;
 import org.springframework.http.ResponseEntity;
@@ -91,7 +91,7 @@ public class ProjectController {
 	}
 
 	@PutMapping("/{projectName}/{filename}")
-	public ResponseEntity<Void> updateConfiguration(
+	public ResponseEntity<String> updateConfiguration(
 			@PathVariable String projectName,
 			@PathVariable String filename,
 			@RequestBody ConfigurationDTO configurationDTO) {
@@ -99,11 +99,10 @@ public class ProjectController {
 			boolean updated = projectService.updateConfigurationXml(
 					projectName, filename, configurationDTO.xmlContent);
 
-			if (!updated) {
-				return ResponseEntity.notFound().build(); // Project or config not found
-			}
-
 			return ResponseEntity.ok().build();
+		} catch (ProjectNotFoundException | ConfigurationNotFoundException exception) {
+			exception.printStackTrace();
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(exception.getMessage());
 		} catch (Exception e) {
 			e.printStackTrace();
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();

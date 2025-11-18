@@ -2,6 +2,7 @@ package org.frankframework.flow.project;
 
 import org.frankframework.flow.projectsettings.FilterType;
 import org.frankframework.flow.configuration.Configuration;
+import org.frankframework.flow.configuration.ConfigurationNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.ResourcePatternResolver;
@@ -44,10 +45,10 @@ public class ProjectService {
 		return projects;
 	}
 
-	public boolean updateConfigurationXml(String projectName, String filename, String xmlContent) {
+	public boolean updateConfigurationXml(String projectName, String filename, String xmlContent) throws ProjectNotFoundException, ConfigurationNotFoundException {
 		Project project = getProject(projectName);
 		if (project == null) {
-			return false; // Project not found
+			throw new ProjectNotFoundException(String.format("Project with name: %s can not be found", projectName)); // Project not found
 		}
 
 		for (Configuration config : project.getConfigurations()) {
@@ -57,7 +58,7 @@ public class ProjectService {
 			}
 		}
 
-		return false; // Configuration not found
+		throw new ConfigurationNotFoundException(String.format("Configuration with filename: %s can not be found", filename)); // Configuration not found
 	}
 
 	/**
