@@ -23,7 +23,7 @@ class ProjectSettingsTest {
     }
 
     @Test
-    void TestGetFiltersShouldReturnInternalMap() {
+    void testGetFiltersShouldReturnInternalMap() {
         Map<FilterType, Boolean> filters = projectSettings.getFilters();
 
         assertNotNull(filters, "getFilters() should never return null");
@@ -35,7 +35,7 @@ class ProjectSettingsTest {
     }
 
     @Test
-    void TestSetFiltersShouldReplaceInternalMap() {
+    void testSetFiltersShouldReplaceInternalMap() {
         // Verify all values start as fakse
         for (FilterType type : FilterType.values()) {
             assertFalse(projectSettings.getFilters().get(type), "Filter should be false in a new ProjectSettings object: " + type);
@@ -61,7 +61,7 @@ class ProjectSettingsTest {
 
     @ParameterizedTest
     @EnumSource(FilterType.class)
-    void TestConstructorShouldInitializeAllFiltersToFalse(FilterType type) {
+    void testConstructorShouldInitializeAllFiltersToFalse(FilterType type) {
         assertFalse(projectSettings.isEnabled(type),
                 "Each filter should default to false: " + type);
     }

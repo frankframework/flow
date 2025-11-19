@@ -1,8 +1,9 @@
 package org.frankframework.flow.project;
 
-import org.frankframework.flow.projectsettings.FilterType;
 import org.frankframework.flow.configuration.Configuration;
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
+import org.frankframework.flow.projectsettings.FilterType;
+import org.frankframework.flow.projectsettings.InvalidFilterTypeException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.ResourcePatternResolver;
@@ -26,40 +27,73 @@ public class ProjectService {
 		initiateProjects();
 	}
 
-	public Project createProject(String name){
+	public Project createProject(String name) {
 		Project project = new Project(name);
 		projects.add(project);
 		return project;
 	}
 
-	public Project getProject(String name){
-		for(Project project : projects){
-			if(project.getName().equals(name)){
+	public Project getProject(String name) throws ProjectNotFoundException {
+		for (Project project : projects) {
+			if (project.getName().equals(name)) {
 				return project;
 			}
 		}
-		return null;
+
+		throw new ProjectNotFoundException(String.format("Project with name: %s cannot be found", name));
 	}
 
-	public ArrayList<Project> getProjects(){
+	public ArrayList<Project> getProjects() {
 		return projects;
 	}
 
-	public boolean updateConfigurationXml(String projectName, String filename, String xmlContent) throws ProjectNotFoundException, ConfigurationNotFoundException {
+	public boolean updateConfigurationXml(String projectName, String filename, String xmlContent)
+			throws ProjectNotFoundException, ConfigurationNotFoundException {
+
 		Project project = getProject(projectName);
-		if (project == null) {
-			throw new ProjectNotFoundException(String.format("Project with name: %s can not be found", projectName)); // Project not found
-		}
 
 		for (Configuration config : project.getConfigurations()) {
 			if (config.getFilename().equals(filename)) {
 				config.setXmlContent(xmlContent);
-				return true; // Successfully updated
+				return true;
 			}
 		}
 
-		throw new ConfigurationNotFoundException(String.format("Configuration with filename: %s can not be found", filename)); // Configuration not found
+		throw new ConfigurationNotFoundException(
+				String.format("Configuration with filename: %s can not be found", filename));
 	}
+
+	public Project enableFilter(String projectName, String type)
+            throws ProjectNotFoundException, InvalidFilterTypeException {
+
+        Project project = getProject(projectName);
+
+        FilterType filterType;
+        try {
+            filterType = FilterType.valueOf(type.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new InvalidFilterTypeException(type);
+        }
+
+        project.enableFilter(filterType);
+        return project;
+    }
+
+    public Project disableFilter(String projectName, String type)
+            throws ProjectNotFoundException, InvalidFilterTypeException {
+
+        Project project = getProject(projectName);
+
+        FilterType filterType;
+        try {
+            filterType = FilterType.valueOf(type.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new InvalidFilterTypeException(type);
+        }
+
+        project.disableFilter(filterType);
+        return project;
+    }
 
 	/**
 	 * Dynamically scan all project folders under /resources/project/
@@ -77,14 +111,17 @@ public class ProjectService {
 				// Example path: file:/.../resources/project/testproject/Configuration1.xml
 				// Extract the project name between "project/" and the next "/"
 				String[] parts = path.split("/project/");
-				if (parts.length < 2) continue;
+				if (parts.length < 2)
+					continue;
 
 				String relativePath = parts[1]; // e.g. "testproject/Configuration1.xml"
 				String projectName = relativePath.substring(0, relativePath.indexOf("/"));
 
 				// Get or create the Project object
-				Project project = getProject(projectName);
-				if (project == null) {
+				Project project;
+				try {
+					project = getProject(projectName);
+				} catch (ProjectNotFoundException e) {
 					project = createProject(projectName);
 				}
 

@@ -27,6 +27,30 @@ class ProjectTest {
     }
 
     @Test
+    void testSetConfigurationXmlUpdatesExistingConfiguration() {
+        String filename = "config1.xml";
+        Configuration config = new Configuration(filename);
+        config.setXmlContent("<old/>");
+        project.addConfiguration(config);
+
+        project.setConfigurationXml(filename, "<new/>");
+
+        assertEquals("<new/>", config.getXmlContent());
+    }
+
+    @Test
+    void testSetConfigurationXmlDoesNothingIfFilenameNotFound() {
+        String filename = "config1.xml";
+        Configuration config = new Configuration(filename);
+        config.setXmlContent("<old/>");
+        project.addConfiguration(config);
+
+        project.setConfigurationXml("nonexistent.xml", "<new/>");
+
+        assertEquals("<old/>", config.getXmlContent());
+    }
+
+    @Test
     void testProjectEnableFilter() {
         assertFalse(project.isFilterEnabled(FilterType.ADAPTER));
         project.enableFilter(FilterType.ADAPTER);
