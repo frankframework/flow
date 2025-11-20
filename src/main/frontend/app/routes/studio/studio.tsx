@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import Tabs, { type TabsList } from '~/components/tabs/tabs'
-import StudioStructure from '~/routes/studio/studio-structure'
+import StudioStructure from '~/routes/studio/filetree/studio-structure'
 import StudioContext from '~/routes/studio/context/studio-context'
 import Flow from '~/routes/studio/canvas/flow'
 import NodeContext from '~/routes/studio/context/node-context'

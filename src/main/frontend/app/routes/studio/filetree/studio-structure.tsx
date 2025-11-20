@@ -4,10 +4,6 @@ import useTabStore from '~/stores/tab-store'
 import Search from '~/components/search/search'
 import FolderIcon from '/icons/solar/Folder.svg?react'
 import FolderOpenIcon from '/icons/solar/Folder Open.svg?react'
-import CodeIcon from '/icons/solar/Code.svg?react'
-import JavaIcon from '/icons/solar/Cup Hot.svg?react'
-import MessageIcon from '/icons/solar/Chat Dots.svg?react'
-import MailIcon from '/icons/solar/Mailbox.svg?react'
 import 'react-complex-tree/lib/style-modern.css'
 import AltArrowRightIcon from '/icons/solar/Alt Arrow Right.svg?react'
 import AltArrowDownIcon from '/icons/solar/Alt Arrow Down.svg?react'
@@ -19,11 +15,12 @@ import {
   type TreeRef,
   UncontrolledTreeEnvironment,
 } from 'react-complex-tree'
-import StudioFilesDataProvider, { type AdapterNodeData } from '~/routes/studio/studio-files-data-provider'
+import StudioFilesDataProvider, { type AdapterNodeData } from '~/routes/studio/filetree/studio-files-data-provider'
 import { useProjectStore } from '~/stores/project-store'
 import { Link } from 'react-router'
 import { useTreeStore } from '~/stores/tree-store'
 import { useShallow } from 'zustand/react/shallow'
+import { getListenerIcon } from './tree-utilities'
 
 export interface ConfigWithAdapters {
   configName: string
@@ -54,6 +51,7 @@ export default function StudioStructure() {
       setIsLoading: state.setIsLoading,
     })),
   )
+  const project = useProjectStore.getState().project
   const [searchTerm, setSearchTerm] = useState('')
   const tree = useRef<TreeRef>(null)
   const dataProviderReference = useRef(new StudioFilesDataProvider([]))
@@ -73,12 +71,13 @@ export default function StudioStructure() {
       try {
         const loaded: ConfigWithAdapters[] = await Promise.all(
           configurationNames.map(async (configName) => {
-            const adapterNames = await getAdapterNamesFromConfiguration(configName)
+            if (!project) return
+            const adapterNames = await getAdapterNamesFromConfiguration(project.name, configName)
 
             // Fetch listener name for each adapter
             const adapters = await Promise.all(
               adapterNames.map(async (adapterName) => {
-                const listenerName = await getAdapterListenerType(configName, adapterName)
+                const listenerName = await getAdapterListenerType(project.name, configName, adapterName)
                 return { adapterName, listenerName }
               }),
             )
@@ -180,8 +179,13 @@ export default function StudioStructure() {
       !item.isFolder && typeof item.data === 'object' && item.data && 'listenerName' in item.data
         ? (item.data as { listenerName: string | null }).listenerName
         : null
-    const Icon = item.isFolder ? (context.isExpanded ? FolderOpenIcon : FolderIcon) : getListenerIcon(listenerType)
 
+    let Icon
+    if (item.isFolder) {
+      Icon = context.isExpanded ? FolderOpenIcon : FolderIcon
+    } else {
+      Icon = getListenerIcon(listenerType)
+    }
     // Highlight only the substring(s) that match the search term
     let highlightedTitle: JSX.Element | string = title
 
@@ -208,20 +212,6 @@ export default function StudioStructure() {
         <span className={`font-inter ml-1 overflow-hidden text-nowrap text-ellipsis`}>{highlightedTitle}</span>
       </>
     )
-  }
-
-  function getListenerIcon(listenerType: string | null) {
-    if (!listenerType) return CodeIcon
-
-    // TODO: Add more icons for more important listener types
-    const listenerIconMap: Record<string, React.FC<React.SVGProps<SVGSVGElement>>> = {
-      JavaListener: JavaIcon,
-      MessageStoreListener: MessageIcon,
-      FtpFileSystemListener: FolderIcon,
-      ExchangeMailListener: MailIcon,
-    }
-
-    return listenerIconMap[listenerType] ?? CodeIcon
   }
 
   return (
