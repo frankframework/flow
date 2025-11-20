@@ -20,10 +20,9 @@ export default function GeneralSettings() {
 
   return (
     <div className="space-y-3 p-6">
-      <div className="border-border space-y-6 rounded-md border p-6 bg-background">
+      <div className="border-border bg-background space-y-6 rounded-md border p-6">
         <Button>Save</Button> <Button>Delete</Button>
         <br />
-        <Toggle onChange={console.log} />
         <RadioList
           options={{
             light: { Light: 'Wit enzo' },
@@ -35,13 +34,16 @@ export default function GeneralSettings() {
         />
         <br />
         <Input onChange={console.log} />
-        <ValidatedInput onChange={console.log} patterns={{
-          'The field can\'t be empty': /.+/,
-          'The field must be a number': /^\d+$/,
-          'The field must be a number between 0 and 100': /^(100|[1-9]?\d)$/,
-        }} />
+        <ValidatedInput
+          onChange={console.log}
+          patterns={{
+            "The field can't be empty": /.+/,
+            'The field must be a number': /^\d+$/,
+            'The field must be a number between 0 and 100': /^(100|[1-9]?\d)$/,
+          }}
+        />
       </div>
-      <div className="border-border space-y-6 rounded-md border p-6 bg-background">
+      <div className="border-border bg-background space-y-6 rounded-md border p-6">
         <p>Introduction to general settings</p>
 
         <InputWithLabel

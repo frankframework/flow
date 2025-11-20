@@ -1,7 +1,7 @@
-import type { FlowNode } from '~/routes/builder/canvas/flow'
-import { getElementTypeFromName } from '~/routes/builder/node-translator-module'
-import type { ExitNode } from '~/routes/builder/canvas/nodetypes/exit-node'
-import type { FrankNode } from '~/routes/builder/canvas/nodetypes/frank-node'
+import type { FlowNode } from '~/routes/studio/canvas/flow'
+import { getElementTypeFromName } from '~/routes/studio/node-translator-module'
+import type { ExitNode } from '~/routes/studio/canvas/nodetypes/exit-node'
+import type { FrankNode } from '~/routes/studio/canvas/nodetypes/frank-node'
 import { SAXParser } from 'sax-ts'
 
 interface IdCounter {
@@ -10,15 +10,15 @@ interface IdCounter {
 
 export async function getXmlString(projectName: string, filename: string): Promise<string> {
   try {
-    const response = await fetch(`/projects/${projectName}/${filename}`)
+    const response = await fetch(`/projects/${projectName}/${filename}`);
     if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`)
+      throw new Error(`HTTP error! Status: ${response.status}`);
     }
 
-    const data = await response.json()
-    return data.xmlContent
+    const data = await response.json();
+    return data.xmlContent;
   } catch (error) {
-    throw new Error(`Failed to fetch XML file for ${projectName}/${filename}: ${error}`)
+    throw new Error(`Failed to fetch XML file for ${projectName}/${filename}: ${error}`);
   }
 }
 

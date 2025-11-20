@@ -1,6 +1,6 @@
 import { type Node, type NodeProps, NodeResizeControl } from '@xyflow/react'
-import { FlowConfig } from '~/routes/builder/canvas/flow.config'
-import { ResizeIcon } from '~/routes/builder/canvas/nodetypes/frank-node'
+import { FlowConfig } from '~/routes/studio/canvas/flow.config'
+import { ResizeIcon } from '~/routes/studio/canvas/nodetypes/frank-node'
 import { useEffect, useRef, useState } from 'react'
 import useFlowStore from '~/stores/flow-store'
 
@@ -65,7 +65,7 @@ export default function StickyNote(properties: NodeProps<StickyNote>) {
           minWidth: `${minWidth}px`,
           background: `
       linear-gradient(to left bottom, transparent 50%, rgba(0,0,0,0.4) 0) no-repeat 100% 0 / 2em 2em,
-      linear-gradient(-135deg, transparent 1.41em, #facc15 0)
+      linear-gradient(-135deg, transparent 1.41em, var(--type-sticky-note) 0)
     `,
         }}
       >
