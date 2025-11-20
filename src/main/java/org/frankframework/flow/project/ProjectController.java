@@ -1,5 +1,9 @@
 package org.frankframework.flow.project;
 
+import org.frankframework.flow.configuration.Configuration;
+import org.frankframework.flow.configuration.ConfigurationDTO;
+
+import org.springframework.http.HttpStatus;
 import org.frankframework.flow.projectsettings.FilterType;
 import org.frankframework.flow.configuration.Configuration;
 import org.frankframework.flow.configuration.ConfigurationDTO;
@@ -37,7 +41,7 @@ public class ProjectController {
 			ProjectDTO projectDTO = new ProjectDTO();
 			projectDTO.name = project.getName();
 			ArrayList<String> filenames = new ArrayList<>();
-			for (Configuration c : project.getConfigurations()) {
+			for (Configuration c :  project.getConfigurations()) {
 				filenames.add(c.getFilename());
 			}
 			projectDTO.filenames = filenames;
@@ -57,7 +61,7 @@ public class ProjectController {
 			ProjectDTO projectDTO = new ProjectDTO();
 			projectDTO.name = project.getName();
 			ArrayList<String> filenames = new ArrayList<>();
-			for (Configuration c : project.getConfigurations()) {
+			for (Configuration c :  project.getConfigurations()) {
 				filenames.add(c.getFilename());
 			}
 			projectDTO.filenames = filenames;

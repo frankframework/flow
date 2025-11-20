@@ -9,7 +9,7 @@ import SidebarContentClose from '~/components/sidebars-layout/sidebar-content-cl
 import useTabStore from '~/stores/tab-store'
 import { useTheme } from '~/hooks/use-theme'
 import { useEffect, useRef, useState } from 'react'
-import { getXmlString } from '~/routes/builder/xml-to-json-parser'
+import { getXmlString } from '~/routes/studio/xml-to-json-parser'
 import variables from '../../../environment/environment'
 import { useFFDoc } from '@frankframework/ff-doc/react'
 import { useProjectStore } from '~/stores/project-store'

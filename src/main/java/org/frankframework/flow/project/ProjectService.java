@@ -1,5 +1,6 @@
 package org.frankframework.flow.project;
 
+import org.frankframework.flow.projectsettings.FilterType;
 import org.frankframework.flow.configuration.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;

@@ -11,6 +11,7 @@ export interface EditorSettings {
 export interface StudioSettings {
   previewOnSave: boolean
   autoRefresh: boolean
+  gradient: boolean
 }
 
 export interface ProjectSettings {
@@ -56,6 +57,7 @@ const defaultEditorSettings: EditorSettings = {
 const defaultStudioSettings: StudioSettings = {
   previewOnSave: true,
   autoRefresh: true,
+  gradient: true,
 }
 
 const defaultProjectSettings: ProjectSettings = {

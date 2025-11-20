@@ -1,4 +1,4 @@
-import type { FlowNode } from '~/routes/builder/canvas/flow'
+import type { FlowNode } from '~/routes/studio/canvas/flow'
 import type { Edge } from '@xyflow/react'
 
 interface ReactFlowJson {
