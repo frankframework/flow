@@ -1,11 +1,17 @@
 package org.frankframework.flow.project;
 
+import org.frankframework.flow.configuration.Configuration;
+import org.frankframework.flow.configuration.ConfigurationDTO;
+
+import org.springframework.http.HttpStatus;
 import org.frankframework.flow.projectsettings.FilterType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -29,7 +35,11 @@ public class ProjectController {
 		for (Project project : projects) {
 			ProjectDTO projectDTO = new ProjectDTO();
 			projectDTO.name = project.getName();
-			projectDTO.filenames = project.getFilenames();
+			ArrayList<String> filenames = new ArrayList<>();
+			for (Configuration c :  project.getConfigurations()) {
+				filenames.add(c.getFilename());
+			}
+			projectDTO.filenames = filenames;
 			projectDTO.filters = project.getProjectSettings().getFilters();
 			projectDTOList.add(projectDTO);
 		}
@@ -45,11 +55,58 @@ public class ProjectController {
 			}
 			ProjectDTO projectDTO = new ProjectDTO();
 			projectDTO.name = project.getName();
-			projectDTO.filenames = project.getFilenames();
+			ArrayList<String> filenames = new ArrayList<>();
+			for (Configuration c :  project.getConfigurations()) {
+				filenames.add(c.getFilename());
+			}
+			projectDTO.filenames = filenames;
 			projectDTO.filters = project.getProjectSettings().getFilters();
 			return ResponseEntity.ok(projectDTO);
 		} catch (Exception e) {
 			return ResponseEntity.badRequest().build();
+		}
+	}
+
+	@GetMapping("/{projectName}/{filename}")
+	public ResponseEntity<ConfigurationDTO> getConfiguration(
+			@PathVariable String projectName,
+			@PathVariable String filename) {
+
+		Project project = projectService.getProject(projectName);
+		if (project == null) {
+			return ResponseEntity.notFound().build();
+		}
+
+		// Find configuration by filename
+		for (var config : project.getConfigurations()) {
+			if (config.getFilename().equals(filename)) {
+				ConfigurationDTO dto = new ConfigurationDTO();
+				dto.name = config.getFilename();
+				dto.xmlContent = config.getXmlContent();
+				return ResponseEntity.ok(dto);
+			}
+		}
+
+		return ResponseEntity.notFound().build(); // No matching config found
+	}
+
+	@PutMapping("/{projectName}/{filename}")
+	public ResponseEntity<Void> updateConfiguration(
+			@PathVariable String projectName,
+			@PathVariable String filename,
+			@RequestBody ConfigurationDTO configurationDTO) {
+		try {
+			boolean updated = projectService.updateConfigurationXml(
+					projectName, filename, configurationDTO.xmlContent);
+
+			if (!updated) {
+				return ResponseEntity.notFound().build(); // Project or config not found
+			}
+
+			return ResponseEntity.ok().build();
+		} catch (Exception e) {
+			e.printStackTrace();
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
 		}
 	}
 
@@ -84,7 +141,11 @@ public class ProjectController {
 			// Return updated DTO
 			ProjectDTO dto = new ProjectDTO();
 			dto.name = project.getName();
-			dto.filenames = project.getFilenames();
+			ArrayList<String> filenames = new ArrayList<>();
+			for (Configuration c :  project.getConfigurations()) {
+				filenames.add(c.getFilename());
+			}
+			dto.filenames = filenames;
 			dto.filters = project.getProjectSettings().getFilters();
 
 			return ResponseEntity.ok(dto);
@@ -116,7 +177,11 @@ public class ProjectController {
 			// Return updated DTO
 			ProjectDTO dto = new ProjectDTO();
 			dto.name = project.getName();
-			dto.filenames = project.getFilenames();
+			ArrayList<String> filenames = new ArrayList<>();
+			for (Configuration c :  project.getConfigurations()) {
+				filenames.add(c.getFilename());
+			}
+			dto.filenames = filenames;
 			dto.filters = project.getProjectSettings().getFilters();
 
 			return ResponseEntity.ok(dto);
