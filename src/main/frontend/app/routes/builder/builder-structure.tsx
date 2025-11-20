@@ -54,6 +54,7 @@ export default function BuilderStructure() {
       setIsLoading: state.setIsLoading,
     })),
   )
+  const project = useProjectStore.getState().project
   const [searchTerm, setSearchTerm] = useState('')
   const tree = useRef<TreeRef>(null)
   const dataProviderReference = useRef(new BuilderFilesDataProvider([]))
@@ -73,12 +74,14 @@ export default function BuilderStructure() {
       try {
         const loaded: ConfigWithAdapters[] = await Promise.all(
           configurationNames.map(async (configName) => {
-            const adapterNames = await getAdapterNamesFromConfiguration(configName)
+            if (!project) return
+            const adapterNames = await getAdapterNamesFromConfiguration(project.name, configName)
 
             // Fetch listener name for each adapter
             const adapters = await Promise.all(
               adapterNames.map(async (adapterName) => {
-                const listenerName = await getAdapterListenerType(configName, adapterName)
+                const listenerName = await getAdapterListenerType(project.name, configName, adapterName)
+                console.log(listenerName)
                 return { adapterName, listenerName }
               }),
             )
