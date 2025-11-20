@@ -2,6 +2,7 @@ package org.frankframework.flow.project;
 
 import org.frankframework.flow.configuration.Configuration;
 import org.frankframework.flow.configuration.ConfigurationDTO;
+import org.frankframework.flow.configuration.AdapterUpdateDTO;
 
 import org.springframework.http.HttpStatus;
 import org.frankframework.flow.projectsettings.FilterType;
@@ -36,7 +37,7 @@ public class ProjectController {
 			ProjectDTO projectDTO = new ProjectDTO();
 			projectDTO.name = project.getName();
 			ArrayList<String> filenames = new ArrayList<>();
-			for (Configuration c :  project.getConfigurations()) {
+			for (Configuration c : project.getConfigurations()) {
 				filenames.add(c.getFilename());
 			}
 			projectDTO.filenames = filenames;
@@ -56,7 +57,7 @@ public class ProjectController {
 			ProjectDTO projectDTO = new ProjectDTO();
 			projectDTO.name = project.getName();
 			ArrayList<String> filenames = new ArrayList<>();
-			for (Configuration c :  project.getConfigurations()) {
+			for (Configuration c : project.getConfigurations()) {
 				filenames.add(c.getFilename());
 			}
 			projectDTO.filenames = filenames;
@@ -110,6 +111,33 @@ public class ProjectController {
 		}
 	}
 
+	@PutMapping("/{projectName}/{configurationName}/adapters/{adapterName}")
+	public ResponseEntity<Void> updateAdapter(
+			@PathVariable String projectName,
+			@PathVariable String configurationName,
+			@PathVariable String adapterName,
+			@RequestBody AdapterUpdateDTO adapterUpdateDTO) {
+
+		try {
+			boolean updated = projectService.updateAdapter(
+					projectName,
+					configurationName,
+					adapterName,
+					adapterUpdateDTO.adapterXml);
+
+			if (!updated) {
+				// Either project, configuration, or adapter not found
+				return ResponseEntity.notFound().build();
+			}
+
+			return ResponseEntity.ok().build();
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+		}
+	}
+
 	@PostMapping("/{projectname}")
 	public ResponseEntity<ProjectDTO> createProject(@PathVariable String projectname) {
 		try {
@@ -126,7 +154,7 @@ public class ProjectController {
 	public ResponseEntity<ProjectDTO> enableFilter(
 			@PathVariable String projectname,
 			@PathVariable String type) {
-				try {
+		try {
 			Project project = projectService.getProject(projectname);
 			if (project == null) {
 				return ResponseEntity.notFound().build();
@@ -142,7 +170,7 @@ public class ProjectController {
 			ProjectDTO dto = new ProjectDTO();
 			dto.name = project.getName();
 			ArrayList<String> filenames = new ArrayList<>();
-			for (Configuration c :  project.getConfigurations()) {
+			for (Configuration c : project.getConfigurations()) {
 				filenames.add(c.getFilename());
 			}
 			dto.filenames = filenames;
@@ -162,7 +190,7 @@ public class ProjectController {
 	public ResponseEntity<ProjectDTO> disableFilter(
 			@PathVariable String projectname,
 			@PathVariable String type) {
-				try {
+		try {
 			Project project = projectService.getProject(projectname);
 			if (project == null) {
 				return ResponseEntity.notFound().build();
@@ -178,7 +206,7 @@ public class ProjectController {
 			ProjectDTO dto = new ProjectDTO();
 			dto.name = project.getName();
 			ArrayList<String> filenames = new ArrayList<>();
-			for (Configuration c :  project.getConfigurations()) {
+			for (Configuration c : project.getConfigurations()) {
 				filenames.add(c.getFilename());
 			}
 			dto.filenames = filenames;

@@ -2,10 +2,21 @@ package org.frankframework.flow.project;
 
 import org.frankframework.flow.configuration.Configuration;
 
+import java.io.ByteArrayInputStream;
+import java.io.StringWriter;
 import java.util.ArrayList;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 
 import org.frankframework.flow.projectsettings.FilterType;
 import org.frankframework.flow.projectsettings.ProjectSettings;
+import org.w3c.dom.*;
 
 public class Project {
 	private String name;
@@ -56,5 +67,59 @@ public class Project {
 
 	public void disableFilter(FilterType type){
 		projectSettings.setEnabled(type, false);
+	}
+
+	public boolean updateAdapter(String configurationName, String adapterName, String newAdapterXml) {
+		System.out.println(configurationName);
+		System.out.println(adapterName);
+		for (Configuration config : configurations) {
+			if (!config.getFilename().equals(configurationName)) continue;
+
+			try {
+				// Parse the existing XML
+				DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+				factory.setIgnoringComments(true);
+				factory.setNamespaceAware(true);
+				DocumentBuilder builder = factory.newDocumentBuilder();
+
+				Document configDoc = builder.parse(new ByteArrayInputStream(config.getXmlContent().getBytes()));
+
+				// Parse the new adapter XML
+				Document newAdapterDoc = builder.parse(new ByteArrayInputStream(newAdapterXml.getBytes()));
+				Node newAdapterNode = configDoc.importNode(newAdapterDoc.getDocumentElement(), true);
+
+				// Find the existing adapter by name
+				NodeList adapters = configDoc.getElementsByTagName("Adapter");
+				boolean found = false;
+
+				for (int i = 0; i < adapters.getLength(); i++) {
+					Element adapterEl = (Element) adapters.item(i);
+					if (adapterEl.getAttribute("name").equals(adapterName)) {
+						// Replace it
+						Node parent = adapterEl.getParentNode();
+						parent.replaceChild(newAdapterNode, adapterEl);
+						found = true;
+						break;
+					}
+				}
+
+				if (found) {
+					// Convert back to string
+					TransformerFactory tf = TransformerFactory.newInstance();
+					Transformer transformer = tf.newTransformer();
+					transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+					transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+					StringWriter writer = new StringWriter();
+					transformer.transform(new DOMSource(configDoc), new StreamResult(writer));
+
+					config.setXmlContent(writer.toString());
+					return true;
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+				return false;
+			}
+		}
+		return false;
 	}
 }

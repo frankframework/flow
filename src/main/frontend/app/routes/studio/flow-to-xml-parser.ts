@@ -61,15 +61,14 @@ export function exportFlowToXml(json: ReactFlowJson, adaptername: string): strin
 
   const exitsXml = exitNodes.length > 0 ? `      <Exits>\n${generateExitsXml(exitNodes)}\n      </Exits>` : ''
 
-  return `<Configuration>
+  return `
   <Adapter name="${adaptername}" description="Auto-generated from React Flow JSON">
 ${receivers.join('\n')}
     <Pipeline>
 ${exitsXml}
 ${pipelineParts.join('\n')}
     </Pipeline>
-  </Adapter>
-</Configuration>`
+  </Adapter>`
 }
 
 function buildEdgeMaps(edges: Edge[]) {
