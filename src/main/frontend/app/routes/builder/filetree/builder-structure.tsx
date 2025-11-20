@@ -19,11 +19,12 @@ import {
   type TreeRef,
   UncontrolledTreeEnvironment,
 } from 'react-complex-tree'
-import BuilderFilesDataProvider, { type AdapterNodeData } from '~/routes/builder/builder-files-data-provider'
+import BuilderFilesDataProvider, { type AdapterNodeData } from '~/routes/builder/filetree/builder-files-data-provider'
 import { useProjectStore } from '~/stores/project-store'
 import { Link } from 'react-router'
 import { useTreeStore } from '~/stores/tree-store'
 import { useShallow } from 'zustand/react/shallow'
+import { getListenerIcon } from './tree-utilities'
 
 export interface ConfigWithAdapters {
   configName: string
@@ -183,8 +184,13 @@ export default function BuilderStructure() {
       !item.isFolder && typeof item.data === 'object' && item.data && 'listenerName' in item.data
         ? (item.data as { listenerName: string | null }).listenerName
         : null
-    const Icon = item.isFolder ? (context.isExpanded ? FolderOpenIcon : FolderIcon) : getListenerIcon(listenerType)
 
+    let Icon
+    if (item.isFolder) {
+      Icon = context.isExpanded ? FolderOpenIcon : FolderIcon
+    } else {
+      Icon = getListenerIcon(listenerType)
+    }
     // Highlight only the substring(s) that match the search term
     let highlightedTitle: JSX.Element | string = title
 
@@ -211,20 +217,6 @@ export default function BuilderStructure() {
         <span className={`font-inter ml-1 overflow-hidden text-nowrap text-ellipsis`}>{highlightedTitle}</span>
       </>
     )
-  }
-
-  function getListenerIcon(listenerType: string | null) {
-    if (!listenerType) return CodeIcon
-
-    // TODO: Add more icons for more important listener types
-    const listenerIconMap: Record<string, React.FC<React.SVGProps<SVGSVGElement>>> = {
-      JavaListener: JavaIcon,
-      MessageStoreListener: MessageIcon,
-      FtpFileSystemListener: FolderIcon,
-      ExchangeMailListener: MailIcon,
-    }
-
-    return listenerIconMap[listenerType] ?? CodeIcon
   }
 
   return (
