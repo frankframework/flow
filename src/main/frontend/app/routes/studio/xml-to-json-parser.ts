@@ -1,28 +1,29 @@
-import type { FlowNode } from '~/routes/builder/canvas/flow'
-import { getElementTypeFromName } from '~/routes/builder/node-translator-module'
-import type { ExitNode } from '~/routes/builder/canvas/nodetypes/exit-node'
-import type { FrankNode } from '~/routes/builder/canvas/nodetypes/frank-node'
+import type { FlowNode } from '~/routes/studio/canvas/flow'
+import { getElementTypeFromName } from '~/routes/studio/node-translator-module'
+import type { ExitNode } from '~/routes/studio/canvas/nodetypes/exit-node'
+import type { FrankNode } from '~/routes/studio/canvas/nodetypes/frank-node'
 import { SAXParser } from 'sax-ts'
 
 interface IdCounter {
   current: number
 }
 
-export async function getXmlString(filename: string): Promise<string> {
+export async function getXmlString(projectName: string, filename: string): Promise<string> {
   try {
-    const response = await fetch(`/configurations/${filename}`)
+    const response = await fetch(`/projects/${projectName}/${filename}`);
     if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`)
+      throw new Error(`HTTP error! Status: ${response.status}`);
     }
-    const data = await response.json()
-    return data.xmlContent
+
+    const data = await response.json();
+    return data.xmlContent;
   } catch (error) {
-    throw new Error(`Failed to fetch XML file: ${error}`)
+    throw new Error(`Failed to fetch XML file for ${projectName}/${filename}: ${error}`);
   }
 }
 
-export async function getAdapterNamesFromConfiguration(filename: string): Promise<string[]> {
-  const xmlString = await getXmlString(filename)
+export async function getAdapterNamesFromConfiguration(projectName: string, filename: string): Promise<string[]> {
+  const xmlString = await getXmlString(projectName, filename)
 
   return new Promise((resolve, reject) => {
     const adapterNames: string[] = []
@@ -50,8 +51,8 @@ export async function getAdapterNamesFromConfiguration(filename: string): Promis
   })
 }
 
-export async function getAdapterFromConfiguration(filename: string, adapterName: string): Promise<Element | null> {
-  const xmlString = await getXmlString(filename)
+export async function getAdapterFromConfiguration(projectname: string, filename: string, adapterName: string): Promise<Element | null> {
+  const xmlString = await getXmlString(projectname, filename)
   const parser = new DOMParser()
   const xmlDoc = parser.parseFromString(xmlString, 'text/xml')
 
@@ -65,8 +66,12 @@ export async function getAdapterFromConfiguration(filename: string, adapterName:
   return null
 }
 
-export async function getAdapterListenerType(filename: string, adapterName: string): Promise<string | null> {
-  const adapterElement = await getAdapterFromConfiguration(filename, adapterName)
+export async function getAdapterListenerType(
+  projectName: string,
+  filename: string,
+  adapterName: string,
+): Promise<string | null> {
+  const adapterElement = await getAdapterFromConfiguration(projectName, filename, adapterName)
   if (!adapterElement) return null
   // Look through all child elements inside the adapter
   const children = adapterElement.querySelectorAll('*')

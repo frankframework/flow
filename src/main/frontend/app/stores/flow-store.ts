@@ -10,12 +10,12 @@ import {
   type OnReconnect,
 } from '@xyflow/react'
 
-import { initialNodes } from '~/routes/builder/canvas/nodes'
-import { initialEdges } from '~/routes/builder/canvas/edges'
-import type { FlowNode } from '~/routes/builder/canvas/flow'
-import type { ChildNode, FrankNode } from '~/routes/builder/canvas/nodetypes/frank-node'
-import type { ExitNode } from '~/routes/builder/canvas/nodetypes/exit-node'
-import type { StickyNote } from '~/routes/builder/canvas/nodetypes/sticky-note'
+import { initialNodes } from '~/routes/studio/canvas/nodes'
+import { initialEdges } from '~/routes/studio/canvas/edges'
+import type { FlowNode } from '~/routes/studio/canvas/flow'
+import type { ChildNode, FrankNode } from '~/routes/studio/canvas/nodetypes/frank-node'
+import type { ExitNode } from '~/routes/studio/canvas/nodetypes/exit-node'
+import type { StickyNote } from '~/routes/studio/canvas/nodetypes/sticky-note'
 
 export interface FlowState {
   nodes: FlowNode[]

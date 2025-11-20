@@ -12,25 +12,26 @@ import {
 } from '@xyflow/react'
 import Dagre from '@dagrejs/dagre'
 import '@xyflow/react/dist/style.css'
-import FrankNodeComponent, { type FrankNode } from '~/routes/builder/canvas/nodetypes/frank-node'
-import FrankEdgeComponent from '~/routes/builder/canvas/edgetypes/frank-edge'
-import ExitNodeComponent, { type ExitNode } from '~/routes/builder/canvas/nodetypes/exit-node'
-import GroupNodeComponent, { type GroupNode } from '~/routes/builder/canvas/nodetypes/group-node'
+import FrankNodeComponent, { type FrankNode } from '~/routes/studio/canvas/nodetypes/frank-node'
+import FrankEdgeComponent from '~/routes/studio/canvas/edgetypes/frank-edge'
+import ExitNodeComponent, { type ExitNode } from '~/routes/studio/canvas/nodetypes/exit-node'
+import GroupNodeComponent, { type GroupNode } from '~/routes/studio/canvas/nodetypes/group-node'
 import useFlowStore, { type FlowState } from '~/stores/flow-store'
 import { useShallow } from 'zustand/react/shallow'
-import { FlowConfig } from '~/routes/builder/canvas/flow.config'
-import { getElementTypeFromName } from '~/routes/builder/node-translator-module'
+import { FlowConfig } from '~/routes/studio/canvas/flow.config'
+import { getElementTypeFromName } from '~/routes/studio/node-translator-module'
 import { createContext, useContext, useEffect, useRef, useState } from 'react'
-import StickyNoteComponent, { type StickyNote } from '~/routes/builder/canvas/nodetypes/sticky-note'
+import StickyNoteComponent, { type StickyNote } from '~/routes/studio/canvas/nodetypes/sticky-note'
 import useTabStore from '~/stores/tab-store'
-import { convertAdapterXmlToJson, getAdapterFromConfiguration } from '~/routes/builder/xml-to-json-parser'
-import { exportFlowToXml } from '~/routes/builder/flow-to-xml-parser'
+import { convertAdapterXmlToJson, getAdapterFromConfiguration } from '~/routes/studio/xml-to-json-parser'
+import { exportFlowToXml } from '~/routes/studio/flow-to-xml-parser'
 import useNodeContextStore from '~/stores/node-context-store'
 import CreateNodeModal from '~/components/flow/create-node-modal'
+import { useProjectStore } from "~/stores/project-store";
 
 export type FlowNode = FrankNode | ExitNode | StickyNote | GroupNode | Node
 
-const NodeContextMenuContext = createContext<(visible: boolean) => void>(() => {})
+const NodeContextMenuContext = createContext<(visible: boolean) => void>(() => { })
 export const useNodeContextMenu = () => useContext(NodeContextMenuContext)
 
 const selector = (state: FlowState) => ({
@@ -67,6 +68,7 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
   const { nodes, edges, viewport, onNodesChange, onEdgesChange, onConnect, onReconnect } = useFlowStore(
     useShallow(selector),
   )
+  const project = useProjectStore.getState().project
 
   const sourceInfoReference = useRef<{
     nodeId: string | null
@@ -429,7 +431,8 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
       if (tab.flowJson && Object.keys(tab.flowJson).length > 0) {
         restoreFlowFromTab(tab.value)
       } else if (tab.configurationName && tab.value) {
-        const adapter = await getAdapterFromConfiguration(tab.configurationName, tab.value)
+        if (!project) return
+        const adapter = await getAdapterFromConfiguration(project.name, tab.configurationName, tab.value)
         if (!adapter) return
         const adapterJson = await convertAdapterXmlToJson(adapter)
         flowStore.setEdges(adapterJson.edges)
@@ -532,14 +535,6 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
       >
         <Controls position="top-left" style={{ color: '#000' }}></Controls>
         <Background variant={BackgroundVariant.Dots} size={3} gap={100}></Background>
-        <Panel position="top-center">
-          <button
-            className="border-border hover:bg-hover bg-background border p-2 hover:cursor-pointer"
-            onClick={exportToXml}
-          >
-            Export To XML
-          </button>
-        </Panel>
       </ReactFlow>
       <CreateNodeModal
         isOpen={showModal}

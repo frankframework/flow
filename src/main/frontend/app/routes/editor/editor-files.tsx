@@ -1,5 +1,5 @@
 import { type JSX, useEffect, useRef, useState } from 'react'
-import { getAdapterNamesFromConfiguration } from '~/routes/builder/xml-to-json-parser'
+import { getAdapterListenerType, getAdapterNamesFromConfiguration } from '~/routes/studio/xml-to-json-parser'
 import useTabStore from '~/stores/tab-store'
 import Search from '~/components/search/search'
 import FolderIcon from '/icons/solar/Folder.svg?react'
@@ -16,15 +16,16 @@ import {
   type TreeRef,
   UncontrolledTreeEnvironment,
 } from 'react-complex-tree'
-import BuilderFilesDataProvider from '~/routes/builder/builder-files-data-provider'
+import StudioFilesDataProvider from '~/routes/studio/filetree/studio-files-data-provider'
 import { useProjectStore } from '~/stores/project-store'
 import { Link } from 'react-router'
 import { useTreeStore } from '~/stores/tree-store'
 import { useShallow } from 'zustand/react/shallow'
+import { getListenerIcon } from '../studio/filetree/tree-utilities'
 
 interface ConfigWithAdapters {
   configName: string
-  adapterNames: string[]
+  adapters: { adapterName: string; listenerName: string | null }[]
 }
 
 const TREE_ID = 'builder-files-tree'
@@ -48,9 +49,10 @@ export default function EditorFiles() {
       setIsLoading: state.setIsLoading,
     })),
   )
+  const project = useProjectStore.getState().project
   const [searchTerm, setSearchTerm] = useState('')
   const tree = useRef<TreeRef>(null)
-  const dataProviderReference = useRef(new BuilderFilesDataProvider([]))
+  const dataProviderReference = useRef(new StudioFilesDataProvider([]))
 
   const configurationNames = useProjectStore((state) => state.project?.filenames)
   const setTabData = useTabStore((state) => state.setTabData)
@@ -68,10 +70,21 @@ export default function EditorFiles() {
       try {
         const loaded: ConfigWithAdapters[] = await Promise.all(
           configurationNames.map(async (configName) => {
-            const adapterNames = await getAdapterNamesFromConfiguration(configName)
-            return { configName, adapterNames }
+            if (!project) return
+            const adapterNames = await getAdapterNamesFromConfiguration(project.name, configName)
+
+            // Fetch listener name for each adapter
+            const adapters = await Promise.all(
+              adapterNames.map(async (adapterName) => {
+                const listenerName = await getAdapterListenerType(project.name, configName, adapterName)
+                return { adapterName, listenerName }
+              }),
+            )
+
+            return { configName, adapters }
           }),
         )
+
         setConfigs(loaded)
       } catch (error) {
         console.error('Failed to load adapter names:', error)
@@ -158,10 +171,19 @@ export default function EditorFiles() {
     item: TreeItem<unknown>
     context: TreeItemRenderContext
   }) => {
-    const Icon = (item.isFolder && (context.isExpanded ? FolderOpenIcon : FolderIcon)) || CodeIcon
-
     const searchLower = searchTerm.toLowerCase()
     const titleLower = title.toLowerCase()
+    const listenerType =
+      !item.isFolder && typeof item.data === 'object' && item.data && 'listenerName' in item.data
+        ? (item.data as { listenerName: string | null }).listenerName
+        : null
+
+    let Icon
+    if (item.isFolder) {
+      Icon = context.isExpanded ? FolderOpenIcon : FolderIcon
+    } else {
+      Icon = getListenerIcon(listenerType)
+    }
 
     // Highlight only the substring(s) that match the search term
     let highlightedTitle: JSX.Element | string = title

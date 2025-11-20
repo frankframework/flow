@@ -9,14 +9,15 @@ import {
 } from '@xyflow/react'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import useFlowStore from '~/stores/flow-store'
-import { CustomHandle } from '~/routes/builder/canvas/nodetypes/components/handle'
-import { FlowConfig } from '~/routes/builder/canvas/flow.config'
-import { useNodeContextMenu } from '~/routes/builder/canvas/flow'
+import { CustomHandle } from '~/routes/studio/canvas/nodetypes/components/handle'
+import { FlowConfig } from '~/routes/studio/canvas/flow.config'
+import { useNodeContextMenu } from '~/routes/studio/canvas/flow'
 import useNodeContextStore from '~/stores/node-context-store'
-import { getElementTypeFromName } from '~/routes/builder/node-translator-module'
-import ChildContextMenu from '~/routes/builder/canvas/nodetypes/components/child-context-menu'
+import { getElementTypeFromName } from '~/routes/studio/node-translator-module'
+import ChildContextMenu from '~/routes/studio/canvas/nodetypes/components/child-context-menu'
 import { useFFDoc } from '@frankframework/ff-doc/react'
 import variables from '../../../../../environment/environment'
+import { useSettingsStore } from '~/routes/settings/settings-store'
 import HandleMenu from './components/handle-menu'
 import HandleMenuItem from './components/handle-menu-item'
 
@@ -51,6 +52,7 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
   const FRANK_DOC_URL = variables.frankDocJsonUrl
   const { elements } = useFFDoc(FRANK_DOC_URL)
   const { setNodeId, setAttributes, setParentId, setIsEditing } = useNodeContextStore()
+  const gradientEnabled = useSettingsStore((state) => state.studio.gradient)
 
   const updateNodeInternals = useUpdateNodeInternals()
 
@@ -267,11 +269,13 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
         <div
           className="border-b-border box-border w-full rounded-t-md border-b p-1"
           style={{
-            background: `radial-gradient(
-                  ellipse farthest-corner at 20% 20%,
-                  var(${colorVariable}) 0%,
-                  var(--color-background) 100%
-                )`,
+            background: gradientEnabled
+              ? `radial-gradient(
+                ellipse farthest-corner at 20% 20%,
+                var(${colorVariable}) 0%,
+                var(--color-background) 100%
+              )`
+              : `var(${colorVariable})`,
           }}
         >
           <h1 className="font-bold">{properties.data.subtype}</h1>
@@ -325,11 +329,13 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
                   <div
                     className="border-b-border box-border w-full rounded-t-md border-b p-1"
                     style={{
-                      background: `radial-gradient(
-                ellipse farthest-corner at 20% 20%,
-                var(--type-${child.type?.toLowerCase?.() || 'default'}) 0%,
-                var(--color-background) 100%
-              )`,
+                      background: gradientEnabled
+                        ? `radial-gradient(
+                          ellipse farthest-corner at 20% 20%,
+                          var(--type-${child.type?.toLowerCase() || 'default'}) 0%,
+                          var(--color-background) 100%
+                        )`
+                        : `var(--type-${child.type?.toLowerCase() || 'default'})`,
                     }}
                   >
                     <h1 className="font-bold">{child.subtype}</h1>
