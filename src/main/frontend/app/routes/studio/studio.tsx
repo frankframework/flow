@@ -1,9 +1,9 @@
-import { useState } from 'react'
-import Tabs from '~/components/tabs/tabs'
-import BuilderStructure from '~/routes/builder/filetree/builder-structure'
-import BuilderContext from '~/routes/builder/context/builder-context'
-import Flow from '~/routes/builder/canvas/flow'
-import NodeContext from '~/routes/builder/context/node-context'
+import { useEffect, useState } from 'react'
+import Tabs, { type TabsList } from '~/components/tabs/tabs'
+import StudioStructure from '~/routes/studio/filetree/studio-structure'
+import StudioContext from '~/routes/studio/context/studio-context'
+import Flow from '~/routes/studio/canvas/flow'
+import NodeContext from '~/routes/studio/context/node-context'
 import useNodeContextStore from '~/stores/node-context-store'
 import SidebarContentClose from '~/components/sidebars-layout/sidebar-content-close'
 import SidebarHeader from '~/components/sidebars-layout/sidebar-header'
@@ -12,7 +12,7 @@ import SidebarLayout from '~/components/sidebars-layout/sidebar-layout'
 import useTabStore from '~/stores/tab-store'
 import { useShallow } from 'zustand/react/shallow'
 
-export default function Builder() {
+export default function Studio() {
   const [showNodeContext, setShowNodeContext] = useState(false)
   const nodeId = useNodeContextStore((state) => state.nodeId)
 
@@ -26,7 +26,7 @@ export default function Builder() {
     <SidebarLayout name="studio" windowResizeOnChange={true}>
       <>
         <SidebarHeader side={SidebarSide.LEFT} title="Structure" />
-        <BuilderStructure />
+        <StudioStructure />
       </>
       <>
         <div className="flex">
@@ -53,7 +53,7 @@ export default function Builder() {
       </>
       <>
         <SidebarHeader side={SidebarSide.RIGHT} title={showNodeContext ? 'Edit node' : 'Palette'} />
-        {showNodeContext ? <NodeContext nodeId={nodeId} setShowNodeContext={setShowNodeContext} /> : <BuilderContext />}
+        {showNodeContext ? <NodeContext nodeId={nodeId} setShowNodeContext={setShowNodeContext} /> : <StudioContext />}
       </>
     </SidebarLayout>
   )

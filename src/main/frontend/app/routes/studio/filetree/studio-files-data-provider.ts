@@ -1,5 +1,5 @@
 import type { Disposable, TreeDataProvider, TreeItem, TreeItemIndex } from 'react-complex-tree'
-import type { ConfigWithAdapters } from '~/routes/builder/filetree/builder-structure';
+import type { ConfigWithAdapters } from '~/routes/studio/filetree/studio-structure'
 
 export interface AdapterNodeData {
   adapterName: string
@@ -7,7 +7,7 @@ export interface AdapterNodeData {
   listenerName: string | null
 }
 
-export default class BuilderFilesDataProvider implements TreeDataProvider {
+export default class StudioFilesDataProvider implements TreeDataProvider {
   private data: Record<TreeItemIndex, TreeItem> = {}
   private treeChangeListeners: ((changedItemIds: TreeItemIndex[]) => void)[] = []
 
@@ -62,9 +62,10 @@ export default class BuilderFilesDataProvider implements TreeDataProvider {
 
     // Config folders and adapters
     for (const { configName, adapters } of configs) {
+      const folderName = configName.replace(/\.xml$/i, '')
       newData[configName] = {
         index: configName,
-        data: configName,
+        data: folderName,
         children: adapters.map((a) => a.adapterName),
         isFolder: true,
       }

@@ -1,12 +1,13 @@
 import { Handle, type Node, type NodeProps, NodeResizeControl, Position } from '@xyflow/react'
-import { MeatballMenu, ResizeIcon } from '~/routes/builder/canvas/nodetypes/frank-node'
-import { FlowConfig } from '~/routes/builder/canvas/flow.config'
+import { MeatballMenu, ResizeIcon } from '~/routes/studio/canvas/nodetypes/frank-node'
+import { FlowConfig } from '~/routes/studio/canvas/flow.config'
 import { useState } from 'react'
 import useFlowStore from '~/stores/flow-store'
 import useNodeContextStore from '~/stores/node-context-store'
-import { useNodeContextMenu } from '~/routes/builder/canvas/flow'
+import { useNodeContextMenu } from '~/routes/studio/canvas/flow'
 import { useFFDoc } from '@frankframework/ff-doc/react'
 import variables from '../../../../../environment/environment'
+import { useSettingsStore } from '~/routes/settings/settings-store'
 
 export type ExitNode = Node<{
   subtype: string
@@ -21,6 +22,7 @@ export default function ExitNode(properties: NodeProps<ExitNode>) {
   const FRANK_DOC_URL = variables.frankDocJsonUrl
   const { elements } = useFFDoc(FRANK_DOC_URL)
   const { setNodeId, setAttributes } = useNodeContextStore()
+  const gradientEnabled = useSettingsStore((state) => state.studio.gradient)
 
   const [isContextMenuOpen, setIsContextMenuOpen] = useState(false)
   const [dimensions, setDimensions] = useState({
@@ -116,11 +118,13 @@ export default function ExitNode(properties: NodeProps<ExitNode>) {
         <div
           className="border-b-border box-border w-full rounded-t-md border-b p-1"
           style={{
-            background: `radial-gradient(
+            background: gradientEnabled
+              ? `radial-gradient(
                 ellipse farthest-corner at 20% 20%,
                 var(--type-exit) 0%,
                 var(--color-background) 100%
-              )`,
+              )`
+              : `var(--type-exit)`,
           }}
         >
           <h1 className="font-bold">{properties.data.subtype}</h1>
