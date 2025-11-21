@@ -15,6 +15,7 @@ export default function ProjectLanding() {
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [search, setSearch] = useState('')
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -50,11 +51,13 @@ export default function ProjectLanding() {
       // refresh the project list after creation
       const newProject = await response.json()
       setProjects((previous) => [...previous, newProject])
-      console.log('Project created:', newProject)
     } catch (error_: any) {
       setError(error_.message)
     }
   }
+
+  // Filter projects by search string (case-insensitive)
+  const filteredProjects = projects.filter((project) => project.name.toLowerCase().includes(search.toLowerCase()))
 
   if (loading) return <p>Loading projects...</p>
   if (error) return <p>Error: {error}</p>
@@ -77,7 +80,7 @@ export default function ProjectLanding() {
             <ArchiveIcon className="mr-2 h-5 w-auto" /> Projects
           </div>
           <div className="flex w-3/4 items-center justify-center px-4 text-sm font-semibold">
-            <Search onChange={() => console.log('searching...')} />
+            <Search onChange={(event) => setSearch(event.target.value)} />
           </div>
         </div>
         {/* Content row */}
@@ -90,7 +93,7 @@ export default function ProjectLanding() {
           </div>
           <div className="h-full w-3/4 overflow-y-auto px-4 py-3">
             {/* Main content column */}
-            {projects.map((project, index) => (
+            {filteredProjects.map((project, index) => (
               <ProjectRow key={project.name + index} project={project} />
             ))}
           </div>

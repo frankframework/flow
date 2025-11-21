@@ -22,7 +22,7 @@ export default function ProjectRow({ project }: Readonly<ProjectRowProperties>) 
         setProject(project)
         clearConfigs()
         clearTabs()
-        navigate('/studio')
+        navigate('/configurations')
       }}
     >
       <div className="flex flex-col">
