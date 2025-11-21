@@ -6,6 +6,8 @@ import 'allotment/dist/style.css'
 import './app.css'
 import React from 'react'
 import { useTheme } from '~/hooks/use-theme'
+import { useProjectStore } from './stores/project-store'
+import ProjectLanding from './routes/projectlanding/project-landing'
 
 export const links: Route.LinksFunction = () => [
   { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
@@ -36,6 +38,7 @@ export const links: Route.LinksFunction = () => [
 
 export function Layout({ children }: Readonly<{ children: React.ReactNode }>) {
   const theme = useTheme()
+  const project = useProjectStore((state) => state.project)
 
   return (
     <html lang="en" data-theme={theme}>
@@ -47,8 +50,18 @@ export function Layout({ children }: Readonly<{ children: React.ReactNode }>) {
         <Links />
       </head>
       <body className="flex">
-        <Navbar />
-        <main className="grow">{children}</main>
+        {/* If a project is loaded, show the navbar and the main content.
+            Otherwise, show the project landing page. */}
+        {project ? (
+          <>
+            <Navbar />
+            <main className="grow">{children}</main>
+          </>
+        ) : (
+          <main className="flex h-full grow flex-col items-center justify-center">
+            <ProjectLanding />
+          </main>
+        )}
         <ScrollRestoration />
         <Scripts />
       </body>
