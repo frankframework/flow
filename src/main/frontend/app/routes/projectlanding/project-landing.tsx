@@ -4,8 +4,11 @@ import ArchiveIcon from '/icons/solar/Archive.svg?react'
 import ProjectRow from './project-row'
 import Search from '~/components/search/search'
 import ActionButton from './action-button'
+import { useProjectStore } from '~/stores/project-store'
+import { useLocation } from 'react-router'
+import ProjectModal from './project-modal'
 
-interface Project {
+export interface Project {
   name: string
   filenames: string[]
   filters: Record<string, boolean> // key = filter name (e.g. "HTTP"), value = true/false
@@ -16,6 +19,9 @@ export default function ProjectLanding() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [search, setSearch] = useState('')
+  const [showModal, setShowModal] = useState(false)
+  const setProject = useProjectStore((state) => state.setProject)
+  const location = useLocation()
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -36,9 +42,13 @@ export default function ProjectLanding() {
     fetchProjects()
   }, [])
 
-  const createProject = async () => {
+  // Reset project when landing on home page
+  useEffect(() => {
+    setProject(undefined)
+  }, [location.key])
+
+  const createProject = async (projectName: string) => {
     try {
-      const projectName = 'testproject_' + `${projects.length + 1}`
       const response = await fetch(`http://localhost:8080/projects/${projectName}`, {
         method: 'POST',
         headers: {
@@ -59,7 +69,12 @@ export default function ProjectLanding() {
   // Filter projects by search string (case-insensitive)
   const filteredProjects = projects.filter((project) => project.name.toLowerCase().includes(search.toLowerCase()))
 
-  if (loading) return <p>Loading projects...</p>
+  if (loading)
+    return (
+      <div className="bg-backdrop flex min-h-screen w-full items-center justify-center">
+        <p className="text-muted-foreground text-sm">Loading projects...</p>
+      </div>
+    )
   if (error) return <p>Error: {error}</p>
 
   return (
@@ -86,19 +101,18 @@ export default function ProjectLanding() {
         {/* Content row */}
         <div className="flex flex-1 overflow-hidden">
           <div className="border-border text-muted-foreground w-1/4 border-r px-4 py-3 text-sm">
-            {/* Info column content here */}
-            <ActionButton label="New Project" onClick={createProject} />
+            <ActionButton label="New Project" onClick={() => setShowModal(true)} />
             <ActionButton label="Open" onClick={() => console.log('Open project')} />
             <ActionButton label="Clone Repository" onClick={() => console.log('Cloning project')} />
           </div>
           <div className="h-full w-3/4 overflow-y-auto px-4 py-3">
-            {/* Main content column */}
             {filteredProjects.map((project, index) => (
               <ProjectRow key={project.name + index} project={project} />
             ))}
           </div>
         </div>
       </div>
+      <ProjectModal isOpen={showModal} onClose={() => setShowModal(false)} onCreate={createProject}/>
     </div>
   )
 }

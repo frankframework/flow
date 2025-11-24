@@ -60,6 +60,16 @@ public class ProjectService {
 		return false; // Configuration not found
 	}
 
+	public Project addConfiguration(String projectName, String configurationName){
+		Project project = getProject(projectName);
+		if(project == null){
+			return null;
+		}
+		Configuration configuration = new Configuration(configurationName);
+		project.addConfiguration(configuration);
+		return project;
+	}
+
 	/**
 	 * Dynamically scan all project folders under /resources/project/
 	 * Each subdirectory = a project

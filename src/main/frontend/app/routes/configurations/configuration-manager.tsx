@@ -11,10 +11,6 @@ export default function ConfigurationManager() {
   const navigate = useNavigate()
   const [showModal, setShowModal] = useState(false)
 
-  const AddConfiguration = () => {
-    console.log('Add configuration clicked')
-  }
-
   return (
     <div className="bg-backdrop h-full w-full p-6">
       <div className="bg-background border-border h-full w-full rounded border p-6">
@@ -27,7 +23,9 @@ export default function ConfigurationManager() {
           <ArrowLeftIcon className="mb-4 h-6 w-auto fill-current hover:cursor-pointer" />
           <p>Return To Projects</p>
         </div>
-        <p>{currentProject?.name}</p>
+        <p className="ml-2">
+          Configurations within <span className="font-bold">{currentProject?.name}</span>:
+        </p>
         <div className="flex">
           {currentProject?.filenames.map((filename, index) => (
             <ConfigurationTile key={filename + index} filename={filename} />
@@ -39,7 +37,7 @@ export default function ConfigurationManager() {
           />
         </div>
       </div>
-      <AddConfigurationModal isOpen={showModal} onClose={() => setShowModal(false)} />
+      <AddConfigurationModal isOpen={showModal} onClose={() => setShowModal(false)} currentProject={currentProject} />
     </div>
   )
 }

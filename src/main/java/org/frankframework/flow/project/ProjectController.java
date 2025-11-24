@@ -113,9 +113,38 @@ public class ProjectController {
 	@PostMapping("/{projectname}")
 	public ResponseEntity<ProjectDTO> createProject(@PathVariable String projectname) {
 		try {
-			projectService.createProject(projectname);
+			Project project = projectService.createProject(projectname);
 			ProjectDTO projectDTO = new ProjectDTO();
-			projectDTO.name = projectname;
+			projectDTO.name = project.getName();
+			ArrayList<String> filenames = new ArrayList<>();
+			for (Configuration c :  project.getConfigurations()) {
+				filenames.add(c.getFilename());
+			}
+			projectDTO.filenames = filenames;
+			projectDTO.filters = project.getProjectSettings().getFilters();
+			return ResponseEntity.ok(projectDTO);
+		} catch (Exception e) {
+			return ResponseEntity.badRequest().build();
+		}
+	}
+
+	@PostMapping("/{projectname}/configurations/{configname}")
+	public ResponseEntity<ProjectDTO> addConfiguration(
+			@PathVariable String projectname,
+			@PathVariable String configname) {
+		try {
+			Project project = projectService.addConfiguration(projectname, configname);
+			if (project == null) {
+				return ResponseEntity.notFound().build();
+			}
+			ProjectDTO projectDTO = new ProjectDTO();
+			projectDTO.name = project.getName();
+			ArrayList<String> filenames = new ArrayList<>();
+			for (Configuration c :  project.getConfigurations()) {
+				filenames.add(c.getFilename());
+			}
+			projectDTO.filenames = filenames;
+			projectDTO.filters = project.getProjectSettings().getFilters();
 			return ResponseEntity.ok(projectDTO);
 		} catch (Exception e) {
 			return ResponseEntity.badRequest().build();
