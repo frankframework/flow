@@ -1,7 +1,7 @@
-import type { FlowNode } from '~/routes/builder/canvas/flow'
-import { getElementTypeFromName } from '~/routes/builder/node-translator-module'
-import type { ExitNode } from '~/routes/builder/canvas/nodetypes/exit-node'
-import type { FrankNode } from '~/routes/builder/canvas/nodetypes/frank-node'
+import type { FlowNode } from '~/routes/studio/canvas/flow'
+import { getElementTypeFromName } from '~/routes/studio/node-translator-module'
+import type { ExitNode } from '~/routes/studio/canvas/nodetypes/exit-node'
+import type { FrankNode } from '~/routes/studio/canvas/nodetypes/frank-node'
 import { SAXParser } from 'sax-ts'
 
 interface IdCounter {

@@ -1,13 +1,9 @@
 import React, { type JSX, useEffect, useRef, useState } from 'react'
-import { getAdapterListenerType, getAdapterNamesFromConfiguration } from '~/routes/builder/xml-to-json-parser'
+import { getAdapterListenerType, getAdapterNamesFromConfiguration } from '~/routes/studio/xml-to-json-parser'
 import useTabStore from '~/stores/tab-store'
 import Search from '~/components/search/search'
 import FolderIcon from '/icons/solar/Folder.svg?react'
 import FolderOpenIcon from '/icons/solar/Folder Open.svg?react'
-import CodeIcon from '/icons/solar/Code.svg?react'
-import JavaIcon from '/icons/solar/Cup Hot.svg?react'
-import MessageIcon from '/icons/solar/Chat Dots.svg?react'
-import MailIcon from '/icons/solar/Mailbox.svg?react'
 import 'react-complex-tree/lib/style-modern.css'
 import AltArrowRightIcon from '/icons/solar/Alt Arrow Right.svg?react'
 import AltArrowDownIcon from '/icons/solar/Alt Arrow Down.svg?react'
@@ -19,11 +15,12 @@ import {
   type TreeRef,
   UncontrolledTreeEnvironment,
 } from 'react-complex-tree'
-import BuilderFilesDataProvider, { type AdapterNodeData } from '~/routes/builder/builder-files-data-provider'
+import StudioFilesDataProvider, { type AdapterNodeData } from '~/routes/studio/filetree/studio-files-data-provider'
 import { useProjectStore } from '~/stores/project-store'
 import { Link } from 'react-router'
 import { useTreeStore } from '~/stores/tree-store'
 import { useShallow } from 'zustand/react/shallow'
+import { getListenerIcon } from './tree-utilities'
 
 export interface ConfigWithAdapters {
   configName: string
@@ -33,7 +30,7 @@ export interface ConfigWithAdapters {
   }[]
 }
 
-const TREE_ID = 'builder-files-tree'
+const TREE_ID = 'studio-files-tree'
 
 function getItemTitle(item: TreeItem<unknown>): string {
   // item.data is either a string (for folders) or object (for leaf nodes)
@@ -45,7 +42,7 @@ function getItemTitle(item: TreeItem<unknown>): string {
   return 'Unnamed'
 }
 
-export default function BuilderStructure() {
+export default function StudioStructure() {
   const { configs, isLoading, setConfigs, setIsLoading } = useTreeStore(
     useShallow((state) => ({
       configs: state.configs,
@@ -57,7 +54,7 @@ export default function BuilderStructure() {
   const project = useProjectStore.getState().project
   const [searchTerm, setSearchTerm] = useState('')
   const tree = useRef<TreeRef>(null)
-  const dataProviderReference = useRef(new BuilderFilesDataProvider([]))
+  const dataProviderReference = useRef(new StudioFilesDataProvider([]))
 
   const configurationNames = useProjectStore((state) => state.project?.filenames)
   const setTabData = useTabStore((state) => state.setTabData)
@@ -81,7 +78,6 @@ export default function BuilderStructure() {
             const adapters = await Promise.all(
               adapterNames.map(async (adapterName) => {
                 const listenerName = await getAdapterListenerType(project.name, configName, adapterName)
-                console.log(listenerName)
                 return { adapterName, listenerName }
               }),
             )
@@ -183,8 +179,13 @@ export default function BuilderStructure() {
       !item.isFolder && typeof item.data === 'object' && item.data && 'listenerName' in item.data
         ? (item.data as { listenerName: string | null }).listenerName
         : null
-    const Icon = item.isFolder ? (context.isExpanded ? FolderOpenIcon : FolderIcon) : getListenerIcon(listenerType)
 
+    let Icon
+    if (item.isFolder) {
+      Icon = context.isExpanded ? FolderOpenIcon : FolderIcon
+    } else {
+      Icon = getListenerIcon(listenerType)
+    }
     // Highlight only the substring(s) that match the search term
     let highlightedTitle: JSX.Element | string = title
 
@@ -213,20 +214,6 @@ export default function BuilderStructure() {
     )
   }
 
-  function getListenerIcon(listenerType: string | null) {
-    if (!listenerType) return CodeIcon
-
-    // TODO: Add more icons for more important listener types
-    const listenerIconMap: Record<string, React.FC<React.SVGProps<SVGSVGElement>>> = {
-      JavaListener: JavaIcon,
-      MessageStoreListener: MessageIcon,
-      FtpFileSystemListener: FolderIcon,
-      ExchangeMailListener: MailIcon,
-    }
-
-    return listenerIconMap[listenerType] ?? CodeIcon
-  }
-
   return (
     <>
       <Search onChange={(event) => setSearchTerm(event.target.value)} />
@@ -253,7 +240,7 @@ export default function BuilderStructure() {
             renderItemArrow={renderItemArrow}
             renderItemTitle={renderItemTitle}
           >
-            <Tree treeId={TREE_ID} rootItem="root" ref={tree} treeLabel="Builder Files" />
+            <Tree treeId={TREE_ID} rootItem="root" ref={tree} treeLabel="Studio Files" />
           </UncontrolledTreeEnvironment>
         </div>
       )}

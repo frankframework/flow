@@ -35,7 +35,7 @@ public class ProjectController {
 			ProjectDTO projectDTO = new ProjectDTO();
 			projectDTO.name = project.getName();
 			ArrayList<String> filenames = new ArrayList<>();
-			for (Configuration c : project.getConfigurations()) {
+			for (Configuration c :  project.getConfigurations()) {
 				filenames.add(c.getFilename());
 			}
 			projectDTO.filenames = filenames;
@@ -95,6 +95,49 @@ public class ProjectController {
 
 		projectService.updateConfigurationXml(projectName, filename, configurationDTO.xmlContent);
 		return ResponseEntity.ok().build();
+	}
+
+	@GetMapping("/{projectName}/{filename}")
+	public ResponseEntity<ConfigurationDTO> getConfiguration(
+			@PathVariable String projectName,
+			@PathVariable String filename) {
+
+		Project project = projectService.getProject(projectName);
+		if (project == null) {
+			return ResponseEntity.notFound().build();
+		}
+
+		// Find configuration by filename
+		for (var config : project.getConfigurations()) {
+			if (config.getFilename().equals(filename)) {
+				ConfigurationDTO dto = new ConfigurationDTO();
+				dto.name = config.getFilename();
+				dto.xmlContent = config.getXmlContent();
+				return ResponseEntity.ok(dto);
+			}
+		}
+
+		return ResponseEntity.notFound().build(); // No matching config found
+	}
+
+	@PutMapping("/{projectName}/{filename}")
+	public ResponseEntity<Void> updateConfiguration(
+			@PathVariable String projectName,
+			@PathVariable String filename,
+			@RequestBody ConfigurationDTO configurationDTO) {
+		try {
+			boolean updated = projectService.updateConfigurationXml(
+					projectName, filename, configurationDTO.xmlContent);
+
+			if (!updated) {
+				return ResponseEntity.notFound().build(); // Project or config not found
+			}
+
+			return ResponseEntity.ok().build();
+		} catch (Exception e) {
+			e.printStackTrace();
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+		}
 	}
 
 	@PostMapping("/{projectname}")

@@ -23,17 +23,17 @@ export default function ProjectTile({ project }: Readonly<ProjectTileProperties>
       </div>
 
       {/* Bottom Action Bar */}
-      <div className="flex divide-x divide-gray-200 border-t border-gray-200">
+      <div className="flex divide-x divide-border border-t border-border">
         <button
           onClick={() => {
             clearConfigs()
             setProject(project)
-            navigate('/builder')
+            navigate('/studio')
           }}
           className="hover:text-foreground-active flex flex-1 items-center justify-center gap-2 p-2 hover:cursor-pointer"
         >
           <RulerCrossPenIcon className="h-8 w-auto fill-current" />
-          <span className="text-sm font-medium">Open in Builder</span>
+          <span className="text-sm font-medium">Open in Studio</span>
         </button>
 
         <button
