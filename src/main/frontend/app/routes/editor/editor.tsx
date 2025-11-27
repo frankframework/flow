@@ -108,20 +108,32 @@ export default function CodeEditor() {
     // Element suggestions
     const elementProvider = monacoInstance.languages.registerCompletionItemProvider('xml', {
       triggerCharacters: ['<'],
-      provideCompletionItems: () => {
+      provideCompletionItems: (model, position) => {
+        const line = model.getLineContent(position.lineNumber)
+        const textBeforeCursor = line.slice(0, position.column - 1)
+
+        // Prevent element suggestions inside attribute values
+        const isInsideQuotes = /="[^"]*$/.test(textBeforeCursor)
+        if (isInsideQuotes) {
+          return { suggestions: [] }
+        }
+
         if (!elements) return { suggestions: [] }
+
         return {
           suggestions: Object.values(elements).map((element: any) => {
-            // Mandatory attributes
             const mandatoryAttributes = Object.entries(element.attributes || {})
               .filter(([_, attribute]) => attribute.mandatory)
-              .map(([name]) => `${name}="\${${name}}"`)
+              .map(([name], index) => {
+                if (index === 0) return `${name}="\${1}"`
+                return `${name}="\${${index + 2}}"`
+              })
               .join(' ')
 
-            // Snippet for tag + mandatory attributes
             const mandatoryAttributesWithSpace = mandatoryAttributes ? ` ${mandatoryAttributes}` : ''
             const openingTag = `${element.name}${mandatoryAttributesWithSpace}>`
-            const closingTag = `</${element.name}`
+            const closingTag = `</${element.name}>`
+
             const insertText = `${openingTag}$0${closingTag}`
 
             return {
@@ -144,14 +156,15 @@ export default function CodeEditor() {
         const textBeforeCursor = line.slice(0, position.column - 1)
 
         // Don't show suggestions if cursor is inside quotes
-        const quotesBefore = (textBeforeCursor.match(/"/g) || []).length
-        if (quotesBefore % 2 === 1) {
-          // Odd number of quotes -> cursor is inside an attribute value
+        const isInsideQuotes = /="[^"]*$/.test(textBeforeCursor)
+        if (isInsideQuotes) {
           return { suggestions: [] }
         }
 
         const tagMatch = textBeforeCursor.match(/<(\w+)/)
         if (!tagMatch) return { suggestions: [] }
+
+        // (rest unchanged)
 
         const tagName = tagMatch[1]
         if (!elements) return
@@ -165,18 +178,18 @@ export default function CodeEditor() {
 
             return enumValues.length > 0
               ? enumValues.map((value, index) => ({
-                label: `${attributeName}="${value}"`,
-                kind: monacoInstance.languages.CompletionItemKind.Enum,
-                insertText: `${attributeName}="${value}"`,
-                documentation: attributeValue?.enum[value]?.description || '',
-              }))
+                  label: `${attributeName}="${value}"`,
+                  kind: monacoInstance.languages.CompletionItemKind.Enum,
+                  insertText: `${attributeName}="${value}"`,
+                  documentation: attributeValue?.enum[value]?.description || '',
+                }))
               : {
-                label: attributeName,
-                kind: monacoInstance.languages.CompletionItemKind.Property,
-                insertText: `${attributeName}="\${1}"`,
-                insertTextRules: monacoInstance.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-                documentation: attributeValue?.description || '',
-              }
+                  label: attributeName,
+                  kind: monacoInstance.languages.CompletionItemKind.Property,
+                  insertText: `${attributeName}="\${1}"`,
+                  insertTextRules: monacoInstance.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+                  documentation: attributeValue?.description || '',
+                }
           },
         )
 
@@ -259,7 +272,7 @@ export default function CodeEditor() {
                 theme={`vs-${theme}`}
                 value={xmlContent}
                 onMount={handleEditorMount}
-                options={{ automaticLayout: true }}
+                options={{ automaticLayout: true, quickSuggestions: false }}
               />
             </div>
           </>
