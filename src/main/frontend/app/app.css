@@ -87,3 +87,17 @@ body {
   --focus-border: var(--color-brand);
   --separator-border: var(--color-border);
 }
+
+.key {
+  display: inline-block;
+  padding: 2px 6px;
+  margin: 0 2px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background: var(--color-backdrop);
+  font-size: 0.85em;
+  font-family: var(--font-inter);
+  line-height: 1.4;
+  white-space: nowrap;
+}
+

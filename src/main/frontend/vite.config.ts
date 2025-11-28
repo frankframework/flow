@@ -4,9 +4,19 @@ import { defineConfig } from 'vite'
 import tsconfigPaths from 'vite-tsconfig-paths'
 import svgr from 'vite-plugin-svgr'
 import mdx from '@mdx-js/rollup'
+import remarkGfm from 'remark-gfm'
 
 export default defineConfig({
-  plugins: [tailwindcss(), mdx(), reactRouter(), tsconfigPaths(), svgr()],
+  plugins: [
+    tailwindcss(),
+    mdx({
+      remarkPlugins: [remarkGfm],
+    }),
+    ,
+    reactRouter(),
+    tsconfigPaths(),
+    svgr(),
+  ],
   server: {
     port: 3000,
     proxy: {
