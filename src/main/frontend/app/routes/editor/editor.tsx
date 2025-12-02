@@ -105,6 +105,8 @@ export default function CodeEditor() {
     const monacoInstance = (globalThis as any).monaco
     if (!monacoInstance) return
 
+    const isInsideAttributeValue = (text: string) => /="[^"]*$/.test(text)
+
     // Element suggestions
     const elementProvider = monacoInstance.languages.registerCompletionItemProvider('xml', {
       triggerCharacters: ['<'],
@@ -113,8 +115,7 @@ export default function CodeEditor() {
         const textBeforeCursor = line.slice(0, position.column - 1)
 
         // Prevent element suggestions inside attribute values
-        const isInsideQuotes = /="[^"]*$/.test(textBeforeCursor)
-        if (isInsideQuotes) {
+        if (isInsideAttributeValue(textBeforeCursor)) {
           return { suggestions: [] }
         }
 
@@ -156,8 +157,7 @@ export default function CodeEditor() {
         const textBeforeCursor = line.slice(0, position.column - 1)
 
         // Don't show suggestions if cursor is inside quotes
-        const isInsideQuotes = /="[^"]*$/.test(textBeforeCursor)
-        if (isInsideQuotes) {
+        if (isInsideAttributeValue(textBeforeCursor)) {
           return { suggestions: [] }
         }
 
