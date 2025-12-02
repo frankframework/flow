@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import FfIcon from '/icons/custom/ff!-icon.svg?react'
 import ArchiveIcon from '/icons/solar/Archive.svg?react'
 import ProjectRow from './project-row'
@@ -22,6 +22,7 @@ export default function ProjectLanding() {
   const [showModal, setShowModal] = useState(false)
   const setProject = useProjectStore((state) => state.setProject)
   const location = useLocation()
+  const fileInputReference = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -46,6 +47,23 @@ export default function ProjectLanding() {
   useEffect(() => {
     setProject(undefined)
   }, [location.key])
+
+  const handleOpenProject = () => {
+    fileInputReference.current?.click()
+  }
+
+  const onFilesSelected = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files
+    if (!files) return
+
+    const loadedFiles = [...files].map((file) => ({
+      name: file.name,
+      relativePath: (file as any).webkitRelativePath || file.name,
+      file,
+    }))
+
+    console.log('Loaded files:', loadedFiles)
+  }
 
   const createProject = async (projectName: string) => {
     try {
@@ -102,7 +120,17 @@ export default function ProjectLanding() {
         <div className="flex flex-1 overflow-hidden">
           <div className="border-border text-muted-foreground w-1/4 border-r px-4 py-3 text-sm">
             <ActionButton label="New Project" onClick={() => setShowModal(true)} />
-            <ActionButton label="Open" onClick={() => console.log('Open project')} />
+            <ActionButton label="Open" onClick={handleOpenProject} />
+
+            <input
+              type="file"
+              ref={fileInputReference}
+              style={{ display: 'none' }}
+              onChange={onFilesSelected}
+              webkitdirectory="true"
+              directory=""
+              multiple
+            />
             <ActionButton label="Clone Repository" onClick={() => console.log('Cloning project')} />
           </div>
           <div className="h-full w-3/4 overflow-y-auto px-4 py-3">
