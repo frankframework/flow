@@ -105,17 +105,21 @@ export default function CodeEditor() {
     const monacoInstance = (globalThis as any).monaco
     if (!monacoInstance) return
 
-    const isInsideAttributeValue = (text: string) => /="[^"]*$/.test(text)
+    const isCursorInsideAttributeValue = (model, position) => {
+      const text = getTextBeforeCursor(model, position)
+      return /="[^"]*$/.test(text)
+    }
+
+    const getTextBeforeCursor = (model, position) => {
+      const line = model.getLineContent(position.lineNumber)
+      return line.slice(0, position.column - 1)
+    }
 
     // Element suggestions
     const elementProvider = monacoInstance.languages.registerCompletionItemProvider('xml', {
       triggerCharacters: ['<'],
       provideCompletionItems: (model, position) => {
-        const line = model.getLineContent(position.lineNumber)
-        const textBeforeCursor = line.slice(0, position.column - 1)
-
-        // Prevent element suggestions inside attribute values
-        if (isInsideAttributeValue(textBeforeCursor)) {
+        if (isCursorInsideAttributeValue(model, position)) {
           return { suggestions: [] }
         }
 
@@ -153,14 +157,11 @@ export default function CodeEditor() {
     const attributeProvider = monacoInstance.languages.registerCompletionItemProvider('xml', {
       triggerCharacters: [' '],
       provideCompletionItems: (model, position) => {
-        const line = model.getLineContent(position.lineNumber)
-        const textBeforeCursor = line.slice(0, position.column - 1)
-
-        // Don't show suggestions if cursor is inside quotes
-        if (isInsideAttributeValue(textBeforeCursor)) {
+        if (isCursorInsideAttributeValue(model, position)) {
           return { suggestions: [] }
         }
 
+        const textBeforeCursor = getTextBeforeCursor(model, position)
         const tagMatch = textBeforeCursor.match(/<(\w+)/)
         if (!tagMatch) return { suggestions: [] }
 
