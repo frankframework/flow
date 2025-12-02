@@ -112,7 +112,7 @@ export default function ProjectLanding() {
           </div>
         </div>
       </div>
-      <ProjectModal isOpen={showModal} onClose={() => setShowModal(false)} onCreate={createProject}/>
+      <ProjectModal isOpen={showModal} onClose={() => setShowModal(false)} onCreate={createProject} />
     </div>
   )
 }
