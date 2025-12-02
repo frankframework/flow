@@ -1,11 +1,12 @@
 import React from 'react'
 import HandleMenuItem from './handle-menu-item'
 import { translateHandleTypeToColour } from './handle'
+import type { ActionType } from './action-types'
 
 interface HandleMenuProperties {
   position: { x: number; y: number }
   onClose: () => void
-  onSelect: (type: string) => void
+  onSelect: (type: ActionType) => void
 }
 
 const HandleMenu: React.FC<HandleMenuProperties> = ({ position, onClose, onSelect }) => {

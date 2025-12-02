@@ -21,7 +21,7 @@ function childContextMenu(properties: ContextProperties) {
   return createPortal(
     <div
       style={{ position: 'fixed', top: pos.top, left: pos.left, zIndex: 10_000 }}
-      className="nodrag bg-background border shadow-md"
+      className="nodrag bg-background border-border border shadow-md"
     >
       <button
         className="border-border bg-background absolute -top-1 -right-1 rounded-full border text-gray-400 shadow-sm hover:border-red-400 hover:text-red-400"

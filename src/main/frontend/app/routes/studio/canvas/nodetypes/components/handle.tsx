@@ -1,18 +1,19 @@
 import { Handle, Position, useNodeConnections, useReactFlow } from '@xyflow/react'
 import { useState } from 'react'
 import HandleMenuItem from './handle-menu-item'
+import type { ActionType } from './action-types'
 
 interface HandleProperties {
-  type: string
+  type: ActionType
   index: number
   firstHandlePosition: number
   handleSpacing: number
-  onChangeType: (newType: string) => void
+  onChangeType: (newType: ActionType) => void
   absolutePosition: { x: number; y: number }
 }
 
-export function translateHandleTypeToColour(type: string): string {
-  switch (type.toLowerCase()) {
+export function translateHandleTypeToColour(type: ActionType): string {
+  switch (type) {
     case 'success': {
       return '#68D250'
     }
@@ -22,8 +23,8 @@ export function translateHandleTypeToColour(type: string): string {
     case 'exception': {
       return '#424242'
     }
-    case 'informational': {
-      return '#848484'
+    case 'custom': {
+      return '#1B97D1'
     }
     default: {
       return '#1B97D1'

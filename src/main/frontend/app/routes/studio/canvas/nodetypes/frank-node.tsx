@@ -20,6 +20,7 @@ import variables from '../../../../../environment/environment'
 import { useSettingsStore } from '~/routes/settings/settings-store'
 import HandleMenu from './components/handle-menu'
 import HandleMenuItem from './components/handle-menu-item'
+import type { ActionType } from './components/action-types'
 
 export interface ChildNode {
   id: string
@@ -33,7 +34,7 @@ export type FrankNode = Node<{
   subtype: string
   type: string
   name: string
-  sourceHandles: { type: string; index: number }[]
+  sourceHandles: { type: ActionType; index: number }[]
   attributes?: Record<string, string>
   children: ChildNode[]
 }>
@@ -156,7 +157,7 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
     setAnchorMap({})
   }
 
-  const changeHandleType = (handleIndex: number, newType: string) => {
+  const changeHandleType = (handleIndex: number, newType: ActionType) => {
     useFlowStore.getState().updateHandle(properties.id, handleIndex, { type: newType, index: handleIndex })
     // Timeout to prevent bug from edgelabel not properly updating
     setTimeout(() => {
@@ -234,10 +235,10 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
         </div>
         {isContextMenuOpen && (
           <div
-            className="nodrag bg-background border-border absolute border shadow-md w-30"
+            className="nodrag bg-background border-border absolute w-30 border shadow-md"
             style={{
               left: 'calc(100% + 10px)',
-              top: 'calc(0% - 5px)',
+              top: -5,
               zIndex: 2,
             }}
           >
