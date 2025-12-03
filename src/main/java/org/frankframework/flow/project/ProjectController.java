@@ -4,6 +4,10 @@ import org.frankframework.flow.configuration.Configuration;
 import org.frankframework.flow.configuration.ConfigurationDTO;
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
 import org.frankframework.flow.projectsettings.InvalidFilterTypeException;
+import org.frankframework.flow.configuration.Configuration;
+import org.frankframework.flow.configuration.ConfigurationDTO;
+import org.frankframework.flow.utility.XmlValidator;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -16,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @RestController()
 @RequestMapping("/projects")
@@ -69,14 +74,36 @@ public class ProjectController {
 	}
 
 	@PutMapping("/{projectName}/{filename}")
-	public ResponseEntity<String> updateConfiguration(
+	public ResponseEntity<Object> updateConfiguration(
 			@PathVariable String projectName,
 			@PathVariable String filename,
-			@RequestBody ConfigurationDTO configurationDTO)
-			throws ProjectNotFoundException, ConfigurationNotFoundException {
+			@RequestBody ConfigurationDTO configurationDTO) {
+		try {
+			String validationError = XmlValidator.validateXml(configurationDTO.xmlContent());
+			if (validationError != null) {
+				return ResponseEntity
+						.badRequest()
+						.body(new ErrorDTO("Invalid XML Content", validationError));
+			}
 
-		projectService.updateConfigurationXml(projectName, filename, configurationDTO.xmlContent());
-		return ResponseEntity.ok().build();
+			boolean updated = projectService.updateConfigurationXml(
+					projectName, filename, configurationDTO.xmlContent());
+
+			if (!updated) {
+				String notFoundMessage = String.format("Project with name %s or file with name $s can not be found", projectName, filename);
+				return ResponseEntity
+						.status(HttpStatus.NOT_FOUND)
+						.body(new ErrorDTO("Not found", notFoundMessage));
+			}
+
+			return ResponseEntity.ok().build();
+		} catch (Exception e) {
+			e.printStackTrace();
+			return ResponseEntity
+					.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body(new ErrorDTO("Invalid XML", e.getMessage()));
+		}
+
 	}
 
 	@PostMapping("/{projectname}")

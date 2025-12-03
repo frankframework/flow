@@ -1,5 +1,6 @@
 import Tabs, { type TabsList } from '~/components/tabs/tabs'
 import Editor, { type OnMount } from '@monaco-editor/react'
+import { toast, ToastContainer } from 'react-toastify'
 import EditorFiles from '~/routes/editor/editor-files'
 import SidebarHeader from '~/components/sidebars-layout/sidebar-header'
 import SidebarLayout from '~/components/sidebars-layout/sidebar-layout'
@@ -242,12 +243,28 @@ export default function CodeEditor() {
         body: JSON.stringify({ xmlContent: updatedXml }),
       })
 
-      if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`)
+      // Parse JSON response body if it's not OK
+      if (!response.ok) {
+        const contentType = response.headers.get('content-type')
+        if (contentType && contentType.includes('application/json')) {
+          const errorData = await response.json()
+          toast.error(
+            `Error saving configuration: ${errorData.title || errorData.error}\nDetails: ${errorData.details}`,
+          )
+          console.error('Something went wrong saving the configuration: ', errorData)
+        } else {
+          toast.error(`Error saving configuration. HTTP status: ${response.status}`)
+          console.error('Error saving configuration. HTTP status: ', response.status)
+        }
+        return
+      }
     } catch (error) {
-      console.error('Failed to save XML:', error)
+      toast.error(`Network or unexpected error: ${error}`)
+      console.error('Network or unexpected error: ', error)
     } finally {
       setIsSaving(false)
     }
+    toast.success('Succesfully saved content')
   }
 
   return (
@@ -275,6 +292,7 @@ export default function CodeEditor() {
                 onMount={handleEditorMount}
                 options={{ automaticLayout: true, quickSuggestions: false }}
               />
+              <ToastContainer position="bottom-right" theme={theme} closeOnClick={true} />
             </div>
           </>
         ) : (
