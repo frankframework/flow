@@ -1,5 +1,6 @@
 import { useLayoutEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
+import HandleMenuItem from './handle-menu-item'
 
 interface ContextProperties {
   anchorElement: Element
@@ -20,7 +21,7 @@ function childContextMenu(properties: ContextProperties) {
   return createPortal(
     <div
       style={{ position: 'fixed', top: pos.top, left: pos.left, zIndex: 10_000 }}
-      className="nodrag bg-background rounded-md border shadow-md"
+      className="nodrag bg-background border-border border shadow-md"
     >
       <button
         className="border-border bg-background absolute -top-1 -right-1 rounded-full border text-gray-400 shadow-sm hover:border-red-400 hover:text-red-400"
@@ -40,13 +41,10 @@ function childContextMenu(properties: ContextProperties) {
           <line x1="3" y1="7" x2="7" y2="3" />
         </svg>
       </button>
+      <div className="border-border bg-muted border-b px-3 py-1 text-xs font-bold">Update Element</div>
       <ul>
-        <li className="hover:bg-border cursor-pointer rounded-t-md p-2" onClick={properties.onEdit}>
-          Edit
-        </li>
-        <li className="hover:bg-border cursor-pointer rounded-t-md p-2" onClick={properties.onDelete}>
-          Delete
-        </li>
+        <HandleMenuItem label="Edit" onClick={properties.onEdit} />
+        <HandleMenuItem label="Delete" onClick={properties.onDelete} />
       </ul>
     </div>,
     document.body,
