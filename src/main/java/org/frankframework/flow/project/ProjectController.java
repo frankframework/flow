@@ -78,32 +78,17 @@ public class ProjectController {
 			@PathVariable String projectName,
 			@PathVariable String filename,
 			@RequestBody ConfigurationDTO configurationDTO) {
-		try {
-			String validationError = XmlValidator.validateXml(configurationDTO.xmlContent());
-			if (validationError != null) {
-				return ResponseEntity
-						.badRequest()
-						.body(new ErrorDTO("Invalid XML Content", validationError));
-			}
 
-			boolean updated = projectService.updateConfigurationXml(
-					projectName, filename, configurationDTO.xmlContent());
-
-			if (!updated) {
-				String notFoundMessage = String.format("Project with name %s or file with name $s can not be found", projectName, filename);
-				return ResponseEntity
-						.status(HttpStatus.NOT_FOUND)
-						.body(new ErrorDTO("Not found", notFoundMessage));
-			}
-
-			return ResponseEntity.ok().build();
-		} catch (Exception e) {
-			e.printStackTrace();
+		String validationError = XmlValidator.validateXml(configurationDTO.xmlContent());
+		if (validationError != null) {
 			return ResponseEntity
-					.status(HttpStatus.INTERNAL_SERVER_ERROR)
-					.body(new ErrorDTO("Invalid XML", e.getMessage()));
+					.badRequest()
+					.body(new ErrorDTO("Invalid XML Content", validationError));
 		}
 
+		projectService.updateConfigurationXml(projectName, filename, configurationDTO.xmlContent());
+
+		return ResponseEntity.ok().build();
 	}
 
 	@PostMapping("/{projectname}")
