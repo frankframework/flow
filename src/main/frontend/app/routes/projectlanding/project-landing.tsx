@@ -52,17 +52,45 @@ export default function ProjectLanding() {
     fileInputReference.current?.click()
   }
 
-  const onFilesSelected = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFolderSelection = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files
-    if (!files) return
+    if (!files || files.length === 0) return
 
-    const loadedFiles = [...files].map((file) => ({
-      name: file.name,
-      relativePath: (file as any).webkitRelativePath || file.name,
-      file,
-    }))
+    // Detect project root folder (first directory name)
+    const firstPath = (files[0] as any).webkitRelativePath
+    const projectRoot = firstPath.split('/')[0]
 
-    console.log('Loaded files:', loadedFiles)
+    console.log('Detected project root:', projectRoot)
+
+    // 1. Create project in backend
+    await createProject(projectRoot)
+
+    // 2. Collect XML configuration files from /src/main/configurations
+    const configs: { filepath: string; xmlContent: string }[] = []
+
+    for (const file of files) {
+      const relative = (file as any).webkitRelativePath
+
+      if (relative.startsWith(`${projectRoot}/src/main/configurations/`) && relative.endsWith('.xml')) {
+        const content = await file.text() // read file content
+        configs.push({
+          filepath: relative.replace(`${projectRoot}/`, ''), // path relative to project root
+          xmlContent: content,
+        })
+      }
+    }
+
+    console.log('Uploading configs:', configs)
+
+    // Import configurations to the project
+    await fetch(`http://localhost:8080/projects/${projectRoot}/import-configurations`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        projectName: projectRoot,
+        configurations: configs,
+      }),
+    })
   }
 
   const createProject = async (projectName: string) => {
@@ -126,7 +154,7 @@ export default function ProjectLanding() {
               type="file"
               ref={fileInputReference}
               style={{ display: 'none' }}
-              onChange={onFilesSelected}
+              onChange={handleFolderSelection}
               webkitdirectory="true"
               directory=""
               multiple

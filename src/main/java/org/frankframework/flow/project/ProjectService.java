@@ -25,23 +25,37 @@ public class ProjectService {
 		initiateProjects();
 	}
 
-	public Project createProject(String name){
+	public Project createProject(String name) {
 		Project project = new Project(name);
 		projects.add(project);
 		return project;
 	}
 
-	public Project getProject(String name){
-		for(Project project : projects){
-			if(project.getName().equals(name)){
+	public Project getProject(String name) {
+		for (Project project : projects) {
+			if (project.getName().equals(name)) {
 				return project;
 			}
 		}
 		return null;
 	}
 
-	public ArrayList<Project> getProjects(){
+	public ArrayList<Project> getProjects() {
 		return projects;
+	}
+
+	public Project addConfigurations(String projectName, ArrayList<String> configurationPaths) {
+		Project project = getProject(projectName);
+		if (project == null) {
+			return null; // Project not found
+		}
+
+		for (String path : configurationPaths) {
+			Configuration config = new Configuration(path);
+			project.addConfiguration(config);
+		}
+
+		return project;
 	}
 
 	public boolean updateConfigurationXml(String projectName, String filename, String xmlContent) {
@@ -51,7 +65,7 @@ public class ProjectService {
 		}
 
 		for (Configuration config : project.getConfigurations()) {
-			if (config.getFilename().equals(filename)) {
+			if (config.getFilepath().equals(filename)) {
 				config.setXmlContent(xmlContent);
 				return true; // Successfully updated
 			}
@@ -60,9 +74,9 @@ public class ProjectService {
 		return false; // Configuration not found
 	}
 
-	public Project addConfiguration(String projectName, String configurationName){
+	public Project addConfiguration(String projectName, String configurationName) {
 		Project project = getProject(projectName);
-		if(project == null){
+		if (project == null) {
 			return null;
 		}
 		Configuration configuration = new Configuration(configurationName);
@@ -86,7 +100,8 @@ public class ProjectService {
 				// Example path: file:/.../resources/project/testproject/Configuration1.xml
 				// Extract the project name between "project/" and the next "/"
 				String[] parts = path.split("/project/");
-				if (parts.length < 2) continue;
+				if (parts.length < 2)
+					continue;
 
 				String relativePath = parts[1]; // e.g. "testproject/Configuration1.xml"
 				String projectName = relativePath.substring(0, relativePath.indexOf("/"));

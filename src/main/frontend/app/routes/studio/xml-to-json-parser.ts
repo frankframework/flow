@@ -8,17 +8,24 @@ interface IdCounter {
   current: number
 }
 
-export async function getXmlString(projectName: string, filename: string): Promise<string> {
+export async function getXmlString(projectName: string, filepath: string): Promise<string> {
   try {
-    const response = await fetch(`/projects/${projectName}/${filename}`);
+    const response = await fetch(`/projects/${projectName}/configuration`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ filepath }),
+    })
+
     if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
+      throw new Error(`HTTP error! Status: ${response.status}`)
     }
 
-    const data = await response.json();
-    return data.xmlContent;
+    const data = await response.json()
+    return data.xmlContent
   } catch (error) {
-    throw new Error(`Failed to fetch XML file for ${projectName}/${filename}: ${error}`);
+    throw new Error(`Failed to fetch XML file for ${filepath}: ${error}`)
   }
 }
 
@@ -51,7 +58,11 @@ export async function getAdapterNamesFromConfiguration(projectName: string, file
   })
 }
 
-export async function getAdapterFromConfiguration(projectname: string, filename: string, adapterName: string): Promise<Element | null> {
+export async function getAdapterFromConfiguration(
+  projectname: string,
+  filename: string,
+  adapterName: string,
+): Promise<Element | null> {
   const xmlString = await getXmlString(projectname, filename)
   const parser = new DOMParser()
   const xmlDoc = parser.parseFromString(xmlString, 'text/xml')

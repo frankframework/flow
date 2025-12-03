@@ -21,6 +21,7 @@ public class Project {
 	public String getName() {
 		return name;
 	}
+
 	public void setName(String name) {
 		this.name = name;
 	}
@@ -33,16 +34,16 @@ public class Project {
 		this.configurations.add(configuration);
 	}
 
-	public void setConfigurationXml(String filename, String xmlContent) {
+	public void setConfigurationXml(String filepath, String xmlContent) {
 		for (Configuration c : this.configurations) {
-			if (c.getFilename().equals(filename)) {
+			if (c.getFilepath().equals(filepath)) {
 				c.setXmlContent(xmlContent);
 				return;
 			}
 		}
 	}
 
-	public ProjectSettings getProjectSettings(){
+	public ProjectSettings getProjectSettings() {
 		return this.projectSettings;
 	}
 
@@ -50,11 +51,15 @@ public class Project {
 		return projectSettings.isEnabled(type);
 	}
 
-	public void enableFilter(FilterType type){
+	public void enableFilter(FilterType type) {
 		projectSettings.setEnabled(type, true);
 	}
 
-	public void disableFilter(FilterType type){
+	public void disableFilter(FilterType type) {
 		projectSettings.setEnabled(type, false);
+	}
+
+	public void clearConfigurations() {
+		configurations.clear();
 	}
 }

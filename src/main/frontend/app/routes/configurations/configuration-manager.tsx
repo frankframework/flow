@@ -11,8 +11,13 @@ export default function ConfigurationManager() {
   const navigate = useNavigate()
   const [showModal, setShowModal] = useState(false)
 
+  const handleClick = () => {
+    console.log(currentProject)
+  }
+
   return (
     <div className="bg-backdrop h-full w-full p-6">
+      <button onClick={handleClick}>Click</button>
       <div className="bg-background border-border h-full w-full rounded border p-6">
         <div
           className="hover:text-foreground-active flex w-fit hover:cursor-pointer"
@@ -24,16 +29,16 @@ export default function ConfigurationManager() {
           <p>Return To Projects</p>
         </div>
         <p className="ml-2">
-          Configurations within <span className="font-bold">{currentProject?.name}</span>:
+          Configurations within <span className="font-bold">{currentProject?.name}</span>/src/main/configurations:
         </p>
-        <div className="flex">
+        <div className="flex flex-wrap gap-4 pt-4">
           {currentProject?.filenames.map((filename, index) => (
-            <ConfigurationTile key={filename + index} filename={filename} />
+            <ConfigurationTile key={filename + index} filepath={filename} />
           ))}
           <AddConfigurationTile
             onClick={() => {
               setShowModal(true)
-            }}
+            }} 
           />
         </div>
       </div>
