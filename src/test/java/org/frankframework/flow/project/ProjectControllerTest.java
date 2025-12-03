@@ -144,8 +144,6 @@ class ProjectControllerTest {
     @Test
     void updateConfigurationSuccessReturns200() throws Exception {
         String xmlContent = "<xml>updated</xml>";
-        ConfigurationDTO dto = new ConfigurationDTO();
-        dto.xmlContent = xmlContent;
 
         when(projectService.updateConfigurationXml("MyProject", "config1.xml", xmlContent)).thenReturn(true);
 
@@ -205,8 +203,8 @@ class ProjectControllerTest {
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value(projectName))
-                .andExpect(jsonPath("$.filenames").doesNotExist())
-                .andExpect(jsonPath("$.filters").doesNotExist());
+                .andExpect(jsonPath("$.filenames").isEmpty())
+                .andExpect(jsonPath("$.filters").isNotEmpty());
 
         verify(projectService).createProject(projectName);
     }

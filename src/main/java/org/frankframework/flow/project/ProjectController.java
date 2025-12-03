@@ -32,15 +32,8 @@ public class ProjectController {
 		List<Project> projects = projectService.getProjects();
 
 		for (Project project : projects) {
-			ProjectDTO projectDTO = new ProjectDTO();
-			projectDTO.name = project.getName();
-			ArrayList<String> filenames = new ArrayList<>();
-			for (Configuration c :  project.getConfigurations()) {
-				filenames.add(c.getFilename());
-			}
-			projectDTO.filenames = filenames;
-			projectDTO.filters = project.getProjectSettings().getFilters();
-			projectDTOList.add(projectDTO);
+			ProjectDTO dto = ProjectDTO.from(project);
+			projectDTOList.add(dto);
 		}
 		return ResponseEntity.ok(projectDTOList);
 	}
@@ -51,18 +44,9 @@ public class ProjectController {
 
 		Project project = projectService.getProject(projectName);
 
-		ProjectDTO projectDTO = new ProjectDTO();
-		projectDTO.name = project.getName();
+		ProjectDTO dto = ProjectDTO.from(project);
 
-		ArrayList<String> filenames = new ArrayList<>();
-		for (Configuration c : project.getConfigurations()) {
-			filenames.add(c.getFilename());
-		}
-
-		projectDTO.filenames = filenames;
-		projectDTO.filters = project.getProjectSettings().getFilters();
-
-		return ResponseEntity.ok(projectDTO);
+		return ResponseEntity.ok(dto);
 	}
 
 	@GetMapping("/{projectName}/{filename}")
@@ -75,9 +59,7 @@ public class ProjectController {
 
 		for (Configuration config : project.getConfigurations()) {
 			if (config.getFilename().equals(filename)) {
-				ConfigurationDTO dto = new ConfigurationDTO();
-				dto.name = config.getFilename();
-				dto.xmlContent = config.getXmlContent();
+				ConfigurationDTO dto = new ConfigurationDTO(config.getFilename(), config.getXmlContent());
 				return ResponseEntity.ok(dto);
 			}
 		}
@@ -93,18 +75,17 @@ public class ProjectController {
 			@RequestBody ConfigurationDTO configurationDTO)
 			throws ProjectNotFoundException, ConfigurationNotFoundException {
 
-		projectService.updateConfigurationXml(projectName, filename, configurationDTO.xmlContent);
+		projectService.updateConfigurationXml(projectName, filename, configurationDTO.xmlContent());
 		return ResponseEntity.ok().build();
 	}
 
 	@PostMapping("/{projectname}")
 	public ResponseEntity<ProjectDTO> createProject(@PathVariable String projectname) {
-		projectService.createProject(projectname);
+		Project project = projectService.createProject(projectname);
 
-		ProjectDTO projectDTO = new ProjectDTO();
-		projectDTO.name = projectname;
+		ProjectDTO dto = ProjectDTO.from(project);
 
-		return ResponseEntity.ok(projectDTO);
+		return ResponseEntity.ok(dto);
 	}
 
 	@PatchMapping("/{projectname}/filters/{type}/enable")
@@ -114,7 +95,8 @@ public class ProjectController {
 			throws ProjectNotFoundException, InvalidFilterTypeException {
 
 		Project project = projectService.enableFilter(projectname, type);
-		return ResponseEntity.ok(convertProjectToDTO(project));
+		ProjectDTO dto = ProjectDTO.from(project);
+		return ResponseEntity.ok(dto);
 	}
 
 	@PatchMapping("/{projectname}/filters/{type}/disable")
@@ -124,21 +106,7 @@ public class ProjectController {
 			throws ProjectNotFoundException, InvalidFilterTypeException {
 
 		Project project = projectService.disableFilter(projectname, type);
-		return ResponseEntity.ok(convertProjectToDTO(project));
-	}
-
-	private ProjectDTO convertProjectToDTO(Project project) {
-		ProjectDTO dto = new ProjectDTO();
-		dto.name = project.getName();
-
-		ArrayList<String> filenames = new ArrayList<>();
-		for (Configuration c : project.getConfigurations()) {
-			filenames.add(c.getFilename());
-		}
-
-		dto.filenames = filenames;
-		dto.filters = project.getProjectSettings().getFilters();
-
-		return dto;
+		ProjectDTO dto = ProjectDTO.from(project);
+		return ResponseEntity.ok(dto);
 	}
 }

@@ -1,6 +1,4 @@
 package org.frankframework.flow.configuration;
 
-public class ConfigurationDTO {
-	public String name;
-	public String xmlContent;
+public record ConfigurationDTO(String name, String xmlContent) {
 }
