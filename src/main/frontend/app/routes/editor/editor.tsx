@@ -251,13 +251,16 @@ export default function CodeEditor() {
           toast.error(
             `Error saving configuration: ${errorData.title || errorData.error}\nDetails: ${errorData.details}`,
           )
+          console.error('Something went wrong saving the configuration: ', errorData)
         } else {
           toast.error(`Error saving configuration. HTTP status: ${response.status}`)
+          console.error('Error saving configuration. HTTP status: ', response.status)
         }
         return
       }
     } catch (error) {
       toast.error(`Network or unexpected error: ${error}`)
+      console.error('Network or unexpected error: ', error)
     } finally {
       setIsSaving(false)
     }
