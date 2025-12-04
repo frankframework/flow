@@ -18,7 +18,6 @@ import { useFFDoc } from '@frankframework/ff-doc/react'
 import variables from '../../../../../environment/environment'
 import { useSettingsStore } from '~/routes/settings/settings-store'
 import HandleMenu from './components/handle-menu'
-import HandleMenuItem from './components/handle-menu-item'
 import type { ActionType } from './components/action-types'
 
 export interface ChildNode {
@@ -360,16 +359,6 @@ export function ResizeIcon({ color = '#999999' }: Readonly<{ color?: string }>) 
       <line x1="19" y1="20" x2="20" y2="19" />
       <line x1="14" y1="20" x2="20" y2="14" />
       <line x1="9" y1="20" x2="20" y2="9" />
-    </svg>
-  )
-}
-
-export function MeatballMenu() {
-  return (
-    <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
-      <circle cx="6" cy="12" r="1.5" />
-      <circle cx="12" cy="12" r="1.5" />
-      <circle cx="18" cy="12" r="1.5" />
     </svg>
   )
 }
