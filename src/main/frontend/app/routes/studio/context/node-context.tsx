@@ -87,8 +87,6 @@ export default function NodeContext({
       }
       setInputValues(newValues)
     }
-
-    validateForm()
   }, [attributes, nodeId, parentId])
 
   useEffect(() => {
@@ -98,6 +96,11 @@ export default function NodeContext({
     }
     validateForm()
   }, [attributes])
+
+  // Checks form validity on input value changes (And also on first render)
+  useEffect(() => {
+    validateForm()
+  }, [inputValues])
 
   // Checks input fields for values and returns only those values and their labels
   function resolveFilledAttributes() {
