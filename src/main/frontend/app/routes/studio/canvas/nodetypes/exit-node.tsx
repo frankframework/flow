@@ -1,8 +1,7 @@
 import { Handle, type Node, type NodeProps, NodeResizeControl, Position } from '@xyflow/react'
-import { MeatballMenu, ResizeIcon } from '~/routes/studio/canvas/nodetypes/frank-node'
+import { ResizeIcon } from '~/routes/studio/canvas/nodetypes/frank-node'
 import { FlowConfig } from '~/routes/studio/canvas/flow.config'
 import { useState } from 'react'
-import useFlowStore from '~/stores/flow-store'
 import useNodeContextStore from '~/stores/node-context-store'
 import { useNodeContextMenu } from '~/routes/studio/canvas/flow'
 import { useFFDoc } from '@frankframework/ff-doc/react'
@@ -21,22 +20,13 @@ export default function ExitNode(properties: NodeProps<ExitNode>) {
   const showNodeContextMenu = useNodeContextMenu()
   const FRANK_DOC_URL = variables.frankDocJsonUrl
   const { elements } = useFFDoc(FRANK_DOC_URL)
-  const { setNodeId, setAttributes } = useNodeContextStore()
+  const { setNodeId, setAttributes, setIsEditing } = useNodeContextStore()
   const gradientEnabled = useSettingsStore((state) => state.studio.gradient)
 
-  const [isContextMenuOpen, setIsContextMenuOpen] = useState(false)
   const [dimensions, setDimensions] = useState({
     width: minNodeWidth, // Initial width
     height: minNodeHeight, // Initial height
   })
-
-  const toggleContextMenu = () => {
-    setIsContextMenuOpen(!isContextMenuOpen)
-  }
-
-  const deleteNode = () => {
-    useFlowStore.getState().deleteNode(properties.id)
-  }
 
   const editNode = () => {
     const recordElements = elements as Record<string, { name: string; [key: string]: any }>
@@ -46,7 +36,7 @@ export default function ExitNode(properties: NodeProps<ExitNode>) {
     setNodeId(+properties.id)
     setAttributes(attributes)
     showNodeContextMenu(true)
-    setIsContextMenuOpen(false)
+    setIsEditing(true)
   }
 
   return (
@@ -74,47 +64,8 @@ export default function ExitNode(properties: NodeProps<ExitNode>) {
           minHeight: `${minNodeHeight}px`,
           minWidth: `${minNodeWidth}px`,
         }}
+        onDoubleClick={editNode}
       >
-        <div className="nodrag absolute right-0 px-2 hover:cursor-pointer hover:opacity-50" onClick={toggleContextMenu}>
-          <MeatballMenu />
-        </div>
-        {isContextMenuOpen && (
-          <div
-            className="nodrag bg-background absolute rounded-md border shadow-md"
-            style={{
-              left: 'calc(100% + 10px)',
-              top: '0',
-              zIndex: 100,
-            }}
-          >
-            <button
-              className="border-border bg-background absolute -top-1 -right-1 rounded-full border text-gray-400 shadow-sm hover:border-red-400 hover:text-red-400"
-              onClick={() => setIsContextMenuOpen(false)}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-3 w-3"
-                width="10"
-                height="10"
-                viewBox="0 0 10 10"
-                strokeWidth="1"
-                stroke="currentColor"
-                strokeLinecap="round"
-              >
-                <line x1="3" y1="3" x2="7" y2="7" />
-                <line x1="3" y1="7" x2="7" y2="3" />
-              </svg>
-            </button>
-            <ul>
-              <li className="hover:bg-border cursor-pointer rounded-t-md p-2" onClick={editNode}>
-                Edit
-              </li>
-              <li className="hover:bg-border cursor-pointer rounded-b-md p-2" onClick={deleteNode}>
-                Delete
-              </li>
-            </ul>
-          </div>
-        )}
         <div
           className="border-b-border box-border w-full rounded-t-md border-b p-1"
           style={{
