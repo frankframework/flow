@@ -8,6 +8,7 @@ import {
   ReactFlow,
   ReactFlowProvider,
   useReactFlow,
+  Panel,
 } from '@xyflow/react'
 import Dagre from '@dagrejs/dagre'
 import '@xyflow/react/dist/style.css'
