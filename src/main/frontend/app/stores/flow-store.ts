@@ -39,6 +39,7 @@ export interface FlowState {
   addChild: (nodeId: string, child: ChildNode) => void
   setStickyText: (nodeId: string, text: string) => void
   setNodeName: (nodeId: string, name: string) => void
+  getNodeName: (nodeId: string) => string | null
   addHandle: (nodeId: string, handle: { type: ActionType; index: number }) => void
   updateHandle: (nodeId: string, handleIndex: number, newHandle: { type: ActionType; index: number }) => void
   updateChild: (parentNodeId: string, updatedChild: ChildNode) => void
@@ -206,6 +207,12 @@ const useFlowStore = create<FlowState>((set, get) => ({
         return node
       }),
     })
+  },
+  getNodeName: (nodeId: string) => {
+    const node = get().nodes.find((n) => n.id === nodeId)
+    if (!node) return null
+    if (isFrankNode(node) || isExitNode(node)) return node.data.name ?? null
+    return null
   },
   addHandle: (nodeId, handle) => {
     set({
