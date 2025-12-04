@@ -63,7 +63,6 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
     groupNode: GroupNodeComponent,
   }
   const edgeTypes = { frankEdge: FrankEdgeComponent }
-  const defaultEdgeOptions = { zIndex: 1001 } // Greater index than 1000, the default for a node when it is selected. Enables clicking on edges always
   const reactFlow = useReactFlow()
 
   const { nodes, edges, viewport, onNodesChange, onEdgesChange, onConnect, onReconnect } = useFlowStore(
@@ -558,7 +557,6 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
         onConnectEnd={handleConnectEnd}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
-        defaultEdgeOptions={defaultEdgeOptions}
         deleteKeyCode={'Delete'}
         minZoom={0.2}
       >
