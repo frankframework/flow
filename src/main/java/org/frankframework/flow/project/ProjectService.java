@@ -1,5 +1,6 @@
 package org.frankframework.flow.project;
 
+import org.frankframework.flow.configuration.AdapterNotFoundException;
 import org.frankframework.flow.configuration.Configuration;
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
 import org.frankframework.flow.projectsettings.FilterType;
@@ -8,11 +9,26 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.stereotype.Service;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Optional;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 
 @Service
 public class ProjectService {
@@ -64,36 +80,111 @@ public class ProjectService {
 	}
 
 	public Project enableFilter(String projectName, String type)
-            throws ProjectNotFoundException, InvalidFilterTypeException {
+			throws ProjectNotFoundException, InvalidFilterTypeException {
 
-        Project project = getProject(projectName);
+		Project project = getProject(projectName);
 
-        FilterType filterType;
-        try {
-            filterType = FilterType.valueOf(type.toUpperCase());
-        } catch (IllegalArgumentException e) {
-            throw new InvalidFilterTypeException(type);
-        }
+		FilterType filterType;
+		try {
+			filterType = FilterType.valueOf(type.toUpperCase());
+		} catch (IllegalArgumentException e) {
+			throw new InvalidFilterTypeException(type);
+		}
 
-        project.enableFilter(filterType);
-        return project;
-    }
+		project.enableFilter(filterType);
+		return project;
+	}
 
-    public Project disableFilter(String projectName, String type)
-            throws ProjectNotFoundException, InvalidFilterTypeException {
+	public Project disableFilter(String projectName, String type)
+			throws ProjectNotFoundException, InvalidFilterTypeException {
 
-        Project project = getProject(projectName);
+		Project project = getProject(projectName);
 
-        FilterType filterType;
-        try {
-            filterType = FilterType.valueOf(type.toUpperCase());
-        } catch (IllegalArgumentException e) {
-            throw new InvalidFilterTypeException(type);
-        }
+		FilterType filterType;
+		try {
+			filterType = FilterType.valueOf(type.toUpperCase());
+		} catch (IllegalArgumentException e) {
+			throw new InvalidFilterTypeException(type);
+		}
 
-        project.disableFilter(filterType);
-        return project;
-    }
+		project.disableFilter(filterType);
+		return project;
+	}
+
+	public boolean updateAdapter(String projectName, String configurationName, String adapterName,
+			String newAdapterXml)
+			throws ProjectNotFoundException, ConfigurationNotFoundException, AdapterNotFoundException {
+		Project project = getProject(projectName);
+
+		Optional<Configuration> configOptional = project.getConfigurations().stream()
+				.filter(configuration -> configuration.getFilename().equals(configurationName))
+				.findFirst();
+
+		if (configOptional.isEmpty()) {
+			System.err.println("Configuration not found: " + configurationName);
+			throw new ConfigurationNotFoundException("Configuration not found: " + configurationName);
+		}
+
+		Configuration config = configOptional.get();
+
+		try {
+			// Parse configuration XML
+			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+			factory.setIgnoringComments(true);
+			factory.setNamespaceAware(true);
+			DocumentBuilder builder = factory.newDocumentBuilder();
+			Document configDoc = builder.parse(new ByteArrayInputStream(config.getXmlContent().getBytes()));
+
+			// Parse new adapter XML
+			Document newAdapterDoc = builder.parse(new ByteArrayInputStream(newAdapterXml.getBytes()));
+			Node newAdapterNode = configDoc.importNode(newAdapterDoc.getDocumentElement(), true);
+
+			// Locate existing adapter by name
+			NodeList adapters = configDoc.getElementsByTagName("Adapter");
+			boolean replaced = false;
+			for (int i = 0; i < adapters.getLength(); i++) {
+				Element adapterEl = (Element) adapters.item(i);
+				if (adapterEl.getAttribute("name").equals(adapterName)) {
+					Node parent = adapterEl.getParentNode();
+					parent.replaceChild(newAdapterNode, adapterEl);
+					replaced = true;
+					break;
+				}
+			}
+
+			if (!replaced) {
+				throw new AdapterNotFoundException("Adapter not found: " + adapterName);
+			}
+
+			// Convert updated DOM back to string + some settings to make indentation
+			// prettier and logical
+			TransformerFactory tf = TransformerFactory.newInstance();
+			Transformer transformer = tf.newTransformer();
+			transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+			transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
+			transformer.setOutputProperty(OutputKeys.METHOD, "xml");
+			transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+
+			// Force consistent newlines
+			transformer.setOutputProperty("{http://xml.apache.org/xalan}line-separator", "\n");
+			StringWriter writer = new StringWriter();
+			transformer.transform(new DOMSource(configDoc), new StreamResult(writer));
+
+			String xmlOutput = writer.toString().replaceAll("(?m)^[ \t]*\r?\n", "");
+			config.setXmlContent(xmlOutput);
+
+			return true;
+
+		} catch (AdapterNotFoundException | ConfigurationNotFoundException | ProjectNotFoundException e) {
+			// rethrow explicitly so they bubble up to GlobalExceptionHandler
+			throw e;
+		} catch (Exception e) {
+			// Other unexpected exceptions still return false
+			System.err.println("Error updating adapter: " + e.getMessage());
+			e.printStackTrace();
+			return false;
+		}
+	}
 
 	/**
 	 * Dynamically scan all project folders under /resources/project/
@@ -135,7 +226,6 @@ public class ProjectService {
 				project.addConfiguration(configuration);
 			}
 
-			System.out.println("Loaded " + projects.size() + " projects successfully.");
 		} catch (IOException e) {
 			System.err.println("Error initializing projects: " + e.getMessage());
 			e.printStackTrace();

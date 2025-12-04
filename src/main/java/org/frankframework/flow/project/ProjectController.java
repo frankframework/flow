@@ -2,6 +2,7 @@ package org.frankframework.flow.project;
 
 import org.frankframework.flow.configuration.Configuration;
 import org.frankframework.flow.configuration.ConfigurationDTO;
+import org.frankframework.flow.configuration.AdapterUpdateDTO;
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
 import org.frankframework.flow.projectsettings.InvalidFilterTypeException;
 import org.frankframework.flow.configuration.Configuration;
@@ -74,19 +75,37 @@ public class ProjectController {
 	}
 
 	@PutMapping("/{projectName}/{filename}")
-	public ResponseEntity<Object> updateConfiguration(
+	public ResponseEntity<Void> updateConfiguration(
 			@PathVariable String projectName,
 			@PathVariable String filename,
-			@RequestBody ConfigurationDTO configurationDTO) {
+			@RequestBody ConfigurationDTO configurationDTO) throws ProjectNotFoundException, ConfigurationNotFoundException, InvalidXmlContentException {
 
-		String validationError = XmlValidator.validateXml(configurationDTO.xmlContent());
-		if (validationError != null) {
-			return ResponseEntity
-					.badRequest()
-					.body(new ErrorDTO("Invalid XML Content", validationError));
+		XmlValidator.validateXml(configurationDTO.xmlContent());
+
+		projectService.updateConfigurationXml(
+				projectName,
+				filename,
+				configurationDTO.xmlContent());
+
+		return ResponseEntity.ok().build();
+	}
+
+	@PutMapping("/{projectName}/{configurationName}/adapters/{adapterName}")
+	public ResponseEntity<Void> updateAdapter(
+			@PathVariable String projectName,
+			@PathVariable String configurationName,
+			@PathVariable String adapterName,
+			@RequestBody AdapterUpdateDTO adapterUpdateDTO) {
+
+		boolean updated = projectService.updateAdapter(
+				projectName,
+				configurationName,
+				adapterName,
+				adapterUpdateDTO.adapterXml());
+
+		if (!updated) {
+			return ResponseEntity.notFound().build();
 		}
-
-		projectService.updateConfigurationXml(projectName, filename, configurationDTO.xmlContent());
 
 		return ResponseEntity.ok().build();
 	}
