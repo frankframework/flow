@@ -71,7 +71,7 @@ export default function EditorFiles() {
         const loaded: ConfigWithAdapters[] = await Promise.all(
           configurationNames.map(async (configName) => {
             if (!project) return
-            const adapterNames = await getAdapterNamesFromConfiguration(project.name, project.name, configName)
+            const adapterNames = await getAdapterNamesFromConfiguration(project.name, configName)
 
             // Fetch listener name for each adapter
             const adapters = await Promise.all(
