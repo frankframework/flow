@@ -75,19 +75,17 @@ public class ProjectController {
 	}
 
 	@PutMapping("/{projectName}/{filename}")
-	public ResponseEntity<Object> updateConfiguration(
+	public ResponseEntity<Void> updateConfiguration(
 			@PathVariable String projectName,
 			@PathVariable String filename,
-			@RequestBody ConfigurationDTO configurationDTO) {
+			@RequestBody ConfigurationDTO configurationDTO) throws ProjectNotFoundException, ConfigurationNotFoundException, InvalidXmlContentException {
 
-		String validationError = XmlValidator.validateXml(configurationDTO.xmlContent());
-		if (validationError != null) {
-			return ResponseEntity
-					.badRequest()
-					.body(new ErrorDTO("Invalid XML Content", validationError));
-		}
+		XmlValidator.validateXml(configurationDTO.xmlContent());
 
-		projectService.updateConfigurationXml(projectName, filename, configurationDTO.xmlContent());
+		projectService.updateConfigurationXml(
+				projectName,
+				filename,
+				configurationDTO.xmlContent());
 
 		return ResponseEntity.ok().build();
 	}
@@ -99,24 +97,17 @@ public class ProjectController {
 			@PathVariable String adapterName,
 			@RequestBody AdapterUpdateDTO adapterUpdateDTO) {
 
-		try {
-			boolean updated = projectService.updateAdapter(
-					projectName,
-					configurationName,
-					adapterName,
-					adapterUpdateDTO.adapterXml);
+		boolean updated = projectService.updateAdapter(
+				projectName,
+				configurationName,
+				adapterName,
+				adapterUpdateDTO.adapterXml());
 
-			if (!updated) {
-				// Either project, configuration, or adapter not found
-				return ResponseEntity.notFound().build();
-			}
-
-			return ResponseEntity.ok().build();
-
-		} catch (Exception e) {
-			e.printStackTrace();
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+		if (!updated) {
+			return ResponseEntity.notFound().build();
 		}
+
+		return ResponseEntity.ok().build();
 	}
 
 	@PostMapping("/{projectname}")

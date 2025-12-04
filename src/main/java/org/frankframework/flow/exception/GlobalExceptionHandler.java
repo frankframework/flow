@@ -1,6 +1,8 @@
 package org.frankframework.flow.exception;
 
+import org.frankframework.flow.configuration.AdapterNotFoundException;
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
+import org.frankframework.flow.project.InvalidXmlContentException;
 import org.frankframework.flow.project.ProjectNotFoundException;
 import org.frankframework.flow.projectsettings.InvalidFilterTypeException;
 import org.springframework.http.HttpStatus;
@@ -38,4 +40,17 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest()
                 .body(new ErrorResponseDTO("InvalidFilterType", ex.getMessage()));
     }
+
+    @ExceptionHandler(InvalidXmlContentException.class)
+    public ResponseEntity<ErrorResponseDTO> handleInvalidXml(InvalidXmlContentException ex) {
+        return ResponseEntity.badRequest()
+                .body(new ErrorResponseDTO("InvalidXmlContent", ex.getMessage()));
+    }
+
+    @ExceptionHandler(AdapterNotFoundException.class)
+    public ResponseEntity<ErrorResponseDTO> handleAdapterNotFound(AdapterNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new ErrorResponseDTO("AdapterNotFound", ex.getMessage()));
+    }
+
 }

@@ -1,5 +1,6 @@
 package org.frankframework.flow.project;
 
+import org.frankframework.flow.configuration.AdapterNotFoundException;
 import org.frankframework.flow.configuration.Configuration;
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
 import org.frankframework.flow.projectsettings.FilterType;
@@ -79,44 +80,41 @@ public class ProjectService {
 	}
 
 	public Project enableFilter(String projectName, String type)
-            throws ProjectNotFoundException, InvalidFilterTypeException {
+			throws ProjectNotFoundException, InvalidFilterTypeException {
 
-        Project project = getProject(projectName);
+		Project project = getProject(projectName);
 
-        FilterType filterType;
-        try {
-            filterType = FilterType.valueOf(type.toUpperCase());
-        } catch (IllegalArgumentException e) {
-            throw new InvalidFilterTypeException(type);
-        }
+		FilterType filterType;
+		try {
+			filterType = FilterType.valueOf(type.toUpperCase());
+		} catch (IllegalArgumentException e) {
+			throw new InvalidFilterTypeException(type);
+		}
 
-        project.enableFilter(filterType);
-        return project;
-    }
+		project.enableFilter(filterType);
+		return project;
+	}
 
-    public Project disableFilter(String projectName, String type)
-            throws ProjectNotFoundException, InvalidFilterTypeException {
+	public Project disableFilter(String projectName, String type)
+			throws ProjectNotFoundException, InvalidFilterTypeException {
 
-        Project project = getProject(projectName);
+		Project project = getProject(projectName);
 
-        FilterType filterType;
-        try {
-            filterType = FilterType.valueOf(type.toUpperCase());
-        } catch (IllegalArgumentException e) {
-            throw new InvalidFilterTypeException(type);
-        }
+		FilterType filterType;
+		try {
+			filterType = FilterType.valueOf(type.toUpperCase());
+		} catch (IllegalArgumentException e) {
+			throw new InvalidFilterTypeException(type);
+		}
 
-        project.disableFilter(filterType);
-        return project;
-    }
+		project.disableFilter(filterType);
+		return project;
+	}
 
 	public boolean updateAdapter(String projectName, String configurationName, String adapterName,
-			String newAdapterXml) {
+			String newAdapterXml)
+			throws ProjectNotFoundException, ConfigurationNotFoundException, AdapterNotFoundException {
 		Project project = getProject(projectName);
-		if (project == null) {
-			System.err.println("Project not found: " + projectName);
-			return false;
-		}
 
 		Optional<Configuration> configOptional = project.getConfigurations().stream()
 				.filter(configuration -> configuration.getFilename().equals(configurationName))
@@ -124,7 +122,7 @@ public class ProjectService {
 
 		if (configOptional.isEmpty()) {
 			System.err.println("Configuration not found: " + configurationName);
-			return false;
+			throw new ConfigurationNotFoundException("Configuration not found: " + configurationName);
 		}
 
 		Configuration config = configOptional.get();
@@ -155,11 +153,11 @@ public class ProjectService {
 			}
 
 			if (!replaced) {
-				System.err.println("Adapter not found: " + adapterName);
-				return false;
+				throw new AdapterNotFoundException("Adapter not found: " + adapterName);
 			}
 
-			// Convert updated DOM back to string + some settings to make indentation prettier and logical
+			// Convert updated DOM back to string + some settings to make indentation
+			// prettier and logical
 			TransformerFactory tf = TransformerFactory.newInstance();
 			Transformer transformer = tf.newTransformer();
 			transformer.setOutputProperty(OutputKeys.INDENT, "yes");
@@ -177,7 +175,11 @@ public class ProjectService {
 
 			return true;
 
+		} catch (AdapterNotFoundException | ConfigurationNotFoundException | ProjectNotFoundException e) {
+			// rethrow explicitly so they bubble up to GlobalExceptionHandler
+			throw e;
 		} catch (Exception e) {
+			// Other unexpected exceptions still return false
 			System.err.println("Error updating adapter: " + e.getMessage());
 			e.printStackTrace();
 			return false;

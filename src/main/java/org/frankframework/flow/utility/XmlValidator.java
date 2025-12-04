@@ -7,6 +7,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
+import org.frankframework.flow.project.InvalidXmlContentException;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
@@ -33,7 +34,7 @@ public class XmlValidator {
             builder.parse(new InputSource(new StringReader(xmlContent)));
             return null; // valid
         } catch (ParserConfigurationException | SAXException | IOException e) {
-            return e.getMessage(); // descriptive error
+            throw new InvalidXmlContentException(e.getMessage());
         }
     }
 }

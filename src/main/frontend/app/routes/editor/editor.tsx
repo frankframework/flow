@@ -249,7 +249,7 @@ export default function CodeEditor() {
         if (contentType && contentType.includes('application/json')) {
           const errorData = await response.json()
           toast.error(
-            `Error saving configuration: ${errorData.title || errorData.error}\nDetails: ${errorData.details}`,
+            `Error saving configuration: ${errorData.title || errorData.error}\nDetails: ${errorData.message}`,
           )
           console.error('Something went wrong saving the configuration: ', errorData)
         } else {

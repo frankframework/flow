@@ -1,6 +1,4 @@
 package org.frankframework.flow.configuration;
 
-public class AdapterUpdateDTO {
-    public String adapterXml;
-    
+public record AdapterUpdateDTO(String adapterXml) {
 }

@@ -11,6 +11,7 @@ import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 
+import org.frankframework.flow.configuration.AdapterNotFoundException;
 import org.frankframework.flow.configuration.Configuration;
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
 import org.frankframework.flow.projectsettings.FilterType;
@@ -39,126 +40,209 @@ class ProjectServiceTest {
 
     @Test
     void testAddingProjectToProjectService() {
-
         String projectName = "new_project";
+
         assertEquals(0, projectService.getProjects().size());
-        assertThrows(ProjectNotFoundException.class, () -> {
-            projectService.getProject(projectName);
-        });
+        assertThrows(ProjectNotFoundException.class, () -> projectService.getProject(projectName));
 
         projectService.createProject(projectName);
+
         assertEquals(1, projectService.getProjects().size());
         assertNotNull(projectService.getProject(projectName));
     }
 
     @Test
     void testGetProjectThrowsProjectNotFound() {
-        assertThrows(ProjectNotFoundException.class, () -> {
-            projectService.getProject("missingProject");
-        });
+        assertThrows(ProjectNotFoundException.class, () -> projectService.getProject("missingProject"));
     }
 
     @Test
     void testUpdateConfigurationXmlSuccess() throws Exception {
-        String projectName = "project1";
-        String filename = "config.xml";
-        String xml = "<root/>";
+        projectService.createProject("proj");
+        Project project = projectService.getProject("proj");
 
-        projectService.createProject(projectName);
-        Project project = projectService.getProject(projectName);
-
-        Configuration config = new Configuration(filename);
+        Configuration config = new Configuration("config.xml");
         project.getConfigurations().add(config);
 
-        boolean updated = projectService.updateConfigurationXml(projectName, filename, xml);
+        boolean updated = projectService.updateConfigurationXml("proj", "config.xml", "<root/>");
 
         assertTrue(updated);
-        assertEquals(xml, config.getXmlContent());
+        assertEquals("<root/>", config.getXmlContent());
     }
 
     @Test
     void testUpdateConfigurationXmlThrowsProjectNotFound() {
-        assertThrows(ProjectNotFoundException.class, () -> {
-            projectService.updateConfigurationXml("unknownProject", "config.xml", "<root/>");
-        });
+        assertThrows(ProjectNotFoundException.class,
+                () -> projectService.updateConfigurationXml("unknownProject", "config.xml", "<root/>"));
     }
 
     @Test
     void testUpdateConfigurationXmlConfigNotFound() throws Exception {
-        String projectName = "project1";
+        projectService.createProject("proj");
 
-        projectService.createProject(projectName);
-
-        assertThrows(ConfigurationNotFoundException.class, () -> {
-            projectService.updateConfigurationXml(projectName, "missingConfig.xml", "<root/>");
-        });
+        assertThrows(ConfigurationNotFoundException.class,
+                () -> projectService.updateConfigurationXml("proj", "missingConfig.xml", "<root/>"));
     }
 
     @Test
     void testEnableFilterValid() throws Exception {
-        String projectName = "proj1";
-        projectService.createProject(projectName);
+        projectService.createProject("proj");
 
-        Project project = projectService.enableFilter(projectName, "ADAPTER");
+        Project project = projectService.enableFilter("proj", "ADAPTER");
 
         assertTrue(project.getProjectSettings().getFilters().get(FilterType.ADAPTER));
     }
 
     @Test
     void testDisableFilterValid() throws Exception {
-        String projectName = "proj1";
-        projectService.createProject(projectName);
+        projectService.createProject("proj");
 
-        // Enable first
-        projectService.enableFilter(projectName, "ADAPTER");
-        assertTrue(projectService.getProject(projectName)
-                .getProjectSettings().getFilters().get(FilterType.ADAPTER));
+        // enable first
+        projectService.enableFilter("proj", "ADAPTER");
+        assertTrue(projectService.getProject("proj").getProjectSettings()
+                .getFilters().get(FilterType.ADAPTER));
 
-        // Then disable
-        Project project = projectService.disableFilter(projectName, "ADAPTER");
-        assertFalse(project.getProjectSettings().getFilters().get(FilterType.ADAPTER));
+        // disable
+        Project updated = projectService.disableFilter("proj", "ADAPTER");
+        assertFalse(updated.getProjectSettings().getFilters().get(FilterType.ADAPTER));
     }
 
     @Test
     void testEnableFilterInvalidFilterType() {
-        String projectName = "proj1";
-        projectService.createProject(projectName);
+        projectService.createProject("proj");
 
-        InvalidFilterTypeException ex = assertThrows(InvalidFilterTypeException.class, () -> {
-            projectService.enableFilter(projectName, "INVALID_TYPE");
-        });
+        InvalidFilterTypeException ex = assertThrows(InvalidFilterTypeException.class,
+                () -> projectService.enableFilter("proj", "INVALID_TYPE"));
 
         assertEquals("Invalid filter type: INVALID_TYPE", ex.getMessage());
     }
 
     @Test
     void testDisableFilterInvalidFilterType() {
-        String projectName = "proj1";
-        projectService.createProject(projectName);
+        projectService.createProject("proj");
 
-        InvalidFilterTypeException ex = assertThrows(InvalidFilterTypeException.class, () -> {
-            projectService.disableFilter(projectName, "INVALID_TYPE");
-        });
+        InvalidFilterTypeException ex = assertThrows(InvalidFilterTypeException.class,
+                () -> projectService.disableFilter("proj", "INVALID_TYPE"));
 
         assertEquals("Invalid filter type: INVALID_TYPE", ex.getMessage());
     }
 
     @Test
     void testEnableFilterProjectNotFound() {
-        ProjectNotFoundException ex = assertThrows(ProjectNotFoundException.class, () -> {
-            projectService.enableFilter("unknownProject", "ADAPTER");
-        });
+        ProjectNotFoundException ex = assertThrows(ProjectNotFoundException.class,
+                () -> projectService.enableFilter("unknownProject", "ADAPTER"));
 
         assertTrue(ex.getMessage().contains("Project with name: unknownProject"));
     }
 
     @Test
     void testDisableFilterProjectNotFound() {
-        ProjectNotFoundException ex = assertThrows(ProjectNotFoundException.class, () -> {
-            projectService.disableFilter("unknownProject", "ADAPTER");
-        });
+        ProjectNotFoundException ex = assertThrows(ProjectNotFoundException.class,
+                () -> projectService.disableFilter("unknownProject", "ADAPTER"));
 
         assertTrue(ex.getMessage().contains("Project with name: unknownProject"));
     }
 
+    @Test
+    void updateAdapterSuccess() throws Exception {
+        // Arrange
+        projectService.createProject("proj");
+        Project project = projectService.getProject("proj");
+
+        String originalXml = """
+                <Configuration>
+                    <Adapter name="A1">
+                        <Settings>123</Settings>
+                    </Adapter>
+                    <Adapter name="A2">
+                        <Settings>456</Settings>
+                    </Adapter>
+                </Configuration>
+                """;
+
+        Configuration config = new Configuration("conf.xml");
+        config.setXmlContent(originalXml);
+        project.getConfigurations().add(config);
+
+        String newAdapterXml = """
+                <Adapter name="A1">
+                    <Settings>999</Settings>
+                </Adapter>
+                """;
+
+        // Act
+        boolean result = projectService.updateAdapter("proj", "conf.xml", "A1", newAdapterXml);
+
+        // Assert
+        assertTrue(result);
+        String updatedXml = config.getXmlContent();
+        assertTrue(updatedXml.contains("<Settings>999</Settings>"));
+        assertFalse(updatedXml.contains("<Settings>123</Settings>"));
+        assertTrue(updatedXml.contains("A2"), "Other adapters must remain unchanged");
+    }
+
+    @Test
+    void updateAdapterProjectNotFoundThrows() {
+        ProjectNotFoundException ex = assertThrows(ProjectNotFoundException.class, () -> {
+            projectService.updateAdapter("unknownProject", "conf.xml", "A1", "<Adapter name='A1'/>");
+        });
+        assertTrue(ex.getMessage().contains("Project with name: unknownProject"));
+    }
+
+    @Test
+    void updateAdapterConfigurationNotFoundThrows() throws Exception {
+        projectService.createProject("proj");
+
+        ConfigurationNotFoundException ex = assertThrows(ConfigurationNotFoundException.class, () -> {
+            projectService.updateAdapter("proj", "missing.xml", "A1", "<Adapter name='A1'/>");
+        });
+
+        assertEquals("Configuration not found: missing.xml", ex.getMessage());
+    }
+
+    @Test
+    void updateAdapterAdapterNotFoundThrows() throws Exception {
+        projectService.createProject("proj");
+        Project project = projectService.getProject("proj");
+
+        String xml = """
+                <Configuration>
+                    <Adapter name="Other"/>
+                </Configuration>
+                """;
+
+        Configuration config = new Configuration("conf.xml");
+        config.setXmlContent(xml);
+        project.getConfigurations().add(config);
+
+        AdapterNotFoundException ex = assertThrows(AdapterNotFoundException.class, () -> {
+            projectService.updateAdapter("proj", "conf.xml", "A1", "<Adapter name='A1'/>");
+        });
+
+        assertEquals("Adapter not found: A1", ex.getMessage());
+        assertEquals(xml, config.getXmlContent());
+    }
+
+    @Test
+    void updateAdapterInvalidXmlReturnsFalse() throws Exception {
+        projectService.createProject("proj");
+        Project project = projectService.getProject("proj");
+
+        String xml = """
+                <Configuration>
+                    <Adapter name="A1"/>
+                </Configuration>
+                """;
+
+        Configuration config = new Configuration("conf.xml");
+        config.setXmlContent(xml);
+        project.getConfigurations().add(config);
+
+        String invalidXml = "<Adapter><broken>";
+
+        boolean result = projectService.updateAdapter("proj", "conf.xml", "A1", invalidXml);
+
+        assertFalse(result);
+        assertEquals(xml, config.getXmlContent());
+    }
 }

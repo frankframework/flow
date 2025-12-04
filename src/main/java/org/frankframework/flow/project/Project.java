@@ -70,8 +70,6 @@ public class Project {
 	}
 
 	public boolean updateAdapter(String configurationName, String adapterName, String newAdapterXml) {
-		System.out.println(configurationName);
-		System.out.println(adapterName);
 		for (Configuration config : configurations) {
 			if (!config.getFilename().equals(configurationName)) continue;
 

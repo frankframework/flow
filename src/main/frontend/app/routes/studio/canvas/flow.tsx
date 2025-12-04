@@ -28,6 +28,8 @@ import { exportFlowToXml } from '~/routes/studio/flow-to-xml-parser'
 import useNodeContextStore from '~/stores/node-context-store'
 import CreateNodeModal from '~/components/flow/create-node-modal'
 import { useProjectStore } from "~/stores/project-store";
+import { toast, ToastContainer } from 'react-toastify'
+import { useTheme } from '~/hooks/use-theme'
 
 export type FlowNode = FrankNode | ExitNode | StickyNote | GroupNode | Node
 
@@ -45,6 +47,7 @@ const selector = (state: FlowState) => ({
 })
 
 function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b: boolean) => void }>) {
+  const theme = useTheme()
   const [loading, setLoading] = useState(false)
   const { isEditing, setIsEditing, setParentId } = useNodeContextStore(
     useShallow((s) => ({
@@ -522,8 +525,11 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
     if (!response.ok) {
       throw new Error(`HTTP error! Status: ${response.status}`)
     }
+
+    toast.success('Flow saved successfully!')
     } catch (error) {
       console.error('Failed to save XML:', error)
+      toast.error(`Failed to save XML: ${error}`)
     }
   }
 
@@ -571,6 +577,7 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
           </button>
         </Panel>
       </ReactFlow>
+      <ToastContainer position="bottom-right" theme={theme} closeOnClick={true} />
       <CreateNodeModal
         isOpen={showModal}
         onClose={() => setShowModal(false)}
