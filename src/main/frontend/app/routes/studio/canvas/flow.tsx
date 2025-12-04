@@ -5,7 +5,6 @@ import {
   Controls,
   type Edge,
   type Node,
-  Panel,
   ReactFlow,
   ReactFlowProvider,
   useReactFlow,
@@ -27,13 +26,13 @@ import { convertAdapterXmlToJson, getAdapterFromConfiguration } from '~/routes/s
 import { exportFlowToXml } from '~/routes/studio/flow-to-xml-parser'
 import useNodeContextStore from '~/stores/node-context-store'
 import CreateNodeModal from '~/components/flow/create-node-modal'
-import { useProjectStore } from "~/stores/project-store";
+import { useProjectStore } from '~/stores/project-store'
 import { toast, ToastContainer } from 'react-toastify'
 import { useTheme } from '~/hooks/use-theme'
 
 export type FlowNode = FrankNode | ExitNode | StickyNote | GroupNode | Node
 
-const NodeContextMenuContext = createContext<(visible: boolean) => void>(() => { })
+const NodeContextMenuContext = createContext<(visible: boolean) => void>(() => {})
 export const useNodeContextMenu = () => useContext(NodeContextMenuContext)
 
 const selector = (state: FlowState) => ({

@@ -14,12 +14,10 @@ import { FlowConfig } from '~/routes/studio/canvas/flow.config'
 import { useNodeContextMenu } from '~/routes/studio/canvas/flow'
 import useNodeContextStore from '~/stores/node-context-store'
 import { getElementTypeFromName } from '~/routes/studio/node-translator-module'
-import ChildContextMenu from '~/routes/studio/canvas/nodetypes/components/child-context-menu'
 import { useFFDoc } from '@frankframework/ff-doc/react'
 import variables from '../../../../../environment/environment'
 import { useSettingsStore } from '~/routes/settings/settings-store'
 import HandleMenu from './components/handle-menu'
-import HandleMenuItem from './components/handle-menu-item'
 import type { ActionType } from './components/action-types'
 
 export interface ChildNode {
@@ -38,8 +36,6 @@ export type FrankNode = Node<{
   attributes?: Record<string, string>
   children: ChildNode[]
 }>
-
-type AnchorMap = Record<string, HTMLElement | null>
 
 export default function FrankNode(properties: NodeProps<FrankNode>) {
   const minNodeWidth = FlowConfig.NODE_DEFAULT_WIDTH
@@ -60,8 +56,6 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
   const reactFlow = useReactFlow()
   const [isHandleMenuOpen, setIsHandleMenuOpen] = useState(false)
   const [handleMenuPosition, setHandleMenuPosition] = useState({ x: 0, y: 0 })
-  const [isContextMenuOpen, setIsContextMenuOpen] = useState(false)
-  const [anchorMap, setAnchorMap] = useState<AnchorMap>({})
 
   const [dimensions, setDimensions] = useState({
     width: minNodeWidth, // Initial width
@@ -119,19 +113,6 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
     setIsHandleMenuOpen(!isHandleMenuOpen)
   }
 
-  const toggleContextMenu = () => {
-    setIsContextMenuOpen(!isContextMenuOpen)
-  }
-
-  const deleteNode = () => {
-    useFlowStore.getState().deleteNode(properties.id)
-  }
-
-  const deleteChildNode = (childId: string) => {
-    useFlowStore.getState().deleteChild(properties.id, childId)
-    setAnchorMap({})
-  }
-
   const editNode = () => {
     const recordElements = elements as Record<string, { name: string; [key: string]: any }>
     const attributes = Object.values(recordElements).find(
@@ -140,7 +121,7 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
     setNodeId(+properties.id)
     setAttributes(attributes)
     showNodeContextMenu(true)
-    setIsContextMenuOpen(false)
+    setIsEditing(true)
   }
 
   const editChild = (childId: string) => {
@@ -154,7 +135,7 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
     setNodeId(+childId)
     setAttributes(attributes)
     showNodeContextMenu(true)
-    setAnchorMap({})
+    setIsEditing(true)
   }
 
   const changeHandleType = (handleIndex: number, newType: ActionType) => {
@@ -229,44 +210,8 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDropOnNode}
+        onDoubleClick={editNode}
       >
-        <div className="nodrag absolute right-0 px-2 hover:cursor-pointer hover:opacity-50" onClick={toggleContextMenu}>
-          <MeatballMenu />
-        </div>
-        {isContextMenuOpen && (
-          <div
-            className="nodrag bg-background border-border absolute w-30 border shadow-md"
-            style={{
-              left: 'calc(100% + 10px)',
-              top: -5,
-              zIndex: 2,
-            }}
-          >
-            <button
-              className="border-border bg-background absolute -top-1 -right-1 rounded-full border text-gray-400 shadow-sm hover:border-red-400 hover:text-red-400"
-              onClick={() => setIsContextMenuOpen(false)}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-3 w-3"
-                width="10"
-                height="10"
-                viewBox="0 0 10 10"
-                strokeWidth="1"
-                stroke="currentColor"
-                strokeLinecap="round"
-              >
-                <line x1="3" y1="3" x2="7" y2="7" />
-                <line x1="3" y1="7" x2="7" y2="3" />
-              </svg>
-            </button>
-            <div className="border-border bg-muted border-b px-3 py-1 text-xs font-bold">Update Element</div>
-            <ul>
-              <HandleMenuItem label="Edit" onClick={editNode} />
-              <HandleMenuItem label="Delete" onClick={deleteNode} />
-            </ul>
-          </div>
-        )}
         <div
           className="border-b-border box-border w-full rounded-t-md border-b p-1"
           style={{
@@ -301,32 +246,11 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
                   key={child.type + index.toString()}
                   className="border-border bg-background relative mb-1 max-w-max rounded-md border-1"
                   style={{ minHeight: `${minNodeHeight / 2}px` }}
+                  onDoubleClick={(event) => {
+                    event.stopPropagation()
+                    editChild(child.id)
+                  }}
                 >
-                  <div
-                    className="nodrag absolute right-0 px-2 hover:cursor-pointer hover:opacity-50"
-                    onClick={(event) => {
-                      const target = event.currentTarget as HTMLElement
-
-                      setAnchorMap((previous) => {
-                        // if this child is already open, close it
-                        if (previous[child.id]) return {}
-
-                        // otherwise open this one (and implicitly close any others)
-                        return { [child.id]: target }
-                      })
-                    }}
-                  >
-                    <MeatballMenu />
-                  </div>
-
-                  {anchorMap[child.id] && (
-                    <ChildContextMenu
-                      anchorElement={anchorMap[child.id]!}
-                      onClose={() => setAnchorMap({})}
-                      onEdit={() => editChild(child.id)}
-                      onDelete={() => deleteChildNode(child.id)}
-                    />
-                  )}
                   <div
                     className="border-b-border box-border w-full rounded-t-md border-b p-1"
                     style={{
@@ -435,16 +359,6 @@ export function ResizeIcon({ color = '#999999' }: Readonly<{ color?: string }>) 
       <line x1="19" y1="20" x2="20" y2="19" />
       <line x1="14" y1="20" x2="20" y2="14" />
       <line x1="9" y1="20" x2="20" y2="9" />
-    </svg>
-  )
-}
-
-export function MeatballMenu() {
-  return (
-    <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
-      <circle cx="6" cy="12" r="1.5" />
-      <circle cx="12" cy="12" r="1.5" />
-      <circle cx="18" cy="12" r="1.5" />
     </svg>
   )
 }
