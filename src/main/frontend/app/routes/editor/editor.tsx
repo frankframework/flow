@@ -1,5 +1,6 @@
 import Tabs, { type TabsList } from '~/components/tabs/tabs'
 import Editor, { type OnMount } from '@monaco-editor/react'
+import { toast, ToastContainer } from 'react-toastify'
 import EditorFiles from '~/routes/editor/editor-files'
 import SidebarHeader from '~/components/sidebars-layout/sidebar-header'
 import SidebarLayout from '~/components/sidebars-layout/sidebar-layout'
@@ -105,23 +106,40 @@ export default function CodeEditor() {
     const monacoInstance = (globalThis as any).monaco
     if (!monacoInstance) return
 
+    const isCursorInsideAttributeValue = (model, position) => {
+      const text = getTextBeforeCursor(model, position)
+      return /="[^"]*$/.test(text)
+    }
+
+    const getTextBeforeCursor = (model, position) => {
+      const line = model.getLineContent(position.lineNumber)
+      return line.slice(0, position.column - 1)
+    }
+
     // Element suggestions
     const elementProvider = monacoInstance.languages.registerCompletionItemProvider('xml', {
       triggerCharacters: ['<'],
-      provideCompletionItems: () => {
+      provideCompletionItems: (model, position) => {
+        if (isCursorInsideAttributeValue(model, position)) {
+          return { suggestions: [] }
+        }
+
         if (!elements) return { suggestions: [] }
+
         return {
           suggestions: Object.values(elements).map((element: any) => {
-            // Mandatory attributes
             const mandatoryAttributes = Object.entries(element.attributes || {})
               .filter(([_, attribute]) => attribute.mandatory)
-              .map(([name]) => `${name}="\${${name}}"`)
+              .map(([name], index) => {
+                if (index === 0) return `${name}="\${1}"`
+                return `${name}="\${${index + 2}}"`
+              })
               .join(' ')
 
-            // Snippet for tag + mandatory attributes
             const mandatoryAttributesWithSpace = mandatoryAttributes ? ` ${mandatoryAttributes}` : ''
             const openingTag = `${element.name}${mandatoryAttributesWithSpace}>`
-            const closingTag = `</${element.name}`
+            const closingTag = `</${element.name}>`
+
             const insertText = `${openingTag}$0${closingTag}`
 
             return {
@@ -140,18 +158,15 @@ export default function CodeEditor() {
     const attributeProvider = monacoInstance.languages.registerCompletionItemProvider('xml', {
       triggerCharacters: [' '],
       provideCompletionItems: (model, position) => {
-        const line = model.getLineContent(position.lineNumber)
-        const textBeforeCursor = line.slice(0, position.column - 1)
-
-        // Don't show suggestions if cursor is inside quotes
-        const quotesBefore = (textBeforeCursor.match(/"/g) || []).length
-        if (quotesBefore % 2 === 1) {
-          // Odd number of quotes -> cursor is inside an attribute value
+        if (isCursorInsideAttributeValue(model, position)) {
           return { suggestions: [] }
         }
 
+        const textBeforeCursor = getTextBeforeCursor(model, position)
         const tagMatch = textBeforeCursor.match(/<(\w+)/)
         if (!tagMatch) return { suggestions: [] }
+
+        // (rest unchanged)
 
         const tagName = tagMatch[1]
         if (!elements) return
@@ -165,18 +180,18 @@ export default function CodeEditor() {
 
             return enumValues.length > 0
               ? enumValues.map((value, index) => ({
-                label: `${attributeName}="${value}"`,
-                kind: monacoInstance.languages.CompletionItemKind.Enum,
-                insertText: `${attributeName}="${value}"`,
-                documentation: attributeValue?.enum[value]?.description || '',
-              }))
+                  label: `${attributeName}="${value}"`,
+                  kind: monacoInstance.languages.CompletionItemKind.Enum,
+                  insertText: `${attributeName}="${value}"`,
+                  documentation: attributeValue?.enum[value]?.description || '',
+                }))
               : {
-                label: attributeName,
-                kind: monacoInstance.languages.CompletionItemKind.Property,
-                insertText: `${attributeName}="\${1}"`,
-                insertTextRules: monacoInstance.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-                documentation: attributeValue?.description || '',
-              }
+                  label: attributeName,
+                  kind: monacoInstance.languages.CompletionItemKind.Property,
+                  insertText: `${attributeName}="\${1}"`,
+                  insertTextRules: monacoInstance.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+                  documentation: attributeValue?.description || '',
+                }
           },
         )
 
@@ -228,12 +243,28 @@ export default function CodeEditor() {
         body: JSON.stringify({ xmlContent: updatedXml }),
       })
 
-      if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`)
+      // Parse JSON response body if it's not OK
+      if (!response.ok) {
+        const contentType = response.headers.get('content-type')
+        if (contentType && contentType.includes('application/json')) {
+          const errorData = await response.json()
+          toast.error(
+            `Error saving configuration: ${errorData.title || errorData.error}\nDetails: ${errorData.details}`,
+          )
+          console.error('Something went wrong saving the configuration: ', errorData)
+        } else {
+          toast.error(`Error saving configuration. HTTP status: ${response.status}`)
+          console.error('Error saving configuration. HTTP status: ', response.status)
+        }
+        return
+      }
     } catch (error) {
-      console.error('Failed to save XML:', error)
+      toast.error(`Network or unexpected error: ${error}`)
+      console.error('Network or unexpected error: ', error)
     } finally {
       setIsSaving(false)
     }
+    toast.success('Succesfully saved content')
   }
 
   return (
@@ -259,8 +290,9 @@ export default function CodeEditor() {
                 theme={`vs-${theme}`}
                 value={xmlContent}
                 onMount={handleEditorMount}
-                options={{ automaticLayout: true }}
+                options={{ automaticLayout: true, quickSuggestions: false }}
               />
+              <ToastContainer position="bottom-right" theme={theme} closeOnClick={true} />
             </div>
           </>
         ) : (
