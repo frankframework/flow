@@ -10,4 +10,25 @@
       </SenderPipe>
     </Pipeline>
   </Adapter>
+
+  <Adapter name="Adapter config 2-2" description="No desc">
+    <Receiver
+        name="03 MessageStoreReceiver"
+        numThreads="4"
+        transactionAttribute="Required"
+        pollInterval="1"
+    >
+      <MessageStoreListener
+          name="03 MessageStoreListener"
+          slotId="${instance.name}/TestMessageStore"
+          statusValueInProcess="I"
+      />
+    </Receiver>
+    <Pipeline>
+      <SenderPipe name="Send">
+        <JdbcMessageLog slotId="${instance.name}/TestMessageLog"/>
+        <IbisLocalSender javaListener="04 JavaListener"/>
+      </SenderPipe>
+    </Pipeline>
+  </Adapter>
 </Configuration>

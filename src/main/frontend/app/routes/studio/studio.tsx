@@ -11,9 +11,12 @@ import { SidebarSide } from '~/components/sidebars-layout/sidebar-layout-store'
 import SidebarLayout from '~/components/sidebars-layout/sidebar-layout'
 import useTabStore from '~/stores/tab-store'
 import { useShallow } from 'zustand/react/shallow'
+import { ToastContainer } from 'react-toastify'
+import { useTheme } from '~/hooks/use-theme'
 
 export default function Studio() {
   const [showNodeContext, setShowNodeContext] = useState(false)
+  const theme = useTheme()
   const nodeId = useNodeContextStore((state) => state.nodeId)
 
   const { activeTab } = useTabStore(
@@ -39,7 +42,10 @@ export default function Studio() {
         <div className="border-b-border bg-background flex h-12 items-center border-b p-4">Path: {activeTab}</div>
 
         {activeTab ? (
-          <Flow showNodeContextMenu={setShowNodeContext} />
+          <>
+            <Flow showNodeContextMenu={setShowNodeContext} />
+            <ToastContainer position="bottom-right" theme={theme} closeOnClick={true} />
+          </>
         ) : (
           <div className="text-muted-foreground flex h-full flex-col items-center justify-center p-8 text-center">
             <div className="border-border bg-background/40 max-w-md rounded-2xl border border-dashed p-10 shadow-inner backdrop-blur-sm">
