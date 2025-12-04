@@ -78,7 +78,8 @@ public class ProjectController {
 	public ResponseEntity<Void> updateConfiguration(
 			@PathVariable String projectName,
 			@PathVariable String filename,
-			@RequestBody ConfigurationDTO configurationDTO) throws ProjectNotFoundException, ConfigurationNotFoundException, InvalidXmlContentException {
+			@RequestBody ConfigurationDTO configurationDTO)
+			throws ProjectNotFoundException, ConfigurationNotFoundException, InvalidXmlContentException {
 
 		XmlValidator.validateXml(configurationDTO.xmlContent());
 
@@ -122,24 +123,11 @@ public class ProjectController {
 	@PostMapping("/{projectname}/configurations/{configname}")
 	public ResponseEntity<ProjectDTO> addConfiguration(
 			@PathVariable String projectname,
-			@PathVariable String configname) {
-		try {
-			Project project = projectService.addConfiguration(projectname, configname);
-			if (project == null) {
-				return ResponseEntity.notFound().build();
-			}
-			ProjectDTO projectDTO = new ProjectDTO();
-			projectDTO.name = project.getName();
-			ArrayList<String> filenames = new ArrayList<>();
-			for (Configuration c :  project.getConfigurations()) {
-				filenames.add(c.getFilename());
-			}
-			projectDTO.filenames = filenames;
-			projectDTO.filters = project.getProjectSettings().getFilters();
-			return ResponseEntity.ok(projectDTO);
-		} catch (Exception e) {
-			return ResponseEntity.badRequest().build();
-		}
+			@PathVariable String configname) throws ProjectNotFoundException {
+		Project project = projectService.addConfiguration(projectname, configname);
+
+		ProjectDTO projectDTO = ProjectDTO.from(project);
+		return ResponseEntity.ok(projectDTO);
 	}
 
 	@PatchMapping("/{projectname}/filters/{type}/enable")

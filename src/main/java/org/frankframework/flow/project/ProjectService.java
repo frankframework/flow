@@ -188,9 +188,7 @@ public class ProjectService {
 
 	public Project addConfiguration(String projectName, String configurationName){
 		Project project = getProject(projectName);
-		if(project == null){
-			return null;
-		}
+		
 		Configuration configuration = new Configuration(configurationName);
 		project.addConfiguration(configuration);
 		return project;
