@@ -9,16 +9,18 @@ interface IdCounter {
 }
 
 export async function getXmlString(projectName: string, filename: string): Promise<string> {
+  const baseUrl = import.meta.env.VITE_API_BASE_URL
   try {
-    const response = await fetch(`/projects/${projectName}/${filename}`);
+    const url = `${baseUrl}projects/${projectName}/${filename}`
+    const response = await fetch(url)
     if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
+      throw new Error(`HTTP error! Status: ${response.status}`)
     }
 
-    const data = await response.json();
-    return data.xmlContent;
+    const data = await response.json()
+    return data.xmlContent
   } catch (error) {
-    throw new Error(`Failed to fetch XML file for ${projectName}/${filename}: ${error}`);
+    throw new Error(`Failed to fetch XML file for ${projectName}/${filename}: ${error}`)
   }
 }
 
