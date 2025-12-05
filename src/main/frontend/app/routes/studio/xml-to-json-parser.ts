@@ -3,15 +3,15 @@ import { getElementTypeFromName } from '~/routes/studio/node-translator-module'
 import type { ExitNode } from '~/routes/studio/canvas/nodetypes/exit-node'
 import type { FrankNode } from '~/routes/studio/canvas/nodetypes/frank-node'
 import { SAXParser } from 'sax-ts'
+import { API_BASE_URL } from '~/config'
 
 interface IdCounter {
   current: number
 }
 
 export async function getXmlString(projectName: string, filename: string): Promise<string> {
-  const baseUrl = import.meta.env.VITE_API_BASE_URL
   try {
-    const url = `${baseUrl}projects/${projectName}/${filename}`
+    const url = `${API_BASE_URL}projects/${projectName}/${filename}`
     const response = await fetch(url)
     if (!response.ok) {
       throw new Error(`HTTP error! Status: ${response.status}`)

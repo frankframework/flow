@@ -7,6 +7,7 @@ import ActionButton from './action-button'
 import { useProjectStore } from '~/stores/project-store'
 import { useLocation } from 'react-router'
 import ProjectModal from './project-modal'
+import { API_BASE_URL } from '~/config'
 
 export interface Project {
   name: string
@@ -22,12 +23,11 @@ export default function ProjectLanding() {
   const [showModal, setShowModal] = useState(false)
   const setProject = useProjectStore((state) => state.setProject)
   const location = useLocation()
-  const baseUrl = import.meta.env.VITE_API_BASE_URL
 
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const response = await fetch(`${baseUrl}projects`)
+        const response = await fetch(`${API_BASE_URL}projects`)
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`)
         }
@@ -50,7 +50,7 @@ export default function ProjectLanding() {
 
   const createProject = async (projectName: string) => {
     try {
-      const response = await fetch(`${baseUrl}projects/${projectName}`, {
+      const response = await fetch(`${API_BASE_URL}projects/${projectName}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -1,5 +1,6 @@
 import type { Project } from '../projectlanding/project-landing'
 import { useState } from 'react'
+import { API_BASE_URL } from '~/config'
 import { useProjectStore } from '~/stores/project-store'
 
 interface AddConfigurationModalProperties {
@@ -19,7 +20,6 @@ export default function AddConfigurationModal({
   const [error, setError] = useState<string | null>(null)
   const [filename, setFilename] = useState<string>('')
   const setProject = useProjectStore((s) => s.setProject)
-  const baseUrl = import.meta.env.VITE_API_BASE_URL
 
   const handleAdd = async () => {
     setLoading(true)
@@ -37,7 +37,7 @@ export default function AddConfigurationModal({
         configname = `${configname}.xml`
       }
 
-      const url = `${baseUrl}projects/${encodeURIComponent(
+      const url = `${API_BASE_URL}projects/${encodeURIComponent(
         currentProject.name,
       )}/configurations/${encodeURIComponent(configname)}`
 
