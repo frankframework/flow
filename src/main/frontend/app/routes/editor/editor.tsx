@@ -25,6 +25,7 @@ export default function CodeEditor() {
   const editorReference = useRef<Parameters<OnMount>[0] | null>(null)
   const decorationIdsReference = useRef<string[]>([])
   const [isSaving, setIsSaving] = useState(false)
+  const baseUrl = import.meta.env.VITE_API_BASE_URL
 
   const handleEditorMount: OnMount = (editor, monacoInstance) => {
     editorReference.current = editor
@@ -237,7 +238,8 @@ export default function CodeEditor() {
     setIsSaving(true)
 
     try {
-      const response = await fetch(`/projects/${project.name}/${configName}`, {
+      const url = `${baseUrl}projects/${project.name}/${configName}`
+      const response = await fetch(url, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ xmlContent: updatedXml }),

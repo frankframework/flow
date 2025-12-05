@@ -14,7 +14,7 @@ export default function Navbar() {
         <div className="text-xl font-bold">Flow</div>
       </div>
       <ul className="flex w-full flex-col">
-        <NavbarLink route="/" label="Overview" Icon={ProjectsIcon} />
+        <NavbarLink route="/configurations" label="Overview" Icon={ProjectsIcon} />
         <NavbarLink route="/studio" label="Studio" Icon={RulerCrossPenIcon} />
         <NavbarLink route="/editor" label="Editor" Icon={CodeIcon} />
       </ul>

@@ -16,6 +16,7 @@ interface TabStoreState {
   setActiveTab: (tabId: string) => void
   removeTab: (tabId: string) => void
   removeTabAndSelectFallback: (tabId: string) => void
+  clearTabs: () => void
 }
 
 const useTabStore = create<TabStoreState>()(
@@ -50,6 +51,7 @@ const useTabStore = create<TabStoreState>()(
           activeTab: remainingKeys.includes(state.activeTab) ? state.activeTab : (remainingKeys.at(-1) ?? ''),
         }
       }),
+    clearTabs: () => set({ tabs: {}, activeTab: '' }),
   })),
 )
 

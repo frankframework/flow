@@ -1,4 +1,4 @@
-import { isRouteErrorResponse, Links, Meta, Outlet, Scripts, ScrollRestoration } from 'react-router'
+import { isRouteErrorResponse, Links, Meta, Outlet, Scripts, ScrollRestoration, useLocation } from 'react-router'
 
 import type { Route } from './+types/root'
 import Navbar from '~/components/navbar/navbar'
@@ -36,6 +36,7 @@ export const links: Route.LinksFunction = () => [
 
 export function Layout({ children }: Readonly<{ children: React.ReactNode }>) {
   const theme = useTheme()
+  const location = useLocation()
 
   return (
     <html lang="en" data-theme={theme}>
@@ -47,8 +48,9 @@ export function Layout({ children }: Readonly<{ children: React.ReactNode }>) {
         <Links />
       </head>
       <body className="flex">
-        <Navbar />
-        <main className="grow">{children}</main>
+        {/* Hide navbar only for the landing path ('/'). */}
+        {location.pathname !== '/' && <Navbar />}
+        <main className="grow">{children ?? <Outlet />}</main>
         <ScrollRestoration />
         <Scripts />
       </body>
