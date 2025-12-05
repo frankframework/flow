@@ -105,11 +105,11 @@ function extractEdgesFromAdapter(adapter: Element, nodes: FlowNode[]): FrankEdge
 
   const forwardIndexBySourceId = new Map<string, number>()
 
-  // 1. Explicit forwards
+  // 1. Explicit forwards (fills forwardIndexBySourceId)
   const forwardEdges = extractForwardEdges(pipelineChildren, nameToId, forwardIndexBySourceId)
 
-  // 2. Fallback sequential edges using `nodes` order
-  const fallbackEdges = extractFallbackEdges(nodes)
+  // 2. Fallback sequential edges (uses forwardIndexBySourceId)
+  const fallbackEdges = extractFallbackEdges(nodes, forwardIndexBySourceId)
 
   return [...forwardEdges, ...fallbackEdges]
 }
@@ -168,7 +168,7 @@ function extractForwardEdges(
   return edges
 }
 
-function extractFallbackEdges(nodes: FlowNode[]): FrankEdge[] {
+function extractFallbackEdges(nodes: FlowNode[], forwardIndexBySourceId: Map<string, number>): FrankEdge[] {
   const edges: FrankEdge[] = []
 
   for (let i = 0; i < nodes.length - 1; i++) {
@@ -178,12 +178,17 @@ function extractFallbackEdges(nodes: FlowNode[]): FrankEdge[] {
     if (current.type === 'exitNode') continue
     if (next.type === 'exitNode') continue
 
+    const nextHandleIndex = forwardIndexBySourceId.get(current.id) ?? 1
+
+    // update next index for future edges
+    forwardIndexBySourceId.set(current.id, nextHandleIndex + 1)
+
     edges.push({
       id: `${current.id}-${next.id}`,
       source: current.id,
       target: next.id,
       type: 'frankEdge',
-      sourceHandle: '1',
+      sourceHandle: nextHandleIndex.toString(),
     })
   }
 
@@ -232,29 +237,30 @@ function convertAdapterToFlowNodes(adapter: any): FlowNode[] {
     }
 
     // Extract source handles from <Forward> children
+    // Extract all forward elements
     const forwardElements = [...element.querySelectorAll('Forward')]
-    const sourceHandles =
-      forwardElements.length > 0
-        ? forwardElements.map((forward, index) => {
-            const path = forward.getAttribute('path') || ''
-            const loweredPath = path.toLowerCase()
-            // Only check for bad flows/forwards right now, could later be updated to also include exceptions and custom handles
-            const type =
-              loweredPath.includes('error') || loweredPath.includes('bad') || loweredPath.includes('fail')
-                ? 'failure'
-                : 'success'
 
-            return {
-              type,
-              index: index + 1,
-            }
-          })
-        : [
-            {
-              type: 'success',
-              index: 1,
-            },
-          ]
+    // First build handles for explicit forwards
+    let sourceHandles = forwardElements.map((forward, index) => {
+      const path = forward.getAttribute('path') || ''
+      const loweredPath = path.toLowerCase()
+
+      const type =
+        loweredPath.includes('error') || loweredPath.includes('bad') || loweredPath.includes('fail')
+          ? 'failure'
+          : 'success'
+
+      return {
+        type,
+        index: index + 1,
+      }
+    })
+
+    // Always add 1 fallback handle after all forward handles
+    sourceHandles.push({
+      type: 'success',
+      index: sourceHandles.length + 1,
+    })
 
     const frankNode: FrankNode = convertElementToNode(element, idCounter, sourceHandles)
     nodes.push(frankNode)
