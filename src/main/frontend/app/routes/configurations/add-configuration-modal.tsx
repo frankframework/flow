@@ -19,10 +19,12 @@ export default function AddConfigurationModal({
   const [error, setError] = useState<string | null>(null)
   const [filename, setFilename] = useState<string>('')
   const setProject = useProjectStore((s) => s.setProject)
+  const baseUrl = import.meta.env.VITE_API_BASE_URL
 
   const handleAdd = async () => {
     setLoading(true)
     setError(null)
+
     try {
       let configname = filename.trim()
       if (!configname) {
@@ -35,7 +37,10 @@ export default function AddConfigurationModal({
         configname = `${configname}.xml`
       }
 
-      const url = `http://localhost:8080/projects/${encodeURIComponent(currentProject.name)}/configurations/${encodeURIComponent(configname)}`
+      const url = `${baseUrl}projects/${encodeURIComponent(
+        currentProject.name,
+      )}/configurations/${encodeURIComponent(configname)}`
+
       const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -66,9 +71,12 @@ export default function AddConfigurationModal({
         <p className="mb-4">Add a new configuration file.</p>
 
         <div className="mb-4 flex items-center gap-2">
-          <label className="text-sm font-medium">Filename</label>
+          <label className="text-sm font-medium" htmlFor="configuration-filename-input">
+            Filename
+          </label>
           <div className="ml-2 flex w-full items-center">
             <input
+              id="configuration-filename-input"
               value={filename}
               onChange={(event) => setFilename(event.target.value)}
               className="border-border bg-background focus:border-foreground-active focus:ring-foreground-active w-full rounded border px-2 py-1 text-sm transition focus:ring-2 focus:outline-none"

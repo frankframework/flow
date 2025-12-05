@@ -22,11 +22,12 @@ export default function ProjectLanding() {
   const [showModal, setShowModal] = useState(false)
   const setProject = useProjectStore((state) => state.setProject)
   const location = useLocation()
+  const baseUrl = import.meta.env.VITE_API_BASE_URL
 
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const response = await fetch('http://localhost:8080/projects')
+        const response = await fetch(`${baseUrl}projects`)
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`)
         }
@@ -49,7 +50,7 @@ export default function ProjectLanding() {
 
   const createProject = async (projectName: string) => {
     try {
-      const response = await fetch(`http://localhost:8080/projects/${projectName}`, {
+      const response = await fetch(`${baseUrl}projects/${projectName}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
