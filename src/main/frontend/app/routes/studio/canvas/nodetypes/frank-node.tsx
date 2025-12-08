@@ -19,14 +19,7 @@ import variables from '../../../../../environment/environment'
 import { useSettingsStore } from '~/routes/settings/settings-store'
 import HandleMenu from './components/handle-menu'
 import type { ActionType } from './components/action-types'
-
-export interface ChildNode {
-  id: string
-  subtype: string
-  type: string
-  name?: string
-  attributes?: Record<string, string>
-}
+import { ChildNode } from './child-node'
 
 export type FrankNode = Node<{
   subtype: string
@@ -174,6 +167,7 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
         type: getElementTypeFromName(dropped.name),
         name: '',
         attributes: {},
+        children: [],
       }
 
       addChild(properties.id, child)
@@ -241,52 +235,16 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
         {(properties.data.children.length > 0 || dragOver) && (
           <div className="w-full p-4">
             <div className="border-border bg-background w-full rounded-md p-4 shadow-[inset_0px_2px_4px_rgba(0,0,0,0.1)]">
-              {properties.data.children.map((child, index) => (
-                <div
-                  key={child.type + index.toString()}
-                  className="border-border bg-background relative mb-1 max-w-max rounded-md border-1"
-                  style={{ minHeight: `${minNodeHeight / 2}px` }}
-                  onDoubleClick={(event) => {
-                    event.stopPropagation()
-                    editChild(child.id)
-                  }}
-                >
-                  <div
-                    className="border-b-border box-border w-full rounded-t-md border-b p-1"
-                    style={{
-                      background: gradientEnabled
-                        ? `radial-gradient(
-                          ellipse farthest-corner at 20% 20%,
-                          var(--type-${child.type?.toLowerCase() || 'default'}) 0%,
-                          var(--color-background) 100%
-                        )`
-                        : `var(--type-${child.type?.toLowerCase() || 'default'})`,
-                    }}
-                  >
-                    <h1 className="font-bold">{child.subtype}</h1>
-                    <p className="overflow-hidden text-sm tracking-wider overflow-ellipsis whitespace-nowrap">
-                      {child.name?.toUpperCase()}
-                    </p>
-                  </div>
-
-                  {child.attributes &&
-                    Object.entries(child.attributes).map(([key, value]) => (
-                      <div key={key} className="my-1 px-1">
-                        <p className="text-gray-1000 overflow-hidden text-sm font-bold overflow-ellipsis whitespace-nowrap">
-                          {key}
-                        </p>
-                        <p className="overflow-hidden text-sm overflow-ellipsis whitespace-nowrap">{value}</p>
-                      </div>
-                    ))}
-                </div>
+              {properties.data.children.map((child) => (
+                <ChildNode key={child.id} child={child} gradientEnabled={gradientEnabled} onEdit={editChild} />
               ))}
 
               {dragOver && (
                 <div
-                  className="flex items-center justify-center border-2 border-dashed border-gray-400 bg-gray-100/50 text-center text-xs text-gray-600 italic"
+                  className="border-foreground-muted bg-foreground-muted/50 flex items-center justify-center border-2 border-dashed text-center text-xs italic"
                   style={{
                     height: '100px',
-                    width: '200px',
+                    width: '100%',
                     marginTop: '8px',
                     borderRadius: '6px',
                   }}
