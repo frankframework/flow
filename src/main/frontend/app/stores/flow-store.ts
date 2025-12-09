@@ -13,10 +13,12 @@ import {
 import { initialNodes } from '~/routes/studio/canvas/nodes'
 import { initialEdges } from '~/routes/studio/canvas/edges'
 import type { FlowNode } from '~/routes/studio/canvas/flow'
-import type { ChildNode, FrankNode } from '~/routes/studio/canvas/nodetypes/frank-node'
+import type { FrankNode } from '~/routes/studio/canvas/nodetypes/frank-node'
 import type { ExitNode } from '~/routes/studio/canvas/nodetypes/exit-node'
 import type { StickyNote } from '~/routes/studio/canvas/nodetypes/sticky-note'
 import type { ActionType } from '~/routes/studio/canvas/nodetypes/components/action-types'
+import type { ChildNode } from '~/routes/studio/canvas/nodetypes/child-node'
+import { addChildRecursive, deleteChildRecursive, updateChildRecursive } from './child-utilities'
 
 export interface FlowState {
   nodes: FlowNode[]
@@ -44,6 +46,7 @@ export interface FlowState {
   updateHandle: (nodeId: string, handleIndex: number, newHandle: { type: ActionType; index: number }) => void
   updateChild: (parentNodeId: string, updatedChild: ChildNode) => void
   deleteChild: (parentId: string, childId: string) => void
+  addChildToChild: (nodeId: string, targetChildId: string, newChild: ChildNode) => void
 }
 
 export function isFrankNode(node: FlowNode): node is FrankNode {
@@ -249,38 +252,48 @@ const useFlowStore = create<FlowState>((set, get) => ({
       }),
     })
   },
-  updateChild: (parentNodeId: string, updatedChild: ChildNode) => {
+  updateChild: (rootNodeId: string, updatedChild: ChildNode) => {
     set({
       nodes: get().nodes.map((node) => {
-        if (node.id === parentNodeId && isFrankNode(node)) {
-          const updatedChildren = node.data.children.map((child) =>
-            child.id === updatedChild.id ? { ...child, ...updatedChild } : child,
-          )
-          return {
-            ...node,
-            data: {
-              ...node.data,
-              children: updatedChildren,
-            },
-          }
+        if (node.id !== rootNodeId || !isFrankNode(node)) return node
+
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            children: updateChildRecursive(node.data.children || [], updatedChild),
+          },
         }
-        return node
       }),
     })
   },
-  deleteChild: (parentId, childId) => {
+  deleteChild: (rootNodeId: string, childId: string) => {
     set({
       nodes: get().nodes.map((node) => {
-        if (node.id === parentId && isFrankNode(node)) {
-          return {
-            ...node,
-            data: {
-              ...node.data,
-              children: node.data.children.filter((child) => child.id !== childId),
-            },
-          }
+        if (node.id !== rootNodeId || !isFrankNode(node)) return node
+
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            children: deleteChildRecursive(node.data.children || [], childId),
+          },
         }
-        return node
+      }),
+    })
+  },
+  addChildToChild: (nodeId: string, targetChildId: string, newChild: ChildNode) => {
+    set({
+      nodes: get().nodes.map((node) => {
+        if (node.id !== nodeId) return node
+
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            children: addChildRecursive(node.data.children || [], targetChildId, newChild),
+          },
+        }
       }),
     })
   },

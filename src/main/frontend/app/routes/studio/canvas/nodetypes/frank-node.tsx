@@ -20,6 +20,7 @@ import { useSettingsStore } from '~/routes/settings/settings-store'
 import HandleMenu from './components/handle-menu'
 import type { ActionType } from './components/action-types'
 import { ChildNode } from './child-node'
+import { findChildRecursive } from '~/stores/child-utilities'
 
 export type FrankNode = Node<{
   subtype: string
@@ -118,14 +119,14 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
   }
 
   const editChild = (childId: string) => {
-    const child = properties.data.children.find((c) => c.id === childId)
+    const child = findChildRecursive(properties.data.children, childId)
     if (!child) return
 
     const recordElements = elements as Record<string, { name: string; [key: string]: any }>
     const attributes = Object.values(recordElements).find((element) => element.name === child.subtype)?.attributes
 
-    setParentId(properties.id)
-    setNodeId(+childId)
+    setParentId(properties.id) // The FrankNode stays the parent for editing purposes
+    setNodeId(+childId) // Correctly set the clicked child id
     setAttributes(attributes)
     showNodeContextMenu(true)
     setIsEditing(true)
@@ -148,17 +149,17 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
 
   const handleDropOnNode = useCallback(
     (event: React.DragEvent) => {
+      setDragOver(false)
       event.preventDefault()
-      event.stopPropagation() // No bubbling to prevent also dropping onto the canvas
+      event.stopPropagation()
       showNodeContextMenu(true)
       setIsEditing(true)
-      setDragOver(false)
       setParentId(properties.id)
 
       const raw = event.dataTransfer.getData('application/reactflow')
       if (!raw) return
 
-      const dropped = JSON.parse(raw) // e.g. { name:"HttpSender", attributes:{…} }
+      const dropped = JSON.parse(raw)
       const newId = useFlowStore.getState().getNextNodeId()
 
       const child: ChildNode = {
@@ -172,7 +173,7 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
 
       addChild(properties.id, child)
     },
-    [addChild, properties.id, updateNodeInternals],
+    [properties.id, addChild],
   )
 
   return (
@@ -236,7 +237,15 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
           <div className="w-full p-4">
             <div className="border-border bg-background w-full rounded-md p-4 shadow-[inset_0px_2px_4px_rgba(0,0,0,0.1)]">
               {properties.data.children.map((child) => (
-                <ChildNode key={child.id} child={child} gradientEnabled={gradientEnabled} onEdit={editChild} />
+                <div key={child.id} data-child-id={child.id} className="child-drop-zone">
+                  <ChildNode
+                    child={child}
+                    gradientEnabled={gradientEnabled}
+                    onEdit={editChild}
+                    parentId={properties.id}
+                    rootId={properties.id}
+                  />
+                </div>
               ))}
 
               {dragOver && (
