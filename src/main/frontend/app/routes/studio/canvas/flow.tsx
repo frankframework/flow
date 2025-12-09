@@ -8,6 +8,7 @@ import {
   ReactFlow,
   ReactFlowProvider,
   useReactFlow,
+  Panel,
 } from '@xyflow/react'
 import Dagre from '@dagrejs/dagre'
 import '@xyflow/react/dist/style.css'
@@ -512,20 +513,18 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
 
     try {
       if (!project) return
-      const response = await fetch(
-      `/projects/${encodeURIComponent(project.name)}/${encodeURIComponent(configName)}/adapters/${encodeURIComponent(activeTabName)}`,
-      {
+      const url = `${API_BASE_URL}projects/${encodeURIComponent(project.name)}/${encodeURIComponent(configName)}/adapters/${encodeURIComponent(activeTabName)}`
+      const response = await fetch(url, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ adapterXml: xmlString }),
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`)
       }
-    )
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`)
-    }
-
-    toast.success('Flow saved successfully!')
+      toast.success('Flow saved successfully!')
     } catch (error) {
       console.error('Failed to save XML:', error)
       toast.error(`Failed to save XML: ${error}`)
