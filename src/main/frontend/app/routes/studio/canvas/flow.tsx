@@ -30,7 +30,6 @@ import CreateNodeModal from '~/components/flow/create-node-modal'
 import { useProjectStore } from '~/stores/project-store'
 import { toast, ToastContainer } from 'react-toastify'
 import { useTheme } from '~/hooks/use-theme'
-import { API_BASE_URL } from '~/config'
 
 export type FlowNode = FrankNode | ExitNode | StickyNote | GroupNode | Node
 

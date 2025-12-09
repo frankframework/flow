@@ -7,7 +7,6 @@ import ActionButton from './action-button'
 import { useProjectStore } from '~/stores/project-store'
 import { useLocation } from 'react-router'
 import ProjectModal from './project-modal'
-import { API_BASE_URL } from '~/config'
 
 export interface Project {
   name: string

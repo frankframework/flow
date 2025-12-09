@@ -1,6 +1,5 @@
 import type { Project } from '../projectlanding/project-landing'
 import { useState } from 'react'
-import { API_BASE_URL } from '~/config'
 import { useProjectStore } from '~/stores/project-store'
 
 interface AddConfigurationModalProperties {

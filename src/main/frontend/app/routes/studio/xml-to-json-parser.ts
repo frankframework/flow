@@ -3,7 +3,6 @@ import { getElementTypeFromName } from '~/routes/studio/node-translator-module'
 import type { ExitNode } from '~/routes/studio/canvas/nodetypes/exit-node'
 import type { FrankNode } from '~/routes/studio/canvas/nodetypes/frank-node'
 import { SAXParser } from 'sax-ts'
-import { API_BASE_URL } from '~/config'
 
 interface IdCounter {
   current: number

@@ -18,6 +18,7 @@
     "allotment": "^1.20.3",
     "clsx": "^2.1.1",
     "dagre": "^0.8.5",
+    "dotenv": "^17.2.3",
     "isbot": "^5.1.17",
     "react": "^19.0.0",
     "react-complex-tree": "^2.6.0",
