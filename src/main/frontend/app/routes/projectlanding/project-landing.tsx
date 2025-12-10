@@ -27,7 +27,7 @@ export default function ProjectLanding() {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const response = await fetch('http://localhost:8080/projects')
+        const response = await fetch(`${API_BASE_URL}projects`)
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`)
         }
@@ -60,8 +60,6 @@ export default function ProjectLanding() {
     const firstPath = (files[0] as any).webkitRelativePath
     const projectRoot = firstPath.split('/')[0]
 
-    console.log('Detected project root:', projectRoot)
-
     // 1. Create project in backend
     await createProject(projectRoot)
 
@@ -80,10 +78,8 @@ export default function ProjectLanding() {
       }
     }
 
-    console.log('Uploading configs:', configs)
-
     // Import configurations to the project
-    await fetch(`http://localhost:8080/projects/${projectRoot}/import-configurations`, {
+    await fetch(`${API_BASE_URL}projects/${projectRoot}/import-configurations`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -95,7 +91,7 @@ export default function ProjectLanding() {
 
   const createProject = async (projectName: string) => {
     try {
-      const response = await fetch(`http://localhost:8080/projects/${projectName}`, {
+      const response = await fetch(`${API_BASE_URL}projects/${projectName}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

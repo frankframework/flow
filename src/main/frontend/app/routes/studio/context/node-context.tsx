@@ -14,9 +14,8 @@ export default function NodeContext({
   setShowNodeContext: (b: boolean) => void
   nodeId: number
 }>) {
-  const { nodes, setAttributes, getAttributes, setNodeName, deleteNode, updateChild, deleteChild } = useFlowStore(
-    (state) => state,
-  )
+  const { nodes, setAttributes, getAttributes, setNodeName, getNodeName, deleteNode, updateChild, deleteChild } =
+    useFlowStore((state) => state)
   const [canSave, setCanSave] = useState(false)
   const [showAll, setShowAll] = useState(false)
   const [inputValues, setInputValues] = useState<Record<number, string>>({})
@@ -71,8 +70,13 @@ export default function NodeContext({
         }
       }
     } else {
-      // Editing a top-level node → pull from store
-      currentAttributes = getAttributes(nodeId.toString())
+      const attributes = getAttributes(nodeId.toString())
+      const name = getNodeName(nodeId.toString())
+
+      currentAttributes = {
+        ...(name ? { name } : {}),
+        ...attributes,
+      }
     }
 
     if (currentAttributes) {
@@ -83,8 +87,6 @@ export default function NodeContext({
       }
       setInputValues(newValues)
     }
-
-    validateForm()
   }, [attributes, nodeId, parentId])
 
   useEffect(() => {
@@ -94,6 +96,11 @@ export default function NodeContext({
     }
     validateForm()
   }, [attributes])
+
+  // Checks form validity on input value changes (And also on first render)
+  useEffect(() => {
+    validateForm()
+  }, [inputValues])
 
   // Checks input fields for values and returns only those values and their labels
   function resolveFilledAttributes() {
@@ -190,7 +197,7 @@ export default function NodeContext({
                 {attribute.mandatory && '*'}
                 {key}
                 {attribute.description && (
-                        <DescriptionHelpIcon description={attribute.description} elements={elements} />
+                  <DescriptionHelpIcon description={attribute.description} elements={elements} />
                 )}
               </label>
 
@@ -237,10 +244,7 @@ function DescriptionHelpIcon({
   elements,
 }: Readonly<{ description: string; elements: Record<string, any> | null }>) {
   const [show, setShow] = useState(false)
-  const transformed = useJavadocTransform(
-    description,
-    elements,
-  )
+  const transformed = useJavadocTransform(description, elements)
 
   return (
     <div className="relative inline-block px-2">

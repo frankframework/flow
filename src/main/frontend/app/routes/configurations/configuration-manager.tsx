@@ -11,13 +11,8 @@ export default function ConfigurationManager() {
   const navigate = useNavigate()
   const [showModal, setShowModal] = useState(false)
 
-  const handleClick = () => {
-    console.log(currentProject)
-  }
-
   return (
     <div className="bg-backdrop h-full w-full p-6">
-      <button onClick={handleClick}>Click</button>
       <div className="bg-background border-border h-full w-full rounded border p-6">
         <div
           className="hover:text-foreground-active flex w-fit hover:cursor-pointer"

@@ -10,7 +10,7 @@ interface IdCounter {
 
 export async function getXmlString(projectName: string, filepath: string): Promise<string> {
   try {
-    const response = await fetch(`/projects/${projectName}/configuration`, {
+    const response = await fetch(`${API_BASE_URL}projects/${projectName}/configuration`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -227,10 +227,20 @@ function convertAdapterToFlowNodes(adapter: any): FlowNode[] {
     const forwardElements = [...element.querySelectorAll('Forward')]
     const sourceHandles =
       forwardElements.length > 0
-        ? forwardElements.map((forward, index) => ({
-            type: forward.getAttribute('name') || `forward${index + 1}`,
-            index: index + 1,
-          }))
+        ? forwardElements.map((forward, index) => {
+            const path = forward.getAttribute('path') || ''
+            const loweredPath = path.toLowerCase()
+            // Only check for bad flows/forwards right now, could later be updated to also include exceptions and custom handles
+            const type =
+              loweredPath.includes('error') || loweredPath.includes('bad') || loweredPath.includes('fail')
+                ? 'failure'
+                : 'success'
+
+            return {
+              type,
+              index: index + 1,
+            }
+          })
         : [
             {
               type: 'success',
