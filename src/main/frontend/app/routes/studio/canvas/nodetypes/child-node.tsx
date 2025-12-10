@@ -26,11 +26,34 @@ export function ChildNode({ child, gradientEnabled, onEdit, parentId, rootId }: 
   const { setParentId, setChildParentId, setIsEditing } = useNodeContextStore()
   const showNodeContextMenu = useNodeContextMenu()
   const addChildToChild = useFlowStore((state) => state.addChildToChild)
+  const [dragOver, setDragOver] = useState(false)
+
+  const handleDragOver = (event: React.DragEvent) => {
+    event.preventDefault()
+
+    const target = event.target as HTMLElement
+
+    // Find the nearest body element
+    const closestBody = target.closest('.child-node-body')
+
+    // If the closest body is not THIS body, user is dragging over a nested child
+    if (closestBody !== event.currentTarget) {
+      setDragOver(false)
+      return
+    }
+
+    setDragOver(true)
+  }
+
+  const handleDragLeave = () => {
+    setDragOver(false)
+  }
 
   const handleDrop = useCallback(
     (event: React.DragEvent) => {
       event.preventDefault()
       event.stopPropagation()
+      setDragOver(false)
       showNodeContextMenu(true)
       setIsEditing(true)
       setParentId(rootId)
@@ -64,8 +87,6 @@ export function ChildNode({ child, gradientEnabled, onEdit, parentId, rootId }: 
         event.stopPropagation()
         onEdit(child.id)
       }}
-      onDrop={handleDrop}
-      onDragOver={(event) => event.preventDefault()}
     >
       {/* Header */}
       <div
@@ -85,7 +106,12 @@ export function ChildNode({ child, gradientEnabled, onEdit, parentId, rootId }: 
       </div>
 
       {/* Body */}
-      <div className="relative min-h-[100px] px-1 py-1">
+      <div
+        className="child-node-body relative min-h-[100px] px-1 py-1"
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
         {child.attributes &&
           Object.entries(child.attributes).map(([key, value]) => (
             <div key={key} className="my-1">
@@ -97,7 +123,6 @@ export function ChildNode({ child, gradientEnabled, onEdit, parentId, rootId }: 
         {/* Recursive children */}
         {child.children && child.children.length > 0 && (
           <div className="relative mt-2 pl-4">
-
             {child.children.map((nested) => (
               <ChildNode
                 key={nested.id}
@@ -108,6 +133,22 @@ export function ChildNode({ child, gradientEnabled, onEdit, parentId, rootId }: 
                 rootId={rootId}
               />
             ))}
+          </div>
+        )}
+
+        {/* Drop zone */}
+        {dragOver && (
+          <div className="mt-2 pl-4">
+            <div
+              className="border-foreground-muted bg-foreground-muted/50 flex items-center justify-center border-2 border-dashed text-center text-xs italic"
+              style={{
+                height: '100px',
+                width: '100%',
+                borderRadius: '6px',
+              }}
+            >
+              Drop to add child
+            </div>
           </div>
         )}
       </div>

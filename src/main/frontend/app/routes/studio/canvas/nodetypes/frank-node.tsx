@@ -141,8 +141,15 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
   }
 
   const handleDragOver = (event: React.DragEvent) => {
-    event.preventDefault() // ⬅ keep default behaviour cancelled
-    setDragOver(true)
+    event.preventDefault()
+
+    const isInsideChild = (event.target as HTMLElement).closest('.child-drop-zone')
+
+    if (isInsideChild) {
+      setDragOver(false) // Dragging over a child: DO NOT show "drop to add child"
+    } else {
+      setDragOver(true) // Dragging over FrankNode
+    }
   }
 
   const handleDragLeave = () => setDragOver(false)
