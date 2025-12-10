@@ -5,7 +5,14 @@
   "scripts": {
     "build": "react-router build",
     "start": "react-router dev",
-    "typecheck": "react-router typegen && tsc"
+    "typecheck": "react-router typegen && tsc",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "e2e": "cd cypress && pnpm exec cypress run",
+    "e2e:open": "cd cypress && pnpm exec cypress open"
   },
   "dependencies": {
     "@dagrejs/dagre": "^1.1.4",
@@ -30,15 +37,21 @@
     "zustand": "^5.0.3"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.1",
     "@mdx-js/react": "^3.1.0",
     "@react-router/dev": "^7.4.1",
     "@tailwindcss/vite": "^4.0.0",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
     "@types/mdx": "^2.0.13",
     "@types/node": "^20",
     "@types/react": "^19.0.1",
     "@types/react-dom": "^19.0.1",
     "@typescript-eslint/eslint-plugin": "^8.26.1",
     "@typescript-eslint/parser": "^8.26.1",
+    "@vitejs/plugin-react": "^5.1.2",
+    "@vitest/ui": "^4.0.15",
     "eslint": "^9.23.0",
     "eslint-config-prettier": "^10.1.1",
     "eslint-plugin-prettier": "^5.2.5",
@@ -46,6 +59,7 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-sonarjs": "^3.0.2",
     "eslint-plugin-unicorn": "^58.0.0",
+    "jsdom": "^27.3.0",
     "prettier": "^3.5.3",
     "prettier-plugin-tailwindcss": "^0.6.11",
     "react-router-devtools": "^1.1.0",
@@ -54,6 +68,8 @@
     "typescript-eslint": "^8.26.1",
     "vite": "^6.3.5",
     "vite-plugin-svgr": "^4.3.0",
-    "vite-tsconfig-paths": "^5.1.4"
-  }
+    "vite-tsconfig-paths": "^5.1.4",
+    "vitest": "^4.0.15"
+  },
+  "packageManager": "pnpm@10.22.0+sha512.bf049efe995b28f527fd2b41ae0474ce29186f7edcb3bf545087bd61fbbebb2bf75362d1307fda09c2d288e1e499787ac12d4fcb617a974718a6051f2eee741c"
 }

@@ -45,14 +45,14 @@ jobs:
         working-directory: src/main/frontend
 
       - name: Lint Frontend
-        run: pnpm lint
+        run: pnpm run lint
         working-directory: src/main/frontend
 
       - name: Lint Backend
         run: mvn checkstyle:check
 
       - name: Test Frontend
-        run: pnpm test --watch=false --browsers=ChromeHeadless
+        run: pnpm run test --watch=false --browsers=ChromeHeadless
         working-directory: src/main/frontend
 
       - name: Test & Build Backend and run E2E Tests
