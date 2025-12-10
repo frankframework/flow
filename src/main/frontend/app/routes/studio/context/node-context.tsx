@@ -218,10 +218,11 @@ export default function NodeContext({
           {displayedAttributes.map(([key, attribute, originalIndex]: [string, any, number]) => (
             <div key={originalIndex}>
               <ContextInput
+                id={`ctx-${originalIndex}`}
                 value={inputValues[originalIndex] ?? ''}
                 onChange={(value: string) => {
-                  setInputValues((prev) => {
-                    const updated = { ...prev, [originalIndex]: value }
+                  setInputValues((previous) => {
+                    const updated = { ...previous, [originalIndex]: value }
                     validateForm(updated)
                     return updated
                   })

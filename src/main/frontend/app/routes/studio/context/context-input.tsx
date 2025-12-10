@@ -3,6 +3,7 @@ import HelpIcon from '/icons/solar/Help.svg?react'
 import { useJavadocTransform } from '@frankframework/ff-doc/react'
 
 export interface ContextInputProperties {
+  id: string
   value: string
   onChange: (value: string) => void
   onKeyDown?: (event: React.KeyboardEvent) => void
@@ -19,6 +20,7 @@ export interface ContextInputProperties {
 }
 
 export default function ContextInput({
+  id,
   value,
   onChange,
   onKeyDown,
@@ -31,10 +33,11 @@ export default function ContextInput({
   const description = attribute?.description
   const required = attribute?.mandatory
 
-  const renderInputField = () => {
+  const renderInputField = (id: string) => {
     if (enumOptions) {
       return (
         <select
+          id={id}
           value={value}
           onChange={(event) => onChange(event.currentTarget.value)}
           onKeyDown={onKeyDown}
@@ -53,6 +56,7 @@ export default function ContextInput({
     if (type === 'bool') {
       return (
         <select
+          id={id}
           value={value}
           onChange={(event) => onChange(event.currentTarget.value)}
           onKeyDown={onKeyDown}
@@ -68,6 +72,7 @@ export default function ContextInput({
     if (type === 'int') {
       return (
         <input
+          id={id}
           type="text"
           inputMode="numeric"
           value={value}
@@ -81,6 +86,7 @@ export default function ContextInput({
 
     return (
       <input
+        id={id}
         type="text"
         value={value}
         onChange={(event) => onChange(event.currentTarget.value)}
@@ -91,16 +97,15 @@ export default function ContextInput({
   }
 
   return (
-    <label className="group font-small text-foreground relative block text-sm">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          {required && <span className="text-red-500">*</span>}
-          <span>{label}</span>
-          {description && <DescriptionHelpIcon description={description} elements={elements ?? null} />}
-        </div>
+    <div className="group font-small text-foreground relative block text-sm">
+      <div className="flex items-center gap-2">
+        {required && <span className="text-red-500">*</span>}
+        <label htmlFor={id}>{label}</label>
+        {description && <DescriptionHelpIcon description={description} elements={elements ?? null} />}
       </div>
-      {renderInputField()}
-    </label>
+
+      {renderInputField(id)}
+    </div>
   )
 }
 
@@ -115,6 +120,7 @@ function DescriptionHelpIcon({
     <div className="relative inline-block px-2">
       <button
         type="button"
+        tabIndex={-1}
         onClick={() => setShow((previous) => !previous)}
         className="text-blue-500 hover:text-blue-700 focus:outline-none"
         title="Show help"
