@@ -45,9 +45,9 @@ public class Project {
 		this.configurations.add(configuration);
 	}
 
-	public void setConfigurationXml(String filename, String xmlContent) {
+	public void setConfigurationXml(String filepath, String xmlContent) {
 		for (Configuration c : this.configurations) {
-			if (c.getFilename().equals(filename)) {
+			if (c.getFilepath().equals(filepath)) {
 				c.setXmlContent(xmlContent);
 				return;
 			}
@@ -70,9 +70,13 @@ public class Project {
 		projectSettings.setEnabled(type, false);
 	}
 
+	public void clearConfigurations() {
+		configurations.clear();
+	}
+
 	public boolean updateAdapter(String configurationName, String adapterName, String newAdapterXml) {
 		for (Configuration config : configurations) {
-			if (!config.getFilename().equals(configurationName))
+			if (!config.getFilepath().equals(configurationName))
 				continue;
 
 			try {

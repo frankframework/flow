@@ -49,7 +49,7 @@ class ProjectControllerTest {
                 when(project.getName()).thenReturn("MyProject");
 
                 Configuration config = mock(Configuration.class);
-                when(config.getFilename()).thenReturn("config1.xml");
+                when(config.getFilepath()).thenReturn("config1.xml");
 
                 when(project.getConfigurations()).thenReturn(new ArrayList<>(List.of(config)));
 
@@ -115,7 +115,7 @@ class ProjectControllerTest {
                 Project project = mockProject();
                 Configuration config = project.getConfigurations().get(0);
 
-                when(config.getFilename()).thenReturn("config1.xml");
+                when(config.getFilepath()).thenReturn("config1.xml");
                 when(config.getXmlContent()).thenReturn("<xml>content</xml>");
 
                 when(projectService.getProject("MyProject")).thenReturn(project);

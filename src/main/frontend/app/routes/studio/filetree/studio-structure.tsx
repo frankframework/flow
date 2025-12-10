@@ -56,7 +56,7 @@ export default function StudioStructure() {
   const tree = useRef<TreeRef>(null)
   const dataProviderReference = useRef(new StudioFilesDataProvider([]))
 
-  const configurationNames = useProjectStore((state) => state.project?.filenames)
+  const configurationPaths = useProjectStore((state) => state.project?.filepaths)
   const setTabData = useTabStore((state) => state.setTabData)
   const setActiveTab = useTabStore((state) => state.setActiveTab)
   const getTab = useTabStore((state) => state.getTab)
@@ -70,19 +70,19 @@ export default function StudioStructure() {
 
       try {
         const loaded: ConfigWithAdapters[] = await Promise.all(
-          configurationNames.map(async (configName) => {
+          configurationPaths.map(async (configPath) => {
             if (!project) return
-            const adapterNames = await getAdapterNamesFromConfiguration(project.name, configName)
+            const adapterNames = await getAdapterNamesFromConfiguration(project.name, configPath)
 
             // Fetch listener name for each adapter
             const adapters = await Promise.all(
               adapterNames.map(async (adapterName) => {
-                const listenerName = await getAdapterListenerType(project.name, configName, adapterName)
+                const listenerName = await getAdapterListenerType(project.name, configPath, adapterName)
                 return { adapterName, listenerName }
               }),
             )
 
-            return { configName, adapters }
+            return { configName: configPath, adapters }
           }),
         )
 
@@ -95,7 +95,7 @@ export default function StudioStructure() {
     }
 
     loadAdapters()
-  }, [configurationNames])
+  }, [configurationPaths])
 
   useEffect(() => {
     dataProviderReference.current.updateData(configs)

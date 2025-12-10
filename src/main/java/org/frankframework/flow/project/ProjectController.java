@@ -4,6 +4,7 @@ import org.frankframework.flow.configuration.Configuration;
 import org.frankframework.flow.configuration.ConfigurationDTO;
 import org.frankframework.flow.configuration.AdapterUpdateDTO;
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
+import org.frankframework.flow.projectsettings.FilterType;
 import org.frankframework.flow.projectsettings.InvalidFilterTypeException;
 import org.frankframework.flow.configuration.Configuration;
 import org.frankframework.flow.configuration.ConfigurationDTO;
@@ -55,23 +56,99 @@ public class ProjectController {
 		return ResponseEntity.ok(dto);
 	}
 
-	@GetMapping("/{projectName}/{filename}")
-	public ResponseEntity<ConfigurationDTO> getConfiguration(
+	@PatchMapping("/{projectname}")
+	public ResponseEntity<ProjectDTO> patchProject(
+			@PathVariable String projectname,
+			@RequestBody ProjectDTO projectDTO) {
+
+		try {
+			Project project = projectService.getProject(projectname);
+			if (project == null) {
+				return ResponseEntity.notFound().build();
+			}
+
+			// 1. Update project name (only if present)
+			if (projectDTO.name() != null && !projectDTO.name().equals(project.getName())) {
+				project.setName(projectDTO.name());
+			}
+
+			// 2. Update configuration list (only if present)
+			if (projectDTO.filepaths() != null) {
+				// Replace entire configuration list
+				project.clearConfigurations();
+				for (String filepath : projectDTO.filepaths()) {
+					project.addConfiguration(new Configuration(filepath));
+				}
+			}
+
+			// 3. Merge filter map (only update provided filters)
+			if (projectDTO.filters() != null) {
+				for (var entry : projectDTO.filters().entrySet()) {
+					FilterType type = entry.getKey();
+					Boolean enabled = entry.getValue();
+
+					if (enabled == null)
+						continue;
+
+					if (enabled) {
+						project.enableFilter(type);
+					} else {
+						project.disableFilter(type);
+					}
+				}
+			}
+
+			// Build updated DTO
+			ProjectDTO dto = ProjectDTO.from(project);
+
+			return ResponseEntity.ok(dto);
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+		}
+	}
+
+	@PostMapping("/{projectName}/configuration")
+	public ResponseEntity<ConfigurationDTO> getConfigurationByPath(
 			@PathVariable String projectName,
-			@PathVariable String filename)
+			@RequestBody ConfigurationPathDTO requestBody)
 			throws ProjectNotFoundException, ConfigurationNotFoundException {
 
 		Project project = projectService.getProject(projectName);
 
+		String filepath = requestBody.filepath();
+
+		// Find configuration by filepath
 		for (Configuration config : project.getConfigurations()) {
-			if (config.getFilename().equals(filename)) {
-				ConfigurationDTO dto = new ConfigurationDTO(config.getFilename(), config.getXmlContent());
+			if (config.getFilepath().equals(filepath)) {
+				ConfigurationDTO dto = new ConfigurationDTO(config.getFilepath(), config.getXmlContent());
 				return ResponseEntity.ok(dto);
 			}
 		}
 
 		throw new ConfigurationNotFoundException(
-				"Configuration with filename: " + filename + " cannot be found");
+				"Configuration with filename: " + requestBody.filepath() + " cannot be found");
+	}
+
+	@PostMapping("/{projectname}/import-configurations")
+	public ResponseEntity<ProjectDTO> importConfigurations(
+			@PathVariable String projectname,
+			@RequestBody ProjectImportDTO importDTO) {
+
+		Project project = projectService.getProject(projectname);
+		if (project == null)
+			return ResponseEntity.notFound().build();
+
+		for (ImportConfigurationDTO conf : importDTO.configurations()) {
+			Configuration c = new Configuration(conf.filepath());
+			c.setXmlContent(conf.xmlContent());
+			project.addConfiguration(c);
+		}
+
+		ProjectDTO dto = ProjectDTO.from(project);
+
+		return ResponseEntity.ok(dto);
 	}
 
 	@PutMapping("/{projectName}/{filename}")

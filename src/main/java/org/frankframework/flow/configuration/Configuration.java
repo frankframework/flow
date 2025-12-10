@@ -1,20 +1,20 @@
 package org.frankframework.flow.configuration;
 
 public class Configuration {
-	private String filename;
+	private String filepath;
 	private String xmlContent;
 
-	public Configuration(String filename) {
-		this.filename = filename;
+	public Configuration(String filepath) {
+		this.filepath = filepath;
 		this.xmlContent = "<Configuration><Adapter name='new adapter'></Adapter></Configuration>";
 	}
 
-	public String getFilename() {
-		return filename;
+	public String getFilepath() {
+		return filepath;
 	}
 
-	public void setFilename(String filename) {
-		this.filename = filename;
+	public void setFilepath(String filepath) {
+		this.filepath = filepath;
 	}
 	public String getXmlContent() {
 		return this.xmlContent;
