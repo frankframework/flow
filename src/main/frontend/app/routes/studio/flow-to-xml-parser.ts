@@ -62,14 +62,6 @@ export function exportFlowToXml(json: ReactFlowJson, adaptername: string): strin
 
   const exitsXml = exitNodes.length > 0 ? `      <Exits>\n${generateExitsXml(exitNodes)}\n      </Exits>` : ''
 
-  console.log(`
-  <Adapter name="${adaptername}" description="Auto-generated from React Flow JSON">
-${receivers.join('\n')}
-    <Pipeline>
-${exitsXml}
-${pipelineParts.join('\n')}
-    </Pipeline>
-  </Adapter>`)
   return `
   <Adapter name="${adaptername}" description="Auto-generated from React Flow JSON">
 ${receivers.join('\n')}
