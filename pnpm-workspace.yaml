@@ -1,0 +1,3 @@
+packages:
+  - 'src/main/frontend'
+  - 'src/main/frontend/cypress'

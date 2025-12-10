@@ -1,0 +1,70 @@
+name: Build and Test Application
+
+on:
+  pull_request:
+    types: [ opened, synchronize, reopened ]
+    branches: [ master ]
+  push:
+    branches: [ master ]
+
+env:
+  JAVA_VERSION: 21
+  NODE_VERSION: 23
+  PNPM_VERSION: 10.4.0
+
+jobs:
+  build-and-test:
+    name: Build & Run All Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v5
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Set up Node.js ${{ env.NODE_VERSION }}
+        id: pnpm-modules-cache
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+          cache-dependency-path: 'pnpm-lock.yaml'
+
+      - name: Install Frontend Dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
+        working-directory: src/main/frontend
+
+      - name: Lint Frontend
+        run: pnpm lint
+        working-directory: src/main/frontend
+
+      - name: Lint Backend
+        run: mvn checkstyle:check
+
+      - name: Test Frontend
+        run: pnpm test --watch=false --browsers=ChromeHeadless
+        working-directory: src/main/frontend
+
+      - name: Test & Build Backend and run E2E Tests
+        run: mvn clean package
+
+      - name: Upload CI Artifacts on Failure
+        if: failure()
+        uses: actions/upload-artifact@v5
+        with:
+          name: test-artifacts
+          path: |
+            target/surefire-reports/
+            target/failsafe-reports/
+            target/cypress/
+          retention-days: 7
