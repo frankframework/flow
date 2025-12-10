@@ -1,17 +1,19 @@
 import { Handle, Position, useNodeConnections, useReactFlow } from '@xyflow/react'
 import { useState } from 'react'
+import HandleMenuItem from './handle-menu-item'
+import type { ActionType } from './action-types'
 
 interface HandleProperties {
-  type: string
+  type: ActionType
   index: number
   firstHandlePosition: number
   handleSpacing: number
-  onChangeType: (newType: string) => void
+  onChangeType: (newType: ActionType) => void
   absolutePosition: { x: number; y: number }
 }
 
-function translateHandleTypeToColour(type: string): string {
-  switch (type.toLowerCase()) {
+export function translateHandleTypeToColour(type: ActionType): string {
+  switch (type) {
     case 'success': {
       return '#68D250'
     }
@@ -21,8 +23,8 @@ function translateHandleTypeToColour(type: string): string {
     case 'exception': {
       return '#424242'
     }
-    case 'informational': {
-      return '#848484'
+    case 'custom': {
+      return '#1B97D1'
     }
     default: {
       return '#1B97D1'
@@ -80,44 +82,56 @@ export function CustomHandle(properties: Readonly<HandleProperties>) {
 
       {isMenuOpen && (
         <div
-          className="nodrag absolute rounded-md border bg-white shadow-md"
+          className="nodrag bg-background border-border absolute border shadow-md"
           style={{
-            left: `${menuPosition.x + 10}px`,
-            top: `${menuPosition.y + 10}px`,
+            left: `${menuPosition.x + 10}px`, // offset to the right of cursor
+            top: `${menuPosition.y - 5}px`,
           }}
         >
-          <ul>
-            <button
-              className="border-border absolute -top-1 -right-1 rounded-full border bg-white text-gray-400 shadow-sm hover:border-red-400 hover:text-red-400"
-              onClick={() => setIsMenuOpen(false)}
+          <button
+            className="border-border absolute -top-1 -right-1 rounded-full border bg-white text-gray-400 shadow-sm hover:border-red-400 hover:text-red-400"
+            onClick={() => setIsMenuOpen(false)}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-3 w-3"
+              width="10"
+              height="10"
+              viewBox="0 0 10 10"
+              strokeWidth="1"
+              stroke="currentColor"
+              strokeLinecap="round"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-3 w-3"
-                width="10"
-                height="10"
-                viewBox="0 0 10 10"
-                strokeWidth="1"
-                stroke="currentColor"
-                strokeLinecap="round"
-              >
-                <line x1="3" y1="3" x2="7" y2="7" />
-                <line x1="3" y1="7" x2="7" y2="3" />
-              </svg>
-            </button>
-            <li className="hover:bg-border cursor-pointer rounded-t-md p-2" onClick={() => handleMenuClick('success')}>
-              Success
-            </li>
-            <li className="hover:bg-border cursor-pointer p-2" onClick={() => handleMenuClick('failure')}>
-              Failure
-            </li>
-            <li className="hover:bg-border cursor-pointer p-2" onClick={() => handleMenuClick('exception')}>
-              Exception
-            </li>
-            <li className="hover:bg-border cursor-pointer rounded-b-md p-2" onClick={() => handleMenuClick('custom')}>
-              Custom
-            </li>
-          </ul>
+              <line x1="3" y1="3" x2="7" y2="7" />
+              <line x1="3" y1="7" x2="7" y2="3" />
+            </svg>
+          </button>
+          <div className="w-37">
+            <div className="border-border bg-muted border-b px-3 py-1 text-xs font-bold">Change Handle Type</div>
+            <ul className="w-full">
+              <HandleMenuItem
+                label="Success"
+                iconColor={translateHandleTypeToColour('success')}
+                onClick={() => handleMenuClick('success')}
+              />
+              <HandleMenuItem
+                label="Failure"
+                iconColor={translateHandleTypeToColour('failure')}
+                onClick={() => handleMenuClick('failure')}
+              />
+              <HandleMenuItem
+                label="Exception"
+                iconColor={translateHandleTypeToColour('exception')}
+                onClick={() => handleMenuClick('exception')}
+              />
+              <HandleMenuItem
+                label="Custom"
+                iconColor={translateHandleTypeToColour('custom')}
+                onClick={() => handleMenuClick('custom')}
+                isLast
+              />
+            </ul>
+          </div>
         </div>
       )}
     </div>

@@ -16,6 +16,7 @@ import type { FlowNode } from '~/routes/studio/canvas/flow'
 import type { ChildNode, FrankNode } from '~/routes/studio/canvas/nodetypes/frank-node'
 import type { ExitNode } from '~/routes/studio/canvas/nodetypes/exit-node'
 import type { StickyNote } from '~/routes/studio/canvas/nodetypes/sticky-note'
+import type { ActionType } from '~/routes/studio/canvas/nodetypes/components/action-types'
 
 export interface FlowState {
   nodes: FlowNode[]
@@ -38,8 +39,9 @@ export interface FlowState {
   addChild: (nodeId: string, child: ChildNode) => void
   setStickyText: (nodeId: string, text: string) => void
   setNodeName: (nodeId: string, name: string) => void
-  addHandle: (nodeId: string, handle: { type: string; index: number }) => void
-  updateHandle: (nodeId: string, handleIndex: number, newHandle: { type: string; index: number }) => void
+  getNodeName: (nodeId: string) => string | null
+  addHandle: (nodeId: string, handle: { type: ActionType; index: number }) => void
+  updateHandle: (nodeId: string, handleIndex: number, newHandle: { type: ActionType; index: number }) => void
   updateChild: (parentNodeId: string, updatedChild: ChildNode) => void
   deleteChild: (parentId: string, childId: string) => void
 }
@@ -206,6 +208,12 @@ const useFlowStore = create<FlowState>((set, get) => ({
       }),
     })
   },
+  getNodeName: (nodeId: string) => {
+    const node = get().nodes.find((n) => n.id === nodeId)
+    if (!node) return null
+    if (isFrankNode(node) || isExitNode(node)) return node.data.name ?? null
+    return null
+  },
   addHandle: (nodeId, handle) => {
     set({
       nodes: get().nodes.map((node) => {
@@ -222,7 +230,7 @@ const useFlowStore = create<FlowState>((set, get) => ({
       }),
     })
   },
-  updateHandle: (nodeId: string, handleIndex: number, newHandle: { type: string; index: number }) => {
+  updateHandle: (nodeId: string, handleIndex: number, newHandle: { type: ActionType; index: number }) => {
     set({
       nodes: get().nodes.map((node) => {
         if (node.id === nodeId && isFrankNode(node)) {

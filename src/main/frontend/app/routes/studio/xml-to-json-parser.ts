@@ -10,15 +10,16 @@ interface IdCounter {
 
 export async function getXmlString(projectName: string, filename: string): Promise<string> {
   try {
-    const response = await fetch(`/projects/${projectName}/${filename}`);
+    const url = `${API_BASE_URL}projects/${projectName}/${filename}`
+    const response = await fetch(url)
     if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
+      throw new Error(`HTTP error! Status: ${response.status}`)
     }
 
-    const data = await response.json();
-    return data.xmlContent;
+    const data = await response.json()
+    return data.xmlContent
   } catch (error) {
-    throw new Error(`Failed to fetch XML file for ${projectName}/${filename}: ${error}`);
+    throw new Error(`Failed to fetch XML file for ${projectName}/${filename}: ${error}`)
   }
 }
 
@@ -51,7 +52,11 @@ export async function getAdapterNamesFromConfiguration(projectName: string, file
   })
 }
 
-export async function getAdapterFromConfiguration(projectname: string, filename: string, adapterName: string): Promise<Element | null> {
+export async function getAdapterFromConfiguration(
+  projectname: string,
+  filename: string,
+  adapterName: string,
+): Promise<Element | null> {
   const xmlString = await getXmlString(projectname, filename)
   const parser = new DOMParser()
   const xmlDoc = parser.parseFromString(xmlString, 'text/xml')
@@ -216,10 +221,20 @@ function convertAdapterToFlowNodes(adapter: any): FlowNode[] {
     const forwardElements = [...element.querySelectorAll('Forward')]
     const sourceHandles =
       forwardElements.length > 0
-        ? forwardElements.map((forward, index) => ({
-            type: forward.getAttribute('name') || `forward${index + 1}`,
-            index: index + 1,
-          }))
+        ? forwardElements.map((forward, index) => {
+            const path = forward.getAttribute('path') || ''
+            const loweredPath = path.toLowerCase()
+            // Only check for bad flows/forwards right now, could later be updated to also include exceptions and custom handles
+            const type =
+              loweredPath.includes('error') || loweredPath.includes('bad') || loweredPath.includes('fail')
+                ? 'failure'
+                : 'success'
+
+            return {
+              type,
+              index: index + 1,
+            }
+          })
         : [
             {
               type: 'success',

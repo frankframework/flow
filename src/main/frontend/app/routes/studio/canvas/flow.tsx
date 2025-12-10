@@ -5,10 +5,10 @@ import {
   Controls,
   type Edge,
   type Node,
-  Panel,
   ReactFlow,
   ReactFlowProvider,
   useReactFlow,
+  Panel,
 } from '@xyflow/react'
 import Dagre from '@dagrejs/dagre'
 import '@xyflow/react/dist/style.css'
@@ -27,11 +27,13 @@ import { convertAdapterXmlToJson, getAdapterFromConfiguration } from '~/routes/s
 import { exportFlowToXml } from '~/routes/studio/flow-to-xml-parser'
 import useNodeContextStore from '~/stores/node-context-store'
 import CreateNodeModal from '~/components/flow/create-node-modal'
-import { useProjectStore } from "~/stores/project-store";
+import { useProjectStore } from '~/stores/project-store'
+import { toast, ToastContainer } from 'react-toastify'
+import { useTheme } from '~/hooks/use-theme'
 
 export type FlowNode = FrankNode | ExitNode | StickyNote | GroupNode | Node
 
-const NodeContextMenuContext = createContext<(visible: boolean) => void>(() => { })
+const NodeContextMenuContext = createContext<(visible: boolean) => void>(() => {})
 export const useNodeContextMenu = () => useContext(NodeContextMenuContext)
 
 const selector = (state: FlowState) => ({
@@ -45,6 +47,7 @@ const selector = (state: FlowState) => ({
 })
 
 function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b: boolean) => void }>) {
+  const theme = useTheme()
   const [loading, setLoading] = useState(false)
   const { isEditing, setIsEditing, setParentId } = useNodeContextStore(
     useShallow((s) => ({
@@ -63,7 +66,6 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
     groupNode: GroupNodeComponent,
   }
   const edgeTypes = { frankEdge: FrankEdgeComponent }
-  const defaultEdgeOptions = { zIndex: 1001 } // Greater index than 1000, the default for a node when it is selected. Enables clicking on edges always
   const reactFlow = useReactFlow()
 
   const { nodes, edges, viewport, onNodesChange, onEdgesChange, onConnect, onReconnect } = useFlowStore(
@@ -501,6 +503,34 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
     URL.revokeObjectURL(url)
   }
 
+  const saveFlow = async () => {
+    const flowData = reactFlow.toObject()
+    const activeTabName = useTabStore.getState().activeTab
+    const configName = useTabStore.getState().getTab(activeTabName)?.configurationName
+    if (!configName) return
+
+    const xmlString = exportFlowToXml(flowData, activeTabName)
+
+    try {
+      if (!project) return
+      const url = `${API_BASE_URL}projects/${encodeURIComponent(project.name)}/${encodeURIComponent(configName)}/adapters/${encodeURIComponent(activeTabName)}`
+      const response = await fetch(url, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adapterXml: xmlString }),
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`)
+      }
+
+      toast.success('Flow saved successfully!')
+    } catch (error) {
+      console.error('Failed to save XML:', error)
+      toast.error(`Failed to save XML: ${error}`)
+    }
+  }
+
   return (
     <div
       className="relative h-full w-full"
@@ -531,13 +561,21 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
         onConnectEnd={handleConnectEnd}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
-        defaultEdgeOptions={defaultEdgeOptions}
         deleteKeyCode={'Delete'}
         minZoom={0.2}
       >
         <Controls position="top-left" style={{ color: '#000' }}></Controls>
         <Background variant={BackgroundVariant.Dots} size={3} gap={100}></Background>
+        <Panel position="top-center">
+          <button
+            className="border-border hover:bg-hover bg-background border p-2 hover:cursor-pointer"
+            onClick={saveFlow}
+          >
+            Save XML
+          </button>
+        </Panel>
       </ReactFlow>
+      <ToastContainer position="bottom-right" theme={theme} closeOnClick={true} />
       <CreateNodeModal
         isOpen={showModal}
         onClose={() => setShowModal(false)}

@@ -6,7 +6,7 @@ public class Configuration {
 
 	public Configuration(String filename) {
 		this.filename = filename;
-		this.xmlContent = "<Configuration></Configuration>";
+		this.xmlContent = "<Configuration><Adapter name='new adapter'></Adapter></Configuration>";
 	}
 
 	public String getFilename() {
