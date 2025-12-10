@@ -27,8 +27,8 @@ export default function ConfigurationManager() {
           Configurations within <span className="font-bold">{currentProject?.name}</span>/src/main/configurations:
         </p>
         <div className="flex flex-wrap gap-4 pt-4">
-          {currentProject?.filenames.map((filename, index) => (
-            <ConfigurationTile key={filename + index} filepath={filename} />
+          {currentProject?.filepaths.map((filepath, index) => (
+            <ConfigurationTile key={filepath + index} filepath={filepath} />
           ))}
           <AddConfigurationTile
             onClick={() => {

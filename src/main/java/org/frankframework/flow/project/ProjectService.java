@@ -63,11 +63,8 @@ public class ProjectService {
 		return projects;
 	}
 
-	public Project addConfigurations(String projectName, ArrayList<String> configurationPaths) {
+	public Project addConfigurations(String projectName, ArrayList<String> configurationPaths) throws ProjectNotFoundException {
 		Project project = getProject(projectName);
-		if (project == null) {
-			return null; // Project not found
-		}
 
 		for (String path : configurationPaths) {
 			Configuration config = new Configuration(path);
@@ -77,20 +74,20 @@ public class ProjectService {
 		return project;
 	}
 
-	public boolean updateConfigurationXml(String projectName, String filename, String xmlContent)
+	public boolean updateConfigurationXml(String projectName, String filepath, String xmlContent)
 			throws ProjectNotFoundException, ConfigurationNotFoundException {
 
 		Project project = getProject(projectName);
 
 		for (Configuration config : project.getConfigurations()) {
-			if (config.getFilepath().equals(filename)) {
+			if (config.getFilepath().equals(filepath)) {
 				config.setXmlContent(xmlContent);
 				return true;
 			}
 		}
 
 		throw new ConfigurationNotFoundException(
-				String.format("Configuration with filename: %s can not be found", filename));
+				String.format("Configuration with filepath: %s can not be found", filepath));
 	}
 
 	public Project enableFilter(String projectName, String type)
@@ -125,18 +122,18 @@ public class ProjectService {
 		return project;
 	}
 
-	public boolean updateAdapter(String projectName, String configurationName, String adapterName,
+	public boolean updateAdapter(String projectName, String configurationPath, String adapterName,
 			String newAdapterXml)
 			throws ProjectNotFoundException, ConfigurationNotFoundException, AdapterNotFoundException {
 		Project project = getProject(projectName);
 
 		Optional<Configuration> configOptional = project.getConfigurations().stream()
-				.filter(configuration -> configuration.getFilename().equals(configurationName))
+				.filter(configuration -> configuration.getFilepath().equals(configurationPath))
 				.findFirst();
 
 		if (configOptional.isEmpty()) {
-			System.err.println("Configuration not found: " + configurationName);
-			throw new ConfigurationNotFoundException("Configuration not found: " + configurationName);
+			System.err.println("Configuration not found: " + configurationPath);
+			throw new ConfigurationNotFoundException("Configuration not found: " + configurationPath);
 		}
 
 		Configuration config = configOptional.get();
