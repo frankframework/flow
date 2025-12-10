@@ -1,6 +1,5 @@
 import { create } from 'zustand'
 import { subscribeWithSelector } from 'zustand/middleware'
-import FolderIcon from '/icons/solar/Folder.svg?react'
 
 interface TabData {
   value: string
@@ -17,12 +16,13 @@ interface TabStoreState {
   setActiveTab: (tabId: string) => void
   removeTab: (tabId: string) => void
   removeTabAndSelectFallback: (tabId: string) => void
+  clearTabs: () => void
 }
 
 const useTabStore = create<TabStoreState>()(
   subscribeWithSelector((set, get) => ({
-    tabs: { tab1: { value: 'tab1', configurationName: 'Config1', icon: FolderIcon } },
-    activeTab: 'tab1',
+    tabs: {},
+    activeTab: '',
     setTabData: (tabId, data) =>
       set((state) => ({
         tabs: {
@@ -51,6 +51,7 @@ const useTabStore = create<TabStoreState>()(
           activeTab: remainingKeys.includes(state.activeTab) ? state.activeTab : (remainingKeys.at(-1) ?? ''),
         }
       }),
+    clearTabs: () => set({ tabs: {}, activeTab: '' }),
   })),
 )
 

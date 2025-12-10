@@ -1,10 +1,9 @@
-import { type JSX, useEffect, useRef, useState } from 'react'
-import { getAdapterNamesFromConfiguration } from '~/routes/builder/xml-to-json-parser'
+import React, { type JSX, useEffect, useRef, useState } from 'react'
+import { getAdapterListenerType, getAdapterNamesFromConfiguration } from '~/routes/studio/xml-to-json-parser'
 import useTabStore from '~/stores/tab-store'
 import Search from '~/components/search/search'
 import FolderIcon from '/icons/solar/Folder.svg?react'
 import FolderOpenIcon from '/icons/solar/Folder Open.svg?react'
-import CodeIcon from '/icons/solar/Code.svg?react'
 import 'react-complex-tree/lib/style-modern.css'
 import AltArrowRightIcon from '/icons/solar/Alt Arrow Right.svg?react'
 import AltArrowDownIcon from '/icons/solar/Alt Arrow Down.svg?react'
@@ -21,13 +20,17 @@ import { useProjectStore } from '~/stores/project-store'
 import { Link } from 'react-router'
 import { useTreeStore } from '~/stores/tree-store'
 import { useShallow } from 'zustand/react/shallow'
+import { getListenerIcon } from './tree-utilities'
 
 export interface ConfigWithAdapters {
   configName: string
-  adapterNames: string[]
+  adapters: {
+    adapterName: string
+    listenerName: string | null
+  }[]
 }
 
-const TREE_ID = 'builder-files-tree'
+const TREE_ID = 'studio-files-tree'
 
 function getItemTitle(item: TreeItem<unknown>): string {
   // item.data is either a string (for folders) or object (for leaf nodes)
@@ -48,6 +51,7 @@ export default function FileStructure() {
       setIsLoading: state.setIsLoading,
     })),
   )
+  const project = useProjectStore.getState().project
   const [searchTerm, setSearchTerm] = useState('')
   const [matchingItemIds, setMatchingItemIds] = useState<string[]>([])
   const [activeMatchIndex, setActiveMatchIndex] = useState<number>(-1)
@@ -71,10 +75,21 @@ export default function FileStructure() {
       try {
         const loaded: ConfigWithAdapters[] = await Promise.all(
           configurationNames.map(async (configName) => {
-            const adapterNames = await getAdapterNamesFromConfiguration(configName)
-            return { configName, adapterNames }
+            if (!project) return
+            const adapterNames = await getAdapterNamesFromConfiguration(project.name, configName)
+
+            // Fetch listener name for each adapter
+            const adapters = await Promise.all(
+              adapterNames.map(async (adapterName) => {
+                const listenerName = await getAdapterListenerType(project.name, configName, adapterName)
+                return { adapterName, listenerName }
+              }),
+            )
+
+            return { configName, adapters }
           }),
         )
+
         setConfigs(loaded)
       } catch (error) {
         console.error('Failed to load adapter names:', error)
@@ -82,6 +97,7 @@ export default function FileStructure() {
         setIsLoading(false)
       }
     }
+
     loadAdapters()
   }, [configurationNames])
 
@@ -124,7 +140,7 @@ export default function FileStructure() {
   useEffect(() => {
     const handleKeyDown = async (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        // ✅ Clear search and highlight
+        // Clear search and highlight
         setSearchTerm('')
         setHighlightedItemId(null)
         setMatchingItemIds([])
@@ -136,10 +152,10 @@ export default function FileStructure() {
 
       if (event.key === 'Tab' && !event.shiftKey) {
         event.preventDefault()
-        setActiveMatchIndex((prev) => (prev + 1) % matchingItemIds.length)
+        setActiveMatchIndex((previous) => (previous + 1) % matchingItemIds.length)
       } else if (event.key === 'Tab' && event.shiftKey) {
         event.preventDefault()
-        setActiveMatchIndex((prev) => (prev - 1 < 0 ? matchingItemIds.length - 1 : prev - 1))
+        setActiveMatchIndex((previous) => (previous - 1 < 0 ? matchingItemIds.length - 1 : previous - 1))
       } else if (event.key === 'Enter') {
         event.preventDefault()
 
@@ -154,8 +170,6 @@ export default function FileStructure() {
     globalThis.addEventListener('keydown', handleKeyDown)
     return () => globalThis.removeEventListener('keydown', handleKeyDown)
   }, [matchingItemIds, highlightedItemId])
-
-
 
   useEffect(() => {
     if (activeMatchIndex === -1 || !tree.current) return
@@ -239,11 +253,19 @@ export default function FileStructure() {
     item: TreeItem<unknown>
     context: TreeItemRenderContext
   }) => {
-    const Icon = (item.isFolder && (context.isExpanded ? FolderOpenIcon : FolderIcon)) || CodeIcon
-
     const searchLower = searchTerm.toLowerCase()
     const titleLower = title.toLowerCase()
+    const listenerType =
+      !item.isFolder && typeof item.data === 'object' && item.data && 'listenerName' in item.data
+        ? (item.data as { listenerName: string | null }).listenerName
+        : null
 
+    let Icon
+    if (item.isFolder) {
+      Icon = context.isExpanded ? FolderOpenIcon : FolderIcon
+    } else {
+      Icon = getListenerIcon(listenerType)
+    }
     // Highlight only the substring(s) that match the search term
     let highlightedTitle: JSX.Element | string = title
 
@@ -270,8 +292,9 @@ export default function FileStructure() {
       <>
         <Icon className="fill-foreground w-4 flex-shrink-0" />
         <span
-          className={`font-inter ml-1 overflow-hidden text-nowrap text-ellipsis ${isHighlighted ? 'outline-foreground-active rounded-sm px-1 outline outline-2' : ''
-            }`}
+          className={`font-inter ml-1 overflow-hidden text-nowrap text-ellipsis ${
+            isHighlighted ? 'outline-foreground-active rounded-sm px-1 outline outline-2' : ''
+          }`}
         >
           {highlightedTitle}
         </span>
@@ -305,7 +328,7 @@ export default function FileStructure() {
             renderItemArrow={renderItemArrow}
             renderItemTitle={renderItemTitle}
           >
-            <Tree treeId={TREE_ID} rootItem="root" ref={tree} treeLabel="Builder Files" />
+            <Tree treeId={TREE_ID} rootItem="root" ref={tree} treeLabel="Files" />
           </UncontrolledTreeEnvironment>
         </div>
       )}
