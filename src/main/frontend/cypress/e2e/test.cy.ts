@@ -1,9 +1,9 @@
-﻿describe('Application Routing', () => {
+describe('Application Routing', () => {
   beforeEach(() => {
-    cy.visit('/');
+    cy.visit('/studio');
   });
 
-  it('should not navigate on init', () => {
-    cy.url().should('include', '/');
+  it('should went to studio', () => {
+    cy.url().should('include', '/studio');
   });
 });

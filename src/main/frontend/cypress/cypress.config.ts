@@ -1,4 +1,4 @@
-﻿// frontend/cypress.config.ts
+// frontend/cypress.config.ts
 import { defineConfig } from 'cypress'
 
 export default defineConfig({
