@@ -30,6 +30,7 @@ export function ChildNode({ child, gradientEnabled, onEdit, parentId, rootId }: 
 
   const handleDragOver = (event: React.DragEvent) => {
     event.preventDefault()
+    event.stopPropagation()
 
     const target = event.target as HTMLElement
 
