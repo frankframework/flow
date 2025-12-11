@@ -38,8 +38,6 @@ export default function NodeContext({
       return
     }
 
-    console.log('Validating form...')
-
     const mandatoryValid = validateMandatoryFields(validations)
     const numberValid = validateNumberFields(validations)
     if (!numberValid || !mandatoryValid) {

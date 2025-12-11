@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import HelpIcon from '/icons/solar/Help.svg?react'
 import { useJavadocTransform } from '@frankframework/ff-doc/react'
+import ContextInputField from './context-input-field'
 
 export interface ContextInputProperties {
   id: string
@@ -33,69 +34,6 @@ export default function ContextInput({
   const description = attribute?.description
   const required = attribute?.mandatory
 
-  const renderInputField = (id: string) => {
-    if (enumOptions) {
-      return (
-        <select
-          id={id}
-          value={value}
-          onChange={(event) => onChange(event.currentTarget.value)}
-          onKeyDown={onKeyDown}
-          className="border-border bg-background focus:border-foreground-active focus:ring-foreground-active mt-1 w-full rounded-md border px-3 py-2 shadow-sm sm:text-sm"
-        >
-          <option value="">Select option…</option>
-          {Object.keys(enumOptions).map((optKey) => (
-            <option key={optKey} value={optKey}>
-              {optKey}
-            </option>
-          ))}
-        </select>
-      )
-    }
-
-    if (type === 'bool') {
-      return (
-        <select
-          id={id}
-          value={value}
-          onChange={(event) => onChange(event.currentTarget.value)}
-          onKeyDown={onKeyDown}
-          className="border-border bg-background focus:border-foreground-active focus:ring-foreground-active mt-1 w-full rounded-md border px-3 py-2 shadow-sm sm:text-sm"
-        >
-          <option value="">Select…</option>
-          <option value="true">true</option>
-          <option value="false">false</option>
-        </select>
-      )
-    }
-
-    if (type === 'int') {
-      return (
-        <input
-          id={id}
-          type="text"
-          inputMode="numeric"
-          value={value}
-          onChange={(event) => onChange(event.currentTarget.value)}
-          onKeyDown={onKeyDown}
-          pattern="[0-9]*"
-          className="border-border focus:border-foreground-active mt-1 w-full rounded-md border px-3 py-2 shadow-sm focus:ring-0 focus:outline-none sm:text-sm"
-        />
-      )
-    }
-
-    return (
-      <input
-        id={id}
-        type="text"
-        value={value}
-        onChange={(event) => onChange(event.currentTarget.value)}
-        onKeyDown={onKeyDown}
-        className="border-border focus:border-foreground-active mt-1 w-full rounded-md border px-3 py-2 shadow-sm focus:ring-0 focus:outline-none sm:text-sm"
-      />
-    )
-  }
-
   return (
     <div className="group font-small text-foreground relative block text-sm">
       <div className="flex items-center gap-2">
@@ -104,7 +42,14 @@ export default function ContextInput({
         {description && <DescriptionHelpIcon description={description} elements={elements ?? null} />}
       </div>
 
-      {renderInputField(id)}
+      <ContextInputField
+        id={id}
+        value={value}
+        onChange={onChange}
+        onKeyDown={onKeyDown}
+        type={type}
+        enumOptions={enumOptions}
+      />
     </div>
   )
 }
