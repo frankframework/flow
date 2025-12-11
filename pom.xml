@@ -53,6 +53,7 @@
 		<checkstyle.version>3.6.0</checkstyle.version>
 		<puppycrawl.tools.version>12.1.2</puppycrawl.tools.version>
 		<jacoco.version>0.8.14</jacoco.version>
+		<apache.commons.version>1.28.0</apache.commons.version>
 
 		<sonar.organization>frank-framework</sonar.organization>
 		<sonar.host.url>https://sonarcloud.io</sonar.host.url>
@@ -97,7 +98,7 @@
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-compress</artifactId>
-			<version>1.27.1</version>
+			<version>${apache.commons.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.projectlombok</groupId>
@@ -242,6 +243,15 @@
 			</plugin>
 
 			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<configuration>
+					<groups>${junit.includedTags}</groups>
+					<excludedGroups>${junit.excludedTags}</excludedGroups>
+				</configuration>
+			</plugin>
+
+			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>exec-maven-plugin</artifactId>
 				<version>3.5.1</version>
@@ -308,13 +318,12 @@
 							<goal>copy-resources</goal>
 						</goals>
 						<configuration>
-							<outputDirectory>${project.build.testOutputDirectory}</outputDirectory>
+							<outputDirectory>${project.build.testOutputDirectory}/e2e</outputDirectory>
 							<resources>
 								<!-- Copy the Cypress tests and configuration to the test output directory -->
 								<resource>
 									<directory>${project.basedir}/src/main/frontend</directory>
 									<filtering>false</filtering>
-									<targetPath>e2e</targetPath>
 									<includes>
 										<include>tsconfig.json</include>
 										<include>cypress/**</include>
