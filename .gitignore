@@ -6,7 +6,6 @@ target/
 
 **/node_modules/
 
-
 ### STS ###
 .apt_generated
 .classpath
@@ -34,3 +33,5 @@ build/
 
 ### VS Code ###
 .vscode/
+
+src/main/resources/frontend/

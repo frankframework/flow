@@ -5,23 +5,30 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.5.5</version>
+		<version>3.5.7</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 
 	<groupId>org.frankframework.flow</groupId>
 	<artifactId>flow</artifactId>
-	<version>3.0.0-SNAPSHOT</version>
-	<packaging>war</packaging>
+	<version>${revision}</version>
 
 	<name>Frank!Framework Flow</name>
 	<description>Graphical editor for the Frank!Framework Configurations</description>
+	<url>https://frankframework.org</url>
 
-	<properties>
-		<java.version>21</java.version>
-		<maven.compiler.source>21</maven.compiler.source>
-		<maven.compiler.target>21</maven.compiler.target>
-	</properties>
+	<organization>
+		<name>Frank!Framework</name>
+		<url>https://frankframework.org</url>
+	</organization>
+
+	<licenses>
+		<license>
+			<name>Apache License, Version 2.0</name>
+			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+			<distribution>manual</distribution>
+		</license>
+	</licenses>
 
 	<developers>
 		<developer>
@@ -30,7 +37,37 @@
 			<organization>Frank!Framework</organization>
 			<organizationUrl>https://frankframework.org</organizationUrl>
 		</developer>
+		<developer>
+            <name>Stijn Potters</name>
+            <email>stijn.potters@frankframework.org</email>
+            <organization>Frank!Framework</organization>
+            <organizationUrl>https://frankframework.org</organizationUrl>
+        </developer>
 	</developers>
+
+	<properties>
+		<revision>3.0.0-SNAPSHOT</revision>
+		<java.version>21</java.version>
+		<lombok.version>1.18.42</lombok.version>
+		<spotless.version>3.0.0</spotless.version>
+		<checkstyle.version>3.6.0</checkstyle.version>
+		<puppycrawl.tools.version>12.1.2</puppycrawl.tools.version>
+		<jacoco.version>0.8.14</jacoco.version>
+		<apache.commons.version>1.28.0</apache.commons.version>
+
+		<sonar.organization>frank-framework</sonar.organization>
+		<sonar.host.url>https://sonarcloud.io</sonar.host.url>
+		<sonar.coverage.jacoco.xmlReportPaths>
+			${project.basedir}/target/jacoco/jacoco.xml
+		</sonar.coverage.jacoco.xmlReportPaths>
+
+		<junit.excludedTags/>
+        <junit.includedTags/>
+
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<maven.compiler.source>21</maven.compiler.source>
+		<maven.compiler.target>21</maven.compiler.target>
+	</properties>
 
 	<dependencies>
 		<!-- Spring Boot starters -->
@@ -61,7 +98,13 @@
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-compress</artifactId>
-			<version>1.27.1</version>
+			<version>${apache.commons.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<version>${lombok.version}</version>
+			<optional>true</optional>
 		</dependency>
 		<dependency>
 			<groupId>org.testcontainers</groupId>
@@ -103,6 +146,109 @@
 						</goals>
 					</execution>
 				</executions>
+				<configuration>
+					<excludes>
+						<exclude>
+							<groupId>org.projectlombok</groupId>
+							<artifactId>lombok</artifactId>
+						</exclude>
+					</excludes>
+				</configuration>
+			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<source>${java.version}</source>
+					<target>${java.version}</target>
+					<annotationProcessorPaths>
+						<path>
+							<groupId>org.projectlombok</groupId>
+							<artifactId>lombok</artifactId>
+							<version>${lombok.version}</version>
+						</path>
+					</annotationProcessorPaths>
+					<compilerArgs>--enable-preview</compilerArgs>
+				</configuration>
+			</plugin>
+
+			<plugin>
+				<groupId>com.diffplug.spotless</groupId>
+				<artifactId>spotless-maven-plugin</artifactId>
+				<version>${spotless.version}</version>
+				<configuration>
+					<java>
+						<includes>
+							<include>src/main/java/**/*.java</include>
+							<include>src/test/java/**/*.java</include>
+						</includes>
+						<importOrder />
+						<removeUnusedImports />
+						<toggleOffOn/>
+						<trimTrailingWhitespace/>
+						<endWithNewline/>
+						<indent>
+							<spaces>true</spaces>
+							<spacesPerTab>4</spacesPerTab>
+						</indent>
+						<palantirJavaFormat/>
+					</java>
+				</configuration>
+			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-checkstyle-plugin</artifactId>
+				<version>${checkstyle.version}</version>
+				<configuration>
+					<configLocation>checkstyle.xml</configLocation>
+					<failOnViolation>true</failOnViolation>
+				</configuration>
+				<executions>
+					<execution>
+						<goals>
+							<goal>check</goal>
+						</goals>
+					</execution>
+				</executions>
+				<dependencies>
+					<dependency>
+						<groupId>com.puppycrawl.tools</groupId>
+						<artifactId>checkstyle</artifactId>
+						<version>${puppycrawl.tools.version}</version>
+					</dependency>
+				</dependencies>
+			</plugin>
+
+			<plugin>
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+				<version>${jacoco.version}</version>
+				<executions>
+					<execution>
+						<id>prepare-agent</id>
+						<goals>
+							<goal>prepare-agent</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>report</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>report</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<configuration>
+					<groups>${junit.includedTags}</groups>
+					<excludedGroups>${junit.excludedTags}</excludedGroups>
+				</configuration>
 			</plugin>
 
 			<plugin>
@@ -150,19 +296,34 @@
 				<artifactId>maven-resources-plugin</artifactId>
 				<executions>
 					<execution>
+						<id>copy-frontend-build</id>
+						<phase>process-resources</phase>
+						<goals>
+							<goal>copy-resources</goal>
+						</goals>
+						<configuration>
+							<outputDirectory>${project.build.outputDirectory}/frontend</outputDirectory>
+							<resources>
+								<resource>
+									<directory>${project.basedir}/src/main/frontend/build/client</directory>
+									<filtering>false</filtering>
+								</resource>
+							</resources>
+						</configuration>
+					</execution>
+					<execution>
 						<id>copy-frontend-to-TestClasses</id>
 						<phase>process-test-resources</phase>
 						<goals>
 							<goal>copy-resources</goal>
 						</goals>
 						<configuration>
-							<outputDirectory>${project.build.testOutputDirectory}</outputDirectory>
+							<outputDirectory>${project.build.testOutputDirectory}/e2e</outputDirectory>
 							<resources>
 								<!-- Copy the Cypress tests and configuration to the test output directory -->
 								<resource>
 									<directory>${project.basedir}/src/main/frontend</directory>
 									<filtering>false</filtering>
-									<targetPath>e2e</targetPath>
 									<includes>
 										<include>tsconfig.json</include>
 										<include>cypress/**</include>
@@ -180,4 +341,51 @@
 		</plugins>
 	</build>
 
+	<profiles>
+        <profile>
+            <id>docker</id>
+            <properties>
+                <config.image.repository>ghcr.io/frankframework</config.image.repository>
+                <config.image.name>webapp-template</config.image.name>
+                <config.image.tag>${config.image.name}</config.image.tag>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <version>3.1.0</version>
+                        <executions>
+                            <execution>
+                                <id>prepare-package</id>
+                                <phase>package</phase>
+                                <configuration>
+                                    <target>
+                                        <exec executable="docker" failonerror="true">
+                                            <arg value="build"/>
+                                            <arg value="-f"/>
+                                            <arg value="docker/Dockerfile"/>
+                                            <arg value="--no-cache"/>
+                                            <arg value="-t"/>
+                                            <arg value="${config.image.tag}:latest"/>
+                                            <arg value="-t"/>
+                                            <arg value="${config.image.tag}:${revision}"/>
+                                            <arg value="-t"/>
+                                            <arg value="${config.image.repository}/${config.image.tag}:latest"/>
+                                            <arg value="-t"/>
+                                            <arg value="${config.image.repository}/${config.image.tag}:${revision}"/>
+                                            <arg value="."/>
+                                        </exec>
+                                    </target>
+                                </configuration>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+		</profile>
+	</profiles>
 </project>
