@@ -11,13 +11,20 @@ export type InputProperties = {
   disabled?: boolean
 } & Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange' | 'value' | 'placeholder' | 'className' | 'disabled'>
 
-export default function Input({ wrapperClassName, inputClassName, onChange, value, disabled = false, ...properties }: InputProperties) {
+export default function Input({
+  wrapperClassName,
+  inputClassName,
+  onChange,
+  value,
+  disabled = false,
+  ...properties
+}: InputProperties) {
   return (
     <div
       className={twMerge(
         'border-border bg-backdrop hover:not-focus-within:bg-hover focus-within:bg-selected inline-block w-full rounded-md border',
         disabled && 'cursor-not-allowed opacity-50',
-        wrapperClassName
+        wrapperClassName,
       )}
     >
       <input

@@ -69,11 +69,11 @@ export default function FrankEdge({
           }}
           className="flex flex-col items-center"
         >
-          <p className="relative bg-background border-border rounded-md px-2 p-1 text-sm">
+          <p className="bg-background border-border relative rounded-md p-1 px-2 text-sm">
             {sourceHandleType}
             {selected && (
               <button
-                className="absolute -top-3 -right-2.5 rounded-full border border-black text-foreground shadow-sm hover:border-red-400 hover:text-red-400"
+                className="text-foreground absolute -top-3 -right-2.5 rounded-full border border-black shadow-sm hover:border-red-400 hover:text-red-400"
                 onClick={() => deleteEdge(id)}
               >
                 <svg width="15" height="15" viewBox="0 0 15 15" stroke="currentColor" strokeLinecap="round">

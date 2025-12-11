@@ -250,16 +250,16 @@ export default function CodeEditor() {
         if (contentType && contentType.includes('application/json')) {
           const errorData = await response.json()
           toast.error(`Error saving configuration: ${errorData.error}\nDetails: ${errorData.message}`)
-          console.error('Something went wrong saving the configuration: ', errorData)
+          console.error('Something went wrong saving the configuration:', errorData)
         } else {
           toast.error(`Error saving configuration. HTTP status: ${response.status}`)
-          console.error('Error saving configuration. HTTP status: ', response.status)
+          console.error('Error saving configuration. HTTP status:', response.status)
         }
         return
       }
     } catch (error) {
       toast.error(`Network or unexpected error: ${error}`)
-      console.error('Network or unexpected error: ', error)
+      console.error('Network or unexpected error:', error)
     } finally {
       setIsSaving(false)
     }

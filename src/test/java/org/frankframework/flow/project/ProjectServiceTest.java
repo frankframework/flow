@@ -2,7 +2,6 @@ package org.frankframework.flow.project;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -10,7 +9,6 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
-
 import org.frankframework.flow.configuration.AdapterNotFoundException;
 import org.frankframework.flow.configuration.Configuration;
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
@@ -72,7 +70,8 @@ class ProjectServiceTest {
 
     @Test
     void testUpdateConfigurationXmlThrowsProjectNotFound() {
-        assertThrows(ProjectNotFoundException.class,
+        assertThrows(
+                ProjectNotFoundException.class,
                 () -> projectService.updateConfigurationXml("unknownProject", "config.xml", "<root/>"));
     }
 
@@ -80,7 +79,8 @@ class ProjectServiceTest {
     void testUpdateConfigurationXmlConfigNotFound() throws Exception {
         projectService.createProject("proj");
 
-        assertThrows(ConfigurationNotFoundException.class,
+        assertThrows(
+                ConfigurationNotFoundException.class,
                 () -> projectService.updateConfigurationXml("proj", "missingConfig.xml", "<root/>"));
     }
 
@@ -99,8 +99,11 @@ class ProjectServiceTest {
 
         // enable first
         projectService.enableFilter("proj", "ADAPTER");
-        assertTrue(projectService.getProject("proj").getProjectSettings()
-                .getFilters().get(FilterType.ADAPTER));
+        assertTrue(projectService
+                .getProject("proj")
+                .getProjectSettings()
+                .getFilters()
+                .get(FilterType.ADAPTER));
 
         // disable
         Project updated = projectService.disableFilter("proj", "ADAPTER");
@@ -111,8 +114,8 @@ class ProjectServiceTest {
     void testEnableFilterInvalidFilterType() {
         projectService.createProject("proj");
 
-        InvalidFilterTypeException ex = assertThrows(InvalidFilterTypeException.class,
-                () -> projectService.enableFilter("proj", "INVALID_TYPE"));
+        InvalidFilterTypeException ex = assertThrows(
+                InvalidFilterTypeException.class, () -> projectService.enableFilter("proj", "INVALID_TYPE"));
 
         assertEquals("Invalid filter type: INVALID_TYPE", ex.getMessage());
     }
@@ -121,24 +124,24 @@ class ProjectServiceTest {
     void testDisableFilterInvalidFilterType() {
         projectService.createProject("proj");
 
-        InvalidFilterTypeException ex = assertThrows(InvalidFilterTypeException.class,
-                () -> projectService.disableFilter("proj", "INVALID_TYPE"));
+        InvalidFilterTypeException ex = assertThrows(
+                InvalidFilterTypeException.class, () -> projectService.disableFilter("proj", "INVALID_TYPE"));
 
         assertEquals("Invalid filter type: INVALID_TYPE", ex.getMessage());
     }
 
     @Test
     void testEnableFilterProjectNotFound() {
-        ProjectNotFoundException ex = assertThrows(ProjectNotFoundException.class,
-                () -> projectService.enableFilter("unknownProject", "ADAPTER"));
+        ProjectNotFoundException ex = assertThrows(
+                ProjectNotFoundException.class, () -> projectService.enableFilter("unknownProject", "ADAPTER"));
 
         assertTrue(ex.getMessage().contains("Project with name: unknownProject"));
     }
 
     @Test
     void testDisableFilterProjectNotFound() {
-        ProjectNotFoundException ex = assertThrows(ProjectNotFoundException.class,
-                () -> projectService.disableFilter("unknownProject", "ADAPTER"));
+        ProjectNotFoundException ex = assertThrows(
+                ProjectNotFoundException.class, () -> projectService.disableFilter("unknownProject", "ADAPTER"));
 
         assertTrue(ex.getMessage().contains("Project with name: unknownProject"));
     }
@@ -149,7 +152,8 @@ class ProjectServiceTest {
         projectService.createProject("proj");
         Project project = projectService.getProject("proj");
 
-        String originalXml = """
+        String originalXml =
+                """
                 <Configuration>
                     <Adapter name="A1">
                         <Settings>123</Settings>
@@ -164,7 +168,8 @@ class ProjectServiceTest {
         config.setXmlContent(originalXml);
         project.getConfigurations().add(config);
 
-        String newAdapterXml = """
+        String newAdapterXml =
+                """
                 <Adapter name="A1">
                     <Settings>999</Settings>
                 </Adapter>
@@ -205,7 +210,8 @@ class ProjectServiceTest {
         projectService.createProject("proj");
         Project project = projectService.getProject("proj");
 
-        String xml = """
+        String xml =
+                """
                 <Configuration>
                     <Adapter name="Other"/>
                 </Configuration>
@@ -228,7 +234,8 @@ class ProjectServiceTest {
         projectService.createProject("proj");
         Project project = projectService.getProject("proj");
 
-        String xml = """
+        String xml =
+                """
                 <Configuration>
                     <Adapter name="A1"/>
                 </Configuration>

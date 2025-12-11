@@ -169,7 +169,7 @@ function extractEdgesFromAdapter(adapter: Element, nodes: FlowNode[]): FrankEdge
   return edges
 }
 
-function convertAdapterToFlowNodes(adapter: any): FlowNode[] {
+function convertAdapterToFlowNodes(adapter: Element): FlowNode[] {
   let elements: Element[] = []
   let nodes: FlowNode[] = []
   let exitNodes: ExitNode[] = []

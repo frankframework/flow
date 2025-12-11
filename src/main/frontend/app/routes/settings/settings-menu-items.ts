@@ -4,7 +4,7 @@ import WidgetIcon from '/icons/solar/Widget.svg?react'
 import RulerCrossPenIcon from '/icons/solar/Ruler Cross Pen.svg?react'
 import CodeIcon from '/icons/solar/Code.svg?react'
 import GeneralSettings from '~/routes/settings/pages/general-settings'
-import StudioSettings from '~/routes/settings/pages/studio-settings';
+import StudioSettings from '~/routes/settings/pages/studio-settings'
 import ProjectSettings from './pages/project-settings'
 
 export type SettingsMenuItem = TreeItem<SettingsMenuItemData>
