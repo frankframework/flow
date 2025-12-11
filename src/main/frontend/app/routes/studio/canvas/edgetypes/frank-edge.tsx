@@ -33,12 +33,14 @@ export default function FrankEdge({
 
   const sourceHandleType = useFlowStore((state) => {
     const node = state.nodes.find((n) => n.id === source)
-    if (!node?.data) return
+    if (!node?.data) return ''
 
-    const handles = Array.isArray((node?.data as any).sourceHandles)
-    const typedData = node?.data as { sourceHandles: { type: string; index: number }[] }
+    interface NodeData {
+      sourceHandles?: { type: string; index: number }[]
+    }
+    const typedData = node?.data as NodeData
 
-    if (handles) {
+    if (Array.isArray(typedData.sourceHandles)) {
       const sourceHandles = typedData.sourceHandles
       const handleIndex = Number(sourceHandleId)
       const matchedHandle = sourceHandles.find((h) => h.index === handleIndex)

@@ -45,7 +45,7 @@ export default function ProjectLanding() {
   // Reset project when landing on home page
   useEffect(() => {
     setProject(undefined)
-  }, [location.key])
+  }, [location.key, setProject])
 
   const createProject = async (projectName: string) => {
     try {
@@ -61,8 +61,8 @@ export default function ProjectLanding() {
       // refresh the project list after creation
       const newProject = await response.json()
       setProjects((previous) => [...previous, newProject])
-    } catch (error_: any) {
-      setError(error_.message)
+    } catch (error_: unknown) {
+      setError(error_ instanceof Error ? error_.message : 'Failed to create project')
     }
   }
 

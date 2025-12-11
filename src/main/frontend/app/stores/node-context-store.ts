@@ -1,14 +1,14 @@
 import { create } from 'zustand'
 
 interface NodeContextStore {
-  attributes: any
+  attributes: unknown
   nodeId: number
   isEditing: boolean
   parentId: string | null
   childParentId: string | null
   draggedName: string | null
   setNodeId: (nodeId: number) => void
-  setAttributes: (attributes: any[]) => void
+  setAttributes: (attributes?: unknown) => void
   setIsEditing: (value: boolean) => void
   resetAttributes: () => void
   setParentId: (id: string | null) => void

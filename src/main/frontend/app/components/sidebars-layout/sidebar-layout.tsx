@@ -24,7 +24,7 @@ export default function SidebarLayout({
 
   useEffect(() => {
     initializeInstance(name, defaultVisible)
-  }, [])
+  }, [initializeInstance, name, defaultVisible])
 
   const saveVisible = (index: SidebarSide, value: boolean) => {
     setVisible(name, index, value)

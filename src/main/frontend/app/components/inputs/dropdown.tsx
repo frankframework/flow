@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import clsx from 'clsx'
 import AltArrowDownIcon from '/icons/solar/Alt Arrow Down.svg?react'
 
@@ -33,6 +33,21 @@ export default function Dropdown({
 
   const optionsArray = Object.keys(options)
 
+  const getSelectedIndex = useCallback(() => {
+    const index = optionsArray.indexOf(selectedValue ?? '')
+    return index === -1 ? 0 : index
+  }, [optionsArray, selectedValue])
+
+  const getSelectedLabel = () => {
+    return selectedValue ? options[selectedValue] : placeholder
+  }
+
+  const toggleDropdown = useCallback(() => {
+    if (!disabled) {
+      setIsOpen(!isOpen)
+    }
+  }, [disabled, isOpen])
+
   useEffect(() => {
     setSelectedValue(value)
   }, [value])
@@ -42,7 +57,7 @@ export default function Dropdown({
       setHighlightedIndex(getSelectedIndex())
       dropdownReference.current?.focus()
     }
-  }, [isOpen])
+  }, [isOpen, getSelectedIndex])
 
   useEffect(() => {
     if (isOpen && highlightedIndex >= 0 && optionsReference.current[highlightedIndex]) {
@@ -55,7 +70,7 @@ export default function Dropdown({
 
   useEffect(() => {
     optionsReference.current = optionsReference.current.slice(0, optionsArray.length)
-  }, [options])
+  }, [optionsArray.length])
 
   useEffect(() => {
     if (!id) return
@@ -67,22 +82,7 @@ export default function Dropdown({
     return () => {
       labelElement?.removeEventListener('click', toggleDropdown)
     }
-  }, [id, disabled])
-
-  const getSelectedIndex = () => {
-    const index = optionsArray.indexOf(selectedValue ?? '')
-    return index === -1 ? 0 : index
-  }
-
-  const getSelectedLabel = () => {
-    return selectedValue ? options[selectedValue] : placeholder
-  }
-
-  const toggleDropdown = () => {
-    if (!disabled) {
-      setIsOpen(!isOpen)
-    }
-  }
+  }, [id, toggleDropdown])
 
   const handleOptionClick = (optionValue: string) => {
     setSelectedValue(optionValue)

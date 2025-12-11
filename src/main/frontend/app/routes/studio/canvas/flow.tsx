@@ -5,10 +5,10 @@ import {
   Controls,
   type Edge,
   type Node,
+  Panel,
   ReactFlow,
   ReactFlowProvider,
   useReactFlow,
-  Panel,
 } from '@xyflow/react'
 import Dagre from '@dagrejs/dagre'
 import '@xyflow/react/dist/style.css'
@@ -20,9 +20,9 @@ import useFlowStore, { type FlowState } from '~/stores/flow-store'
 import { useShallow } from 'zustand/react/shallow'
 import { FlowConfig } from '~/routes/studio/canvas/flow.config'
 import { getElementTypeFromName } from '~/routes/studio/node-translator-module'
-import { createContext, useContext, useEffect, useRef, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
 import StickyNoteComponent, { type StickyNote } from '~/routes/studio/canvas/nodetypes/sticky-note'
-import useTabStore from '~/stores/tab-store'
+import useTabStore, { type TabData } from '~/stores/tab-store'
 import { convertAdapterXmlToJson, getAdapterFromConfiguration } from '~/routes/studio/xml-to-json-parser'
 import { exportFlowToXml } from '~/routes/studio/flow-to-xml-parser'
 import useNodeContextStore from '~/stores/node-context-store'
@@ -33,7 +33,13 @@ import { useTheme } from '~/hooks/use-theme'
 
 export type FlowNode = FrankNodeType | ExitNode | StickyNote | GroupNode | Node
 
-const NodeContextMenuContext = createContext<(visible: boolean) => void>(() => {})
+interface ConnectionState {
+  isValid: boolean
+}
+
+const NodeContextMenuContext = createContext<(visible: boolean) => void>(() => {
+  // Empty default function
+})
 export const useNodeContextMenu = () => useContext(NodeContextMenuContext)
 
 const selector = (state: FlowState) => ({
@@ -79,11 +85,14 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
     handleType: 'source' | 'target' | null
   }>({ nodeId: null, handleId: null, handleType: null })
 
-  const handleConnectStart = (_: any, { nodeId, handleId, handleType }) => {
+  const handleConnectStart = (
+    _: unknown,
+    { nodeId, handleId, handleType }: { nodeId: string; handleId: string; handleType: 'source' | 'target' },
+  ) => {
     sourceInfoReference.current = { nodeId, handleId, handleType }
   }
 
-  const handleConnectEnd = (event: MouseEvent, connectionState) => {
+  const handleConnectEnd = (event: MouseEvent, connectionState: ConnectionState) => {
     if (!connectionState.isValid) {
       let x: number, y: number
       x = event.clientX
@@ -100,12 +109,7 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
     setShowModal(true)
   }
 
-  useEffect(() => {
-    const laidOutNodes = layoutGraph(nodes, edges, 'LR')
-    useFlowStore.getState().setNodes(laidOutNodes)
-  }, [])
-
-  const layoutGraph = (nodes: Node[], edges: Edge[], direction: 'TB' | 'LR' = 'LR'): Node[] => {
+  const layoutGraph = useCallback((nodes: Node[], edges: Edge[], direction: 'TB' | 'LR' = 'LR'): Node[] => {
     const dagreGraph = new Dagre.graphlib.Graph()
     dagreGraph.setDefaultEdgeLabel(() => ({}))
     dagreGraph.setGraph({ rankdir: direction })
@@ -133,25 +137,9 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
         },
       }
     })
-  }
+  }, [])
 
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      const tagName = (event.target as HTMLElement).tagName
-      const isTyping = ['INPUT', 'TEXTAREA'].includes(tagName) || (event.target as HTMLElement).isContentEditable
-      if (isTyping) return
-
-      if (event.key === 'g' || event.key === 'G') {
-        event.preventDefault()
-        handleGrouping()
-      }
-    }
-
-    globalThis.addEventListener('keydown', handleKeyDown)
-    return () => globalThis.removeEventListener('keydown', handleKeyDown)
-  }, [nodes])
-
-  const handleGrouping = () => {
+  const handleGrouping = useCallback(() => {
     const selectedNodes = nodes.filter((node) => node.selected)
     if (selectedNodes.length < 2) return
 
@@ -174,92 +162,130 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
     }
 
     groupNodes(selectedNodes, nodes)
-  }
+  }, [
+    nodes,
+    allSelectedInSameGroup,
+    getFullySelectedGroupIds,
+    handleDegroupSingleGroup,
+    handleMergeUngroupedIntoGroup,
+    handleMultiGroupMerge,
+    shouldMergeUngroupedIntoGroup,
+  ])
 
-  // Helpers
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const tagName = (event.target as HTMLElement).tagName
+      const isTyping = ['INPUT', 'TEXTAREA'].includes(tagName) || (event.target as HTMLElement).isContentEditable
+      if (isTyping) return
 
-  const getFullySelectedGroupIds = (parentIds: string[], selectedNodes: FlowNode[]) => {
-    return parentIds.filter((parentId) => {
-      const children = nodes.filter((node) => node.parentId === parentId)
-      return children.every((child) => selectedNodes.some((sn) => sn.id === child.id))
-    })
-  }
-
-  const handleMultiGroupMerge = (groupIds: string[], selectedNodes: FlowNode[]) => {
-    let updatedNodes = [...nodes]
-    for (const parentId of groupIds) {
-      const groupChildren = updatedNodes.filter((node) => node.parentId === parentId)
-      updatedNodes = degroupNodes(groupChildren, parentId!, updatedNodes)
+      if (event.key === 'g' || event.key === 'G') {
+        event.preventDefault()
+        handleGrouping()
+      }
     }
 
-    const degroupedSelectedNodes = updatedNodes.filter((node) =>
-      selectedNodes.some((selected) => selected.id === node.id),
-    )
+    globalThis.addEventListener('keydown', handleKeyDown)
+    return () => globalThis.removeEventListener('keydown', handleKeyDown)
+  }, [handleGrouping])
 
-    groupNodes(degroupedSelectedNodes, updatedNodes)
-  }
-
-  const allSelectedInSameGroup = (selectedNodes: FlowNode[]) => {
-    return selectedNodes.every((node) => node.parentId && node.parentId === selectedNodes[0].parentId)
-  }
-
-  const handleDegroupSingleGroup = (selectedNodes: FlowNode[]) => {
-    const parentId = selectedNodes[0].parentId!
-    const updatedNodes = degroupNodes(selectedNodes, parentId, nodes)
-    useFlowStore.getState().setNodes(updatedNodes)
-  }
-
-  const shouldMergeUngroupedIntoGroup = (selectedNodes: FlowNode[]) => {
-    const ungroupedNodes = selectedNodes.filter((n) => !n.parentId)
-    const parentGroups = new Set(selectedNodes.map((n) => n.parentId).filter(Boolean))
-    if (parentGroups.size === 1 && ungroupedNodes.length > 0) {
-      const parentId = [...parentGroups][0]!
-      const parentChildren = nodes.filter((n) => n.parentId === parentId)
-      return parentChildren.every((child) => selectedNodes.some((s) => s.id === child.id))
-    }
-    return false
-  }
-
-  const handleMergeUngroupedIntoGroup = (selectedNodes: FlowNode[]) => {
-    const parentId = selectedNodes.find((n) => n.parentId)?.parentId
-    const updatedNodes = degroupNodes(selectedNodes, parentId, nodes)
-    const updatedSelectedNodes = updatedNodes.filter((node) =>
-      selectedNodes.some((selectedNode) => selectedNode.id === node.id),
-    )
-    groupNodes(updatedSelectedNodes, updatedNodes)
-  }
-
-  const degroupNodes = (selectedNodes: FlowNode[], parentId: string, allNodes: FlowNode[]): FlowNode[] => {
-    const groupNode = allNodes.find((node) => node.id === parentId)
-    if (!groupNode) return allNodes
-
-    const groupX = groupNode.position.x
-    const groupY = groupNode.position.y
-
-    const updatedNodes = allNodes
-      .map((node) => {
-        if (node.id === parentId) {
-          return null // remove group node
-        }
-
-        if (selectedNodes.includes(node) && node.parentId === parentId) {
-          return {
-            ...node,
-            parentId: undefined,
-            extent: undefined,
-            position: {
-              x: node.position.x + groupX,
-              y: node.position.y + groupY,
-            },
-          }
-        }
-
-        return node
+  const getFullySelectedGroupIds = useCallback(
+    (parentIds: string[], selectedNodes: FlowNode[]) => {
+      return parentIds.filter((parentId) => {
+        const children = nodes.filter((node) => node.parentId === parentId)
+        return children.every((child) => selectedNodes.some((sn) => sn.id === child.id))
       })
-      .filter((node): node is FlowNode => node !== null)
+    },
+    [nodes],
+  )
 
-    return updatedNodes
-  }
+  const allSelectedInSameGroup = useCallback((selectedNodes: FlowNode[]) => {
+    return selectedNodes.every((node) => node.parentId && node.parentId === selectedNodes[0].parentId)
+  }, [])
+
+  const degroupNodes = useCallback(
+    (selectedNodes: FlowNode[], parentId: string | undefined, allNodes: FlowNode[]): FlowNode[] => {
+      const groupNode = allNodes.find((node) => node.id === parentId)
+      if (!groupNode) return allNodes
+
+      const groupX = groupNode.position.x
+      const groupY = groupNode.position.y
+
+      return allNodes
+        .map((node) => {
+          if (node.id === parentId) {
+            return null
+          }
+
+          if (selectedNodes.includes(node) && node.parentId === parentId) {
+            return {
+              ...node,
+              parentId: undefined,
+              extent: undefined,
+              position: {
+                x: node.position.x + groupX,
+                y: node.position.y + groupY,
+              },
+            }
+          }
+
+          return node
+        })
+        .filter((node): node is FlowNode => node !== null)
+    },
+    [],
+  )
+
+  const handleMultiGroupMerge = useCallback(
+    (groupIds: string[], selectedNodes: FlowNode[]) => {
+      let updatedNodes = [...nodes]
+      for (const parentId of groupIds) {
+        const groupChildren = updatedNodes.filter((node) => node.parentId === parentId)
+        updatedNodes = degroupNodes(groupChildren, parentId!, updatedNodes)
+      }
+
+      const degroupedSelectedNodes = updatedNodes.filter((node) =>
+        selectedNodes.some((selected) => selected.id === node.id),
+      )
+
+      groupNodes(degroupedSelectedNodes, updatedNodes)
+    },
+    [nodes, degroupNodes],
+  )
+
+  const handleDegroupSingleGroup = useCallback(
+    (selectedNodes: FlowNode[]) => {
+      const parentId = selectedNodes[0].parentId!
+      const updatedNodes = degroupNodes(selectedNodes, parentId, nodes)
+      useFlowStore.getState().setNodes(updatedNodes)
+    },
+    [nodes, degroupNodes],
+  )
+
+  const shouldMergeUngroupedIntoGroup = useCallback(
+    (selectedNodes: FlowNode[]) => {
+      const ungroupedNodes = selectedNodes.filter((n) => !n.parentId)
+      const parentGroups = new Set(selectedNodes.map((n) => n.parentId).filter(Boolean))
+      if (parentGroups.size === 1 && ungroupedNodes.length > 0) {
+        const parentId = [...parentGroups][0]!
+        const parentChildren = nodes.filter((n) => n.parentId === parentId)
+        return parentChildren.every((child) => selectedNodes.some((s) => s.id === child.id))
+      }
+      return false
+    },
+    [nodes],
+  )
+
+  const handleMergeUngroupedIntoGroup = useCallback(
+    (selectedNodes: FlowNode[]) => {
+      const parentId = selectedNodes.find((n) => n.parentId)?.parentId
+      const updatedNodes = degroupNodes(selectedNodes, parentId, nodes)
+      const updatedSelectedNodes = updatedNodes.filter((node) =>
+        selectedNodes.some((selectedNode) => selectedNode.id === node.id),
+      )
+      groupNodes(updatedSelectedNodes, updatedNodes)
+    },
+    [nodes, degroupNodes],
+  )
 
   const groupNodes = (nodesToGroup: FlowNode[], currentNodes: FlowNode[]) => {
     const minX = Math.min(...nodesToGroup.map((node) => node.position.x))
@@ -298,10 +324,10 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
     useFlowStore.getState().setNodes(allNodes)
   }
 
-  const onDragOver = (event: React.DragEvent) => {
+  const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault()
     event.dataTransfer.dropEffect = 'move'
-  }
+  }, [])
 
   const onDrop = (event: React.DragEvent) => {
     event.preventDefault()
@@ -367,25 +393,76 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
     }
   }
 
-  const handleRightMouseButtonClick = (event) => {
-    event.preventDefault()
-    const { screenToFlowPosition } = reactFlow
-    const position = screenToFlowPosition({ x: event.clientX, y: event.clientY })
-    const newId = useFlowStore.getState().getNextNodeId()
+  const handleRightMouseButtonClick = useCallback(
+    (event: React.MouseEvent) => {
+      event.preventDefault()
+      const { screenToFlowPosition } = reactFlow
+      const position = screenToFlowPosition({ x: event.clientX, y: event.clientY })
+      const newId = useFlowStore.getState().getNextNodeId()
 
-    const stickyNote: StickyNote = {
-      id: newId,
-      position: {
-        x: position.x - FlowConfig.STICKY_NOTE_DEFAULT_WIDTH / 2,
-        y: position.y - FlowConfig.STICKY_NOTE_DEFAULT_HEIGHT / 2,
-      },
-      data: {
-        content: 'New Sticky Note',
-      },
-      type: 'stickyNote',
-    }
-    useFlowStore.getState().addNode(stickyNote)
-  }
+      const stickyNote: StickyNote = {
+        id: newId,
+        position: {
+          x: position.x - FlowConfig.STICKY_NOTE_DEFAULT_WIDTH / 2,
+          y: position.y - FlowConfig.STICKY_NOTE_DEFAULT_HEIGHT / 2,
+        },
+        data: {
+          content: 'New Sticky Note',
+        },
+        type: 'stickyNote',
+      }
+      useFlowStore.getState().addNode(stickyNote)
+    },
+    [reactFlow],
+  )
+
+  const loadFlowFromTab = useCallback(
+    async (tab: TabData) => {
+      const flowStore = useFlowStore.getState()
+      setLoading(true)
+      try {
+        if (tab.flowJson && Object.keys(tab.flowJson).length > 0) {
+          restoreFlowFromTab(tab.value)
+        } else if (tab.configurationName && tab.value) {
+          if (!project) return
+          const adapter = await getAdapterFromConfiguration(project.name, tab.configurationName, tab.value)
+          if (!adapter) return
+          const adapterJson = await convertAdapterXmlToJson(adapter)
+          flowStore.setEdges(adapterJson.edges)
+          flowStore.setViewport({ x: 0, y: 0, zoom: 1 })
+          const laidOutNodes = layoutGraph(adapterJson.nodes, adapterJson.edges, 'LR')
+          flowStore.setNodes(laidOutNodes)
+        }
+      } catch (error) {
+        console.error('Error loading tab flow:', error)
+      } finally {
+        setLoading(false)
+      }
+    },
+    [project, layoutGraph, restoreFlowFromTab],
+  )
+
+  const saveFlowToTab = useCallback(
+    (tabId: string) => {
+      const tabStore = useTabStore.getState()
+      const flowStore = useFlowStore.getState()
+
+      const flowData = reactFlow.toObject()
+      const viewport = flowStore.viewport
+      const tabData = tabStore.getTab(tabId)
+
+      if (!tabData) return
+
+      tabStore.setTabData(tabId, {
+        ...tabData,
+        flowJson: {
+          ...flowData,
+          viewport,
+        },
+      })
+    },
+    [reactFlow],
+  )
 
   useEffect(() => {
     const tabStore = useTabStore.getState()
@@ -418,7 +495,7 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
     )
 
     return () => unsubscribe()
-  }, [])
+  }, [loadFlowFromTab, saveFlowToTab])
 
   function clearFlow() {
     const flowStore = useFlowStore.getState()
@@ -427,49 +504,7 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
     flowStore.setViewport({ x: 0, y: 0, zoom: 1 })
   }
 
-  async function loadFlowFromTab(tab) {
-    const flowStore = useFlowStore.getState()
-    setLoading(true)
-    try {
-      if (tab.flowJson && Object.keys(tab.flowJson).length > 0) {
-        restoreFlowFromTab(tab.value)
-      } else if (tab.configurationName && tab.value) {
-        if (!project) return
-        const adapter = await getAdapterFromConfiguration(project.name, tab.configurationName, tab.value)
-        if (!adapter) return
-        const adapterJson = await convertAdapterXmlToJson(adapter)
-        flowStore.setEdges(adapterJson.edges)
-        flowStore.setViewport({ x: 0, y: 0, zoom: 1 })
-        const laidOutNodes = layoutGraph(adapterJson.nodes, adapterJson.edges, 'LR')
-        flowStore.setNodes(laidOutNodes)
-      }
-    } catch (error) {
-      console.error('Error loading tab flow:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const saveFlowToTab = (tabId: string) => {
-    const tabStore = useTabStore.getState()
-    const flowStore = useFlowStore.getState()
-
-    const flowData = reactFlow.toObject()
-    const viewport = flowStore.viewport
-    const tabData = tabStore.getTab(tabId)
-
-    if (!tabData) return
-
-    tabStore.setTabData(tabId, {
-      ...tabData,
-      flowJson: {
-        ...flowData,
-        viewport,
-      },
-    })
-  }
-
-  const restoreFlowFromTab = (tabId: string) => {
+  const restoreFlowFromTab = useCallback((tabId: string) => {
     const tabStore = useTabStore.getState()
     const flowStore = useFlowStore.getState()
 
@@ -485,23 +520,7 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
       flowStore.setEdges([])
       flowStore.setViewport({ x: 0, y: 0, zoom: 1 })
     }
-  }
-
-  const exportToXml = () => {
-    const flowData = reactFlow.toObject()
-    const activeTabName = useTabStore.getState().activeTab
-    const xmlString = exportFlowToXml(flowData, activeTabName)
-    const fileName = 'FlowConfiguration.xml'
-    const blob = new Blob([xmlString], { type: 'application/xml' })
-    const url = URL.createObjectURL(blob)
-
-    const link = document.createElement('a')
-    link.href = url
-    link.download = fileName
-    link.click()
-
-    URL.revokeObjectURL(url)
-  }
+  }, [])
 
   const saveFlow = async () => {
     const flowData = reactFlow.toObject()
@@ -558,7 +577,7 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
         onConnect={onConnect}
         onReconnect={onReconnect}
         onConnectStart={handleConnectStart}
-        onConnectEnd={handleConnectEnd}
+        onReconnectEnd={handleConnectEnd}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         deleteKeyCode={'Delete'}

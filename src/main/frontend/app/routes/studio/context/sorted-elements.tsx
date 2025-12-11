@@ -6,7 +6,7 @@ import useNodeContextStore from '~/stores/node-context-store'
 
 interface Item {
   name: string
-  attributes: any[]
+  attributes?: unknown[]
 }
 
 interface Properties {

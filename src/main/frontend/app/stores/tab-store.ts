@@ -1,10 +1,10 @@
 import { create } from 'zustand'
 import { subscribeWithSelector } from 'zustand/middleware'
 
-interface TabData {
+export interface TabData {
   value: string
-  icon?: React.ComponentType<any>
-  flowJson?: Record<string, any>
+  icon?: React.ComponentType<React.SVGProps<SVGSVGElement>>
+  flowJson?: Record<string, unknown>
   configurationName: string
 }
 

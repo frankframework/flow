@@ -8,7 +8,7 @@ export type StickyNote = Node<{
   content: string
 }>
 
-export default function StickyNote(properties: NodeProps<StickyNote>) {
+export default function StickyNoteComponent(properties: NodeProps<StickyNote>) {
   const minHeight = FlowConfig.STICKY_NOTE_DEFAULT_HEIGHT
   const minWidth = FlowConfig.STICKY_NOTE_DEFAULT_WIDTH
 
@@ -36,7 +36,7 @@ export default function StickyNote(properties: NodeProps<StickyNote>) {
     setLocalContent(properties.data.content)
   }, [properties.data.content])
 
-  const updateContent = (event) => {
+  const updateContent = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newText = event.target.value
 
     setLocalContent(newText)
@@ -48,7 +48,7 @@ export default function StickyNote(properties: NodeProps<StickyNote>) {
       <NodeResizeControl
         minWidth={minWidth}
         minHeight={minHeight}
-        onResize={(event, data) => {
+        onResize={(_event, data) => {
           setDimensions({ width: data.width, height: data.height })
         }}
         style={{

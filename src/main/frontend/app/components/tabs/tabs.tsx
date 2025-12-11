@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useCallback, useEffect, useRef } from 'react'
 import Tab from '~/components/tabs/tab'
 import useTabStore from '~/stores/tab-store'
 import { useShallow } from 'zustand/react/shallow'
@@ -7,8 +7,8 @@ export type TabsList = Record<string, TabsItem>
 
 export interface TabsItem {
   value: string
-  icon?: React.FC<React.SVGProps<SVGSVGElement>>
-  flowJson?: Record<string, any>
+  icon?: React.ComponentType<React.SVGProps<SVGSVGElement>>
+  flowJson?: Record<string, unknown>
 }
 
 export default function Tabs() {
@@ -25,15 +25,7 @@ export default function Tabs() {
     })),
   )
 
-  useEffect(() => {
-    calculateScrollShadows()
-    window.addEventListener('resize', calculateScrollShadows)
-    return () => {
-      window.removeEventListener('resize', calculateScrollShadows)
-    }
-  }, [tabs])
-
-  const calculateScrollShadows = () => {
+  const calculateScrollShadows = useCallback(() => {
     setTimeout(() => {
       if (
         !tabsElementReference.current ||
@@ -50,7 +42,15 @@ export default function Tabs() {
 
       setShadows(currentScroll, 1 - currentScroll)
     })
-  }
+  }, [])
+
+  useEffect(() => {
+    calculateScrollShadows()
+    window.addEventListener('resize', calculateScrollShadows)
+    return () => {
+      window.removeEventListener('resize', calculateScrollShadows)
+    }
+  }, [tabs, calculateScrollShadows])
 
   const setShadows = (left: number, right: number) => {
     if (shadowLeftReference.current) {

@@ -29,9 +29,9 @@ export interface FlowState {
   onEdgesChange: OnEdgesChange
   onConnect: OnConnect
   onReconnect: OnReconnect
-  setNodes: (nodes: FlowNode[]) => void
-  setEdges: (edges: Edge[]) => void
-  setViewport: (viewport: { x: number; y: number; zoom: number }) => void
+  setNodes: (nodes: unknown) => void
+  setEdges: (edges: unknown) => void
+  setViewport: (viewport: unknown) => void
   getNextNodeId: () => string
   addNode: (newNode: FlowNode) => void
   deleteNode: (nodeId: string) => void
@@ -64,10 +64,10 @@ function isStickyNote(node: FlowNode): node is StickyNote {
 function nextFreeNumericId(nodes: FlowNode[]): number {
   let max = -1
 
-  const scan = (ns: any[]) => {
+  const scan = (ns: FlowNode[]) => {
     for (const n of ns) {
       max = Math.max(max, Number(n.id) || 0)
-      if (n.data?.children?.length) scan(n.data.children)
+      if (n.data?.children?.length) scan(n.data.children as FlowNode[])
     }
   }
 
@@ -101,13 +101,14 @@ const useFlowStore = create<FlowState>((set, get) => ({
   },
   onReconnect: (oldEdge, newConnection) => {
     set({
-      edges: get()
-        .edges.filter((edge) => edge.id !== oldEdge.id)
-        .concat({
+      edges: [
+        ...get().edges.filter((edge) => edge.id !== oldEdge.id),
+        {
           ...newConnection,
           id: oldEdge.id,
           type: 'frankEdge',
-        }),
+        },
+      ],
     })
   },
   setNodes: (nodes) => {

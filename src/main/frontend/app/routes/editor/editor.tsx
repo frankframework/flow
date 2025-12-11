@@ -26,7 +26,7 @@ export default function CodeEditor() {
   const decorationIdsReference = useRef<string[]>([])
   const [isSaving, setIsSaving] = useState(false)
 
-  const handleEditorMount: OnMount = (editor, monacoInstance) => {
+  const handleEditorMount: OnMount = (editor, _monacoInstance) => {
     editorReference.current = editor
   }
 
@@ -59,7 +59,7 @@ export default function CodeEditor() {
     }
 
     fetchXml()
-  }, [activeTab])
+  }, [activeTab, project])
 
   useEffect(() => {
     if (!xmlContent || !activeTab || !editorReference.current) return
@@ -103,15 +103,23 @@ export default function CodeEditor() {
   useEffect(() => {
     // Handles all the suggestions
     if (!editorReference.current) return
-    const monacoInstance = (globalThis as any).monaco
+    type Monaco = typeof import('monaco-editor')
+    const monacoInstance = (globalThis as { monaco?: Monaco }).monaco
     if (!monacoInstance) return
 
-    const isCursorInsideAttributeValue = (model, position) => {
+    type ITextModel = Parameters<
+      Parameters<Monaco['languages']['registerCompletionItemProvider']>[1]['provideCompletionItems']
+    >[0]
+    type Position = Parameters<
+      Parameters<Monaco['languages']['registerCompletionItemProvider']>[1]['provideCompletionItems']
+    >[1]
+
+    const isCursorInsideAttributeValue = (model: ITextModel, position: Position) => {
       const text = getTextBeforeCursor(model, position)
       return /="[^"]*$/.test(text)
     }
 
-    const getTextBeforeCursor = (model, position) => {
+    const getTextBeforeCursor = (model: ITextModel, position: Position) => {
       const line = model.getLineContent(position.lineNumber)
       return line.slice(0, position.column - 1)
     }
@@ -126,8 +134,13 @@ export default function CodeEditor() {
 
         if (!elements) return { suggestions: [] }
 
+        interface ElementType {
+          name: string
+          description?: string
+          attributes?: Record<string, { mandatory?: boolean }>
+        }
         return {
-          suggestions: Object.values(elements).map((element: any) => {
+          suggestions: Object.values(elements).map((element: ElementType) => {
             const mandatoryAttributes = Object.entries(element.attributes || {})
               .filter(([_, attribute]) => attribute.mandatory)
               .map(([name], index) => {
@@ -173,13 +186,17 @@ export default function CodeEditor() {
         const element = elements[tagName]
         if (!element || !element.attributes) return { suggestions: [] }
 
+        interface AttributeValue {
+          description?: string
+          enum?: Record<string, { description?: string }>
+        }
         const attributeSuggestions = Object.entries(element.attributes).flatMap(
-          ([attributeName, attributeValue]: [string, any]) => {
+          ([attributeName, attributeValue]: [string, AttributeValue]) => {
             // Suggest enum values if defined
             const enumValues = attributeValue?.enum ? Object.keys(attributeValue.enum) : []
 
             return enumValues.length > 0
-              ? enumValues.map((value, index) => ({
+              ? enumValues.map((value, _index) => ({
                   label: `${attributeName}="${value}"`,
                   kind: monacoInstance.languages.CompletionItemKind.Enum,
                   insertText: `${attributeName}="${value}"`,
@@ -204,7 +221,7 @@ export default function CodeEditor() {
       elementProvider.dispose()
       attributeProvider.dispose()
     }
-  }, [editorReference.current, elements])
+  }, [elements])
 
   const handleSelectTab = (key: string) => {
     useTabStore.getState().setActiveTab(key)
