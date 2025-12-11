@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import Tabs, { type TabsList } from '~/components/tabs/tabs'
-import StudioStructure from '~/routes/studio/filetree/studio-structure'
+import FileStructure from '~/components/file-structure/file-structure'
 import StudioContext from '~/routes/studio/context/studio-context'
 import Flow from '~/routes/studio/canvas/flow'
 import NodeContext from '~/routes/studio/context/node-context'
@@ -29,7 +29,7 @@ export default function Studio() {
     <SidebarLayout name="studio" windowResizeOnChange={true}>
       <>
         <SidebarHeader side={SidebarSide.LEFT} title="Structure" />
-        <StudioStructure />
+        <FileStructure />
       </>
       <>
         <div className="flex">
