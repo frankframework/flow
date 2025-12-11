@@ -286,6 +286,22 @@
 				<artifactId>maven-resources-plugin</artifactId>
 				<executions>
 					<execution>
+						<id>copy-frontend-build</id>
+						<phase>process-resources</phase>
+						<goals>
+							<goal>copy-resources</goal>
+						</goals>
+						<configuration>
+							<outputDirectory>${project.build.outputDirectory}/frontend</outputDirectory>
+							<resources>
+								<resource>
+									<directory>${project.basedir}/src/main/frontend/build/client</directory>
+									<filtering>false</filtering>
+								</resource>
+							</resources>
+						</configuration>
+					</execution>
+					<execution>
 						<id>copy-frontend-to-TestClasses</id>
 						<phase>process-test-resources</phase>
 						<goals>

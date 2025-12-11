@@ -36,7 +36,7 @@ export default function AddConfigurationModal({
         configname = `${configname}.xml`
       }
 
-      const url = `${API_BASE_URL}projects/${encodeURIComponent(
+      const url = `/api/projects/${encodeURIComponent(
         currentProject.name,
       )}/configurations/${encodeURIComponent(configname)}`
 
