@@ -1,15 +1,15 @@
 import type { Disposable, TreeDataProvider, TreeItem, TreeItemIndex } from 'react-complex-tree'
-import type { ConfigWithAdapters } from '~/routes/studio/filetree/studio-structure'
+import type { ConfigWithAdapters } from './file-structure'
 
-export interface AdapterNodeData {
+interface AdapterNodeData {
   adapterName: string
   configName: string
   listenerName: string | null
 }
 
-export default class StudioFilesDataProvider implements TreeDataProvider {
+export default class FilesDataProvider implements TreeDataProvider {
   private data: Record<TreeItemIndex, TreeItem> = {}
-  private treeChangeListeners: ((changedItemIds: TreeItemIndex[]) => void)[] = []
+  private readonly treeChangeListeners: ((changedItemIds: TreeItemIndex[]) => void)[] = []
 
   constructor(configs: ConfigWithAdapters[]) {
     this.updateData(configs)
@@ -18,6 +18,10 @@ export default class StudioFilesDataProvider implements TreeDataProvider {
   public updateData(configs: ConfigWithAdapters[]) {
     this.buildTree(configs)
     this.notifyListeners(['root'])
+  }
+
+  public async getAllItems(): Promise<TreeItem[]> {
+    return Object.values(this.data)
   }
 
   public async getTreeItem(itemId: TreeItemIndex) {

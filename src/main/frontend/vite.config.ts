@@ -10,22 +10,13 @@ dotenv.config({ quiet: true })
 
 export default defineConfig({
   plugins: [tailwindcss(), mdx(), reactRouter(), tsconfigPaths(), svgr()],
-  define: {
-    API_BASE_URL: JSON.stringify(process.env.API_BASE_URL),
-  },
   server: {
     port: 3000,
     proxy: {
-      '/test': {
-        target: 'http://localhost:8080', // Spring Boot backend
-        changeOrigin: true,
-      },
-      '/configurations': {
+      '/api': {
         target: 'http://localhost:8080',
-        changeOrigin: true,
-      },
-      '/projects': {
-        target: 'http://localhost:8080',
+        secure: false,
+        ws: true,
         changeOrigin: true,
       },
     },
