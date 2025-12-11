@@ -9,7 +9,7 @@ interface AdapterNodeData {
 
 export default class FilesDataProvider implements TreeDataProvider {
   private data: Record<TreeItemIndex, TreeItem> = {}
-  private treeChangeListeners: ((changedItemIds: TreeItemIndex[]) => void)[] = []
+  private readonly treeChangeListeners: ((changedItemIds: TreeItemIndex[]) => void)[] = []
 
   constructor(configs: ConfigWithAdapters[]) {
     this.updateData(configs)

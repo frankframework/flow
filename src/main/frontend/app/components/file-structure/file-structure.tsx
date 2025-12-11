@@ -2,11 +2,11 @@ import React, { type JSX, useEffect, useRef, useState } from 'react'
 import { getAdapterListenerType, getAdapterNamesFromConfiguration } from '~/routes/studio/xml-to-json-parser'
 import useTabStore from '~/stores/tab-store'
 import Search from '~/components/search/search'
-import FolderIcon from '/icons/solar/Folder.svg?react'
-import FolderOpenIcon from '/icons/solar/Folder Open.svg?react'
+import FolderIcon from '../../../icons/solar/Folder.svg?react'
+import FolderOpenIcon from '../../../icons/solar/Folder Open.svg?react'
 import 'react-complex-tree/lib/style-modern.css'
-import AltArrowRightIcon from '/icons/solar/Alt Arrow Right.svg?react'
-import AltArrowDownIcon from '/icons/solar/Alt Arrow Down.svg?react'
+import AltArrowRightIcon from '../../../icons/solar/Alt Arrow Right.svg?react'
+import AltArrowDownIcon from '../../../icons/solar/Alt Arrow Down.svg?react'
 
 import {
   Tree,
@@ -67,29 +67,10 @@ export default function FileStructure() {
 
   useEffect(() => {
     const loadAdapters = async () => {
-      if (configs.length > 0) {
-        // skip fetching if already loaded
-        return
-      }
+      if (configs.length > 0) return
 
       try {
-        const loaded: ConfigWithAdapters[] = await Promise.all(
-          configurationNames.map(async (configName) => {
-            if (!project) return
-            const adapterNames = await getAdapterNamesFromConfiguration(project.name, configName)
-
-            // Fetch listener name for each adapter
-            const adapters = await Promise.all(
-              adapterNames.map(async (adapterName) => {
-                const listenerName = await getAdapterListenerType(project.name, configName, adapterName)
-                return { adapterName, listenerName }
-              }),
-            )
-
-            return { configName, adapters }
-          }),
-        )
-
+        const loaded = await Promise.all(configurationNames.map((name) => fetchConfig(name)))
         setConfigs(loaded)
       } catch (error) {
         console.error('Failed to load adapter names:', error)
@@ -100,6 +81,19 @@ export default function FileStructure() {
 
     loadAdapters()
   }, [configurationNames])
+
+  async function fetchConfig(configName: string): Promise<ConfigWithAdapters> {
+    if (!project) return { configName, adapters: [] } // fallback
+
+    const adapterNames = await getAdapterNamesFromConfiguration(project.name, configName)
+    const adapters = await Promise.all(adapterNames.map((adapterName) => fetchAdapter(configName, adapterName)))
+    return { configName, adapters }
+  }
+
+  async function fetchAdapter(configName: string, adapterName: string) {
+    const listenerName = await getAdapterListenerType(project.name, configName, adapterName)
+    return { adapterName, listenerName }
+  }
 
   useEffect(() => {
     const findMatchingItems = async () => {
@@ -275,11 +269,11 @@ export default function FileStructure() {
         <>
           {parts.map((part, index) =>
             part.toLowerCase() === searchLower ? (
-              <mark key={index} className="text-foreground bg-foreground-active rounded-sm">
+              <mark key={`mark-${index}`} className="text-foreground bg-foreground-active rounded-sm">
                 {part}
               </mark>
             ) : (
-              <span key={index}>{part}</span>
+              <span key={`span-${index}`}>{part}</span>
             ),
           )}
         </>
