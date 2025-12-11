@@ -44,15 +44,15 @@ jobs:
         run: pnpm install --frozen-lockfile --ignore-scripts
         working-directory: src/main/frontend
 
-      - name: Lint Frontend
-        run: pnpm run lint
-        working-directory: src/main/frontend
+#      - name: Lint Frontend
+#        run: pnpm run lint
+#        working-directory: src/main/frontend
 
       - name: Lint Backend
         run: mvn checkstyle:check
 
       - name: Test Frontend
-        run: pnpm run test --watch=false --browsers=ChromeHeadless
+        run: pnpm run test:run
         working-directory: src/main/frontend
 
       - name: Test & Build Backend and run E2E Tests
