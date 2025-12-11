@@ -369,7 +369,7 @@
                                             <arg value="-t"/>
                                             <arg value="${config.image.tag}:latest"/>
                                             <arg value="-t"/>
-                                            <arg value="${config.image.tag}${revision}"/>
+                                            <arg value="${config.image.tag}:${revision}"/>
                                             <arg value="-t"/>
                                             <arg value="${config.image.repository}/${config.image.tag}:latest"/>
                                             <arg value="-t"/>

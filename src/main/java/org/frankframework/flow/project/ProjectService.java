@@ -18,7 +18,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Optional;
 
@@ -227,7 +226,7 @@ public class ProjectService {
 
 				// Load XML content
 				String filename = resource.getFilename();
-				String xmlContent = Files.readString(resource.getFile().toPath(), StandardCharsets.UTF_8);
+				String xmlContent = new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
 
 				// Create Configuration and add to Project
 				Configuration configuration = new Configuration(filename);
