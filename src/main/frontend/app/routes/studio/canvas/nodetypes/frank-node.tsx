@@ -44,6 +44,13 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
   const { elements } = useFFDoc(FRANK_DOC_URL)
   const { setNodeId, setAttributes, setParentId, setIsEditing } = useNodeContextStore()
   const gradientEnabled = useSettingsStore((state) => state.studio.gradient)
+  // Store the associated Frank element
+  const frankElement = useMemo(() => {
+    if (!elements) return null
+    const recordElements = elements as Record<string, { name: string; [key: string]: any }>
+
+    return Object.values(recordElements).find((element) => element.name === properties.data.subtype) ?? null
+  }, [elements, properties.data.subtype])
 
   const updateNodeInternals = useUpdateNodeInternals()
 
@@ -108,10 +115,8 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
   }
 
   const editNode = () => {
-    const recordElements = elements as Record<string, { name: string; [key: string]: any }>
-    const attributes = Object.values(recordElements).find(
-      (element) => element.name === properties.data.subtype,
-    )?.attributes
+    if (!frankElement) return
+    const attributes = frankElement.attributes
     setNodeId(+properties.id)
     setAttributes(attributes)
     showNodeContextMenu(true)
@@ -159,15 +164,21 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
       setDragOver(false)
       event.preventDefault()
       event.stopPropagation()
-      showNodeContextMenu(true)
-      setIsEditing(true)
-      setParentId(properties.id)
 
       const raw = event.dataTransfer.getData('application/reactflow')
       if (!raw) return
 
       const dropped = JSON.parse(raw)
       const newId = useFlowStore.getState().getNextNodeId()
+
+      if (!canAcceptChild(dropped.name)) {
+        console.warn(`Rejected drop: ${dropped.name} is not allowed as child of ${properties.data.subtype}`)
+        return
+      }
+
+      showNodeContextMenu(true)
+      setIsEditing(true)
+      setParentId(properties.id)
 
       const child: ChildNode = {
         id: newId,
@@ -180,7 +191,16 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
 
       addChild(properties.id, child)
     },
-    [properties.id, addChild],
+    [properties.id, addChild, frankElement],
+  )
+
+  const canAcceptChild = useCallback(
+    (droppedName: string): boolean => {
+      if (!frankElement?.children) return false
+
+      return frankElement.children.some((child: any) => child.roleName.toLowerCase() === droppedName.toLowerCase())
+    },
+    [frankElement], // ← MUST be here
   )
 
   return (
@@ -231,6 +251,7 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
             {properties.data.name.toUpperCase()}
           </p>
         </div>
+        <button onClick={() => console.log(frankElement)}>Frank</button>
         {properties.data.attributes &&
           Object.entries(properties.data.attributes).map(([key, value]) => (
             <div key={key} className="my-1 w-full max-w-full px-1">
