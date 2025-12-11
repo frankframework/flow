@@ -1,3 +1,3 @@
 packages:
-  - 'src/main/frontend'
-  - 'src/main/frontend/cypress'
+  - src/main/frontend
+  - src/main/frontend/cypress
