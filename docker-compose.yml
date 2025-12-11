@@ -1,6 +1,6 @@
 services:
-  insights:
-    image: ghcr.io/frankframework/insights:latest
+  flow:
+    image: ghcr.io/frankframework/flow:latest
     build:
       dockerfile: ./docker/Dockerfile
       context: .

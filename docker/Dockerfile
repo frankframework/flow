@@ -9,8 +9,8 @@ RUN addgroup --gid ${GID} spring && \
 USER spring
 
 COPY --chown=spring ./docker/scripts/ /scripts/
-COPY --chown=spring ./target/flow-webapp*.jar /app/flow-webapp.jar
+COPY --chown=spring ./target/flow*.jar /app/flow.jar
 
 EXPOSE 8080
 
-CMD ["java","-jar","/app/flow-webapp.jar"]
+CMD ["java","-jar","/app/flow.jar"]
