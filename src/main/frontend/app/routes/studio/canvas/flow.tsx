@@ -12,7 +12,7 @@ import {
 } from '@xyflow/react'
 import Dagre from '@dagrejs/dagre'
 import '@xyflow/react/dist/style.css'
-import FrankNodeComponent, { type FrankNode } from '~/routes/studio/canvas/nodetypes/frank-node'
+import FrankNodeComponent, { type frankNode } from '~/routes/studio/canvas/nodetypes/frank-node'
 import FrankEdgeComponent from '~/routes/studio/canvas/edgetypes/frank-edge'
 import ExitNodeComponent, { type ExitNode } from '~/routes/studio/canvas/nodetypes/exit-node'
 import GroupNodeComponent, { type GroupNode } from '~/routes/studio/canvas/nodetypes/group-node'
@@ -31,7 +31,7 @@ import { useProjectStore } from '~/stores/project-store'
 import { toast, ToastContainer } from 'react-toastify'
 import { useTheme } from '~/hooks/use-theme'
 
-export type FlowNode = FrankNode | ExitNode | StickyNote | GroupNode | Node
+export type FlowNode = frankNode | ExitNode | StickyNote | GroupNode | Node
 
 const NodeContextMenuContext = createContext<(visible: boolean) => void>(() => {})
 export const useNodeContextMenu = () => useContext(NodeContextMenuContext)
@@ -334,7 +334,7 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
     const width = nodeType === 'exitNode' ? FlowConfig.EXIT_DEFAULT_WIDTH : FlowConfig.NODE_DEFAULT_WIDTH
     const height = nodeType === 'exitNode' ? FlowConfig.EXIT_DEFAULT_HEIGHT : FlowConfig.NODE_DEFAULT_HEIGHT
 
-    const newNode: FrankNode = {
+    const newNode: frankNode = {
       id: newId.toString(),
       position: {
         x: position.x - width / 2, // Center on cursor

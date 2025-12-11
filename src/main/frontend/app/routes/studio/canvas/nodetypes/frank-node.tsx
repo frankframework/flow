@@ -21,8 +21,9 @@ import HandleMenu from './components/handle-menu'
 import type { ActionType } from './components/action-types'
 import { ChildNode } from './child-node'
 import { findChildRecursive } from '~/stores/child-utilities'
+import { canAcceptChildStatic } from './node-utilities'
 
-export type FrankNode = Node<{
+export type frankNode = Node<{
   subtype: string
   type: string
   name: string
@@ -31,7 +32,7 @@ export type FrankNode = Node<{
   children: ChildNode[]
 }>
 
-export default function FrankNode(properties: NodeProps<FrankNode>) {
+export default function FrankNode(properties: NodeProps<frankNode>) {
   const minNodeWidth = FlowConfig.NODE_DEFAULT_WIDTH
   const minNodeHeight = FlowConfig.NODE_DEFAULT_HEIGHT
   const type = properties.data.type.toLowerCase()
@@ -41,7 +42,8 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
   const [dragOver, setDragOver] = useState(false)
   const showNodeContextMenu = useNodeContextMenu()
   const FRANK_DOC_URL = variables.frankDocJsonUrl
-  const { elements } = useFFDoc(FRANK_DOC_URL)
+  const { elements, filters } = useFFDoc(FRANK_DOC_URL)
+  const [dragForbidden, setDragForbidden] = useState(false)
   const { setNodeId, setAttributes, setParentId, setIsEditing } = useNodeContextStore()
   const gradientEnabled = useSettingsStore((state) => state.studio.gradient)
   // Store the associated Frank element
@@ -92,7 +94,7 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
   const addChild = useFlowStore((state) => state.addChild)
 
   const handleMenuClick = useCallback(
-    (handleType: string) => {
+    (handleType: ActionType) => {
       addHandle(properties.id, {
         type: handleType,
         index: properties.data.sourceHandles.length + 1,
@@ -100,7 +102,7 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
       updateNodeInternals(properties.id) // Update the edge
       setIsHandleMenuOpen(false) // Close the menu after selection
     },
-    [properties.id, properties.data.sourceHandles.length],
+    [addHandle, properties.id, properties.data.sourceHandles.length, updateNodeInternals],
   )
 
   const toggleHandleMenu = (event: React.MouseEvent) => {
@@ -147,17 +149,32 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
 
   const handleDragOver = (event: React.DragEvent) => {
     event.preventDefault()
+    event.dataTransfer.dropEffect = 'none'
 
     const isInsideChild = (event.target as HTMLElement).closest('.child-drop-zone')
 
-    if (isInsideChild) {
-      setDragOver(false) // Dragging over a child: DO NOT show "drop to add child"
+    const raw = event.dataTransfer.getData('application/reactflow')
+    if (!raw) {
+      setDragOver(false)
+      return
+    }
+
+    const dropped = JSON.parse(raw)
+    const allowed = canAcceptChild(dropped.name)
+
+    if (!allowed || isInsideChild) {
+      setDragOver(false)
+      setDragForbidden(true)
     } else {
-      setDragOver(true) // Dragging over FrankNode
+      setDragOver(true)
+      setDragForbidden(false)
     }
   }
 
-  const handleDragLeave = () => setDragOver(false)
+  const handleDragLeave = () => {
+    setDragOver(false)
+    setDragForbidden(false)
+  }
 
   const handleDropOnNode = useCallback(
     (event: React.DragEvent) => {
@@ -195,12 +212,10 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
   )
 
   const canAcceptChild = useCallback(
-    (droppedName: string): boolean => {
-      if (!frankElement?.children) return false
-
-      return frankElement.children.some((child: any) => child.roleName.toLowerCase() === droppedName.toLowerCase())
+    (droppedName: string) => {
+      return canAcceptChildStatic(frankElement, droppedName, filters)
     },
-    [frankElement], // ← MUST be here
+    [frankElement, filters],
   )
 
   return (
@@ -221,9 +236,7 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
         <ResizeIcon />
       </NodeResizeControl>
       <div
-        className={`bg-background flex h-full w-full flex-col items-center overflow-x-visible overflow-y-hidden rounded-md ${
-          properties.selected ? 'border-2 border-black' : 'border-border border'
-        }`}
+        className={`bg-background flex h-full w-full flex-col items-center overflow-x-visible overflow-y-hidden rounded-md border ${dragForbidden ? 'border-red-500' : 'border-border'}`}
         style={{
           minHeight: `${minNodeHeight}px`,
           minWidth: `${minNodeWidth}px`,
@@ -235,7 +248,7 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
         onDoubleClick={editNode}
       >
         <div
-          className="border-b-border box-border w-full rounded-t-md border-b p-1"
+          className={`border-b-border box-border w-full rounded-t-md border-b p-1`}
           style={{
             background: gradientEnabled
               ? `radial-gradient(
@@ -251,7 +264,6 @@ export default function FrankNode(properties: NodeProps<FrankNode>) {
             {properties.data.name.toUpperCase()}
           </p>
         </div>
-        <button onClick={() => console.log(frankElement)}>Frank</button>
         {properties.data.attributes &&
           Object.entries(properties.data.attributes).map(([key, value]) => (
             <div key={key} className="my-1 w-full max-w-full px-1">

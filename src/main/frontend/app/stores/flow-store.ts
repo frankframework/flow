@@ -13,7 +13,7 @@ import {
 import { initialNodes } from '~/routes/studio/canvas/nodes'
 import { initialEdges } from '~/routes/studio/canvas/edges'
 import type { FlowNode } from '~/routes/studio/canvas/flow'
-import type { FrankNode } from '~/routes/studio/canvas/nodetypes/frank-node'
+import type { frankNode } from '~/routes/studio/canvas/nodetypes/frank-node'
 import type { ExitNode } from '~/routes/studio/canvas/nodetypes/exit-node'
 import type { StickyNote } from '~/routes/studio/canvas/nodetypes/sticky-note'
 import type { ActionType } from '~/routes/studio/canvas/nodetypes/components/action-types'
@@ -49,7 +49,7 @@ export interface FlowState {
   addChildToChild: (nodeId: string, targetChildId: string, newChild: ChildNode) => void
 }
 
-export function isFrankNode(node: FlowNode): node is FrankNode {
+export function isFrankNode(node: FlowNode): node is frankNode {
   return node.type === 'frankNode'
 }
 
