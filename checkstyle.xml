@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<!DOCTYPE module PUBLIC "-//Checkstyle//DTD Checkstyle Configuration 1.2//EN"
+	"https://checkstyle.sourceforge.io/dtds/configuration_1_2.dtd">
+<module name="Checker">
+	<module name="TreeWalker">
+		<property name="fileExtensions" value="java" />
+		<property name="severity" value="error"/>
+		<module name="RedundantImport" />
+		<module name="UnusedImports">
+			<property name="processJavadoc" value="true" />
+		</module>
+		<module name="MagicNumber">
+		<property name="ignoreNumbers" value="0,1,-1"/>
+		</module>
+	</module>
+	<module name="LineLength">
+		<property name="severity" value="warning"/>
+		<property name="max" value="150"/>
+	</module>
+</module>

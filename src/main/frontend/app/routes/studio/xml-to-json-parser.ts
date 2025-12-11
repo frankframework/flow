@@ -10,7 +10,7 @@ interface IdCounter {
 
 export async function getXmlString(projectName: string, filename: string): Promise<string> {
   try {
-    const url = `${API_BASE_URL}projects/${projectName}/${filename}`
+    const url = `/api/projects/${projectName}/${filename}`
     const response = await fetch(url)
     if (!response.ok) {
       throw new Error(`HTTP error! Status: ${response.status}`)
