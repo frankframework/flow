@@ -237,7 +237,7 @@ export default function CodeEditor() {
     setIsSaving(true)
 
     try {
-      const url = `${API_BASE_URL}projects/${project.name}/${configName}`
+      const url = `/api/projects/${project.name}/${configName}`
       const response = await fetch(url, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },

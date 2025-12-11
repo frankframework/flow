@@ -1,73 +1,87 @@
-import typescriptParser from '@typescript-eslint/parser'
-import prettierPlugin from 'eslint-plugin-prettier'
-import tsPlugin from '@typescript-eslint/eslint-plugin'
-import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended'
-import eslintPluginReact from 'eslint-plugin-react'
-import eslintPluginUnicorn from 'eslint-plugin-unicorn'
-import eslintConfigPrettier from 'eslint-config-prettier'
-import sonarjs from 'eslint-plugin-sonarjs'
+import typescriptParser from '@typescript-eslint/parser';
+import tsPlugin from '@typescript-eslint/eslint-plugin';
+import reactPlugin from 'eslint-plugin-react';
+import reactHooksPlugin from 'eslint-plugin-react-hooks';
+import prettierPlugin from 'eslint-plugin-prettier';
+import unicorn from 'eslint-plugin-unicorn';
+import sonarjs from 'eslint-plugin-sonarjs';
+import js from '@eslint/js';
+import eslintConfigPrettier from 'eslint-config-prettier';
 
 export default [
   {
-    ignores: ['.cache/', '.git/', '.github/', 'node_modules/', '.react-router/', 'vite-env.d.ts'],
+    ignores: ['.cache/', '.git/', '.github/', 'node_modules/', 'dist/', 'build/', '.react-router/'],
   },
+
   {
-    files: ['**/*.{js,ts,jsx,tsx,cjs,cts,mjs,mts,html,vue}'],
+    ...js.configs.recommended,
+  },
+
+  {
+    files: ['**/*.ts', '**/*.tsx'],
     languageOptions: {
       parser: typescriptParser,
       parserOptions: {
-        project: ['./tsconfig.json'],
+        ecmaVersion: 'latest',
+        sourceType: 'module',
+        ecmaFeatures: {
+          jsx: true,
+        },
       },
     },
     plugins: {
       '@typescript-eslint': tsPlugin,
-      prettier: prettierPlugin,
+      'react': reactPlugin,
+      'react-hooks': reactHooksPlugin,
+      'prettier': prettierPlugin,
+      'sonarjs': sonarjs,
+    },
+    settings: {
+      react: {
+        version: 'detect',
+      },
     },
     rules: {
-      // TypeScript: https://typescript-eslint.io/rules/
-      ...tsPlugin.configs.recommended.rules,
-      ...tsPlugin.configs.stylistic.rules,
+      ...tsPlugin.configs.recommended?.rules,
+      ...tsPlugin.configs.stylistic?.rules,
+      ...reactPlugin.configs.recommended?.rules,
+      ...reactPlugin.configs['jsx-runtime']?.rules,
+      ...eslintConfigPrettier?.rules,
+
+      // TypeScript rules
+      '@typescript-eslint/explicit-function-return-type': 'off',
+      '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
       '@typescript-eslint/triple-slash-reference': 'warn',
-      '@typescript-eslint/member-ordering': 'error',
 
-      // EcmaScript: https://eslint.org/docs/latest/rules/
+      // React rules
+      'react/react-in-jsx-scope': 'off',
+      'react/prop-types': 'off',
+      'react-hooks/rules-of-hooks': 'error',
+      'react-hooks/exhaustive-deps': 'warn',
+
       'prefer-template': 'error',
+      'no-undef': 'off',
 
-      // Prettier: https://github.com/prettier/eslint-config-prettier?tab=readme-ov-file#special-rules
-      ...eslintConfigPrettier.rules,
       'prettier/prettier': 'warn',
+
+      'sonarjs/cognitive-complexity': 'warn',
+      'sonarjs/no-duplicate-string': 'warn',
     },
   },
-  // Unicorn: https://github.com/sindresorhus/eslint-plugin-unicorn
-  eslintPluginUnicorn.configs.recommended,
+
   {
+    plugins: {
+      unicorn,
+    },
     rules: {
-      'unicorn/prevent-abbreviations': [
-        'error',
-        {
-          replacements: {
-            doc: {
-              document: false,
-            },
-          },
-        },
-      ],
+      ...unicorn.configs.recommended?.rules,
+      'unicorn/no-empty-file': 'warn',
+      'unicorn/prevent-abbreviations': 'off',
       'unicorn/no-array-reduce': 'off',
       'unicorn/prefer-ternary': 'warn',
       'unicorn/no-null': 'off',
+      'unicorn/prefer-dom-node-text-content': 'warn',
+      'unicorn/filename-case': 'off',
     },
   },
-  // SonarJS: https://github.com/SonarSource/SonarJS/blob/master/packages/jsts/src/rules/README.md
-  sonarjs.configs.recommended,
-  {
-    rules: {
-      'sonarjs/cognitive-complexity': 'error',
-      'sonarjs/no-duplicate-string': 'error',
-    },
-  },
-  // React
-  eslintPluginReact.configs.flat.recommended,
-  eslintPluginReact.configs.flat['jsx-runtime'],
-  // Prettier
-  eslintPluginPrettierRecommended,
-]
+];
