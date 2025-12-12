@@ -1,5 +1,6 @@
 import type { FlowNode } from '~/routes/studio/canvas/flow'
 import type { Edge } from '@xyflow/react'
+import { ChildNode } from './canvas/nodetypes/child-node'
 
 interface ReactFlowJson {
   nodes: FlowNode[]
@@ -126,16 +127,7 @@ function generateXmlElement(
     .map(([key, value]) => ` ${key}="${escapeXml(value)}"`)
     .join('')}`
 
-  const childXml = children
-    .map((child: any) => {
-      const childAttributes =
-        (child.name ? ` name="${escapeXml(child.name)}"` : '') +
-        Object.entries(child.attributes || {})
-          .map(([k, v]) => ` ${k}="${escapeXml(v)}"`)
-          .join('')
-      return `    <${child.subtype}${childAttributes}/>`
-    })
-    .join('\n')
+  const childXml = children.map((child: ChildNode) => generateChildXml(child, 4)).join('\n')
 
   const forwards = (edgeMap.get(node.id) || [])
     .filter(({ targetId }) => exitNodeIds.has(targetId))
@@ -147,8 +139,30 @@ function generateXmlElement(
     .join('\n')
 
   const content = [childXml, forwards].filter(Boolean).join('\n')
-
   return content ? `  <${subtype}${attributeString}>\n${content}\n  </${subtype}>` : `  <${subtype}${attributeString}/>`
+}
+
+function generateChildXml(child: ChildNode, indent: 4): string {
+  const spaces = ' '.repeat(indent)
+
+  const attributes =
+    (child.name ? ` name="${escapeXml(child.name)}"` : '') +
+    Object.entries(child.attributes || {})
+      .map(([key, value]) => ` ${key}="${escapeXml(value)}"`)
+      .join('')
+
+  const hasChildren = child.children && child.children.length > 0
+
+  if (!hasChildren) {
+    return `${spaces}<${child.subtype}${attributes}/>`
+  }
+
+  // Recursive case
+  const childXmlStrings = child.children!.map((nested) => generateChildXml(nested, indent + 2))
+
+  return `${spaces}<${child.subtype}${attributes}>
+${childXmlStrings.join('\n')}
+${spaces}</${child.subtype}>`
 }
 
 function generateExitsXml(exitNodes: FlowNode[]): string {

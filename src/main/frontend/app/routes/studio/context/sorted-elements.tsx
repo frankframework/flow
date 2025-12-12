@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import ArrowDownIcon from 'icons/solar/Alt Arrow Down.svg?react'
 import ArrowRightIcon from 'icons/solar/Alt Arrow Right.svg?react'
 import { useSettingsStore } from '~/routes/settings/settings-store'
+import useNodeContextStore from '~/stores/node-context-store'
 
 interface Item {
   name: string
@@ -18,6 +19,7 @@ interface Properties {
 export default function SortedElements({ type, items, onDragStart, searchTerm }: Readonly<Properties>) {
   const [isExpanded, setIsExpanded] = useState(false)
   const gradientEnabled = useSettingsStore((state) => state.studio.gradient)
+  const { setDraggedName } = useNodeContextStore((state) => state)
 
   const toggleExpansion = () => {
     setIsExpanded(!isExpanded)
@@ -53,6 +55,7 @@ export default function SortedElements({ type, items, onDragStart, searchTerm }:
               key={value.name}
               draggable
               onDragStart={onDragStart(value)}
+              onDragEnd={() => setDraggedName(null)}
               style={{
                 background: gradientEnabled
                   ? `radial-gradient(

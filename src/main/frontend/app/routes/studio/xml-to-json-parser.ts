@@ -1,7 +1,7 @@
 import type { FlowNode } from '~/routes/studio/canvas/flow'
 import { getElementTypeFromName } from '~/routes/studio/node-translator-module'
 import type { ExitNode } from '~/routes/studio/canvas/nodetypes/exit-node'
-import type { FrankNode } from '~/routes/studio/canvas/nodetypes/frank-node'
+import type { frankNode } from '~/routes/studio/canvas/nodetypes/frank-node'
 import { SAXParser } from 'sax-ts'
 
 interface IdCounter {
@@ -242,7 +242,7 @@ function convertAdapterToFlowNodes(adapter: any): FlowNode[] {
             },
           ]
 
-    const frankNode: FrankNode = convertElementToNode(element, idCounter, sourceHandles)
+    const frankNode: frankNode = convertElementToNode(element, idCounter, sourceHandles)
     nodes.push(frankNode)
   }
 
@@ -256,7 +256,7 @@ function convertAdapterToFlowNodes(adapter: any): FlowNode[] {
   return nodes
 }
 
-function convertElementToNode(element: Element, idCounter: IdCounter, sourceHandles: any): FrankNode {
+function convertElementToNode(element: Element, idCounter: IdCounter, sourceHandles: any): frankNode {
   const thisId = (idCounter.current++).toString()
   // Extract attributes for this element except "name"
   const attributes: Record<string, string> = {}
@@ -266,7 +266,7 @@ function convertElementToNode(element: Element, idCounter: IdCounter, sourceHand
     }
   }
 
-  const frankNode: FrankNode = {
+  const frankNode: frankNode = {
     id: thisId,
     type: 'frankNode',
     position: { x: 0, y: 0 },

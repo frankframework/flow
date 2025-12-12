@@ -9,7 +9,7 @@ import { useFFDoc } from '@frankframework/ff-doc/react'
 import { useProjectStore } from '~/stores/project-store'
 
 export default function StudioContext() {
-  const { setAttributes, setNodeId } = useNodeContextStore((state) => state)
+  const { setAttributes, setNodeId, setDraggedName } = useNodeContextStore((state) => state)
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({})
   const [searchTerm, setSearchTerm] = useState('')
   const project = useProjectStore((state) => state.project)
@@ -35,14 +35,15 @@ export default function StudioContext() {
     }
   })
 
-  const onDragStart = (value: { attributes: any[] }) => {
+  const onDragStart = (value: { attributes: any[]; name: string }) => {
     return (event: {
       dataTransfer: { setData: (argument0: string, argument1: string) => void; effectAllowed: string }
     }) => {
       setAttributes(value.attributes)
       setNodeId(+useFlowStore.getState().nodeIdCounter)
+      setDraggedName(value.name)
       event.dataTransfer.setData('application/reactflow', JSON.stringify(value))
-      event.dataTransfer.effectAllowed = 'move'
+      event.dataTransfer.effectAllowed = 'copyMove'
     }
   }
 
