@@ -40,11 +40,12 @@ export default function FrankNode(properties: NodeProps<frankNode>) {
   const handleSpacing = 20
   const containerReference = useRef<HTMLDivElement>(null)
   const [dragOver, setDragOver] = useState(false)
+  const [canDropDraggedElement, setCanDropDraggedElement] = useState(false)
   const showNodeContextMenu = useNodeContextMenu()
   const FRANK_DOC_URL = variables.frankDocJsonUrl
   const { elements, filters } = useFFDoc(FRANK_DOC_URL)
   const [dragForbidden, setDragForbidden] = useState(false)
-  const { setNodeId, setAttributes, setParentId, setIsEditing } = useNodeContextStore()
+  const { setNodeId, setAttributes, setParentId, setIsEditing, setDraggedName, draggedName } = useNodeContextStore()
   const gradientEnabled = useSettingsStore((state) => state.studio.gradient)
   // Store the associated Frank element
   const frankElement = useMemo(() => {
@@ -147,9 +148,16 @@ export default function FrankNode(properties: NodeProps<frankNode>) {
     }, 0)
   }
 
+  const canAcceptChild = useCallback(
+    (droppedName: string) => {
+      return canAcceptChildStatic(frankElement, droppedName, filters)
+    },
+    [frankElement, filters],
+  )
+
   const handleDragOver = (event: React.DragEvent) => {
     event.preventDefault()
-    event.dataTransfer.dropEffect = 'none'
+    event.stopPropagation()
 
     const isInsideChild = (event.target as HTMLElement).closest('.child-drop-zone')
 
@@ -161,6 +169,8 @@ export default function FrankNode(properties: NodeProps<frankNode>) {
 
     const dropped = JSON.parse(raw)
     const allowed = canAcceptChild(dropped.name)
+
+    event.dataTransfer.dropEffect = allowed ? 'copy' : 'none'
 
     if (!allowed || isInsideChild) {
       setDragOver(false)
@@ -178,7 +188,9 @@ export default function FrankNode(properties: NodeProps<frankNode>) {
 
   const handleDropOnNode = useCallback(
     (event: React.DragEvent) => {
+      setDragForbidden(false)
       setDragOver(false)
+      setDraggedName(null)
       event.preventDefault()
       event.stopPropagation()
 
@@ -208,15 +220,32 @@ export default function FrankNode(properties: NodeProps<frankNode>) {
 
       addChild(properties.id, child)
     },
-    [properties.id, addChild, frankElement],
+    [
+      setDraggedName,
+      canAcceptChild,
+      showNodeContextMenu,
+      setIsEditing,
+      setParentId,
+      properties.id,
+      properties.data.subtype,
+      addChild,
+    ],
   )
 
-  const canAcceptChild = useCallback(
-    (droppedName: string) => {
-      return canAcceptChildStatic(frankElement, droppedName, filters)
-    },
-    [frankElement, filters],
-  )
+  useEffect(() => {
+    if (!draggedName || !frankElement) {
+      setCanDropDraggedElement(false)
+      return
+    }
+
+    const allowed = canAcceptChild(draggedName)
+
+    if (allowed) {
+      setCanDropDraggedElement(true)
+    } else {
+      setCanDropDraggedElement(false)
+    }
+  }, [draggedName, canAcceptChild, frankElement])
 
   return (
     <>
@@ -236,7 +265,7 @@ export default function FrankNode(properties: NodeProps<frankNode>) {
         <ResizeIcon />
       </NodeResizeControl>
       <div
-        className={`bg-background flex h-full w-full flex-col items-center overflow-x-visible overflow-y-hidden rounded-md border ${dragForbidden ? 'border-red-500' : 'border-border'}`}
+        className={`bg-background flex h-full w-full flex-col items-center overflow-x-visible overflow-y-hidden rounded-md border ${properties.selected ? 'border-blue-500' : 'border-border'}`}
         style={{
           minHeight: `${minNodeHeight}px`,
           minWidth: `${minNodeWidth}px`,
@@ -273,7 +302,7 @@ export default function FrankNode(properties: NodeProps<frankNode>) {
               <p className="overflow-hidden text-sm overflow-ellipsis whitespace-nowrap">{value}</p>
             </div>
           ))}
-        {(properties.data.children.length > 0 || dragOver) && (
+        {(properties.data.children.length > 0 || dragOver || canDropDraggedElement) && (
           <div className="w-full p-4">
             <div className="border-border bg-background w-full rounded-md p-4 shadow-[inset_0px_2px_4px_rgba(0,0,0,0.1)]">
               {properties.data.children.map((child) => (
@@ -288,9 +317,10 @@ export default function FrankNode(properties: NodeProps<frankNode>) {
                 </div>
               ))}
 
+              {/* Drop zone */}
               {dragOver && (
                 <div
-                  className="border-foreground-muted bg-foreground-muted/50 flex items-center justify-center border-2 border-dashed text-center text-xs italic"
+                  className="border-foreground-muted bg-foreground-muted/20 flex items-center justify-center border-2 border-dashed text-center text-xs italic"
                   style={{
                     height: '100px',
                     width: '100%',
@@ -299,6 +329,20 @@ export default function FrankNode(properties: NodeProps<frankNode>) {
                   }}
                 >
                   Drop to add child
+                </div>
+              )}
+              {canDropDraggedElement && !dragOver && (
+                <div className="mt-2 pl-4">
+                  <div
+                    className="border-foreground-muted bg-foreground-muted/20 flex items-center justify-center border-2 border-dashed text-center text-xs italic"
+                    style={{
+                      height: '20px', // half height
+                      width: '100%', // full width
+                      borderRadius: '6px',
+                    }}
+                  >
+                    Can drop here
+                  </div>
                 </div>
               )}
             </div>

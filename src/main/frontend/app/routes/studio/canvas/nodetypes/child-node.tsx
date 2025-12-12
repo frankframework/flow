@@ -1,8 +1,11 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import useFlowStore from '~/stores/flow-store'
 import { getElementTypeFromName } from '../../node-translator-module'
 import useNodeContextStore from '~/stores/node-context-store'
 import { useNodeContextMenu } from '../flow'
+import { canAcceptChildStatic } from './node-utilities'
+import variables from 'environment/environment'
+import { useFFDoc } from '@frankframework/ff-doc/react'
 
 export interface ChildNode {
   id: string
@@ -23,48 +26,85 @@ interface ChildNodeProperties {
 }
 
 export function ChildNode({ child, gradientEnabled, onEdit, parentId, rootId }: Readonly<ChildNodeProperties>) {
-  const { setParentId, setChildParentId, setIsEditing } = useNodeContextStore()
+  const { setParentId, setChildParentId, setIsEditing, setDraggedName, draggedName } = useNodeContextStore()
   const showNodeContextMenu = useNodeContextMenu()
   const addChildToChild = useFlowStore((state) => state.addChildToChild)
   const [dragOver, setDragOver] = useState(false)
+  const [canDropDraggedElement, setCanDropDraggedElement] = useState(false)
+  const [dragForbidden, setDragForbidden] = useState(false)
+  const FRANK_DOC_URL = variables.frankDocJsonUrl
+  const { elements, filters } = useFFDoc(FRANK_DOC_URL)
+  // Store the associated Frank element
+  const frankElement = useMemo(() => {
+    if (!elements) return null
+    const recordElements = elements as Record<string, { name: string; [key: string]: any }>
+
+    return Object.values(recordElements).find((element) => element.name === child.subtype) ?? null
+  }, [elements, child.subtype])
 
   const handleDragOver = (event: React.DragEvent) => {
     event.preventDefault()
     event.stopPropagation()
 
-    const target = event.target as HTMLElement
-
-    // Find the nearest body element
-    const closestBody = target.closest('.child-node-body')
-
-    // If the closest body is not THIS body, user is dragging over a nested child
-    if (closestBody !== event.currentTarget) {
+    const raw = event.dataTransfer.getData('application/reactflow')
+    if (!raw) {
       setDragOver(false)
       return
     }
 
-    setDragOver(true)
+    const dropped = JSON.parse(raw)
+    const allowed = canAcceptChild(dropped.name)
+
+    // If we are dragging over a nested ChildNode, do NOT show the drop zone
+    const nestedNode = (event.target as HTMLElement).closest('[data-childnode-id]')
+    const isThisNode = nestedNode?.getAttribute('data-childnode-id') === child.id
+
+    event.dataTransfer.dropEffect = allowed ? 'copy' : 'none'
+
+    if (!allowed && isThisNode) {
+      setDragForbidden(true)
+      setDragOver(false)
+    } else if (allowed && isThisNode) {
+      setDragForbidden(false)
+      setDragOver(true)
+    }
   }
 
   const handleDragLeave = () => {
     setDragOver(false)
+    setDragForbidden(false)
   }
+
+  const canAcceptChild = useCallback(
+    (droppedName: string) => {
+      return canAcceptChildStatic(frankElement, droppedName, filters)
+    },
+    [frankElement, filters],
+  )
 
   const handleDrop = useCallback(
     (event: React.DragEvent) => {
       event.preventDefault()
       event.stopPropagation()
       setDragOver(false)
-      showNodeContextMenu(true)
-      setIsEditing(true)
-      setParentId(rootId)
-      setChildParentId(parentId)
+      setDragForbidden(false)
+      setDraggedName(null)
 
       const raw = event.dataTransfer.getData('application/reactflow')
       if (!raw) return
 
       const dropped = JSON.parse(raw)
       const newId = useFlowStore.getState().getNextNodeId()
+
+      if (!canAcceptChild(dropped.name)) {
+        console.warn(`Rejected drop: ${dropped.name} is not allowed as child of ${child.subtype}`)
+        return
+      }
+
+      showNodeContextMenu(true)
+      setIsEditing(true)
+      setParentId(rootId)
+      setChildParentId(parentId)
 
       const newChild: ChildNode = {
         id: newId,
@@ -78,12 +118,43 @@ export function ChildNode({ child, gradientEnabled, onEdit, parentId, rootId }: 
       // Add child recursively
       addChildToChild(rootId, child.id, newChild)
     },
-    [child.id, parentId, addChildToChild],
+    [
+      setDraggedName,
+      canAcceptChild,
+      showNodeContextMenu,
+      setIsEditing,
+      setParentId,
+      rootId,
+      setChildParentId,
+      parentId,
+      addChildToChild,
+      child.id,
+      child.subtype,
+    ],
   )
+
+  useEffect(() => {
+    if (!draggedName) {
+      setCanDropDraggedElement(false)
+      return
+    }
+
+    const allowed = canAcceptChild(draggedName)
+
+    if (allowed) {
+      setCanDropDraggedElement(true)
+      return
+    }
+    setCanDropDraggedElement(false)
+  }, [draggedName, canAcceptChild, frankElement, child.subtype])
 
   return (
     <div
-      className="bg-background border-border relative mr-0.5 mb-2 rounded-md border"
+      data-childnode-id={child.id}
+      className={`bg-background relative mr-0.5 mb-2 rounded-md border ${dragForbidden ? 'border-2 border-dashed' : 'border-border'}`}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
       onDoubleClick={(event) => {
         event.stopPropagation()
         onEdit(child.id)
@@ -107,12 +178,7 @@ export function ChildNode({ child, gradientEnabled, onEdit, parentId, rootId }: 
       </div>
 
       {/* Body */}
-      <div
-        className="child-node-body relative min-h-[100px] px-1 py-1"
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-      >
+      <div className="child-node-body relative min-h-[100px] px-1 py-1">
         {child.attributes &&
           Object.entries(child.attributes).map(([key, value]) => (
             <div key={key} className="my-1">
@@ -141,7 +207,7 @@ export function ChildNode({ child, gradientEnabled, onEdit, parentId, rootId }: 
         {dragOver && (
           <div className="mt-2 pl-4">
             <div
-              className="border-foreground-muted bg-foreground-muted/50 flex items-center justify-center border-2 border-dashed text-center text-xs italic"
+              className="border-foreground-muted bg-foreground-muted/20 flex items-center justify-center border-2 border-dashed text-center text-xs italic"
               style={{
                 height: '100px',
                 width: '100%',
@@ -149,6 +215,20 @@ export function ChildNode({ child, gradientEnabled, onEdit, parentId, rootId }: 
               }}
             >
               Drop to add child
+            </div>
+          </div>
+        )}
+        {canDropDraggedElement && !dragOver && (
+          <div className="mt-2 pl-4">
+            <div
+              className="border-foreground-muted bg-foreground-muted/20 flex items-center justify-center border-2 border-dashed text-center text-xs italic"
+              style={{
+                height: '20px', // half height
+                width: '100%', // full width
+                borderRadius: '6px',
+              }}
+            >
+              Can drop here
             </div>
           </div>
         )}
