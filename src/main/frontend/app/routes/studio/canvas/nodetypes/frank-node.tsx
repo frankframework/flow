@@ -23,7 +23,7 @@ import { ChildNode } from './child-node'
 import { findChildRecursive } from '~/stores/child-utilities'
 import { canAcceptChildStatic } from './node-utilities'
 
-export type frankNode = Node<{
+export type FrankNodeType = Node<{
   subtype: string
   type: string
   name: string
@@ -32,7 +32,7 @@ export type frankNode = Node<{
   children: ChildNode[]
 }>
 
-export default function FrankNode(properties: NodeProps<frankNode>) {
+export default function FrankNode(properties: NodeProps<FrankNodeType>) {
   const minNodeWidth = FlowConfig.NODE_DEFAULT_WIDTH
   const minNodeHeight = FlowConfig.NODE_DEFAULT_HEIGHT
   const type = properties.data.type.toLowerCase()

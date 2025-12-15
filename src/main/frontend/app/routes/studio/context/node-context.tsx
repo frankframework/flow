@@ -267,7 +267,7 @@ export default function NodeContext({
                 onKeyDown={handleKeyDown}
                 label={key}
                 attribute={attribute}
-                enumOptions={attribute.enum ? ffDoc.enums[attribute.enum] : undefined}
+                enumOptions={ffDoc?.enums?.[attribute.enum] ?? undefined}
                 elements={elements ?? undefined}
               />
             </div>

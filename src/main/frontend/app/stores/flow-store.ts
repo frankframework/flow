@@ -13,7 +13,7 @@ import {
 import { initialNodes } from '~/routes/studio/canvas/nodes'
 import { initialEdges } from '~/routes/studio/canvas/edges'
 import type { FlowNode } from '~/routes/studio/canvas/flow'
-import type { frankNode } from '~/routes/studio/canvas/nodetypes/frank-node'
+import type { FrankNodeType } from '~/routes/studio/canvas/nodetypes/frank-node'
 import type { ExitNode } from '~/routes/studio/canvas/nodetypes/exit-node'
 import type { StickyNote } from '~/routes/studio/canvas/nodetypes/sticky-note'
 import type { ActionType } from '~/routes/studio/canvas/nodetypes/components/action-types'
@@ -49,7 +49,7 @@ export interface FlowState {
   addChildToChild: (nodeId: string, targetChildId: string, newChild: ChildNode) => void
 }
 
-export function isFrankNode(node: FlowNode): node is frankNode {
+export function isFrankNode(node: FlowNode): node is FrankNodeType {
   return node.type === 'frankNode'
 }
 
@@ -291,7 +291,7 @@ const useFlowStore = create<FlowState>((set, get) => ({
           ...node,
           data: {
             ...node.data,
-            children: addChildRecursive(node.data.children || [], targetChildId, newChild),
+            children: addChildRecursive(node.data.children ?? [], targetChildId, newChild),
           },
         }
       }),
