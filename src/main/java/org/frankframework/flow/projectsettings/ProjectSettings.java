@@ -8,7 +8,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class ProjectSettings {
-    private final Map<FilterType, Boolean> filters = new EnumMap<>(FilterType.class);
+    private Map<FilterType, Boolean> filters = new EnumMap<>(FilterType.class);
 
     public ProjectSettings() {
         for (FilterType type : FilterType.values()) {

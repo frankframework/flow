@@ -44,9 +44,9 @@ export async function getAdapterNamesFromConfiguration(projectName: string, file
       }
     }
 
-    parser.addEventListener('error', (error: Error) => {
+    parser.onerror = (error: Error) => {
       reject(new Error(`SAX parsing error: ${error.message}`))
-    })
+    }
 
     parser.onend = () => {
       resolve(adapterNames)
