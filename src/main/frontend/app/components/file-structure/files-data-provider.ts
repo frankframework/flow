@@ -48,7 +48,6 @@ export default class FilesDataProvider implements TreeDataProvider {
 
   private buildTree(configs: ConfigWithAdapters[]) {
     const newData: Record<TreeItemIndex, TreeItem> = {
-      // Root
       root: {
         index: 'root',
         data: 'Configurations',
@@ -57,7 +56,6 @@ export default class FilesDataProvider implements TreeDataProvider {
       },
     }
 
-    // Config folders and adapters
     for (const { configName, adapters } of configs) {
       const folderName = configName.replace(/\.xml$/i, '')
       newData[configName] = {

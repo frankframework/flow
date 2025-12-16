@@ -34,12 +34,10 @@ export default function Tabs(props?: TabsProps) {
     })),
   )
 
-  // Use props if provided, otherwise fall back to store
   const tabs = props?.tabs ?? storeData.tabs
   const activeTab = props?.selectedTab ?? storeData.activeTab
   const setActiveTab = props?.onSelectTab ?? storeData.setActiveTab
 
-  // Handle close with proper signature
   const handleClose = (key: string) => {
     if (props?.onCloseTab) {
       props.onCloseTab(key)

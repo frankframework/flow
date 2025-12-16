@@ -58,10 +58,8 @@ export default function NodeContext({
           const raw = validations[index]
           const value = raw?.toString().trim() ?? ''
 
-          // allow empty string
           if (value === '') return true
 
-          // allow digits only
           if (!/^\d+$/.test(value)) {
             setErrorMessage('Please enter valid integer values into numeric fields only')
             return false
@@ -141,7 +139,6 @@ export default function NodeContext({
     [parentId, childParentId, getAttributes, getNodeName],
   )
 
-  // Fills out input fields with already existing attributes when editing a node
   useEffect(() => {
     if (!attributes || Number.isNaN(nodeId)) return
 
@@ -176,17 +173,14 @@ export default function NodeContext({
     if (!attributes) return []
 
     const entries = Object.entries(attributes) // stable ordering [ [key, attr], ... ]
-    const filledAttributes = entries
+    return entries
       .map(([key], index) => {
-        // read from value cache first (works whether mounted or not)
         const raw = inputValues[index] ?? inputValues[index]
         const value = raw?.toString().trim()
         if (value) return { name: key, value }
         return null
       })
       .filter(Boolean) as { name: string; value: string }[]
-
-    return filledAttributes
   }
 
   const handleKeyDown = (event: React.KeyboardEvent) => {
