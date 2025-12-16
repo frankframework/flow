@@ -13,6 +13,7 @@ import { getXmlString } from '~/routes/studio/xml-to-json-parser'
 import variables from '../../../environment/environment'
 import { useFFDoc } from '@frankframework/ff-doc/react'
 import { useProjectStore } from '~/stores/project-store'
+import EditorFileStructure from '~/components/file-structure/editor-file-structure'
 
 export default function CodeEditor() {
   const theme = useTheme()
@@ -270,7 +271,7 @@ export default function CodeEditor() {
     <SidebarLayout name="editor" windowResizeOnChange={true}>
       <>
         <SidebarHeader side={SidebarSide.LEFT} title="Files" />
-        <FileStructure />
+        <EditorFileStructure />
       </>
       <>
         <div className="flex">
