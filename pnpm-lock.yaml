@@ -157,7 +157,7 @@ importers:
         specifier: ^8.26.1
         version: 8.49.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)
       vite:
-        specifier: ^6.3.5
+        specifier: ^6.4.1
         version: 6.4.1(@types/node@20.19.26)(jiti@2.6.1)(lightningcss@1.30.2)
       vite-plugin-svgr:
         specifier: ^4.3.0
