@@ -6,6 +6,7 @@ import { useShallow } from 'zustand/react/shallow'
 import { useFFDoc } from '@frankframework/ff-doc/react'
 import variables from '../../../../environment/environment'
 import ContextInput from './context-input'
+import { findChildRecursive } from '~/stores/child-utilities'
 
 export default function NodeContext({
   nodeId,
@@ -23,12 +24,13 @@ export default function NodeContext({
 
   const FRANK_DOC_URL = variables.frankDocJsonUrl
   const { elements, ffDoc } = useFFDoc(FRANK_DOC_URL)
-  const { attributes, setIsEditing, parentId, setParentId } = useNodeContextStore(
+  const { attributes, setIsEditing, parentId, setParentId, childParentId } = useNodeContextStore(
     useShallow((s) => ({
       attributes: s.attributes,
       setIsEditing: s.setIsEditing,
       parentId: s.parentId,
       setParentId: s.setParentId,
+      childParentId: s.childParentId,
     })),
   )
 
@@ -89,28 +91,46 @@ export default function NodeContext({
 
     let currentAttributes: Record<string, string> | undefined
 
-    if (parentId) {
-      // Editing a child node → look inside its parent
-      const parent = nodes.find((n) => n.id === parentId.toString())
-      if (isFrankNode(parent!)) {
-        const child = parent.data.children.find((c) => c.id === nodeId.toString())
-        if (child) {
-          currentAttributes = {
-            ...(child.name ? { name: child.name } : {}),
-            ...child.attributes,
-          }
+    // CASE 1: Editing a child node (childParentId is set)
+    if (childParentId && parentId) {
+      const parentNode = nodes.find((n) => n.id === parentId.toString())
+      if (!parentNode || !isFrankNode(parentNode)) return
+
+      // recursively search the child tree to find this child
+      const child = findChildRecursive(parentNode.data.children, nodeId.toString())
+      if (child) {
+        currentAttributes = {
+          ...(child.name ? { name: child.name } : {}),
+          ...child.attributes,
         }
       }
-    } else {
+    }
+
+    // CASE 2: Editing a FIRST-LEVEL child node
+    else if (parentId) {
+      const parentNode = nodes.find((n) => n.id === parentId.toString())
+      if (!parentNode || !isFrankNode(parentNode)) return
+
+      const child = parentNode.data.children.find((c) => c.id === nodeId.toString())
+      if (child) {
+        currentAttributes = {
+          ...(child.name ? { name: child.name } : {}),
+          ...child.attributes,
+        }
+      }
+    }
+
+    // CASE 3: Editing a REAL ReactFlow node (top-level node)
+    else {
       const attributes = getAttributes(nodeId.toString())
       const name = getNodeName(nodeId.toString())
-
       currentAttributes = {
         ...(name ? { name } : {}),
         ...attributes,
       }
     }
 
+    // apply resolved attributes
     if (currentAttributes) {
       const entries = Object.entries(attributes)
       const newValues: Record<number, string> = {}
@@ -119,7 +139,7 @@ export default function NodeContext({
       }
       setInputValues(newValues)
     }
-  }, [attributes, nodeId, parentId])
+  }, [attributes, nodeId, parentId, childParentId])
 
   useEffect(() => {
     if (!attributes) {
@@ -165,27 +185,39 @@ export default function NodeContext({
     const filteredAttributes = filledAttributes.filter((attribute) => attribute.name !== 'name')
     const newAttributesObject = Object.fromEntries(filteredAttributes.map(({ name, value }) => [name, value]))
 
+    // If we're editing a child (the common case)
     if (parentId) {
-      const parentNode = nodes.find((n) => n.id === parentId)
-      if (!isFrankNode(parentNode!)) return
-      const existingChild = parentNode?.data?.children?.find((c) => c.id === nodeId.toString())
+      const parentNode = nodes.find((n) => n.id === parentId.toString())
+      if (!parentNode || !isFrankNode(parentNode)) return
 
-      const childNode = {
-        id: nodeId.toString(),
-        type: existingChild?.type ?? 'defaultType',
-        subtype: existingChild?.subtype ?? 'defaultSubtype',
+      // 🔍 Find the child recursively
+      const existingChild = findChildRecursive(parentNode.data.children, nodeId.toString())
+
+      if (!existingChild) {
+        console.error('ERROR: Could not find child to update:', nodeId)
+        return
+      }
+
+      // ✅ Build updated child (preserves type, subtype, children, etc.)
+      const updatedChild = {
+        ...existingChild,
         ...(nameField && { name: nameField.value }),
         attributes: newAttributesObject,
       }
 
-      updateChild(parentId.toString(), childNode)
+      // Update child recursively in store
+      updateChild(parentNode.id, updatedChild)
+
+      // Close context
       setIsEditing(false)
       setShowNodeContext(false)
       setParentId(null)
       return
     }
 
+    // Else: updating a top-level Frank node
     setAttributes(nodeId.toString(), newAttributesObject)
+
     if (nameField) {
       setNodeName(nodeId.toString(), nameField.value)
     }
@@ -235,7 +267,7 @@ export default function NodeContext({
                 onKeyDown={handleKeyDown}
                 label={key}
                 attribute={attribute}
-                enumOptions={attribute.enum ? ffDoc.enums[attribute.enum] : undefined}
+                enumOptions={ffDoc?.enums?.[attribute.enum] ?? undefined}
                 elements={elements ?? undefined}
               />
             </div>
