@@ -79,7 +79,7 @@ export default function ProjectLanding() {
     }
 
     // Import configurations to the project
-    await fetch(`${API_BASE_URL}projects/${projectRoot}/import-configurations`, {
+    await fetch(`/api/projects/${projectRoot}/import-configurations`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
