@@ -1,5 +1,5 @@
 import useNodeContextStore from '~/stores/node-context-store'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import useFlowStore, { isFrankNode } from '~/stores/flow-store'
 import Button from '~/components/inputs/button'
 import { useShallow } from 'zustand/react/shallow'
@@ -34,112 +34,129 @@ export default function NodeContext({
     })),
   )
 
-  const validateForm = (validations = inputValues) => {
-    if (!attributes) {
-      setCanSave(true)
-      return
-    }
+  const validateMandatoryFields = useCallback(
+    (validations: Record<number, string>) => {
+      if (!attributes) return true
 
-    const mandatoryValid = validateMandatoryFields(validations)
-    const numberValid = validateNumberFields(validations)
-    if (!numberValid || !mandatoryValid) {
-      setCanSave(false)
-      return
-    }
-
-    setCanSave(true)
-  }
-
-  const validateMandatoryFields = (validations = inputValues) => {
-    if (!attributes) return true
-
-    return Object.entries(attributes).every(([_, attribute], index) => {
-      if (attribute.mandatory) {
-        const raw = validations[index]
-        return raw && raw.toString().trim() !== ''
-      }
-      return true
-    })
-  }
-
-  const validateNumberFields = (validations = inputValues) => {
-    if (!attributes) return true
-
-    return Object.entries(attributes).every(([_, attribute], index) => {
-      if (attribute.type === 'int') {
-        const raw = validations[index]
-        const value = raw?.toString().trim() ?? ''
-
-        // allow empty string
-        if (value === '') return true
-
-        // allow digits only
-        if (!/^\d+$/.test(value)) {
-          setErrorMessage('Please enter valid integer values into numeric fields only')
-          return false
+      return Object.entries(attributes).every(([_, attribute], index) => {
+        if (attribute.mandatory) {
+          const raw = validations[index]
+          return raw && raw.toString().trim() !== ''
         }
-        return /^\d+$/.test(value)
+        return true
+      })
+    },
+    [attributes],
+  )
+
+  const validateNumberFields = useCallback(
+    (validations: Record<number, string>) => {
+      if (!attributes) return true
+
+      return Object.entries(attributes).every(([_, attribute], index) => {
+        if (attribute.type === 'int') {
+          const raw = validations[index]
+          const value = raw?.toString().trim() ?? ''
+
+          // allow empty string
+          if (value === '') return true
+
+          // allow digits only
+          if (!/^\d+$/.test(value)) {
+            setErrorMessage('Please enter valid integer values into numeric fields only')
+            return false
+          }
+          return /^\d+$/.test(value)
+        }
+
+        return true
+      })
+    },
+    [attributes],
+  )
+
+  const validateForm = useCallback(
+    (validations = inputValues) => {
+      if (!attributes) {
+        setCanSave(true)
+        return
       }
 
-      return true
-    })
-  }
+      const mandatoryValid = validateMandatoryFields(validations)
+      const numberValid = validateNumberFields(validations)
+      if (!numberValid || !mandatoryValid) {
+        setCanSave(false)
+        return
+      }
+
+      setCanSave(true)
+    },
+    [attributes, inputValues, validateMandatoryFields, validateNumberFields],
+  )
+
+  const getNestedChildAttributes = useCallback(
+    (nodeId: number) => {
+      if (!childParentId || !parentId) return
+      const parentNode = nodes.find((n) => n.id === parentId.toString())
+      if (!parentNode || !isFrankNode(parentNode)) return
+
+      const child = findChildRecursive(parentNode.data.children, nodeId.toString())
+      if (!child) return
+
+      return {
+        ...(child.name ? { name: child.name } : {}),
+        ...child.attributes,
+      }
+    },
+    [childParentId, parentId, nodes],
+  )
+
+  const getFirstLevelChildAttributes = useCallback(
+    (nodeId: number) => {
+      if (!parentId || childParentId) return
+      const parentNode = nodes.find((n) => n.id === parentId.toString())
+      if (!parentNode || !isFrankNode(parentNode)) return
+
+      const child = parentNode.data.children.find((c) => c.id === nodeId.toString())
+      if (!child) return
+
+      return {
+        ...(child.name ? { name: child.name } : {}),
+        ...child.attributes,
+      }
+    },
+    [parentId, childParentId, nodes],
+  )
+
+  const getTopLevelNodeAttributes = useCallback(
+    (nodeId: number) => {
+      if (parentId || childParentId) return
+      const attributes = getAttributes(nodeId.toString())
+      const name = getNodeName(nodeId.toString())
+      return {
+        ...(name ? { name } : {}),
+        ...attributes,
+      }
+    },
+    [parentId, childParentId, getAttributes, getNodeName],
+  )
 
   // Fills out input fields with already existing attributes when editing a node
   useEffect(() => {
     if (!attributes || Number.isNaN(nodeId)) return
 
-    let currentAttributes: Record<string, string> | undefined
+    const currentAttributes =
+      getNestedChildAttributes(nodeId) ?? getFirstLevelChildAttributes(nodeId) ?? getTopLevelNodeAttributes(nodeId)
 
-    // CASE 1: Editing a child node (childParentId is set)
-    if (childParentId && parentId) {
-      const parentNode = nodes.find((n) => n.id === parentId.toString())
-      if (!parentNode || !isFrankNode(parentNode)) return
-
-      // recursively search the child tree to find this child
-      const child = findChildRecursive(parentNode.data.children, nodeId.toString())
-      if (child) {
-        currentAttributes = {
-          ...(child.name ? { name: child.name } : {}),
-          ...child.attributes,
-        }
-      }
-    }
-
-    // CASE 2: Editing a FIRST-LEVEL child node
-    else if (parentId) {
-      const parentNode = nodes.find((n) => n.id === parentId.toString())
-      if (!parentNode || !isFrankNode(parentNode)) return
-
-      const child = parentNode.data.children.find((c) => c.id === nodeId.toString())
-      if (child) {
-        currentAttributes = {
-          ...(child.name ? { name: child.name } : {}),
-          ...child.attributes,
-        }
-      }
-    }
-
-    // CASE 3: Editing a REAL ReactFlow node (top-level node)
-    else {
-      const attributes = getAttributes(nodeId.toString())
-      const name = getNodeName(nodeId.toString())
-      currentAttributes = {
-        ...(name ? { name } : {}),
-        ...attributes,
-      }
-    }
-
-    // apply resolved attributes
     if (currentAttributes) {
       const entries = Object.entries(attributes)
       const newValues: Record<number, string> = {}
       for (const [index, [key]] of entries.entries()) {
-        newValues[index] = currentAttributes?.[key] ?? ''
+        newValues[index] = (currentAttributes as Record<string, string>)[key] ?? ''
       }
       setInputValues(newValues)
     }
-  }, [attributes, nodeId, parentId, childParentId])
+  }, [attributes, nodeId, getNestedChildAttributes, getFirstLevelChildAttributes, getTopLevelNodeAttributes])
 
   useEffect(() => {
     if (!attributes) {
@@ -147,12 +164,12 @@ export default function NodeContext({
       return
     }
     validateForm()
-  }, [attributes])
+  }, [attributes, validateForm])
 
   // Checks form validity on input value changes (And also on first render)
   useEffect(() => {
     validateForm()
-  }, [inputValues])
+  }, [inputValues, validateForm])
 
   // Checks input fields for values and returns only those values and their labels
   function resolveFilledAttributes() {
@@ -240,8 +257,15 @@ export default function NodeContext({
   }
 
   // Keep original attribute index so refs are stable
-  const entriesWithIndex: [string, any, number][] = attributes
-    ? Object.entries(attributes).map(([k, v], index) => [k, v, index])
+  interface AttributeType {
+    mandatory?: boolean
+    type?: string
+    enum?: string
+    description?: string
+  }
+
+  const entriesWithIndex: [string, AttributeType, number][] = attributes
+    ? Object.entries(attributes).map(([k, v], index) => [k, v as AttributeType, index])
     : []
 
   const displayedAttributes = entriesWithIndex.filter(([_, attribute]) => showAll || attribute.mandatory)
@@ -252,7 +276,7 @@ export default function NodeContext({
         <div className="bg-background w-full space-y-4 rounded-md p-6">
           <h1>For node with id: {nodeId}</h1>
 
-          {displayedAttributes.map(([key, attribute, originalIndex]: [string, any, number]) => (
+          {displayedAttributes.map(([key, attribute, originalIndex]: [string, AttributeType, number]) => (
             <div key={originalIndex}>
               <ContextInput
                 id={`ctx-${originalIndex}`}
@@ -267,7 +291,14 @@ export default function NodeContext({
                 onKeyDown={handleKeyDown}
                 label={key}
                 attribute={attribute}
-                enumOptions={ffDoc?.enums?.[attribute.enum] ?? undefined}
+                enumOptions={
+                  attribute.enum && ffDoc?.enums?.[attribute.enum]
+                    ? Object.keys(ffDoc.enums[attribute.enum]).reduce(
+                        (result, key) => ({ ...result, [key]: key }),
+                        {} as Record<string, string>,
+                      )
+                    : undefined
+                }
                 elements={elements ?? undefined}
               />
             </div>

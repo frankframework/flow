@@ -1,6 +1,6 @@
 import type { FlowNode } from '~/routes/studio/canvas/flow'
 import type { Edge } from '@xyflow/react'
-import { ChildNode } from './canvas/nodetypes/child-node'
+import type { ChildNode } from './canvas/nodetypes/child-node'
 
 interface ReactFlowJson {
   nodes: FlowNode[]
@@ -86,7 +86,10 @@ function buildEdgeMaps(edges: Edge[]) {
     if (!edgeMap.has(edge.source)) edgeMap.set(edge.source, [])
     edgeMap.get(edge.source)!.push({
       targetId: edge.target,
-      label: edge.data?.label || 'success',
+      label:
+        typeof edge.data === 'object' && edge.data && 'label' in edge.data && typeof edge.data.label === 'string'
+          ? edge.data.label
+          : 'success',
     })
   }
 
@@ -110,7 +113,7 @@ function topologicalSort(startNodes: string[], outgoing: Record<string, string[]
     dfs(startId)
   }
 
-  return sorted.reverse()
+  return sorted.toReversed()
 }
 
 function generateXmlElement(
@@ -120,8 +123,8 @@ function generateXmlElement(
   nodeMap: Map<string, FlowNode>,
 ): string {
   const { subtype, name } = node.data as NodeData
-  const attributes = (node.data as any).attributes || {}
-  const children = (node.data as any).children || []
+  const attributes = (node.data as NodeData).attributes || {}
+  const children = (node.data as NodeData).children || []
 
   const attributeString = ` name="${escapeXml(name)}"${Object.entries(attributes)
     .map(([key, value]) => ` ${key}="${escapeXml(value)}"`)
@@ -142,7 +145,7 @@ function generateXmlElement(
   return content ? `  <${subtype}${attributeString}>\n${content}\n  </${subtype}>` : `  <${subtype}${attributeString}/>`
 }
 
-function generateChildXml(child: ChildNode, indent: 4): string {
+function generateChildXml(child: ChildNode, indent: number): string {
   const spaces = ' '.repeat(indent)
 
   const attributes =

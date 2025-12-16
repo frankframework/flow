@@ -3,9 +3,17 @@ import { getElementTypeFromName } from '~/routes/studio/node-translator-module'
 import type { ExitNode } from '~/routes/studio/canvas/nodetypes/exit-node'
 import type { FrankNodeType } from '~/routes/studio/canvas/nodetypes/frank-node'
 import { SAXParser } from 'sax-ts'
+import type { ChildNode } from '~/routes/studio/canvas/nodetypes/child-node'
 
 interface IdCounter {
   current: number
+}
+
+import type { ActionType } from './canvas/nodetypes/components/action-types'
+
+interface SourceHandle {
+  type: ActionType
+  index: number
 }
 
 export async function getXmlString(projectName: string, filename: string): Promise<string> {
@@ -30,15 +38,15 @@ export async function getAdapterNamesFromConfiguration(projectName: string, file
     const adapterNames: string[] = []
     const parser = new SAXParser(true, {}) // strict mode
 
-    parser.onopentag = (node) => {
+    parser.onopentag = (node: { name: string; attributes: Record<string, unknown> }) => {
       if (node.name === 'Adapter' && typeof node.attributes.name === 'string') {
         adapterNames.push(node.attributes.name)
       }
     }
 
-    parser.onerror = (error) => {
+    parser.addEventListener('error', (error: Error) => {
       reject(new Error(`SAX parsing error: ${error.message}`))
-    }
+    })
 
     parser.onend = () => {
       resolve(adapterNames)
@@ -97,23 +105,23 @@ export async function convertAdapterXmlToJson(adapter: Element) {
   return adapterJson
 }
 
-function extractEdgesFromAdapter(adapter: Element, nodes: FlowNode[]): FrankEdge[] {
-  const edges: FrankEdge[] = []
-  const pipelineElement = adapter.querySelector('Pipeline')
-  if (!pipelineElement) return edges
-
-  // Map node names to their IDs
+function buildNodeNameToIdMap(nodes: FlowNode[]): Map<string, string> {
   const nameToId = new Map<string, string>()
   for (const node of nodes) {
     if ('name' in node.data && typeof node.data.name === 'string') {
       nameToId.set(node.data.name, node.id)
     }
   }
+  return nameToId
+}
 
-  // Track which nodes already have custom forwards
-  const nodesWithExplicitTargets = new Set<string>()
-  const forwardIndexBySourceId = new Map<string, number>()
-
+function processExplicitForwards(
+  pipelineElement: Element,
+  nameToId: Map<string, string>,
+  edges: FrankEdge[],
+  nodesWithExplicitTargets: Set<string>,
+  forwardIndexBySourceId: Map<string, number>,
+) {
   const pipelineChildren = [...pipelineElement.children]
   for (const element of pipelineChildren) {
     const sourceName = element.getAttribute('name')
@@ -133,7 +141,6 @@ function extractEdgesFromAdapter(adapter: Element, nodes: FlowNode[]): FrankEdge
         continue
       }
 
-      // Assign a numeric sourceHandle per forward per source node
       const currentIndex = forwardIndexBySourceId.get(sourceId) ?? 1
       forwardIndexBySourceId.set(sourceId, currentIndex + 1)
 
@@ -148,8 +155,9 @@ function extractEdgesFromAdapter(adapter: Element, nodes: FlowNode[]): FrankEdge
       nodesWithExplicitTargets.add(sourceId)
     }
   }
+}
 
-  // Fallback: connect sequential nodes unless current is an exitNode or has explicit forwards
+function addSequentialFallbackEdges(nodes: FlowNode[], edges: FrankEdge[], nodesWithExplicitTargets: Set<string>) {
   for (let index = 0; index < nodes.length - 1; index++) {
     const current = nodes[index]
     const next = nodes[index + 1]
@@ -165,88 +173,98 @@ function extractEdgesFromAdapter(adapter: Element, nodes: FlowNode[]): FrankEdge
       sourceHandle: '1',
     })
   }
+}
+
+function extractEdgesFromAdapter(adapter: Element, nodes: FlowNode[]): FrankEdge[] {
+  const edges: FrankEdge[] = []
+  const pipelineElement = adapter.querySelector('Pipeline')
+  if (!pipelineElement) return edges
+
+  const nameToId = buildNodeNameToIdMap(nodes)
+  const nodesWithExplicitTargets = new Set<string>()
+  const forwardIndexBySourceId = new Map<string, number>()
+
+  processExplicitForwards(pipelineElement, nameToId, edges, nodesWithExplicitTargets, forwardIndexBySourceId)
+  addSequentialFallbackEdges(nodes, edges, nodesWithExplicitTargets)
 
   return edges
 }
 
-function convertAdapterToFlowNodes(adapter: Element): FlowNode[] {
-  let elements: Element[] = []
-  let nodes: FlowNode[] = []
-  let exitNodes: ExitNode[] = []
-  const idCounter: IdCounter = { current: 0 }
-
+function collectPipelineElements(adapter: Element): Element[] {
+  const elements: Element[] = []
   const receiverElements = adapter.querySelectorAll('Adapter > Receiver')
   for (const receiver of receiverElements) elements.push(receiver)
 
   const pipelineElement = adapter.querySelector('Pipeline')
-  let firstPipeName = null
-  if (pipelineElement) {
-    firstPipeName = pipelineElement.getAttribute('firstPipe')
-  }
-  if (pipelineElement) {
-    let pipeArray = [...pipelineElement.children]
+  if (!pipelineElement) return elements
 
-    if (firstPipeName) {
-      const firstPipeIndex = pipeArray.findIndex((pipe) => pipe.getAttribute('name') === firstPipeName)
+  const firstPipeName = pipelineElement.getAttribute('firstPipe')
+  let pipeArray = [...pipelineElement.children]
 
-      if (firstPipeIndex !== -1) {
-        const [firstPipe] = pipeArray.splice(firstPipeIndex, 1)
-        pipeArray.unshift(firstPipe)
-      }
+  if (firstPipeName) {
+    const firstPipeIndex = pipeArray.findIndex((pipe) => pipe.getAttribute('name') === firstPipeName)
+    if (firstPipeIndex !== -1) {
+      const [firstPipe] = pipeArray.splice(firstPipeIndex, 1)
+      pipeArray.unshift(firstPipe)
     }
-
-    elements.push(...pipeArray)
   }
+
+  elements.push(...pipeArray)
+  return elements
+}
+
+function extractSourceHandles(element: Element): SourceHandle[] {
+  const forwardElements = [...element.querySelectorAll('Forward')]
+  if (forwardElements.length === 0) {
+    return [{ type: 'success' as ActionType, index: 1 }]
+  }
+
+  return forwardElements.map((forward, index) => {
+    const path = forward.getAttribute('path') || ''
+    const loweredPath = path.toLowerCase()
+    const type: ActionType =
+      loweredPath.includes('error') || loweredPath.includes('bad') || loweredPath.includes('fail')
+        ? 'failure'
+        : 'success'
+
+    return { type, index: index + 1 }
+  })
+}
+
+function processExitElements(element: Element, exitNodes: ExitNode[]) {
+  const exits = [...element.children]
+  for (const exit of exits) {
+    const exitNode: ExitNode = {
+      id: '',
+      type: 'exitNode',
+      position: { x: 0, y: 0 },
+      data: {
+        name: exit.getAttribute('name') || '',
+        type: 'Exit',
+        subtype: 'Exit',
+      },
+    }
+    exitNodes.push(exitNode)
+  }
+}
+
+function convertAdapterToFlowNodes(adapter: Element): FlowNode[] {
+  const nodes: FlowNode[] = []
+  const exitNodes: ExitNode[] = []
+  const idCounter: IdCounter = { current: 0 }
+  const elements = collectPipelineElements(adapter)
 
   for (const element of elements) {
     if (element.tagName === 'Exits') {
-      const exits = [...element.children]
-      for (const exit of exits) {
-        const exitNode: ExitNode = {
-          id: '', // IDs get assigned after collecting all nodes
-          type: 'exitNode',
-          position: { x: 0, y: 0 },
-          data: {
-            name: exit.getAttribute('name') || '',
-            type: 'Exit',
-            subtype: 'Exit',
-          },
-        }
-        exitNodes.push(exitNode)
-      }
+      processExitElements(element, exitNodes)
       continue
     }
 
-    // Extract source handles from <Forward> children
-    const forwardElements = [...element.querySelectorAll('Forward')]
-    const sourceHandles =
-      forwardElements.length > 0
-        ? forwardElements.map((forward, index) => {
-            const path = forward.getAttribute('path') || ''
-            const loweredPath = path.toLowerCase()
-            // Only check for bad flows/forwards right now, could later be updated to also include exceptions and custom handles
-            const type =
-              loweredPath.includes('error') || loweredPath.includes('bad') || loweredPath.includes('fail')
-                ? 'failure'
-                : 'success'
-
-            return {
-              type,
-              index: index + 1,
-            }
-          })
-        : [
-            {
-              type: 'success',
-              index: 1,
-            },
-          ]
-
+    const sourceHandles = extractSourceHandles(element)
     const frankNode: FrankNodeType = convertElementToNode(element, idCounter, sourceHandles)
     nodes.push(frankNode)
   }
 
-  // Now assign IDs to exitNodes starting from current id
   for (const exitNode of exitNodes) {
     exitNode.id = idCounter.current.toString()
     nodes.push(exitNode)
@@ -256,7 +274,7 @@ function convertAdapterToFlowNodes(adapter: Element): FlowNode[] {
   return nodes
 }
 
-function convertElementToNode(element: Element, idCounter: IdCounter, sourceHandles: any): FrankNodeType {
+function convertElementToNode(element: Element, idCounter: IdCounter, sourceHandles: SourceHandle[]): FrankNodeType {
   const thisId = (idCounter.current++).toString()
   // Extract attributes for this element except "name"
   const attributes: Record<string, string> = {}
@@ -283,11 +301,10 @@ function convertElementToNode(element: Element, idCounter: IdCounter, sourceHand
   return frankNode
 }
 
-function convertChildren(elements: Element[], idCounter: IdCounter): any[] {
+function convertChildren(elements: Element[], idCounter: IdCounter): ChildNode[] {
   return elements
-    .filter((child) => child.tagName !== 'Forward') // skip 'Forward' elements
+    .filter((child) => child.tagName !== 'Forward')
     .map((child) => {
-      // Extract child's attributes except 'name'
       const childAttributes: Record<string, string> = {}
       const childId = (idCounter.current++).toString()
       for (const attribute of child.attributes) {
@@ -298,7 +315,7 @@ function convertChildren(elements: Element[], idCounter: IdCounter): any[] {
 
       return {
         id: childId,
-        name: child.getAttribute('name'),
+        name: child.getAttribute('name') || undefined,
         subtype: child.tagName,
         type: getElementTypeFromName(child.tagName),
         attributes: Object.keys(childAttributes).length > 0 ? childAttributes : undefined,

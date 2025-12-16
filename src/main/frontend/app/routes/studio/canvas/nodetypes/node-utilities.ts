@@ -1,11 +1,21 @@
-export function canAcceptChildStatic(frankElement: any, droppedName: string, filters: any): boolean {
+import type { Child, Filters } from '@frankframework/ff-doc'
+
+export interface FrankElement {
+  children?: Child[]
+}
+
+export function canAcceptChildStatic(
+  frankElement: FrankElement | null,
+  droppedName: string,
+  filters: Filters | null,
+): boolean {
   if (!frankElement?.children) return false
   if (!filters?.Components) return false
 
   const droppedLower = droppedName.toLowerCase()
   const components = filters.Components
 
-  return frankElement.children.some((child: any) => {
+  return frankElement.children.some((child) => {
     const role = child.roleName.toLowerCase()
 
     // Case 1: direct match

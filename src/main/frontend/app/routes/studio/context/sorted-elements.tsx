@@ -3,16 +3,12 @@ import ArrowDownIcon from 'icons/solar/Alt Arrow Down.svg?react'
 import ArrowRightIcon from 'icons/solar/Alt Arrow Right.svg?react'
 import { useSettingsStore } from '~/routes/settings/settings-store'
 import useNodeContextStore from '~/stores/node-context-store'
-
-interface Item {
-  name: string
-  attributes?: unknown[]
-}
+import type { ElementDetails } from '@frankframework/ff-doc'
 
 interface Properties {
   type: string
-  items: Item[]
-  onDragStart: (item: Item) => React.DragEventHandler<HTMLLIElement>
+  items: ElementDetails[]
+  onDragStart: (item: ElementDetails) => React.DragEventHandler<HTMLLIElement>
   searchTerm: string
 }
 

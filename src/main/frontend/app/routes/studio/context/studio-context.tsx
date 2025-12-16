@@ -7,6 +7,7 @@ import Search from '~/components/search/search'
 import variables from '../../../../environment/environment'
 import { useFFDoc } from '@frankframework/ff-doc/react'
 import { useProjectStore } from '~/stores/project-store'
+import type { ElementDetails } from '@frankframework/ff-doc'
 
 export default function StudioContext() {
   const { setAttributes, setNodeId, setDraggedName } = useNodeContextStore((state) => state)
@@ -23,7 +24,7 @@ export default function StudioContext() {
 
   useEffect(() => {
     if (!elements) return
-    const types = Object.values(elements).map((element: any) => getElementTypeFromName(element.name))
+    const types = Object.values(elements).map((element: ElementDetails) => getElementTypeFromName(element.name))
     const initialState: Record<string, boolean> = {}
     for (const type of types) {
       if (!(type in expandedGroups)) {
@@ -33,9 +34,9 @@ export default function StudioContext() {
     if (Object.keys(initialState).length > 0) {
       setExpandedGroups((previous) => ({ ...previous, ...initialState }))
     }
-  })
+  }, [elements, expandedGroups])
 
-  const onDragStart = (value: { attributes: any[]; name: string }) => {
+  const onDragStart = (value: ElementDetails) => {
     return (event: {
       dataTransfer: { setData: (argument0: string, argument1: string) => void; effectAllowed: string }
     }) => {
@@ -68,8 +69,8 @@ export default function StudioContext() {
     )
   }
 
-  const groupElementsByType = (elements: Record<string, any>) => {
-    const grouped: Record<string, any[]> = {}
+  const groupElementsByType = (elements: Record<string, ElementDetails>) => {
+    const grouped: Record<string, ElementDetails[]> = {}
     const seen = new Set<string>()
 
     for (const [, value] of Object.entries(elements)) {
@@ -84,10 +85,10 @@ export default function StudioContext() {
   }
 
   const visibleElements = Object.fromEntries(
-    Object.entries(elements || {}).filter(([_, value]) => shouldShowElement(value.name)),
+    Object.entries(elements || {}).filter(([_, value]) => shouldShowElement((value as ElementDetails).name)),
   )
 
-  const groupedElements = elements ? groupElementsByType(visibleElements) : {}
+  const groupedElements = elements ? groupElementsByType(visibleElements as Record<string, ElementDetails>) : {}
 
   const filteredGroupedElements = Object.entries(groupedElements).reduce(
     (accumulator, [type, items]) => {
@@ -95,7 +96,7 @@ export default function StudioContext() {
       if (filteredItems.length > 0) accumulator[type] = filteredItems
       return accumulator
     },
-    {} as Record<string, any[]>,
+    {} as Record<string, ElementDetails[]>,
   )
 
   const elementsToRender = searchTerm ? filteredGroupedElements : groupedElements
@@ -114,7 +115,7 @@ export default function StudioContext() {
           <li className="text-foreground-muted italic">No results found.</li>
         )}
         {Object.entries(elementsToRender)
-          .sort(([typeA], [typeB]) => typeA.localeCompare(typeB))
+          .toSorted(([typeA], [typeB]) => typeA.localeCompare(typeB))
           .map(([type, items]) => (
             <SortedElements key={type} type={type} items={items} onDragStart={onDragStart} searchTerm={searchTerm} />
           ))}

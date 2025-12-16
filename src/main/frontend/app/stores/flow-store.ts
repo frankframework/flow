@@ -292,6 +292,8 @@ const useFlowStore = create<FlowState>((set, get) => ({
       nodes: get().nodes.map((node) => {
         if (node.id !== nodeId) return node
 
+        if (!isFrankNode(node)) return node
+
         return {
           ...node,
           data: {
