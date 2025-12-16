@@ -49,4 +49,10 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(new ErrorResponseDTO("AdapterNotFound", ex.getMessage()));
     }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponseDTO> handleIllegalArgumentException(IllegalArgumentException exception) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponseDTO("Illegal Argument", exception.getMessage()));
+    }
 }

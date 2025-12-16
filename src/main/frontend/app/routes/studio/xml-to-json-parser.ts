@@ -4,12 +4,11 @@ import type { ExitNode } from '~/routes/studio/canvas/nodetypes/exit-node'
 import type { FrankNodeType } from '~/routes/studio/canvas/nodetypes/frank-node'
 import { SAXParser } from 'sax-ts'
 import type { ChildNode } from '~/routes/studio/canvas/nodetypes/child-node'
+import type { ActionType } from './canvas/nodetypes/components/action-types'
 
 interface IdCounter {
   current: number
 }
-
-import type { ActionType } from './canvas/nodetypes/components/action-types'
 
 interface SourceHandle {
   type: ActionType
@@ -44,8 +43,9 @@ export async function getAdapterNamesFromConfiguration(projectName: string, file
       }
     }
 
-    parser.onerror = (error: Error) => {
-      reject(new Error(`SAX parsing error: ${error.message}`))
+    // eslint-disable-next-line unicorn/prefer-add-event-listener
+    parser.onerror = (error: any) => {
+      reject(error)
     }
 
     parser.onend = () => {
@@ -284,10 +284,10 @@ function convertElementToNode(element: Element, idCounter: IdCounter, sourceHand
     }
   }
 
-  const frankNode: FrankNodeType = {
+  return {
     id: thisId,
     type: 'frankNode',
-    position: { x: 0, y: 0 },
+    position: {x: 0, y: 0},
     data: {
       name: element.getAttribute('name') || '',
       type: getElementTypeFromName(element.tagName),
@@ -297,8 +297,6 @@ function convertElementToNode(element: Element, idCounter: IdCounter, sourceHand
       attributes: Object.keys(attributes).length > 0 ? attributes : undefined,
     },
   }
-
-  return frankNode
 }
 
 function convertChildren(elements: Element[], idCounter: IdCounter): ChildNode[] {

@@ -54,6 +54,7 @@ public class XmlSecurityUtils {
      * Creates a secure TransformerFactory configured to prevent XXE attacks.
      *
      * @return A TransformerFactory with security features enabled
+     * @throws IllegalStateException if security features cannot be set
      */
     public static TransformerFactory createSecureTransformerFactory() {
         TransformerFactory factory = TransformerFactory.newInstance();
@@ -62,9 +63,7 @@ public class XmlSecurityUtils {
             factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
             factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_STYLESHEET, "");
         } catch (Exception e) {
-            // Some implementations may not support these attributes
-            // Log and continue with basic factory
-            System.err.println("Warning: Could not set all security features on TransformerFactory: " + e.getMessage());
+            throw new IllegalStateException("Could not create secure TransformerFactory: " + e.getMessage());
         }
         return factory;
     }
