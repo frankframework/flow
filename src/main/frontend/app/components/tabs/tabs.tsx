@@ -9,14 +9,23 @@ export interface TabsItem {
   value: string
   icon?: React.ComponentType<React.SVGProps<SVGSVGElement>>
   flowJson?: Record<string, unknown>
+  configurationName: string
 }
 
-export default function Tabs() {
+interface TabsProps {
+  tabs?: TabsList
+  selectedTab?: string
+  onSelectTab?: (key: string) => void
+  onCloseTab?: (key: string, event?: React.MouseEvent) => void
+}
+
+export default function Tabs(props?: TabsProps) {
   const tabsElementReference = useRef<HTMLDivElement>(null)
   const tabsListReference = useRef<HTMLUListElement>(null)
   const shadowLeftReference = useRef<HTMLDivElement>(null)
   const shadowRightReference = useRef<HTMLDivElement>(null)
-  const { tabs, activeTab, setActiveTab, removeTabAndSelectFallback } = useTabStore(
+
+  const storeData = useTabStore(
     useShallow((state) => ({
       tabs: state.tabs,
       activeTab: state.activeTab,
@@ -24,6 +33,20 @@ export default function Tabs() {
       removeTabAndSelectFallback: state.removeTabAndSelectFallback,
     })),
   )
+
+  // Use props if provided, otherwise fall back to store
+  const tabs = props?.tabs ?? storeData.tabs
+  const activeTab = props?.selectedTab ?? storeData.activeTab
+  const setActiveTab = props?.onSelectTab ?? storeData.setActiveTab
+
+  // Handle close with proper signature
+  const handleClose = (key: string) => {
+    if (props?.onCloseTab) {
+      props.onCloseTab(key)
+    } else {
+      storeData.removeTabAndSelectFallback(key)
+    }
+  }
 
   const calculateScrollShadows = useCallback(() => {
     setTimeout(() => {
@@ -83,8 +106,10 @@ export default function Tabs() {
             value={tab.value}
             isSelected={activeTab === key}
             onSelect={() => setActiveTab(key)}
-            onClose={() => removeTabAndSelectFallback(key)}
+            onClose={() => handleClose(key)}
             icon={tab.icon}
+            configurationName={tab.configurationName}
+            flowJson={tab.flowJson}
           />
         ))}
       </ul>

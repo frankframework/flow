@@ -3,6 +3,7 @@ import { useProjectStore } from '~/stores/project-store'
 import { useTreeStore } from '~/stores/tree-store'
 import KebabVerticalIcon from 'icons/solar/Kebab Vertical.svg?react'
 import useTabStore from '~/stores/tab-store'
+import type { Project } from '~/routes/projectlanding/project-landing'
 
 interface ProjectRowProperties {
   project: Project

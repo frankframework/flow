@@ -6,6 +6,7 @@ import { useNodeContextMenu } from '~/routes/studio/canvas/flow'
 import { useFFDoc } from '@frankframework/ff-doc/react'
 import variables from '../../../../../environment/environment'
 import { useSettingsStore } from '~/routes/settings/settings-store'
+import type { Attribute } from '~/types/ff-doc.types'
 
 export type ExitNode = Node<{
   subtype: string
@@ -25,7 +26,7 @@ export default function ExitNodeComponent(properties: NodeProps<ExitNode>) {
   const editNode = () => {
     interface ElementWithAttributes {
       name: string
-      attributes?: unknown
+      attributes?: Record<string, Attribute>
     }
     const recordElements = elements as Record<string, ElementWithAttributes>
     const attributes = Object.values(recordElements).find(

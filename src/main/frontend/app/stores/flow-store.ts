@@ -29,9 +29,9 @@ export interface FlowState {
   onEdgesChange: OnEdgesChange
   onConnect: OnConnect
   onReconnect: OnReconnect
-  setNodes: (nodes: unknown) => void
-  setEdges: (edges: unknown) => void
-  setViewport: (viewport: unknown) => void
+  setNodes: (nodes: FlowNode[]) => void
+  setEdges: (edges: Edge[]) => void
+  setViewport: (viewport: { x: number; y: number; zoom: number }) => void
   getNextNodeId: () => string
   addNode: (newNode: FlowNode) => void
   deleteNode: (nodeId: string) => void
@@ -67,7 +67,11 @@ function nextFreeNumericId(nodes: FlowNode[]): number {
   const scan = (ns: FlowNode[]) => {
     for (const n of ns) {
       max = Math.max(max, Number(n.id) || 0)
-      if (n.data?.children?.length) scan(n.data.children as FlowNode[])
+      if (isFrankNode(n) && n.data.children?.length) {
+        for (const child of n.data.children) {
+          max = Math.max(max, Number(child.id) || 0)
+        }
+      }
     }
   }
 
@@ -111,10 +115,10 @@ const useFlowStore = create<FlowState>((set, get) => ({
       ],
     })
   },
-  setNodes: (nodes) => {
+  setNodes: (nodes: FlowNode[]): void => {
     set({ nodes })
   },
-  setEdges: (edges) => {
+  setEdges: (edges: Edge[]) => {
     set({ edges })
   },
   setViewport: (viewport) => {
@@ -218,7 +222,7 @@ const useFlowStore = create<FlowState>((set, get) => ({
     if (isFrankNode(node) || isExitNode(node)) return node.data.name ?? null
     return null
   },
-  addHandle: (nodeId, handle) => {
+  addHandle: (nodeId: string, handle: { type: ActionType; index: number }) => {
     set({
       nodes: get().nodes.map((node) => {
         if (node.id === nodeId && isFrankNode(node)) {

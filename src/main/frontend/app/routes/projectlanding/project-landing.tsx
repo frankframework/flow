@@ -17,10 +17,10 @@ export interface Project {
 export default function ProjectLanding() {
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+  const [error, setError] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [showModal, setShowModal] = useState(false)
-  const setProject = useProjectStore((state) => state.setProject)
+  const clearProject = useProjectStore((state) => state.clearProject)
   const location = useLocation()
 
   useEffect(() => {
@@ -33,7 +33,7 @@ export default function ProjectLanding() {
         const data = await response.json()
         setProjects(data)
       } catch (error_) {
-        setError(error_.message)
+        setError(error_ instanceof Error ? error_.message : 'Failed to fetch projects')
       } finally {
         setLoading(false)
       }
@@ -44,8 +44,8 @@ export default function ProjectLanding() {
 
   // Reset project when landing on home page
   useEffect(() => {
-    setProject(undefined)
-  }, [location.key, setProject])
+    clearProject()
+  }, [location.key, clearProject])
 
   const createProject = async (projectName: string) => {
     try {
@@ -61,7 +61,7 @@ export default function ProjectLanding() {
       // refresh the project list after creation
       const newProject = await response.json()
       setProjects((previous) => [...previous, newProject])
-    } catch (error_: unknown) {
+    } catch (error_) {
       setError(error_ instanceof Error ? error_.message : 'Failed to create project')
     }
   }

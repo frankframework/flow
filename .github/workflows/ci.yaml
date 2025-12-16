@@ -44,9 +44,12 @@ jobs:
         run: pnpm install --frozen-lockfile --ignore-scripts
         working-directory: src/main/frontend
 
-      - name: Temporary commented - Lint Frontend causes issues on GH Actions
       - name: Lint Frontend
         run: pnpm run lint
+        working-directory: src/main/frontend
+
+      - name: Typecheck Frontend
+        run: pnpm run typecheck
         working-directory: src/main/frontend
 
       - name: Lint Backend with Spotless

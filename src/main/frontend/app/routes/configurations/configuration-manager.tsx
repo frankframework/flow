@@ -37,7 +37,7 @@ export default function ConfigurationManager() {
           />
         </div>
       </div>
-      <AddConfigurationModal isOpen={showModal} onClose={() => setShowModal(false)} currentProject={currentProject} />
+      <AddConfigurationModal isOpen={showModal} onClose={() => setShowModal(false)} currentProject={currentProject!} />
     </div>
   )
 }

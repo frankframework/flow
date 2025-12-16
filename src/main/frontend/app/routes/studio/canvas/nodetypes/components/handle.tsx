@@ -51,7 +51,7 @@ export function CustomHandle(properties: Readonly<HandleProperties>) {
     setIsMenuOpen(!isMenuOpen) // Toggle menu visibility
   }
 
-  const handleMenuClick = (newType: string) => {
+  const handleMenuClick = (newType: ActionType) => {
     properties.onChangeType(newType) // Change the handle type
     setIsMenuOpen(false) // Close the menu after selection
   }
