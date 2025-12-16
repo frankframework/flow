@@ -1,7 +1,7 @@
 import type { FlowNode } from '~/routes/studio/canvas/flow'
 import { getElementTypeFromName } from '~/routes/studio/node-translator-module'
 import type { ExitNode } from '~/routes/studio/canvas/nodetypes/exit-node'
-import type { FrankNode } from '~/routes/studio/canvas/nodetypes/frank-node'
+import type { FrankNodeType } from '~/routes/studio/canvas/nodetypes/frank-node'
 import { SAXParser } from 'sax-ts'
 
 interface IdCounter {
@@ -10,7 +10,7 @@ interface IdCounter {
 
 export async function getXmlString(projectName: string, filepath: string): Promise<string> {
   try {
-    const response = await fetch(`${API_BASE_URL}projects/${projectName}/configuration`, {
+    const response = await fetch(`/api/projects/${projectName}/configuration`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -248,7 +248,7 @@ function convertAdapterToFlowNodes(adapter: any): FlowNode[] {
             },
           ]
 
-    const frankNode: FrankNode = convertElementToNode(element, idCounter, sourceHandles)
+    const frankNode: FrankNodeType = convertElementToNode(element, idCounter, sourceHandles)
     nodes.push(frankNode)
   }
 
@@ -262,7 +262,7 @@ function convertAdapterToFlowNodes(adapter: any): FlowNode[] {
   return nodes
 }
 
-function convertElementToNode(element: Element, idCounter: IdCounter, sourceHandles: any): FrankNode {
+function convertElementToNode(element: Element, idCounter: IdCounter, sourceHandles: any): FrankNodeType {
   const thisId = (idCounter.current++).toString()
   // Extract attributes for this element except "name"
   const attributes: Record<string, string> = {}
@@ -272,7 +272,7 @@ function convertElementToNode(element: Element, idCounter: IdCounter, sourceHand
     }
   }
 
-  const frankNode: FrankNode = {
+  const frankNode: FrankNodeType = {
     id: thisId,
     type: 'frankNode',
     position: { x: 0, y: 0 },

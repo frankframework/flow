@@ -8,6 +8,8 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 public class CorsConfig implements WebMvcConfigurer {
 
+	private static final long MAX_AGE_SECONDS = 3600;
+
 	@Value("${cors.allowed.origins:}")
 	private String[] allowedOrigins;
 
@@ -18,6 +20,6 @@ public class CorsConfig implements WebMvcConfigurer {
 				.allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
 				.allowedHeaders("*")
 				.allowCredentials(false)
-				.maxAge(3600);
+				.maxAge(MAX_AGE_SECONDS);
 	}
 }

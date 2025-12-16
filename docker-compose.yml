@@ -1,7 +1,8 @@
 services:
   flow:
-    image: frankframework/flow
-    build: .
+    image: ghcr.io/frankframework/flow:latest
+    build:
+      dockerfile: ./docker/Dockerfile
+      context: .
     ports:
       - "8080:8080"
-

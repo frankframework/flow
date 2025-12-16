@@ -1,8 +1,8 @@
-import CodeIcon from '/icons/solar/Code.svg?react'
-import JavaIcon from '/icons/solar/Cup Hot.svg?react'
-import MessageIcon from '/icons/solar/Chat Dots.svg?react'
-import MailIcon from '/icons/solar/Mailbox.svg?react'
-import FolderIcon from '/icons/solar/Folder.svg?react'
+import CodeIcon from '../../../icons/solar/Code.svg?react'
+import JavaIcon from '../../../icons/solar/Cup Hot.svg?react'
+import MessageIcon from '../../../icons/solar/Chat Dots.svg?react'
+import MailIcon from '../../../icons/solar/Mailbox.svg?react'
+import FolderIcon from '../../../icons/solar/Folder.svg?react'
 
 export function getListenerIcon(listenerType: string | null) {
   if (!listenerType) return CodeIcon
