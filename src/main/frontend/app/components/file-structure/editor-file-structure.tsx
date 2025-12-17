@@ -5,6 +5,7 @@ import FolderOpenIcon from '../../../icons/solar/Folder Open.svg?react'
 import 'react-complex-tree/lib/style-modern.css'
 import AltArrowRightIcon from '../../../icons/solar/Alt Arrow Right.svg?react'
 import AltArrowDownIcon from '../../../icons/solar/Alt Arrow Down.svg?react'
+import CodeIcon from '../../../icons/solar/Code.svg?react'
 
 import {
   Tree,
@@ -165,7 +166,7 @@ export default function EditorFileStructure() {
     item: TreeItem
     context: TreeItemRenderContext
   }) => {
-    const Icon = item.isFolder ? (context.isExpanded ? FolderOpenIcon : FolderIcon) : null
+    const Icon = item.isFolder ? (context.isExpanded ? FolderOpenIcon : FolderIcon) : CodeIcon
 
     const searchLower = searchTerm.toLowerCase()
     const titleLower = title.toLowerCase()
