@@ -2,10 +2,11 @@ import useNodeContextStore from '~/stores/node-context-store'
 import { useEffect, useState } from 'react'
 import useFlowStore, { isFrankNode } from '~/stores/flow-store'
 import Button from '~/components/inputs/button'
-import HelpIcon from '/icons/solar/Help.svg?react'
 import { useShallow } from 'zustand/react/shallow'
-import { useJavadocTransform, useFFDoc } from '@frankframework/ff-doc/react'
+import { useFFDoc } from '@frankframework/ff-doc/react'
 import variables from '../../../../environment/environment'
+import ContextInput from './context-input'
+import { findChildRecursive } from '~/stores/child-utilities'
 
 export default function NodeContext({
   nodeId,
@@ -18,37 +19,70 @@ export default function NodeContext({
     useFlowStore((state) => state)
   const [canSave, setCanSave] = useState(false)
   const [showAll, setShowAll] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('')
   const [inputValues, setInputValues] = useState<Record<number, string>>({})
 
   const FRANK_DOC_URL = variables.frankDocJsonUrl
-  const { elements } = useFFDoc(FRANK_DOC_URL)
-  const { attributes, setIsEditing, parentId, setParentId } = useNodeContextStore(
+  const { elements, ffDoc } = useFFDoc(FRANK_DOC_URL)
+  const { attributes, setIsEditing, parentId, setParentId, childParentId } = useNodeContextStore(
     useShallow((s) => ({
       attributes: s.attributes,
       setIsEditing: s.setIsEditing,
       parentId: s.parentId,
       setParentId: s.setParentId,
+      childParentId: s.childParentId,
     })),
   )
 
-  const validateForm = () => {
+  const validateForm = (validations = inputValues) => {
     if (!attributes) {
       setCanSave(true)
       return
     }
 
-    const entries = Object.entries(attributes) // stable ordering
-    const allValid = entries.every(([_, attribute]: [string, any], index: number) => {
+    const mandatoryValid = validateMandatoryFields(validations)
+    const numberValid = validateNumberFields(validations)
+    if (!numberValid || !mandatoryValid) {
+      setCanSave(false)
+      return
+    }
+
+    setCanSave(true)
+  }
+
+  const validateMandatoryFields = (validations = inputValues) => {
+    if (!attributes) return true
+
+    return Object.entries(attributes).every(([_, attribute], index) => {
       if (attribute.mandatory) {
-        // use value cache first (works when inputs are unmounted); fallback to ref if present
-        const raw = inputValues[index] ?? inputValues[index]
-        const value = raw?.toString().trim()
-        return !!value
+        const raw = validations[index]
+        return raw && raw.toString().trim() !== ''
       }
       return true
     })
+  }
 
-    setCanSave(allValid)
+  const validateNumberFields = (validations = inputValues) => {
+    if (!attributes) return true
+
+    return Object.entries(attributes).every(([_, attribute], index) => {
+      if (attribute.type === 'int') {
+        const raw = validations[index]
+        const value = raw?.toString().trim() ?? ''
+
+        // allow empty string
+        if (value === '') return true
+
+        // allow digits only
+        if (!/^\d+$/.test(value)) {
+          setErrorMessage('Please enter valid integer values into numeric fields only')
+          return false
+        }
+        return /^\d+$/.test(value)
+      }
+
+      return true
+    })
   }
 
   // Fills out input fields with already existing attributes when editing a node
@@ -57,28 +91,46 @@ export default function NodeContext({
 
     let currentAttributes: Record<string, string> | undefined
 
-    if (parentId) {
-      // Editing a child node → look inside its parent
-      const parent = nodes.find((n) => n.id === parentId.toString())
-      if (isFrankNode(parent!)) {
-        const child = parent.data.children.find((c) => c.id === nodeId.toString())
-        if (child) {
-          currentAttributes = {
-            ...(child.name ? { name: child.name } : {}),
-            ...child.attributes,
-          }
+    // CASE 1: Editing a child node (childParentId is set)
+    if (childParentId && parentId) {
+      const parentNode = nodes.find((n) => n.id === parentId.toString())
+      if (!parentNode || !isFrankNode(parentNode)) return
+
+      // recursively search the child tree to find this child
+      const child = findChildRecursive(parentNode.data.children, nodeId.toString())
+      if (child) {
+        currentAttributes = {
+          ...(child.name ? { name: child.name } : {}),
+          ...child.attributes,
         }
       }
-    } else {
+    }
+
+    // CASE 2: Editing a FIRST-LEVEL child node
+    else if (parentId) {
+      const parentNode = nodes.find((n) => n.id === parentId.toString())
+      if (!parentNode || !isFrankNode(parentNode)) return
+
+      const child = parentNode.data.children.find((c) => c.id === nodeId.toString())
+      if (child) {
+        currentAttributes = {
+          ...(child.name ? { name: child.name } : {}),
+          ...child.attributes,
+        }
+      }
+    }
+
+    // CASE 3: Editing a REAL ReactFlow node (top-level node)
+    else {
       const attributes = getAttributes(nodeId.toString())
       const name = getNodeName(nodeId.toString())
-
       currentAttributes = {
         ...(name ? { name } : {}),
         ...attributes,
       }
     }
 
+    // apply resolved attributes
     if (currentAttributes) {
       const entries = Object.entries(attributes)
       const newValues: Record<number, string> = {}
@@ -87,7 +139,7 @@ export default function NodeContext({
       }
       setInputValues(newValues)
     }
-  }, [attributes, nodeId, parentId])
+  }, [attributes, nodeId, parentId, childParentId])
 
   useEffect(() => {
     if (!attributes) {
@@ -133,27 +185,39 @@ export default function NodeContext({
     const filteredAttributes = filledAttributes.filter((attribute) => attribute.name !== 'name')
     const newAttributesObject = Object.fromEntries(filteredAttributes.map(({ name, value }) => [name, value]))
 
+    // If we're editing a child (the common case)
     if (parentId) {
-      const parentNode = nodes.find((n) => n.id === parentId)
-      if (!isFrankNode(parentNode!)) return
-      const existingChild = parentNode?.data?.children?.find((c) => c.id === nodeId.toString())
+      const parentNode = nodes.find((n) => n.id === parentId.toString())
+      if (!parentNode || !isFrankNode(parentNode)) return
 
-      const childNode = {
-        id: nodeId.toString(),
-        type: existingChild?.type ?? 'defaultType',
-        subtype: existingChild?.subtype ?? 'defaultSubtype',
+      // 🔍 Find the child recursively
+      const existingChild = findChildRecursive(parentNode.data.children, nodeId.toString())
+
+      if (!existingChild) {
+        console.error('ERROR: Could not find child to update:', nodeId)
+        return
+      }
+
+      // ✅ Build updated child (preserves type, subtype, children, etc.)
+      const updatedChild = {
+        ...existingChild,
         ...(nameField && { name: nameField.value }),
         attributes: newAttributesObject,
       }
 
-      updateChild(parentId.toString(), childNode)
+      // Update child recursively in store
+      updateChild(parentNode.id, updatedChild)
+
+      // Close context
       setIsEditing(false)
       setShowNodeContext(false)
       setParentId(null)
       return
     }
 
+    // Else: updating a top-level Frank node
     setAttributes(nodeId.toString(), newAttributesObject)
+
     if (nameField) {
       setNodeName(nodeId.toString(), nameField.value)
     }
@@ -190,29 +254,21 @@ export default function NodeContext({
 
           {displayedAttributes.map(([key, attribute, originalIndex]: [string, any, number]) => (
             <div key={originalIndex}>
-              <label
-                htmlFor={`input-${originalIndex}`}
-                className="group font-small text-foreground relative block text-sm"
-              >
-                {attribute.mandatory && '*'}
-                {key}
-                {attribute.description && (
-                  <DescriptionHelpIcon description={attribute.description} elements={elements} />
-                )}
-              </label>
-
-              <input
-                type="text"
-                id={`input-${originalIndex}`}
-                name={`input-${originalIndex}`}
+              <ContextInput
+                id={`ctx-${originalIndex}`}
                 value={inputValues[originalIndex] ?? ''}
-                onInput={(event) => {
-                  const value = event.currentTarget.value
-                  setInputValues((previous) => ({ ...previous, [originalIndex]: value }))
-                  validateForm()
+                onChange={(value: string) => {
+                  setInputValues((previous) => {
+                    const updated = { ...previous, [originalIndex]: value }
+                    validateForm(updated)
+                    return updated
+                  })
                 }}
                 onKeyDown={handleKeyDown}
-                className="border-border focus:border-foreground-active focus:ring-foreground-active mt-1 w-full rounded-md border px-3 py-2 shadow-sm sm:text-sm"
+                label={key}
+                attribute={attribute}
+                enumOptions={ffDoc?.enums?.[attribute.enum] ?? undefined}
+                elements={elements ?? undefined}
               />
             </div>
           ))}
@@ -225,44 +281,25 @@ export default function NodeContext({
         </div>
       </div>
 
-      <div className="border-t-border bg-background flex w-full justify-end gap-4 border-t p-4">
-        <Button
-          onClick={handleSave}
-          disabled={!canSave}
-          className={`${canSave ? '' : 'cursor-not-allowed opacity-50'}`}
-        >
-          Save & Close
-        </Button>
-        <Button onClick={handleDiscard}>Delete</Button>
+      <div className="border-t-border bg-background border-t p-4">
+        {/* Buttons row */}
+        <div className="flex w-full items-center justify-between">
+          <Button
+            onClick={handleSave}
+            disabled={!canSave}
+            className={`w-auto ${canSave ? '' : 'cursor-not-allowed opacity-50'}`}
+          >
+            Save & Close
+          </Button>
+
+          <Button className="w-auto" onClick={handleDiscard}>
+            Delete
+          </Button>
+        </div>
+
+        {/* Error message underneath both buttons */}
+        {!canSave && errorMessage && <p className="mt-2 text-sm text-red-600">{errorMessage}</p>}
       </div>
     </>
-  )
-}
-
-function DescriptionHelpIcon({
-  description,
-  elements,
-}: Readonly<{ description: string; elements: Record<string, any> | null }>) {
-  const [show, setShow] = useState(false)
-  const transformed = useJavadocTransform(description, elements)
-
-  return (
-    <div className="relative inline-block px-2">
-      <button
-        type="button"
-        onClick={() => setShow((previous) => !previous)}
-        className="text-blue-500 hover:text-blue-700 focus:outline-none"
-        title="Show help"
-      >
-        <HelpIcon className="h-auto w-[12px] fill-current" />
-      </button>
-
-      {show && (
-        <div
-          className="bg-background border-border absolute top-0 left-6 z-20 mt-0 w-84 rounded-md border px-3 py-2 text-sm shadow-lg"
-          dangerouslySetInnerHTML={transformed}
-        />
-      )}
-    </div>
   )
 }

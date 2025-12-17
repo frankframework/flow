@@ -1,7 +1,7 @@
 import Tabs, { type TabsList } from '~/components/tabs/tabs'
 import Editor, { type OnMount } from '@monaco-editor/react'
 import { toast, ToastContainer } from 'react-toastify'
-import EditorFiles from '~/routes/editor/editor-files'
+import FileStructure from '../../components/file-structure/file-structure'
 import SidebarHeader from '~/components/sidebars-layout/sidebar-header'
 import SidebarLayout from '~/components/sidebars-layout/sidebar-layout'
 import { SidebarSide } from '~/components/sidebars-layout/sidebar-layout-store'
@@ -237,7 +237,7 @@ export default function CodeEditor() {
     setIsSaving(true)
 
     try {
-      const url = `${API_BASE_URL}projects/${project.name}/${configName}`
+      const url = `/api/projects/${project.name}/${configName}`
       const response = await fetch(url, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -270,7 +270,7 @@ export default function CodeEditor() {
     <SidebarLayout name="editor" windowResizeOnChange={true}>
       <>
         <SidebarHeader side={SidebarSide.LEFT} title="Files" />
-        <EditorFiles />
+        <FileStructure />
       </>
       <>
         <div className="flex">

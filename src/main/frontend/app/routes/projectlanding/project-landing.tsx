@@ -27,7 +27,7 @@ export default function ProjectLanding() {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}projects`)
+        const response = await fetch('/api/projects')
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`)
         }
@@ -79,7 +79,7 @@ export default function ProjectLanding() {
     }
 
     // Import configurations to the project
-    await fetch(`${API_BASE_URL}projects/${projectRoot}/import-configurations`, {
+    await fetch(`/api/projects/${projectRoot}/import-configurations`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -91,7 +91,7 @@ export default function ProjectLanding() {
 
   const createProject = async (projectName: string) => {
     try {
-      const response = await fetch(`${API_BASE_URL}projects/${projectName}`, {
+      const response = await fetch(`/api/projects/${projectName}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -2,11 +2,11 @@ import React, { type JSX, useEffect, useRef, useState } from 'react'
 import { getAdapterListenerType, getAdapterNamesFromConfiguration } from '~/routes/studio/xml-to-json-parser'
 import useTabStore from '~/stores/tab-store'
 import Search from '~/components/search/search'
-import FolderIcon from '/icons/solar/Folder.svg?react'
-import FolderOpenIcon from '/icons/solar/Folder Open.svg?react'
+import FolderIcon from '../../../icons/solar/Folder.svg?react'
+import FolderOpenIcon from '../../../icons/solar/Folder Open.svg?react'
 import 'react-complex-tree/lib/style-modern.css'
-import AltArrowRightIcon from '/icons/solar/Alt Arrow Right.svg?react'
-import AltArrowDownIcon from '/icons/solar/Alt Arrow Down.svg?react'
+import AltArrowRightIcon from '../../../icons/solar/Alt Arrow Right.svg?react'
+import AltArrowDownIcon from '../../../icons/solar/Alt Arrow Down.svg?react'
 
 import {
   Tree,
@@ -15,7 +15,7 @@ import {
   type TreeRef,
   UncontrolledTreeEnvironment,
 } from 'react-complex-tree'
-import StudioFilesDataProvider, { type AdapterNodeData } from '~/routes/studio/filetree/studio-files-data-provider'
+import FilesDataProvider from '~/components/file-structure/files-data-provider'
 import { useProjectStore } from '~/stores/project-store'
 import { Link } from 'react-router'
 import { useTreeStore } from '~/stores/tree-store'
@@ -42,7 +42,7 @@ function getItemTitle(item: TreeItem<unknown>): string {
   return 'Unnamed'
 }
 
-export default function StudioStructure() {
+export default function FileStructure() {
   const { configs, isLoading, setConfigs, setIsLoading } = useTreeStore(
     useShallow((state) => ({
       configs: state.configs,
@@ -53,8 +53,12 @@ export default function StudioStructure() {
   )
   const project = useProjectStore.getState().project
   const [searchTerm, setSearchTerm] = useState('')
+  const [matchingItemIds, setMatchingItemIds] = useState<string[]>([])
+  const [activeMatchIndex, setActiveMatchIndex] = useState<number>(-1)
+  const [highlightedItemId, setHighlightedItemId] = useState<string | null>(null)
+
   const tree = useRef<TreeRef>(null)
-  const dataProviderReference = useRef(new StudioFilesDataProvider([]))
+  const dataProviderReference = useRef(new FilesDataProvider([]))
 
   const configurationPaths = useProjectStore((state) => state.project?.filepaths)
   const setTabData = useTabStore((state) => state.setTabData)
@@ -63,29 +67,10 @@ export default function StudioStructure() {
 
   useEffect(() => {
     const loadAdapters = async () => {
-      if (configs.length > 0) {
-        // skip fetching if already loaded
-        return
-      }
+      if (configs.length > 0) return
 
       try {
-        const loaded: ConfigWithAdapters[] = await Promise.all(
-          configurationPaths.map(async (configPath) => {
-            if (!project) return
-            const adapterNames = await getAdapterNamesFromConfiguration(project.name, configPath)
-
-            // Fetch listener name for each adapter
-            const adapters = await Promise.all(
-              adapterNames.map(async (adapterName) => {
-                const listenerName = await getAdapterListenerType(project.name, configPath, adapterName)
-                return { adapterName, listenerName }
-              }),
-            )
-
-            return { configName: configPath, adapters }
-          }),
-        )
-
+        const loaded = await Promise.all(configurationPaths.map((path) => fetchConfig(path)))
         setConfigs(loaded)
       } catch (error) {
         console.error('Failed to load adapter names:', error)
@@ -97,9 +82,98 @@ export default function StudioStructure() {
     loadAdapters()
   }, [configurationPaths])
 
+  async function fetchConfig(configPath: string): Promise<ConfigWithAdapters> {
+    if (!project) return { configName: configPath, adapters: [] } // fallback
+
+    const adapterNames = await getAdapterNamesFromConfiguration(project.name, configPath)
+    const adapters = await Promise.all(adapterNames.map((adapterName) => fetchAdapter(configPath, adapterName)))
+    return { configName: configPath, adapters }
+  }
+
+  async function fetchAdapter(configName: string, adapterName: string) {
+    const listenerName = await getAdapterListenerType(project.name, configName, adapterName)
+    return { adapterName, listenerName }
+  }
+
+  useEffect(() => {
+    const findMatchingItems = async () => {
+      if (!searchTerm) {
+        setMatchingItemIds([])
+        setActiveMatchIndex(-1)
+        setHighlightedItemId(null)
+        return
+      }
+
+      const allItems = await dataProviderReference.current.getAllItems?.()
+      if (!allItems) return
+
+      const lower = searchTerm.toLowerCase()
+      const matches = allItems
+        .filter((item: TreeItem<unknown>) => getItemTitle(item).toLowerCase().includes(lower))
+        .map((item: TreeItem<unknown>) => item.index)
+
+      setMatchingItemIds(matches)
+
+      if (matches.length > 0) {
+        setActiveMatchIndex(0)
+        setHighlightedItemId(matches[0])
+      } else {
+        setActiveMatchIndex(-1)
+        setHighlightedItemId(null)
+      }
+    }
+
+    findMatchingItems()
+  }, [searchTerm, configs])
+
   useEffect(() => {
     dataProviderReference.current.updateData(configs)
   }, [configs])
+
+  // Listener for tab and enter keys
+  useEffect(() => {
+    const handleKeyDown = async (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        // Clear search and highlight
+        setSearchTerm('')
+        setHighlightedItemId(null)
+        setMatchingItemIds([])
+        setActiveMatchIndex(-1)
+        return
+      }
+
+      if (matchingItemIds.length === 0) return
+
+      if (event.key === 'Tab' && !event.shiftKey) {
+        event.preventDefault()
+        setActiveMatchIndex((previous) => (previous + 1) % matchingItemIds.length)
+      } else if (event.key === 'Tab' && event.shiftKey) {
+        event.preventDefault()
+        setActiveMatchIndex((previous) => (previous - 1 < 0 ? matchingItemIds.length - 1 : previous - 1))
+      } else if (event.key === 'Enter') {
+        event.preventDefault()
+
+        // If nothing highlighted yet, select the first match
+        const targetItemId = highlightedItemId || matchingItemIds[0]
+        if (targetItemId) {
+          handleItemClick([targetItemId])
+        }
+      }
+    }
+
+    globalThis.addEventListener('keydown', handleKeyDown)
+    return () => globalThis.removeEventListener('keydown', handleKeyDown)
+  }, [matchingItemIds, highlightedItemId])
+
+  useEffect(() => {
+    if (activeMatchIndex === -1 || !tree.current) return
+
+    const itemId = matchingItemIds[activeMatchIndex]
+    if (!itemId) return
+
+    // set visual highlight only
+    setHighlightedItemId(itemId)
+  }, [activeMatchIndex])
 
   useEffect(() => {
     // Collapse all folders when no search term is entered
@@ -195,21 +269,29 @@ export default function StudioStructure() {
         <>
           {parts.map((part, index) =>
             part.toLowerCase() === searchLower ? (
-              <mark key={index} className="text-foreground bg-foreground-active rounded-sm">
+              <mark key={`mark-${index}`} className="text-foreground bg-foreground-active rounded-sm">
                 {part}
               </mark>
             ) : (
-              <span key={index}>{part}</span>
+              <span key={`span-${index}`}>{part}</span>
             ),
           )}
         </>
       )
     }
 
+    const isHighlighted = highlightedItemId == item.index
+
     return (
       <>
         <Icon className="fill-foreground w-4 flex-shrink-0" />
-        <span className={`font-inter ml-1 overflow-hidden text-nowrap text-ellipsis`}>{highlightedTitle}</span>
+        <span
+          className={`font-inter ml-1 overflow-hidden text-nowrap text-ellipsis ${
+            isHighlighted ? 'outline-foreground-active rounded-sm px-1 outline outline-2' : ''
+          }`}
+        >
+          {highlightedTitle}
+        </span>
       </>
     )
   }
@@ -240,7 +322,7 @@ export default function StudioStructure() {
             renderItemArrow={renderItemArrow}
             renderItemTitle={renderItemTitle}
           >
-            <Tree treeId={TREE_ID} rootItem="root" ref={tree} treeLabel="Studio Files" />
+            <Tree treeId={TREE_ID} rootItem="root" ref={tree} treeLabel="Files" />
           </UncontrolledTreeEnvironment>
         </div>
       )}
