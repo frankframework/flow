@@ -3,7 +3,7 @@ import type { ConfigWithAdapters } from './file-structure'
 
 interface AdapterNodeData {
   adapterName: string
-  configName: string
+  configPath: string
   listenerName: string | null
 }
 
@@ -64,9 +64,9 @@ export default class FilesDataProvider implements TreeDataProvider {
       isFolder: true,
     }
 
-    for (const { configName, adapters } of configs) {
+    for (const { configPath, adapters } of configs) {
       // Remove the fixed src/main/configurations prefix
-      const relativePath = configName.replace(/^src\/main\/configurations\//, '')
+      const relativePath = configPath.replace(/^src\/main\/configurations\//, '')
 
       // Split by / to create nested folders
       const parts = relativePath.split('/') // e.g. ["AMQP", "Configuration.xml"]
@@ -100,7 +100,7 @@ export default class FilesDataProvider implements TreeDataProvider {
           for (const { adapterName, listenerName } of adapters) {
             newData[adapterName] = {
               index: adapterName,
-              data: { adapterName, configName, listenerName } satisfies AdapterNodeData,
+              data: { adapterName, configPath, listenerName } satisfies AdapterNodeData,
               isFolder: false,
             }
           }

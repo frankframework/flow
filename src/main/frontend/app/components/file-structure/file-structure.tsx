@@ -23,7 +23,7 @@ import { useShallow } from 'zustand/react/shallow'
 import { getListenerIcon } from './tree-utilities'
 
 export interface ConfigWithAdapters {
-  configName: string
+  configPath: string
   adapters: {
     adapterName: string
     listenerName: string | null
@@ -83,11 +83,11 @@ export default function FileStructure() {
   }, [configurationPaths])
 
   async function fetchConfig(configPath: string): Promise<ConfigWithAdapters> {
-    if (!project) return { configName: configPath, adapters: [] } // fallback
+    if (!project) return { configPath: configPath, adapters: [] } // fallback
 
     const adapterNames = await getAdapterNamesFromConfiguration(project.name, configPath)
     const adapters = await Promise.all(adapterNames.map((adapterName) => fetchAdapter(configPath, adapterName)))
-    return { configName: configPath, adapters }
+    return { configPath: configPath, adapters }
   }
 
   async function fetchAdapter(configName: string, adapterName: string) {
@@ -207,17 +207,17 @@ export default function FileStructure() {
     if (!item || item.isFolder) return
 
     const data = item.data
-    if (typeof data === 'object' && data !== null && 'adapterName' in data && 'configName' in data) {
-      const { adapterName, configName } = data as { adapterName: string; configName: string }
-      openNewTab(adapterName, configName)
+    if (typeof data === 'object' && data !== null && 'adapterName' in data && 'configPath' in data) {
+      const { adapterName, configPath } = data as { adapterName: string; configPath: string }
+      openNewTab(adapterName, configPath)
     }
   }
 
-  const openNewTab = (adapterName: string, configName: string) => {
+  const openNewTab = (adapterName: string, configPath: string) => {
     if (!getTab(adapterName)) {
       setTabData(adapterName, {
         value: adapterName,
-        configurationName: configName,
+        configurationPath: configPath,
         flowJson: {},
       })
     }

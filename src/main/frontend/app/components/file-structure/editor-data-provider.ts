@@ -1,12 +1,13 @@
 import type { Disposable, TreeDataProvider, TreeItem, TreeItemIndex } from 'react-complex-tree'
 
 export interface FileNode {
+  name: string
   path: string
   isDirectory: boolean
 }
 
 export default class EditorFilesDataProvider implements TreeDataProvider {
-  private data: Record<TreeItemIndex, TreeItem> = {}
+  private data: Record<TreeItemIndex, TreeItem<FileNode>> = {}
   private readonly treeChangeListeners: ((changedItemIds: TreeItemIndex[]) => void)[] = []
   private readonly rootName: string
 
@@ -15,17 +16,17 @@ export default class EditorFilesDataProvider implements TreeDataProvider {
     this.buildTree(rootName, paths)
   }
 
-  public async getAllItems(): Promise<TreeItem[]> {
+  public async getAllItems(): Promise<TreeItem<FileNode>[]> {
     return Object.values(this.data)
+  }
+
+  public async getTreeItem(itemId: TreeItemIndex): Promise<TreeItem<FileNode>> {
+    return this.data[itemId]
   }
 
   public updateData(paths: string[]) {
     this.buildTree(this.rootName, paths)
     this.notifyListeners(['root'])
-  }
-
-  public async getTreeItem(itemId: TreeItemIndex) {
-    return this.data[itemId]
   }
 
   public async onChangeItemChildren(itemId: TreeItemIndex, newChildren: TreeItemIndex[]) {
@@ -43,16 +44,20 @@ export default class EditorFilesDataProvider implements TreeDataProvider {
   }
 
   public async onRenameItem(item: TreeItem, name: string): Promise<void> {
-    this.data[item.index].data = name
+    this.data[item.index].data.name = name
   }
 
   private buildTree(rootName: string, paths: string[]) {
-    const newData: Record<TreeItemIndex, TreeItem> = {}
+    const newData: Record<TreeItemIndex, TreeItem<FileNode>> = {}
 
     // Root
     newData['root'] = {
       index: 'root',
-      data: rootName,
+      data: {
+        name: rootName,
+        path: '',
+        isDirectory: true,
+      },
       children: [],
       isFolder: true,
     }
@@ -61,16 +66,23 @@ export default class EditorFilesDataProvider implements TreeDataProvider {
       const parts = fullPath.split('/')
 
       let parentIndex: TreeItemIndex = 'root'
+      let currentPath = ''
 
       for (let i = 0; i < parts.length; i++) {
         const part = parts[i]
         const isLast = i === parts.length - 1
+        currentPath = currentPath ? `${currentPath}/${part}` : part
+
         const nodeIndex = `${parentIndex}/${part}`
 
         if (!newData[nodeIndex]) {
           newData[nodeIndex] = {
             index: nodeIndex,
-            data: part,
+            data: {
+              name: part,
+              path: currentPath,
+              isDirectory: !isLast,
+            },
             children: isLast ? undefined : [],
             isFolder: !isLast,
           }

@@ -1,7 +1,6 @@
-import Tabs, { type TabsList } from '~/components/tabs/tabs'
+import StudioTabs, { type TabsList } from '~/components/tabs/studio-tabs'
 import Editor, { type OnMount } from '@monaco-editor/react'
 import { toast, ToastContainer } from 'react-toastify'
-import FileStructure from '../../components/file-structure/file-structure'
 import SidebarHeader from '~/components/sidebars-layout/sidebar-header'
 import SidebarLayout from '~/components/sidebars-layout/sidebar-layout'
 import { SidebarSide } from '~/components/sidebars-layout/sidebar-layout-store'
@@ -14,14 +13,18 @@ import variables from '../../../environment/environment'
 import { useFFDoc } from '@frankframework/ff-doc/react'
 import { useProjectStore } from '~/stores/project-store'
 import EditorFileStructure from '~/components/file-structure/editor-file-structure'
+import useEditorTabStore from '~/stores/editor-tab-store'
+import EditorTabs from '~/components/tabs/editor-tabs'
 
 export default function CodeEditor() {
   const theme = useTheme()
   const FRANK_DOC_URL = variables.frankDocJsonUrl
   const { elements } = useFFDoc(FRANK_DOC_URL)
   const project = useProjectStore.getState().project
-  const [tabs, setTabs] = useState<TabsList>(useTabStore.getState().tabs as TabsList)
-  const [activeTab, setActiveTab] = useState<string | undefined>(useTabStore.getState().activeTab)
+  const [tabs, setTabs] = useState(useEditorTabStore.getState().tabs)
+  const [activeTabFilePath, setActiveTabFilePath] = useState<string | undefined>(
+    useEditorTabStore.getState().activeTabFilePath,
+  )
   const [xmlContent, setXmlContent] = useState<string>('')
   const editorReference = useRef<Parameters<OnMount>[0] | null>(null)
   const decorationIdsReference = useRef<string[]>([])
@@ -32,13 +35,13 @@ export default function CodeEditor() {
   }
 
   useEffect(() => {
-    const unsubTabs = useTabStore.subscribe((state) => {
-      setTabs(state.tabs as TabsList)
+    const unsubTabs = useEditorTabStore.subscribe((state) => {
+      setTabs(state.tabs)
     })
-    const unsubActiveTab = useTabStore.subscribe(
-      (state) => state.activeTab,
+    const unsubActiveTab = useEditorTabStore.subscribe(
+      (state) => state.activeTabFilePath,
       (newActiveTab) => {
-        setActiveTab(newActiveTab)
+        setActiveTabFilePath(newActiveTab)
       },
     )
     return () => {
@@ -50,9 +53,9 @@ export default function CodeEditor() {
   useEffect(() => {
     async function fetchXml() {
       try {
-        const configName = useTabStore.getState().getTab(activeTab)?.configurationName
-        if (!configName || !project) return
-        const xmlString = await getXmlString(project.name, configName)
+        const configPath = useEditorTabStore.getState().getTab(activeTabFilePath)?.filePath
+        if (!configPath || !project) return
+        const xmlString = await getXmlString(project.name, configPath)
         setXmlContent(xmlString)
       } catch (error) {
         console.error('Failed to load XML:', error)
@@ -60,10 +63,10 @@ export default function CodeEditor() {
     }
 
     fetchXml()
-  }, [activeTab])
+  }, [activeTabFilePath])
 
   useEffect(() => {
-    if (!xmlContent || !activeTab || !editorReference.current) return
+    if (!xmlContent || !activeTabFilePath || !editorReference.current) return
 
     const editor = editorReference.current
 
@@ -72,7 +75,7 @@ export default function CodeEditor() {
     if (!model) return
 
     const lines = xmlContent.split('\n')
-    const matchIndex = lines.findIndex((line) => line.includes('<Adapter') && line.includes(activeTab))
+    const matchIndex = lines.findIndex((line) => line.includes('<Adapter') && line.includes(activeTabFilePath))
     if (matchIndex === -1) return
 
     const lineNumber = matchIndex + 1
@@ -99,7 +102,7 @@ export default function CodeEditor() {
 
     // Optional cleanup if component unmounts before timeout
     return () => clearTimeout(timeout)
-  }, [xmlContent, activeTab])
+  }, [xmlContent, activeTabFilePath])
 
   useEffect(() => {
     // Handles all the suggestions
@@ -216,7 +219,7 @@ export default function CodeEditor() {
     useTabStore.getState().removeTab(key)
 
     // Auto-select fallback if the closed tab was active
-    if (key === activeTab) {
+    if (key === activeTabFilePath) {
       const remainingTabs = Object.keys(useTabStore.getState().tabs)
       if (remainingTabs.length > 0) {
         useTabStore.getState().setActiveTab(remainingTabs[0])
@@ -227,8 +230,8 @@ export default function CodeEditor() {
   }
 
   const handleSave = async () => {
-    if (!project || !activeTab) return
-    const configName = useTabStore.getState().getTab(activeTab)?.configurationName
+    if (!project || !activeTabFilePath) return
+    const configName = useTabStore.getState().getTab(activeTabFilePath)?.configurationName
     if (!configName) return
 
     const editor = editorReference.current
@@ -277,13 +280,20 @@ export default function CodeEditor() {
         <div className="flex">
           <SidebarContentClose side={SidebarSide.LEFT} />
           <div className="grow overflow-x-auto">
-            <Tabs tabs={tabs} selectedTab={activeTab} onSelectTab={handleSelectTab} onCloseTab={handleCloseTab} />
+            <EditorTabs
+              tabs={tabs}
+              selectedTab={activeTabFilePath}
+              onSelectTab={handleSelectTab}
+              onCloseTab={handleCloseTab}
+            />
           </div>
           <SidebarContentClose side={SidebarSide.RIGHT} />
         </div>
-        {activeTab ? (
+        {activeTabFilePath ? (
           <>
-            <div className="border-b-border bg-background flex h-12 items-center border-b p-4">Path: {activeTab}</div>
+            <div className="border-b-border bg-background flex h-12 items-center border-b p-4">
+              Path: {activeTabFilePath}
+            </div>
             <div className="h-full">
               <Editor
                 language="xml"
@@ -309,7 +319,7 @@ export default function CodeEditor() {
         <div className="flex w-full items-center justify-center">
           <button
             onClick={handleSave}
-            disabled={isSaving || !activeTab}
+            disabled={isSaving || !activeTabFilePath}
             className="border-border bg-background hover:bg-foreground-active my-2 rounded border px-3 py-1 disabled:opacity-50"
           >
             {isSaving ? 'Saving...' : 'Save XML'}

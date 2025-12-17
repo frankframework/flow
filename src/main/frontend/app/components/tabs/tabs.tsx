@@ -1,36 +1,28 @@
-import React, { useEffect, useRef } from 'react'
-import Tab from '~/components/tabs/tab'
-import useTabStore from '~/stores/tab-store'
-import { useShallow } from 'zustand/react/shallow'
-
-export type TabsList = Record<string, TabsItem>
+import { useEffect, useRef } from 'react'
+import Tab from './tab'
 
 export interface TabsItem {
   value: string
   icon?: React.FC<React.SVGProps<SVGSVGElement>>
-  flowJson?: Record<string, any>
 }
 
-export default function Tabs() {
+interface TabsViewProps<T extends string = string> {
+  tabs: Record<T, TabsItem>
+  activeTab: T | null
+  onSelectTab: (key: T) => void
+  onCloseTab: (key: T) => void
+}
+
+export function TabsView<T extends string>({ tabs, activeTab, onSelectTab, onCloseTab }: TabsViewProps<T>) {
   const tabsElementReference = useRef<HTMLDivElement>(null)
   const tabsListReference = useRef<HTMLUListElement>(null)
   const shadowLeftReference = useRef<HTMLDivElement>(null)
   const shadowRightReference = useRef<HTMLDivElement>(null)
-  const { tabs, activeTab, setActiveTab, removeTabAndSelectFallback } = useTabStore(
-    useShallow((state) => ({
-      tabs: state.tabs,
-      activeTab: state.activeTab,
-      setActiveTab: state.setActiveTab,
-      removeTabAndSelectFallback: state.removeTabAndSelectFallback,
-    })),
-  )
 
   useEffect(() => {
     calculateScrollShadows()
     window.addEventListener('resize', calculateScrollShadows)
-    return () => {
-      window.removeEventListener('resize', calculateScrollShadows)
-    }
+    return () => window.removeEventListener('resize', calculateScrollShadows)
   }, [tabs])
 
   const calculateScrollShadows = () => {
@@ -61,12 +53,8 @@ export default function Tabs() {
     }
   }
 
-  const handleWheel = () => {
-    calculateScrollShadows()
-  }
-
   return (
-    <div ref={tabsElementReference} className="relative flex h-12" onWheel={handleWheel}>
+    <div ref={tabsElementReference} className="relative flex h-12">
       <div
         ref={shadowLeftReference}
         className="absolute top-0 bottom-0 left-0 z-10 w-2 bg-gradient-to-r from-black/15 to-transparent opacity-0"
@@ -80,14 +68,15 @@ export default function Tabs() {
         {Object.entries(tabs).map(([key, tab]) => (
           <Tab
             key={key}
-            value={tab.value}
+            value={tab.value ?? tab.fileName}
             isSelected={activeTab === key}
-            onSelect={() => setActiveTab(key)}
-            onClose={() => removeTabAndSelectFallback(key)}
+            onSelect={() => onSelectTab(key as T)}
+            onClose={() => onCloseTab(key as T)}
             icon={tab.icon}
           />
         ))}
       </ul>
+
       <div className="bg-background border-b-border flex-grow border-b" />
     </div>
   )

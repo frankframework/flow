@@ -1,4 +1,4 @@
-import React, { type JSX, useEffect, useRef, useState } from 'react'
+import React, { type JSX, useCallback, useEffect, useRef, useState } from 'react'
 import Search from '~/components/search/search'
 import FolderIcon from '../../../icons/solar/Folder.svg?react'
 import FolderOpenIcon from '../../../icons/solar/Folder Open.svg?react'
@@ -14,14 +14,14 @@ import {
   UncontrolledTreeEnvironment,
 } from 'react-complex-tree'
 
-import useTabStore from '~/stores/tab-store'
+import useEditorTabStore from '~/stores/editor-tab-store'
 import { useProjectStore } from '~/stores/project-store'
-import EditorFilesDataProvider from './editor-data-provider'
+import EditorFilesDataProvider, { type FileNode } from './editor-data-provider'
 
-const TREE_ID = 'editor-files-tree'
+const TREE_ID = 'editor-files-tree' 
 
-function getItemTitle(item: TreeItem<unknown>): string {
-  return typeof item.data === 'string' ? item.data : 'Unnamed'
+function getItemTitle(item: TreeItem<FileNode>): string {
+  return typeof item.data.name === 'string' ? item.data.name : 'Unnamed'
 }
 
 export default function EditorFileStructure() {
@@ -36,9 +36,9 @@ export default function EditorFileStructure() {
   const tree = useRef<TreeRef>(null)
   const dataProviderReference = useRef(new EditorFilesDataProvider('Configurations', []))
 
-  const setTabData = useTabStore((state) => state.setTabData)
-  const setActiveTab = useTabStore((state) => state.setActiveTab)
-  const getTab = useTabStore((state) => state.getTab)
+  const setTabData = useEditorTabStore((state) => state.setTabData)
+  const setActiveTab = useEditorTabStore((state) => state.setActiveTab)
+  const getTab = useEditorTabStore((state) => state.getTab)
 
   useEffect(() => {
     if (!project) return
@@ -75,18 +75,32 @@ export default function EditorFileStructure() {
     findMatchingItems()
   }, [searchTerm, filepaths])
 
-  /**
-   * Item click → open file tab
-   */
-  const handleItemClick = async (itemIds: string[]) => {
-    if (!dataProviderReference.current || itemIds.length === 0) return
+  const openFileTab = useCallback(
+    (filePath: string, fileName: string) => {
+      if (!getTab(filePath)) {
+        setTabData(filePath, {
+          fileName: fileName,
+          filePath: filePath,
+        })
+      }
+      setActiveTab(filePath)
+    },
+    [getTab, setActiveTab, setTabData],
+  )
 
-    const item = await dataProviderReference.current.getTreeItem(itemIds[0])
-    if (!item || item.isFolder) return
+  const handleItemClick = useCallback(
+    async (itemIds: string[]) => {
+      if (!dataProviderReference.current || itemIds.length === 0) return
 
-    const filename = item.data as string
-    openFileTab(filename)
-  }
+      const item = await dataProviderReference.current.getTreeItem(itemIds[0])
+      if (!item || item.isFolder) return
+
+      const filePath = item.data.path as string
+      const fileName = item.data.name as string
+      openFileTab(filePath, fileName)
+    },
+    [openFileTab],
+  )
 
   /**
    * Keyboard navigation (unchanged)
@@ -127,17 +141,6 @@ export default function EditorFileStructure() {
     if (!tree.current) return
     searchTerm ? tree.current.expandAll() : tree.current.collapseAll()
   }, [searchTerm])
-
-  const openFileTab = (filename: string) => {
-    if (!getTab(filename)) {
-      setTabData(filename, {
-        value: filename,
-        configurationName: filename,
-        flowJson: {},
-      })
-    }
-    setActiveTab(filename)
-  }
 
   /**
    * Rendering helpers (mostly unchanged)

@@ -1,7 +1,7 @@
 import React from 'react'
 import clsx from 'clsx'
 import CloseIcon from '/icons/custom/Close.svg?react'
-import type { TabsItem } from '~/components/tabs/tabs'
+import type { TabsItem } from '~/components/tabs/studio-tabs'
 import CodeIcon from '/icons/solar/Code.svg?react'
 
 export type TabProperties = {

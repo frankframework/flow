@@ -29,8 +29,8 @@ export async function getXmlString(projectName: string, filepath: string): Promi
   }
 }
 
-export async function getAdapterNamesFromConfiguration(projectName: string, filename: string): Promise<string[]> {
-  const xmlString = await getXmlString(projectName, filename)
+export async function getAdapterNamesFromConfiguration(projectName: string, filepath: string): Promise<string[]> {
+  const xmlString = await getXmlString(projectName, filepath)
 
   return new Promise((resolve, reject) => {
     const adapterNames: string[] = []

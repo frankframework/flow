@@ -433,9 +433,9 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
     try {
       if (tab.flowJson && Object.keys(tab.flowJson).length > 0) {
         restoreFlowFromTab(tab.value)
-      } else if (tab.configurationName && tab.value) {
+      } else if (tab.configurationPath && tab.value) {
         if (!project) return
-        const adapter = await getAdapterFromConfiguration(project.name, tab.configurationName, tab.value)
+        const adapter = await getAdapterFromConfiguration(project.name, tab.configurationPath, tab.value)
         if (!adapter) return
         const adapterJson = await convertAdapterXmlToJson(adapter)
         flowStore.setEdges(adapterJson.edges)
