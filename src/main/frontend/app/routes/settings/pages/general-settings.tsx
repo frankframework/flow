@@ -1,11 +1,10 @@
-import { type GeneralSettings, useSettingsStore } from '../settings-store'
+import { type GeneralSettings as GeneralSettingsType, useSettingsStore } from '../settings-store'
 import Dropdown from '~/components/inputs/dropdown'
 import CheckboxWithLabel from '~/components/inputs/checkbox-with-label'
 import InputWithLabel from '~/components/inputs/input-with-label'
 import Button from '~/components/inputs/button'
 import Input from '~/components/inputs/input'
 import RadioList from '~/components/inputs/radio-list'
-import Toggle from '~/components/inputs/toggle'
 import ValidatedInput from '~/components/inputs/validatedInput'
 
 export default function GeneralSettings() {
@@ -30,7 +29,7 @@ export default function GeneralSettings() {
             system: { System: 'Zelfde als je hebt' },
           }}
           value={general.theme}
-          onChange={(theme) => setGeneralSettings({ theme: theme as GeneralSettings['theme'] })}
+          onChange={(theme) => setGeneralSettings({ theme: theme as GeneralSettingsType['theme'] })}
         />
         <br />
         <Input onChange={console.log} />
@@ -56,7 +55,7 @@ export default function GeneralSettings() {
           <Dropdown
             id="theme"
             value={general.theme}
-            onChange={(theme) => setGeneralSettings({ theme: theme as GeneralSettings['theme'] })}
+            onChange={(theme) => setGeneralSettings({ theme: theme as GeneralSettingsType['theme'] })}
             options={{ light: 'Light', dark: 'Dark', system: 'System' }}
             className="w-100!"
           />

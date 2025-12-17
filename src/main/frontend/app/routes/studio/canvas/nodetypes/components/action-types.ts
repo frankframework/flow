@@ -1,4 +1,4 @@
-const ACTION_TYPES = {
+export const ACTION_TYPES = {
   SUCCESS: 'success',
   FAILURE: 'failure',
   EXCEPTION: 'exception',

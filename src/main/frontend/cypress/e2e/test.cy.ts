@@ -1,3 +1,3 @@
 describe('Application Routing', () => {
-
-});
+  /* empty */
+})

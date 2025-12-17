@@ -9,7 +9,8 @@ type CheckboxWithLabelProperties = {
 } & CheckboxProperties
 
 export default function CheckboxWithLabel({ id, label, description, ...properties }: CheckboxWithLabelProperties) {
-  const uniqueId = id ?? useId()
+  const generatedId = useId()
+  const uniqueId = id ?? generatedId
 
   return (
     <InputWithLabel htmlFor={uniqueId} label={label} description={description}>

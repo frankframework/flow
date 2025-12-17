@@ -2,18 +2,16 @@ package org.frankframework.flow.utility;
 
 import java.io.IOException;
 import java.io.StringReader;
-
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-
 import org.frankframework.flow.project.InvalidXmlContentException;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 public class XmlValidator {
 
-    private XmlValidator(){}
+    private XmlValidator() {}
 
     public static String validateXml(String xmlContent) {
         if (xmlContent == null || xmlContent.isBlank()) {

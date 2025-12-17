@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import HelpIcon from '/icons/solar/Help.svg?react'
 import { useJavadocTransform } from '@frankframework/ff-doc/react'
 import ContextInputField from './context-input-field'
+import type { Attribute, Elements } from '@frankframework/ff-doc'
 
 export interface ContextInputProperties {
   id: string
@@ -9,15 +10,9 @@ export interface ContextInputProperties {
   onChange: (value: string) => void
   onKeyDown?: (event: React.KeyboardEvent) => void
   label?: string
-  attribute?: {
-    [key: string]: any
-    mandatory?: boolean
-    description?: string
-    type?: string
-    enum?: string
-  }
+  attribute?: Attribute
   enumOptions?: Record<string, string> | undefined
-  elements?: Record<string, any> | null
+  elements?: Elements | null
 }
 
 export default function ContextInput({
@@ -54,10 +49,7 @@ export default function ContextInput({
   )
 }
 
-function DescriptionHelpIcon({
-  description,
-  elements,
-}: Readonly<{ description: string; elements: Record<string, any> | null }>) {
+function DescriptionHelpIcon({ description, elements }: Readonly<{ description: string; elements: Elements | null }>) {
   const [show, setShow] = useState(false)
   const transformed = useJavadocTransform(description, elements)
 

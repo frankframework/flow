@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import Tabs, { type TabsList } from '~/components/tabs/tabs'
+import { useState } from 'react'
+import Tabs from '~/components/tabs/tabs'
 import FileStructure from '~/components/file-structure/file-structure'
 import StudioContext from '~/routes/studio/context/studio-context'
 import Flow from '~/routes/studio/canvas/flow'

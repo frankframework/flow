@@ -8,7 +8,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.EnumMap;
 import java.util.Map;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -27,7 +26,9 @@ class ProjectSettingsTest {
         Map<FilterType, Boolean> filters = projectSettings.getFilters();
 
         assertNotNull(filters, "getFilters() should never return null");
-        assertEquals(FilterType.values().length, filters.size(),
+        assertEquals(
+                FilterType.values().length,
+                filters.size(),
                 "getFilters() should contain an entry for every FilterType");
         for (FilterType type : FilterType.values()) {
             assertFalse(filters.get(type), "Default value should be false for: " + type);
@@ -38,7 +39,9 @@ class ProjectSettingsTest {
     void testSetFiltersShouldReplaceInternalMap() {
         // Verify all values start as fakse
         for (FilterType type : FilterType.values()) {
-            assertFalse(projectSettings.getFilters().get(type), "Filter should be false in a new ProjectSettings object: " + type);
+            assertFalse(
+                    projectSettings.getFilters().get(type),
+                    "Filter should be false in a new ProjectSettings object: " + type);
         }
 
         EnumMap<FilterType, Boolean> newFilters = new EnumMap<>(FilterType.class);
@@ -62,8 +65,7 @@ class ProjectSettingsTest {
     @ParameterizedTest
     @EnumSource(FilterType.class)
     void testConstructorShouldInitializeAllFiltersToFalse(FilterType type) {
-        assertFalse(projectSettings.isEnabled(type),
-                "Each filter should default to false: " + type);
+        assertFalse(projectSettings.isEnabled(type), "Each filter should default to false: " + type);
     }
 
     @Test

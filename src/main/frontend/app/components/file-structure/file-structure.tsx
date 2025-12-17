@@ -1,4 +1,4 @@
-import React, { type JSX, useEffect, useRef, useState } from 'react'
+import React, { type JSX, useCallback, useEffect, useRef, useState } from 'react'
 import { getAdapterListenerType, getAdapterNamesFromConfiguration } from '~/routes/studio/xml-to-json-parser'
 import useTabStore from '~/stores/tab-store'
 import Search from '~/components/search/search'
@@ -67,7 +67,22 @@ export default function FileStructure() {
 
   useEffect(() => {
     const loadAdapters = async () => {
-      if (configs.length > 0) return
+      if (configs.length > 0 || !configurationNames) return
+
+      // eslint-disable-next-line unicorn/consistent-function-scoping
+      const fetchAdapter = async (configName: string, adapterName: string) => {
+        if (!project) return { adapterName, listenerName: null }
+        const listenerName = await getAdapterListenerType(project.name, configName, adapterName)
+        return { adapterName, listenerName }
+      }
+
+      const fetchConfig = async (configName: string): Promise<ConfigWithAdapters> => {
+        if (!project) return { configName, adapters: [] }
+
+        const adapterNames = await getAdapterNamesFromConfiguration(project.name, configName)
+        const adapters = await Promise.all(adapterNames.map((adapterName) => fetchAdapter(configName, adapterName)))
+        return { configName, adapters }
+      }
 
       try {
         const loaded = await Promise.all(configurationNames.map((name) => fetchConfig(name)))
@@ -80,20 +95,7 @@ export default function FileStructure() {
     }
 
     loadAdapters()
-  }, [configurationNames])
-
-  async function fetchConfig(configName: string): Promise<ConfigWithAdapters> {
-    if (!project) return { configName, adapters: [] } // fallback
-
-    const adapterNames = await getAdapterNamesFromConfiguration(project.name, configName)
-    const adapters = await Promise.all(adapterNames.map((adapterName) => fetchAdapter(configName, adapterName)))
-    return { configName, adapters }
-  }
-
-  async function fetchAdapter(configName: string, adapterName: string) {
-    const listenerName = await getAdapterListenerType(project.name, configName, adapterName)
-    return { adapterName, listenerName }
-  }
+  }, [configurationNames, configs.length, setConfigs, setIsLoading, project])
 
   useEffect(() => {
     const findMatchingItems = async () => {
@@ -110,7 +112,7 @@ export default function FileStructure() {
       const lower = searchTerm.toLowerCase()
       const matches = allItems
         .filter((item: TreeItem<unknown>) => getItemTitle(item).toLowerCase().includes(lower))
-        .map((item: TreeItem<unknown>) => item.index)
+        .map((item: TreeItem<unknown>) => String(item.index))
 
       setMatchingItemIds(matches)
 
@@ -129,6 +131,39 @@ export default function FileStructure() {
   useEffect(() => {
     dataProviderReference.current.updateData(configs)
   }, [configs])
+
+  const openNewTab = useCallback(
+    (adapterName: string, configName: string) => {
+      if (!getTab(adapterName)) {
+        setTabData(adapterName, {
+          value: adapterName,
+          configurationName: configName,
+          flowJson: {},
+        })
+      }
+
+      setActiveTab(adapterName)
+    },
+    [getTab, setTabData, setActiveTab],
+  )
+
+  const handleItemClick = useCallback(
+    async (itemIds: (string | number)[], _treeId: string) => {
+      if (!dataProviderReference.current || itemIds.length === 0) return
+
+      const itemId = itemIds[0]
+      const item = await dataProviderReference.current.getTreeItem(itemId)
+
+      if (!item || item.isFolder) return
+
+      const data = item.data
+      if (typeof data === 'object' && data !== null && 'adapterName' in data && 'configName' in data) {
+        const { adapterName, configName } = data as { adapterName: string; configName: string }
+        openNewTab(adapterName, configName)
+      }
+    },
+    [openNewTab],
+  )
 
   // Listener for tab and enter keys
   useEffect(() => {
@@ -156,14 +191,14 @@ export default function FileStructure() {
         // If nothing highlighted yet, select the first match
         const targetItemId = highlightedItemId || matchingItemIds[0]
         if (targetItemId) {
-          handleItemClick([targetItemId])
+          await handleItemClick([targetItemId], TREE_ID)
         }
       }
     }
 
     globalThis.addEventListener('keydown', handleKeyDown)
     return () => globalThis.removeEventListener('keydown', handleKeyDown)
-  }, [matchingItemIds, highlightedItemId])
+  }, [matchingItemIds, highlightedItemId, handleItemClick])
 
   useEffect(() => {
     if (activeMatchIndex === -1 || !tree.current) return
@@ -173,7 +208,7 @@ export default function FileStructure() {
 
     // set visual highlight only
     setHighlightedItemId(itemId)
-  }, [activeMatchIndex])
+  }, [activeMatchIndex, matchingItemIds])
 
   useEffect(() => {
     // Collapse all folders when no search term is entered
@@ -196,33 +231,6 @@ export default function FileStructure() {
     const treeReference = tree.current
     if (!treeReference) return
     treeReference.expandAll()
-  }
-
-  const handleItemClick = async (itemIds: string[]) => {
-    if (!dataProviderReference.current || itemIds.length === 0) return
-
-    const itemId = itemIds[0]
-    const item = await dataProviderReference.current.getTreeItem(itemId)
-
-    if (!item || item.isFolder) return
-
-    const data = item.data
-    if (typeof data === 'object' && data !== null && 'adapterName' in data && 'configName' in data) {
-      const { adapterName, configName } = data as { adapterName: string; configName: string }
-      openNewTab(adapterName, configName)
-    }
-  }
-
-  const openNewTab = (adapterName: string, configName: string) => {
-    if (!getTab(adapterName)) {
-      setTabData(adapterName, {
-        value: adapterName,
-        configurationName: configName,
-        flowJson: {},
-      })
-    }
-
-    setActiveTab(adapterName)
   }
 
   const renderItemArrow = ({ item, context }: { item: TreeItem<unknown>; context: TreeItemRenderContext }) => {
@@ -296,12 +304,13 @@ export default function FileStructure() {
     )
   }
 
-  return (
-    <>
-      <Search onChange={(event) => setSearchTerm(event.target.value)} />
-      {isLoading ? (
-        <p>Loading configurations...</p>
-      ) : configs.length === 0 ? (
+  const renderContent = () => {
+    if (isLoading) {
+      return <p>Loading configurations...</p>
+    }
+
+    if (configs.length === 0) {
+      return (
         <p className="p-2 text-center">
           No configurations found, load in a project through the&nbsp;
           <Link to="/" className="font-medium text-blue-600 hover:underline">
@@ -309,23 +318,32 @@ export default function FileStructure() {
           </Link>
           .
         </p>
-      ) : (
-        <div className="overflow-auto pr-2">
-          <UncontrolledTreeEnvironment
-            viewState={{}}
-            getItemTitle={getItemTitle}
-            dataProvider={dataProviderReference.current}
-            onSelectItems={handleItemClick}
-            canDragAndDrop={true}
-            canDropOnFolder={true}
-            canSearch={false}
-            renderItemArrow={renderItemArrow}
-            renderItemTitle={renderItemTitle}
-          >
-            <Tree treeId={TREE_ID} rootItem="root" ref={tree} treeLabel="Files" />
-          </UncontrolledTreeEnvironment>
-        </div>
-      )}
+      )
+    }
+
+    return (
+      <div className="overflow-auto pr-2">
+        <UncontrolledTreeEnvironment
+          viewState={{}}
+          getItemTitle={getItemTitle}
+          dataProvider={dataProviderReference.current}
+          onSelectItems={handleItemClick}
+          canDragAndDrop={true}
+          canDropOnFolder={true}
+          canSearch={false}
+          renderItemArrow={renderItemArrow}
+          renderItemTitle={renderItemTitle}
+        >
+          <Tree treeId={TREE_ID} rootItem="root" ref={tree} treeLabel="Files" />
+        </UncontrolledTreeEnvironment>
+      </div>
+    )
+  }
+
+  return (
+    <>
+      <Search onChange={(event) => setSearchTerm(event.target.value)} />
+      {renderContent()}
     </>
   )
 }

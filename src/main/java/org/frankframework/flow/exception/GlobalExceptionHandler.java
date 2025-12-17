@@ -31,20 +31,17 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponseDTO> handleGeneralError(Exception ex) {
         ex.printStackTrace();
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new ErrorResponseDTO("InternalServerError",
-                        "An unexpected error occurred."));
+                .body(new ErrorResponseDTO("InternalServerError", "An unexpected error occurred."));
     }
 
     @ExceptionHandler(InvalidFilterTypeException.class)
     public ResponseEntity<ErrorResponseDTO> handleInvalidFilter(InvalidFilterTypeException ex) {
-        return ResponseEntity.badRequest()
-                .body(new ErrorResponseDTO("InvalidFilterType", ex.getMessage()));
+        return ResponseEntity.badRequest().body(new ErrorResponseDTO("InvalidFilterType", ex.getMessage()));
     }
 
     @ExceptionHandler(InvalidXmlContentException.class)
     public ResponseEntity<ErrorResponseDTO> handleInvalidXml(InvalidXmlContentException ex) {
-        return ResponseEntity.badRequest()
-                .body(new ErrorResponseDTO("InvalidXmlContent", ex.getMessage()));
+        return ResponseEntity.badRequest().body(new ErrorResponseDTO("InvalidXmlContent", ex.getMessage()));
     }
 
     @ExceptionHandler(AdapterNotFoundException.class)
@@ -53,4 +50,9 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponseDTO("AdapterNotFound", ex.getMessage()));
     }
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponseDTO> handleIllegalArgumentException(IllegalArgumentException exception) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponseDTO("Illegal Argument", exception.getMessage()));
+    }
 }

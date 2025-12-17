@@ -16,7 +16,8 @@ export default function RadioButton({
   id,
   ...properties
 }: RadioButtonProperties) {
-  const uniqueId = id ?? useId()
+  const generatedId = useId()
+  const uniqueId = id ?? generatedId
   const [isSelected, setIsSelected] = useState(checked)
 
   useEffect(() => {

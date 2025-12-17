@@ -13,12 +13,12 @@ export default function AddConfigurationModal({
   onClose,
   currentProject,
 }: Readonly<AddConfigurationModalProperties>) {
-  if (!isOpen) return null
-
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [filename, setFilename] = useState<string>('')
   const setProject = useProjectStore((s) => s.setProject)
+
+  if (!isOpen) return null
 
   const handleAdd = async () => {
     setLoading(true)
@@ -50,8 +50,8 @@ export default function AddConfigurationModal({
       const updatedProject = await response.json()
       setProject(updatedProject)
       onClose()
-    } catch (error_: any) {
-      setError(error_?.message ?? 'Failed to add configuration')
+    } catch (error_: unknown) {
+      setError(error_ instanceof Error ? error_.message : 'Failed to add configuration')
     } finally {
       setLoading(false)
     }

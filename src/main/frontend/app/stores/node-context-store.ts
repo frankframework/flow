@@ -1,14 +1,15 @@
 import { create } from 'zustand'
+import type { Attribute } from '~/types/ff-doc.types'
 
 interface NodeContextStore {
-  attributes: any
+  attributes: Record<string, Attribute> | undefined
   nodeId: number
   isEditing: boolean
   parentId: string | null
   childParentId: string | null
   draggedName: string | null
   setNodeId: (nodeId: number) => void
-  setAttributes: (attributes: any[]) => void
+  setAttributes: (attributes?: Record<string, Attribute>) => void
   setIsEditing: (value: boolean) => void
   resetAttributes: () => void
   setParentId: (id: string | null) => void
@@ -17,7 +18,7 @@ interface NodeContextStore {
 }
 
 const useNodeContextStore = create<NodeContextStore>((set) => ({
-  attributes: [{ name: 'placeholder attribute' }, { param: 'placeholder attribute' }],
+  attributes: undefined,
   nodeId: 0,
   isEditing: false,
   parentId: null,
@@ -26,7 +27,7 @@ const useNodeContextStore = create<NodeContextStore>((set) => ({
   setNodeId: (nodeId) => set({ nodeId }),
   setAttributes: (attributes) => set({ attributes }),
   setIsEditing: (value) => set({ isEditing: value }),
-  resetAttributes: () => set({ attributes: [] }),
+  resetAttributes: () => set({ attributes: undefined }),
   setParentId: (parentId: string | null) => set({ parentId }),
   setChildParentId: (childParentId: string | null) => set({ childParentId }),
   setDraggedName: (draggedName) => set({ draggedName }),
