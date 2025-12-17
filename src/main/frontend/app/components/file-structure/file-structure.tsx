@@ -65,29 +65,24 @@ export default function FileStructure() {
   const setActiveTab = useTabStore((state) => state.setActiveTab)
   const getTab = useTabStore((state) => state.getTab)
 
-  const fetchAdapter = useCallback(
-    async (configName: string, adapterName: string) => {
-      if (!project) return { adapterName, listenerName: null }
-      const listenerName = await getAdapterListenerType(project.name, configName, adapterName)
-      return { adapterName, listenerName }
-    },
-    [project],
-  )
-
-  const fetchConfig = useCallback(
-    async (configName: string): Promise<ConfigWithAdapters> => {
-      if (!project) return { configName, adapters: [] }
-
-      const adapterNames = await getAdapterNamesFromConfiguration(project.name, configName)
-      const adapters = await Promise.all(adapterNames.map((adapterName) => fetchAdapter(configName, adapterName)))
-      return { configName, adapters }
-    },
-    [project, fetchAdapter],
-  )
-
   useEffect(() => {
     const loadAdapters = async () => {
       if (configs.length > 0 || !configurationNames) return
+
+      // eslint-disable-next-line unicorn/consistent-function-scoping
+      const fetchAdapter = async (configName: string, adapterName: string) => {
+        if (!project) return { adapterName, listenerName: null }
+        const listenerName = await getAdapterListenerType(project.name, configName, adapterName)
+        return { adapterName, listenerName }
+      }
+
+      const fetchConfig = async (configName: string): Promise<ConfigWithAdapters> => {
+        if (!project) return { configName, adapters: [] }
+
+        const adapterNames = await getAdapterNamesFromConfiguration(project.name, configName)
+        const adapters = await Promise.all(adapterNames.map((adapterName) => fetchAdapter(configName, adapterName)))
+        return { configName, adapters }
+      }
 
       try {
         const loaded = await Promise.all(configurationNames.map((name) => fetchConfig(name)))
@@ -100,7 +95,7 @@ export default function FileStructure() {
     }
 
     loadAdapters()
-  }, [configurationNames, configs.length, setConfigs, setIsLoading, fetchConfig])
+  }, [configurationNames, configs.length, setConfigs, setIsLoading, project])
 
   useEffect(() => {
     const findMatchingItems = async () => {
