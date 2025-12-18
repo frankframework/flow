@@ -19,12 +19,6 @@ export function TabsView<T extends string>({ tabs, activeTab, onSelectTab, onClo
   const shadowLeftReference = useRef<HTMLDivElement>(null)
   const shadowRightReference = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
-    calculateScrollShadows()
-    window.addEventListener('resize', calculateScrollShadows)
-    return () => window.removeEventListener('resize', calculateScrollShadows)
-  }, [tabs])
-
   const calculateScrollShadows = useCallback(() => {
     setTimeout(() => {
       if (
@@ -43,6 +37,12 @@ export function TabsView<T extends string>({ tabs, activeTab, onSelectTab, onClo
       setShadows(currentScroll, 1 - currentScroll)
     })
   }, [])
+
+  useEffect(() => {
+    calculateScrollShadows()
+    window.addEventListener('resize', calculateScrollShadows)
+    return () => window.removeEventListener('resize', calculateScrollShadows)
+  }, [calculateScrollShadows, tabs])
 
   useEffect(() => {
     calculateScrollShadows()

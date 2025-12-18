@@ -132,38 +132,32 @@ export default function FileStructure() {
     dataProviderReference.current.updateData(configs)
   }, [configs])
 
-  const openNewTab = useCallback(
-    (adapterName: string, configName: string) => {
-      if (!getTab(adapterName)) {
-        setTabData(adapterName, {
-          value: adapterName,
-          configurationName: configName,
-          flowJson: {},
-        })
-      }
+  const handleItemClick = async (itemIds: string[]) => {
+    if (!dataProviderReference.current || itemIds.length === 0) return
 
-      setActiveTab(adapterName)
-    },
-    [getTab, setTabData, setActiveTab],
-  )
+    const itemId = itemIds[0]
+    const item = await dataProviderReference.current.getTreeItem(itemId)
 
-  const handleItemClick = useCallback(
-    async (itemIds: (string | number)[], _treeId: string) => {
-      if (!dataProviderReference.current || itemIds.length === 0) return
+    if (!item || item.isFolder) return
 
-      const itemId = itemIds[0]
-      const item = await dataProviderReference.current.getTreeItem(itemId)
+    const data = item.data
+    if (typeof data === 'object' && data !== null && 'adapterName' in data && 'configPath' in data) {
+      const { adapterName, configPath } = data as { adapterName: string; configPath: string }
+      openNewTab(adapterName, configPath)
+    }
+  }
 
-      if (!item || item.isFolder) return
+  const openNewTab = (adapterName: string, configPath: string) => {
+    if (!getTab(adapterName)) {
+      setTabData(adapterName, {
+        value: adapterName,
+        configurationPath: configPath,
+        flowJson: {},
+      })
+    }
 
-      const data = item.data
-      if (typeof data === 'object' && data !== null && 'adapterName' in data && 'configName' in data) {
-        const { adapterName, configName } = data as { adapterName: string; configName: string }
-        openNewTab(adapterName, configName)
-      }
-    },
-    [openNewTab],
-  )
+    setActiveTab(adapterName)
+  }
 
   // Listener for tab and enter keys
   useEffect(() => {
@@ -191,7 +185,7 @@ export default function FileStructure() {
         // If nothing highlighted yet, select the first match
         const targetItemId = highlightedItemId || matchingItemIds[0]
         if (targetItemId) {
-          await handleItemClick([targetItemId], TREE_ID)
+          await handleItemClick([targetItemId])
         }
       }
     }
@@ -231,33 +225,6 @@ export default function FileStructure() {
     const treeReference = tree.current
     if (!treeReference) return
     treeReference.expandAll()
-  }
-
-  const handleItemClick = async (itemIds: string[]) => {
-    if (!dataProviderReference.current || itemIds.length === 0) return
-
-    const itemId = itemIds[0]
-    const item = await dataProviderReference.current.getTreeItem(itemId)
-
-    if (!item || item.isFolder) return
-
-    const data = item.data
-    if (typeof data === 'object' && data !== null && 'adapterName' in data && 'configPath' in data) {
-      const { adapterName, configPath } = data as { adapterName: string; configPath: string }
-      openNewTab(adapterName, configPath)
-    }
-  }
-
-  const openNewTab = (adapterName: string, configPath: string) => {
-    if (!getTab(adapterName)) {
-      setTabData(adapterName, {
-        value: adapterName,
-        configurationPath: configPath,
-        flowJson: {},
-      })
-    }
-
-    setActiveTab(adapterName)
   }
 
   const renderItemArrow = ({ item, context }: { item: TreeItem<unknown>; context: TreeItemRenderContext }) => {
