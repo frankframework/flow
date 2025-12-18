@@ -1,14 +1,12 @@
 package org.frankframework.flow.project;
 
-import org.junit.jupiter.api.Test;
-
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.List;
-
 import org.frankframework.flow.configuration.Configuration;
 import org.frankframework.flow.projectsettings.FilterType;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 class ProjectTest {
 
@@ -89,7 +87,8 @@ class ProjectTest {
 
     @Test
     void updateAdapterReplacesAdapterAndUpdatesXml() {
-        String originalXml = """
+        String originalXml =
+                """
                 <Configuration>
                     <Adapter name="OldAdapter">
                         <Settings>123</Settings>
@@ -100,7 +99,8 @@ class ProjectTest {
                 </Configuration>
                 """;
 
-        String newAdapterXml = """
+        String newAdapterXml =
+                """
                 <Adapter name="OldAdapter">
                     <Settings>999</Settings>
                 </Adapter>
@@ -116,19 +116,17 @@ class ProjectTest {
 
         String updatedXml = config.getXmlContent();
 
-        assertTrue(updatedXml.contains("<Settings>999</Settings>"),
-                "New adapter XML should be present");
+        assertTrue(updatedXml.contains("<Settings>999</Settings>"), "New adapter XML should be present");
 
-        assertFalse(updatedXml.contains("<Settings>123</Settings>"),
-                "Old adapter definition should be removed");
+        assertFalse(updatedXml.contains("<Settings>123</Settings>"), "Old adapter definition should be removed");
 
-        assertTrue(updatedXml.contains("OtherAdapter"),
-                "Other adapters must remain unchanged");
+        assertTrue(updatedXml.contains("OtherAdapter"), "Other adapters must remain unchanged");
     }
 
     @Test
     void updateAdapterReturnsFalseWhenAdapterNotFound() {
-        String originalXml = """
+        String originalXml =
+                """
                 <Configuration>
                     <Adapter name="A1"><X>1</X></Adapter>
                 </Configuration>
@@ -138,12 +136,10 @@ class ProjectTest {
         config.setXmlContent(originalXml);
         project.getConfigurations().add(config);
 
-        boolean result = project.updateAdapter("config1.xml", "MissingAdapter",
-                "<Adapter name=\"MissingAdapter\"/>");
+        boolean result = project.updateAdapter("config1.xml", "MissingAdapter", "<Adapter name=\"MissingAdapter\"/>");
 
         assertFalse(result, "Should return false if adapter does not exist");
-        assertEquals(originalXml, config.getXmlContent(),
-                "XML should remain unchanged when no adapter is replaced");
+        assertEquals(originalXml, config.getXmlContent(), "XML should remain unchanged when no adapter is replaced");
     }
 
     @Test
@@ -159,7 +155,6 @@ class ProjectTest {
         boolean result = project.updateAdapter("config1.xml", "A1", invalidXml);
 
         assertFalse(result, "Invalid XML should make updateAdapter return false");
-        assertEquals(originalXml, config.getXmlContent(),
-                "XML should remain unchanged after catching an exception");
+        assertEquals(originalXml, config.getXmlContent(), "XML should remain unchanged after catching an exception");
     }
 }

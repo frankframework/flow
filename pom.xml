@@ -94,11 +94,15 @@
 			<artifactId>spring-boot-testcontainers</artifactId>
 			<scope>test</scope>
 		</dependency>
-		<!-- Upgrade commons-compress because of vulnerability; transitive dep of testcontainers 1.19.x -->
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-compress</artifactId>
 			<version>${apache.commons.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-lang3</artifactId>
+			<version>3.20.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.projectlombok</groupId>

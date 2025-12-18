@@ -34,7 +34,7 @@ export function translateHandleTypeToColour(type: ActionType): string {
 
 export function CustomHandle(properties: Readonly<HandleProperties>) {
   const connections = useNodeConnections({ handleType: 'source', handleId: properties.index.toString() })
-  const [type, setType] = useState(properties.type)
+  const type = properties.type
   const reactFlow = useReactFlow()
 
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -51,7 +51,7 @@ export function CustomHandle(properties: Readonly<HandleProperties>) {
     setIsMenuOpen(!isMenuOpen) // Toggle menu visibility
   }
 
-  const handleMenuClick = (newType: string) => {
+  const handleMenuClick = (newType: ActionType) => {
     properties.onChangeType(newType) // Change the handle type
     setIsMenuOpen(false) // Close the menu after selection
   }

@@ -19,9 +19,10 @@ import variables from '../../../../../environment/environment'
 import { useSettingsStore } from '~/routes/settings/settings-store'
 import HandleMenu from './components/handle-menu'
 import type { ActionType } from './components/action-types'
-import { ChildNode } from './child-node'
+import { ChildNodeComponent, type ChildNode } from './child-node'
 import { findChildRecursive } from '~/stores/child-utilities'
 import { canAcceptChildStatic } from './node-utilities'
+import type { ElementDetails } from '@frankframework/ff-doc'
 
 export type FrankNodeType = Node<{
   subtype: string
@@ -44,13 +45,12 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
   const showNodeContextMenu = useNodeContextMenu()
   const FRANK_DOC_URL = variables.frankDocJsonUrl
   const { elements, filters } = useFFDoc(FRANK_DOC_URL)
-  const [dragForbidden, setDragForbidden] = useState(false)
   const { setNodeId, setAttributes, setParentId, setIsEditing, setDraggedName, draggedName } = useNodeContextStore()
   const gradientEnabled = useSettingsStore((state) => state.studio.gradient)
   // Store the associated Frank element
   const frankElement = useMemo(() => {
     if (!elements) return null
-    const recordElements = elements as Record<string, { name: string; [key: string]: any }>
+    const recordElements = elements as Record<string, ElementDetails>
 
     return Object.values(recordElements).find((element) => element.name === properties.data.subtype) ?? null
   }, [elements, properties.data.subtype])
@@ -77,7 +77,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
       const newHeight = containerReference.current.offsetHeight
       setDimensions((previous) => ({ ...previous, height: newHeight }))
     }
-  }, [dragOver])
+  }, [dragOver, properties.id, updateNodeInternals])
 
   useLayoutEffect(() => {
     if (containerReference.current) {
@@ -130,7 +130,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
     const child = findChildRecursive(properties.data.children, childId)
     if (!child) return
 
-    const recordElements = elements as Record<string, { name: string; [key: string]: any }>
+    const recordElements = elements as Record<string, ElementDetails>
     const attributes = Object.values(recordElements).find((element) => element.name === child.subtype)?.attributes
 
     setParentId(properties.id) // The FrankNode stays the parent for editing purposes
@@ -174,21 +174,17 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
 
     if (!allowed || isInsideChild) {
       setDragOver(false)
-      setDragForbidden(true)
     } else {
       setDragOver(true)
-      setDragForbidden(false)
     }
   }
 
   const handleDragLeave = () => {
     setDragOver(false)
-    setDragForbidden(false)
   }
 
   const handleDropOnNode = useCallback(
     (event: React.DragEvent) => {
-      setDragForbidden(false)
       setDragOver(false)
       setDraggedName(null)
       event.preventDefault()
@@ -307,7 +303,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
             <div className="border-border bg-background w-full rounded-md p-4 shadow-[inset_0px_2px_4px_rgba(0,0,0,0.1)]">
               {properties.data.children.map((child) => (
                 <div key={child.id} data-child-id={child.id} className="child-drop-zone">
-                  <ChildNode
+                  <ChildNodeComponent
                     child={child}
                     gradientEnabled={gradientEnabled}
                     onEdit={editChild}

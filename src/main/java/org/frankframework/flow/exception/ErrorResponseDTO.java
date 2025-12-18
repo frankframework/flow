@@ -9,4 +9,3 @@ public class ErrorResponseDTO {
         this.message = message;
     }
 }
-

@@ -1,5 +1,5 @@
 import Tabs, { type TabsList } from '~/components/tabs/tabs'
-import Editor, { type OnMount } from '@monaco-editor/react'
+import Editor, { type Monaco, type OnMount } from '@monaco-editor/react'
 import { toast, ToastContainer } from 'react-toastify'
 import FileStructure from '../../components/file-structure/file-structure'
 import SidebarHeader from '~/components/sidebars-layout/sidebar-header'
@@ -13,6 +13,7 @@ import { getXmlString } from '~/routes/studio/xml-to-json-parser'
 import variables from '../../../environment/environment'
 import { useFFDoc } from '@frankframework/ff-doc/react'
 import { useProjectStore } from '~/stores/project-store'
+import type { ElementDetails, Attribute, EnumValue } from '~/types/ff-doc.types'
 
 export default function CodeEditor() {
   const theme = useTheme()
@@ -26,7 +27,7 @@ export default function CodeEditor() {
   const decorationIdsReference = useRef<string[]>([])
   const [isSaving, setIsSaving] = useState(false)
 
-  const handleEditorMount: OnMount = (editor, monacoInstance) => {
+  const handleEditorMount: OnMount = (editor, _monacoInstance) => {
     editorReference.current = editor
   }
 
@@ -59,7 +60,7 @@ export default function CodeEditor() {
     }
 
     fetchXml()
-  }, [activeTab])
+  }, [activeTab, project])
 
   useEffect(() => {
     if (!xmlContent || !activeTab || !editorReference.current) return
@@ -81,7 +82,7 @@ export default function CodeEditor() {
     editor.setPosition({ lineNumber, column: 1 })
     editor.focus()
 
-    decorationIdsReference.current = editor.deltaDecorations(decorationIdsReference.current, [
+    const newDecorations = editor.createDecorationsCollection([
       {
         range: { startLineNumber: lineNumber, startColumn: 1, endLineNumber: lineNumber, endColumn: 1 },
         options: {
@@ -90,10 +91,11 @@ export default function CodeEditor() {
         },
       },
     ])
+    decorationIdsReference.current = newDecorations.getRanges().map(() => '')
 
     // Remove highlight after 2s
     const timeout = setTimeout(() => {
-      decorationIdsReference.current = editor.deltaDecorations(decorationIdsReference.current, [])
+      newDecorations.clear()
     }, 2000)
 
     // Optional cleanup if component unmounts before timeout
@@ -103,15 +105,20 @@ export default function CodeEditor() {
   useEffect(() => {
     // Handles all the suggestions
     if (!editorReference.current) return
-    const monacoInstance = (globalThis as any).monaco
+    const monacoInstance = (globalThis as { monaco?: Monaco }).monaco
     if (!monacoInstance) return
 
-    const isCursorInsideAttributeValue = (model, position) => {
+    type CompletionProvider = Parameters<Monaco['languages']['registerCompletionItemProvider']>[1]
+    type ProvideCompletionItems = CompletionProvider['provideCompletionItems']
+    type ITextModel = Parameters<ProvideCompletionItems>[0]
+    type Position = Parameters<ProvideCompletionItems>[1]
+
+    const isCursorInsideAttributeValue = (model: ITextModel, position: Position) => {
       const text = getTextBeforeCursor(model, position)
       return /="[^"]*$/.test(text)
     }
 
-    const getTextBeforeCursor = (model, position) => {
+    const getTextBeforeCursor = (model: ITextModel, position: Position) => {
       const line = model.getLineContent(position.lineNumber)
       return line.slice(0, position.column - 1)
     }
@@ -119,7 +126,7 @@ export default function CodeEditor() {
     // Element suggestions
     const elementProvider = monacoInstance.languages.registerCompletionItemProvider('xml', {
       triggerCharacters: ['<'],
-      provideCompletionItems: (model, position) => {
+      provideCompletionItems: (model: ITextModel, position: Position) => {
         if (isCursorInsideAttributeValue(model, position)) {
           return { suggestions: [] }
         }
@@ -127,9 +134,10 @@ export default function CodeEditor() {
         if (!elements) return { suggestions: [] }
 
         return {
-          suggestions: Object.values(elements).map((element: any) => {
-            const mandatoryAttributes = Object.entries(element.attributes || {})
-              .filter(([_, attribute]) => attribute.mandatory)
+          suggestions: Object.values(elements).map((el) => {
+            const element = el as ElementDetails
+            const mandatoryAttributes = Object.entries((element.attributes || {}) as Record<string, Attribute>)
+              .filter(([, attribute]) => attribute.mandatory)
               .map(([name], index) => {
                 if (index === 0) return `${name}="\${1}"`
                 return `${name}="\${${index + 2}}"`
@@ -154,10 +162,9 @@ export default function CodeEditor() {
       },
     })
 
-    // Attribute suggestions
     const attributeProvider = monacoInstance.languages.registerCompletionItemProvider('xml', {
       triggerCharacters: [' '],
-      provideCompletionItems: (model, position) => {
+      provideCompletionItems: (model: ITextModel, position: Position) => {
         if (isCursorInsideAttributeValue(model, position)) {
           return { suggestions: [] }
         }
@@ -166,32 +173,33 @@ export default function CodeEditor() {
         const tagMatch = textBeforeCursor.match(/<(\w+)/)
         if (!tagMatch) return { suggestions: [] }
 
-        // (rest unchanged)
-
         const tagName = tagMatch[1]
-        if (!elements) return
-        const element = elements[tagName]
-        if (!element || !element.attributes) return { suggestions: [] }
+        if (!elements) return { suggestions: [] }
+        const el = elements[tagName]
+        if (!el || !el.attributes) return { suggestions: [] }
 
-        const attributeSuggestions = Object.entries(element.attributes).flatMap(
-          ([attributeName, attributeValue]: [string, any]) => {
-            // Suggest enum values if defined
-            const enumValues = attributeValue?.enum ? Object.keys(attributeValue.enum) : []
+        const element = el as ElementDetails
 
-            return enumValues.length > 0
-              ? enumValues.map((value, index) => ({
-                  label: `${attributeName}="${value}"`,
-                  kind: monacoInstance.languages.CompletionItemKind.Enum,
-                  insertText: `${attributeName}="${value}"`,
-                  documentation: attributeValue?.enum[value]?.description || '',
-                }))
-              : {
-                  label: attributeName,
-                  kind: monacoInstance.languages.CompletionItemKind.Property,
-                  insertText: `${attributeName}="\${1}"`,
-                  insertTextRules: monacoInstance.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-                  documentation: attributeValue?.description || '',
-                }
+        const attributeSuggestions = Object.entries((element.attributes || {}) as Record<string, Attribute>).flatMap(
+          ([attributeName, attribute]) => {
+            if (attribute.enum && element.enums && element.enums[attribute.enum]) {
+              const enumRecord = element.enums[attribute.enum] as Record<string, EnumValue>
+              const enumValues = Object.entries(enumRecord)
+              return enumValues.map(([value]) => ({
+                label: `${attributeName}="${value}"`,
+                kind: monacoInstance.languages.CompletionItemKind.Enum,
+                insertText: `${attributeName}="${value}"`,
+                documentation: (attribute.description as string) || '',
+              }))
+            }
+
+            return {
+              label: attributeName,
+              kind: monacoInstance.languages.CompletionItemKind.Property,
+              insertText: `${attributeName}="\${1}"`,
+              insertTextRules: monacoInstance.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+              documentation: attribute.description || '',
+            }
           },
         )
 
@@ -204,7 +212,7 @@ export default function CodeEditor() {
       elementProvider.dispose()
       attributeProvider.dispose()
     }
-  }, [editorReference.current, elements])
+  }, [elements])
 
   const handleSelectTab = (key: string) => {
     useTabStore.getState().setActiveTab(key)
@@ -250,16 +258,16 @@ export default function CodeEditor() {
         if (contentType && contentType.includes('application/json')) {
           const errorData = await response.json()
           toast.error(`Error saving configuration: ${errorData.error}\nDetails: ${errorData.message}`)
-          console.error('Something went wrong saving the configuration: ', errorData)
+          console.error('Something went wrong saving the configuration:', errorData)
         } else {
           toast.error(`Error saving configuration. HTTP status: ${response.status}`)
-          console.error('Error saving configuration. HTTP status: ', response.status)
+          console.error('Error saving configuration. HTTP status:', response.status)
         }
         return
       }
     } catch (error) {
       toast.error(`Network or unexpected error: ${error}`)
-      console.error('Network or unexpected error: ', error)
+      console.error('Network or unexpected error:', error)
     } finally {
       setIsSaving(false)
     }

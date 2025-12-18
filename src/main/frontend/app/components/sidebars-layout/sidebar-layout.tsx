@@ -24,7 +24,7 @@ export default function SidebarLayout({
 
   useEffect(() => {
     initializeInstance(name, defaultVisible)
-  }, [])
+  }, [initializeInstance, name, defaultVisible])
 
   const saveVisible = (index: SidebarSide, value: boolean) => {
     setVisible(name, index, value)
@@ -54,7 +54,9 @@ export default function SidebarLayout({
           >
             {childrenArray[SidebarSide.LEFT]}
           </Allotment.Pane>
-          <Allotment.Pane className="flex h-full flex-col bg-backdrop">{childrenArray[SidebarSide.MIDDLE]}</Allotment.Pane>
+          <Allotment.Pane className="bg-backdrop flex h-full flex-col">
+            {childrenArray[SidebarSide.MIDDLE]}
+          </Allotment.Pane>
           {childrenArray[SidebarSide.RIGHT] && (
             <Allotment.Pane
               snap

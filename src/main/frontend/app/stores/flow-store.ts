@@ -64,10 +64,14 @@ function isStickyNote(node: FlowNode): node is StickyNote {
 function nextFreeNumericId(nodes: FlowNode[]): number {
   let max = -1
 
-  const scan = (ns: any[]) => {
+  const scan = (ns: FlowNode[]) => {
     for (const n of ns) {
       max = Math.max(max, Number(n.id) || 0)
-      if (n.data?.children?.length) scan(n.data.children)
+      if (isFrankNode(n) && n.data.children?.length) {
+        for (const child of n.data.children) {
+          max = Math.max(max, Number(child.id) || 0)
+        }
+      }
     }
   }
 
@@ -101,19 +105,20 @@ const useFlowStore = create<FlowState>((set, get) => ({
   },
   onReconnect: (oldEdge, newConnection) => {
     set({
-      edges: get()
-        .edges.filter((edge) => edge.id !== oldEdge.id)
-        .concat({
+      edges: [
+        ...get().edges.filter((edge) => edge.id !== oldEdge.id),
+        {
           ...newConnection,
           id: oldEdge.id,
           type: 'frankEdge',
-        }),
+        },
+      ],
     })
   },
-  setNodes: (nodes) => {
+  setNodes: (nodes: FlowNode[]): void => {
     set({ nodes })
   },
-  setEdges: (edges) => {
+  setEdges: (edges: Edge[]) => {
     set({ edges })
   },
   setViewport: (viewport) => {
@@ -217,7 +222,7 @@ const useFlowStore = create<FlowState>((set, get) => ({
     if (isFrankNode(node) || isExitNode(node)) return node.data.name ?? null
     return null
   },
-  addHandle: (nodeId, handle) => {
+  addHandle: (nodeId: string, handle: { type: ActionType; index: number }) => {
     set({
       nodes: get().nodes.map((node) => {
         if (node.id === nodeId && isFrankNode(node)) {
@@ -286,6 +291,8 @@ const useFlowStore = create<FlowState>((set, get) => ({
     set({
       nodes: get().nodes.map((node) => {
         if (node.id !== nodeId) return node
+
+        if (!isFrankNode(node)) return node
 
         return {
           ...node,

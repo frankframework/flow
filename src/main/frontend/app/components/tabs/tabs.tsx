@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useCallback, useEffect, useRef } from 'react'
 import Tab from '~/components/tabs/tab'
 import useTabStore from '~/stores/tab-store'
 import { useShallow } from 'zustand/react/shallow'
@@ -7,16 +7,25 @@ export type TabsList = Record<string, TabsItem>
 
 export interface TabsItem {
   value: string
-  icon?: React.FC<React.SVGProps<SVGSVGElement>>
-  flowJson?: Record<string, any>
+  icon?: React.ComponentType<React.SVGProps<SVGSVGElement>>
+  flowJson?: Record<string, unknown>
+  configurationName: string
 }
 
-export default function Tabs() {
+interface TabsProps {
+  tabs?: TabsList
+  selectedTab?: string
+  onSelectTab?: (key: string) => void
+  onCloseTab?: (key: string, event?: React.MouseEvent) => void
+}
+
+export default function Tabs(props?: TabsProps) {
   const tabsElementReference = useRef<HTMLDivElement>(null)
   const tabsListReference = useRef<HTMLUListElement>(null)
   const shadowLeftReference = useRef<HTMLDivElement>(null)
   const shadowRightReference = useRef<HTMLDivElement>(null)
-  const { tabs, activeTab, setActiveTab, removeTabAndSelectFallback } = useTabStore(
+
+  const storeData = useTabStore(
     useShallow((state) => ({
       tabs: state.tabs,
       activeTab: state.activeTab,
@@ -25,15 +34,19 @@ export default function Tabs() {
     })),
   )
 
-  useEffect(() => {
-    calculateScrollShadows()
-    window.addEventListener('resize', calculateScrollShadows)
-    return () => {
-      window.removeEventListener('resize', calculateScrollShadows)
-    }
-  }, [tabs])
+  const tabs = props?.tabs ?? storeData.tabs
+  const activeTab = props?.selectedTab ?? storeData.activeTab
+  const setActiveTab = props?.onSelectTab ?? storeData.setActiveTab
 
-  const calculateScrollShadows = () => {
+  const handleClose = (key: string) => {
+    if (props?.onCloseTab) {
+      props.onCloseTab(key)
+    } else {
+      storeData.removeTabAndSelectFallback(key)
+    }
+  }
+
+  const calculateScrollShadows = useCallback(() => {
     setTimeout(() => {
       if (
         !tabsElementReference.current ||
@@ -50,7 +63,15 @@ export default function Tabs() {
 
       setShadows(currentScroll, 1 - currentScroll)
     })
-  }
+  }, [])
+
+  useEffect(() => {
+    calculateScrollShadows()
+    window.addEventListener('resize', calculateScrollShadows)
+    return () => {
+      window.removeEventListener('resize', calculateScrollShadows)
+    }
+  }, [tabs, calculateScrollShadows])
 
   const setShadows = (left: number, right: number) => {
     if (shadowLeftReference.current) {
@@ -83,8 +104,10 @@ export default function Tabs() {
             value={tab.value}
             isSelected={activeTab === key}
             onSelect={() => setActiveTab(key)}
-            onClose={() => removeTabAndSelectFallback(key)}
+            onClose={() => handleClose(key)}
             icon={tab.icon}
+            configurationName={tab.configurationName}
+            flowJson={tab.flowJson}
           />
         ))}
       </ul>

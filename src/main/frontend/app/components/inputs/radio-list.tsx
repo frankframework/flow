@@ -22,7 +22,8 @@ export default function RadioList({
   id,
   ...properties
 }: Readonly<RadioListProperties>) {
-  const uniqueId = id ?? useId()
+  const generatedId = useId()
+  const uniqueId = id ?? generatedId
   const [selectedValue, setSelectedValue] = useState<string | undefined>(value)
 
   const optionsArray = Object.entries(options)

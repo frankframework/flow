@@ -1,8 +1,10 @@
 package org.frankframework.flow.project;
 
+import java.util.ArrayList;
+import java.util.List;
+import org.frankframework.flow.configuration.AdapterUpdateDTO;
 import org.frankframework.flow.configuration.Configuration;
 import org.frankframework.flow.configuration.ConfigurationDTO;
-import org.frankframework.flow.configuration.AdapterUpdateDTO;
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
 import org.frankframework.flow.projectsettings.FilterType;
 import org.frankframework.flow.projectsettings.InvalidFilterTypeException;
@@ -18,40 +20,36 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @RestController()
 @RequestMapping("/projects")
 public class ProjectController {
-	private final ProjectService projectService;
+    private final ProjectService projectService;
 
-	public ProjectController(ProjectService projectService) {
-		this.projectService = projectService;
-	}
+    public ProjectController(ProjectService projectService) {
+        this.projectService = projectService;
+    }
 
-	@GetMapping
-	public ResponseEntity<List<ProjectDTO>> getAllProjects() {
-		List<ProjectDTO> projectDTOList = new ArrayList<>();
-		List<Project> projects = projectService.getProjects();
+    @GetMapping
+    public ResponseEntity<List<ProjectDTO>> getAllProjects() {
+        List<ProjectDTO> projectDTOList = new ArrayList<>();
+        List<Project> projects = projectService.getProjects();
 
-		for (Project project : projects) {
-			ProjectDTO dto = ProjectDTO.from(project);
-			projectDTOList.add(dto);
-		}
-		return ResponseEntity.ok(projectDTOList);
-	}
+        for (Project project : projects) {
+            ProjectDTO dto = ProjectDTO.from(project);
+            projectDTOList.add(dto);
+        }
+        return ResponseEntity.ok(projectDTOList);
+    }
 
-	@GetMapping("/{projectName}")
-	public ResponseEntity<ProjectDTO> getProject(@PathVariable String projectName)
-			throws ProjectNotFoundException {
+    @GetMapping("/{projectName}")
+    public ResponseEntity<ProjectDTO> getProject(@PathVariable String projectName) throws ProjectNotFoundException {
 
-		Project project = projectService.getProject(projectName);
+        Project project = projectService.getProject(projectName);
 
-		ProjectDTO dto = ProjectDTO.from(project);
+        ProjectDTO dto = ProjectDTO.from(project);
 
-		return ResponseEntity.ok(dto);
-	}
+        return ResponseEntity.ok(dto);
+    }
 
 	@PatchMapping("/{projectname}")
 	public ResponseEntity<ProjectDTO> patchProject(
@@ -112,7 +110,7 @@ public class ProjectController {
 			@RequestBody ConfigurationPathDTO requestBody)
 			throws ProjectNotFoundException, ConfigurationNotFoundException {
 
-		Project project = projectService.getProject(projectName);
+        Project project = projectService.getProject(projectName);
 
 		String filepath = requestBody.filepath();
 
@@ -125,7 +123,7 @@ public class ProjectController {
 		}
 
 		throw new ConfigurationNotFoundException(
-				"Configuration with filename: " + requestBody.filepath() + " cannot be found");
+				"Configuration with filepath: " + requestBody.filepath() + " cannot be found");
 	}
 
 	@PostMapping("/{projectname}/import-configurations")
@@ -148,81 +146,70 @@ public class ProjectController {
 		return ResponseEntity.ok(dto);
 	}
 
-	@PutMapping("/{projectName}/{filename}")
-	public ResponseEntity<Void> updateConfiguration(
-			@PathVariable String projectName,
-			@PathVariable String filename,
-			@RequestBody ConfigurationDTO configurationDTO)
-			throws ProjectNotFoundException, ConfigurationNotFoundException, InvalidXmlContentException {
+    @PutMapping("/{projectName}/{filename}")
+    public ResponseEntity<Void> updateConfiguration(
+            @PathVariable String projectName,
+            @PathVariable String filename,
+            @RequestBody ConfigurationDTO configurationDTO)
+            throws ProjectNotFoundException, ConfigurationNotFoundException, InvalidXmlContentException {
 
-		XmlValidator.validateXml(configurationDTO.xmlContent());
+        XmlValidator.validateXml(configurationDTO.xmlContent());
 
-		projectService.updateConfigurationXml(
-				projectName,
-				filename,
-				configurationDTO.xmlContent());
+        projectService.updateConfigurationXml(projectName, filename, configurationDTO.xmlContent());
 
-		return ResponseEntity.ok().build();
-	}
+        return ResponseEntity.ok().build();
+    }
 
-	@PutMapping("/{projectName}/{configurationName}/adapters/{adapterName}")
-	public ResponseEntity<Void> updateAdapter(
-			@PathVariable String projectName,
-			@PathVariable String configurationName,
-			@PathVariable String adapterName,
-			@RequestBody AdapterUpdateDTO adapterUpdateDTO) {
+    @PutMapping("/{projectName}/{configurationName}/adapters/{adapterName}")
+    public ResponseEntity<Void> updateAdapter(
+            @PathVariable String projectName,
+            @PathVariable String configurationName,
+            @PathVariable String adapterName,
+            @RequestBody AdapterUpdateDTO adapterUpdateDTO) {
 
-		boolean updated = projectService.updateAdapter(
-				projectName,
-				configurationName,
-				adapterName,
-				adapterUpdateDTO.adapterXml());
+        boolean updated = projectService.updateAdapter(
+                projectName, configurationName, adapterName, adapterUpdateDTO.adapterXml());
 
-		if (!updated) {
-			return ResponseEntity.notFound().build();
-		}
+        if (!updated) {
+            return ResponseEntity.notFound().build();
+        }
 
-		return ResponseEntity.ok().build();
-	}
+        return ResponseEntity.ok().build();
+    }
 
-	@PostMapping("/{projectname}")
-	public ResponseEntity<ProjectDTO> createProject(@PathVariable String projectname) {
-		Project project = projectService.createProject(projectname);
+    @PostMapping("/{projectname}")
+    public ResponseEntity<ProjectDTO> createProject(@PathVariable String projectname) {
+        Project project = projectService.createProject(projectname);
 
-		ProjectDTO dto = ProjectDTO.from(project);
+        ProjectDTO dto = ProjectDTO.from(project);
 
-		return ResponseEntity.ok(dto);
-	}
+        return ResponseEntity.ok(dto);
+    }
 
-	@PostMapping("/{projectname}/configurations/{configname}")
-	public ResponseEntity<ProjectDTO> addConfiguration(
-			@PathVariable String projectname,
-			@PathVariable String configname) throws ProjectNotFoundException {
-		Project project = projectService.addConfiguration(projectname, configname);
+    @PostMapping("/{projectname}/configurations/{configname}")
+    public ResponseEntity<ProjectDTO> addConfiguration(
+            @PathVariable String projectname, @PathVariable String configname) throws ProjectNotFoundException {
+        Project project = projectService.addConfiguration(projectname, configname);
 
-		ProjectDTO projectDTO = ProjectDTO.from(project);
-		return ResponseEntity.ok(projectDTO);
-	}
+        ProjectDTO projectDTO = ProjectDTO.from(project);
+        return ResponseEntity.ok(projectDTO);
+    }
 
-	@PatchMapping("/{projectname}/filters/{type}/enable")
-	public ResponseEntity<ProjectDTO> enableFilter(
-			@PathVariable String projectname,
-			@PathVariable String type)
-			throws ProjectNotFoundException, InvalidFilterTypeException {
+    @PatchMapping("/{projectname}/filters/{type}/enable")
+    public ResponseEntity<ProjectDTO> enableFilter(@PathVariable String projectname, @PathVariable String type)
+            throws ProjectNotFoundException, InvalidFilterTypeException {
 
-		Project project = projectService.enableFilter(projectname, type);
-		ProjectDTO dto = ProjectDTO.from(project);
-		return ResponseEntity.ok(dto);
-	}
+        Project project = projectService.enableFilter(projectname, type);
+        ProjectDTO dto = ProjectDTO.from(project);
+        return ResponseEntity.ok(dto);
+    }
 
-	@PatchMapping("/{projectname}/filters/{type}/disable")
-	public ResponseEntity<ProjectDTO> disableFilter(
-			@PathVariable String projectname,
-			@PathVariable String type)
-			throws ProjectNotFoundException, InvalidFilterTypeException {
+    @PatchMapping("/{projectname}/filters/{type}/disable")
+    public ResponseEntity<ProjectDTO> disableFilter(@PathVariable String projectname, @PathVariable String type)
+            throws ProjectNotFoundException, InvalidFilterTypeException {
 
-		Project project = projectService.disableFilter(projectname, type);
-		ProjectDTO dto = ProjectDTO.from(project);
-		return ResponseEntity.ok(dto);
-	}
+        Project project = projectService.disableFilter(projectname, type);
+        ProjectDTO dto = ProjectDTO.from(project);
+        return ResponseEntity.ok(dto);
+    }
 }
