@@ -7,6 +7,8 @@ import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 import lombok.Getter;
 import lombok.Setter;
 import org.frankframework.flow.configuration.Configuration;
@@ -18,7 +20,7 @@ import org.w3c.dom.*;
 @Getter
 @Setter
 public class Project {
-    private final String name;
+    private String name;
     private final ArrayList<Configuration> configurations;
     private final ProjectSettings projectSettings;
 

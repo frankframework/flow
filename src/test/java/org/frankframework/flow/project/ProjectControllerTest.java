@@ -149,7 +149,7 @@ class ProjectControllerTest {
                                 .andExpect(status().isNotFound())
                                 .andExpect(jsonPath("$.error").value("ConfigurationNotFound"))
                                 .andExpect(jsonPath("$.message")
-                                                .value("Configuration with filename: unknown.xml cannot be found"));
+                                                .value("Configuration with filepath: unknown.xml cannot be found"));
 
         verify(projectService).getProject("MyProject");
     }
