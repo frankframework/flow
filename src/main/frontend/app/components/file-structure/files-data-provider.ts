@@ -46,6 +46,7 @@ export default class FilesDataProvider implements TreeDataProvider {
     this.data[item.index].data = name
   }
 
+  // eslint-disable-next-line sonarjs/cognitive-complexity
   private buildTree(configs: ConfigWithAdapters[]) {
     const newData: Record<TreeItemIndex, TreeItem> = {
       root: {

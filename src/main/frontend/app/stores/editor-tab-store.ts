@@ -46,7 +46,9 @@ const useEditorTabStore = create<EditorTabStoreState>()(
         const remainingKeys = Object.keys(newTabs)
         return {
           tabs: newTabs,
-          activeTabFilePath: remainingKeys.includes(state.activeTabFilePath) ? state.activeTabFilePath : (remainingKeys.at(-1) ?? ''),
+          activeTabFilePath: remainingKeys.includes(state.activeTabFilePath)
+            ? state.activeTabFilePath
+            : (remainingKeys.at(-1) ?? ''),
         }
       }),
     clearTabs: () => set({ tabs: {}, activeTabFilePath: '' }),

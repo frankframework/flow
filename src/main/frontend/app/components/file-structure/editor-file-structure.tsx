@@ -19,7 +19,7 @@ import useEditorTabStore from '~/stores/editor-tab-store'
 import { useProjectStore } from '~/stores/project-store'
 import EditorFilesDataProvider, { type FileNode } from './editor-data-provider'
 
-const TREE_ID = 'editor-files-tree' 
+const TREE_ID = 'editor-files-tree'
 
 function getItemTitle(item: TreeItem<FileNode>): string {
   return typeof item.data.name === 'string' ? item.data.name : 'Unnamed'
@@ -140,8 +140,23 @@ export default function EditorFileStructure() {
    */
   useEffect(() => {
     if (!tree.current) return
-    searchTerm ? tree.current.expandAll() : tree.current.collapseAll()
+
+    if (searchTerm) {
+      tree.current.expandAll()
+    } else {
+      tree.current.collapseAll()
+    }
   }, [searchTerm])
+
+  useEffect(() => {
+    if (activeMatchIndex === -1 || !tree.current) return
+
+    const itemId = matchingItemIds[activeMatchIndex]
+    if (!itemId) return
+
+    // set visual highlight only
+    setHighlightedItemId(itemId)
+  }, [activeMatchIndex, matchingItemIds])
 
   /**
    * Rendering helpers (mostly unchanged)

@@ -16,4 +16,3 @@ export default function EditorTabs() {
     <TabsView tabs={tabs} activeTab={activeTab} onSelectTab={setActiveTab} onCloseTab={removeTabAndSelectFallback} />
   )
 }
-

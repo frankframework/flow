@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import StudioTabs from '~/components/tabs/studio-tabs'
 import FileStructure from '~/components/file-structure/file-structure'
 import StudioContext from '~/routes/studio/context/studio-context'

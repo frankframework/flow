@@ -1,4 +1,4 @@
-import React, { type JSX, useCallback, useEffect, useRef, useState } from 'react'
+import React, { type JSX, useEffect, useRef, useState } from 'react'
 import { getAdapterListenerType, getAdapterNamesFromConfiguration } from '~/routes/studio/xml-to-json-parser'
 import useTabStore from '~/stores/tab-store'
 import Search from '~/components/search/search'

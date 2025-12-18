@@ -1,4 +1,3 @@
-import StudioTabs, { type TabsList } from '~/components/tabs/studio-tabs'
 import Editor, { type Monaco, type OnMount } from '@monaco-editor/react'
 import { toast, ToastContainer } from 'react-toastify'
 import SidebarHeader from '~/components/sidebars-layout/sidebar-header'
@@ -7,7 +6,7 @@ import { SidebarSide } from '~/components/sidebars-layout/sidebar-layout-store'
 import SidebarContentClose from '~/components/sidebars-layout/sidebar-content-close'
 import useTabStore from '~/stores/tab-store'
 import { useTheme } from '~/hooks/use-theme'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { getXmlString } from '~/routes/studio/xml-to-json-parser'
 import variables from '../../../environment/environment'
 import { useFFDoc } from '@frankframework/ff-doc/react'
@@ -218,9 +217,9 @@ export default function CodeEditor() {
     }
   }, [elements])
 
-  const handleSelectTab = (key: string) => {
+  const handleSelectTab = useCallback((key: string) => {
     useTabStore.getState().setActiveTab(key)
-  }
+  }, [])
 
   const handleCloseTab = (key: string, event?: React.MouseEvent) => {
     event?.stopPropagation()
@@ -239,7 +238,7 @@ export default function CodeEditor() {
 
   const handleSave = async () => {
     if (!project || !activeTabFilePath) return
-    const configName = useTabStore.getState().getTab(activeTabFilePath)?.configurationName
+    const configName = useTabStore.getState().getTab(activeTabFilePath)?.configurationPath
     if (!configName) return
 
     const editor = editorReference.current

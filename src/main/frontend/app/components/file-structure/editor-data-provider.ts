@@ -47,21 +47,22 @@ export default class EditorFilesDataProvider implements TreeDataProvider {
     this.data[item.index].data.name = name
   }
 
+  // eslint-disable-next-line sonarjs/cognitive-complexity
   private buildTree(rootName: string, paths: string[]) {
-    const newData: Record<TreeItemIndex, TreeItem<FileNode>> = {}
-
-    // Root
-    newData['root'] = {
-      index: 'root',
-      data: {
-        name: rootName,
-        path: '',
-        isDirectory: true,
+    const newData: Record<TreeItemIndex, TreeItem<FileNode>> = {
+      ['root']: {
+        index: 'root',
+        data: {
+          name: rootName,
+          path: '',
+          isDirectory: true,
+        },
+        children: [],
+        isFolder: true,
       },
-      children: [],
-      isFolder: true,
     }
 
+    // Root
     for (const fullPath of paths) {
       const parts = fullPath.split('/')
 

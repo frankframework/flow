@@ -515,22 +515,6 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
     flowStore.setViewport({ x: 0, y: 0, zoom: 1 })
   }
 
-  const exportToXml = () => {
-    const flowData = reactFlow.toObject()
-    const activeTabName = useTabStore.getState().activeTab
-    const xmlString = exportFlowToXml(flowData, activeTabName)
-    const fileName = 'FlowConfiguration.xml'
-    const blob = new Blob([xmlString], { type: 'application/xml' })
-    const url = URL.createObjectURL(blob)
-
-    const link = document.createElement('a')
-    link.href = url
-    link.download = fileName
-    link.click()
-
-    URL.revokeObjectURL(url)
-  }
-
   const saveFlow = async () => {
     const flowData = reactFlow.toObject()
     const activeTabName = useTabStore.getState().activeTab
