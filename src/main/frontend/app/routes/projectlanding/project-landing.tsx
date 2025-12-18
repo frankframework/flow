@@ -10,7 +10,7 @@ import ProjectModal from './project-modal'
 
 export interface Project {
   name: string
-  filenames: string[]
+  filepaths: string[]
   filters: Record<string, boolean> // key = filter name (e.g. "HTTP"), value = true/false
 }
 

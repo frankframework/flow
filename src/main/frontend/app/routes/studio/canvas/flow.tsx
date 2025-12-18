@@ -498,9 +498,10 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
     const flowJson = tabData?.flowJson
 
     if (flowJson) {
-      flowStore.setNodes(flowJson.nodes || [])
-      flowStore.setEdges(flowJson.edges || [])
-      flowStore.setViewport(flowJson.viewport || { x: 0, y: 0, zoom: 1 })
+      flowStore.setNodes(Array.isArray(flowJson.nodes) ? flowJson.nodes : [])
+      flowStore.setEdges(Array.isArray(flowJson.edges) ? flowJson.edges : [])
+      const viewport = flowJson.viewport as { x: number; y: number; zoom: number } | undefined
+      flowStore.setViewport(viewport && true ? viewport : { x: 0, y: 0, zoom: 1 })
     } else {
       flowStore.setNodes([])
       flowStore.setEdges([])
