@@ -8,6 +8,13 @@
 # normalization without any content checks, effectively setting the text
 # attribute.
 *.java         text eol=lf
+*.ts           text eol=lf
+*.tsx          text eol=lf
+*.json         text eol=lf
+*.cjs          text eol=lf
+*.mjs          text eol=lf
+*.html         text eol=lf
+*.svg          text eol=lf
 *.xml          text eol=lf
 *.xsl          text eol=lf
 *.xslt         text eol=lf

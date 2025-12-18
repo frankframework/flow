@@ -8,7 +8,7 @@ export type GroupNode = Node<{
   height: number
 }>
 
-export default function GroupNodeComponent({ data, selected }: NodeProps<GroupNode>) {
+export default function GroupNodeComponent({ data, selected: _selected }: NodeProps<GroupNode>) {
   const [dimensions, setDimensions] = useState({
     width: data.width,
     height: data.height,

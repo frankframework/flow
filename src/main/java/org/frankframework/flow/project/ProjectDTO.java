@@ -16,9 +16,6 @@ public record ProjectDTO(String name, List<String> filepaths, Map<FilterType, Bo
             filepaths.add(configuration.getFilepath());
         }
         return new ProjectDTO(
-            project.getName(),
-            filepaths,
-            project.getProjectSettings().getFilters()
-        );
+                project.getName(), filepaths, project.getProjectSettings().getFilters());
     }
 }

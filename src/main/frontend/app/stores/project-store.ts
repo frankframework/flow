@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { Project } from '~/routes/projects/projects'
+import type { Project } from '~/routes/projectlanding/project-landing'
 
 interface ProjectStoreState {
   project?: Project

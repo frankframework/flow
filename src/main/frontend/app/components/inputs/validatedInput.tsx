@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import clsx from 'clsx'
 import CheckSquareIcon from '/icons/solar/Check Square.svg?react'
 import CloseSquareIcon from '/icons/solar/Close Square.svg?react'
@@ -21,30 +21,33 @@ export default function ValidatedInput({
   const [checks, setChecks] = useState<Record<string, boolean>>({})
   const [inputValue, setInputValue] = useState(value)
 
+  const validateInput = useCallback(
+    (inputValue: string) => {
+      if (!patterns) {
+        setIsValid(true)
+        return
+      }
+
+      const newChecks: Record<string, boolean> = {}
+      for (const [name, pattern] of Object.entries(patterns)) {
+        newChecks[name] = pattern.test(inputValue)
+      }
+      const newIsValid = Object.keys(newChecks).length === 0 || Object.values(newChecks).every(Boolean)
+
+      setChecks(newChecks)
+      setIsValid(newIsValid)
+    },
+    [patterns],
+  )
+
   useEffect(() => {
     setInputValue(value)
     validateInput(value)
-  }, [value])
+  }, [value, validateInput])
 
   useEffect(() => {
     onValidChange?.(isValid)
   }, [isValid, onValidChange])
-
-  const validateInput = (inputValue: string) => {
-    if (!patterns) {
-      setIsValid(true)
-      return
-    }
-
-    const newChecks: Record<string, boolean> = {}
-    for (const [name, pattern] of Object.entries(patterns)) {
-      newChecks[name] = pattern.test(inputValue)
-    }
-    const newIsValid = Object.keys(newChecks).length === 0 || Object.values(newChecks).every(Boolean)
-
-    setChecks(newChecks)
-    setIsValid(newIsValid)
-  }
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = event.target.value

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import Tab from './tab'
 
 export interface TabsItem {
@@ -25,7 +25,7 @@ export function TabsView<T extends string>({ tabs, activeTab, onSelectTab, onClo
     return () => window.removeEventListener('resize', calculateScrollShadows)
   }, [tabs])
 
-  const calculateScrollShadows = () => {
+  const calculateScrollShadows = useCallback(() => {
     setTimeout(() => {
       if (
         !tabsElementReference.current ||
@@ -42,7 +42,15 @@ export function TabsView<T extends string>({ tabs, activeTab, onSelectTab, onClo
 
       setShadows(currentScroll, 1 - currentScroll)
     })
-  }
+  }, [])
+
+  useEffect(() => {
+    calculateScrollShadows()
+    window.addEventListener('resize', calculateScrollShadows)
+    return () => {
+      window.removeEventListener('resize', calculateScrollShadows)
+    }
+  }, [tabs, calculateScrollShadows])
 
   const setShadows = (left: number, right: number) => {
     if (shadowLeftReference.current) {
@@ -73,6 +81,8 @@ export function TabsView<T extends string>({ tabs, activeTab, onSelectTab, onClo
             onSelect={() => onSelectTab(key as T)}
             onClose={() => onCloseTab(key as T)}
             icon={tab.icon}
+            configurationName={tab.configurationName}
+            flowJson={tab.flowJson}
           />
         ))}
       </ul>

@@ -26,7 +26,7 @@ export default function NavbarLink({ route, label, Icon }: Readonly<NavbarLinkPr
         )}
         <span
           className={clsx(
-            'bg-neutral-950 text-white absolute top-1/2 left-full z-10 ml-2 hidden -translate-y-1/2 rounded px-2 py-1 text-sm whitespace-nowrap shadow-md group-hover:block',
+            'absolute top-1/2 left-full z-10 ml-2 hidden -translate-y-1/2 rounded bg-neutral-950 px-2 py-1 text-sm whitespace-nowrap text-white shadow-md group-hover:block',
           )}
         >
           {label}

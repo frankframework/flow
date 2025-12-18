@@ -7,9 +7,9 @@ interface ProjectModalProperties {
 }
 
 export default function ProjectModal({ isOpen, onClose, onCreate }: Readonly<ProjectModalProperties>) {
-  if (!isOpen) return null
-
   const [name, setName] = useState('')
+
+  if (!isOpen) return null
 
   const handleCreate = async () => {
     if (!name.trim()) return

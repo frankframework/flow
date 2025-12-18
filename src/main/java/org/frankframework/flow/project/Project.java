@@ -1,49 +1,38 @@
 package org.frankframework.flow.project;
 
-import org.frankframework.flow.configuration.Configuration;
-
 import java.io.ByteArrayInputStream;
 import java.io.StringWriter;
 import java.util.ArrayList;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import lombok.Getter;
+import lombok.Setter;
+import org.frankframework.flow.configuration.Configuration;
 import org.frankframework.flow.projectsettings.FilterType;
 import org.frankframework.flow.projectsettings.ProjectSettings;
+import org.frankframework.flow.utility.XmlSecurityUtils;
 import org.w3c.dom.*;
 
+@Getter
+@Setter
 public class Project {
-	private String name;
-	private ArrayList<Configuration> configurations;
-	private ProjectSettings projectSettings;
+    private String name;
+    private final ArrayList<Configuration> configurations;
+    private final ProjectSettings projectSettings;
 
-	public Project(String name) {
-		this.name = name;
-		this.configurations = new ArrayList<>();
-		this.projectSettings = new ProjectSettings();
-	}
+    public Project(String name) {
+        this.name = name;
+        this.configurations = new ArrayList<>();
+        this.projectSettings = new ProjectSettings();
+    }
 
-	public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
-	}
-
-	public ArrayList<Configuration> getConfigurations() {
-		return configurations;
-	}
-
-	public void addConfiguration(Configuration configuration) {
-		this.configurations.add(configuration);
-	}
+    public void addConfiguration(Configuration configuration) {
+        this.configurations.add(configuration);
+    }
 
 	public void setConfigurationXml(String filepath, String xmlContent) {
 		for (Configuration c : this.configurations) {
@@ -58,17 +47,17 @@ public class Project {
 		return this.projectSettings;
 	}
 
-	public boolean isFilterEnabled(FilterType type) {
-		return projectSettings.isEnabled(type);
-	}
+    public boolean isFilterEnabled(FilterType type) {
+        return projectSettings.isEnabled(type);
+    }
 
-	public void enableFilter(FilterType type) {
-		projectSettings.setEnabled(type, true);
-	}
+    public void enableFilter(FilterType type) {
+        projectSettings.setEnabled(type, true);
+    }
 
-	public void disableFilter(FilterType type) {
-		projectSettings.setEnabled(type, false);
-	}
+    public void disableFilter(FilterType type) {
+        projectSettings.setEnabled(type, false);
+    }
 
 	public void clearConfigurations() {
 		configurations.clear();
@@ -131,14 +120,13 @@ public class Project {
 		return false;
 	}
 
-	private String convertDocumentToString(Document doc) throws Exception {
-		TransformerFactory tf = TransformerFactory.newInstance();
-		Transformer transformer = tf.newTransformer();
-		transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-		transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
-		StringWriter writer = new StringWriter();
-		transformer.transform(new DOMSource(doc), new StreamResult(writer));
-		return writer.toString();
-	}
-
+    private String convertDocumentToString(Document doc) throws Exception {
+        Transformer transformer =
+                XmlSecurityUtils.createSecureTransformerFactory().newTransformer();
+        transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+        transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+        StringWriter writer = new StringWriter();
+        transformer.transform(new DOMSource(doc), new StreamResult(writer));
+        return writer.toString();
+    }
 }

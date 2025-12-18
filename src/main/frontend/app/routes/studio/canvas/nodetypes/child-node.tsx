@@ -3,7 +3,7 @@ import useFlowStore from '~/stores/flow-store'
 import { getElementTypeFromName } from '../../node-translator-module'
 import useNodeContextStore from '~/stores/node-context-store'
 import { useNodeContextMenu } from '../flow'
-import { canAcceptChildStatic } from './node-utilities'
+import { canAcceptChildStatic, type FrankElement } from './node-utilities'
 import variables from 'environment/environment'
 import { useFFDoc } from '@frankframework/ff-doc/react'
 
@@ -25,7 +25,13 @@ interface ChildNodeProperties {
   rootId: string
 }
 
-export function ChildNode({ child, gradientEnabled, onEdit, parentId, rootId }: Readonly<ChildNodeProperties>) {
+export function ChildNodeComponent({
+  child,
+  gradientEnabled,
+  onEdit,
+  parentId,
+  rootId,
+}: Readonly<ChildNodeProperties>) {
   const { setParentId, setChildParentId, setIsEditing, setDraggedName, draggedName } = useNodeContextStore()
   const showNodeContextMenu = useNodeContextMenu()
   const addChildToChild = useFlowStore((state) => state.addChildToChild)
@@ -37,7 +43,7 @@ export function ChildNode({ child, gradientEnabled, onEdit, parentId, rootId }: 
   // Store the associated Frank element
   const frankElement = useMemo(() => {
     if (!elements) return null
-    const recordElements = elements as Record<string, { name: string; [key: string]: any }>
+    const recordElements = elements as Record<string, { name: string; [key: string]: unknown }>
 
     return Object.values(recordElements).find((element) => element.name === child.subtype) ?? null
   }, [elements, child.subtype])
@@ -57,7 +63,7 @@ export function ChildNode({ child, gradientEnabled, onEdit, parentId, rootId }: 
 
     // If we are dragging over a nested ChildNode, do NOT show the drop zone
     const nestedNode = (event.target as HTMLElement).closest('[data-childnode-id]')
-    const isThisNode = nestedNode?.getAttribute('data-childnode-id') === child.id
+    const isThisNode = nestedNode instanceof HTMLElement && nestedNode.dataset.childnodeId === child.id
 
     event.dataTransfer.dropEffect = allowed ? 'copy' : 'none'
 
@@ -77,7 +83,7 @@ export function ChildNode({ child, gradientEnabled, onEdit, parentId, rootId }: 
 
   const canAcceptChild = useCallback(
     (droppedName: string) => {
-      return canAcceptChildStatic(frankElement, droppedName, filters)
+      return canAcceptChildStatic(frankElement as FrankElement | null, droppedName, filters)
     },
     [frankElement, filters],
   )
@@ -191,7 +197,7 @@ export function ChildNode({ child, gradientEnabled, onEdit, parentId, rootId }: 
         {child.children && child.children.length > 0 && (
           <div className="relative mt-2 pl-4">
             {child.children.map((nested) => (
-              <ChildNode
+              <ChildNodeComponent
                 key={nested.id}
                 child={nested}
                 gradientEnabled={gradientEnabled}
