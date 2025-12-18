@@ -14,6 +14,10 @@ export interface Project {
   filters: Record<string, boolean> // key = filter name (e.g. "HTTP"), value = true/false
 }
 
+interface DirectoryFile extends File {
+  webkitRelativePath: string
+}
+
 export default function ProjectLanding() {
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
@@ -57,8 +61,8 @@ export default function ProjectLanding() {
     if (!files || files.length === 0) return
 
     // Detect project root folder (first directory name)
-    const firstPath = (files[0] as any).webkitRelativePath
-    const projectRoot = firstPath.split('/')[0]
+    const firstFile = files[0] as DirectoryFile
+    const projectRoot = firstFile.webkitRelativePath.split('/')[0]
 
     // 1. Create project in backend
     await createProject(projectRoot)
@@ -66,8 +70,8 @@ export default function ProjectLanding() {
     // 2. Collect XML configuration files from /src/main/configurations
     const configs: { filepath: string; xmlContent: string }[] = []
 
-    for (const file of files) {
-      const relative = (file as any).webkitRelativePath
+    for (const file of [...files] as DirectoryFile[]) {
+      const relative = file.webkitRelativePath
 
       if (relative.startsWith(`${projectRoot}/src/main/configurations/`) && relative.endsWith('.xml')) {
         const content = await file.text() // read file content
@@ -152,7 +156,6 @@ export default function ProjectLanding() {
               style={{ display: 'none' }}
               onChange={handleFolderSelection}
               webkitdirectory="true"
-              directory=""
               multiple
             />
             <ActionButton label="Clone Repository" onClick={() => console.log('Cloning project')} />

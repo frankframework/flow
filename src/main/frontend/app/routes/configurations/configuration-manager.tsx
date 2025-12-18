@@ -33,7 +33,7 @@ export default function ConfigurationManager() {
           <AddConfigurationTile
             onClick={() => {
               setShowModal(true)
-            }} 
+            }}
           />
         </div>
       </div>
