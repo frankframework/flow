@@ -51,25 +51,51 @@ export default class FilesDataProvider implements TreeDataProvider {
       root: {
         index: 'root',
         data: 'Configurations',
-        children: configs.map((configuration) => configuration.configName),
+        children: [],
         isFolder: true,
       },
     }
 
     for (const { configName, adapters } of configs) {
-      const folderName = configName.replace(/\.xml$/i, '')
-      newData[configName] = {
-        index: configName,
-        data: folderName,
-        children: adapters.map((a) => a.adapterName),
-        isFolder: true,
-      }
+      // Remove the fixed src/main/configurations prefix
+      const relativePath = configName.replace(/^src\/main\/configurations\//, '')
 
-      for (const { adapterName, listenerName } of adapters) {
-        newData[adapterName] = {
-          index: adapterName,
-          data: { adapterName, configName, listenerName } satisfies AdapterNodeData,
-          isFolder: false,
+      // Split by / to create nested folders
+      const parts = relativePath.split('/') // e.g. ["AMQP", "Configuration.xml"]
+
+      let parentIndex = 'root'
+      for (let i = 0; i < parts.length; i++) {
+        const part = parts[i]
+        const isLast = i === parts.length - 1
+
+        const nodeIndex = `${parentIndex}/${part}` // unique index in tree
+
+        // If node does not exist yet, create it
+        if (!newData[nodeIndex]) {
+          newData[nodeIndex] = {
+            index: nodeIndex,
+            data: isLast ? part.replace(/\.xml$/i, '') : part,
+            children: isLast ? adapters.map((a) => a.adapterName) : [],
+            isFolder: !isLast || adapters.length > 0,
+          } as TreeItem
+        }
+
+        // Make sure parent has this child
+        const parentNode = newData[parentIndex]
+        if (!parentNode.children) parentNode.children = []
+        if (!parentNode.children.includes(nodeIndex)) parentNode.children.push(nodeIndex)
+
+        parentIndex = nodeIndex
+
+        // Add adapters as children to the XML file node
+        if (isLast) {
+          for (const { adapterName, listenerName } of adapters) {
+            newData[adapterName] = {
+              index: adapterName,
+              data: { adapterName, configName, listenerName } satisfies AdapterNodeData,
+              isFolder: false,
+            }
+          }
         }
       }
     }

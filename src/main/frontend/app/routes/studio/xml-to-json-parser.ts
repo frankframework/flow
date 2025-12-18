@@ -16,10 +16,16 @@ interface SourceHandle {
   index: number
 }
 
-export async function getXmlString(projectName: string, filename: string): Promise<string> {
+export async function getXmlString(projectName: string, filepath: string): Promise<string> {
   try {
-    const url = `/api/projects/${projectName}/${filename}`
-    const response = await fetch(url)
+    const response = await fetch(`/api/projects/${projectName}/configuration`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ filepath }),
+    })
+
     if (!response.ok) {
       throw new Error(`HTTP error! Status: ${response.status}`)
     }
@@ -27,7 +33,7 @@ export async function getXmlString(projectName: string, filename: string): Promi
     const data = await response.json()
     return data.xmlContent
   } catch (error) {
-    throw new Error(`Failed to fetch XML file for ${projectName}/${filename}: ${error}`)
+    throw new Error(`Failed to fetch XML file for ${filepath}: ${error}`)
   }
 }
 

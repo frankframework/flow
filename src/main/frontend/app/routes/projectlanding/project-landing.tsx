@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import FfIcon from '/icons/custom/ff!-icon.svg?react'
 import ArchiveIcon from '/icons/solar/Archive.svg?react'
 import ProjectRow from './project-row'
@@ -14,6 +14,10 @@ export interface Project {
   filters: Record<string, boolean> // key = filter name (e.g. "HTTP"), value = true/false
 }
 
+interface DirectoryFile extends File {
+  webkitRelativePath: string
+}
+
 export default function ProjectLanding() {
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
@@ -22,6 +26,7 @@ export default function ProjectLanding() {
   const [showModal, setShowModal] = useState(false)
   const clearProject = useProjectStore((state) => state.clearProject)
   const location = useLocation()
+  const fileInputReference = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -46,6 +51,47 @@ export default function ProjectLanding() {
   useEffect(() => {
     clearProject()
   }, [location.key, clearProject])
+
+  const handleOpenProject = () => {
+    fileInputReference.current?.click()
+  }
+
+  const handleFolderSelection = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files
+    if (!files || files.length === 0) return
+
+    // Detect project root folder (first directory name)
+    const firstFile = files[0] as DirectoryFile
+    const projectRoot = firstFile.webkitRelativePath.split('/')[0]
+
+    // 1. Create project in backend
+    await createProject(projectRoot)
+
+    // 2. Collect XML configuration files from /src/main/configurations
+    const configs: { filepath: string; xmlContent: string }[] = []
+
+    for (const file of [...files] as DirectoryFile[]) {
+      const relative = file.webkitRelativePath
+
+      if (relative.startsWith(`${projectRoot}/src/main/configurations/`) && relative.endsWith('.xml')) {
+        const content = await file.text() // read file content
+        configs.push({
+          filepath: relative.replace(`${projectRoot}/`, ''), // path relative to project root
+          xmlContent: content,
+        })
+      }
+    }
+
+    // Import configurations to the project
+    await fetch(`/api/projects/${projectRoot}/import-configurations`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        projectName: projectRoot,
+        configurations: configs,
+      }),
+    })
+  }
 
   const createProject = async (projectName: string) => {
     try {
@@ -102,7 +148,16 @@ export default function ProjectLanding() {
         <div className="flex flex-1 overflow-hidden">
           <div className="border-border text-muted-foreground w-1/4 border-r px-4 py-3 text-sm">
             <ActionButton label="New Project" onClick={() => setShowModal(true)} />
-            <ActionButton label="Open" onClick={() => console.log('Open project')} />
+            <ActionButton label="Open" onClick={handleOpenProject} />
+
+            <input
+              type="file"
+              ref={fileInputReference}
+              style={{ display: 'none' }}
+              onChange={handleFolderSelection}
+              webkitdirectory="true"
+              multiple
+            />
             <ActionButton label="Clone Repository" onClick={() => console.log('Cloning project')} />
           </div>
           <div className="h-full w-3/4 overflow-y-auto px-4 py-3">
