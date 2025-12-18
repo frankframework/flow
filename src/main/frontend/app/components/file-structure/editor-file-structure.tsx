@@ -103,9 +103,7 @@ export default function EditorFileStructure() {
     [openFileTab],
   )
 
-  /**
-   * Keyboard navigation (unchanged)
-   */
+  /* Keyboard navigation */
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
@@ -135,9 +133,7 @@ export default function EditorFileStructure() {
     return () => globalThis.removeEventListener('keydown', handleKeyDown)
   }, [matchingItemIds, highlightedItemId, handleItemClick])
 
-  /**
-   * Expand / collapse on search
-   */
+  /* Expand / collapse on search */
   useEffect(() => {
     if (!tree.current) return
 
@@ -158,9 +154,6 @@ export default function EditorFileStructure() {
     setHighlightedItemId(itemId)
   }, [activeMatchIndex, matchingItemIds])
 
-  /**
-   * Rendering helpers (mostly unchanged)
-   */
   const renderItemArrow = ({ item, context }: { item: TreeItem; context: TreeItemRenderContext }) => {
     if (!item.isFolder) return null
     const Icon = context.isExpanded ? AltArrowDownIcon : AltArrowRightIcon
