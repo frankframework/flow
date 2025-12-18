@@ -24,11 +24,11 @@ export default function ConfigurationManager() {
           <p>Return To Projects</p>
         </div>
         <p className="ml-2">
-          Configurations within <span className="font-bold">{currentProject?.name}</span>:
+          Configurations within <span className="font-bold">{currentProject?.name}</span>/src/main/configurations:
         </p>
-        <div className="flex">
-          {currentProject?.filenames.map((filename, index) => (
-            <ConfigurationTile key={filename + index} filename={filename} />
+        <div className="flex flex-wrap gap-4 pt-4">
+          {currentProject?.filepaths.map((filepath, index) => (
+            <ConfigurationTile key={filepath + index} filepath={filepath} />
           ))}
           <AddConfigurationTile
             onClick={() => {

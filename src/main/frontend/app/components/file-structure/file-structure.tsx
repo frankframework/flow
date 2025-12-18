@@ -60,14 +60,14 @@ export default function FileStructure() {
   const tree = useRef<TreeRef>(null)
   const dataProviderReference = useRef(new FilesDataProvider([]))
 
-  const configurationNames = useProjectStore((state) => state.project?.filenames)
+  const configurationPaths = useProjectStore((state) => state.project?.filepaths)
   const setTabData = useTabStore((state) => state.setTabData)
   const setActiveTab = useTabStore((state) => state.setActiveTab)
   const getTab = useTabStore((state) => state.getTab)
 
   useEffect(() => {
     const loadAdapters = async () => {
-      if (configs.length > 0 || !configurationNames) return
+      if (configs.length > 0 || !configurationPaths) return
 
       // eslint-disable-next-line unicorn/consistent-function-scoping
       const fetchAdapter = async (configName: string, adapterName: string) => {
@@ -85,7 +85,7 @@ export default function FileStructure() {
       }
 
       try {
-        const loaded = await Promise.all(configurationNames.map((name) => fetchConfig(name)))
+        const loaded = await Promise.all(configurationPaths.map((path) => fetchConfig(path)))
         setConfigs(loaded)
       } catch (error) {
         console.error('Failed to load adapter names:', error)
@@ -95,7 +95,7 @@ export default function FileStructure() {
     }
 
     loadAdapters()
-  }, [configurationNames, configs.length, setConfigs, setIsLoading, project])
+  }, [configurationPaths, configs.length, setConfigs, setIsLoading, project])
 
   useEffect(() => {
     const findMatchingItems = async () => {

@@ -47,7 +47,7 @@ class ProjectControllerTest {
         when(project.getName()).thenReturn("MyProject");
 
         Configuration config = mock(Configuration.class);
-        when(config.getFilename()).thenReturn("config1.xml");
+        when(config.getFilepath()).thenReturn("config1.xml");
 
         when(project.getConfigurations()).thenReturn(new ArrayList<>(List.of(config)));
 
@@ -75,7 +75,7 @@ class ProjectControllerTest {
         mockMvc.perform(get("/api/projects").accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].name").value("MyProject"))
-                .andExpect(jsonPath("$[0].filenames[0]").value("config1.xml"))
+                .andExpect(jsonPath("$[0].filepaths[0]").value("config1.xml"))
                 .andExpect(jsonPath("$[0].filters.ADAPTER").value(true))
                 .andExpect(jsonPath("$[0].filters.AMQP").value(false));
 
@@ -90,7 +90,7 @@ class ProjectControllerTest {
         mockMvc.perform(get("/api/projects/MyProject").accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("MyProject"))
-                .andExpect(jsonPath("$.filenames[0]").value("config1.xml"))
+                .andExpect(jsonPath("$.filepaths[0]").value("config1.xml"))
                 .andExpect(jsonPath("$.filters.ADAPTER").value(true))
                 .andExpect(jsonPath("$.filters.AMQP").value(false));
 
@@ -105,19 +105,28 @@ class ProjectControllerTest {
     }
 
     @Test
-    void getConfigurationReturnsExpectedJson() throws Exception {
+    void getConfigurationByPathReturnsExpectedJson() throws Exception {
         Project project = mockProject();
         Configuration config = project.getConfigurations().get(0);
 
-        when(config.getFilename()).thenReturn("config1.xml");
+        when(config.getFilepath()).thenReturn("config1.xml");
         when(config.getXmlContent()).thenReturn("<xml>content</xml>");
 
         when(projectService.getProject("MyProject")).thenReturn(project);
 
-        mockMvc.perform(get("/api/projects/MyProject/config1.xml").accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name").value("config1.xml"))
-                .andExpect(jsonPath("$.xmlContent").value("<xml>content</xml>"));
+                String requestBody = """
+                                {
+                                  "filepath": "config1.xml"
+                                }
+                                """;
+
+                mockMvc.perform(post("/api/projects/MyProject/configuration")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .accept(MediaType.APPLICATION_JSON)
+                                .content(requestBody))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.filepath").value("config1.xml"))
+                                .andExpect(jsonPath("$.xmlContent").value("<xml>content</xml>"));
 
         verify(projectService).getProject("MyProject");
     }
@@ -127,10 +136,20 @@ class ProjectControllerTest {
         Project project = mockProject(); // project has only "config1.xml"
         when(projectService.getProject("MyProject")).thenReturn(project);
 
-        mockMvc.perform(get("/api/projects/MyProject/unknown.xml").accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.error").value("ConfigurationNotFound"))
-                .andExpect(jsonPath("$.message").value("Configuration with filename: unknown.xml cannot be found"));
+                String requestBody = """
+                                {
+                                  "filepath": "unknown.xml"
+                                }
+                                """;
+
+                mockMvc.perform(post("/api/projects/MyProject/configuration")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .accept(MediaType.APPLICATION_JSON)
+                                .content(requestBody))
+                                .andExpect(status().isNotFound())
+                                .andExpect(jsonPath("$.error").value("ConfigurationNotFound"))
+                                .andExpect(jsonPath("$.message")
+                                                .value("Configuration with filepath: unknown.xml cannot be found"));
 
         verify(projectService).getProject("MyProject");
     }
@@ -294,7 +313,7 @@ class ProjectControllerTest {
         mockMvc.perform(post("/api/projects/" + projectName).accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value(projectName))
-                .andExpect(jsonPath("$.filenames").isEmpty())
+                .andExpect(jsonPath("$.filepaths").isEmpty())
                 .andExpect(jsonPath("$.filters").isNotEmpty());
 
         verify(projectService).createProject(projectName);

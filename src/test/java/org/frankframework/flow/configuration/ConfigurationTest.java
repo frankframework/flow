@@ -15,7 +15,7 @@ class ConfigurationTest {
 
     @Test
     void testConfigurationInitialization() {
-        assertEquals("new_configuration", configuration.getFilename());
+        assertEquals("new_configuration", configuration.getFilepath());
         assertEquals(
                 "<Configuration><Adapter name='new adapter'></Adapter></Configuration>", configuration.getXmlContent());
     }
