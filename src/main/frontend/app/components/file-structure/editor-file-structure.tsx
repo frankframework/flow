@@ -77,28 +77,24 @@ export default function EditorFileStructure() {
     findMatchingItems()
   }, [searchTerm, filepaths])
 
-  const openFileTab = useCallback(
-    (filePath: string, fileName: string) => {
-      if (!getTab(filePath)) {
-        setTabData(filePath, {
-          name: fileName,
-          configurationPath: filePath,
-        })
-      }
-      setActiveTab(filePath)
-    },
-    [getTab, setActiveTab, setTabData],
-  )
+  const openFileTab = (filePath: string, fileName: string) => {
+    if (!getTab(filePath)) {
+      setTabData(filePath, {
+        name: fileName,
+        configurationPath: filePath,
+      })
+    }
+    setActiveTab(filePath)
+  }
 
-  const handleItemClick = useCallback((items: TreeItemIndex[], _treeId: string): void => {
+  const handleItemClick = (items: TreeItemIndex[], _treeId: string): void => {
     void handleItemClickAsync(items)
-  }, [])
+  }
 
   const handleItemClickAsync = async (itemIds: TreeItemIndex[]) => {
     if (!dataProviderReference.current || itemIds.length === 0) return
 
     const itemId = itemIds[0]
-
     if (typeof itemId !== 'string') return
 
     const item = await dataProviderReference.current.getTreeItem(itemId)
@@ -138,7 +134,7 @@ export default function EditorFileStructure() {
 
     globalThis.addEventListener('keydown', handleKeyDown)
     return () => globalThis.removeEventListener('keydown', handleKeyDown)
-  }, [matchingItemIds, highlightedItemId, handleItemClick])
+  }, [matchingItemIds, highlightedItemId, handleItemClickAsync])
 
   /* Expand / collapse on search */
   useEffect(() => {

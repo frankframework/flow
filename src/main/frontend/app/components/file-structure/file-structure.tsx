@@ -203,7 +203,7 @@ export default function FileStructure() {
 
     globalThis.addEventListener('keydown', handleKeyDown)
     return () => globalThis.removeEventListener('keydown', handleKeyDown)
-  }, [matchingItemIds, highlightedItemId, handleItemClick])
+  }, [matchingItemIds, highlightedItemId, handleItemClickAsync])
 
   useEffect(() => {
     if (activeMatchIndex === -1 || !tree.current) return
