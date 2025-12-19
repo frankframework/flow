@@ -2,8 +2,8 @@ import { create } from 'zustand'
 import { subscribeWithSelector } from 'zustand/middleware'
 
 interface EditorTabData {
-  fileName: string
-  filePath: string
+  name: string
+  configurationPath: string
 }
 
 interface EditorTabStoreState {

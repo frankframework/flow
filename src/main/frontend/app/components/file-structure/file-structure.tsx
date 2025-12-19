@@ -13,6 +13,7 @@ import {
   type TreeItem,
   type TreeItemRenderContext,
   type TreeRef,
+  type TreeItemIndex,
   UncontrolledTreeEnvironment,
 } from 'react-complex-tree'
 import FilesDataProvider from '~/components/file-structure/files-data-provider'
@@ -132,17 +133,27 @@ export default function FileStructure() {
     dataProviderReference.current.updateData(configs)
   }, [configs])
 
-  const handleItemClick = async (itemIds: string[]) => {
+  const handleItemClick = (items: TreeItemIndex[], _treeId: string): void => {
+    void handleItemClickAsync(items)
+  }
+
+  const handleItemClickAsync = async (itemIds: TreeItemIndex[]) => {
     if (!dataProviderReference.current || itemIds.length === 0) return
 
     const itemId = itemIds[0]
+
+    if (typeof itemId !== 'string') return
+
     const item = await dataProviderReference.current.getTreeItem(itemId)
 
     if (!item || item.isFolder) return
 
     const data = item.data
     if (typeof data === 'object' && data !== null && 'adapterName' in data && 'configPath' in data) {
-      const { adapterName, configPath } = data as { adapterName: string; configPath: string }
+      const { adapterName, configPath } = data as {
+        adapterName: string
+        configPath: string
+      }
       openNewTab(adapterName, configPath)
     }
   }
@@ -150,7 +161,7 @@ export default function FileStructure() {
   const openNewTab = (adapterName: string, configPath: string) => {
     if (!getTab(adapterName)) {
       setTabData(adapterName, {
-        value: adapterName,
+        name: adapterName,
         configurationPath: configPath,
         flowJson: {},
       })
@@ -185,7 +196,7 @@ export default function FileStructure() {
         // If nothing highlighted yet, select the first match
         const targetItemId = highlightedItemId || matchingItemIds[0]
         if (targetItemId) {
-          await handleItemClick([targetItemId])
+          await handleItemClickAsync([targetItemId])
         }
       }
     }

@@ -2,16 +2,16 @@ import React from 'react'
 import clsx from 'clsx'
 import CloseIcon from '/icons/custom/Close.svg?react'
 import CodeIcon from '/icons/solar/Code.svg?react'
-import type { TabsItem } from './tabs'
+import type { TabData } from '~/stores/tab-store'
 
 export type TabProperties = {
-  value: string
+  name: string
   isSelected: boolean
   onSelect: () => void
   onClose: (event: React.MouseEvent) => void
-} & TabsItem
+} & TabData
 
-export default function Tab({ value, icon, isSelected, onSelect, onClose }: Readonly<TabProperties>) {
+export default function Tab({ name, icon, isSelected, onSelect, onClose }: Readonly<TabProperties>) {
   const Icon = icon ?? CodeIcon
 
   const handleClose = (event: React.MouseEvent<Element, MouseEvent>) => {
@@ -30,7 +30,7 @@ export default function Tab({ value, icon, isSelected, onSelect, onClose }: Read
       onClick={onSelect}
     >
       <Icon className={'fill-foreground-muted h-4 w-auto'} />
-      {value}
+      {name}
       <CloseIcon
         className={clsx(
           'hover:fill-foreground h-8 w-auto hover:cursor-pointer',

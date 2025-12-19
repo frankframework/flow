@@ -1,13 +1,10 @@
 import { useCallback, useEffect, useRef } from 'react'
 import Tab from './tab'
+import type { TabData } from '~/stores/tab-store'
 
-export interface TabsItem {
-  value: string
-  icon?: React.FC<React.SVGProps<SVGSVGElement>>
-}
 
 interface TabsViewProps<T extends string = string> {
-  tabs: Record<T, TabsItem>
+  tabs: Record<T, TabData>
   activeTab: T | null
   onSelectTab: (key: T) => void
   onCloseTab: (key: T) => void
@@ -18,6 +15,7 @@ export function TabsView<T extends string>({ tabs, activeTab, onSelectTab, onClo
   const tabsListReference = useRef<HTMLUListElement>(null)
   const shadowLeftReference = useRef<HTMLDivElement>(null)
   const shadowRightReference = useRef<HTMLDivElement>(null)
+  const entries = Object.entries(tabs) as [T, TabData][]
 
   const calculateScrollShadows = useCallback(() => {
     setTimeout(() => {
@@ -73,16 +71,15 @@ export function TabsView<T extends string>({ tabs, activeTab, onSelectTab, onClo
       />
 
       <ul ref={tabsListReference} className="m-0 flex rotate-x-180 flex-nowrap overflow-x-auto p-0 whitespace-nowrap">
-        {Object.entries(tabs).map(([key, tab]) => (
+        {entries.map(([key, tab]) => (
           <Tab
             key={key}
-            value={tab.value ?? tab.fileName}
+            name={tab.name}
+            configurationPath={tab.configurationPath}
             isSelected={activeTab === key}
             onSelect={() => onSelectTab(key as T)}
             onClose={() => onCloseTab(key as T)}
             icon={tab.icon}
-            configurationName={tab.configurationName}
-            flowJson={tab.flowJson}
           />
         ))}
       </ul>

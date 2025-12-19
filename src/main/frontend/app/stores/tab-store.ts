@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { subscribeWithSelector } from 'zustand/middleware'
 
 export interface TabData {
-  value: string
+  name: string
   icon?: React.ComponentType<React.SVGProps<SVGSVGElement>>
   flowJson?: Record<string, unknown>
   configurationPath: string

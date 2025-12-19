@@ -22,9 +22,7 @@ export default function CodeEditor() {
   const { elements } = useFFDoc(FRANK_DOC_URL)
   const project = useProjectStore.getState().project
   const [tabs, setTabs] = useState(useEditorTabStore.getState().tabs)
-  const [activeTabFilePath, setActiveTabFilePath] = useState<string | undefined>(
-    useEditorTabStore.getState().activeTabFilePath,
-  )
+  const [activeTabFilePath, setActiveTabFilePath] = useState<string>(useEditorTabStore.getState().activeTabFilePath)
   const [xmlContent, setXmlContent] = useState<string>('')
   const editorReference = useRef<Parameters<OnMount>[0] | null>(null)
   const decorationIdsReference = useRef<string[]>([])
@@ -53,7 +51,7 @@ export default function CodeEditor() {
   useEffect(() => {
     async function fetchXml() {
       try {
-        const configPath = useEditorTabStore.getState().getTab(activeTabFilePath)?.filePath
+        const configPath = useEditorTabStore.getState().getTab(activeTabFilePath)?.configurationPath
         if (!configPath || !project) return
         const xmlString = await getXmlString(project.name, configPath)
         setXmlContent(xmlString)
@@ -287,12 +285,7 @@ export default function CodeEditor() {
         <div className="flex">
           <SidebarContentClose side={SidebarSide.LEFT} />
           <div className="grow overflow-x-auto">
-            <EditorTabs
-              tabs={tabs}
-              selectedTab={activeTabFilePath}
-              onSelectTab={handleSelectTab}
-              onCloseTab={handleCloseTab}
-            />
+            <EditorTabs />
           </div>
           <SidebarContentClose side={SidebarSide.RIGHT} />
         </div>

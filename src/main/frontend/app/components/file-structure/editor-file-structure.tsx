@@ -12,6 +12,7 @@ import {
   type TreeItem,
   type TreeItemRenderContext,
   type TreeRef,
+  type TreeItemIndex,
   UncontrolledTreeEnvironment,
 } from 'react-complex-tree'
 
@@ -80,8 +81,8 @@ export default function EditorFileStructure() {
     (filePath: string, fileName: string) => {
       if (!getTab(filePath)) {
         setTabData(filePath, {
-          fileName: fileName,
-          filePath: filePath,
+          name: fileName,
+          configurationPath: filePath,
         })
       }
       setActiveTab(filePath)
@@ -89,19 +90,25 @@ export default function EditorFileStructure() {
     [getTab, setActiveTab, setTabData],
   )
 
-  const handleItemClick = useCallback(
-    async (itemIds: string[]) => {
-      if (!dataProviderReference.current || itemIds.length === 0) return
+  const handleItemClick = useCallback((items: TreeItemIndex[], _treeId: string): void => {
+    void handleItemClickAsync(items)
+  }, [])
 
-      const item = await dataProviderReference.current.getTreeItem(itemIds[0])
-      if (!item || item.isFolder) return
+  const handleItemClickAsync = async (itemIds: TreeItemIndex[]) => {
+    if (!dataProviderReference.current || itemIds.length === 0) return
 
-      const filePath = item.data.path as string
-      const fileName = item.data.name as string
-      openFileTab(filePath, fileName)
-    },
-    [openFileTab],
-  )
+    const itemId = itemIds[0]
+
+    if (typeof itemId !== 'string') return
+
+    const item = await dataProviderReference.current.getTreeItem(itemId)
+    if (!item || item.isFolder) return
+
+    const filePath = item.data.path
+    const fileName = item.data.name
+
+    openFileTab(filePath, fileName)
+  }
 
   /* Keyboard navigation */
   useEffect(() => {
@@ -125,7 +132,7 @@ export default function EditorFileStructure() {
       } else if (event.key === 'Enter') {
         event.preventDefault()
         const target = highlightedItemId || matchingItemIds[0]
-        if (target) handleItemClick([target])
+        if (target) handleItemClickAsync([target])
       }
     }
 

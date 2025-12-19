@@ -74,7 +74,7 @@ export default class EditorFilesDataProvider implements TreeDataProvider {
         const isLast = i === parts.length - 1
         currentPath = currentPath ? `${currentPath}/${part}` : part
 
-        const nodeIndex = `${parentIndex}/${part}`
+        const nodeIndex: TreeItemIndex = `${parentIndex}/${part}`
 
         if (!newData[nodeIndex]) {
           newData[nodeIndex] = {
@@ -89,7 +89,7 @@ export default class EditorFilesDataProvider implements TreeDataProvider {
           }
         }
 
-        const parent = newData[parentIndex]
+        const parent: TreeItem<FileNode> = newData[parentIndex]
         parent.children ??= []
         if (!parent.children.includes(nodeIndex)) {
           parent.children.push(nodeIndex)
