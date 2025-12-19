@@ -3,12 +3,12 @@ package org.frankframework.flow.project;
 import java.io.ByteArrayInputStream;
 import java.io.StringWriter;
 import java.util.ArrayList;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import lombok.Getter;
 import lombok.Setter;
 import org.frankframework.flow.configuration.Configuration;
@@ -34,18 +34,18 @@ public class Project {
         this.configurations.add(configuration);
     }
 
-	public void setConfigurationXml(String filepath, String xmlContent) {
-		for (Configuration c : this.configurations) {
-			if (c.getFilepath().equals(filepath)) {
-				c.setXmlContent(xmlContent);
-				return;
-			}
-		}
-	}
+    public void setConfigurationXml(String filepath, String xmlContent) {
+        for (Configuration c : this.configurations) {
+            if (c.getFilepath().equals(filepath)) {
+                c.setXmlContent(xmlContent);
+                return;
+            }
+        }
+    }
 
-	public ProjectSettings getProjectSettings() {
-		return this.projectSettings;
-	}
+    public ProjectSettings getProjectSettings() {
+        return this.projectSettings;
+    }
 
     public boolean isFilterEnabled(FilterType type) {
         return projectSettings.isEnabled(type);
@@ -59,66 +59,65 @@ public class Project {
         projectSettings.setEnabled(type, false);
     }
 
-	public void clearConfigurations() {
-		configurations.clear();
-	}
+    public void clearConfigurations() {
+        configurations.clear();
+    }
 
-	public boolean updateAdapter(String configurationName, String adapterName, String newAdapterXml) {
-		for (Configuration config : configurations) {
-			if (!config.getFilepath().equals(configurationName))
-				continue;
+    public boolean updateAdapter(String configurationName, String adapterName, String newAdapterXml) {
+        for (Configuration config : configurations) {
+            if (!config.getFilepath().equals(configurationName)) continue;
 
-			try {
-				// Parse the existing config XML and the new adapter XML
-				Document configDoc = parseXml(config.getXmlContent());
-				Node newAdapterNode = parseNewAdapter(configDoc, newAdapterXml);
+            try {
+                // Parse the existing config XML and the new adapter XML
+                Document configDoc = parseXml(config.getXmlContent());
+                Node newAdapterNode = parseNewAdapter(configDoc, newAdapterXml);
 
-				// Find and replace the existing adapter
-				boolean replaced = replaceAdapter(configDoc, adapterName, newAdapterNode);
+                // Find and replace the existing adapter
+                boolean replaced = replaceAdapter(configDoc, adapterName, newAdapterNode);
 
-				if (replaced) {
-					// Convert back to string and update configuration
-					String updatedXml = convertDocumentToString(configDoc);
-					config.setXmlContent(updatedXml);
-					return true;
-				}
-			} catch (Exception e) {
-				e.printStackTrace();
-				return false;
-			}
-		}
-		return false;
-	}
+                if (replaced) {
+                    // Convert back to string and update configuration
+                    String updatedXml = convertDocumentToString(configDoc);
+                    config.setXmlContent(updatedXml);
+                    return true;
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                return false;
+            }
+        }
+        return false;
+    }
 
-	private Document parseXml(String xmlContent) throws Exception {
-		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-		factory.setIgnoringComments(true);
-		factory.setNamespaceAware(true);
-		DocumentBuilder builder = factory.newDocumentBuilder();
-		return builder.parse(new ByteArrayInputStream(xmlContent.getBytes()));
-	}
+    private Document parseXml(String xmlContent) throws Exception {
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        factory.setIgnoringComments(true);
+        factory.setNamespaceAware(true);
+        DocumentBuilder builder = factory.newDocumentBuilder();
+        return builder.parse(new ByteArrayInputStream(xmlContent.getBytes()));
+    }
 
-	private Node parseNewAdapter(Document configDoc, String newAdapterXml) throws Exception {
-		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-		factory.setIgnoringComments(true);
-		factory.setNamespaceAware(true);
-		DocumentBuilder builder = factory.newDocumentBuilder();
-		Document newAdapterDoc = builder.parse(new ByteArrayInputStream(newAdapterXml.getBytes()));
-		return configDoc.importNode(newAdapterDoc.getDocumentElement(), true);
-	}
+    private Node parseNewAdapter(Document configDoc, String newAdapterXml) throws Exception {
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        factory.setIgnoringComments(true);
+        factory.setNamespaceAware(true);
+        DocumentBuilder builder = factory.newDocumentBuilder();
+        Document newAdapterDoc = builder.parse(new ByteArrayInputStream(newAdapterXml.getBytes()));
+        return configDoc.importNode(newAdapterDoc.getDocumentElement(), true);
+    }
 
-	private boolean replaceAdapter(Document configDoc, String adapterName, Node newAdapterNode) {
-		NodeList adapters = configDoc.getElementsByTagName("Adapter");
-		for (int i = 0; i < adapters.getLength(); i++) {
-			Element adapterElement = (Element) adapters.item(i);
-			if (adapterElement.getAttribute("name").equals(adapterName)) {
-				Node parent = adapterElement.getParentNode();
-				parent.replaceChild(newAdapterNode, adapterElement);
-				return true;
-			}
-		}
-		return false;
-	}
+    private boolean replaceAdapter(Document configDoc, String adapterName, Node newAdapterNode) {
+        NodeList adapters = configDoc.getElementsByTagName("Adapter");
+        for (int i = 0; i < adapters.getLength(); i++) {
+            Element adapterElement = (Element) adapters.item(i);
+            if (adapterElement.getAttribute("name").equals(adapterName)) {
+                Node parent = adapterElement.getParentNode();
+                parent.replaceChild(newAdapterNode, adapterElement);
+                return true;
+            }
+        }
+        return false;
+    }
 
     private String convertDocumentToString(Document doc) throws Exception {
         Transformer transformer =

@@ -58,20 +58,21 @@ public class ProjectService {
         throw new ProjectNotFoundException(String.format("Project with name: %s cannot be found", name));
     }
 
-	public ArrayList<Project> getProjects() {
-		return projects;
-	}
+    public ArrayList<Project> getProjects() {
+        return projects;
+    }
 
-	public Project addConfigurations(String projectName, ArrayList<String> configurationPaths) throws ProjectNotFoundException {
-		Project project = getProject(projectName);
+    public Project addConfigurations(String projectName, ArrayList<String> configurationPaths)
+            throws ProjectNotFoundException {
+        Project project = getProject(projectName);
 
-		for (String path : configurationPaths) {
-			Configuration config = new Configuration(path);
-			project.addConfiguration(config);
-		}
+        for (String path : configurationPaths) {
+            Configuration config = new Configuration(path);
+            project.addConfiguration(config);
+        }
 
-		return project;
-	}
+        return project;
+    }
 
     public boolean updateConfigurationXml(String projectName, String filepath, String xmlContent)
             throws ProjectNotFoundException, ConfigurationNotFoundException {

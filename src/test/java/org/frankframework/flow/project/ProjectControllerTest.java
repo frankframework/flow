@@ -114,19 +114,20 @@ class ProjectControllerTest {
 
         when(projectService.getProject("MyProject")).thenReturn(project);
 
-                String requestBody = """
+        String requestBody =
+                """
                                 {
                                   "filepath": "config1.xml"
                                 }
                                 """;
 
-                mockMvc.perform(post("/api/projects/MyProject/configuration")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .accept(MediaType.APPLICATION_JSON)
-                                .content(requestBody))
-                                .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.filepath").value("config1.xml"))
-                                .andExpect(jsonPath("$.xmlContent").value("<xml>content</xml>"));
+        mockMvc.perform(post("/api/projects/MyProject/configuration")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.filepath").value("config1.xml"))
+                .andExpect(jsonPath("$.xmlContent").value("<xml>content</xml>"));
 
         verify(projectService).getProject("MyProject");
     }
@@ -136,20 +137,20 @@ class ProjectControllerTest {
         Project project = mockProject(); // project has only "config1.xml"
         when(projectService.getProject("MyProject")).thenReturn(project);
 
-                String requestBody = """
+        String requestBody =
+                """
                                 {
                                   "filepath": "unknown.xml"
                                 }
                                 """;
 
-                mockMvc.perform(post("/api/projects/MyProject/configuration")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .accept(MediaType.APPLICATION_JSON)
-                                .content(requestBody))
-                                .andExpect(status().isNotFound())
-                                .andExpect(jsonPath("$.error").value("ConfigurationNotFound"))
-                                .andExpect(jsonPath("$.message")
-                                                .value("Configuration with filepath: unknown.xml cannot be found"));
+        mockMvc.perform(post("/api/projects/MyProject/configuration")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error").value("ConfigurationNotFound"))
+                .andExpect(jsonPath("$.message").value("Configuration with filepath: unknown.xml cannot be found"));
 
         verify(projectService).getProject("MyProject");
     }
