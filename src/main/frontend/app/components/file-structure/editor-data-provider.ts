@@ -47,10 +47,9 @@ export default class EditorFilesDataProvider implements TreeDataProvider {
     this.data[item.index].data.name = name
   }
 
-  // eslint-disable-next-line sonarjs/cognitive-complexity
   private buildTree(rootName: string, paths: string[]) {
     const newData: Record<TreeItemIndex, TreeItem<FileNode>> = {
-      ['root']: {
+      root: {
         index: 'root',
         data: {
           name: rootName,
@@ -62,44 +61,53 @@ export default class EditorFilesDataProvider implements TreeDataProvider {
       },
     }
 
-    // Root
     for (const fullPath of paths) {
-      const parts = fullPath.split('/')
-
-      let parentIndex: TreeItemIndex = 'root'
-      let currentPath = ''
-
-      for (let i = 0; i < parts.length; i++) {
-        const part = parts[i]
-        const isLast = i === parts.length - 1
-        currentPath = currentPath ? `${currentPath}/${part}` : part
-
-        const nodeIndex: TreeItemIndex = `${parentIndex}/${part}`
-
-        if (!newData[nodeIndex]) {
-          newData[nodeIndex] = {
-            index: nodeIndex,
-            data: {
-              name: part,
-              path: currentPath,
-              isDirectory: !isLast,
-            },
-            children: isLast ? undefined : [],
-            isFolder: !isLast,
-          }
-        }
-
-        const parent: TreeItem<FileNode> = newData[parentIndex]
-        parent.children ??= []
-        if (!parent.children.includes(nodeIndex)) {
-          parent.children.push(nodeIndex)
-        }
-
-        parentIndex = nodeIndex
-      }
+      this.addPathToTree(newData, fullPath)
     }
 
     this.data = newData
+  }
+
+  private addPathToTree(
+    tree: Record<TreeItemIndex, TreeItem<FileNode>>,
+    fullPath: string,
+    rootIndex: TreeItemIndex = 'root',
+  ): TreeItemIndex {
+    const parts = fullPath.split('/')
+
+    let parentIndex: TreeItemIndex = rootIndex
+    let currentPath = ''
+
+    for (let i = 0; i < parts.length; i++) {
+      const part = parts[i]
+      const isLast = i === parts.length - 1
+      currentPath = currentPath ? `${currentPath}/${part}` : part
+
+      const nodeIndex: TreeItemIndex = `${parentIndex}/${part}`
+
+      if (!tree[nodeIndex]) {
+        tree[nodeIndex] = {
+          index: nodeIndex,
+          data: {
+            name: part,
+            path: currentPath,
+            isDirectory: !isLast,
+          },
+          children: isLast ? undefined : [],
+          isFolder: !isLast,
+        }
+      }
+
+      const parent = tree[parentIndex]
+      parent.children ??= []
+      if (!parent.children.includes(nodeIndex)) {
+        parent.children.push(nodeIndex)
+      }
+
+      parentIndex = nodeIndex
+    }
+
+    return parentIndex
   }
 
   private notifyListeners(itemIds: TreeItemIndex[]) {
