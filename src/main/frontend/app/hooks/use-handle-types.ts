@@ -3,7 +3,7 @@ import type { ElementProperty } from '@frankframework/ff-doc'
 
 export function useHandleTypes(typesAllowed?: Record<string, ElementProperty>) {
   return useMemo(() => {
-    // Elements should always have a success handle, indicating a happy path
+    // Elements should always have access to a success handle, indicating a happy path
     const base: string[] = ['success']
 
     if (!typesAllowed) return base
