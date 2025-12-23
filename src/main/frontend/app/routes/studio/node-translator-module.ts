@@ -1,4 +1,15 @@
-const typeSuffixes = ['pipe', 'listener', 'receiver', 'sender', 'validator', 'wrapper', 'job', 'exit']
+const typeSuffixes = [
+  'pipe',
+  'listener',
+  'receiver',
+  'sender',
+  'validator',
+  'wrapper',
+  'job',
+  'exit',
+  'errormessageformatter',
+  'param'
+]
 
 export function getElementTypeFromName(name: string): string {
   const lower = name.toLowerCase()
