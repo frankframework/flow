@@ -1,7 +1,7 @@
 import useNodeContextStore from '~/stores/node-context-store'
 import useFlowStore from '~/stores/flow-store'
 import { getElementTypeFromName } from '~/routes/studio/node-translator-module'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import SortedElements from '~/routes/studio/context/sorted-elements'
 import Search from '~/components/search/search'
 import variables from '../../../../environment/environment'
@@ -21,20 +21,33 @@ export default function StudioContext() {
         .filter(([_, enabled]) => enabled)
         .map(([filterName]) => filterName)
     : []
+  const componentLookup = useMemo(() => {
+    if (!filters?.Components) return {}
+
+    return Object.entries(filters.Components).reduce<Record<string, string>>((acc, [type, names]) => {
+      for (const name of names) {
+        acc[name] = type.toLowerCase()
+      }
+      return acc
+    }, {})
+  }, [filters])
 
   useEffect(() => {
-    if (!elements) return
-    const types = Object.values(elements).map((element: ElementDetails) => getElementTypeFromName(element.name))
+    if (!elements || !filters?.Components) return
+
     const initialState: Record<string, boolean> = {}
-    for (const type of types) {
+
+    for (const element of Object.values(elements)) {
+      const type = getElementTypeFromComponents(element.name, filters.Components)
       if (!(type in expandedGroups)) {
         initialState[type] = true
       }
     }
+
     if (Object.keys(initialState).length > 0) {
       setExpandedGroups((previous) => ({ ...previous, ...initialState }))
     }
-  }, [elements, expandedGroups])
+  }, [elements, filters, expandedGroups])
 
   const onDragStart = (value: ElementDetails) => {
     return (event: {
@@ -73,14 +86,16 @@ export default function StudioContext() {
     const grouped: Record<string, ElementDetails[]> = {}
     const seen = new Set<string>()
 
-    for (const [, value] of Object.entries(elements)) {
-      if (seen.has(value.name)) continue // Skip duplicates by name
+    for (const value of Object.values(elements)) {
+      if (seen.has(value.name)) continue
       seen.add(value.name)
 
-      const type = getElementTypeFromName(value.name)
+      const type = componentLookup[value.name] ?? 'other'
+
       if (!grouped[type]) grouped[type] = []
       grouped[type].push(value)
     }
+
     return grouped
   }
 
@@ -100,6 +115,18 @@ export default function StudioContext() {
   )
 
   const elementsToRender = searchTerm ? filteredGroupedElements : groupedElements
+
+  function getElementTypeFromComponents(elementName: string, components?: Record<string, string[]>): string {
+    if (!components) return 'other'
+
+    for (const [componentType, items] of Object.entries(components)) {
+      if (items.includes(elementName)) {
+        return componentType.toLowerCase()
+      }
+    }
+
+    return 'other'
+  }
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
