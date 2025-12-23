@@ -1,28 +1,26 @@
 import { create } from 'zustand'
 import { subscribeWithSelector } from 'zustand/middleware'
 
-export interface TabData {
+interface EditorTabData {
   name: string
-  icon?: React.ComponentType<React.SVGProps<SVGSVGElement>>
-  flowJson?: Record<string, unknown>
   configurationPath: string
 }
 
-interface TabStoreState {
-  tabs: Record<string, TabData>
-  activeTab: string
-  setTabData: (tabId: string, data: TabData) => void
-  getTab: (tabId: string | undefined) => TabData | undefined
-  setActiveTab: (tabId: string | undefined) => void
+interface EditorTabStoreState {
+  tabs: Record<string, EditorTabData>
+  activeTabFilePath: string
+  setTabData: (tabId: string, data: EditorTabData) => void
+  getTab: (tabId: string) => EditorTabData | undefined
+  setActiveTab: (tabId: string) => void
   removeTab: (tabId: string) => void
   removeTabAndSelectFallback: (tabId: string) => void
   clearTabs: () => void
 }
 
-const useTabStore = create<TabStoreState>()(
+const useEditorTabStore = create<EditorTabStoreState>()(
   subscribeWithSelector((set, get) => ({
     tabs: {},
-    activeTab: '',
+    activeTabFilePath: '',
     setTabData: (tabId, data) =>
       set((state) => ({
         tabs: {
@@ -33,8 +31,8 @@ const useTabStore = create<TabStoreState>()(
           },
         },
       })),
-    getTab: (tabId) => (tabId ? get().tabs[tabId] : undefined),
-    setActiveTab: (tabId) => set({ activeTab: tabId ?? '' }),
+    getTab: (tabId) => get().tabs[tabId],
+    setActiveTab: (tabId) => set({ activeTabFilePath: tabId }),
     removeTab: (tabId) =>
       set((state) => {
         const newTabs = { ...state.tabs }
@@ -48,11 +46,13 @@ const useTabStore = create<TabStoreState>()(
         const remainingKeys = Object.keys(newTabs)
         return {
           tabs: newTabs,
-          activeTab: remainingKeys.includes(state.activeTab) ? state.activeTab : (remainingKeys.at(-1) ?? ''),
+          activeTabFilePath: remainingKeys.includes(state.activeTabFilePath)
+            ? state.activeTabFilePath
+            : (remainingKeys.at(-1) ?? ''),
         }
       }),
-    clearTabs: () => set({ tabs: {}, activeTab: '' }),
+    clearTabs: () => set({ tabs: {}, activeTabFilePath: '' }),
   })),
 )
 
-export default useTabStore
+export default useEditorTabStore
