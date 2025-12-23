@@ -1,50 +1,21 @@
-import React, { useCallback, useEffect, useRef } from 'react'
-import Tab from '~/components/tabs/tab'
-import useTabStore from '~/stores/tab-store'
-import { useShallow } from 'zustand/react/shallow'
+import { useCallback, useEffect, useRef } from 'react'
+import Tab from './tab'
+import type { TabData } from '~/stores/tab-store'
 
-export type TabsList = Record<string, TabsItem>
 
-export interface TabsItem {
-  value: string
-  icon?: React.ComponentType<React.SVGProps<SVGSVGElement>>
-  flowJson?: Record<string, unknown>
-  configurationName: string
+interface TabsViewProps<T extends string = string> {
+  tabs: Record<T, TabData>
+  activeTab: T | null
+  onSelectTab: (key: T) => void
+  onCloseTab: (key: T) => void
 }
 
-interface TabsProps {
-  tabs?: TabsList
-  selectedTab?: string
-  onSelectTab?: (key: string) => void
-  onCloseTab?: (key: string, event?: React.MouseEvent) => void
-}
-
-export default function Tabs(props?: TabsProps) {
+export function TabsView<T extends string>({ tabs, activeTab, onSelectTab, onCloseTab }: TabsViewProps<T>) {
   const tabsElementReference = useRef<HTMLDivElement>(null)
   const tabsListReference = useRef<HTMLUListElement>(null)
   const shadowLeftReference = useRef<HTMLDivElement>(null)
   const shadowRightReference = useRef<HTMLDivElement>(null)
-
-  const storeData = useTabStore(
-    useShallow((state) => ({
-      tabs: state.tabs,
-      activeTab: state.activeTab,
-      setActiveTab: state.setActiveTab,
-      removeTabAndSelectFallback: state.removeTabAndSelectFallback,
-    })),
-  )
-
-  const tabs = props?.tabs ?? storeData.tabs
-  const activeTab = props?.selectedTab ?? storeData.activeTab
-  const setActiveTab = props?.onSelectTab ?? storeData.setActiveTab
-
-  const handleClose = (key: string) => {
-    if (props?.onCloseTab) {
-      props.onCloseTab(key)
-    } else {
-      storeData.removeTabAndSelectFallback(key)
-    }
-  }
+  const entries = Object.entries(tabs) as [T, TabData][]
 
   const calculateScrollShadows = useCallback(() => {
     setTimeout(() => {
@@ -68,6 +39,12 @@ export default function Tabs(props?: TabsProps) {
   useEffect(() => {
     calculateScrollShadows()
     window.addEventListener('resize', calculateScrollShadows)
+    return () => window.removeEventListener('resize', calculateScrollShadows)
+  }, [calculateScrollShadows, tabs])
+
+  useEffect(() => {
+    calculateScrollShadows()
+    window.addEventListener('resize', calculateScrollShadows)
     return () => {
       window.removeEventListener('resize', calculateScrollShadows)
     }
@@ -82,12 +59,8 @@ export default function Tabs(props?: TabsProps) {
     }
   }
 
-  const handleWheel = () => {
-    calculateScrollShadows()
-  }
-
   return (
-    <div ref={tabsElementReference} className="relative flex h-12" onWheel={handleWheel}>
+    <div ref={tabsElementReference} className="relative flex h-12">
       <div
         ref={shadowLeftReference}
         className="absolute top-0 bottom-0 left-0 z-10 w-2 bg-gradient-to-r from-black/15 to-transparent opacity-0"
@@ -98,19 +71,19 @@ export default function Tabs(props?: TabsProps) {
       />
 
       <ul ref={tabsListReference} className="m-0 flex rotate-x-180 flex-nowrap overflow-x-auto p-0 whitespace-nowrap">
-        {Object.entries(tabs).map(([key, tab]) => (
+        {entries.map(([key, tab]) => (
           <Tab
             key={key}
-            value={tab.value}
+            name={tab.name}
+            configurationPath={tab.configurationPath}
             isSelected={activeTab === key}
-            onSelect={() => setActiveTab(key)}
-            onClose={() => handleClose(key)}
+            onSelect={() => onSelectTab(key as T)}
+            onClose={() => onCloseTab(key as T)}
             icon={tab.icon}
-            configurationName={tab.configurationName}
-            flowJson={tab.flowJson}
           />
         ))}
       </ul>
+
       <div className="bg-background border-b-border flex-grow border-b" />
     </div>
   )

@@ -1,4 +1,4 @@
-import React, { type JSX, useCallback, useEffect, useRef, useState } from 'react'
+import React, { type JSX, useEffect, useRef, useState } from 'react'
 import { getAdapterListenerType, getAdapterNamesFromConfiguration } from '~/routes/studio/xml-to-json-parser'
 import useTabStore from '~/stores/tab-store'
 import Search from '~/components/search/search'
@@ -13,6 +13,7 @@ import {
   type TreeItem,
   type TreeItemRenderContext,
   type TreeRef,
+  type TreeItemIndex,
   UncontrolledTreeEnvironment,
 } from 'react-complex-tree'
 import FilesDataProvider from '~/components/file-structure/files-data-provider'
@@ -23,7 +24,7 @@ import { useShallow } from 'zustand/react/shallow'
 import { getListenerIcon } from './tree-utilities'
 
 export interface ConfigWithAdapters {
-  configName: string
+  configPath: string
   adapters: {
     adapterName: string
     listenerName: string | null
@@ -70,18 +71,18 @@ export default function FileStructure() {
       if (configs.length > 0 || !configurationPaths) return
 
       // eslint-disable-next-line unicorn/consistent-function-scoping
-      const fetchAdapter = async (configName: string, adapterName: string) => {
+      const fetchAdapter = async (configPath: string, adapterName: string) => {
         if (!project) return { adapterName, listenerName: null }
-        const listenerName = await getAdapterListenerType(project.name, configName, adapterName)
+        const listenerName = await getAdapterListenerType(project.name, configPath, adapterName)
         return { adapterName, listenerName }
       }
 
-      const fetchConfig = async (configName: string): Promise<ConfigWithAdapters> => {
-        if (!project) return { configName, adapters: [] }
+      const fetchConfig = async (configPath: string): Promise<ConfigWithAdapters> => {
+        if (!project) return { configPath, adapters: [] }
 
-        const adapterNames = await getAdapterNamesFromConfiguration(project.name, configName)
-        const adapters = await Promise.all(adapterNames.map((adapterName) => fetchAdapter(configName, adapterName)))
-        return { configName, adapters }
+        const adapterNames = await getAdapterNamesFromConfiguration(project.name, configPath)
+        const adapters = await Promise.all(adapterNames.map((adapterName) => fetchAdapter(configPath, adapterName)))
+        return { configPath, adapters }
       }
 
       try {
@@ -132,38 +133,42 @@ export default function FileStructure() {
     dataProviderReference.current.updateData(configs)
   }, [configs])
 
-  const openNewTab = useCallback(
-    (adapterName: string, configName: string) => {
-      if (!getTab(adapterName)) {
-        setTabData(adapterName, {
-          value: adapterName,
-          configurationName: configName,
-          flowJson: {},
-        })
+  const handleItemClick = (items: TreeItemIndex[], _treeId: string): void => {
+    void handleItemClickAsync(items)
+  }
+
+  const handleItemClickAsync = async (itemIds: TreeItemIndex[]) => {
+    if (!dataProviderReference.current || itemIds.length === 0) return
+
+    const itemId = itemIds[0]
+
+    if (typeof itemId !== 'string') return
+
+    const item = await dataProviderReference.current.getTreeItem(itemId)
+
+    if (!item || item.isFolder) return
+
+    const data = item.data
+    if (typeof data === 'object' && data !== null && 'adapterName' in data && 'configPath' in data) {
+      const { adapterName, configPath } = data as {
+        adapterName: string
+        configPath: string
       }
+      openNewTab(adapterName, configPath)
+    }
+  }
 
-      setActiveTab(adapterName)
-    },
-    [getTab, setTabData, setActiveTab],
-  )
+  const openNewTab = (adapterName: string, configPath: string) => {
+    if (!getTab(adapterName)) {
+      setTabData(adapterName, {
+        name: adapterName,
+        configurationPath: configPath,
+        flowJson: {},
+      })
+    }
 
-  const handleItemClick = useCallback(
-    async (itemIds: (string | number)[], _treeId: string) => {
-      if (!dataProviderReference.current || itemIds.length === 0) return
-
-      const itemId = itemIds[0]
-      const item = await dataProviderReference.current.getTreeItem(itemId)
-
-      if (!item || item.isFolder) return
-
-      const data = item.data
-      if (typeof data === 'object' && data !== null && 'adapterName' in data && 'configName' in data) {
-        const { adapterName, configName } = data as { adapterName: string; configName: string }
-        openNewTab(adapterName, configName)
-      }
-    },
-    [openNewTab],
-  )
+    setActiveTab(adapterName)
+  }
 
   // Listener for tab and enter keys
   useEffect(() => {
@@ -191,14 +196,14 @@ export default function FileStructure() {
         // If nothing highlighted yet, select the first match
         const targetItemId = highlightedItemId || matchingItemIds[0]
         if (targetItemId) {
-          await handleItemClick([targetItemId], TREE_ID)
+          await handleItemClickAsync([targetItemId])
         }
       }
     }
 
     globalThis.addEventListener('keydown', handleKeyDown)
     return () => globalThis.removeEventListener('keydown', handleKeyDown)
-  }, [matchingItemIds, highlightedItemId, handleItemClick])
+  }, [matchingItemIds, highlightedItemId, handleItemClickAsync])
 
   useEffect(() => {
     if (activeMatchIndex === -1 || !tree.current) return

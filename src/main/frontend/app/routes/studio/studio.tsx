@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import Tabs from '~/components/tabs/tabs'
+import StudioTabs from '~/components/tabs/studio-tabs'
 import FileStructure from '~/components/file-structure/file-structure'
 import StudioContext from '~/routes/studio/context/studio-context'
 import Flow from '~/routes/studio/canvas/flow'
@@ -19,9 +19,10 @@ export default function Studio() {
   const theme = useTheme()
   const nodeId = useNodeContextStore((state) => state.nodeId)
 
-  const { activeTab } = useTabStore(
+  const { activeTab, activeTabPath } = useTabStore(
     useShallow((state) => ({
       activeTab: state.activeTab,
+      activeTabPath: state.activeTab ? state.tabs[state.activeTab]?.configurationPath : undefined,
     })),
   )
 
@@ -35,14 +36,16 @@ export default function Studio() {
         <div className="flex">
           <SidebarContentClose side={SidebarSide.LEFT} />
           <div className="grow overflow-x-auto">
-            <Tabs />
+            <StudioTabs />
           </div>
           <SidebarContentClose side={SidebarSide.RIGHT} />
         </div>
-        <div className="border-b-border bg-background flex h-12 items-center border-b p-4">Path: {activeTab}</div>
 
         {activeTab ? (
           <>
+            <div className="border-b-border bg-background flex h-12 items-center border-b p-4">
+              Path: {activeTabPath}
+            </div>
             <Flow showNodeContextMenu={setShowNodeContext} />
             <ToastContainer position="bottom-right" theme={theme} closeOnClick={true} />
           </>
