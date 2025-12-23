@@ -9,10 +9,8 @@ interface IdCounter {
   current: number
 }
 
-import type { ActionType } from './canvas/nodetypes/components/action-types'
-
 interface SourceHandle {
-  type: ActionType
+  type: string
   index: number
 }
 
@@ -223,13 +221,13 @@ function collectPipelineElements(adapter: Element): Element[] {
 function extractSourceHandles(element: Element): SourceHandle[] {
   const forwardElements = [...element.querySelectorAll('Forward')]
   if (forwardElements.length === 0) {
-    return [{ type: 'success' as ActionType, index: 1 }]
+    return [{ type: 'success', index: 1 }]
   }
 
   return forwardElements.map((forward, index) => {
     const path = forward.getAttribute('path') || ''
     const loweredPath = path.toLowerCase()
-    const type: ActionType =
+    const type: string =
       loweredPath.includes('error') || loweredPath.includes('bad') || loweredPath.includes('fail')
         ? 'failure'
         : 'success'

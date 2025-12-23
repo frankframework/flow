@@ -18,17 +18,18 @@ import { useFFDoc } from '@frankframework/ff-doc/react'
 import variables from '../../../../../environment/environment'
 import { useSettingsStore } from '~/routes/settings/settings-store'
 import HandleMenu from './components/handle-menu'
-import type { ActionType } from './components/action-types'
 import { ChildNodeComponent, type ChildNode } from './child-node'
 import { findChildRecursive } from '~/stores/child-utilities'
 import { canAcceptChildStatic } from './node-utilities'
 import type { ElementDetails } from '@frankframework/ff-doc'
+import { toast } from 'react-toastify'
+import { useTheme } from '~/hooks/use-theme'
 
 export type FrankNodeType = Node<{
   subtype: string
   type: string
   name: string
-  sourceHandles: { type: ActionType; index: number }[]
+  sourceHandles: { type: string; index: number }[]
   attributes?: Record<string, string>
   children: ChildNode[]
 }>
@@ -46,6 +47,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
   const FRANK_DOC_URL = variables.frankDocJsonUrl
   const { elements, filters } = useFFDoc(FRANK_DOC_URL)
   const { setNodeId, setAttributes, setParentId, setIsEditing, setDraggedName, draggedName } = useNodeContextStore()
+  const theme = useTheme()
   const gradientEnabled = useSettingsStore((state) => state.studio.gradient)
   // Store the associated Frank element
   const frankElement = useMemo(() => {
@@ -94,8 +96,22 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
   const addHandle = useFlowStore.getState().addHandle
   const addChild = useFlowStore((state) => state.addChild)
 
+  const hasHandleOfType = useCallback(
+    (type: string) => {
+      return properties.data.sourceHandles.some((handle) => handle.type === type)
+    },
+    [properties.data.sourceHandles],
+  )
+
   const handleMenuClick = useCallback(
-    (handleType: ActionType) => {
+    (handleType: string) => {
+      // Prevent adding duplicate handle types
+      if (hasHandleOfType(handleType)) {
+        toast.warn(`Handle of type "${handleType}" is already present!`)
+        console.warn(`Handle of type "${handleType}" is already present!`)
+        return
+      }
+
       addHandle(properties.id, {
         type: handleType,
         index: properties.data.sourceHandles.length + 1,
@@ -103,7 +119,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
       updateNodeInternals(properties.id) // Update the edge
       setIsHandleMenuOpen(false) // Close the menu after selection
     },
-    [addHandle, properties.id, properties.data.sourceHandles.length, updateNodeInternals],
+    [hasHandleOfType, addHandle, properties.id, properties.data.sourceHandles.length, updateNodeInternals],
   )
 
   const toggleHandleMenu = (event: React.MouseEvent) => {
@@ -140,7 +156,18 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
     setIsEditing(true)
   }
 
-  const changeHandleType = (handleIndex: number, newType: ActionType) => {
+  const changeHandleType = (handleIndex: number, newType: string) => {
+    // Prevent changing to a duplicate handle type
+    const existing = properties.data.sourceHandles.some(
+      (handle) => handle.type === newType && handle.index !== handleIndex,
+    )
+
+    if (existing) {
+      toast.warn(`Handle of type "${newType}" is already present!`)
+      console.warn(`Handle of type "${newType}" is already present!`)
+      return
+    }
+
     useFlowStore.getState().updateHandle(properties.id, handleIndex, { type: newType, index: handleIndex })
     // Timeout to prevent bug from edgelabel not properly updating
     setTimeout(() => {
@@ -367,6 +394,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
           handleSpacing={handleSpacing}
           onChangeType={(newType) => changeHandleType(handle.index, newType)}
           absolutePosition={{ x: properties.positionAbsoluteX, y: properties.positionAbsoluteY }}
+          typesAllowed={frankElement?.forwards}
         />
       ))}
       <div
@@ -385,6 +413,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
           position={handleMenuPosition}
           onClose={() => setIsHandleMenuOpen(false)}
           onSelect={handleMenuClick}
+          typesAllowed={frankElement?.forwards}
         />
       )}
     </>
