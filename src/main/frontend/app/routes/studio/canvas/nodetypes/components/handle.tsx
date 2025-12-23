@@ -1,35 +1,38 @@
 import { Handle, Position, useNodeConnections, useReactFlow } from '@xyflow/react'
 import { useState } from 'react'
 import HandleMenuItem from './handle-menu-item'
-import type { ActionType } from './action-types'
+import type { ElementProperty } from '@frankframework/ff-doc'
+import { useHandleTypes } from '~/hooks/use-handle-types'
 
 interface HandleProperties {
-  type: ActionType
+  type: string
   index: number
   firstHandlePosition: number
   handleSpacing: number
-  onChangeType: (newType: ActionType) => void
+  onChangeType: (newType: string) => void
   absolutePosition: { x: number; y: number }
+  typesAllowed?: Record<string, ElementProperty>
 }
 
-export function translateHandleTypeToColour(type: ActionType): string {
-  switch (type) {
-    case 'success': {
-      return '#68D250'
-    }
-    case 'failure': {
-      return '#E84E4E'
-    }
-    case 'exception': {
-      return '#424242'
-    }
-    case 'custom': {
-      return '#1B97D1'
-    }
-    default: {
-      return '#1B97D1'
+const HANDLE_TYPE_COLOURS: Record<string, string> = {
+  success: '#68D250',
+  failure: '#E84E4E',
+  exception: '#424242',
+  timeout: '#F2A900',
+  error: '#ff7605ff',
+  default: '#1B97D1',
+}
+
+export function translateHandleTypeToColour(type: string): string {
+  const normalized = type.toLowerCase()
+
+  for (const [suffix, colour] of Object.entries(HANDLE_TYPE_COLOURS)) {
+    if (normalized.endsWith(suffix)) {
+      return colour
     }
   }
+
+  return HANDLE_TYPE_COLOURS.default
 }
 
 export function CustomHandle(properties: Readonly<HandleProperties>) {
@@ -39,6 +42,7 @@ export function CustomHandle(properties: Readonly<HandleProperties>) {
 
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [menuPosition, setMenuPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 })
+  const handleTypes = useHandleTypes(properties.typesAllowed)
 
   const handleClick = (event: React.MouseEvent) => {
     const { clientX, clientY } = event
@@ -51,7 +55,7 @@ export function CustomHandle(properties: Readonly<HandleProperties>) {
     setIsMenuOpen(!isMenuOpen) // Toggle menu visibility
   }
 
-  const handleMenuClick = (newType: ActionType) => {
+  const handleMenuClick = (newType: string) => {
     properties.onChangeType(newType) // Change the handle type
     setIsMenuOpen(false) // Close the menu after selection
   }
@@ -109,27 +113,15 @@ export function CustomHandle(properties: Readonly<HandleProperties>) {
           <div className="w-37">
             <div className="border-border bg-muted border-b px-3 py-1 text-xs font-bold">Change Handle Type</div>
             <ul className="w-full">
-              <HandleMenuItem
-                label="Success"
-                iconColor={translateHandleTypeToColour('success')}
-                onClick={() => handleMenuClick('success')}
-              />
-              <HandleMenuItem
-                label="Failure"
-                iconColor={translateHandleTypeToColour('failure')}
-                onClick={() => handleMenuClick('failure')}
-              />
-              <HandleMenuItem
-                label="Exception"
-                iconColor={translateHandleTypeToColour('exception')}
-                onClick={() => handleMenuClick('exception')}
-              />
-              <HandleMenuItem
-                label="Custom"
-                iconColor={translateHandleTypeToColour('custom')}
-                onClick={() => handleMenuClick('custom')}
-                isLast
-              />
+              {handleTypes.map((type, index) => (
+                <HandleMenuItem
+                  key={type}
+                  label={type}
+                  iconColor={translateHandleTypeToColour(type)}
+                  onClick={() => handleMenuClick(type)}
+                  isLast={index === handleTypes.length - 1}
+                />
+              ))}
             </ul>
           </div>
         </div>
