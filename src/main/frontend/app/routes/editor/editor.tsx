@@ -215,28 +215,10 @@ export default function CodeEditor() {
     }
   }, [elements])
 
-  const handleSelectTab = useCallback((key: string) => {
-    useTabStore.getState().setActiveTab(key)
-  }, [])
-
-  const handleCloseTab = (key: string, event?: React.MouseEvent) => {
-    event?.stopPropagation()
-    useTabStore.getState().removeTab(key)
-
-    // Auto-select fallback if the closed tab was active
-    if (key === activeTabFilePath) {
-      const remainingTabs = Object.keys(useTabStore.getState().tabs)
-      if (remainingTabs.length > 0) {
-        useTabStore.getState().setActiveTab(remainingTabs[0])
-      } else {
-        useTabStore.getState().setActiveTab(undefined)
-      }
-    }
-  }
-
   const handleSave = async () => {
     if (!project || !activeTabFilePath) return
-    const configName = useTabStore.getState().getTab(activeTabFilePath)?.configurationPath
+
+    const configName = activeTabFilePath.split('/').pop()
     if (!configName) return
 
     const editor = editorReference.current
