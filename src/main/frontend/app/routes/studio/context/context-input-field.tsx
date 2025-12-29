@@ -1,5 +1,6 @@
 // ContextInputField.tsx
 import React from 'react'
+import Toggle from '~/components/inputs/toggle'
 
 interface ContextInputFieldProperties {
   id: string
@@ -40,19 +41,8 @@ export default function ContextInputField({
 
   // Render boolean dropdown
   if (type === 'bool') {
-    return (
-      <select
-        id={id}
-        value={value}
-        onChange={(event) => onChange(event.currentTarget.value)}
-        onKeyDown={onKeyDown}
-        className="border-border bg-background focus:border-foreground-active focus:ring-foreground-active mt-1 w-full rounded-md border px-3 py-2 shadow-sm sm:text-sm"
-      >
-        <option value="">Select…</option>
-        <option value="true">true</option>
-        <option value="false">false</option>
-      </select>
-    )
+    const checked = value === 'true'
+    return <Toggle checked={checked} onChange={(checked) => onChange(checked.toString())} className="mt-1" />
   }
 
   // Render integer-only input

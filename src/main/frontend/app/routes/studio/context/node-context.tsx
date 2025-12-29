@@ -183,13 +183,6 @@ export default function NodeContext({
       .filter(Boolean) as { name: string; value: string }[]
   }
 
-  const handleKeyDown = (event: React.KeyboardEvent) => {
-    if (event.key === 'Enter') {
-      event.preventDefault()
-      handleSave()
-    }
-  }
-
   const handleSave = () => {
     const filledAttributes = resolveFilledAttributes()
     const nameField = filledAttributes.find((attribute) => attribute.name === 'name')
@@ -282,7 +275,6 @@ export default function NodeContext({
                     return updated
                   })
                 }}
-                onKeyDown={handleKeyDown}
                 label={key}
                 attribute={attribute}
                 enumOptions={
