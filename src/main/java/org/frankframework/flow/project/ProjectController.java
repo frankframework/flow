@@ -140,29 +140,26 @@ public class ProjectController {
         return ResponseEntity.ok(dto);
     }
 
-    @PutMapping("/{projectName}/{filename}")
+    @PutMapping("/{projectName}/configuration")
     public ResponseEntity<Void> updateConfiguration(
-            @PathVariable String projectName,
-            @PathVariable String filename,
-            @RequestBody ConfigurationDTO configurationDTO)
+            @PathVariable String projectName, @RequestBody ConfigurationDTO configurationDTO)
             throws ProjectNotFoundException, ConfigurationNotFoundException, InvalidXmlContentException {
 
         XmlValidator.validateXml(configurationDTO.xmlContent());
 
-        projectService.updateConfigurationXml(projectName, filename, configurationDTO.xmlContent());
+        projectService.updateConfigurationXml(projectName, configurationDTO.filepath(), configurationDTO.xmlContent());
 
         return ResponseEntity.ok().build();
     }
 
-    @PutMapping("/{projectName}/{configurationName}/adapters/{adapterName}")
+    @PutMapping("/{projectName}/adapters/{adapterName}")
     public ResponseEntity<Void> updateAdapter(
             @PathVariable String projectName,
-            @PathVariable String configurationName,
             @PathVariable String adapterName,
             @RequestBody AdapterUpdateDTO adapterUpdateDTO) {
 
         boolean updated = projectService.updateAdapter(
-                projectName, configurationName, adapterName, adapterUpdateDTO.adapterXml());
+                projectName, adapterUpdateDTO.configurationPath(), adapterName, adapterUpdateDTO.adapterXml());
 
         if (!updated) {
             return ResponseEntity.notFound().build();

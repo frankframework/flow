@@ -215,29 +215,8 @@ export default function CodeEditor() {
     }
   }, [elements])
 
-  const handleSelectTab = useCallback((key: string) => {
-    useTabStore.getState().setActiveTab(key)
-  }, [])
-
-  const handleCloseTab = (key: string, event?: React.MouseEvent) => {
-    event?.stopPropagation()
-    useTabStore.getState().removeTab(key)
-
-    // Auto-select fallback if the closed tab was active
-    if (key === activeTabFilePath) {
-      const remainingTabs = Object.keys(useTabStore.getState().tabs)
-      if (remainingTabs.length > 0) {
-        useTabStore.getState().setActiveTab(remainingTabs[0])
-      } else {
-        useTabStore.getState().setActiveTab(undefined)
-      }
-    }
-  }
-
   const handleSave = async () => {
     if (!project || !activeTabFilePath) return
-    const configName = useTabStore.getState().getTab(activeTabFilePath)?.configurationPath
-    if (!configName) return
 
     const editor = editorReference.current
     const updatedXml = editor?.getValue?.()
@@ -246,11 +225,11 @@ export default function CodeEditor() {
     setIsSaving(true)
 
     try {
-      const url = `/api/projects/${project.name}/${configName}`
+      const url = `/api/projects/${project.name}/configuration`
       const response = await fetch(url, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ xmlContent: updatedXml }),
+        body: JSON.stringify({ filepath: activeTabFilePath, xmlContent: updatedXml }),
       })
 
       // Parse JSON response body if it's not OK

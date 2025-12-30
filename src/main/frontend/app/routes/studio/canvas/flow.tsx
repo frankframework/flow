@@ -519,18 +519,19 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
   const saveFlow = async () => {
     const flowData = reactFlow.toObject()
     const activeTabName = useTabStore.getState().activeTab
-    const configName = useTabStore.getState().getTab(activeTabName)?.configurationPath
-    if (!configName) return
+    const configurationPath = useTabStore.getState().getTab(activeTabName)?.configurationPath
+
+    if (!configurationPath) return
 
     const xmlString = exportFlowToXml(flowData, activeTabName)
 
     try {
       if (!project) return
-      const url = `/api/projects/${encodeURIComponent(project.name)}/${encodeURIComponent(configName)}/adapters/${encodeURIComponent(activeTabName)}`
+      const url = `/api/projects/${encodeURIComponent(project.name)}/adapters/${encodeURIComponent(activeTabName)}`
       const response = await fetch(url, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ adapterXml: xmlString }),
+        body: JSON.stringify({ adapterXml: xmlString, configurationPath: configurationPath }),
       })
 
       if (!response.ok) {

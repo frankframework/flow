@@ -91,6 +91,10 @@ export default function ProjectLanding() {
         configurations: configs,
       }),
     })
+
+    // Sync local project list with backend
+    const updated = await fetch(`/api/projects/${projectRoot}`).then((res) => res.json())
+    setProjects((prev) => prev.map((p) => (p.name === updated.name ? updated : p)))
   }
 
   const createProject = async (projectName: string) => {
