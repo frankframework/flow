@@ -218,9 +218,6 @@ export default function CodeEditor() {
   const handleSave = async () => {
     if (!project || !activeTabFilePath) return
 
-    const configName = activeTabFilePath.split('/').pop()
-    if (!configName) return
-
     const editor = editorReference.current
     const updatedXml = editor?.getValue?.()
     if (!updatedXml) return
@@ -228,11 +225,11 @@ export default function CodeEditor() {
     setIsSaving(true)
 
     try {
-      const url = `/api/projects/${project.name}/${configName}`
+      const url = `/api/projects/${project.name}/configuration`
       const response = await fetch(url, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ xmlContent: updatedXml }),
+        body: JSON.stringify({ filepath: activeTabFilePath, xmlContent: updatedXml }),
       })
 
       // Parse JSON response body if it's not OK

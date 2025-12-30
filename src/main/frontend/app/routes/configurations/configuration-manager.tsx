@@ -17,7 +17,7 @@ export default function ConfigurationManager() {
         <div
           className="hover:text-foreground-active flex w-fit hover:cursor-pointer"
           onClick={() => {
-            console.log(currentProject)
+            navigate('/')
           }}
         >
           <ArrowLeftIcon className="mb-4 h-6 w-auto fill-current hover:cursor-pointer" />
