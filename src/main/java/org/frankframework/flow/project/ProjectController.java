@@ -142,8 +142,7 @@ public class ProjectController {
 
     @PutMapping("/{projectName}/configuration")
     public ResponseEntity<Void> updateConfiguration(
-            @PathVariable String projectName,
-            @RequestBody ConfigurationDTO configurationDTO)
+            @PathVariable String projectName, @RequestBody ConfigurationDTO configurationDTO)
             throws ProjectNotFoundException, ConfigurationNotFoundException, InvalidXmlContentException {
 
         XmlValidator.validateXml(configurationDTO.xmlContent());

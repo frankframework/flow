@@ -1,7 +1,6 @@
 package org.frankframework.flow.project;
 
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -116,16 +115,17 @@ class ProjectControllerTest {
 
         when(projectService.getProject("MyProject")).thenReturn(project);
 
-        String requestBody = """
+        String requestBody =
+                """
                 {
                   "filepath": "config1.xml"
                 }
                 """;
 
         mockMvc.perform(post("/api/projects/MyProject/configuration")
-                .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON)
-                .content(requestBody))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.filepath").value("config1.xml"))
                 .andExpect(jsonPath("$.xmlContent").value("<xml>content</xml>"));
@@ -138,20 +138,20 @@ class ProjectControllerTest {
         Project project = mockProject(); // project has only "config1.xml"
         when(projectService.getProject("MyProject")).thenReturn(project);
 
-        String requestBody = """
+        String requestBody =
+                """
                 {
                   "filepath": "unknown.xml"
                 }
                 """;
 
         mockMvc.perform(post("/api/projects/MyProject/configuration")
-                .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON)
-                .content(requestBody))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.error").value("ConfigurationNotFound"))
-                .andExpect(jsonPath("$.message")
-                        .value("Configuration with filepath: unknown.xml cannot be found"));
+                .andExpect(jsonPath("$.message").value("Configuration with filepath: unknown.xml cannot be found"));
 
         verify(projectService).getProject("MyProject");
     }
@@ -164,9 +164,10 @@ class ProjectControllerTest {
                 .thenReturn(true);
 
         mockMvc.perform(
-                put("/api/projects/MyProject/configuration")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
+                        put("/api/projects/MyProject/configuration")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(
+                                        """
                                 {
                                   "filepath": "config1.xml",
                                   "xmlContent": "<xml>updated</xml>"
@@ -184,9 +185,10 @@ class ProjectControllerTest {
                 .updateConfigurationXml("UnknownProject", "config1.xml", "<xml>updated</xml>");
 
         mockMvc.perform(
-                put("/api/projects/UnknownProject/configuration")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
+                        put("/api/projects/UnknownProject/configuration")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(
+                                        """
                                 {
                                   "filepath": "config1.xml",
                                   "xmlContent": "<xml>updated</xml>"
@@ -206,9 +208,10 @@ class ProjectControllerTest {
                 .updateConfigurationXml("MyProject", "unknown.xml", "<xml>updated</xml>");
 
         mockMvc.perform(
-                put("/api/projects/MyProject/configuration")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
+                        put("/api/projects/MyProject/configuration")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(
+                                        """
                                 {
                                   "filepath": "unknown.xml",
                                   "xmlContent": "<xml>updated</xml>"
@@ -233,9 +236,10 @@ class ProjectControllerTest {
                     .thenThrow(new InvalidXmlContentException("Malformed XML"));
 
             mockMvc.perform(
-                    put("/api/projects/MyProject/configuration")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content("""
+                            put("/api/projects/MyProject/configuration")
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .content(
+                                            """
                                 {
                                   "filepath": "config1.xml",
                                   "xmlContent": "<xml><unclosed></xml>"
@@ -253,15 +257,14 @@ class ProjectControllerTest {
     @Test
     void updateAdapterSuccessReturns200() throws Exception {
         when(projectService.updateAdapter(
-                eq("MyProject"),
-                eq("config1.xml"),
-                eq("MyAdapter"),
-                eq("<adapter>updated</adapter>"))).thenReturn(true);
+                        eq("MyProject"), eq("config1.xml"), eq("MyAdapter"), eq("<adapter>updated</adapter>")))
+                .thenReturn(true);
 
         mockMvc.perform(
-                put("/api/projects/MyProject/adapters/MyAdapter")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
+                        put("/api/projects/MyProject/adapters/MyAdapter")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(
+                                        """
                                 {
                                   "configurationPath": "config1.xml",
                                   "adapterXml": "<adapter>updated</adapter>"
@@ -269,26 +272,21 @@ class ProjectControllerTest {
                                 """))
                 .andExpect(status().isOk());
 
-        verify(projectService).updateAdapter(
-                "MyProject",
-                "config1.xml",
-                "MyAdapter",
-                "<adapter>updated</adapter>");
+        verify(projectService).updateAdapter("MyProject", "config1.xml", "MyAdapter", "<adapter>updated</adapter>");
     }
 
     @Test
     void updateAdapterNotFoundReturns404() throws Exception {
 
         when(projectService.updateAdapter(
-                eq("MyProject"),
-                eq("config1.xml"),
-                eq("UnknownAdapter"),
-                eq("<adapter>something</adapter>"))).thenReturn(false);
+                        eq("MyProject"), eq("config1.xml"), eq("UnknownAdapter"), eq("<adapter>something</adapter>")))
+                .thenReturn(false);
 
         mockMvc.perform(
-                put("/api/projects/MyProject/adapters/UnknownAdapter")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
+                        put("/api/projects/MyProject/adapters/UnknownAdapter")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(
+                                        """
                                 {
                                   "configurationPath": "config1.xml",
                                   "adapterXml": "<adapter>something</adapter>"
@@ -296,11 +294,8 @@ class ProjectControllerTest {
                                 """))
                 .andExpect(status().isNotFound());
 
-        verify(projectService).updateAdapter(
-                "MyProject",
-                "config1.xml",
-                "UnknownAdapter",
-                "<adapter>something</adapter>");
+        verify(projectService)
+                .updateAdapter("MyProject", "config1.xml", "UnknownAdapter", "<adapter>something</adapter>");
     }
 
     @Test
@@ -310,15 +305,13 @@ class ProjectControllerTest {
         // Force generic runtime exception → GlobalExceptionHandler should catch it
         doThrow(new RuntimeException("Something went wrong"))
                 .when(projectService)
-                .updateAdapter(eq("MyProject"),
-                        eq("config1.xml"),
-                        eq("MyAdapter"),
-                        eq("<adapter>broken</adapter>"));
+                .updateAdapter(eq("MyProject"), eq("config1.xml"), eq("MyAdapter"), eq("<adapter>broken</adapter>"));
 
         mockMvc.perform(
-                put("/api/projects/MyProject/adapters/MyAdapter")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
+                        put("/api/projects/MyProject/adapters/MyAdapter")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(
+                                        """
                                 {
                                   "configurationPath": "config1.xml",
                                   "adapterXml": "<adapter>broken</adapter>"
@@ -383,7 +376,7 @@ class ProjectControllerTest {
                 .enableFilter("UnknownProject", "ADAPTER");
 
         mockMvc.perform(patch("/api/projects/UnknownProject/filters/ADAPTER/enable")
-                .accept(MediaType.APPLICATION_JSON))
+                        .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.error").value("ProjectNotFound"))
                 .andExpect(jsonPath("$.message").value("Project not found"));
@@ -394,15 +387,12 @@ class ProjectControllerTest {
     @Test
     void enableFilterInvalidFilterTypeReturns400() throws Exception {
         String filterType = "INVALID";
-        doThrow(new InvalidFilterTypeException(filterType)).when(projectService).enableFilter("MyProject",
-                filterType);
+        doThrow(new InvalidFilterTypeException(filterType)).when(projectService).enableFilter("MyProject", filterType);
 
-        mockMvc.perform(patch("/api/projects/MyProject/filters/INVALID/enable")
-                .accept(MediaType.APPLICATION_JSON))
+        mockMvc.perform(patch("/api/projects/MyProject/filters/INVALID/enable").accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error").value("InvalidFilterType"))
-                .andExpect(jsonPath("$.message")
-                        .value(String.format("Invalid filter type: %s", filterType)));
+                .andExpect(jsonPath("$.message").value(String.format("Invalid filter type: %s", filterType)));
 
         verify(projectService).enableFilter("MyProject", filterType);
     }
@@ -426,8 +416,7 @@ class ProjectControllerTest {
 
         when(projectService.disableFilter("MyProject", "ADAPTER")).thenReturn(updatedProject);
 
-        mockMvc.perform(patch("/api/projects/MyProject/filters/ADAPTER/disable")
-                .accept(MediaType.APPLICATION_JSON))
+        mockMvc.perform(patch("/api/projects/MyProject/filters/ADAPTER/disable").accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("MyProject"))
                 .andExpect(jsonPath("$.filters.ADAPTER").value(false)) // toggled to false
@@ -443,7 +432,7 @@ class ProjectControllerTest {
                 .disableFilter("UnknownProject", "ADAPTER");
 
         mockMvc.perform(patch("/api/projects/UnknownProject/filters/ADAPTER/disable")
-                .accept(MediaType.APPLICATION_JSON))
+                        .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.error").value("ProjectNotFound"))
                 .andExpect(jsonPath("$.message").value("Project not found"));
@@ -454,15 +443,12 @@ class ProjectControllerTest {
     @Test
     void disableFilterInvalidFilterTypeReturns400() throws Exception {
         String filterType = "INVALID";
-        doThrow(new InvalidFilterTypeException(filterType)).when(projectService).disableFilter("MyProject",
-                filterType);
+        doThrow(new InvalidFilterTypeException(filterType)).when(projectService).disableFilter("MyProject", filterType);
 
-        mockMvc.perform(patch("/api/projects/MyProject/filters/INVALID/disable")
-                .accept(MediaType.APPLICATION_JSON))
+        mockMvc.perform(patch("/api/projects/MyProject/filters/INVALID/disable").accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error").value("InvalidFilterType"))
-                .andExpect(jsonPath("$.message")
-                        .value(String.format("Invalid filter type: %s", filterType)));
+                .andExpect(jsonPath("$.message").value(String.format("Invalid filter type: %s", filterType)));
 
         verify(projectService).disableFilter("MyProject", filterType);
     }
