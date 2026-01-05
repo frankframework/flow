@@ -1,5 +1,4 @@
 import { createPortal } from 'react-dom'
-import { useEffect, useState } from 'react'
 
 export interface DeprecatedInfo {
   since?: string
@@ -22,7 +21,7 @@ export function DeprecatedPopover({
       className="bg-background text-foreground fixed z-[9999] w-64 rounded-md border border-red-400 p-3 text-xs shadow-lg"
       style={{
         top: anchorRect.top,
-        left: anchorRect.right + 8, // 👉 right of cursor/icon
+        left: anchorRect.right
       }}
     >
       <h3 className="mb-2 font-bold text-red-600">Deprecated</h3>
