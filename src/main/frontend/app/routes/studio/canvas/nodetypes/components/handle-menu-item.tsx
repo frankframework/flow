@@ -1,6 +1,6 @@
 import React from 'react'
 
-interface HandleMenuItemProperties {
+export interface HandleMenuItemProperties {
   label: string
   iconColor?: string
   onClick: () => void

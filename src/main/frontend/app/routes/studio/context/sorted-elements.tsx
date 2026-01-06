@@ -5,6 +5,8 @@ import { useSettingsStore } from '~/routes/settings/settings-store'
 import useNodeContextStore from '~/stores/node-context-store'
 import type { ElementDetails } from '@frankframework/ff-doc'
 import { getElementTypeFromName } from '../node-translator-module'
+import DangerIcon from '../../../../icons/solar/Danger Triangle.svg?react'
+import { DeprecatedListPopover } from './deprecated-list-popover'
 
 interface Properties {
   type: string
@@ -48,21 +50,30 @@ export default function SortedElements({ type, items, onDragStart, searchTerm }:
             return (
               <li
                 key={value.name}
-                className="border-border m-2 cursor-move list-none overflow-hidden rounded border p-4 overflow-ellipsis"
+                className="border-border m-2 flex cursor-move items-center justify-between rounded border p-4"
                 draggable
                 onDragStart={onDragStart(value)}
                 onDragEnd={() => setDraggedName(null)}
                 style={{
                   background: gradientEnabled
                     ? `radial-gradient(
-              ellipse farthest-corner at 20% 20%,
-              var(--type-${elementType}) 0%,
-              var(--color-background) 100%
-            )`
+          ellipse farthest-corner at 20% 20%,
+          var(--type-${elementType}) 0%,
+          var(--color-background) 100%
+        )`
                     : `var(--type-${elementType})`,
                 }}
               >
-                {value.name}
+                {/* Left: name */}
+                <span className="overflow-hidden text-ellipsis whitespace-nowrap">{value.name}</span>
+
+                {/* Right: deprecated icon */}
+                {value.deprecated && (
+                  <div className="group relative ml-2 flex-shrink-0">
+                    <DangerIcon />
+                    <DeprecatedListPopover deprecated={value.deprecated} />
+                  </div>
+                )}
               </li>
             )
           })}

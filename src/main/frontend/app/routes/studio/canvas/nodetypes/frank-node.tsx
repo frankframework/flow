@@ -7,6 +7,7 @@ import {
   useReactFlow,
   useUpdateNodeInternals,
 } from '@xyflow/react'
+import DangerIcon from '../../../../../icons/solar/Danger Triangle.svg?react'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import useFlowStore from '~/stores/flow-store'
 import { CustomHandle } from '~/routes/studio/canvas/nodetypes/components/handle'
@@ -23,7 +24,7 @@ import { findChildRecursive } from '~/stores/child-utilities'
 import { canAcceptChildStatic } from './node-utilities'
 import type { ElementDetails } from '@frankframework/ff-doc'
 import { toast } from 'react-toastify'
-import { useTheme } from '~/hooks/use-theme'
+import { DeprecatedPopover } from './components/deprecated-popover'
 
 export type FrankNodeType = Node<{
   subtype: string
@@ -47,7 +48,6 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
   const FRANK_DOC_URL = variables.frankDocJsonUrl
   const { elements, filters } = useFFDoc(FRANK_DOC_URL)
   const { setNodeId, setAttributes, setParentId, setIsEditing, setDraggedName, draggedName } = useNodeContextStore()
-  const theme = useTheme()
   const gradientEnabled = useSettingsStore((state) => state.studio.gradient)
   // Store the associated Frank element
   const frankElement = useMemo(() => {
@@ -56,6 +56,10 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
 
     return Object.values(recordElements).find((element) => element.name === properties.data.subtype) ?? null
   }, [elements, properties.data.subtype])
+  const isDeprecated = frankElement?.deprecated
+  const [showDeprecated, setShowDeprecated] = useState(false)
+  const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null)
+  const dangerTriangleReference = useRef<HTMLDivElement>(null)
 
   const updateNodeInternals = useUpdateNodeInternals()
 
@@ -300,7 +304,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
         onDoubleClick={editNode}
       >
         <div
-          className={`border-b-border box-border w-full rounded-t-md border-b p-1`}
+          className={`border-b-border relative box-border w-full rounded-t-md border-b p-1`}
           style={{
             background: gradientEnabled
               ? `radial-gradient(
@@ -315,6 +319,25 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
           <p className="overflow-hidden text-sm tracking-wider overflow-ellipsis whitespace-nowrap">
             {properties.data.name.toUpperCase()}
           </p>
+          {isDeprecated && frankElement?.deprecated && (
+            <>
+              <div
+                ref={dangerTriangleReference}
+                className="absolute top-0.5 right-1 z-10 flex items-center justify-center"
+                onMouseEnter={() => {
+                  if (dangerTriangleReference.current) {
+                    setAnchorRect(dangerTriangleReference.current.getBoundingClientRect())
+                  }
+                  setShowDeprecated(true)
+                }}
+                onMouseLeave={() => setShowDeprecated(false)}
+              >
+                <DangerIcon />
+              </div>
+
+              {showDeprecated && <DeprecatedPopover deprecated={frankElement.deprecated} anchorRect={anchorRect} />}
+            </>
+          )}
         </div>
         {properties.data.attributes &&
           Object.entries(properties.data.attributes).map(([key, value]) => (
