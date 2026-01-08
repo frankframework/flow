@@ -21,6 +21,7 @@ import org.w3c.dom.*;
 @Setter
 public class Project {
     private String name;
+    private String rootPath;
     private final ArrayList<Configuration> configurations;
     private final ProjectSettings projectSettings;
 

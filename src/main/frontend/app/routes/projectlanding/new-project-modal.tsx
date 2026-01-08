@@ -1,12 +1,12 @@
 import { useState } from 'react'
 
-interface ProjectModalProperties {
+interface NewProjectModalProperties {
   isOpen: boolean
   onClose: () => void
   onCreate: (name: string) => void
 }
 
-export default function ProjectModal({ isOpen, onClose, onCreate }: Readonly<ProjectModalProperties>) {
+export default function NewProjectModal({ isOpen, onClose, onCreate }: Readonly<NewProjectModalProperties>) {
   const [name, setName] = useState('')
 
   if (!isOpen) return null

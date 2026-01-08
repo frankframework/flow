@@ -1,11 +1,15 @@
 package org.frankframework.flow.project;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+
 import org.frankframework.flow.configuration.AdapterUpdateDTO;
 import org.frankframework.flow.configuration.Configuration;
 import org.frankframework.flow.configuration.ConfigurationDTO;
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
+import org.frankframework.flow.projectfolder.ProjectFolderService;
 import org.frankframework.flow.projectsettings.FilterType;
 import org.frankframework.flow.projectsettings.InvalidFilterTypeException;
 import org.frankframework.flow.utility.XmlValidator;
@@ -24,9 +28,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/projects")
 public class ProjectController {
     private final ProjectService projectService;
+    private final ProjectFolderService projectFolderService;
 
-    public ProjectController(ProjectService projectService) {
+    public ProjectController(ProjectService projectService, ProjectFolderService projectFolderService) {
         this.projectService = projectService;
+        this.projectFolderService = projectFolderService;
     }
 
     @GetMapping
@@ -39,6 +45,16 @@ public class ProjectController {
             projectDTOList.add(dto);
         }
         return ResponseEntity.ok(projectDTOList);
+    }
+
+    @GetMapping("/backend-folders")
+    public List<String> getBackendFolders() throws IOException {
+        return projectFolderService.listProjectFolders();
+    }
+
+    @GetMapping("/root")
+    public ResponseEntity<Map<String, String>> getProjectsRoot() {
+        return ResponseEntity.ok(Map.of("rootPath", projectFolderService.getProjectsRoot().toString()));
     }
 
     @GetMapping("/{projectName}")
@@ -81,7 +97,8 @@ public class ProjectController {
                     FilterType type = entry.getKey();
                     Boolean enabled = entry.getValue();
 
-                    if (enabled == null) continue;
+                    if (enabled == null)
+                        continue;
 
                     if (enabled) {
                         project.enableFilter(type);
@@ -127,7 +144,8 @@ public class ProjectController {
             @PathVariable String projectname, @RequestBody ProjectImportDTO importDTO) {
 
         Project project = projectService.getProject(projectname);
-        if (project == null) return ResponseEntity.notFound().build();
+        if (project == null)
+            return ResponseEntity.notFound().build();
 
         for (ImportConfigurationDTO conf : importDTO.configurations()) {
             Configuration c = new Configuration(conf.filepath());
