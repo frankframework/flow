@@ -328,9 +328,10 @@ class ProjectControllerTest {
     void createProjectReturnsProjectDto() throws Exception {
         // Arrange
         String projectName = "NewProject";
-        Project createdProject = new Project(projectName);
+        String rootPath = "/path/to/new/project";
+        Project createdProject = new Project(projectName, rootPath);
 
-        when(projectService.createProject(projectName)).thenReturn(createdProject);
+        when(projectService.createProject(projectName, rootPath)).thenReturn(createdProject);
 
         mockMvc.perform(post("/api/projects/" + projectName).accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -338,7 +339,7 @@ class ProjectControllerTest {
                 .andExpect(jsonPath("$.filepaths").isEmpty())
                 .andExpect(jsonPath("$.filters").isNotEmpty());
 
-        verify(projectService).createProject(projectName);
+        verify(projectService).createProject(projectName, rootPath);
     }
 
     @Test

@@ -36,27 +36,31 @@ export default function EditorFileStructure() {
   const [highlightedItemId, setHighlightedItemId] = useState<string | null>(null)
 
   const tree = useRef<TreeRef>(null)
-  const dataProviderReference = useRef(new EditorFilesDataProvider('Configurations', []))
 
   const setTabData = useEditorTabStore((state) => state.setTabData)
   const setActiveTab = useEditorTabStore((state) => state.setActiveTab)
   const getTab = useEditorTabStore((state) => state.getTab)
 
+  const [dataProvider, setDataProvider] = useState<EditorFilesDataProvider | null>(null)
+
   useEffect(() => {
     if (!project) return
-    dataProviderReference.current.updateData(filepaths)
-  }, [filepaths, project])
+
+    // Create a new provider with the actual project name
+    const provider = new EditorFilesDataProvider(project.name)
+    setDataProvider(provider)
+  }, [project])
 
   useEffect(() => {
     const findMatchingItems = async () => {
-      if (!searchTerm || !dataProviderReference.current) {
+      if (!searchTerm || !dataProvider) {
         setMatchingItemIds([])
         setActiveMatchIndex(-1)
         setHighlightedItemId(null)
         return
       }
 
-      const allItems = await dataProviderReference.current.getAllItems()
+      const allItems = await dataProvider.getAllItems()
       const lower = searchTerm.toLowerCase()
 
       const matches = allItems
@@ -92,12 +96,12 @@ export default function EditorFileStructure() {
   }
 
   const handleItemClickAsync = async (itemIds: TreeItemIndex[]) => {
-    if (!dataProviderReference.current || itemIds.length === 0) return
+    if (!dataProvider || itemIds.length === 0) return
 
     const itemId = itemIds[0]
     if (typeof itemId !== 'string') return
 
-    const item = await dataProviderReference.current.getTreeItem(itemId)
+    const item = await dataProvider.getTreeItem(itemId)
     if (!item || item.isFolder) return
 
     const filePath = item.data.path
@@ -216,7 +220,7 @@ export default function EditorFileStructure() {
     )
   }
 
-  if (!dataProviderReference.current) return null
+  if (!dataProvider) return null
 
   return (
     <>
@@ -225,7 +229,7 @@ export default function EditorFileStructure() {
         <UncontrolledTreeEnvironment
           viewState={{}}
           getItemTitle={getItemTitle}
-          dataProvider={dataProviderReference.current}
+          dataProvider={dataProvider}
           onSelectItems={handleItemClick}
           canSearch={false}
           renderItemArrow={renderItemArrow}

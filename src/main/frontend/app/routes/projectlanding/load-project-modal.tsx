@@ -4,7 +4,7 @@ import FolderIcon from '../../../icons/solar/Folder.svg?react'
 interface LoadProjectModalProperties {
   isOpen: boolean
   onClose: () => void
-  onCreate: (name: string) => void
+  onCreate: (name: string, rootPath: string) => void
 }
 
 export default function LoadProjectModal({ isOpen, onClose, onCreate }: Readonly<LoadProjectModalProperties>) {
@@ -53,7 +53,7 @@ export default function LoadProjectModal({ isOpen, onClose, onCreate }: Readonly
   if (!isOpen) return null
 
   const handleCreate = (name: string) => {
-    onCreate(name)
+    onCreate(name, rootPath || '')
     onClose()
   }
 

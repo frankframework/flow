@@ -28,7 +28,9 @@ export default function ProjectRow({ project }: Readonly<ProjectRowProperties>) 
     >
       <div className="flex flex-col">
         <div className="">{project.name}</div>
-        <p className="text-foreground-muted">path/to/{project.name}</p>
+        <p className="text-foreground-muted">
+          {project.rootPath}\{project.name}
+        </p>
       </div>
 
       <KebabVerticalIcon className="h-4 w-auto" />

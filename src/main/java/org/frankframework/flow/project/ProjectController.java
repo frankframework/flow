@@ -1,6 +1,7 @@
 package org.frankframework.flow.project;
 
 import java.io.IOException;
+import java.nio.file.NoSuchFileException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -9,7 +10,8 @@ import org.frankframework.flow.configuration.AdapterUpdateDTO;
 import org.frankframework.flow.configuration.Configuration;
 import org.frankframework.flow.configuration.ConfigurationDTO;
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
-import org.frankframework.flow.projectfolder.ProjectFolderService;
+import org.frankframework.flow.filetree.FileTreeNode;
+import org.frankframework.flow.filetree.FileTreeService;
 import org.frankframework.flow.projectsettings.FilterType;
 import org.frankframework.flow.projectsettings.InvalidFilterTypeException;
 import org.frankframework.flow.utility.XmlValidator;
@@ -28,11 +30,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/projects")
 public class ProjectController {
     private final ProjectService projectService;
-    private final ProjectFolderService projectFolderService;
+    private final FileTreeService fileTreeService;
 
-    public ProjectController(ProjectService projectService, ProjectFolderService projectFolderService) {
+    public ProjectController(ProjectService projectService, FileTreeService fileTreeService) {
         this.projectService = projectService;
-        this.projectFolderService = projectFolderService;
+        this.fileTreeService = fileTreeService;
     }
 
     @GetMapping
@@ -49,12 +51,17 @@ public class ProjectController {
 
     @GetMapping("/backend-folders")
     public List<String> getBackendFolders() throws IOException {
-        return projectFolderService.listProjectFolders();
+        return fileTreeService.listProjectFolders();
     }
 
     @GetMapping("/root")
     public ResponseEntity<Map<String, String>> getProjectsRoot() {
-        return ResponseEntity.ok(Map.of("rootPath", projectFolderService.getProjectsRoot().toString()));
+        return ResponseEntity.ok(Map.of("rootPath", fileTreeService.getProjectsRoot().toString()));
+    }
+
+    @GetMapping("/{name}/tree")
+    public FileTreeNode getProjectTree(@PathVariable String name) throws IOException {
+        return fileTreeService.getProjectTree(name);
     }
 
     @GetMapping("/{projectName}")
@@ -121,22 +128,24 @@ public class ProjectController {
     @PostMapping("/{projectName}/configuration")
     public ResponseEntity<ConfigurationDTO> getConfigurationByPath(
             @PathVariable String projectName, @RequestBody ConfigurationPathDTO requestBody)
-            throws ProjectNotFoundException, ConfigurationNotFoundException {
+            throws ProjectNotFoundException, ConfigurationNotFoundException, IOException {
 
         Project project = projectService.getProject(projectName);
 
         String filepath = requestBody.filepath();
 
         // Find configuration by filepath
-        for (Configuration config : project.getConfigurations()) {
-            if (config.getFilepath().equals(filepath)) {
-                ConfigurationDTO dto = new ConfigurationDTO(config.getFilepath(), config.getXmlContent());
-                return ResponseEntity.ok(dto);
-            }
+        String content;
+        try {
+            content = fileTreeService.readFileContent(filepath);
+        } catch (NoSuchFileException e) {
+            throw new ConfigurationNotFoundException("Configuration file not found: " + filepath);
+        } catch (IllegalArgumentException e) {
+            throw new ConfigurationNotFoundException("Invalid configuration path: " + filepath);
         }
 
-        throw new ConfigurationNotFoundException(
-                "Configuration with filepath: " + requestBody.filepath() + " cannot be found");
+        ConfigurationDTO dto = new ConfigurationDTO(filepath, content);
+        return ResponseEntity.ok(dto);
     }
 
     @PostMapping("/{projectname}/import-configurations")
@@ -186,9 +195,9 @@ public class ProjectController {
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping("/{projectname}")
-    public ResponseEntity<ProjectDTO> createProject(@PathVariable String projectname) {
-        Project project = projectService.createProject(projectname);
+    @PostMapping
+    public ResponseEntity<ProjectDTO> createProject(@RequestBody ProjectCreateDTO projectCreateDTO) {
+        Project project = projectService.createProject(projectCreateDTO.name(), projectCreateDTO.rootPath());
 
         ProjectDTO dto = ProjectDTO.from(project);
 

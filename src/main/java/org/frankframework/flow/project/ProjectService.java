@@ -4,6 +4,8 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Optional;
 import javax.xml.transform.OutputKeys;
@@ -18,6 +20,7 @@ import org.frankframework.flow.projectsettings.FilterType;
 import org.frankframework.flow.projectsettings.InvalidFilterTypeException;
 import org.frankframework.flow.utility.XmlSecurityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.stereotype.Service;
@@ -35,15 +38,17 @@ public class ProjectService {
     private static final String BASE_PATH = "classpath:project/";
     private static final int MIN_PARTS_LENGTH = 2;
     private final ResourcePatternResolver resolver;
+    private final Path projectsRoot;
 
     @Autowired
-    public ProjectService(ResourcePatternResolver resolver) {
+    public ProjectService(ResourcePatternResolver resolver, @Value("${app.project.root}") String rootPath) {
         this.resolver = resolver;
+        this.projectsRoot = Paths.get(rootPath).toAbsolutePath().normalize();
         initiateProjects();
     }
 
-    public Project createProject(String name) {
-        Project project = new Project(name);
+    public Project createProject(String name, String rootPath) {
+        Project project = new Project(name, rootPath);
         projects.add(project);
         return project;
     }
@@ -200,7 +205,7 @@ public class ProjectService {
                 try {
                     project = getProject(projectName);
                 } catch (ProjectNotFoundException e) {
-                    project = createProject(projectName);
+                    project = createProject(projectName, projectsRoot.toString());
                 }
 
                 // Load XML content

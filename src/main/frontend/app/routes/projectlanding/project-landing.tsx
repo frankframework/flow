@@ -11,7 +11,7 @@ import LoadProjectModal from './load-project-modal'
 
 export interface Project {
   name: string
-  rootPath?: string
+  rootPath: string
   filepaths: string[]
   filters: Record<string, boolean> // key = filter name (e.g. "HTTP"), value = true/false
 }
@@ -103,11 +103,15 @@ export default function ProjectLanding() {
 
   const createProject = async (projectName: string, rootPath?: string) => {
     try {
-      const response = await fetch(`/api/projects/${projectName}`, {
+      const response = await fetch(`/api/projects`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        body: JSON.stringify({
+          name: projectName,
+          rootPath: rootPath ?? undefined,
+        }),
       })
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`)
@@ -117,6 +121,17 @@ export default function ProjectLanding() {
       setProjects((previous) => [...previous, newProject])
     } catch (error_) {
       setError(error_ instanceof Error ? error_.message : 'Failed to create project')
+    }
+
+    try {
+      const response = await fetch(`/api/projects/${projectName}/tree`)
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`)
+      }
+      const data = await response.json()
+      console.log('Project tree:', data)
+    } catch (error_) {
+      console.error(error_ instanceof Error ? error_.message : 'Failed to fetch project tree')
     }
   }
 
