@@ -47,7 +47,7 @@ public class FileTreeService {
     public String readFileContent(String absoluteFilepath) throws IOException {
         Path filePath = Paths.get(absoluteFilepath).toAbsolutePath().normalize();
 
-        // Security check: make sure file is under projects root
+        // Make sure file is under projects root
         if (!filePath.startsWith(projectsRoot)) {
             throw new IllegalArgumentException("File is outside of projects root: " + absoluteFilepath);
         }
@@ -61,6 +61,25 @@ public class FileTreeService {
         }
 
         return Files.readString(filePath, StandardCharsets.UTF_8);
+    }
+
+    public void updateFileContent(String absoluteFilepath, String newContent) throws IOException {
+        Path filePath = Paths.get(absoluteFilepath).toAbsolutePath().normalize();
+
+        // Make sure file is under projects root
+        if (!filePath.startsWith(projectsRoot)) {
+            throw new IllegalArgumentException("File is outside of projects root: " + absoluteFilepath);
+        }
+
+        if (!Files.exists(filePath)) {
+            throw new IllegalArgumentException("File does not exist: " + absoluteFilepath);
+        }
+
+        if (Files.isDirectory(filePath)) {
+            throw new IllegalArgumentException("Cannot update a directory: " + absoluteFilepath);
+        }
+
+        Files.writeString(filePath, newContent, StandardCharsets.UTF_8);
     }
 
     public FileTreeNode getProjectTree(String projectName) throws IOException {

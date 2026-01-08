@@ -219,8 +219,8 @@ export default function CodeEditor() {
     if (!project || !activeTabFilePath) return
 
     const editor = editorReference.current
-    const updatedXml = editor?.getValue?.()
-    if (!updatedXml) return
+    const updatedContent = editor?.getValue?.()
+    if (!updatedContent) return
 
     setIsSaving(true)
 
@@ -229,7 +229,7 @@ export default function CodeEditor() {
       const response = await fetch(url, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ filepath: activeTabFilePath, xmlContent: updatedXml }),
+        body: JSON.stringify({ filepath: activeTabFilePath, content: updatedContent }),
       })
 
       // Parse JSON response body if it's not OK

@@ -170,11 +170,20 @@ public class ProjectController {
     @PutMapping("/{projectName}/configuration")
     public ResponseEntity<Void> updateConfiguration(
             @PathVariable String projectName, @RequestBody ConfigurationDTO configurationDTO)
-            throws ProjectNotFoundException, ConfigurationNotFoundException, InvalidXmlContentException {
+            throws ProjectNotFoundException, ConfigurationNotFoundException, InvalidXmlContentException, IOException {
 
-        XmlValidator.validateXml(configurationDTO.xmlContent());
+        // Validate XML
+        if (configurationDTO.filepath().toLowerCase().endsWith(".xml")) {
+            XmlValidator.validateXml(configurationDTO.content());
+        }
 
-        projectService.updateConfigurationXml(projectName, configurationDTO.filepath(), configurationDTO.xmlContent());
+        Project project = projectService.getProject(projectName);
+
+        try {
+            fileTreeService.updateFileContent(configurationDTO.filepath(), configurationDTO.content());
+        } catch (IllegalArgumentException e) {
+            throw new ConfigurationNotFoundException("Invalid file path: " + configurationDTO.filepath());
+        }
 
         return ResponseEntity.ok().build();
     }
