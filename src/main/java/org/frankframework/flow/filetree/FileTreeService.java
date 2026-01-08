@@ -1,17 +1,26 @@
 package org.frankframework.flow.filetree;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.frankframework.flow.configuration.AdapterNotFoundException;
+import org.frankframework.flow.configuration.ConfigurationNotFoundException;
+import org.frankframework.flow.utility.XmlAdapterUtils;
+import org.frankframework.flow.utility.XmlSecurityUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+
+import org.w3c.dom.Node;
+import org.w3c.dom.Document;
 
 @Service
 public class FileTreeService {
@@ -90,6 +99,60 @@ public class FileTreeService {
         }
 
         return buildTree(projectPath);
+    }
+
+    public boolean updateAdapterFromFile(
+            String projectName,
+            Path configurationFile,
+            String adapterName,
+            String newAdapterXml)
+            throws ConfigurationNotFoundException, AdapterNotFoundException {
+
+        if (!Files.exists(configurationFile)) {
+            throw new ConfigurationNotFoundException(
+                    "Configuration file not found: " + configurationFile);
+        }
+
+        try {
+            // Parse configuration XML from file
+            Document configDoc = XmlSecurityUtils.createSecureDocumentBuilder()
+                    .parse(Files.newInputStream(configurationFile));
+
+            // Parse new adapter XML
+            Document newAdapterDoc = XmlSecurityUtils.createSecureDocumentBuilder()
+                    .parse(new ByteArrayInputStream(newAdapterXml.getBytes(StandardCharsets.UTF_8)));
+
+            Node newAdapterNode = newAdapterDoc.getDocumentElement();
+
+            // Delegate replacement logic
+            boolean replaced = XmlAdapterUtils.replaceAdapterInDocument(
+                    configDoc,
+                    adapterName,
+                    newAdapterNode);
+
+            if (!replaced) {
+                throw new AdapterNotFoundException("Adapter not found: " + adapterName);
+            }
+
+            // Delegate document to string conversion
+            String updatedXml = XmlAdapterUtils.convertDocumentToString(configDoc);
+
+            // Write updated XML back to file
+            Files.writeString(
+                    configurationFile,
+                    updatedXml,
+                    StandardCharsets.UTF_8,
+                    StandardOpenOption.TRUNCATE_EXISTING);
+
+            return true;
+
+        } catch (AdapterNotFoundException | ConfigurationNotFoundException e) {
+            throw e; // let GlobalExceptionHandler deal with it
+        } catch (Exception e) {
+            System.err.println("Error updating adapter in file: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
     }
 
     // Recursive method to build the file tree

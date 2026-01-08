@@ -527,11 +527,15 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
 
     try {
       if (!project) return
-      const url = `/api/projects/${encodeURIComponent(project.name)}/adapters/${encodeURIComponent(activeTabName)}`
+      const url = `/api/projects/${encodeURIComponent(project.name)}/adapters`
       const response = await fetch(url, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ adapterXml: xmlString, configurationPath: configurationPath }),
+        body: JSON.stringify({
+          adapterXml: xmlString,
+          adapterName: activeTabName,
+          configurationPath: configurationPath,
+        }),
       })
 
       if (!response.ok) {

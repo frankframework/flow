@@ -18,10 +18,8 @@ import {
 } from 'react-complex-tree'
 import FilesDataProvider from '~/components/file-structure/files-data-provider'
 import { useProjectStore } from '~/stores/project-store'
-import { Link } from 'react-router'
-import { useTreeStore } from '~/stores/tree-store'
-import { useShallow } from 'zustand/react/shallow'
 import { getListenerIcon } from './tree-utilities'
+import type { FileTreeNode } from './editor-data-provider'
 
 export interface ConfigWithAdapters {
   configPath: string
@@ -43,60 +41,58 @@ function getItemTitle(item: TreeItem<unknown>): string {
   return 'Unnamed'
 }
 
+function findConfigurationsDir(node: FileTreeNode): FileTreeNode | null {
+  const normalizedPath = node.path.replaceAll('\\', '/')
+  if (node.type === 'DIRECTORY' && normalizedPath.endsWith('/src/main/configurations')) {
+    return node
+  }
+
+  if (!node.children) return null
+
+  for (const child of node.children) {
+    const found = findConfigurationsDir(child)
+    if (found) return found
+  }
+
+  return null
+}
+
 export default function FileStructure() {
-  const { configs, isLoading, setConfigs, setIsLoading } = useTreeStore(
-    useShallow((state) => ({
-      configs: state.configs,
-      isLoading: state.isLoading,
-      setConfigs: state.setConfigs,
-      setIsLoading: state.setIsLoading,
-    })),
-  )
   const project = useProjectStore.getState().project
+  const [isTreeLoading, setIsTreeLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [matchingItemIds, setMatchingItemIds] = useState<string[]>([])
   const [activeMatchIndex, setActiveMatchIndex] = useState<number>(-1)
   const [highlightedItemId, setHighlightedItemId] = useState<string | null>(null)
 
   const tree = useRef<TreeRef>(null)
-  const dataProviderReference = useRef(new FilesDataProvider([]))
-
-  const configurationPaths = useProjectStore((state) => state.project?.filepaths)
+  const dataProviderReference = useRef(new FilesDataProvider(project ? project.name : ''))
   const setTabData = useTabStore((state) => state.setTabData)
   const setActiveTab = useTabStore((state) => state.setActiveTab)
   const getTab = useTabStore((state) => state.getTab)
 
   useEffect(() => {
-    const loadAdapters = async () => {
-      if (configs.length > 0 || !configurationPaths) return
-
-      // eslint-disable-next-line unicorn/consistent-function-scoping
-      const fetchAdapter = async (configPath: string, adapterName: string) => {
-        if (!project) return { adapterName, listenerName: null }
-        const listenerName = await getAdapterListenerType(project.name, configPath, adapterName)
-        return { adapterName, listenerName }
-      }
-
-      const fetchConfig = async (configPath: string): Promise<ConfigWithAdapters> => {
-        if (!project) return { configPath, adapters: [] }
-
-        const adapterNames = await getAdapterNamesFromConfiguration(project.name, configPath)
-        const adapters = await Promise.all(adapterNames.map((adapterName) => fetchAdapter(configPath, adapterName)))
-        return { configPath, adapters }
-      }
-
+    // Load in the filetree from the backend
+    const loadFileTree = async () => {
+      if (!project) return
+      setIsTreeLoading(true)
       try {
-        const loaded = await Promise.all(configurationPaths.map((path) => fetchConfig(path)))
-        setConfigs(loaded)
+        const response = await fetch(`/api/projects/${project.name}/tree`)
+        const tree: FileTreeNode = await response.json()
+
+        const configurationsRoot = findConfigurationsDir(tree)
+        if (!configurationsRoot) return
+
+        await dataProviderReference.current.updateData(configurationsRoot)
       } catch (error) {
-        console.error('Failed to load adapter names:', error)
+        console.error('Failed to load file tree', error)
       } finally {
-        setIsLoading(false)
+        setIsTreeLoading(false)
       }
     }
 
-    loadAdapters()
-  }, [configurationPaths, configs.length, setConfigs, setIsLoading, project])
+    loadFileTree()
+  }, [project])
 
   useEffect(() => {
     const findMatchingItems = async () => {
@@ -127,11 +123,7 @@ export default function FileStructure() {
     }
 
     findMatchingItems()
-  }, [searchTerm, configs])
-
-  useEffect(() => {
-    dataProviderReference.current.updateData(configs)
-  }, [configs])
+  }, [searchTerm])
 
   const handleItemClick = (items: TreeItemIndex[], _treeId: string): void => {
     void handleItemClickAsync(items)
@@ -310,20 +302,12 @@ export default function FileStructure() {
   }
 
   const renderContent = () => {
-    if (isLoading) {
-      return <p>Loading configurations...</p>
+    if (!project) {
+      return <p>Loading project...</p>
     }
 
-    if (configs.length === 0) {
-      return (
-        <p className="p-2 text-center">
-          No configurations found, load in a project through the&nbsp;
-          <Link to="/" className="font-medium text-blue-600 hover:underline">
-            dashboard overview
-          </Link>
-          .
-        </p>
-      )
+    if (isTreeLoading) {
+      return <p>Loading configurations...</p>
     }
 
     return (

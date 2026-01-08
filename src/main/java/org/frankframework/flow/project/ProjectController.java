@@ -2,6 +2,8 @@ package org.frankframework.flow.project;
 
 import java.io.IOException;
 import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -188,14 +190,17 @@ public class ProjectController {
         return ResponseEntity.ok().build();
     }
 
-    @PutMapping("/{projectName}/adapters/{adapterName}")
-    public ResponseEntity<Void> updateAdapter(
+    @PutMapping("/{projectName}/adapters")
+    public ResponseEntity<Void> updateAdapterFromFile(
             @PathVariable String projectName,
-            @PathVariable String adapterName,
-            @RequestBody AdapterUpdateDTO adapterUpdateDTO) {
+            @RequestBody AdapterUpdateDTO dto) {
+        Path configPath = Paths.get(dto.configurationPath());
 
-        boolean updated = projectService.updateAdapter(
-                projectName, adapterUpdateDTO.configurationPath(), adapterName, adapterUpdateDTO.adapterXml());
+        boolean updated = fileTreeService.updateAdapterFromFile(
+                projectName,
+                configPath,
+                dto.adapterName(),
+                dto.adapterXml());
 
         if (!updated) {
             return ResponseEntity.notFound().build();

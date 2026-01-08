@@ -151,6 +151,9 @@
 					</execution>
 				</executions>
 				<configuration>
+					<profiles>
+						<profile>local</profile>
+					</profiles>
 					<excludes>
 						<exclude>
 							<groupId>org.projectlombok</groupId>

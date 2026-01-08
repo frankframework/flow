@@ -36,8 +36,6 @@ export default function LoadProjectModal({ isOpen, onClose, onCreate }: Readonly
         const foldersData = await foldersResponse.json()
         const rootData = await rootResponse.json()
 
-        console.log(rootData)
-
         setFolders(foldersData)
         setRootPath(rootData.rootPath)
       } catch (error) {

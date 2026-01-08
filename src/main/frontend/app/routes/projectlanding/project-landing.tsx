@@ -122,17 +122,6 @@ export default function ProjectLanding() {
     } catch (error_) {
       setError(error_ instanceof Error ? error_.message : 'Failed to create project')
     }
-
-    try {
-      const response = await fetch(`/api/projects/${projectName}/tree`)
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`)
-      }
-      const data = await response.json()
-      console.log('Project tree:', data)
-    } catch (error_) {
-      console.error(error_ instanceof Error ? error_.message : 'Failed to fetch project tree')
-    }
   }
 
   const loadProject = async () => {

@@ -18,6 +18,7 @@ import org.frankframework.flow.configuration.Configuration;
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
 import org.frankframework.flow.projectsettings.FilterType;
 import org.frankframework.flow.projectsettings.InvalidFilterTypeException;
+import org.frankframework.flow.utility.XmlAdapterUtils;
 import org.frankframework.flow.utility.XmlSecurityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -151,11 +152,11 @@ public class ProjectService {
 
             Node newAdapterNode = configDoc.importNode(newAdapterDoc.getDocumentElement(), true);
 
-            if (!replaceAdapterInDocument(configDoc, adapterName, newAdapterNode)) {
+            if (!XmlAdapterUtils.replaceAdapterInDocument(configDoc, adapterName, newAdapterNode)) {
                 throw new AdapterNotFoundException("Adapter not found: " + adapterName);
             }
 
-            String xmlOutput = convertDocumentToString(configDoc);
+            String xmlOutput = XmlAdapterUtils.convertDocumentToString(configDoc);
             config.setXmlContent(xmlOutput);
 
             return true;
@@ -222,32 +223,5 @@ public class ProjectService {
             System.err.println("Error initializing projects: " + e.getMessage());
             e.printStackTrace();
         }
-    }
-
-    private boolean replaceAdapterInDocument(Document configDoc, String adapterName, Node newAdapterNode) {
-        NodeList adapters = configDoc.getElementsByTagName("Adapter");
-        for (int i = 0; i < adapters.getLength(); i++) {
-            Element adapter = (Element) adapters.item(i);
-            if (adapterName.equals(adapter.getAttribute("name"))) {
-                adapter.getParentNode().replaceChild(newAdapterNode, adapter);
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private String convertDocumentToString(Document doc) throws Exception {
-        Transformer transformer =
-                XmlSecurityUtils.createSecureTransformerFactory().newTransformer();
-        transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-        transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
-        transformer.setOutputProperty(OutputKeys.METHOD, "xml");
-        transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
-        transformer.setOutputProperty("{http://xml.apache.org/xalan}line-separator", "\n");
-
-        StringWriter writer = new StringWriter();
-        transformer.transform(new DOMSource(doc), new StreamResult(writer));
-
-        return writer.toString().replaceAll("(?m)^[ \t]*\r?\n", "");
     }
 }
