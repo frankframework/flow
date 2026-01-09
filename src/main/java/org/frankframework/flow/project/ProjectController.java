@@ -7,7 +7,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
 import org.frankframework.flow.configuration.AdapterUpdateDTO;
 import org.frankframework.flow.configuration.Configuration;
 import org.frankframework.flow.configuration.ConfigurationDTO;
@@ -58,7 +57,8 @@ public class ProjectController {
 
     @GetMapping("/root")
     public ResponseEntity<Map<String, String>> getProjectsRoot() {
-        return ResponseEntity.ok(Map.of("rootPath", fileTreeService.getProjectsRoot().toString()));
+        return ResponseEntity.ok(
+                Map.of("rootPath", fileTreeService.getProjectsRoot().toString()));
     }
 
     @GetMapping("/{name}/tree")
@@ -106,8 +106,7 @@ public class ProjectController {
                     FilterType type = entry.getKey();
                     Boolean enabled = entry.getValue();
 
-                    if (enabled == null)
-                        continue;
+                    if (enabled == null) continue;
 
                     if (enabled) {
                         project.enableFilter(type);
@@ -132,8 +131,6 @@ public class ProjectController {
             @PathVariable String projectName, @RequestBody ConfigurationPathDTO requestBody)
             throws ProjectNotFoundException, ConfigurationNotFoundException, IOException {
 
-        Project project = projectService.getProject(projectName);
-
         String filepath = requestBody.filepath();
 
         // Find configuration by filepath
@@ -155,8 +152,7 @@ public class ProjectController {
             @PathVariable String projectname, @RequestBody ProjectImportDTO importDTO) {
 
         Project project = projectService.getProject(projectname);
-        if (project == null)
-            return ResponseEntity.notFound().build();
+        if (project == null) return ResponseEntity.notFound().build();
 
         for (ImportConfigurationDTO conf : importDTO.configurations()) {
             Configuration c = new Configuration(conf.filepath());
@@ -179,8 +175,6 @@ public class ProjectController {
             XmlValidator.validateXml(configurationDTO.content());
         }
 
-        Project project = projectService.getProject(projectName);
-
         try {
             fileTreeService.updateFileContent(configurationDTO.filepath(), configurationDTO.content());
         } catch (IllegalArgumentException e) {
@@ -192,15 +186,11 @@ public class ProjectController {
 
     @PutMapping("/{projectName}/adapters")
     public ResponseEntity<Void> updateAdapterFromFile(
-            @PathVariable String projectName,
-            @RequestBody AdapterUpdateDTO dto) {
+            @PathVariable String projectName, @RequestBody AdapterUpdateDTO dto) {
         Path configPath = Paths.get(dto.configurationPath());
 
-        boolean updated = fileTreeService.updateAdapterFromFile(
-                projectName,
-                configPath,
-                dto.adapterName(),
-                dto.adapterXml());
+        boolean updated =
+                fileTreeService.updateAdapterFromFile(projectName, configPath, dto.adapterName(), dto.adapterXml());
 
         if (!updated) {
             return ResponseEntity.notFound().build();

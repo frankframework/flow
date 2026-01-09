@@ -6,11 +6,13 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.frankframework.flow.configuration.Configuration;
-import org.frankframework.flow.configuration.ConfigurationNotFoundException;
+import org.frankframework.flow.filetree.FileTreeService;
 import org.frankframework.flow.projectsettings.FilterType;
 import org.frankframework.flow.projectsettings.InvalidFilterTypeException;
 import org.frankframework.flow.projectsettings.ProjectSettings;
@@ -21,8 +23,7 @@ import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.context.annotation.Bean;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -32,16 +33,11 @@ class ProjectControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @Autowired
-    ProjectService projectService;
+    @MockBean
+    private ProjectService projectService;
 
-    @TestConfiguration
-    static class MockConfig {
-        @Bean
-        ProjectService projectService() {
-            return mock(ProjectService.class);
-        }
-    }
+    @MockBean
+    private FileTreeService fileTreeService;
 
     private Project mockProject() {
         Project project = mock(Project.class);
@@ -107,13 +103,10 @@ class ProjectControllerTest {
 
     @Test
     void getConfigurationByPathReturnsExpectedJson() throws Exception {
-        Project project = mockProject();
-        Configuration config = project.getConfigurations().get(0);
+        String filepath = "config1.xml";
+        String xmlContent = "<xml>content</xml>";
 
-        when(config.getFilepath()).thenReturn("config1.xml");
-        when(config.getXmlContent()).thenReturn("<xml>content</xml>");
-
-        when(projectService.getProject("MyProject")).thenReturn(project);
+        when(fileTreeService.readFileContent(filepath)).thenReturn(xmlContent);
 
         String requestBody =
                 """
@@ -127,16 +120,18 @@ class ProjectControllerTest {
                         .accept(MediaType.APPLICATION_JSON)
                         .content(requestBody))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.filepath").value("config1.xml"))
-                .andExpect(jsonPath("$.xmlContent").value("<xml>content</xml>"));
+                .andExpect(jsonPath("$.filepath").value(filepath))
+                .andExpect(jsonPath("$.content").value(xmlContent));
 
-        verify(projectService).getProject("MyProject");
+        // Verify
+        verify(fileTreeService).readFileContent(filepath);
     }
 
     @Test
     void getConfigurationConfigurationNotFoundReturns404() throws Exception {
-        Project project = mockProject(); // project has only "config1.xml"
-        when(projectService.getProject("MyProject")).thenReturn(project);
+        String filepath = "unknown.xml";
+
+        when(fileTreeService.readFileContent(filepath)).thenThrow(new NoSuchFileException(filepath));
 
         String requestBody =
                 """
@@ -151,17 +146,17 @@ class ProjectControllerTest {
                         .content(requestBody))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.error").value("ConfigurationNotFound"))
-                .andExpect(jsonPath("$.message").value("Configuration with filepath: unknown.xml cannot be found"));
+                .andExpect(jsonPath("$.message").value("Configuration file not found: " + filepath));
 
-        verify(projectService).getProject("MyProject");
+        verify(fileTreeService).readFileContent(filepath);
     }
 
     @Test
     void updateConfigurationSuccessReturns200() throws Exception {
+        String filepath = "config1.xml";
         String xmlContent = "<xml>updated</xml>";
 
-        when(projectService.updateConfigurationXml("MyProject", "config1.xml", xmlContent))
-                .thenReturn(true);
+        doNothing().when(fileTreeService).updateFileContent(filepath, xmlContent);
 
         mockMvc.perform(
                         put("/api/projects/MyProject/configuration")
@@ -170,42 +165,22 @@ class ProjectControllerTest {
                                         """
                                 {
                                   "filepath": "config1.xml",
-                                  "xmlContent": "<xml>updated</xml>"
+                                  "content": "<xml>updated</xml>"
                                 }
                                 """))
                 .andExpect(status().isOk());
 
-        verify(projectService).updateConfigurationXml("MyProject", "config1.xml", xmlContent);
-    }
-
-    @Test
-    void updateConfigurationProjectNotFoundReturns404() throws Exception {
-        doThrow(new ProjectNotFoundException("Project not found"))
-                .when(projectService)
-                .updateConfigurationXml("UnknownProject", "config1.xml", "<xml>updated</xml>");
-
-        mockMvc.perform(
-                        put("/api/projects/UnknownProject/configuration")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(
-                                        """
-                                {
-                                  "filepath": "config1.xml",
-                                  "xmlContent": "<xml>updated</xml>"
-                                }
-                                """))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.error").value("ProjectNotFound"))
-                .andExpect(jsonPath("$.message").value("Project not found"));
-
-        verify(projectService).updateConfigurationXml("UnknownProject", "config1.xml", "<xml>updated</xml>");
+        verify(fileTreeService).updateFileContent(filepath, xmlContent);
     }
 
     @Test
     void updateConfigurationConfigurationNotFoundReturns404() throws Exception {
-        doThrow(new ConfigurationNotFoundException("Configuration not found"))
-                .when(projectService)
-                .updateConfigurationXml("MyProject", "unknown.xml", "<xml>updated</xml>");
+        String filepath = "unknown.xml";
+        String xmlContent = "<xml>updated</xml>";
+
+        doThrow(new IllegalArgumentException("Invalid path"))
+                .when(fileTreeService)
+                .updateFileContent(filepath, xmlContent);
 
         mockMvc.perform(
                         put("/api/projects/MyProject/configuration")
@@ -214,14 +189,14 @@ class ProjectControllerTest {
                                         """
                                 {
                                   "filepath": "unknown.xml",
-                                  "xmlContent": "<xml>updated</xml>"
+                                  "content": "<xml>updated</xml>"
                                 }
                                 """))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.error").value("ConfigurationNotFound"))
-                .andExpect(jsonPath("$.message").value("Configuration not found"));
+                .andExpect(jsonPath("$.message").value("Invalid file path: " + filepath));
 
-        verify(projectService).updateConfigurationXml("MyProject", "unknown.xml", "<xml>updated</xml>");
+        verify(fileTreeService).updateFileContent(filepath, xmlContent);
     }
 
     @Test
@@ -230,7 +205,6 @@ class ProjectControllerTest {
 
         try (MockedStatic<XmlValidator> validatorMock = Mockito.mockStatic(XmlValidator.class)) {
 
-            // Mock validator to throw the exception instead of returning a string
             validatorMock
                     .when(() -> XmlValidator.validateXml(invalidXml))
                     .thenThrow(new InvalidXmlContentException("Malformed XML"));
@@ -240,80 +214,92 @@ class ProjectControllerTest {
                                     .contentType(MediaType.APPLICATION_JSON)
                                     .content(
                                             """
-                                {
-                                  "filepath": "config1.xml",
-                                  "xmlContent": "<xml><unclosed></xml>"
-                                }
-                                """))
+                                    {
+                                      "filepath": "config1.xml",
+                                      "content": "<xml><unclosed></xml>"
+                                    }
+                                    """))
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.error").value("InvalidXmlContent"))
                     .andExpect(jsonPath("$.message").value("Malformed XML"));
 
-            // Service should never be called if validation failed
-            verify(projectService, never()).updateConfigurationXml(anyString(), anyString(), anyString());
+            verify(fileTreeService, never()).updateFileContent(anyString(), anyString());
         }
     }
 
     @Test
-    void updateAdapterSuccessReturns200() throws Exception {
-        when(projectService.updateAdapter(
-                        eq("MyProject"), eq("config1.xml"), eq("MyAdapter"), eq("<adapter>updated</adapter>")))
+    void updateAdapterFromFileSuccessReturns200() throws Exception {
+        String projectName = "MyProject";
+        String configPath = "config1.xml";
+        String adapterName = "MyAdapter";
+        String adapterXml = "<adapter>updated</adapter>";
+
+        when(fileTreeService.updateAdapterFromFile(
+                        eq(projectName), eq(Paths.get(configPath)), eq(adapterName), eq(adapterXml)))
                 .thenReturn(true);
 
         mockMvc.perform(
-                        put("/api/projects/MyProject/adapters/MyAdapter")
+                        put("/api/projects/MyProject/adapters")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(
                                         """
                                 {
                                   "configurationPath": "config1.xml",
+                                  "adapterName": "MyAdapter",
                                   "adapterXml": "<adapter>updated</adapter>"
                                 }
                                 """))
                 .andExpect(status().isOk());
 
-        verify(projectService).updateAdapter("MyProject", "config1.xml", "MyAdapter", "<adapter>updated</adapter>");
+        verify(fileTreeService).updateAdapterFromFile(projectName, Paths.get(configPath), adapterName, adapterXml);
     }
 
     @Test
-    void updateAdapterNotFoundReturns404() throws Exception {
+    void updateAdapterFromFileNotFoundReturns404() throws Exception {
+        String projectName = "MyProject";
+        String configPath = "config1.xml";
+        String adapterName = "UnknownAdapter";
+        String adapterXml = "<adapter>something</adapter>";
 
-        when(projectService.updateAdapter(
-                        eq("MyProject"), eq("config1.xml"), eq("UnknownAdapter"), eq("<adapter>something</adapter>")))
+        when(fileTreeService.updateAdapterFromFile(
+                        eq(projectName), eq(Paths.get(configPath)), eq(adapterName), eq(adapterXml)))
                 .thenReturn(false);
 
         mockMvc.perform(
-                        put("/api/projects/MyProject/adapters/UnknownAdapter")
+                        put("/api/projects/MyProject/adapters")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(
                                         """
                                 {
                                   "configurationPath": "config1.xml",
+                                  "adapterName": "UnknownAdapter",
                                   "adapterXml": "<adapter>something</adapter>"
                                 }
                                 """))
                 .andExpect(status().isNotFound());
 
-        verify(projectService)
-                .updateAdapter("MyProject", "config1.xml", "UnknownAdapter", "<adapter>something</adapter>");
+        verify(fileTreeService).updateAdapterFromFile(projectName, Paths.get(configPath), adapterName, adapterXml);
     }
 
     @Test
-    void updateAdapterThrowsExceptionReturns500HandledByGlobalExceptionHandler() throws Exception {
-        String xml = "<adapter>broken</adapter>";
+    void updateAdapterFromFileThrowsExceptionReturns500HandledByGlobalExceptionHandler() throws Exception {
+        String projectName = "MyProject";
+        String configPath = "config1.xml";
+        String adapterName = "MyAdapter";
+        String adapterXml = "<adapter>broken</adapter>";
 
-        // Force generic runtime exception → GlobalExceptionHandler should catch it
         doThrow(new RuntimeException("Something went wrong"))
-                .when(projectService)
-                .updateAdapter(eq("MyProject"), eq("config1.xml"), eq("MyAdapter"), eq("<adapter>broken</adapter>"));
+                .when(fileTreeService)
+                .updateAdapterFromFile(eq(projectName), eq(Paths.get(configPath)), eq(adapterName), eq(adapterXml));
 
         mockMvc.perform(
-                        put("/api/projects/MyProject/adapters/MyAdapter")
+                        put("/api/projects/MyProject/adapters")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(
                                         """
                                 {
                                   "configurationPath": "config1.xml",
+                                  "adapterName": "MyAdapter",
                                   "adapterXml": "<adapter>broken</adapter>"
                                 }
                                 """))
@@ -321,19 +307,29 @@ class ProjectControllerTest {
                 .andExpect(jsonPath("$.error").value("InternalServerError"))
                 .andExpect(jsonPath("$.message").value("An unexpected error occurred."));
 
-        verify(projectService).updateAdapter("MyProject", "config1.xml", "MyAdapter", xml);
+        verify(fileTreeService).updateAdapterFromFile(projectName, Paths.get(configPath), adapterName, adapterXml);
     }
 
     @Test
     void createProjectReturnsProjectDto() throws Exception {
-        // Arrange
         String projectName = "NewProject";
         String rootPath = "/path/to/new/project";
+
         Project createdProject = new Project(projectName, rootPath);
 
         when(projectService.createProject(projectName, rootPath)).thenReturn(createdProject);
 
-        mockMvc.perform(post("/api/projects/" + projectName).accept(MediaType.APPLICATION_JSON))
+        mockMvc.perform(
+                        post("/api/projects")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .accept(MediaType.APPLICATION_JSON)
+                                .content(
+                                        """
+                                {
+                                  "name": "NewProject",
+                                  "rootPath": "/path/to/new/project"
+                                }
+                                """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value(projectName))
                 .andExpect(jsonPath("$.filepaths").isEmpty())

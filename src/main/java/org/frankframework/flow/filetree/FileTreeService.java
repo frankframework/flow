@@ -11,24 +11,21 @@ import java.nio.file.StandardOpenOption;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
 import org.frankframework.flow.configuration.AdapterNotFoundException;
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
 import org.frankframework.flow.utility.XmlAdapterUtils;
 import org.frankframework.flow.utility.XmlSecurityUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-
-import org.w3c.dom.Node;
 import org.w3c.dom.Document;
+import org.w3c.dom.Node;
 
 @Service
 public class FileTreeService {
 
     private final Path projectsRoot;
 
-    public FileTreeService(
-            @Value("${app.project.root}") String rootPath) {
+    public FileTreeService(@Value("${app.project.root}") String rootPath) {
         this.projectsRoot = Paths.get(rootPath).toAbsolutePath().normalize();
     }
 
@@ -38,8 +35,7 @@ public class FileTreeService {
         }
 
         try (Stream<Path> paths = Files.list(projectsRoot)) {
-            return paths
-                    .filter(Files::isDirectory)
+            return paths.filter(Files::isDirectory)
                     .map(path -> path.getFileName().toString())
                     .sorted()
                     .collect(Collectors.toList());
@@ -102,21 +98,17 @@ public class FileTreeService {
     }
 
     public boolean updateAdapterFromFile(
-            String projectName,
-            Path configurationFile,
-            String adapterName,
-            String newAdapterXml)
+            String projectName, Path configurationFile, String adapterName, String newAdapterXml)
             throws ConfigurationNotFoundException, AdapterNotFoundException {
 
         if (!Files.exists(configurationFile)) {
-            throw new ConfigurationNotFoundException(
-                    "Configuration file not found: " + configurationFile);
+            throw new ConfigurationNotFoundException("Configuration file not found: " + configurationFile);
         }
 
         try {
             // Parse configuration XML from file
-            Document configDoc = XmlSecurityUtils.createSecureDocumentBuilder()
-                    .parse(Files.newInputStream(configurationFile));
+            Document configDoc =
+                    XmlSecurityUtils.createSecureDocumentBuilder().parse(Files.newInputStream(configurationFile));
 
             // Parse new adapter XML
             Document newAdapterDoc = XmlSecurityUtils.createSecureDocumentBuilder()
@@ -125,10 +117,7 @@ public class FileTreeService {
             Node newAdapterNode = newAdapterDoc.getDocumentElement();
 
             // Delegate replacement logic
-            boolean replaced = XmlAdapterUtils.replaceAdapterInDocument(
-                    configDoc,
-                    adapterName,
-                    newAdapterNode);
+            boolean replaced = XmlAdapterUtils.replaceAdapterInDocument(configDoc, adapterName, newAdapterNode);
 
             if (!replaced) {
                 throw new AdapterNotFoundException("Adapter not found: " + adapterName);
@@ -139,10 +128,7 @@ public class FileTreeService {
 
             // Write updated XML back to file
             Files.writeString(
-                    configurationFile,
-                    updatedXml,
-                    StandardCharsets.UTF_8,
-                    StandardOpenOption.TRUNCATE_EXISTING);
+                    configurationFile, updatedXml, StandardCharsets.UTF_8, StandardOpenOption.TRUNCATE_EXISTING);
 
             return true;
 
@@ -165,8 +151,7 @@ public class FileTreeService {
             node.setType(NodeType.DIRECTORY);
 
             try (Stream<Path> stream = Files.list(path)) {
-                List<FileTreeNode> children = stream
-                        .map(p -> {
+                List<FileTreeNode> children = stream.map(p -> {
                             try {
                                 return buildTree(p);
                             } catch (IOException e) {
@@ -184,5 +169,4 @@ public class FileTreeService {
 
         return node;
     }
-
 }

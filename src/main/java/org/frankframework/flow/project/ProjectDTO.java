@@ -15,6 +15,9 @@ public record ProjectDTO(String name, String rootPath, List<String> filepaths, M
             filepaths.add(configuration.getFilepath());
         }
         return new ProjectDTO(
-                project.getName(), project.getRootPath(), filepaths, project.getProjectSettings().getFilters());
+                project.getName(),
+                project.getRootPath(),
+                filepaths,
+                project.getProjectSettings().getFilters());
     }
 }

@@ -1,12 +1,11 @@
 package org.frankframework.flow.utility;
 
-import lombok.experimental.UtilityClass;
-import org.w3c.dom.*;
-
+import java.io.StringWriter;
 import javax.xml.transform.*;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import java.io.StringWriter;
+import lombok.experimental.UtilityClass;
+import org.w3c.dom.*;
 
 @UtilityClass
 public class XmlAdapterUtils {
@@ -14,11 +13,7 @@ public class XmlAdapterUtils {
     /**
      * Replaces an Adapter element (matched by name attribute) inside the given configuration document.
      */
-    public static boolean replaceAdapterInDocument(
-            Document configDoc,
-            String adapterName,
-            Node newAdapterNode
-    ) {
+    public static boolean replaceAdapterInDocument(Document configDoc, String adapterName, Node newAdapterNode) {
         NodeList adapters = configDoc.getElementsByTagName("Adapter");
 
         for (int i = 0; i < adapters.getLength(); i++) {
