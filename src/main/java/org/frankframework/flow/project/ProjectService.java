@@ -167,7 +167,6 @@ public class ProjectService {
             e.printStackTrace();
             return false;
         }
-
     }
 
     public Project addConfiguration(String projectName, String configurationName) {
@@ -194,8 +193,7 @@ public class ProjectService {
                 // Example path: file:/.../resources/project/testproject/Configuration1.xml
                 // Extract the project name between "project/" and the next "/"
                 String[] parts = path.split("/project/");
-                if (parts.length < MIN_PARTS_LENGTH)
-                    continue;
+                if (parts.length < MIN_PARTS_LENGTH) continue;
 
                 String relativePath = parts[1]; // e.g. "testproject/Configuration1.xml"
                 String projectName = relativePath.substring(0, relativePath.indexOf("/"));

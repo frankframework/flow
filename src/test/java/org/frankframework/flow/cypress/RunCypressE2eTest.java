@@ -16,6 +16,7 @@ import java.net.http.HttpResponse;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Stream;
@@ -28,7 +29,6 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.TestFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.test.context.TestPropertySource;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 /**
@@ -40,7 +40,6 @@ import org.testcontainers.junit.jupiter.Testcontainers;
  * @author Sergi Philipsen
  * @see "https://github.com/wimdeblauwe/testcontainers-cypress"
  */
-@TestPropertySource(properties = "app.project.root=/tmp/flow-projects")
 @Testcontainers(disabledWithoutDocker = true)
 @Tag("integration")
 public class RunCypressE2eTest {
@@ -61,6 +60,7 @@ public class RunCypressE2eTest {
     private static void startApplication() {
         SpringApplication springApplication = FlowApplication.configureApplication();
 
+        springApplication.setDefaultProperties(Map.of("app.project.root", "/tmp/flow-projects"));
         run = springApplication.run();
 
         assertTrue(run.isRunning());
