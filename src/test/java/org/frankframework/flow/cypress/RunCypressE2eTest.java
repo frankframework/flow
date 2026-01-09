@@ -28,6 +28,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.TestFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.test.context.TestPropertySource;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 /**
@@ -39,6 +40,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
  * @author Sergi Philipsen
  * @see "https://github.com/wimdeblauwe/testcontainers-cypress"
  */
+@TestPropertySource(properties = "app.project.root=/tmp/flow-projects")
 @Testcontainers(disabledWithoutDocker = true)
 @Tag("integration")
 public class RunCypressE2eTest {

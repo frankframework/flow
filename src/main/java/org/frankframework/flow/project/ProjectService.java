@@ -22,6 +22,7 @@ import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.stereotype.Service;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
+import org.xml.sax.SAXParseException;
 
 @Service
 public class ProjectService {
@@ -137,11 +138,13 @@ public class ProjectService {
         Configuration config = configOptional.get();
 
         try {
+            // Parse existing config
             Document configDoc = XmlSecurityUtils.createSecureDocumentBuilder()
-                    .parse(new ByteArrayInputStream(config.getXmlContent().getBytes()));
+                    .parse(new ByteArrayInputStream(config.getXmlContent().getBytes(StandardCharsets.UTF_8)));
 
+            // Parse new adapter
             Document newAdapterDoc = XmlSecurityUtils.createSecureDocumentBuilder()
-                    .parse(new ByteArrayInputStream(newAdapterXml.getBytes()));
+                    .parse(new ByteArrayInputStream(newAdapterXml.getBytes(StandardCharsets.UTF_8)));
 
             Node newAdapterNode = configDoc.importNode(newAdapterDoc.getDocumentElement(), true);
 
@@ -155,14 +158,16 @@ public class ProjectService {
             return true;
 
         } catch (AdapterNotFoundException | ConfigurationNotFoundException | ProjectNotFoundException e) {
-            // rethrow explicitly so they bubble up to GlobalExceptionHandler
             throw e;
+        } catch (SAXParseException e) {
+            System.err.println("Invalid XML for adapter " + adapterName + ": " + e.getMessage());
+            return false;
         } catch (Exception e) {
-            // Other unexpected exceptions still return false
-            System.err.println("Error updating adapter: " + e.getMessage());
+            System.err.println("Unexpected error updating adapter: " + e.getMessage());
             e.printStackTrace();
             return false;
         }
+
     }
 
     public Project addConfiguration(String projectName, String configurationName) {
@@ -189,7 +194,8 @@ public class ProjectService {
                 // Example path: file:/.../resources/project/testproject/Configuration1.xml
                 // Extract the project name between "project/" and the next "/"
                 String[] parts = path.split("/project/");
-                if (parts.length < MIN_PARTS_LENGTH) continue;
+                if (parts.length < MIN_PARTS_LENGTH)
+                    continue;
 
                 String relativePath = parts[1]; // e.g. "testproject/Configuration1.xml"
                 String projectName = relativePath.substring(0, relativePath.indexOf("/"));
