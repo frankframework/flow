@@ -136,7 +136,6 @@ public class FileTreeService {
             throw e; // let GlobalExceptionHandler deal with it
         } catch (Exception e) {
             System.err.println("Error updating adapter in file: " + e.getMessage());
-            e.printStackTrace();
             return false;
         }
     }
