@@ -1,5 +1,4 @@
 import React, { type JSX, useEffect, useRef, useState } from 'react'
-import { getAdapterListenerType, getAdapterNamesFromConfiguration } from '~/routes/studio/xml-to-json-parser'
 import useTabStore from '~/stores/tab-store'
 import Search from '~/components/search/search'
 import FolderIcon from '../../../icons/solar/Folder.svg?react'
@@ -18,8 +17,9 @@ import {
 } from 'react-complex-tree'
 import FilesDataProvider from '~/components/file-structure/files-data-provider'
 import { useProjectStore } from '~/stores/project-store'
-import { getListenerIcon } from './tree-utilities'
+import { getListenerIcon, hashFileTree } from './tree-utilities'
 import type { FileTreeNode } from './editor-data-provider'
+import { useTreeStore } from '~/stores/tree-store'
 
 export interface ConfigWithAdapters {
   configPath: string
@@ -72,18 +72,38 @@ export default function FileStructure() {
   const getTab = useTabStore((state) => state.getTab)
 
   useEffect(() => {
-    // Load in the filetree from the backend
     const loadFileTree = async () => {
       if (!project) return
+
       setIsTreeLoading(true)
+
       try {
+        // Fetch the raw file tree from the backend
         const response = await fetch(`/api/projects/${project.name}/tree`)
-        const tree: FileTreeNode = await response.json()
+        if (!response.ok) {
+          throw new Error(`Failed to fetch file tree: ${response.status}`)
+        }
+        const fetchedTree: FileTreeNode = await response.json()
 
-        const configurationsRoot = findConfigurationsDir(tree)
-        if (!configurationsRoot) return
+        // Compute a hash of the fetched tree
+        const fetchedHash = hashFileTree(fetchedTree)
 
-        await dataProviderReference.current.updateData(configurationsRoot)
+        // Read cached provider data from the TreeStore
+        const { providerData: cachedProviderData, treeHash: cachedHash } = useTreeStore.getState()
+
+        // If hash matches and we have cached provider data, use it
+        if (cachedProviderData && fetchedHash === cachedHash) {
+          dataProviderReference.current.buildFromCachedData(cachedProviderData)
+        } else {
+          // Otherwise, filetree updated, so rebuild the provider data
+          const configurationsRoot = findConfigurationsDir(fetchedTree)
+          if (!configurationsRoot) return
+
+          const newProviderData = await dataProviderReference.current.updateData(configurationsRoot)
+
+          // Cache the newly built provider data and hash
+          useTreeStore.getState().setProviderData(newProviderData, fetchedHash)
+        }
       } catch (error) {
         console.error('Failed to load file tree', error)
       } finally {
@@ -91,7 +111,7 @@ export default function FileStructure() {
       }
     }
 
-    loadFileTree()
+    void loadFileTree()
   }, [project])
 
   useEffect(() => {

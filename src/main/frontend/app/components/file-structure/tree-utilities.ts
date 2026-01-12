@@ -3,6 +3,7 @@ import JavaIcon from '../../../icons/solar/Cup Hot.svg?react'
 import MessageIcon from '../../../icons/solar/Chat Dots.svg?react'
 import MailIcon from '../../../icons/solar/Mailbox.svg?react'
 import FolderIcon from '../../../icons/solar/Folder.svg?react'
+import type { FileTreeNode } from './editor-data-provider'
 
 export function getListenerIcon(listenerType: string | null) {
   if (!listenerType) return CodeIcon
@@ -15,4 +16,15 @@ export function getListenerIcon(listenerType: string | null) {
   }
 
   return listenerIconMap[listenerType] ?? CodeIcon
+}
+
+export function hashFileTree(node: FileTreeNode): string {
+  const normalize = (n: FileTreeNode): unknown => ({
+    name: n.name,
+    path: n.path,
+    type: n.type,
+    children: n.children?.map((element) => normalize(element)) ?? [],
+  })
+
+  return JSON.stringify(normalize(node))
 }

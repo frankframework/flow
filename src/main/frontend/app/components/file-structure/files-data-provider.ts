@@ -99,6 +99,12 @@ export default class FilesDataProvider implements TreeDataProvider {
 
     this.data = newData
     this.notifyListeners(['root'])
+    return newData
+  }
+
+  public buildFromCachedData(cachedData: Record<TreeItemIndex, TreeItem>) {
+    this.data = cachedData
+    this.notifyListeners(['root'])
   }
 
   public async getAllItems(): Promise<TreeItem[]> {
