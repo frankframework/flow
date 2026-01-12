@@ -40,8 +40,8 @@ export default class EditorFilesDataProvider implements TreeDataProvider {
   private buildTreeFromFileTree(rootNode: FileTreeNode) {
     const newData: Record<TreeItemIndex, TreeItem<FileNode>> = {}
 
-    const traverse = (node: FileTreeNode, parentIndex: TreeItemIndex): TreeItemIndex => {
-      const index = parentIndex === 'root' ? node.name : `${parentIndex}/${node.name}`
+    const traverse = (node: FileTreeNode, parentIndex: TreeItemIndex | null): TreeItemIndex => {
+      const index = parentIndex === null ? 'root' : `${parentIndex}/${node.name}`
 
       newData[index] = {
         index,
@@ -54,33 +54,16 @@ export default class EditorFilesDataProvider implements TreeDataProvider {
       }
 
       if (node.type === 'DIRECTORY' && node.children) {
-        newData[index].children ??= []
         for (const child of node.children) {
           const childIndex = traverse(child, index)
-          newData[index].children.push(childIndex)
+          newData[index].children!.push(childIndex)
         }
       }
 
       return index
     }
 
-    newData['root'] = {
-      index: 'root',
-      data: {
-        name: rootNode.name,
-        path: rootNode.path,
-      },
-      children: [],
-      isFolder: rootNode.type === 'DIRECTORY',
-    }
-
-    if (rootNode.children) {
-      for (const child of rootNode.children) {
-        const childIndex = traverse(child, 'root')
-        newData['root'].children!.push(childIndex)
-      }
-    }
-
+    traverse(rootNode, null)
     this.data = newData
   }
 

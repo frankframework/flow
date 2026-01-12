@@ -16,87 +16,86 @@ export default class FilesDataProvider implements TreeDataProvider {
 
   /** Update the tree using a backend fileTree */
   public async updateData(fileTree: FileTreeNode) {
-    const newData: Record<TreeItemIndex, TreeItem> = {
-      root: {
-        index: 'root',
-        data: 'Configurations',
-        children: [],
-        isFolder: true,
-      },
-    }
+    const newData: Record<TreeItemIndex, TreeItem> = {}
 
-    // Recursive traversal
-    const traverse = async (node: FileTreeNode, parentIndex: TreeItemIndex): Promise<TreeItemIndex | null> => {
-      // Ignore non-XML files
-      if (node.type === 'FILE' && !node.name.endsWith('.xml')) return null
+    const traverse = async (node: FileTreeNode, parentIndex: TreeItemIndex | null): Promise<TreeItemIndex | null> => {
+      const index = parentIndex === null ? 'root' : `${parentIndex}/${node.name}`
 
-      const index = parentIndex === 'root' ? node.name : `${parentIndex}/${node.name}`
+      // Root node
+      if (parentIndex === null) {
+        newData[index] = {
+          index,
+          data: 'Configurations',
+          children: [],
+          isFolder: true,
+        }
+      }
 
-      if (node.type === 'DIRECTORY') {
+      // Ignore non-XML files (but only for non-root nodes)
+      if (parentIndex !== null && node.type === 'FILE' && !node.name.endsWith('.xml')) {
+        return null
+      }
+
+      // Directory
+      if (parentIndex !== null && node.type === 'DIRECTORY') {
         newData[index] = {
           index,
           data: node.name,
           children: [],
           isFolder: true,
         }
+      }
 
-        if (node.children) {
-          for (const child of node.children) {
-            const childIndex = await traverse(child, index)
-            if (childIndex && !newData[index].children!.includes(childIndex)) {
-              newData[index].children!.push(childIndex)
+      // .xml treated as folder
+      if (parentIndex !== null && node.type === 'FILE') {
+        newData[index] = {
+          index,
+          data: node.name.replace(/\.xml$/, ''),
+          children: [],
+          isFolder: true,
+        }
+
+        try {
+          const adapterNames = await getAdapterNamesFromConfiguration(this.projectName, node.path)
+
+          for (const adapterName of adapterNames) {
+            const adapterIndex = `${index}/${adapterName}`
+            newData[adapterIndex] = {
+              index: adapterIndex,
+              data: {
+                adapterName,
+                configPath: node.path,
+                listenerName: await getAdapterListenerType(this.projectName, node.path, adapterName),
+              },
+              isFolder: false,
             }
+            newData[index].children!.push(adapterIndex)
           }
+        } catch (error) {
+          console.error(`Failed to load adapters for ${node.path}:`, error)
         }
-
-        // Remove empty directories
-        if (newData[index].children!.length === 0) {
-          delete newData[index]
-          return null
-        }
-
-        return index
       }
 
-      // FILE ending with .xml
-      newData[index] = {
-        index,
-        data: node.name.replace(/\.xml$/, ''),
-        children: [],
-        isFolder: true, // treat .xml as folder to hold adapters
+      // Recurse into children
+      if (node.type === 'DIRECTORY' && node.children) {
+        for (const child of node.children) {
+          const childIndex = await traverse(child, index)
+          if (childIndex) {
+            newData[index].children!.push(childIndex)
+          }
+        }
       }
 
-      // Populate adapters using your shared function
-      try {
-        const adapterNames = await getAdapterNamesFromConfiguration(this.projectName, node.path)
-
-        for (const adapterName of adapterNames) {
-          const adapterIndex = `${index}/${adapterName}`
-          newData[adapterIndex] = {
-            index: adapterIndex,
-            data: {
-              adapterName,
-              configPath: node.path,
-              listenerName: await getAdapterListenerType(this.projectName, node.path, adapterName),
-            },
-            isFolder: false, // leaf node
-          }
-          newData[index].children!.push(adapterIndex)
-        }
-      } catch (error) {
-        console.error(`Failed to load adapters for ${node.path}:`, error)
+      // Prune empty non-root directories
+      if (parentIndex !== null && node.type === 'DIRECTORY' && newData[index].children!.length === 0) {
+        delete newData[index]
+        return null
       }
 
       return index
     }
 
-    // Traverse all children of the root folder
-    if (fileTree.children) {
-      for (const child of fileTree.children) {
-        const childIndex = await traverse(child, 'root')
-        if (childIndex) newData['root'].children!.push(childIndex)
-      }
-    }
+    await traverse(fileTree, null)
 
     this.data = newData
     this.notifyListeners(['root'])
