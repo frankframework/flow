@@ -94,7 +94,6 @@ public class FileTreeService {
             throw new IllegalArgumentException("Project does not exist: " + projectName);
         }
 
-<<<<<<< HEAD
         return buildShallowTree(projectPath);
     }
 
@@ -132,9 +131,6 @@ public class FileTreeService {
         }
 
         return buildTree(configDirPath);
-=======
-        return buildTree(projectPath);
->>>>>>> master
     }
 
     public boolean updateAdapterFromFile(
@@ -147,13 +143,8 @@ public class FileTreeService {
 
         try {
             // Parse configuration XML from file
-<<<<<<< HEAD
             Document configDoc = XmlSecurityUtils.createSecureDocumentBuilder()
                     .parse(Files.newInputStream(configurationFile));
-=======
-            Document configDoc =
-                    XmlSecurityUtils.createSecureDocumentBuilder().parse(Files.newInputStream(configurationFile));
->>>>>>> master
 
             // Parse new adapter XML
             Document newAdapterDoc = XmlSecurityUtils.createSecureDocumentBuilder()
@@ -185,11 +176,7 @@ public class FileTreeService {
         }
     }
 
-<<<<<<< HEAD
     // Recursive method to build the entire file tree
-=======
-    // Recursive method to build the file tree
->>>>>>> master
     private FileTreeNode buildTree(Path path) throws IOException {
         FileTreeNode node = new FileTreeNode();
         node.setName(path.getFileName().toString());
@@ -200,21 +187,12 @@ public class FileTreeService {
 
             try (Stream<Path> stream = Files.list(path)) {
                 List<FileTreeNode> children = stream.map(p -> {
-<<<<<<< HEAD
                     try {
                         return buildTree(p);
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
                 })
-=======
-                            try {
-                                return buildTree(p);
-                            } catch (IOException e) {
-                                throw new RuntimeException(e);
-                            }
-                        })
->>>>>>> master
                         .collect(Collectors.toList());
 
                 node.setChildren(children);
@@ -226,7 +204,6 @@ public class FileTreeService {
 
         return node;
     }
-<<<<<<< HEAD
 
     // Method to build a shallow tree (only immediate children)
     private FileTreeNode buildShallowTree(Path path) throws IOException {
@@ -261,6 +238,4 @@ public class FileTreeService {
         return node;
     }
 
-=======
->>>>>>> master
 }

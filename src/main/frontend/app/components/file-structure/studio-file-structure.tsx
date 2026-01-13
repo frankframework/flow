@@ -44,25 +44,8 @@ function getItemTitle(item: TreeItem<FileNode>): string {
   return 'Unnamed'
 }
 
-function findConfigurationsDir(node: FileTreeNode): FileTreeNode | null {
-  const normalizedPath = node.path.replaceAll('\\', '/')
-  if (node.type === 'DIRECTORY' && normalizedPath.endsWith('/src/main/configurations')) {
-    return node
-  }
-
-  if (!node.children) return null
-
-  for (const child of node.children) {
-    const found = findConfigurationsDir(child)
-    if (found) return found
-  }
-
-  return null
-}
-
 export default function StudioFileStructure() {
   const project = useProjectStore.getState().project
-  const [isTreeLoading, setIsTreeLoading] = useState(true)
   const [isTreeLoading, setIsTreeLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [matchingItemIds, setMatchingItemIds] = useState<string[]>([])
@@ -70,7 +53,6 @@ export default function StudioFileStructure() {
   const [highlightedItemId, setHighlightedItemId] = useState<string | null>(null)
 
   const tree = useRef<TreeRef>(null)
-  const dataProviderReference = useRef(new FilesDataProvider(project ? project.name : ''))
   const dataProviderReference = useRef(new FilesDataProvider(project ? project.name : ''))
   const setTabData = useTabStore((state) => state.setTabData)
   const setActiveTab = useTabStore((state) => state.setActiveTab)
@@ -127,7 +109,6 @@ export default function StudioFileStructure() {
     }
 
     findMatchingItems()
-  }, [searchTerm])
   }, [searchTerm])
 
   const handleItemClick = (items: TreeItemIndex[], _treeId: string): void => {
@@ -328,8 +309,6 @@ export default function StudioFileStructure() {
     if (!project) {
       return <p>Loading project...</p>
     }
-
-    if (isTreeLoading) {
     if (!project) {
       return <p>Loading project...</p>
     }
