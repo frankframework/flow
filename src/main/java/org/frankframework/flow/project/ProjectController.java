@@ -69,8 +69,8 @@ public class ProjectController {
 
     @GetMapping("/{name}/tree/configurations")
     public FileTreeNode getConfigurationTree(
-            @PathVariable String name,
-            @RequestParam(required = false, defaultValue = "false") boolean shallow) throws IOException {
+            @PathVariable String name, @RequestParam(required = false, defaultValue = "false") boolean shallow)
+            throws IOException {
 
         if (shallow) {
             return fileTreeService.getShallowConfigurationsDirectoryTree(name);
@@ -90,9 +90,8 @@ public class ProjectController {
     }
 
     @GetMapping(value = "/{projectname}", params = "path")
-    public FileTreeNode getDirectoryContent(
-            @PathVariable String projectname,
-            @RequestParam String path) throws IOException {
+    public FileTreeNode getDirectoryContent(@PathVariable String projectname, @RequestParam String path)
+            throws IOException {
 
         return fileTreeService.getShallowDirectoryTree(projectname, path);
     }
@@ -127,8 +126,7 @@ public class ProjectController {
                     FilterType type = entry.getKey();
                     Boolean enabled = entry.getValue();
 
-                    if (enabled == null)
-                        continue;
+                    if (enabled == null) continue;
 
                     if (enabled) {
                         project.enableFilter(type);
@@ -174,8 +172,7 @@ public class ProjectController {
             @PathVariable String projectname, @RequestBody ProjectImportDTO importDTO) {
 
         Project project = projectService.getProject(projectname);
-        if (project == null)
-            return ResponseEntity.notFound().build();
+        if (project == null) return ResponseEntity.notFound().build();
 
         for (ImportConfigurationDTO conf : importDTO.configurations()) {
             Configuration c = new Configuration(conf.filepath());
@@ -212,8 +209,8 @@ public class ProjectController {
             @PathVariable String projectName, @RequestBody AdapterUpdateDTO dto) {
         Path configPath = Paths.get(dto.configurationPath());
 
-        boolean updated = fileTreeService.updateAdapterFromFile(projectName, configPath, dto.adapterName(),
-                dto.adapterXml());
+        boolean updated =
+                fileTreeService.updateAdapterFromFile(projectName, configPath, dto.adapterName(), dto.adapterXml());
 
         if (!updated) {
             return ResponseEntity.notFound().build();

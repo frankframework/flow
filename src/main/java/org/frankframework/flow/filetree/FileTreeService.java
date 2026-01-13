@@ -100,6 +100,10 @@ public class FileTreeService {
     public FileTreeNode getShallowDirectoryTree(String projectName, String directoryPath) throws IOException {
         Path dirPath = projectsRoot.resolve(projectName).resolve(directoryPath).normalize();
 
+        if (!dirPath.startsWith(projectsRoot.resolve(projectName))) {
+            throw new SecurityException("Invalid path: outside project directory");
+        }
+
         if (!Files.exists(dirPath) || !Files.isDirectory(dirPath)) {
             throw new IllegalArgumentException("Directory does not exist: " + dirPath);
         }
@@ -143,8 +147,8 @@ public class FileTreeService {
 
         try {
             // Parse configuration XML from file
-            Document configDoc = XmlSecurityUtils.createSecureDocumentBuilder()
-                    .parse(Files.newInputStream(configurationFile));
+            Document configDoc =
+                    XmlSecurityUtils.createSecureDocumentBuilder().parse(Files.newInputStream(configurationFile));
 
             // Parse new adapter XML
             Document newAdapterDoc = XmlSecurityUtils.createSecureDocumentBuilder()
@@ -187,12 +191,12 @@ public class FileTreeService {
 
             try (Stream<Path> stream = Files.list(path)) {
                 List<FileTreeNode> children = stream.map(p -> {
-                    try {
-                        return buildTree(p);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                })
+                            try {
+                                return buildTree(p);
+                            } catch (IOException e) {
+                                throw new RuntimeException(e);
+                            }
+                        })
                         .collect(Collectors.toList());
 
                 node.setChildren(children);
@@ -219,23 +223,23 @@ public class FileTreeService {
 
         try (Stream<Path> stream = Files.list(path)) {
             List<FileTreeNode> children = stream.map(p -> {
-                FileTreeNode child = new FileTreeNode();
-                child.setName(p.getFileName().toString());
-                child.setPath(p.toAbsolutePath().toString());
+                        FileTreeNode child = new FileTreeNode();
+                        child.setName(p.getFileName().toString());
+                        child.setPath(p.toAbsolutePath().toString());
 
-                if (Files.isDirectory(p)) {
-                    child.setType(NodeType.DIRECTORY);
-                } else {
-                    child.setType(NodeType.FILE);
-                }
+                        if (Files.isDirectory(p)) {
+                            child.setType(NodeType.DIRECTORY);
+                        } else {
+                            child.setType(NodeType.FILE);
+                        }
 
-                return child;
-            }).toList();
+                        return child;
+                    })
+                    .toList();
 
             node.setChildren(children);
         }
 
         return node;
     }
-
 }
