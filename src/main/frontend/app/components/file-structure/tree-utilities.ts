@@ -18,13 +18,17 @@ export function getListenerIcon(listenerType: string | null) {
   return listenerIconMap[listenerType] ?? CodeIcon
 }
 
-export function hashFileTree(node: FileTreeNode): string {
-  const normalize = (n: FileTreeNode): unknown => ({
-    name: n.name,
-    path: n.path,
-    type: n.type,
-    children: n.children?.map((element) => normalize(element)) ?? [],
-  })
+function getSortRank(child: FileTreeNode) {
+  if (child.type === 'DIRECTORY') return 0
+  if (child.type === 'FILE' && child.name.endsWith('.xml')) return 1
+  return 2
+}
 
-  return JSON.stringify(normalize(node))
+export function sortChildren(children?: FileTreeNode[]): FileTreeNode[] {
+  // Sort directories first, then XML files (Treated like folders), then other files, all alphabetically
+  return (children ?? []).toSorted((a, b) => {
+    const diff = getSortRank(a) - getSortRank(b)
+    if (diff !== 0) return diff
+    return a.name.localeCompare(b.name)
+  })
 }

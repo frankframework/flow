@@ -16,55 +16,95 @@ export default class EditorFilesDataProvider implements TreeDataProvider {
   private data: Record<TreeItemIndex, TreeItem<FileNode>> = {}
   private readonly treeChangeListeners: ((changedItemIds: TreeItemIndex[]) => void)[] = []
   private readonly projectName: string
+  private loadedDirectories = new Set<string>()
 
   constructor(projectName: string) {
     this.projectName = projectName
-    this.fetchAndBuildTree()
+    this.loadRoot()
   }
 
-  /** Fetch file tree from backend and build the provider's data */
-  private async fetchAndBuildTree() {
+  private async loadRoot() {
     try {
       const response = await fetch(`/api/projects/${this.projectName}/tree`)
       if (!response.ok) throw new Error(`HTTP error ${response.status}`)
 
-      const tree: FileTreeNode = await response.json()
-      this.buildTreeFromFileTree(tree)
+      const root: FileTreeNode = await response.json()
+
+      this.data['root'] = {
+        index: 'root',
+        data: { name: root.name, path: root.path },
+        isFolder: true,
+        children: [],
+      }
+
+      // Sort directories first, then files, both alphabetically
+      const sortedChildren = (root.children ?? []).toSorted((a, b) => {
+        if (a.type !== b.type) {
+          return a.type === 'DIRECTORY' ? -1 : 1
+        }
+        return a.name.localeCompare(b.name)
+      })
+
+      for (const child of sortedChildren) {
+        const childIndex = `root/${child.name}`
+
+        this.data[childIndex] = {
+          index: childIndex,
+          data: { name: child.name, path: child.path },
+          isFolder: child.type === 'DIRECTORY',
+          children: child.type === 'DIRECTORY' ? [] : undefined,
+        }
+
+        this.data['root'].children!.push(childIndex)
+      }
+
+      this.loadedDirectories.add(root.path)
       this.notifyListeners(['root'])
     } catch (error) {
-      console.error('Failed to load project tree for EditorFilesDataProvider', error)
+      console.error('Failed to load root directory', error)
     }
   }
 
-  /** Converts the backend file tree to react-complex-tree data */
-  private buildTreeFromFileTree(rootNode: FileTreeNode) {
-    const newData: Record<TreeItemIndex, TreeItem<FileNode>> = {}
+  public async loadDirectory(itemId: TreeItemIndex): Promise<void> {
+    const item = this.data[itemId]
+    if (!item || !item.isFolder) return
+    if (this.loadedDirectories.has(item.data.path)) return
 
-    const traverse = (node: FileTreeNode, parentIndex: TreeItemIndex | null): TreeItemIndex => {
-      const index = parentIndex === null ? 'root' : `${parentIndex}/${node.name}`
+    try {
+      const response = await fetch(`/api/projects/${this.projectName}?path=${encodeURIComponent(item.data.path)}`)
+      if (!response.ok) throw new Error('Failed to fetch directory')
 
-      newData[index] = {
-        index,
-        data: {
-          name: node.name,
-          path: node.path,
-        },
-        children: node.type === 'DIRECTORY' ? [] : undefined,
-        isFolder: node.type === 'DIRECTORY',
-      }
+      const dir: FileTreeNode = await response.json()
 
-      if (node.type === 'DIRECTORY' && node.children) {
-        for (const child of node.children) {
-          const childIndex = traverse(child, index)
-          newData[index].children!.push(childIndex)
+      const sortedChildren = (dir.children ?? []).toSorted((a, b) => {
+        if (a.type !== b.type) {
+          return a.type === 'DIRECTORY' ? -1 : 1
         }
+        return a.name.localeCompare(b.name)
+      })
+
+      const children: TreeItemIndex[] = []
+
+      for (const child of sortedChildren) {
+        const childIndex = `${itemId}/${child.name}`
+
+        this.data[childIndex] = {
+          index: childIndex,
+          data: { name: child.name, path: child.path },
+          isFolder: child.type === 'DIRECTORY',
+          children: child.type === 'DIRECTORY' ? [] : undefined,
+        }
+
+        children.push(childIndex)
       }
 
-      return index
-    }
+      item.children = children
 
-    traverse(rootNode, null)
-    this.data = newData
+      this.loadedDirectories.add(item.data.path)
+      this.notifyListeners([itemId])
+    } catch (error) {
+      console.error('Failed to load directory', error)
+    }
   }
 
   public async getAllItems(): Promise<TreeItem<FileNode>[]> {

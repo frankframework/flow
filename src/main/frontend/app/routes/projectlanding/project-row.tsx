@@ -3,7 +3,6 @@ import { useProjectStore } from '~/stores/project-store'
 import KebabVerticalIcon from 'icons/solar/Kebab Vertical.svg?react'
 import useTabStore from '~/stores/tab-store'
 import type { Project } from '~/routes/projectlanding/project-landing'
-import { useTreeStore } from '~/stores/tree-store'
 
 interface ProjectRowProperties {
   project: Project
@@ -13,7 +12,6 @@ export default function ProjectRow({ project }: Readonly<ProjectRowProperties>) 
   const navigate = useNavigate()
 
   const setProject = useProjectStore((state) => state.setProject)
-  const clearTreeCache = useTreeStore((state) => state.clearCache)
   const clearTabs = useTabStore((state) => state.clearTabs)
 
   return (
@@ -22,7 +20,6 @@ export default function ProjectRow({ project }: Readonly<ProjectRowProperties>) 
       onClick={() => {
         setProject(project)
         clearTabs()
-        clearTreeCache()
         navigate('/configurations')
       }}
     >
