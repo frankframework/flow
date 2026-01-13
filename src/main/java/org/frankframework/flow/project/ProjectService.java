@@ -2,29 +2,27 @@ package org.frankframework.flow.project;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Optional;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 import lombok.Getter;
 import org.frankframework.flow.configuration.AdapterNotFoundException;
 import org.frankframework.flow.configuration.Configuration;
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
 import org.frankframework.flow.projectsettings.FilterType;
 import org.frankframework.flow.projectsettings.InvalidFilterTypeException;
+import org.frankframework.flow.utility.XmlAdapterUtils;
 import org.frankframework.flow.utility.XmlSecurityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.stereotype.Service;
 import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
+import org.xml.sax.SAXParseException;
 
 @Service
 public class ProjectService {
@@ -35,15 +33,17 @@ public class ProjectService {
     private static final String BASE_PATH = "classpath:project/";
     private static final int MIN_PARTS_LENGTH = 2;
     private final ResourcePatternResolver resolver;
+    private final Path projectsRoot;
 
     @Autowired
-    public ProjectService(ResourcePatternResolver resolver) {
+    public ProjectService(ResourcePatternResolver resolver, @Value("${app.project.root}") String rootPath) {
         this.resolver = resolver;
+        this.projectsRoot = Paths.get(rootPath).toAbsolutePath().normalize();
         initiateProjects();
     }
 
-    public Project createProject(String name) {
-        Project project = new Project(name);
+    public Project createProject(String name, String rootPath) {
+        Project project = new Project(name, rootPath);
         projects.add(project);
         return project;
     }
@@ -138,29 +138,32 @@ public class ProjectService {
         Configuration config = configOptional.get();
 
         try {
+            // Parse existing config
             Document configDoc = XmlSecurityUtils.createSecureDocumentBuilder()
-                    .parse(new ByteArrayInputStream(config.getXmlContent().getBytes()));
+                    .parse(new ByteArrayInputStream(config.getXmlContent().getBytes(StandardCharsets.UTF_8)));
 
+            // Parse new adapter
             Document newAdapterDoc = XmlSecurityUtils.createSecureDocumentBuilder()
-                    .parse(new ByteArrayInputStream(newAdapterXml.getBytes()));
+                    .parse(new ByteArrayInputStream(newAdapterXml.getBytes(StandardCharsets.UTF_8)));
 
             Node newAdapterNode = configDoc.importNode(newAdapterDoc.getDocumentElement(), true);
 
-            if (!replaceAdapterInDocument(configDoc, adapterName, newAdapterNode)) {
+            if (!XmlAdapterUtils.replaceAdapterInDocument(configDoc, adapterName, newAdapterNode)) {
                 throw new AdapterNotFoundException("Adapter not found: " + adapterName);
             }
 
-            String xmlOutput = convertDocumentToString(configDoc);
+            String xmlOutput = XmlAdapterUtils.convertDocumentToString(configDoc);
             config.setXmlContent(xmlOutput);
 
             return true;
 
         } catch (AdapterNotFoundException | ConfigurationNotFoundException | ProjectNotFoundException e) {
-            // rethrow explicitly so they bubble up to GlobalExceptionHandler
             throw e;
+        } catch (SAXParseException e) {
+            System.err.println("Invalid XML for adapter " + adapterName + ": " + e.getMessage());
+            return false;
         } catch (Exception e) {
-            // Other unexpected exceptions still return false
-            System.err.println("Error updating adapter: " + e.getMessage());
+            System.err.println("Unexpected error updating adapter: " + e.getMessage());
             e.printStackTrace();
             return false;
         }
@@ -200,7 +203,7 @@ public class ProjectService {
                 try {
                     project = getProject(projectName);
                 } catch (ProjectNotFoundException e) {
-                    project = createProject(projectName);
+                    project = createProject(projectName, projectsRoot.toString());
                 }
 
                 // Load XML content
@@ -217,32 +220,5 @@ public class ProjectService {
             System.err.println("Error initializing projects: " + e.getMessage());
             e.printStackTrace();
         }
-    }
-
-    private boolean replaceAdapterInDocument(Document configDoc, String adapterName, Node newAdapterNode) {
-        NodeList adapters = configDoc.getElementsByTagName("Adapter");
-        for (int i = 0; i < adapters.getLength(); i++) {
-            Element adapter = (Element) adapters.item(i);
-            if (adapterName.equals(adapter.getAttribute("name"))) {
-                adapter.getParentNode().replaceChild(newAdapterNode, adapter);
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private String convertDocumentToString(Document doc) throws Exception {
-        Transformer transformer =
-                XmlSecurityUtils.createSecureTransformerFactory().newTransformer();
-        transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-        transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
-        transformer.setOutputProperty(OutputKeys.METHOD, "xml");
-        transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
-        transformer.setOutputProperty("{http://xml.apache.org/xalan}line-separator", "\n");
-
-        StringWriter writer = new StringWriter();
-        transformer.transform(new DOMSource(doc), new StreamResult(writer));
-
-        return writer.toString().replaceAll("(?m)^[ \t]*\r?\n", "");
     }
 }

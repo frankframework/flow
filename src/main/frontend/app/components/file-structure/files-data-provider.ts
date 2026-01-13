@@ -1,22 +1,103 @@
 import type { Disposable, TreeDataProvider, TreeItem, TreeItemIndex } from 'react-complex-tree'
-import type { ConfigWithAdapters } from './file-structure'
-
-interface AdapterNodeData {
-  adapterName: string
-  configPath: string
-  listenerName: string | null
-}
+import type { FileTreeNode } from './editor-data-provider'
+import { getAdapterListenerType, getAdapterNamesFromConfiguration } from '~/routes/studio/xml-to-json-parser'
 
 export default class FilesDataProvider implements TreeDataProvider {
   private data: Record<TreeItemIndex, TreeItem> = {}
   private readonly treeChangeListeners: ((changedItemIds: TreeItemIndex[]) => void)[] = []
+  private projectName: string
 
-  constructor(configs: ConfigWithAdapters[]) {
-    this.updateData(configs)
+  constructor(projectName: string, fileTree?: FileTreeNode) {
+    this.projectName = projectName
+    if (fileTree) {
+      void this.updateData(fileTree)
+    }
   }
 
-  public updateData(configs: ConfigWithAdapters[]) {
-    this.buildTree(configs)
+  /** Update the tree using a backend fileTree */
+  public async updateData(fileTree: FileTreeNode) {
+    const newData: Record<TreeItemIndex, TreeItem> = {}
+
+    const traverse = async (node: FileTreeNode, parentIndex: TreeItemIndex | null): Promise<TreeItemIndex | null> => {
+      const index = parentIndex === null ? 'root' : `${parentIndex}/${node.name}`
+
+      // Root node
+      if (parentIndex === null) {
+        newData[index] = {
+          index,
+          data: 'Configurations',
+          children: [],
+          isFolder: true,
+        }
+      }
+
+      // Ignore non-XML files (but only for non-root nodes)
+      if (parentIndex !== null && node.type === 'FILE' && !node.name.endsWith('.xml')) {
+        return null
+      }
+
+      // Directory
+      if (parentIndex !== null && node.type === 'DIRECTORY') {
+        newData[index] = {
+          index,
+          data: node.name,
+          children: [],
+          isFolder: true,
+        }
+      }
+
+      // .xml treated as folder
+      if (parentIndex !== null && node.type === 'FILE') {
+        newData[index] = {
+          index,
+          data: node.name.replace(/\.xml$/, ''),
+          children: [],
+          isFolder: true,
+        }
+
+        try {
+          const adapterNames = await getAdapterNamesFromConfiguration(this.projectName, node.path)
+
+          for (const adapterName of adapterNames) {
+            const adapterIndex = `${index}/${adapterName}`
+            newData[adapterIndex] = {
+              index: adapterIndex,
+              data: {
+                adapterName,
+                configPath: node.path,
+                listenerName: await getAdapterListenerType(this.projectName, node.path, adapterName),
+              },
+              isFolder: false,
+            }
+            newData[index].children!.push(adapterIndex)
+          }
+        } catch (error) {
+          console.error(`Failed to load adapters for ${node.path}:`, error)
+        }
+      }
+
+      // Recurse into children
+      if (node.type === 'DIRECTORY' && node.children) {
+        for (const child of node.children) {
+          const childIndex = await traverse(child, index)
+          if (childIndex) {
+            newData[index].children!.push(childIndex)
+          }
+        }
+      }
+
+      // Prune empty non-root directories
+      if (parentIndex !== null && node.type === 'DIRECTORY' && newData[index].children!.length === 0) {
+        delete newData[index]
+        return null
+      }
+
+      return index
+    }
+
+    await traverse(fileTree, null)
+
+    this.data = newData
     this.notifyListeners(['root'])
   }
 
@@ -30,7 +111,7 @@ export default class FilesDataProvider implements TreeDataProvider {
 
   public async onChangeItemChildren(itemId: TreeItemIndex, newChildren: TreeItemIndex[]) {
     this.data[itemId].children = newChildren
-    for (const listener of this.treeChangeListeners) listener([itemId])
+    this.notifyListeners([itemId])
   }
 
   public onDidChangeTreeData(listener: (changedItemIds: TreeItemIndex[]) => void): Disposable {
@@ -40,68 +121,6 @@ export default class FilesDataProvider implements TreeDataProvider {
         this.treeChangeListeners.splice(this.treeChangeListeners.indexOf(listener), 1)
       },
     }
-  }
-
-  public async onRenameItem(item: TreeItem, name: string): Promise<void> {
-    this.data[item.index].data = name
-  }
-
-  // eslint-disable-next-line sonarjs/cognitive-complexity
-  private buildTree(configs: ConfigWithAdapters[]) {
-    const newData: Record<TreeItemIndex, TreeItem> = {
-      root: {
-        index: 'root',
-        data: 'Configurations',
-        children: [],
-        isFolder: true,
-      },
-    }
-
-    for (const { configPath, adapters } of configs) {
-      // Remove the fixed src/main/configurations prefix
-      const relativePath = configPath.replace(/^src\/main\/configurations\//, '')
-
-      // Split by / to create nested folders
-      const parts = relativePath.split('/') // e.g. ["AMQP", "Configuration.xml"]
-
-      let parentIndex = 'root'
-      for (let i = 0; i < parts.length; i++) {
-        const part = parts[i]
-        const isLast = i === parts.length - 1
-
-        const nodeIndex = `${parentIndex}/${part}` // unique index in tree
-
-        // If node does not exist yet, create it
-        if (!newData[nodeIndex]) {
-          newData[nodeIndex] = {
-            index: nodeIndex,
-            data: isLast ? part.replace(/\.xml$/i, '') : part,
-            children: isLast ? adapters.map((a) => a.adapterName) : [],
-            isFolder: !isLast || adapters.length > 0,
-          } as TreeItem
-        }
-
-        // Make sure parent has this child
-        const parentNode = newData[parentIndex]
-        if (!parentNode.children) parentNode.children = []
-        if (!parentNode.children.includes(nodeIndex)) parentNode.children.push(nodeIndex)
-
-        parentIndex = nodeIndex
-
-        // Add adapters as children to the XML file node
-        if (isLast) {
-          for (const { adapterName, listenerName } of adapters) {
-            newData[adapterName] = {
-              index: adapterName,
-              data: { adapterName, configPath, listenerName } satisfies AdapterNodeData,
-              isFolder: false,
-            }
-          }
-        }
-      }
-    }
-
-    this.data = newData
   }
 
   private notifyListeners(itemIds: TreeItemIndex[]) {

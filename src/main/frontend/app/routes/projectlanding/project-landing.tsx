@@ -6,10 +6,12 @@ import Search from '~/components/search/search'
 import ActionButton from './action-button'
 import { useProjectStore } from '~/stores/project-store'
 import { useLocation } from 'react-router'
-import ProjectModal from './project-modal'
+import NewProjectModal from './new-project-modal'
+import LoadProjectModal from './load-project-modal'
 
 export interface Project {
   name: string
+  rootPath: string
   filepaths: string[]
   filters: Record<string, boolean> // key = filter name (e.g. "HTTP"), value = true/false
 }
@@ -23,7 +25,9 @@ export default function ProjectLanding() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [search, setSearch] = useState('')
-  const [showModal, setShowModal] = useState(false)
+  const [showNewProjectModal, setShowNewProjectModal] = useState(false)
+  const [showLoadProjectModal, setShowLoadProjectModal] = useState(false)
+
   const clearProject = useProjectStore((state) => state.clearProject)
   const location = useLocation()
   const fileInputReference = useRef<HTMLInputElement>(null)
@@ -97,13 +101,17 @@ export default function ProjectLanding() {
     setProjects((prev) => prev.map((p) => (p.name === updated.name ? updated : p)))
   }
 
-  const createProject = async (projectName: string) => {
+  const createProject = async (projectName: string, rootPath?: string) => {
     try {
-      const response = await fetch(`/api/projects/${projectName}`, {
+      const response = await fetch(`/api/projects`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        body: JSON.stringify({
+          name: projectName,
+          rootPath: rootPath ?? undefined,
+        }),
       })
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`)
@@ -114,6 +122,10 @@ export default function ProjectLanding() {
     } catch (error_) {
       setError(error_ instanceof Error ? error_.message : 'Failed to create project')
     }
+  }
+
+  const loadProject = async () => {
+    setShowLoadProjectModal(true)
   }
 
   // Filter projects by search string (case-insensitive)
@@ -151,7 +163,7 @@ export default function ProjectLanding() {
         {/* Content row */}
         <div className="flex flex-1 overflow-hidden">
           <div className="border-border text-muted-foreground w-1/4 border-r px-4 py-3 text-sm">
-            <ActionButton label="New Project" onClick={() => setShowModal(true)} />
+            <ActionButton label="New Project" onClick={() => setShowNewProjectModal(true)} />
             <ActionButton label="Open" onClick={handleOpenProject} />
 
             <input
@@ -163,6 +175,7 @@ export default function ProjectLanding() {
               multiple
             />
             <ActionButton label="Clone Repository" onClick={() => console.log('Cloning project')} />
+            <ActionButton label="Load Project" onClick={loadProject} />
           </div>
           <div className="h-full w-3/4 overflow-y-auto px-4 py-3">
             {filteredProjects.map((project, index) => (
@@ -171,7 +184,16 @@ export default function ProjectLanding() {
           </div>
         </div>
       </div>
-      <ProjectModal isOpen={showModal} onClose={() => setShowModal(false)} onCreate={createProject} />
+      <NewProjectModal
+        isOpen={showNewProjectModal}
+        onClose={() => setShowNewProjectModal(false)}
+        onCreate={createProject}
+      />
+      <LoadProjectModal
+        isOpen={showLoadProjectModal}
+        onClose={() => setShowLoadProjectModal(false)}
+        onCreate={createProject}
+      />
     </div>
   )
 }

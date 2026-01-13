@@ -14,7 +14,7 @@ class ProjectTest {
 
     @BeforeEach
     void init() {
-        project = new Project("TestProject");
+        project = new Project("TestProject", "/path/to/project");
     }
 
     @Test

@@ -33,17 +33,18 @@ class ProjectServiceTest {
     @BeforeEach
     void init() throws IOException {
         when(resolver.getResources(anyString())).thenReturn(new Resource[0]);
-        projectService = new ProjectService(resolver);
+        projectService = new ProjectService(resolver, "/path/to/projects");
     }
 
     @Test
     void testAddingProjectToProjectService() {
         String projectName = "new_project";
+        String rootPath = "/path/to/new_project";
 
         assertEquals(0, projectService.getProjects().size());
         assertThrows(ProjectNotFoundException.class, () -> projectService.getProject(projectName));
 
-        projectService.createProject(projectName);
+        projectService.createProject(projectName, rootPath);
 
         assertEquals(1, projectService.getProjects().size());
         assertNotNull(projectService.getProject(projectName));
@@ -56,7 +57,7 @@ class ProjectServiceTest {
 
     @Test
     void testUpdateConfigurationXmlSuccess() throws Exception {
-        projectService.createProject("proj");
+        projectService.createProject("proj", "/path/to/proj");
         Project project = projectService.getProject("proj");
 
         Configuration config = new Configuration("config.xml");
@@ -77,7 +78,7 @@ class ProjectServiceTest {
 
     @Test
     void testUpdateConfigurationXmlConfigNotFound() throws Exception {
-        projectService.createProject("proj");
+        projectService.createProject("proj", "/path/to/proj");
 
         assertThrows(
                 ConfigurationNotFoundException.class,
@@ -86,7 +87,7 @@ class ProjectServiceTest {
 
     @Test
     void testEnableFilterValid() throws Exception {
-        projectService.createProject("proj");
+        projectService.createProject("proj", "/path/to/proj");
 
         Project project = projectService.enableFilter("proj", "ADAPTER");
 
@@ -95,7 +96,7 @@ class ProjectServiceTest {
 
     @Test
     void testDisableFilterValid() throws Exception {
-        projectService.createProject("proj");
+        projectService.createProject("proj", "/path/to/proj");
 
         // enable first
         projectService.enableFilter("proj", "ADAPTER");
@@ -112,7 +113,7 @@ class ProjectServiceTest {
 
     @Test
     void testEnableFilterInvalidFilterType() {
-        projectService.createProject("proj");
+        projectService.createProject("proj", "/path/to/proj");
 
         InvalidFilterTypeException ex = assertThrows(
                 InvalidFilterTypeException.class, () -> projectService.enableFilter("proj", "INVALID_TYPE"));
@@ -122,7 +123,7 @@ class ProjectServiceTest {
 
     @Test
     void testDisableFilterInvalidFilterType() {
-        projectService.createProject("proj");
+        projectService.createProject("proj", "/path/to/proj");
 
         InvalidFilterTypeException ex = assertThrows(
                 InvalidFilterTypeException.class, () -> projectService.disableFilter("proj", "INVALID_TYPE"));
@@ -149,7 +150,7 @@ class ProjectServiceTest {
     @Test
     void updateAdapterSuccess() throws Exception {
         // Arrange
-        projectService.createProject("proj");
+        projectService.createProject("proj", "/path/to/proj");
         Project project = projectService.getProject("proj");
 
         String originalXml =
@@ -196,7 +197,7 @@ class ProjectServiceTest {
 
     @Test
     void updateAdapterConfigurationNotFoundThrows() throws Exception {
-        projectService.createProject("proj");
+        projectService.createProject("proj", "/path/to/proj");
 
         ConfigurationNotFoundException ex = assertThrows(ConfigurationNotFoundException.class, () -> {
             projectService.updateAdapter("proj", "missing.xml", "A1", "<Adapter name='A1'/>");
@@ -207,7 +208,7 @@ class ProjectServiceTest {
 
     @Test
     void updateAdapterAdapterNotFoundThrows() throws Exception {
-        projectService.createProject("proj");
+        projectService.createProject("proj", "/path/to/proj");
         Project project = projectService.getProject("proj");
 
         String xml =
@@ -231,7 +232,7 @@ class ProjectServiceTest {
 
     @Test
     void updateAdapterInvalidXmlReturnsFalse() throws Exception {
-        projectService.createProject("proj");
+        projectService.createProject("proj", "/path/to/proj");
         Project project = projectService.getProject("proj");
 
         String xml =

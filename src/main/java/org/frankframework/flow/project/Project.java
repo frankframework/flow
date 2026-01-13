@@ -21,11 +21,13 @@ import org.w3c.dom.*;
 @Setter
 public class Project {
     private String name;
+    private String rootPath;
     private final ArrayList<Configuration> configurations;
     private final ProjectSettings projectSettings;
 
-    public Project(String name) {
+    public Project(String name, String rootPath) {
         this.name = name;
+        this.rootPath = rootPath;
         this.configurations = new ArrayList<>();
         this.projectSettings = new ProjectSettings();
     }

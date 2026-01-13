@@ -16,6 +16,7 @@ import java.net.http.HttpResponse;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Stream;
@@ -59,6 +60,7 @@ public class RunCypressE2eTest {
     private static void startApplication() {
         SpringApplication springApplication = FlowApplication.configureApplication();
 
+        springApplication.setDefaultProperties(Map.of("app.project.root", "/tmp/flow-projects"));
         run = springApplication.run();
 
         assertTrue(run.isRunning());

@@ -3,17 +3,68 @@ import type { Disposable, TreeDataProvider, TreeItem, TreeItemIndex } from 'reac
 export interface FileNode {
   name: string
   path: string
-  isDirectory: boolean
+}
+
+export interface FileTreeNode {
+  name: string
+  path: string
+  type: 'FILE' | 'DIRECTORY'
+  children?: FileTreeNode[]
 }
 
 export default class EditorFilesDataProvider implements TreeDataProvider {
   private data: Record<TreeItemIndex, TreeItem<FileNode>> = {}
   private readonly treeChangeListeners: ((changedItemIds: TreeItemIndex[]) => void)[] = []
-  private readonly rootName: string
+  private readonly projectName: string
 
-  constructor(rootName: string, paths: string[]) {
-    this.rootName = rootName
-    this.buildTree(rootName, paths)
+  constructor(projectName: string) {
+    this.projectName = projectName
+    this.fetchAndBuildTree()
+  }
+
+  /** Fetch file tree from backend and build the provider's data */
+  private async fetchAndBuildTree() {
+    try {
+      const response = await fetch(`/api/projects/${this.projectName}/tree`)
+      if (!response.ok) throw new Error(`HTTP error ${response.status}`)
+
+      const tree: FileTreeNode = await response.json()
+      this.buildTreeFromFileTree(tree)
+      this.notifyListeners(['root'])
+    } catch (error) {
+      console.error('Failed to load project tree for EditorFilesDataProvider', error)
+    }
+  }
+
+  /** Converts the backend file tree to react-complex-tree data */
+  private buildTreeFromFileTree(rootNode: FileTreeNode) {
+    const newData: Record<TreeItemIndex, TreeItem<FileNode>> = {}
+
+    const traverse = (node: FileTreeNode, parentIndex: TreeItemIndex | null): TreeItemIndex => {
+      const index = parentIndex === null ? 'root' : `${parentIndex}/${node.name}`
+
+      newData[index] = {
+        index,
+        data: {
+          name: node.name,
+          path: node.path,
+        },
+        children: node.type === 'DIRECTORY' ? [] : undefined,
+        isFolder: node.type === 'DIRECTORY',
+      }
+
+      if (node.type === 'DIRECTORY' && node.children) {
+        for (const child of node.children) {
+          const childIndex = traverse(child, index)
+          newData[index].children!.push(childIndex)
+        }
+      }
+
+      return index
+    }
+
+    traverse(rootNode, null)
+    this.data = newData
   }
 
   public async getAllItems(): Promise<TreeItem<FileNode>[]> {
@@ -22,11 +73,6 @@ export default class EditorFilesDataProvider implements TreeDataProvider {
 
   public async getTreeItem(itemId: TreeItemIndex): Promise<TreeItem<FileNode>> {
     return this.data[itemId]
-  }
-
-  public updateData(paths: string[]) {
-    this.buildTree(this.rootName, paths)
-    this.notifyListeners(['root'])
   }
 
   public async onChangeItemChildren(itemId: TreeItemIndex, newChildren: TreeItemIndex[]) {
@@ -47,69 +93,7 @@ export default class EditorFilesDataProvider implements TreeDataProvider {
     this.data[item.index].data.name = name
   }
 
-  private buildTree(rootName: string, paths: string[]) {
-    const newData: Record<TreeItemIndex, TreeItem<FileNode>> = {
-      root: {
-        index: 'root',
-        data: {
-          name: rootName,
-          path: '',
-          isDirectory: true,
-        },
-        children: [],
-        isFolder: true,
-      },
-    }
-
-    for (const fullPath of paths) {
-      this.addPathToTree(newData, fullPath)
-    }
-
-    this.data = newData
-  }
-
-  private addPathToTree(
-    tree: Record<TreeItemIndex, TreeItem<FileNode>>,
-    fullPath: string,
-    rootIndex: TreeItemIndex = 'root',
-  ): TreeItemIndex {
-    const parts = fullPath.split('/')
-
-    let parentIndex: TreeItemIndex = rootIndex
-    let currentPath = ''
-
-    for (let i = 0; i < parts.length; i++) {
-      const part = parts[i]
-      const isLast = i === parts.length - 1
-      currentPath = currentPath ? `${currentPath}/${part}` : part
-
-      const nodeIndex: TreeItemIndex = `${parentIndex}/${part}`
-
-      if (!tree[nodeIndex]) {
-        tree[nodeIndex] = {
-          index: nodeIndex,
-          data: {
-            name: part,
-            path: currentPath,
-            isDirectory: !isLast,
-          },
-          children: isLast ? undefined : [],
-          isFolder: !isLast,
-        }
-      }
-
-      const parent = tree[parentIndex]
-      parent.children ??= []
-      if (!parent.children.includes(nodeIndex)) {
-        parent.children.push(nodeIndex)
-      }
-
-      parentIndex = nodeIndex
-    }
-
-    return parentIndex
-  }
-
+  /** Notify all listeners that certain nodes changed */
   private notifyListeners(itemIds: TreeItemIndex[]) {
     for (const listener of this.treeChangeListeners) listener(itemIds)
   }

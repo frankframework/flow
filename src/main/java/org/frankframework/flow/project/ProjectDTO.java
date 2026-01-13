@@ -6,7 +6,7 @@ import java.util.Map;
 import org.frankframework.flow.configuration.Configuration;
 import org.frankframework.flow.projectsettings.FilterType;
 
-public record ProjectDTO(String name, List<String> filepaths, Map<FilterType, Boolean> filters) {
+public record ProjectDTO(String name, String rootPath, List<String> filepaths, Map<FilterType, Boolean> filters) {
 
     // Factory method to create a ProjectDTO from a Project
     public static ProjectDTO from(Project project) {
@@ -15,6 +15,9 @@ public record ProjectDTO(String name, List<String> filepaths, Map<FilterType, Bo
             filepaths.add(configuration.getFilepath());
         }
         return new ProjectDTO(
-                project.getName(), filepaths, project.getProjectSettings().getFilters());
+                project.getName(),
+                project.getRootPath(),
+                filepaths,
+                project.getProjectSettings().getFilters());
     }
 }
