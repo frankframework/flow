@@ -196,8 +196,11 @@ function addSequentialFallbackEdges(
 
     const explicitTargets = explicitTargetsBySourceId.get(current.id)
 
-    // Only skip if the NEXT node is already an explicit target
-    if (explicitTargets?.has(next.id)) {
+    // skip if explicit forward already points to next
+    if (explicitTargets?.has(next.id)) continue
+
+    // skip if current already forwards to ANY exit
+    if (hasExplicitExitForward(current.id, explicitTargetsBySourceId, nodes)) {
       continue
     }
 
@@ -208,8 +211,8 @@ function addSequentialFallbackEdges(
       id: `${current.id}-${next.id}-${handleIndex}`,
       source: current.id,
       target: next.id,
-      type: 'frankEdge',
       sourceHandle: handleIndex.toString(),
+      type: 'frankEdge',
     })
   }
 }
@@ -422,6 +425,17 @@ function findSuccessExit(nodes: FlowNode[]): FlowNode | undefined {
 
     return false
   })
+}
+
+function hasExplicitExitForward(
+  sourceId: string,
+  explicitTargetsBySourceId: Map<string, Set<string>>,
+  nodes: FlowNode[],
+): boolean {
+  const targets = explicitTargetsBySourceId.get(sourceId)
+  if (!targets) return false
+
+  return [...targets].some((targetId) => nodes.some((n) => n.id === targetId && n.type === 'exitNode'))
 }
 
 function isNodeTargeted(nodeId: string, edges: FrankEdge[]): boolean {
