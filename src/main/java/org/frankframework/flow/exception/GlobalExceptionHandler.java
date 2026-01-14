@@ -3,6 +3,7 @@ package org.frankframework.flow.exception;
 import org.frankframework.flow.configuration.AdapterNotFoundException;
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
 import org.frankframework.flow.project.InvalidXmlContentException;
+import org.frankframework.flow.project.ProjectAlreadyExistsException;
 import org.frankframework.flow.project.ProjectNotFoundException;
 import org.frankframework.flow.projectsettings.InvalidFilterTypeException;
 import org.springframework.http.HttpStatus;
@@ -18,6 +19,13 @@ public class GlobalExceptionHandler {
         ex.printStackTrace();
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(new ErrorResponseDTO("ProjectNotFound", ex.getMessage()));
+    }
+
+    @ExceptionHandler(ProjectAlreadyExistsException.class)
+    public ResponseEntity<ErrorResponseDTO> handleProjectNotFound(ProjectAlreadyExistsException ex) {
+        ex.printStackTrace();
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new ErrorResponseDTO("ProjectAlreadyExists", ex.getMessage()));
     }
 
     @ExceptionHandler(ConfigurationNotFoundException.class)

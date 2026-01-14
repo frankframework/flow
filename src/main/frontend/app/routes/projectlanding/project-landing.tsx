@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import FfIcon from '/icons/custom/ff!-icon.svg?react'
 import ArchiveIcon from '/icons/solar/Archive.svg?react'
 import ProjectRow from './project-row'
@@ -8,16 +8,14 @@ import { useProjectStore } from '~/stores/project-store'
 import { useLocation } from 'react-router'
 import NewProjectModal from './new-project-modal'
 import LoadProjectModal from './load-project-modal'
+import { toast, ToastContainer } from 'react-toastify'
+import { useTheme } from '~/hooks/use-theme'
 
 export interface Project {
   name: string
   rootPath: string
   filepaths: string[]
   filters: Record<string, boolean> // key = filter name (e.g. "HTTP"), value = true/false
-}
-
-interface DirectoryFile extends File {
-  webkitRelativePath: string
 }
 
 export default function ProjectLanding() {
@@ -27,10 +25,10 @@ export default function ProjectLanding() {
   const [search, setSearch] = useState('')
   const [showNewProjectModal, setShowNewProjectModal] = useState(false)
   const [showLoadProjectModal, setShowLoadProjectModal] = useState(false)
+  const theme = useTheme()
 
   const clearProject = useProjectStore((state) => state.clearProject)
   const location = useLocation()
-  const fileInputReference = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -56,52 +54,7 @@ export default function ProjectLanding() {
     clearProject()
   }, [location.key, clearProject])
 
-  const handleOpenProject = () => {
-    fileInputReference.current?.click()
-  }
-
-  const handleFolderSelection = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files
-    if (!files || files.length === 0) return
-
-    // Detect project root folder (first directory name)
-    const firstFile = files[0] as DirectoryFile
-    const projectRoot = firstFile.webkitRelativePath.split('/')[0]
-
-    // 1. Create project in backend
-    await createProject(projectRoot)
-
-    // 2. Collect XML configuration files from /src/main/configurations
-    const configs: { filepath: string; xmlContent: string }[] = []
-
-    for (const file of [...files] as DirectoryFile[]) {
-      const relative = file.webkitRelativePath
-
-      if (relative.startsWith(`${projectRoot}/src/main/configurations/`) && relative.endsWith('.xml')) {
-        const content = await file.text() // read file content
-        configs.push({
-          filepath: relative.replace(`${projectRoot}/`, ''), // path relative to project root
-          xmlContent: content,
-        })
-      }
-    }
-
-    // Import configurations to the project
-    await fetch(`/api/projects/${projectRoot}/import-configurations`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        projectName: projectRoot,
-        configurations: configs,
-      }),
-    })
-
-    // Sync local project list with backend
-    const updated = await fetch(`/api/projects/${projectRoot}`).then((res) => res.json())
-    setProjects((prev) => prev.map((p) => (p.name === updated.name ? updated : p)))
-  }
-
-  const createProject = async (projectName: string, rootPath?: string) => {
+  const createProject = async (projectName: string, rootPath: string) => {
     try {
       const response = await fetch(`/api/projects`, {
         method: 'POST',
@@ -114,17 +67,27 @@ export default function ProjectLanding() {
         }),
       })
       if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`)
+        const contentType = response.headers.get('content-type')
+        if (contentType && contentType.includes('application/json')) {
+          const errorData = await response.json()
+          toast.error(`Error loading project: ${errorData.error}\nDetails: ${errorData.message}`)
+          console.error('Something went wrong loading the project:', errorData)
+        } else {
+          toast.error(`Error loading project. HTTP status: ${response.status}`)
+          console.error('Error loading project. HTTP status:', response.status)
+        }
+        return
       }
       // refresh the project list after creation
       const newProject = await response.json()
       setProjects((previous) => [...previous, newProject])
-    } catch (error_) {
-      setError(error_ instanceof Error ? error_.message : 'Failed to create project')
+    } catch (error) {
+      toast.error(`Network or unexpected error: ${error}`)
+      console.error('Network or unexpected error:', error)
     }
   }
 
-  const loadProject = async () => {
+  const handleOpenProject = async () => {
     setShowLoadProjectModal(true)
   }
 
@@ -141,6 +104,7 @@ export default function ProjectLanding() {
 
   return (
     <div className="bg-backdrop flex min-h-screen w-full flex-col items-center pt-20">
+      <ToastContainer position="bottom-right" theme={theme} closeOnClick={true} />
       <div className="relative mb-6 flex w-2/5 flex-row items-center">
         <div className="flex w-1/4 flex-row items-center">
           <FfIcon className="h-auto w-12" />
@@ -165,17 +129,7 @@ export default function ProjectLanding() {
           <div className="border-border text-muted-foreground w-1/4 border-r px-4 py-3 text-sm">
             <ActionButton label="New Project" onClick={() => setShowNewProjectModal(true)} />
             <ActionButton label="Open" onClick={handleOpenProject} />
-
-            <input
-              type="file"
-              ref={fileInputReference}
-              style={{ display: 'none' }}
-              onChange={handleFolderSelection}
-              webkitdirectory="true"
-              multiple
-            />
             <ActionButton label="Clone Repository" onClick={() => console.log('Cloning project')} />
-            <ActionButton label="Load Project" onClick={loadProject} />
           </div>
           <div className="h-full w-3/4 overflow-y-auto px-4 py-3">
             {filteredProjects.map((project, index) => (
