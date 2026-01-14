@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController()
@@ -66,6 +67,18 @@ public class ProjectController {
         return fileTreeService.getProjectTree(name);
     }
 
+    @GetMapping("/{name}/tree/configurations")
+    public FileTreeNode getConfigurationTree(
+            @PathVariable String name, @RequestParam(required = false, defaultValue = "false") boolean shallow)
+            throws IOException {
+
+        if (shallow) {
+            return fileTreeService.getShallowConfigurationsDirectoryTree(name);
+        } else {
+            return fileTreeService.getConfigurationsDirectoryTree(name);
+        }
+    }
+
     @GetMapping("/{projectName}")
     public ResponseEntity<ProjectDTO> getProject(@PathVariable String projectName) throws ProjectNotFoundException {
 
@@ -74,6 +87,13 @@ public class ProjectController {
         ProjectDTO dto = ProjectDTO.from(project);
 
         return ResponseEntity.ok(dto);
+    }
+
+    @GetMapping(value = "/{projectname}", params = "path")
+    public FileTreeNode getDirectoryContent(@PathVariable String projectname, @RequestParam String path)
+            throws IOException {
+
+        return fileTreeService.getShallowDirectoryTree(projectname, path);
     }
 
     @PatchMapping("/{projectname}")

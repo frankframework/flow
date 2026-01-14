@@ -1,6 +1,5 @@
 import { useNavigate } from 'react-router'
 import { useProjectStore } from '~/stores/project-store'
-import { useTreeStore } from '~/stores/tree-store'
 import KebabVerticalIcon from 'icons/solar/Kebab Vertical.svg?react'
 import useTabStore from '~/stores/tab-store'
 import type { Project } from '~/routes/projectlanding/project-landing'
@@ -13,7 +12,6 @@ export default function ProjectRow({ project }: Readonly<ProjectRowProperties>) 
   const navigate = useNavigate()
 
   const setProject = useProjectStore((state) => state.setProject)
-  const clearConfigs = useTreeStore((state) => state.clearConfigs)
   const clearTabs = useTabStore((state) => state.clearTabs)
 
   return (
@@ -21,7 +19,6 @@ export default function ProjectRow({ project }: Readonly<ProjectRowProperties>) 
       className="hover:bg-backdrop mb-2 flex w-full cursor-pointer items-center justify-between rounded px-3 py-1"
       onClick={() => {
         setProject(project)
-        clearConfigs()
         clearTabs()
         navigate('/configurations')
       }}
