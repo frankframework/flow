@@ -6,6 +6,7 @@ import { useNodeContextMenu } from '~/routes/studio/canvas/flow'
 import { useFFDoc } from '@frankframework/ff-doc/react'
 import variables from '../../../../../environment/environment'
 import { useSettingsStore } from '~/routes/settings/settings-store'
+import type { Attribute } from '@frankframework/ff-doc'
 
 export type ExitNode = Node<{
   subtype: string
