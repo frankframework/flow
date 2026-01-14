@@ -197,6 +197,13 @@ class FileTreeServiceTest {
     }
 
     @Test
+    void getProjectTreeThrowsIfProjectDoesNotExist() {
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class, () -> fileTreeService.getProjectTree("NonExistentProject"));
+        assertTrue(exception.getMessage().contains("Project does not exist: NonExistentProject"));
+    }
+
+    @Test
     void updateAdapterFromFileReturnsFalseIfInvalidXml()
             throws IOException, AdapterNotFoundException, ConfigurationNotFoundException {
         Path filePath = tempRoot.resolve("ProjectA/config1.xml");
