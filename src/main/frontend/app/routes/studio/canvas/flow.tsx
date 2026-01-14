@@ -53,11 +53,12 @@ const selector = (state: FlowState) => ({
 function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b: boolean) => void }>) {
   const theme = useTheme()
   const [loading, setLoading] = useState(false)
-  const { isEditing, setIsEditing, setParentId } = useNodeContextStore(
+  const { isEditing, setIsEditing, setParentId, setDraggedName } = useNodeContextStore(
     useShallow((s) => ({
       isEditing: s.isEditing,
       setIsEditing: s.setIsEditing,
       setParentId: s.setParentId,
+      setDraggedName: s.setDraggedName,
     })),
   )
   const [showModal, setShowModal] = useState(false)
@@ -330,6 +331,7 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
 
   const onDrop = (event: React.DragEvent) => {
     event.preventDefault()
+    setDraggedName(null)
     setParentId(null)
 
     const data = event.dataTransfer.getData('application/reactflow')
