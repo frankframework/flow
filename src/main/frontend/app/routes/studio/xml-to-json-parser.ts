@@ -222,7 +222,7 @@ function addImplicitSuccessExitEdge(
   const successExit = findSuccessExit(nodes)
   if (!successExit) return
 
-  // Already explicitly targeted → do nothing
+  // Already explicitly targeted: do nothing
   if (isNodeTargeted(successExit.id, edges)) return
 
   // Find last non-exit node
@@ -286,6 +286,11 @@ function extractSourceHandles(element: Element): SourceHandle[] {
 function processExitElements(element: Element, exitNodes: ExitNode[]) {
   const exits = [...element.children]
   for (const exit of exits) {
+    const attributes: Record<string, string> = {}
+    for (const attr of exit.attributes) {
+      attributes[attr.name] = attr.value
+    }
+
     const exitNode: ExitNode = {
       id: '',
       type: 'exitNode',
@@ -294,6 +299,7 @@ function processExitElements(element: Element, exitNodes: ExitNode[]) {
         name: exit.getAttribute('name') || '',
         type: 'Exit',
         subtype: 'Exit',
+        attributes,
       },
     }
     exitNodes.push(exitNode)
@@ -312,6 +318,10 @@ function convertAdapterToFlowNodes(adapter: Element): FlowNode[] {
       continue
     }
     if (element.tagName.toLowerCase() === 'exit') {
+      const attributes: Record<string, string> = {}
+      for (const attr of element.attributes) {
+        attributes[attr.name] = attr.value
+      }
       const exitNode: ExitNode = {
         id: '',
         type: 'exitNode',
@@ -320,6 +330,7 @@ function convertAdapterToFlowNodes(adapter: Element): FlowNode[] {
           name: element.getAttribute('name') || '',
           type: 'Exit',
           subtype: 'Exit',
+          attributes,
         },
       }
       exitNodes.push(exitNode)
@@ -391,7 +402,26 @@ function convertChildren(elements: Element[], idCounter: IdCounter): ChildNode[]
 }
 
 function findSuccessExit(nodes: FlowNode[]): FlowNode | undefined {
-  return nodes.find((node) => node.type === 'exitNode' && 'name' in node.data && node.data.name === 'SUCCESS')
+  return nodes.find((node) => {
+    if (node.type !== 'exitNode') return false
+
+    const data = node.data
+    if (typeof data !== 'object' || data === null) return false
+
+    // Check for 'name' directly (case-insensitive)
+    if ('name' in data && typeof data.name === 'string' && data.name.toLowerCase() === 'success') {
+      return true
+    }
+
+    // Check for 'state' inside attributes if it exists (case-insensitive)
+    if ('attributes' in data && data.attributes && typeof data.attributes === 'object') {
+      const attrs = data.attributes as Record<string, string>
+      const state = attrs['state']
+      return state.toLowerCase() === 'success'
+    }
+
+    return false
+  })
 }
 
 function isNodeTargeted(nodeId: string, edges: FrankEdge[]): boolean {
