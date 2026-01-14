@@ -1,19 +1,47 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 interface NewProjectModalProperties {
   isOpen: boolean
   onClose: () => void
-  onCreate: (name: string) => void
+  onCreate: (name: string, rootPath: string) => void
 }
 
 export default function NewProjectModal({ isOpen, onClose, onCreate }: Readonly<NewProjectModalProperties>) {
   const [name, setName] = useState('')
+  const [rootPath, setRootPath] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!isOpen) return
+
+    const fetchData = async () => {
+      setLoading(true)
+      setError(null)
+
+      try {
+        const rootResponse = await fetch('/api/projects/root')
+        if (!rootResponse.ok) {
+          throw new Error(`Root HTTP error! Status: ${rootResponse.status}`)
+        }
+
+        const rootData = await rootResponse.json()
+        setRootPath(rootData.rootPath)
+      } catch (error) {
+        setError(error instanceof Error ? error.message : 'Failed to fetch project data')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [isOpen])
 
   if (!isOpen) return null
 
   const handleCreate = async () => {
     if (!name.trim()) return
-    onCreate(name)
+    onCreate(name, rootPath)
     onClose()
   }
 
@@ -21,9 +49,11 @@ export default function NewProjectModal({ isOpen, onClose, onCreate }: Readonly<
     <div className="bg-background/50 absolute inset-0 z-50 flex items-center justify-center">
       <div className="bg-background border-border relative h-[400px] w-[600px] rounded-lg border p-6 shadow-lg">
         <h2 className="mb-4 text-lg font-semibold">Add Project</h2>
-        <p className="mb-4">Add a new project</p>
+        <p className="mb-4">Add a new project in {rootPath}</p>
 
         <div className="mb-4 flex items-center gap-2">
+          {loading && <p className="text-muted-foreground">Loading rootfolder...</p>}
+          {error && <p className="text-destructive">{error}</p>}
           <label className="text-sm font-medium">Projectname</label>
           <input
             value={name}
