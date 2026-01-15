@@ -1,0 +1,3 @@
+describe('Application Routing', () => {
+  /* empty */
+})

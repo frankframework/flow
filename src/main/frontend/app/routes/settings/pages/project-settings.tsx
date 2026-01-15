@@ -14,9 +14,7 @@ export default function ProjectSettings() {
 
     try {
       const response = await fetch(
-        `http://localhost:8080/projects/${encodeURIComponent(project.name)}/filters/${encodeURIComponent(
-          filter,
-        )}/${action}`,
+        `api/projects/${encodeURIComponent(project.name)}/filters/${encodeURIComponent(filter)}/${action}`,
         { method: 'PATCH' },
       )
 

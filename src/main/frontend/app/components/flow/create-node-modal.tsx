@@ -32,7 +32,6 @@ function CreateNodeModal({
   positions,
   sourceInfo,
 }: Readonly<CreateNodeModalProperties>) {
-  if (!isOpen) return null
   const FRANK_DOC_URL = variables.frankDocJsonUrl
 
   const { elements } = useFFDoc(FRANK_DOC_URL)
@@ -44,7 +43,7 @@ function CreateNodeModal({
 
   const elementArray = useMemo(() => {
     if (!elements) return []
-    return Object.values(elements).sort((a, b) => a.name.localeCompare(b.name))
+    return Object.values(elements).toSorted((a, b) => a.name.localeCompare(b.name))
   }, [elements])
   // Filter based on search input
 
@@ -57,7 +56,7 @@ function CreateNodeModal({
     setSearch(newSearch)
     const filtered = elementArray
       .filter((element) => element.name.toLowerCase().includes(newSearch.toLowerCase()))
-      .sort((a, b) => a.name.localeCompare(b.name))
+      .toSorted((a, b) => a.name.localeCompare(b.name))
 
     // Automatically select the first match (if any)
     if (filtered.length > 0) {
@@ -66,6 +65,8 @@ function CreateNodeModal({
       setSelectedElement('') // No matches → clear selection
     }
   }
+
+  if (!isOpen) return null
 
   const handleCreateNode = () => {
     if (!selectedElement || !positions || !sourceInfo || !elements) return

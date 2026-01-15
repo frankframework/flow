@@ -1,5 +1,5 @@
-import type { ConfigWithAdapters } from '~/routes/studio/filetree/studio-structure';
-import { create } from 'zustand';
+import type { ConfigWithAdapters } from '~/components/file-structure/file-structure'
+import { create } from 'zustand'
 
 interface TreestoreState {
   configs: ConfigWithAdapters[]

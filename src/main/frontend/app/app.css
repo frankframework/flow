@@ -38,8 +38,23 @@
     --type-wrapper: #4A30CC;
     --type-job: #fd7200;
     --type-exit: #E84E4E;
+    --type-errormessageformatter: #ff2424;
+    --type-param: #1389ff;
     --type-other: #FDC300;
     --type-sticky-note: #facc15;
+
+    /* Palette Styling */
+    --palette-pipes: #68D250;
+    --palette-listeners: #D250BF;
+    --palette-senders: #30CCAF;
+    --palette-validators: #3079CC;
+    --palette-batch: #FDC300;
+    --palette-scheduling: #fd7200;
+    --palette-errormessageformatters: #ff2424;
+    --palette-other: #FDC300;
+    --palette-parameters: #1389ff;
+    --palette-monitoring: #00ff84;
+    --palette-transactionalstorages: #FDC300;
   }
 
   [data-theme="dark"] {
@@ -61,8 +76,22 @@
     --type-wrapper: #4A30CC;
     --type-job: #9a4602;
     --type-exit: #882e2e;
+    --type-errormessageformatter: #7b1313;
+    --type-param: #0d4a87;
     --type-other: #9c7800;
     --type-sticky-note: #986804;
+
+    --palette-pipes: #136502;
+    --palette-listeners: #853279;
+    --palette-senders: #1c7c6a;
+    --palette-validators: #3079CC;
+    --palette-batch: #9c7800;
+    --palette-scheduling: #9a4602;
+    --palette-errormessageformatters: #7b1313;
+    --palette-other: #9c7800;
+    --palette-parameters: #0d4a87;
+    --palette-monitoring: #01924c;
+    --palette-transactionalstorages: #9c7800;
   }
 
 }

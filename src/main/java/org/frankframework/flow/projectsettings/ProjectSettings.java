@@ -2,7 +2,11 @@ package org.frankframework.flow.projectsettings;
 
 import java.util.EnumMap;
 import java.util.Map;
+import lombok.Getter;
+import lombok.Setter;
 
+@Getter
+@Setter
 public class ProjectSettings {
     private Map<FilterType, Boolean> filters = new EnumMap<>(FilterType.class);
 
@@ -10,14 +14,6 @@ public class ProjectSettings {
         for (FilterType type : FilterType.values()) {
             filters.put(type, false);
         }
-    }
-
-    public Map<FilterType, Boolean> getFilters() {
-        return filters;
-    }
-
-    public void setFilters(Map<FilterType, Boolean> filters) {
-        this.filters = filters;
     }
 
     // Convenience method to set an individual type

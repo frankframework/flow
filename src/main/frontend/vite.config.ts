@@ -4,6 +4,9 @@ import { defineConfig } from 'vite'
 import tsconfigPaths from 'vite-tsconfig-paths'
 import svgr from 'vite-plugin-svgr'
 import mdx from '@mdx-js/rollup'
+import dotenv from 'dotenv'
+
+dotenv.config({ quiet: true })
 import remarkGfm from 'remark-gfm'
 
 export default defineConfig({
@@ -24,16 +27,10 @@ export default defineConfig({
         target: 'https://frankdoc.frankframework.org',
         changeOrigin: true,
       },
-      '/test': {
-        target: 'http://localhost:8080', // Spring Boot backend
-        changeOrigin: true,
-      },
-      '/configurations': {
-        target: 'http://localhost:8080', // Spring Boot backend
-        changeOrigin: true,
-      },
-      '/projects': {
+      '/api': {
         target: 'http://localhost:8080',
+        secure: false,
+        ws: true,
         changeOrigin: true,
       },
     },

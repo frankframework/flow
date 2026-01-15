@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
-import Tabs, { type TabsList } from '~/components/tabs/tabs'
-import StudioStructure from '~/routes/studio/filetree/studio-structure'
+import { useState } from 'react'
+import StudioTabs from '~/components/tabs/studio-tabs'
+import FileStructure from '~/components/file-structure/file-structure'
 import StudioContext from '~/routes/studio/context/studio-context'
 import Flow from '~/routes/studio/canvas/flow'
 import NodeContext from '~/routes/studio/context/node-context'
@@ -11,14 +11,18 @@ import { SidebarSide } from '~/components/sidebars-layout/sidebar-layout-store'
 import SidebarLayout from '~/components/sidebars-layout/sidebar-layout'
 import useTabStore from '~/stores/tab-store'
 import { useShallow } from 'zustand/react/shallow'
+import { ToastContainer } from 'react-toastify'
+import { useTheme } from '~/hooks/use-theme'
 
 export default function Studio() {
   const [showNodeContext, setShowNodeContext] = useState(false)
+  const theme = useTheme()
   const nodeId = useNodeContextStore((state) => state.nodeId)
 
-  const { activeTab } = useTabStore(
+  const { activeTab, activeTabPath } = useTabStore(
     useShallow((state) => ({
       activeTab: state.activeTab,
+      activeTabPath: state.activeTab ? state.tabs[state.activeTab]?.configurationPath : undefined,
     })),
   )
 
@@ -26,20 +30,25 @@ export default function Studio() {
     <SidebarLayout name="studio" windowResizeOnChange={true}>
       <>
         <SidebarHeader side={SidebarSide.LEFT} title="Structure" />
-        <StudioStructure />
+        <FileStructure />
       </>
       <>
         <div className="flex">
           <SidebarContentClose side={SidebarSide.LEFT} />
           <div className="grow overflow-x-auto">
-            <Tabs />
+            <StudioTabs />
           </div>
           <SidebarContentClose side={SidebarSide.RIGHT} />
         </div>
-        <div className="border-b-border bg-background flex h-12 items-center border-b p-4">Path: {activeTab}</div>
 
         {activeTab ? (
-          <Flow showNodeContextMenu={setShowNodeContext} />
+          <>
+            <div className="border-b-border bg-background flex h-12 items-center border-b p-4">
+              Path: {activeTabPath}
+            </div>
+            <Flow showNodeContextMenu={setShowNodeContext} />
+            <ToastContainer position="bottom-right" theme={theme} closeOnClick={true} />
+          </>
         ) : (
           <div className="text-muted-foreground flex h-full flex-col items-center justify-center p-8 text-center">
             <div className="border-border bg-background/40 max-w-md rounded-2xl border border-dashed p-10 shadow-inner backdrop-blur-sm">

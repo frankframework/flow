@@ -1,15 +1,16 @@
 import useNodeContextStore from '~/stores/node-context-store'
 import useFlowStore from '~/stores/flow-store'
 import { getElementTypeFromName } from '~/routes/studio/node-translator-module'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import SortedElements from '~/routes/studio/context/sorted-elements'
 import Search from '~/components/search/search'
 import variables from '../../../../environment/environment'
 import { useFFDoc } from '@frankframework/ff-doc/react'
 import { useProjectStore } from '~/stores/project-store'
+import type { ElementDetails } from '@frankframework/ff-doc'
 
 export default function StudioContext() {
-  const { setAttributes, setNodeId } = useNodeContextStore((state) => state)
+  const { setAttributes, setNodeId, setDraggedName } = useNodeContextStore((state) => state)
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({})
   const [searchTerm, setSearchTerm] = useState('')
   const project = useProjectStore((state) => state.project)
@@ -20,29 +21,43 @@ export default function StudioContext() {
         .filter(([_, enabled]) => enabled)
         .map(([filterName]) => filterName)
     : []
+  const componentLookup = useMemo(() => {
+    if (!filters?.Components) return {}
+
+    return Object.entries(filters.Components).reduce<Record<string, string>>((acc, [type, names]) => {
+      for (const name of names) {
+        acc[name] = type.toLowerCase()
+      }
+      return acc
+    }, {})
+  }, [filters])
 
   useEffect(() => {
-    if (!elements) return
-    const types = Object.values(elements).map((element: any) => getElementTypeFromName(element.name))
+    if (!elements || !filters?.Components) return
+
     const initialState: Record<string, boolean> = {}
-    for (const type of types) {
+
+    for (const element of Object.values(elements)) {
+      const type = getElementTypeFromComponents(element.name, filters.Components)
       if (!(type in expandedGroups)) {
         initialState[type] = true
       }
     }
+
     if (Object.keys(initialState).length > 0) {
       setExpandedGroups((previous) => ({ ...previous, ...initialState }))
     }
-  })
+  }, [elements, filters, expandedGroups])
 
-  const onDragStart = (value: { attributes: any[] }) => {
+  const onDragStart = (value: ElementDetails) => {
     return (event: {
       dataTransfer: { setData: (argument0: string, argument1: string) => void; effectAllowed: string }
     }) => {
       setAttributes(value.attributes)
       setNodeId(+useFlowStore.getState().nodeIdCounter)
+      setDraggedName(value.name)
       event.dataTransfer.setData('application/reactflow', JSON.stringify(value))
-      event.dataTransfer.effectAllowed = 'move'
+      event.dataTransfer.effectAllowed = 'copyMove'
     }
   }
 
@@ -67,26 +82,28 @@ export default function StudioContext() {
     )
   }
 
-  const groupElementsByType = (elements: Record<string, any>) => {
-    const grouped: Record<string, any[]> = {}
+  const groupElementsByType = (elements: Record<string, ElementDetails>) => {
+    const grouped: Record<string, ElementDetails[]> = {}
     const seen = new Set<string>()
 
-    for (const [, value] of Object.entries(elements)) {
-      if (seen.has(value.name)) continue // Skip duplicates by name
+    for (const value of Object.values(elements)) {
+      if (seen.has(value.name)) continue
       seen.add(value.name)
 
-      const type = getElementTypeFromName(value.name)
+      const type = componentLookup[value.name] ?? 'other'
+
       if (!grouped[type]) grouped[type] = []
       grouped[type].push(value)
     }
+
     return grouped
   }
 
   const visibleElements = Object.fromEntries(
-    Object.entries(elements || {}).filter(([_, value]) => shouldShowElement(value.name)),
+    Object.entries(elements || {}).filter(([_, value]) => shouldShowElement((value as ElementDetails).name)),
   )
 
-  const groupedElements = elements ? groupElementsByType(visibleElements) : {}
+  const groupedElements = elements ? groupElementsByType(visibleElements as Record<string, ElementDetails>) : {}
 
   const filteredGroupedElements = Object.entries(groupedElements).reduce(
     (accumulator, [type, items]) => {
@@ -94,10 +111,22 @@ export default function StudioContext() {
       if (filteredItems.length > 0) accumulator[type] = filteredItems
       return accumulator
     },
-    {} as Record<string, any[]>,
+    {} as Record<string, ElementDetails[]>,
   )
 
   const elementsToRender = searchTerm ? filteredGroupedElements : groupedElements
+
+  function getElementTypeFromComponents(elementName: string, components?: Record<string, string[]>): string {
+    if (!components) return 'other'
+
+    for (const [componentType, items] of Object.entries(components)) {
+      if (items.includes(elementName)) {
+        return componentType.toLowerCase()
+      }
+    }
+
+    return 'other'
+  }
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
@@ -113,7 +142,7 @@ export default function StudioContext() {
           <li className="text-foreground-muted italic">No results found.</li>
         )}
         {Object.entries(elementsToRender)
-          .sort(([typeA], [typeB]) => typeA.localeCompare(typeB))
+          .toSorted(([typeA], [typeB]) => typeA.localeCompare(typeB))
           .map(([type, items]) => (
             <SortedElements key={type} type={type} items={items} onDragStart={onDragStart} searchTerm={searchTerm} />
           ))}

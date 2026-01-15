@@ -1,0 +1,66 @@
+{
+    "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+    "extends": [
+        "config:recommended"
+    ],
+    "labels": [
+        "Dependencies"
+    ],
+    "ignoreDeps": [
+        "pnpm"
+    ],
+    "postUpgradeTasks": {
+        "commands": [
+            "pnpm install --lockfile-only"
+        ],
+        "fileFilters": [
+            "pnpm-lock.yaml",
+            "**/package.json"
+        ],
+        "executionMode": "branch"
+    },
+    "packageRules": [
+        {
+            "matchManagers": [
+                "maven"
+            ],
+            "addLabels": [
+                "Java"
+            ],
+            "schedule": [
+                "* 7 * * 1"
+            ]
+        },
+        {
+            "matchManagers": [
+                "npm"
+            ],
+            "matchDepTypes": [
+                "peerDependencies"
+            ],
+            "enabled": false
+        },
+        {
+            "matchManagers": [
+                "npm"
+            ],
+            "rangeStrategy": "bump",
+            "addLabels": [
+                "JavaScript"
+            ],
+            "schedule": [
+                "* 7 1-7 * 1"
+            ]
+        },
+        {
+            "matchManagers": [
+                "npm"
+            ],
+            "matchPackagePatterns": [
+                "^@angular",
+                "^typescript$"
+            ],
+            "groupName": "Angular"
+        }
+    ]
+}

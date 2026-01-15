@@ -1,21 +1,22 @@
 import { create } from 'zustand'
 import { subscribeWithSelector } from 'zustand/middleware'
 
-interface TabData {
-  value: string
-  icon?: React.ComponentType<any>
-  flowJson?: Record<string, any>
-  configurationName: string
+export interface TabData {
+  name: string
+  icon?: React.ComponentType<React.SVGProps<SVGSVGElement>>
+  flowJson?: Record<string, unknown>
+  configurationPath: string
 }
 
 interface TabStoreState {
   tabs: Record<string, TabData>
   activeTab: string
   setTabData: (tabId: string, data: TabData) => void
-  getTab: (tabId: string) => TabData | undefined
-  setActiveTab: (tabId: string) => void
+  getTab: (tabId: string | undefined) => TabData | undefined
+  setActiveTab: (tabId: string | undefined) => void
   removeTab: (tabId: string) => void
   removeTabAndSelectFallback: (tabId: string) => void
+  clearTabs: () => void
 }
 
 const useTabStore = create<TabStoreState>()(
@@ -32,8 +33,8 @@ const useTabStore = create<TabStoreState>()(
           },
         },
       })),
-    getTab: (tabId) => get().tabs[tabId],
-    setActiveTab: (tabId) => set({ activeTab: tabId }),
+    getTab: (tabId) => (tabId ? get().tabs[tabId] : undefined),
+    setActiveTab: (tabId) => set({ activeTab: tabId ?? '' }),
     removeTab: (tabId) =>
       set((state) => {
         const newTabs = { ...state.tabs }
@@ -50,6 +51,7 @@ const useTabStore = create<TabStoreState>()(
           activeTab: remainingKeys.includes(state.activeTab) ? state.activeTab : (remainingKeys.at(-1) ?? ''),
         }
       }),
+    clearTabs: () => set({ tabs: {}, activeTab: '' }),
   })),
 )
 

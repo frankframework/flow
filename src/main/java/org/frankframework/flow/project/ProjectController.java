@@ -1,10 +1,22 @@
 package org.frankframework.flow.project;
 
+import java.io.IOException;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import org.frankframework.flow.configuration.AdapterUpdateDTO;
 import org.frankframework.flow.configuration.Configuration;
 import org.frankframework.flow.configuration.ConfigurationDTO;
-
-import org.springframework.http.HttpStatus;
+import org.frankframework.flow.configuration.ConfigurationNotFoundException;
+import org.frankframework.flow.filetree.FileTreeNode;
+import org.frankframework.flow.filetree.FileTreeService;
 import org.frankframework.flow.projectsettings.FilterType;
+import org.frankframework.flow.projectsettings.InvalidFilterTypeException;
+import org.frankframework.flow.utility.XmlValidator;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -15,182 +27,211 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @RestController()
 @RequestMapping("/projects")
 public class ProjectController {
-	private final ProjectService projectService;
+    private final ProjectService projectService;
+    private final FileTreeService fileTreeService;
 
-	public ProjectController(ProjectService projectService) {
-		this.projectService = projectService;
-	}
+    public ProjectController(ProjectService projectService, FileTreeService fileTreeService) {
+        this.projectService = projectService;
+        this.fileTreeService = fileTreeService;
+    }
 
-	@GetMapping
-	public ResponseEntity<List<ProjectDTO>> getAllProjects() {
-		List<ProjectDTO> projectDTOList = new ArrayList<>();
-		List<Project> projects = projectService.getProjects();
+    @GetMapping
+    public ResponseEntity<List<ProjectDTO>> getAllProjects() {
+        List<ProjectDTO> projectDTOList = new ArrayList<>();
+        List<Project> projects = projectService.getProjects();
 
-		for (Project project : projects) {
-			ProjectDTO projectDTO = new ProjectDTO();
-			projectDTO.name = project.getName();
-			ArrayList<String> filenames = new ArrayList<>();
-			for (Configuration c :  project.getConfigurations()) {
-				filenames.add(c.getFilename());
-			}
-			projectDTO.filenames = filenames;
-			projectDTO.filters = project.getProjectSettings().getFilters();
-			projectDTOList.add(projectDTO);
-		}
-		return ResponseEntity.ok(projectDTOList);
-	}
+        for (Project project : projects) {
+            ProjectDTO dto = ProjectDTO.from(project);
+            projectDTOList.add(dto);
+        }
+        return ResponseEntity.ok(projectDTOList);
+    }
 
-	@GetMapping("/{projectname}")
-	public ResponseEntity<ProjectDTO> getProject(@PathVariable String projectname) {
-		try {
-			Project project = projectService.getProject(projectname);
-			if (project == null) {
-				return ResponseEntity.notFound().build();
-			}
-			ProjectDTO projectDTO = new ProjectDTO();
-			projectDTO.name = project.getName();
-			ArrayList<String> filenames = new ArrayList<>();
-			for (Configuration c :  project.getConfigurations()) {
-				filenames.add(c.getFilename());
-			}
-			projectDTO.filenames = filenames;
-			projectDTO.filters = project.getProjectSettings().getFilters();
-			return ResponseEntity.ok(projectDTO);
-		} catch (Exception e) {
-			return ResponseEntity.badRequest().build();
-		}
-	}
+    @GetMapping("/backend-folders")
+    public List<String> getBackendFolders() throws IOException {
+        return fileTreeService.listProjectFolders();
+    }
 
-	@GetMapping("/{projectName}/{filename}")
-	public ResponseEntity<ConfigurationDTO> getConfiguration(
-			@PathVariable String projectName,
-			@PathVariable String filename) {
+    @GetMapping("/root")
+    public ResponseEntity<Map<String, String>> getProjectsRoot() {
+        return ResponseEntity.ok(
+                Map.of("rootPath", fileTreeService.getProjectsRoot().toString()));
+    }
 
-		Project project = projectService.getProject(projectName);
-		if (project == null) {
-			return ResponseEntity.notFound().build();
-		}
+    @GetMapping("/{name}/tree")
+    public FileTreeNode getProjectTree(@PathVariable String name) throws IOException {
+        return fileTreeService.getProjectTree(name);
+    }
 
-		// Find configuration by filename
-		for (var config : project.getConfigurations()) {
-			if (config.getFilename().equals(filename)) {
-				ConfigurationDTO dto = new ConfigurationDTO();
-				dto.name = config.getFilename();
-				dto.xmlContent = config.getXmlContent();
-				return ResponseEntity.ok(dto);
-			}
-		}
+    @GetMapping("/{projectName}")
+    public ResponseEntity<ProjectDTO> getProject(@PathVariable String projectName) throws ProjectNotFoundException {
 
-		return ResponseEntity.notFound().build(); // No matching config found
-	}
+        Project project = projectService.getProject(projectName);
 
-	@PutMapping("/{projectName}/{filename}")
-	public ResponseEntity<Void> updateConfiguration(
-			@PathVariable String projectName,
-			@PathVariable String filename,
-			@RequestBody ConfigurationDTO configurationDTO) {
-		try {
-			boolean updated = projectService.updateConfigurationXml(
-					projectName, filename, configurationDTO.xmlContent);
+        ProjectDTO dto = ProjectDTO.from(project);
 
-			if (!updated) {
-				return ResponseEntity.notFound().build(); // Project or config not found
-			}
+        return ResponseEntity.ok(dto);
+    }
 
-			return ResponseEntity.ok().build();
-		} catch (Exception e) {
-			e.printStackTrace();
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-		}
-	}
+    @PatchMapping("/{projectname}")
+    public ResponseEntity<ProjectDTO> patchProject(
+            @PathVariable String projectname, @RequestBody ProjectDTO projectDTO) {
 
-	@PostMapping("/{projectname}")
-	public ResponseEntity<ProjectDTO> createProject(@PathVariable String projectname) {
-		try {
-			projectService.createProject(projectname);
-			ProjectDTO projectDTO = new ProjectDTO();
-			projectDTO.name = projectname;
-			return ResponseEntity.ok(projectDTO);
-		} catch (Exception e) {
-			return ResponseEntity.badRequest().build();
-		}
-	}
+        try {
+            Project project = projectService.getProject(projectname);
+            if (project == null) {
+                return ResponseEntity.notFound().build();
+            }
 
-	@PatchMapping("/{projectname}/filters/{type}/enable")
-	public ResponseEntity<ProjectDTO> enableFilter(
-			@PathVariable String projectname,
-			@PathVariable String type) {
-				try {
-			Project project = projectService.getProject(projectname);
-			if (project == null) {
-				return ResponseEntity.notFound().build();
-			}
+            // 1. Update project name (only if present)
+            if (projectDTO.name() != null && !projectDTO.name().equals(project.getName())) {
+                project.setName(projectDTO.name());
+            }
 
-			// Parse enum safely
-			FilterType filterType = FilterType.valueOf(type.toUpperCase());
+            // 2. Update configuration list (only if present)
+            if (projectDTO.filepaths() != null) {
+                // Replace entire configuration list
+                project.clearConfigurations();
+                for (String filepath : projectDTO.filepaths()) {
+                    project.addConfiguration(new Configuration(filepath));
+                }
+            }
 
-			// Enable the filter
-			project.enableFilter(filterType);
+            // 3. Merge filter map (only update provided filters)
+            if (projectDTO.filters() != null) {
+                for (var entry : projectDTO.filters().entrySet()) {
+                    FilterType type = entry.getKey();
+                    Boolean enabled = entry.getValue();
 
-			// Return updated DTO
-			ProjectDTO dto = new ProjectDTO();
-			dto.name = project.getName();
-			ArrayList<String> filenames = new ArrayList<>();
-			for (Configuration c :  project.getConfigurations()) {
-				filenames.add(c.getFilename());
-			}
-			dto.filenames = filenames;
-			dto.filters = project.getProjectSettings().getFilters();
+                    if (enabled == null) continue;
 
-			return ResponseEntity.ok(dto);
+                    if (enabled) {
+                        project.enableFilter(type);
+                    } else {
+                        project.disableFilter(type);
+                    }
+                }
+            }
 
-		} catch (IllegalArgumentException e) {
-			// thrown if invalid type string
-			return ResponseEntity.badRequest().body(null);
-		} catch (Exception e) {
-			return ResponseEntity.internalServerError().build();
-		}
-	}
+            // Build updated DTO
+            ProjectDTO dto = ProjectDTO.from(project);
 
-	@PatchMapping("/{projectname}/filters/{type}/disable")
-	public ResponseEntity<ProjectDTO> disableFilter(
-			@PathVariable String projectname,
-			@PathVariable String type) {
-				try {
-			Project project = projectService.getProject(projectname);
-			if (project == null) {
-				return ResponseEntity.notFound().build();
-			}
+            return ResponseEntity.ok(dto);
 
-			// Parse enum safely
-			FilterType filterType = FilterType.valueOf(type.toUpperCase());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
 
-			// Disable the filter
-			project.disableFilter(filterType);
+    @PostMapping("/{projectName}/configuration")
+    public ResponseEntity<ConfigurationDTO> getConfigurationByPath(
+            @PathVariable String projectName, @RequestBody ConfigurationPathDTO requestBody)
+            throws ProjectNotFoundException, ConfigurationNotFoundException, IOException {
 
-			// Return updated DTO
-			ProjectDTO dto = new ProjectDTO();
-			dto.name = project.getName();
-			ArrayList<String> filenames = new ArrayList<>();
-			for (Configuration c :  project.getConfigurations()) {
-				filenames.add(c.getFilename());
-			}
-			dto.filenames = filenames;
-			dto.filters = project.getProjectSettings().getFilters();
+        String filepath = requestBody.filepath();
 
-			return ResponseEntity.ok(dto);
+        // Find configuration by filepath
+        String content;
+        try {
+            content = fileTreeService.readFileContent(filepath);
+        } catch (NoSuchFileException e) {
+            throw new ConfigurationNotFoundException("Configuration file not found: " + filepath);
+        } catch (IllegalArgumentException e) {
+            throw new ConfigurationNotFoundException("Invalid configuration path: " + filepath);
+        }
 
-		} catch (IllegalArgumentException e) {
-			// thrown if invalid type string
-			return ResponseEntity.badRequest().body(null);
-		} catch (Exception e) {
-			return ResponseEntity.internalServerError().build();
-		}
-	}
+        ConfigurationDTO dto = new ConfigurationDTO(filepath, content);
+        return ResponseEntity.ok(dto);
+    }
+
+    @PostMapping("/{projectname}/import-configurations")
+    public ResponseEntity<ProjectDTO> importConfigurations(
+            @PathVariable String projectname, @RequestBody ProjectImportDTO importDTO) {
+
+        Project project = projectService.getProject(projectname);
+        if (project == null) return ResponseEntity.notFound().build();
+
+        for (ImportConfigurationDTO conf : importDTO.configurations()) {
+            Configuration c = new Configuration(conf.filepath());
+            c.setXmlContent(conf.xmlContent());
+            project.addConfiguration(c);
+        }
+
+        ProjectDTO dto = ProjectDTO.from(project);
+
+        return ResponseEntity.ok(dto);
+    }
+
+    @PutMapping("/{projectName}/configuration")
+    public ResponseEntity<Void> updateConfiguration(
+            @PathVariable String projectName, @RequestBody ConfigurationDTO configurationDTO)
+            throws ProjectNotFoundException, ConfigurationNotFoundException, InvalidXmlContentException, IOException {
+
+        // Validate XML
+        if (configurationDTO.filepath().toLowerCase().endsWith(".xml")) {
+            XmlValidator.validateXml(configurationDTO.content());
+        }
+
+        try {
+            fileTreeService.updateFileContent(configurationDTO.filepath(), configurationDTO.content());
+        } catch (IllegalArgumentException e) {
+            throw new ConfigurationNotFoundException("Invalid file path: " + configurationDTO.filepath());
+        }
+
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/{projectName}/adapters")
+    public ResponseEntity<Void> updateAdapterFromFile(
+            @PathVariable String projectName, @RequestBody AdapterUpdateDTO dto) {
+        Path configPath = Paths.get(dto.configurationPath());
+
+        boolean updated =
+                fileTreeService.updateAdapterFromFile(projectName, configPath, dto.adapterName(), dto.adapterXml());
+
+        if (!updated) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping
+    public ResponseEntity<ProjectDTO> createProject(@RequestBody ProjectCreateDTO projectCreateDTO) {
+        Project project = projectService.createProject(projectCreateDTO.name(), projectCreateDTO.rootPath());
+
+        ProjectDTO dto = ProjectDTO.from(project);
+
+        return ResponseEntity.ok(dto);
+    }
+
+    @PostMapping("/{projectname}/configurations/{configname}")
+    public ResponseEntity<ProjectDTO> addConfiguration(
+            @PathVariable String projectname, @PathVariable String configname) throws ProjectNotFoundException {
+        Project project = projectService.addConfiguration(projectname, configname);
+
+        ProjectDTO projectDTO = ProjectDTO.from(project);
+        return ResponseEntity.ok(projectDTO);
+    }
+
+    @PatchMapping("/{projectname}/filters/{type}/enable")
+    public ResponseEntity<ProjectDTO> enableFilter(@PathVariable String projectname, @PathVariable String type)
+            throws ProjectNotFoundException, InvalidFilterTypeException {
+
+        Project project = projectService.enableFilter(projectname, type);
+        ProjectDTO dto = ProjectDTO.from(project);
+        return ResponseEntity.ok(dto);
+    }
+
+    @PatchMapping("/{projectname}/filters/{type}/disable")
+    public ResponseEntity<ProjectDTO> disableFilter(@PathVariable String projectname, @PathVariable String type)
+            throws ProjectNotFoundException, InvalidFilterTypeException {
+
+        Project project = projectService.disableFilter(projectname, type);
+        ProjectDTO dto = ProjectDTO.from(project);
+        return ResponseEntity.ok(dto);
+    }
 }

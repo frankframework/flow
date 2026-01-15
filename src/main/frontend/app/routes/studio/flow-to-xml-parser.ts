@@ -1,5 +1,6 @@
 import type { FlowNode } from '~/routes/studio/canvas/flow'
 import type { Edge } from '@xyflow/react'
+import type { ChildNode } from './canvas/nodetypes/child-node'
 
 interface ReactFlowJson {
   nodes: FlowNode[]
@@ -61,15 +62,14 @@ export function exportFlowToXml(json: ReactFlowJson, adaptername: string): strin
 
   const exitsXml = exitNodes.length > 0 ? `      <Exits>\n${generateExitsXml(exitNodes)}\n      </Exits>` : ''
 
-  return `<Configuration>
+  return `
   <Adapter name="${adaptername}" description="Auto-generated from React Flow JSON">
 ${receivers.join('\n')}
     <Pipeline>
 ${exitsXml}
 ${pipelineParts.join('\n')}
     </Pipeline>
-  </Adapter>
-</Configuration>`
+  </Adapter>`
 }
 
 function buildEdgeMaps(edges: Edge[]) {
@@ -86,7 +86,10 @@ function buildEdgeMaps(edges: Edge[]) {
     if (!edgeMap.has(edge.source)) edgeMap.set(edge.source, [])
     edgeMap.get(edge.source)!.push({
       targetId: edge.target,
-      label: edge.data?.label || 'success',
+      label:
+        typeof edge.data === 'object' && edge.data && 'label' in edge.data && typeof edge.data.label === 'string'
+          ? edge.data.label
+          : 'success',
     })
   }
 
@@ -110,7 +113,7 @@ function topologicalSort(startNodes: string[], outgoing: Record<string, string[]
     dfs(startId)
   }
 
-  return sorted.reverse()
+  return sorted.toReversed()
 }
 
 function generateXmlElement(
@@ -120,23 +123,14 @@ function generateXmlElement(
   nodeMap: Map<string, FlowNode>,
 ): string {
   const { subtype, name } = node.data as NodeData
-  const attributes = (node.data as any).attributes || {}
-  const children = (node.data as any).children || []
+  const attributes = (node.data as NodeData).attributes || {}
+  const children = (node.data as NodeData).children || []
 
   const attributeString = ` name="${escapeXml(name)}"${Object.entries(attributes)
     .map(([key, value]) => ` ${key}="${escapeXml(value)}"`)
     .join('')}`
 
-  const childXml = children
-    .map((child: any) => {
-      const childAttributes =
-        (child.name ? ` name="${escapeXml(child.name)}"` : '') +
-        Object.entries(child.attributes || {})
-          .map(([k, v]) => ` ${k}="${escapeXml(v)}"`)
-          .join('')
-      return `    <${child.subtype}${childAttributes}/>`
-    })
-    .join('\n')
+  const childXml = children.map((child: ChildNode) => generateChildXml(child, 4)).join('\n')
 
   const forwards = (edgeMap.get(node.id) || [])
     .filter(({ targetId }) => exitNodeIds.has(targetId))
@@ -148,8 +142,30 @@ function generateXmlElement(
     .join('\n')
 
   const content = [childXml, forwards].filter(Boolean).join('\n')
-
   return content ? `  <${subtype}${attributeString}>\n${content}\n  </${subtype}>` : `  <${subtype}${attributeString}/>`
+}
+
+function generateChildXml(child: ChildNode, indent: number): string {
+  const spaces = ' '.repeat(indent)
+
+  const attributes =
+    (child.name ? ` name="${escapeXml(child.name)}"` : '') +
+    Object.entries(child.attributes || {})
+      .map(([key, value]) => ` ${key}="${escapeXml(value)}"`)
+      .join('')
+
+  const hasChildren = child.children && child.children.length > 0
+
+  if (!hasChildren) {
+    return `${spaces}<${child.subtype}${attributes}/>`
+  }
+
+  // Recursive case
+  const childXmlStrings = child.children!.map((nested) => generateChildXml(nested, indent + 2))
+
+  return `${spaces}<${child.subtype}${attributes}>
+${childXmlStrings.join('\n')}
+${spaces}</${child.subtype}>`
 }
 
 function generateExitsXml(exitNodes: FlowNode[]): string {
