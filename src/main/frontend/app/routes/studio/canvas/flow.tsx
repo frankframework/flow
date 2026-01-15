@@ -498,7 +498,6 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
 
     const tabData = tabStore.getTab(tabId)
     const flowJson = tabData?.flowJson
-    console.log(flowJson)
 
     if (flowJson) {
       flowStore.setNodes(Array.isArray(flowJson.nodes) ? flowJson.nodes : [])
