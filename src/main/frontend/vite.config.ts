@@ -15,7 +15,6 @@ export default defineConfig({
     mdx({
       remarkPlugins: [remarkGfm],
     }),
-    ,
     reactRouter(),
     tsconfigPaths(),
     svgr(),
