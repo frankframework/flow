@@ -120,6 +120,34 @@ function buildNodeNameToIdMap(nodes: FlowNode[]): Map<string, string> {
   return nameToId
 }
 
+/**
+ * Function that does a lot, but in summary does the following:
+ * Extracts edges from an adapter, following the adapter edge generation rules:
+ *
+ * 1. Explicit Forward Edges
+ *    - Every <Forward> element always generates an edge from the current node
+ *      to the specified target node.
+ *
+ * 2. Receiver -> First Pipeline Node
+ *    - All receivers in the adapter automatically generate an edge to the first
+ *      node in the pipeline, ensuring that incoming messages flow into the pipeline.
+ *
+ * 3. Implicit Pipeline Edges (Fallbacks)
+ *    - For nodes in the pipeline, edges are generated top-to-bottom to simulate
+ *      the natural flow.
+ *    - Skip creating an implicit edge if the current node has a <Forward> that:
+ *        a) Points to any other pipeline node, or
+ *        b) Points to an exit node with state="SUCCESS"
+ *
+ * 4. Implicit Success Exit Edge
+ *    - If a SUCCESS exit exists and the last pipeline node does not have a <Forward>
+ *      to any exit, an implicit edge is created from the last pipeline node to
+ *      the SUCCESS exit.
+ *
+ * @param adapter The XML Element representing the adapter
+ * @param nodes The FlowNode array representing all nodes in the adapter
+ * @returns An array of FrankEdge objects representing all generated edges
+ */
 function extractEdgesFromAdapter(adapter: Element, nodes: FlowNode[]): FrankEdge[] {
   const pipelineElement = adapter.querySelector('Pipeline')
   if (!pipelineElement) return []
