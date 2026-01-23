@@ -23,7 +23,7 @@ public class Project {
     private String name;
     private String rootPath;
     private final ArrayList<Configuration> configurations;
-    private final ProjectSettings projectSettings;
+    @Getter private final ProjectSettings projectSettings;
 
     public Project(String name, String rootPath) {
         this.name = name;
@@ -45,11 +45,7 @@ public class Project {
         }
     }
 
-    public ProjectSettings getProjectSettings() {
-        return this.projectSettings;
-    }
-
-    public boolean isFilterEnabled(FilterType type) {
+	public boolean isFilterEnabled(FilterType type) {
         return projectSettings.isEnabled(type);
     }
 
@@ -92,7 +88,7 @@ public class Project {
     }
 
     private Document parseXml(String xmlContent) throws Exception {
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        DocumentBuilderFactory factory = XmlSecurityUtils.createSecureDocumentBuilderFactory();
         factory.setIgnoringComments(true);
         factory.setNamespaceAware(true);
         DocumentBuilder builder = factory.newDocumentBuilder();
@@ -100,7 +96,7 @@ public class Project {
     }
 
     private Node parseNewAdapter(Document configDoc, String newAdapterXml) throws Exception {
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        DocumentBuilderFactory factory = XmlSecurityUtils.createSecureDocumentBuilderFactory();
         factory.setIgnoringComments(true);
         factory.setNamespaceAware(true);
         DocumentBuilder builder = factory.newDocumentBuilder();
