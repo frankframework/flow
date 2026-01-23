@@ -23,7 +23,7 @@ public class Project {
     private String name;
     private String rootPath;
     private final ArrayList<Configuration> configurations;
-    @Getter private final ProjectSettings projectSettings;
+    private final ProjectSettings projectSettings;
 
     public Project(String name, String rootPath) {
         this.name = name;
