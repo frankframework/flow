@@ -38,8 +38,6 @@ export default class EditorFilesDataProvider implements TreeDataProvider {
       const response = await fetch(apiUrl(`/api/projects/${this.projectName}/tree`))
 
       if (!response.ok) {
-        // We loggen de warning, maar zorgen dat de 'data' leeg blijft en geldig
-        // Dit voorkomt dat de UI crasht op 400/404/500 errors
         console.warn(
           `[EditorFilesDataProvider] Failed to fetch project tree: ${response.status} ${response.statusText}`,
         )
@@ -50,7 +48,6 @@ export default class EditorFilesDataProvider implements TreeDataProvider {
 
       const tree: FileTreeNode = await response.json()
 
-      // Check of we geldige data hebben
       if (!tree) {
         console.warn('[EditorFilesDataProvider] Received empty tree from API')
         this.data = {}
@@ -61,7 +58,7 @@ export default class EditorFilesDataProvider implements TreeDataProvider {
       this.notifyListeners(['root'])
     } catch (error) {
       console.error('[EditorFilesDataProvider] Unexpected error loading tree:', error)
-      this.data = {} // Fallback naar leeg
+      this.data = {}
       this.notifyListeners(['root'])
     }
   }
@@ -71,8 +68,6 @@ export default class EditorFilesDataProvider implements TreeDataProvider {
     const newData: Record<TreeItemIndex, TreeItem<FileNode>> = {}
 
     const traverse = (node: FileTreeNode, parentIndex: TreeItemIndex | null): TreeItemIndex => {
-      // Gebruik een veilige unieke ID. Path is vaak beter dan naam als ID.
-      // Als rootNode geen path heeft, gebruik 'root'.
       const index = parentIndex === null ? 'root' : node.path || `${parentIndex}/${node.name}`
 
       newData[index] = {
@@ -109,7 +104,6 @@ export default class EditorFilesDataProvider implements TreeDataProvider {
   public async getTreeItem(itemId: TreeItemIndex): Promise<TreeItem<FileNode>> {
     const item = this.data[itemId]
     if (!item) {
-      // Fallback om crashes te voorkomen als de tree item niet bestaat
       return {
         index: itemId,
         isFolder: false,

@@ -27,15 +27,12 @@ class FileTreeServiceTest {
 
     @BeforeEach
     void setUp() throws IOException {
-        // Create a temporary directory for testing
         tempRoot = Files.createTempDirectory("testProjectRoot");
 
-        // Mock ProjectService to return our temp directory
         when(projectService.getProjectsRoot()).thenReturn(tempRoot);
 
         fileTreeService = new FileTreeService(projectService);
 
-        // Create some sample project folders and files
         Files.createDirectory(tempRoot.resolve("ProjectA"));
         Files.createDirectory(tempRoot.resolve("ProjectB"));
         Files.writeString(tempRoot.resolve("ProjectA/config1.xml"), "<config>original</config>");
@@ -43,17 +40,14 @@ class FileTreeServiceTest {
 
     @AfterEach
     void tearDown() throws IOException {
-        // Clean up temp directory
         if (tempRoot != null && Files.exists(tempRoot)) {
-            Files.walk(tempRoot)
-                    .sorted((a, b) -> b.compareTo(a)) // reverse order to delete files before directories
-                    .forEach(path -> {
-                        try {
-                            Files.deleteIfExists(path);
-                        } catch (IOException e) {
-                            // ignore
-                        }
-                    });
+            Files.walk(tempRoot).sorted((a, b) -> b.compareTo(a)).forEach(path -> {
+                try {
+                    Files.deleteIfExists(path);
+                } catch (IOException e) {
+                    // ignore
+                }
+            });
         }
     }
 
@@ -68,7 +62,6 @@ class FileTreeServiceTest {
 
     @Test
     void listProjectFoldersThrowsIfRootDoesNotExist() {
-        // Mock ProjectService to return a non-existent path
         Path nonExistentPath = Paths.get("some/nonexistent/path");
         when(projectService.getProjectsRoot()).thenReturn(nonExistentPath);
 
@@ -81,7 +74,6 @@ class FileTreeServiceTest {
 
     @Test
     void listProjectFoldersThrowsIfRootIsAFile() throws IOException {
-        // Create a temporary file (not a directory)
         Path tempFile = Files.createTempFile("not-a-directory", ".txt");
 
         when(projectService.getProjectsRoot()).thenReturn(tempFile);

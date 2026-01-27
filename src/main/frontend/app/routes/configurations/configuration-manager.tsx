@@ -58,7 +58,6 @@ export default function ConfigurationManager() {
   const [showModal, setShowModal] = useState(false)
 
   useEffect(() => {
-    // FIX: Als er geen project is, doe niets (voorkomt 400 bad requests)
     if (!currentProject) return
 
     const fetchTree = async () => {
@@ -95,8 +94,6 @@ export default function ConfigurationManager() {
     fetchTree()
   }, [currentProject])
 
-  // FIX: CRUCIAAL - Als project undefined is, render dan NIET de normale view
-  // Dit voorkomt de crash in AddConfigurationModal en de "Invalid Hook Call" error
   if (!currentProject) {
     return (
       <div className="bg-backdrop flex h-full w-full flex-col items-center justify-center p-6">

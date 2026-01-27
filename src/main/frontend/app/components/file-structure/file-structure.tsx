@@ -71,7 +71,6 @@ export default function FileStructure() {
     if (!project) return
 
     const initProvider = async () => {
-      // Create provider
       const provider = new FilesDataProvider(project.name)
 
       setIsTreeLoading(true)
@@ -176,7 +175,6 @@ export default function FileStructure() {
     setActiveTab(adapterName)
   }
 
-  // Keyboard and search handlers remain standard
   useEffect(() => {
     const handleKeyDown = async (event: KeyboardEvent) => {
       if (event.key === 'Escape') {

@@ -6,7 +6,7 @@ import { apiUrl } from '~/utils/api'
 interface AddConfigurationModalProperties {
   isOpen: boolean
   onClose: () => void
-  currentProject?: Project // FIX: Make this optional
+  currentProject?: Project
 }
 
 export default function AddConfigurationModal({

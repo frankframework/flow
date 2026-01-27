@@ -233,7 +233,6 @@ export default function EditorFileStructure() {
     )
   }
 
-  // Render niets totdat provider geladen is (voorkomt crashes)
   if (!dataProvider) return <div className="text-muted-foreground p-4 text-xs">Initializing tree...</div>
 
   return (
