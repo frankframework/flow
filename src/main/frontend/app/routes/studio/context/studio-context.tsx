@@ -1,6 +1,5 @@
 import useNodeContextStore from '~/stores/node-context-store'
 import useFlowStore from '~/stores/flow-store'
-import { getElementTypeFromName } from '~/routes/studio/node-translator-module'
 import { useEffect, useMemo, useState } from 'react'
 import SortedElements from '~/routes/studio/context/sorted-elements'
 import Search from '~/components/search/search'

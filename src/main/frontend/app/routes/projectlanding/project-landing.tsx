@@ -8,6 +8,7 @@ import { useProjectStore } from '~/stores/project-store'
 import { useLocation } from 'react-router'
 import NewProjectModal from './new-project-modal'
 import LoadProjectModal from './load-project-modal'
+import { apiUrl } from '~/utils/api'
 
 export interface Project {
   name: string
@@ -35,7 +36,7 @@ export default function ProjectLanding() {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const response = await fetch('/api/projects')
+        const response = await fetch(apiUrl('/api/projects'))
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`)
         }
@@ -87,7 +88,7 @@ export default function ProjectLanding() {
     }
 
     // Import configurations to the project
-    await fetch(`/api/projects/${projectRoot}/import-configurations`, {
+    await fetch(apiUrl(`/api/projects/${projectRoot}/import-configurations`), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -97,13 +98,13 @@ export default function ProjectLanding() {
     })
 
     // Sync local project list with backend
-    const updated = await fetch(`/api/projects/${projectRoot}`).then((res) => res.json())
+    const updated = await fetch(apiUrl(`/api/projects/${projectRoot}`)).then((res) => res.json())
     setProjects((prev) => prev.map((p) => (p.name === updated.name ? updated : p)))
   }
 
   const createProject = async (projectName: string, rootPath?: string) => {
     try {
-      const response = await fetch(`/api/projects`, {
+      const response = await fetch(apiUrl('/api/projects'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

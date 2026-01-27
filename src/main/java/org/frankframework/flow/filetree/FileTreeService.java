@@ -13,9 +13,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.frankframework.flow.configuration.AdapterNotFoundException;
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
+import org.frankframework.flow.project.ProjectService;
 import org.frankframework.flow.utility.XmlAdapterUtils;
 import org.frankframework.flow.utility.XmlSecurityUtils;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
@@ -25,8 +25,8 @@ public class FileTreeService {
 
     private final Path projectsRoot;
 
-    public FileTreeService(@Value("${app.project.root}") String rootPath) {
-        this.projectsRoot = Paths.get(rootPath).toAbsolutePath().normalize();
+    public FileTreeService(ProjectService projectService) {
+        this.projectsRoot = projectService.getProjectsRoot();
     }
 
     public List<String> listProjectFolders() throws IOException {

@@ -1,4 +1,4 @@
-import React, { type JSX, useEffect, useRef, useState, useMemo } from 'react'
+import React, { type JSX, useEffect, useRef, useState } from 'react'
 import Search from '~/components/search/search'
 import FolderIcon from '../../../icons/solar/Folder.svg?react'
 import FolderOpenIcon from '../../../icons/solar/Folder Open.svg?react'
@@ -29,9 +29,6 @@ function getItemTitle(item: TreeItem<FileNode>): string {
 export default function EditorFileStructure() {
   const project = useProjectStore((state) => state.project)
 
-  // FIX: useMemo om array stabiel te houden
-  const filepaths = useMemo(() => project?.filepaths ?? [], [project?.filepaths])
-
   const [searchTerm, setSearchTerm] = useState('')
   const [matchingItemIds, setMatchingItemIds] = useState<string[]>([])
   const [activeMatchIndex, setActiveMatchIndex] = useState<number>(-1)
@@ -45,7 +42,6 @@ export default function EditorFileStructure() {
 
   const [dataProvider, setDataProvider] = useState<EditorFilesDataProvider | null>(null)
 
-  // FIX: Initialiseer provider slechts één keer per project change
   useEffect(() => {
     if (!project?.name) return
 
@@ -67,7 +63,6 @@ export default function EditorFileStructure() {
     }
   }, [project?.name])
 
-  // FIX: Search logic alleen uitvoeren als dataProvider bestaat
   useEffect(() => {
     const findMatchingItems = async () => {
       if (!dataProvider) return
@@ -98,7 +93,7 @@ export default function EditorFileStructure() {
     }
 
     findMatchingItems()
-  }, [searchTerm, dataProvider]) // filepaths weggehaald als dependency, dataProvider bevat de data al
+  }, [searchTerm, dataProvider])
 
   const openFileTab = (filePath: string, fileName: string) => {
     if (!getTab(filePath)) {
@@ -158,7 +153,7 @@ export default function EditorFileStructure() {
 
     globalThis.addEventListener('keydown', handleKeyDown)
     return () => globalThis.removeEventListener('keydown', handleKeyDown)
-  }, [matchingItemIds, highlightedItemId])
+  }, [matchingItemIds, highlightedItemId, handleItemClickAsync])
 
   useEffect(() => {
     if (!tree.current) return

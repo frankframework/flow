@@ -4,6 +4,7 @@ import type { ExitNode } from '~/routes/studio/canvas/nodetypes/exit-node'
 import type { FrankNodeType } from '~/routes/studio/canvas/nodetypes/frank-node'
 import { SAXParser } from 'sax-ts'
 import type { ChildNode } from '~/routes/studio/canvas/nodetypes/child-node'
+import { apiUrl } from '~/utils/api'
 
 interface IdCounter {
   current: number
@@ -16,7 +17,7 @@ interface SourceHandle {
 
 export async function getXmlString(projectName: string, filepath: string): Promise<string> {
   try {
-    const response = await fetch(`/api/projects/${projectName}/configuration`, {
+    const response = await fetch(apiUrl(`/api/projects/${projectName}/configuration`), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

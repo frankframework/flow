@@ -5,7 +5,7 @@ import SidebarLayout from '~/components/sidebars-layout/sidebar-layout'
 import { SidebarSide } from '~/components/sidebars-layout/sidebar-layout-store'
 import SidebarContentClose from '~/components/sidebars-layout/sidebar-content-close'
 import { useTheme } from '~/hooks/use-theme'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { getXmlString } from '~/routes/studio/xml-to-json-parser'
 import variables from '../../../environment/environment'
 import { useFFDoc } from '@frankframework/ff-doc/react'
@@ -14,6 +14,7 @@ import EditorFileStructure from '~/components/file-structure/editor-file-structu
 import useEditorTabStore from '~/stores/editor-tab-store'
 import EditorTabs from '~/components/tabs/editor-tabs'
 import type { ElementDetails, Attribute, EnumValue } from '~/types/ff-doc.types'
+import { apiUrl } from '~/utils/api'
 
 export default function CodeEditor() {
   const theme = useTheme()
@@ -224,7 +225,7 @@ export default function CodeEditor() {
     setIsSaving(true)
 
     try {
-      const url = `/api/projects/${project.name}/configuration`
+      const url = apiUrl(`/api/projects/${project.name}/configuration`)
       const response = await fetch(url, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },

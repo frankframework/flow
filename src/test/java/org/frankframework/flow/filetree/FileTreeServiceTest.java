@@ -1,30 +1,60 @@
 package org.frankframework.flow.filetree;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import java.io.IOException;
 import java.nio.file.*;
 import java.util.List;
 import org.frankframework.flow.configuration.AdapterNotFoundException;
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
+import org.frankframework.flow.project.ProjectService;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 class FileTreeServiceTest {
 
-    private Path tempRoot;
+    @Mock
+    private ProjectService projectService;
+
     private FileTreeService fileTreeService;
+    private Path tempRoot;
 
     @BeforeEach
     void setUp() throws IOException {
         // Create a temporary directory for testing
-        tempRoot = Files.createTempDirectory("flow-projects-test");
-        fileTreeService = new FileTreeService(tempRoot.toString());
+        tempRoot = Files.createTempDirectory("testProjectRoot");
+
+        // Mock ProjectService to return our temp directory
+        when(projectService.getProjectsRoot()).thenReturn(tempRoot);
+
+        fileTreeService = new FileTreeService(projectService);
 
         // Create some sample project folders and files
         Files.createDirectory(tempRoot.resolve("ProjectA"));
         Files.createDirectory(tempRoot.resolve("ProjectB"));
         Files.writeString(tempRoot.resolve("ProjectA/config1.xml"), "<config>original</config>");
+    }
+
+    @AfterEach
+    void tearDown() throws IOException {
+        // Clean up temp directory
+        if (tempRoot != null && Files.exists(tempRoot)) {
+            Files.walk(tempRoot)
+                    .sorted((a, b) -> b.compareTo(a)) // reverse order to delete files before directories
+                    .forEach(path -> {
+                        try {
+                            Files.deleteIfExists(path);
+                        } catch (IOException e) {
+                            // ignore
+                        }
+                    });
+        }
     }
 
     @Test
@@ -38,98 +68,80 @@ class FileTreeServiceTest {
 
     @Test
     void listProjectFoldersThrowsIfRootDoesNotExist() {
-        // Provide a path that does not exist
-        String nonExistentPath = "some/nonexistent/path";
-        FileTreeService fileTreeService = new FileTreeService(nonExistentPath);
+        // Mock ProjectService to return a non-existent path
+        Path nonExistentPath = Paths.get("some/nonexistent/path");
+        when(projectService.getProjectsRoot()).thenReturn(nonExistentPath);
 
-        IllegalStateException exception =
-                assertThrows(IllegalStateException.class, fileTreeService::listProjectFolders);
+        FileTreeService service = new FileTreeService(projectService);
 
-        assert exception.getMessage().contains("Projects root does not exist or is not a directory");
+        IllegalStateException exception = assertThrows(IllegalStateException.class, service::listProjectFolders);
+
+        assertTrue(exception.getMessage().contains("Projects root does not exist or is not a directory"));
     }
 
     @Test
     void listProjectFoldersThrowsIfRootIsAFile() throws IOException {
         // Create a temporary file (not a directory)
         Path tempFile = Files.createTempFile("not-a-directory", ".txt");
-        FileTreeService fileTreeService = new FileTreeService(tempFile.toString());
 
-        IllegalStateException exception =
-                assertThrows(IllegalStateException.class, fileTreeService::listProjectFolders);
+        when(projectService.getProjectsRoot()).thenReturn(tempFile);
 
-        assert exception.getMessage().contains("Projects root does not exist or is not a directory");
+        FileTreeService service = new FileTreeService(projectService);
+
+        IllegalStateException exception = assertThrows(IllegalStateException.class, service::listProjectFolders);
+
+        assertTrue(exception.getMessage().contains("Projects root does not exist or is not a directory"));
 
         Files.deleteIfExists(tempFile);
     }
 
     @Test
     void readFileContentReturnsContentWhenFileExists() throws IOException {
-        // Setup a temporary project root and file
-        Path projectRoot = Files.createTempDirectory("projectRoot");
-        Path file = Files.createTempFile(projectRoot, "config", ".xml");
+        Path file = Files.createTempFile(tempRoot, "config", ".xml");
         String expectedContent = "<xml>hello</xml>";
         Files.writeString(file, expectedContent);
-
-        FileTreeService fileTreeService = new FileTreeService(projectRoot.toString());
 
         String content = fileTreeService.readFileContent(file.toString());
         assertEquals(expectedContent, content);
 
         Files.deleteIfExists(file);
-        Files.deleteIfExists(projectRoot);
     }
 
     @Test
     void readFileContentThrowsIfFileOutsideProjectRoot() throws IOException {
-        Path projectRoot = Files.createTempDirectory("projectRoot");
         Path outsideFile = Files.createTempFile("outside", ".txt");
-
-        FileTreeService fileTreeService = new FileTreeService(projectRoot.toString());
 
         IllegalArgumentException exception = assertThrows(
                 IllegalArgumentException.class, () -> fileTreeService.readFileContent(outsideFile.toString()));
         assertTrue(exception.getMessage().contains("File is outside of projects root"));
 
         Files.deleteIfExists(outsideFile);
-        Files.deleteIfExists(projectRoot);
     }
 
     @Test
-    void readFileContentThrowsIfFileDoesNotExist() throws IOException {
-        Path projectRoot = Files.createTempDirectory("projectRoot");
-        Path missingFile = projectRoot.resolve("missing.xml");
-
-        FileTreeService fileTreeService = new FileTreeService(projectRoot.toString());
+    void readFileContentThrowsIfFileDoesNotExist() {
+        Path missingFile = tempRoot.resolve("missing.xml");
 
         assertThrows(NoSuchFileException.class, () -> fileTreeService.readFileContent(missingFile.toString()));
-
-        Files.deleteIfExists(projectRoot);
     }
 
     @Test
     void readFileContentThrowsIfPathIsDirectory() throws IOException {
-        Path projectRoot = Files.createTempDirectory("projectRoot");
-        Path dir = Files.createTempDirectory(projectRoot, "subdir");
-
-        FileTreeService fileTreeService = new FileTreeService(projectRoot.toString());
+        Path dir = Files.createTempDirectory(tempRoot, "subdir");
 
         IllegalArgumentException exception =
                 assertThrows(IllegalArgumentException.class, () -> fileTreeService.readFileContent(dir.toString()));
         assertTrue(exception.getMessage().contains("Requested path is a directory"));
 
         Files.deleteIfExists(dir);
-        Files.deleteIfExists(projectRoot);
     }
 
     @Test
     void updateFileContentWritesNewContent() throws IOException {
-        Path projectRoot = Files.createTempDirectory("projectRoot");
-        Path file = Files.createTempFile(projectRoot, "config", ".xml");
+        Path file = Files.createTempFile(tempRoot, "config", ".xml");
 
         String initialContent = "<xml>old</xml>";
         Files.writeString(file, initialContent);
-
-        FileTreeService fileTreeService = new FileTreeService(projectRoot.toString());
 
         String newContent = "<xml>updated</xml>";
         fileTreeService.updateFileContent(file.toString(), newContent);
@@ -138,15 +150,11 @@ class FileTreeServiceTest {
         assertEquals(newContent, readBack);
 
         Files.deleteIfExists(file);
-        Files.deleteIfExists(projectRoot);
     }
 
     @Test
     void updateFileContentThrowsIfFileOutsideProjectRoot() throws IOException {
-        Path projectRoot = Files.createTempDirectory("projectRoot");
         Path outsideFile = Files.createTempFile("outside", ".txt");
-
-        FileTreeService fileTreeService = new FileTreeService(projectRoot.toString());
 
         IllegalArgumentException exception = assertThrows(
                 IllegalArgumentException.class,
@@ -154,37 +162,27 @@ class FileTreeServiceTest {
         assertTrue(exception.getMessage().contains("File is outside of projects root"));
 
         Files.deleteIfExists(outsideFile);
-        Files.deleteIfExists(projectRoot);
     }
 
     @Test
-    void updateFileContentThrowsIfFileDoesNotExist() throws IOException {
-        Path projectRoot = Files.createTempDirectory("projectRoot");
-        Path missingFile = projectRoot.resolve("missing.xml");
-
-        FileTreeService fileTreeService = new FileTreeService(projectRoot.toString());
+    void updateFileContentThrowsIfFileDoesNotExist() {
+        Path missingFile = tempRoot.resolve("missing.xml");
 
         IllegalArgumentException exception = assertThrows(
                 IllegalArgumentException.class,
                 () -> fileTreeService.updateFileContent(missingFile.toString(), "content"));
         assertTrue(exception.getMessage().contains("File does not exist"));
-
-        Files.deleteIfExists(projectRoot);
     }
 
     @Test
     void updateFileContentThrowsIfPathIsDirectory() throws IOException {
-        Path projectRoot = Files.createTempDirectory("projectRoot");
-        Path dir = Files.createTempDirectory(projectRoot, "subdir");
-
-        FileTreeService fileTreeService = new FileTreeService(projectRoot.toString());
+        Path dir = Files.createTempDirectory(tempRoot, "subdir");
 
         IllegalArgumentException exception = assertThrows(
                 IllegalArgumentException.class, () -> fileTreeService.updateFileContent(dir.toString(), "content"));
         assertTrue(exception.getMessage().contains("Cannot update a directory"));
 
         Files.deleteIfExists(dir);
-        Files.deleteIfExists(projectRoot);
     }
 
     @Test
@@ -208,7 +206,7 @@ class FileTreeServiceTest {
     }
 
     @Test
-    void updateAdapterFromFileThrowsIfAdapterNotFound() throws IOException {
+    void updateAdapterFromFileThrowsIfAdapterNotFound() {
         Path filePath = tempRoot.resolve("ProjectA/config1.xml");
 
         AdapterNotFoundException thrown = assertThrows(
@@ -222,31 +220,35 @@ class FileTreeServiceTest {
     @Test
     void getProjectsRootReturnsCorrectPath() {
         Path root = fileTreeService.getProjectsRoot();
-        assertEquals(tempRoot.toAbsolutePath(), root);
+        assertEquals(tempRoot.toAbsolutePath(), root.toAbsolutePath());
     }
 
     @Test
     void getProjectsRootThrowsIfRootDoesNotExist() {
-        // Provide a path that does not exist
-        String nonExistentPath = "some/nonexistent/path";
-        FileTreeService fileTreeService = new FileTreeService(nonExistentPath);
+        // Mock ProjectService to return a non-existent path
+        Path nonExistentPath = Paths.get("some/nonexistent/path");
+        when(projectService.getProjectsRoot()).thenReturn(nonExistentPath);
 
-        IllegalStateException exception = assertThrows(IllegalStateException.class, fileTreeService::getProjectsRoot);
+        FileTreeService service = new FileTreeService(projectService);
 
-        assert exception.getMessage().contains("Projects root does not exist or is not a directory");
+        IllegalStateException exception = assertThrows(IllegalStateException.class, service::getProjectsRoot);
+
+        assertTrue(exception.getMessage().contains("Projects root does not exist or is not a directory"));
     }
 
     @Test
     void getProjectsRootThrowsIfRootIsAFile() throws IOException {
         // Create a temporary file (not a directory)
         Path tempFile = Files.createTempFile("not-a-directory", ".txt");
-        FileTreeService fileTreeService = new FileTreeService(tempFile.toString());
 
-        IllegalStateException exception = assertThrows(IllegalStateException.class, fileTreeService::getProjectsRoot);
+        when(projectService.getProjectsRoot()).thenReturn(tempFile);
 
-        assert exception.getMessage().contains("Projects root does not exist or is not a directory");
+        FileTreeService service = new FileTreeService(projectService);
 
-        // Cleanup
+        IllegalStateException exception = assertThrows(IllegalStateException.class, service::getProjectsRoot);
+
+        assertTrue(exception.getMessage().contains("Projects root does not exist or is not a directory"));
+
         Files.deleteIfExists(tempFile);
     }
 }

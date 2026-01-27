@@ -31,15 +31,27 @@ public class ProjectService {
     private final ArrayList<Project> projects = new ArrayList<>();
 
     private static final String BASE_PATH = "classpath:project/";
+    private static final String DEFAULT_PROJECT_ROOT = "src/main/resources/project";
     private static final int MIN_PARTS_LENGTH = 2;
     private final ResourcePatternResolver resolver;
     private final Path projectsRoot;
 
     @Autowired
-    public ProjectService(ResourcePatternResolver resolver, @Value("${app.project.root}") String rootPath) {
+    public ProjectService(ResourcePatternResolver resolver, @Value("${app.project.root:}") String rootPath) {
         this.resolver = resolver;
-        this.projectsRoot = Paths.get(rootPath).toAbsolutePath().normalize();
+        this.projectsRoot = resolveProjectRoot(rootPath);
         initiateProjects();
+    }
+
+    private Path resolveProjectRoot(String rootPath) {
+        if (rootPath == null || rootPath.isBlank()) {
+            return Paths.get(DEFAULT_PROJECT_ROOT).toAbsolutePath().normalize();
+        }
+        return Paths.get(rootPath).toAbsolutePath().normalize();
+    }
+
+    public Path getProjectsRoot() {
+        return projectsRoot;
     }
 
     public Project createProject(String name, String rootPath) {
@@ -56,10 +68,6 @@ public class ProjectService {
         }
 
         throw new ProjectNotFoundException(String.format("Project with name: %s cannot be found", name));
-    }
-
-    public ArrayList<Project> getProjects() {
-        return projects;
     }
 
     public Project addConfigurations(String projectName, ArrayList<String> configurationPaths)

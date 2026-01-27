@@ -1,4 +1,5 @@
 import type { Disposable, TreeDataProvider, TreeItem, TreeItemIndex } from 'react-complex-tree'
+import { apiUrl } from '~/utils/api'
 
 export interface FileNode {
   name: string
@@ -34,7 +35,7 @@ export default class EditorFilesDataProvider implements TreeDataProvider {
     try {
       if (!this.projectName) return
 
-      const response = await fetch(`/api/projects/${this.projectName}/tree`)
+      const response = await fetch(apiUrl(`/api/projects/${this.projectName}/tree`))
 
       if (!response.ok) {
         // We loggen de warning, maar zorgen dat de 'data' leeg blijft en geldig

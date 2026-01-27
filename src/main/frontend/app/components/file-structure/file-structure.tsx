@@ -7,6 +7,7 @@ import FolderOpenIcon from '../../../icons/solar/Folder Open.svg?react'
 import 'react-complex-tree/lib/style-modern.css'
 import AltArrowRightIcon from '../../../icons/solar/Alt Arrow Right.svg?react'
 import AltArrowDownIcon from '../../../icons/solar/Alt Arrow Down.svg?react'
+import { apiUrl } from '~/utils/api'
 
 import {
   Tree,
@@ -77,7 +78,7 @@ export default function FileStructure() {
 
       setIsTreeLoading(true)
       try {
-        const response = await fetch(`/api/projects/${project.name}/tree`)
+        const response = await fetch(apiUrl(`/api/projects/${project.name}/tree`))
 
         if (!response.ok) {
           console.warn(`[Studio] API Error: ${response.status} - ${response.statusText}`)
@@ -108,7 +109,7 @@ export default function FileStructure() {
     }
 
     initProvider()
-  }, [project?.name]) // Only re-run if project name changes
+  }, [project, project?.name])
 
   useEffect(() => {
     const findMatchingItems = async () => {

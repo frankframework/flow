@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router'
 import AddConfigurationTile from './add-configuration-tile'
 import { useEffect, useState } from 'react'
 import AddConfigurationModal from './add-configuration-modal'
+import { apiUrl } from '~/utils/api'
 
 export interface FileTreeNode {
   name: string
@@ -62,16 +63,16 @@ export default function ConfigurationManager() {
   const [showModal, setShowModal] = useState(false)
 
   useEffect(() => {
-    // Stop if there is no project to fetch for
+    // FIX: Stop immediately if there is no project
     if (!currentProject) return
 
     const fetchTree = async () => {
       try {
-        const response = await fetch(`/api/projects/${currentProject.name}/tree`)
+        const response = await fetch(apiUrl(`/api/projects/${currentProject.name}/tree`))
 
         if (!response.ok) {
+          setError(`Could not load configurations (API ${response.status})`)
           console.warn(`API returned ${response.status} for project tree`)
-          // Do not set global error that blocks UI, just log it
           return
         }
 
@@ -95,20 +96,21 @@ export default function ConfigurationManager() {
         setConfigFiles(xmlFilesWithRelative)
       } catch (error) {
         console.error('Failed to load project tree', error)
+        setError('Failed to load project tree data.')
       }
     }
 
     fetchTree()
   }, [currentProject])
 
-  // CRASH FIX: Check if project is loaded before rendering main content
+  // FIX: Prevent rendering if project is undefined
   if (!currentProject) {
     return (
       <div className="bg-backdrop flex h-full w-full flex-col items-center justify-center p-6">
-        <div className="text-muted-foreground">No project selected. Please return to the dashboard.</div>
+        <div className="text-muted-foreground mb-4">No project selected.</div>
         <button
           onClick={() => navigate('/')}
-          className="bg-background border-border hover:text-foreground-active mt-4 rounded border px-4 py-2"
+          className="bg-background border-border hover:text-foreground-active rounded border px-4 py-2"
         >
           Return to Projects
         </button>
@@ -153,7 +155,7 @@ export default function ConfigurationManager() {
           </>
         )}
       </div>
-      {/* We can safely pass currentProject here because of the check above */}
+      {/* SAFE: We know currentProject is defined here */}
       <AddConfigurationModal isOpen={showModal} onClose={() => setShowModal(false)} currentProject={currentProject} />
     </div>
   )
