@@ -4,7 +4,6 @@ import type { Route } from './+types/root'
 import Navbar from '~/components/navbar/navbar'
 import 'allotment/dist/style.css'
 import './app.css'
-import React from 'react'
 import { useTheme } from '~/hooks/use-theme'
 
 export const links: Route.LinksFunction = () => [
@@ -37,9 +36,10 @@ export const links: Route.LinksFunction = () => [
 export function Layout({ children }: Readonly<{ children: React.ReactNode }>) {
   const theme = useTheme()
   const location = useLocation()
+  const isLandingPage = location.pathname === '/'
 
   return (
-    <html lang="en" data-theme={theme}>
+    <html lang="en" data-theme={theme} suppressHydrationWarning>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -48,9 +48,8 @@ export function Layout({ children }: Readonly<{ children: React.ReactNode }>) {
         <Links />
       </head>
       <body className="flex">
-        {/* Hide navbar only for the landing path ('/'). */}
-        {location.pathname !== '/' && <Navbar />}
-        <main className="grow">{children ?? <Outlet />}</main>
+        {!isLandingPage && <Navbar />}
+        <main className="grow">{children}</main>
         <ScrollRestoration />
         <Scripts />
       </body>

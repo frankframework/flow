@@ -1,4 +1,4 @@
-import React, { type JSX, useCallback, useEffect, useRef, useState } from 'react'
+import React, { type JSX, useEffect, useRef, useState, useMemo } from 'react'
 import Search from '~/components/search/search'
 import FolderIcon from '../../../icons/solar/Folder.svg?react'
 import FolderOpenIcon from '../../../icons/solar/Folder Open.svg?react'
@@ -28,7 +28,9 @@ function getItemTitle(item: TreeItem<FileNode>): string {
 
 export default function EditorFileStructure() {
   const project = useProjectStore((state) => state.project)
-  const filepaths = project?.filepaths ?? []
+
+  // FIX: useMemo om array stabiel te houden
+  const filepaths = useMemo(() => project?.filepaths ?? [], [project?.filepaths])
 
   const [searchTerm, setSearchTerm] = useState('')
   const [matchingItemIds, setMatchingItemIds] = useState<string[]>([])
@@ -43,17 +45,34 @@ export default function EditorFileStructure() {
 
   const [dataProvider, setDataProvider] = useState<EditorFilesDataProvider | null>(null)
 
+  // FIX: Initialiseer provider slechts één keer per project change
   useEffect(() => {
-    if (!project) return
+    if (!project?.name) return
 
-    // Create a new provider with the actual project name
-    const provider = new EditorFilesDataProvider(project.name)
-    setDataProvider(provider)
-  }, [project])
+    let isMounted = true
 
+    const initProvider = async () => {
+      const provider = new EditorFilesDataProvider(project.name)
+      await provider.loadData()
+
+      if (isMounted) {
+        setDataProvider(provider)
+      }
+    }
+
+    initProvider()
+
+    return () => {
+      isMounted = false
+    }
+  }, [project?.name])
+
+  // FIX: Search logic alleen uitvoeren als dataProvider bestaat
   useEffect(() => {
     const findMatchingItems = async () => {
-      if (!searchTerm || !dataProvider) {
+      if (!dataProvider) return
+
+      if (!searchTerm) {
         setMatchingItemIds([])
         setActiveMatchIndex(-1)
         setHighlightedItemId(null)
@@ -79,7 +98,7 @@ export default function EditorFileStructure() {
     }
 
     findMatchingItems()
-  }, [searchTerm, filepaths])
+  }, [searchTerm, dataProvider]) // filepaths weggehaald als dependency, dataProvider bevat de data al
 
   const openFileTab = (filePath: string, fileName: string) => {
     if (!getTab(filePath)) {
@@ -110,7 +129,6 @@ export default function EditorFileStructure() {
     openFileTab(filePath, fileName)
   }
 
-  /* Keyboard navigation */
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
@@ -132,15 +150,16 @@ export default function EditorFileStructure() {
       } else if (event.key === 'Enter') {
         event.preventDefault()
         const target = highlightedItemId || matchingItemIds[0]
-        if (target) handleItemClickAsync([target])
+        if (target) {
+          void handleItemClickAsync([target])
+        }
       }
     }
 
     globalThis.addEventListener('keydown', handleKeyDown)
     return () => globalThis.removeEventListener('keydown', handleKeyDown)
-  }, [matchingItemIds, highlightedItemId, handleItemClickAsync])
+  }, [matchingItemIds, highlightedItemId])
 
-  /* Expand / collapse on search */
   useEffect(() => {
     if (!tree.current) return
 
@@ -157,7 +176,6 @@ export default function EditorFileStructure() {
     const itemId = matchingItemIds[activeMatchIndex]
     if (!itemId) return
 
-    // set visual highlight only
     setHighlightedItemId(itemId)
   }, [activeMatchIndex, matchingItemIds])
 
@@ -220,7 +238,8 @@ export default function EditorFileStructure() {
     )
   }
 
-  if (!dataProvider) return null
+  // Render niets totdat provider geladen is (voorkomt crashes)
+  if (!dataProvider) return <div className="text-muted-foreground p-4 text-xs">Initializing tree...</div>
 
   return (
     <>

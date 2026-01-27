@@ -4,7 +4,6 @@ import SidebarHeader from '~/components/sidebars-layout/sidebar-header'
 import SidebarLayout from '~/components/sidebars-layout/sidebar-layout'
 import { SidebarSide } from '~/components/sidebars-layout/sidebar-layout-store'
 import SidebarContentClose from '~/components/sidebars-layout/sidebar-content-close'
-import useTabStore from '~/stores/tab-store'
 import { useTheme } from '~/hooks/use-theme'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { getXmlString } from '~/routes/studio/xml-to-json-parser'
@@ -255,7 +254,7 @@ export default function CodeEditor() {
   }
 
   return (
-    <SidebarLayout name="editor" windowResizeOnChange={true}>
+    <SidebarLayout name="editor">
       <>
         <SidebarHeader side={SidebarSide.LEFT} title="Files" />
         <EditorFileStructure />

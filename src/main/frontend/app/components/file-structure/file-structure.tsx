@@ -1,5 +1,5 @@
 import React, { type JSX, useEffect, useRef, useState } from 'react'
-import { getAdapterListenerType, getAdapterNamesFromConfiguration } from '~/routes/studio/xml-to-json-parser'
+import { getListenerIcon } from './tree-utilities'
 import useTabStore from '~/stores/tab-store'
 import Search from '~/components/search/search'
 import FolderIcon from '../../../icons/solar/Folder.svg?react'
@@ -18,21 +18,11 @@ import {
 } from 'react-complex-tree'
 import FilesDataProvider from '~/components/file-structure/files-data-provider'
 import { useProjectStore } from '~/stores/project-store'
-import { getListenerIcon } from './tree-utilities'
 import type { FileTreeNode } from './editor-data-provider'
-
-export interface ConfigWithAdapters {
-  configPath: string
-  adapters: {
-    adapterName: string
-    listenerName: string | null
-  }[]
-}
 
 const TREE_ID = 'studio-files-tree'
 
 function getItemTitle(item: TreeItem<unknown>): string {
-  // item.data is either a string (for folders) or object (for leaf nodes)
   if (typeof item.data === 'string') {
     return item.data
   } else if (typeof item.data === 'object' && item.data !== null && 'adapterName' in item.data) {
@@ -41,7 +31,11 @@ function getItemTitle(item: TreeItem<unknown>): string {
   return 'Unnamed'
 }
 
-function findConfigurationsDir(node: FileTreeNode): FileTreeNode | null {
+function findConfigurationsDir(node: FileTreeNode | undefined | null): FileTreeNode | null {
+  if (!node || !node.path) {
+    return null
+  }
+
   const normalizedPath = node.path.replaceAll('\\', '/')
   if (node.type === 'DIRECTORY' && normalizedPath.endsWith('/src/main/configurations')) {
     return node
@@ -58,52 +52,74 @@ function findConfigurationsDir(node: FileTreeNode): FileTreeNode | null {
 }
 
 export default function FileStructure() {
-  const project = useProjectStore.getState().project
-  const [isTreeLoading, setIsTreeLoading] = useState(true)
+  const project = useProjectStore((state) => state.project)
+  const [isTreeLoading, setIsTreeLoading] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [matchingItemIds, setMatchingItemIds] = useState<string[]>([])
   const [activeMatchIndex, setActiveMatchIndex] = useState<number>(-1)
   const [highlightedItemId, setHighlightedItemId] = useState<string | null>(null)
 
   const tree = useRef<TreeRef>(null)
-  const dataProviderReference = useRef(new FilesDataProvider(project ? project.name : ''))
+
+  // FIX: Use state for provider to ensure re-renders when initialized
+  const [dataProvider, setDataProvider] = useState<FilesDataProvider | null>(null)
+
   const setTabData = useTabStore((state) => state.setTabData)
   const setActiveTab = useTabStore((state) => state.setActiveTab)
   const getTab = useTabStore((state) => state.getTab)
 
   useEffect(() => {
-    // Load in the filetree from the backend
-    const loadFileTree = async () => {
-      if (!project) return
+    if (!project) return
+
+    const initProvider = async () => {
+      // Create provider
+      const provider = new FilesDataProvider(project.name)
+
       setIsTreeLoading(true)
       try {
         const response = await fetch(`/api/projects/${project.name}/tree`)
-        const tree: FileTreeNode = await response.json()
 
-        const configurationsRoot = findConfigurationsDir(tree)
-        if (!configurationsRoot) return
+        if (!response.ok) {
+          console.warn(`[Studio] API Error: ${response.status} - ${response.statusText}`)
+          setIsTreeLoading(false)
+          return
+        }
 
-        await dataProviderReference.current.updateData(configurationsRoot)
+        const treeData: FileTreeNode = await response.json()
+
+        // Defensive check
+        if (!treeData) {
+          setIsTreeLoading(false)
+          return
+        }
+
+        const configurationsRoot = findConfigurationsDir(treeData)
+
+        if (configurationsRoot) {
+          await provider.updateData(configurationsRoot)
+        }
+
+        setDataProvider(provider)
       } catch (error) {
-        console.error('Failed to load file tree', error)
+        console.error('[Studio] Failed to load file tree', error)
       } finally {
         setIsTreeLoading(false)
       }
     }
 
-    loadFileTree()
-  }, [project])
+    initProvider()
+  }, [project?.name]) // Only re-run if project name changes
 
   useEffect(() => {
     const findMatchingItems = async () => {
-      if (!searchTerm) {
+      if (!searchTerm || !dataProvider) {
         setMatchingItemIds([])
         setActiveMatchIndex(-1)
         setHighlightedItemId(null)
         return
       }
 
-      const allItems = await dataProviderReference.current.getAllItems?.()
+      const allItems = await dataProvider.getAllItems?.()
       if (!allItems) return
 
       const lower = searchTerm.toLowerCase()
@@ -123,20 +139,20 @@ export default function FileStructure() {
     }
 
     findMatchingItems()
-  }, [searchTerm])
+  }, [searchTerm, dataProvider])
 
   const handleItemClick = (items: TreeItemIndex[], _treeId: string): void => {
     void handleItemClickAsync(items)
   }
 
   const handleItemClickAsync = async (itemIds: TreeItemIndex[]) => {
-    if (!dataProviderReference.current || itemIds.length === 0) return
+    if (!dataProvider || itemIds.length === 0) return
 
     const itemId = itemIds[0]
 
     if (typeof itemId !== 'string') return
 
-    const item = await dataProviderReference.current.getTreeItem(itemId)
+    const item = await dataProvider.getTreeItem(itemId)
 
     if (!item || item.isFolder) return
 
@@ -162,11 +178,10 @@ export default function FileStructure() {
     setActiveTab(adapterName)
   }
 
-  // Listener for tab and enter keys
+  // Keyboard and search handlers remain standard
   useEffect(() => {
     const handleKeyDown = async (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        // Clear search and highlight
         setSearchTerm('')
         setHighlightedItemId(null)
         setMatchingItemIds([])
@@ -184,8 +199,6 @@ export default function FileStructure() {
         setActiveMatchIndex((previous) => (previous - 1 < 0 ? matchingItemIds.length - 1 : previous - 1))
       } else if (event.key === 'Enter') {
         event.preventDefault()
-
-        // If nothing highlighted yet, select the first match
         const targetItemId = highlightedItemId || matchingItemIds[0]
         if (targetItemId) {
           await handleItemClickAsync([targetItemId])
@@ -195,40 +208,23 @@ export default function FileStructure() {
 
     globalThis.addEventListener('keydown', handleKeyDown)
     return () => globalThis.removeEventListener('keydown', handleKeyDown)
-  }, [matchingItemIds, highlightedItemId, handleItemClickAsync])
+  }, [matchingItemIds, highlightedItemId, dataProvider]) // Removed recursive dependency
 
   useEffect(() => {
     if (activeMatchIndex === -1 || !tree.current) return
-
     const itemId = matchingItemIds[activeMatchIndex]
     if (!itemId) return
-
-    // set visual highlight only
     setHighlightedItemId(itemId)
   }, [activeMatchIndex, matchingItemIds])
 
   useEffect(() => {
-    // Collapse all folders when no search term is entered
+    if (!tree.current) return
     if (!searchTerm) {
-      collapseAllFolders()
+      tree.current.collapseAll()
       return
     }
-
-    // expand all folders when search term is not empty
-    expandAllFolders()
+    tree.current.expandAll()
   }, [searchTerm])
-
-  const collapseAllFolders = () => {
-    const treeReference = tree.current
-    if (!treeReference) return
-    treeReference.collapseAll()
-  }
-
-  const expandAllFolders = () => {
-    const treeReference = tree.current
-    if (!treeReference) return
-    treeReference.expandAll()
-  }
 
   const renderItemArrow = ({ item, context }: { item: TreeItem<unknown>; context: TreeItemRenderContext }) => {
     if (!item.isFolder) {
@@ -265,11 +261,11 @@ export default function FileStructure() {
     } else {
       Icon = getListenerIcon(listenerType)
     }
-    // Highlight only the substring(s) that match the search term
+
     let highlightedTitle: JSX.Element | string = title
 
     if (searchTerm && titleLower.includes(searchLower)) {
-      const parts = title.split(new RegExp(`(${searchTerm})`, 'gi')) // keep matched pieces
+      const parts = title.split(new RegExp(`(${searchTerm})`, 'gi'))
       highlightedTitle = (
         <>
           {parts.map((part, index) =>
@@ -301,21 +297,17 @@ export default function FileStructure() {
     )
   }
 
-  const renderContent = () => {
-    if (!project) {
-      return <p>Loading project...</p>
-    }
+  if (!project) return <p>No Project Selected</p>
+  if (isTreeLoading || !dataProvider) return <p>Loading configurations...</p>
 
-    if (isTreeLoading) {
-      return <p>Loading configurations...</p>
-    }
-
-    return (
+  return (
+    <>
+      <Search onChange={(event) => setSearchTerm(event.target.value)} />
       <div className="overflow-auto pr-2">
         <UncontrolledTreeEnvironment
           viewState={{}}
           getItemTitle={getItemTitle}
-          dataProvider={dataProviderReference.current}
+          dataProvider={dataProvider}
           onSelectItems={handleItemClick}
           canDragAndDrop={true}
           canDropOnFolder={true}
@@ -326,13 +318,8 @@ export default function FileStructure() {
           <Tree treeId={TREE_ID} rootItem="root" ref={tree} treeLabel="Files" />
         </UncontrolledTreeEnvironment>
       </div>
-    )
-  }
-
-  return (
-    <>
-      <Search onChange={(event) => setSearchTerm(event.target.value)} />
-      {renderContent()}
     </>
   )
 }
+
+export class ConfigWithAdapters {}

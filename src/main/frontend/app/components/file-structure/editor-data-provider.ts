@@ -19,20 +19,49 @@ export default class EditorFilesDataProvider implements TreeDataProvider {
 
   constructor(projectName: string) {
     this.projectName = projectName
-    this.fetchAndBuildTree()
+  }
+
+  /**
+   * Public method to initialize data loading.
+   * Call this from your React component's useEffect.
+   */
+  public async loadData(): Promise<void> {
+    await this.fetchAndBuildTree()
   }
 
   /** Fetch file tree from backend and build the provider's data */
   private async fetchAndBuildTree() {
     try {
+      if (!this.projectName) return
+
       const response = await fetch(`/api/projects/${this.projectName}/tree`)
-      if (!response.ok) throw new Error(`HTTP error ${response.status}`)
+
+      if (!response.ok) {
+        // We loggen de warning, maar zorgen dat de 'data' leeg blijft en geldig
+        // Dit voorkomt dat de UI crasht op 400/404/500 errors
+        console.warn(
+          `[EditorFilesDataProvider] Failed to fetch project tree: ${response.status} ${response.statusText}`,
+        )
+        this.data = {}
+        this.notifyListeners(['root'])
+        return
+      }
 
       const tree: FileTreeNode = await response.json()
+
+      // Check of we geldige data hebben
+      if (!tree) {
+        console.warn('[EditorFilesDataProvider] Received empty tree from API')
+        this.data = {}
+        return
+      }
+
       this.buildTreeFromFileTree(tree)
       this.notifyListeners(['root'])
     } catch (error) {
-      console.error('Failed to load project tree for EditorFilesDataProvider', error)
+      console.error('[EditorFilesDataProvider] Unexpected error loading tree:', error)
+      this.data = {} // Fallback naar leeg
+      this.notifyListeners(['root'])
     }
   }
 
@@ -41,7 +70,9 @@ export default class EditorFilesDataProvider implements TreeDataProvider {
     const newData: Record<TreeItemIndex, TreeItem<FileNode>> = {}
 
     const traverse = (node: FileTreeNode, parentIndex: TreeItemIndex | null): TreeItemIndex => {
-      const index = parentIndex === null ? 'root' : `${parentIndex}/${node.name}`
+      // Gebruik een veilige unieke ID. Path is vaak beter dan naam als ID.
+      // Als rootNode geen path heeft, gebruik 'root'.
+      const index = parentIndex === null ? 'root' : node.path || `${parentIndex}/${node.name}`
 
       newData[index] = {
         index,
@@ -63,7 +94,10 @@ export default class EditorFilesDataProvider implements TreeDataProvider {
       return index
     }
 
-    traverse(rootNode, null)
+    if (rootNode) {
+      traverse(rootNode, null)
+    }
+
     this.data = newData
   }
 
@@ -72,25 +106,42 @@ export default class EditorFilesDataProvider implements TreeDataProvider {
   }
 
   public async getTreeItem(itemId: TreeItemIndex): Promise<TreeItem<FileNode>> {
-    return this.data[itemId]
+    const item = this.data[itemId]
+    if (!item) {
+      // Fallback om crashes te voorkomen als de tree item niet bestaat
+      return {
+        index: itemId,
+        isFolder: false,
+        data: { name: 'Unknown', path: '' },
+        children: [],
+      }
+    }
+    return item
   }
 
   public async onChangeItemChildren(itemId: TreeItemIndex, newChildren: TreeItemIndex[]) {
-    this.data[itemId].children = newChildren
-    this.notifyListeners([itemId])
+    if (this.data[itemId]) {
+      this.data[itemId].children = newChildren
+      this.notifyListeners([itemId])
+    }
   }
 
   public onDidChangeTreeData(listener: (changedItemIds: TreeItemIndex[]) => void): Disposable {
     this.treeChangeListeners.push(listener)
     return {
       dispose: () => {
-        this.treeChangeListeners.splice(this.treeChangeListeners.indexOf(listener), 1)
+        const index = this.treeChangeListeners.indexOf(listener)
+        if (index !== -1) {
+          this.treeChangeListeners.splice(index, 1)
+        }
       },
     }
   }
 
   public async onRenameItem(item: TreeItem, name: string): Promise<void> {
-    this.data[item.index].data.name = name
+    if (this.data[item.index]) {
+      this.data[item.index].data.name = name
+    }
   }
 
   /** Notify all listeners that certain nodes changed */

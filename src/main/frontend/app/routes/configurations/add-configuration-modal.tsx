@@ -5,7 +5,7 @@ import { useProjectStore } from '~/stores/project-store'
 interface AddConfigurationModalProperties {
   isOpen: boolean
   onClose: () => void
-  currentProject: Project
+  currentProject?: Project // Made optional for safety
 }
 
 export default function AddConfigurationModal({
@@ -18,7 +18,8 @@ export default function AddConfigurationModal({
   const [filename, setFilename] = useState<string>('')
   const setProject = useProjectStore((s) => s.setProject)
 
-  if (!isOpen) return null
+  // CRASH FIX: Return null if project is missing
+  if (!isOpen || !currentProject) return null
 
   const handleAdd = async () => {
     setLoading(true)
