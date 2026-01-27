@@ -45,7 +45,7 @@ public class Project {
         }
     }
 
-	public boolean isFilterEnabled(FilterType type) {
+    public boolean isFilterEnabled(FilterType type) {
         return projectSettings.isEnabled(type);
     }
 
