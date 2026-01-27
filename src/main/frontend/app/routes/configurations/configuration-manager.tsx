@@ -16,11 +16,8 @@ export interface FileTreeNode {
 }
 
 function findConfigurationsDir(node: FileTreeNode | undefined | null): FileTreeNode | null {
-  if (!node || !node.path) {
-    return null
-  }
+  if (!node || !node.path) return null
 
-  // Normalize slashes to avoid OS specific issues
   const normalizedPath = node.path.replaceAll('\\', '/')
 
   if (node.type === 'DIRECTORY' && normalizedPath.endsWith('/src/main/configurations')) {
@@ -39,7 +36,6 @@ function findConfigurationsDir(node: FileTreeNode | undefined | null): FileTreeN
 
 function collectXmlFiles(node: FileTreeNode | undefined | null): FileTreeNode[] {
   let result: FileTreeNode[] = []
-
   if (!node) return result
 
   if (node.type === 'FILE' && node.name.endsWith('.xml')) {
@@ -58,12 +54,11 @@ function collectXmlFiles(node: FileTreeNode | undefined | null): FileTreeNode[] 
 export default function ConfigurationManager() {
   const currentProject = useProjectStore((state) => state.project)
   const [configFiles, setConfigFiles] = useState<FileTreeNode[]>([])
-  const [error, setError] = useState<string | null>(null)
   const navigate = useNavigate()
   const [showModal, setShowModal] = useState(false)
 
   useEffect(() => {
-    // FIX: Stop immediately if there is no project
+    // FIX: Als er geen project is, doe niets (voorkomt 400 bad requests)
     if (!currentProject) return
 
     const fetchTree = async () => {
@@ -71,7 +66,6 @@ export default function ConfigurationManager() {
         const response = await fetch(apiUrl(`/api/projects/${currentProject.name}/tree`))
 
         if (!response.ok) {
-          setError(`Could not load configurations (API ${response.status})`)
           console.warn(`API returned ${response.status} for project tree`)
           return
         }
@@ -87,7 +81,6 @@ export default function ConfigurationManager() {
         }
 
         const xmlFiles = collectXmlFiles(configurationDirectory)
-
         const xmlFilesWithRelative = xmlFiles.map((file) => ({
           ...file,
           relativePath: file.path.replace(`${configurationDirectory.path}\\`, '').replaceAll('\\', '/'),
@@ -96,14 +89,14 @@ export default function ConfigurationManager() {
         setConfigFiles(xmlFilesWithRelative)
       } catch (error) {
         console.error('Failed to load project tree', error)
-        setError('Failed to load project tree data.')
       }
     }
 
     fetchTree()
   }, [currentProject])
 
-  // FIX: Prevent rendering if project is undefined
+  // FIX: CRUCIAAL - Als project undefined is, render dan NIET de normale view
+  // Dit voorkomt de crash in AddConfigurationModal en de "Invalid Hook Call" error
   if (!currentProject) {
     return (
       <div className="bg-backdrop flex h-full w-full flex-col items-center justify-center p-6">
@@ -121,41 +114,23 @@ export default function ConfigurationManager() {
   return (
     <div className="bg-backdrop h-full w-full p-6">
       <div className="bg-background border-border h-full w-full rounded border p-6">
-        <div
-          className="hover:text-foreground-active flex w-fit hover:cursor-pointer"
-          onClick={() => {
-            navigate('/')
-          }}
-        >
+        <div className="hover:text-foreground-active flex w-fit hover:cursor-pointer" onClick={() => navigate('/')}>
           <ArrowLeftIcon className="mb-4 h-6 w-auto fill-current hover:cursor-pointer" />
           <p>Return To Projects</p>
         </div>
 
-        {error ? (
-          <div className="rounded border border-red-500 bg-red-50 p-4 font-bold text-red-500">
-            {error} - Check if the backend is running and the project exists.
-          </div>
-        ) : (
-          <>
-            <p className="ml-2">
-              Configurations within <span className="font-bold">{currentProject.name}</span>
-              /src/main/configurations:
-            </p>
-            <div className="flex flex-wrap gap-4 pt-4">
-              {configFiles.map((file) => (
-                <ConfigurationTile key={file.path} filepath={file.relativePath} />
-              ))}
+        <p className="ml-2">
+          Configurations within <span className="font-bold">{currentProject.name}</span>/src/main/configurations:
+        </p>
+        <div className="flex flex-wrap gap-4 pt-4">
+          {configFiles.map((file) => (
+            <ConfigurationTile key={file.path} filepath={file.relativePath} />
+          ))}
 
-              <AddConfigurationTile
-                onClick={() => {
-                  setShowModal(true)
-                }}
-              />
-            </div>
-          </>
-        )}
+          <AddConfigurationTile onClick={() => setShowModal(true)} />
+        </div>
       </div>
-      {/* SAFE: We know currentProject is defined here */}
+      {/* Nu veilig omdat we hierboven al gecheckt hebben of currentProject bestaat */}
       <AddConfigurationModal isOpen={showModal} onClose={() => setShowModal(false)} currentProject={currentProject} />
     </div>
   )

@@ -18,10 +18,10 @@ export default class FilesDataProvider implements TreeDataProvider {
   public async updateData(fileTree: FileTreeNode) {
     const newData: Record<TreeItemIndex, TreeItem> = {}
 
+    // eslint-disable-next-line sonarjs/cognitive-complexity
     const traverse = async (node: FileTreeNode, parentIndex: TreeItemIndex | null): Promise<TreeItemIndex | null> => {
       const index = parentIndex === null ? 'root' : `${parentIndex}/${node.name}`
 
-      // Root node
       if (parentIndex === null) {
         newData[index] = {
           index,
@@ -31,12 +31,10 @@ export default class FilesDataProvider implements TreeDataProvider {
         }
       }
 
-      // Ignore non-XML files (but only for non-root nodes)
       if (parentIndex !== null && node.type === 'FILE' && !node.name.endsWith('.xml')) {
         return null
       }
 
-      // Directory
       if (parentIndex !== null && node.type === 'DIRECTORY') {
         newData[index] = {
           index,
@@ -46,7 +44,6 @@ export default class FilesDataProvider implements TreeDataProvider {
         }
       }
 
-      // .xml treated as folder
       if (parentIndex !== null && node.type === 'FILE') {
         newData[index] = {
           index,
@@ -76,7 +73,6 @@ export default class FilesDataProvider implements TreeDataProvider {
         }
       }
 
-      // Recurse into children
       if (node.type === 'DIRECTORY' && node.children) {
         for (const child of node.children) {
           const childIndex = await traverse(child, index)
@@ -86,7 +82,6 @@ export default class FilesDataProvider implements TreeDataProvider {
         }
       }
 
-      // Prune empty non-root directories
       if (parentIndex !== null && node.type === 'DIRECTORY' && newData[index].children!.length === 0) {
         delete newData[index]
         return null

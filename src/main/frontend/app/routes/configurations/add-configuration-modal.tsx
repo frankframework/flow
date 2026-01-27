@@ -19,7 +19,6 @@ export default function AddConfigurationModal({
   const [filename, setFilename] = useState<string>('')
   const setProject = useProjectStore((s) => s.setProject)
 
-  // FIX: Safely return null if project is missing
   if (!isOpen || !currentProject) return null
 
   const handleAdd = async () => {

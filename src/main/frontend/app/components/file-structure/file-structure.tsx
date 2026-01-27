@@ -62,9 +62,7 @@ export default function FileStructure() {
 
   const tree = useRef<TreeRef>(null)
 
-  // FIX: Use state for provider to ensure re-renders when initialized
   const [dataProvider, setDataProvider] = useState<FilesDataProvider | null>(null)
-
   const setTabData = useTabStore((state) => state.setTabData)
   const setActiveTab = useTabStore((state) => state.setActiveTab)
   const getTab = useTabStore((state) => state.getTab)
@@ -88,7 +86,6 @@ export default function FileStructure() {
 
         const treeData: FileTreeNode = await response.json()
 
-        // Defensive check
         if (!treeData) {
           setIsTreeLoading(false)
           return
@@ -209,7 +206,7 @@ export default function FileStructure() {
 
     globalThis.addEventListener('keydown', handleKeyDown)
     return () => globalThis.removeEventListener('keydown', handleKeyDown)
-  }, [matchingItemIds, highlightedItemId, dataProvider]) // Removed recursive dependency
+  }, [matchingItemIds, highlightedItemId, dataProvider, handleItemClickAsync])
 
   useEffect(() => {
     if (activeMatchIndex === -1 || !tree.current) return
