@@ -94,7 +94,47 @@ public class FileTreeService {
             throw new IllegalArgumentException("Project does not exist: " + projectName);
         }
 
-        return buildTree(projectPath);
+        return buildShallowTree(projectPath);
+    }
+
+    public FileTreeNode getShallowDirectoryTree(String projectName, String directoryPath) throws IOException {
+        Path dirPath = projectsRoot.resolve(projectName).resolve(directoryPath).normalize();
+
+        if (!dirPath.startsWith(projectsRoot.resolve(projectName))) {
+            throw new SecurityException("Invalid path: outside project directory");
+        }
+
+        if (!Files.exists(dirPath) || !Files.isDirectory(dirPath)) {
+            throw new IllegalArgumentException("Directory does not exist: " + dirPath);
+        }
+
+        return buildShallowTree(dirPath);
+    }
+
+    public FileTreeNode getShallowConfigurationsDirectoryTree(String projectName) throws IOException {
+        Path configDirPath = projectsRoot
+                .resolve(projectName)
+                .resolve("src/main/configurations")
+                .normalize();
+
+        if (!Files.exists(configDirPath) || !Files.isDirectory(configDirPath)) {
+            throw new IllegalArgumentException("Configurations directory does not exist: " + configDirPath);
+        }
+
+        return buildShallowTree(configDirPath);
+    }
+
+    public FileTreeNode getConfigurationsDirectoryTree(String projectName) throws IOException {
+        Path configDirPath = projectsRoot
+                .resolve(projectName)
+                .resolve("src/main/configurations")
+                .normalize();
+
+        if (!Files.exists(configDirPath) || !Files.isDirectory(configDirPath)) {
+            throw new IllegalArgumentException("Configurations directory does not exist: " + configDirPath);
+        }
+
+        return buildTree(configDirPath);
     }
 
     public boolean updateAdapterFromFile(
@@ -140,7 +180,7 @@ public class FileTreeService {
         }
     }
 
-    // Recursive method to build the file tree
+    // Recursive method to build the entire file tree
     private FileTreeNode buildTree(Path path) throws IOException {
         FileTreeNode node = new FileTreeNode();
         node.setName(path.getFileName().toString());
@@ -164,6 +204,40 @@ public class FileTreeService {
         } else {
             node.setType(NodeType.FILE);
             node.setChildren(null);
+        }
+
+        return node;
+    }
+
+    // Method to build a shallow tree (only immediate children)
+    private FileTreeNode buildShallowTree(Path path) throws IOException {
+        FileTreeNode node = new FileTreeNode();
+        node.setName(path.getFileName().toString());
+        node.setPath(path.toAbsolutePath().toString());
+
+        if (!Files.isDirectory(path)) {
+            throw new IllegalArgumentException("Path is not a directory: " + path);
+        }
+
+        node.setType(NodeType.DIRECTORY);
+
+        try (Stream<Path> stream = Files.list(path)) {
+            List<FileTreeNode> children = stream.map(p -> {
+                        FileTreeNode child = new FileTreeNode();
+                        child.setName(p.getFileName().toString());
+                        child.setPath(p.toAbsolutePath().toString());
+
+                        if (Files.isDirectory(p)) {
+                            child.setType(NodeType.DIRECTORY);
+                        } else {
+                            child.setType(NodeType.FILE);
+                        }
+
+                        return child;
+                    })
+                    .toList();
+
+            node.setChildren(children);
         }
 
         return node;

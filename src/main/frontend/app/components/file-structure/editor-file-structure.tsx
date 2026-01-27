@@ -1,4 +1,4 @@
-import React, { type JSX, useCallback, useEffect, useRef, useState } from 'react'
+import React, { type JSX, useEffect, useRef, useState } from 'react'
 import Search from '~/components/search/search'
 import FolderIcon from '../../../icons/solar/Folder.svg?react'
 import FolderOpenIcon from '../../../icons/solar/Folder Open.svg?react'
@@ -79,7 +79,7 @@ export default function EditorFileStructure() {
     }
 
     findMatchingItems()
-  }, [searchTerm, filepaths])
+  }, [searchTerm, filepaths, dataProvider])
 
   const openFileTab = (filePath: string, fileName: string) => {
     if (!getTab(filePath)) {
@@ -99,15 +99,17 @@ export default function EditorFileStructure() {
     if (!dataProvider || itemIds.length === 0) return
 
     const itemId = itemIds[0]
-    if (typeof itemId !== 'string') return
-
     const item = await dataProvider.getTreeItem(itemId)
-    if (!item || item.isFolder) return
+    if (!item) return
 
-    const filePath = item.data.path
-    const fileName = item.data.name
+    // Fetch contents and expand folder if folder
+    if (item.isFolder) {
+      await dataProvider.loadDirectory(itemId)
+      return
+    }
 
-    openFileTab(filePath, fileName)
+    // Load file in editor tab if file
+    openFileTab(item.data.path, item.data.name)
   }
 
   /* Keyboard navigation */
@@ -164,12 +166,19 @@ export default function EditorFileStructure() {
   const renderItemArrow = ({ item, context }: { item: TreeItem; context: TreeItemRenderContext }) => {
     if (!item.isFolder) return null
     const Icon = context.isExpanded ? AltArrowDownIcon : AltArrowRightIcon
-    return (
-      <Icon
-        onClick={context.toggleExpandedState}
-        className="rct-tree-item-arrow-isFolder rct-tree-item-arrow fill-foreground"
-      />
-    )
+
+    const handleClick = async (event: React.MouseEvent) => {
+      event.stopPropagation()
+
+      // Only load when expanding
+      if (!context.isExpanded && dataProvider) {
+        await dataProvider.loadDirectory(item.index)
+      }
+
+      context.toggleExpandedState()
+    }
+
+    return <Icon onClick={handleClick} className="rct-tree-item-arrow-isFolder rct-tree-item-arrow fill-foreground" />
   }
 
   const renderItemTitle = ({

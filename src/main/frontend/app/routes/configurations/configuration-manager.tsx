@@ -56,7 +56,7 @@ export default function ConfigurationManager() {
 
     const fetchTree = async () => {
       try {
-        const response = await fetch(`/api/projects/${currentProject.name}/tree`)
+        const response = await fetch(`/api/projects/${currentProject.name}/tree/configurations`)
         if (!response.ok) {
           throw new Error(`HTTP error ${response.status}`)
         }
