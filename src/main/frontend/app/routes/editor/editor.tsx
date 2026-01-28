@@ -6,14 +6,13 @@ import { SidebarSide } from '~/components/sidebars-layout/sidebar-layout-store'
 import SidebarContentClose from '~/components/sidebars-layout/sidebar-content-close'
 import { useTheme } from '~/hooks/use-theme'
 import { useEffect, useRef, useState } from 'react'
-import { getXmlString } from '~/routes/studio/xml-to-json-parser'
 import { useProjectStore } from '~/stores/project-store'
 import EditorFileStructure from '~/components/file-structure/editor-file-structure'
 import useEditorTabStore from '~/stores/editor-tab-store'
 import EditorTabs from '~/components/tabs/editor-tabs'
 import type { ElementDetails, Attribute, EnumValue } from '~/types/ff-doc.types'
-import { apiUrl } from '~/utils/api'
 import { useFrankDoc } from '~/providers/frankdoc-provider'
+import { fetchConfiguration, saveConfiguration } from '~/services/configuration-service'
 
 export default function CodeEditor() {
   const theme = useTheme()
@@ -47,18 +46,26 @@ export default function CodeEditor() {
   }, [])
 
   useEffect(() => {
+    const abortController = new AbortController()
+
     async function fetchXml() {
       try {
         const configPath = useEditorTabStore.getState().getTab(activeTabFilePath)?.configurationPath
         if (!configPath || !project) return
-        const xmlString = await getXmlString(project.name, configPath)
-        setXmlContent(xmlString)
+        const xmlString = await fetchConfiguration(project.name, configPath, abortController.signal)
+        if (!abortController.signal.aborted) {
+          setXmlContent(xmlString)
+        }
       } catch (error) {
-        console.error('Failed to load XML:', error)
+        if (!abortController.signal.aborted) {
+          console.error('Failed to load XML:', error)
+        }
       }
     }
 
     fetchXml()
+
+    return () => abortController.abort()
   }, [project, activeTabFilePath])
 
   useEffect(() => {
@@ -223,33 +230,14 @@ export default function CodeEditor() {
     setIsSaving(true)
 
     try {
-      const url = apiUrl(`/projects/${project.name}/configuration`)
-      const response = await fetch(url, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ filepath: activeTabFilePath, content: updatedContent }),
-      })
-
-      // Parse JSON response body if it's not OK
-      if (!response.ok) {
-        const contentType = response.headers.get('content-type')
-        if (contentType && contentType.includes('application/json')) {
-          const errorData = await response.json()
-          toast.error(`Error saving configuration: ${errorData.error}\nDetails: ${errorData.message}`)
-          console.error('Something went wrong saving the configuration:', errorData)
-        } else {
-          toast.error(`Error saving configuration. HTTP status: ${response.status}`)
-          console.error('Error saving configuration. HTTP status:', response.status)
-        }
-        return
-      }
+      await saveConfiguration(project.name, activeTabFilePath, updatedContent)
+      toast.success('Succesfully saved content')
     } catch (error) {
-      toast.error(`Network or unexpected error: ${error}`)
-      console.error('Network or unexpected error:', error)
+      toast.error(`Error saving configuration: ${error instanceof Error ? error.message : error}`)
+      console.error('Error saving configuration:', error)
     } finally {
       setIsSaving(false)
     }
-    toast.success('Succesfully saved content')
   }
 
   return (

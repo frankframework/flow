@@ -4,7 +4,7 @@ import type { ExitNode } from '~/routes/studio/canvas/nodetypes/exit-node'
 import type { FrankNodeType } from '~/routes/studio/canvas/nodetypes/frank-node'
 import { SAXParser } from 'sax-ts'
 import type { ChildNode } from '~/routes/studio/canvas/nodetypes/child-node'
-import { apiUrl } from '~/utils/api'
+import { fetchConfiguration } from '~/services/configuration-service'
 
 interface IdCounter {
   current: number
@@ -16,24 +16,7 @@ interface SourceHandle {
 }
 
 export async function getXmlString(projectName: string, filepath: string): Promise<string> {
-  try {
-    const response = await fetch(apiUrl(`/projects/${projectName}/configuration`), {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ filepath }),
-    })
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`)
-    }
-
-    const data = await response.json()
-    return data.content
-  } catch (error) {
-    throw new Error(`Failed to fetch XML file for ${filepath}: ${error}`)
-  }
+  return fetchConfiguration(projectName, filepath)
 }
 
 export async function getAdapterNamesFromConfiguration(projectName: string, filepath: string): Promise<string[]> {

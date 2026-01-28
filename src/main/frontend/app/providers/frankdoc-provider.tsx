@@ -1,6 +1,7 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
+import { createContext, useContext, type ReactNode } from 'react'
 import type { FFDoc, ElementDetails, Filters } from '@frankframework/ff-doc'
 import { fetchFrankDoc } from '~/services/frankdoc-service'
+import { useAsync } from '~/hooks/use-async'
 
 interface FrankDocContextValue {
   ffDoc: FFDoc | null
@@ -8,38 +9,19 @@ interface FrankDocContextValue {
   filters: Filters | null
   isLoading: boolean
   error: Error | null
-  refetch: () => Promise<void>
+  refetch: () => void
 }
 
 const FrankDocContext = createContext<FrankDocContextValue | null>(null)
 
 export function FrankDocProvider({ children }: { children: ReactNode }) {
-  const [ffDoc, setFfDoc] = useState<FFDoc | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<Error | null>(null)
-
-  const loadFrankDoc = async () => {
-    setIsLoading(true)
-    setError(null)
-    try {
-      const data = await fetchFrankDoc()
-      setFfDoc(data)
-    } catch (error_) {
-      setError(error_ instanceof Error ? error_ : new Error('Unknown error'))
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    loadFrankDoc()
-  }, [])
+  const { data: ffDoc, isLoading, error, refetch } = useAsync((signal) => fetchFrankDoc(signal), [])
 
   const elements = ffDoc?.elements ?? null
   const filters = ffDoc?.filters ?? null
 
   return (
-    <FrankDocContext.Provider value={{ ffDoc, elements, filters, isLoading, error, refetch: loadFrankDoc }}>
+    <FrankDocContext.Provider value={{ ffDoc, elements, filters, isLoading, error, refetch }}>
       {children}
     </FrankDocContext.Provider>
   )

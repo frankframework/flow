@@ -3,9 +3,9 @@ import ConfigurationTile from './configuration-tile'
 import ArrowLeftIcon from '/icons/solar/Alt Arrow Left.svg?react'
 import { useNavigate } from 'react-router'
 import AddConfigurationTile from './add-configuration-tile'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import AddConfigurationModal from './add-configuration-modal'
-import { apiUrl } from '~/utils/api'
+import { useProjectTree } from '~/hooks/use-project-tree'
 
 export interface FileTreeNode {
   name: string
@@ -53,46 +53,23 @@ function collectXmlFiles(node: FileTreeNode | undefined | null): FileTreeNode[] 
 
 export default function ConfigurationManager() {
   const currentProject = useProjectStore((state) => state.project)
-  const [configFiles, setConfigFiles] = useState<FileTreeNode[]>([])
   const navigate = useNavigate()
   const [showModal, setShowModal] = useState(false)
 
-  useEffect(() => {
-    if (!currentProject) return
+  const { data: tree } = useProjectTree(currentProject?.name)
 
-    const fetchTree = async () => {
-      try {
-        const response = await fetch(apiUrl(`/projects/${currentProject.name}/tree`))
+  const configFiles = (() => {
+    if (!tree) return []
 
-        if (!response.ok) {
-          console.warn(`API returned ${response.status} for project tree`)
-          return
-        }
+    const configurationDirectory = findConfigurationsDir(tree)
+    if (!configurationDirectory) return []
 
-        const tree: FileTreeNode = await response.json()
-        if (!tree) return
-
-        const configurationDirectory = findConfigurationsDir(tree)
-
-        if (!configurationDirectory) {
-          console.warn('Configuration directory not found.')
-          return
-        }
-
-        const xmlFiles = collectXmlFiles(configurationDirectory)
-        const xmlFilesWithRelative = xmlFiles.map((file) => ({
-          ...file,
-          relativePath: file.path.replace(`${configurationDirectory.path}\\`, '').replaceAll('\\', '/'),
-        }))
-
-        setConfigFiles(xmlFilesWithRelative)
-      } catch (error) {
-        console.error('Failed to load project tree', error)
-      }
-    }
-
-    fetchTree()
-  }, [currentProject])
+    const xmlFiles = collectXmlFiles(configurationDirectory)
+    return xmlFiles.map((file) => ({
+      ...file,
+      relativePath: file.path.replace(`${configurationDirectory.path}\\`, '').replaceAll('\\', '/'),
+    }))
+  })()
 
   if (!currentProject) {
     return (

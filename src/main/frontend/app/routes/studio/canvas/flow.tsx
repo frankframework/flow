@@ -32,7 +32,7 @@ import CreateNodeModal from '~/components/flow/create-node-modal'
 import { useProjectStore } from '~/stores/project-store'
 import { toast, ToastContainer } from 'react-toastify'
 import { useTheme } from '~/hooks/use-theme'
-import { apiUrl } from '~/utils/api'
+import { saveAdapter } from '~/services/adapter-service'
 
 export type FlowNode = FrankNodeType | ExitNode | StickyNote | GroupNode | Node
 
@@ -522,31 +522,16 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
     const activeTabName = useTabStore.getState().activeTab
     const configurationPath = useTabStore.getState().getTab(activeTabName)?.configurationPath
 
-    if (!configurationPath) return
+    if (!configurationPath || !project) return
 
     const xmlString = exportFlowToXml(flowData, activeTabName)
 
     try {
-      if (!project) return
-      const url = apiUrl(`/projects/${encodeURIComponent(project.name)}/adapters`)
-      const response = await fetch(url, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          adapterXml: xmlString,
-          adapterName: activeTabName,
-          configurationPath: configurationPath,
-        }),
-      })
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`)
-      }
-
+      await saveAdapter(project.name, xmlString, activeTabName, configurationPath)
       toast.success('Flow saved successfully!')
     } catch (error) {
       console.error('Failed to save XML:', error)
-      toast.error(`Failed to save XML: ${error}`)
+      toast.error(`Failed to save XML: ${error instanceof Error ? error.message : error}`)
     }
   }
 

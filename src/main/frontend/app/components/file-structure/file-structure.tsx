@@ -7,7 +7,6 @@ import FolderOpenIcon from '../../../icons/solar/Folder Open.svg?react'
 import 'react-complex-tree/lib/style-modern.css'
 import AltArrowRightIcon from '../../../icons/solar/Alt Arrow Right.svg?react'
 import AltArrowDownIcon from '../../../icons/solar/Alt Arrow Down.svg?react'
-import { apiUrl } from '~/utils/api'
 
 import {
   Tree,
@@ -20,6 +19,7 @@ import {
 import FilesDataProvider from '~/components/file-structure/files-data-provider'
 import { useProjectStore } from '~/stores/project-store'
 import type { FileTreeNode } from './editor-data-provider'
+import { useProjectTree } from '~/hooks/use-project-tree'
 
 const TREE_ID = 'studio-files-tree'
 
@@ -54,7 +54,6 @@ function findConfigurationsDir(node: FileTreeNode | undefined | null): FileTreeN
 
 export default function FileStructure() {
   const project = useProjectStore((state) => state.project)
-  const [isTreeLoading, setIsTreeLoading] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [matchingItemIds, setMatchingItemIds] = useState<string[]>([])
   const [activeMatchIndex, setActiveMatchIndex] = useState<number>(-1)
@@ -67,45 +66,25 @@ export default function FileStructure() {
   const setActiveTab = useTabStore((state) => state.setActiveTab)
   const getTab = useTabStore((state) => state.getTab)
 
+  const { data: treeData, isLoading: isTreeLoading } = useProjectTree(project?.name)
+
   useEffect(() => {
-    if (!project) return
+    if (!project || !treeData) return
 
     const initProvider = async () => {
       const provider = new FilesDataProvider(project.name)
 
-      setIsTreeLoading(true)
-      try {
-        const response = await fetch(apiUrl(`/projects/${project.name}/tree`))
+      const configurationsRoot = findConfigurationsDir(treeData)
 
-        if (!response.ok) {
-          console.warn(`[Studio] API Error: ${response.status} - ${response.statusText}`)
-          setIsTreeLoading(false)
-          return
-        }
-
-        const treeData: FileTreeNode = await response.json()
-
-        if (!treeData) {
-          setIsTreeLoading(false)
-          return
-        }
-
-        const configurationsRoot = findConfigurationsDir(treeData)
-
-        if (configurationsRoot) {
-          await provider.updateData(configurationsRoot)
-        }
-
-        setDataProvider(provider)
-      } catch (error) {
-        console.error('[Studio] Failed to load file tree', error)
-      } finally {
-        setIsTreeLoading(false)
+      if (configurationsRoot) {
+        await provider.updateData(configurationsRoot)
       }
+
+      setDataProvider(provider)
     }
 
     initProvider()
-  }, [project, project?.name])
+  }, [project, treeData])
 
   useEffect(() => {
     const findMatchingItems = async () => {
