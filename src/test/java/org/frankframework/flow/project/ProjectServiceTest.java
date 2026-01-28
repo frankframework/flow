@@ -37,7 +37,7 @@ class ProjectServiceTest {
     }
 
     @Test
-    void testAddingProjectToProjectService() {
+    void testAddingProjectToProjectService() throws ProjectNotFoundException {
         String projectName = "new_project";
         String rootPath = "/path/to/new_project";
 
