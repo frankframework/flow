@@ -12,17 +12,5 @@ export default defineConfig({
   plugins: [tailwindcss(), mdx(), reactRouter(), tsconfigPaths(), svgr()],
   server: {
     port: 3000,
-    proxy: {
-      '/js/frankdoc.json': {
-        target: 'https://frankdoc.frankframework.org',
-        changeOrigin: true,
-      },
-      '/api': {
-        target: 'http://localhost:8080',
-        secure: false,
-        ws: true,
-        changeOrigin: true,
-      },
-    },
   },
 })

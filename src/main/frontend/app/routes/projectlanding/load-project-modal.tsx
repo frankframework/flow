@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import FolderIcon from '../../../icons/solar/Folder.svg?react'
+import { apiUrl } from '~/utils/api'
 
 interface LoadProjectModalProperties {
   isOpen: boolean
@@ -22,8 +23,8 @@ export default function LoadProjectModal({ isOpen, onClose, onCreate }: Readonly
 
       try {
         const [foldersResponse, rootResponse] = await Promise.all([
-          fetch('/api/projects/backend-folders'),
-          fetch('/api/projects/root'),
+          fetch(apiUrl('/projects/backend-folders')),
+          fetch(apiUrl('/projects/root')),
         ])
 
         if (!foldersResponse.ok) {

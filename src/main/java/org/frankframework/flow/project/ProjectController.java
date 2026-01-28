@@ -7,7 +7,8 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import org.frankframework.flow.configuration.AdapterUpdateDTO;
+import org.frankframework.flow.adapter.AdapterNotFoundException;
+import org.frankframework.flow.adapter.AdapterUpdateDTO;
 import org.frankframework.flow.configuration.Configuration;
 import org.frankframework.flow.configuration.ConfigurationDTO;
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
@@ -116,7 +117,6 @@ public class ProjectController {
                 }
             }
 
-            // Build updated DTO
             ProjectDTO dto = ProjectDTO.from(project);
 
             return ResponseEntity.ok(dto);
@@ -149,7 +149,7 @@ public class ProjectController {
 
     @PostMapping("/{projectname}/import-configurations")
     public ResponseEntity<ProjectDTO> importConfigurations(
-            @PathVariable String projectname, @RequestBody ProjectImportDTO importDTO) {
+            @PathVariable String projectname, @RequestBody ProjectImportDTO importDTO) throws ProjectNotFoundException {
 
         Project project = projectService.getProject(projectname);
         if (project == null) return ResponseEntity.notFound().build();
@@ -186,7 +186,8 @@ public class ProjectController {
 
     @PutMapping("/{projectName}/adapters")
     public ResponseEntity<Void> updateAdapterFromFile(
-            @PathVariable String projectName, @RequestBody AdapterUpdateDTO dto) {
+            @PathVariable String projectName, @RequestBody AdapterUpdateDTO dto)
+            throws AdapterNotFoundException, ConfigurationNotFoundException {
         Path configPath = Paths.get(dto.configurationPath());
 
         boolean updated =

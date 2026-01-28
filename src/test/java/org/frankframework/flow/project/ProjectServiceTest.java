@@ -9,7 +9,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
-import org.frankframework.flow.configuration.AdapterNotFoundException;
+import org.frankframework.flow.adapter.AdapterNotFoundException;
 import org.frankframework.flow.configuration.Configuration;
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
 import org.frankframework.flow.projectsettings.FilterType;
@@ -37,7 +37,7 @@ class ProjectServiceTest {
     }
 
     @Test
-    void testAddingProjectToProjectService() {
+    void testAddingProjectToProjectService() throws ProjectNotFoundException {
         String projectName = "new_project";
         String rootPath = "/path/to/new_project";
 
