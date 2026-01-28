@@ -107,7 +107,7 @@ public class ProjectService {
         try {
             filterType = FilterType.valueOf(type.toUpperCase());
         } catch (IllegalArgumentException e) {
-            throw new InvalidFilterTypeException(type);
+            throw new InvalidFilterTypeException("Invalid filter type: " + type);
         }
 
         project.enableFilter(filterType);
