@@ -17,7 +17,7 @@ interface SourceHandle {
 
 export async function getXmlString(projectName: string, filepath: string): Promise<string> {
   try {
-    const response = await fetch(apiUrl(`/api/projects/${projectName}/configuration`), {
+    const response = await fetch(apiUrl(`/projects/${projectName}/configuration`), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

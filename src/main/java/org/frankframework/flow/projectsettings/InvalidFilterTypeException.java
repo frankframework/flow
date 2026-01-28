@@ -1,7 +1,10 @@
 package org.frankframework.flow.projectsettings;
 
-public class InvalidFilterTypeException extends RuntimeException {
-    public InvalidFilterTypeException(String type) {
-        super("Invalid filter type: " + type);
+import org.frankframework.flow.exception.ApiException;
+import org.springframework.http.HttpStatus;
+
+public class InvalidFilterTypeException extends ApiException {
+    public InvalidFilterTypeException(String message) {
+        super(message, HttpStatus.BAD_REQUEST);
     }
 }

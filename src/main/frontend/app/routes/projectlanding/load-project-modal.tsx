@@ -23,8 +23,8 @@ export default function LoadProjectModal({ isOpen, onClose, onCreate }: Readonly
 
       try {
         const [foldersResponse, rootResponse] = await Promise.all([
-          fetch(apiUrl('/api/projects/backend-folders')),
-          fetch(apiUrl('/api/projects/root')),
+          fetch(apiUrl('/projects/backend-folders')),
+          fetch(apiUrl('/projects/root')),
         ])
 
         if (!foldersResponse.ok) {

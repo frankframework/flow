@@ -8,7 +8,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Optional;
 import lombok.Getter;
-import org.frankframework.flow.configuration.AdapterNotFoundException;
+import org.frankframework.flow.adapter.AdapterNotFoundException;
 import org.frankframework.flow.configuration.Configuration;
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
 import org.frankframework.flow.projectsettings.FilterType;
@@ -123,7 +123,7 @@ public class ProjectService {
         try {
             filterType = FilterType.valueOf(type.toUpperCase());
         } catch (IllegalArgumentException e) {
-            throw new InvalidFilterTypeException(type);
+            throw new InvalidFilterTypeException("Invalid filter type: " + type);
         }
 
         project.disableFilter(filterType);
@@ -177,7 +177,7 @@ public class ProjectService {
         }
     }
 
-    public Project addConfiguration(String projectName, String configurationName) {
+    public Project addConfiguration(String projectName, String configurationName) throws ProjectNotFoundException {
         Project project = getProject(projectName);
 
         Configuration configuration = new Configuration(configurationName);

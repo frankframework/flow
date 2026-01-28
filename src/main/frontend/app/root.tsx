@@ -5,6 +5,7 @@ import Navbar from '~/components/navbar/navbar'
 import 'allotment/dist/style.css'
 import './app.css'
 import { useTheme } from '~/hooks/use-theme'
+import { FrankDocProvider } from '~/providers/frankdoc-provider'
 
 export const links: Route.LinksFunction = () => [
   { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
@@ -39,7 +40,7 @@ export function Layout({ children }: Readonly<{ children: React.ReactNode }>) {
   const isLandingPage = location.pathname === '/'
 
   return (
-    <html lang="en" data-theme={theme} suppressHydrationWarning>
+    <html lang="en" data-theme={theme}>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -58,7 +59,11 @@ export function Layout({ children }: Readonly<{ children: React.ReactNode }>) {
 }
 
 export default function App() {
-  return <Outlet />
+  return (
+    <FrankDocProvider>
+      <Outlet />
+    </FrankDocProvider>
+  )
 }
 
 export function ErrorBoundary({ error }: Readonly<Route.ErrorBoundaryProps>) {

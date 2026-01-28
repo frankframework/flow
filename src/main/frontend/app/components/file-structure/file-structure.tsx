@@ -75,7 +75,7 @@ export default function FileStructure() {
 
       setIsTreeLoading(true)
       try {
-        const response = await fetch(apiUrl(`/api/projects/${project.name}/tree`))
+        const response = await fetch(apiUrl(`/projects/${project.name}/tree`))
 
         if (!response.ok) {
           console.warn(`[Studio] API Error: ${response.status} - ${response.statusText}`)

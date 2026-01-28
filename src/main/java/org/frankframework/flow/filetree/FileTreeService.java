@@ -11,7 +11,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.frankframework.flow.configuration.AdapterNotFoundException;
+import org.frankframework.flow.adapter.AdapterNotFoundException;
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
 import org.frankframework.flow.project.ProjectService;
 import org.frankframework.flow.utility.XmlAdapterUtils;

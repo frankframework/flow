@@ -6,7 +6,7 @@ import static org.mockito.Mockito.*;
 import java.io.IOException;
 import java.nio.file.*;
 import java.util.List;
-import org.frankframework.flow.configuration.AdapterNotFoundException;
+import org.frankframework.flow.adapter.AdapterNotFoundException;
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
 import org.frankframework.flow.project.ProjectService;
 import org.junit.jupiter.api.AfterEach;

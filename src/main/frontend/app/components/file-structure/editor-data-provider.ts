@@ -35,7 +35,7 @@ export default class EditorFilesDataProvider implements TreeDataProvider {
     try {
       if (!this.projectName) return
 
-      const response = await fetch(apiUrl(`/api/projects/${this.projectName}/tree`))
+      const response = await fetch(apiUrl(`/projects/${this.projectName}/tree`))
 
       if (!response.ok) {
         console.warn(

@@ -207,7 +207,7 @@ class ProjectControllerTest {
 
             validatorMock
                     .when(() -> XmlValidator.validateXml(invalidXml))
-                    .thenThrow(new InvalidXmlContentException("Malformed XML"));
+                    .thenThrow(new InvalidXmlContentException("Malformed XML", null));
 
             mockMvc.perform(
                             put("/api/projects/MyProject/configuration")

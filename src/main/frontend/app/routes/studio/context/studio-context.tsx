@@ -3,18 +3,16 @@ import useFlowStore from '~/stores/flow-store'
 import { useEffect, useMemo, useState } from 'react'
 import SortedElements from '~/routes/studio/context/sorted-elements'
 import Search from '~/components/search/search'
-import variables from '../../../../environment/environment'
-import { useFFDoc } from '@frankframework/ff-doc/react'
 import { useProjectStore } from '~/stores/project-store'
 import type { ElementDetails } from '@frankframework/ff-doc'
+import { useFrankDoc } from '~/providers/frankdoc-provider'
 
 export default function StudioContext() {
   const { setAttributes, setNodeId, setDraggedName } = useNodeContextStore((state) => state)
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({})
   const [searchTerm, setSearchTerm] = useState('')
   const project = useProjectStore((state) => state.project)
-  const FRANK_DOC_URL = variables.frankDocJsonUrl
-  const { filters, elements } = useFFDoc(FRANK_DOC_URL)
+  const { filters, elements } = useFrankDoc()
   const enabledFilters = project
     ? Object.entries(project.filters)
         .filter(([_, enabled]) => enabled)

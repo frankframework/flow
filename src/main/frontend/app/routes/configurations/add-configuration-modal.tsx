@@ -38,7 +38,7 @@ export default function AddConfigurationModal({
       }
 
       const url = apiUrl(
-        `/api/projects/${encodeURIComponent(currentProject.name)}/configurations/${encodeURIComponent(configname)}`,
+        `/projects/${encodeURIComponent(currentProject.name)}/configurations/${encodeURIComponent(configname)}`,
       )
 
       const response = await fetch(url, {

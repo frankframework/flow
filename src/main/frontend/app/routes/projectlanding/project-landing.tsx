@@ -36,7 +36,7 @@ export default function ProjectLanding() {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const response = await fetch(apiUrl('/api/projects'))
+        const response = await fetch(apiUrl('/projects'))
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`)
         }
@@ -88,7 +88,7 @@ export default function ProjectLanding() {
     }
 
     // Import configurations to the project
-    await fetch(apiUrl(`/api/projects/${projectRoot}/import-configurations`), {
+    await fetch(apiUrl(`/projects/${projectRoot}/import-configurations`), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -98,13 +98,13 @@ export default function ProjectLanding() {
     })
 
     // Sync local project list with backend
-    const updated = await fetch(apiUrl(`/api/projects/${projectRoot}`)).then((res) => res.json())
+    const updated = await fetch(apiUrl(`/projects/${projectRoot}`)).then((res) => res.json())
     setProjects((prev) => prev.map((p) => (p.name === updated.name ? updated : p)))
   }
 
   const createProject = async (projectName: string, rootPath?: string) => {
     try {
-      const response = await fetch(apiUrl('/api/projects'), {
+      const response = await fetch(apiUrl('/projects'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

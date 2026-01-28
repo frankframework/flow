@@ -62,7 +62,7 @@ export default function ConfigurationManager() {
 
     const fetchTree = async () => {
       try {
-        const response = await fetch(apiUrl(`/api/projects/${currentProject.name}/tree`))
+        const response = await fetch(apiUrl(`/projects/${currentProject.name}/tree`))
 
         if (!response.ok) {
           console.warn(`API returned ${response.status} for project tree`)

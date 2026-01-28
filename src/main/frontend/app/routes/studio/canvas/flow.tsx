@@ -528,7 +528,7 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
 
     try {
       if (!project) return
-      const url = apiUrl(`/api/projects/${encodeURIComponent(project.name)}/adapters`)
+      const url = apiUrl(`/projects/${encodeURIComponent(project.name)}/adapters`)
       const response = await fetch(url, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },

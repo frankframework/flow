@@ -27,7 +27,6 @@ export default function Studio() {
   )
 
   return (
-    // FIX: Verwijder windowResizeOnChange={true}
     <SidebarLayout name="studio">
       <>
         <SidebarHeader side={SidebarSide.LEFT} title="Structure" />
