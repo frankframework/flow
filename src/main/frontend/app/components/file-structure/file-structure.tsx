@@ -71,13 +71,15 @@ export default function FileStructure() {
     if (!project || !treeData) return
 
     const initProvider = async () => {
-      const provider = new FilesDataProvider(project.name)
       const configurationsRoot = findConfigurationsDir(treeData)
 
-      if (configurationsRoot) {
-        await provider.updateData(configurationsRoot)
+      if (!configurationsRoot) {
+        setDataProvider(null)
+        return
       }
 
+      const provider = new FilesDataProvider(project.name)
+      await provider.updateData(configurationsRoot)
       setDataProvider(provider)
     }
 
@@ -263,7 +265,9 @@ export default function FileStructure() {
   }
 
   if (!project) return <p className="text-muted-foreground p-4 text-sm">No Project Selected</p>
-  if (isTreeLoading || !dataProvider) return <LoadingSpinner message="Loading configurations..." className="p-8" />
+  if (isTreeLoading) return <LoadingSpinner message="Loading configurations..." className="p-8" />
+  if (!dataProvider)
+    return <p className="text-muted-foreground p-4 text-sm">No configurations found in src/main/configurations</p>
 
   return (
     <>
