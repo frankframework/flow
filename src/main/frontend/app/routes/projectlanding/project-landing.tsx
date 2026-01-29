@@ -39,7 +39,6 @@ export default function ProjectLanding() {
   const location = useLocation()
   const fileInputReference = useRef<HTMLInputElement>(null)
 
-  // Sync fetched projects to local state for mutations
   useEffect(() => {
     if (projectsData) {
       setProjects(projectsData)

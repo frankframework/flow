@@ -17,7 +17,6 @@ function parseCurrentUrl(): { route: AppRoute; params: Record<string, string> } 
   const path = globalThis.location.pathname
   const params: Record<string, string> = {}
 
-  // Parse help topic from URL like /help/topic-name
   if (path.startsWith('/help')) {
     const parts = path.split('/').filter(Boolean)
     if (parts.length > 1) {
@@ -41,18 +40,15 @@ export const useNavigationStore = create<NavigationState>((set, get) => ({
   routeParams: initial.params,
 
   navigate: (route: AppRoute, params?: Record<string, string>) => {
-    // Build the new path
     let newPath = `/${route}`
     if (params?.topic && route === 'help') {
       newPath = `/help/${params.topic}`
     }
 
-    // Update URL
     if (globalThis.location.pathname !== newPath) {
       globalThis.history.pushState({}, '', newPath)
     }
 
-    // Update state synchronously
     set({ currentRoute: route, routeParams: params ?? {} })
   },
 
@@ -61,7 +57,6 @@ export const useNavigationStore = create<NavigationState>((set, get) => ({
   },
 }))
 
-// Handle browser back/forward buttons
 if (globalThis.window !== undefined) {
   globalThis.addEventListener('popstate', () => {
     const { route, params } = parseCurrentUrl()
