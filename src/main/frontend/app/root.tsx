@@ -1,11 +1,10 @@
-import { isRouteErrorResponse, Links, Meta, Outlet, Scripts, ScrollRestoration, useLocation } from 'react-router'
+import { useEffect } from 'react'
+import { isRouteErrorResponse, Links, Meta, Outlet, Scripts, ScrollRestoration } from 'react-router'
 
 import type { Route } from './+types/root'
-import Navbar from '~/components/navbar/navbar'
 import 'allotment/dist/style.css'
 import './app.css'
 import { useTheme } from '~/hooks/use-theme'
-import { FrankDocProvider } from '~/providers/frankdoc-provider'
 
 export const links: Route.LinksFunction = () => [
   { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
@@ -34,13 +33,19 @@ export const links: Route.LinksFunction = () => [
   { rel: 'manifest', href: '/favicons/site.webmanifest' },
 ]
 
-export function Layout({ children }: Readonly<{ children: React.ReactNode }>) {
+function ThemeProvider({ children }: { children: React.ReactNode }) {
   const theme = useTheme()
-  const location = useLocation()
-  const isLandingPage = location.pathname === '/'
 
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme)
+  }, [theme])
+
+  return <>{children}</>
+}
+
+export function Layout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" data-theme={theme}>
+    <html lang="en" data-theme="dark">
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -48,9 +53,8 @@ export function Layout({ children }: Readonly<{ children: React.ReactNode }>) {
         <Meta />
         <Links />
       </head>
-      <body className="flex">
-        {!isLandingPage && <Navbar />}
-        <main className="grow">{children}</main>
+      <body>
+        <ThemeProvider>{children}</ThemeProvider>
         <ScrollRestoration />
         <Scripts />
       </body>
@@ -59,11 +63,7 @@ export function Layout({ children }: Readonly<{ children: React.ReactNode }>) {
 }
 
 export default function App() {
-  return (
-    <FrankDocProvider>
-      <Outlet />
-    </FrankDocProvider>
-  )
+  return <Outlet />
 }
 
 export function ErrorBoundary({ error }: Readonly<Route.ErrorBoundaryProps>) {

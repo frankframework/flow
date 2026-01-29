@@ -1,7 +1,6 @@
-import { createContext, useContext, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useState, useCallback, useMemo, type ReactNode } from 'react'
 import type { FFDoc, ElementDetails, Filters } from '@frankframework/ff-doc'
 import { fetchFrankDoc } from '~/services/frankdoc-service'
-import { useAsync } from '~/hooks/use-async'
 
 interface FrankDocContextValue {
   ffDoc: FFDoc | null
@@ -15,13 +14,50 @@ interface FrankDocContextValue {
 const FrankDocContext = createContext<FrankDocContextValue | null>(null)
 
 export function FrankDocProvider({ children }: { children: ReactNode }) {
-  const { data: ffDoc, isLoading, error, refetch } = useAsync((signal) => fetchFrankDoc(signal), [])
+  const [ffDoc, setFfDoc] = useState<FFDoc | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<Error | null>(null)
+
+  const loadData = useCallback(async (signal?: AbortSignal) => {
+    setIsLoading(true)
+    setError(null)
+    try {
+      const data = await fetchFrankDoc(signal)
+      if (!signal?.aborted) {
+        setFfDoc(data)
+      }
+    } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') return
+      if (!signal?.aborted) {
+        setError(err instanceof Error ? err : new Error('Failed to load FrankDoc'))
+      }
+    } finally {
+      if (!signal?.aborted) {
+        setIsLoading(false)
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    const controller = new AbortController()
+    loadData(controller.signal)
+    return () => controller.abort()
+  }, [loadData])
 
   const elements = ffDoc?.elements ?? null
   const filters = ffDoc?.filters ?? null
 
+  const refetch = useCallback(() => {
+    loadData()
+  }, [loadData])
+
+  const contextValue = useMemo(
+    () => ({ ffDoc, elements, filters, isLoading, error, refetch }),
+    [ffDoc, elements, filters, isLoading, error, refetch]
+  )
+
   return (
-    <FrankDocContext.Provider value={{ ffDoc, elements, filters, isLoading, error, refetch }}>
+    <FrankDocContext.Provider value={contextValue}>
       {children}
     </FrankDocContext.Provider>
   )
