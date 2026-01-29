@@ -33,7 +33,6 @@ export default function ProjectLanding() {
   const clearProject = useProjectStore((state) => state.clearProject)
   const location = useLocation()
 
-  // Sync fetched projects to local state for mutations
   useEffect(() => {
     if (projectsData) {
       setProjects(projectsData)
