@@ -1,7 +1,7 @@
 import { Link } from 'react-router'
 import RoundedToggle from '~/components/inputs/rounded-toggle'
 import { useProjectStore } from '~/stores/project-store'
-import { apiUrl } from '~/utils/api'
+import { toggleProjectFilter } from '~/services/project-service'
 
 export default function ProjectSettings() {
   const project = useProjectStore((state) => state.project)
@@ -11,15 +11,9 @@ export default function ProjectSettings() {
     if (!project) return
 
     const currentlyEnabled = project.filters[filter]
-    const action = currentlyEnabled ? 'disable' : 'enable'
 
     try {
-      const response = await fetch(
-        apiUrl(`/projects/${encodeURIComponent(project.name)}/filters/${encodeURIComponent(filter)}/${action}`),
-        { method: 'PATCH' },
-      )
-
-      if (!response.ok) throw new Error(`Failed to toggle filter ${filter}`)
+      await toggleProjectFilter(project.name, filter, !currentlyEnabled)
 
       // Update the project in the store
       const updatedFilters = { ...project.filters, [filter]: !currentlyEnabled }

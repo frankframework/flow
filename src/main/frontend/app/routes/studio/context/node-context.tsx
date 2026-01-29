@@ -276,8 +276,8 @@ export default function NodeContext({
                 label={key}
                 attribute={attribute}
                 enumOptions={
-                  attribute.enum && ffDoc?.ffDoc?.enums?.[attribute.enum]
-                    ? Object.keys(ffDoc?.ffDoc?.enums[attribute.enum]).reduce(
+                  attribute.enum && ffDoc?.enums?.[attribute.enum]
+                    ? Object.keys(ffDoc.enums[attribute.enum]).reduce(
                         (result, key) => ({ ...result, [key]: key }),
                         {} as Record<string, string>,
                       )

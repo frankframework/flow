@@ -1,5 +1,6 @@
 import React, { type JSX, useEffect, useRef, useState } from 'react'
 import Search from '~/components/search/search'
+import LoadingSpinner from '~/components/loading-spinner'
 import FolderIcon from '../../../icons/solar/Folder.svg?react'
 import FolderOpenIcon from '../../../icons/solar/Folder Open.svg?react'
 import 'react-complex-tree/lib/style-modern.css'
@@ -105,10 +106,6 @@ export default function EditorFileStructure() {
     setActiveTab(filePath)
   }
 
-  const handleItemClick = (items: TreeItemIndex[], _treeId: string): void => {
-    void handleItemClickAsync(items)
-  }
-
   const handleItemClickAsync = async (itemIds: TreeItemIndex[]) => {
     if (!dataProvider || itemIds.length === 0) return
 
@@ -122,6 +119,10 @@ export default function EditorFileStructure() {
     const fileName = item.data.name
 
     openFileTab(filePath, fileName)
+  }
+
+  const handleItemClick = (items: TreeItemIndex[], _treeId: string): void => {
+    void handleItemClickAsync(items)
   }
 
   useEffect(() => {
@@ -153,7 +154,7 @@ export default function EditorFileStructure() {
 
     globalThis.addEventListener('keydown', handleKeyDown)
     return () => globalThis.removeEventListener('keydown', handleKeyDown)
-  }, [matchingItemIds, highlightedItemId, handleItemClickAsync])
+  }, [matchingItemIds, highlightedItemId])
 
   useEffect(() => {
     if (!tree.current) return
@@ -233,7 +234,7 @@ export default function EditorFileStructure() {
     )
   }
 
-  if (!dataProvider) return <div className="text-muted-foreground p-4 text-xs">Initializing tree...</div>
+  if (!dataProvider) return <LoadingSpinner message="Loading files..." className="p-8" />
 
   return (
     <>

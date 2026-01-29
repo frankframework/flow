@@ -1,7 +1,7 @@
 import type { Project } from '../projectlanding/project-landing'
 import { useState } from 'react'
 import { useProjectStore } from '~/stores/project-store'
-import { apiUrl } from '~/utils/api'
+import { createConfiguration } from '~/services/configuration-service'
 
 interface AddConfigurationModalProperties {
   isOpen: boolean
@@ -37,18 +37,7 @@ export default function AddConfigurationModal({
         configname = `${configname}.xml`
       }
 
-      const url = apiUrl(
-        `/projects/${encodeURIComponent(currentProject.name)}/configurations/${encodeURIComponent(configname)}`,
-      )
-
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-      })
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`)
-      }
-      const updatedProject = await response.json()
+      const updatedProject = await createConfiguration(currentProject.name, configname)
       setProject(updatedProject)
       onClose()
     } catch (error_: unknown) {
