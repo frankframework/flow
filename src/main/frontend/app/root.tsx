@@ -37,7 +37,7 @@ function ThemeProvider({ children }: { children: React.ReactNode }) {
   const theme = useTheme()
 
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme)
+    document.documentElement.dataset.theme = theme
   }, [theme])
 
   return <>{children}</>

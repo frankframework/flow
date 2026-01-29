@@ -1,6 +1,6 @@
 import { apiFetch } from '~/utils/api'
-import type { FFDoc } from '@frankframework/ff-doc'
+import type { FFDocJson } from '@frankframework/ff-doc'
 
-export async function fetchFrankDoc(signal?: AbortSignal): Promise<FFDoc> {
-  return apiFetch<FFDoc>('/json/frankdoc', { signal })
+export async function fetchFrankDoc(signal?: AbortSignal): Promise<FFDocJson> {
+  return apiFetch<FFDocJson>('/json/frankdoc', { signal })
 }

@@ -6,6 +6,7 @@ import AddConfigurationTile from './add-configuration-tile'
 import { useState } from 'react'
 import AddConfigurationModal from './add-configuration-modal'
 import { useProjectTree } from '~/hooks/use-project-tree'
+import LoadingSpinner from '~/components/loading-spinner'
 
 export interface FileTreeNode {
   name: string
@@ -56,7 +57,7 @@ export default function ConfigurationManager() {
   const navigate = useNavigate()
   const [showModal, setShowModal] = useState(false)
 
-  const { data: tree } = useProjectTree(currentProject?.name)
+  const { data: tree, isLoading } = useProjectTree(currentProject?.name)
 
   const configFiles = (() => {
     if (!tree) return []
@@ -85,6 +86,14 @@ export default function ConfigurationManager() {
     )
   }
 
+  if (isLoading) {
+    return (
+      <div className="bg-backdrop flex h-full w-full items-center justify-center">
+        <LoadingSpinner size="lg" message="Loading configurations..." />
+      </div>
+    )
+  }
+
   return (
     <div className="bg-backdrop h-full w-full p-6">
       <div className="bg-background border-border h-full w-full rounded border p-6">
@@ -104,7 +113,6 @@ export default function ConfigurationManager() {
           <AddConfigurationTile onClick={() => setShowModal(true)} />
         </div>
       </div>
-      {/* Nu veilig omdat we hierboven al gecheckt hebben of currentProject bestaat */}
       <AddConfigurationModal isOpen={showModal} onClose={() => setShowModal(false)} currentProject={currentProject} />
     </div>
   )

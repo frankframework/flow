@@ -1,50 +1,41 @@
 import useNodeContextStore from '~/stores/node-context-store'
 import useFlowStore from '~/stores/flow-store'
-import { useEffect, useMemo, useState } from 'react'
+import { useState } from 'react'
 import SortedElements from '~/routes/studio/context/sorted-elements'
 import Search from '~/components/search/search'
 import { useProjectStore } from '~/stores/project-store'
 import type { ElementDetails } from '@frankframework/ff-doc'
 import { useFrankDoc } from '~/providers/frankdoc-provider'
+import LoadingSpinner from '~/components/loading-spinner'
 
 export default function StudioContext() {
   const { setAttributes, setNodeId, setDraggedName } = useNodeContextStore((state) => state)
-  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({})
   const [searchTerm, setSearchTerm] = useState('')
   const project = useProjectStore((state) => state.project)
-  const { filters, elements } = useFrankDoc()
+  const { filters, elements, isLoading } = useFrankDoc()
+
+  if (isLoading || !elements) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <LoadingSpinner message="Loading palette..." />
+      </div>
+    )
+  }
+
   const enabledFilters = project
     ? Object.entries(project.filters)
         .filter(([_, enabled]) => enabled)
         .map(([filterName]) => filterName)
     : []
-  const componentLookup = useMemo(() => {
-    if (!filters?.Components) return {}
 
-    return Object.entries(filters.Components).reduce<Record<string, string>>((acc, [type, names]) => {
-      for (const name of names) {
-        acc[name] = type.toLowerCase()
-      }
-      return acc
-    }, {})
-  }, [filters])
-
-  useEffect(() => {
-    if (!elements || !filters?.Components) return
-
-    const initialState: Record<string, boolean> = {}
-
-    for (const element of Object.values(elements)) {
-      const type = getElementTypeFromComponents(element.name, filters.Components)
-      if (!(type in expandedGroups)) {
-        initialState[type] = true
-      }
-    }
-
-    if (Object.keys(initialState).length > 0) {
-      setExpandedGroups((previous) => ({ ...previous, ...initialState }))
-    }
-  }, [elements, filters, expandedGroups])
+  const componentLookup = filters?.Components
+    ? Object.entries(filters.Components).reduce<Record<string, string>>((acc, [type, names]) => {
+        for (const name of names) {
+          acc[name] = type.toLowerCase()
+        }
+        return acc
+      }, {})
+    : {}
 
   const onDragStart = (value: ElementDetails) => {
     return (event: {
@@ -59,19 +50,15 @@ export default function StudioContext() {
   }
 
   const shouldShowElement = (elementName: string) => {
-    // Show all elements if no filters are applied
-    if (!filters || enabledFilters.length === 0) return true
-    if (!filters.TYPE || enabledFilters.length === 0) return true
+    if (enabledFilters.length === 0) return true
+    if (!filters || !filters.TYPE) return true
 
-    // Check if element exists in any TYPE category
     const foundInFilters = Object.values(filters).some((categoryGroup) =>
       Object.values(categoryGroup).some((items) => items.includes(elementName)),
     )
 
-    // If the element is not part of any category then its always visible, this would apply for things like Exits, jobs etc.
     if (!foundInFilters) return true
 
-    // Otherwise, only show if its category is enabled
     return Object.values(filters).some((categoryGroup) =>
       Object.entries(categoryGroup).some(
         ([categoryName, items]) => enabledFilters.includes(categoryName) && items.includes(elementName),
@@ -79,11 +66,11 @@ export default function StudioContext() {
     )
   }
 
-  const groupElementsByType = (elements: Record<string, ElementDetails>) => {
+  const groupElementsByType = (elementsToGroup: Record<string, ElementDetails>) => {
     const grouped: Record<string, ElementDetails[]> = {}
     const seen = new Set<string>()
 
-    for (const value of Object.values(elements)) {
+    for (const value of Object.values(elementsToGroup)) {
       if (seen.has(value.name)) continue
       seen.add(value.name)
 
@@ -97,10 +84,10 @@ export default function StudioContext() {
   }
 
   const visibleElements = Object.fromEntries(
-    Object.entries(elements || {}).filter(([_, value]) => shouldShowElement((value as ElementDetails).name)),
+    Object.entries(elements).filter(([_, value]) => shouldShowElement((value as ElementDetails).name)),
   )
 
-  const groupedElements = elements ? groupElementsByType(visibleElements as Record<string, ElementDetails>) : {}
+  const groupedElements = groupElementsByType(visibleElements as Record<string, ElementDetails>)
 
   const filteredGroupedElements = Object.entries(groupedElements).reduce(
     (accumulator, [type, items]) => {
@@ -112,18 +99,6 @@ export default function StudioContext() {
   )
 
   const elementsToRender = searchTerm ? filteredGroupedElements : groupedElements
-
-  function getElementTypeFromComponents(elementName: string, components?: Record<string, string[]>): string {
-    if (!components) return 'other'
-
-    for (const [componentType, items] of Object.entries(components)) {
-      if (items.includes(elementName)) {
-        return componentType.toLowerCase()
-      }
-    }
-
-    return 'other'
-  }
 
   return (
     <div className="flex h-full flex-col overflow-hidden">

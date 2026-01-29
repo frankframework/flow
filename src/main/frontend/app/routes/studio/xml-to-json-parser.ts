@@ -2,7 +2,6 @@ import type { FlowNode } from '~/routes/studio/canvas/flow'
 import { getElementTypeFromName } from '~/routes/studio/node-translator-module'
 import type { ExitNode } from '~/routes/studio/canvas/nodetypes/exit-node'
 import type { FrankNodeType } from '~/routes/studio/canvas/nodetypes/frank-node'
-import { SAXParser } from 'sax-ts'
 import type { ChildNode } from '~/routes/studio/canvas/nodetypes/child-node'
 import { fetchConfiguration } from '~/services/configuration-service'
 
@@ -19,34 +18,41 @@ export async function getXmlString(projectName: string, filepath: string): Promi
   return fetchConfiguration(projectName, filepath)
 }
 
-export async function getAdapterNamesFromConfiguration(projectName: string, filepath: string): Promise<string[]> {
+export interface AdapterInfo {
+  name: string
+  listenerType: string | null
+}
+
+export async function getAdaptersFromConfiguration(projectName: string, filepath: string): Promise<AdapterInfo[]> {
   const xmlString = await getXmlString(projectName, filepath)
+  const parser = new DOMParser()
+  const xmlDoc = parser.parseFromString(xmlString, 'text/xml')
 
-  return new Promise((resolve, reject) => {
-    const adapterNames: string[] = []
-    const parser = new SAXParser(true, {}) // strict mode
+  const adapters: AdapterInfo[] = []
+  const adapterElements = xmlDoc.querySelectorAll('Adapter')
 
-    parser.onopentag = (node: { name: string; attributes: Record<string, unknown> }) => {
-      if (node.name === 'Adapter' && typeof node.attributes.name === 'string') {
-        adapterNames.push(node.attributes.name)
+  for (const adapter of adapterElements) {
+    const name = adapter.getAttribute('name')
+    if (!name) continue
+
+    let listenerType: string | null = null
+    const children = adapter.querySelectorAll('*')
+    for (const child of children) {
+      if (child.tagName.includes('Listener')) {
+        listenerType = child.tagName
+        break
       }
     }
 
-    // eslint-disable-next-line unicorn/prefer-add-event-listener
-    parser.onerror = (error: Error) => {
-      reject(new Error(`SAX parsing error: ${error.message}`))
-    }
+    adapters.push({ name, listenerType })
+  }
 
-    parser.onend = () => {
-      resolve(adapterNames)
-    }
+  return adapters
+}
 
-    try {
-      parser.write(xmlString).close()
-    } catch (error) {
-      reject(new Error(`Failed to parse XML: ${(error as Error).message}`))
-    }
-  })
+export async function getAdapterNamesFromConfiguration(projectName: string, filepath: string): Promise<string[]> {
+  const adapters = await getAdaptersFromConfiguration(projectName, filepath)
+  return adapters.map((a) => a.name)
 }
 
 export async function getAdapterFromConfiguration(

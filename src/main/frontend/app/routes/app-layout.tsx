@@ -1,6 +1,6 @@
-import { Outlet } from 'react-router'
 import Navbar from '~/components/navbar/navbar'
 import { FrankDocProvider } from '~/providers/frankdoc-provider'
+import AppContent from '~/components/app-content'
 
 export default function AppLayout() {
   return (
@@ -8,7 +8,7 @@ export default function AppLayout() {
       <div className="flex h-screen">
         <Navbar />
         <main className="grow overflow-auto">
-          <Outlet />
+          <AppContent />
         </main>
       </div>
     </FrankDocProvider>
