@@ -47,6 +47,18 @@ class ProjectServiceTest {
     }
 
     @Test
+    void testAddingProjectThrowsProjectAlreadyExists() throws ProjectAlreadyExistsException {
+        String projectName = "existing_project";
+        String rootPath = "/path/to/existing_project";
+
+        projectService.createProject(projectName, rootPath);
+
+        assertThrows(
+                ProjectAlreadyExistsException.class,
+                () -> projectService.createProject(projectName, rootPath));
+    }
+
+    @Test
     void testGetProjectThrowsProjectNotFound() {
         assertThrows(ProjectNotFoundException.class, () -> projectService.getProject("missingProject"));
     }
