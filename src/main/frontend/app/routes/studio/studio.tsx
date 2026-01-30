@@ -27,7 +27,7 @@ export default function Studio() {
   )
 
   return (
-    <SidebarLayout name="studio" windowResizeOnChange={true}>
+    <SidebarLayout name="studio">
       <>
         <SidebarHeader side={SidebarSide.LEFT} title="Structure" />
         <FileStructure />

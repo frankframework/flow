@@ -1,3 +1,3 @@
-package org.frankframework.flow.configuration;
+package org.frankframework.flow.adapter;
 
 public record AdapterUpdateDTO(String adapterXml, String adapterName, String configurationPath) {}

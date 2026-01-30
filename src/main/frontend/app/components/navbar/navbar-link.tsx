@@ -1,5 +1,4 @@
 import { Link, useLocation } from 'react-router'
-import React from 'react'
 import clsx from 'clsx'
 
 interface NavbarLinkProperties {
