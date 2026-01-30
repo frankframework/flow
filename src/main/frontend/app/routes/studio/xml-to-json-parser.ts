@@ -532,7 +532,6 @@ function convertChildren(elements: Element[], idCounter: IdCounter): ChildNode[]
 
 // ----------------------------------------------------------------------------- HELPERS -----------------------------------------------------------------------------
 function isSuccessExit(node: FlowNode): boolean {
-  const success = 'success'
   if (node.type !== 'exitNode') return false
 
   const data = node.data
@@ -543,7 +542,7 @@ function isSuccessExit(node: FlowNode): boolean {
   }
 
   const state = (data.attributes as Record<string, string>).state
-  return state?.toLowerCase() === success
+  return state?.toLowerCase() === 'success'
 }
 
 function findSuccessExit(nodes: FlowNode[]): FlowNode | undefined {
