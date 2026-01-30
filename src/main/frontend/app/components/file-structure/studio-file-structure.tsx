@@ -77,7 +77,7 @@ export default function StudioFileStructure() {
       }
     }
 
-    void loadFileTree()
+    loadFileTree()
   }, [project])
 
   useEffect(() => {
