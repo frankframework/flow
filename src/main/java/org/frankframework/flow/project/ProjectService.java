@@ -8,7 +8,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Optional;
 import lombok.Getter;
-import org.frankframework.flow.configuration.AdapterNotFoundException;
+import org.frankframework.flow.adapter.AdapterNotFoundException;
 import org.frankframework.flow.configuration.Configuration;
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
 import org.frankframework.flow.projectsettings.FilterType;
@@ -31,15 +31,27 @@ public class ProjectService {
     private final ArrayList<Project> projects = new ArrayList<>();
 
     private static final String BASE_PATH = "classpath:project/";
+    private static final String DEFAULT_PROJECT_ROOT = "src/main/resources/project";
     private static final int MIN_PARTS_LENGTH = 2;
     private final ResourcePatternResolver resolver;
     private final Path projectsRoot;
 
     @Autowired
-    public ProjectService(ResourcePatternResolver resolver, @Value("${app.project.root}") String rootPath) {
+    public ProjectService(ResourcePatternResolver resolver, @Value("${app.project.root:}") String rootPath) {
         this.resolver = resolver;
-        this.projectsRoot = Paths.get(rootPath).toAbsolutePath().normalize();
+        this.projectsRoot = resolveProjectRoot(rootPath);
         initiateProjects();
+    }
+
+    private Path resolveProjectRoot(String rootPath) {
+        if (rootPath == null || rootPath.isBlank()) {
+            return Paths.get(DEFAULT_PROJECT_ROOT).toAbsolutePath().normalize();
+        }
+        return Paths.get(rootPath).toAbsolutePath().normalize();
+    }
+
+    public Path getProjectsRoot() {
+        return projectsRoot;
     }
 
     public Project createProject(String name, String rootPath) {
@@ -56,10 +68,6 @@ public class ProjectService {
         }
 
         throw new ProjectNotFoundException(String.format("Project with name: %s cannot be found", name));
-    }
-
-    public ArrayList<Project> getProjects() {
-        return projects;
     }
 
     public Project addConfigurations(String projectName, ArrayList<String> configurationPaths)
@@ -99,7 +107,7 @@ public class ProjectService {
         try {
             filterType = FilterType.valueOf(type.toUpperCase());
         } catch (IllegalArgumentException e) {
-            throw new InvalidFilterTypeException(type);
+            throw new InvalidFilterTypeException("Invalid filter type: " + type);
         }
 
         project.enableFilter(filterType);
@@ -115,7 +123,7 @@ public class ProjectService {
         try {
             filterType = FilterType.valueOf(type.toUpperCase());
         } catch (IllegalArgumentException e) {
-            throw new InvalidFilterTypeException(type);
+            throw new InvalidFilterTypeException("Invalid filter type: " + type);
         }
 
         project.disableFilter(filterType);
@@ -169,7 +177,7 @@ public class ProjectService {
         }
     }
 
-    public Project addConfiguration(String projectName, String configurationName) {
+    public Project addConfiguration(String projectName, String configurationName) throws ProjectNotFoundException {
         Project project = getProject(projectName);
 
         Configuration configuration = new Configuration(configurationName);

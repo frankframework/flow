@@ -32,6 +32,7 @@ import CreateNodeModal from '~/components/flow/create-node-modal'
 import { useProjectStore } from '~/stores/project-store'
 import { toast, ToastContainer } from 'react-toastify'
 import { useTheme } from '~/hooks/use-theme'
+import { apiUrl } from '~/utils/api'
 
 export type FlowNode = FrankNodeType | ExitNode | StickyNote | GroupNode | Node
 
@@ -527,7 +528,7 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
 
     try {
       if (!project) return
-      const url = `/api/projects/${encodeURIComponent(project.name)}/adapters`
+      const url = apiUrl(`/projects/${encodeURIComponent(project.name)}/adapters`)
       const response = await fetch(url, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },

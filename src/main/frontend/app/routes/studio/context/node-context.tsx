@@ -3,10 +3,9 @@ import { useCallback, useEffect, useState } from 'react'
 import useFlowStore, { isFrankNode } from '~/stores/flow-store'
 import Button from '~/components/inputs/button'
 import { useShallow } from 'zustand/react/shallow'
-import { useFFDoc } from '@frankframework/ff-doc/react'
-import variables from '../../../../environment/environment'
 import ContextInput from './context-input'
 import { findChildRecursive } from '~/stores/child-utilities'
+import { useFrankDoc } from '~/providers/frankdoc-provider'
 
 export default function NodeContext({
   nodeId,
@@ -22,8 +21,7 @@ export default function NodeContext({
   const [errorMessage, setErrorMessage] = useState('')
   const [inputValues, setInputValues] = useState<Record<number, string>>({})
 
-  const FRANK_DOC_URL = variables.frankDocJsonUrl
-  const { elements, ffDoc } = useFFDoc(FRANK_DOC_URL)
+  const { elements, ffDoc } = useFrankDoc()
   const { attributes, setIsEditing, parentId, setParentId, childParentId } = useNodeContextStore(
     useShallow((s) => ({
       attributes: s.attributes,
@@ -278,8 +276,8 @@ export default function NodeContext({
                 label={key}
                 attribute={attribute}
                 enumOptions={
-                  attribute.enum && ffDoc?.enums?.[attribute.enum]
-                    ? Object.keys(ffDoc.enums[attribute.enum]).reduce(
+                  attribute.enum && ffDoc?.ffDoc?.enums?.[attribute.enum]
+                    ? Object.keys(ffDoc?.ffDoc?.enums[attribute.enum]).reduce(
                         (result, key) => ({ ...result, [key]: key }),
                         {} as Record<string, string>,
                       )
