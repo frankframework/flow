@@ -66,11 +66,10 @@ export default function StudioFileStructure() {
         console.error('[Studio] Failed to load file tree', error)
       } finally {
         setIsTreeLoading(false)
-        setIsTreeLoading(false)
       }
     }
 
-    initProvider()
+    void initProvider()
   }, [project, project?.name])
 
   useEffect(() => {
