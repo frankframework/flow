@@ -37,26 +37,6 @@ function getItemTitle(item: TreeItem<FileNode>): string {
   return 'Unnamed'
 }
 
-function findConfigurationsDir(node: FileTreeNode | undefined | null): FileTreeNode | null {
-  if (!node || !node.path) {
-    return null
-  }
-
-  const normalizedPath = node.path.replaceAll('\\', '/')
-  if (node.type === 'DIRECTORY' && normalizedPath.endsWith('/src/main/configurations')) {
-    return node
-  }
-
-  if (!node.children) return null
-
-  for (const child of node.children) {
-    const found = findConfigurationsDir(child)
-    if (found) return found
-  }
-
-  return null
-}
-
 export default function StudioFileStructure() {
   const project = useProjectStore((state) => state.project)
   const [isTreeLoading, setIsTreeLoading] = useState(false)
