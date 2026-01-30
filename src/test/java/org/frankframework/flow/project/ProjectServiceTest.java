@@ -53,9 +53,7 @@ class ProjectServiceTest {
 
         projectService.createProject(projectName, rootPath);
 
-        assertThrows(
-                ProjectAlreadyExistsException.class,
-                () -> projectService.createProject(projectName, rootPath));
+        assertThrows(ProjectAlreadyExistsException.class, () -> projectService.createProject(projectName, rootPath));
     }
 
     @Test
