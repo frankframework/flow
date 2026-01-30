@@ -531,41 +531,23 @@ function convertChildren(elements: Element[], idCounter: IdCounter): ChildNode[]
 }
 
 // ----------------------------------------------------------------------------- HELPERS -----------------------------------------------------------------------------
-function findSuccessExit(nodes: FlowNode[]): FlowNode | undefined {
-  return nodes.find((node) => {
-    if (node.type !== 'exitNode') return false
-
-    const data = node.data
-    if (typeof data !== 'object' || data === null) return false
-
-    // Check for 'name' directly (case-insensitive)
-    if ('name' in data && typeof data.name === 'string' && data.name.toLowerCase() === 'success') {
-      return true
-    }
-
-    // Check for 'state' inside attributes if it exists (case-insensitive)
-    if ('attributes' in data && data.attributes && typeof data.attributes === 'object') {
-      const attrs = data.attributes as Record<string, string>
-      const state = attrs['state']
-      return state.toLowerCase() === 'success'
-    }
-
-    return false
-  })
-}
-
 function isSuccessExit(node: FlowNode): boolean {
+  const success = 'success'
   if (node.type !== 'exitNode') return false
 
   const data = node.data
   if (!data || typeof data !== 'object') return false
 
-  if ('attributes' in data && data.attributes) {
-    const state = (data.attributes as Record<string, string>).state
-    return state?.toUpperCase() === 'SUCCESS'
+  if (!('attributes' in data) || typeof data.attributes !== 'object' || !data.attributes) {
+    return false
   }
 
-  return false
+  const state = (data.attributes as Record<string, string>).state
+  return state?.toLowerCase() === success
+}
+
+function findSuccessExit(nodes: FlowNode[]): FlowNode | undefined {
+  return nodes.find((node) => isSuccessExit(node))
 }
 
 function hasExplicitPipeForward(
