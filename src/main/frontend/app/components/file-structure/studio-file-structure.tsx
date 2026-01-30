@@ -19,7 +19,7 @@ import {
 } from 'react-complex-tree'
 import FilesDataProvider from '~/components/file-structure/studio-files-data-provider'
 import { useProjectStore } from '~/stores/project-store'
-import type { FileNode } from './editor-data-provider'
+import type { FileNode, FileTreeNode } from './editor-data-provider'
 
 const TREE_ID = 'studio-files-tree'
 
@@ -73,7 +73,7 @@ export default function StudioFileStructure() {
   const getTab = useTabStore((state) => state.getTab)
 
   useEffect(() => {
-    const loadFileTree = async () => {
+    const initProvider = async () => {
       if (!project) return
 
       setIsTreeLoading(true)
@@ -81,7 +81,7 @@ export default function StudioFileStructure() {
       try {
         // Create a new provider for this project
         const provider = new FilesDataProvider(project.name)
-        dataProviderReference.current = provider
+        setDataProvider(provider)
       } catch (error) {
         console.error('[Studio] Failed to load file tree', error)
       } finally {
@@ -155,12 +155,12 @@ export default function StudioFileStructure() {
 
     const path = item.data.path
 
-    if (path.endsWith('.xml')) {
+    if (path.endsWith('.xml') && dataProvider) {
       // XML configs can contain adapters
-      await dataProviderReference.current.loadAdapters(item.index)
+      if (dataProvider) await dataProvider.loadAdapters(item.index)
     } else {
       // Normal directory
-      await dataProviderReference.current.loadDirectory(item.index)
+      if (dataProvider) await dataProvider.loadDirectory(item.index)
     }
   }
 

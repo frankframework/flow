@@ -93,7 +93,7 @@ export default function EditorFileStructure() {
     }
 
     findMatchingItems()
-  }, [searchTerm, filepaths, dataProvider])
+  }, [searchTerm, dataProvider])
 
   const openFileTab = (filePath: string, fileName: string) => {
     if (!getTab(filePath)) {

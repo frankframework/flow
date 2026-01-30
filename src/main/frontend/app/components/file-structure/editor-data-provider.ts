@@ -50,12 +50,11 @@ export default class EditorFilesDataProvider implements TreeDataProvider {
 
       const root: FileTreeNode = await response.json()
 
-      if (!tree) {
+      if (!root) {
         console.warn('[EditorFilesDataProvider] Received empty tree from API')
         this.data = {}
         return
       }
-
 
       this.data['root'] = {
         index: 'root',
@@ -95,7 +94,7 @@ export default class EditorFilesDataProvider implements TreeDataProvider {
     if (this.loadedDirectories.has(item.data.path)) return
 
     try {
-      const response = await fetch(`/api/projects/${this.projectName}?path=${encodeURIComponent(item.data.path)}`)
+      const response = await fetch(apiUrl(`/projects/${this.projectName}?path=${encodeURIComponent(item.data.path)}`))
       if (!response.ok) throw new Error('Failed to fetch directory')
 
       const dir: FileTreeNode = await response.json()
