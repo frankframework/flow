@@ -1,7 +1,10 @@
 package org.frankframework.flow.project;
 
-public class ProjectAlreadyExistsException extends RuntimeException {
+import org.frankframework.flow.exception.ApiException;
+import org.springframework.http.HttpStatus;
+
+public class ProjectAlreadyExistsException extends ApiException {
     public ProjectAlreadyExistsException(String message) {
-        super(message);
+        super(message, HttpStatus.CONFLICT);
     }
 }

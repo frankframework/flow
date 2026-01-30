@@ -1,6 +1,7 @@
 import { Link } from 'react-router'
 import RoundedToggle from '~/components/inputs/rounded-toggle'
 import { useProjectStore } from '~/stores/project-store'
+import { apiUrl } from '~/utils/api'
 
 export default function ProjectSettings() {
   const project = useProjectStore((state) => state.project)
@@ -14,7 +15,7 @@ export default function ProjectSettings() {
 
     try {
       const response = await fetch(
-        `api/projects/${encodeURIComponent(project.name)}/filters/${encodeURIComponent(filter)}/${action}`,
+        apiUrl(`/projects/${encodeURIComponent(project.name)}/filters/${encodeURIComponent(filter)}/${action}`),
         { method: 'PATCH' },
       )
 

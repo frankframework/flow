@@ -1,5 +1,4 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
 
 export enum SidebarSide {
   LEFT = 0,
@@ -9,90 +8,31 @@ export enum SidebarSide {
 
 export type VisibilityState = [boolean, boolean, boolean]
 
-interface SideBarInstance {
-  visible: VisibilityState
-  sizes: number[]
-}
-
 interface SidebarState {
-  instances: Record<string, SideBarInstance>
-
-  initializeInstance: (name: string, defaultVisible?: VisibilityState) => void
-  toggleSidebar: (name: string, side: SidebarSide) => void
-  setSizes: (name: string, sizes: number[]) => void
-  setVisible: (name: string, side: SidebarSide, value: boolean) => void
+  visibility: Record<string, VisibilityState>
+  setVisibility: (name: string, side: SidebarSide, value: boolean) => void
+  getVisibility: (name: string) => VisibilityState
 }
 
 const DEFAULT_VISIBILITY: VisibilityState = [true, true, true]
 
-export const useSidebarStore = create<SidebarState>()(
-  persist(
-    (set) => ({
-      instances: {},
+export const useSidebarStore = create<SidebarState>((set, get) => ({
+  visibility: {},
 
-      initializeInstance: (name, defaultVisible = DEFAULT_VISIBILITY) =>
-        set((state) => {
-          if (state.instances[name]) return state
-
-          return {
-            instances: {
-              ...state.instances,
-              [name]: {
-                visible: defaultVisible,
-                sizes: [],
-              },
-            },
-          }
-        }),
-
-      toggleSidebar: (name, side) =>
-        set((state) => {
-          const instance = state.instances[name]
-          if (!instance) return state
-
-          const newVisible: VisibilityState = [...instance.visible]
-          newVisible[side] = !newVisible[side]
-
-          return updateInstanceState(state, name, { visible: newVisible })
-        }),
-
-      setSizes: (name, sizes) =>
-        set((state) => {
-          const instance = state.instances[name]
-          if (!instance) return state
-
-          return updateInstanceState(state, name, { sizes })
-        }),
-
-      setVisible: (name, side, value) =>
-        set((state) => {
-          const instance = state.instances[name]
-          if (!instance) return state
-
-          const newVisible: VisibilityState = [...instance.visible]
-          newVisible[side] = value
-
-          return updateInstanceState(state, name, { visible: newVisible })
-        }),
+  setVisibility: (name, side, value) =>
+    set((state) => {
+      const current = state.visibility[name] ?? [...DEFAULT_VISIBILITY]
+      const updated: VisibilityState = [...current] as VisibilityState
+      updated[side] = value
+      return {
+        visibility: {
+          ...state.visibility,
+          [name]: updated,
+        },
+      }
     }),
-    {
-      name: 'sidebar-storage',
-    },
-  ),
-)
 
-function updateInstanceState(
-  state: SidebarState,
-  name: string,
-  updates: Partial<SideBarInstance>,
-): Partial<SidebarState> {
-  return {
-    instances: {
-      ...state.instances,
-      [name]: {
-        ...state.instances[name],
-        ...updates,
-      },
-    },
-  }
-}
+  getVisibility: (name) => {
+    return get().visibility[name] ?? DEFAULT_VISIBILITY
+  },
+}))

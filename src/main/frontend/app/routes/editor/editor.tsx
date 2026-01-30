@@ -4,22 +4,20 @@ import SidebarHeader from '~/components/sidebars-layout/sidebar-header'
 import SidebarLayout from '~/components/sidebars-layout/sidebar-layout'
 import { SidebarSide } from '~/components/sidebars-layout/sidebar-layout-store'
 import SidebarContentClose from '~/components/sidebars-layout/sidebar-content-close'
-import useTabStore from '~/stores/tab-store'
 import { useTheme } from '~/hooks/use-theme'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { getXmlString } from '~/routes/studio/xml-to-json-parser'
-import variables from '../../../environment/environment'
-import { useFFDoc } from '@frankframework/ff-doc/react'
 import { useProjectStore } from '~/stores/project-store'
 import EditorFileStructure from '~/components/file-structure/editor-file-structure'
 import useEditorTabStore from '~/stores/editor-tab-store'
 import EditorTabs from '~/components/tabs/editor-tabs'
 import type { ElementDetails, Attribute, EnumValue } from '~/types/ff-doc.types'
+import { apiUrl } from '~/utils/api'
+import { useFrankDoc } from '~/providers/frankdoc-provider'
 
 export default function CodeEditor() {
   const theme = useTheme()
-  const FRANK_DOC_URL = variables.frankDocJsonUrl
-  const { elements } = useFFDoc(FRANK_DOC_URL)
+  const { elements } = useFrankDoc()
   const project = useProjectStore.getState().project
   const [tabs, setTabs] = useState(useEditorTabStore.getState().tabs)
   const [activeTabFilePath, setActiveTabFilePath] = useState<string>(useEditorTabStore.getState().activeTabFilePath)
@@ -225,7 +223,7 @@ export default function CodeEditor() {
     setIsSaving(true)
 
     try {
-      const url = `/api/projects/${project.name}/configuration`
+      const url = apiUrl(`/projects/${project.name}/configuration`)
       const response = await fetch(url, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -255,7 +253,7 @@ export default function CodeEditor() {
   }
 
   return (
-    <SidebarLayout name="editor" windowResizeOnChange={true}>
+    <SidebarLayout name="editor">
       <>
         <SidebarHeader side={SidebarSide.LEFT} title="Files" />
         <EditorFileStructure />

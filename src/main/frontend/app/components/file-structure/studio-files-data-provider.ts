@@ -2,21 +2,22 @@ import type { Disposable, TreeDataProvider, TreeItem, TreeItemIndex } from 'reac
 import type { FileTreeNode } from './editor-data-provider'
 import { getAdapterListenerType, getAdapterNamesFromConfiguration } from '~/routes/studio/xml-to-json-parser'
 import { sortChildren } from './tree-utilities'
+import { apiUrl } from '~/utils/api'
 
 export default class FilesDataProvider implements TreeDataProvider {
   private data: Record<TreeItemIndex, TreeItem> = {}
   private readonly treeChangeListeners: ((changedItemIds: TreeItemIndex[]) => void)[] = []
-  private projectName: string
+  private readonly projectName: string
   private loadedDirectories = new Set<string>()
 
   constructor(projectName: string) {
     this.projectName = projectName
-    void this.loadRoot()
+    this.loadRoot()
   }
 
-  /** Update the tree using a backend fileTree */
+  // Load root directory
   private async loadRoot() {
-    const response = await fetch(`/api/projects/${this.projectName}/tree/configurations?shallow=true`)
+    const response = await fetch(apiUrl(`/projects/${this.projectName}/tree/configurations?shallow=true`))
     if (!response.ok) throw new Error(`Failed to fetch root: ${response.status}`)
 
     const root: FileTreeNode = await response.json()
@@ -57,7 +58,7 @@ export default class FilesDataProvider implements TreeDataProvider {
     try {
       if (!item.children) item.children = []
 
-      const response = await fetch(`/api/projects/${this.projectName}?path=${encodeURIComponent(item.data.path)}`)
+      const response = await fetch(apiUrl(`/projects/${this.projectName}?path=${encodeURIComponent(item.data.path)}`))
       if (!response.ok) throw new Error('Failed to fetch directory')
 
       const dir: FileTreeNode = await response.json()

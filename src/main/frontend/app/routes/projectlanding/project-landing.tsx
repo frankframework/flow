@@ -8,8 +8,10 @@ import { useProjectStore } from '~/stores/project-store'
 import { useLocation } from 'react-router'
 import NewProjectModal from './new-project-modal'
 import LoadProjectModal from './load-project-modal'
+import { apiUrl } from '~/utils/api'
 import { toast, ToastContainer } from 'react-toastify'
 import { useTheme } from '~/hooks/use-theme'
+import React from 'react'
 
 export interface Project {
   name: string
@@ -33,7 +35,7 @@ export default function ProjectLanding() {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const response = await fetch('/api/projects')
+        const response = await fetch(apiUrl('/projects'))
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`)
         }
@@ -54,9 +56,9 @@ export default function ProjectLanding() {
     clearProject()
   }, [location.key, clearProject])
 
-  const createProject = async (projectName: string, rootPath: string) => {
+  const createProject = async (projectName: string, rootPath?: string) => {
     try {
-      const response = await fetch(`/api/projects`, {
+      const response = await fetch(apiUrl('/projects'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -70,7 +72,22 @@ export default function ProjectLanding() {
         const contentType = response.headers.get('content-type')
         if (contentType && contentType.includes('application/json')) {
           const errorData = await response.json()
-          toast.error(`Error loading project: ${errorData.error}\nDetails: ${errorData.message}`)
+          toast.error(
+            <div>
+              Error loading project: Statuscode {errorData.httpStatus}
+              <br />
+              <br />
+              Details:
+              <br />
+              {errorData.messages.map((message: string, index: number) => (
+                <React.Fragment key={index}>
+                  {message}
+                  <br />
+                </React.Fragment>
+              ))}
+            </div>,
+          )
+
           console.error('Something went wrong loading the project:', errorData)
         } else {
           toast.error(`Error loading project. HTTP status: ${response.status}`)
