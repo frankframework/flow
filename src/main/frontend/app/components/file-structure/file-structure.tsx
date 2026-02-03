@@ -1,4 +1,4 @@
-import React, { type JSX, useEffect, useRef, useState } from 'react'
+import React, { type JSX, useCallback, useEffect, useRef, useState } from 'react'
 import { getListenerIcon } from './tree-utilities'
 import useTabStore from '~/stores/tab-store'
 import Search from '~/components/search/search'
@@ -61,6 +61,7 @@ export default function FileStructure() {
   const tree = useRef<TreeRef>(null)
 
   const [dataProvider, setDataProvider] = useState<FilesDataProvider | null>(null)
+  const [providerLoading, setProviderLoading] = useState(false)
   const setTabData = useTabStore((state) => state.setTabData)
   const setActiveTab = useTabStore((state) => state.setActiveTab)
   const getTab = useTabStore((state) => state.getTab)
@@ -71,16 +72,19 @@ export default function FileStructure() {
     if (!project || !treeData) return
 
     const initProvider = async () => {
+      setProviderLoading(true)
       const configurationsRoot = findConfigurationsDir(treeData)
 
       if (!configurationsRoot) {
         setDataProvider(null)
+        setProviderLoading(false)
         return
       }
 
       const provider = new FilesDataProvider(project.name)
       await provider.updateData(configurationsRoot)
       setDataProvider(provider)
+      setProviderLoading(false)
     }
 
     initProvider()
@@ -117,32 +121,38 @@ export default function FileStructure() {
     findMatchingItems()
   }, [searchTerm, dataProvider])
 
-  const openNewTab = (adapterName: string, configPath: string) => {
-    if (!getTab(adapterName)) {
-      setTabData(adapterName, {
-        name: adapterName,
-        configurationPath: configPath,
-        flowJson: {},
-      })
-    }
-    setActiveTab(adapterName)
-  }
+  const openNewTab = useCallback(
+    (adapterName: string, configPath: string) => {
+      if (!getTab(adapterName)) {
+        setTabData(adapterName, {
+          name: adapterName,
+          configurationPath: configPath,
+          flowJson: {},
+        })
+      }
+      setActiveTab(adapterName)
+    },
+    [getTab, setTabData, setActiveTab],
+  )
 
-  const handleItemClickAsync = async (itemIds: TreeItemIndex[]) => {
-    if (!dataProvider || itemIds.length === 0) return
+  const handleItemClickAsync = useCallback(
+    async (itemIds: TreeItemIndex[]) => {
+      if (!dataProvider || itemIds.length === 0) return
 
-    const itemId = itemIds[0]
-    if (typeof itemId !== 'string') return
+      const itemId = itemIds[0]
+      if (typeof itemId !== 'string') return
 
-    const item = await dataProvider.getTreeItem(itemId)
-    if (!item || item.isFolder) return
+      const item = await dataProvider.getTreeItem(itemId)
+      if (!item || item.isFolder) return
 
-    const data = item.data
-    if (typeof data === 'object' && data !== null && 'adapterName' in data && 'configPath' in data) {
-      const { adapterName, configPath } = data as { adapterName: string; configPath: string }
-      openNewTab(adapterName, configPath)
-    }
-  }
+      const data = item.data
+      if (typeof data === 'object' && data !== null && 'adapterName' in data && 'configPath' in data) {
+        const { adapterName, configPath } = data as { adapterName: string; configPath: string }
+        openNewTab(adapterName, configPath)
+      }
+    },
+    [dataProvider, openNewTab],
+  )
 
   const handleItemClick = (items: TreeItemIndex[], _treeId: string): void => {
     void handleItemClickAsync(items)
@@ -177,7 +187,7 @@ export default function FileStructure() {
 
     globalThis.addEventListener('keydown', handleKeyDown)
     return () => globalThis.removeEventListener('keydown', handleKeyDown)
-  }, [matchingItemIds, highlightedItemId])
+  }, [matchingItemIds, highlightedItemId, handleItemClickAsync])
 
   useEffect(() => {
     if (activeMatchIndex === -1 || !tree.current) return
@@ -265,7 +275,7 @@ export default function FileStructure() {
   }
 
   if (!project) return <p className="text-muted-foreground p-4 text-sm">No Project Selected</p>
-  if (isTreeLoading) return <LoadingSpinner message="Loading configurations..." className="p-8" />
+  if (isTreeLoading || providerLoading) return <LoadingSpinner message="Loading configurations..." className="p-8" />
   if (!dataProvider)
     return <p className="text-muted-foreground p-4 text-sm">No configurations found in src/main/configurations</p>
 

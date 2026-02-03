@@ -18,7 +18,6 @@ export default function CodeEditor() {
   const theme = useTheme()
   const { elements } = useFrankDoc()
   const project = useProjectStore.getState().project
-  const [tabs, setTabs] = useState(useEditorTabStore.getState().tabs)
   const [activeTabFilePath, setActiveTabFilePath] = useState<string>(useEditorTabStore.getState().activeTabFilePath)
   const [xmlContent, setXmlContent] = useState<string>('')
   const editorReference = useRef<Parameters<OnMount>[0] | null>(null)
@@ -30,9 +29,6 @@ export default function CodeEditor() {
   }
 
   useEffect(() => {
-    const unsubTabs = useEditorTabStore.subscribe((state) => {
-      setTabs(state.tabs)
-    })
     const unsubActiveTab = useEditorTabStore.subscribe(
       (state) => state.activeTabFilePath,
       (newActiveTab) => {
@@ -40,7 +36,6 @@ export default function CodeEditor() {
       },
     )
     return () => {
-      unsubTabs()
       unsubActiveTab()
     }
   }, [])

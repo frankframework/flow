@@ -1,4 +1,4 @@
-import React, { type JSX, useEffect, useRef, useState } from 'react'
+import React, { type JSX, useCallback, useEffect, useRef, useState } from 'react'
 import Search from '~/components/search/search'
 import LoadingSpinner from '~/components/loading-spinner'
 import FolderIcon from '../../../icons/solar/Folder.svg?react'
@@ -96,30 +96,36 @@ export default function EditorFileStructure() {
     findMatchingItems()
   }, [searchTerm, dataProvider])
 
-  const openFileTab = (filePath: string, fileName: string) => {
-    if (!getTab(filePath)) {
-      setTabData(filePath, {
-        name: fileName,
-        configurationPath: filePath,
-      })
-    }
-    setActiveTab(filePath)
-  }
+  const openFileTab = useCallback(
+    (filePath: string, fileName: string) => {
+      if (!getTab(filePath)) {
+        setTabData(filePath, {
+          name: fileName,
+          configurationPath: filePath,
+        })
+      }
+      setActiveTab(filePath)
+    },
+    [getTab, setTabData, setActiveTab],
+  )
 
-  const handleItemClickAsync = async (itemIds: TreeItemIndex[]) => {
-    if (!dataProvider || itemIds.length === 0) return
+  const handleItemClickAsync = useCallback(
+    async (itemIds: TreeItemIndex[]) => {
+      if (!dataProvider || itemIds.length === 0) return
 
-    const itemId = itemIds[0]
-    if (typeof itemId !== 'string') return
+      const itemId = itemIds[0]
+      if (typeof itemId !== 'string') return
 
-    const item = await dataProvider.getTreeItem(itemId)
-    if (!item || item.isFolder) return
+      const item = await dataProvider.getTreeItem(itemId)
+      if (!item || item.isFolder) return
 
-    const filePath = item.data.path
-    const fileName = item.data.name
+      const filePath = item.data.path
+      const fileName = item.data.name
 
-    openFileTab(filePath, fileName)
-  }
+      openFileTab(filePath, fileName)
+    },
+    [dataProvider, openFileTab],
+  )
 
   const handleItemClick = (items: TreeItemIndex[], _treeId: string): void => {
     void handleItemClickAsync(items)
@@ -154,7 +160,7 @@ export default function EditorFileStructure() {
 
     globalThis.addEventListener('keydown', handleKeyDown)
     return () => globalThis.removeEventListener('keydown', handleKeyDown)
-  }, [matchingItemIds, highlightedItemId])
+  }, [matchingItemIds, highlightedItemId, handleItemClickAsync])
 
   useEffect(() => {
     if (!tree.current) return
