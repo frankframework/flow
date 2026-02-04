@@ -1,28 +1,21 @@
 package org.frankframework.flow.project;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 import lombok.Getter;
 import org.frankframework.flow.adapter.AdapterNotFoundException;
 import org.frankframework.flow.configuration.Configuration;
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
 import org.frankframework.flow.projectsettings.FilterType;
 import org.frankframework.flow.projectsettings.InvalidFilterTypeException;
-import org.frankframework.flow.utility.XmlAdapterUtils;
-import org.frankframework.flow.utility.XmlSecurityUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.stereotype.Service;
-import org.w3c.dom.Document;
-import org.w3c.dom.Node;
-import org.xml.sax.SAXParseException;
 
 @Service
 public class ProjectService {
@@ -30,28 +23,95 @@ public class ProjectService {
     @Getter
     private final ArrayList<Project> projects = new ArrayList<>();
 
-    private static final String BASE_PATH = "classpath:project/";
-    private static final String DEFAULT_PROJECT_ROOT = "src/main/resources/project";
-    private static final int MIN_PARTS_LENGTH = 2;
-    private final ResourcePatternResolver resolver;
-    private final Path projectsRoot;
+    private static final String CONFIGURATIONS_DIR = "src/main/configurations";
+    private static final String DEFAULT_CONFIGURATION_XML =
+            """
+            <Configuration name="DefaultConfig">
+                <Adapter name="SampleAdapter">
+                    <Receiver name="SampleReceiver">
+                        <ApiListener method="GET" uriPattern="/sample" />
+                    </Receiver>
+                    <Pipeline>
+                        <FixedResultPipe name="Result" returnString="Hello from Flow!" />
+                    </Pipeline>
+                </Adapter>
+            </Configuration>
+            """;
 
-    @Autowired
-    public ProjectService(ResourcePatternResolver resolver, @Value("${app.project.root:}") String rootPath) {
-        this.resolver = resolver;
-        this.projectsRoot = resolveProjectRoot(rootPath);
-        initiateProjects();
-    }
-
-    private Path resolveProjectRoot(String rootPath) {
-        if (rootPath == null || rootPath.isBlank()) {
-            return Paths.get(DEFAULT_PROJECT_ROOT).toAbsolutePath().normalize();
+    public Project createProjectOnDisk(String absolutePath) throws IOException {
+        if (absolutePath == null || absolutePath.isBlank()) {
+            throw new IllegalArgumentException("Project path must not be blank");
         }
-        return Paths.get(rootPath).toAbsolutePath().normalize();
+
+        Path projectDir = Paths.get(absolutePath).toAbsolutePath().normalize();
+        if (Files.exists(projectDir)) {
+            throw new IllegalArgumentException("Project directory already exists: " + absolutePath);
+        }
+
+        Path configurationsDir = projectDir.resolve(CONFIGURATIONS_DIR);
+        Files.createDirectories(configurationsDir);
+
+        Path configFile = configurationsDir.resolve("Configuration.xml");
+        Files.writeString(configFile, DEFAULT_CONFIGURATION_XML, StandardCharsets.UTF_8);
+
+        String name = projectDir.getFileName().toString();
+        String rootPath = projectDir.toString();
+
+        Project project = new Project(name, rootPath);
+        Configuration configuration = new Configuration(configFile.toAbsolutePath().normalize().toString());
+        configuration.setXmlContent(DEFAULT_CONFIGURATION_XML);
+        project.addConfiguration(configuration);
+
+        projects.add(project);
+        return project;
     }
 
-    public Path getProjectsRoot() {
-        return projectsRoot;
+    public Project openProjectFromDisk(String absolutePath) throws IOException {
+        Path projectDir = Paths.get(absolutePath).toAbsolutePath().normalize();
+
+        // Check if already registered in memory
+        for (Project project : projects) {
+            if (Paths.get(project.getRootPath()).toAbsolutePath().normalize().equals(projectDir)) {
+                return project;
+            }
+        }
+
+        if (!Files.exists(projectDir) || !Files.isDirectory(projectDir)) {
+            throw new IllegalArgumentException("Project directory does not exist: " + absolutePath);
+        }
+
+        String name = projectDir.getFileName().toString();
+        String rootPath = projectDir.toString();
+
+        Project project = new Project(name, rootPath);
+
+        // Scan for XML files in src/main/configurations/
+        Path configurationsDir = projectDir.resolve(CONFIGURATIONS_DIR);
+        if (Files.exists(configurationsDir) && Files.isDirectory(configurationsDir)) {
+            scanXmlFiles(configurationsDir, project);
+        } else {
+            // Fallback: scan project root for XML files (backward compat)
+            scanXmlFiles(projectDir, project);
+        }
+
+        projects.add(project);
+        return project;
+    }
+
+    private void scanXmlFiles(Path directory, Project project) throws IOException {
+        try (Stream<Path> paths = Files.walk(directory)) {
+            List<Path> xmlFiles = paths.filter(Files::isRegularFile)
+                    .filter(p -> p.toString().endsWith(".xml"))
+                    .toList();
+
+            for (Path xmlFile : xmlFiles) {
+                String absolutePath = xmlFile.toAbsolutePath().normalize().toString();
+                String xmlContent = Files.readString(xmlFile, StandardCharsets.UTF_8);
+                Configuration configuration = new Configuration(absolutePath);
+                configuration.setXmlContent(xmlContent);
+                project.addConfiguration(configuration);
+            }
+        }
     }
 
     public Project createProject(String name, String rootPath) {
@@ -139,40 +199,37 @@ public class ProjectService {
                 .findFirst();
 
         if (configOptional.isEmpty()) {
-            System.err.println("Configuration not found: " + configurationPath);
             throw new ConfigurationNotFoundException("Configuration not found: " + configurationPath);
         }
 
         Configuration config = configOptional.get();
 
         try {
-            // Parse existing config
-            Document configDoc = XmlSecurityUtils.createSecureDocumentBuilder()
-                    .parse(new ByteArrayInputStream(config.getXmlContent().getBytes(StandardCharsets.UTF_8)));
+            var configDoc = org.frankframework.flow.utility.XmlSecurityUtils.createSecureDocumentBuilder()
+                    .parse(new java.io.ByteArrayInputStream(config.getXmlContent().getBytes(StandardCharsets.UTF_8)));
 
-            // Parse new adapter
-            Document newAdapterDoc = XmlSecurityUtils.createSecureDocumentBuilder()
-                    .parse(new ByteArrayInputStream(newAdapterXml.getBytes(StandardCharsets.UTF_8)));
+            var newAdapterDoc = org.frankframework.flow.utility.XmlSecurityUtils.createSecureDocumentBuilder()
+                    .parse(new java.io.ByteArrayInputStream(newAdapterXml.getBytes(StandardCharsets.UTF_8)));
 
-            Node newAdapterNode = configDoc.importNode(newAdapterDoc.getDocumentElement(), true);
+            var newAdapterNode = configDoc.importNode(newAdapterDoc.getDocumentElement(), true);
 
-            if (!XmlAdapterUtils.replaceAdapterInDocument(configDoc, adapterName, newAdapterNode)) {
+            if (!org.frankframework.flow.utility.XmlAdapterUtils.replaceAdapterInDocument(
+                    configDoc, adapterName, newAdapterNode)) {
                 throw new AdapterNotFoundException("Adapter not found: " + adapterName);
             }
 
-            String xmlOutput = XmlAdapterUtils.convertDocumentToString(configDoc);
+            String xmlOutput = org.frankframework.flow.utility.XmlAdapterUtils.convertDocumentToString(configDoc);
             config.setXmlContent(xmlOutput);
 
             return true;
 
         } catch (AdapterNotFoundException | ConfigurationNotFoundException | ProjectNotFoundException e) {
             throw e;
-        } catch (SAXParseException e) {
+        } catch (org.xml.sax.SAXParseException e) {
             System.err.println("Invalid XML for adapter " + adapterName + ": " + e.getMessage());
             return false;
         } catch (Exception e) {
             System.err.println("Unexpected error updating adapter: " + e.getMessage());
-            e.printStackTrace();
             return false;
         }
     }
@@ -183,50 +240,5 @@ public class ProjectService {
         Configuration configuration = new Configuration(configurationName);
         project.addConfiguration(configuration);
         return project;
-    }
-
-    /**
-     * Dynamically scan all project folders under /resources/project/
-     * Each subdirectory = a project
-     * Each .xml file = a configuration
-     */
-    private void initiateProjects() {
-        try {
-            // Find all XML files recursively under /project/
-            Resource[] xmlResources = resolver.getResources(BASE_PATH + "**/*.xml");
-
-            for (Resource resource : xmlResources) {
-                String path = resource.getURI().toString();
-
-                // Example path: file:/.../resources/project/testproject/Configuration1.xml
-                // Extract the project name between "project/" and the next "/"
-                String[] parts = path.split("/project/");
-                if (parts.length < MIN_PARTS_LENGTH) continue;
-
-                String relativePath = parts[1]; // e.g. "testproject/Configuration1.xml"
-                String projectName = relativePath.substring(0, relativePath.indexOf("/"));
-
-                // Get or create the Project object
-                Project project;
-                try {
-                    project = getProject(projectName);
-                } catch (ProjectNotFoundException e) {
-                    project = createProject(projectName, projectsRoot.toString());
-                }
-
-                // Load XML content
-                String filename = resource.getFilename();
-                String xmlContent = new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-
-                // Create Configuration and add to Project
-                Configuration configuration = new Configuration(filename);
-                configuration.setXmlContent(xmlContent);
-                project.addConfiguration(configuration);
-            }
-
-        } catch (IOException e) {
-            System.err.println("Error initializing projects: " + e.getMessage());
-            e.printStackTrace();
-        }
     }
 }

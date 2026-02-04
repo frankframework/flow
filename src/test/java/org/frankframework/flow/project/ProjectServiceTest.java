@@ -24,16 +24,11 @@ import org.springframework.core.io.support.ResourcePatternResolver;
 
 @ExtendWith(MockitoExtension.class)
 class ProjectServiceTest {
-
-    @Mock
-    private ResourcePatternResolver resolver;
-
     private ProjectService projectService;
 
     @BeforeEach
-    void init() throws IOException {
-        when(resolver.getResources(anyString())).thenReturn(new Resource[0]);
-        projectService = new ProjectService(resolver, "/path/to/projects");
+    void init() {
+        projectService = new ProjectService();
     }
 
     @Test
