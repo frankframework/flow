@@ -50,7 +50,6 @@ export default function EditorFileStructure() {
 
     const initProvider = async () => {
       const provider = new EditorFilesDataProvider(project.name)
-      await provider.loadData()
 
       if (isMounted) {
         setDataProvider(provider)
@@ -114,22 +113,20 @@ export default function EditorFileStructure() {
       if (!dataProvider || itemIds.length === 0) return
 
       const itemId = itemIds[0]
-      if (typeof itemId !== 'string') return
-
       const item = await dataProvider.getTreeItem(itemId)
-      if (!item || item.isFolder) return
+      if (!item) return
 
-      const filePath = item.data.path
-      const fileName = item.data.name
+      // Fetch contents and expand folder if folder
+      if (item.isFolder) {
+        await dataProvider.loadDirectory(itemId)
+        return
+      }
 
-      openFileTab(filePath, fileName)
+      // Load file in editor tab if file
+      openFileTab(item.data.path, item.data.name)
     },
     [dataProvider, openFileTab],
   )
-
-  const handleItemClick = (items: TreeItemIndex[], _treeId: string): void => {
-    void handleItemClickAsync(items)
-  }
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -184,12 +181,19 @@ export default function EditorFileStructure() {
   const renderItemArrow = ({ item, context }: { item: TreeItem; context: TreeItemRenderContext }) => {
     if (!item.isFolder) return null
     const Icon = context.isExpanded ? AltArrowDownIcon : AltArrowRightIcon
-    return (
-      <Icon
-        onClick={context.toggleExpandedState}
-        className="rct-tree-item-arrow-isFolder rct-tree-item-arrow fill-foreground"
-      />
-    )
+
+    const handleClick = async (event: React.MouseEvent) => {
+      event.stopPropagation()
+
+      // Only load when expanding
+      if (!context.isExpanded && dataProvider) {
+        await dataProvider.loadDirectory(item.index)
+      }
+
+      context.toggleExpandedState()
+    }
+
+    return <Icon onClick={handleClick} className="rct-tree-item-arrow-isFolder rct-tree-item-arrow fill-foreground" />
   }
 
   const renderItemTitle = ({
@@ -250,7 +254,7 @@ export default function EditorFileStructure() {
           viewState={{}}
           getItemTitle={getItemTitle}
           dataProvider={dataProvider}
-          onSelectItems={handleItemClick}
+          onSelectItems={handleItemClickAsync}
           canSearch={false}
           renderItemArrow={renderItemArrow}
           renderItemTitle={renderItemTitle}

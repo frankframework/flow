@@ -44,7 +44,21 @@ export async function fetchProjectRoot(signal?: AbortSignal): Promise<{ rootPath
 }
 
 export async function fetchProjectTree(projectName: string, signal?: AbortSignal): Promise<FileTreeNode> {
+  return apiFetch<FileTreeNode>(`/projects/${encodeURIComponent(projectName)}/tree/configurations`, { signal })
+}
+
+export async function fetchProjectRootTree(projectName: string, signal?: AbortSignal): Promise<FileTreeNode> {
   return apiFetch<FileTreeNode>(`/projects/${encodeURIComponent(projectName)}/tree`, { signal })
+}
+
+export async function fetchDirectoryByPath(
+  projectName: string,
+  path: string,
+  signal?: AbortSignal,
+): Promise<FileTreeNode> {
+  return apiFetch<FileTreeNode>(`/projects/${encodeURIComponent(projectName)}?path=${encodeURIComponent(path)}`, {
+    signal,
+  })
 }
 
 export async function toggleProjectFilter(projectName: string, filter: string, enable: boolean): Promise<void> {
