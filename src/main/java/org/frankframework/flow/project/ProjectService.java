@@ -17,29 +17,22 @@ import org.frankframework.flow.configuration.Configuration;
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
 import org.frankframework.flow.projectsettings.FilterType;
 import org.frankframework.flow.projectsettings.InvalidFilterTypeException;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
+@Getter
 @Slf4j
 @Service
 public class ProjectService {
 
-    @Getter
     private final List<Project> projects = new CopyOnWriteArrayList<>();
 
     private static final String CONFIGURATIONS_DIR = "src/main/configurations";
-    private static final String DEFAULT_CONFIGURATION_XML =
-            """
-            <Configuration name="DefaultConfig">
-                <Adapter name="SampleAdapter">
-                    <Receiver name="SampleReceiver">
-                        <ApiListener method="GET" uriPattern="/sample" />
-                    </Receiver>
-                    <Pipeline>
-                        <FixedResultPipe name="Result" returnString="Hello from Flow!" />
-                    </Pipeline>
-                </Adapter>
-            </Configuration>
-            """;
+
+    private String loadDefaultConfiguration() throws IOException {
+        ClassPathResource resource = new ClassPathResource("templates/default-configuration.xml");
+        return new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+    }
 
     public Project createProjectOnDisk(String absolutePath) throws IOException {
         if (absolutePath == null || absolutePath.isBlank()) {
@@ -54,8 +47,10 @@ public class ProjectService {
         Path configurationsDir = projectDir.resolve(CONFIGURATIONS_DIR);
         Files.createDirectories(configurationsDir);
 
+        String defaultXml = loadDefaultConfiguration();
+
         Path configFile = configurationsDir.resolve("Configuration.xml");
-        Files.writeString(configFile, DEFAULT_CONFIGURATION_XML, StandardCharsets.UTF_8);
+        Files.writeString(configFile, defaultXml, StandardCharsets.UTF_8);
 
         String name = projectDir.getFileName().toString();
         String rootPath = projectDir.toString();
@@ -63,7 +58,7 @@ public class ProjectService {
         Project project = new Project(name, rootPath);
         Configuration configuration =
                 new Configuration(configFile.toAbsolutePath().normalize().toString());
-        configuration.setXmlContent(DEFAULT_CONFIGURATION_XML);
+        configuration.setXmlContent(defaultXml);
         project.addConfiguration(configuration);
 
         projects.add(project);

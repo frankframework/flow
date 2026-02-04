@@ -1,0 +1,10 @@
+<Configuration name="DefaultConfig">
+    <Adapter name="SampleAdapter">
+        <Receiver name="SampleReceiver">
+            <ApiListener method="GET" uriPattern="/sample" />
+        </Receiver>
+        <Pipeline>
+            <FixedResultPipe name="Result" returnString="Hello from Flow!" />
+        </Pipeline>
+    </Adapter>
+</Configuration>
