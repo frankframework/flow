@@ -32,7 +32,7 @@ import CreateNodeModal from '~/components/flow/create-node-modal'
 import { useProjectStore } from '~/stores/project-store'
 import { toast, ToastContainer } from 'react-toastify'
 import { useTheme } from '~/hooks/use-theme'
-import { apiUrl } from '~/utils/api'
+import { saveAdapter } from '~/services/adapter-service'
 
 export type FlowNode = FrankNodeType | ExitNode | StickyNote | GroupNode | Node
 
@@ -72,6 +72,8 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
   }
   const edgeTypes = { frankEdge: FrankEdgeComponent }
   const reactFlow = useReactFlow()
+  const reactFlowRef = useRef(reactFlow)
+  reactFlowRef.current = reactFlow
 
   const { nodes, edges, viewport, onNodesChange, onEdgesChange, onConnect, onReconnect } = useFlowStore(
     useShallow(selector),
@@ -417,6 +419,75 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
   )
 
   useEffect(() => {
+    function restoreFlowFromTab(tabId: string) {
+      const tabStore = useTabStore.getState()
+      const flowStore = useFlowStore.getState()
+
+      const tabData = tabStore.getTab(tabId)
+      const flowJson = tabData?.flowJson
+
+      if (flowJson) {
+        flowStore.setNodes(Array.isArray(flowJson.nodes) ? flowJson.nodes : [])
+        flowStore.setEdges(Array.isArray(flowJson.edges) ? flowJson.edges : [])
+        const viewport = flowJson.viewport as { x: number; y: number; zoom: number } | undefined
+        flowStore.setViewport(viewport && true ? viewport : { x: 0, y: 0, zoom: 1 })
+      } else {
+        flowStore.setNodes([])
+        flowStore.setEdges([])
+        flowStore.setViewport({ x: 0, y: 0, zoom: 1 })
+      }
+    }
+
+    function clearFlow() {
+      const flowStore = useFlowStore.getState()
+      flowStore.setNodes([])
+      flowStore.setEdges([])
+      flowStore.setViewport({ x: 0, y: 0, zoom: 1 })
+    }
+
+    async function loadFlowFromTab(tab: TabData) {
+      const flowStore = useFlowStore.getState()
+      const currentProject = useProjectStore.getState().project
+      setLoading(true)
+      try {
+        if (tab.flowJson && Object.keys(tab.flowJson).length > 0) {
+          restoreFlowFromTab(tab.name)
+        } else if (tab.configurationPath && tab.name) {
+          if (!currentProject) return
+          const adapter = await getAdapterFromConfiguration(currentProject.name, tab.configurationPath, tab.name)
+          if (!adapter) return
+          const adapterJson = await convertAdapterXmlToJson(adapter)
+          flowStore.setEdges(adapterJson.edges)
+          flowStore.setViewport({ x: 0, y: 0, zoom: 1 })
+          const laidOutNodes = layoutGraph(adapterJson.nodes, adapterJson.edges, 'LR')
+          flowStore.setNodes(laidOutNodes)
+        }
+      } catch (error) {
+        console.error('Error loading tab flow:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    function saveFlowToTab(tabId: string) {
+      const tabStore = useTabStore.getState()
+      const flowStore = useFlowStore.getState()
+
+      const flowData = reactFlowRef.current.toObject()
+      const viewport = flowStore.viewport
+      const tabData = tabStore.getTab(tabId)
+
+      if (!tabData) return
+
+      tabStore.setTabData(tabId, {
+        ...tabData,
+        flowJson: {
+          ...flowData,
+          viewport,
+        },
+      })
+    }
+
     const tabStore = useTabStore.getState()
     const currentActiveTabKey = tabStore.activeTab
 
@@ -447,106 +518,23 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
     )
 
     return () => unsubscribe()
-  }, [])
-
-  async function loadFlowFromTab(tab: TabData) {
-    const flowStore = useFlowStore.getState()
-    setLoading(true)
-    try {
-      if (tab.flowJson && Object.keys(tab.flowJson).length > 0) {
-        restoreFlowFromTab(tab.name)
-      } else if (tab.configurationPath && tab.name) {
-        if (!project) return
-        const adapter = await getAdapterFromConfiguration(project.name, tab.configurationPath, tab.name)
-        if (!adapter) return
-        const adapterJson = await convertAdapterXmlToJson(adapter)
-        flowStore.setEdges(adapterJson.edges)
-        flowStore.setViewport({ x: 0, y: 0, zoom: 1 })
-        const laidOutNodes = layoutGraph(adapterJson.nodes, adapterJson.edges, 'LR')
-        flowStore.setNodes(laidOutNodes)
-      }
-    } catch (error) {
-      console.error('Error loading tab flow:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const saveFlowToTab = (tabId: string) => {
-    const tabStore = useTabStore.getState()
-    const flowStore = useFlowStore.getState()
-
-    const flowData = reactFlow.toObject()
-    const viewport = flowStore.viewport
-    const tabData = tabStore.getTab(tabId)
-
-    if (!tabData) return
-
-    tabStore.setTabData(tabId, {
-      ...tabData,
-      flowJson: {
-        ...flowData,
-        viewport,
-      },
-    })
-  }
-
-  const restoreFlowFromTab = (tabId: string) => {
-    const tabStore = useTabStore.getState()
-    const flowStore = useFlowStore.getState()
-
-    const tabData = tabStore.getTab(tabId)
-    const flowJson = tabData?.flowJson
-
-    if (flowJson) {
-      flowStore.setNodes(Array.isArray(flowJson.nodes) ? flowJson.nodes : [])
-      flowStore.setEdges(Array.isArray(flowJson.edges) ? flowJson.edges : [])
-      const viewport = flowJson.viewport as { x: number; y: number; zoom: number } | undefined
-      flowStore.setViewport(viewport && true ? viewport : { x: 0, y: 0, zoom: 1 })
-    } else {
-      flowStore.setNodes([])
-      flowStore.setEdges([])
-      flowStore.setViewport({ x: 0, y: 0, zoom: 1 })
-    }
-  }
-
-  function clearFlow() {
-    const flowStore = useFlowStore.getState()
-    flowStore.setNodes([])
-    flowStore.setEdges([])
-    flowStore.setViewport({ x: 0, y: 0, zoom: 1 })
-  }
+  }, [layoutGraph])
 
   const saveFlow = async () => {
     const flowData = reactFlow.toObject()
     const activeTabName = useTabStore.getState().activeTab
     const configurationPath = useTabStore.getState().getTab(activeTabName)?.configurationPath
 
-    if (!configurationPath) return
+    if (!configurationPath || !project) return
 
     const xmlString = exportFlowToXml(flowData, activeTabName)
 
     try {
-      if (!project) return
-      const url = apiUrl(`/projects/${encodeURIComponent(project.name)}/adapters`)
-      const response = await fetch(url, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          adapterXml: xmlString,
-          adapterName: activeTabName,
-          configurationPath: configurationPath,
-        }),
-      })
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`)
-      }
-
+      await saveAdapter(project.name, xmlString, activeTabName, configurationPath)
       toast.success('Flow saved successfully!')
     } catch (error) {
       console.error('Failed to save XML:', error)
-      toast.error(`Failed to save XML: ${error}`)
+      toast.error(`Failed to save XML: ${error instanceof Error ? error.message : error}`)
     }
   }
 

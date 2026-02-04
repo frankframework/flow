@@ -1,6 +1,5 @@
-import { useEffect, useState } from 'react'
 import FolderIcon from '../../../icons/solar/Folder.svg?react'
-import { apiUrl } from '~/utils/api'
+import { useBackendFolders } from '~/hooks/use-backend-folders'
 
 interface LoadProjectModalProperties {
   isOpen: boolean
@@ -9,45 +8,11 @@ interface LoadProjectModalProperties {
 }
 
 export default function LoadProjectModal({ isOpen, onClose, onCreate }: Readonly<LoadProjectModalProperties>) {
-  const [folders, setFolders] = useState<string[]>([])
-  const [rootPath, setRootPath] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const { data, isLoading: loading, error: fetchError } = useBackendFolders(isOpen)
 
-  useEffect(() => {
-    if (!isOpen) return
-
-    const fetchData = async () => {
-      setLoading(true)
-      setError(null)
-
-      try {
-        const [foldersResponse, rootResponse] = await Promise.all([
-          fetch(apiUrl('/projects/backend-folders')),
-          fetch(apiUrl('/projects/root')),
-        ])
-
-        if (!foldersResponse.ok) {
-          throw new Error(`Folders HTTP error! Status: ${foldersResponse.status}`)
-        }
-        if (!rootResponse.ok) {
-          throw new Error(`Root HTTP error! Status: ${rootResponse.status}`)
-        }
-
-        const foldersData = await foldersResponse.json()
-        const rootData = await rootResponse.json()
-
-        setFolders(foldersData)
-        setRootPath(rootData.rootPath)
-      } catch (error) {
-        setError(error instanceof Error ? error.message : 'Failed to fetch project data')
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchData()
-  }, [isOpen])
+  const folders = data?.folders ?? []
+  const rootPath = data?.rootPath ?? null
+  const error = fetchError ? fetchError.message : null
 
   if (!isOpen) return null
 
