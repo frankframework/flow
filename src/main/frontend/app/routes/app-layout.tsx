@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react'
 import { useProjectStore, getStoredProjectName } from '~/stores/project-store'
 import { fetchProject } from '~/services/project-service'
 import LoadingSpinner from '~/components/loading-spinner'
+import type { Project } from '~/types/project.types'
 
 export default function AppLayout() {
   const [restoring, setRestoring] = useState(!!getStoredProjectName())
@@ -17,7 +18,7 @@ export default function AppLayout() {
     }
 
     fetchProject(storedName)
-      .then((fetched) => {
+      .then((fetched: Project) => {
         useProjectStore.getState().setProject(fetched)
       })
       .catch(() => {

@@ -1,5 +1,5 @@
 import { apiFetch } from '~/utils/api'
-import type { Project } from '~/routes/projectlanding/project-landing'
+import type { Project } from '~/types/project.types'
 
 export async function fetchConfiguration(projectName: string, filepath: string, signal?: AbortSignal): Promise<string> {
   const data = await apiFetch<{ content: string }>(`/projects/${encodeURIComponent(projectName)}/configuration`, {

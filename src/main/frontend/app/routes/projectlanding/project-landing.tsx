@@ -1,174 +1,190 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
+import { useNavigate } from 'react-router'
 import FfIcon from '/icons/custom/ff!-icon.svg?react'
 import ArchiveIcon from '/icons/solar/Archive.svg?react'
+
+import { useRecentProjects } from '~/hooks/use-projects'
+import { useProjectStore } from '~/stores/project-store'
+import { openProject, createProject, cloneProject, removeRecentProject } from '~/services/project-service'
+
 import ProjectRow from './project-row'
 import Search from '~/components/search/search'
 import ActionButton from './action-button'
-import { useProjectStore } from '~/stores/project-store'
-import { useLocation } from 'react-router'
 import NewProjectModal from './new-project-modal'
-import LoadProjectModal from './load-project-modal'
-import { useProjects } from '~/hooks/use-projects'
-import {
-  createProject as createProjectService,
-  fetchProject,
-  importConfigurations,
-  type ConfigImport,
-} from '~/services/project-service'
-
-export interface Project {
-  name: string
-  rootPath: string
-  filepaths: string[]
-  filters: Record<string, boolean> // key = filter name (e.g. "HTTP"), value = true/false
-}
-
-interface DirectoryFile extends File {
-  webkitRelativePath: string
-}
+import CloneProjectModal from './clone-project-modal'
+import DirectoryPicker from '~/components/directory-picker/directory-picker'
+import type { RecentProject } from '~/types/project.types'
 
 export default function ProjectLanding() {
-  const { data: projectsData, isLoading: loading, error: projectsError } = useProjects()
-  const [projects, setProjects] = useState<Project[]>([])
-  const [search, setSearch] = useState('')
-  const [showNewProjectModal, setShowNewProjectModal] = useState(false)
-  const [showLoadProjectModal, setShowLoadProjectModal] = useState(false)
-  const [localError, setLocalError] = useState<string | null>(null)
+  const navigate = useNavigate()
+  const { data: recentProjects, isLoading, error: apiError, refetch } = useRecentProjects()
+  const clearProjectState = useProjectStore((state) => state.clearProject)
+  const setProject = useProjectStore((state) => state.setProject)
 
-  const clearProject = useProjectStore((state) => state.clearProject)
-  const location = useLocation()
-  const fileInputReference = useRef<HTMLInputElement>(null)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isCloneModalOpen, setIsCloneModalOpen] = useState(false)
+  const [isOpenPickerOpen, setIsOpenPickerOpen] = useState(false)
+  const [runtimeError, setRuntimeError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (projectsData) {
-      setProjects(projectsData)
-    }
-  }, [projectsData])
+    clearProjectState()
+  }, [clearProjectState])
 
-  const error = localError || (projectsError ? projectsError.message : null)
-
-  // Reset project when landing on home page
-  useEffect(() => {
-    clearProject()
-  }, [location.key, clearProject])
-
-  const handleOpenProject = () => {
-    fileInputReference.current?.click()
-  }
-
-  const handleFolderSelection = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files
-    if (!files || files.length === 0) return
-
-    // Detect project root folder (first directory name)
-    const firstFile = files[0] as DirectoryFile
-    const projectRoot = firstFile.webkitRelativePath.split('/')[0]
-
-    // 1. Create project in backend
-    await createProject(projectRoot)
-
-    // 2. Collect XML configuration files from /src/main/configurations
-    const configs: ConfigImport[] = []
-
-    for (const file of [...files] as DirectoryFile[]) {
-      const relative = file.webkitRelativePath
-
-      if (relative.startsWith(`${projectRoot}/src/main/configurations/`) && relative.endsWith('.xml')) {
-        const content = await file.text() // read file content
-        configs.push({
-          filepath: relative.replace(`${projectRoot}/`, ''), // path relative to project root
-          xmlContent: content,
-        })
+  const handleOpenProject = useCallback(
+    async (rootPath: string) => {
+      setRuntimeError(null)
+      try {
+        const project = await openProject(rootPath)
+        setProject(project)
+        navigate(`/studio/${encodeURIComponent(project.name)}`)
+      } catch (error) {
+        setRuntimeError(error instanceof Error ? error.message : 'Failed to open project')
       }
-    }
+    },
+    [navigate, setProject],
+  )
 
-    // Import configurations to the project
-    await importConfigurations(projectRoot, configs)
-
-    // Sync local project list with backend
-    const updated = await fetchProject(projectRoot)
-    setProjects((prev) => prev.map((p) => (p.name === updated.name ? updated : p)))
+  const onOpenFolder = async (selectedPath: string) => {
+    setIsOpenPickerOpen(false)
+    await handleOpenProject(selectedPath)
   }
 
-  const createProject = async (projectName: string, rootPath?: string) => {
+  const onCreateProject = async (absolutePath: string) => {
+    setRuntimeError(null)
     try {
-      const newProject = await createProjectService(projectName, rootPath)
-      setProjects((previous) => [...previous, newProject])
-    } catch (error_) {
-      setLocalError(error_ instanceof Error ? error_.message : 'Failed to create project')
+      const project = await createProject(absolutePath)
+      setProject(project)
+      setIsModalOpen(false)
+      navigate(`/studio/${encodeURIComponent(project.name)}`)
+    } catch (error) {
+      setRuntimeError(error instanceof Error ? error.message : 'Creation failed')
     }
   }
 
-  const loadProject = async () => {
-    setShowLoadProjectModal(true)
+  const onCloneProject = async (repoUrl: string, localPath: string) => {
+    setRuntimeError(null)
+    try {
+      const project = await cloneProject(repoUrl, localPath)
+      setProject(project)
+      setIsCloneModalOpen(false)
+      navigate(`/studio/${encodeURIComponent(project.name)}`)
+    } catch (error) {
+      setRuntimeError(error instanceof Error ? error.message : 'Clone failed')
+    }
   }
 
-  // Filter projects by search string (case-insensitive)
-  const filteredProjects = projects.filter((project) => project.name.toLowerCase().includes(search.toLowerCase()))
+  const onRemoveProject = async (rootPath: string) => {
+    try {
+      await removeRecentProject(rootPath)
+      refetch()
+    } catch (error) {
+      setRuntimeError(error instanceof Error ? error.message : 'Failed to remove project')
+    }
+  }
 
-  if (loading)
-    return (
-      <div className="bg-backdrop flex min-h-screen w-full items-center justify-center">
-        <p className="text-muted-foreground text-sm">Loading projects...</p>
-      </div>
-    )
-  if (error) return <p>Error: {error}</p>
+  const projects = recentProjects ?? []
+  const filteredProjects = projects.filter((p) => p.name.toLowerCase().includes(searchTerm.toLowerCase()))
+
+  if (isLoading) return <LoadingState />
 
   return (
     <div className="bg-backdrop flex min-h-screen w-full flex-col items-center pt-20">
-      <div className="relative mb-6 flex w-2/5 flex-row items-center">
-        <div className="flex w-1/4 flex-row items-center">
-          <FfIcon className="h-auto w-12" />
-          <div className="px-2 text-lg font-semibold">Flow</div>
-        </div>
-      </div>
-      <div
-        className="border-border bg-background flex min-h-[400px] w-2/5 flex-col rounded border shadow"
-        style={{ height: 400 }}
-      >
-        {/* Header row */}
-        <div className="border-border flex h-12 border-b">
-          <div className="border-border flex w-1/4 items-center border-r px-4 text-sm font-semibold">
-            <ArchiveIcon className="mr-2 h-5 w-auto" /> Projects
-          </div>
-          <div className="flex w-3/4 items-center justify-center px-4 text-sm font-semibold">
-            <Search onChange={(event) => setSearch(event.target.value)} />
-          </div>
-        </div>
-        {/* Content row */}
-        <div className="flex flex-1 overflow-hidden">
-          <div className="border-border text-muted-foreground w-1/4 border-r px-4 py-3 text-sm">
-            <ActionButton label="New Project" onClick={() => setShowNewProjectModal(true)} />
-            <ActionButton label="Open" onClick={handleOpenProject} />
+      <Header />
 
-            <input
-              type="file"
-              ref={fileInputReference}
-              style={{ display: 'none' }}
-              onChange={handleFolderSelection}
-              webkitdirectory="true"
-              multiple
-            />
-            <ActionButton label="Clone Repository" onClick={() => console.log('Cloning project')} />
-            <ActionButton label="Load Project" onClick={loadProject} />
-          </div>
-          <div className="h-full w-3/4 overflow-y-auto px-4 py-3">
-            {filteredProjects.map((project, index) => (
-              <ProjectRow key={project.name + index} project={project} />
-            ))}
-          </div>
+      <main className="border-border bg-background flex min-h-[400px] w-2/5 flex-col rounded border shadow">
+        <Toolbar onSearchChange={setSearchTerm} />
+
+        <div className="flex flex-1 overflow-hidden">
+          <Sidebar
+            onNewClick={() => setIsModalOpen(true)}
+            onOpenClick={() => setIsOpenPickerOpen(true)}
+            onCloneClick={() => setIsCloneModalOpen(true)}
+          />
+          <ProjectList
+            projects={filteredProjects}
+            onProjectClick={handleOpenProject}
+            onRemoveProject={onRemoveProject}
+          />
         </div>
-      </div>
-      <NewProjectModal
-        isOpen={showNewProjectModal}
-        onClose={() => setShowNewProjectModal(false)}
-        onCreate={createProject}
+      </main>
+
+      {(runtimeError || apiError) && (
+        <p className="mt-4 text-sm font-medium text-red-500">{runtimeError || apiError?.message}</p>
+      )}
+
+      <NewProjectModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onCreate={onCreateProject} />
+      <CloneProjectModal
+        isOpen={isCloneModalOpen}
+        onClose={() => setIsCloneModalOpen(false)}
+        onClone={onCloneProject}
       />
-      <LoadProjectModal
-        isOpen={showLoadProjectModal}
-        onClose={() => setShowLoadProjectModal(false)}
-        onCreate={createProject}
-      />
+      <DirectoryPicker isOpen={isOpenPickerOpen} onSelect={onOpenFolder} onCancel={() => setIsOpenPickerOpen(false)} />
     </div>
   )
 }
+
+const Header = () => (
+  <header className="mb-6 flex w-2/5 items-center gap-3">
+    <FfIcon className="h-12 w-auto" />
+    <h1 className="text-lg font-semibold text-slate-800">Frank!Flow</h1>
+  </header>
+)
+
+const Sidebar = ({
+  onNewClick,
+  onOpenClick,
+  onCloneClick,
+}: {
+  onNewClick: () => void
+  onOpenClick: () => void
+  onCloneClick: () => void
+}) => (
+  <nav className="border-border flex w-1/4 flex-col gap-3 border-r bg-slate-50/50 p-4">
+    <ActionButton label="Open Folder" onClick={onOpenClick} />
+    <ActionButton label="Clone Repository" onClick={onCloneClick} />
+    <ActionButton label="New Project" onClick={onNewClick} />
+  </nav>
+)
+
+const ProjectList = ({
+  projects,
+  onProjectClick,
+  onRemoveProject,
+}: {
+  projects: RecentProject[]
+  onProjectClick: (rootPath: string) => void
+  onRemoveProject: (rootPath: string) => void
+}) => (
+  <section className="h-full flex-1 overflow-y-auto p-4">
+    {projects.length === 0 ? (
+      <p className="text-muted-foreground mt-10 text-center text-sm italic">No projects found</p>
+    ) : (
+      projects.map((p) => (
+        <ProjectRow
+          key={p.rootPath}
+          project={p}
+          onClick={() => onProjectClick(p.rootPath)}
+          onRemove={() => onRemoveProject(p.rootPath)}
+        />
+      ))
+    )}
+  </section>
+)
+
+const Toolbar = ({ onSearchChange }: { onSearchChange: (val: string) => void }) => (
+  <div className="border-border flex h-12 border-b">
+    <div className="border-border flex w-1/4 items-center border-r px-4 text-xs font-bold tracking-wider text-slate-500 uppercase">
+      <ArchiveIcon className="mr-2 h-4 w-4" /> Recent
+    </div>
+    <div className="flex flex-1 items-center px-4">
+      <Search onChange={(e) => onSearchChange(e.target.value)} />
+    </div>
+  </div>
+)
+
+const LoadingState = () => (
+  <div className="flex h-screen w-full animate-pulse items-center justify-center text-slate-400">
+    Initializing workspace...
+  </div>
+)

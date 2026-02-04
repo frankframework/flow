@@ -5,10 +5,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.when;
 
-import java.io.IOException;
 import org.frankframework.flow.adapter.AdapterNotFoundException;
 import org.frankframework.flow.configuration.Configuration;
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
@@ -17,23 +14,15 @@ import org.frankframework.flow.projectsettings.InvalidFilterTypeException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.support.ResourcePatternResolver;
 
 @ExtendWith(MockitoExtension.class)
 class ProjectServiceTest {
-
-    @Mock
-    private ResourcePatternResolver resolver;
-
     private ProjectService projectService;
 
     @BeforeEach
-    void init() throws IOException {
-        when(resolver.getResources(anyString())).thenReturn(new Resource[0]);
-        projectService = new ProjectService(resolver, "/path/to/projects");
+    void init() {
+        projectService = new ProjectService();
     }
 
     @Test

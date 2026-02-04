@@ -1,32 +1,34 @@
 import { useState } from 'react'
 import DirectoryPicker from '~/components/directory-picker/directory-picker'
 
-interface NewProjectModalProperties {
+interface CloneProjectModalProperties {
   isOpen: boolean
   onClose: () => void
-  onCreate: (absolutePath: string) => void
+  onClone: (repoUrl: string, localPath: string) => void
 }
 
-export default function NewProjectModal({ isOpen, onClose, onCreate }: Readonly<NewProjectModalProperties>) {
-  const [name, setName] = useState('')
+export default function CloneProjectModal({ isOpen, onClose, onClone }: Readonly<CloneProjectModalProperties>) {
+  const [repoUrl, setRepoUrl] = useState('')
   const [location, setLocation] = useState('')
   const [showPicker, setShowPicker] = useState(false)
 
   if (!isOpen) return null
 
-  const handleCreate = () => {
-    if (!name.trim() || !location) return
+  const repoName = repoUrl
+    .split('/')
+    .pop()
+    ?.replace(/\.git$/, '')
 
+  const handleClone = () => {
+    if (!repoUrl.trim() || !location) return
     const separator = location.includes('/') ? '/' : '\\'
-    const absolutePath = `${location}${separator}${name.trim()}`
-    onCreate(absolutePath)
-    setName('')
-    setLocation('')
-    onClose()
+    const localPath = `${location}${separator}${repoName}`
+    onClone(repoUrl.trim(), localPath)
+    handleClose()
   }
 
   const handleClose = () => {
-    setName('')
+    setRepoUrl('')
     setLocation('')
     setShowPicker(false)
     onClose()
@@ -36,18 +38,18 @@ export default function NewProjectModal({ isOpen, onClose, onCreate }: Readonly<
     <>
       <div className="bg-background/50 absolute inset-0 z-50 flex items-center justify-center">
         <div className="bg-background border-border relative h-[400px] w-[600px] rounded-lg border p-6 shadow-lg">
-          <h2 className="mb-4 text-lg font-semibold">New Project</h2>
-          <p className="text-foreground-muted mb-4 text-sm">Create a new Frank! project on disk</p>
+          <h2 className="mb-4 text-lg font-semibold">Clone Repository</h2>
+          <p className="text-foreground-muted mb-4 text-sm">Clone a Git repository to a local folder</p>
 
           <div className="mb-4">
-            <label className="mb-1 block text-sm font-medium">Location</label>
+            <label className="mb-1 block text-sm font-medium">Clone into</label>
             <div className="flex items-center gap-2">
               <input
                 value={location}
                 readOnly
                 className="border-border bg-backdrop w-full rounded border px-2 py-1 text-sm"
                 placeholder="Select a parent directory..."
-                aria-label="project location"
+                aria-label="clone location"
               />
               <button
                 onClick={() => setShowPicker(true)}
@@ -59,31 +61,31 @@ export default function NewProjectModal({ isOpen, onClose, onCreate }: Readonly<
           </div>
 
           <div className="mb-4">
-            <label className="mb-1 block text-sm font-medium">Project Name</label>
+            <label className="mb-1 block text-sm font-medium">Repository URL</label>
             <input
-              value={name}
-              onChange={(event) => setName(event.target.value)}
+              value={repoUrl}
+              onChange={(event) => setRepoUrl(event.target.value)}
               className="border-border bg-background focus:border-foreground-active focus:ring-foreground-active w-full rounded border px-2 py-1 text-sm transition focus:ring-2 focus:outline-none"
-              placeholder="Enter project name"
-              aria-label="project name"
+              placeholder="https://github.com/user/repo.git"
+              aria-label="repository url"
             />
           </div>
 
-          {location && name.trim() && (
+          {location && repoName && (
             <p className="text-foreground-muted mb-4 text-xs">
-              Project will be created at: {location}
+              Will clone to: {location}
               {location.includes('/') ? '/' : '\\'}
-              {name.trim()}
+              {repoName}
             </p>
           )}
 
           <div className="flex gap-2">
             <button
-              onClick={handleCreate}
-              disabled={!name.trim() || !location}
+              onClick={handleClone}
+              disabled={!repoUrl.trim() || !location}
               className="bg-backdrop hover:bg-background border-border rounded border px-4 py-2 hover:cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Create Project
+              Clone
             </button>
 
             <button

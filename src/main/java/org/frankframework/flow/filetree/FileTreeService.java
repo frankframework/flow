@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.frankframework.flow.adapter.AdapterNotFoundException;
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
+import org.frankframework.flow.project.ProjectNotFoundException;
 import org.frankframework.flow.project.ProjectService;
 import org.frankframework.flow.utility.XmlAdapterUtils;
 import org.frankframework.flow.utility.XmlSecurityUtils;
@@ -23,39 +24,14 @@ import org.w3c.dom.Node;
 @Service
 public class FileTreeService {
 
-    private final Path projectsRoot;
+    private final ProjectService projectService;
 
     public FileTreeService(ProjectService projectService) {
-        this.projectsRoot = projectService.getProjectsRoot();
-    }
-
-    public List<String> listProjectFolders() throws IOException {
-        if (!Files.exists(projectsRoot) || !Files.isDirectory(projectsRoot)) {
-            throw new IllegalStateException("Projects root does not exist or is not a directory");
-        }
-
-        try (Stream<Path> paths = Files.list(projectsRoot)) {
-            return paths.filter(Files::isDirectory)
-                    .map(path -> path.getFileName().toString())
-                    .sorted()
-                    .collect(Collectors.toList());
-        }
-    }
-
-    public Path getProjectsRoot() {
-        if (!Files.exists(projectsRoot) || !Files.isDirectory(projectsRoot)) {
-            throw new IllegalStateException("Projects root does not exist or is not a directory");
-        }
-        return projectsRoot;
+        this.projectService = projectService;
     }
 
     public String readFileContent(String absoluteFilepath) throws IOException {
         Path filePath = Paths.get(absoluteFilepath).toAbsolutePath().normalize();
-
-        // Make sure file is under projects root
-        if (!filePath.startsWith(projectsRoot)) {
-            throw new IllegalArgumentException("File is outside of projects root: " + absoluteFilepath);
-        }
 
         if (!Files.exists(filePath)) {
             throw new NoSuchFileException("File does not exist: " + absoluteFilepath);
@@ -71,11 +47,6 @@ public class FileTreeService {
     public void updateFileContent(String absoluteFilepath, String newContent) throws IOException {
         Path filePath = Paths.get(absoluteFilepath).toAbsolutePath().normalize();
 
-        // Make sure file is under projects root
-        if (!filePath.startsWith(projectsRoot)) {
-            throw new IllegalArgumentException("File is outside of projects root: " + absoluteFilepath);
-        }
-
         if (!Files.exists(filePath)) {
             throw new IllegalArgumentException("File does not exist: " + absoluteFilepath);
         }
@@ -88,13 +59,18 @@ public class FileTreeService {
     }
 
     public FileTreeNode getProjectTree(String projectName) throws IOException {
-        Path projectPath = projectsRoot.resolve(projectName).normalize();
+        try {
+            var project = projectService.getProject(projectName);
+            Path projectPath = Paths.get(project.getRootPath()).toAbsolutePath().normalize();
 
-        if (!Files.exists(projectPath) || !Files.isDirectory(projectPath)) {
+            if (!Files.exists(projectPath) || !Files.isDirectory(projectPath)) {
+                throw new IllegalArgumentException("Project directory does not exist: " + projectName);
+            }
+
+            return buildTree(projectPath);
+        } catch (ProjectNotFoundException e) {
             throw new IllegalArgumentException("Project does not exist: " + projectName);
         }
-
-        return buildTree(projectPath);
     }
 
     public boolean updateAdapterFromFile(

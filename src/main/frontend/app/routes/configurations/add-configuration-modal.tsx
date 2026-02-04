@@ -1,7 +1,7 @@
-import type { Project } from '../projectlanding/project-landing'
 import { useState } from 'react'
 import { useProjectStore } from '~/stores/project-store'
 import { createConfiguration } from '~/services/configuration-service'
+import type { Project } from '~/types/project.types'
 
 interface AddConfigurationModalProperties {
   isOpen: boolean

@@ -1,46 +1,45 @@
 import { apiFetch } from '~/utils/api'
-import type { Project } from '~/routes/projectlanding/project-landing'
 import type { FileTreeNode } from '~/routes/configurations/configuration-manager'
-
-export interface ConfigImport {
-  filepath: string
-  xmlContent: string
-}
+import type { Project, RecentProject } from '~/types/project.types'
 
 export async function fetchProjects(signal?: AbortSignal): Promise<Project[]> {
   return apiFetch<Project[]>('/projects', { signal })
 }
 
-export async function fetchProject(name: string, signal?: AbortSignal): Promise<Project> {
-  return apiFetch<Project>(`/projects/${encodeURIComponent(name)}`, { signal })
+export async function fetchProject(name: string): Promise<Project> {
+  return apiFetch<Project>(`/projects/${encodeURIComponent(name)}`)
 }
 
-export async function createProject(name: string, rootPath?: string): Promise<Project> {
+export async function fetchRecentProjects(signal?: AbortSignal): Promise<RecentProject[]> {
+  return apiFetch<RecentProject[]>('/projects/recent', { signal })
+}
+
+export async function removeRecentProject(rootPath: string): Promise<void> {
+  await apiFetch<void>('/projects/recent', {
+    method: 'DELETE',
+    body: JSON.stringify({ rootPath }),
+  })
+}
+
+export async function openProject(rootPath: string): Promise<Project> {
+  return apiFetch<Project>('/projects/open', {
+    method: 'POST',
+    body: JSON.stringify({ rootPath }),
+  })
+}
+
+export async function cloneProject(repoUrl: string, localPath: string): Promise<Project> {
+  return apiFetch<Project>('/projects/clone', {
+    method: 'POST',
+    body: JSON.stringify({ repoUrl, localPath }),
+  })
+}
+
+export async function createProject(rootPath: string): Promise<Project> {
   return apiFetch<Project>('/projects', {
     method: 'POST',
-    body: JSON.stringify({
-      name,
-      rootPath: rootPath ?? undefined,
-    }),
+    body: JSON.stringify({ rootPath }),
   })
-}
-
-export async function importConfigurations(projectName: string, configs: ConfigImport[]): Promise<void> {
-  await apiFetch<void>(`/projects/${encodeURIComponent(projectName)}/import-configurations`, {
-    method: 'POST',
-    body: JSON.stringify({
-      projectName,
-      configurations: configs,
-    }),
-  })
-}
-
-export async function fetchBackendFolders(signal?: AbortSignal): Promise<string[]> {
-  return apiFetch<string[]>('/projects/backend-folders', { signal })
-}
-
-export async function fetchProjectRoot(signal?: AbortSignal): Promise<{ rootPath: string }> {
-  return apiFetch<{ rootPath: string }>('/projects/root', { signal })
 }
 
 export async function fetchProjectTree(projectName: string, signal?: AbortSignal): Promise<FileTreeNode> {
