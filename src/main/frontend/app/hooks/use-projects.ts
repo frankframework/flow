@@ -1,7 +1,7 @@
 import { useAsync } from './use-async'
-import { fetchProjects } from '~/services/project-service'
-import type { Project } from '~/routes/projectlanding/project-landing'
+import { fetchRecentProjects } from '~/services/project-service'
+import type { RecentProject } from '~/types/project.types'
 
-export function useProjects() {
-  return useAsync<Project[]>((signal) => fetchProjects(signal))
+export function useRecentProjects() {
+  return useAsync<RecentProject[]>((signal) => fetchRecentProjects(signal))
 }

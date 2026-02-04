@@ -9,8 +9,10 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Stream;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.frankframework.flow.adapter.AdapterNotFoundException;
 import org.frankframework.flow.configuration.Configuration;
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
@@ -18,19 +20,18 @@ import org.frankframework.flow.projectsettings.FilterType;
 import org.frankframework.flow.projectsettings.InvalidFilterTypeException;
 import org.frankframework.flow.utility.XmlAdapterUtils;
 import org.frankframework.flow.utility.XmlSecurityUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.support.ResourcePatternResolver;
+
 import org.springframework.stereotype.Service;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.xml.sax.SAXParseException;
 
+@Slf4j
 @Service
 public class ProjectService {
 
     @Getter
-    private final ArrayList<Project> projects = new ArrayList<>();
+    private final List<Project> projects = new CopyOnWriteArrayList<>();
 
     private static final String CONFIGURATIONS_DIR = "src/main/configurations";
     private static final String DEFAULT_CONFIGURATION_XML =
@@ -67,7 +68,8 @@ public class ProjectService {
         String rootPath = projectDir.toString();
 
         Project project = new Project(name, rootPath);
-        Configuration configuration = new Configuration(configFile.toAbsolutePath().normalize().toString());
+        Configuration configuration =
+                new Configuration(configFile.toAbsolutePath().normalize().toString());
         configuration.setXmlContent(DEFAULT_CONFIGURATION_XML);
         project.addConfiguration(configuration);
 
@@ -218,7 +220,6 @@ public class ProjectService {
         Configuration config = configOptional.get();
 
         try {
-            // Parse existing config
             Document configDoc = XmlSecurityUtils.createSecureDocumentBuilder()
                     .parse(new ByteArrayInputStream(config.getXmlContent().getBytes(StandardCharsets.UTF_8)));
 
@@ -228,7 +229,8 @@ public class ProjectService {
 
             Node newAdapterNode = configDoc.importNode(newAdapterDoc.getDocumentElement(), true);
 
-            if (!XmlAdapterUtils.replaceAdapterInDocument(configDoc, adapterName, newAdapterNode)) {
+            if (!XmlAdapterUtils.replaceAdapterInDocument(
+                    configDoc, adapterName, newAdapterNode)) {
                 throw new AdapterNotFoundException("Adapter not found: " + adapterName);
             }
 
@@ -240,10 +242,10 @@ public class ProjectService {
         } catch (AdapterNotFoundException | ConfigurationNotFoundException | ProjectNotFoundException e) {
             throw e;
         } catch (SAXParseException e) {
-            System.err.println("Invalid XML for adapter " + adapterName + ": " + e.getMessage());
+            log.warn("Invalid XML for adapter {}: {}", adapterName, e.getMessage());
             return false;
         } catch (Exception e) {
-            System.err.println("Unexpected error updating adapter: " + e.getMessage());
+            log.error("Unexpected error updating adapter: {}", e.getMessage(), e);
             return false;
         }
     }

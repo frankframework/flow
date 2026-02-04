@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { Project } from '~/routes/projectlanding/project-landing'
+import type { Project } from '~/types/project.types'
 
 const SESSION_KEY = 'active-project-name'
 

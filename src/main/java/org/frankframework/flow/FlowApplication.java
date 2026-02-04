@@ -6,6 +6,7 @@ import static org.springframework.web.servlet.function.RouterFunctions.route;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.web.servlet.function.RequestPredicate;
@@ -21,7 +22,9 @@ public class FlowApplication {
     }
 
     public static SpringApplication configureApplication() {
-        return new SpringApplication(FlowApplication.class);
+        return new SpringApplicationBuilder(FlowApplication.class)
+                .headless(false)
+                .build();
     }
 
     /**
