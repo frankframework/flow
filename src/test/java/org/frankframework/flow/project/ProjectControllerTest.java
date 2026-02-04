@@ -39,6 +39,9 @@ class ProjectControllerTest {
     @MockitoBean
     private FileTreeService fileTreeService;
 
+    @MockitoBean
+    private RecentProjectsService recentProjectsService;
+
     private Project mockProject() {
         Project project = mock(Project.class);
         when(project.getName()).thenReturn("MyProject");
@@ -283,12 +286,13 @@ class ProjectControllerTest {
 
     @Test
     void createProjectReturnsProjectDto() throws Exception {
-        String projectName = "NewProject";
         String rootPath = "/path/to/new/project";
+        Project project = mockProject();
+        when(project.getName()).thenReturn("NewProject");
+        when(project.getRootPath()).thenReturn(rootPath);
+        when(project.getConfigurations()).thenReturn(new ArrayList<>());
 
-        Project createdProject = new Project(projectName, rootPath);
-
-        when(projectService.createProject(projectName, rootPath)).thenReturn(createdProject);
+        when(projectService.createProjectOnDisk(rootPath)).thenReturn(project);
 
         mockMvc.perform(
                         post("/api/projects")
@@ -297,16 +301,15 @@ class ProjectControllerTest {
                                 .content(
                                         """
                                 {
-                                  "name": "NewProject",
                                   "rootPath": "/path/to/new/project"
                                 }
                                 """))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name").value(projectName))
-                .andExpect(jsonPath("$.filepaths").isEmpty())
-                .andExpect(jsonPath("$.filters").isNotEmpty());
+                .andExpect(jsonPath("$.name").value("NewProject"))
+                .andExpect(jsonPath("$.rootPath").value(rootPath));
 
-        verify(projectService).createProject(projectName, rootPath);
+        verify(projectService).createProjectOnDisk(rootPath);
+        verify(recentProjectsService).addRecentProject("NewProject", rootPath);
     }
 
     @Test
