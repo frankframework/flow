@@ -1,48 +1,36 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
-import type { FFDoc, ElementDetails, Filters } from '@frankframework/ff-doc'
-import { fetchFrankDoc } from '~/services/frankdoc-service'
+import { createContext, useContext, useMemo, type ReactNode } from 'react'
+import { useFFDoc } from '@frankframework/ff-doc/react'
+import type { Elements, Filters, FFDocJson } from '@frankframework/ff-doc'
+import { apiUrl } from '~/utils/api'
 
 interface FrankDocContextValue {
-  ffDoc: FFDoc | null
-  elements: Record<string, ElementDetails> | null
+  ffDoc: FFDocJson | null
+  elements: Elements | null
   filters: Filters | null
   isLoading: boolean
   error: Error | null
-  refetch: () => Promise<void>
+  refetch: () => void
 }
 
 const FrankDocContext = createContext<FrankDocContextValue | null>(null)
 
 export function FrankDocProvider({ children }: { children: ReactNode }) {
-  const [ffDoc, setFfDoc] = useState<FFDoc | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<Error | null>(null)
+  const { ffDoc, elements, filters } = useFFDoc(apiUrl('/json/frankdoc'))
 
-  const loadFrankDoc = async () => {
-    setIsLoading(true)
-    setError(null)
-    try {
-      const data = await fetchFrankDoc()
-      setFfDoc(data)
-    } catch (error_) {
-      setError(error_ instanceof Error ? error_ : new Error('Unknown error'))
-    } finally {
-      setIsLoading(false)
-    }
+  const isLoading = ffDoc === null
+  const error = null
+
+  // eslint-disable-next-line unicorn/consistent-function-scoping
+  const refetch = () => {
+    globalThis.location.reload()
   }
 
-  useEffect(() => {
-    loadFrankDoc()
-  }, [])
-
-  const elements = ffDoc?.elements ?? null
-  const filters = ffDoc?.filters ?? null
-
-  return (
-    <FrankDocContext.Provider value={{ ffDoc, elements, filters, isLoading, error, refetch: loadFrankDoc }}>
-      {children}
-    </FrankDocContext.Provider>
+  const contextValue = useMemo(
+    () => ({ ffDoc, elements, filters, isLoading, error, refetch }),
+    [ffDoc, elements, filters, isLoading],
   )
+
+  return <FrankDocContext.Provider value={contextValue}>{children}</FrankDocContext.Provider>
 }
 
 export function useFrankDoc(): FrankDocContextValue {

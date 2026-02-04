@@ -1,6 +1,6 @@
 import type { Disposable, TreeDataProvider, TreeItem, TreeItemIndex } from 'react-complex-tree'
 import type { FileTreeNode } from './editor-data-provider'
-import { getAdapterListenerType, getAdapterNamesFromConfiguration } from '~/routes/studio/xml-to-json-parser'
+import { getAdaptersFromConfiguration } from '~/routes/studio/xml-to-json-parser'
 
 export default class FilesDataProvider implements TreeDataProvider {
   private data: Record<TreeItemIndex, TreeItem> = {}
@@ -73,16 +73,14 @@ export default class FilesDataProvider implements TreeDataProvider {
     newData[index] = this.createBaseItem(index, node.name.replace(/\.xml$/, ''), true)
 
     try {
-      const adapterNames = await getAdapterNamesFromConfiguration(this.projectName, node.path)
+      const adapters = await getAdaptersFromConfiguration(this.projectName, node.path)
 
-      for (const adapterName of adapterNames) {
-        const adapterIndex = `${index}/${adapterName}`
-
-        const listenerName = await getAdapterListenerType(this.projectName, node.path, adapterName)
+      for (const adapter of adapters) {
+        const adapterIndex = `${index}/${adapter.name}`
 
         newData[adapterIndex] = this.createBaseItem(
           adapterIndex,
-          { adapterName, configPath: node.path, listenerName },
+          { adapterName: adapter.name, configPath: node.path, listenerName: adapter.listenerType },
           false,
         )
 
