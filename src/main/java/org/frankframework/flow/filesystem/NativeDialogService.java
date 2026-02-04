@@ -5,6 +5,7 @@ import java.awt.EventQueue;
 import java.awt.HeadlessException;
 import java.util.Optional;
 import javax.swing.JFileChooser;
+import javax.swing.JFrame;
 import javax.swing.UIManager;
 import lombok.extern.slf4j.Slf4j;
 import org.frankframework.flow.exception.ApiException;
@@ -28,13 +29,21 @@ public class NativeDialogService {
         final String[] result = new String[1];
         try {
             EventQueue.invokeAndWait(() -> {
-                JFileChooser chooser = new JFileChooser();
-                chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-                chooser.setDialogTitle("Select Frank!Flow Project Folder");
+                JFrame frame = new JFrame();
+                frame.setAlwaysOnTop(true);
+                frame.setLocationRelativeTo(null);
 
-                int returnVal = chooser.showOpenDialog(null);
-                if (returnVal == JFileChooser.APPROVE_OPTION) {
-                    result[0] = chooser.getSelectedFile().getAbsolutePath();
+                try {
+                    JFileChooser chooser = new JFileChooser();
+                    chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+                    chooser.setDialogTitle("Select Frank!Flow Project Folder");
+
+                    int returnVal = chooser.showOpenDialog(frame);
+                    if (returnVal == JFileChooser.APPROVE_OPTION) {
+                        result[0] = chooser.getSelectedFile().getAbsolutePath();
+                    }
+                } finally {
+                    frame.dispose();
                 }
             });
         } catch (HeadlessException e) {

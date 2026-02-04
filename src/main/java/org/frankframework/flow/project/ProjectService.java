@@ -110,12 +110,52 @@ public class ProjectService {
 
             for (Path xmlFile : xmlFiles) {
                 String absolutePath = xmlFile.toAbsolutePath().normalize().toString();
-                String xmlContent = Files.readString(xmlFile, StandardCharsets.UTF_8);
-                Configuration configuration = new Configuration(absolutePath);
-                configuration.setXmlContent(xmlContent);
-                project.addConfiguration(configuration);
+                try {
+                    String xmlContent = Files.readString(xmlFile, StandardCharsets.UTF_8);
+                    Configuration configuration = new Configuration(absolutePath);
+                    configuration.setXmlContent(xmlContent);
+                    project.addConfiguration(configuration);
+                } catch (java.nio.charset.MalformedInputException e) {
+                    log.warn("Skipping file with invalid UTF-8 encoding: {}", absolutePath);
+                }
             }
         }
+    }
+
+    public Project cloneAndOpenProject(String repoUrl, String localPath) throws IOException {
+        if (repoUrl == null || repoUrl.isBlank()) {
+            throw new IllegalArgumentException("Repository URL must not be blank");
+        }
+        if (localPath == null || localPath.isBlank()) {
+            throw new IllegalArgumentException("Local path must not be blank");
+        }
+
+        Path targetDir = Paths.get(localPath).toAbsolutePath().normalize();
+        if (Files.exists(targetDir)) {
+            throw new IllegalArgumentException("Target directory already exists: " + targetDir);
+        }
+
+        try {
+            ProcessBuilder processBuilder = new ProcessBuilder("git", "clone", repoUrl, targetDir.toString());
+            processBuilder.redirectErrorStream(true);
+            Process process = processBuilder.start();
+
+            String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+            int exitCode = process.waitFor();
+
+            if (exitCode != 0) {
+                log.error("git clone failed (exit code {}): {}", exitCode, output);
+                throw new IOException(
+                        "git clone failed: " + output.lines().findFirst().orElse("unknown error"));
+            }
+
+            log.info("Cloned repository {} to {}", repoUrl, targetDir);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IOException("git clone was interrupted");
+        }
+
+        return openProjectFromDisk(targetDir.toString());
     }
 
     public Project createProject(String name, String rootPath) {

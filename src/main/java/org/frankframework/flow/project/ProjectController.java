@@ -221,6 +221,17 @@ public class ProjectController {
         return ResponseEntity.ok(dto);
     }
 
+    @PostMapping("/clone")
+    public ResponseEntity<ProjectDTO> cloneProject(@RequestBody ProjectCloneDTO projectCloneDTO) throws IOException {
+        Project project = projectService.cloneAndOpenProject(projectCloneDTO.repoUrl(), projectCloneDTO.localPath());
+
+        recentProjectsService.addRecentProject(project.getName(), project.getRootPath());
+
+        ProjectDTO dto = ProjectDTO.from(project);
+
+        return ResponseEntity.ok(dto);
+    }
+
     @PostMapping("/open")
     public ResponseEntity<ProjectDTO> openProject(@RequestBody ProjectCreateDTO projectCreateDTO) throws IOException {
         Project project = projectService.openProjectFromDisk(projectCreateDTO.rootPath());

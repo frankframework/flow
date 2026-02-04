@@ -6,12 +6,13 @@ import ArchiveIcon from '/icons/solar/Archive.svg?react'
 import { useRecentProjects } from '~/hooks/use-projects'
 import { useProjectStore } from '~/stores/project-store'
 import { filesystemService } from '~/services/filesystem-service'
-import { openProject, createProject } from '~/services/project-service'
+import { openProject, createProject, cloneProject } from '~/services/project-service'
 
 import ProjectRow from './project-row'
 import Search from '~/components/search/search'
 import ActionButton from './action-button'
 import NewProjectModal from './new-project-modal'
+import CloneProjectModal from './clone-project-modal'
 import type { RecentProject } from '~/types/project.types'
 
 export default function ProjectLanding() {
@@ -22,6 +23,7 @@ export default function ProjectLanding() {
 
   const [searchTerm, setSearchTerm] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isCloneModalOpen, setIsCloneModalOpen] = useState(false)
   const [runtimeError, setRuntimeError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -70,6 +72,19 @@ export default function ProjectLanding() {
     }
   }
 
+  const onCloneProject = async (repoUrl: string, localPath: string) => {
+    setRuntimeError(null)
+    try {
+      const project = await cloneProject(repoUrl, localPath)
+      setProject(project)
+      setIsCloneModalOpen(false)
+      refetch()
+      navigate(`/studio/${encodeURIComponent(project.name)}`)
+    } catch (error) {
+      setRuntimeError(error instanceof Error ? error.message : 'Clone failed')
+    }
+  }
+
   const projects = recentProjects ?? []
   const filteredProjects = projects.filter((p) => p.name.toLowerCase().includes(searchTerm.toLowerCase()))
 
@@ -83,7 +98,11 @@ export default function ProjectLanding() {
         <Toolbar onSearchChange={setSearchTerm} />
 
         <div className="flex flex-1 overflow-hidden">
-          <Sidebar onNewClick={() => setIsModalOpen(true)} onOpenClick={onOpenNativeFolder} />
+          <Sidebar
+            onNewClick={() => setIsModalOpen(true)}
+            onOpenClick={onOpenNativeFolder}
+            onCloneClick={() => setIsCloneModalOpen(true)}
+          />
           <ProjectList projects={filteredProjects} onProjectClick={handleOpenProject} />
         </div>
       </main>
@@ -93,6 +112,11 @@ export default function ProjectLanding() {
       )}
 
       <NewProjectModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onCreate={onCreateProject} />
+      <CloneProjectModal
+        isOpen={isCloneModalOpen}
+        onClose={() => setIsCloneModalOpen(false)}
+        onClone={onCloneProject}
+      />
     </div>
   )
 }
@@ -104,10 +128,18 @@ const Header = () => (
   </header>
 )
 
-const Sidebar = ({ onNewClick, onOpenClick }: { onNewClick: () => void; onOpenClick: () => void }) => (
+const Sidebar = ({
+  onNewClick,
+  onOpenClick,
+  onCloneClick,
+}: {
+  onNewClick: () => void
+  onOpenClick: () => void
+  onCloneClick: () => void
+}) => (
   <nav className="border-border flex w-1/4 flex-col gap-3 border-r bg-slate-50/50 p-4">
     <ActionButton label="Open Folder" onClick={onOpenClick} />
-    {/*<ActionButton label="Clone Project" onClick={onCloneProject} />*/}
+    <ActionButton label="Clone Repository" onClick={onCloneClick} />
     <ActionButton label="New Project" onClick={onNewClick} />
   </nav>
 )
