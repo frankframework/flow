@@ -1,5 +1,5 @@
 import type { Disposable, TreeDataProvider, TreeItem, TreeItemIndex } from 'react-complex-tree'
-import { apiUrl } from '~/utils/api'
+import { fetchProjectTree } from '~/services/project-service'
 import { sortChildren } from './tree-utilities'
 
 export interface FileNode {
@@ -37,18 +37,7 @@ export default class EditorFilesDataProvider implements TreeDataProvider {
     try {
       if (!this.projectName) return
 
-      const response = await fetch(apiUrl(`/projects/${this.projectName}/tree`))
-
-      if (!response.ok) {
-        console.warn(
-          `[EditorFilesDataProvider] Failed to fetch project tree: ${response.status} ${response.statusText}`,
-        )
-        this.data = {}
-        this.notifyListeners(['root'])
-        return
-      }
-
-      const root: FileTreeNode = await response.json()
+      const tree = await fetchProjectTree(this.projectName)
 
       if (!root) {
         console.warn('[EditorFilesDataProvider] Received empty tree from API')

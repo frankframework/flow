@@ -8,7 +8,13 @@ import { useProjectStore } from '~/stores/project-store'
 import { useLocation } from 'react-router'
 import NewProjectModal from './new-project-modal'
 import LoadProjectModal from './load-project-modal'
-import { apiUrl } from '~/utils/api'
+import { useProjects } from '~/hooks/use-projects'
+import {
+  createProject as createProjectService,
+  fetchProject,
+  importConfigurations,
+  type ConfigImport,
+} from '~/services/project-service'
 
 export interface Project {
   name: string
@@ -22,35 +28,24 @@ interface DirectoryFile extends File {
 }
 
 export default function ProjectLanding() {
+  const { data: projectsData, isLoading: loading, error: projectsError } = useProjects()
   const [projects, setProjects] = useState<Project[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [showNewProjectModal, setShowNewProjectModal] = useState(false)
   const [showLoadProjectModal, setShowLoadProjectModal] = useState(false)
+  const [localError, setLocalError] = useState<string | null>(null)
 
   const clearProject = useProjectStore((state) => state.clearProject)
   const location = useLocation()
   const fileInputReference = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    const fetchProjects = async () => {
-      try {
-        const response = await fetch(apiUrl('/projects'))
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`)
-        }
-        const data = await response.json()
-        setProjects(data)
-      } catch (error_) {
-        setError(error_ instanceof Error ? error_.message : 'Failed to fetch projects')
-      } finally {
-        setLoading(false)
-      }
+    if (projectsData) {
+      setProjects(projectsData)
     }
+  }, [projectsData])
 
-    fetchProjects()
-  }, [])
+  const error = localError || (projectsError ? projectsError.message : null)
 
   // Reset project when landing on home page
   useEffect(() => {
@@ -73,7 +68,7 @@ export default function ProjectLanding() {
     await createProject(projectRoot)
 
     // 2. Collect XML configuration files from /src/main/configurations
-    const configs: { filepath: string; xmlContent: string }[] = []
+    const configs: ConfigImport[] = []
 
     for (const file of [...files] as DirectoryFile[]) {
       const relative = file.webkitRelativePath
@@ -88,40 +83,19 @@ export default function ProjectLanding() {
     }
 
     // Import configurations to the project
-    await fetch(apiUrl(`/projects/${projectRoot}/import-configurations`), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        projectName: projectRoot,
-        configurations: configs,
-      }),
-    })
+    await importConfigurations(projectRoot, configs)
 
     // Sync local project list with backend
-    const updated = await fetch(apiUrl(`/projects/${projectRoot}`)).then((res) => res.json())
+    const updated = await fetchProject(projectRoot)
     setProjects((prev) => prev.map((p) => (p.name === updated.name ? updated : p)))
   }
 
   const createProject = async (projectName: string, rootPath?: string) => {
     try {
-      const response = await fetch(apiUrl('/projects'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: projectName,
-          rootPath: rootPath ?? undefined,
-        }),
-      })
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`)
-      }
-      // refresh the project list after creation
-      const newProject = await response.json()
+      const newProject = await createProjectService(projectName, rootPath)
       setProjects((previous) => [...previous, newProject])
     } catch (error_) {
-      setError(error_ instanceof Error ? error_.message : 'Failed to create project')
+      setLocalError(error_ instanceof Error ? error_.message : 'Failed to create project')
     }
   }
 

@@ -1,13 +1,13 @@
-import React, { type JSX, useEffect, useRef, useState } from 'react'
+import React, { type JSX, useCallback, useEffect, useRef, useState } from 'react'
 import { getListenerIcon } from './tree-utilities'
 import useTabStore from '~/stores/tab-store'
 import Search from '~/components/search/search'
+import LoadingSpinner from '~/components/loading-spinner'
 import FolderIcon from '../../../icons/solar/Folder.svg?react'
 import FolderOpenIcon from '../../../icons/solar/Folder Open.svg?react'
 import 'react-complex-tree/lib/style-modern.css'
 import AltArrowRightIcon from '../../../icons/solar/Alt Arrow Right.svg?react'
 import AltArrowDownIcon from '../../../icons/solar/Alt Arrow Down.svg?react'
-import { apiUrl } from '~/utils/api'
 
 import {
   Tree,
@@ -20,6 +20,7 @@ import {
 import FilesDataProvider from '~/components/file-structure/studio-files-data-provider'
 import { useProjectStore } from '~/stores/project-store'
 import type { FileNode, FileTreeNode } from './editor-data-provider'
+import { useProjectTree } from '~/hooks/use-project-tree'
 
 const TREE_ID = 'studio-files-tree'
 
@@ -39,7 +40,6 @@ function getItemTitle(item: TreeItem<FileNode>): string {
 
 export default function StudioFileStructure() {
   const project = useProjectStore((state) => state.project)
-  const [isTreeLoading, setIsTreeLoading] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [matchingItemIds, setMatchingItemIds] = useState<string[]>([])
   const [activeMatchIndex, setActiveMatchIndex] = useState<number>(-1)
@@ -48,11 +48,16 @@ export default function StudioFileStructure() {
   const tree = useRef<TreeRef>(null)
 
   const [dataProvider, setDataProvider] = useState<FilesDataProvider | null>(null)
+  const [providerLoading, setProviderLoading] = useState(false)
   const setTabData = useTabStore((state) => state.setTabData)
   const setActiveTab = useTabStore((state) => state.setActiveTab)
   const getTab = useTabStore((state) => state.getTab)
 
+  const { data: treeData, isLoading: isTreeLoading } = useProjectTree(project?.name)
+
   useEffect(() => {
+    if (!project || !treeData) return
+
     const initProvider = async () => {
       if (!project) return
 
@@ -70,7 +75,7 @@ export default function StudioFileStructure() {
     }
 
     void initProvider()
-  }, [project, project?.name])
+  }, [project, treeData])
 
   useEffect(() => {
     const findMatchingItems = async () => {
@@ -184,7 +189,7 @@ export default function StudioFileStructure() {
 
     globalThis.addEventListener('keydown', handleKeyDown)
     return () => globalThis.removeEventListener('keydown', handleKeyDown)
-  }, [matchingItemIds, highlightedItemId, dataProvider, handleItemClickAsync])
+  }, [matchingItemIds, highlightedItemId, handleItemClickAsync])
 
   useEffect(() => {
     if (activeMatchIndex === -1 || !tree.current) return
@@ -276,8 +281,10 @@ export default function StudioFileStructure() {
     )
   }
 
-  if (!project) return <p>No Project Selected</p>
-  if (isTreeLoading || !dataProvider) return <p>Loading configurations...</p>
+  if (!project) return <p className="text-muted-foreground p-4 text-sm">No Project Selected</p>
+  if (isTreeLoading || providerLoading) return <LoadingSpinner message="Loading configurations..." className="p-8" />
+  if (!dataProvider)
+    return <p className="text-muted-foreground p-4 text-sm">No configurations found in src/main/configurations</p>
 
   return (
     <>
@@ -300,5 +307,3 @@ export default function StudioFileStructure() {
     </>
   )
 }
-
-export class ConfigWithAdapters {}

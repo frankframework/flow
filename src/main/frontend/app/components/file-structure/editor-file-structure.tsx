@@ -1,5 +1,6 @@
-import React, { type JSX, useEffect, useRef, useState } from 'react'
+import React, { type JSX, useCallback, useEffect, useRef, useState } from 'react'
 import Search from '~/components/search/search'
+import LoadingSpinner from '~/components/loading-spinner'
 import FolderIcon from '../../../icons/solar/Folder.svg?react'
 import FolderOpenIcon from '../../../icons/solar/Folder Open.svg?react'
 import 'react-complex-tree/lib/style-modern.css'
@@ -95,26 +96,26 @@ export default function EditorFileStructure() {
     findMatchingItems()
   }, [searchTerm, dataProvider])
 
-  const openFileTab = (filePath: string, fileName: string) => {
-    if (!getTab(filePath)) {
-      setTabData(filePath, {
-        name: fileName,
-        configurationPath: filePath,
-      })
-    }
-    setActiveTab(filePath)
-  }
+  const openFileTab = useCallback(
+    (filePath: string, fileName: string) => {
+      if (!getTab(filePath)) {
+        setTabData(filePath, {
+          name: fileName,
+          configurationPath: filePath,
+        })
+      }
+      setActiveTab(filePath)
+    },
+    [getTab, setTabData, setActiveTab],
+  )
 
-  const handleItemClick = (items: TreeItemIndex[], _treeId: string): void => {
-    void handleItemClickAsync(items)
-  }
+  const handleItemClickAsync = useCallback(
+    async (itemIds: TreeItemIndex[]) => {
+      if (!dataProvider || itemIds.length === 0) return
 
-  const handleItemClickAsync = async (itemIds: TreeItemIndex[]) => {
-    if (!dataProvider || itemIds.length === 0) return
-
-    const itemId = itemIds[0]
-    const item = await dataProvider.getTreeItem(itemId)
-    if (!item) return
+      const itemId = itemIds[0]
+        const item = await dataProvider.getTreeItem(itemId)
+      if (!item) return
 
     // Fetch contents and expand folder if folder
     if (item.isFolder) {
@@ -242,7 +243,7 @@ export default function EditorFileStructure() {
     )
   }
 
-  if (!dataProvider) return <div className="text-muted-foreground p-4 text-xs">Initializing tree...</div>
+  if (!dataProvider) return <LoadingSpinner message="Loading files..." className="p-8" />
 
   return (
     <>
