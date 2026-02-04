@@ -6,6 +6,10 @@ export async function fetchProjects(signal?: AbortSignal): Promise<Project[]> {
   return apiFetch<Project[]>('/projects', { signal })
 }
 
+export async function fetchProject(name: string): Promise<Project> {
+  return apiFetch<Project>(`/projects/${encodeURIComponent(name)}`)
+}
+
 export async function fetchRecentProjects(signal?: AbortSignal): Promise<RecentProject[]> {
   return apiFetch<RecentProject[]>('/projects/recent', { signal })
 }
