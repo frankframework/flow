@@ -59,22 +59,14 @@ export default function StudioFileStructure() {
     if (!project || !treeData) return
 
     const initProvider = async () => {
-      if (!project) return
+      setProviderLoading(true)
 
-      setIsTreeLoading(true)
-
-      try {
-        // Create a new provider for this project
-        const provider = new FilesDataProvider(project.name)
-        setDataProvider(provider)
-      } catch (error) {
-        console.error('[Studio] Failed to load file tree', error)
-      } finally {
-        setIsTreeLoading(false)
-      }
+      const provider = new FilesDataProvider(project.name)
+      setDataProvider(provider)
+      setProviderLoading(false)
     }
 
-    void initProvider()
+    initProvider()
   }, [project, treeData])
 
   useEffect(() => {
@@ -112,53 +104,62 @@ export default function StudioFileStructure() {
     void handleItemClickAsync(items)
   }
 
-  const handleItemClickAsync = async (itemIds: TreeItemIndex[]) => {
-    if (!dataProvider || itemIds.length === 0) return
+  const loadFolderContents = useCallback(
+    async (item: TreeItem<FileNode>) => {
+      if (!item.isFolder) return
 
-    const itemId = itemIds[0]
-    if (typeof itemId !== 'string') return
+      const path = item.data.path
 
-    const item = await dataProvider.getTreeItem(itemId)
-    if (!item) return
+      if (path.endsWith('.xml') && dataProvider) {
+        // XML configs can contain adapters
+        if (dataProvider) await dataProvider.loadAdapters(item.index)
+      } else {
+        // Normal directory
+        if (dataProvider) await dataProvider.loadDirectory(item.index)
+      }
+    },
+    [dataProvider],
+  )
 
-    if (item.isFolder) {
-      await loadFolderContents(item)
-      return
-    }
+  const openNewTab = useCallback(
+    (adapterName: string, configPath: string) => {
+      if (!getTab(adapterName)) {
+        setTabData(adapterName, {
+          name: adapterName,
+          configurationPath: configPath,
+          flowJson: {},
+        })
+      }
 
-    // Leaf node: open adapter
-    const data = item.data
-    if (typeof data === 'object' && data !== null && 'adapterName' in data && 'configPath' in data) {
-      const { adapterName, configPath } = data as { adapterName: string; configPath: string }
-      openNewTab(adapterName, configPath)
-    }
-  }
+      setActiveTab(adapterName)
+    },
+    [getTab, setTabData, setActiveTab],
+  )
 
-  const loadFolderContents = async (item: TreeItem<FileNode>) => {
-    if (!item.isFolder) return
+  const handleItemClickAsync = useCallback(
+    async (itemIds: TreeItemIndex[]) => {
+      if (!dataProvider || itemIds.length === 0) return
 
-    const path = item.data.path
+      const itemId = itemIds[0]
+      if (typeof itemId !== 'string') return
 
-    if (path.endsWith('.xml') && dataProvider) {
-      // XML configs can contain adapters
-      if (dataProvider) await dataProvider.loadAdapters(item.index)
-    } else {
-      // Normal directory
-      if (dataProvider) await dataProvider.loadDirectory(item.index)
-    }
-  }
+      const item = await dataProvider.getTreeItem(itemId)
+      if (!item) return
 
-  const openNewTab = (adapterName: string, configPath: string) => {
-    if (!getTab(adapterName)) {
-      setTabData(adapterName, {
-        name: adapterName,
-        configurationPath: configPath,
-        flowJson: {},
-      })
-    }
+      if (item.isFolder) {
+        await loadFolderContents(item)
+        return
+      }
 
-    setActiveTab(adapterName)
-  }
+      // Leaf node: open adapter
+      const data = item.data
+      if (typeof data === 'object' && data !== null && 'adapterName' in data && 'configPath' in data) {
+        const { adapterName, configPath } = data as { adapterName: string; configPath: string }
+        openNewTab(adapterName, configPath)
+      }
+    },
+    [dataProvider, loadFolderContents, openNewTab],
+  )
 
   useEffect(() => {
     const handleKeyDown = async (event: KeyboardEvent) => {

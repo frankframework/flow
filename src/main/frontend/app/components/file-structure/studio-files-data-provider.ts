@@ -1,8 +1,7 @@
 import type { Disposable, TreeDataProvider, TreeItem, TreeItemIndex } from 'react-complex-tree'
-import type { FileTreeNode } from './editor-data-provider'
 import { getAdapterListenerType, getAdapterNamesFromConfiguration } from '~/routes/studio/xml-to-json-parser'
 import { sortChildren } from './tree-utilities'
-import { apiUrl } from '~/utils/api'
+import { fetchDirectoryByPath, fetchProjectTree } from '~/services/project-service'
 
 export default class FilesDataProvider implements TreeDataProvider {
   private data: Record<TreeItemIndex, TreeItem> = {}
@@ -17,10 +16,13 @@ export default class FilesDataProvider implements TreeDataProvider {
 
   // Load root directory
   private async loadRoot() {
-    const response = await fetch(apiUrl(`/projects/${this.projectName}/tree/configurations?shallow=true`))
-    if (!response.ok) throw new Error(`Failed to fetch root: ${response.status}`)
+    const tree = await fetchProjectTree(this.projectName)
 
-    const root: FileTreeNode = await response.json()
+    if (!tree) {
+      console.warn('[EditorFilesDataProvider] Received empty tree from API')
+      this.data = {}
+      return
+    }
 
     this.data['root'] = {
       index: 'root',
@@ -29,7 +31,7 @@ export default class FilesDataProvider implements TreeDataProvider {
       isFolder: true,
     }
 
-    const sortedChildren = sortChildren(root.children)
+    const sortedChildren = sortChildren(tree.children)
 
     for (const child of sortedChildren) {
       const index = `root/${child.name}`
@@ -47,7 +49,7 @@ export default class FilesDataProvider implements TreeDataProvider {
       this.data['root'].children!.push(index)
     }
 
-    this.loadedDirectories.add(root.path)
+    this.loadedDirectories.add(tree.path)
     this.notifyListeners(['root'])
   }
 
@@ -58,12 +60,14 @@ export default class FilesDataProvider implements TreeDataProvider {
     try {
       if (!item.children) item.children = []
 
-      const response = await fetch(apiUrl(`/projects/${this.projectName}?path=${encodeURIComponent(item.data.path)}`))
-      if (!response.ok) throw new Error('Failed to fetch directory')
+      const directory = await fetchDirectoryByPath(this.projectName, item.data.path)
+      if (!directory) {
+        console.warn('[StudioFilesDataProvider] Received empty directory from API')
+        this.data = {}
+        return
+      }
 
-      const dir: FileTreeNode = await response.json()
-
-      const sortedChildren = sortChildren(dir.children)
+      const sortedChildren = sortChildren(directory.children)
 
       const children: TreeItemIndex[] = []
 

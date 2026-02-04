@@ -50,7 +50,6 @@ export default function EditorFileStructure() {
 
     const initProvider = async () => {
       const provider = new EditorFilesDataProvider(project.name)
-      await provider.loadData()
 
       if (isMounted) {
         setDataProvider(provider)
@@ -114,18 +113,20 @@ export default function EditorFileStructure() {
       if (!dataProvider || itemIds.length === 0) return
 
       const itemId = itemIds[0]
-        const item = await dataProvider.getTreeItem(itemId)
+      const item = await dataProvider.getTreeItem(itemId)
       if (!item) return
 
-    // Fetch contents and expand folder if folder
-    if (item.isFolder) {
-      await dataProvider.loadDirectory(itemId)
-      return
-    }
+      // Fetch contents and expand folder if folder
+      if (item.isFolder) {
+        await dataProvider.loadDirectory(itemId)
+        return
+      }
 
-    // Load file in editor tab if file
-    openFileTab(item.data.path, item.data.name)
-  }
+      // Load file in editor tab if file
+      openFileTab(item.data.path, item.data.name)
+    },
+    [dataProvider, openFileTab],
+  )
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -253,7 +254,7 @@ export default function EditorFileStructure() {
           viewState={{}}
           getItemTitle={getItemTitle}
           dataProvider={dataProvider}
-          onSelectItems={handleItemClick}
+          onSelectItems={handleItemClickAsync}
           canSearch={false}
           renderItemArrow={renderItemArrow}
           renderItemTitle={renderItemTitle}
