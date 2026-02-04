@@ -5,7 +5,3 @@ export interface FilesystemEntry {
   absolutePath: string
   type: EntryType
 }
-
-export interface PathSelectionResponse {
-  path: string
-}

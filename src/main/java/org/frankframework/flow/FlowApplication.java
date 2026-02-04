@@ -22,9 +22,7 @@ public class FlowApplication {
     }
 
     public static SpringApplication configureApplication() {
-        return new SpringApplicationBuilder(FlowApplication.class)
-                .headless(false)
-                .build();
+        return new SpringApplicationBuilder(FlowApplication.class).build();
     }
 
     /**
