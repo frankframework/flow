@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router'
 import FfIcon from '/icons/custom/ff!-icon.svg?react'
 import ArchiveIcon from '/icons/solar/Archive.svg?react'
 
-import { useProjects } from '~/hooks/use-projects'
+import { useRecentProjects } from '~/hooks/use-projects'
 import { useProjectStore } from '~/stores/project-store'
 import { filesystemService } from '~/services/filesystem-service'
 import { openProject, createProject } from '~/services/project-service'
@@ -12,31 +12,34 @@ import ProjectRow from './project-row'
 import Search from '~/components/search/search'
 import ActionButton from './action-button'
 import NewProjectModal from './new-project-modal'
-import type { Project } from '~/types/project.types'
+import type { RecentProject } from '~/types/project.types'
 
 export default function ProjectLanding() {
   const navigate = useNavigate()
-  const { data: initialProjects, isLoading, error: apiError } = useProjects()
+  const { data: recentProjects, isLoading, error: apiError, refetch } = useRecentProjects()
   const clearProjectState = useProjectStore((state) => state.clearProject)
+  const setProject = useProjectStore((state) => state.setProject)
 
-  const [projects, setProjects] = useState<Project[]>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [runtimeError, setRuntimeError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (initialProjects) setProjects(initialProjects)
-  }, [initialProjects])
-
-  useEffect(() => {
     clearProjectState()
   }, [clearProjectState])
 
-  const handleProjectNavigation = useCallback(
-    (project: Project) => {
-      navigate(`/studio/${encodeURIComponent(project.name)}`)
+  const handleOpenProject = useCallback(
+    async (rootPath: string) => {
+      setRuntimeError(null)
+      try {
+        const project = await openProject(rootPath)
+        setProject(project)
+        navigate(`/studio/${encodeURIComponent(project.name)}`)
+      } catch (error) {
+        setRuntimeError(error instanceof Error ? error.message : 'Failed to open project')
+      }
     },
-    [navigate],
+    [navigate, setProject],
   )
 
   const onOpenNativeFolder = async () => {
@@ -46,28 +49,28 @@ export default function ProjectLanding() {
       if (!selection?.path) return
 
       const project = await openProject(selection.path)
-      setProjects((prev) => {
-        const index = prev.findIndex((p) => p.rootPath === project.rootPath)
-        return index === -1 ? [project, ...prev] : prev.map((p, i) => (i === index ? project : p))
-      })
-
-      handleProjectNavigation(project)
+      setProject(project)
+      refetch()
+      navigate(`/studio/${encodeURIComponent(project.name)}`)
     } catch (error) {
       setRuntimeError(error instanceof Error ? error.message : 'Failed to open project')
     }
   }
 
-  const onCreateProject = async (path: string) => {
+  const onCreateProject = async (absolutePath: string) => {
+    setRuntimeError(null)
     try {
-      const project = await createProject(path)
-      setProjects((prev) => [project, ...prev])
+      const project = await createProject(absolutePath)
+      setProject(project)
       setIsModalOpen(false)
-      handleProjectNavigation(project)
+      refetch()
+      navigate(`/studio/${encodeURIComponent(project.name)}`)
     } catch (error) {
       setRuntimeError(error instanceof Error ? error.message : 'Creation failed')
     }
   }
 
+  const projects = recentProjects ?? []
   const filteredProjects = projects.filter((p) => p.name.toLowerCase().includes(searchTerm.toLowerCase()))
 
   if (isLoading) return <LoadingState />
@@ -81,7 +84,7 @@ export default function ProjectLanding() {
 
         <div className="flex flex-1 overflow-hidden">
           <Sidebar onNewClick={() => setIsModalOpen(true)} onOpenClick={onOpenNativeFolder} />
-          <ProjectList projects={filteredProjects} />
+          <ProjectList projects={filteredProjects} onProjectClick={handleOpenProject} />
         </div>
       </main>
 
@@ -103,17 +106,24 @@ const Header = () => (
 
 const Sidebar = ({ onNewClick, onOpenClick }: { onNewClick: () => void; onOpenClick: () => void }) => (
   <nav className="border-border flex w-1/4 flex-col gap-3 border-r bg-slate-50/50 p-4">
-    <ActionButton label="New Project" onClick={onNewClick} />
     <ActionButton label="Open Folder" onClick={onOpenClick} />
+    {/*<ActionButton label="Clone Project" onClick={onCloneProject} />*/}
+    <ActionButton label="New Project" onClick={onNewClick} />
   </nav>
 )
 
-const ProjectList = ({ projects }: { projects: Project[] }) => (
+const ProjectList = ({
+  projects,
+  onProjectClick,
+}: {
+  projects: RecentProject[]
+  onProjectClick: (rootPath: string) => void
+}) => (
   <section className="h-full flex-1 overflow-y-auto p-4">
     {projects.length === 0 ? (
       <p className="text-muted-foreground mt-10 text-center text-sm italic">No projects found</p>
     ) : (
-      projects.map((p) => <ProjectRow key={p.rootPath} project={p} />)
+      projects.map((p) => <ProjectRow key={p.rootPath} project={p} onClick={() => onProjectClick(p.rootPath)} />)
     )}
   </section>
 )

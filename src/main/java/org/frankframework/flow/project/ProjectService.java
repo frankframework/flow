@@ -8,8 +8,10 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Stream;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.frankframework.flow.adapter.AdapterNotFoundException;
 import org.frankframework.flow.configuration.Configuration;
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
@@ -17,11 +19,12 @@ import org.frankframework.flow.projectsettings.FilterType;
 import org.frankframework.flow.projectsettings.InvalidFilterTypeException;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 public class ProjectService {
 
     @Getter
-    private final ArrayList<Project> projects = new ArrayList<>();
+    private final List<Project> projects = new CopyOnWriteArrayList<>();
 
     private static final String CONFIGURATIONS_DIR = "src/main/configurations";
     private static final String DEFAULT_CONFIGURATION_XML =
@@ -58,7 +61,8 @@ public class ProjectService {
         String rootPath = projectDir.toString();
 
         Project project = new Project(name, rootPath);
-        Configuration configuration = new Configuration(configFile.toAbsolutePath().normalize().toString());
+        Configuration configuration =
+                new Configuration(configFile.toAbsolutePath().normalize().toString());
         configuration.setXmlContent(DEFAULT_CONFIGURATION_XML);
         project.addConfiguration(configuration);
 
@@ -206,7 +210,8 @@ public class ProjectService {
 
         try {
             var configDoc = org.frankframework.flow.utility.XmlSecurityUtils.createSecureDocumentBuilder()
-                    .parse(new java.io.ByteArrayInputStream(config.getXmlContent().getBytes(StandardCharsets.UTF_8)));
+                    .parse(new java.io.ByteArrayInputStream(
+                            config.getXmlContent().getBytes(StandardCharsets.UTF_8)));
 
             var newAdapterDoc = org.frankframework.flow.utility.XmlSecurityUtils.createSecureDocumentBuilder()
                     .parse(new java.io.ByteArrayInputStream(newAdapterXml.getBytes(StandardCharsets.UTF_8)));
@@ -226,10 +231,10 @@ public class ProjectService {
         } catch (AdapterNotFoundException | ConfigurationNotFoundException | ProjectNotFoundException e) {
             throw e;
         } catch (org.xml.sax.SAXParseException e) {
-            System.err.println("Invalid XML for adapter " + adapterName + ": " + e.getMessage());
+            log.warn("Invalid XML for adapter {}: {}", adapterName, e.getMessage());
             return false;
         } catch (Exception e) {
-            System.err.println("Unexpected error updating adapter: " + e.getMessage());
+            log.error("Unexpected error updating adapter: {}", e.getMessage(), e);
             return false;
         }
     }

@@ -8,3 +8,9 @@
 export interface ProjectCreateDTO {
   rootPath: string
 }
+
+export interface RecentProject {
+  name: string
+  rootPath: string
+  lastOpened: string
+}
