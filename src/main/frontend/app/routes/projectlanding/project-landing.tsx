@@ -5,7 +5,6 @@ import ArchiveIcon from '/icons/solar/Archive.svg?react'
 
 import { useRecentProjects } from '~/hooks/use-projects'
 import { useProjectStore } from '~/stores/project-store'
-import { filesystemService } from '~/services/filesystem-service'
 import { openProject, createProject, cloneProject } from '~/services/project-service'
 
 import ProjectRow from './project-row'
@@ -13,6 +12,7 @@ import Search from '~/components/search/search'
 import ActionButton from './action-button'
 import NewProjectModal from './new-project-modal'
 import CloneProjectModal from './clone-project-modal'
+import DirectoryPicker from '~/components/directory-picker/directory-picker'
 import type { RecentProject } from '~/types/project.types'
 
 export default function ProjectLanding() {
@@ -24,6 +24,7 @@ export default function ProjectLanding() {
   const [searchTerm, setSearchTerm] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isCloneModalOpen, setIsCloneModalOpen] = useState(false)
+  const [isOpenPickerOpen, setIsOpenPickerOpen] = useState(false)
   const [runtimeError, setRuntimeError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -44,19 +45,10 @@ export default function ProjectLanding() {
     [navigate, setProject],
   )
 
-  const onOpenNativeFolder = async () => {
-    setRuntimeError(null)
-    try {
-      const selection = await filesystemService.selectNativePath()
-      if (!selection?.path) return
-
-      const project = await openProject(selection.path)
-      setProject(project)
-      refetch()
-      navigate(`/studio/${encodeURIComponent(project.name)}`)
-    } catch (error) {
-      setRuntimeError(error instanceof Error ? error.message : 'Failed to open project')
-    }
+  const onOpenFolder = async (selectedPath: string) => {
+    setIsOpenPickerOpen(false)
+    await handleOpenProject(selectedPath)
+    refetch()
   }
 
   const onCreateProject = async (absolutePath: string) => {
@@ -100,7 +92,7 @@ export default function ProjectLanding() {
         <div className="flex flex-1 overflow-hidden">
           <Sidebar
             onNewClick={() => setIsModalOpen(true)}
-            onOpenClick={onOpenNativeFolder}
+            onOpenClick={() => setIsOpenPickerOpen(true)}
             onCloneClick={() => setIsCloneModalOpen(true)}
           />
           <ProjectList projects={filteredProjects} onProjectClick={handleOpenProject} />
@@ -117,6 +109,7 @@ export default function ProjectLanding() {
         onClose={() => setIsCloneModalOpen(false)}
         onClone={onCloneProject}
       />
+      <DirectoryPicker isOpen={isOpenPickerOpen} onSelect={onOpenFolder} onCancel={() => setIsOpenPickerOpen(false)} />
     </div>
   )
 }
