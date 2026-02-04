@@ -5,12 +5,13 @@ import useNodeContextStore from '~/stores/node-context-store'
 import { useNodeContextMenu } from '~/routes/studio/canvas/flow'
 import { useSettingsStore } from '~/routes/settings/settings-store'
 import { useFrankDoc } from '~/providers/frankdoc-provider'
-import type { Attribute } from '~/types/ff-doc.types'
+import type { Attribute } from '@frankframework/ff-doc'
 
 export type ExitNode = Node<{
   subtype: string
   type: string
   name: string
+  attributes: Record<string, string>
 }>
 
 export default function ExitNodeComponent(properties: NodeProps<ExitNode>) {

@@ -3,19 +3,21 @@ import type { ElementProperty } from '@frankframework/ff-doc'
 
 export function useHandleTypes(typesAllowed?: Record<string, ElementProperty>) {
   return useMemo(() => {
-    // Elements should always have access to a success handle, indicating a happy path
-    const base: string[] = ['success']
+    // Always include the 'success' handle, using a Set to avoid duplicates
+    const handles = new Set<string>(['success'])
 
-    if (!typesAllowed) return base
+    if (!typesAllowed) return [...handles]
 
-    // Replace wildcard with 'custom' type
-    const hasWildcard = '*' in typesAllowed
-    if (hasWildcard) {
-      base.push('custom')
+    if ('*' in typesAllowed) {
+      handles.add('custom')
     }
 
-    const forwards = Object.keys(typesAllowed).filter((type) => type !== '*')
+    for (const type of Object.keys(typesAllowed)) {
+      if (type !== '*') {
+        handles.add(type)
+      }
+    }
 
-    return [...base, ...forwards]
+    return [...handles]
   }, [typesAllowed])
 }
