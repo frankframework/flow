@@ -5,7 +5,7 @@ import ArchiveIcon from '/icons/solar/Archive.svg?react'
 
 import { useRecentProjects } from '~/hooks/use-projects'
 import { useProjectStore } from '~/stores/project-store'
-import { openProject, createProject, cloneProject } from '~/services/project-service'
+import { openProject, createProject, cloneProject, removeRecentProject } from '~/services/project-service'
 
 import ProjectRow from './project-row'
 import Search from '~/components/search/search'
@@ -48,7 +48,6 @@ export default function ProjectLanding() {
   const onOpenFolder = async (selectedPath: string) => {
     setIsOpenPickerOpen(false)
     await handleOpenProject(selectedPath)
-    refetch()
   }
 
   const onCreateProject = async (absolutePath: string) => {
@@ -57,7 +56,6 @@ export default function ProjectLanding() {
       const project = await createProject(absolutePath)
       setProject(project)
       setIsModalOpen(false)
-      refetch()
       navigate(`/studio/${encodeURIComponent(project.name)}`)
     } catch (error) {
       setRuntimeError(error instanceof Error ? error.message : 'Creation failed')
@@ -70,10 +68,18 @@ export default function ProjectLanding() {
       const project = await cloneProject(repoUrl, localPath)
       setProject(project)
       setIsCloneModalOpen(false)
-      refetch()
       navigate(`/studio/${encodeURIComponent(project.name)}`)
     } catch (error) {
       setRuntimeError(error instanceof Error ? error.message : 'Clone failed')
+    }
+  }
+
+  const onRemoveProject = async (rootPath: string) => {
+    try {
+      await removeRecentProject(rootPath)
+      refetch()
+    } catch (error) {
+      setRuntimeError(error instanceof Error ? error.message : 'Failed to remove project')
     }
   }
 
@@ -95,7 +101,11 @@ export default function ProjectLanding() {
             onOpenClick={() => setIsOpenPickerOpen(true)}
             onCloneClick={() => setIsCloneModalOpen(true)}
           />
-          <ProjectList projects={filteredProjects} onProjectClick={handleOpenProject} />
+          <ProjectList
+            projects={filteredProjects}
+            onProjectClick={handleOpenProject}
+            onRemoveProject={onRemoveProject}
+          />
         </div>
       </main>
 
@@ -140,15 +150,24 @@ const Sidebar = ({
 const ProjectList = ({
   projects,
   onProjectClick,
+  onRemoveProject,
 }: {
   projects: RecentProject[]
   onProjectClick: (rootPath: string) => void
+  onRemoveProject: (rootPath: string) => void
 }) => (
   <section className="h-full flex-1 overflow-y-auto p-4">
     {projects.length === 0 ? (
       <p className="text-muted-foreground mt-10 text-center text-sm italic">No projects found</p>
     ) : (
-      projects.map((p) => <ProjectRow key={p.rootPath} project={p} onClick={() => onProjectClick(p.rootPath)} />)
+      projects.map((p) => (
+        <ProjectRow
+          key={p.rootPath}
+          project={p}
+          onClick={() => onProjectClick(p.rootPath)}
+          onRemove={() => onRemoveProject(p.rootPath)}
+        />
+      ))
     )}
   </section>
 )
