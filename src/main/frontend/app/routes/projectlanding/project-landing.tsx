@@ -9,12 +9,7 @@ import { useLocation } from 'react-router'
 import NewProjectModal from './new-project-modal'
 import LoadProjectModal from './load-project-modal'
 import { useProjects } from '~/hooks/use-projects'
-import {
-  createProject as createProjectService,
-  fetchProject,
-  importConfigurations,
-  type ConfigImport,
-} from '~/services/project-service'
+import { createProject as createProjectService } from '~/services/project-service'
 import { toast, ToastContainer } from 'react-toastify'
 import { useTheme } from '~/hooks/use-theme'
 import React from 'react'
@@ -53,48 +48,13 @@ export default function ProjectLanding() {
 
   const createProject = async (projectName: string, rootPath?: string) => {
     try {
-      const response = await fetch(apiUrl('/projects'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: projectName,
-          rootPath: rootPath ?? undefined,
-        }),
-      })
-      if (!response.ok) {
-        const contentType = response.headers.get('content-type')
-        if (contentType && contentType.includes('application/json')) {
-          const errorData = await response.json()
-          toast.error(
-            <div>
-              Error loading project: Statuscode {errorData.httpStatus}
-              <br />
-              <br />
-              Details:
-              <br />
-              {errorData.messages.map((message: string, index: number) => (
-                <React.Fragment key={index}>
-                  {message}
-                  <br />
-                </React.Fragment>
-              ))}
-            </div>,
-          )
-
-          console.error('Something went wrong loading the project:', errorData)
-        } else {
-          toast.error(`Error loading project. HTTP status: ${response.status}`)
-          console.error('Error loading project. HTTP status:', response.status)
-        }
-        return
-      }
       // refresh the project list after creation
-      const newProject = await response.json()
+      const newProject = await createProjectService(projectName, rootPath)
       setProjects((previous) => [...previous, newProject])
     } catch (error_) {
-      setLocalError(error_ instanceof Error ? error_.message : 'Failed to create project')
+      toast.error(error_ instanceof Error ? error_.message : 'Failed to create project')
+
+      console.error('Something went wrong loading the project:', error_)
     }
   }
 
