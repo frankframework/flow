@@ -8,7 +8,13 @@ import { useProjectStore } from '~/stores/project-store'
 import { useLocation } from 'react-router'
 import NewProjectModal from './new-project-modal'
 import LoadProjectModal from './load-project-modal'
-import { apiUrl } from '~/utils/api'
+import { useProjects } from '~/hooks/use-projects'
+import {
+  createProject as createProjectService,
+  fetchProject,
+  importConfigurations,
+  type ConfigImport,
+} from '~/services/project-service'
 import { toast, ToastContainer } from 'react-toastify'
 import { useTheme } from '~/hooks/use-theme'
 import React from 'react'
@@ -21,35 +27,24 @@ export interface Project {
 }
 
 export default function ProjectLanding() {
+  const { data: projectsData, isLoading: loading, error: projectsError } = useProjects()
   const [projects, setProjects] = useState<Project[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [showNewProjectModal, setShowNewProjectModal] = useState(false)
   const [showLoadProjectModal, setShowLoadProjectModal] = useState(false)
+  const [localError, setLocalError] = useState<string | null>(null)
   const theme = useTheme()
 
   const clearProject = useProjectStore((state) => state.clearProject)
   const location = useLocation()
 
   useEffect(() => {
-    const fetchProjects = async () => {
-      try {
-        const response = await fetch(apiUrl('/projects'))
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`)
-        }
-        const data = await response.json()
-        setProjects(data)
-      } catch (error_) {
-        setError(error_ instanceof Error ? error_.message : 'Failed to fetch projects')
-      } finally {
-        setLoading(false)
-      }
+    if (projectsData) {
+      setProjects(projectsData)
     }
+  }, [projectsData])
 
-    fetchProjects()
-  }, [])
+  const error = localError || (projectsError ? projectsError.message : null)
 
   // Reset project when landing on home page
   useEffect(() => {
@@ -98,9 +93,8 @@ export default function ProjectLanding() {
       // refresh the project list after creation
       const newProject = await response.json()
       setProjects((previous) => [...previous, newProject])
-    } catch (error) {
-      toast.error(`Network or unexpected error: ${error}`)
-      console.error('Network or unexpected error:', error)
+    } catch (error_) {
+      setLocalError(error_ instanceof Error ? error_.message : 'Failed to create project')
     }
   }
 

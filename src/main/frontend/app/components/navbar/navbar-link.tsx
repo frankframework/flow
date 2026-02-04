@@ -1,25 +1,31 @@
-import { Link, useLocation } from 'react-router'
 import clsx from 'clsx'
+import { type AppRoute, useNavigationStore } from '~/stores/navigation-store'
 
 interface NavbarLinkProperties {
-  route: string
+  route: AppRoute
   label: string
   Icon?: React.FC<React.SVGProps<SVGSVGElement>>
 }
 
 export default function NavbarLink({ route, label, Icon }: Readonly<NavbarLinkProperties>) {
-  const location = useLocation()
-  const isActive = location.pathname === route || (route !== '/' && location.pathname.startsWith(route))
+  const currentRoute = useNavigationStore((state) => state.currentRoute)
+  const navigate = useNavigationStore((state) => state.navigate)
+  const isActive = currentRoute === route
+
+  const handleClick = () => {
+    navigate(route)
+  }
 
   return (
     <li className="m-0 list-none p-0">
-      <Link
-        to={route}
-        className={clsx('group hover:bg-hover relative flex flex-col items-center p-4 text-center no-underline')}
+      <button
+        type="button"
+        onClick={handleClick}
+        className="group hover:bg-hover relative flex w-full flex-col items-center p-4 text-center hover:cursor-pointer"
       >
         <div
           className={clsx('absolute top-1/2 left-1 h-10/12 w-[2px] -translate-y-1/2 rounded', isActive && 'bg-brand')}
-        ></div>
+        />
         {Icon && (
           <Icon className={clsx('group-hover:fill-brand h-8 w-auto', isActive ? 'fill-brand' : 'fill-foreground')} />
         )}
@@ -30,7 +36,7 @@ export default function NavbarLink({ route, label, Icon }: Readonly<NavbarLinkPr
         >
           {label}
         </span>
-      </Link>
+      </button>
     </li>
   )
 }
