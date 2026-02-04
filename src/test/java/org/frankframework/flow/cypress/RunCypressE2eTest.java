@@ -60,7 +60,6 @@ public class RunCypressE2eTest {
     private static void startApplication() {
         SpringApplication springApplication = FlowApplication.configureApplication();
 
-        springApplication.setDefaultProperties(Map.of("app.project.root", "/tmp/flow-projects"));
         run = springApplication.run();
 
         assertTrue(run.isRunning());

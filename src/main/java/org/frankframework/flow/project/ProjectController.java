@@ -16,9 +16,11 @@ import org.frankframework.flow.filetree.FileTreeNode;
 import org.frankframework.flow.filetree.FileTreeService;
 import org.frankframework.flow.projectsettings.FilterType;
 import org.frankframework.flow.projectsettings.InvalidFilterTypeException;
+import org.frankframework.flow.recentproject.RecentProjectsService;
 import org.frankframework.flow.utility.XmlValidator;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -34,10 +36,15 @@ import org.springframework.web.bind.annotation.RestController;
 public class ProjectController {
     private final ProjectService projectService;
     private final FileTreeService fileTreeService;
+    private final RecentProjectsService recentProjectsService;
 
-    public ProjectController(ProjectService projectService, FileTreeService fileTreeService) {
+    public ProjectController(
+            ProjectService projectService,
+            FileTreeService fileTreeService,
+            RecentProjectsService recentProjectsService) {
         this.projectService = projectService;
         this.fileTreeService = fileTreeService;
+        this.recentProjectsService = recentProjectsService;
     }
 
     @GetMapping
@@ -52,15 +59,19 @@ public class ProjectController {
         return ResponseEntity.ok(projectDTOList);
     }
 
-    @GetMapping("/backend-folders")
-    public List<String> getBackendFolders() throws IOException {
-        return fileTreeService.listProjectFolders();
+    @GetMapping("/recent")
+    public ResponseEntity<List<RecentProject>> getRecentProjects() {
+        return ResponseEntity.ok(recentProjectsService.getRecentProjects());
     }
 
-    @GetMapping("/root")
-    public ResponseEntity<Map<String, String>> getProjectsRoot() {
-        return ResponseEntity.ok(
-                Map.of("rootPath", fileTreeService.getProjectsRoot().toString()));
+    @DeleteMapping("/recent")
+    public ResponseEntity<Void> removeRecentProject(@RequestBody Map<String, String> body) {
+        String rootPath = body.get("rootPath");
+        if (rootPath == null || rootPath.isBlank()) {
+            return ResponseEntity.badRequest().build();
+        }
+        recentProjectsService.removeRecentProject(rootPath);
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/{name}/tree")
@@ -221,9 +232,21 @@ public class ProjectController {
     }
 
     @PostMapping
-    public ResponseEntity<ProjectDTO> createProject(@RequestBody ProjectCreateDTO projectCreateDTO)
-            throws ProjectAlreadyExistsException {
-        Project project = projectService.createProject(projectCreateDTO.name(), projectCreateDTO.rootPath());
+    public ResponseEntity<ProjectDTO> createProject(@RequestBody ProjectCreateDTO projectCreateDTO) throws IOException {
+        Project project = projectService.createProjectOnDisk(projectCreateDTO.rootPath());
+
+        recentProjectsService.addRecentProject(project.getName(), project.getRootPath());
+
+        ProjectDTO dto = ProjectDTO.from(project);
+
+        return ResponseEntity.ok(dto);
+    }
+
+    @PostMapping("/open")
+    public ResponseEntity<ProjectDTO> openProject(@RequestBody ProjectCreateDTO projectCreateDTO) throws IOException {
+        Project project = projectService.openProjectFromDisk(projectCreateDTO.rootPath());
+
+        recentProjectsService.addRecentProject(project.getName(), project.getRootPath());
 
         ProjectDTO dto = ProjectDTO.from(project);
 

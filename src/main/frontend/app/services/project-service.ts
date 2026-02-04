@@ -2,36 +2,21 @@ import { apiFetch } from '~/utils/api'
 import type { Project } from '~/routes/projectlanding/project-landing'
 import type { FileTreeNode } from '~/routes/configurations/configuration-manager'
 
-export interface ConfigImport {
-  filepath: string
-  xmlContent: string
-}
-
 export async function fetchProjects(signal?: AbortSignal): Promise<Project[]> {
   return apiFetch<Project[]>('/projects', { signal })
 }
 
-export async function fetchProject(name: string, signal?: AbortSignal): Promise<Project> {
-  return apiFetch<Project>(`/projects/${encodeURIComponent(name)}`, { signal })
-}
-
-export async function createProject(name: string, rootPath?: string): Promise<Project> {
-  return apiFetch<Project>('/projects', {
+export async function openProject(rootPath: string): Promise<Project> {
+  return apiFetch<Project>('/projects/open', {
     method: 'POST',
-    body: JSON.stringify({
-      name,
-      rootPath: rootPath ?? undefined,
-    }),
+    body: JSON.stringify({ rootPath }),
   })
 }
 
-export async function importConfigurations(projectName: string, configs: ConfigImport[]): Promise<void> {
-  await apiFetch<void>(`/projects/${encodeURIComponent(projectName)}/import-configurations`, {
+export async function createProject(rootPath: string): Promise<Project> {
+  return apiFetch<Project>('/projects', {
     method: 'POST',
-    body: JSON.stringify({
-      projectName,
-      configurations: configs,
-    }),
+    body: JSON.stringify({ rootPath }),
   })
 }
 

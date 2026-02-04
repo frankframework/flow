@@ -5,6 +5,8 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import org.frankframework.flow.adapter.AdapterNotFoundException;
@@ -17,23 +19,20 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.ResourcePatternResolver;
 
 @ExtendWith(MockitoExtension.class)
 class ProjectServiceTest {
-
-    @Mock
-    private ResourcePatternResolver resolver;
-
     private ProjectService projectService;
 
     @BeforeEach
-    void init() throws IOException {
-        projectService = new ProjectService(resolver, "/path/to/projects");
+    void init() {
+        projectService = new ProjectService();
     }
 
     @Test
-    void testAddingProjectToProjectService() throws ProjectNotFoundException, ProjectAlreadyExistsException {
+    void testAddingProjectToProjectService() throws ProjectNotFoundException {
         String projectName = "new_project";
         String rootPath = "/path/to/new_project";
 
@@ -44,16 +43,6 @@ class ProjectServiceTest {
 
         assertEquals(1, projectService.getProjects().size());
         assertNotNull(projectService.getProject(projectName));
-    }
-
-    @Test
-    void testAddingProjectThrowsProjectAlreadyExists() throws ProjectAlreadyExistsException {
-        String projectName = "existing_project";
-        String rootPath = "/path/to/existing_project";
-
-        projectService.createProject(projectName, rootPath);
-
-        assertThrows(ProjectAlreadyExistsException.class, () -> projectService.createProject(projectName, rootPath));
     }
 
     @Test
@@ -118,7 +107,7 @@ class ProjectServiceTest {
     }
 
     @Test
-    void testEnableFilterInvalidFilterType() throws ProjectAlreadyExistsException {
+    void testEnableFilterInvalidFilterType() {
         projectService.createProject("proj", "/path/to/proj");
 
         InvalidFilterTypeException ex = assertThrows(
@@ -128,7 +117,7 @@ class ProjectServiceTest {
     }
 
     @Test
-    void testDisableFilterInvalidFilterType() throws ProjectAlreadyExistsException {
+    void testDisableFilterInvalidFilterType() {
         projectService.createProject("proj", "/path/to/proj");
 
         InvalidFilterTypeException ex = assertThrows(
