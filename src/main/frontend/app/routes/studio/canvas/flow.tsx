@@ -15,6 +15,7 @@ import {
 import Dagre from '@dagrejs/dagre'
 import '@xyflow/react/dist/style.css'
 import FrankNodeComponent, { type FrankNodeType } from '~/routes/studio/canvas/nodetypes/frank-node'
+import type { ChildNode } from '~/routes/studio/canvas/nodetypes/child-node'
 import FrankEdgeComponent from '~/routes/studio/canvas/edgetypes/frank-edge'
 import ExitNodeComponent, { type ExitNode } from '~/routes/studio/canvas/nodetypes/exit-node'
 import GroupNodeComponent, { type GroupNode } from '~/routes/studio/canvas/nodetypes/group-node'
@@ -51,6 +52,34 @@ const selector = (state: FlowState) => ({
   onReconnect: state.onReconnect,
 })
 
+type IdGenerator = () => string
+
+function cloneWithRemappedIds<T>(value: T, idMap: Map<string, string>, generateId: IdGenerator): T {
+  if (Array.isArray(value)) {
+    return value.map((v) => cloneWithRemappedIds(v, idMap, generateId)) as T
+  }
+
+  if (value && typeof value === 'object') {
+    const obj = value as Record<string, unknown>
+
+    return Object.fromEntries(
+      Object.entries(obj).map(([key, val]) => {
+        // Remap any `id: string`
+        if (key === 'id' && typeof val === 'string') {
+          if (!idMap.has(val)) {
+            idMap.set(val, generateId())
+          }
+          return [key, idMap.get(val)!]
+        }
+
+        return [key, cloneWithRemappedIds(val, idMap, generateId)]
+      }),
+    ) as T
+  }
+
+  return value
+}
+
 function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b: boolean) => void }>) {
   const theme = useTheme()
   const [loading, setLoading] = useState(false)
@@ -64,6 +93,10 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
   )
   const [showModal, setShowModal] = useState(false)
   const [edgeDropPositions, setEdgeDropPositions] = useState<{ x: number; y: number } | null>(null)
+  const clipboardRef = useRef<{
+    nodes: FlowNode[]
+    edges: Edge[]
+  } | null>(null)
 
   const nodeTypes = {
     frankNode: FrankNodeComponent,
@@ -274,11 +307,77 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
     shouldMergeUngroupedIntoGroup,
   ])
 
+  const copySelection = useCallback(() => {
+    const selectedNodes = nodes.filter((n) => n.selected)
+    if (selectedNodes.length === 0) return
+
+    const selectedNodeIds = new Set(selectedNodes.map((n) => n.id))
+
+    const selectedEdges = edges.filter((e) => selectedNodeIds.has(e.source) && selectedNodeIds.has(e.target))
+
+    clipboardRef.current = {
+      nodes: selectedNodes,
+      edges: selectedEdges,
+    }
+  }, [nodes, edges])
+
+  const pasteSelection = useCallback(() => {
+    const clipboard = clipboardRef.current
+    if (!clipboard) return
+
+    const flowStore = useFlowStore.getState()
+    const offset = 40
+
+    const idMap = new Map<string, string>()
+    const generateId = () => flowStore.getNextNodeId().toString()
+
+    // Clone nodes with remapped IDs
+    const newNodes: FlowNode[] = clipboard.nodes.map((node) => {
+      const cloned = cloneWithRemappedIds(node, idMap, generateId)
+
+      return {
+        ...cloned,
+        position: {
+          x: node.position.x + offset,
+          y: node.position.y + offset,
+        },
+        parentId: undefined,
+        extent: undefined,
+        selected: true,
+      }
+    })
+
+    // Clone edges using the SAME idMap
+    const newEdges: Edge[] = clipboard.edges.map((edge) => cloneWithRemappedIds(edge, idMap, generateId))
+
+    // Deselect existing nodes
+    const deselectedNodes = flowStore.nodes.map((n) => ({
+      ...n,
+      selected: false,
+    }))
+
+    flowStore.setNodes([...deselectedNodes, ...newNodes])
+    flowStore.setEdges([...flowStore.edges, ...newEdges])
+  }, [])
+
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       const tagName = (event.target as HTMLElement).tagName
       const isTyping = ['INPUT', 'TEXTAREA'].includes(tagName) || (event.target as HTMLElement).isContentEditable
+
       if (isTyping) return
+
+      const isCmdOrCtrl = event.metaKey || event.ctrlKey
+
+      if (isCmdOrCtrl && event.key.toLowerCase() === 'c') {
+        event.preventDefault()
+        copySelection()
+      }
+
+      if (isCmdOrCtrl && event.key.toLowerCase() === 'v') {
+        event.preventDefault()
+        pasteSelection()
+      }
 
       if (event.key === 'g' || event.key === 'G') {
         event.preventDefault()
@@ -288,7 +387,7 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
 
     globalThis.addEventListener('keydown', handleKeyDown)
     return () => globalThis.removeEventListener('keydown', handleKeyDown)
-  }, [handleGrouping])
+  }, [copySelection, pasteSelection, handleGrouping])
 
   const groupNodes = (nodesToGroup: FlowNode[], currentNodes: FlowNode[]) => {
     const minX = Math.min(...nodesToGroup.map((node) => node.position.x))
@@ -582,6 +681,7 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
           >
             Save XML
           </button>
+          <button onClick={() => console.log(reactFlow.toObject())}>Click</button>
         </Panel>
       </ReactFlow>
       <ToastContainer position="bottom-right" theme={theme} closeOnClick={true} />
