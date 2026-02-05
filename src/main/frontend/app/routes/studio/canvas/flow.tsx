@@ -15,7 +15,6 @@ import {
 import Dagre from '@dagrejs/dagre'
 import '@xyflow/react/dist/style.css'
 import FrankNodeComponent, { type FrankNodeType } from '~/routes/studio/canvas/nodetypes/frank-node'
-import type { ChildNode } from '~/routes/studio/canvas/nodetypes/child-node'
 import FrankEdgeComponent from '~/routes/studio/canvas/edgetypes/frank-edge'
 import ExitNodeComponent, { type ExitNode } from '~/routes/studio/canvas/nodetypes/exit-node'
 import GroupNodeComponent, { type GroupNode } from '~/routes/studio/canvas/nodetypes/group-node'
@@ -369,6 +368,7 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
 
       const isCmdOrCtrl = event.metaKey || event.ctrlKey
 
+
       if (isCmdOrCtrl && event.key.toLowerCase() === 'c') {
         event.preventDefault()
         copySelection()
@@ -681,7 +681,6 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
           >
             Save XML
           </button>
-          <button onClick={() => console.log(reactFlow.toObject())}>Click</button>
         </Panel>
       </ReactFlow>
       <ToastContainer position="bottom-right" theme={theme} closeOnClick={true} />
