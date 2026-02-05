@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { isRouteErrorResponse, Links, Meta, Outlet, Scripts, ScrollRestoration } from 'react-router'
-
+import { ToastContainer } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
 import type { Route } from './+types/root'
 import 'allotment/dist/style.css'
 import './app.css'
@@ -40,7 +41,12 @@ function ThemeProvider({ children }: { children: React.ReactNode }) {
     document.documentElement.dataset.theme = theme
   }, [theme])
 
-  return <>{children}</>
+  return (
+    <>
+      {children}
+      <ToastContainer theme={theme} position="bottom-right" />
+    </>
+  )
 }
 
 export function Layout({ children }: Readonly<{ children: React.ReactNode }>) {

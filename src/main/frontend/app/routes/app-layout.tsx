@@ -7,8 +7,12 @@ import { fetchProject } from '~/services/project-service'
 import LoadingSpinner from '~/components/loading-spinner'
 import type { Project } from '~/types/project.types'
 import { Toast } from '~/components/toast'
+import { ToastContainer } from 'react-toastify'
+import { useTheme } from '~/hooks/use-theme'
 
 export default function AppLayout() {
+  const theme = useTheme()
+
   const [restoring, setRestoring] = useState(!!getStoredProjectName())
 
   useEffect(() => {

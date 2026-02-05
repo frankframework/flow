@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router'
 import FfIcon from '/icons/custom/ff!-icon.svg?react'
 import ArchiveIcon from '/icons/solar/Archive.svg?react'
-
+import { toast } from 'react-toastify'
 import { useRecentProjects } from '~/hooks/use-projects'
 import { useProjectStore } from '~/stores/project-store'
 import { openProject, createProject, cloneProject, removeRecentProject } from '~/services/project-service'
@@ -25,21 +25,25 @@ export default function ProjectLanding() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isCloneModalOpen, setIsCloneModalOpen] = useState(false)
   const [isOpenPickerOpen, setIsOpenPickerOpen] = useState(false)
-  const [runtimeError, setRuntimeError] = useState<string | null>(null)
 
   useEffect(() => {
     clearProjectState()
   }, [clearProjectState])
 
+  useEffect(() => {
+    if (apiError) {
+      toast.error(`Could not load in projects: ${apiError.message}`)
+    }
+  }, [apiError])
+
   const handleOpenProject = useCallback(
     async (rootPath: string) => {
-      setRuntimeError(null)
       try {
         const project = await openProject(rootPath)
         setProject(project)
         navigate(`/studio/${encodeURIComponent(project.name)}`)
       } catch (error) {
-        setRuntimeError(error instanceof Error ? error.message : 'Failed to open project')
+        toast.error(error instanceof Error ? error.message : 'Failed to open project')
       }
     },
     [navigate, setProject],
@@ -51,26 +55,24 @@ export default function ProjectLanding() {
   }
 
   const onCreateProject = async (absolutePath: string) => {
-    setRuntimeError(null)
     try {
       const project = await createProject(absolutePath)
       setProject(project)
       setIsModalOpen(false)
       navigate(`/studio/${encodeURIComponent(project.name)}`)
     } catch (error) {
-      setRuntimeError(error instanceof Error ? error.message : 'Creation failed')
+      toast.error(error instanceof Error ? error.message : 'Failed to create project')
     }
   }
 
   const onCloneProject = async (repoUrl: string, localPath: string) => {
-    setRuntimeError(null)
     try {
       const project = await cloneProject(repoUrl, localPath)
       setProject(project)
       setIsCloneModalOpen(false)
       navigate(`/studio/${encodeURIComponent(project.name)}`)
     } catch (error) {
-      setRuntimeError(error instanceof Error ? error.message : 'Clone failed')
+      toast.error(error instanceof Error ? error.message : 'Failed to clone project from GitHub')
     }
   }
 
@@ -78,8 +80,8 @@ export default function ProjectLanding() {
     try {
       await removeRecentProject(rootPath)
       refetch()
-    } catch (error) {
-      setRuntimeError(error instanceof Error ? error.message : 'Failed to remove project')
+    } catch {
+      toast.error('Failed to remove recent opened project')
     }
   }
 
@@ -108,10 +110,6 @@ export default function ProjectLanding() {
           />
         </div>
       </main>
-
-      {(runtimeError || apiError) && (
-        <p className="mt-4 text-sm font-medium text-red-500">{runtimeError || apiError?.message}</p>
-      )}
 
       <NewProjectModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onCreate={onCreateProject} />
       <CloneProjectModal

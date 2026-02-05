@@ -7,7 +7,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -76,7 +75,6 @@ public class ProjectService {
     public Project openProjectFromDisk(String absolutePath) throws IOException {
         Path projectDir = Paths.get(absolutePath).toAbsolutePath().normalize();
 
-        // Check if already registered in memory
         for (Project project : projects) {
             if (Paths.get(project.getRootPath()).toAbsolutePath().normalize().equals(projectDir)) {
                 return project;
@@ -92,12 +90,10 @@ public class ProjectService {
 
         Project project = new Project(name, rootPath);
 
-        // Scan for XML files in src/main/configurations/
         Path configurationsDir = projectDir.resolve(CONFIGURATIONS_DIR);
         if (Files.exists(configurationsDir) && Files.isDirectory(configurationsDir)) {
             scanXmlFiles(configurationsDir, project);
         } else {
-            // Fallback: scan project root for XML files (backward compat)
             scanXmlFiles(projectDir, project);
         }
 
@@ -161,15 +157,14 @@ public class ProjectService {
         return openProjectFromDisk(targetDir.toString());
     }
 
-    public Project createProject(String name, String rootPath) throws ProjectAlreadyExistsException {
+    public void createProject(String name, String rootPath) {
         Project project = new Project(name, rootPath);
         if (projects.contains(project)) {
             throw new ProjectAlreadyExistsException(
                     "Project with name '" + name + "' and rootPath '" + rootPath + "' already exists.");
         }
         projects.add(project);
-        return project;
-    }
+	}
 
     public Project getProject(String name) throws ProjectNotFoundException {
         for (Project project : projects) {
@@ -179,18 +174,6 @@ public class ProjectService {
         }
 
         throw new ProjectNotFoundException(String.format("Project with name: %s cannot be found", name));
-    }
-
-    public Project addConfigurations(String projectName, ArrayList<String> configurationPaths)
-            throws ProjectNotFoundException {
-        Project project = getProject(projectName);
-
-        for (String path : configurationPaths) {
-            Configuration config = new Configuration(path);
-            project.addConfiguration(config);
-        }
-
-        return project;
     }
 
     public boolean updateConfigurationXml(String projectName, String filepath, String xmlContent)
