@@ -110,14 +110,80 @@ function buildNodeNameToIdMap(nodes: FlowNode[]): Map<string, string> {
   return nameToId
 }
 
-function processExplicitForwards(
+/**
+ * Function that does a lot, but in summary does the following:
+ * Extracts edges from an adapter, following the adapter edge generation rules:
+ *
+ * 1. Explicit Forward Edges
+ *    - Every <Forward> element always generates an edge from the current node
+ *      to the specified target node.
+ *
+ * 2. Receiver -> First Pipeline Node
+ *    - All receivers in the adapter automatically generate an edge to the first
+ *      node in the pipeline, ensuring that incoming messages flow into the pipeline.
+ *
+ * 3. Implicit Pipeline Edges (Fallbacks)
+ *    - For nodes in the pipeline, edges are generated top-to-bottom to simulate
+ *      the natural flow.
+ *    - Skip creating an implicit edge if the current node has a <Forward> that:
+ *        a) Points to any other pipeline node, or
+ *        b) Points to an exit node with state="SUCCESS"
+ *
+ * 4. Implicit Success Exit Edge
+ *    - If a SUCCESS exit exists and the last pipeline node does not have a <Forward>
+ *      to any exit, an implicit edge is created from the last pipeline node to
+ *      the SUCCESS exit.
+ *
+ * @param adapter The XML Element representing the adapter
+ * @param nodes The FlowNode array representing all nodes in the adapter
+ * @returns An array of FrankEdge objects representing all generated edges
+ */
+function extractEdgesFromAdapter(adapter: Element, nodes: FlowNode[]): FrankEdge[] {
+  const pipelineElement = adapter.querySelector('Pipeline')
+  if (!pipelineElement) return []
+
+  const edges: FrankEdge[] = []
+  const nameToId = buildNodeNameToIdMap(nodes)
+  const forwardIndexBySourceId = new Map<string, number>()
+  const explicitTargetsBySourceId = new Map<string, Set<string>>()
+  const sourcesWithSuccessExitForward = new Set<string>()
+
+  addExplicitForwardEdges(
+    pipelineElement,
+    nameToId,
+    nodes,
+    edges,
+    forwardIndexBySourceId,
+    explicitTargetsBySourceId,
+    sourcesWithSuccessExitForward,
+  )
+
+  addReceiverToFirstPipeEdges(adapter, nodes, edges, forwardIndexBySourceId)
+
+  addSequentialFallbackEdges(
+    nodes,
+    edges,
+    forwardIndexBySourceId,
+    explicitTargetsBySourceId,
+    sourcesWithSuccessExitForward,
+  )
+
+  addImplicitSuccessExitEdge(nodes, edges, forwardIndexBySourceId)
+
+  return edges
+}
+
+function addExplicitForwardEdges(
   pipelineElement: Element,
   nameToId: Map<string, string>,
+  nodes: FlowNode[],
   edges: FrankEdge[],
-  nodesWithExplicitTargets: Set<string>,
   forwardIndexBySourceId: Map<string, number>,
+  explicitTargetsBySourceId: Map<string, Set<string>>,
+  sourcesWithSuccessExitForward: Set<string>,
 ) {
   const pipelineChildren = [...pipelineElement.children]
+
   for (const element of pipelineChildren) {
     const sourceName = element.getAttribute('name')
     if (!sourceName) continue
@@ -126,63 +192,156 @@ function processExplicitForwards(
     if (!sourceId) continue
 
     const forwards = element.querySelectorAll('Forward')
-    for (const forward of forwards) {
-      const targetName = forward.getAttribute('path')
-      if (!targetName) continue
+    addForwardEdges(
+      forwards,
+      sourceId,
+      nodes,
+      edges,
+      forwardIndexBySourceId,
+      explicitTargetsBySourceId,
+      sourcesWithSuccessExitForward,
+    )
+  }
+}
 
-      const targetId = nameToId.get(targetName)
-      if (!targetId) {
-        console.warn(`Target node with name "${targetName}" not found.`)
-        continue
-      }
+/**
+ * Handles creating edges from a set of <Forward> elements
+ */
+function addForwardEdges(
+  forwards: NodeListOf<Element>,
+  sourceId: string,
+  nodes: FlowNode[],
+  edges: FrankEdge[],
+  forwardIndexBySourceId: Map<string, number>,
+  explicitTargetsBySourceId: Map<string, Set<string>>,
+  sourcesWithSuccessExitForward: Set<string>,
+) {
+  for (const forward of forwards) {
+    const targetName = forward.getAttribute('path')
+    if (!targetName) continue
 
-      const currentIndex = forwardIndexBySourceId.get(sourceId) ?? 1
-      forwardIndexBySourceId.set(sourceId, currentIndex + 1)
+    const targetNode = nodes.find((n) => n.data && 'name' in n.data && n.data.name === targetName)
+    if (!targetNode) continue
 
-      edges.push({
-        id: `${sourceId}-${targetId}`,
-        source: sourceId,
-        target: targetId,
-        type: 'frankEdge',
-        sourceHandle: currentIndex.toString(),
-      })
+    const handleIndex = forwardIndexBySourceId.get(sourceId) ?? 1
+    forwardIndexBySourceId.set(sourceId, handleIndex + 1)
 
-      nodesWithExplicitTargets.add(sourceId)
+    edges.push({
+      id: `${sourceId}-${targetNode.id}-${handleIndex}`,
+      source: sourceId,
+      target: targetNode.id,
+      type: 'frankEdge',
+      sourceHandle: handleIndex.toString(),
+    })
+
+    if (!explicitTargetsBySourceId.has(sourceId)) {
+      explicitTargetsBySourceId.set(sourceId, new Set())
+    }
+    explicitTargetsBySourceId.get(sourceId)!.add(targetNode.id)
+
+    if (targetNode.type === 'exitNode' && isSuccessExit(targetNode)) {
+      sourcesWithSuccessExitForward.add(sourceId)
     }
   }
 }
 
-function addSequentialFallbackEdges(nodes: FlowNode[], edges: FrankEdge[], nodesWithExplicitTargets: Set<string>) {
-  for (let index = 0; index < nodes.length - 1; index++) {
-    const current = nodes[index]
-    const next = nodes[index + 1]
+function addReceiverToFirstPipeEdges(
+  adapter: Element,
+  nodes: FlowNode[],
+  edges: FrankEdge[],
+  forwardIndexBySourceId: Map<string, number>,
+) {
+  // Find all receivers
+  const receivers = nodes.filter((n): n is FrankNodeType => isFrankNode(n) && n.data.type === 'receiver')
 
-    if (current.type === 'exitNode') continue
-    if (nodesWithExplicitTargets.has(current.id)) continue
+  if (receivers.length === 0) return
+
+  // Find first pipe in the pipeline (exclude exitNodes and receivers)
+  const firstPipe = nodes.find(
+    (n): n is FrankNodeType => isFrankNode(n) && n.data.type !== 'receiver' && n.type !== 'exitNode',
+  )
+  if (!firstPipe) return
+
+  for (const receiver of receivers) {
+    const handleIndex = forwardIndexBySourceId.get(receiver.id) ?? 1
+    forwardIndexBySourceId.set(receiver.id, handleIndex + 1)
 
     edges.push({
-      id: `${current.id}-${next.id}`,
-      source: current.id,
-      target: next.id,
+      id: `${receiver.id}-${firstPipe.id}-${handleIndex}`,
+      source: receiver.id,
+      target: firstPipe.id,
       type: 'frankEdge',
-      sourceHandle: '1',
+      sourceHandle: handleIndex.toString(),
     })
   }
 }
 
-function extractEdgesFromAdapter(adapter: Element, nodes: FlowNode[]): FrankEdge[] {
-  const edges: FrankEdge[] = []
-  const pipelineElement = adapter.querySelector('Pipeline')
-  if (!pipelineElement) return edges
+function addSequentialFallbackEdges(
+  nodes: FlowNode[],
+  edges: FrankEdge[],
+  forwardIndexBySourceId: Map<string, number>,
+  explicitTargetsBySourceId: Map<string, Set<string>>,
+  sourcesWithSuccessExitForward: Set<string>,
+) {
+  for (let i = 0; i < nodes.length - 1; i++) {
+    const current = nodes[i]
+    // skip exit nodes
+    if (current.type === 'exitNode') continue
+    // skip receivers (they already get edges to first pipeline pipe)
+    if (isFrankNode(current) && current.data.type === 'receiver') continue
 
-  const nameToId = buildNodeNameToIdMap(nodes)
-  const nodesWithExplicitTargets = new Set<string>()
-  const forwardIndexBySourceId = new Map<string, number>()
+    // find next NON-exit node
+    const next = nodes.slice(i + 1).find((n) => n.type !== 'exitNode')
+    if (!next) continue
 
-  processExplicitForwards(pipelineElement, nameToId, edges, nodesWithExplicitTargets, forwardIndexBySourceId)
-  addSequentialFallbackEdges(nodes, edges, nodesWithExplicitTargets)
+    // Block fallback if pipe explicitly forwards to another pipe
+    if (hasExplicitPipeForward(current.id, explicitTargetsBySourceId, nodes)) continue
 
-  return edges
+    // Block fallback if pipe explicitly forwards to SUCCESS exit
+    if (sourcesWithSuccessExitForward.has(current.id)) continue
+
+    const explicitTargets = explicitTargetsBySourceId.get(current.id)
+    if (explicitTargets?.has(next.id)) continue
+
+    const handleIndex = forwardIndexBySourceId.get(current.id) ?? 1
+    forwardIndexBySourceId.set(current.id, handleIndex + 1)
+
+    edges.push({
+      id: `${current.id}-${next.id}-${handleIndex}`,
+      source: current.id,
+      target: next.id,
+      sourceHandle: handleIndex.toString(),
+      type: 'frankEdge',
+    })
+  }
+}
+
+function addImplicitSuccessExitEdge(
+  nodes: FlowNode[],
+  edges: FrankEdge[],
+  forwardIndexBySourceId: Map<string, number>,
+) {
+  const successExit = findSuccessExit(nodes)
+  if (!successExit) return
+
+  // Already explicitly targeted: do nothing
+  if (isNodeTargeted(successExit.id, edges)) return
+
+  // Find last non-exit node
+  const lastPipelineNode = nodes.toReversed().find((node) => node.type !== 'exitNode')
+
+  if (!lastPipelineNode) return
+
+  const handleIndex = forwardIndexBySourceId.get(lastPipelineNode.id) ?? 1
+  forwardIndexBySourceId.set(lastPipelineNode.id, handleIndex + 1)
+
+  edges.push({
+    id: `${lastPipelineNode.id}-${successExit.id}-${handleIndex}`,
+    source: lastPipelineNode.id,
+    target: successExit.id,
+    type: 'frankEdge',
+    sourceHandle: handleIndex.toString(),
+  })
 }
 
 function collectPipelineElements(adapter: Element): Element[] {
@@ -210,25 +369,46 @@ function collectPipelineElements(adapter: Element): Element[] {
 
 function extractSourceHandles(element: Element): SourceHandle[] {
   const forwardElements = [...element.querySelectorAll('Forward')]
+
+  // No forwards? Create a single implicit success handle
   if (forwardElements.length === 0) {
     return [{ type: 'success', index: 1 }]
   }
 
-  return forwardElements.map((forward, index) => {
-    const path = forward.getAttribute('path') || ''
-    const loweredPath = path.toLowerCase()
-    const type: string =
-      loweredPath.includes('error') || loweredPath.includes('bad') || loweredPath.includes('fail')
-        ? 'failure'
-        : 'success'
+  const handles: SourceHandle[] = forwardElements.map((forward, index) => {
+    const name = forward.getAttribute('name')?.trim()
 
-    return { type, index: index + 1 }
+    return {
+      type: name && name.length > 0 ? name : 'success',
+      index: index + 1,
+    }
   })
+
+  // Check if any forward represents SUCCESS
+  const hasSuccessForward = forwardElements.some((forward) => {
+    const name = forward.getAttribute('name')?.toUpperCase()
+    return name === 'SUCCESS'
+  })
+
+  // If not, add implicit fallback handle
+  if (!hasSuccessForward) {
+    handles.push({
+      type: 'success',
+      index: handles.length + 1,
+    })
+  }
+
+  return handles
 }
 
 function processExitElements(element: Element, exitNodes: ExitNode[]) {
   const exits = [...element.children]
   for (const exit of exits) {
+    const attributes: Record<string, string> = {}
+    for (const attr of exit.attributes) {
+      attributes[attr.name] = attr.value
+    }
+
     const exitNode: ExitNode = {
       id: '',
       type: 'exitNode',
@@ -237,6 +417,7 @@ function processExitElements(element: Element, exitNodes: ExitNode[]) {
         name: exit.getAttribute('name') || '',
         type: 'Exit',
         subtype: 'Exit',
+        attributes,
       },
     }
     exitNodes.push(exitNode)
@@ -252,6 +433,25 @@ function convertAdapterToFlowNodes(adapter: Element): FlowNode[] {
   for (const element of elements) {
     if (element.tagName === 'Exits') {
       processExitElements(element, exitNodes)
+      continue
+    }
+    if (element.tagName.toLowerCase() === 'exit') {
+      const attributes: Record<string, string> = {}
+      for (const attr of element.attributes) {
+        attributes[attr.name] = attr.value
+      }
+      const exitNode: ExitNode = {
+        id: '',
+        type: 'exitNode',
+        position: { x: 0, y: 0 },
+        data: {
+          name: element.getAttribute('name') || '',
+          type: 'Exit',
+          subtype: 'Exit',
+          attributes,
+        },
+      }
+      exitNodes.push(exitNode)
       continue
     }
 
@@ -317,6 +517,44 @@ function convertChildren(elements: Element[], idCounter: IdCounter): ChildNode[]
         children: convertChildren([...child.children], idCounter),
       }
     })
+}
+
+// ----------------------------------------------------------------------------- HELPERS -----------------------------------------------------------------------------
+function isSuccessExit(node: FlowNode): boolean {
+  if (node.type !== 'exitNode') return false
+
+  const data = node.data
+  if (!data || typeof data !== 'object') return false
+
+  if (!('attributes' in data) || typeof data.attributes !== 'object' || !data.attributes) {
+    return false
+  }
+
+  const state = (data.attributes as Record<string, string>).state
+  return state?.toLowerCase() === 'success'
+}
+
+function findSuccessExit(nodes: FlowNode[]): FlowNode | undefined {
+  return nodes.find((node) => isSuccessExit(node))
+}
+
+function hasExplicitPipeForward(
+  sourceId: string,
+  explicitTargetsBySourceId: Map<string, Set<string>>,
+  nodes: FlowNode[],
+): boolean {
+  const targets = explicitTargetsBySourceId.get(sourceId)
+  if (!targets) return false
+
+  return [...targets].some((targetId) => nodes.some((n) => n.id === targetId && n.type === 'frankNode'))
+}
+
+function isNodeTargeted(nodeId: string, edges: FrankEdge[]): boolean {
+  return edges.some((edge) => edge.target === nodeId)
+}
+
+function isFrankNode(node: FlowNode): node is FrankNodeType {
+  return node.type === 'frankNode' && node.data !== undefined && 'type' in node.data
 }
 
 interface FrankEdge {
