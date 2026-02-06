@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import StudioTabs from '~/components/tabs/studio-tabs'
 import StudioFileStructure from '~/components/file-structure/studio-file-structure'
 import StudioContext from '~/routes/studio/context/studio-context'
@@ -13,6 +13,9 @@ import useTabStore from '~/stores/tab-store'
 import { useShallow } from 'zustand/react/shallow'
 import { ToastContainer } from 'react-toastify'
 import { useTheme } from '~/hooks/use-theme'
+import useEditorTabStore from '~/stores/editor-tab-store'
+import { useNavigationStore } from '~/stores/navigation-store'
+import CodeIcon from '/icons/solar/Code.svg?react'
 
 export default function Studio() {
   const [showNodeContext, setShowNodeContext] = useState(false)
@@ -25,6 +28,20 @@ export default function Studio() {
       activeTabPath: state.activeTab ? state.tabs[state.activeTab]?.configurationPath : undefined,
     })),
   )
+
+  const handleOpenInEditor = useCallback(() => {
+    if (!activeTabPath) return
+
+    const { setTabData, setActiveTab, getTab } = useEditorTabStore.getState()
+    if (!getTab(activeTabPath)) {
+      setTabData(activeTabPath, {
+        name: activeTabPath,
+        configurationPath: activeTabPath,
+      })
+    }
+    setActiveTab(activeTabPath)
+    useNavigationStore.getState().navigate('editor')
+  }, [activeTabPath])
 
   return (
     <SidebarLayout name="studio">
@@ -43,8 +60,16 @@ export default function Studio() {
 
         {activeTab ? (
           <>
-            <div className="border-b-border bg-background flex h-12 items-center border-b p-4">
-              Path: {activeTabPath}
+            <div className="border-b-border bg-background flex h-12 items-center justify-between border-b p-4">
+              <span>Path: {activeTabPath}</span>
+              <button
+                onClick={handleOpenInEditor}
+                className="border-border bg-background hover:bg-foreground-active flex items-center gap-1.5 rounded border px-2.5 py-1 text-sm"
+                title="Open in Editor"
+              >
+                <CodeIcon className="fill-foreground h-4 w-4" />
+                Open in Editor
+              </button>
             </div>
             <Flow showNodeContextMenu={setShowNodeContext} />
             <ToastContainer position="bottom-right" theme={theme} closeOnClick={true} />
