@@ -62,6 +62,7 @@ public class Project {
         configurations.clear();
     }
 
+    /* A project is equal to another project if it has the same name and rootpath */
     @Override
     public boolean equals(Object o) {
         if (this == o) return true; // same reference

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { fetchProjectRoot } from '~/services/project-service'
 
 interface NewProjectModalProperties {
   isOpen: boolean
@@ -20,12 +21,7 @@ export default function NewProjectModal({ isOpen, onClose, onCreate }: Readonly<
       setError(null)
 
       try {
-        const rootResponse = await fetch('/api/projects/root')
-        if (!rootResponse.ok) {
-          throw new Error(`Root HTTP error! Status: ${rootResponse.status}`)
-        }
-
-        const rootData = await rootResponse.json()
+        const rootData = await fetchProjectRoot()
         setRootPath(rootData.rootPath)
       } catch (error) {
         setError(error instanceof Error ? error.message : 'Failed to fetch project data')
