@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import FfIcon from '/icons/custom/ff!-icon.svg?react'
 import ArchiveIcon from '/icons/solar/Archive.svg?react'
 import ProjectRow from './project-row'
@@ -9,22 +9,16 @@ import { useLocation } from 'react-router'
 import NewProjectModal from './new-project-modal'
 import LoadProjectModal from './load-project-modal'
 import { useProjects } from '~/hooks/use-projects'
-import {
-  createProject as createProjectService,
-  fetchProject,
-  importConfigurations,
-  type ConfigImport,
-} from '~/services/project-service'
+import { createProject as createProjectService } from '~/services/project-service'
+import { toast, ToastContainer } from 'react-toastify'
+import { useTheme } from '~/hooks/use-theme'
+import React from 'react'
 
 export interface Project {
   name: string
   rootPath: string
   filepaths: string[]
   filters: Record<string, boolean> // key = filter name (e.g. "HTTP"), value = true/false
-}
-
-interface DirectoryFile extends File {
-  webkitRelativePath: string
 }
 
 export default function ProjectLanding() {
@@ -34,10 +28,10 @@ export default function ProjectLanding() {
   const [showNewProjectModal, setShowNewProjectModal] = useState(false)
   const [showLoadProjectModal, setShowLoadProjectModal] = useState(false)
   const [localError, setLocalError] = useState<string | null>(null)
+  const theme = useTheme()
 
   const clearProject = useProjectStore((state) => state.clearProject)
   const location = useLocation()
-  const fileInputReference = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (projectsData) {
@@ -52,54 +46,19 @@ export default function ProjectLanding() {
     clearProject()
   }, [location.key, clearProject])
 
-  const handleOpenProject = () => {
-    fileInputReference.current?.click()
-  }
-
-  const handleFolderSelection = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files
-    if (!files || files.length === 0) return
-
-    // Detect project root folder (first directory name)
-    const firstFile = files[0] as DirectoryFile
-    const projectRoot = firstFile.webkitRelativePath.split('/')[0]
-
-    // 1. Create project in backend
-    await createProject(projectRoot)
-
-    // 2. Collect XML configuration files from /src/main/configurations
-    const configs: ConfigImport[] = []
-
-    for (const file of [...files] as DirectoryFile[]) {
-      const relative = file.webkitRelativePath
-
-      if (relative.startsWith(`${projectRoot}/src/main/configurations/`) && relative.endsWith('.xml')) {
-        const content = await file.text() // read file content
-        configs.push({
-          filepath: relative.replace(`${projectRoot}/`, ''), // path relative to project root
-          xmlContent: content,
-        })
-      }
-    }
-
-    // Import configurations to the project
-    await importConfigurations(projectRoot, configs)
-
-    // Sync local project list with backend
-    const updated = await fetchProject(projectRoot)
-    setProjects((prev) => prev.map((p) => (p.name === updated.name ? updated : p)))
-  }
-
   const createProject = async (projectName: string, rootPath?: string) => {
     try {
+      // refresh the project list after creation
       const newProject = await createProjectService(projectName, rootPath)
       setProjects((previous) => [...previous, newProject])
     } catch (error_) {
-      setLocalError(error_ instanceof Error ? error_.message : 'Failed to create project')
+      toast.error(error_ instanceof Error ? error_.message : 'Failed to create project')
+
+      console.error('Something went wrong loading the project:', error_)
     }
   }
 
-  const loadProject = async () => {
+  const handleOpenProject = async () => {
     setShowLoadProjectModal(true)
   }
 
@@ -116,6 +75,7 @@ export default function ProjectLanding() {
 
   return (
     <div className="bg-backdrop flex min-h-screen w-full flex-col items-center pt-20">
+      <ToastContainer position="bottom-right" theme={theme} closeOnClick={true} />
       <div className="relative mb-6 flex w-2/5 flex-row items-center">
         <div className="flex w-1/4 flex-row items-center">
           <FfIcon className="h-auto w-12" />
@@ -140,17 +100,7 @@ export default function ProjectLanding() {
           <div className="border-border text-muted-foreground w-1/4 border-r px-4 py-3 text-sm">
             <ActionButton label="New Project" onClick={() => setShowNewProjectModal(true)} />
             <ActionButton label="Open" onClick={handleOpenProject} />
-
-            <input
-              type="file"
-              ref={fileInputReference}
-              style={{ display: 'none' }}
-              onChange={handleFolderSelection}
-              webkitdirectory="true"
-              multiple
-            />
             <ActionButton label="Clone Repository" onClick={() => console.log('Cloning project')} />
-            <ActionButton label="Load Project" onClick={loadProject} />
           </div>
           <div className="h-full w-3/4 overflow-y-auto px-4 py-3">
             {filteredProjects.map((project, index) => (
