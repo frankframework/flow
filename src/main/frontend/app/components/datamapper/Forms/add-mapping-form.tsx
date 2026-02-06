@@ -265,20 +265,11 @@ function AddMappingForm({ onSave, sources, targets, initialData }: MappingModalP
         </label>
 
         {isConditional && (
-          <select
-            className="bg-background mt-2 w-full rounded border p-2"
+          <Dropdown
             value={selectedConditional?.id ?? ''}
-            onChange={(e) => setSelectedConditional(conditions.find((c) => c.id === e.target.value) ?? null)}
-          >
-            <option value="" hidden>
-              Select a condition
-            </option>
-            {conditions.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
+            onChange={(e) => setSelectedConditional(conditions.find((c) => c.id === e) ?? null)}
+            options={Object.fromEntries(conditions.map((s) => [s.id, s.name]))}
+          />
         )}
       </div>
 

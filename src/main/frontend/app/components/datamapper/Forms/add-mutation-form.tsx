@@ -8,6 +8,7 @@ import type {
   Source,
 } from '~/types/datamapper_types/config-types'
 import Input from '~/components/inputs/input'
+import Dropdown from '~/components/inputs/dropdown'
 
 function AddMutationForm({
   sources,
@@ -45,11 +46,11 @@ function AddMutationForm({
       <Input value={mutation.name} onChange={(e) => setMutation((m) => ({ ...m, name: e.target.value }))} />
 
       <label>Mutation type:</label>
-      <select
+      <Dropdown
         className="bg-background mb-4 w-full rounded border p-2"
         value={mutation.mutationType?.name ?? ''}
         onChange={(e) => {
-          const mt = mutations.mutations.find((m) => m.name === e.target.value) ?? null
+          const mt = mutations.mutations.find((m) => m.name === e) ?? null
           setMutation({
             id,
             name: mutation.name,
@@ -57,17 +58,8 @@ function AddMutationForm({
             inputs: [],
           })
         }}
-      >
-        <option value="" hidden>
-          Select mutation type
-        </option>
-
-        {mutations.mutations.map((mt) => (
-          <option key={mt.name} value={mt.name}>
-            {mt.name}
-          </option>
-        ))}
-      </select>
+        options={Object.fromEntries(mutations.mutations.map((s) => [s.name, s.name]))}
+      />
 
       {mutation.mutationType && <MutationDetailsForm mutation={mutation} setMutation={setMutation} sources={sources} />}
 
@@ -231,8 +223,7 @@ function MutationInputField({
         )}
 
         {(mutationInput.type === 'attribute' || value.type === 'defaultValue') && (
-          <input
-            className="bg-background w-full rounded-md border px-3 py-2"
+          <Input
             value={value.value ?? ''}
             onChange={(e) =>
               updateInput({

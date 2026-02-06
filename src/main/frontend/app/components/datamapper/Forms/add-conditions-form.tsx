@@ -1,4 +1,5 @@
 import { useId, useState } from 'react'
+import Dropdown from '~/components/inputs/dropdown'
 import Input from '~/components/inputs/input'
 import type {
   Source,
@@ -55,11 +56,10 @@ function AddConditionForm({ sources, onSave, conditionToEdit }: Readonly<AddCond
       {/* Condition type selector */}
       <div className="mb-4 flex flex-col">
         <label className="mb-1">Condition type:</label>
-        <select
-          className="bg-background w-full rounded border p-2"
+        <Dropdown
           value={condition.type?.name ?? ''}
           onChange={(event) => {
-            const cConfig = conditionsConfig.conditions.find((c) => c.name === event.target.value) ?? null
+            const cConfig = conditionsConfig.conditions.find((c) => c.name === event) ?? null
             setCondition({
               id,
               name: condition.name,
@@ -71,16 +71,9 @@ function AddConditionForm({ sources, onSave, conditionToEdit }: Readonly<AddCond
                 })) ?? [],
             })
           }}
-        >
-          <option value="" hidden>
-            Select condition type
-          </option>
-          {conditionsConfig.conditions.map((c) => (
-            <option key={c.name} value={c.name}>
-              {c.name}
-            </option>
-          ))}
-        </select>
+          // className="bg-background w-full rounded border p-2"
+          options={Object.fromEntries(conditionsConfig.conditions.map((s) => [s.name, s.name]))}
+        />
       </div>
 
       {selectedConditionConfig && (
@@ -183,9 +176,8 @@ function ConditionInputField({
         </select>
 
         {selectedIsDefault && (
-          <input
+          <Input
             type="text"
-            className="bg-background w-full rounded-md border px-3 py-2"
             placeholder="Enter default value"
             value={value?.value ?? ''}
             onChange={(event) => onChange({ type: 'defaultValue', value: event.target.value })}
@@ -199,9 +191,8 @@ function ConditionInputField({
     return (
       <div className="mb-2 flex flex-col">
         <label className="mb-1">{inputConfig.label}</label>
-        <input
+        <Input
           type="text"
-          className="bg-background w-full rounded-md border px-3 py-2"
           value={value?.value ?? ''}
           onChange={(event) => onChange({ type: 'attribute', value: event.target.value })}
         />
