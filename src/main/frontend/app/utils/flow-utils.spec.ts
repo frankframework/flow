@@ -102,10 +102,10 @@ describe('cloneWithRemappedIds', () => {
     const result = cloneWithRemappedIds(input, idMap, generateId)
 
     // The object itself still has no id
-    expect((result as any).id).toBeUndefined()
+    expect((result as unknown as { id?: string }).id).toBeUndefined()
 
     // Children also remain without ids
-    expect((result.children[0] as any).id).toBeUndefined()
+    expect((result.children[0] as unknown as { id?: string }).id).toBeUndefined()
 
     // Other properties are preserved
     expect(result.name).toBe('Node without id')

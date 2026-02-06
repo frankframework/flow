@@ -1,7 +1,6 @@
-import { type Node, type NodeProps, NodeResizeControl, useReactFlow } from '@xyflow/react'
+import { type Node, type NodeProps, NodeResizeControl } from '@xyflow/react'
 import { useState } from 'react'
 import { ResizeIcon } from '~/routes/studio/canvas/nodetypes/frank-node'
-import type { FlowNode } from '../flow'
 
 export type GroupNode = Node<{
   label: string
@@ -9,14 +8,13 @@ export type GroupNode = Node<{
   height: number
 }>
 
-export default function GroupNodeComponent({ data, id, selected }: NodeProps<GroupNode>) {
+export default function GroupNodeComponent({ data, selected }: NodeProps<GroupNode>) {
   const [dimensions, setDimensions] = useState({
     width: data.width,
     height: data.height,
   })
   const [isEditing, setIsEditing] = useState(false)
   const [label, setLabel] = useState(data.label)
-  const reactFlow = useReactFlow()
 
   const handleBlur = () => setIsEditing(false)
   const handleClick = () => setIsEditing(true)
@@ -26,16 +24,6 @@ export default function GroupNodeComponent({ data, id, selected }: NodeProps<Gro
       handleBlur()
     }
   }
-
-  // const selectNode = (e: React.MouseEvent) => {
-  //   e.stopPropagation() // Prevent drag start from blocking selection
-  //   reactFlow.setNodes((nodes) =>
-  //     nodes.map((n) => {
-  //       const isSelected = n.id === id
-  //       return isSelected ? { ...n, selected: true } : { ...n, selected: false }
-  //     }),
-  //   )
-  // }
 
   return (
     <>
