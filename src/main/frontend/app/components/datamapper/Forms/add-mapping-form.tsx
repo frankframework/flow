@@ -6,6 +6,7 @@ import type { Mutation, Condition, Source } from '~/types/datamapper_types/confi
 import type { MappingConfig, NodeLabels } from '~/types/datamapper_types/node-types'
 import Modal from '../Modal'
 import Checkbox from '~/components/inputs/checkbox'
+import Dropdown from '~/components/inputs/dropdown'
 
 export interface MappingModalProps {
   onSave: (data: MappingConfig) => void
@@ -137,6 +138,14 @@ function AddMappingForm({ onSave, sources, targets, initialData }: MappingModalP
                       </option>
                     ))}
                   </select>
+                  {/* Updated dropdown: TODO check if styling can be reworked to work properly 
+                  <Dropdown
+                    id={idx.toString()}
+                    value={id}
+                    onChange={(e) => updateArrayItem(setSourceIds, idx, e)}
+                    // className="bg-background w-full rounded border p-2"
+                    options={Object.fromEntries(sources.map((s) => [s.id, `${s.label} (${s.type})`]))}
+                  /> */}
                   <button onClick={() => deleteArrayItem(setSourceIds, idx)} className="text-red-500">
                     &times;
                   </button>
@@ -226,40 +235,25 @@ function AddMappingForm({ onSave, sources, targets, initialData }: MappingModalP
       <div className="mb-4 grid shrink-0 grid-cols-[1fr_auto_1fr] items-end gap-4">
         <div className="flex flex-col gap-1">
           <label className="text-muted-foreground text-sm font-semibold">Output</label>
-          <select
-            className="bg-background rounded border p-2"
+          <Dropdown
             value={output}
-            onChange={(e) => setOutput(e.target.value)}
-          >
-            <option value="" hidden>
-              Select output
-            </option>
-            {filteredOutputs.map((o) => (
-              <option key={o.id} value={o.id}>
-                {o.label} ({o.type})
-              </option>
-            ))}
-          </select>
+            onChange={setOutput}
+            // className="bg-background w-full rounded border p-2"
+            options={Object.fromEntries(filteredOutputs.map((s) => [s.id, `${s.label} (${s.type})`]))}
+          />
         </div>
 
         <div className="flex items-center justify-center pb-2 text-2xl">→</div>
 
         <div className="flex flex-col gap-1">
           <label className="text-muted-foreground text-sm font-semibold">Target</label>
-          <select
-            className="bg-background rounded border p-2"
+
+          <Dropdown
             value={targetId}
-            onChange={(e) => setTargetId(e.target.value)}
-          >
-            <option value="" disabled>
-              Select target
-            </option>
-            {targets.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.label} ({t.type})
-              </option>
-            ))}
-          </select>
+            onChange={setTargetId}
+            // className="bg-background w-full rounded border p-2"
+            options={Object.fromEntries(targets.map((s) => [s.id, `${s.label} (${s.type})`]))}
+          />
         </div>
       </div>
 
