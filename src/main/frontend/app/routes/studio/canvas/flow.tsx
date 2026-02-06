@@ -33,6 +33,7 @@ import { useProjectStore } from '~/stores/project-store'
 import { toast, ToastContainer } from 'react-toastify'
 import { useTheme } from '~/hooks/use-theme'
 import { saveAdapter } from '~/services/adapter-service'
+import { cloneWithRemappedIds } from '~/utils/flow-utils'
 
 export type FlowNode = FrankNodeType | ExitNode | StickyNote | GroupNode | Node
 
@@ -50,38 +51,6 @@ const selector = (state: FlowState) => ({
   onConnect: state.onConnect,
   onReconnect: state.onReconnect,
 })
-
-const REFERENCE_KEYS = new Set(['source', 'target', 'parentId'])
-
-// Helper function for copying nodes and edges with new IDs while maintaining relationships
-function cloneWithRemappedIds<T>(value: T, idMap: Map<string, string>, generateId: () => string): T {
-  if (Array.isArray(value)) {
-    return value.map((v) => cloneWithRemappedIds(v, idMap, generateId)) as T
-  }
-
-  if (value && typeof value === 'object') {
-    const obj = value as Record<string, unknown>
-
-    return Object.fromEntries(
-      Object.entries(obj).map(([key, val]) => {
-        if (key === 'id' && typeof val === 'string') {
-          if (!idMap.has(val)) {
-            idMap.set(val, generateId())
-          }
-          return [key, idMap.get(val)!]
-        }
-
-        if (REFERENCE_KEYS.has(key) && typeof val === 'string') {
-          return [key, idMap.get(val) ?? val]
-        }
-
-        return [key, cloneWithRemappedIds(val, idMap, generateId)]
-      }),
-    ) as T
-  }
-
-  return value
-}
 
 function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b: boolean) => void }>) {
   const theme = useTheme()
@@ -329,7 +298,6 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
     if (!clipboard) return
 
     const flowStore = useFlowStore.getState()
-    const offset = 40
 
     const idMap = new Map<string, string>()
     const generateId = () => flowStore.getNextNodeId().toString()
@@ -338,14 +306,17 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
     const newNodes: FlowNode[] = clipboard.nodes.map((node) => {
       const cloned = cloneWithRemappedIds(node, idMap, generateId)
 
+      // Remap parentId using the original node's parentId
+      const remappedParentId = node.parentId ? idMap.get(node.parentId) : undefined
+
       return {
         ...cloned,
         position: {
-          x: node.position.x + offset,
-          y: node.position.y + offset,
+          x: node.position.x + FlowConfig.COPY_PASTE_OFFSET,
+          y: node.position.y + FlowConfig.COPY_PASTE_OFFSET,
         },
-        parentId: undefined,
-        extent: undefined,
+        parentId: remappedParentId,
+        extent: remappedParentId ? 'parent' : undefined,
         selected: true,
       }
     })
@@ -414,7 +385,7 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
       type: 'groupNode',
       data: { label: 'New Group', width: width, height: height },
       dragHandle: '.drag-handle',
-      selectable: false,
+      selectable: true,
     }
 
     const updatedSelectedNodes: FlowNode[] = nodesToGroup.map((node) => ({
