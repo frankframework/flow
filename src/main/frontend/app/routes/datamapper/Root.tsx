@@ -1,7 +1,7 @@
-import React, { useEffect, useReducer, useState } from 'react'
+import { useEffect, useReducer, useState } from 'react'
 
 import PropertyList from './property-list'
-import { showInfoToast } from '~/components/datamapper/Toast'
+import { showInfoToast, Toast } from '~/components/datamapper/Toast'
 import ToggleThemeButton from '~/components/datamapper/toggle-theme-button'
 import {
   DEFAULT_MAPPING_LIST_CONFIG,
@@ -13,6 +13,8 @@ import { convertMappingConfigToMappingFile } from '~/utils/datamapper_utils/util
 import AdvancedEditor from './advanced-editor'
 import Initialize from './Initialize'
 import MappingTable from './mapping-table'
+import { ReactFlowProvider } from '@xyflow/react'
+import { FileProvider } from '~/stores/datamapper_state/schemaQueue/schema-queue-context'
 
 function Root() {
   const [route, setRoute] = useState('Initialize')
@@ -48,87 +50,92 @@ function Root() {
   }, [mappingListConfig])
 
   return (
-    <div>
-      <div className="fixed top-0 right-0 z-60 bg-red-500">
-        <ToggleThemeButton />
-        <button
-          className="border-border hover:bg-hover active:bg-selected hidden rounded-md border px-4 py-2"
-          onClick={() => {
-            console.dir(mappingListConfig)
-            showInfoToast('Logging config to console!', 'Debug')
-          }}
-        >
-          Test External node log
-        </button>
-        <button
-          className="border-border hover:bg-hover active:bg-selected hidden rounded-md border px-4 py-2"
-          onClick={() => {
-            const dataString = `data:text/json;charset=utf-8,${encodeURIComponent(
-              JSON.stringify(convertMappingConfigToMappingFile(mappingListConfig)),
-            )}`
-            const link = document.createElement('a')
-            link.href = dataString
-            link.download = 'mapping-file.json'
-            link.click()
-            showInfoToast('Downloading file!', 'Debug')
-          }}
-        >
-          Export as final mappingFile
-        </button>
-        <button
-          className="border-border hover:bg-hover active:bg-selected rounded-md border px-4 py-2"
-          onClick={handleManualConfigExport}
-        >
-          Export configuration file
-        </button>
-        <button
-          className="border-border hover:bg-hover active:bg-selected rounded-md border px-4 py-2"
-          onClick={() => {
-            localStorage.clear()
-            globalThis.location.reload()
-          }}
-        >
-          RESET
-        </button>
-      </div>
-      <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div className="bg-background text-foreground pointer-events-auto flex h-full w-full flex-col overflow-hidden rounded-lg shadow-lg">
-          <div className="border-b-border box-border h-8 w-full rounded-t-md border-b bg-[radial-gradient(ellipse_farthest-corner_at_20%_20%,var(--type-pipe)_0%,var(--color-background)_100%)] p-1">
-            Mapping (mappingName)
+    <ReactFlowProvider>
+      <FileProvider>
+        <div>
+          <div className="fixed top-0 right-0 z-60 bg-red-500">
+            <ToggleThemeButton />
+            <button
+              className="border-border hover:bg-hover active:bg-selected rounded-md border px-4 py-2"
+              onClick={() => {
+                console.dir(mappingListConfig)
+                showInfoToast('Logging config to console!', 'Debug')
+              }}
+            >
+              Test External node log
+            </button>
+            <button
+              className="border-border hover:bg-hover active:bg-selected hidden rounded-md border px-4 py-2"
+              onClick={() => {
+                const dataString = `data:text/json;charset=utf-8,${encodeURIComponent(
+                  JSON.stringify(convertMappingConfigToMappingFile(mappingListConfig)),
+                )}`
+                const link = document.createElement('a')
+                link.href = dataString
+                link.download = 'mapping-file.json'
+                link.click()
+                showInfoToast('Downloading file!', 'Debug')
+              }}
+            >
+              Export as final mappingFile
+            </button>
+            <button
+              className="border-border hover:bg-hover active:bg-selected rounded-md border px-4 py-2"
+              onClick={handleManualConfigExport}
+            >
+              Export configuration file
+            </button>
+            <button
+              className="border-border hover:bg-hover active:bg-selected rounded-md border px-4 py-2"
+              onClick={() => {
+                localStorage.clear()
+                globalThis.location.reload()
+              }}
+            >
+              RESET
+            </button>
           </div>
-          <div className="my-3 flex h-10 w-full gap-4 px-4">
-            {routes.map((route) => (
-              <button
-                key={route}
-                disabled={route !== 'Initialize' && !confirmed}
-                className="border-border hover:bg-hover active:bg-selected text-foreground bg-backdrop disabled:bg-backdrop disabled:text-foreground-muted flex-1 rounded-md border px-4 py-2"
-                onClick={() => setRoute(route)}
-              >
-                {route}
-              </button>
-            ))}
-          </div>
+          <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="bg-background text-foreground pointer-events-auto flex h-full w-full flex-col overflow-hidden rounded-lg shadow-lg">
+              <div className="border-b-border box-border h-8 w-full rounded-t-md border-b bg-[radial-gradient(ellipse_farthest-corner_at_20%_20%,var(--type-pipe)_0%,var(--color-background)_100%)] p-1">
+                Mapping (mappingName)
+              </div>
+              <div className="my-3 flex h-10 w-full gap-4 px-4">
+                {routes.map((route) => (
+                  <button
+                    key={route}
+                    disabled={route !== 'Initialize' && !confirmed}
+                    className="border-border hover:bg-hover active:bg-selected text-foreground bg-backdrop disabled:bg-backdrop disabled:text-foreground-muted flex-1 rounded-md border px-4 py-2"
+                    onClick={() => setRoute(route)}
+                  >
+                    {route}
+                  </button>
+                ))}
+              </div>
 
-          <div className="bg-selected flex-1 overflow-auto">
-            {route === 'Initialize' && (
-              <Initialize
-                config={mappingListConfig}
-                configDispatch={dispatchMappingListConfig}
-                confirmed={confirmed}
-                setConfirmed={setConfirmed}
-              />
-            )}
-            {route === 'Properties' && (
-              <PropertyList config={mappingListConfig} configDispatch={dispatchMappingListConfig} />
-            )}
-            {route === 'Mappings' && (
-              <MappingTable config={mappingListConfig} configDispatch={dispatchMappingListConfig} />
-            )}
-            {route === 'Advanced' && <AdvancedEditor />}
+              <div className="bg-selected flex-1 overflow-auto">
+                {route === 'Initialize' && (
+                  <Initialize
+                    config={mappingListConfig}
+                    configDispatch={dispatchMappingListConfig}
+                    confirmed={confirmed}
+                    setConfirmed={setConfirmed}
+                  />
+                )}
+                {route === 'Properties' && (
+                  <PropertyList config={mappingListConfig} configDispatch={dispatchMappingListConfig} />
+                )}
+                {route === 'Mappings' && (
+                  <MappingTable config={mappingListConfig} configDispatch={dispatchMappingListConfig} />
+                )}
+                {route === 'Advanced' && <AdvancedEditor />}
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
+        <Toast />
+      </FileProvider>
+    </ReactFlowProvider>
   )
 }
 

@@ -1,5 +1,11 @@
 import { useState, useEffect } from 'react'
-import type { FormatDefinition, FormatState, PropertyBasicTypes, RuleSet } from '~/types/datamapper_types/data-types'
+import type {
+  FormatDefinition,
+  FormatState,
+  PropertyBasicTypes,
+  RuleSet,
+  PropertyDefinition,
+} from '~/types/datamapper_types/data-types'
 import type { CustomNodeData, NodeLabels } from '~/types/datamapper_types/node-types'
 import { showWarningToast } from '../Toast'
 

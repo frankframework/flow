@@ -150,7 +150,6 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
         typeIncludes: 'targetOnly',
         includeChecked: true,
       })
-      console.dir(sources)
 
       if (!editingMapping) {
         const checkedSources = sources.filter((s) => s.checked)

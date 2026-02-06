@@ -66,19 +66,33 @@ function AddMappingForm({ onSave, sources, targets, initialData }: MappingModalP
 
   useEffect(() => {
     const outputType = targets.find((t) => t.id === targetId)?.type
-    if (!unfilteredOutputs.some((o) => o.id === output && o.type === outputType)) {
+    const possibleOutputs = unfilteredOutputs.some((o) => o.id === output && o.type === outputType)
+    console.dir(filteredOutputs)
+
+    if (!possibleOutputs) {
       setOutput('')
     }
-  }, [targetId])
+    console.dir(filteredOutputs)
+    if (filteredOutputs.length == 1) {
+      setOutput(filteredOutputs[0].id)
+    }
+  }, [targetId, filteredOutputs, unfilteredOutputs, output, targets])
 
   useEffect(() => {
-    if (!initialData) return
-    setSourceIds(initialData.sources)
-    setTargetId(initialData.target ?? '')
-    setMutations(initialData.mutations || [])
-    setConditions(initialData.conditions || [])
-    setOutput(initialData.output)
-  }, [initialData])
+    if (initialData) {
+      setSourceIds(initialData.sources)
+      setTargetId(initialData.target ?? '')
+      setMutations(initialData.mutations || [])
+      setConditions(initialData.conditions || [])
+      setOutput(initialData.output)
+    } else {
+      const selectedSources = sources.filter((s) => s.checked).map((s) => s.id)
+      const selectedTarget = targets.find((t) => t.checked)?.id ?? ''
+
+      setSourceIds(selectedSources.length > 0 ? selectedSources : [])
+      setTargetId(selectedTarget)
+    }
+  }, [sources, targets, initialData])
 
   const handleSave = () => {
     onSave({
