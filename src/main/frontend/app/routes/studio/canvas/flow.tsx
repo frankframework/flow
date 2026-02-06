@@ -51,9 +51,10 @@ const selector = (state: FlowState) => ({
   onReconnect: state.onReconnect,
 })
 
-type IdGenerator = () => string
+const REFERENCE_KEYS = new Set(['source', 'target', 'parentId'])
 
-function cloneWithRemappedIds<T>(value: T, idMap: Map<string, string>, generateId: IdGenerator): T {
+// Helper function for copying nodes and edges with new IDs while maintaining relationships
+function cloneWithRemappedIds<T>(value: T, idMap: Map<string, string>, generateId: () => string): T {
   if (Array.isArray(value)) {
     return value.map((v) => cloneWithRemappedIds(v, idMap, generateId)) as T
   }
@@ -63,12 +64,15 @@ function cloneWithRemappedIds<T>(value: T, idMap: Map<string, string>, generateI
 
     return Object.fromEntries(
       Object.entries(obj).map(([key, val]) => {
-        // Remap any `id: string`
         if (key === 'id' && typeof val === 'string') {
           if (!idMap.has(val)) {
             idMap.set(val, generateId())
           }
           return [key, idMap.get(val)!]
+        }
+
+        if (REFERENCE_KEYS.has(key) && typeof val === 'string') {
+          return [key, idMap.get(val) ?? val]
         }
 
         return [key, cloneWithRemappedIds(val, idMap, generateId)]
@@ -330,7 +334,7 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
     const idMap = new Map<string, string>()
     const generateId = () => flowStore.getNextNodeId().toString()
 
-    // Clone nodes with remapped IDs
+    // Remap the IDs of cloned nodes
     const newNodes: FlowNode[] = clipboard.nodes.map((node) => {
       const cloned = cloneWithRemappedIds(node, idMap, generateId)
 
@@ -349,14 +353,18 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
     // Clone edges using the SAME idMap
     const newEdges: Edge[] = clipboard.edges.map((edge) => cloneWithRemappedIds(edge, idMap, generateId))
 
-    // Deselect existing nodes
+    // Deselect existing nodes and edges
     const deselectedNodes = flowStore.nodes.map((n) => ({
       ...n,
       selected: false,
     }))
+    const deselectedEdges = flowStore.edges.map((e) => ({
+      ...e,
+      selected: false,
+    }))
 
     flowStore.setNodes([...deselectedNodes, ...newNodes])
-    flowStore.setEdges([...flowStore.edges, ...newEdges])
+    flowStore.setEdges([...deselectedEdges, ...newEdges])
   }, [])
 
   useEffect(() => {
@@ -367,7 +375,6 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
       if (isTyping) return
 
       const isCmdOrCtrl = event.metaKey || event.ctrlKey
-
 
       if (isCmdOrCtrl && event.key.toLowerCase() === 'c') {
         event.preventDefault()
