@@ -1,0 +1,96 @@
+import type { Dispatch, RefObject, SetStateAction } from 'react'
+import OneEdgeNode, { type OneEdgeNodeProperties } from './one-edge-node'
+import LabeledGroupNode, { type LabeledGroupNodeProperties } from './labeled-group-node'
+import MappingNode, { type MappingNodeProperties } from './mapping-node'
+import type { NodeTypes, Node } from '@xyflow/react'
+
+import ExtraSourceNode, { type ExtraSourceNodeProperties } from './extra-source-node'
+import type { useFlowManagement } from '~/hooks/use-datamapper-flow-management'
+import type { CustomNodeData, MappingConfig } from '~/types/datamapper_types/node-types'
+
+interface GetNodeTypesParameters {
+  flow: ReturnType<typeof useFlowManagement>
+  setScNodes: Dispatch<SetStateAction<Node[]>>
+  setEditingNode: Dispatch<SetStateAction<CustomNodeData | null>>
+  setAddFieldModalOpen: Dispatch<SetStateAction<boolean>>
+  openModelType: RefObject<'source' | 'target'>
+  setEditingMapping: Dispatch<SetStateAction<MappingConfig | null>>
+  openMapping: () => void
+}
+
+export const getNodeTypes = ({
+  flow,
+  setScNodes,
+  setEditingNode,
+  setAddFieldModalOpen,
+  openModelType,
+  setEditingMapping,
+  openMapping,
+}: GetNodeTypesParameters): NodeTypes => ({
+  sourceOnly: (properties: OneEdgeNodeProperties) => (
+    <OneEdgeNode
+      {...properties}
+      data={{ ...properties.data, setNodes: setScNodes }}
+      variant="source"
+      onEdit={(data) => {
+        if (data) {
+          setEditingNode(data)
+          openModelType.current = 'source'
+          setAddFieldModalOpen(true)
+        }
+      }}
+      onDelete={(id) => flow.deleteNode(id)}
+      onHighlight={(id) => flow.highlightFromPropertyNode(id)}
+    />
+  ),
+  targetOnly: (properties: OneEdgeNodeProperties) => (
+    <OneEdgeNode
+      {...properties}
+      data={{ ...properties.data, setNodes: setScNodes }}
+      variant="target"
+      onEdit={(data) => {
+        if (data) {
+          setEditingNode(data)
+          openModelType.current = 'target'
+          setAddFieldModalOpen(true)
+        }
+      }}
+      onDelete={(id) => flow.deleteNode(id)}
+      onHighlight={(id) => flow.highlightFromPropertyNode(id)}
+    />
+  ),
+  labeledGroup: (node: LabeledGroupNodeProperties) => (
+    <LabeledGroupNode
+      {...node}
+      onHighlight={(id) => flow.highlightFromPropertyNode(id)}
+      onEdit={(data) => {
+        if (data) {
+          setEditingNode(data)
+          openModelType.current = 'target'
+          setAddFieldModalOpen(true)
+        }
+      }}
+      onDelete={(id) => flow.deleteNode(id)}
+    />
+  ),
+  extraSourceNode: (node: ExtraSourceNodeProperties) => (
+    <ExtraSourceNode
+      {...node}
+      onHighlight={(id) => flow.highlightFromPropertyNode(id)}
+      onDelete={(id) => flow.deleteNode(id)}
+    />
+  ),
+  mappingNode: (node: MappingNodeProperties) => (
+    <MappingNode
+      {...node}
+      onClick={(id) => flow.highlightFromMappingNode(id)}
+      onEdit={(data) => {
+        setEditingMapping(data)
+        openMapping()
+      }}
+      onDelete={(id) => {
+        flow.deleteMapping(id)
+      }}
+    />
+  ),
+})
