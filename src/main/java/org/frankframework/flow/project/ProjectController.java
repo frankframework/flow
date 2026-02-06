@@ -221,7 +221,8 @@ public class ProjectController {
     }
 
     @PostMapping
-    public ResponseEntity<ProjectDTO> createProject(@RequestBody ProjectCreateDTO projectCreateDTO) {
+    public ResponseEntity<ProjectDTO> createProject(@RequestBody ProjectCreateDTO projectCreateDTO)
+            throws ProjectAlreadyExistsException {
         Project project = projectService.createProject(projectCreateDTO.name(), projectCreateDTO.rootPath());
 
         ProjectDTO dto = ProjectDTO.from(project);

@@ -3,6 +3,7 @@ import { useProjectStore } from '~/stores/project-store'
 import KebabVerticalIcon from 'icons/solar/Kebab Vertical.svg?react'
 import useTabStore from '~/stores/tab-store'
 import type { Project } from '~/routes/projectlanding/project-landing'
+import useEditorTabStore from '~/stores/editor-tab-store'
 
 interface ProjectRowProperties {
   project: Project
@@ -13,6 +14,7 @@ export default function ProjectRow({ project }: Readonly<ProjectRowProperties>) 
 
   const setProject = useProjectStore((state) => state.setProject)
   const clearTabs = useTabStore((state) => state.clearTabs)
+  const clearEditorTabs = useEditorTabStore((state) => state.clearTabs)
 
   return (
     <div
@@ -20,6 +22,7 @@ export default function ProjectRow({ project }: Readonly<ProjectRowProperties>) 
       onClick={() => {
         setProject(project)
         clearTabs()
+        clearEditorTabs()
         navigate('/configurations')
       }}
     >
