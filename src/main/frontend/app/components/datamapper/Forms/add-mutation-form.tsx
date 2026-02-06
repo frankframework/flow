@@ -7,6 +7,7 @@ import type {
   MutationTypeInput,
   Source,
 } from '~/types/datamapper_types/config-types'
+import Input from '~/components/inputs/input'
 
 function AddMutationForm({
   sources,
@@ -41,11 +42,7 @@ function AddMutationForm({
       <h1 className="mb-2 text-xl font-bold">Add Mutation</h1>
 
       <label>Mutation name:</label>
-      <input
-        className="bg-background w-full rounded-md border px-3 py-2"
-        value={mutation.name}
-        onChange={(e) => setMutation((m) => ({ ...m, name: e.target.value }))}
-      />
+      <Input value={mutation.name} onChange={(e) => setMutation((m) => ({ ...m, name: e.target.value }))} />
 
       <label>Mutation type:</label>
       <select

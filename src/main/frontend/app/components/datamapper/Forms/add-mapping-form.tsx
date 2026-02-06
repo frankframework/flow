@@ -5,6 +5,7 @@ import AddConditionForm from './add-conditions-form'
 import type { Mutation, Condition, Source } from '~/types/datamapper_types/config-types'
 import type { MappingConfig, NodeLabels } from '~/types/datamapper_types/node-types'
 import Modal from '../Modal'
+import Checkbox from '~/components/inputs/checkbox'
 
 export interface MappingModalProps {
   onSave: (data: MappingConfig) => void
@@ -265,7 +266,7 @@ function AddMappingForm({ onSave, sources, targets, initialData }: MappingModalP
       {/* Conditional Mapping */}
       <div className="mb-4 shrink-0">
         <label className="flex items-center gap-2 font-semibold">
-          <input type="checkbox" checked={isConditional} onChange={(e) => setIsConditional(e.target.checked)} />
+          <Checkbox checked={isConditional} onChange={(e) => setIsConditional(e)} />
           Conditional Mapping
         </label>
 

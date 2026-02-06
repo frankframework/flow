@@ -8,6 +8,8 @@ import type {
 } from '~/types/datamapper_types/data-types'
 import type { CustomNodeData, NodeLabels } from '~/types/datamapper_types/node-types'
 import { showWarningToast } from '../Toast'
+import Input from '~/components/inputs/input'
+import Dropdown from '~/components/inputs/dropdown'
 
 export interface FieldModalProperties {
   fieldType: 'source' | 'target'
@@ -102,47 +104,29 @@ function AddFieldForm({ fieldType, onSave, parents, formatDefinition, initialDat
       {!initialData && (
         <>
           <label htmlFor="parentId">Parent</label>
-          <select
-            name="parentId"
+          <Dropdown
+            id="parentId"
             value={parentId}
-            onChange={(e) => setParent(e.target.value)}
-            className="bg-background mb-4 w-full rounded border p-2"
-          >
-            <option value={`${fieldType}-table`}>{`${fieldType}-table`}</option>
-            {parents.map((parent) => (
-              <option key={parent.id} value={parent.id}>
-                {parent.label}
-              </option>
-            ))}
-          </select>
+            onChange={(e) => setParent(e)}
+            options={{
+              ...Object.fromEntries(parents.map((p) => [p.id, p.label])),
+              [`${fieldType}-table`]: `${fieldType}-table`,
+            }}
+          />
         </>
       )}
 
       <label htmlFor="variableType">Variable Type:</label>
-      <select
-        name="variableType"
+      <Dropdown
+        id="variableType"
         value={variableType}
-        onChange={(e) => setVariableType(e.target.value)}
+        onChange={(e) => setVariableType(e)}
         disabled={initialData?.variableType == 'object'}
-        className="bg-background mb-4 w-full rounded border p-2 disabled:cursor-not-allowed disabled:appearance-none"
-      >
-        <option value="" disabled hidden>
-          Select a type
-        </option>
-        {availableTypes.map((type) => (
-          <option key={type.name} value={type.name}>
-            {type.name}
-          </option>
-        ))}
-      </select>
+        options={Object.fromEntries(availableTypes.map((p) => [p.name, p.name]))}
+      />
 
       <label htmlFor="propertyName">Property name:</label>
-      <input
-        name="propertyName"
-        value={label}
-        onChange={(e) => setLabel(e.target.value)}
-        className="border-border focus:border-foreground-active focus:ring-foreground-active mt-1 w-full rounded-md border px-3 py-2 shadow-sm sm:text-sm"
-      />
+      <Input name="propertyName" value={label} onChange={(e) => setLabel(e.target.value)} />
 
       <div hidden={defaultValueInputType == 'object'}>
         <label htmlFor="defaultValue">Default value:</label>
@@ -158,12 +142,11 @@ function AddFieldForm({ fieldType, onSave, parents, formatDefinition, initialDat
             <option value="false">false</option>
           </select>
         ) : (
-          <input
+          <Input
             name="defaultValue"
             value={defaultValue}
             type="text"
             onChange={(e) => validateDefaultValue(e.target.value)}
-            className="border-border focus:border-foreground-active focus:ring-foreground-active mt-1 w-full rounded-md border px-3 py-2 shadow-sm sm:text-sm"
           />
         )}
       </div>

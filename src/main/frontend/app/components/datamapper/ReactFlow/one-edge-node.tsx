@@ -3,6 +3,8 @@ import { Handle, Position, type Node, useNodeConnections } from '@xyflow/react'
 import clsx from 'clsx'
 import type { CustomNodeData } from '~/types/datamapper_types/node-types'
 import { PROPERTY_WIDTH } from '~/utils/datamapper_utils/const'
+import Magnifier from '/icons/solar/Magnifier.svg?react'
+import Settings from '/icons/solar/Settings.svg?react'
 
 export interface OneEdgeNodeProperties {
   id: string
@@ -63,6 +65,7 @@ function OneEdgeNode({ id, data, variant = 'source', onEdit, onDelete, onHighlig
             }}
           >
             💡
+            {/* <Magnifier className={'fill-yellow-400'} /> Commented this out, want to replace it with a better icon*/}
           </button>
 
           <button
@@ -73,6 +76,7 @@ function OneEdgeNode({ id, data, variant = 'source', onEdit, onDelete, onHighlig
             }}
           >
             ✏️
+            {/* <Settings className={'fill-border'} /> Commented this out, want to replace it with a better icon*/}
           </button>
 
           <button

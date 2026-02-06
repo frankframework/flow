@@ -1,4 +1,5 @@
 import { useId, useState } from 'react'
+import Input from '~/components/inputs/input'
 import type {
   Source,
   Condition,
@@ -43,9 +44,8 @@ function AddConditionForm({ sources, onSave, conditionToEdit }: Readonly<AddCond
       {/* Name input */}
       <div className="mb-4 flex flex-col">
         <label className="mb-1">Condition Name:</label>
-        <input
+        <Input
           type="text"
-          className="bg-background w-full rounded border p-2"
           value={condition.name}
           onChange={(event) => setCondition((c) => ({ ...c, name: event.target.value }))}
           placeholder="Enter a name for this condition"
