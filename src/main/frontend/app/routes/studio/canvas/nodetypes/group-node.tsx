@@ -8,7 +8,7 @@ export type GroupNode = Node<{
   height: number
 }>
 
-export default function GroupNodeComponent({ data, selected: _selected }: NodeProps<GroupNode>) {
+export default function GroupNodeComponent({ data, selected }: NodeProps<GroupNode>) {
   const [dimensions, setDimensions] = useState({
     width: data.width,
     height: data.height,
@@ -39,7 +39,7 @@ export default function GroupNodeComponent({ data, selected: _selected }: NodePr
         <ResizeIcon color="black" />
       </NodeResizeControl>
       <div
-        className="pointer-events-none cursor-default rounded border bg-pink-300/25"
+        className={`cursor-default rounded border bg-pink-300/25 ${selected ? 'border-blue-500' : 'border-border'}`}
         style={{
           width: dimensions.width,
           height: dimensions.height,

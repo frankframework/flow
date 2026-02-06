@@ -52,8 +52,8 @@ export default function ExitNodeComponent(properties: NodeProps<ExitNode>) {
         <ResizeIcon />
       </NodeResizeControl>
       <div
-        className={`bg-background flex h-full w-full flex-col items-center rounded-md ${
-          properties.selected ? 'border-2 border-black' : 'border-border border'
+        className={`bg-background flex h-full w-full flex-col items-center rounded-md border ${
+          properties.selected ? 'border-blue-500' : 'border-border'
         }`}
         style={{
           minHeight: `${minNodeHeight}px`,
