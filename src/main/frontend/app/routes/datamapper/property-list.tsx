@@ -25,6 +25,7 @@ import type { MappingListConfig } from '~/types/datamapper_types/config-types'
 import type { CustomNodeData, MappingConfig, NodeLabels } from '~/types/datamapper_types/node-types'
 import { TABLE_WIDTH } from '~/utils/datamapper_utils/const'
 import { getNodesByTypeAndId, createMappingNode } from '~/utils/datamapper_utils/react-node-utils'
+import Button from '~/components/inputs/button'
 
 interface PropertyListProperties {
   config: MappingListConfig
@@ -77,6 +78,7 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
   const openModelGroups = useRef<NodeLabels[]>([])
   const [mappingSources, setMappingSources] = useState<NodeLabels[]>([])
   const [mappingTargets, setMappingTargets] = useState<NodeLabels[]>([])
+  const widthRef = useRef<HTMLDivElement>(null)
 
   const flow = useFlowManagement({
     reactFlowInstance,
@@ -171,7 +173,7 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
 
     const updateSize = () => {
       requestAnimationFrame(() => {
-        flow.calculateTablePositions()
+        flow.calculateTablePositions(widthRef.current?.offsetWidth ?? 0)
       })
     }
 
@@ -219,7 +221,7 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
   }, [reactFlowInstance])
 
   return (
-    <div className="w-full">
+    <div className="w-full" ref={widthRef}>
       <div className="mt-4 h-[30px] px-4">
         <div className="absolute right-[65%] flex flex-row items-center justify-between px-45">
           <h1 className="text-l font-semibold">Source: {config.formatTypes.source?.name}</h1>
@@ -337,8 +339,8 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
       </Modal>
       <div className="pointer-events-none fixed right-0 bottom-4 left-0 z-50 z-60 min-w-[300px]">
         <div className="pointer-events-auto relative flex w-full justify-between px-12">
-          <button
-            className="hover:bg-hover active:bg-backdrop text-foreground bg-selected border-border hover:bg-hover absolute bottom-2 left-1/4 z-10 rounded rounded-2xl rounded-md border px-4 py-2"
+          <Button
+            className="absolute bottom-2 left-1/4 z-10 rounded rounded-2xl rounded-md border px-4 py-2"
             onClick={() => {
               openModelGroups.current = getNodesByTypeAndId(reactFlowInstance?.getNodes(), {
                 typeIncludes: ['labeledGroup', 'extraSourceNode'],
@@ -349,17 +351,17 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
             }}
           >
             Add Source
-          </button>
-          <button
-            className="border-border bg-foreground-active text-foreground hover:bg-hover absolute bottom-2 left-1/2 z-10 -translate-x-1/2 rounded-2xl border px-4 py-2"
+          </Button>
+          <Button
+            className="bg-foreground-active text-foreground hover:bg-hover absolute bottom-2 left-1/2 z-10 -translate-x-1/2 rounded-2xl border px-4 py-2"
             onClick={() => {
               openMapping()
             }}
           >
             MAP
-          </button>
-          <button
-            className="hover:bg-hover active:bg-backdrop text-foreground bg-selected border-border hover:bg-hover absolute right-1/4 bottom-2 z-10 rounded rounded-2xl rounded-md border px-4 py-2"
+          </Button>
+          <Button
+            className="absolute right-1/4 bottom-2 z-10 rounded rounded-2xl rounded-md border px-4 py-2"
             onClick={() => {
               openModelGroups.current = getNodesByTypeAndId(reactFlowInstance?.getNodes(), {
                 typeIncludes: 'labeledGroup',
@@ -370,7 +372,7 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
             }}
           >
             Add target
-          </button>
+          </Button>
         </div>
       </div>
     </div>

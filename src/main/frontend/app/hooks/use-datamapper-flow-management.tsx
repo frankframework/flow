@@ -653,8 +653,8 @@ export function useFlowManagement({ reactFlowInstance, config, setScNodes, setEd
     setEdges(remainingEdges)
   }
 
-  function calculateTablePositions() {
-    const padding = (window.innerWidth - TABLE_WIDTH * 2 - MAPPING_TABLE_WIDTH) / 4
+  function calculateTablePositions(width: number) {
+    const padding = (width - TABLE_WIDTH * 2 - MAPPING_TABLE_WIDTH) / 4
 
     const sourceX = padding
     const mappingX = sourceX + padding + TABLE_WIDTH

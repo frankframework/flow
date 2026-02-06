@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-export type AppRoute = 'configurations' | 'studio' | 'editor' | 'help' | 'settings'
+export type AppRoute = 'configurations' | 'studio' | 'editor' | 'help' | 'settings' | 'datamapper'
 
 interface NavigationState {
   currentRoute: AppRoute
@@ -29,6 +29,7 @@ function parseCurrentUrl(): { route: AppRoute; params: Record<string, string> } 
   if (path.startsWith('/editor')) return { route: 'editor', params }
   if (path.startsWith('/settings')) return { route: 'settings', params }
   if (path.startsWith('/configurations')) return { route: 'configurations', params }
+  if (path.startsWith('/datamapper')) return { route: 'datamapper', params }
 
   return { route: 'configurations', params }
 }

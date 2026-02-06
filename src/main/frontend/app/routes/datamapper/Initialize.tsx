@@ -1,6 +1,8 @@
 import { type Dispatch, type SetStateAction, useState, type ChangeEvent } from 'react'
 import SourceDefinitionComponent from '~/components/datamapper/source-schema-definition'
 import UploadImportButton from '~/components/datamapper/upload-import-button'
+import Button from '~/components/inputs/button'
+import Dropdown from '~/components/inputs/dropdown'
 import type { ConfigActions } from '~/stores/datamapper_state/mappingListConfig/reducer'
 import type { MappingListConfig } from '~/types/datamapper_types/config-types'
 import type { DataTypeSchema } from '~/types/datamapper_types/data-types'
@@ -17,14 +19,14 @@ function Initialize({ config, configDispatch, confirmed, setConfirmed }: Initial
   const datatypes: DataTypeSchema = datatypesJson as DataTypeSchema
   const [sources, setSources] = useState<number[]>([])
 
-  const findDataType = (event: ChangeEvent<HTMLSelectElement>) =>
-    datatypes.find((dataType) => dataType.name === event.target.value) ?? null
+  const findDataType = (name: string) => datatypes.find((dataType) => dataType.name === name) ?? null
 
-  const configSourceDispatch = (onChangeEvent: ChangeEvent<HTMLSelectElement>) =>
-    configDispatch({ type: 'SET_SOURCE_FORMAT', payload: findDataType(onChangeEvent) })
+  // Dispatch functions that take the selected value as a string
+  const configSourceDispatch = (value: string) =>
+    configDispatch({ type: 'SET_SOURCE_FORMAT', payload: findDataType(value) })
 
-  const configTargetDispatch = (onChangeEvent: ChangeEvent<HTMLSelectElement>) =>
-    configDispatch({ type: 'SET_TARGET_FORMAT', payload: findDataType(onChangeEvent) })
+  const configTargetDispatch = (value: string) =>
+    configDispatch({ type: 'SET_TARGET_FORMAT', payload: findDataType(value) })
 
   // Manual export
   const handleManualExport = () => {
@@ -42,12 +44,9 @@ function Initialize({ config, configDispatch, confirmed, setConfirmed }: Initial
         <div className="flex-1">
           <UploadImportButton label="Import Configuration" configDispatch={configDispatch} />
         </div>
-        <button
-          className="border-border bg-backdrop text-foreground hover:bg-hover active:bg-selecteds flex-1 rounded-xl border px-4 py-3 text-sm font-medium transition"
-          onClick={handleManualExport}
-        >
+        <Button className="flex-1" onClick={handleManualExport}>
           Export Configuration
-        </button>
+        </Button>
       </div>
 
       {/* Source & Target type Selection */}
@@ -58,20 +57,12 @@ function Initialize({ config, configDispatch, confirmed, setConfirmed }: Initial
           <label htmlFor="sourceType" className="text-foreground-muted text-sm">
             Type:
           </label>
-          <select
-            id="sourceType"
-            className="border-border text-foreground bg-background w-full rounded-xl border p-2 text-sm focus:outline-none"
+          <Dropdown
             value={config.formatTypes?.source?.name || ''}
-            disabled={confirmed}
             onChange={configSourceDispatch}
-          >
-            <option value="">Select source datatype</option>
-            {datatypes.map((dt) => (
-              <option key={dt.name} value={dt.name}>
-                {dt.name}
-              </option>
-            ))}
-          </select>
+            options={Object.fromEntries(datatypes.map((dt) => [dt.name, dt.name]))}
+            disabled={confirmed}
+          />
         </div>
 
         {/* Target */}
@@ -80,32 +71,24 @@ function Initialize({ config, configDispatch, confirmed, setConfirmed }: Initial
           <label htmlFor="targetType" className="text-foreground-muted text-sm">
             Type:
           </label>
-          <select
-            id="targetType"
-            className="border-border text-foreground bg-background w-full rounded-xl border p-2 text-sm focus:outline-none"
+          <Dropdown
             value={config.formatTypes?.target?.name || ''}
-            disabled={confirmed}
             onChange={configTargetDispatch}
-          >
-            <option value="">Select target datatype</option>
-            {datatypes.map((dt) => (
-              <option key={dt.name} value={dt.name}>
-                {dt.name}
-              </option>
-            ))}
-          </select>
+            options={Object.fromEntries(datatypes.map((dt) => [dt.name, dt.name]))}
+            disabled={confirmed}
+          />
         </div>
       </div>
 
       {/* Confirm Button */}
       <div className="flex justify-center" hidden={confirmed}>
-        <button
-          className="border-border bg-foreground-active disabled:bg-backdrop disabled:text-foreground-muted rounded-2xl border px-6 py-3 font-medium text-[var(--color-neutral-900)] transition hover:brightness-110"
+        <Button
+          className="bg-foreground-active disabled:bg-backdrop disabled:text-foreground-muted font-medium text-[var(--color-neutral-900)] transition hover:brightness-110"
           disabled={confirmed || !config.formatTypes.target || !config.formatTypes.source}
           onClick={() => setConfirmed(true)}
         >
           Confirm types
-        </button>
+        </Button>
       </div>
 
       {/* Extra source section */}
@@ -114,12 +97,9 @@ function Initialize({ config, configDispatch, confirmed, setConfirmed }: Initial
           {/* Source Section */}
           <div className="flex flex-1 flex-col gap-4">
             <UploadImportButton label="Import Schema" flowType="source" config={config} disabled={!confirmed} />
-            <button
-              onClick={() => setSources((previous) => [...previous, (previous.at(-1) || 0) + 1])}
-              className="border-border bg-background text-foreground hover:bg-hover w-full rounded-xl border px-4 py-2.5 font-medium transition"
-            >
+            <Button onClick={() => setSources((previous) => [...previous, (previous.at(-1) || 0) + 1])}>
               Add Extra Schema
-            </button>
+            </Button>
             {sources.length > 0 && (
               <div className="max-h-[60vh] overflow-auto rounded-xl p-2">
                 {sources.map((id) => (

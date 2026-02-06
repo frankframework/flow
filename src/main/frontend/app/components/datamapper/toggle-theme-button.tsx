@@ -13,7 +13,7 @@ function ThemeToggleButton() {
 
   return (
     <button
-      className="border-border hover:bg-hover active:bg-selected rounded-md border px-4 py-2"
+      className="border-border hover:bg-hover active:bg-selected rounded-md border px-4 py-2 bg-red-500"
       onClick={toggleTheme}
     >
       Switch to {theme === 'light' ? 'dark' : 'light'} mode
