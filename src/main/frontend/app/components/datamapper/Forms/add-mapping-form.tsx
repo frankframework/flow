@@ -67,12 +67,10 @@ function AddMappingForm({ onSave, sources, targets, initialData }: MappingModalP
   useEffect(() => {
     const outputType = targets.find((t) => t.id === targetId)?.type
     const possibleOutputs = unfilteredOutputs.some((o) => o.id === output && o.type === outputType)
-    console.dir(filteredOutputs)
-
     if (!possibleOutputs) {
       setOutput('')
     }
-    console.dir(filteredOutputs)
+
     if (filteredOutputs.length == 1) {
       setOutput(filteredOutputs[0].id)
     }
