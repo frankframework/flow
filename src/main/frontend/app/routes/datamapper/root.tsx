@@ -1,7 +1,7 @@
 import { useEffect, useReducer, useState } from 'react'
 
 import PropertyList from './property-list'
-import { showInfoToast, Toast } from '~/components/datamapper/Toast'
+import { showInfoToast, Toast } from '~/components/datamapper/toast'
 import ToggleThemeButton from '~/components/datamapper/toggle-theme-button'
 import {
   DEFAULT_MAPPING_LIST_CONFIG,
