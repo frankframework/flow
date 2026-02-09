@@ -17,7 +17,7 @@ import { ReactFlowProvider } from '@xyflow/react'
 import { FileProvider } from '~/stores/datamapper_state/schemaQueue/schema-queue-context'
 import Button from '~/components/inputs/button'
 
-function Root() {
+export default function Root() {
   const [route, setRoute] = useState('Initialize')
   const routes = ['Initialize', 'Properties', 'Mappings', 'Advanced']
 
@@ -143,5 +143,3 @@ function Root() {
     </ReactFlowProvider>
   )
 }
-
-export default Root
