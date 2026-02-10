@@ -3,9 +3,7 @@ import { getAdapterNamesFromConfiguration } from '../studio/xml-to-json-parser'
 import { useEffect, useState } from 'react'
 import RulerCrossPenIcon from '/icons/solar/Ruler Cross Pen.svg?react'
 import CodeIcon from '/icons/solar/Code.svg?react'
-import useTabStore from '~/stores/tab-store'
-import { useNavigationStore } from '~/stores/navigation-store'
-import useEditorTabStore from '~/stores/editor-tab-store'
+import { openInStudio, openInEditor } from '~/actions/navigationActions'
 
 interface ConfigurationTileProperties {
   filepath: string
@@ -27,28 +25,11 @@ export default function ConfigurationTile({ filepath, relativePath }: Readonly<C
   }, [projectName, filepath])
 
   const handleOpenInStudio = (adapterName: string) => {
-    const { setTabData, setActiveTab, getTab } = useTabStore.getState()
-    if (!getTab(adapterName)) {
-      setTabData(adapterName, {
-        name: adapterName,
-        configurationPath: filepath,
-        flowJson: {},
-      })
-    }
-    setActiveTab(adapterName)
-    useNavigationStore.getState().navigate('studio')
+    openInStudio(adapterName, filepath)
   }
 
   const handleOpenInEditor = () => {
-    const { setTabData, setActiveTab, getTab } = useEditorTabStore.getState()
-    if (!getTab(relativePath)) {
-      setTabData(relativePath, {
-        name: relativePath,
-        configurationPath: filepath,
-      })
-    }
-    setActiveTab(relativePath)
-    useNavigationStore.getState().navigate('editor')
+    openInEditor(relativePath, filepath)
   }
 
   return (
