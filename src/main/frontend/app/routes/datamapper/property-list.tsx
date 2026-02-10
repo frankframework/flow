@@ -100,6 +100,58 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
     })
   }, []) //UseMemo is used here to ensure nodetype is not changed throughout rerenders. If the variable is update reactflow throws a warning in the console;
 
+  useEffect(() => {
+    if (!reactFlowInstance) return
+
+    const updateSize = () => {
+      requestAnimationFrame(() => {
+        flow.calculateTablePositions(widthRef.current?.offsetWidth ?? 0)
+      })
+    }
+
+    window.addEventListener('resize', updateSize)
+
+    // delay initial run
+    requestAnimationFrame(updateSize)
+
+    return () => {
+      window.removeEventListener('resize', updateSize)
+    }
+  }, [reactFlowInstance])
+
+  useEffect(() => {
+    if (!reactFlowInstance) return
+
+    configDispatch({
+      type: 'SET_PROPERTY_DATA',
+      payload: reactFlowInstance.toObject(),
+    })
+  }, [scnodes, edges])
+
+  //Updates the outer canvas whenever something is added
+  useEffect(() => {
+    setCanvasSize((size) => flow.updateCanvasSize(scnodes, size))
+  }, [scnodes])
+
+  useEffect(() => {
+    if (!reactFlowInstance || initHasRun.current) return
+    initHasRun.current = true
+
+    if (config.propertyData.nodes && config.propertyData.nodes.length > 1) {
+      onRestore()
+    } else {
+      // Dummy data creation function, to be removed later maybe a if development check here would be nice?
+      // initFlowNodes(flow, config)
+    }
+    if (targetSchematic) {
+      flow.importSchematic(targetSchematic, 'target')
+    }
+    if (sourceSchematics.length > 0) {
+      flow.importMultipleSchematics(sourceSchematics)
+    }
+    clearFiles()
+  }, [reactFlowInstance])
+
   const onscNodesChange = useCallback(
     (changes: NodeChange[]) => setScNodes((nodes) => applyNodeChanges(changes, nodes) as Node[]),
     [],
@@ -168,57 +220,60 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
       setAddMappingModalOpen(true)
     })
   }
-  useEffect(() => {
-    if (!reactFlowInstance) return
 
-    const updateSize = () => {
-      requestAnimationFrame(() => {
-        flow.calculateTablePositions(widthRef.current?.offsetWidth ?? 0)
-      })
+  async function saveField(data: CustomNodeData) {
+    if (!reactFlowInstance) {
+      setAddFieldModalOpen(false)
+      setEditingNode(null)
+      return
     }
 
-    window.addEventListener('resize', updateSize)
-
-    // delay initial run
-    requestAnimationFrame(updateSize)
-
-    return () => {
-      window.removeEventListener('resize', updateSize)
+    try {
+      if (editingNode) {
+        flow.editNode(data)
+      } else {
+        await flow.addNodeSequential(
+          openModelType.current as 'source' | 'target',
+          data.label,
+          data.variableType,
+          data.defaultValue ?? null,
+          data.parentId,
+        )
+      }
+      setEditingNode(null)
+      setAddFieldModalOpen(false)
+      showSuccessToast('Added property succesfully!')
+    } catch (error) {
+      if (error instanceof DuplicateLabelException) {
+        showErrorToast(error.message)
+      } else {
+        throw error
+      }
     }
-  }, [reactFlowInstance])
+  }
+  async function saveMapping(parameters: MappingConfig) {
+    if (!reactFlowInstance) {
+      setAddMappingModalOpen(false)
 
-  useEffect(() => {
-    if (!reactFlowInstance) return
+      return
+    }
+    const { updatedNodes, updatedEdges } = createMappingNode(parameters, scnodes, edges)
 
-    configDispatch({
-      type: 'SET_PROPERTY_DATA',
-      payload: reactFlowInstance.toObject(),
+    setScNodes(updatedNodes)
+    setEdges(updatedEdges)
+    setEditingMapping(null)
+    setAddMappingModalOpen(false)
+    showSuccessToast('Added mapping succesfully!')
+  }
+  function openAddFieldModal(modelType: 'source' | 'target') {
+    openModelGroups.current = getNodesByTypeAndId(reactFlowInstance?.getNodes(), {
+      typeIncludes: modelType === 'source' ? ['labeledGroup', 'extraSourceNode'] : 'labeledGroup',
+      idIncludes: modelType,
     })
-  }, [scnodes, edges])
 
-  //Updates the outer canvas whenever something is added
-  useEffect(() => {
-    setCanvasSize((size) => flow.updateCanvasSize(scnodes, size))
-  }, [scnodes])
-
-  useEffect(() => {
-    if (!reactFlowInstance || initHasRun.current) return
-    initHasRun.current = true
-
-    if (config.propertyData.nodes && config.propertyData.nodes.length > 1) {
-      onRestore()
-    } else {
-      // Dummy data creation function, to be removed later maybe a if development check here would be nice?
-      // initFlowNodes(flow, config)
-    }
-    if (targetSchematic) {
-      flow.importSchematic(targetSchematic, 'target')
-    }
-    if (sourceSchematics.length > 0) {
-      flow.importMultipleSchematics(sourceSchematics)
-    }
-    clearFiles()
-  }, [reactFlowInstance])
+    openModelType.current = modelType
+    setAddFieldModalOpen(true)
+  }
 
   return (
     <div className="w-full" ref={widthRef}>
@@ -278,36 +333,7 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
           initialData={editingNode}
           parents={openModelGroups.current}
           formatDefinition={config.formatTypes}
-          onSave={async (data: CustomNodeData) => {
-            if (!reactFlowInstance) {
-              setAddFieldModalOpen(false)
-              setEditingNode(null)
-              return
-            }
-
-            try {
-              if (editingNode) {
-                flow.editNode(data)
-              } else {
-                await flow.addNodeSequential(
-                  openModelType.current as 'source' | 'target',
-                  data.label,
-                  data.variableType,
-                  data.defaultValue ?? null,
-                  data.parentId,
-                )
-              }
-              setEditingNode(null)
-              setAddFieldModalOpen(false)
-              showSuccessToast('Added property succesfully!')
-            } catch (error) {
-              if (error instanceof DuplicateLabelException) {
-                showErrorToast(error.message)
-              } else {
-                throw error
-              }
-            }
-          }}
+          onSave={saveField}
         />
       </Modal>
       <Modal
@@ -321,55 +347,26 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
           sources={mappingSources}
           targets={mappingTargets}
           initialData={editingMapping}
-          onSave={async (parameters) => {
-            if (!reactFlowInstance) {
-              setAddMappingModalOpen(false)
-
-              return
-            }
-            const { updatedNodes, updatedEdges } = createMappingNode(parameters, scnodes, edges)
-
-            setScNodes(updatedNodes)
-            setEdges(updatedEdges)
-            setEditingMapping(null)
-            setAddMappingModalOpen(false)
-            showSuccessToast('Added mapping succesfully!')
-          }}
+          onSave={saveMapping}
         />
       </Modal>
       <div className="pointer-events-none fixed right-0 bottom-4 left-0 z-50 z-60 min-w-[300px]">
         <div className="pointer-events-auto relative flex w-full justify-between px-12">
           <Button
             className="absolute bottom-2 left-1/4 z-10 rounded rounded-2xl rounded-md border px-4 py-2"
-            onClick={() => {
-              openModelGroups.current = getNodesByTypeAndId(reactFlowInstance?.getNodes(), {
-                typeIncludes: ['labeledGroup', 'extraSourceNode'],
-                idIncludes: 'source',
-              })
-              openModelType.current = 'source'
-              setAddFieldModalOpen(true)
-            }}
+            onClick={() => openAddFieldModal('source')}
           >
             Add Source
           </Button>
           <Button
             className="bg-foreground-active text-foreground hover:bg-hover absolute bottom-2 left-1/2 z-10 -translate-x-1/2 rounded-2xl border px-4 py-2"
-            onClick={() => {
-              openMapping()
-            }}
+            onClick={openMapping}
           >
             MAP
           </Button>
           <Button
             className="absolute right-1/4 bottom-2 z-10 rounded rounded-2xl rounded-md border px-4 py-2"
-            onClick={() => {
-              openModelGroups.current = getNodesByTypeAndId(reactFlowInstance?.getNodes(), {
-                typeIncludes: 'labeledGroup',
-                idIncludes: 'target',
-              })
-              openModelType.current = 'target'
-              setAddFieldModalOpen(true)
-            }}
+            onClick={() => openAddFieldModal('target')}
           >
             Add target
           </Button>

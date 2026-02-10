@@ -96,8 +96,8 @@ export default function Root() {
         </div>
 
         {/* Center modal/container */}
-        <div className="bg-selected inset-0 z-50 h-full items-center justify-center p-4">
-          <div className="text-foreground rounded-lg shadow-lg">
+        <div className="bg-backdrop inset-0 z-50 h-full items-center justify-center p-4">
+          <div className="bg-background text-foreground rounded-lg shadow-lg">
             {/* Header */}
             <div className="border-b-border box-border h-10 w-full rounded-t-md border-b bg-[radial-gradient(ellipse_farthest-corner_at_20%_20%,var(--type-pipe)_0%,var(--color-background)_100%)] p-2 text-lg font-semibold">
               Mapping (mappingName)
