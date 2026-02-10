@@ -174,7 +174,7 @@ function AddMappingForm({ onSave, sources, targets, initialData }: MappingModalP
                     <div className="flex gap-2">
                       <button
                         onClick={() => {
-                          setEditMutation(m)
+                          setEditMutation(mutation)
                           setMutationModal(true)
                         }}
                       >
