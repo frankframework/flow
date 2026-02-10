@@ -33,6 +33,7 @@ import { useProjectStore } from '~/stores/project-store'
 import { toast, ToastContainer } from 'react-toastify'
 import { useTheme } from '~/hooks/use-theme'
 import { saveAdapter } from '~/services/adapter-service'
+import { cloneWithRemappedIds } from '~/utils/flow-utils'
 
 export type FlowNode = FrankNodeType | ExitNode | StickyNote | GroupNode | Node
 
@@ -64,6 +65,10 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
   )
   const [showModal, setShowModal] = useState(false)
   const [edgeDropPositions, setEdgeDropPositions] = useState<{ x: number; y: number } | null>(null)
+  const clipboardRef = useRef<{
+    nodes: FlowNode[]
+    edges: Edge[]
+  } | null>(null)
 
   const nodeTypes = {
     frankNode: FrankNodeComponent,
@@ -274,11 +279,83 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
     shouldMergeUngroupedIntoGroup,
   ])
 
+  const copySelection = useCallback(() => {
+    const selectedNodes = nodes.filter((n) => n.selected)
+    if (selectedNodes.length === 0) return
+
+    const selectedNodeIds = new Set(selectedNodes.map((n) => n.id))
+
+    const selectedEdges = edges.filter((e) => selectedNodeIds.has(e.source) && selectedNodeIds.has(e.target))
+
+    clipboardRef.current = {
+      nodes: selectedNodes,
+      edges: selectedEdges,
+    }
+  }, [nodes, edges])
+
+  const pasteSelection = useCallback(() => {
+    const clipboard = clipboardRef.current
+    if (!clipboard) return
+
+    const flowStore = useFlowStore.getState()
+
+    const idMap = new Map<string, string>()
+    const generateId = () => flowStore.getNextNodeId().toString()
+
+    // Remap the IDs of cloned nodes
+    const newNodes: FlowNode[] = clipboard.nodes.map((node) => {
+      const cloned = cloneWithRemappedIds(node, idMap, generateId)
+
+      // Remap parentId using the original node's parentId
+      const remappedParentId = node.parentId ? idMap.get(node.parentId) : undefined
+
+      return {
+        ...cloned,
+        position: {
+          x: node.position.x + FlowConfig.COPY_PASTE_OFFSET,
+          y: node.position.y + FlowConfig.COPY_PASTE_OFFSET,
+        },
+        parentId: remappedParentId,
+        extent: remappedParentId ? 'parent' : undefined,
+        selected: true,
+      }
+    })
+
+    // Clone edges using the SAME idMap
+    const newEdges: Edge[] = clipboard.edges.map((edge) => cloneWithRemappedIds(edge, idMap, generateId))
+
+    // Deselect existing nodes and edges
+    const deselectedNodes = flowStore.nodes.map((n) => ({
+      ...n,
+      selected: false,
+    }))
+    const deselectedEdges = flowStore.edges.map((e) => ({
+      ...e,
+      selected: false,
+    }))
+
+    flowStore.setNodes([...deselectedNodes, ...newNodes])
+    flowStore.setEdges([...deselectedEdges, ...newEdges])
+  }, [])
+
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       const tagName = (event.target as HTMLElement).tagName
       const isTyping = ['INPUT', 'TEXTAREA'].includes(tagName) || (event.target as HTMLElement).isContentEditable
+
       if (isTyping) return
+
+      const isCmdOrCtrl = event.metaKey || event.ctrlKey
+
+      if (isCmdOrCtrl && event.key.toLowerCase() === 'c') {
+        event.preventDefault()
+        copySelection()
+      }
+
+      if (isCmdOrCtrl && event.key.toLowerCase() === 'v') {
+        event.preventDefault()
+        pasteSelection()
+      }
 
       if (event.key === 'g' || event.key === 'G') {
         event.preventDefault()
@@ -288,7 +365,7 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
 
     globalThis.addEventListener('keydown', handleKeyDown)
     return () => globalThis.removeEventListener('keydown', handleKeyDown)
-  }, [handleGrouping])
+  }, [copySelection, pasteSelection, handleGrouping])
 
   const groupNodes = (nodesToGroup: FlowNode[], currentNodes: FlowNode[]) => {
     const minX = Math.min(...nodesToGroup.map((node) => node.position.x))
@@ -308,7 +385,7 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
       type: 'groupNode',
       data: { label: 'New Group', width: width, height: height },
       dragHandle: '.drag-handle',
-      selectable: false,
+      selectable: true,
     }
 
     const updatedSelectedNodes: FlowNode[] = nodesToGroup.map((node) => ({

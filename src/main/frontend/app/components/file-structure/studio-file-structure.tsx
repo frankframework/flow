@@ -19,7 +19,7 @@ import {
 } from 'react-complex-tree'
 import FilesDataProvider from '~/components/file-structure/studio-files-data-provider'
 import { useProjectStore } from '~/stores/project-store'
-import type { FileNode, FileTreeNode } from './editor-data-provider'
+import type { FileNode } from './editor-data-provider'
 import { useProjectTree } from '~/hooks/use-project-tree'
 
 const TREE_ID = 'studio-files-tree'
