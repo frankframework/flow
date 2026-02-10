@@ -62,7 +62,7 @@ export default function ConfigurationTile({ filepath, relativePath }: Readonly<C
       {adapterNames.length > 0 ? (
         <>
           <h1 className="text-foreground mb-2 text-xs">
-            Adapter{adapterNames.length == 1 ? '' : 's'} in this configuration:
+            Adapter{adapterNames.length == 1 ? '' : 's'} within this configuration:
           </h1>
           <div className="bg-backdrop border-border flex-1 overflow-y-auto rounded border p-2">
             <ul className="space-y-2">

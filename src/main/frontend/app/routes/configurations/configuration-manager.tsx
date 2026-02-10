@@ -96,7 +96,7 @@ export default function ConfigurationManager() {
   }
 
   return (
-    <div className="bg-background border-border flex h-full w-full flex-col rounded border p-6">
+    <div className="bg-background flex h-full w-full flex-col p-6">
       <div className="hover:text-foreground-active flex w-fit hover:cursor-pointer" onClick={() => navigate('/')}>
         <ArrowLeftIcon className="mb-4 h-6 w-auto fill-current hover:cursor-pointer" />
         <p>Return To Projects</p>
