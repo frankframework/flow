@@ -155,7 +155,7 @@ function AddMappingForm({ onSave, sources, targets, initialData }: MappingModalP
               ))}
             </div>
 
-            <button onClick={() => setSourceIds((p) => [...p, ''])} className="mt-1 shrink-0 text-sm text-blue-500">
+            <button onClick={() => setSourceIds((id) => [...id, ''])} className="mt-1 shrink-0 text-sm text-blue-500">
               + Add another source
             </button>
           </div>
@@ -167,10 +167,10 @@ function AddMappingForm({ onSave, sources, targets, initialData }: MappingModalP
             <label className="shrink-0 font-semibold">Mutations</label>
 
             <div className={scrollable}>
-              {mutations.map((m) => (
-                <div key={m.id} className="rounded border p-2">
+              {mutations.map((mutation) => (
+                <div key={mutation.id} className="rounded border p-2">
                   <div className="flex items-center justify-between">
-                    <span className="font-semibold">{m.name}</span>
+                    <span className="font-semibold">{mutation.name}</span>
                     <div className="flex gap-2">
                       <button
                         onClick={() => {
@@ -181,7 +181,11 @@ function AddMappingForm({ onSave, sources, targets, initialData }: MappingModalP
                         ✏️
                       </button>
                       <button
-                        onClick={() => setMutations((p) => p.filter((x) => x.id !== m.id))}
+                        onClick={() =>
+                          setMutations((mutations) =>
+                            mutations.filter((mutationIterator) => mutationIterator.id !== mutation.id),
+                          )
+                        }
                         className="text-red-500"
                       >
                         &times;
