@@ -43,7 +43,7 @@ export default function ConfigurationTile({ filepath, relativePath }: Readonly<C
     const { setTabData, setActiveTab, getTab } = useEditorTabStore.getState()
     if (!getTab(relativePath)) {
       setTabData(relativePath, {
-        name: filepath,
+        name: relativePath,
         configurationPath: filepath,
       })
     }
@@ -60,13 +60,18 @@ export default function ConfigurationTile({ filepath, relativePath }: Readonly<C
 
       {/* Adapter list */}
       {adapterNames.length > 0 ? (
-        <div className="flex-1 overflow-y-auto">
-          <ul className="space-y-2">
-            {adapterNames.map((name) => (
-              <AdapterListItem key={name} name={name} onOpenInStudio={handleOpenInStudio} />
-            ))}
-          </ul>
-        </div>
+        <>
+          <h1 className="text-foreground mb-2 text-xs">
+            Adapter{adapterNames.length == 1 ? '' : 's'} in this configuration:
+          </h1>
+          <div className="bg-backdrop border-border flex-1 overflow-y-auto rounded border p-2">
+            <ul className="space-y-2">
+              {adapterNames.map((name) => (
+                <AdapterListItem key={name} name={name} onOpenInStudio={handleOpenInStudio} />
+              ))}
+            </ul>
+          </div>
+        </>
       ) : (
         <div className="text-muted-foreground flex-1 text-xs italic">No adapters found</div>
       )}
@@ -92,7 +97,7 @@ interface AdapterListItemProps {
 
 function AdapterListItem({ name, onOpenInStudio }: AdapterListItemProps) {
   return (
-    <li className="border-border bg-muted flex items-center rounded border px-2 py-1">
+    <li className="border-border bg-background flex items-center rounded border px-2 py-1">
       {/* Adapter name – 2/3 */}
       <span className="text-foreground border-border w-2/3 truncate border-r text-xs" title={name}>
         {name}
