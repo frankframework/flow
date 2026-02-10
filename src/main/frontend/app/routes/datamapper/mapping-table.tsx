@@ -84,28 +84,25 @@ function MappingTable({ config, configDispatch }: PropertyListProperties) {
     return flowToMappingTable(nodes, edges)
   }, [nodes, edges])
 
+  function saveMapping(mappingConfig: MappingConfig) {
+    const { updatedNodes, updatedEdges } = createMappingNode(mappingConfig, nodes, edges)
+
+    configDispatch({
+      type: 'SET_PROPERTY_DATA_NODES_EDGES',
+      payload: { nodes: updatedNodes, edges: updatedEdges },
+    })
+
+    setRefresh((v) => v + 1)
+    setEditingMapping(null)
+    setModalOpen(false)
+
+    showSuccessToast('Mapping saved successfully!')
+  }
+
   return (
     <div className="relative w-full p-4">
       <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)}>
-        <AddMappingForm
-          sources={sources}
-          targets={targets}
-          initialData={editingMapping}
-          onSave={(mappingConfig) => {
-            const { updatedNodes, updatedEdges } = createMappingNode(mappingConfig, nodes, edges)
-
-            configDispatch({
-              type: 'SET_PROPERTY_DATA_NODES_EDGES',
-              payload: { nodes: updatedNodes, edges: updatedEdges },
-            })
-
-            setRefresh((v) => v + 1)
-            setEditingMapping(null)
-            setModalOpen(false)
-
-            showSuccessToast('Mapping saved successfully!')
-          }}
-        />
+        <AddMappingForm sources={sources} targets={targets} initialData={editingMapping} onSave={saveMapping} />
       </Modal>
 
       {/* -------------------------------- Header -------------------------------- */}
