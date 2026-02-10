@@ -7,7 +7,7 @@ import type {
   PropertyDefinition,
 } from '~/types/datamapper_types/data-types'
 import type { CustomNodeData, NodeLabels } from '~/types/datamapper_types/node-types'
-import { showWarningToast } from '../toast'
+import { showWarningToast } from '../../toast'
 import Input from '~/components/inputs/input'
 import Dropdown from '~/components/inputs/dropdown'
 import Button from '~/components/inputs/button'

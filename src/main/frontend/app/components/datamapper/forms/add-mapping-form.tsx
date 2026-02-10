@@ -4,7 +4,7 @@ import AddMutationForm from './add-mutation-form'
 import AddConditionForm from './add-conditions-form'
 import type { Mutation, Condition, Source } from '~/types/datamapper_types/config-types'
 import type { MappingConfig, NodeLabels } from '~/types/datamapper_types/node-types'
-import Modal from '../modal'
+import Modal from '../../modal'
 import Checkbox from '~/components/inputs/checkbox'
 import Dropdown from '~/components/inputs/dropdown'
 
