@@ -11,7 +11,7 @@ import type {
   ConditionTypeInput,
   ConditionOperatorConfig,
 } from '~/types/datamapper_types/config-types'
-import conditionConfigJson from '~/utils/datamapper_utils/condition-config.json'
+import conditionConfigJson from '~/utils/datamapper_utils/config/condition-config.json'
 
 interface AddConditionFormProperties {
   sources: Source[]
@@ -49,7 +49,7 @@ function AddConditionForm({ sources, onSave, conditionToEdit }: Readonly<AddCond
         <Input
           type="text"
           value={condition.name}
-          onChange={(event) => setCondition((c) => ({ ...c, name: event.target.value }))}
+          onChange={(event) => setCondition((condition) => ({ ...condition, name: event.target.value }))}
           placeholder="Enter a name for this condition"
         />
       </div>
@@ -60,20 +60,20 @@ function AddConditionForm({ sources, onSave, conditionToEdit }: Readonly<AddCond
         <Dropdown
           value={condition.type?.name ?? ''}
           onChange={(event) => {
-            const cConfig = conditionsConfig.conditions.find((c) => c.name === event) ?? null
+            const conditionType = conditionsConfig.conditions.find((condition) => condition.name === event) ?? null
             setCondition({
               id,
               name: condition.name,
-              type: cConfig ?? null,
+              type: conditionType ?? null,
               inputs:
-                cConfig?.inputs.map(() => ({
+                conditionType?.inputs.map(() => ({
                   type: '',
                   value: '',
                 })) ?? [],
             })
           }}
           // className="bg-background w-full rounded border p-2"
-          options={Object.fromEntries(conditionsConfig.conditions.map((s) => [s.name, s.name]))}
+          options={Object.fromEntries(conditionsConfig.conditions.map((condition) => [condition.name, condition.name]))}
         />
       </div>
 
@@ -105,10 +105,10 @@ function ConditionDetailsForm({
   conditionConfig: ConditionType
 }>) {
   function updateInput(index: number, value: ConditionInput) {
-    setCondition((c) => {
-      const newInputs = [...c.inputs]
+    setCondition((condition) => {
+      const newInputs = [...condition.inputs]
       newInputs[index] = value
-      return { ...c, inputs: newInputs }
+      return { ...condition, inputs: newInputs }
     })
   }
 
@@ -165,9 +165,9 @@ function ConditionInputField({
             Select source
           </option>
           {inputConfig.allowDefaultValue && <option value="defaultValue">Default Value</option>}
-          {filteredSources.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.label}
+          {filteredSources.map((source) => (
+            <option key={source.id} value={source.id}>
+              {source.label}
             </option>
           ))}
         </select>
@@ -217,9 +217,9 @@ function ConditionInputField({
           <option value="" hidden>
             Select operator
           </option>
-          {operatorConfig.allowedValues.map((op) => (
-            <option key={op} value={op}>
-              {op}
+          {operatorConfig.allowedValues.map((option) => (
+            <option key={option} value={option}>
+              {option}
             </option>
           ))}
         </select>

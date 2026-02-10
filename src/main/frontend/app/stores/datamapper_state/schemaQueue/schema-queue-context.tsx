@@ -24,12 +24,12 @@ export const FileProvider = ({ children }: FileProviderProperties) => {
   const [sourceSchematics, setSourceSchematics] = useState<SourceSchematic[]>([])
   const [targetSchematic, setTargetSchematic] = useState<File | null>(null)
 
-  const addSourceSchematic = (schematic: SourceSchematic) => {
+  const addSourceSchematic = (schematicToAdd: SourceSchematic) => {
     setSourceSchematics((previous) => {
       // Filter out any existing schematic with the same name
-      const filtered = previous.filter((s) => s.name !== schematic.name)
+      const filtered = previous.filter((schematic) => schematic.name !== schematicToAdd.name)
       // Add the new schematic
-      return [...filtered, schematic]
+      return [...filtered, schematicToAdd]
     })
   }
   const clearFiles = () => {
@@ -38,7 +38,7 @@ export const FileProvider = ({ children }: FileProviderProperties) => {
   }
 
   const deleteSourceSchema = (name: string) => {
-    setSourceSchematics(sourceSchematics.filter((item) => item.name != name))
+    setSourceSchematics(sourceSchematics.filter((schema) => schema.name != name))
   }
 
   return (

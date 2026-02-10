@@ -6,7 +6,7 @@ import Dropdown from '~/components/inputs/dropdown'
 import type { ConfigActions } from '~/stores/datamapper_state/mappingListConfig/reducer'
 import type { MappingListConfig } from '~/types/datamapper_types/config-types'
 import type { DataTypeSchema } from '~/types/datamapper_types/data-types'
-import datatypesJson from '~/utils/datamapper_utils/data-types.json'
+import datatypesJson from '~/utils/datamapper_utils/config/data-types.json'
 
 interface InitializeProperties {
   config: MappingListConfig
@@ -60,7 +60,7 @@ function Initialize({ config, configDispatch, confirmed, setConfirmed }: Initial
           <Dropdown
             value={config.formatTypes?.source?.name || ''}
             onChange={configSourceDispatch}
-            options={Object.fromEntries(datatypes.map((dt) => [dt.name, dt.name]))}
+            options={Object.fromEntries(datatypes.map((dataType) => [dataType.name, dataType.name]))}
             disabled={confirmed}
           />
         </div>
@@ -74,7 +74,7 @@ function Initialize({ config, configDispatch, confirmed, setConfirmed }: Initial
           <Dropdown
             value={config.formatTypes?.target?.name || ''}
             onChange={configTargetDispatch}
-            options={Object.fromEntries(datatypes.map((dt) => [dt.name, dt.name]))}
+            options={Object.fromEntries(datatypes.map((dataType) => [dataType.name, dataType.name]))}
             disabled={confirmed}
           />
         </div>

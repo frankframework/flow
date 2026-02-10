@@ -24,8 +24,8 @@ function MappingNode({ id, data, onClick, onDelete, onEdit }: MappingNodePropert
       {/* Delete */}
       <button
         className="absolute right-0 bottom-0 px-1 text-xs font-bold text-red-600 hover:text-red-700 hover:opacity-80"
-        onClick={(e) => {
-          e.stopPropagation()
+        onClick={(event) => {
+          event.stopPropagation()
           onDelete?.(id)
         }}
       >
@@ -35,8 +35,8 @@ function MappingNode({ id, data, onClick, onDelete, onEdit }: MappingNodePropert
       {/* Edit */}
       <button
         className="absolute top-0 right-0 px-1 text-xs font-bold hover:opacity-80"
-        onClick={(e) => {
-          e.stopPropagation()
+        onClick={(event) => {
+          event.stopPropagation()
           onEdit?.(data)
         }}
       >

@@ -121,13 +121,13 @@ function AddFieldForm({ fieldType, onSave, parents, formatDefinition, initialDat
       <Dropdown
         id="variableType"
         value={variableType}
-        onChange={(e) => setVariableType(e)}
+        onChange={(value) => setVariableType(value)}
         disabled={initialData?.variableType == 'object'}
         options={Object.fromEntries(availableTypes.map((p) => [p.name, p.name]))}
       />
 
       <label htmlFor="propertyName">Property name:</label>
-      <Input name="propertyName" value={label} onChange={(e) => setLabel(e.target.value)} />
+      <Input name="propertyName" value={label} onChange={(event) => setLabel(event.target.value)} />
 
       <div hidden={defaultValueInputType == 'object'}>
         <label htmlFor="defaultValue">Default value:</label>
@@ -137,9 +137,9 @@ function AddFieldForm({ fieldType, onSave, parents, formatDefinition, initialDat
             value={defaultValue}
             onChange={(value: string) => setDefaultValue(value)}
             options={{
-              [``]: `none`,
-              [`true`]: `true`,
-              [`false`]: `false`,
+              ['']: 'none',
+              ['true']: 'true',
+              ['false']: 'false',
             }}
           />
         ) : (
@@ -147,7 +147,7 @@ function AddFieldForm({ fieldType, onSave, parents, formatDefinition, initialDat
             name="defaultValue"
             value={defaultValue}
             type="text"
-            onChange={(e) => validateDefaultValue(e.target.value)}
+            onChange={(event) => validateDefaultValue(event.target.value)}
           />
         )}
       </div>

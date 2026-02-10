@@ -49,9 +49,9 @@ function UploadImportButton({
 
   const isUploaded = Boolean(uploadedFileName)
 
-  const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
     if (disabled) return // prevent any action if disabled
-    const file = e.target.files?.[0]
+    const file = event.target.files?.[0]
     if (!file) return
 
     try {
@@ -80,7 +80,7 @@ function UploadImportButton({
       showErrorToast('Invalid json file!', 'Import failed')
     }
 
-    e.target.value = ''
+    event.target.value = ''
   }
 
   return (

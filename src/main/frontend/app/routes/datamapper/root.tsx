@@ -9,7 +9,7 @@ import {
 } from '~/stores/datamapper_state/mappingListConfig/reducer'
 import type { MappingListConfig } from '~/types/datamapper_types/config-types'
 import { FLOW_KEY } from '~/utils/datamapper_utils/const'
-import { convertMappingConfigToMappingFile } from '~/utils/datamapper_utils/utils'
+import { convertMappingConfigToMappingFile } from '~/utils/datamapper_utils/convert-node-utils'
 import AdvancedEditor from './advanced-editor'
 import Initialize from './initialize'
 import MappingTable from './mapping-table'

@@ -30,8 +30,8 @@ function flowToMappingTable(nodes: Node[], edges: Edge[]): MappingRow[] {
   return nodes
     .filter((node): node is MappingNode => node.type === 'mappingNode')
     .map((mappingNode): MappingRow => {
-      const incomingEdges = edges.filter((e) => e.target === mappingNode.id)
-      const outgoingEdges = edges.filter((e) => e.source === mappingNode.id)
+      const incomingEdges = edges.filter((edge) => edge.target === mappingNode.id)
+      const outgoingEdges = edges.filter((edge) => edge.source === mappingNode.id)
 
       const mutations = mappingNode.data?.mutations ?? []
       const conditions = mappingNode.data?.conditions ?? []
@@ -41,15 +41,15 @@ function flowToMappingTable(nodes: Node[], edges: Edge[]): MappingRow[] {
         const outputId = mappingNode.data?.output
         if (!outputId) return ''
 
-        const mutation = mutations.find((m) => m.id === outputId)
-        const condition = conditions.find((c) => c.id == outputId)
+        const mutation = mutations.find((mutation) => mutation.id === outputId)
+        const condition = conditions.find((condition) => condition.id == outputId)
         return mutation?.name ?? condition?.name ?? getLabel(outputId)
       })()
 
       return {
         id: mappingNode.id,
-        sourcesNames: incomingEdges.map((e) => getLabel(e.source)),
-        targetsNames: outgoingEdges.map((e) => getLabel(e.target)),
+        sourcesNames: incomingEdges.map((edge) => getLabel(edge.source)),
+        targetsNames: outgoingEdges.map((edge) => getLabel(edge.target)),
         type: mappingNode.data?.type ?? 'one-to-one',
         mutations,
         conditions,
@@ -92,7 +92,7 @@ function MappingTable({ config, configDispatch }: PropertyListProperties) {
       payload: { nodes: updatedNodes, edges: updatedEdges },
     })
 
-    setRefresh((v) => v + 1)
+    setRefresh((count) => count + 1)
     setEditingMapping(null)
     setModalOpen(false)
 
@@ -156,19 +156,19 @@ function MappingTable({ config, configDispatch }: PropertyListProperties) {
 
                 {/* Mutations */}
                 <td className="border px-3 py-2 align-top">
-                  {row.mutations.map((op, index) => (
+                  {row.mutations.map((mutation, index) => (
                     <div key={index} className="leading-tight">
-                      <span className="text-xl">{op.name}</span>{' '}
-                      <span className="text-foreground-muted text-xl">(Type: {op.mutationType?.name})</span>
+                      <span className="text-xl">{mutation.name}</span>{' '}
+                      <span className="text-foreground-muted text-xl">(Type: {mutation.mutationType?.name})</span>
                     </div>
                   ))}
                 </td>
                 {/* Conditions */}
                 <td className="border px-3 py-2 align-top">
-                  {row.conditions.map((op, index) => (
+                  {row.conditions.map((condition, index) => (
                     <div key={index} className="leading-tight">
-                      <span className="text-xl">{op.name}</span>{' '}
-                      <span className="text-foreground-muted text-xl">(Type: {op.type?.name})</span>
+                      <span className="text-xl">{condition.name}</span>{' '}
+                      <span className="text-foreground-muted text-xl">(Type: {condition.type?.name})</span>
                     </div>
                   ))}
                 </td>
@@ -193,7 +193,7 @@ function MappingTable({ config, configDispatch }: PropertyListProperties) {
                     className="px-1 text-3xl hover:opacity-80"
                     onClick={(e) => {
                       e.stopPropagation()
-                      const mappingNode = nodes.find((n) => n.id === row.id)
+                      const mappingNode = nodes.find((node) => node.id === row.id)
                       setEditingMapping((mappingNode?.data as MappingConfig) ?? null)
                       setModalOpen(true)
                     }}
@@ -214,7 +214,7 @@ function MappingTable({ config, configDispatch }: PropertyListProperties) {
                         },
                       })
 
-                      setRefresh((v) => v + 1)
+                      setRefresh((count) => count + 1)
                     }}
                   >
                     X

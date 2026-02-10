@@ -19,7 +19,7 @@ import { deleteMappingNode } from '~/utils/datamapper_utils/react-node-utils'
 interface UseFlowManagementProperties {
   reactFlowInstance: ReactFlowInstance
   config: MappingListConfig
-  setScNodes: Dispatch<SetStateAction<Node[]>>
+  setReactFlowNodes: Dispatch<SetStateAction<Node[]>>
   setEdges: Dispatch<SetStateAction<Edge[]>>
 }
 
@@ -55,7 +55,12 @@ export class DuplicateLabelException extends Error {
   }
 }
 
-export function useFlowManagement({ reactFlowInstance, config, setScNodes, setEdges }: UseFlowManagementProperties) {
+export function useFlowManagement({
+  reactFlowInstance,
+  config,
+  setReactFlowNodes,
+  setEdges,
+}: UseFlowManagementProperties) {
   const sourceIdCounter = useRef(0)
   const targetIdCounter = useRef(0)
   const lastUpdate = useRef(0)
@@ -129,7 +134,7 @@ export function useFlowManagement({ reactFlowInstance, config, setScNodes, setEd
     }
 
     //Generate reactflow object from the values
-    setScNodes((previous) => {
+    setReactFlowNodes((previous) => {
       const newNode = generateReactFlowObject(previous, {
         id: resolvedId,
         label,
@@ -161,23 +166,25 @@ export function useFlowManagement({ reactFlowInstance, config, setScNodes, setEd
       //Check for duplicate labels, where parent id and label are the same but Id is not
       const duplicate = reactFlowInstance
         .getNodes()
-        .some((n) => n.parentId === data.parentId && n.data?.label === data.label && n.id != data.id)
+        .some((node) => node.parentId === data.parentId && node.data?.label === data.label && node.id != data.id)
       if (duplicate) throw new DuplicateLabelException('Duplicate property not allowed! Change property name.')
     }
     //Change type to object if needed.
     const updatedType = data.variableType.includes('object') ? 'labeledGroup' : `${side}Only`
-    data.variableTypeBasic = formatType?.properties.find((a) => a.name == updatedType)?.type
+    data.variableTypeBasic = formatType?.properties.find(
+      (propertyDefinition) => propertyDefinition.name == updatedType,
+    )?.type
     //Persist node to reactflow
-    setScNodes((previous) =>
-      previous.map((n) =>
-        n.id === data.id
+    setReactFlowNodes((previous) =>
+      previous.map((node) =>
+        node.id === data.id
           ? {
-              ...n,
+              ...node,
               type: updatedType,
 
               data: data,
             }
-          : n,
+          : node,
       ),
     )
     //Retrieve updated node
@@ -188,17 +195,17 @@ export function useFlowManagement({ reactFlowInstance, config, setScNodes, setEd
 
   function deleteNode(id: string) {
     let nodeToDelete: Node | undefined
-    setScNodes((previous: Node[]) => {
+    setReactFlowNodes((previous: Node[]) => {
       //Find node
-      nodeToDelete = previous.find((n) => n.id === id)
+      nodeToDelete = previous.find((node) => node.id === id)
       if (!nodeToDelete) return previous
       //Get parent id of node
       const parentId = nodeToDelete.parentId
-      let updatedNodes = previous.filter((n) => n.id !== id)
+      let updatedNodes = previous.filter((node) => node.id !== id)
       //If item is a group
       if (nodeToDelete.type == 'labeledGroup' || nodeToDelete?.type === 'extraSourceNode') {
         //remove all child elements
-        updatedNodes = updatedNodes.filter((n) => !n.parentId?.startsWith(id))
+        updatedNodes = updatedNodes.filter((node) => !node.parentId?.startsWith(id))
       }
       if (parentId) {
         //If item has parent set, reposition the items of the parent
@@ -218,7 +225,7 @@ export function useFlowManagement({ reactFlowInstance, config, setScNodes, setEd
 
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        setScNodes((previous) => {
+        setReactFlowNodes((previous) => {
           const newNodes = sequentialReposition(previous, editingNode.parentId!)
 
           return newNodes
@@ -267,7 +274,7 @@ export function useFlowManagement({ reactFlowInstance, config, setScNodes, setEd
       }),
     )
 
-    setScNodes((previousNodes) =>
+    setReactFlowNodes((previousNodes) =>
       previousNodes.map((node) => ({
         ...node,
         style: {
@@ -309,8 +316,8 @@ export function useFlowManagement({ reactFlowInstance, config, setScNodes, setEd
       return new Set(
         reactFlowInstance
           .getNodes()
-          .filter((n) => n.parentId === nodeId)
-          .map((n) => n.id),
+          .filter((node) => node.parentId === nodeId)
+          .map((node) => node.id),
       )
     }
 
@@ -330,7 +337,7 @@ export function useFlowManagement({ reactFlowInstance, config, setScNodes, setEd
       })),
     )
 
-    setScNodes((previousNodes) =>
+    setReactFlowNodes((previousNodes) =>
       previousNodes.map((node) => ({
         ...node,
         style: {
@@ -518,13 +525,13 @@ export function useFlowManagement({ reactFlowInstance, config, setScNodes, setEd
     if (!format) throw new Error(`No format configuration for side "${side}"`)
 
     if (!rawType) {
-      const fallback = format.properties.find((p) => p.name === 'string')
+      const fallback = format.properties.find((property) => property.name === 'string')
       if (!fallback) throw new Error('No default string type configured')
       return { name: fallback.name, basicType: fallback.type }
     }
 
     const normalized = rawType.replace(/^xs:/, '').replace(/^xsd:/, '').toLowerCase()
-    const property = format.properties.find((p) => p.name === normalized)
+    const property = format.properties.find((property) => property.name === normalized)
 
     if (!property) {
       throw new Error(`Type "${normalized}" is not configured for format "${format.name}"`)
@@ -537,10 +544,10 @@ export function useFlowManagement({ reactFlowInstance, config, setScNodes, setEd
   function importJsonConfiguration(jsonConfiguration: string) {
     const flow = JSON.parse(jsonConfiguration)
     if (flow) {
-      setScNodes(flow.nodes || [])
+      setReactFlowNodes(flow.nodes || [])
       setEdges(flow.edges || [])
-      sourceIdCounter.current = flow.nodes.filter((e: Node) => e.id.includes('source')).length
-      targetIdCounter.current = flow.nodes.filter((e: Node) => e.id.includes('target')).length
+      sourceIdCounter.current = flow.nodes.filter((node: Node) => node.id.includes('source')).length
+      targetIdCounter.current = flow.nodes.filter((node: Node) => node.id.includes('target')).length
     }
   }
 
@@ -564,7 +571,7 @@ export function useFlowManagement({ reactFlowInstance, config, setScNodes, setEd
   //Function used to calculate exact position node is to be placed at.
   function calculateNodePosition(previous: Node[], parentId: string) {
     //Get list of all future siblings
-    const futureSiblings = previous.filter((n) => n.parentId === parentId)
+    const futureSiblings = previous.filter((node) => node.parentId === parentId)
     //Get bottom item in the list
     let previousItem: Node | undefined = futureSiblings.at(-1)
     let parentNode = reactFlowInstance.getNode(parentId)
@@ -597,8 +604,8 @@ export function useFlowManagement({ reactFlowInstance, config, setScNodes, setEd
 
       //Get all children of parent and sort them by position
       const children = nodes
-        .filter((n) => n.parentId === parentId)
-        .toSorted((a, b) => (a.position.y ?? 0) - (b.position.y ?? 0))
+        .filter((node) => node.parentId === parentId)
+        .toSorted((nodeA, nodeB) => (nodeA.position.y ?? 0) - (nodeB.position.y ?? 0))
 
       for (const child of children) {
         //Get height of child, or default to standard if it cannot be found
@@ -611,7 +618,7 @@ export function useFlowManagement({ reactFlowInstance, config, setScNodes, setEd
       if (parentNode?.type == 'labeledGroup' || parentNode?.type === 'extraSourceNode') yOffset += GROUP_PADDING_TOP
 
       //Set height for parent
-      nodes = nodes.map((n) => (n.id === parentId ? { ...n, height: yOffset } : n))
+      nodes = nodes.map((node) => (node.id === parentId ? { ...node, height: yOffset } : node))
       //Add padding at the bottom of a group
       //Move up one
       parentId = reactFlowInstance.getNode(parentId)?.parentId ?? null
@@ -626,7 +633,7 @@ export function useFlowManagement({ reactFlowInstance, config, setScNodes, setEd
       reactFlowInstance.getNodes(),
       reactFlowInstance.getEdges(),
     )
-    setScNodes(remainingNodes)
+    setReactFlowNodes(remainingNodes)
     setEdges(remainingEdges)
   }
 
@@ -663,8 +670,8 @@ export function useFlowManagement({ reactFlowInstance, config, setScNodes, setEd
     )
   }
   async function clearTarget() {
-    setScNodes((previous: Node[]) => {
-      let updatedNodes = previous.filter((n) => !n.parentId?.startsWith('target'))
+    setReactFlowNodes((previous: Node[]) => {
+      let updatedNodes = previous.filter((node) => !node.parentId?.startsWith('target'))
       return updatedNodes
     })
   }
@@ -688,10 +695,10 @@ export function useFlowManagement({ reactFlowInstance, config, setScNodes, setEd
   }
 
   async function importMultipleSchematics(sourceSchematics: SourceSchematic[]) {
-    for (const schematic of sourceSchematics.toSorted((a, b) => {
+    for (const schematic of sourceSchematics.toSorted((schematicA, schematicB) => {
       // Wierd sorting function, but basically this make sure any without a name are placed first in the list, to ensure the base is at the top of the list
-      const aName = a.name ?? ''
-      const bName = b.name ?? ''
+      const aName = schematicA.name ?? ''
+      const bName = schematicB.name ?? ''
 
       if (aName === '' && bName !== '') return -1
       if (aName !== '' && bName === '') return 1

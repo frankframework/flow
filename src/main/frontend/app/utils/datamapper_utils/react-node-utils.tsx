@@ -6,34 +6,10 @@ interface GetNodesOptions {
   idIncludes?: string
   includeChecked?: boolean
 }
+
 export interface DeleteMappingNodeResult {
   remainingNodes: Node[]
   remainingEdges: Edge[]
-}
-
-export function getNodesByTypeAndId(nodes: Node[] | null | undefined, options: GetNodesOptions = {}): NodeLabels[] {
-  if (!nodes) return []
-  let newNodes = nodes
-    .filter((n) => {
-      if (!options.typeIncludes) return true
-
-      if (Array.isArray(options.typeIncludes)) {
-        return options.typeIncludes.some((type) => n.type?.includes(type))
-      }
-
-      return n.type?.includes(options.typeIncludes)
-    })
-    .filter((n) => (options.idIncludes ? n.id.includes(options.idIncludes) : true))
-    .map(
-      (n) =>
-        ({
-          id: n.id,
-          type: n.data.variableTypeBasic,
-          label: typeof n.data?.label === 'string' ? n.data.label : '',
-          ...(options.includeChecked ? { checked: n.data?.checked as boolean } : {}),
-        }) as NodeLabels,
-    )
-  return newNodes
 }
 
 export interface MappingNodeResult {
@@ -41,44 +17,123 @@ export interface MappingNodeResult {
   updatedEdges: Edge[]
 }
 
-function getNodeCenter(sources: string[], target: string, allNodes: Node[]): { x: number; y: number } {
-  //This function currently only gets the relative coordinates of the items in the parent. If it's in an object it will not add the parent object's coordinates
-  let x = 0
-  let y = 0
-  let count = 0
+export function getNodesByTypeAndId(nodes: Node[] | null | undefined, options: GetNodesOptions = {}): NodeLabels[] {
+  if (!nodes) return []
 
-  for (const nodeId of sources) {
-    let node = allNodes.find((n) => n.id === nodeId)
-    if (node) {
-      y += node.position.y
-      count++
-      addParentPosition(node)
+  let newNodes = nodes
+    .filter((node) => {
+      if (!options.typeIncludes) return true
+
+      if (Array.isArray(options.typeIncludes)) {
+        return options.typeIncludes.some((type) => node.type?.includes(type))
+      }
+
+      return node.type?.includes(options.typeIncludes)
+    })
+    .filter((node) => (options.idIncludes ? node.id.includes(options.idIncludes) : true))
+    .map(
+      (node) =>
+        ({
+          id: node.id,
+          type: node.data.variableTypeBasic,
+          label: typeof node.data?.label === 'string' ? node.data.label : '',
+          ...(options.includeChecked ? { checked: node.data?.checked as boolean } : {}),
+        }) as NodeLabels,
+    )
+  return newNodes
+}
+
+function findNodeById(nodeId: string, allNodes: Node[]): Node | undefined {
+  return allNodes.find((node) => node.id === nodeId)
+}
+
+function removeEdgesForNode(nodeId: string, allEdges: Edge[]): Edge[] {
+  return allEdges.filter((edge) => edge.source !== nodeId && edge.target !== nodeId)
+}
+
+function getNodeAbsoluteY(node: Node, allNodes: Node[]): number {
+  let y = node.position.y
+  let currentNode: Node | undefined = node
+
+  while (currentNode?.parentId) {
+    currentNode = findNodeById(currentNode.parentId, allNodes)
+    if (currentNode) {
+      y += currentNode.position.y
     }
   }
 
-  let node = allNodes.find((n) => n.id === target)
-  if (node) {
-    y += node.position.y
-    count++
-    addParentPosition(node)
+  return y
+}
+
+function calculateMappingCenter(sourceIds: string[], targetId: string, allNodes: Node[]): { x: number; y: number } {
+  const relatedNodes = [...sourceIds.map((id) => findNodeById(id, allNodes)), findNodeById(targetId, allNodes)].filter(
+    Boolean,
+  ) as Node[]
+
+  const averageY =
+    relatedNodes.reduce((sum, node) => sum + getNodeAbsoluteY(node, allNodes), 0) / (relatedNodes.length || 1)
+
+  const sourceTableX = findNodeById('source-table', allNodes)?.position.x ?? 0
+  const targetTableX = findNodeById('target-table', allNodes)?.position.x ?? 0
+
+  return {
+    x: (sourceTableX + targetTableX) / 1.8,
+    y: averageY,
+  }
+}
+
+function resolveVerticalOverlap(desiredY: number, allNodes: Node[], minDistance = 40, offset = 50): number {
+  let y = desiredY
+  let hasOverlap = true
+
+  while (hasOverlap) {
+    hasOverlap = false
+
+    for (const node of allNodes) {
+      if (node.type !== 'mappingNode') continue
+
+      if (Math.abs(node.position.y - y) < minDistance) {
+        y += offset
+        hasOverlap = true
+        break
+      }
+    }
   }
 
-  function addParentPosition(node: Node) {
-    if (node.parentId?.endsWith('table')) {
-      return
-    }
-    const parentNode = allNodes.find((n) => n.id == node.parentId)
-    if (parentNode != null) {
-      y += parentNode.position?.y
-      addParentPosition(parentNode)
-    }
-  }
-  let sourceNode = allNodes.find((n) => n.id == 'source-table')
-  let targetNode = allNodes.find((n) => n.id == 'target-table')
+  return y
+}
 
-  if (sourceNode) x += sourceNode.position.x
-  if (targetNode) x += targetNode.position.x
-  return { x: x / 1.8, y: y / count }
+function createMappingId() {
+  return `mapping-${Math.random().toString(36).slice(2)}`
+}
+
+function createRandomColour() {
+  return `#${Math.floor(Math.random() * 16_777_215)
+    .toString(16)
+    .padStart(6, '0')}`
+}
+
+function buildMappingEdges(mappingConfig: MappingConfig): Edge[] {
+  const { id, sources, target, colour } = mappingConfig
+
+  return [
+    ...sources.map((sourceId) => ({
+      id: `${sourceId}-${id}`,
+      source: sourceId,
+      target: id!,
+      style: { stroke: colour, strokeWidth: 2 },
+      selectable: true,
+      data: { hidden: false },
+    })),
+    {
+      id: `${id}-${target}`,
+      source: id!,
+      target,
+      style: { stroke: colour, strokeWidth: 2 },
+      selectable: true,
+      data: { hidden: false },
+    },
+  ]
 }
 
 export function createMappingNode(
@@ -86,89 +141,57 @@ export function createMappingNode(
   allNodes: Node[] = [],
   allEdges: Edge[],
 ): MappingNodeResult {
-  let updatedNodes: Node[]
-  if (mappingConfig.id) {
-    updatedNodes = allNodes.map((n) =>
-      n.id === mappingConfig.id
-        ? {
-            ...n,
-
-            data: mappingConfig,
-          }
-        : n,
-    )
-
-    allEdges = allEdges.filter((edge) => edge.source !== mappingConfig.id && edge.target !== mappingConfig.id)
-  } else {
-    const id = `mapping-${Math.random().toString(36).slice(2)}`
-    const colour = `#${Math.floor(Math.random() * 16_777_215)
-      .toString(16)
-      .padStart(6, '0')}`
-    mappingConfig.colour = colour
-    mappingConfig.id = id
-
-    const position = getNodeCenter(mappingConfig.sources, mappingConfig.target, allNodes)
-
-    let overlap = true
-    while (overlap) {
-      overlap = false
-      for (const node of allNodes) {
-        if (node.type === 'mappingNode') {
-          const distance = Math.abs(node.position.y - position.y)
-          if (distance < 40) {
-            position.y += 50
-            overlap = true
-            break
-          }
-        }
-      }
-    }
-
-    allNodes.push({
-      id,
-      parentId: 'mapping-table',
-      type: 'mappingNode',
-      position: { x: 0, y: position.y },
-      data: mappingConfig,
-    })
-    updatedNodes = allNodes
-  }
-  const updatedEdges = [...allEdges, ...createEdges(mappingConfig)]
-  return { updatedNodes, updatedEdges }
+  return mappingConfig.id
+    ? updateExistingMappingNode(mappingConfig, allNodes, allEdges)
+    : createNewMappingNode(mappingConfig, allNodes, allEdges)
 }
 
-function createEdges(mappingConfig: MappingConfig) {
-  const newEdges: Edge[] = []
+function updateExistingMappingNode(
+  mappingConfig: MappingConfig,
+  allNodes: Node[],
+  allEdges: Edge[],
+): MappingNodeResult {
+  const updatedNodes = allNodes.map((node) => (node.id === mappingConfig.id ? { ...node, data: mappingConfig } : node))
 
-  for (const sourceId of mappingConfig.sources) {
-    newEdges.push({
-      id: `${sourceId}-${mappingConfig.id}`,
-      source: sourceId,
-      target: mappingConfig.id ?? '',
-      style: { stroke: mappingConfig.colour, strokeWidth: 2 },
-      selectable: true,
-      data: { hidden: false },
-    })
+  const cleanedEdges = removeEdgesForNode(mappingConfig.id!, allEdges)
+
+  return {
+    updatedNodes,
+    updatedEdges: [...cleanedEdges, ...buildMappingEdges(mappingConfig)],
+  }
+}
+
+function createNewMappingNode(mappingConfig: MappingConfig, allNodes: Node[], allEdges: Edge[]): MappingNodeResult {
+  const id = createMappingId()
+  const colour = createRandomColour()
+
+  const newMappingConfig: MappingConfig = {
+    ...mappingConfig,
+    id,
+    colour,
   }
 
-  newEdges.push({
-    id: `${mappingConfig.id}-${mappingConfig.target}`,
-    source: mappingConfig.id ?? '',
-    target: mappingConfig.target,
-    style: { stroke: mappingConfig.colour, strokeWidth: 2 },
-    selectable: true,
-    data: { hidden: false },
-  })
+  const centerPosition = calculateMappingCenter(newMappingConfig.sources, newMappingConfig.target, allNodes)
 
-  return newEdges
+  const resolvedY = resolveVerticalOverlap(centerPosition.y, allNodes)
+
+  const newNode: Node = {
+    id,
+    parentId: 'mapping-table',
+    type: 'mappingNode',
+    position: { x: 0, y: resolvedY },
+    data: newMappingConfig,
+  }
+
+  return {
+    updatedNodes: [...allNodes, newNode],
+    updatedEdges: [...allEdges, ...buildMappingEdges(newMappingConfig)],
+  }
 }
 
 export function deleteMappingNode(nodeId: string, allNodes: Node[], allEdges: Edge[]): DeleteMappingNodeResult {
-  // Filter out the mapping node itself
-  const remainingNodes = allNodes.filter((node) => node.id !== nodeId)
-
-  // Filter out edges connected to the mapping node
-  const remainingEdges = allEdges.filter((edge) => edge.source !== nodeId && edge.target !== nodeId)
-
-  return { remainingNodes, remainingEdges }
+  return {
+    remainingNodes: allNodes.filter((node) => node.id !== nodeId),
+    remainingEdges: removeEdgesForNode(nodeId, allEdges),
+  }
 }

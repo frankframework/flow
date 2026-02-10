@@ -3,8 +3,6 @@ import { Handle, Position, type Node, useNodeConnections } from '@xyflow/react'
 import clsx from 'clsx'
 import type { CustomNodeData } from '~/types/datamapper_types/node-types'
 import { PROPERTY_WIDTH } from '~/utils/datamapper_utils/const'
-import Magnifier from '/icons/solar/Magnifier.svg?react'
-import Settings from '/icons/solar/Settings.svg?react'
 
 export interface OneEdgeNodeProperties {
   id: string
@@ -26,12 +24,14 @@ function OneEdgeNode({ id, data, variant = 'source', onEdit, onDelete, onHighlig
 
   const updateChecked = (newChecked: boolean) => {
     data.setNodes?.((nodes: Node[]) =>
-      nodes.map((n) => (n.id === id ? { ...n, data: { ...n.data, checked: newChecked } } : n)),
+      nodes.map((node) => (node.id === id ? { ...node, data: { ...node.data, checked: newChecked } } : node)),
     )
     if (variant != 'source') {
       data.setNodes?.((nodes: Node[]) =>
-        nodes.map((n) =>
-          n.id !== id && n.parentId?.includes('target') ? { ...n, data: { ...n.data, checked: false } } : n,
+        nodes.map((node) =>
+          node.id !== id && node.parentId?.includes('target')
+            ? { ...node, data: { ...node.data, checked: false } }
+            : node,
         ),
       )
     }
@@ -39,8 +39,8 @@ function OneEdgeNode({ id, data, variant = 'source', onEdit, onDelete, onHighlig
 
   return (
     <div
-      onClick={(e) => {
-        e.preventDefault()
+      onClick={(event) => {
+        event.preventDefault()
         updateChecked(!checked)
       }}
       className={clsx(
@@ -59,8 +59,8 @@ function OneEdgeNode({ id, data, variant = 'source', onEdit, onDelete, onHighlig
         <div className="flex gap-3">
           <button
             className="text-lg hover:opacity-70"
-            onClick={(e) => {
-              e.stopPropagation()
+            onClick={(event) => {
+              event.stopPropagation()
               onHighlight?.(id)
             }}
           >
@@ -70,8 +70,8 @@ function OneEdgeNode({ id, data, variant = 'source', onEdit, onDelete, onHighlig
 
           <button
             className="text-lg hover:opacity-70"
-            onClick={(e) => {
-              e.stopPropagation()
+            onClick={(event) => {
+              event.stopPropagation()
               onEdit?.(data)
             }}
           >
@@ -81,8 +81,8 @@ function OneEdgeNode({ id, data, variant = 'source', onEdit, onDelete, onHighlig
 
           <button
             className="text-xl font-bold text-red-600 hover:text-red-700 hover:opacity-80"
-            onClick={(e) => {
-              e.stopPropagation()
+            onClick={(event) => {
+              event.stopPropagation()
               onDelete?.(id)
             }}
           >

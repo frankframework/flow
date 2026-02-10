@@ -24,8 +24,8 @@ function LabeledGroupNode({ id, data, onEdit, onDelete, onHighlight }: LabeledGr
         <div className="flex gap-3">
           <button
             className="text-lg hover:opacity-70"
-            onClick={(e) => {
-              e.stopPropagation()
+            onClick={(event) => {
+              event.stopPropagation()
               onHighlight?.(id)
             }}
           >
@@ -33,8 +33,8 @@ function LabeledGroupNode({ id, data, onEdit, onDelete, onHighlight }: LabeledGr
           </button>
           <button
             className="text-lg hover:opacity-70"
-            onClick={(e) => {
-              e.stopPropagation()
+            onClick={(event) => {
+              event.stopPropagation()
               onEdit?.(data)
             }}
           >
@@ -42,8 +42,8 @@ function LabeledGroupNode({ id, data, onEdit, onDelete, onHighlight }: LabeledGr
           </button>
           <button
             className="text-xl font-bold text-red-600 hover:text-red-700 hover:opacity-80"
-            onClick={(e) => {
-              e.stopPropagation()
+            onClick={(event) => {
+              event.stopPropagation()
               onDelete?.(id)
             }}
           >

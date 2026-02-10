@@ -10,9 +10,9 @@ import type { CustomNodeData, MappingConfig } from '~/types/datamapper_types/nod
 
 interface GetNodeTypesParameters {
   flow: ReturnType<typeof useFlowManagement>
-  setScNodes: Dispatch<SetStateAction<Node[]>>
+  setReactFlowNodes: Dispatch<SetStateAction<Node[]>>
   setEditingNode: Dispatch<SetStateAction<CustomNodeData | null>>
-  setAddFieldModalOpen: Dispatch<SetStateAction<boolean>>
+  setAddFieldModal: Dispatch<SetStateAction<boolean>>
   openModelType: RefObject<'source' | 'target'>
   setEditingMapping: Dispatch<SetStateAction<MappingConfig | null>>
   openMapping: () => void
@@ -20,9 +20,9 @@ interface GetNodeTypesParameters {
 
 export const getNodeTypes = ({
   flow,
-  setScNodes,
+  setReactFlowNodes,
   setEditingNode,
-  setAddFieldModalOpen,
+  setAddFieldModal,
   openModelType,
   setEditingMapping,
   openMapping,
@@ -30,13 +30,13 @@ export const getNodeTypes = ({
   sourceOnly: (properties: OneEdgeNodeProperties) => (
     <OneEdgeNode
       {...properties}
-      data={{ ...properties.data, setNodes: setScNodes }}
+      data={{ ...properties.data, setNodes: setReactFlowNodes }}
       variant="source"
       onEdit={(data) => {
         if (data) {
           setEditingNode(data)
           openModelType.current = 'source'
-          setAddFieldModalOpen(true)
+          setAddFieldModal(true)
         }
       }}
       onDelete={(id) => flow.deleteNode(id)}
@@ -46,13 +46,13 @@ export const getNodeTypes = ({
   targetOnly: (properties: OneEdgeNodeProperties) => (
     <OneEdgeNode
       {...properties}
-      data={{ ...properties.data, setNodes: setScNodes }}
+      data={{ ...properties.data, setNodes: setReactFlowNodes }}
       variant="target"
       onEdit={(data) => {
         if (data) {
           setEditingNode(data)
           openModelType.current = 'target'
-          setAddFieldModalOpen(true)
+          setAddFieldModal(true)
         }
       }}
       onDelete={(id) => flow.deleteNode(id)}
@@ -67,7 +67,7 @@ export const getNodeTypes = ({
         if (data) {
           setEditingNode(data)
           openModelType.current = 'target'
-          setAddFieldModalOpen(true)
+          setAddFieldModal(true)
         }
       }}
       onDelete={(id) => flow.deleteNode(id)}
