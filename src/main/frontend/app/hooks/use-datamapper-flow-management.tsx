@@ -36,6 +36,16 @@ function updateCanvasSize(nodes: Node[], currentSize: { height: number }) {
   }
   return { ...currentSize, height: maxY }
 }
+function getConnectedNodes(edges: Edge[], from: Set<string>, exclude: Set<string> = new Set<string>()): Set<string> {
+  const result = new Set<string>()
+
+  for (const { source, target } of edges) {
+    if (from.has(source) && !exclude.has(target)) result.add(target)
+    if (from.has(target) && !exclude.has(source)) result.add(source)
+  }
+
+  return result
+}
 
 export class DuplicateLabelException extends Error {
   constructor(message: string) {
@@ -52,7 +62,7 @@ export function useFlowManagement({ reactFlowInstance, config, setScNodes, setEd
 
   function generateReactFlowObject(previous: Node[], data: CustomNodeData): Node {
     //Calculate the position the node is to be placed at. This isn't always very accurate and will be corrected later after adding
-    const newY: number = calculateNodePosition(previous, data.parentId, data.id)
+    const newY: number = calculateNodePosition(previous, data.parentId)
     //Set the correct type of the node
     let type: string
 
@@ -284,42 +294,27 @@ export function useFlowManagement({ reactFlowInstance, config, setScNodes, setEd
 
   //Highlights fields whenever the button on a property node is pressed
   function highlightFromPropertyNode(nodeId: string) {
-    //Adds base node id
-    let nodeIdsToProcess: string[] = [nodeId]
-    let node = reactFlowInstance.getNode(nodeId)
-    if (node && (node.type == 'labeledGroup' || node.type == 'extraSourceNode')) {
-      //If node is a group, add all child elements. Currently objects in objects are ignored, if needed support can be added
-      nodeIdsToProcess = reactFlowInstance
-        .getNodes()
-        .filter((n) => n.parentId === nodeId)
-        .map((n) => n.id)
-    }
-    const firstHop = new Set<string>() //First hop here is from the property to the mapping
-    const secondHop = new Set<string>() //Second hop here is from the mapping to the properties on the other side
+    const nodeIds = getNodeAndChildren(nodeId)
+    const edges = reactFlowInstance.getEdges()
 
-    for (const edge of reactFlowInstance.getEdges()) {
-      for (const id of nodeIdsToProcess) {
-        if (edge.source === id) firstHop.add(edge.target)
-        if (edge.target === id) firstHop.add(edge.source)
-      }
-    }
+    const firstHop = getConnectedNodes(edges, nodeIds)
+    const secondHop = getConnectedNodes(edges, firstHop, nodeIds)
 
-    for (const edge of reactFlowInstance.getEdges()) {
-      for (const mid of firstHop) {
-        for (const id of nodeIdsToProcess) {
-          if (edge.source === mid && edge.target !== id) {
-            secondHop.add(edge.target)
-          }
-          if (edge.target === mid && edge.source !== id) {
-            secondHop.add(edge.source)
-          }
-        }
-      }
+    applyHighlight(new Set([...nodeIds, ...firstHop, ...secondHop]))
+  }
+  function getNodeAndChildren(nodeId: string): Set<string> {
+    const node = reactFlowInstance.getNode(nodeId)
+
+    if (node && (node.type === 'labeledGroup' || node.type === 'extraSourceNode')) {
+      return new Set(
+        reactFlowInstance
+          .getNodes()
+          .filter((n) => n.parentId === nodeId)
+          .map((n) => n.id),
+      )
     }
 
-    const highlightedNodes = new Set([...nodeIdsToProcess, ...firstHop, ...secondHop])
-
-    applyHighlight(highlightedNodes)
+    return new Set([nodeId])
   }
 
   //Sets opacity to 1 to fully reset any highlighting
@@ -567,7 +562,7 @@ export function useFlowManagement({ reactFlowInstance, config, setScNodes, setEd
     })
   }
   //Function used to calculate exact position node is to be placed at.
-  function calculateNodePosition(previous: Node[], parentId: string, id: string) {
+  function calculateNodePosition(previous: Node[], parentId: string) {
     //Get list of all future siblings
     const futureSiblings = previous.filter((n) => n.parentId === parentId)
     //Get bottom item in the list

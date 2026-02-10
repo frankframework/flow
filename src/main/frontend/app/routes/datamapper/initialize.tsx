@@ -1,4 +1,4 @@
-import { type Dispatch, type SetStateAction, useState, type ChangeEvent } from 'react'
+import { type Dispatch, type SetStateAction, useState } from 'react'
 import SourceDefinitionComponent from '~/components/datamapper/source-schema-definition'
 import UploadImportButton from '~/components/datamapper/upload-import-button'
 import Button from '~/components/inputs/button'
