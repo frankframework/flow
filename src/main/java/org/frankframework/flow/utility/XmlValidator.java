@@ -13,9 +13,9 @@ public class XmlValidator {
 
     private XmlValidator() {}
 
-    public static String validateXml(String xmlContent) {
+    public static void validateXml(String xmlContent) throws InvalidXmlContentException {
         if (xmlContent == null || xmlContent.isBlank()) {
-            return "XML content is empty.";
+            return;
         }
 
         try {
@@ -30,9 +30,8 @@ public class XmlValidator {
 
             DocumentBuilder builder = factory.newDocumentBuilder();
             builder.parse(new InputSource(new StringReader(xmlContent)));
-            return null; // valid
         } catch (ParserConfigurationException | SAXException | IOException e) {
-            throw new InvalidXmlContentException(e.getMessage());
+            throw new InvalidXmlContentException("Failed to validate xml content: ", e);
         }
     }
 }

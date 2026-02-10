@@ -3,6 +3,7 @@ package org.frankframework.flow.project;
 import java.io.ByteArrayInputStream;
 import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.Objects;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.OutputKeys;
@@ -45,10 +46,6 @@ public class Project {
         }
     }
 
-    public ProjectSettings getProjectSettings() {
-        return this.projectSettings;
-    }
-
     public boolean isFilterEnabled(FilterType type) {
         return projectSettings.isEnabled(type);
     }
@@ -63,6 +60,20 @@ public class Project {
 
     public void clearConfigurations() {
         configurations.clear();
+    }
+
+    /* A project is equal to another project if it has the same name and rootpath */
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true; // same reference
+        if (o == null || getClass() != o.getClass()) return false; // different class
+        Project project = (Project) o;
+        return Objects.equals(name, project.name) && Objects.equals(rootPath, project.rootPath);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, rootPath);
     }
 
     public boolean updateAdapter(String configurationName, String adapterName, String newAdapterXml) {
@@ -92,7 +103,7 @@ public class Project {
     }
 
     private Document parseXml(String xmlContent) throws Exception {
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        DocumentBuilderFactory factory = XmlSecurityUtils.createSecureDocumentBuilderFactory();
         factory.setIgnoringComments(true);
         factory.setNamespaceAware(true);
         DocumentBuilder builder = factory.newDocumentBuilder();
@@ -100,7 +111,7 @@ public class Project {
     }
 
     private Node parseNewAdapter(Document configDoc, String newAdapterXml) throws Exception {
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        DocumentBuilderFactory factory = XmlSecurityUtils.createSecureDocumentBuilderFactory();
         factory.setIgnoringComments(true);
         factory.setNamespaceAware(true);
         DocumentBuilder builder = factory.newDocumentBuilder();

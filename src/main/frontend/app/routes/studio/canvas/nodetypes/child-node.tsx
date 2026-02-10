@@ -4,8 +4,7 @@ import { getElementTypeFromName } from '../../node-translator-module'
 import useNodeContextStore from '~/stores/node-context-store'
 import { useNodeContextMenu } from '../flow'
 import { canAcceptChildStatic, type FrankElement } from './node-utilities'
-import variables from 'environment/environment'
-import { useFFDoc } from '@frankframework/ff-doc/react'
+import { useFrankDoc } from '~/providers/frankdoc-provider'
 
 export interface ChildNode {
   id: string
@@ -38,8 +37,7 @@ export function ChildNodeComponent({
   const [dragOver, setDragOver] = useState(false)
   const [canDropDraggedElement, setCanDropDraggedElement] = useState(false)
   const [dragForbidden, setDragForbidden] = useState(false)
-  const FRANK_DOC_URL = variables.frankDocJsonUrl
-  const { elements, filters } = useFFDoc(FRANK_DOC_URL)
+  const { elements, filters } = useFrankDoc()
   // Store the associated Frank element
   const frankElement = useMemo(() => {
     if (!elements) return null

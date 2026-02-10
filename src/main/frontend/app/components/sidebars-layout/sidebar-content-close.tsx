@@ -5,10 +5,12 @@ import { SidebarContext } from '~/components/sidebars-layout/sidebar-layout'
 
 export default function SidebarContentClose(properties: Readonly<SidebarsCloseProperties>) {
   const layoutName = useContext(SidebarContext)
-  if (!layoutName) throw new Error('SidebarsClose must be used within a SidebarLayout or be provided a layoutName prop')
-  const visible = useSidebarStore((sate) => sate.instances[layoutName]?.visible[properties.side]) ?? null
+  if (!layoutName) throw new Error('SidebarContentClose must be used within a SidebarLayout')
 
-  if (!visible) {
+  const visibility = useSidebarStore((state) => state.getVisibility(layoutName))
+  const isVisible = visibility[properties.side]
+
+  if (!isVisible) {
     return (
       <div className="border-border flex aspect-square h-12 items-center justify-center border">
         <SidebarClose {...properties} />

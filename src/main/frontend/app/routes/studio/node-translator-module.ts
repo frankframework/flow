@@ -8,7 +8,7 @@ const typeSuffixes = [
   'job',
   'exit',
   'errormessageformatter',
-  'param'
+  'param',
 ]
 
 export function getElementTypeFromName(name: string): string {

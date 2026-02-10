@@ -1,11 +1,12 @@
 import type { Project } from '../projectlanding/project-landing'
 import { useState } from 'react'
 import { useProjectStore } from '~/stores/project-store'
+import { createConfiguration } from '~/services/configuration-service'
 
 interface AddConfigurationModalProperties {
   isOpen: boolean
   onClose: () => void
-  currentProject: Project
+  currentProject?: Project
 }
 
 export default function AddConfigurationModal({
@@ -18,7 +19,7 @@ export default function AddConfigurationModal({
   const [filename, setFilename] = useState<string>('')
   const setProject = useProjectStore((s) => s.setProject)
 
-  if (!isOpen) return null
+  if (!isOpen || !currentProject) return null
 
   const handleAdd = async () => {
     setLoading(true)
@@ -36,18 +37,7 @@ export default function AddConfigurationModal({
         configname = `${configname}.xml`
       }
 
-      const url = `/api/projects/${encodeURIComponent(
-        currentProject.name,
-      )}/configurations/${encodeURIComponent(configname)}`
-
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-      })
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`)
-      }
-      const updatedProject = await response.json()
+      const updatedProject = await createConfiguration(currentProject.name, configname)
       setProject(updatedProject)
       onClose()
     } catch (error_: unknown) {

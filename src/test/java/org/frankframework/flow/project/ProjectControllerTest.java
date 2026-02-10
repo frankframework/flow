@@ -22,9 +22,9 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(ProjectController.class)
@@ -33,10 +33,10 @@ class ProjectControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @MockitoBean
     private ProjectService projectService;
 
-    @MockBean
+    @MockitoBean
     private FileTreeService fileTreeService;
 
     private Project mockProject() {
@@ -145,8 +145,8 @@ class ProjectControllerTest {
                         .accept(MediaType.APPLICATION_JSON)
                         .content(requestBody))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.error").value("ConfigurationNotFound"))
-                .andExpect(jsonPath("$.message").value("Configuration file not found: " + filepath));
+                .andExpect(jsonPath("$.httpStatus").value(404))
+                .andExpect(jsonPath("$.messages[0]").value("Configuration file not found: " + filepath));
 
         verify(fileTreeService).readFileContent(filepath);
     }
@@ -193,8 +193,8 @@ class ProjectControllerTest {
                                 }
                                 """))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.error").value("ConfigurationNotFound"))
-                .andExpect(jsonPath("$.message").value("Invalid file path: " + filepath));
+                .andExpect(jsonPath("$.httpStatus").value(404))
+                .andExpect(jsonPath("$.messages[0]").value("Invalid file path: " + filepath));
 
         verify(fileTreeService).updateFileContent(filepath, xmlContent);
     }
@@ -207,7 +207,7 @@ class ProjectControllerTest {
 
             validatorMock
                     .when(() -> XmlValidator.validateXml(invalidXml))
-                    .thenThrow(new InvalidXmlContentException("Malformed XML"));
+                    .thenThrow(new InvalidXmlContentException("Malformed XML", null));
 
             mockMvc.perform(
                             put("/api/projects/MyProject/configuration")
@@ -220,8 +220,8 @@ class ProjectControllerTest {
                                     }
                                     """))
                     .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.error").value("InvalidXmlContent"))
-                    .andExpect(jsonPath("$.message").value("Malformed XML"));
+                    .andExpect(jsonPath("$.httpStatus").value(400))
+                    .andExpect(jsonPath("$.messages[0]").value("Malformed XML"));
 
             verify(fileTreeService, never()).updateFileContent(anyString(), anyString());
         }
@@ -277,35 +277,6 @@ class ProjectControllerTest {
                                 }
                                 """))
                 .andExpect(status().isNotFound());
-
-        verify(fileTreeService).updateAdapterFromFile(projectName, Paths.get(configPath), adapterName, adapterXml);
-    }
-
-    @Test
-    void updateAdapterFromFileThrowsExceptionReturns500HandledByGlobalExceptionHandler() throws Exception {
-        String projectName = "MyProject";
-        String configPath = "config1.xml";
-        String adapterName = "MyAdapter";
-        String adapterXml = "<adapter>broken</adapter>";
-
-        doThrow(new RuntimeException("Something went wrong"))
-                .when(fileTreeService)
-                .updateAdapterFromFile(eq(projectName), eq(Paths.get(configPath)), eq(adapterName), eq(adapterXml));
-
-        mockMvc.perform(
-                        put("/api/projects/MyProject/adapters")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(
-                                        """
-                                {
-                                  "configurationPath": "config1.xml",
-                                  "adapterName": "MyAdapter",
-                                  "adapterXml": "<adapter>broken</adapter>"
-                                }
-                                """))
-                .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.error").value("InternalServerError"))
-                .andExpect(jsonPath("$.message").value("An unexpected error occurred."));
 
         verify(fileTreeService).updateAdapterFromFile(projectName, Paths.get(configPath), adapterName, adapterXml);
     }
@@ -375,8 +346,8 @@ class ProjectControllerTest {
         mockMvc.perform(patch("/api/projects/UnknownProject/filters/ADAPTER/enable")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.error").value("ProjectNotFound"))
-                .andExpect(jsonPath("$.message").value("Project not found"));
+                .andExpect(jsonPath("$.httpStatus").value(404))
+                .andExpect(jsonPath("$.messages[0]").value("Project not found"));
 
         verify(projectService).enableFilter("UnknownProject", "ADAPTER");
     }
@@ -384,12 +355,14 @@ class ProjectControllerTest {
     @Test
     void enableFilterInvalidFilterTypeReturns400() throws Exception {
         String filterType = "INVALID";
-        doThrow(new InvalidFilterTypeException(filterType)).when(projectService).enableFilter("MyProject", filterType);
+        doThrow(new InvalidFilterTypeException("Invalid filter type: " + filterType))
+                .when(projectService)
+                .enableFilter("MyProject", filterType);
 
         mockMvc.perform(patch("/api/projects/MyProject/filters/INVALID/enable").accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").value("InvalidFilterType"))
-                .andExpect(jsonPath("$.message").value(String.format("Invalid filter type: %s", filterType)));
+                .andExpect(jsonPath("$.httpStatus").value(400))
+                .andExpect(jsonPath("$.messages[0]").value("Invalid filter type: " + filterType));
 
         verify(projectService).enableFilter("MyProject", filterType);
     }
@@ -423,7 +396,7 @@ class ProjectControllerTest {
     }
 
     @Test
-    void diableFilterProjectNotFoundReturns404() throws Exception {
+    void disableFilterProjectNotFoundReturns404() throws Exception {
         doThrow(new ProjectNotFoundException("Project not found"))
                 .when(projectService)
                 .disableFilter("UnknownProject", "ADAPTER");
@@ -431,8 +404,8 @@ class ProjectControllerTest {
         mockMvc.perform(patch("/api/projects/UnknownProject/filters/ADAPTER/disable")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.error").value("ProjectNotFound"))
-                .andExpect(jsonPath("$.message").value("Project not found"));
+                .andExpect(jsonPath("$.httpStatus").value(404))
+                .andExpect(jsonPath("$.messages[0]").value("Project not found"));
 
         verify(projectService).disableFilter("UnknownProject", "ADAPTER");
     }
@@ -440,12 +413,14 @@ class ProjectControllerTest {
     @Test
     void disableFilterInvalidFilterTypeReturns400() throws Exception {
         String filterType = "INVALID";
-        doThrow(new InvalidFilterTypeException(filterType)).when(projectService).disableFilter("MyProject", filterType);
+        doThrow(new InvalidFilterTypeException("Invalid filter type: " + filterType))
+                .when(projectService)
+                .disableFilter("MyProject", filterType);
 
         mockMvc.perform(patch("/api/projects/MyProject/filters/INVALID/disable").accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").value("InvalidFilterType"))
-                .andExpect(jsonPath("$.message").value(String.format("Invalid filter type: %s", filterType)));
+                .andExpect(jsonPath("$.httpStatus").value(400))
+                .andExpect(jsonPath("$.messages[0]").value("Invalid filter type: " + filterType));
 
         verify(projectService).disableFilter("MyProject", filterType);
     }

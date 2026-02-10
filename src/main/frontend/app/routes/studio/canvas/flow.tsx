@@ -32,6 +32,8 @@ import CreateNodeModal from '~/components/flow/create-node-modal'
 import { useProjectStore } from '~/stores/project-store'
 import { toast, ToastContainer } from 'react-toastify'
 import { useTheme } from '~/hooks/use-theme'
+import { saveAdapter } from '~/services/adapter-service'
+import { cloneWithRemappedIds } from '~/utils/flow-utils'
 
 export type FlowNode = FrankNodeType | ExitNode | StickyNote | GroupNode | Node
 
@@ -53,15 +55,20 @@ const selector = (state: FlowState) => ({
 function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b: boolean) => void }>) {
   const theme = useTheme()
   const [loading, setLoading] = useState(false)
-  const { isEditing, setIsEditing, setParentId } = useNodeContextStore(
+  const { isEditing, setIsEditing, setParentId, setDraggedName } = useNodeContextStore(
     useShallow((s) => ({
       isEditing: s.isEditing,
       setIsEditing: s.setIsEditing,
       setParentId: s.setParentId,
+      setDraggedName: s.setDraggedName,
     })),
   )
   const [showModal, setShowModal] = useState(false)
   const [edgeDropPositions, setEdgeDropPositions] = useState<{ x: number; y: number } | null>(null)
+  const clipboardRef = useRef<{
+    nodes: FlowNode[]
+    edges: Edge[]
+  } | null>(null)
 
   const nodeTypes = {
     frankNode: FrankNodeComponent,
@@ -71,6 +78,8 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
   }
   const edgeTypes = { frankEdge: FrankEdgeComponent }
   const reactFlow = useReactFlow()
+  const reactFlowRef = useRef(reactFlow)
+  reactFlowRef.current = reactFlow
 
   const { nodes, edges, viewport, onNodesChange, onEdgesChange, onConnect, onReconnect } = useFlowStore(
     useShallow(selector),
@@ -270,11 +279,83 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
     shouldMergeUngroupedIntoGroup,
   ])
 
+  const copySelection = useCallback(() => {
+    const selectedNodes = nodes.filter((n) => n.selected)
+    if (selectedNodes.length === 0) return
+
+    const selectedNodeIds = new Set(selectedNodes.map((n) => n.id))
+
+    const selectedEdges = edges.filter((e) => selectedNodeIds.has(e.source) && selectedNodeIds.has(e.target))
+
+    clipboardRef.current = {
+      nodes: selectedNodes,
+      edges: selectedEdges,
+    }
+  }, [nodes, edges])
+
+  const pasteSelection = useCallback(() => {
+    const clipboard = clipboardRef.current
+    if (!clipboard) return
+
+    const flowStore = useFlowStore.getState()
+
+    const idMap = new Map<string, string>()
+    const generateId = () => flowStore.getNextNodeId().toString()
+
+    // Remap the IDs of cloned nodes
+    const newNodes: FlowNode[] = clipboard.nodes.map((node) => {
+      const cloned = cloneWithRemappedIds(node, idMap, generateId)
+
+      // Remap parentId using the original node's parentId
+      const remappedParentId = node.parentId ? idMap.get(node.parentId) : undefined
+
+      return {
+        ...cloned,
+        position: {
+          x: node.position.x + FlowConfig.COPY_PASTE_OFFSET,
+          y: node.position.y + FlowConfig.COPY_PASTE_OFFSET,
+        },
+        parentId: remappedParentId,
+        extent: remappedParentId ? 'parent' : undefined,
+        selected: true,
+      }
+    })
+
+    // Clone edges using the SAME idMap
+    const newEdges: Edge[] = clipboard.edges.map((edge) => cloneWithRemappedIds(edge, idMap, generateId))
+
+    // Deselect existing nodes and edges
+    const deselectedNodes = flowStore.nodes.map((n) => ({
+      ...n,
+      selected: false,
+    }))
+    const deselectedEdges = flowStore.edges.map((e) => ({
+      ...e,
+      selected: false,
+    }))
+
+    flowStore.setNodes([...deselectedNodes, ...newNodes])
+    flowStore.setEdges([...deselectedEdges, ...newEdges])
+  }, [])
+
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       const tagName = (event.target as HTMLElement).tagName
       const isTyping = ['INPUT', 'TEXTAREA'].includes(tagName) || (event.target as HTMLElement).isContentEditable
+
       if (isTyping) return
+
+      const isCmdOrCtrl = event.metaKey || event.ctrlKey
+
+      if (isCmdOrCtrl && event.key.toLowerCase() === 'c') {
+        event.preventDefault()
+        copySelection()
+      }
+
+      if (isCmdOrCtrl && event.key.toLowerCase() === 'v') {
+        event.preventDefault()
+        pasteSelection()
+      }
 
       if (event.key === 'g' || event.key === 'G') {
         event.preventDefault()
@@ -284,7 +365,7 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
 
     globalThis.addEventListener('keydown', handleKeyDown)
     return () => globalThis.removeEventListener('keydown', handleKeyDown)
-  }, [handleGrouping])
+  }, [copySelection, pasteSelection, handleGrouping])
 
   const groupNodes = (nodesToGroup: FlowNode[], currentNodes: FlowNode[]) => {
     const minX = Math.min(...nodesToGroup.map((node) => node.position.x))
@@ -304,7 +385,7 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
       type: 'groupNode',
       data: { label: 'New Group', width: width, height: height },
       dragHandle: '.drag-handle',
-      selectable: false,
+      selectable: true,
     }
 
     const updatedSelectedNodes: FlowNode[] = nodesToGroup.map((node) => ({
@@ -330,6 +411,7 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
 
   const onDrop = (event: React.DragEvent) => {
     event.preventDefault()
+    setDraggedName(null)
     setParentId(null)
 
     const data = event.dataTransfer.getData('application/reactflow')
@@ -416,6 +498,75 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
   )
 
   useEffect(() => {
+    function restoreFlowFromTab(tabId: string) {
+      const tabStore = useTabStore.getState()
+      const flowStore = useFlowStore.getState()
+
+      const tabData = tabStore.getTab(tabId)
+      const flowJson = tabData?.flowJson
+
+      if (flowJson) {
+        flowStore.setNodes(Array.isArray(flowJson.nodes) ? flowJson.nodes : [])
+        flowStore.setEdges(Array.isArray(flowJson.edges) ? flowJson.edges : [])
+        const viewport = flowJson.viewport as { x: number; y: number; zoom: number } | undefined
+        flowStore.setViewport(viewport && true ? viewport : { x: 0, y: 0, zoom: 1 })
+      } else {
+        flowStore.setNodes([])
+        flowStore.setEdges([])
+        flowStore.setViewport({ x: 0, y: 0, zoom: 1 })
+      }
+    }
+
+    function clearFlow() {
+      const flowStore = useFlowStore.getState()
+      flowStore.setNodes([])
+      flowStore.setEdges([])
+      flowStore.setViewport({ x: 0, y: 0, zoom: 1 })
+    }
+
+    async function loadFlowFromTab(tab: TabData) {
+      const flowStore = useFlowStore.getState()
+      const currentProject = useProjectStore.getState().project
+      setLoading(true)
+      try {
+        if (tab.flowJson && Object.keys(tab.flowJson).length > 0) {
+          restoreFlowFromTab(tab.name)
+        } else if (tab.configurationPath && tab.name) {
+          if (!currentProject) return
+          const adapter = await getAdapterFromConfiguration(currentProject.name, tab.configurationPath, tab.name)
+          if (!adapter) return
+          const adapterJson = await convertAdapterXmlToJson(adapter)
+          flowStore.setEdges(adapterJson.edges)
+          flowStore.setViewport({ x: 0, y: 0, zoom: 1 })
+          const laidOutNodes = layoutGraph(adapterJson.nodes, adapterJson.edges, 'LR')
+          flowStore.setNodes(laidOutNodes)
+        }
+      } catch (error) {
+        console.error('Error loading tab flow:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    function saveFlowToTab(tabId: string) {
+      const tabStore = useTabStore.getState()
+      const flowStore = useFlowStore.getState()
+
+      const flowData = reactFlowRef.current.toObject()
+      const viewport = flowStore.viewport
+      const tabData = tabStore.getTab(tabId)
+
+      if (!tabData) return
+
+      tabStore.setTabData(tabId, {
+        ...tabData,
+        flowJson: {
+          ...flowData,
+          viewport,
+        },
+      })
+    }
+
     const tabStore = useTabStore.getState()
     const currentActiveTabKey = tabStore.activeTab
 
@@ -446,106 +597,23 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
     )
 
     return () => unsubscribe()
-  }, [])
-
-  async function loadFlowFromTab(tab: TabData) {
-    const flowStore = useFlowStore.getState()
-    setLoading(true)
-    try {
-      if (tab.flowJson && Object.keys(tab.flowJson).length > 0) {
-        restoreFlowFromTab(tab.name)
-      } else if (tab.configurationPath && tab.name) {
-        if (!project) return
-        const adapter = await getAdapterFromConfiguration(project.name, tab.configurationPath, tab.name)
-        if (!adapter) return
-        const adapterJson = await convertAdapterXmlToJson(adapter)
-        flowStore.setEdges(adapterJson.edges)
-        flowStore.setViewport({ x: 0, y: 0, zoom: 1 })
-        const laidOutNodes = layoutGraph(adapterJson.nodes, adapterJson.edges, 'LR')
-        flowStore.setNodes(laidOutNodes)
-      }
-    } catch (error) {
-      console.error('Error loading tab flow:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const saveFlowToTab = (tabId: string) => {
-    const tabStore = useTabStore.getState()
-    const flowStore = useFlowStore.getState()
-
-    const flowData = reactFlow.toObject()
-    const viewport = flowStore.viewport
-    const tabData = tabStore.getTab(tabId)
-
-    if (!tabData) return
-
-    tabStore.setTabData(tabId, {
-      ...tabData,
-      flowJson: {
-        ...flowData,
-        viewport,
-      },
-    })
-  }
-
-  const restoreFlowFromTab = (tabId: string) => {
-    const tabStore = useTabStore.getState()
-    const flowStore = useFlowStore.getState()
-
-    const tabData = tabStore.getTab(tabId)
-    const flowJson = tabData?.flowJson
-
-    if (flowJson) {
-      flowStore.setNodes(Array.isArray(flowJson.nodes) ? flowJson.nodes : [])
-      flowStore.setEdges(Array.isArray(flowJson.edges) ? flowJson.edges : [])
-      const viewport = flowJson.viewport as { x: number; y: number; zoom: number } | undefined
-      flowStore.setViewport(viewport && true ? viewport : { x: 0, y: 0, zoom: 1 })
-    } else {
-      flowStore.setNodes([])
-      flowStore.setEdges([])
-      flowStore.setViewport({ x: 0, y: 0, zoom: 1 })
-    }
-  }
-
-  function clearFlow() {
-    const flowStore = useFlowStore.getState()
-    flowStore.setNodes([])
-    flowStore.setEdges([])
-    flowStore.setViewport({ x: 0, y: 0, zoom: 1 })
-  }
+  }, [layoutGraph])
 
   const saveFlow = async () => {
     const flowData = reactFlow.toObject()
     const activeTabName = useTabStore.getState().activeTab
     const configurationPath = useTabStore.getState().getTab(activeTabName)?.configurationPath
 
-    if (!configurationPath) return
+    if (!configurationPath || !project) return
 
     const xmlString = exportFlowToXml(flowData, activeTabName)
 
     try {
-      if (!project) return
-      const url = `/api/projects/${encodeURIComponent(project.name)}/adapters`
-      const response = await fetch(url, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          adapterXml: xmlString,
-          adapterName: activeTabName,
-          configurationPath: configurationPath,
-        }),
-      })
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`)
-      }
-
+      await saveAdapter(project.name, xmlString, activeTabName, configurationPath)
       toast.success('Flow saved successfully!')
     } catch (error) {
       console.error('Failed to save XML:', error)
-      toast.error(`Failed to save XML: ${error}`)
+      toast.error(`Failed to save XML: ${error instanceof Error ? error.message : error}`)
     }
   }
 

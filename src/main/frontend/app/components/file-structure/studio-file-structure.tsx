@@ -1,7 +1,8 @@
-import React, { type JSX, useEffect, useRef, useState } from 'react'
-import { getAdapterListenerType, getAdapterNamesFromConfiguration } from '~/routes/studio/xml-to-json-parser'
+import React, { type JSX, useCallback, useEffect, useRef, useState } from 'react'
+import { getListenerIcon } from './tree-utilities'
 import useTabStore from '~/stores/tab-store'
 import Search from '~/components/search/search'
+import LoadingSpinner from '~/components/loading-spinner'
 import FolderIcon from '../../../icons/solar/Folder.svg?react'
 import FolderOpenIcon from '../../../icons/solar/Folder Open.svg?react'
 import 'react-complex-tree/lib/style-modern.css'
@@ -16,100 +17,74 @@ import {
   type TreeItemIndex,
   UncontrolledTreeEnvironment,
 } from 'react-complex-tree'
-import FilesDataProvider from '~/components/file-structure/files-data-provider'
+import FilesDataProvider from '~/components/file-structure/studio-files-data-provider'
 import { useProjectStore } from '~/stores/project-store'
-import { getListenerIcon } from './tree-utilities'
-import type { FileTreeNode } from './editor-data-provider'
-
-export interface ConfigWithAdapters {
-  configPath: string
-  adapters: {
-    adapterName: string
-    listenerName: string | null
-  }[]
-}
+import type { FileNode } from './editor-data-provider'
+import { useProjectTree } from '~/hooks/use-project-tree'
 
 const TREE_ID = 'studio-files-tree'
 
-function getItemTitle(item: TreeItem<unknown>): string {
-  // item.data is either a string (for folders) or object (for leaf nodes)
+function getItemTitle(item: TreeItem<FileNode>): string {
   if (typeof item.data === 'string') {
     return item.data
-  } else if (typeof item.data === 'object' && item.data !== null && 'adapterName' in item.data) {
-    return (item.data as { adapterName: string }).adapterName
+  } else if (typeof item.data === 'object' && item.data !== null) {
+    if ('adapterName' in item.data) {
+      return (item.data as { adapterName: string }).adapterName
+    }
+    if ('name' in item.data) {
+      return (item.data as { name: string }).name
+    }
   }
   return 'Unnamed'
 }
 
-function findConfigurationsDir(node: FileTreeNode): FileTreeNode | null {
-  const normalizedPath = node.path.replaceAll('\\', '/')
-  if (node.type === 'DIRECTORY' && normalizedPath.endsWith('/src/main/configurations')) {
-    return node
-  }
-
-  if (!node.children) return null
-
-  for (const child of node.children) {
-    const found = findConfigurationsDir(child)
-    if (found) return found
-  }
-
-  return null
-}
-
-export default function FileStructure() {
-  const project = useProjectStore.getState().project
-  const [isTreeLoading, setIsTreeLoading] = useState(true)
+export default function StudioFileStructure() {
+  const project = useProjectStore((state) => state.project)
   const [searchTerm, setSearchTerm] = useState('')
   const [matchingItemIds, setMatchingItemIds] = useState<string[]>([])
   const [activeMatchIndex, setActiveMatchIndex] = useState<number>(-1)
   const [highlightedItemId, setHighlightedItemId] = useState<string | null>(null)
 
   const tree = useRef<TreeRef>(null)
-  const dataProviderReference = useRef(new FilesDataProvider(project ? project.name : ''))
+
+  const [dataProvider, setDataProvider] = useState<FilesDataProvider | null>(null)
+  const [providerLoading, setProviderLoading] = useState(false)
   const setTabData = useTabStore((state) => state.setTabData)
   const setActiveTab = useTabStore((state) => state.setActiveTab)
   const getTab = useTabStore((state) => state.getTab)
 
+  const { data: treeData, isLoading: isTreeLoading } = useProjectTree(project?.name)
+
   useEffect(() => {
-    // Load in the filetree from the backend
-    const loadFileTree = async () => {
-      if (!project) return
-      setIsTreeLoading(true)
-      try {
-        const response = await fetch(`/api/projects/${project.name}/tree`)
-        const tree: FileTreeNode = await response.json()
+    if (!project || !treeData) return
 
-        const configurationsRoot = findConfigurationsDir(tree)
-        if (!configurationsRoot) return
+    const initProvider = async () => {
+      setProviderLoading(true)
 
-        await dataProviderReference.current.updateData(configurationsRoot)
-      } catch (error) {
-        console.error('Failed to load file tree', error)
-      } finally {
-        setIsTreeLoading(false)
-      }
+      const provider = new FilesDataProvider(project.name)
+      setDataProvider(provider)
+      setProviderLoading(false)
     }
 
-    loadFileTree()
-  }, [project])
+    initProvider()
+  }, [project, treeData])
 
   useEffect(() => {
     const findMatchingItems = async () => {
-      if (!searchTerm) {
+      if (!searchTerm || !dataProvider) {
         setMatchingItemIds([])
         setActiveMatchIndex(-1)
         setHighlightedItemId(null)
         return
       }
 
-      const allItems = await dataProviderReference.current.getAllItems?.()
+      const allItems = await dataProvider.getAllItems?.()
       if (!allItems) return
 
       const lower = searchTerm.toLowerCase()
       const matches = allItems
-        .filter((item: TreeItem<unknown>) => getItemTitle(item).toLowerCase().includes(lower))
-        .map((item: TreeItem<unknown>) => String(item.index))
+        .filter((item: TreeItem<FileNode>) => getItemTitle(item).toLowerCase().includes(lower))
+        .map((item: TreeItem<FileNode>) => String(item.index))
 
       setMatchingItemIds(matches)
 
@@ -123,50 +98,72 @@ export default function FileStructure() {
     }
 
     findMatchingItems()
-  }, [searchTerm])
+  }, [searchTerm, dataProvider])
 
   const handleItemClick = (items: TreeItemIndex[], _treeId: string): void => {
     void handleItemClickAsync(items)
   }
 
-  const handleItemClickAsync = async (itemIds: TreeItemIndex[]) => {
-    if (!dataProviderReference.current || itemIds.length === 0) return
+  const loadFolderContents = useCallback(
+    async (item: TreeItem<FileNode>) => {
+      if (!item.isFolder) return
 
-    const itemId = itemIds[0]
+      const path = item.data.path
 
-    if (typeof itemId !== 'string') return
-
-    const item = await dataProviderReference.current.getTreeItem(itemId)
-
-    if (!item || item.isFolder) return
-
-    const data = item.data
-    if (typeof data === 'object' && data !== null && 'adapterName' in data && 'configPath' in data) {
-      const { adapterName, configPath } = data as {
-        adapterName: string
-        configPath: string
+      if (path.endsWith('.xml') && dataProvider) {
+        // XML configs can contain adapters
+        if (dataProvider) await dataProvider.loadAdapters(item.index)
+      } else {
+        // Normal directory
+        if (dataProvider) await dataProvider.loadDirectory(item.index)
       }
-      openNewTab(adapterName, configPath)
-    }
-  }
+    },
+    [dataProvider],
+  )
 
-  const openNewTab = (adapterName: string, configPath: string) => {
-    if (!getTab(adapterName)) {
-      setTabData(adapterName, {
-        name: adapterName,
-        configurationPath: configPath,
-        flowJson: {},
-      })
-    }
+  const openNewTab = useCallback(
+    (adapterName: string, configPath: string) => {
+      if (!getTab(adapterName)) {
+        setTabData(adapterName, {
+          name: adapterName,
+          configurationPath: configPath,
+          flowJson: {},
+        })
+      }
 
-    setActiveTab(adapterName)
-  }
+      setActiveTab(adapterName)
+    },
+    [getTab, setTabData, setActiveTab],
+  )
 
-  // Listener for tab and enter keys
+  const handleItemClickAsync = useCallback(
+    async (itemIds: TreeItemIndex[]) => {
+      if (!dataProvider || itemIds.length === 0) return
+
+      const itemId = itemIds[0]
+      if (typeof itemId !== 'string') return
+
+      const item = await dataProvider.getTreeItem(itemId)
+      if (!item) return
+
+      if (item.isFolder) {
+        await loadFolderContents(item)
+        return
+      }
+
+      // Leaf node: open adapter
+      const data = item.data
+      if (typeof data === 'object' && data !== null && 'adapterName' in data && 'configPath' in data) {
+        const { adapterName, configPath } = data as { adapterName: string; configPath: string }
+        openNewTab(adapterName, configPath)
+      }
+    },
+    [dataProvider, loadFolderContents, openNewTab],
+  )
+
   useEffect(() => {
     const handleKeyDown = async (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        // Clear search and highlight
         setSearchTerm('')
         setHighlightedItemId(null)
         setMatchingItemIds([])
@@ -184,8 +181,6 @@ export default function FileStructure() {
         setActiveMatchIndex((previous) => (previous - 1 < 0 ? matchingItemIds.length - 1 : previous - 1))
       } else if (event.key === 'Enter') {
         event.preventDefault()
-
-        // If nothing highlighted yet, select the first match
         const targetItemId = highlightedItemId || matchingItemIds[0]
         if (targetItemId) {
           await handleItemClickAsync([targetItemId])
@@ -199,47 +194,33 @@ export default function FileStructure() {
 
   useEffect(() => {
     if (activeMatchIndex === -1 || !tree.current) return
-
     const itemId = matchingItemIds[activeMatchIndex]
     if (!itemId) return
-
-    // set visual highlight only
     setHighlightedItemId(itemId)
   }, [activeMatchIndex, matchingItemIds])
 
   useEffect(() => {
-    // Collapse all folders when no search term is entered
+    if (!tree.current) return
     if (!searchTerm) {
-      collapseAllFolders()
+      tree.current.collapseAll()
       return
     }
-
-    // expand all folders when search term is not empty
-    expandAllFolders()
+    tree.current.expandAll()
   }, [searchTerm])
 
-  const collapseAllFolders = () => {
-    const treeReference = tree.current
-    if (!treeReference) return
-    treeReference.collapseAll()
-  }
+  const renderItemArrow = ({ item, context }: { item: TreeItem<FileNode>; context: TreeItemRenderContext }) => {
+    if (!item.isFolder) return null
 
-  const expandAllFolders = () => {
-    const treeReference = tree.current
-    if (!treeReference) return
-    treeReference.expandAll()
-  }
-
-  const renderItemArrow = ({ item, context }: { item: TreeItem<unknown>; context: TreeItemRenderContext }) => {
-    if (!item.isFolder) {
-      return null
-    }
     const Icon = context.isExpanded ? AltArrowDownIcon : AltArrowRightIcon
+
+    const handleArrowClick = async (event: React.MouseEvent) => {
+      event.stopPropagation() // prevent triggering item click
+      await loadFolderContents(item)
+      context.toggleExpandedState()
+    }
+
     return (
-      <Icon
-        onClick={context.toggleExpandedState}
-        className="rct-tree-item-arrow-isFolder rct-tree-item-arrow fill-foreground"
-      />
+      <Icon onClick={handleArrowClick} className="rct-tree-item-arrow-isFolder rct-tree-item-arrow fill-foreground" />
     )
   }
 
@@ -249,7 +230,7 @@ export default function FileStructure() {
     context,
   }: {
     title: string
-    item: TreeItem<unknown>
+    item: TreeItem<FileNode>
     context: TreeItemRenderContext
   }) => {
     const searchLower = searchTerm.toLowerCase()
@@ -265,11 +246,11 @@ export default function FileStructure() {
     } else {
       Icon = getListenerIcon(listenerType)
     }
-    // Highlight only the substring(s) that match the search term
+
     let highlightedTitle: JSX.Element | string = title
 
     if (searchTerm && titleLower.includes(searchLower)) {
-      const parts = title.split(new RegExp(`(${searchTerm})`, 'gi')) // keep matched pieces
+      const parts = title.split(new RegExp(`(${searchTerm})`, 'gi'))
       highlightedTitle = (
         <>
           {parts.map((part, index) =>
@@ -301,21 +282,19 @@ export default function FileStructure() {
     )
   }
 
-  const renderContent = () => {
-    if (!project) {
-      return <p>Loading project...</p>
-    }
+  if (!project) return <p className="text-muted-foreground p-4 text-sm">No Project Selected</p>
+  if (isTreeLoading || providerLoading) return <LoadingSpinner message="Loading configurations..." className="p-8" />
+  if (!dataProvider)
+    return <p className="text-muted-foreground p-4 text-sm">No configurations found in src/main/configurations</p>
 
-    if (isTreeLoading) {
-      return <p>Loading configurations...</p>
-    }
-
-    return (
+  return (
+    <>
+      <Search onChange={(event) => setSearchTerm(event.target.value)} />
       <div className="overflow-auto pr-2">
         <UncontrolledTreeEnvironment
           viewState={{}}
           getItemTitle={getItemTitle}
-          dataProvider={dataProviderReference.current}
+          dataProvider={dataProvider}
           onSelectItems={handleItemClick}
           canDragAndDrop={true}
           canDropOnFolder={true}
@@ -326,13 +305,6 @@ export default function FileStructure() {
           <Tree treeId={TREE_ID} rootItem="root" ref={tree} treeLabel="Files" />
         </UncontrolledTreeEnvironment>
       </div>
-    )
-  }
-
-  return (
-    <>
-      <Search onChange={(event) => setSearchTerm(event.target.value)} />
-      {renderContent()}
     </>
   )
 }

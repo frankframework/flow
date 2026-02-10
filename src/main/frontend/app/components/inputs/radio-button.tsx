@@ -6,7 +6,8 @@ export type RadioButtonProperties = {
   disabled?: boolean
   onChange?: (checked: boolean) => void
   id?: string
-} & Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type' | 'disabled' | 'onChange' | 'checked'>
+  name?: string
+} & Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type' | 'disabled' | 'onChange' | 'checked' | 'name'>
 
 export default function RadioButton({
   checked = false,
@@ -14,10 +15,12 @@ export default function RadioButton({
   onChange,
   className,
   id,
+  name,
   ...properties
 }: RadioButtonProperties) {
   const generatedId = useId()
   const uniqueId = id ?? generatedId
+  const groupName = name ?? generatedId
   const [isSelected, setIsSelected] = useState(checked)
 
   useEffect(() => {
@@ -39,7 +42,7 @@ export default function RadioButton({
       >
         <input
           id={uniqueId}
-          name="radio"
+          name={groupName}
           type="radio"
           disabled={disabled}
           onChange={handleChange}

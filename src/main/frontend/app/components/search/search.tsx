@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useId } from 'react'
 import MagnifierIcon from '/icons/solar/Magnifier.svg?react'
 import Input from '~/components/inputs/input'
 
@@ -12,20 +12,22 @@ interface SearchProperties {
 }
 
 export default function Search({
-  id = 'search',
+  id,
   type = 'search',
   placeholder = 'Search',
   value,
   onChange,
   onKeyDown,
 }: Readonly<SearchProperties>) {
+  const generatedId = useId()
+  const inputId = id ?? generatedId
   return (
     <div className="relative px-4">
-      <label htmlFor={id} className="absolute top-1/2 left-6 -translate-y-1/2">
+      <label htmlFor={inputId} className="absolute top-1/2 left-6 -translate-y-1/2">
         <MagnifierIcon className="fill-foreground-muted h-auto w-4" />
       </label>
       <Input
-        id={id}
+        id={inputId}
         type={type}
         placeholder={placeholder}
         value={value}

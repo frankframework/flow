@@ -10,19 +10,20 @@ export interface SidebarsCloseProperties {
 
 export default function SidebarClose({ side }: Readonly<SidebarsCloseProperties>) {
   const layoutName = useContext(SidebarContext)
-  const { toggleSidebar } = useSidebarStore()
+  const visibility = useSidebarStore((state) => state.getVisibility(layoutName ?? ''))
+  const setVisibility = useSidebarStore((state) => state.setVisibility)
   const isLeft = side === SidebarSide.LEFT
 
-  if (!layoutName) throw new Error('SidebarsClose must be used within a SidebarLayout or be provided a layoutName prop')
+  if (!layoutName) throw new Error('SidebarsClose must be used within a SidebarLayout')
 
   const toggleVisible = () => {
-    toggleSidebar(layoutName, side)
+    setVisibility(layoutName, side, !visibility[side])
   }
 
   return (
     <SidebarIcon
       onClick={toggleVisible}
-      className={clsx('fill-foreground hover:fill-brand', isLeft && 'rotate-180')}
+      className={clsx('fill-foreground hover:fill-brand cursor-pointer', isLeft && 'rotate-180')}
     ></SidebarIcon>
   )
 }

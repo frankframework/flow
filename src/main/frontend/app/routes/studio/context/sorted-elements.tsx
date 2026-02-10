@@ -31,7 +31,7 @@ export default function SortedElements({ type, items, onDragStart, searchTerm }:
       key={type}
       className="mb-4 border-t-2 p-2 shadow-md"
       style={{
-        borderColor: `var(--palette-${type})`,
+        borderColor: `var(--palette-${type.toLowerCase()})`,
       }}
     >
       <button

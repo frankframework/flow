@@ -15,9 +15,8 @@ import { FlowConfig } from '~/routes/studio/canvas/flow.config'
 import { useNodeContextMenu } from '~/routes/studio/canvas/flow'
 import useNodeContextStore from '~/stores/node-context-store'
 import { getElementTypeFromName } from '~/routes/studio/node-translator-module'
-import { useFFDoc } from '@frankframework/ff-doc/react'
-import variables from '../../../../../environment/environment'
 import { useSettingsStore } from '~/routes/settings/settings-store'
+import { useFrankDoc } from '~/providers/frankdoc-provider'
 import HandleMenu from './components/handle-menu'
 import { ChildNodeComponent, type ChildNode } from './child-node'
 import { findChildRecursive } from '~/stores/child-utilities'
@@ -45,8 +44,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
   const [dragOver, setDragOver] = useState(false)
   const [canDropDraggedElement, setCanDropDraggedElement] = useState(false)
   const showNodeContextMenu = useNodeContextMenu()
-  const FRANK_DOC_URL = variables.frankDocJsonUrl
-  const { elements, filters } = useFFDoc(FRANK_DOC_URL)
+  const { elements, filters } = useFrankDoc()
   const { setNodeId, setAttributes, setParentId, setIsEditing, setDraggedName, draggedName } = useNodeContextStore()
   const gradientEnabled = useSettingsStore((state) => state.studio.gradient)
   // Store the associated Frank element

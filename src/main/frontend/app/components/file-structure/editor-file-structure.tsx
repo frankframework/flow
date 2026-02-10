@@ -1,5 +1,6 @@
 import React, { type JSX, useCallback, useEffect, useRef, useState } from 'react'
 import Search from '~/components/search/search'
+import LoadingSpinner from '~/components/loading-spinner'
 import FolderIcon from '../../../icons/solar/Folder.svg?react'
 import FolderOpenIcon from '../../../icons/solar/Folder Open.svg?react'
 import 'react-complex-tree/lib/style-modern.css'
@@ -28,7 +29,6 @@ function getItemTitle(item: TreeItem<FileNode>): string {
 
 export default function EditorFileStructure() {
   const project = useProjectStore((state) => state.project)
-  const filepaths = project?.filepaths ?? []
 
   const [searchTerm, setSearchTerm] = useState('')
   const [matchingItemIds, setMatchingItemIds] = useState<string[]>([])
@@ -44,16 +44,30 @@ export default function EditorFileStructure() {
   const [dataProvider, setDataProvider] = useState<EditorFilesDataProvider | null>(null)
 
   useEffect(() => {
-    if (!project) return
+    if (!project?.name) return
 
-    // Create a new provider with the actual project name
-    const provider = new EditorFilesDataProvider(project.name)
-    setDataProvider(provider)
-  }, [project])
+    let isMounted = true
+
+    const initProvider = async () => {
+      const provider = new EditorFilesDataProvider(project.name)
+
+      if (isMounted) {
+        setDataProvider(provider)
+      }
+    }
+
+    initProvider()
+
+    return () => {
+      isMounted = false
+    }
+  }, [project?.name])
 
   useEffect(() => {
     const findMatchingItems = async () => {
-      if (!searchTerm || !dataProvider) {
+      if (!dataProvider) return
+
+      if (!searchTerm) {
         setMatchingItemIds([])
         setActiveMatchIndex(-1)
         setHighlightedItemId(null)
@@ -79,38 +93,41 @@ export default function EditorFileStructure() {
     }
 
     findMatchingItems()
-  }, [searchTerm, filepaths])
+  }, [searchTerm, dataProvider])
 
-  const openFileTab = (filePath: string, fileName: string) => {
-    if (!getTab(filePath)) {
-      setTabData(filePath, {
-        name: fileName,
-        configurationPath: filePath,
-      })
-    }
-    setActiveTab(filePath)
-  }
+  const openFileTab = useCallback(
+    (filePath: string, fileName: string) => {
+      if (!getTab(filePath)) {
+        setTabData(filePath, {
+          name: fileName,
+          configurationPath: filePath,
+        })
+      }
+      setActiveTab(filePath)
+    },
+    [getTab, setTabData, setActiveTab],
+  )
 
-  const handleItemClick = (items: TreeItemIndex[], _treeId: string): void => {
-    void handleItemClickAsync(items)
-  }
+  const handleItemClickAsync = useCallback(
+    async (itemIds: TreeItemIndex[]) => {
+      if (!dataProvider || itemIds.length === 0) return
 
-  const handleItemClickAsync = async (itemIds: TreeItemIndex[]) => {
-    if (!dataProvider || itemIds.length === 0) return
+      const itemId = itemIds[0]
+      const item = await dataProvider.getTreeItem(itemId)
+      if (!item) return
 
-    const itemId = itemIds[0]
-    if (typeof itemId !== 'string') return
+      // Fetch contents and expand folder if folder
+      if (item.isFolder) {
+        await dataProvider.loadDirectory(itemId)
+        return
+      }
 
-    const item = await dataProvider.getTreeItem(itemId)
-    if (!item || item.isFolder) return
+      // Load file in editor tab if file
+      openFileTab(item.data.path, item.data.name)
+    },
+    [dataProvider, openFileTab],
+  )
 
-    const filePath = item.data.path
-    const fileName = item.data.name
-
-    openFileTab(filePath, fileName)
-  }
-
-  /* Keyboard navigation */
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
@@ -132,7 +149,9 @@ export default function EditorFileStructure() {
       } else if (event.key === 'Enter') {
         event.preventDefault()
         const target = highlightedItemId || matchingItemIds[0]
-        if (target) handleItemClickAsync([target])
+        if (target) {
+          void handleItemClickAsync([target])
+        }
       }
     }
 
@@ -140,7 +159,6 @@ export default function EditorFileStructure() {
     return () => globalThis.removeEventListener('keydown', handleKeyDown)
   }, [matchingItemIds, highlightedItemId, handleItemClickAsync])
 
-  /* Expand / collapse on search */
   useEffect(() => {
     if (!tree.current) return
 
@@ -157,19 +175,25 @@ export default function EditorFileStructure() {
     const itemId = matchingItemIds[activeMatchIndex]
     if (!itemId) return
 
-    // set visual highlight only
     setHighlightedItemId(itemId)
   }, [activeMatchIndex, matchingItemIds])
 
   const renderItemArrow = ({ item, context }: { item: TreeItem; context: TreeItemRenderContext }) => {
     if (!item.isFolder) return null
     const Icon = context.isExpanded ? AltArrowDownIcon : AltArrowRightIcon
-    return (
-      <Icon
-        onClick={context.toggleExpandedState}
-        className="rct-tree-item-arrow-isFolder rct-tree-item-arrow fill-foreground"
-      />
-    )
+
+    const handleClick = async (event: React.MouseEvent) => {
+      event.stopPropagation()
+
+      // Only load when expanding
+      if (!context.isExpanded && dataProvider) {
+        await dataProvider.loadDirectory(item.index)
+      }
+
+      context.toggleExpandedState()
+    }
+
+    return <Icon onClick={handleClick} className="rct-tree-item-arrow-isFolder rct-tree-item-arrow fill-foreground" />
   }
 
   const renderItemTitle = ({
@@ -220,7 +244,7 @@ export default function EditorFileStructure() {
     )
   }
 
-  if (!dataProvider) return null
+  if (!dataProvider) return <LoadingSpinner message="Loading files..." className="p-8" />
 
   return (
     <>
@@ -230,7 +254,7 @@ export default function EditorFileStructure() {
           viewState={{}}
           getItemTitle={getItemTitle}
           dataProvider={dataProvider}
-          onSelectItems={handleItemClick}
+          onSelectItems={handleItemClickAsync}
           canSearch={false}
           renderItemArrow={renderItemArrow}
           renderItemTitle={renderItemTitle}

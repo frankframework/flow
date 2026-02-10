@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef } from 'react'
 import Tab from './tab'
 import type { TabData } from '~/stores/tab-store'
 
-
 interface TabsViewProps<T extends string = string> {
   tabs: Record<T, TabData>
   activeTab: T | null

@@ -1,14 +1,13 @@
 package org.frankframework.flow.project;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Optional;
 import lombok.Getter;
-import org.frankframework.flow.configuration.AdapterNotFoundException;
+import org.frankframework.flow.adapter.AdapterNotFoundException;
 import org.frankframework.flow.configuration.Configuration;
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
 import org.frankframework.flow.projectsettings.FilterType;
@@ -17,7 +16,6 @@ import org.frankframework.flow.utility.XmlAdapterUtils;
 import org.frankframework.flow.utility.XmlSecurityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.stereotype.Service;
 import org.w3c.dom.Document;
@@ -30,20 +28,34 @@ public class ProjectService {
     @Getter
     private final ArrayList<Project> projects = new ArrayList<>();
 
-    private static final String BASE_PATH = "classpath:project/";
+    private static final String DEFAULT_PROJECT_ROOT = "src/main/resources/project";
     private static final int MIN_PARTS_LENGTH = 2;
     private final ResourcePatternResolver resolver;
     private final Path projectsRoot;
 
     @Autowired
-    public ProjectService(ResourcePatternResolver resolver, @Value("${app.project.root}") String rootPath) {
+    public ProjectService(ResourcePatternResolver resolver, @Value("${app.project.root:}") String rootPath) {
         this.resolver = resolver;
-        this.projectsRoot = Paths.get(rootPath).toAbsolutePath().normalize();
-        initiateProjects();
+        this.projectsRoot = resolveProjectRoot(rootPath);
     }
 
-    public Project createProject(String name, String rootPath) {
+    private Path resolveProjectRoot(String rootPath) {
+        if (rootPath == null || rootPath.isBlank()) {
+            return Paths.get(DEFAULT_PROJECT_ROOT).toAbsolutePath().normalize();
+        }
+        return Paths.get(rootPath).toAbsolutePath().normalize();
+    }
+
+    public Path getProjectsRoot() {
+        return projectsRoot;
+    }
+
+    public Project createProject(String name, String rootPath) throws ProjectAlreadyExistsException {
         Project project = new Project(name, rootPath);
+        if (projects.contains(project)) {
+            throw new ProjectAlreadyExistsException(
+                    "Project with name '" + name + "' and rootPath '" + rootPath + "' already exists.");
+        }
         projects.add(project);
         return project;
     }
@@ -56,10 +68,6 @@ public class ProjectService {
         }
 
         throw new ProjectNotFoundException(String.format("Project with name: %s cannot be found", name));
-    }
-
-    public ArrayList<Project> getProjects() {
-        return projects;
     }
 
     public Project addConfigurations(String projectName, ArrayList<String> configurationPaths)
@@ -99,7 +107,7 @@ public class ProjectService {
         try {
             filterType = FilterType.valueOf(type.toUpperCase());
         } catch (IllegalArgumentException e) {
-            throw new InvalidFilterTypeException(type);
+            throw new InvalidFilterTypeException("Invalid filter type: " + type);
         }
 
         project.enableFilter(filterType);
@@ -115,7 +123,7 @@ public class ProjectService {
         try {
             filterType = FilterType.valueOf(type.toUpperCase());
         } catch (IllegalArgumentException e) {
-            throw new InvalidFilterTypeException(type);
+            throw new InvalidFilterTypeException("Invalid filter type: " + type);
         }
 
         project.disableFilter(filterType);
@@ -169,56 +177,11 @@ public class ProjectService {
         }
     }
 
-    public Project addConfiguration(String projectName, String configurationName) {
+    public Project addConfiguration(String projectName, String configurationName) throws ProjectNotFoundException {
         Project project = getProject(projectName);
 
         Configuration configuration = new Configuration(configurationName);
         project.addConfiguration(configuration);
         return project;
-    }
-
-    /**
-     * Dynamically scan all project folders under /resources/project/
-     * Each subdirectory = a project
-     * Each .xml file = a configuration
-     */
-    private void initiateProjects() {
-        try {
-            // Find all XML files recursively under /project/
-            Resource[] xmlResources = resolver.getResources(BASE_PATH + "**/*.xml");
-
-            for (Resource resource : xmlResources) {
-                String path = resource.getURI().toString();
-
-                // Example path: file:/.../resources/project/testproject/Configuration1.xml
-                // Extract the project name between "project/" and the next "/"
-                String[] parts = path.split("/project/");
-                if (parts.length < MIN_PARTS_LENGTH) continue;
-
-                String relativePath = parts[1]; // e.g. "testproject/Configuration1.xml"
-                String projectName = relativePath.substring(0, relativePath.indexOf("/"));
-
-                // Get or create the Project object
-                Project project;
-                try {
-                    project = getProject(projectName);
-                } catch (ProjectNotFoundException e) {
-                    project = createProject(projectName, projectsRoot.toString());
-                }
-
-                // Load XML content
-                String filename = resource.getFilename();
-                String xmlContent = new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-
-                // Create Configuration and add to Project
-                Configuration configuration = new Configuration(filename);
-                configuration.setXmlContent(xmlContent);
-                project.addConfiguration(configuration);
-            }
-
-        } catch (IOException e) {
-            System.err.println("Error initializing projects: " + e.getMessage());
-            e.printStackTrace();
-        }
     }
 }

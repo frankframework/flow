@@ -7,7 +7,8 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import org.frankframework.flow.configuration.AdapterUpdateDTO;
+import org.frankframework.flow.adapter.AdapterNotFoundException;
+import org.frankframework.flow.adapter.AdapterUpdateDTO;
 import org.frankframework.flow.configuration.Configuration;
 import org.frankframework.flow.configuration.ConfigurationDTO;
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
@@ -25,6 +26,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController()
@@ -66,6 +68,18 @@ public class ProjectController {
         return fileTreeService.getProjectTree(name);
     }
 
+    @GetMapping("/{name}/tree/configurations")
+    public FileTreeNode getConfigurationTree(
+            @PathVariable String name, @RequestParam(required = false, defaultValue = "false") boolean shallow)
+            throws IOException {
+
+        if (shallow) {
+            return fileTreeService.getShallowConfigurationsDirectoryTree(name);
+        } else {
+            return fileTreeService.getConfigurationsDirectoryTree(name);
+        }
+    }
+
     @GetMapping("/{projectName}")
     public ResponseEntity<ProjectDTO> getProject(@PathVariable String projectName) throws ProjectNotFoundException {
 
@@ -74,6 +88,13 @@ public class ProjectController {
         ProjectDTO dto = ProjectDTO.from(project);
 
         return ResponseEntity.ok(dto);
+    }
+
+    @GetMapping(value = "/{projectname}", params = "path")
+    public FileTreeNode getDirectoryContent(@PathVariable String projectname, @RequestParam String path)
+            throws IOException {
+
+        return fileTreeService.getShallowDirectoryTree(projectname, path);
     }
 
     @PatchMapping("/{projectname}")
@@ -116,7 +137,6 @@ public class ProjectController {
                 }
             }
 
-            // Build updated DTO
             ProjectDTO dto = ProjectDTO.from(project);
 
             return ResponseEntity.ok(dto);
@@ -149,7 +169,7 @@ public class ProjectController {
 
     @PostMapping("/{projectname}/import-configurations")
     public ResponseEntity<ProjectDTO> importConfigurations(
-            @PathVariable String projectname, @RequestBody ProjectImportDTO importDTO) {
+            @PathVariable String projectname, @RequestBody ProjectImportDTO importDTO) throws ProjectNotFoundException {
 
         Project project = projectService.getProject(projectname);
         if (project == null) return ResponseEntity.notFound().build();
@@ -186,7 +206,8 @@ public class ProjectController {
 
     @PutMapping("/{projectName}/adapters")
     public ResponseEntity<Void> updateAdapterFromFile(
-            @PathVariable String projectName, @RequestBody AdapterUpdateDTO dto) {
+            @PathVariable String projectName, @RequestBody AdapterUpdateDTO dto)
+            throws AdapterNotFoundException, ConfigurationNotFoundException {
         Path configPath = Paths.get(dto.configurationPath());
 
         boolean updated =
@@ -200,7 +221,8 @@ public class ProjectController {
     }
 
     @PostMapping
-    public ResponseEntity<ProjectDTO> createProject(@RequestBody ProjectCreateDTO projectCreateDTO) {
+    public ResponseEntity<ProjectDTO> createProject(@RequestBody ProjectCreateDTO projectCreateDTO)
+            throws ProjectAlreadyExistsException {
         Project project = projectService.createProject(projectCreateDTO.name(), projectCreateDTO.rootPath());
 
         ProjectDTO dto = ProjectDTO.from(project);
