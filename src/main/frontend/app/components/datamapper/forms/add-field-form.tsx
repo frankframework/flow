@@ -10,6 +10,7 @@ import type { CustomNodeData, NodeLabels } from '~/types/datamapper_types/node-t
 import { showWarningToast } from '../toast'
 import Input from '~/components/inputs/input'
 import Dropdown from '~/components/inputs/dropdown'
+import Button from '~/components/inputs/button'
 
 export interface FieldModalProperties {
   fieldType: 'source' | 'target'
@@ -131,16 +132,16 @@ function AddFieldForm({ fieldType, onSave, parents, formatDefinition, initialDat
       <div hidden={defaultValueInputType == 'object'}>
         <label htmlFor="defaultValue">Default value:</label>
         {defaultValueInputType === 'boolean' ? (
-          <select
-            name="defaultValue"
+          <Dropdown
+            id="defaultValue"
             value={defaultValue}
-            onChange={(e) => setDefaultValue(e.target.value)}
-            className="border-border focus:border-foreground-active focus:ring-foreground-active mt-1 w-full rounded-md border px-3 py-2 shadow-sm sm:text-sm"
-          >
-            <option value="">--</option>
-            <option value="true">true</option>
-            <option value="false">false</option>
-          </select>
+            onChange={(value: string) => setDefaultValue(value)}
+            options={{
+              [``]: `none`,
+              [`true`]: `true`,
+              [`false`]: `false`,
+            }}
+          />
         ) : (
           <Input
             name="defaultValue"
@@ -151,13 +152,13 @@ function AddFieldForm({ fieldType, onSave, parents, formatDefinition, initialDat
         )}
       </div>
 
-      <button
+      <Button
         onClick={handleSave}
         disabled={isFormIncomplete}
         className="border-border hover:bg-hover mt-4 flex w-full flex-col items-center rounded-2xl rounded-md border p-7 px-4 py-2 disabled:opacity-50"
       >
         Save
-      </button>
+      </Button>
     </div>
   )
 }

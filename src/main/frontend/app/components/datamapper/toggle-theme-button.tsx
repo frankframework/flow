@@ -1,6 +1,7 @@
 import { useSettingsStore } from '~/routes/settings/settings-store'
 import { useTheme } from '~/hooks/use-theme'
 
+//TEMPORARY COMPONENT ONLY USED FOR TESTING
 function ThemeToggleButton() {
   const theme = useTheme()
   const setGeneralSettings = useSettingsStore((s) => s.setGeneralSettings)
@@ -13,7 +14,7 @@ function ThemeToggleButton() {
 
   return (
     <button
-      className="border-border hover:bg-hover active:bg-selected rounded-md border px-4 py-2 bg-red-500"
+      className="border-border hover:bg-hover active:bg-selected rounded-md border bg-red-500 px-4 py-2"
       onClick={toggleTheme}
     >
       Switch to {theme === 'light' ? 'dark' : 'light'} mode

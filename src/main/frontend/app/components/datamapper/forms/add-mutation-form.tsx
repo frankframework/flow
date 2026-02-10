@@ -9,6 +9,7 @@ import type {
 } from '~/types/datamapper_types/config-types'
 import Input from '~/components/inputs/input'
 import Dropdown from '~/components/inputs/dropdown'
+import Button from '~/components/inputs/button'
 
 function AddMutationForm({
   sources,
@@ -47,7 +48,6 @@ function AddMutationForm({
 
       <label>Mutation type:</label>
       <Dropdown
-        className="bg-background mb-4 w-full rounded border p-2"
         value={mutation.mutationType?.name ?? ''}
         onChange={(e) => {
           const mt = mutations.mutations.find((m) => m.name === e) ?? null
@@ -63,13 +63,9 @@ function AddMutationForm({
 
       {mutation.mutationType && <MutationDetailsForm mutation={mutation} setMutation={setMutation} sources={sources} />}
 
-      <button
-        onClick={handleSave}
-        disabled={isFormIncomplete}
-        className="hover:bg-hover mt-4 w-full rounded-md border py-2 disabled:opacity-50"
-      >
+      <Button onClick={handleSave} disabled={isFormIncomplete} className="mt-3 w-full">
         Save
-      </button>
+      </Button>
     </div>
   )
 }
@@ -137,13 +133,9 @@ function MutationDetailsForm({
 
             {/* Add input button */}
             {mtInput.expandable && (
-              <button
-                type="button"
-                onClick={() => addInputField(mtInput)}
-                className="w-full rounded-md border px-3 py-2 text-sm"
-              >
+              <Button type="button" onClick={() => addInputField(mtInput)} className="w-full">
                 Add input
-              </button>
+              </Button>
             )}
           </div>
         )

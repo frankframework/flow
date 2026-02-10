@@ -3,6 +3,8 @@ import { useState } from 'react'
 import UploadImportButton from './upload-import-button'
 import type { MappingListConfig } from '~/types/datamapper_types/config-types'
 import { useFile } from '~/stores/datamapper_state/schemaQueue/schema-queue-context'
+import Input from '../inputs/input'
+import Button from '../inputs/button'
 
 interface SourceDefinitionComponentProperties {
   config?: MappingListConfig
@@ -17,21 +19,17 @@ function SourceDefinitionComponent({ config, onDelete }: SourceDefinitionCompone
   return (
     <div className="bg-background relative mt-3 flex flex-col gap-3 rounded-lg border p-3 shadow">
       <label htmlFor="sourcePath">Name:</label>
-      <input
+      <Input
         id="sourcePath"
         value={sourceName}
-        onChange={(e) => setSourceName(e.target.value)}
-        className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+        onChange={(event) => {
+          setSourceName(event.target.value)
+        }}
         disabled={confirmed}
       />
-      <button
-        className="border-border bg-backdrop text-foreground hover:bg-hover active:bg-selected disabled:bg-backdrop disabled:text-foreground-muted w-full rounded-lg border px-3 py-2.5 text-sm font-medium"
-        disabled={sourceName.length === 0}
-        hidden={confirmed}
-        onClick={() => setConfirmed(true)}
-      >
+      <Button disabled={sourceName.length === 0} hidden={confirmed} onClick={() => setConfirmed(true)}>
         Confirm Name
-      </button>
+      </Button>
       <div hidden={!confirmed}>
         <UploadImportButton
           label="Import Schema"

@@ -1,4 +1,5 @@
 import { useId, useState } from 'react'
+import Button from '~/components/inputs/button'
 import Dropdown from '~/components/inputs/dropdown'
 import Input from '~/components/inputs/input'
 import type {
@@ -85,13 +86,9 @@ function AddConditionForm({ sources, onSave, conditionToEdit }: Readonly<AddCond
         />
       )}
 
-      <button
-        onClick={handleSave}
-        disabled={isFormIncomplete}
-        className="hover:bg-hover mt-4 w-full rounded-md border py-2 disabled:opacity-50"
-      >
+      <Button onClick={handleSave} disabled={isFormIncomplete}>
         Save
-      </button>
+      </Button>
     </div>
   )
 }
@@ -234,9 +231,8 @@ function ConditionInputField({
   return (
     <div className="mb-2 flex flex-col">
       <label className="mb-1">{inputConfig.label}</label>
-      <input
+      <Input
         type="text"
-        className="bg-background w-full rounded-md border px-3 py-2"
         value={value?.value ?? ''}
         onChange={(event) => onChange({ type: 'defaultValue', value: event.target.value })}
       />
