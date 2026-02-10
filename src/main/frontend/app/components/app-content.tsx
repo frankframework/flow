@@ -6,7 +6,7 @@ const ConfigurationManager = lazy(() => import('~/routes/configurations/configur
 const Studio = lazy(() => import('~/routes/studio/studio'))
 const CodeEditor = lazy(() => import('~/routes/editor/editor'))
 const Help = lazy(() => import('~/routes/help/help'))
-const Datamapper = lazy(() => import('../routes/datamapper/root'))
+const Datamapper = lazy(() => import('~/routes/datamapper/root'))
 const Settings = lazy(() => import('~/routes/settings/settings'))
 
 const routeComponents: Record<AppRoute, React.LazyExoticComponent<ComponentType>> = {

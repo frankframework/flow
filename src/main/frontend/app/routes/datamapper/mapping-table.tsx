@@ -122,7 +122,7 @@ function MappingTable({ config, configDispatch }: PropertyListProperties) {
       <div className="border-border w-full overflow-y-auto border p-4">
         <table className="bg-background w-full">
           <thead className="sticky top-0 z-10">
-            <tr className="bg-foreground-muted">
+            <tr className="bg-foreground-active">
               <th className="border px-3 py-2">Sources</th>
               <th className="border px-3 py-2">Targets</th>
               <th className="border px-3 py-2">Mutations</th>

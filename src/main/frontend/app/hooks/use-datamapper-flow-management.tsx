@@ -3,13 +3,7 @@ import type { Node, Edge, ReactFlowInstance } from '@xyflow/react'
 
 import { SAXParser } from 'sax-ts'
 import type { MappingListConfig } from '~/types/datamapper_types/config-types'
-import type {
-  JsonSchema,
-  SaxAttributes,
-  XsdComplexType,
-  XsdElement,
-  XsdSequence,
-} from '~/types/datamapper_types/schema-types'
+import type { JsonSchema, SaxAttributes, XsdComplexType, XsdElement } from '~/types/datamapper_types/schema-types'
 import type { SourceSchematic } from '~/stores/datamapper_state/schemaQueue/schema-queue-context'
 import type { CustomNodeData } from '~/types/datamapper_types/node-types'
 import {
@@ -27,18 +21,6 @@ interface UseFlowManagementProperties {
   config: MappingListConfig
   setScNodes: Dispatch<SetStateAction<Node[]>>
   setEdges: Dispatch<SetStateAction<Edge[]>>
-}
-
-function isXsdElement(node: unknown): node is XsdElement {
-  return typeof node === 'object' && node !== null && '@_name' in node
-}
-
-function isXsdComplexType(node: unknown): node is XsdComplexType {
-  return typeof node === 'object' && node !== null && 'xs:sequence' in node
-}
-
-function isXsdSequence(node: unknown): node is XsdSequence {
-  return typeof node === 'object' && node !== null && 'xs:element' in node
 }
 
 //Updates outer Reactflow canvas. This probably should be moved out of this file?
