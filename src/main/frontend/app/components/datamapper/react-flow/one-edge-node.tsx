@@ -46,7 +46,7 @@ function OneEdgeNode({ id, data, variant = 'source', onEdit, onDelete, onHighlig
       onClick={updateChecked}
       className={clsx(
         'border-border flex cursor-pointer flex-row gap-1 rounded-md border p-2',
-        checked ? 'bg-foreground-active text-[var(--color-neutral-900)]' : 'bg-backdrop',
+        checked ? 'bg-foreground-active text-neutral' : 'bg-backdrop',
       )}
       style={{ width: `${PROPERTY_WIDTH}px` }}
     >

@@ -143,7 +143,7 @@ function AddMappingForm({ onSave, sources, targets, initialData }: MappingModalP
               ))}
             </div>
 
-            <button onClick={() => setSourceIds((id) => [...id, ''])} className="mt-1 shrink-0 text-sm text-blue-500">
+            <button onClick={() => setSourceIds((id) => [...id, ''])} className="text-info mt-1 shrink-0 text-sm">
               + Add another source
             </button>
           </div>
@@ -179,7 +179,7 @@ function AddMappingForm({ onSave, sources, targets, initialData }: MappingModalP
               ))}
             </div>
 
-            <button onClick={() => setMutationModal(true)} className="mt-1 shrink-0 text-sm text-blue-500">
+            <button onClick={() => setMutationModal(true)} className="text-info mt-1 shrink-0 text-sm">
               + Add Mutation
             </button>
           </div>
@@ -212,7 +212,7 @@ function AddMappingForm({ onSave, sources, targets, initialData }: MappingModalP
               ))}
             </div>
 
-            <button onClick={() => setConditionModal(true)} className="mt-1 shrink-0 text-sm text-blue-500">
+            <button onClick={() => setConditionModal(true)} className="text-info mt-1 shrink-0 text-sm">
               + Add Condition
             </button>
           </div>
