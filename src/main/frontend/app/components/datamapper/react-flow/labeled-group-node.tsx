@@ -1,6 +1,9 @@
 import { Handle, Position } from '@xyflow/react'
 import type { CustomNodeData } from '~/types/datamapper_types/node-types'
 import { GROUP_WIDTH } from '~/utils/datamapper_utils/const'
+import HighlightButton from '../basic-components/highlight-button'
+import EditButton from '../basic-components/edit-button'
+import DeleteButton from '../basic-components/delete-button'
 
 export interface LabeledGroupNodeProperties {
   id: string
@@ -22,33 +25,23 @@ function LabeledGroupNode({ id, data, onEdit, onDelete, onHighlight }: LabeledGr
       <div className="bg-backdrop border-border absolute bottom-0 flex w-full items-center justify-between rounded-md border px-4 py-2 text-sm opacity-80">
         <span>(Object)</span>
         <div className="flex gap-3">
-          <button
-            className="text-lg hover:opacity-70"
-            onClick={(event) => {
-              event.stopPropagation()
+          <HighlightButton
+            onClick={() => {
               onHighlight?.(id)
             }}
-          >
-            💡
-          </button>
-          <button
-            className="text-lg hover:opacity-70"
-            onClick={(event) => {
-              event.stopPropagation()
+          />
+
+          <EditButton
+            onClick={() => {
               onEdit?.(data)
             }}
-          >
-            ✏️
-          </button>
-          <button
-            className="text-xl font-bold text-[var(--color-error)] hover:opacity-80"
-            onClick={(event) => {
-              event.stopPropagation()
+          />
+
+          <DeleteButton
+            onClick={() => {
               onDelete?.(id)
             }}
-          >
-            &times;
-          </button>
+          />
         </div>
       </div>
       <Handle type="target" position={Position.Top} style={{ opacity: 0 }} />

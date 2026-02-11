@@ -3,6 +3,9 @@ import { Handle, Position, type Node, useNodeConnections } from '@xyflow/react'
 import clsx from 'clsx'
 import type { CustomNodeData } from '~/types/datamapper_types/node-types'
 import { PROPERTY_WIDTH } from '~/utils/datamapper_utils/const'
+import EditButton from '../basic-components/edit-button'
+import DeleteButton from '../basic-components/delete-button'
+import HighlightButton from '../basic-components/highlight-button'
 
 export interface OneEdgeNodeProperties {
   id: string
@@ -55,37 +58,23 @@ function OneEdgeNode({ id, data, variant = 'source', onEdit, onDelete, onHighlig
         <span>({data.variableType})</span>
 
         <div className="flex gap-3">
-          <button
-            className="text-lg hover:opacity-70"
-            onClick={(event) => {
-              event.stopPropagation()
+          <HighlightButton
+            onClick={() => {
               onHighlight?.(id)
             }}
-          >
-            💡
-            {/* <Magnifier className={'fill-yellow-400'} /> Commented this out, want to replace it with a better icon*/}
-          </button>
+          />
 
-          <button
-            className="text-lg hover:opacity-70"
-            onClick={(event) => {
-              event.stopPropagation()
+          <EditButton
+            onClick={() => {
               onEdit?.(data)
             }}
-          >
-            ✏️
-            {/* <Settings className={'fill-border'} /> Commented this out, want to replace it with a better icon*/}
-          </button>
+          />
 
-          <button
-            className="text-xl font-bold text-[var(--color-error)] hover:opacity-80"
-            onClick={(event) => {
-              event.stopPropagation()
+          <DeleteButton
+            onClick={() => {
               onDelete?.(id)
             }}
-          >
-            &times;
-          </button>
+          />
         </div>
       </div>
 
