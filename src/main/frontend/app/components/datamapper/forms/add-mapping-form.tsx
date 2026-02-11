@@ -128,7 +128,7 @@ function AddMappingForm({ onSave, sources, targets, initialData }: MappingModalP
             <div className={scrollable}>
               {sourceIds.map((id, value) => (
                 <div key={value} className="flex items-center gap-2">
-                  <select
+                  {/* <select
                     value={id}
                     onChange={(e) => updateArrayItem(setSourceIds, value, e.target.value)}
                     className="bg-background w-full rounded border p-2"
@@ -139,15 +139,14 @@ function AddMappingForm({ onSave, sources, targets, initialData }: MappingModalP
                         {s.label} ({s.type})
                       </option>
                     ))}
-                  </select>
-                  {/* Updated dropdown: TODO check if styling can be reworked to work properly 
+                  </select> */}
                   <Dropdown
                     id={value.toString()}
                     value={id}
                     onChange={(e) => updateArrayItem(setSourceIds, value, e)}
                     // className="bg-background w-full rounded border p-2"
                     options={Object.fromEntries(sources.map((s) => [s.id, `${s.label} (${s.type})`]))}
-                  /> */}
+                  />
                   <button onClick={() => deleteArrayItem(setSourceIds, value)} className="text-red-500">
                     &times;
                   </button>

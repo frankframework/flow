@@ -180,6 +180,12 @@ export default function Dropdown({
         <ul
           ref={listReference}
           className="border-border text-foreground bg-background absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md border py-1 shadow-lg"
+          style={{
+            position: 'fixed',
+            top: (dropdownReference.current?.getBoundingClientRect().bottom ?? 0) + window.scrollY,
+            left: dropdownReference.current?.getBoundingClientRect().left ?? 0 + window.scrollX,
+            width: dropdownReference.current?.offsetWidth,
+          }}
         >
           {optionsArray.length > 0 ? (
             Object.entries(options).map(([value, label], index) => (
