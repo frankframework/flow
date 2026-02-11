@@ -26,11 +26,31 @@ export function KeybindsTable() {
         </thead>
         <tbody>
           <tr>
+            <td>Save Changes</td>
+            <td>
+              {platform === 'win' ? (
+                <>
+                  <span className="key">Ctrl</span> + <span className="key">S</span>
+                </>
+              ) : (
+                <>
+                  <span className="key">⌘</span> + <span className="key">S</span>
+                </>
+              )}
+            </td>
+          </tr>
+          <tr>
             <td>Delete Selection</td>
             <td>
               <>
                 <span className="key">Backspace</span> / <span className="key">Delete</span>
               </>
+            </td>
+          </tr>
+          <tr>
+            <td>Edit Node</td>
+            <td>
+              <span className="key">Double-click</span>
             </td>
           </tr>
           <tr>

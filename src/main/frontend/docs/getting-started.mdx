@@ -1,1 +1,152 @@
-There is no real help documentation yet. Please look around and feel free to ask questions on the [GitHub Discussions](https://github.com/frankframework/flow/discussions).
+import { HelpImage } from '../app/routes/help/help-image.tsx'
+
+# Getting Started with Flow Studio
+
+Flow Studio allows you to visually create and edit Frank!Framework adapters using a drag-and-drop interface powered by React Flow, while still giving you full access to the underlying XML configuration.
+
+This guide will help you get started quickly.
+
+---
+
+## 1. Creating a Pipeline
+
+You build pipelines visually in the **Flow Studio**.
+
+### To create a pipeline:
+
+1. Open the **Flow Studio**.
+
+<HelpImage 
+  src="/docs/images/Help Studio Button.png"
+  alt="Location of studio button"
+  caption="Button to the Flow Studio"
+  width="700px"
+/>
+
+2. Select the adapter you wish to edit from the file structure on the left
+3. Locate the **Palette** panel.
+
+<HelpImage 
+  src="/docs/images/Help Palette.png"
+  alt="Location of palette panel"
+  caption="Location of the palette panel"
+  width="1200px"
+/>
+
+4. Drag elements from the palette onto the canvas.
+5. Arrange them to define your flow structure.
+
+Each element you place represents a Frank configuration component (e.g., Pipes, Senders, Receivers, etc.).
+
+You can freely move elements around to organize your pipeline visually.
+
+---
+
+## 2. Connecting Elements
+
+To define the flow between elements:
+
+1. Hover over an element connector.
+2. Drag an edge (connection) from one element to another.
+
+
+<HelpImage 
+  src="/docs/images/Help Connection.png"
+  alt="Dragging an edge between elements"
+  caption="Dragging a connection from one element to another"
+  width="700px"
+/>
+
+3. Release on the target element connector.
+
+When you create a connection:
+
+- A corresponding `<Forward>` entry is automatically generated in the XML.
+- The correct `path` and `name` attributes are created based on the connection.
+
+This ensures your visual flow and XML configuration always stay in sync.
+
+---
+
+## 3. Editing Element Properties
+
+You can configure each element individually.
+
+### To edit an element:
+
+1. Double-click the element on the canvas.
+2. A configuration panel will open.
+
+<HelpImage 
+  src="/docs/images/Help Edit.png"
+  alt="Editing a studio node"
+  caption="Editing the attributes of an element"
+  width="700px"
+/>
+
+3. Modify element-specific attributes
+
+Changes are immediately reflected in the underlying XML.
+
+---
+
+## 4. Editing the XML Directly
+
+For advanced configuration, you can edit the XML directly.
+
+1. Open the **Flow Editor**.
+
+<HelpImage 
+  src="/docs/images/Help Editor Button.png"
+  alt="Location of the editor button"
+  caption="Location of the editor button"
+  width="700px"
+/>
+
+2. Modify the XML configuration manually.
+3. Save your changes.
+
+The visual representation will stay synchronized with the XML.
+
+This allows:
+- Advanced configuration
+- Manual fine-tuning
+- Debugging
+
+---
+
+## 5. Visual and XML Synchronization
+
+Flow Studio maintains synchronization between:
+
+- Visual pipeline representation
+- Underlying XML configuration
+
+You can:
+- Build visually and refine in XML
+- Edit XML and continue visually
+- Switch between both approaches at any time
+
+---
+
+## Recommended Workflow
+
+For most users:
+
+1. Create the structure visually.
+2. Connect elements to define flow logic.
+3. Configure elements via double-click.
+4. Use the XML editor for advanced adjustments.
+
+---
+
+You can now:
+
+- Build Frank adapters visually
+- Configure pipelines interactively
+- Automatically generate `<Forwards>` connections
+- Edit the raw XML when needed
+
+Flow Studio gives you the flexibility of visual modeling with the power of direct XML control.
+
+Please look around and feel free to ask questions on the [GitHub Discussions](https://github.com/frankframework/flow/discussions).
