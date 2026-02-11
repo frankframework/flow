@@ -16,25 +16,25 @@ const defaultStyle = 'items-end justify-end pointer-events-none'
 const toastStyles = {
   ERROR: {
     container: 'items-center justify-center bg-black/50',
-    card: `${toastBaseCard} bg-[var(--color-error)]`,
+    card: `${toastBaseCard} bg-error`,
     icon: '',
     defaultDuration: 2000,
   },
   WARNING: {
     container: defaultStyle,
-    card: `${toastBaseCard} bg-[var(--color-warning)]`,
+    card: `${toastBaseCard} bg-warning`,
     icon: '⚠️',
     defaultDuration: 3000,
   },
   INFO: {
     container: defaultStyle,
-    card: `${toastBaseCard} bg-[var(--color-info)]`,
+    card: `${toastBaseCard} bg-info`,
     icon: 'ℹ️',
     defaultDuration: 3000,
   },
   SUCCESS: {
     container: defaultStyle,
-    card: `${toastBaseCard} bg-[var(--color-success)]`,
+    card: `${toastBaseCard} bg-success`,
     icon: '✅',
     defaultDuration: 3000,
   },

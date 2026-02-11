@@ -26,10 +26,7 @@ function Modal({ isOpen, onClose, title, children }: ModalProperties) {
       >
         {title && <h2 className="mb-4 text-xl font-bold">{title}</h2>}
         <div>{children}</div>
-        <button
-          onClick={onClose}
-          className="absolute top-2 right-2 text-3xl text-[var(--color-error)] hover:opacity-80"
-        >
+        <button onClick={onClose} className="text-error absolute top-2 right-2 text-3xl hover:opacity-80">
           &times;
         </button>
       </div>

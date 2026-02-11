@@ -33,7 +33,7 @@ function ExtraSourceNode({ id, data, onDelete, onHighlight }: ExtraSourceNodePro
             💡
           </button>
           <button
-            className="text-xl font-bold text-[var(--color-error)] hover:opacity-80"
+            className="text-error text-xl font-bold hover:opacity-80"
             onClick={(event) => {
               event.stopPropagation()
               onDelete?.(id)

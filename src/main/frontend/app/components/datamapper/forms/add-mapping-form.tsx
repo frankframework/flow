@@ -147,14 +147,14 @@ function AddMappingForm({ onSave, sources, targets, initialData }: MappingModalP
                     onChange={(e) => updateArrayItem(setSourceIds, value, e)}
                     options={Object.fromEntries(sources.map((s) => [s.id, `${s.label} (${s.type})`]))}
                   /> */}
-                  <button onClick={() => deleteArrayItem(setSourceIds, value)} className="text-[var(--color-error)]">
+                  <button onClick={() => deleteArrayItem(setSourceIds, value)} className="text-error">
                     &times;
                   </button>
                 </div>
               ))}
             </div>
 
-            <button onClick={() => setSourceIds((id) => [...id, ''])} className="mt-1 shrink-0 text-sm text-blue-500">
+            <button onClick={() => setSourceIds((id) => [...id, ''])} className="text-info mt-1 shrink-0 text-sm">
               + Add another source
             </button>
           </div>
@@ -185,7 +185,7 @@ function AddMappingForm({ onSave, sources, targets, initialData }: MappingModalP
                             mutations.filter((mutationIterator) => mutationIterator.id !== mutation.id),
                           )
                         }
-                        className="text-[var(--color-error)]"
+                        className="text-error"
                       >
                         &times;
                       </button>
@@ -195,7 +195,7 @@ function AddMappingForm({ onSave, sources, targets, initialData }: MappingModalP
               ))}
             </div>
 
-            <button onClick={() => setMutationModal(true)} className="mt-1 shrink-0 text-sm text-blue-500">
+            <button onClick={() => setMutationModal(true)} className="text-info mt-1 shrink-0 text-sm">
               + Add Mutation
             </button>
           </div>
@@ -223,7 +223,7 @@ function AddMappingForm({ onSave, sources, targets, initialData }: MappingModalP
                             conditions.filter((conditionToCompare) => conditionToCompare.id !== condition.id),
                           )
                         }
-                        className="text-[var(--color-error)]"
+                        className="text-error"
                       >
                         &times;
                       </button>
@@ -233,7 +233,7 @@ function AddMappingForm({ onSave, sources, targets, initialData }: MappingModalP
               ))}
             </div>
 
-            <button onClick={() => setConditionModal(true)} className="mt-1 shrink-0 text-sm text-blue-500">
+            <button onClick={() => setConditionModal(true)} className="text-info mt-1 shrink-0 text-sm">
               + Add Condition
             </button>
           </div>

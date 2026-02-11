@@ -23,7 +23,7 @@ function MappingNode({ id, data, onClick, onDelete, onEdit }: MappingNodePropert
 
       {/* Delete */}
       <button
-        className="text-l absolute right-0 bottom-0 px-1 font-bold text-[var(--color-error)] drop-shadow-[0_0_1px_black] hover:opacity-80"
+        className="text-l text-error absolute right-0 bottom-0 px-1 font-bold drop-shadow-[0_0_1px_black] hover:opacity-80"
         onClick={(event) => {
           event.stopPropagation()
           onDelete?.(id)

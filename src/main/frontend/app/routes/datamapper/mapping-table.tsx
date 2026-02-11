@@ -202,7 +202,7 @@ function MappingTable({ config, configDispatch }: PropertyListProperties) {
                   </button>
 
                   <button
-                    className="px-1 text-4xl font-bold text-[var(--color-error)] hover:opacity-80"
+                    className="text-error px-1 text-4xl font-bold hover:opacity-80"
                     onClick={() => {
                       const { remainingNodes, remainingEdges } = deleteMappingNode(row.id, nodes, edges)
 
