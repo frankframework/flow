@@ -72,7 +72,6 @@ function AddConditionForm({ sources, onSave, conditionToEdit }: Readonly<AddCond
                 })) ?? [],
             })
           }}
-          // className="bg-background w-full rounded border p-2"
           options={Object.fromEntries(conditionsConfig.conditions.map((condition) => [condition.name, condition.name]))}
         />
       </div>
