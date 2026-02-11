@@ -17,6 +17,9 @@ env:
   REGISTRY: ghcr.io
   # github.repository as <account>/<repo>
   IMAGE_NAME: ${{ github.repository }}
+  JAVA_VERSION: 21
+  NODE_VERSION: 23
+  PNPM_VERSION: 10.4.0
 
 
 jobs:
@@ -57,6 +60,33 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v5
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Set up Node.js ${{ env.NODE_VERSION }}
+        id: pnpm-modules-cache
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+          cache-dependency-path: 'pnpm-lock.yaml'
+
+      - name: Install Frontend Dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
+        working-directory: src/main/frontend
+        
+      - name: Test & Build Backend and run E2E Tests
+        run: mvn clean package
 
       - name: Get version from Pom
         run: echo "VERSION=$(./mvnw help:evaluate -Dexpression=revision -q -DforceStdout)" >> $GITHUB_ENV
