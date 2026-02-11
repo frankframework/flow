@@ -16,11 +16,11 @@ function ExtraSourceNode({ id, data, onDelete, onHighlight }: ExtraSourceNodePro
       style={{ width: `${GROUP_WIDTH + 30}px` }}
     >
       {/* Header */}
-      <div className="w-full rounded-md bg-[var(--color-info)] px-2 py-2 text-sm font-semibold">
+      <div className="bg-info w-full rounded-md px-2 py-2 text-sm font-semibold">
         {data.label ? `extra source: ${data.label}` : 'ExtraSource'}
       </div>
 
-      <div className="border-border absolute bottom-0 flex w-full items-center justify-between rounded-md border bg-[var(--color-info)] px-4 py-2 text-sm opacity-80">
+      <div className="border-border bg-info absolute bottom-0 flex w-full items-center justify-between rounded-md border px-4 py-2 text-sm opacity-80">
         <span>(Source )</span>
         <div className="flex gap-3">
           <button
