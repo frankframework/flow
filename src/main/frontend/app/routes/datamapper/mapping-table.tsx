@@ -202,7 +202,7 @@ function MappingTable({ config, configDispatch }: PropertyListProperties) {
                   </button>
 
                   <button
-                    className="px-1 text-4xl font-bold text-red-600 hover:text-red-700 hover:opacity-80"
+                    className="px-1 text-4xl font-bold text-[var(--color-error)] hover:opacity-80"
                     onClick={() => {
                       const { remainingNodes, remainingEdges } = deleteMappingNode(row.id, nodes, edges)
 
@@ -217,7 +217,7 @@ function MappingTable({ config, configDispatch }: PropertyListProperties) {
                       setRefresh((count) => count + 1)
                     }}
                   >
-                    X
+                    &times;
                   </button>
                 </td>
               </tr>

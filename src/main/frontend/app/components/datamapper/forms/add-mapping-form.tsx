@@ -144,10 +144,9 @@ function AddMappingForm({ onSave, sources, targets, initialData }: MappingModalP
                     id={value.toString()}
                     value={id}
                     onChange={(e) => updateArrayItem(setSourceIds, value, e)}
-                    // className="bg-background w-full rounded border p-2"
                     options={Object.fromEntries(sources.map((s) => [s.id, `${s.label} (${s.type})`]))}
                   />
-                  <button onClick={() => deleteArrayItem(setSourceIds, value)} className="text-red-500">
+                  <button onClick={() => deleteArrayItem(setSourceIds, value)} className="text-[var(--color-error)]">
                     &times;
                   </button>
                 </div>
@@ -185,7 +184,7 @@ function AddMappingForm({ onSave, sources, targets, initialData }: MappingModalP
                             mutations.filter((mutationIterator) => mutationIterator.id !== mutation.id),
                           )
                         }
-                        className="text-red-500"
+                        className="text-[var(--color-error)]"
                       >
                         &times;
                       </button>
@@ -223,7 +222,7 @@ function AddMappingForm({ onSave, sources, targets, initialData }: MappingModalP
                             conditions.filter((conditionToCompare) => conditionToCompare.id !== condition.id),
                           )
                         }
-                        className="text-red-500"
+                        className="text-[var(--color-error)]"
                       >
                         &times;
                       </button>
@@ -247,7 +246,6 @@ function AddMappingForm({ onSave, sources, targets, initialData }: MappingModalP
           <Dropdown
             value={output}
             onChange={setOutput}
-            // className="bg-background w-full rounded border p-2"
             options={Object.fromEntries(
               filteredOutputs.map((output) => [output.id, `${output.label} (${output.type})`]),
             )}
@@ -262,7 +260,6 @@ function AddMappingForm({ onSave, sources, targets, initialData }: MappingModalP
           <Dropdown
             value={targetId}
             onChange={setTargetId}
-            // className="bg-background w-full rounded border p-2"
             options={Object.fromEntries(targets.map((target) => [target.id, `${target.label} (${target.type})`]))}
           />
         </div>
