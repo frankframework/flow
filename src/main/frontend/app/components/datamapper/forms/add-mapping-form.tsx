@@ -4,7 +4,7 @@ import AddMutationForm from './add-mutation-form'
 import AddConditionForm from './add-conditions-form'
 import type { Mutation, Condition, Source } from '~/types/datamapper_types/config-types'
 import type { MappingConfig, NodeLabels } from '~/types/datamapper_types/node-types'
-import Modal from '../../modal'
+import Modal from '~/components/modal'
 import Checkbox from '~/components/inputs/checkbox'
 import Dropdown from '~/components/inputs/dropdown'
 
@@ -128,18 +128,6 @@ function AddMappingForm({ onSave, sources, targets, initialData }: MappingModalP
             <div className={scrollable}>
               {sourceIds.map((id, value) => (
                 <div key={value} className="flex items-center gap-2">
-                  {/* <select
-                    value={id}
-                    onChange={(e) => updateArrayItem(setSourceIds, value, e.target.value)}
-                    className="bg-background w-full rounded border p-2"
-                  >
-                    <option value="">Select source</option>
-                    {sources.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.label} ({s.type})
-                      </option>
-                    ))}
-                  </select> */}
                   <Dropdown
                     id={value.toString()}
                     value={id}
