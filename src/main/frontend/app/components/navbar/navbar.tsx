@@ -9,7 +9,7 @@ import DatamapperIcon from '/icons/solar/Mapping.svg?react'
 
 export default function Navbar() {
   return (
-    <nav className="border-border flex h-screen w-20 flex-col items-center justify-between gap-20 border-r py-4">
+    <nav className="border-border flex h-screen w-20 flex-shrink-0 flex-col items-center justify-between gap-20 border-r py-4">
       <div className="flex w-full flex-col items-center">
         <FfIcon className="h-auto w-[48px]" />
         <div className="text-xl font-bold">Flow</div>

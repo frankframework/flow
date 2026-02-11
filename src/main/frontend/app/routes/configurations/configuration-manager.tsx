@@ -69,6 +69,7 @@ export default function ConfigurationManager() {
     return xmlFiles.map((file) => ({
       ...file,
       relativePath: file.path.replace(`${configurationDirectory.path}\\`, '').replaceAll('\\', '/'),
+      path: file.path,
     }))
   })()
 
@@ -95,19 +96,19 @@ export default function ConfigurationManager() {
   }
 
   return (
-    <div className="bg-backdrop h-full w-full p-6">
-      <div className="bg-background border-border h-full w-full rounded border p-6">
-        <div className="hover:text-foreground-active flex w-fit hover:cursor-pointer" onClick={() => navigate('/')}>
-          <ArrowLeftIcon className="mb-4 h-6 w-auto fill-current hover:cursor-pointer" />
-          <p>Return To Projects</p>
-        </div>
+    <div className="bg-background flex h-full w-full flex-col p-6">
+      <div className="hover:text-foreground-active flex w-fit hover:cursor-pointer" onClick={() => navigate('/')}>
+        <ArrowLeftIcon className="mb-4 h-6 w-auto fill-current hover:cursor-pointer" />
+        <p>Return To Projects</p>
+      </div>
 
-        <p className="ml-2">
-          Configurations within <span className="font-bold">{currentProject.name}</span>/src/main/configurations:
-        </p>
-        <div className="flex flex-wrap gap-4 pt-4">
+      <p className="ml-2">
+        Configurations within <span className="font-bold">{currentProject.name}</span>/src/main/configurations:
+      </p>
+      <div className="bg-backdrop border-border w-full flex-1 overflow-y-auto rounded border p-2">
+        <div className="flex flex-wrap gap-4">
           {configFiles.map((file) => (
-            <ConfigurationTile key={file.path} filepath={file.relativePath} />
+            <ConfigurationTile key={file.path} filepath={file.path} relativePath={file.relativePath} />
           ))}
 
           <AddConfigurationTile onClick={() => setShowModal(true)} />
