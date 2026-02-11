@@ -26,7 +26,7 @@ export function KeybindsTable() {
         </thead>
         <tbody>
           <tr>
-            <td>Delete Node</td>
+            <td>Delete Selection</td>
             <td>
               <>
                 <span className="key">Backspace</span> / <span className="key">Delete</span>
@@ -55,6 +55,34 @@ export function KeybindsTable() {
               ) : (
                 <>
                   <span className="key">⌘</span> + <span className="key">Click</span>
+                </>
+              )}
+            </td>
+          </tr>
+          <tr>
+            <td>Copy Selection</td>
+            <td>
+              {platform === 'win' ? (
+                <>
+                  <span className="key">Ctrl</span> + <span className="key">C</span>
+                </>
+              ) : (
+                <>
+                  <span className="key">⌘</span> + <span className="key">C</span>
+                </>
+              )}
+            </td>
+          </tr>
+          <tr>
+            <td>Paste Selection</td>
+            <td>
+              {platform === 'win' ? (
+                <>
+                  <span className="key">Ctrl</span> + <span className="key">V</span>
+                </>
+              ) : (
+                <>
+                  <span className="key">⌘</span> + <span className="key">V</span>
                 </>
               )}
             </td>
