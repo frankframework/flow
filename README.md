@@ -32,15 +32,11 @@ To run the application in development mode, you can use the following commands:
 
 To use the Flow application correctly, a small amount of local configuration is required.
 
-## 1. Configure the project root
+## 1. Select or upload a project
 
-In `src/main/resources`, create a file named `application-local.properties` and define the root directory where your Frank!Framework projects are stored:
+Use the folder browser to select your existing project on your machine.  
+Alternatively, you can clone a repository directly from GitHub to start working immediately.
 
-```properties
-app.project.root=/path/to/your/projects
-```
-
-This directory is used by Flow to discover and load available projects.
 ## 2. Ensure correct project structure
 
 Within the project you want to work on, all Frank!Framework configurations must be located in: `src/main/configurations`
