@@ -147,7 +147,7 @@ function AddMappingForm({ onSave, sources, targets, initialData }: MappingModalP
                     onChange={(e) => updateArrayItem(setSourceIds, value, e)}
                     options={Object.fromEntries(sources.map((s) => [s.id, `${s.label} (${s.type})`]))}
                   /> */}
-                  <button onClick={() => deleteArrayItem(setSourceIds, value)} className="text-red-500">
+                  <button onClick={() => deleteArrayItem(setSourceIds, value)} className="text-[var(--color-error)]">
                     &times;
                   </button>
                 </div>
@@ -185,7 +185,7 @@ function AddMappingForm({ onSave, sources, targets, initialData }: MappingModalP
                             mutations.filter((mutationIterator) => mutationIterator.id !== mutation.id),
                           )
                         }
-                        className="text-red-500"
+                        className="text-[var(--color-error)]"
                       >
                         &times;
                       </button>
@@ -223,7 +223,7 @@ function AddMappingForm({ onSave, sources, targets, initialData }: MappingModalP
                             conditions.filter((conditionToCompare) => conditionToCompare.id !== condition.id),
                           )
                         }
-                        className="text-red-500"
+                        className="text-[var(--color-error)]"
                       >
                         &times;
                       </button>

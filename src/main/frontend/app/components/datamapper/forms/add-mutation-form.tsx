@@ -232,7 +232,7 @@ function MutationInputField({
       </div>
 
       {showDelete && (
-        <button type="button" onClick={onDelete} className="m-2 text-xl text-red-500">
+        <button type="button" onClick={onDelete} className="m-2 text-xl text-[var(--color-error)]">
           &times;
         </button>
       )}

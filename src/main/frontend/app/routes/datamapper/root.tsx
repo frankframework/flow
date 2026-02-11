@@ -1,7 +1,7 @@
 import { useEffect, useReducer, useState } from 'react'
 
 import PropertyList from './property-list'
-import { showInfoToast } from '~/components/toast'
+import { showInfoToast, showSuccessToast } from '~/components/toast'
 import ToggleThemeButton from '~/components/datamapper/toggle-theme-button'
 import {
   DEFAULT_MAPPING_LIST_CONFIG,
@@ -51,6 +51,7 @@ export default function Root() {
   return (
     <ReactFlowProvider>
       <FileProvider>
+        {/* These buttons only exists for testing purposes, ignore the styling on these, they will be removed in later stages */}
         <div className="top fixed right-0 z-60 gap-2">
           <ToggleThemeButton />
 
@@ -58,7 +59,7 @@ export default function Root() {
             className="border-border hover:bg-hover active:bg-selected w-48 rounded-md border bg-red-500 px-4 py-2 text-sm"
             onClick={() => {
               console.dir(mappingListConfig)
-              showInfoToast('Logging config to console!', 'Debug')
+              showSuccessToast('Logging config to console!', 'Debug')
             }}
           >
             Test External node log

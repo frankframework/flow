@@ -41,7 +41,7 @@ function LabeledGroupNode({ id, data, onEdit, onDelete, onHighlight }: LabeledGr
             ✏️
           </button>
           <button
-            className="text-xl font-bold text-red-600 hover:text-red-700 hover:opacity-80"
+            className="text-xl font-bold text-[var(--color-error)] hover:opacity-80"
             onClick={(event) => {
               event.stopPropagation()
               onDelete?.(id)

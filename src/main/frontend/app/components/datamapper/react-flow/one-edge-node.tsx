@@ -22,7 +22,8 @@ function OneEdgeNode({ id, data, variant = 'source', onEdit, onDelete, onHighlig
 
   const isConnectable = connections.length === 0 || variant === 'source'
 
-  const updateChecked = (newChecked: boolean) => {
+  const updateChecked = () => {
+    const newChecked = !checked
     data.setNodes?.((nodes: Node[]) =>
       nodes.map((node) => (node.id === id ? { ...node, data: { ...node.data, checked: newChecked } } : node)),
     )
@@ -39,10 +40,7 @@ function OneEdgeNode({ id, data, variant = 'source', onEdit, onDelete, onHighlig
 
   return (
     <div
-      onClick={(event) => {
-        event.preventDefault()
-        updateChecked(!checked)
-      }}
+      onClick={updateChecked}
       className={clsx(
         'border-border flex cursor-pointer flex-row gap-1 rounded-md border p-2',
         checked ? 'bg-foreground-active text-[var(--color-neutral-900)]' : 'bg-backdrop',
@@ -80,7 +78,7 @@ function OneEdgeNode({ id, data, variant = 'source', onEdit, onDelete, onHighlig
           </button>
 
           <button
-            className="text-xl font-bold text-red-600 hover:text-red-700 hover:opacity-80"
+            className="text-xl font-bold text-[var(--color-error)] hover:opacity-80"
             onClick={(event) => {
               event.stopPropagation()
               onDelete?.(id)
