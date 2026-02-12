@@ -158,7 +158,7 @@ function ConditionInputField({
           }
           options={Object.fromEntries([
             ...(inputConfig.allowDefaultValue ? [['defaultValue', 'Default Value']] : []),
-            ...filteredSources.map((s) => [s.id, s.label]),
+            ...filteredSources.map((source) => [source.id, source.label]),
           ])}
         />
 
