@@ -5,6 +5,7 @@ import type { MappingListConfig } from '~/types/datamapper_types/config-types'
 import { useFile } from '~/stores/datamapper_state/schemaQueue/schema-queue-context'
 import Input from '../inputs/input'
 import Button from '../inputs/button'
+import DeleteButton from './basic-components/delete-button'
 
 interface SourceDefinitionComponentProperties {
   config?: MappingListConfig
@@ -39,15 +40,12 @@ function SourceDefinitionComponent({ config, onDelete }: SourceDefinitionCompone
           disabled={!confirmed}
         />
       </div>
-      <button
-        className="absolute top-2 right-2 text-3xl font-bold text-red-600 hover:text-red-700 hover:opacity-80"
+      <DeleteButton
         onClick={() => {
           deleteSourceSchema(sourceName)
           onDelete()
         }}
-      >
-        &times;
-      </button>
+      />
     </div>
   )
 }
