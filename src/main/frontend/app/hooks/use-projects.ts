@@ -1,6 +1,6 @@
 import { useAsync } from './use-async'
-import { fetchRecentProjects } from '~/services/project-service'
 import type { RecentProject } from '~/types/project.types'
+import { fetchRecentProjects } from '~/services/recent-project-service'
 
 export function useRecentProjects() {
   return useAsync<RecentProject[]>((signal) => fetchRecentProjects(signal))

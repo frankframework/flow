@@ -12,10 +12,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/filesystem")
 public class FilesystemController {
 
-    private final FilesystemService filesystemService;
+    private final FileSystemStorage fileSystemStorage;
 
-    public FilesystemController(FilesystemService filesystemService) {
-        this.filesystemService = filesystemService;
+    public FilesystemController(FileSystemStorage fileSystemStorage) {
+        this.fileSystemStorage = fileSystemStorage;
     }
 
     @GetMapping("/browse")
@@ -24,9 +24,9 @@ public class FilesystemController {
 
         List<FilesystemEntry> entries;
         if (path.isBlank()) {
-            entries = filesystemService.listRoots();
+            entries = fileSystemStorage.listRoots();
         } else {
-            entries = filesystemService.listDirectories(path);
+            entries = fileSystemStorage.listDirectory(path);
         }
         return ResponseEntity.ok(entries);
     }

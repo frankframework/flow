@@ -1,6 +1,7 @@
 package org.frankframework.flow.filetree;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 import java.io.IOException;
@@ -8,10 +9,12 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Comparator;
 import java.util.List;
 import org.frankframework.flow.adapter.AdapterNotFoundException;
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
+import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.frankframework.flow.project.Project;
 import org.frankframework.flow.project.ProjectNotFoundException;
 import org.frankframework.flow.project.ProjectService;
@@ -32,14 +35,42 @@ public class FileTreeServiceTest {
     @Mock
     private ProjectService projectService;
 
+    @Mock
+    private FileSystemStorage fileSystemStorage;
+
     private FileTreeService fileTreeService;
+
     private Path tempProjectRoot;
     private static final String TEST_PROJECT_NAME = "FrankFlowTestProject";
 
     @BeforeEach
     public void setUp() throws IOException {
         tempProjectRoot = Files.createTempDirectory("flow_unit_test");
-        fileTreeService = new FileTreeService(projectService);
+        fileTreeService = new FileTreeService(projectService, fileSystemStorage);
+
+        // Configure fileSystemStorage mock to delegate to real filesystem operations.
+        // toAbsolutePath returns the path as-is since tests use absolute temp paths.
+        lenient().when(fileSystemStorage.toAbsolutePath(anyString())).thenAnswer(invocation -> {
+            String path = invocation.getArgument(0);
+            return Paths.get(path);
+        });
+
+        // readFile delegates to the real filesystem
+        lenient().when(fileSystemStorage.readFile(anyString())).thenAnswer(invocation -> {
+            String path = invocation.getArgument(0);
+            return Files.readString(Paths.get(path));
+        });
+
+        // writeFile delegates to the real filesystem
+        lenient().doAnswer(invocation -> {
+            String path = invocation.getArgument(0);
+            String content = invocation.getArgument(1);
+            Files.writeString(Paths.get(path), content);
+            return null;
+        }).when(fileSystemStorage).writeFile(anyString(), anyString());
+
+        // Default to local environment
+        lenient().when(fileSystemStorage.isLocalEnvironment()).thenReturn(true);
     }
 
     @AfterEach

@@ -5,12 +5,14 @@ import { sortChildren } from './tree-utilities'
 export interface FileNode {
   name: string
   path: string
+  projectRoot?: boolean
 }
 
 export interface FileTreeNode {
   name: string
   path: string
   type: 'FILE' | 'DIRECTORY'
+  projectRoot?: boolean
   children?: FileTreeNode[]
 }
 
@@ -22,11 +24,18 @@ export default class EditorFilesDataProvider implements TreeDataProvider {
 
   constructor(projectName: string) {
     this.projectName = projectName
-    this.loadRoot()
   }
 
-  /** Fetch root directory from backend and build the provider's data */
-  private async loadRoot() {
+  /**
+   * Public method to initialize data loading.
+   * Call this from your React component's useEffect.
+   */
+  public async loadData(): Promise<void> {
+    await this.fetchAndBuildTree()
+  }
+
+  /** Fetch file tree from backend and build the provider's data */
+  private async fetchAndBuildTree() {
     try {
       if (!this.projectName) return
 
@@ -38,30 +47,7 @@ export default class EditorFilesDataProvider implements TreeDataProvider {
         return
       }
 
-      this.data['root'] = {
-        index: 'root',
-        data: { name: tree.name, path: tree.path },
-        isFolder: true,
-        children: [],
-      }
-
-      // Sort directories first, then files, both alphabetically
-      const sortedChildren = sortChildren(tree.children)
-
-      for (const child of sortedChildren) {
-        const childIndex = `root/${child.name}`
-
-        this.data[childIndex] = {
-          index: childIndex,
-          data: { name: child.name, path: child.path },
-          isFolder: child.type === 'DIRECTORY',
-          children: child.type === 'DIRECTORY' ? [] : undefined,
-        }
-
-        this.data['root'].children!.push(childIndex)
-      }
-
-      this.loadedDirectories.add(tree.path)
+      this.buildTreeFromFileTree(tree)
       this.notifyListeners(['root'])
     } catch (error) {
       console.error('[EditorFilesDataProvider] Unexpected error loading tree:', error)
@@ -92,7 +78,7 @@ export default class EditorFilesDataProvider implements TreeDataProvider {
 
         this.data[childIndex] = {
           index: childIndex,
-          data: { name: child.name, path: child.path },
+          data: { name: child.name, path: child.path, projectRoot: node.projectRoot },
           isFolder: child.type === 'DIRECTORY',
           children: child.type === 'DIRECTORY' ? [] : undefined,
         }

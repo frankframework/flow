@@ -2,136 +2,137 @@ package org.frankframework.flow.project;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.charset.MalformedInputException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
-import lombok.Getter;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 import lombok.extern.slf4j.Slf4j;
 import org.frankframework.flow.adapter.AdapterNotFoundException;
 import org.frankframework.flow.configuration.Configuration;
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
+import org.frankframework.flow.filesystem.FileSystemStorage;
+import org.frankframework.flow.filesystem.FilesystemEntry;
 import org.frankframework.flow.projectsettings.FilterType;
 import org.frankframework.flow.projectsettings.InvalidFilterTypeException;
+import org.frankframework.flow.recentproject.RecentProject;
+import org.frankframework.flow.recentproject.RecentProjectsService;
+import org.frankframework.flow.utility.XmlSecurityUtils;
+import org.springframework.context.annotation.Lazy;
 import org.frankframework.flow.utility.XmlAdapterUtils;
 import org.frankframework.flow.utility.XmlSecurityUtils;
 
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+import org.w3c.dom.Node;
+import org.xml.sax.SAXParseException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.xml.sax.SAXParseException;
 
-@Getter
 @Slf4j
 @Service
 public class ProjectService {
-
-    private final List<Project> projects = new CopyOnWriteArrayList<>();
-
     private static final String CONFIGURATIONS_DIR = "src/main/configurations";
 
-    private String loadDefaultConfiguration() throws IOException {
-        ClassPathResource resource = new ClassPathResource("templates/default-configuration.xml");
-        return new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+    private final FileSystemStorage fileSystemStorage;
+    private final RecentProjectsService recentProjectsService;
+
+    private final Map<String, Project> projectCache = new ConcurrentHashMap<>();
+
+    public ProjectService(FileSystemStorage fileSystemStorage, @Lazy RecentProjectsService recentProjectsService) {
+        this.fileSystemStorage = fileSystemStorage;
+        this.recentProjectsService = recentProjectsService;
     }
 
-    public Project createProjectOnDisk(String absolutePath) throws IOException {
-        if (absolutePath == null || absolutePath.isBlank()) {
-            throw new IllegalArgumentException("Project path must not be blank");
+    public List<Project> getProjects() {
+        if (fileSystemStorage.isLocalEnvironment()) {
+            return getProjectsFromRecentList();
         }
-
-        Path projectDir = Paths.get(absolutePath).toAbsolutePath().normalize();
-        if (Files.exists(projectDir)) {
-            throw new IllegalArgumentException("Project directory already exists: " + absolutePath);
-        }
-
-        Path configurationsDir = projectDir.resolve(CONFIGURATIONS_DIR);
-        Files.createDirectories(configurationsDir);
-
-        String defaultXml = loadDefaultConfiguration();
-
-        Path configFile = configurationsDir.resolve("Configuration.xml");
-        Files.writeString(configFile, defaultXml, StandardCharsets.UTF_8);
-
-        String name = projectDir.getFileName().toString();
-        String rootPath = projectDir.toString();
-
-        Project project = new Project(name, rootPath);
-        Configuration configuration =
-                new Configuration(configFile.toAbsolutePath().normalize().toString());
-        configuration.setXmlContent(defaultXml);
-        project.addConfiguration(configuration);
-
-        projects.add(project);
-        return project;
+        return getProjectsFromWorkspaceScan();
     }
 
-    public Project openProjectFromDisk(String absolutePath) throws IOException {
-        Path projectDir = Paths.get(absolutePath).toAbsolutePath().normalize();
+    private List<Project> getProjectsFromRecentList() {
+        List<Project> foundProjects = new ArrayList<>();
+        List<RecentProject> recentProjects = recentProjectsService.getRecentProjects();
 
-        for (Project project : projects) {
-            if (Paths.get(project.getRootPath()).toAbsolutePath().normalize().equals(projectDir)) {
-                return project;
+        for (RecentProject recent : recentProjects) {
+            try {
+                Project p = loadProjectCached(recent.rootPath());
+                foundProjects.add(p);
+            } catch (Exception e) {
+                log.debug("Recent project no longer valid: {}", recent.rootPath());
+            }
+        }
+        return foundProjects;
+    }
+
+    private List<Project> getProjectsFromWorkspaceScan() {
+        List<Project> foundProjects = new ArrayList<>();
+        List<FilesystemEntry> entries = fileSystemStorage.listRoots();
+
+        for (FilesystemEntry entry : entries) {
+            try {
+                Project p = loadProjectCached(entry.path());
+                foundProjects.add(p);
+            } catch (Exception e) {
+                // Not a valid project, skip
+            }
+        }
+        return foundProjects;
+    }
+
+    public Project getProject(String name) throws ProjectNotFoundException {
+        for (Project cached : projectCache.values()) {
+            if (cached.getName().equals(name)) {
+                return cached;
             }
         }
 
-        if (!Files.exists(projectDir) || !Files.isDirectory(projectDir)) {
-            throw new IllegalArgumentException("Project directory does not exist: " + absolutePath);
-        }
-
-        String name = projectDir.getFileName().toString();
-        String rootPath = projectDir.toString();
-
-        Project project = new Project(name, rootPath);
-
-        Path configurationsDir = projectDir.resolve(CONFIGURATIONS_DIR);
-        if (Files.exists(configurationsDir) && Files.isDirectory(configurationsDir)) {
-            scanXmlFiles(configurationsDir, project);
-        } else {
-            scanXmlFiles(projectDir, project);
-        }
-
-        projects.add(project);
-        return project;
+        return getProjects().stream()
+                .filter(p -> p.getName().equals(name))
+                .findFirst()
+                .orElseThrow(() -> new ProjectNotFoundException("Project not found: " + name));
     }
 
-    private void scanXmlFiles(Path directory, Project project) throws IOException {
-        try (Stream<Path> paths = Files.walk(directory)) {
-            List<Path> xmlFiles = paths.filter(Files::isRegularFile)
-                    .filter(p -> p.toString().endsWith(".xml"))
-                    .toList();
+    public Project createProjectOnDisk(String path) throws IOException {
+        Path projectPath = fileSystemStorage.createProjectDirectory(path);
 
-            for (Path xmlFile : xmlFiles) {
-                String absolutePath = xmlFile.toAbsolutePath().normalize().toString();
-                try {
-                    String xmlContent = Files.readString(xmlFile, StandardCharsets.UTF_8);
-                    Configuration configuration = new Configuration(absolutePath);
-                    configuration.setXmlContent(xmlContent);
-                    project.addConfiguration(configuration);
-                } catch (MalformedInputException e) {
-                    log.warn("Skipping file with invalid UTF-8 encoding: {}", absolutePath);
-                }
-            }
-        }
+        Files.createDirectories(projectPath.resolve(CONFIGURATIONS_DIR));
+
+        String defaultXml = new String(
+                new ClassPathResource("templates/default-configuration.xml")
+                        .getInputStream()
+                        .readAllBytes(),
+                StandardCharsets.UTF_8);
+        fileSystemStorage.writeFile(
+                projectPath
+                        .resolve(CONFIGURATIONS_DIR)
+                        .resolve("Configuration.xml")
+                        .toString(),
+                defaultXml);
+
+        return loadProjectAndCache(projectPath.toString());
+    }
+
+    public Project openProjectFromDisk(String path) throws IOException {
+        return loadProjectAndCache(path);
     }
 
     public Project cloneAndOpenProject(String repoUrl, String localPath) throws IOException {
-        if (repoUrl == null || repoUrl.isBlank()) {
-            throw new IllegalArgumentException("Repository URL must not be blank");
-        }
-        if (localPath == null || localPath.isBlank()) {
-            throw new IllegalArgumentException("Local path must not be blank");
-        }
+        Path targetDir = fileSystemStorage.toAbsolutePath(localPath);
 
-        Path targetDir = Paths.get(localPath).toAbsolutePath().normalize();
         if (Files.exists(targetDir)) {
-            throw new IllegalArgumentException("Target directory already exists: " + targetDir);
+            throw new IllegalArgumentException("Project already exists at: " + targetDir);
         }
 
         try {
@@ -154,80 +155,153 @@ public class ProjectService {
             throw new IOException("git clone was interrupted");
         }
 
-        return openProjectFromDisk(targetDir.toString());
+        return loadProjectAndCache(targetDir.toString());
     }
 
-    public void createProject(String name, String rootPath) {
-        Project project = new Project(name, rootPath);
-        if (projects.contains(project)) {
-            throw new ProjectAlreadyExistsException(
-                    "Project with name '" + name + "' and rootPath '" + rootPath + "' already exists.");
-        }
-        projects.add(project);
-	}
+    public void invalidateCache() {
+        projectCache.clear();
+    }
 
-    public Project getProject(String name) throws ProjectNotFoundException {
-        for (Project project : projects) {
-            if (project.getName().equals(name)) {
-                return project;
+    public void invalidateProject(String projectName) {
+        projectCache.entrySet().removeIf(e -> e.getValue().getName().equals(projectName));
+    }
+
+    // --- Core Loading Logic ---
+
+    private Project loadProjectCached(String path) throws IOException {
+        String cacheKey = fileSystemStorage.toAbsolutePath(path).toString();
+        Project cached = projectCache.get(cacheKey);
+        if (cached != null) {
+            return cached;
+        }
+        return loadProjectAndCache(path);
+    }
+
+    private Project loadProjectAndCache(String path) throws IOException {
+        Project project = loadProjectFromStorage(path);
+        String cacheKey = fileSystemStorage.toAbsolutePath(path).toString();
+        projectCache.put(cacheKey, project);
+        return project;
+    }
+
+    private Project loadProjectFromStorage(String path) throws IOException {
+        Path absPath = fileSystemStorage.toAbsolutePath(path);
+
+        if (!Files.exists(absPath) || !Files.isDirectory(absPath)) {
+            throw new IOException("Invalid project path: " + absPath);
+        }
+
+        Project project = new Project(absPath.getFileName().toString(), absPath.toString());
+
+        Path configDir = absPath.resolve(CONFIGURATIONS_DIR);
+        if (!Files.exists(configDir)) {
+            return project;
+        }
+
+        try (Stream<Path> s = Files.walk(configDir)) {
+            s.filter(p -> p.toString().endsWith(".xml")).forEach(p -> {
+                try {
+                    String content = fileSystemStorage.readFile(p.toString());
+                    Configuration c = new Configuration(p.toString());
+                    c.setXmlContent(content);
+                    project.addConfiguration(c);
+                } catch (IOException e) {
+                    log.error("Error reading config file {}: {}", p, e.getMessage(), e);
+                }
+            });
+        }
+        return project;
+    }
+
+    public void exportProjectAsZip(String projectName, OutputStream outputStream)
+            throws IOException, ProjectNotFoundException {
+        Project project = getProject(projectName);
+        Path projectPath = fileSystemStorage.toAbsolutePath(project.getRootPath());
+
+        if (!Files.exists(projectPath) || !Files.isDirectory(projectPath)) {
+            throw new ProjectNotFoundException("Project directory not found: " + projectName);
+        }
+
+        try (ZipOutputStream zos = new ZipOutputStream(outputStream);
+                Stream<Path> paths = Files.walk(projectPath)) {
+            paths.filter(Files::isRegularFile).forEach(filePath -> {
+                try {
+                    String entryName =
+                            projectPath.relativize(filePath).toString().replace("\\", "/");
+                    zos.putNextEntry(new ZipEntry(entryName));
+                    Files.copy(filePath, zos);
+                    zos.closeEntry();
+                } catch (IOException e) {
+                    throw new RuntimeException("Error zipping file: " + filePath, e);
+                }
+            });
+        }
+    }
+
+    public Project importProjectFromFiles(String projectName, List<MultipartFile> files, List<String> paths)
+            throws IOException {
+        Path projectDir = fileSystemStorage.createProjectDirectory(projectName);
+
+        for (int i = 0; i < files.size(); i++) {
+            String relativePath = paths.get(i).replace("\\", "/");
+
+            if (relativePath.contains("..") || relativePath.startsWith("/")) {
+                throw new SecurityException("Invalid file path: " + relativePath);
             }
+
+            Path targetPath = projectDir.resolve(relativePath).normalize();
+            if (!targetPath.startsWith(projectDir)) {
+                throw new SecurityException("File path escapes project directory: " + relativePath);
+            }
+
+            Files.createDirectories(targetPath.getParent());
+            files.get(i).transferTo(targetPath);
         }
 
-        throw new ProjectNotFoundException(String.format("Project with name: %s cannot be found", name));
+        return loadProjectAndCache(projectDir.toString());
     }
 
     public boolean updateConfigurationXml(String projectName, String filepath, String xmlContent)
-            throws ProjectNotFoundException, ConfigurationNotFoundException {
+            throws ProjectNotFoundException, ConfigurationNotFoundException, IOException {
 
         Project project = getProject(projectName);
 
-        for (Configuration config : project.getConfigurations()) {
-            if (config.getFilepath().equals(filepath)) {
-                config.setXmlContent(xmlContent);
-                return true;
-            }
-        }
+        Configuration targetConfig = project.getConfigurations().stream()
+                .filter(c -> c.getFilepath().equals(filepath))
+                .findFirst()
+                .orElseThrow(() -> new ConfigurationNotFoundException(
+                        String.format("Configuration with filepath: %s not found", filepath)));
 
-        throw new ConfigurationNotFoundException(
-                String.format("Configuration with filepath: %s can not be found", filepath));
+        fileSystemStorage.writeFile(filepath, xmlContent);
+        targetConfig.setXmlContent(xmlContent);
+        return true;
     }
 
     public Project enableFilter(String projectName, String type)
             throws ProjectNotFoundException, InvalidFilterTypeException {
-
         Project project = getProject(projectName);
-
-        FilterType filterType;
-        try {
-            filterType = FilterType.valueOf(type.toUpperCase());
-        } catch (IllegalArgumentException e) {
-            throw new InvalidFilterTypeException("Invalid filter type: " + type);
-        }
-
-        project.enableFilter(filterType);
+        project.enableFilter(parseFilterType(type));
         return project;
     }
 
     public Project disableFilter(String projectName, String type)
             throws ProjectNotFoundException, InvalidFilterTypeException {
-
         Project project = getProject(projectName);
+        project.disableFilter(parseFilterType(type));
+        return project;
+    }
 
-        FilterType filterType;
+    private FilterType parseFilterType(String type) throws InvalidFilterTypeException {
         try {
-            filterType = FilterType.valueOf(type.toUpperCase());
+            return FilterType.valueOf(type.toUpperCase());
         } catch (IllegalArgumentException e) {
             throw new InvalidFilterTypeException("Invalid filter type: " + type);
         }
-
-        project.disableFilter(filterType);
-        return project;
     }
 
     public boolean updateAdapter(String projectName, String configurationPath, String adapterName, String newAdapterXml)
             throws ProjectNotFoundException, ConfigurationNotFoundException, AdapterNotFoundException {
         Project project = getProject(projectName);
-
         Optional<Configuration> configOptional = project.getConfigurations().stream()
                 .filter(configuration -> configuration.getFilepath().equals(configurationPath))
                 .findFirst();
@@ -254,9 +328,7 @@ public class ProjectService {
 
             String xmlOutput = XmlAdapterUtils.convertDocumentToString(configDoc);
             config.setXmlContent(xmlOutput);
-
             return true;
-
         } catch (AdapterNotFoundException | ConfigurationNotFoundException | ProjectNotFoundException e) {
             throw e;
         } catch (SAXParseException e) {
@@ -270,7 +342,6 @@ public class ProjectService {
 
     public Project addConfiguration(String projectName, String configurationName) throws ProjectNotFoundException {
         Project project = getProject(projectName);
-
         Configuration configuration = new Configuration(configurationName);
         project.addConfiguration(configuration);
         return project;

@@ -6,9 +6,10 @@ interface DirectoryPickerProperties {
   isOpen: boolean
   onSelect: (absolutePath: string) => void
   onCancel: () => void
+  rootLabel?: string
 }
 
-export default function DirectoryPicker({ isOpen, onSelect, onCancel }: Readonly<DirectoryPickerProperties>) {
+export default function DirectoryPicker({ isOpen, onSelect, onCancel, rootLabel = 'Computer' }: Readonly<DirectoryPickerProperties>) {
   const [currentPath, setCurrentPath] = useState('')
   const [entries, setEntries] = useState<FilesystemEntry[]>([])
   const [selectedEntry, setSelectedEntry] = useState<string | null>(null)
@@ -52,11 +53,11 @@ export default function DirectoryPicker({ isOpen, onSelect, onCancel }: Readonly
   }
 
   const handleClick = (entry: FilesystemEntry) => {
-    setSelectedEntry(entry.absolutePath)
+    setSelectedEntry(entry.path)
   }
 
   const handleDoubleClick = (entry: FilesystemEntry) => {
-    loadEntries(entry.absolutePath)
+    loadEntries(entry.path)
   }
 
   const activePath = selectedEntry ?? currentPath
@@ -79,7 +80,9 @@ export default function DirectoryPicker({ isOpen, onSelect, onCancel }: Readonly
           >
             ..
           </button>
-          <span className="text-foreground-muted truncate text-xs">{currentPath || 'Computer'}</span>
+          <span className="text-foreground-muted truncate text-xs">
+            {currentPath || rootLabel}
+          </span>
         </div>
 
         <div className="flex-1 overflow-y-auto p-2">
@@ -92,14 +95,19 @@ export default function DirectoryPicker({ isOpen, onSelect, onCancel }: Readonly
             !error &&
             entries.map((entry) => (
               <button
-                key={entry.absolutePath}
+                key={entry.path}
                 onClick={() => handleClick(entry)}
                 onDoubleClick={() => handleDoubleClick(entry)}
                 className={`flex w-full items-center gap-2 rounded px-3 py-1.5 text-left text-sm ${
-                  selectedEntry === entry.absolutePath ? 'bg-backdrop font-medium' : 'hover:bg-backdrop/50'
+                  selectedEntry === entry.path ? 'bg-backdrop font-medium' : 'hover:bg-backdrop/50'
                 }`}
               >
-                <span className="text-xs">📁</span>
+                <span className="relative text-xs">
+                  📁
+                  {entry.projectRoot && (
+                    <span className="absolute -bottom-0.25 h-1.5 w-1.5 rounded-full bg-black" style={{ left: 'calc(50% + 2px)' }} />
+                  )}
+                </span>
                 <span className="truncate">{entry.name}</span>
               </button>
             ))}

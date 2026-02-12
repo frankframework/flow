@@ -1,4 +1,4 @@
-package org.frankframework.flow.config;
+package org.frankframework.flow.common.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;

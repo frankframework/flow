@@ -2,6 +2,7 @@
 
 export interface FilesystemEntry {
   name: string
-  absolutePath: string
+  path: string
   type: EntryType
+  projectRoot: boolean
 }
