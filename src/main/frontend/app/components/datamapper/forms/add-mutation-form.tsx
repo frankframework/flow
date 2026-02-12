@@ -10,6 +10,7 @@ import type {
 import Input from '~/components/inputs/input'
 import Dropdown from '~/components/inputs/dropdown'
 import Button from '~/components/inputs/button'
+import DeleteButton from '../basic-components/delete-button'
 
 function AddMutationForm({
   sources,
@@ -201,21 +202,15 @@ function MutationInputField({
         {mutationInput.label && <label className="mb-1 block">{mutationInput.label}</label>}
 
         {mutationInput.type === 'source' && (
-          <select
-            className="bg-background mb-2 w-full rounded border p-2"
+          <Dropdown
             value={value.sourceId ?? ''}
-            onChange={(event) => handleSourceChange(event.target.value)}
-          >
-            <option value="" hidden>
-              Select source
-            </option>
-            {mutationInput.allowDefaultValue && <option value="defaultValue">defaultValue</option>}
-            {sources.map((source) => (
-              <option key={source.id} value={source.id}>
-                {source.label}
-              </option>
-            ))}
-          </select>
+            onChange={handleSourceChange}
+            className="mb-4"
+            options={Object.fromEntries([
+              ...(mutationInput.allowDefaultValue ? [['defaultValue', 'defaultValue']] : []),
+              ...sources.map((source) => [source.id, source.label]),
+            ])}
+          />
         )}
 
         {(mutationInput.type === 'attribute' || value.type === 'defaultValue') && (
@@ -231,11 +226,7 @@ function MutationInputField({
         )}
       </div>
 
-      {showDelete && (
-        <button type="button" onClick={onDelete} className="text-error m-2 text-xl">
-          &times;
-        </button>
-      )}
+      {showDelete && onDelete && <DeleteButton onClick={onDelete} />}
     </div>
   )
 }

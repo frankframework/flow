@@ -4,9 +4,12 @@ import AddMutationForm from './add-mutation-form'
 import AddConditionForm from './add-conditions-form'
 import type { Mutation, Condition, Source } from '~/types/datamapper_types/config-types'
 import type { MappingConfig, NodeLabels } from '~/types/datamapper_types/node-types'
-import Modal from '../../modal'
+import Modal from '~/components/modal'
 import Checkbox from '~/components/inputs/checkbox'
 import Dropdown from '~/components/inputs/dropdown'
+import DeleteButton from '../basic-components/delete-button'
+import EditButton from '../basic-components/edit-button'
+import Button from '~/components/inputs/button'
 
 export interface MappingModalProps {
   onSave: (data: MappingConfig) => void
@@ -99,6 +102,7 @@ function AddMappingForm({ onSave, sources, targets, initialData }: MappingModalP
   const handleSave = () => {
     onSave({
       id: initialData?.id,
+      outputLabel: unfilteredOutputs.find((t) => t.id === output)?.label,
       colour: initialData?.colour,
       sources: sourceIds,
       target: targetId,
@@ -128,28 +132,13 @@ function AddMappingForm({ onSave, sources, targets, initialData }: MappingModalP
             <div className={scrollable}>
               {sourceIds.map((id, value) => (
                 <div key={value} className="flex items-center gap-2">
-                  <select
-                    value={id}
-                    onChange={(e) => updateArrayItem(setSourceIds, value, e.target.value)}
-                    className="bg-background w-full rounded border p-2"
-                  >
-                    <option value="">Select source</option>
-                    {sources.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.label} ({s.type})
-                      </option>
-                    ))}
-                  </select>
-                  {/* Updated dropdown: TODO check if styling can be reworked to work properly 
                   <Dropdown
                     id={value.toString()}
                     value={id}
                     onChange={(e) => updateArrayItem(setSourceIds, value, e)}
                     options={Object.fromEntries(sources.map((s) => [s.id, `${s.label} (${s.type})`]))}
-                  /> */}
-                  <button onClick={() => deleteArrayItem(setSourceIds, value)} className="text-error">
-                    &times;
-                  </button>
+                  />
+                  <DeleteButton onClick={() => deleteArrayItem(setSourceIds, value)} />
                 </div>
               ))}
             </div>
@@ -171,24 +160,19 @@ function AddMappingForm({ onSave, sources, targets, initialData }: MappingModalP
                   <div className="flex items-center justify-between">
                     <span className="font-semibold">{mutation.name}</span>
                     <div className="flex gap-2">
-                      <button
+                      <EditButton
                         onClick={() => {
                           setEditMutation(mutation)
                           setMutationModal(true)
                         }}
-                      >
-                        ✏️
-                      </button>
-                      <button
+                      />
+                      <DeleteButton
                         onClick={() =>
                           setMutations((mutations) =>
                             mutations.filter((mutationIterator) => mutationIterator.id !== mutation.id),
                           )
                         }
-                        className="text-error"
-                      >
-                        &times;
-                      </button>
+                      />
                     </div>
                   </div>
                 </div>
@@ -209,24 +193,19 @@ function AddMappingForm({ onSave, sources, targets, initialData }: MappingModalP
                   <div className="flex items-center justify-between">
                     <span className="font-semibold">{condition.name}</span>
                     <div className="flex gap-2">
-                      <button
+                      <EditButton
                         onClick={() => {
                           setEditCondition(condition)
                           setConditionModal(true)
                         }}
-                      >
-                        ✏️
-                      </button>
-                      <button
+                      />
+                      <DeleteButton
                         onClick={() =>
                           setConditions((conditions) =>
                             conditions.filter((conditionToCompare) => conditionToCompare.id !== condition.id),
                           )
                         }
-                        className="text-error"
-                      >
-                        &times;
-                      </button>
+                      />
                     </div>
                   </div>
                 </div>
@@ -282,13 +261,13 @@ function AddMappingForm({ onSave, sources, targets, initialData }: MappingModalP
         )}
       </div>
 
-      <button
+      <Button
         onClick={handleSave}
         disabled={isFormIncomplete}
         className="mt-2 w-full shrink-0 rounded-md border py-2 disabled:opacity-50"
       >
         Save
-      </button>
+      </Button>
 
       {/* Modals */}
       <Modal isOpen={addMutationModal} onClose={() => setMutationModal(false)}>
