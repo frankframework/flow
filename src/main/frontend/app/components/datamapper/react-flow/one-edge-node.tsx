@@ -54,10 +54,10 @@ function OneEdgeNode({ id, data, variant = 'source', onEdit, onDelete, onHighlig
       <div className="ml-2 text-left">{data.label}</div>
 
       {/* Footer */}
-      <div className="mt-auto ml-auto flex items-center justify-between text-sm opacity-80">
+      <div className="ml-auto flex items-center text-sm opacity-80">
         <span>({data.variableType})</span>
 
-        <div className="flex gap-3">
+        <div className="ml-4 flex h-[22px] gap-3">
           <HighlightButton
             onClick={() => {
               onHighlight?.(id)
