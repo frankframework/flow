@@ -29,16 +29,16 @@ function MappingNode({ id, data, onClick, onDelete, onEdit }: MappingNodePropert
       </div>
 
       {/* Right: Buttons (top and bottom) */}
-      <div className="flex h-[25px] w-[5px] flex-col justify-between">
+      <div className="z-5 flex h-[25px] w-[5px] flex-col justify-between">
         <EditButton
-          className="absolute top-0 right-0 text-sm"
+          className="absolute right-0 bottom-5 text-sm"
           onClick={() => {
             onEdit?.(data)
           }}
         />
 
         <DeleteButton
-          className="absolute right-0 bottom-0"
+          className="absolute top-4 right-0 z-4"
           onClick={() => {
             onDelete?.(id)
           }}
