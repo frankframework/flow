@@ -5,6 +5,7 @@ import RulerCrossPenIcon from '/icons/solar/Ruler Cross Pen.svg?react'
 import CodeIcon from '/icons/solar/Code.svg?react'
 import HelpIcon from '/icons/solar/Help.svg?react'
 import SettingsIcon from '/icons/solar/Settings.svg?react'
+import DatamapperIcon from '/icons/solar/Mapping.svg?react'
 
 export default function Navbar() {
   return (
@@ -17,6 +18,7 @@ export default function Navbar() {
         <NavbarLink route="configurations" label="Overview" Icon={ProjectsIcon} />
         <NavbarLink route="studio" label="Studio" Icon={RulerCrossPenIcon} />
         <NavbarLink route="editor" label="Editor" Icon={CodeIcon} />
+        <NavbarLink route="datamapper" label="Datamapper" Icon={DatamapperIcon} />
       </ul>
       <div className="flex-grow"></div>
       <ul className="flex w-full flex-col">
