@@ -23,7 +23,6 @@ import { FlowConfig } from '~/routes/studio/canvas/flow.config'
 interface FlowSnapshot {
   nodes: FlowNode[]
   edges: Edge[]
-  viewport: { x: number; y: number; zoom: number }
 }
 
 export interface FlowState {
@@ -31,6 +30,9 @@ export interface FlowState {
   edges: Edge[]
   viewport: { x: number; y: number; zoom: number }
   nodeIdCounter: number
+  isDragging: boolean
+  isPerformingAction: boolean
+  isInternalChange: boolean
   history: FlowSnapshot[]
   future: FlowSnapshot[]
   onNodesChange: OnNodesChange<FlowNode>
@@ -55,6 +57,7 @@ export interface FlowState {
   updateChild: (parentNodeId: string, updatedChild: ChildNode) => void
   deleteChild: (parentId: string, childId: string) => void
   addChildToChild: (nodeId: string, targetChildId: string, newChild: ChildNode) => void
+  withHistoryTransaction: (fn: () => void) => void
   saveToHistory: () => void
   undo: () => void
   redo: () => void
@@ -93,29 +96,63 @@ function nextFreeNumericId(nodes: FlowNode[]): number {
 const createSnapshot = (state: FlowState): FlowSnapshot => ({
   nodes: structuredClone(state.nodes),
   edges: structuredClone(state.edges),
-  viewport: { ...state.viewport },
 })
-
 
 const useFlowStore = create<FlowState>((set, get) => ({
   nodes: initialNodes,
   edges: initialEdges,
   viewport: { x: 0, y: 0, zoom: 1 },
   nodeIdCounter: nextFreeNumericId(initialNodes),
+  isDragging: false,
+  isPerformingAction: false,
+  isInternalChange: false,
   history: [],
   future: [],
   onNodesChange: (changes) => {
-    get().saveToHistory()
-    set({
-      nodes: applyNodeChanges(changes, get().nodes),
-    })
+    const state = get()
+
+    if (state.isInternalChange) {
+      set({ isInternalChange: false })
+      return
+    }
+
+    // Determine if this change is the start or end of a drag, or a structural change (add/remove)
+    const dragStart = changes.some(
+      (change) => change.type === 'position' && 'dragging' in change && change.dragging === true && !state.isDragging,
+    )
+
+    const dragEnd = changes.some(
+      (change) => change.type === 'position' && 'dragging' in change && change.dragging === false,
+    )
+
+    const structuralChange = changes.some((change) => change.type === 'add' || change.type === 'remove')
+
+    // Save history only when drag starts
+    // Allows users to drag nodes without filling history with intermediate states, but still supports undoing the entire drag action
+    if (dragStart || structuralChange) {
+      state.saveToHistory()
+    }
+
+    set((state) => ({
+      nodes: applyNodeChanges(changes, state.nodes),
+      isDragging: dragStart ? true : dragEnd ? false : state.isDragging,
+    }))
   },
   onEdgesChange: (changes) => {
-    get().saveToHistory()
-    set({
-      edges: applyEdgeChanges(changes, get().edges),
-    })
+    const state = get()
+    if (state.isInternalChange) {
+      set({ isInternalChange: false })
+      return
+    }
+    if (!get().isPerformingAction) {
+      get().saveToHistory()
+    }
+
+    set((state) => ({
+      edges: applyEdgeChanges(changes, state.edges),
+    }))
   },
+
   onConnect: (connection) => {
     get().saveToHistory()
     const newEdge = {
@@ -162,12 +199,18 @@ const useFlowStore = create<FlowState>((set, get) => ({
     })
   },
   deleteNode: (nodeId: string) => {
-    get().saveToHistory()
-    set({
-      nodes: get().nodes.filter((node) => node.id !== nodeId),
-      edges: get().edges.filter((edge) => edge.source !== nodeId && edge.target !== nodeId),
+    get().withHistoryTransaction(() => {
+      set({
+        isInternalChange: true,
+      })
+
+      set((state) => ({
+        nodes: state.nodes.filter((n) => n.id !== nodeId),
+        edges: state.edges.filter((e) => e.source !== nodeId && e.target !== nodeId),
+      }))
     })
   },
+
   deleteEdge: (edgeId: string) => {
     get().saveToHistory()
     set({
@@ -342,12 +385,23 @@ const useFlowStore = create<FlowState>((set, get) => ({
       }),
     })
   },
+  /* Helper which allows performing multiple updates as a single history action. Useful for complex operations that involve multiple state changes, so that they can be undone/redone in one step instead of filling the history with intermediate states. */
+  withHistoryTransaction: (fn: () => void) => {
+    get().saveToHistory()
+    set({ isPerformingAction: true })
+    fn()
+    set({ isPerformingAction: false })
+  },
   saveToHistory: () => {
-    const snapshot = createSnapshot(get())
+    const state = get()
+
+    if (state.isPerformingAction) return
+
+    const snapshot = createSnapshot(state)
 
     set((state) => ({
       history: [...state.history, snapshot].slice(-FlowConfig.MAX_HISTORY),
-      future: [], // clear redo stack on new action
+      future: [],
     }))
   },
 
@@ -361,7 +415,6 @@ const useFlowStore = create<FlowState>((set, get) => ({
     set((state) => ({
       nodes: previous.nodes,
       edges: previous.edges,
-      viewport: previous.viewport,
       history: state.history.slice(0, -1),
       future: [currentSnapshot, ...state.future],
     }))
@@ -377,7 +430,6 @@ const useFlowStore = create<FlowState>((set, get) => ({
     set((state) => ({
       nodes: next.nodes,
       edges: next.edges,
-      viewport: next.viewport,
       history: [...state.history, currentSnapshot],
       future: state.future.slice(1),
     }))
