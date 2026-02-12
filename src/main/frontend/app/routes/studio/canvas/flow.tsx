@@ -357,6 +357,23 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
         pasteSelection()
       }
 
+      if (isCmdOrCtrl && event.key.toLowerCase() === 'z') {
+        event.preventDefault()
+        // Redo if Shift is also pressed, otherwise undo
+        if (event.shiftKey) {
+          useFlowStore.getState().redo()
+        } else {
+          console.log('Undo triggered')
+          useFlowStore.getState().undo()
+        }
+      }
+
+      // Or redo with Cmd/Ctrl + Y, which is common on Windows
+      if (isCmdOrCtrl && event.key.toLowerCase() === 'y') {
+        event.preventDefault()
+        useFlowStore.getState().redo()
+      }
+
       if (event.key === 'g' || event.key === 'G') {
         event.preventDefault()
         handleGrouping()

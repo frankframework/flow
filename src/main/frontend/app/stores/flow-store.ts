@@ -18,12 +18,21 @@ import type { ExitNode } from '~/routes/studio/canvas/nodetypes/exit-node'
 import type { StickyNote } from '~/routes/studio/canvas/nodetypes/sticky-note'
 import type { ChildNode } from '~/routes/studio/canvas/nodetypes/child-node'
 import { addChildRecursive, deleteChildRecursive, updateChildRecursive } from './child-utilities'
+import { FlowConfig } from '~/routes/studio/canvas/flow.config'
+
+interface FlowSnapshot {
+  nodes: FlowNode[]
+  edges: Edge[]
+  viewport: { x: number; y: number; zoom: number }
+}
 
 export interface FlowState {
   nodes: FlowNode[]
   edges: Edge[]
   viewport: { x: number; y: number; zoom: number }
   nodeIdCounter: number
+  history: FlowSnapshot[]
+  future: FlowSnapshot[]
   onNodesChange: OnNodesChange<FlowNode>
   onEdgesChange: OnEdgesChange
   onConnect: OnConnect
@@ -46,6 +55,9 @@ export interface FlowState {
   updateChild: (parentNodeId: string, updatedChild: ChildNode) => void
   deleteChild: (parentId: string, childId: string) => void
   addChildToChild: (nodeId: string, targetChildId: string, newChild: ChildNode) => void
+  saveToHistory: () => void
+  undo: () => void
+  redo: () => void
 }
 
 export function isFrankNode(node: FlowNode): node is FrankNodeType {
@@ -78,22 +90,34 @@ function nextFreeNumericId(nodes: FlowNode[]): number {
   return max + 1
 }
 
+const createSnapshot = (state: FlowState): FlowSnapshot => ({
+  nodes: structuredClone(state.nodes),
+  edges: structuredClone(state.edges),
+  viewport: { ...state.viewport },
+})
+
+
 const useFlowStore = create<FlowState>((set, get) => ({
   nodes: initialNodes,
   edges: initialEdges,
   viewport: { x: 0, y: 0, zoom: 1 },
   nodeIdCounter: nextFreeNumericId(initialNodes),
+  history: [],
+  future: [],
   onNodesChange: (changes) => {
+    get().saveToHistory()
     set({
       nodes: applyNodeChanges(changes, get().nodes),
     })
   },
   onEdgesChange: (changes) => {
+    get().saveToHistory()
     set({
       edges: applyEdgeChanges(changes, get().edges),
     })
   },
   onConnect: (connection) => {
+    get().saveToHistory()
     const newEdge = {
       ...connection,
       type: 'frankEdge',
@@ -103,6 +127,7 @@ const useFlowStore = create<FlowState>((set, get) => ({
     })
   },
   onReconnect: (oldEdge, newConnection) => {
+    get().saveToHistory()
     set({
       edges: [
         ...get().edges.filter((edge) => edge.id !== oldEdge.id),
@@ -115,9 +140,11 @@ const useFlowStore = create<FlowState>((set, get) => ({
     })
   },
   setNodes: (nodes: FlowNode[]): void => {
+    get().saveToHistory()
     set({ nodes })
   },
   setEdges: (edges: Edge[]) => {
+    get().saveToHistory()
     set({ edges })
   },
   setViewport: (viewport) => {
@@ -129,22 +156,26 @@ const useFlowStore = create<FlowState>((set, get) => ({
     return current.toString()
   },
   addNode: (newNode: FlowNode) => {
+    get().saveToHistory()
     set({
       nodes: [...get().nodes, newNode],
     })
   },
   deleteNode: (nodeId: string) => {
+    get().saveToHistory()
     set({
       nodes: get().nodes.filter((node) => node.id !== nodeId),
       edges: get().edges.filter((edge) => edge.source !== nodeId && edge.target !== nodeId),
     })
   },
   deleteEdge: (edgeId: string) => {
+    get().saveToHistory()
     set({
       edges: get().edges.filter((edge) => edge.id !== edgeId),
     })
   },
   setAttributes: (nodeId, attributes) => {
+    get().saveToHistory()
     set({
       nodes: get().nodes.map((node) => {
         if (node.id === nodeId && isFrankNode(node)) {
@@ -168,6 +199,7 @@ const useFlowStore = create<FlowState>((set, get) => ({
     return null
   },
   addChild: (nodeId, child) => {
+    get().saveToHistory()
     set({
       nodes: get().nodes.map((node) => {
         if (node.id === nodeId && isFrankNode(node)) {
@@ -184,6 +216,7 @@ const useFlowStore = create<FlowState>((set, get) => ({
     })
   },
   setStickyText: (nodeId, text) => {
+    get().saveToHistory()
     set({
       nodes: get().nodes.map((node) => {
         if (node.id === nodeId && isStickyNote(node)) {
@@ -200,6 +233,7 @@ const useFlowStore = create<FlowState>((set, get) => ({
     })
   },
   setNodeName: (nodeId, name) => {
+    get().saveToHistory()
     set({
       nodes: get().nodes.map((node) => {
         if (node.id === nodeId && (isFrankNode(node) || isExitNode(node))) {
@@ -222,6 +256,7 @@ const useFlowStore = create<FlowState>((set, get) => ({
     return null
   },
   addHandle: (nodeId: string, handle: { type: string; index: number }) => {
+    get().saveToHistory()
     set({
       nodes: get().nodes.map((node) => {
         if (node.id === nodeId && isFrankNode(node)) {
@@ -238,6 +273,7 @@ const useFlowStore = create<FlowState>((set, get) => ({
     })
   },
   updateHandle: (nodeId: string, handleIndex: number, newHandle: { type: string; index: number }) => {
+    get().saveToHistory()
     set({
       nodes: get().nodes.map((node) => {
         if (node.id === nodeId && isFrankNode(node)) {
@@ -257,6 +293,7 @@ const useFlowStore = create<FlowState>((set, get) => ({
     })
   },
   updateChild: (rootNodeId: string, updatedChild: ChildNode) => {
+    get().saveToHistory()
     set({
       nodes: get().nodes.map((node) => {
         if (node.id !== rootNodeId || !isFrankNode(node)) return node
@@ -272,6 +309,7 @@ const useFlowStore = create<FlowState>((set, get) => ({
     })
   },
   deleteChild: (rootNodeId: string, childId: string) => {
+    get().saveToHistory()
     set({
       nodes: get().nodes.map((node) => {
         if (node.id !== rootNodeId || !isFrankNode(node)) return node
@@ -287,6 +325,7 @@ const useFlowStore = create<FlowState>((set, get) => ({
     })
   },
   addChildToChild: (nodeId: string, targetChildId: string, newChild: ChildNode) => {
+    get().saveToHistory()
     set({
       nodes: get().nodes.map((node) => {
         if (node.id !== nodeId) return node
@@ -302,6 +341,46 @@ const useFlowStore = create<FlowState>((set, get) => ({
         }
       }),
     })
+  },
+  saveToHistory: () => {
+    const snapshot = createSnapshot(get())
+
+    set((state) => ({
+      history: [...state.history, snapshot].slice(-FlowConfig.MAX_HISTORY),
+      future: [], // clear redo stack on new action
+    }))
+  },
+
+  undo: () => {
+    const { history } = get()
+    if (history.length === 0) return
+
+    const previous = history.at(-1)! // Already checked that history is not empty, so this is safe
+    const currentSnapshot = createSnapshot(get())
+
+    set((state) => ({
+      nodes: previous.nodes,
+      edges: previous.edges,
+      viewport: previous.viewport,
+      history: state.history.slice(0, -1),
+      future: [currentSnapshot, ...state.future],
+    }))
+  },
+
+  redo: () => {
+    const { future } = get()
+    if (future.length === 0) return
+
+    const next = future[0]
+    const currentSnapshot = createSnapshot(get())
+
+    set((state) => ({
+      nodes: next.nodes,
+      edges: next.edges,
+      viewport: next.viewport,
+      history: [...state.history, currentSnapshot],
+      future: state.future.slice(1),
+    }))
   },
 }))
 
