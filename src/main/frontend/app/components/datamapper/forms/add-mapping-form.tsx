@@ -131,8 +131,8 @@ function AddMappingForm({ onSave, sources, targets, initialData }: MappingModalP
                   <Dropdown
                     id={value.toString()}
                     value={id}
-                    onChange={(e) => updateArrayItem(setSourceIds, value, e)}
-                    options={Object.fromEntries(sources.map((s) => [s.id, `${s.label} (${s.type})`]))}
+onChange={(event) => updateArrayItem(setSourceIds, value, event)}
+options={Object.fromEntries(sources.map((source) => [source.id, `${source.label} (${source.type})`]))}
                   />
                   <button onClick={() => deleteArrayItem(setSourceIds, value)} className="text-error">
                     &times;
