@@ -202,7 +202,7 @@ function ConditionInputField({
         <Dropdown
           value={value?.value ?? ''}
           onChange={(val) => onChange({ type: 'operator', value: val })}
-          options={Object.fromEntries(operatorConfig.allowedValues.map((opt) => [opt, opt]))}
+          options={Object.fromEntries(operatorConfig.allowedValues.map((option) => [option, option]))}
         />
       </div>
     )
