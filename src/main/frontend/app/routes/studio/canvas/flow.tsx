@@ -11,6 +11,7 @@ import {
   ReactFlow,
   ReactFlowProvider,
   useReactFlow,
+  useUpdateNodeInternals,
 } from '@xyflow/react'
 import Dagre from '@dagrejs/dagre'
 import '@xyflow/react/dist/style.css'
@@ -55,10 +56,11 @@ const selector = (state: FlowState) => ({
 function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b: boolean) => void }>) {
   const theme = useTheme()
   const [loading, setLoading] = useState(false)
-  const { isEditing, setIsEditing, setParentId, setDraggedName } = useNodeContextStore(
+  const { isEditing, setIsEditing, setIsNewNode, setParentId, setDraggedName } = useNodeContextStore(
     useShallow((s) => ({
       isEditing: s.isEditing,
       setIsEditing: s.setIsEditing,
+      setIsNewNode: s.setIsNewNode,
       setParentId: s.setParentId,
       setDraggedName: s.setDraggedName,
     })),
@@ -77,6 +79,7 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
     groupNode: GroupNodeComponent,
   }
   const edgeTypes = { frankEdge: FrankEdgeComponent }
+  const updateNodeInternals = useUpdateNodeInternals()
   const reactFlow = useReactFlow()
   const reactFlowRef = useRef(reactFlow)
   reactFlowRef.current = reactFlow
@@ -363,7 +366,6 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
         if (event.shiftKey) {
           useFlowStore.getState().redo()
         } else {
-          console.log('Undo triggered')
           useFlowStore.getState().undo()
         }
       }
@@ -447,6 +449,7 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
     sourceInfo?: { nodeId: string | null; handleId: string | null; handleType: 'source' | 'target' | null },
   ) {
     showNodeContextMenu(true)
+    setIsNewNode(true)
     setIsEditing(true)
 
     const flowStore = useFlowStore.getState()
@@ -527,18 +530,17 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
         flowStore.setEdges(Array.isArray(flowJson.edges) ? flowJson.edges : [])
         const viewport = flowJson.viewport as { x: number; y: number; zoom: number } | undefined
         flowStore.setViewport(viewport && true ? viewport : { x: 0, y: 0, zoom: 1 })
+
+        flowStore.setHistory(tabData.history ?? [])
+        flowStore.setFuture(tabData.future ?? [])
       } else {
-        flowStore.setNodes([])
-        flowStore.setEdges([])
-        flowStore.setViewport({ x: 0, y: 0, zoom: 1 })
+        clearFlow()
       }
     }
 
     function clearFlow() {
       const flowStore = useFlowStore.getState()
-      flowStore.setNodes([])
-      flowStore.setEdges([])
-      flowStore.setViewport({ x: 0, y: 0, zoom: 1 })
+      flowStore.resetStore()
     }
 
     async function loadFlowFromTab(tab: TabData) {
@@ -557,6 +559,8 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
           flowStore.setViewport({ x: 0, y: 0, zoom: 1 })
           const laidOutNodes = layoutGraph(adapterJson.nodes, adapterJson.edges, 'LR')
           flowStore.setNodes(laidOutNodes)
+          flowStore.setHistory([])
+          flowStore.setFuture([])
         }
       } catch (error) {
         console.error('Error loading tab flow:', error)
@@ -581,6 +585,8 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
           ...flowData,
           viewport,
         },
+        history: flowStore.history,
+        future: flowStore.future,
       })
     }
 
@@ -633,6 +639,29 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
       toast.error(`Failed to save XML: ${error instanceof Error ? error.message : error}`)
     }
   }
+
+  // Listen for node data changes to trigger internals update for connected edges and handles
+  // Added for undo/redo and direct data changes to ensure handles stay positioned properly
+  useEffect(() => {
+    const unsub = useFlowStore.subscribe(
+      (state) => state.nodes, // selector: subscribe only to nodes
+      (newNodes, oldNodes) => {
+        if (!reactFlowRef.current || !oldNodes) return
+
+        // Compare old vs new node data
+        for (const node of newNodes) {
+          const oldNode = oldNodes.find((n) => n.id === node.id)
+          if (!oldNode) continue
+
+          if (oldNode.data !== node.data) {
+            updateNodeInternals(node.id)
+          }
+        }
+      },
+    )
+
+    return () => unsub()
+  }, [updateNodeInternals])
 
   return (
     <div

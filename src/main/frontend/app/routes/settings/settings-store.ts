@@ -57,7 +57,7 @@ const defaultEditorSettings: EditorSettings = {
 const defaultStudioSettings: StudioSettings = {
   previewOnSave: true,
   autoRefresh: true,
-  gradient: true,
+  gradient: false,
 }
 
 const defaultProjectSettings: ProjectSettings = {
