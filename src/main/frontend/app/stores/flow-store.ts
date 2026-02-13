@@ -136,9 +136,12 @@ const useFlowStore = create<FlowState>()(
         (change) => change.type === 'position' && 'dragging' in change && change.dragging === false,
       )
 
+      let nextIsDragging = state.isDragging
+      if (dragStart) nextIsDragging = true
+      if (dragEnd) nextIsDragging = false
       set((state) => ({
         nodes: applyNodeChanges(changes, state.nodes),
-        isDragging: dragStart ? true : dragEnd ? false : state.isDragging,
+        isDragging: nextIsDragging,
       }))
 
       if (dragStart) get().saveToHistory()
