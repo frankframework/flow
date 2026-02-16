@@ -46,7 +46,6 @@ export default function AppLayout() {
           <AppContent />
         </main>
       </div>
-      <Toast />
     </FrankDocProvider>
   )
 }

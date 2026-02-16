@@ -3,15 +3,7 @@ import { useNavigate } from 'react-router'
 import FfIcon from '/icons/custom/ff!-icon.svg?react'
 import ArchiveIcon from '/icons/solar/Archive.svg?react'
 import { toast } from 'react-toastify'
-import { useRecentProjects } from '~/hooks/use-projects'
 import { useProjectStore } from '~/stores/project-store'
-import {
-  openProject,
-  createProject,
-  cloneProject,
-  exportProject,
-  importProjectFolder,
-} from '~/services/project-service'
 
 import ProjectRow from './project-row'
 import Search from '~/components/search/search'
@@ -24,6 +16,14 @@ import { fetchAppInfo } from '~/services/app-info-service'
 import { removeRecentProject } from '~/services/recent-project-service'
 import useTabStore from '~/stores/tab-store'
 import useEditorTabStore from '~/stores/editor-tab-store'
+import {
+  cloneProject,
+  createProject,
+  exportProject,
+  importProjectFolder,
+  openProject
+} from '~/services/project-service'
+import { useRecentProjects } from '~/hooks/use-projects'
 
 export default function ProjectLanding() {
   const navigate = useNavigate()
@@ -229,10 +229,20 @@ export default function ProjectLanding() {
 }
 
 const Header = () => (
-  <header className="mb-6 flex w-2/5 items-center gap-3">
-    <FfIcon className="h-12 w-auto" />
-    <h1 className="text-lg font-semibold text-slate-800">Frank!Flow</h1>
-  </header>
+  <>
+    //TODO CHANGE
+    <header className="mb-6 flex w-2/5 items-center gap-3">
+      <FfIcon className="h-12 w-auto" />
+      <h1 className="text-lg font-semibold text-slate-800">Flow</h1>
+    </header>
+
+    <div className="relative mb-6 flex w-2/5 flex-row items-center">
+      <div className="flex w-1/4 flex-row items-center">
+        <FfIcon className="h-auto w-12" />
+        <div className="px-2 text-lg font-semibold">Flow</div>
+      </div>
+    </div>
+  </>
 )
 
 const Sidebar = ({

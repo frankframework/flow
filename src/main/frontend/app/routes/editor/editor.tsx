@@ -1,6 +1,5 @@
 import Editor, { type Monaco, type OnMount } from '@monaco-editor/react'
 import { useShallow } from 'zustand/react/shallow'
-import { toast } from 'react-toastify'
 import SidebarHeader from '~/components/sidebars-layout/sidebar-header'
 import SidebarLayout from '~/components/sidebars-layout/sidebar-layout'
 import { SidebarSide } from '~/components/sidebars-layout/sidebar-layout-store'
@@ -14,11 +13,10 @@ import EditorTabs from '~/components/tabs/editor-tabs'
 import type { ElementDetails, Attribute, EnumValue } from '~/types/ff-doc.types'
 import { useFrankDoc } from '~/providers/frankdoc-provider'
 import { fetchConfiguration, saveConfiguration } from '~/services/configuration-service'
-import { useNavigationStore } from '~/stores/navigation-store'
-import useTabStore from '~/stores/tab-store'
 import RulerCrossPenIcon from '/icons/solar/Ruler Cross Pen.svg?react'
 import { openInStudio } from '~/actions/navigationActions'
 import Button from '~/components/inputs/button'
+import { showErrorToast, showSuccessToast } from '~/components/toast'
 
 function findAdaptersInXml(xml: string): { name: string; offset: number }[] {
   const adapters: { name: string; offset: number }[] = []
@@ -263,9 +261,9 @@ export default function CodeEditor() {
 
     try {
       await saveConfiguration(project.name, activeTabFilePath, updatedContent)
-      toast.success('Succesfully saved content')
+      showSuccessToast('Succesfully saved content')
     } catch (error) {
-      toast.error(`Error saving configuration: ${error instanceof Error ? error.message : error}`)
+      showErrorToast(`Error saving configuration: ${error instanceof Error ? error.message : error}`)
       console.error('Error saving configuration:', error)
     } finally {
       setIsSaving(false)

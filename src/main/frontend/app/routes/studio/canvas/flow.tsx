@@ -33,6 +33,7 @@ import { useProjectStore } from '~/stores/project-store'
 import { toast } from 'react-toastify'
 import { saveAdapter } from '~/services/adapter-service'
 import { cloneWithRemappedIds } from '~/utils/flow-utils'
+import { showErrorToast, showSuccessToast } from '~/components/toast'
 
 export type FlowNode = FrankNodeType | ExitNode | StickyNote | GroupNode | Node
 
@@ -608,10 +609,10 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
 
     try {
       await saveAdapter(project.name, xmlString, activeTabName, configurationPath)
-      toast.success('Flow saved successfully!')
+      showSuccessToast('Flow saved successfully!')
     } catch (error) {
       console.error('Failed to save XML:', error)
-      toast.error(`Failed to save XML: ${error instanceof Error ? error.message : error}`)
+      showErrorToast(`Failed to save XML: ${error instanceof Error ? error.message : error}`)
     }
   }
 
