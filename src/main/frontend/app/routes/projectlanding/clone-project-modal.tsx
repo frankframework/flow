@@ -4,7 +4,7 @@ import { filesystemService } from '~/services/filesystem-service'
 
 interface CloneProjectModalProperties {
   isOpen: boolean
-  isLocal: boolean // <--- NIEUW
+  isLocal: boolean
   onClose: () => void
   onClone: (repoUrl: string, localPath: string) => void
 }
@@ -19,7 +19,6 @@ export default function CloneProjectModal({
   const [location, setLocation] = useState('')
   const [showPicker, setShowPicker] = useState(false)
 
-  // Load default path when modal opens
   useEffect(() => {
     if (isOpen && isLocal) {
       filesystemService
@@ -39,7 +38,6 @@ export default function CloneProjectModal({
     ?.replace(/\.git$/, '')
 
   const handleClone = () => {
-    // Validatie: Repo URL is altijd nodig. Location alleen als lokaal.
     if (!repoUrl.trim()) return
     if (isLocal && !location) return
 
@@ -49,7 +47,6 @@ export default function CloneProjectModal({
       const separator = location.includes('/') ? '/' : '\\'
       finalPath = `${location}${separator}${repoName}`
     } else {
-      // Cloud: combineer optionele subfolder met reponaam
       const name = repoName || 'cloned-project'
       finalPath = location ? `${location}/${name}` : name
     }
@@ -117,7 +114,6 @@ export default function CloneProjectModal({
           <div className="flex gap-2">
             <button
               onClick={handleClone}
-              // Button disabled logica
               disabled={!repoUrl.trim() || (isLocal && !location)}
               className="bg-backdrop hover:bg-background border-border rounded border px-4 py-2 hover:cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
             >

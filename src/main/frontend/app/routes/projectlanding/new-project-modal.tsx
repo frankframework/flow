@@ -4,7 +4,7 @@ import { filesystemService } from '~/services/filesystem-service'
 
 interface NewProjectModalProperties {
   isOpen: boolean
-  isLocal: boolean // <--- NIEUW
+  isLocal: boolean
   onClose: () => void
   onCreate: (pathOrName: string) => void
 }
@@ -14,7 +14,6 @@ export default function NewProjectModal({ isOpen, isLocal, onClose, onCreate }: 
   const [location, setLocation] = useState('')
   const [showPicker, setShowPicker] = useState(false)
 
-  // Load default path when modal opens
   useEffect(() => {
     if (isOpen && isLocal) {
       filesystemService
@@ -37,7 +36,6 @@ export default function NewProjectModal({ isOpen, isLocal, onClose, onCreate }: 
       const absolutePath = `${location}${separator}${name.trim()}`
       onCreate(absolutePath)
     } else {
-      // Cloud: combineer optionele subfolder met naam
       const trimmedName = name.trim()
       const path = location ? `${location}/${trimmedName}` : trimmedName
       onCreate(path)
@@ -103,7 +101,6 @@ export default function NewProjectModal({ isOpen, isLocal, onClose, onCreate }: 
           <div className="flex gap-2">
             <button
               onClick={handleCreate}
-              // Validatie: Naam moet er zijn. Locatie alleen als isLocal.
               disabled={!name.trim() || (isLocal && !location)}
               className="bg-backdrop hover:bg-background border-border rounded border px-4 py-2 hover:cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
             >

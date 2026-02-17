@@ -122,11 +122,9 @@ public class ProjectServiceTest {
         assertNotNull(project);
         assertEquals(projectName, project.getName());
 
-        // Verify that src/main/configurations directory was created
         Path configDir = tempDir.resolve(projectName).resolve("src/main/configurations");
         assertTrue(Files.exists(configDir), "configurations directory should exist");
 
-        // Verify that Configuration.xml was written with default content
         Path configFile = configDir.resolve("Configuration.xml");
         assertTrue(Files.exists(configFile), "Configuration.xml should exist");
         String content = Files.readString(configFile, StandardCharsets.UTF_8);
@@ -188,7 +186,6 @@ public class ProjectServiceTest {
         projectService.createProjectOnDisk("proj");
         Project project = projectService.getProject("proj");
 
-        // The project should already have at least one configuration from disk
         assertFalse(project.getConfigurations().isEmpty());
         Configuration config = project.getConfigurations().get(0);
         String filepath = config.getFilepath();
@@ -449,7 +446,6 @@ public class ProjectServiceTest {
         assertNotNull(project);
         assertEquals(projectName, project.getName());
 
-        // Verify files were actually written to disk
         Path projectDir = tempDir.resolve(projectName);
         Path writtenConfig = projectDir.resolve("src/main/configurations/Configuration.xml");
         assertTrue(Files.exists(writtenConfig), "Configuration.xml should be written to disk");
@@ -563,7 +559,6 @@ public class ProjectServiceTest {
                 "files", "evil.xml", "application/xml", "<evil/>".getBytes(StandardCharsets.UTF_8));
 
         List<MultipartFile> files = List.of(maliciousFile);
-        // Backslashes get normalized to forward slashes, but .. is still detected
         List<String> paths = List.of("..\\..\\etc\\evil.xml");
 
         assertThrows(SecurityException.class, () -> projectService.importProjectFromFiles(projectName, files, paths));

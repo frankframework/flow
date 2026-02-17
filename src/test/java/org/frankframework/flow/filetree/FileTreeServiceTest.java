@@ -268,7 +268,6 @@ public class FileTreeServiceTest {
     public void getShallowDirectoryTreeReturnsTreeForValidDirectory() throws IOException, ProjectNotFoundException {
         stubToAbsolutePath();
 
-        // Create project structure
         Files.writeString(tempProjectRoot.resolve("config1.xml"), "<config/>");
         Files.writeString(tempProjectRoot.resolve("readme.txt"), "hello");
 

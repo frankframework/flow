@@ -152,8 +152,6 @@ public class ProjectService {
         projectCache.entrySet().removeIf(e -> e.getValue().getName().equals(projectName));
     }
 
-    // --- Core Loading Logic ---
-
     private Project loadProjectCached(String path) throws IOException {
         String cacheKey = fileSystemStorage.toAbsolutePath(path).toString();
         Project cached = projectCache.get(cacheKey);

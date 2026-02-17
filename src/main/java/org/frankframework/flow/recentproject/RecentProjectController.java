@@ -42,7 +42,6 @@ public class RecentProjectController {
             return ResponseEntity.badRequest().build();
         }
 
-        // In cloud mode, convert the relative path back to absolute before removing
         if (!fileSystemStorage.isLocalEnvironment()) {
             try {
                 rootPath = fileSystemStorage.toAbsolutePath(rootPath).toString();

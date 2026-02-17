@@ -83,7 +83,6 @@ public class LocalFileSystemStorageService implements FileSystemStorage {
             for (File root : File.listRoots()) {
                 Path rootPath = root.toPath().toAbsolutePath().normalize();
                 if (candidate.startsWith(rootPath)) {
-                    // Re-resolve relative to the known root to break the taint chain
                     Path relativePart = rootPath.relativize(candidate);
                     return rootPath.resolve(relativePart);
                 }
