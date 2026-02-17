@@ -6,7 +6,6 @@ import { useProjectStore, getStoredProjectName } from '~/stores/project-store'
 import { fetchProject } from '~/services/project-service'
 import LoadingSpinner from '~/components/loading-spinner'
 import type { Project } from '~/types/project.types'
-import { Toast } from '~/components/toast'
 
 export default function AppLayout() {
   const [restoring, setRestoring] = useState(!!getStoredProjectName())
