@@ -16,6 +16,8 @@ import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.frankframework.flow.adapter.AdapterNotFoundException;
 import org.frankframework.flow.configuration.Configuration;
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
@@ -135,24 +137,13 @@ public class ProjectService {
             throw new IllegalArgumentException("Project already exists at: " + targetDir);
         }
 
-        try {
-            ProcessBuilder processBuilder = new ProcessBuilder("git", "clone", repoUrl, targetDir.toString());
-            processBuilder.redirectErrorStream(true);
-            Process process = processBuilder.start();
-
-            String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-            int exitCode = process.waitFor();
-
-            if (exitCode != 0) {
-                log.error("git clone failed (exit code {}): {}", exitCode, output);
-                throw new IOException(
-                        "git clone failed: " + output.lines().findFirst().orElse("unknown error"));
-            }
-
+        try (Git git = Git.cloneRepository()
+                .setURI(repoUrl)
+                .setDirectory(targetDir.toFile())
+                .call()) {
             log.info("Cloned repository {} to {}", repoUrl, targetDir);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new IOException("git clone was interrupted");
+        } catch (GitAPIException e) {
+            throw new IOException("git clone failed: " + e.getMessage(), e);
         }
 
         return loadProjectAndCache(targetDir.toString());
