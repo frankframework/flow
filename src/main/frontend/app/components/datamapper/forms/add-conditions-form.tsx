@@ -85,7 +85,7 @@ function AddConditionForm({ sources, onSave, conditionToEdit }: Readonly<AddCond
         />
       )}
 
-      <Button onClick={handleSave} disabled={isFormIncomplete}>
+      <Button onClick={handleSave} disabled={isFormIncomplete} className="w-full">
         Save
       </Button>
     </div>
@@ -148,28 +148,19 @@ function ConditionInputField({
     return (
       <div className="mb-2 flex flex-col">
         <label className="mb-1">{inputConfig.label}</label>
-        <select
-          className="bg-background mb-2 w-full rounded border p-2"
+        <Dropdown
+          className="mb-4"
           value={selectedIsDefault ? 'defaultValue' : (value?.sourceId ?? '')}
-          onChange={(event) => {
-            const value_ = event.target.value
-            if (value_ === 'defaultValue') {
-              onChange({ type: 'defaultValue', value: '' })
-            } else {
-              onChange({ type: 'source', sourceId: value_, value: '' })
-            }
-          }}
-        >
-          <option value="" hidden>
-            Select source
-          </option>
-          {inputConfig.allowDefaultValue && <option value="defaultValue">Default Value</option>}
-          {filteredSources.map((source) => (
-            <option key={source.id} value={source.id}>
-              {source.label}
-            </option>
-          ))}
-        </select>
+          onChange={(id) =>
+            onChange(
+              id === 'defaultValue' ? { type: 'defaultValue', value: '' } : { type: 'source', sourceId: id, value: '' },
+            )
+          }
+          options={Object.fromEntries([
+            ...(inputConfig.allowDefaultValue ? [['defaultValue', 'Default Value']] : []),
+            ...filteredSources.map((source) => [source.id, source.label]),
+          ])}
+        />
 
         {selectedIsDefault && (
           <Input
@@ -208,20 +199,11 @@ function ConditionInputField({
     return (
       <div className="mb-2 flex flex-col">
         <label className="mb-1">{operatorConfig.label}</label>
-        <select
-          className="bg-background w-full rounded border p-2"
+        <Dropdown
           value={value?.value ?? ''}
-          onChange={(event) => onChange({ type: 'operator', value: event.target.value })}
-        >
-          <option value="" hidden>
-            Select operator
-          </option>
-          {operatorConfig.allowedValues.map((option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
-          ))}
-        </select>
+          onChange={(val) => onChange({ type: 'operator', value: val })}
+          options={Object.fromEntries(operatorConfig.allowedValues.map((option) => [option, option]))}
+        />
       </div>
     )
   }
