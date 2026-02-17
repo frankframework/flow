@@ -137,7 +137,7 @@ public class ProjectService {
                 .setDirectory(targetDir.toFile())
                 .call()) {
             log.info("Cloned repository {} to {}", repoUrl, targetDir);
-		} catch (GitAPIException e) {
+        } catch (GitAPIException e) {
             throw new IOException("git clone failed: " + e.getMessage(), e);
         }
 

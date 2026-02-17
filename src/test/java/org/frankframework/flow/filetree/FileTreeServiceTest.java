@@ -10,7 +10,6 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.Comparator;
 import java.util.List;
 import org.frankframework.flow.adapter.AdapterNotFoundException;
@@ -247,7 +246,8 @@ public class FileTreeServiceTest {
         Files.writeString(tempProjectRoot.resolve("config1.xml"), "<config/>");
         Files.writeString(tempProjectRoot.resolve("readme.txt"), "hello");
 
-        Project project = new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+        Project project =
+                new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
         when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
 
         FileTreeNode node = fileTreeService.getShallowDirectoryTree(TEST_PROJECT_NAME, ".");
@@ -263,19 +263,21 @@ public class FileTreeServiceTest {
 
     @Test
     void getShallowDirectoryTreeThrowsSecurityExceptionForPathTraversal() throws ProjectNotFoundException {
-        Project project = new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+        Project project =
+                new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
         when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
 
         SecurityException ex = assertThrows(
-                SecurityException.class,
-                () -> fileTreeService.getShallowDirectoryTree(TEST_PROJECT_NAME, "../other"));
+                SecurityException.class, () -> fileTreeService.getShallowDirectoryTree(TEST_PROJECT_NAME, "../other"));
 
         assertTrue(ex.getMessage().contains("Invalid path"));
     }
 
     @Test
-    void getShallowDirectoryTreeThrowsIllegalArgumentExceptionIfDirectoryDoesNotExist() throws ProjectNotFoundException {
-        Project project = new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+    void getShallowDirectoryTreeThrowsIllegalArgumentExceptionIfDirectoryDoesNotExist()
+            throws ProjectNotFoundException {
+        Project project =
+                new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
         when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
 
         IllegalArgumentException ex = assertThrows(
@@ -293,7 +295,8 @@ public class FileTreeServiceTest {
         Files.writeString(configsDir.resolve("config1.xml"), "<config/>");
         Files.writeString(configsDir.resolve("readme.txt"), "hello");
 
-        Project project = new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+        Project project =
+                new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
         when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
 
         FileTreeNode node = fileTreeService.getShallowConfigurationsDirectoryTree(TEST_PROJECT_NAME);
@@ -310,7 +313,8 @@ public class FileTreeServiceTest {
 
     @Test
     public void getShallowConfigurationsDirectoryTreeThrowsIfDirectoryDoesNotExist() throws ProjectNotFoundException {
-        Project project = new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+        Project project =
+                new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
         when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
 
         IllegalArgumentException ex = assertThrows(
@@ -342,7 +346,8 @@ public class FileTreeServiceTest {
         Files.createDirectory(subDir);
         Files.writeString(subDir.resolve("nested.xml"), "<nested></nested>");
 
-        Project project = new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+        Project project =
+                new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
         when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
 
         FileTreeNode node = fileTreeService.getConfigurationsDirectoryTree(TEST_PROJECT_NAME);
@@ -367,7 +372,8 @@ public class FileTreeServiceTest {
 
     @Test
     public void getConfigurationsDirectoryTreeThrowsIfDirectoryDoesNotExist() throws ProjectNotFoundException {
-        Project project = new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+        Project project =
+                new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
         when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
 
         IllegalArgumentException ex = assertThrows(
