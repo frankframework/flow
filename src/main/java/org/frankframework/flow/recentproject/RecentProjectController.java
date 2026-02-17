@@ -41,6 +41,16 @@ public class RecentProjectController {
         if (rootPath == null || rootPath.isBlank()) {
             return ResponseEntity.badRequest().build();
         }
+
+        // In cloud mode, convert the relative path back to absolute before removing
+        if (!fileSystemStorage.isLocalEnvironment()) {
+            try {
+                rootPath = fileSystemStorage.toAbsolutePath(rootPath).toString();
+            } catch (Exception e) {
+                return ResponseEntity.badRequest().build();
+            }
+        }
+
         recentProjectsService.removeRecentProject(rootPath);
         return ResponseEntity.ok().build();
     }

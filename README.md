@@ -2,6 +2,11 @@
 
 Easily create configurations for the Frank!Framework with the Flow Studio and Editor! 
 
+Please use profile on locally:
+-Dspring.profiles.active=local
+or with docker
+-Dspring.profiles.active=cloud
+
 ## Build from source
 
 Building the project requires Java, Maven, NodeJS, PNPM and Docker installed on your system.

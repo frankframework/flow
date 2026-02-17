@@ -22,11 +22,15 @@ import DirectoryPicker from '~/components/directory-picker/directory-picker'
 import type { RecentProject } from '~/types/project.types'
 import { fetchAppInfo } from '~/services/app-info-service'
 import { removeRecentProject } from '~/services/recent-project-service'
+import useTabStore from '~/stores/tab-store'
+import useEditorTabStore from '~/stores/editor-tab-store'
 
 export default function ProjectLanding() {
   const navigate = useNavigate()
   const { data: recentProjects, isLoading, error: apiError, refetch } = useRecentProjects()
   const clearProjectState = useProjectStore((state) => state.clearProject)
+  const clearTabsState = useTabStore((state) => state.clearTabs)
+  const clearEditorTabsState = useEditorTabStore((state) => state.clearTabs)
   const setProject = useProjectStore((state) => state.setProject)
 
   const [searchTerm, setSearchTerm] = useState('')
@@ -35,11 +39,14 @@ export default function ProjectLanding() {
   const [isOpenPickerOpen, setIsOpenPickerOpen] = useState(false)
   const [isLocalEnvironment, setIsLocalEnvironment] = useState(true)
   const [rootLocationName, setRootLocationName] = useState('Computer')
+  const [isOpeningProject, setIsOpeningProject] = useState(false)
   const importInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     clearProjectState()
-  }, [clearProjectState])
+    clearEditorTabsState()
+    clearTabsState()
+  }, [clearEditorTabsState, clearProjectState, clearTabsState])
 
   useEffect(() => {
     const loadAppInfo = async () => {
@@ -65,12 +72,15 @@ export default function ProjectLanding() {
 
   const handleOpenProject = useCallback(
     async (rootPath: string) => {
+      setIsOpeningProject(true)
       try {
         const project = await openProject(rootPath)
         setProject(project)
         navigate(`/studio/${encodeURIComponent(project.name)}`)
       } catch (error) {
         toast.error(error instanceof Error ? error.message : 'Failed to open project')
+      } finally {
+        setIsOpeningProject(false)
       }
     },
     [navigate, setProject],
@@ -82,6 +92,7 @@ export default function ProjectLanding() {
   }
 
   const onCreateProject = async (absolutePath: string) => {
+    setIsOpeningProject(true)
     try {
       const project = await createProject(absolutePath)
       setProject(project)
@@ -89,10 +100,13 @@ export default function ProjectLanding() {
       navigate(`/studio/${encodeURIComponent(project.name)}`)
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to create project')
+    } finally {
+      setIsOpeningProject(false)
     }
   }
 
   const onCloneProject = async (repoUrl: string, localPath: string) => {
+    setIsOpeningProject(true)
     try {
       const project = await cloneProject(repoUrl, localPath)
       setProject(project)
@@ -100,6 +114,8 @@ export default function ProjectLanding() {
       navigate(`/studio/${encodeURIComponent(project.name)}`)
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to clone project from GitHub')
+    } finally {
+      setIsOpeningProject(false)
     }
   }
 
@@ -125,6 +141,7 @@ export default function ProjectLanding() {
     const files = e.target.files
     if (!files || files.length === 0) return
 
+    setIsOpeningProject(true)
     try {
       const project = await importProjectFolder(files)
       setProject(project)
@@ -132,6 +149,8 @@ export default function ProjectLanding() {
       navigate(`/studio/${encodeURIComponent(project.name)}`)
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to import project')
+    } finally {
+      setIsOpeningProject(false)
     }
 
     if (importInputRef.current) {
@@ -140,9 +159,9 @@ export default function ProjectLanding() {
   }
 
   const projects = recentProjects ?? []
-  const filteredProjects = projects.filter((p) => p.name.toLowerCase().includes(searchTerm.toLowerCase()))
+  const filteredProjects = projects.filter((project) => project.name.toLowerCase().includes(searchTerm.toLowerCase()))
 
-  if (isLoading) return <LoadingState />
+  if (isLoading || isOpeningProject) return <LoadingState />
 
   return (
     <div className="bg-backdrop flex min-h-screen w-full flex-col items-center pt-20">
@@ -170,23 +189,11 @@ export default function ProjectLanding() {
 
         {!isLocalEnvironment && (
           <div className="border-border border-t bg-amber-50 px-4 py-2 text-xs text-amber-600">
-            Cloud workspace projects are automatically removed after 24 hours of inactivity. Use Export to download a
-            backup.
+            Cloud workspace projects are automatically removed after 24 hours of inactivity. After you are done please
+            use the Export functionality in the landing page to download a backup of your project.
           </div>
         )}
       </main>
-
-      {!isLocalEnvironment && (
-        <input
-          ref={importInputRef}
-          type="file"
-          /* @ts-expect-error webkitdirectory is a non-standard but widely supported attribute */
-          webkitdirectory=""
-          multiple
-          className="hidden"
-          onChange={handleImportFolderChange}
-        />
-      )}
 
       <NewProjectModal
         isOpen={isModalOpen}
@@ -200,6 +207,17 @@ export default function ProjectLanding() {
         onClose={() => setIsCloneModalOpen(false)}
         onClone={onCloneProject}
       />
+      {!isLocalEnvironment && (
+        <input
+          ref={importInputRef}
+          type="file"
+          /* @ts-expect-error webkitdirectory is a non-standard but widely supported attribute */
+          webkitdirectory=""
+          multiple
+          className="hidden"
+          onChange={handleImportFolderChange}
+        />
+      )}
       <DirectoryPicker
         isOpen={isOpenPickerOpen}
         onSelect={onOpenFolder}
@@ -232,7 +250,7 @@ const Sidebar = ({
 }) => (
   <nav className="border-border flex w-1/4 flex-col gap-3 border-r bg-slate-50/50 p-4">
     <ActionButton label={isLocal ? 'Open Local Folder' : 'Open Workspace Project'} onClick={onOpenClick} />
-    {isLocal && <ActionButton label="Clone Repository" onClick={onCloneClick} />}
+    <ActionButton label="Clone Repository" onClick={onCloneClick} />
     <ActionButton label="New Project" onClick={onNewClick} />
     {!isLocal && <ActionButton label="Import Project Folder" onClick={onImportClick} />}
   </nav>
@@ -255,14 +273,14 @@ const ProjectList = ({
     {projects.length === 0 ? (
       <p className="text-muted-foreground mt-10 text-center text-sm italic">No projects found</p>
     ) : (
-      projects.map((p) => (
+      projects.map((project) => (
         <ProjectRow
-          key={p.rootPath}
-          project={p}
+          key={project.rootPath}
+          project={project}
           isLocal={isLocal}
-          onClick={() => onProjectClick(p.rootPath)}
-          onRemove={() => onRemoveProject(p.rootPath)}
-          onExport={() => onExportProject(p.name)}
+          onClick={() => onProjectClick(project.rootPath)}
+          onRemove={() => onRemoveProject(project.rootPath)}
+          onExport={() => onExportProject(project.name)}
         />
       ))
     )}

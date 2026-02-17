@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
+import FolderIcon from '/icons/solar/Folder.svg?react'
 import { filesystemService } from '~/services/filesystem-service'
 import type { FilesystemEntry } from '~/types/filesystem.types'
+import { ApiError } from '~/utils/api'
 
 interface DirectoryPickerProperties {
   isOpen: boolean
@@ -30,7 +32,12 @@ export default function DirectoryPicker({
       setEntries(result)
       setCurrentPath(path)
     } catch (error_) {
-      setError(error_ instanceof Error ? error_.message : 'Failed to load directories')
+      const status = error_ instanceof ApiError ? error_.status : 0
+      if (status === 403) {
+        setError('Access denied')
+      } else {
+        setError(error_ instanceof Error ? error_.message : 'Failed to load directories')
+      }
     } finally {
       setLoading(false)
     }
@@ -45,13 +52,19 @@ export default function DirectoryPicker({
 
   if (!isOpen) return null
 
-  const parentPath = currentPath ? currentPath.replace(/[\\/][^\\/]*$/, '') : ''
   const isRoot = !currentPath
   const canGoUp = !isRoot
 
   const handleNavigateUp = () => {
-    if (parentPath === currentPath) {
+    if (/^[a-zA-Z]:[/\\]?$/.test(currentPath) || currentPath === '/') {
       loadEntries('')
+      return
+    }
+    const parentPath = currentPath.replace(/[\\/][^\\/]*$/, '')
+    if (!parentPath || parentPath === currentPath) {
+      loadEntries('')
+    } else if (/^[a-zA-Z]:$/.test(parentPath)) {
+      loadEntries(`${parentPath}\\`)
     } else {
       loadEntries(parentPath)
     }
@@ -72,7 +85,10 @@ export default function DirectoryPicker({
       <div className="bg-background border-border flex h-[450px] w-[500px] flex-col rounded-lg border shadow-lg">
         <div className="border-border flex items-center justify-between border-b px-4 py-3">
           <h3 className="text-sm font-semibold">Select Directory</h3>
-          <button onClick={onCancel} className="text-foreground-muted hover:text-foreground text-lg leading-none">
+          <button
+            onClick={onCancel}
+            className="text-foreground-muted hover:text-foreground cursor-pointer text-lg leading-none"
+          >
             &times;
           </button>
         </div>
@@ -81,7 +97,7 @@ export default function DirectoryPicker({
           <button
             onClick={handleNavigateUp}
             disabled={!canGoUp}
-            className="bg-backdrop border-border rounded border px-2 py-0.5 text-xs disabled:opacity-30"
+            className="bg-backdrop border-border cursor-pointer rounded border px-2 py-0.5 text-xs disabled:opacity-30"
           >
             ..
           </button>
@@ -101,17 +117,14 @@ export default function DirectoryPicker({
                 key={entry.path}
                 onClick={() => handleClick(entry)}
                 onDoubleClick={() => handleDoubleClick(entry)}
-                className={`flex w-full items-center gap-2 rounded px-3 py-1.5 text-left text-sm ${
+                className={`flex w-full cursor-pointer items-center gap-2 rounded px-3 py-1.5 text-left text-sm ${
                   selectedEntry === entry.path ? 'bg-backdrop font-medium' : 'hover:bg-backdrop/50'
                 }`}
               >
                 <span className="relative text-xs">
-                  📁
+                  <FolderIcon className="fill-foreground w-4 flex-shrink-0" />
                   {entry.projectRoot && (
-                    <span
-                      className="absolute -bottom-0.25 h-1.5 w-1.5 rounded-full bg-black"
-                      style={{ left: 'calc(50% + 2px)' }}
-                    />
+                    <span className="absolute bottom-0.5 h-1.5 w-1.5 rounded-full bg-black" style={{ left: '65%' }} />
                   )}
                 </span>
                 <span className="truncate">{entry.name}</span>
@@ -124,13 +137,16 @@ export default function DirectoryPicker({
             {activePath || 'Select a directory'}
           </span>
           <div className="flex gap-2">
-            <button onClick={onCancel} className="border-border hover:bg-backdrop rounded border px-3 py-1 text-sm">
+            <button
+              onClick={onCancel}
+              className="border-border hover:bg-backdrop cursor-pointer rounded border px-3 py-1 text-sm"
+            >
               Cancel
             </button>
             <button
               onClick={() => onSelect(activePath)}
               disabled={!activePath}
-              className="bg-backdrop hover:bg-background border-border rounded border px-3 py-1 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+              className="bg-backdrop hover:bg-background border-border cursor-pointer rounded border px-3 py-1 text-sm disabled:cursor-not-allowed disabled:opacity-50"
             >
               Select
             </button>

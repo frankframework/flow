@@ -129,7 +129,23 @@ public class CloudFileSystemStorageService implements FileSystemStorage {
             return root;
         }
 
-        Path resolved = root.resolve(path).normalize();
+        // If the path is already absolute and under the root, use it directly
+        Path candidate = Paths.get(path).toAbsolutePath().normalize();
+        if (candidate.startsWith(root)) {
+            return candidate;
+        }
+
+        // Otherwise treat as relative to the root (strip leading slashes)
+        String cleanPath = path;
+        while (cleanPath.startsWith("/") || cleanPath.startsWith("\\")) {
+            cleanPath = cleanPath.substring(1);
+        }
+
+        if (cleanPath.isBlank()) {
+            return root;
+        }
+
+        Path resolved = root.resolve(cleanPath).normalize();
 
         if (!resolved.startsWith(root)) {
             throw new SecurityException("Access denied: " + path);

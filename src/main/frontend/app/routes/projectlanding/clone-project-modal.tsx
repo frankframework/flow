@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import DirectoryPicker from '~/components/directory-picker/directory-picker'
+import { filesystemService } from '~/services/filesystem-service'
 
 interface CloneProjectModalProperties {
   isOpen: boolean
@@ -18,12 +19,17 @@ export default function CloneProjectModal({
   const [location, setLocation] = useState('')
   const [showPicker, setShowPicker] = useState(false)
 
-  // Reset velden als modal opent
+  // Load default path when modal opens
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && isLocal) {
+      filesystemService
+        .getDefaultPath()
+        .then(setLocation)
+        .catch(() => setLocation(''))
+    } else if (isOpen) {
       setLocation('')
     }
-  }, [isOpen])
+  }, [isOpen, isLocal])
 
   if (!isOpen) return null
 
@@ -101,7 +107,10 @@ export default function CloneProjectModal({
 
           {repoName && (
             <p className="text-foreground-muted mb-4 text-xs">
-              Will clone to: {isLocal ? `${location}/${repoName}` : `${location ? `${location}/` : ''}${repoName}`}
+              Will clone to:{' '}
+              {isLocal
+                ? `${location}${location.includes('/') ? '/' : '\\'}${repoName}`
+                : `${location ? `${location}/` : ''}${repoName}`}
             </p>
           )}
 

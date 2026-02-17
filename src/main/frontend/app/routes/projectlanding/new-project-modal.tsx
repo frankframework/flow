@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import DirectoryPicker from '~/components/directory-picker/directory-picker'
+import { filesystemService } from '~/services/filesystem-service'
 
 interface NewProjectModalProperties {
   isOpen: boolean
@@ -13,12 +14,17 @@ export default function NewProjectModal({ isOpen, isLocal, onClose, onCreate }: 
   const [location, setLocation] = useState('')
   const [showPicker, setShowPicker] = useState(false)
 
-  // Reset velden als modal opent
+  // Load default path when modal opens
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && isLocal) {
+      filesystemService
+        .getDefaultPath()
+        .then(setLocation)
+        .catch(() => setLocation(''))
+    } else if (isOpen) {
       setLocation('')
     }
-  }, [isOpen])
+  }, [isOpen, isLocal])
 
   if (!isOpen) return null
 
@@ -88,7 +94,9 @@ export default function NewProjectModal({ isOpen, isLocal, onClose, onCreate }: 
           {name.trim() && (
             <p className="text-foreground-muted mb-4 text-xs">
               Project will be created at:{' '}
-              {isLocal ? `${location}/${name.trim()}` : `${location ? `${location}/` : ''}${name.trim()}`}
+              {isLocal
+                ? `${location}${location.includes('/') ? '/' : '\\'}${name.trim()}`
+                : `${location ? `${location}/` : ''}${name.trim()}`}
             </p>
           )}
 
