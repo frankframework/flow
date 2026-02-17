@@ -27,10 +27,8 @@ public class RecentProjectController {
 
         if (!fileSystemStorage.isLocalEnvironment()) {
             projects = projects.stream()
-                    .map(p -> new RecentProject(
-                            p.name(),
-                            fileSystemStorage.toRelativePath(p.rootPath()),
-                            p.lastOpened()))
+                    .map(p ->
+                            new RecentProject(p.name(), fileSystemStorage.toRelativePath(p.rootPath()), p.lastOpened()))
                     .toList();
         }
 

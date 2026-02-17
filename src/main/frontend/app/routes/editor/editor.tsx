@@ -1,6 +1,5 @@
 import Editor, { type Monaco, type OnMount } from '@monaco-editor/react'
 import { useShallow } from 'zustand/react/shallow'
-import { toast, ToastContainer } from 'react-toastify'
 import { toast } from 'react-toastify'
 import SidebarHeader from '~/components/sidebars-layout/sidebar-header'
 import SidebarLayout from '~/components/sidebars-layout/sidebar-layout'

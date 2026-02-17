@@ -5,7 +5,7 @@ export function apiUrl(path: string): string {
 }
 
 const getAnonymousSessionId = () => {
-  const STORAGE_KEY = 'frankflow_anon_session_id';
+  const STORAGE_KEY = 'frankflow_anon_session_id'
   let id = sessionStorage.getItem(STORAGE_KEY)
   if (!id) {
     id = crypto.randomUUID()
@@ -44,17 +44,17 @@ export async function apiFetch<T>(path: string, options?: RequestInit): Promise<
   const headers: Record<string, string> = {
     ...defaultHeaders,
     'X-Session-ID': getAnonymousSessionId(),
-    ...(options?.headers as Record<string, string>)
+    ...(options?.headers as Record<string, string>),
   }
 
-  const token = getAuthToken();
+  const token = getAuthToken()
   if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
+    headers['Authorization'] = `Bearer ${token}`
   }
 
   const response = await fetch(apiUrl(path), {
     ...options,
-    headers
+    headers,
   })
 
   if (!response.ok) {

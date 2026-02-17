@@ -3,7 +3,6 @@ package org.frankframework.flow.project;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.charset.MalformedInputException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -27,16 +26,12 @@ import org.frankframework.flow.projectsettings.FilterType;
 import org.frankframework.flow.projectsettings.InvalidFilterTypeException;
 import org.frankframework.flow.recentproject.RecentProject;
 import org.frankframework.flow.recentproject.RecentProjectsService;
-import org.frankframework.flow.utility.XmlSecurityUtils;
-import org.springframework.context.annotation.Lazy;
 import org.frankframework.flow.utility.XmlAdapterUtils;
 import org.frankframework.flow.utility.XmlSecurityUtils;
-
+import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import org.w3c.dom.Node;
-import org.xml.sax.SAXParseException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.xml.sax.SAXParseException;
@@ -142,7 +137,7 @@ public class ProjectService {
                 .setDirectory(targetDir.toFile())
                 .call()) {
             log.info("Cloned repository {} to {}", repoUrl, targetDir);
-        } catch (GitAPIException e) {
+		} catch (GitAPIException e) {
             throw new IOException("git clone failed: " + e.getMessage(), e);
         }
 
@@ -312,8 +307,7 @@ public class ProjectService {
 
             Node newAdapterNode = configDoc.importNode(newAdapterDoc.getDocumentElement(), true);
 
-            if (!XmlAdapterUtils.replaceAdapterInDocument(
-                    configDoc, adapterName, newAdapterNode)) {
+            if (!XmlAdapterUtils.replaceAdapterInDocument(configDoc, adapterName, newAdapterNode)) {
                 throw new AdapterNotFoundException("Adapter not found: " + adapterName);
             }
 

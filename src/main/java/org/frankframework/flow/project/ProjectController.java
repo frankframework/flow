@@ -75,12 +75,12 @@ public class ProjectController {
         return ResponseEntity.ok(toDto(project));
     }
 
-	@GetMapping(value = "/{projectname}", params = "path")
-	public FileTreeNode getDirectoryContent(@PathVariable String projectname, @RequestParam String path)
-			throws IOException {
+    @GetMapping(value = "/{projectname}", params = "path")
+    public FileTreeNode getDirectoryContent(@PathVariable String projectname, @RequestParam String path)
+            throws IOException {
 
-		return fileTreeService.getShallowDirectoryTree(projectname, path);
-	}
+        return fileTreeService.getShallowDirectoryTree(projectname, path);
+    }
 
     @PostMapping
     public ResponseEntity<ProjectDTO> createProject(@RequestBody ProjectCreateDTO projectCreateDTO) throws IOException {

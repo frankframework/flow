@@ -6,9 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -71,7 +69,8 @@ class ProjectServiceTest {
             return tempDir.resolve(path);
         });
 
-        lenient().doAnswer(invocation -> {
+        lenient()
+                .doAnswer(invocation -> {
                     String path = invocation.getArgument(0);
                     String content = invocation.getArgument(1);
                     Path filePath = Path.of(path);
@@ -154,23 +153,18 @@ class ProjectServiceTest {
     }
 
     @Test
-    void testGetProjectsFromRecentList() throws IOException, ProjectNotFoundException {
-        // Create a project first so it exists on disk
+    void testGetProjectsFromRecentList() throws IOException {
         projectService.createProjectOnDisk("my_project");
 
-        // Now simulate the recent projects list containing that project
         Path projectDir = tempDir.resolve("my_project");
         recentProjects.add(new RecentProject("my_project", projectDir.toString(), "2026-01-01T00:00:00Z"));
 
-        // Clear the cache so getProjects must reload
         projectService.invalidateCache();
 
         List<Project> projects = projectService.getProjects();
         assertEquals(1, projects.size());
-        assertEquals("my_project", projects.get(0).getName());
+        assertEquals("my_project", projects.getFirst().getName());
     }
-
-    // ---- Update configuration XML ----
 
     @Test
     void testUpdateConfigurationXmlSuccess() throws Exception {
@@ -387,10 +381,7 @@ class ProjectServiceTest {
                 "<Configuration><Adapter name='TestAdapter'/></Configuration>".getBytes(StandardCharsets.UTF_8));
 
         MockMultipartFile propsFile = new MockMultipartFile(
-                "files",
-                "application.properties",
-                "text/plain",
-                "key=value".getBytes(StandardCharsets.UTF_8));
+                "files", "application.properties", "text/plain", "key=value".getBytes(StandardCharsets.UTF_8));
 
         List<MultipartFile> files = List.of(configFile, propsFile);
         List<String> paths =
@@ -483,8 +474,7 @@ class ProjectServiceTest {
         // Backslashes get normalized to forward slashes, but .. is still detected
         List<String> paths = List.of("..\\..\\etc\\evil.xml");
 
-        assertThrows(
-                SecurityException.class, () -> projectService.importProjectFromFiles(projectName, files, paths));
+        assertThrows(SecurityException.class, () -> projectService.importProjectFromFiles(projectName, files, paths));
     }
 
     // ---- Cache invalidation ----
@@ -551,6 +541,7 @@ class ProjectServiceTest {
 
     @Test
     void testAddConfigurationProjectNotFound() {
-        assertThrows(ProjectNotFoundException.class, () -> projectService.addConfiguration("noSuchProject", "Conf.xml"));
+        assertThrows(
+                ProjectNotFoundException.class, () -> projectService.addConfiguration("noSuchProject", "Conf.xml"));
     }
 }

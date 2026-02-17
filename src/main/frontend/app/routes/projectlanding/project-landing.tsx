@@ -112,6 +112,7 @@ export default function ProjectLanding() {
     }
   }
 
+  // eslint-disable-next-line unicorn/consistent-function-scoping
   const onExportProject = async (projectName: string) => {
     try {
       await exportProject(projectName)
@@ -168,23 +169,24 @@ export default function ProjectLanding() {
         </div>
 
         {!isLocalEnvironment && (
-          <div className="border-border border-t px-4 py-2 text-xs text-amber-600 bg-amber-50">
-            Cloud workspace projects are automatically removed after 24 hours of inactivity.
-            Use Export to download a backup.
+          <div className="border-border border-t bg-amber-50 px-4 py-2 text-xs text-amber-600">
+            Cloud workspace projects are automatically removed after 24 hours of inactivity. Use Export to download a
+            backup.
           </div>
         )}
       </main>
 
-      <input
-        ref={importInputRef}
-        type="file"
-        /* @ts-expect-error webkitdirectory is a non-standard but widely supported attribute */
-        webkitdirectory=""
-        directory=""
-        multiple
-        className="hidden"
-        onChange={handleImportFolderChange}
-      />
+      {!isLocalEnvironment && (
+        <input
+          ref={importInputRef}
+          type="file"
+          /* @ts-expect-error webkitdirectory is a non-standard but widely supported attribute */
+          webkitdirectory=""
+          multiple
+          className="hidden"
+          onChange={handleImportFolderChange}
+        />
+      )}
 
       <NewProjectModal
         isOpen={isModalOpen}

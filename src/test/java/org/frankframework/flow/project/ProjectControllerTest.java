@@ -289,7 +289,7 @@ class ProjectControllerTest {
         mockMvc.perform(
                         put("/api/projects/MyProject/adapters")
                                 .contentType(MediaType.APPLICATION_JSON)
-								.content(
+                                .content(
                                         """
                                 {
                                   "configurationPath": "config1.xml",
@@ -451,10 +451,12 @@ class ProjectControllerTest {
     @Test
     void exportProjectReturnsZipFile() throws Exception {
         doAnswer(invocation -> {
-            OutputStream os = invocation.getArgument(1);
-            os.write("fake-zip-content".getBytes());
-            return null;
-        }).when(projectService).exportProjectAsZip(eq("MyProject"), any(OutputStream.class));
+                    OutputStream os = invocation.getArgument(1);
+                    os.write("fake-zip-content".getBytes());
+                    return null;
+                })
+                .when(projectService)
+                .exportProjectAsZip(eq("MyProject"), any(OutputStream.class));
 
         mockMvc.perform(get("/api/projects/MyProject/export"))
                 .andExpect(status().isOk())
@@ -470,8 +472,7 @@ class ProjectControllerTest {
                 .when(projectService)
                 .exportProjectAsZip(eq("Unknown"), any(OutputStream.class));
 
-        mockMvc.perform(get("/api/projects/Unknown/export"))
-                .andExpect(status().isNotFound());
+        mockMvc.perform(get("/api/projects/Unknown/export")).andExpect(status().isNotFound());
 
         verify(projectService).exportProjectAsZip(eq("Unknown"), any(OutputStream.class));
     }
@@ -488,8 +489,8 @@ class ProjectControllerTest {
 
         MockMultipartFile file1 = new MockMultipartFile(
                 "files", "Configuration.xml", MediaType.APPLICATION_XML_VALUE, "<config>test</config>".getBytes());
-        MockMultipartFile file2 = new MockMultipartFile(
-                "files", "pom.xml", MediaType.APPLICATION_XML_VALUE, "<project/>".getBytes());
+        MockMultipartFile file2 =
+                new MockMultipartFile("files", "pom.xml", MediaType.APPLICATION_XML_VALUE, "<project/>".getBytes());
 
         mockMvc.perform(multipart("/api/projects/import")
                         .file(file1)

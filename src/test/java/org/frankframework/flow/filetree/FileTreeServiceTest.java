@@ -10,6 +10,7 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.Comparator;
 import java.util.List;
 import org.frankframework.flow.adapter.AdapterNotFoundException;
@@ -62,12 +63,15 @@ public class FileTreeServiceTest {
         });
 
         // writeFile delegates to the real filesystem
-        lenient().doAnswer(invocation -> {
-            String path = invocation.getArgument(0);
-            String content = invocation.getArgument(1);
-            Files.writeString(Paths.get(path), content);
-            return null;
-        }).when(fileSystemStorage).writeFile(anyString(), anyString());
+        lenient()
+                .doAnswer(invocation -> {
+                    String path = invocation.getArgument(0);
+                    String content = invocation.getArgument(1);
+                    Files.writeString(Paths.get(path), content);
+                    return null;
+                })
+                .when(fileSystemStorage)
+                .writeFile(anyString(), anyString());
 
         // Default to local environment
         lenient().when(fileSystemStorage.isLocalEnvironment()).thenReturn(true);
@@ -238,57 +242,61 @@ public class FileTreeServiceTest {
     }
 
     @Test
-    public void getShallowDirectoryTreeReturnsTreeForValidDirectory() throws IOException {
+    public void getShallowDirectoryTreeReturnsTreeForValidDirectory() throws IOException, ProjectNotFoundException {
+        // Create project structure
+        Files.writeString(tempProjectRoot.resolve("config1.xml"), "<config/>");
+        Files.writeString(tempProjectRoot.resolve("readme.txt"), "hello");
 
-        // Add one more file in ProjectA to test multiple children
-        Path additionalFile = tempRoot.resolve("ProjectA/readme.txt");
-        Files.writeString(additionalFile, "hello");
+        Project project = new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+        when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
 
-        FileTreeNode node = fileTreeService.getShallowDirectoryTree("ProjectA", ".");
+        FileTreeNode node = fileTreeService.getShallowDirectoryTree(TEST_PROJECT_NAME, ".");
 
         assertNotNull(node);
-        assertEquals("ProjectA", node.getName());
         assertEquals(NodeType.DIRECTORY, node.getType());
         assertNotNull(node.getChildren());
-
-        // We expect two children now: config1.xml and readme.txt
         assertEquals(2, node.getChildren().size());
 
-        // Verify children names
         assertTrue(node.getChildren().stream().anyMatch(c -> c.getName().equals("config1.xml")));
         assertTrue(node.getChildren().stream().anyMatch(c -> c.getName().equals("readme.txt")));
     }
 
     @Test
-    void getShallowDirectoryTreeThrowsSecurityExceptionForPathTraversal() {
+    void getShallowDirectoryTreeThrowsSecurityExceptionForPathTraversal() throws ProjectNotFoundException {
+        Project project = new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+        when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
+
         SecurityException ex = assertThrows(
-                SecurityException.class, () -> fileTreeService.getShallowDirectoryTree("ProjectA", "../ProjectB"));
+                SecurityException.class,
+                () -> fileTreeService.getShallowDirectoryTree(TEST_PROJECT_NAME, "../other"));
 
         assertTrue(ex.getMessage().contains("Invalid path"));
     }
 
     @Test
-    void getShallowDirectoryTreeThrowsIllegalArgumentExceptionIfDirectoryDoesNotExist() {
+    void getShallowDirectoryTreeThrowsIllegalArgumentExceptionIfDirectoryDoesNotExist() throws ProjectNotFoundException {
+        Project project = new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+        when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
+
         IllegalArgumentException ex = assertThrows(
                 IllegalArgumentException.class,
-                () -> fileTreeService.getShallowDirectoryTree("ProjectA", "nonexistent"));
+                () -> fileTreeService.getShallowDirectoryTree(TEST_PROJECT_NAME, "nonexistent"));
 
         assertTrue(ex.getMessage().contains("Directory does not exist"));
     }
 
     @Test
-    public void getShallowConfigurationsDirectoryTreeReturnsTreeForExistingDirectory() throws IOException {
-        // Move the existing config1.xml into the expected configurations folder
-        Path configsDir = tempRoot.resolve("ProjectA/src/main/configurations");
+    public void getShallowConfigurationsDirectoryTreeReturnsTreeForExistingDirectory()
+            throws IOException, ProjectNotFoundException {
+        Path configsDir = tempProjectRoot.resolve("src/main/configurations");
         Files.createDirectories(configsDir);
-        Files.move(
-                tempRoot.resolve("ProjectA/config1.xml"),
-                configsDir.resolve("config1.xml"),
-                StandardCopyOption.REPLACE_EXISTING);
-
+        Files.writeString(configsDir.resolve("config1.xml"), "<config/>");
         Files.writeString(configsDir.resolve("readme.txt"), "hello");
 
-        FileTreeNode node = fileTreeService.getShallowConfigurationsDirectoryTree("ProjectA");
+        Project project = new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+        when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
+
+        FileTreeNode node = fileTreeService.getShallowConfigurationsDirectoryTree(TEST_PROJECT_NAME);
 
         assertNotNull(node);
         assertEquals("configurations", node.getName().toLowerCase());
@@ -301,18 +309,21 @@ public class FileTreeServiceTest {
     }
 
     @Test
-    public void getShallowConfigurationsDirectoryTreeThrowsIfDirectoryDoesNotExist() {
-        // No src/main/configurations created for ProjectB
+    public void getShallowConfigurationsDirectoryTreeThrowsIfDirectoryDoesNotExist() throws ProjectNotFoundException {
+        Project project = new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+        when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
+
         IllegalArgumentException ex = assertThrows(
                 IllegalArgumentException.class,
-                () -> fileTreeService.getShallowConfigurationsDirectoryTree("ProjectB"));
+                () -> fileTreeService.getShallowConfigurationsDirectoryTree(TEST_PROJECT_NAME));
 
         assertTrue(ex.getMessage().contains("Configurations directory does not exist"));
     }
 
     @Test
-    public void getShallowConfigurationsDirectoryTreeThrowsIfProjectDoesNotExist() {
-        // Project does not exist
+    public void getShallowConfigurationsDirectoryTreeThrowsIfProjectDoesNotExist() throws ProjectNotFoundException {
+        when(projectService.getProject("NonExistentProject")).thenThrow(new ProjectNotFoundException("err"));
+
         IllegalArgumentException ex = assertThrows(
                 IllegalArgumentException.class,
                 () -> fileTreeService.getShallowConfigurationsDirectoryTree("NonExistentProject"));
@@ -321,57 +332,55 @@ public class FileTreeServiceTest {
     }
 
     @Test
-    public void getConfigurationsDirectoryTreeReturnsFullTreeForExistingDirectory() throws IOException {
-        // Reuse the existing setup: create the configurations folder
-        Path configsDir = tempRoot.resolve("ProjectA/src/main/configurations");
+    public void getConfigurationsDirectoryTreeReturnsFullTreeForExistingDirectory()
+            throws IOException, ProjectNotFoundException {
+        Path configsDir = tempProjectRoot.resolve("src/main/configurations");
         Files.createDirectories(configsDir);
-
-        // Move existing config1.xml into this folder
-        Files.move(
-                tempRoot.resolve("ProjectA/config1.xml"),
-                configsDir.resolve("config1.xml"),
-                StandardCopyOption.REPLACE_EXISTING);
-
-        // Add an extra file and subdirectory to test recursion
+        Files.writeString(configsDir.resolve("config1.xml"), "<config/>");
         Files.writeString(configsDir.resolve("readme.txt"), "hello");
         Path subDir = configsDir.resolve("subconfigs");
         Files.createDirectory(subDir);
         Files.writeString(subDir.resolve("nested.xml"), "<nested></nested>");
 
-        FileTreeNode node = fileTreeService.getConfigurationsDirectoryTree("ProjectA");
+        Project project = new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+        when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
+
+        FileTreeNode node = fileTreeService.getConfigurationsDirectoryTree(TEST_PROJECT_NAME);
 
         assertNotNull(node);
         assertEquals("configurations", node.getName().toLowerCase());
         assertEquals(NodeType.DIRECTORY, node.getType());
         assertNotNull(node.getChildren());
-        assertEquals(3, node.getChildren().size()); // config1.xml, readme.txt, subconfigs
+        assertEquals(3, node.getChildren().size());
 
-        // Check for files
         assertTrue(node.getChildren().stream().anyMatch(c -> c.getName().equals("config1.xml")));
         assertTrue(node.getChildren().stream().anyMatch(c -> c.getName().equals("readme.txt")));
 
-        // Check for subdirectory
         FileTreeNode subConfigNode = node.getChildren().stream()
                 .filter(c -> c.getName().equals("subconfigs"))
                 .findFirst()
                 .orElseThrow();
         assertEquals(NodeType.DIRECTORY, subConfigNode.getType());
         assertEquals(1, subConfigNode.getChildren().size());
-        assertEquals("nested.xml", subConfigNode.getChildren().get(0).getName());
+        assertEquals("nested.xml", subConfigNode.getChildren().getFirst().getName());
     }
 
     @Test
-    public void getConfigurationsDirectoryTreeThrowsIfDirectoryDoesNotExist() {
-        // The "src/main/configurations" folder does NOT exist yet
+    public void getConfigurationsDirectoryTreeThrowsIfDirectoryDoesNotExist() throws ProjectNotFoundException {
+        Project project = new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+        when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
+
         IllegalArgumentException ex = assertThrows(
-                IllegalArgumentException.class, () -> fileTreeService.getConfigurationsDirectoryTree("ProjectA"));
+                IllegalArgumentException.class,
+                () -> fileTreeService.getConfigurationsDirectoryTree(TEST_PROJECT_NAME));
 
         assertTrue(ex.getMessage().contains("Configurations directory does not exist"));
     }
 
     @Test
-    public void getConfigurationsDirectoryTreeThrowsIfProjectDoesNotExist() {
-        // Project folder itself does not exist
+    public void getConfigurationsDirectoryTreeThrowsIfProjectDoesNotExist() throws ProjectNotFoundException {
+        when(projectService.getProject("NonExistingProject")).thenThrow(new ProjectNotFoundException("err"));
+
         IllegalArgumentException ex = assertThrows(
                 IllegalArgumentException.class,
                 () -> fileTreeService.getConfigurationsDirectoryTree("NonExistingProject"));

@@ -9,11 +9,11 @@ interface CloneProjectModalProperties {
 }
 
 export default function CloneProjectModal({
-                                            isOpen,
-                                            isLocal,
-                                            onClose,
-                                            onClone
-                                          }: Readonly<CloneProjectModalProperties>) {
+  isOpen,
+  isLocal,
+  onClose,
+  onClone,
+}: Readonly<CloneProjectModalProperties>) {
   const [repoUrl, setRepoUrl] = useState('')
   const [location, setLocation] = useState('')
   const [showPicker, setShowPicker] = useState(false)
@@ -28,16 +28,16 @@ export default function CloneProjectModal({
   if (!isOpen) return null
 
   const repoName = repoUrl
-          .split('/')
-          .pop()
-          ?.replace(/\.git$/, '')
+    .split('/')
+    .pop()
+    ?.replace(/\.git$/, '')
 
   const handleClone = () => {
     // Validatie: Repo URL is altijd nodig. Location alleen als lokaal.
     if (!repoUrl.trim()) return
     if (isLocal && !location) return
 
-    let finalPath = ''
+    let finalPath: string
 
     if (isLocal) {
       const separator = location.includes('/') ? '/' : '\\'
@@ -60,79 +60,79 @@ export default function CloneProjectModal({
   }
 
   return (
-          <>
-            <div className="bg-background/50 absolute inset-0 z-50 flex items-center justify-center">
-              <div className="bg-background border-border relative h-[400px] w-[600px] rounded-lg border p-6 shadow-lg">
-                <h2 className="mb-4 text-lg font-semibold">Clone Repository</h2>
-                <p className="text-foreground-muted mb-4 text-sm">
-                  {isLocal ? "Clone a Git repository to a local folder" : "Clone a Git repository into the workspace"}
-                </p>
+    <>
+      <div className="bg-background/50 absolute inset-0 z-50 flex items-center justify-center">
+        <div className="bg-background border-border relative h-[400px] w-[600px] rounded-lg border p-6 shadow-lg">
+          <h2 className="mb-4 text-lg font-semibold">Clone Repository</h2>
+          <p className="text-foreground-muted mb-4 text-sm">
+            {isLocal ? 'Clone a Git repository to a local folder' : 'Clone a Git repository into the workspace'}
+          </p>
 
-                <div className="mb-4">
-                  <label className="mb-1 block text-sm font-medium">Clone into</label>
-                  <div className="flex items-center gap-2">
-                    <input
-                            value={location || (isLocal ? '' : 'Workspace root')}
-                            readOnly
-                            className="border-border bg-backdrop w-full rounded border px-2 py-1 text-sm"
-                            placeholder={isLocal ? "Select a parent directory..." : "Workspace root (or browse for subfolder)"}
-                            aria-label="clone location"
-                    />
+          <div className="mb-4">
+            <label className="mb-1 block text-sm font-medium">Clone into</label>
+            <div className="flex items-center gap-2">
+              <input
+                value={location || (isLocal ? '' : 'Workspace root')}
+                readOnly
+                className="border-border bg-backdrop w-full rounded border px-2 py-1 text-sm"
+                placeholder={isLocal ? 'Select a parent directory...' : 'Workspace root (or browse for subfolder)'}
+                aria-label="clone location"
+              />
 
-                    <button
-                            onClick={() => setShowPicker(true)}
-                            className="bg-backdrop hover:bg-background border-border rounded border px-3 py-1 text-sm whitespace-nowrap hover:cursor-pointer"
-                    >
-                      Browse...
-                    </button>
-                  </div>
-                </div>
-
-                <div className="mb-4">
-                  <label className="mb-1 block text-sm font-medium">Repository URL</label>
-                  <input
-                          value={repoUrl}
-                          onChange={(event) => setRepoUrl(event.target.value)}
-                          className="border-border bg-background focus:border-foreground-active focus:ring-foreground-active w-full rounded border px-2 py-1 text-sm transition focus:ring-2 focus:outline-none"
-                          placeholder="https://github.com/user/repo.git"
-                          aria-label="repository url"
-                  />
-                </div>
-
-                {repoName && (
-                        <p className="text-foreground-muted mb-4 text-xs">
-                          Will clone to: {isLocal ? `${location}/${repoName}` : `${location ? `${location}/` : ''}${repoName}`}
-                        </p>
-                )}
-
-                <div className="flex gap-2">
-                  <button
-                          onClick={handleClone}
-                          // Button disabled logica
-                          disabled={!repoUrl.trim() || (isLocal && !location)}
-                          className="bg-backdrop hover:bg-background border-border rounded border px-4 py-2 hover:cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    Clone
-                  </button>
-
-                  <button
-                          onClick={handleClose}
-                          className="bg-background border-border hover:bg-backdrop absolute top-3 right-3 cursor-pointer rounded border px-3 py-1"
-                  >
-                    Close
-                  </button>
-                </div>
-              </div>
+              <button
+                onClick={() => setShowPicker(true)}
+                className="bg-backdrop hover:bg-background border-border rounded border px-3 py-1 text-sm whitespace-nowrap hover:cursor-pointer"
+              >
+                Browse...
+              </button>
             </div>
+          </div>
 
-            <DirectoryPicker
-                    isOpen={showPicker}
-                    onSelect={(path) => {
-                      setLocation(path)
-                      setShowPicker(false)
-                    }}
-                    onCancel={() => setShowPicker(false)}
+          <div className="mb-4">
+            <label className="mb-1 block text-sm font-medium">Repository URL</label>
+            <input
+              value={repoUrl}
+              onChange={(event) => setRepoUrl(event.target.value)}
+              className="border-border bg-background focus:border-foreground-active focus:ring-foreground-active w-full rounded border px-2 py-1 text-sm transition focus:ring-2 focus:outline-none"
+              placeholder="https://github.com/user/repo.git"
+              aria-label="repository url"
             />
-          </>
+          </div>
+
+          {repoName && (
+            <p className="text-foreground-muted mb-4 text-xs">
+              Will clone to: {isLocal ? `${location}/${repoName}` : `${location ? `${location}/` : ''}${repoName}`}
+            </p>
+          )}
+
+          <div className="flex gap-2">
+            <button
+              onClick={handleClone}
+              // Button disabled logica
+              disabled={!repoUrl.trim() || (isLocal && !location)}
+              className="bg-backdrop hover:bg-background border-border rounded border px-4 py-2 hover:cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Clone
+            </button>
+
+            <button
+              onClick={handleClose}
+              className="bg-background border-border hover:bg-backdrop absolute top-3 right-3 cursor-pointer rounded border px-3 py-1"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <DirectoryPicker
+        isOpen={showPicker}
+        onSelect={(path) => {
+          setLocation(path)
+          setShowPicker(false)
+        }}
+        onCancel={() => setShowPicker(false)}
+      />
+    </>
   )
 }

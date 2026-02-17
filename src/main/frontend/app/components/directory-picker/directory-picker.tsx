@@ -9,7 +9,12 @@ interface DirectoryPickerProperties {
   rootLabel?: string
 }
 
-export default function DirectoryPicker({ isOpen, onSelect, onCancel, rootLabel = 'Computer' }: Readonly<DirectoryPickerProperties>) {
+export default function DirectoryPicker({
+  isOpen,
+  onSelect,
+  onCancel,
+  rootLabel = 'Computer',
+}: Readonly<DirectoryPickerProperties>) {
   const [currentPath, setCurrentPath] = useState('')
   const [entries, setEntries] = useState<FilesystemEntry[]>([])
   const [selectedEntry, setSelectedEntry] = useState<string | null>(null)
@@ -80,9 +85,7 @@ export default function DirectoryPicker({ isOpen, onSelect, onCancel, rootLabel 
           >
             ..
           </button>
-          <span className="text-foreground-muted truncate text-xs">
-            {currentPath || rootLabel}
-          </span>
+          <span className="text-foreground-muted truncate text-xs">{currentPath || rootLabel}</span>
         </div>
 
         <div className="flex-1 overflow-y-auto p-2">
@@ -105,7 +108,10 @@ export default function DirectoryPicker({ isOpen, onSelect, onCancel, rootLabel 
                 <span className="relative text-xs">
                   📁
                   {entry.projectRoot && (
-                    <span className="absolute -bottom-0.25 h-1.5 w-1.5 rounded-full bg-black" style={{ left: 'calc(50% + 2px)' }} />
+                    <span
+                      className="absolute -bottom-0.25 h-1.5 w-1.5 rounded-full bg-black"
+                      style={{ left: 'calc(50% + 2px)' }}
+                    />
                   )}
                 </span>
                 <span className="truncate">{entry.name}</span>
