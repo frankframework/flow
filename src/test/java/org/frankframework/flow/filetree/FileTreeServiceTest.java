@@ -178,7 +178,8 @@ public class FileTreeServiceTest {
     }
 
     @Test
-    void getProjectTreeThrowsIfProjectDoesNotExist() {
+    void getProjectTreeThrowsIfProjectDoesNotExist() throws ProjectNotFoundException {
+        when(projectService.getProject("NonExistentProject")).thenThrow(new ProjectNotFoundException("err"));
         IllegalArgumentException exception = assertThrows(
                 IllegalArgumentException.class, () -> fileTreeService.getProjectTree("NonExistentProject"));
         assertTrue(exception.getMessage().contains("Project does not exist: NonExistentProject"));
