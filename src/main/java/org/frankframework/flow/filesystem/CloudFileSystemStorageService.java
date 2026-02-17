@@ -30,12 +30,15 @@ public class CloudFileSystemStorageService implements FileSystemStorage {
         this.userContext = userContext;
     }
 
-    private Path getUserRoot() throws IOException {
+    private Path getUserRootPath() {
         String workspaceId = userContext.getWorkspaceId();
         if (workspaceId == null) workspaceId = "anonymous";
 
-        Path userRoot =
-                Paths.get(baseWorkspacePath, workspaceId).toAbsolutePath().normalize();
+        return Paths.get(baseWorkspacePath, workspaceId).toAbsolutePath().normalize();
+    }
+
+    private Path getOrCreateUserRoot() throws IOException {
+        Path userRoot = getUserRootPath();
 
         if (!Files.exists(userRoot)) {
             Files.createDirectories(userRoot);
@@ -67,7 +70,7 @@ public class CloudFileSystemStorageService implements FileSystemStorage {
 
     @Override
     public List<FilesystemEntry> listDirectory(String path) throws IOException {
-        Path userRoot = getUserRoot();
+        Path userRoot = getOrCreateUserRoot();
         Path dir = resolveSecurely(path);
 
         List<FilesystemEntry> entries = new ArrayList<>();
@@ -107,9 +110,9 @@ public class CloudFileSystemStorageService implements FileSystemStorage {
     }
 
     @Override
-    public String toRelativePath(String absolutePath) throws IOException {
+    public String toRelativePath(String absolutePath) {
         String normalized = absolutePath.replace("\\", "/");
-        String userRoot = getUserRoot().toString().replace("\\", "/");
+        String userRoot = getUserRootPath().toString().replace("\\", "/");
         if (normalized.startsWith(userRoot)) {
             String relative = normalized.substring(userRoot.length());
             if (relative.isEmpty()) return "/";
@@ -120,7 +123,7 @@ public class CloudFileSystemStorageService implements FileSystemStorage {
     }
 
     private Path resolveSecurely(String path) throws IOException {
-        Path root = getUserRoot();
+        Path root = getOrCreateUserRoot();
 
         if (path == null || path.isBlank() || path.equals("/") || path.equals("\\")) {
             return root;

@@ -33,7 +33,7 @@ public interface FileSystemStorage {
      * Local: returns the path unchanged.
      * Cloud: returns the path relative to the user's workspace root.
      */
-    default String toRelativePath(String absolutePath) throws IOException {
+    default String toRelativePath(String absolutePath) {
         return absolutePath;
     }
 }

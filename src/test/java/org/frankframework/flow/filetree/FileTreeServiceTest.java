@@ -47,33 +47,6 @@ public class FileTreeServiceTest {
     public void setUp() throws IOException {
         tempProjectRoot = Files.createTempDirectory("flow_unit_test");
         fileTreeService = new FileTreeService(projectService, fileSystemStorage);
-
-        // Configure fileSystemStorage mock to delegate to real filesystem operations.
-        // toAbsolutePath returns the path as-is since tests use absolute temp paths.
-        lenient().when(fileSystemStorage.toAbsolutePath(anyString())).thenAnswer(invocation -> {
-            String path = invocation.getArgument(0);
-            return Paths.get(path);
-        });
-
-        // readFile delegates to the real filesystem
-        lenient().when(fileSystemStorage.readFile(anyString())).thenAnswer(invocation -> {
-            String path = invocation.getArgument(0);
-            return Files.readString(Paths.get(path));
-        });
-
-        // writeFile delegates to the real filesystem
-        lenient()
-                .doAnswer(invocation -> {
-                    String path = invocation.getArgument(0);
-                    String content = invocation.getArgument(1);
-                    Files.writeString(Paths.get(path), content);
-                    return null;
-                })
-                .when(fileSystemStorage)
-                .writeFile(anyString(), anyString());
-
-        // Default to local environment
-        lenient().when(fileSystemStorage.isLocalEnvironment()).thenReturn(true);
     }
 
     @AfterEach
@@ -90,9 +63,37 @@ public class FileTreeServiceTest {
         }
     }
 
+    private void stubToAbsolutePath() throws IOException {
+        when(fileSystemStorage.toAbsolutePath(anyString())).thenAnswer(invocation -> {
+            String path = invocation.getArgument(0);
+            return Paths.get(path);
+        });
+    }
+
+    private void stubReadFile() throws IOException {
+        when(fileSystemStorage.readFile(anyString())).thenAnswer(invocation -> {
+            String path = invocation.getArgument(0);
+            return Files.readString(Paths.get(path));
+        });
+    }
+
+    private void stubWriteFile() throws IOException {
+        doAnswer(invocation -> {
+                    String path = invocation.getArgument(0);
+                    String content = invocation.getArgument(1);
+                    Files.writeString(Paths.get(path), content);
+                    return null;
+                })
+                .when(fileSystemStorage)
+                .writeFile(anyString(), anyString());
+    }
+
     @Test
     @DisplayName("Should correctly read content from an existing file")
     public void readFileContent_Success() throws IOException {
+        stubToAbsolutePath();
+        stubReadFile();
+
         Path file = tempProjectRoot.resolve("test.xml");
         String content = "<test>data</test>";
         Files.writeString(file, content, StandardCharsets.UTF_8);
@@ -103,7 +104,9 @@ public class FileTreeServiceTest {
 
     @Test
     @DisplayName("Should throw NoSuchFileException when file does not exist")
-    public void readFileContent_FileNotFound() {
+    public void readFileContent_FileNotFound() throws IOException {
+        stubToAbsolutePath();
+
         String path = tempProjectRoot.resolve("non-existent.xml").toString();
         assertThrows(NoSuchFileException.class, () -> fileTreeService.readFileContent(path));
     }
@@ -111,6 +114,8 @@ public class FileTreeServiceTest {
     @Test
     @DisplayName("Should throw IllegalArgumentException when path is a directory")
     public void readFileContent_IsDirectory() throws IOException {
+        stubToAbsolutePath();
+
         Path dir = Files.createDirectory(tempProjectRoot.resolve("subdir"));
         String path = dir.toAbsolutePath().toString();
 
@@ -120,6 +125,9 @@ public class FileTreeServiceTest {
     @Test
     @DisplayName("Should successfully overwrite a file with new content")
     public void updateFileContent_Success() throws IOException {
+        stubToAbsolutePath();
+        stubWriteFile();
+
         Path file = tempProjectRoot.resolve("update.xml");
         Files.writeString(file, "old content");
 
@@ -131,7 +139,9 @@ public class FileTreeServiceTest {
 
     @Test
     @DisplayName("Should fail when updating a non-existent file")
-    public void updateFileContent_MissingFile() {
+    public void updateFileContent_MissingFile() throws IOException {
+        stubToAbsolutePath();
+
         String path = tempProjectRoot.resolve("missing-file.xml").toString();
         assertThrows(IllegalArgumentException.class, () -> fileTreeService.updateFileContent(path, "data"));
     }
@@ -139,6 +149,9 @@ public class FileTreeServiceTest {
     @Test
     @DisplayName("Should build a recursive tree structure for deep directories")
     public void getProjectTree_DeepStructure() throws IOException, ProjectNotFoundException {
+        stubToAbsolutePath();
+        when(fileSystemStorage.isLocalEnvironment()).thenReturn(true);
+
         Files.writeString(tempProjectRoot.resolve("fileA.xml"), "A");
         Path dir1 = Files.createDirectory(tempProjectRoot.resolve("dir1"));
         Files.writeString(dir1.resolve("fileB.xml"), "B");
@@ -188,6 +201,8 @@ public class FileTreeServiceTest {
     @Test
     @DisplayName("Should replace a specific adapter XML block in a configuration file")
     public void updateAdapterFromFile_Success() throws Exception {
+        stubToAbsolutePath();
+
         Path configFile = tempProjectRoot.resolve("Configuration.xml");
         String originalXml = "<Configuration><Adapter name=\"Test\"><foo/></Adapter></Configuration>";
         Files.writeString(configFile, originalXml);
@@ -204,6 +219,8 @@ public class FileTreeServiceTest {
     @Test
     @DisplayName("Should throw AdapterNotFoundException if adapter name is missing")
     void updateAdapterFromFile_AdapterNotFound() throws IOException {
+        stubToAbsolutePath();
+
         Path configFile = tempProjectRoot.resolve("config.xml");
         Files.writeString(configFile, "<configuration><adapter name=\"Other\"/></configuration>");
 
@@ -216,6 +233,8 @@ public class FileTreeServiceTest {
     @DisplayName("Should return false if the new adapter XML is malformed")
     public void updateAdapterFromFile_MalformedXml()
             throws IOException, AdapterNotFoundException, ConfigurationNotFoundException {
+        stubToAbsolutePath();
+
         Path configFile = tempProjectRoot.resolve("config.xml");
         Files.writeString(configFile, "<configuration><adapter name=\"A\"/></configuration>");
 
@@ -228,6 +247,10 @@ public class FileTreeServiceTest {
     @Test
     @DisplayName("Should handle multiple consecutive file operations correctly")
     void integration_MultipleOperations() throws IOException {
+        stubToAbsolutePath();
+        stubReadFile();
+        stubWriteFile();
+
         Path f1 = tempProjectRoot.resolve("f1.xml");
         Path f2 = tempProjectRoot.resolve("f2.xml");
 
@@ -243,6 +266,8 @@ public class FileTreeServiceTest {
 
     @Test
     public void getShallowDirectoryTreeReturnsTreeForValidDirectory() throws IOException, ProjectNotFoundException {
+        stubToAbsolutePath();
+
         // Create project structure
         Files.writeString(tempProjectRoot.resolve("config1.xml"), "<config/>");
         Files.writeString(tempProjectRoot.resolve("readme.txt"), "hello");
@@ -263,7 +288,9 @@ public class FileTreeServiceTest {
     }
 
     @Test
-    void getShallowDirectoryTreeThrowsSecurityExceptionForPathTraversal() throws ProjectNotFoundException {
+    void getShallowDirectoryTreeThrowsSecurityExceptionForPathTraversal() throws ProjectNotFoundException, IOException {
+        stubToAbsolutePath();
+
         Project project =
                 new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
         when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
@@ -276,7 +303,9 @@ public class FileTreeServiceTest {
 
     @Test
     void getShallowDirectoryTreeThrowsIllegalArgumentExceptionIfDirectoryDoesNotExist()
-            throws ProjectNotFoundException {
+            throws ProjectNotFoundException, IOException {
+        stubToAbsolutePath();
+
         Project project =
                 new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
         when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
@@ -291,6 +320,8 @@ public class FileTreeServiceTest {
     @Test
     public void getShallowConfigurationsDirectoryTreeReturnsTreeForExistingDirectory()
             throws IOException, ProjectNotFoundException {
+        stubToAbsolutePath();
+
         Path configsDir = tempProjectRoot.resolve("src/main/configurations");
         Files.createDirectories(configsDir);
         Files.writeString(configsDir.resolve("config1.xml"), "<config/>");
@@ -313,7 +344,10 @@ public class FileTreeServiceTest {
     }
 
     @Test
-    public void getShallowConfigurationsDirectoryTreeThrowsIfDirectoryDoesNotExist() throws ProjectNotFoundException {
+    public void getShallowConfigurationsDirectoryTreeThrowsIfDirectoryDoesNotExist()
+            throws ProjectNotFoundException, IOException {
+        stubToAbsolutePath();
+
         Project project =
                 new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
         when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
@@ -339,6 +373,9 @@ public class FileTreeServiceTest {
     @Test
     public void getConfigurationsDirectoryTreeReturnsFullTreeForExistingDirectory()
             throws IOException, ProjectNotFoundException {
+        stubToAbsolutePath();
+        when(fileSystemStorage.isLocalEnvironment()).thenReturn(true);
+
         Path configsDir = tempProjectRoot.resolve("src/main/configurations");
         Files.createDirectories(configsDir);
         Files.writeString(configsDir.resolve("config1.xml"), "<config/>");
@@ -372,7 +409,11 @@ public class FileTreeServiceTest {
     }
 
     @Test
-    public void getConfigurationsDirectoryTreeThrowsIfDirectoryDoesNotExist() throws ProjectNotFoundException {
+    public void getConfigurationsDirectoryTreeThrowsIfDirectoryDoesNotExist()
+            throws ProjectNotFoundException, IOException {
+        stubToAbsolutePath();
+        when(fileSystemStorage.isLocalEnvironment()).thenReturn(true);
+
         Project project =
                 new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
         when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);

@@ -156,7 +156,7 @@ public class FileTreeService {
 
     public boolean updateAdapterFromFile(
             String projectName, Path configurationFile, String adapterName, String newAdapterXml)
-            throws ConfigurationNotFoundException, AdapterNotFoundException {
+            throws ConfigurationNotFoundException, AdapterNotFoundException, IOException {
 
         Path absConfigFile = fileSystemStorage.toAbsolutePath(configurationFile.toString());
 

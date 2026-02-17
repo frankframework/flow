@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.*;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -48,10 +48,18 @@ class ProjectServiceTest {
     private final List<RecentProject> recentProjects = new ArrayList<>();
 
     @BeforeEach
-    void init() throws IOException {
-        lenient().when(fileSystemStorage.isLocalEnvironment()).thenReturn(true);
+    void init() {
+        recentProjects.clear();
+        projectService = new ProjectService(fileSystemStorage, recentProjectsService);
+    }
 
-        lenient().when(fileSystemStorage.createProjectDirectory(anyString())).thenAnswer(invocation -> {
+    /**
+     * Sets up all stubs needed for tests that create projects on disk and then interact with them.
+     */
+    private void stubFileSystemForProjectCreation() throws IOException {
+        when(fileSystemStorage.isLocalEnvironment()).thenReturn(true);
+
+        when(fileSystemStorage.createProjectDirectory(anyString())).thenAnswer(invocation -> {
             String dirName = invocation.getArgument(0);
             Path dirPath = Path.of(dirName);
             String projectName = dirPath.getFileName().toString();
@@ -60,7 +68,7 @@ class ProjectServiceTest {
             return projectDir;
         });
 
-        lenient().when(fileSystemStorage.toAbsolutePath(anyString())).thenAnswer(invocation -> {
+        when(fileSystemStorage.toAbsolutePath(anyString())).thenAnswer(invocation -> {
             String path = invocation.getArgument(0);
             Path p = Path.of(path);
             if (p.isAbsolute()) {
@@ -69,8 +77,7 @@ class ProjectServiceTest {
             return tempDir.resolve(path);
         });
 
-        lenient()
-                .doAnswer(invocation -> {
+        doAnswer(invocation -> {
                     String path = invocation.getArgument(0);
                     String content = invocation.getArgument(1);
                     Path filePath = Path.of(path);
@@ -83,22 +90,20 @@ class ProjectServiceTest {
                 .when(fileSystemStorage)
                 .writeFile(anyString(), anyString());
 
-        lenient().when(fileSystemStorage.readFile(anyString())).thenAnswer(invocation -> {
+        when(fileSystemStorage.readFile(anyString())).thenAnswer(invocation -> {
             String path = invocation.getArgument(0);
             return Files.readString(Path.of(path), StandardCharsets.UTF_8);
         });
 
-        lenient().when(recentProjectsService.getRecentProjects()).thenReturn(recentProjects);
-
-        recentProjects.clear();
-
-        projectService = new ProjectService(fileSystemStorage, recentProjectsService);
+        when(recentProjectsService.getRecentProjects()).thenReturn(recentProjects);
     }
 
     // ---- Create and retrieve projects ----
 
     @Test
     void testAddingProjectToProjectService() throws ProjectNotFoundException, IOException {
+        stubFileSystemForProjectCreation();
+
         String projectName = "new_project";
 
         assertEquals(0, projectService.getProjects().size());
@@ -112,6 +117,8 @@ class ProjectServiceTest {
 
     @Test
     void testCreateProjectOnDiskCreatesDirectoryStructure() throws IOException {
+        stubFileSystemForProjectCreation();
+
         String projectName = "test_proj";
 
         Project project = projectService.createProjectOnDisk(projectName);
@@ -132,6 +139,8 @@ class ProjectServiceTest {
 
     @Test
     void testCreateProjectOnDiskLoadsConfiguration() throws IOException, ProjectNotFoundException {
+        stubFileSystemForProjectCreation();
+
         String projectName = "loaded_proj";
 
         projectService.createProjectOnDisk(projectName);
@@ -142,18 +151,26 @@ class ProjectServiceTest {
     }
 
     @Test
-    void testGetProjectThrowsProjectNotFound() {
+    void testGetProjectThrowsProjectNotFound() throws IOException {
+        when(fileSystemStorage.isLocalEnvironment()).thenReturn(true);
+        when(recentProjectsService.getRecentProjects()).thenReturn(recentProjects);
+
         assertThrows(ProjectNotFoundException.class, () -> projectService.getProject("missingProject"));
     }
 
     @Test
     void testGetProjectsReturnsEmptyListInitially() {
+        when(fileSystemStorage.isLocalEnvironment()).thenReturn(true);
+        when(recentProjectsService.getRecentProjects()).thenReturn(recentProjects);
+
         List<Project> projects = projectService.getProjects();
         assertEquals(0, projects.size());
     }
 
     @Test
     void testGetProjectsFromRecentList() throws IOException {
+        stubFileSystemForProjectCreation();
+
         projectService.createProjectOnDisk("my_project");
 
         Path projectDir = tempDir.resolve("my_project");
@@ -168,6 +185,8 @@ class ProjectServiceTest {
 
     @Test
     void testUpdateConfigurationXmlSuccess() throws Exception {
+        stubFileSystemForProjectCreation();
+
         projectService.createProjectOnDisk("proj");
         Project project = projectService.getProject("proj");
 
@@ -184,6 +203,9 @@ class ProjectServiceTest {
 
     @Test
     void testUpdateConfigurationXmlThrowsProjectNotFound() {
+        when(fileSystemStorage.isLocalEnvironment()).thenReturn(true);
+        when(recentProjectsService.getRecentProjects()).thenReturn(recentProjects);
+
         assertThrows(
                 ProjectNotFoundException.class,
                 () -> projectService.updateConfigurationXml("unknownProject", "config.xml", "<root/>"));
@@ -191,6 +213,8 @@ class ProjectServiceTest {
 
     @Test
     void testUpdateConfigurationXmlConfigNotFound() throws Exception {
+        stubFileSystemForProjectCreation();
+
         projectService.createProjectOnDisk("proj");
 
         assertThrows(
@@ -202,6 +226,8 @@ class ProjectServiceTest {
 
     @Test
     void testEnableFilterValid() throws Exception {
+        stubFileSystemForProjectCreation();
+
         projectService.createProjectOnDisk("proj");
 
         Project project = projectService.enableFilter("proj", "ADAPTER");
@@ -211,6 +237,8 @@ class ProjectServiceTest {
 
     @Test
     void testDisableFilterValid() throws Exception {
+        stubFileSystemForProjectCreation();
+
         projectService.createProjectOnDisk("proj");
 
         // enable first
@@ -228,6 +256,8 @@ class ProjectServiceTest {
 
     @Test
     void testEnableFilterInvalidFilterType() throws IOException {
+        stubFileSystemForProjectCreation();
+
         projectService.createProjectOnDisk("proj");
 
         InvalidFilterTypeException ex = assertThrows(
@@ -238,6 +268,8 @@ class ProjectServiceTest {
 
     @Test
     void testDisableFilterInvalidFilterType() throws IOException {
+        stubFileSystemForProjectCreation();
+
         projectService.createProjectOnDisk("proj");
 
         InvalidFilterTypeException ex = assertThrows(
@@ -248,6 +280,9 @@ class ProjectServiceTest {
 
     @Test
     void testEnableFilterProjectNotFound() {
+        when(fileSystemStorage.isLocalEnvironment()).thenReturn(true);
+        when(recentProjectsService.getRecentProjects()).thenReturn(recentProjects);
+
         ProjectNotFoundException ex = assertThrows(
                 ProjectNotFoundException.class, () -> projectService.enableFilter("unknownProject", "ADAPTER"));
 
@@ -256,6 +291,9 @@ class ProjectServiceTest {
 
     @Test
     void testDisableFilterProjectNotFound() {
+        when(fileSystemStorage.isLocalEnvironment()).thenReturn(true);
+        when(recentProjectsService.getRecentProjects()).thenReturn(recentProjects);
+
         ProjectNotFoundException ex = assertThrows(
                 ProjectNotFoundException.class, () -> projectService.disableFilter("unknownProject", "ADAPTER"));
 
@@ -266,6 +304,8 @@ class ProjectServiceTest {
 
     @Test
     void updateAdapterSuccess() throws Exception {
+        stubFileSystemForProjectCreation();
+
         projectService.createProjectOnDisk("proj");
         Project project = projectService.getProject("proj");
 
@@ -303,6 +343,9 @@ class ProjectServiceTest {
 
     @Test
     void updateAdapterProjectNotFoundThrows() {
+        when(fileSystemStorage.isLocalEnvironment()).thenReturn(true);
+        when(recentProjectsService.getRecentProjects()).thenReturn(recentProjects);
+
         ProjectNotFoundException ex = assertThrows(ProjectNotFoundException.class, () -> {
             projectService.updateAdapter("unknownProject", "conf.xml", "A1", "<Adapter name='A1'/>");
         });
@@ -311,6 +354,8 @@ class ProjectServiceTest {
 
     @Test
     void updateAdapterConfigurationNotFoundThrows() throws Exception {
+        stubFileSystemForProjectCreation();
+
         projectService.createProjectOnDisk("proj");
 
         ConfigurationNotFoundException ex = assertThrows(ConfigurationNotFoundException.class, () -> {
@@ -322,6 +367,8 @@ class ProjectServiceTest {
 
     @Test
     void updateAdapterAdapterNotFoundThrows() throws Exception {
+        stubFileSystemForProjectCreation();
+
         projectService.createProjectOnDisk("proj");
         Project project = projectService.getProject("proj");
 
@@ -346,6 +393,8 @@ class ProjectServiceTest {
 
     @Test
     void updateAdapterInvalidXmlReturnsFalse() throws Exception {
+        stubFileSystemForProjectCreation();
+
         projectService.createProjectOnDisk("proj");
         Project project = projectService.getProject("proj");
 
@@ -372,6 +421,8 @@ class ProjectServiceTest {
 
     @Test
     void importProjectFromFilesSuccess() throws Exception {
+        stubFileSystemForProjectCreation();
+
         String projectName = "imported_project";
 
         MockMultipartFile configFile = new MockMultipartFile(
@@ -406,6 +457,8 @@ class ProjectServiceTest {
 
     @Test
     void importProjectFromFilesLoadsConfigurations() throws Exception {
+        stubFileSystemForProjectCreation();
+
         String projectName = "imported_with_configs";
 
         String configXml =
@@ -432,7 +485,14 @@ class ProjectServiceTest {
     }
 
     @Test
-    void importProjectFromFilesRejectsPathTraversalWithDoubleDots() {
+    void importProjectFromFilesRejectsPathTraversalWithDoubleDots() throws IOException {
+        when(fileSystemStorage.createProjectDirectory(anyString())).thenAnswer(invocation -> {
+            String dirName = invocation.getArgument(0);
+            Path projectDir = tempDir.resolve(dirName);
+            Files.createDirectories(projectDir);
+            return projectDir;
+        });
+
         String projectName = "traversal_project";
 
         MockMultipartFile maliciousFile = new MockMultipartFile(
@@ -448,7 +508,14 @@ class ProjectServiceTest {
     }
 
     @Test
-    void importProjectFromFilesRejectsAbsolutePath() {
+    void importProjectFromFilesRejectsAbsolutePath() throws IOException {
+        when(fileSystemStorage.createProjectDirectory(anyString())).thenAnswer(invocation -> {
+            String dirName = invocation.getArgument(0);
+            Path projectDir = tempDir.resolve(dirName);
+            Files.createDirectories(projectDir);
+            return projectDir;
+        });
+
         String projectName = "abs_path_project";
 
         MockMultipartFile maliciousFile = new MockMultipartFile(
@@ -464,7 +531,14 @@ class ProjectServiceTest {
     }
 
     @Test
-    void importProjectFromFilesRejectsBackslashPathTraversal() {
+    void importProjectFromFilesRejectsBackslashPathTraversal() throws IOException {
+        when(fileSystemStorage.createProjectDirectory(anyString())).thenAnswer(invocation -> {
+            String dirName = invocation.getArgument(0);
+            Path projectDir = tempDir.resolve(dirName);
+            Files.createDirectories(projectDir);
+            return projectDir;
+        });
+
         String projectName = "backslash_project";
 
         MockMultipartFile maliciousFile = new MockMultipartFile(
@@ -481,6 +555,8 @@ class ProjectServiceTest {
 
     @Test
     void testInvalidateCacheClearsAllProjects() throws Exception {
+        stubFileSystemForProjectCreation();
+
         projectService.createProjectOnDisk("proj1");
         projectService.createProjectOnDisk("proj2");
 
@@ -496,6 +572,8 @@ class ProjectServiceTest {
 
     @Test
     void testInvalidateProjectRemovesSingleProject() throws Exception {
+        stubFileSystemForProjectCreation();
+
         projectService.createProjectOnDisk("proj1");
         projectService.createProjectOnDisk("proj2");
 
@@ -510,6 +588,8 @@ class ProjectServiceTest {
 
     @Test
     void testOpenProjectFromDisk() throws Exception {
+        stubFileSystemForProjectCreation();
+
         // Manually create a project directory on disk
         String projectName = "manual_project";
         Path projectDir = tempDir.resolve(projectName);
@@ -530,6 +610,8 @@ class ProjectServiceTest {
 
     @Test
     void testAddConfigurationToProject() throws Exception {
+        stubFileSystemForProjectCreation();
+
         projectService.createProjectOnDisk("proj");
 
         Project project = projectService.addConfiguration("proj", "NewConfig.xml");
@@ -541,6 +623,9 @@ class ProjectServiceTest {
 
     @Test
     void testAddConfigurationProjectNotFound() {
+        when(fileSystemStorage.isLocalEnvironment()).thenReturn(true);
+        when(recentProjectsService.getRecentProjects()).thenReturn(recentProjects);
+
         assertThrows(
                 ProjectNotFoundException.class, () -> projectService.addConfiguration("noSuchProject", "Conf.xml"));
     }

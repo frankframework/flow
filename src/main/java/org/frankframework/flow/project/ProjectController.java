@@ -164,7 +164,7 @@ public class ProjectController {
     @PutMapping("/{projectName}/adapters")
     public ResponseEntity<Void> updateAdapterFromFile(
             @PathVariable String projectName, @RequestBody AdapterUpdateDTO dto)
-            throws AdapterNotFoundException, ConfigurationNotFoundException {
+            throws AdapterNotFoundException, ConfigurationNotFoundException, IOException {
         Path configPath = Paths.get(dto.configurationPath());
         boolean updated =
                 fileTreeService.updateAdapterFromFile(projectName, configPath, dto.adapterName(), dto.adapterXml());
