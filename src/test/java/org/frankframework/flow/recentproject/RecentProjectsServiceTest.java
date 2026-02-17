@@ -2,6 +2,7 @@ package org.frankframework.flow.recentproject;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -25,7 +26,6 @@ class RecentProjectsServiceTest {
     private RecentProjectsService service;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    // Use cloud mode to avoid touching the real user home directory
     private String storedJson;
 
     @TempDir
@@ -35,22 +35,23 @@ class RecentProjectsServiceTest {
     void setUp() throws IOException {
         storedJson = null;
 
-        lenient().when(fileSystemStorage.isLocalEnvironment()).thenReturn(false);
+        when(fileSystemStorage.isLocalEnvironment()).thenReturn(false);
 
-        lenient().when(fileSystemStorage.readFile(anyString())).thenAnswer(invocation -> {
+        when(fileSystemStorage.readFile(anyString())).thenAnswer(invocation -> {
             if (storedJson == null) throw new IOException("File not found");
             return storedJson;
         });
 
-        lenient()
-                .doAnswer(invocation -> {
+        service = new RecentProjectsService(fileSystemStorage, objectMapper);
+    }
+
+    private void stubWriteFile() throws IOException {
+        doAnswer(invocation -> {
                     storedJson = invocation.getArgument(1);
                     return null;
                 })
                 .when(fileSystemStorage)
                 .writeFile(anyString(), anyString());
-
-        service = new RecentProjectsService(fileSystemStorage, objectMapper);
     }
 
     @Test
@@ -61,7 +62,9 @@ class RecentProjectsServiceTest {
     }
 
     @Test
-    void addRecentProjectStoresProject() {
+    void addRecentProjectStoresProject() throws IOException {
+        stubWriteFile();
+
         service.addRecentProject("MyProject", "/path/to/project");
 
         List<RecentProject> projects = service.getRecentProjects();
@@ -70,7 +73,9 @@ class RecentProjectsServiceTest {
     }
 
     @Test
-    void addRecentProjectMovesExistingToFront() {
+    void addRecentProjectMovesExistingToFront() throws IOException {
+        stubWriteFile();
+
         service.addRecentProject("First", "/path/first");
         service.addRecentProject("Second", "/path/second");
         service.addRecentProject("First", "/path/first");
@@ -82,7 +87,9 @@ class RecentProjectsServiceTest {
     }
 
     @Test
-    void addRecentProjectLimitsToMaxSize() {
+    void addRecentProjectLimitsToMaxSize() throws IOException {
+        stubWriteFile();
+
         for (int i = 0; i < 15; i++) {
             service.addRecentProject("Project" + i, "/path/project" + i);
         }
@@ -93,7 +100,9 @@ class RecentProjectsServiceTest {
     }
 
     @Test
-    void removeRecentProjectDeletesEntry() {
+    void removeRecentProjectDeletesEntry() throws IOException {
+        stubWriteFile();
+
         service.addRecentProject("ToRemove", "/path/to-remove");
         service.addRecentProject("ToKeep", "/path/to-keep");
 
@@ -105,7 +114,9 @@ class RecentProjectsServiceTest {
     }
 
     @Test
-    void removeRecentProjectIgnoresNonExistent() {
+    void removeRecentProjectIgnoresNonExistent() throws IOException {
+        stubWriteFile();
+
         service.addRecentProject("Existing", "/path/existing");
 
         service.removeRecentProject("/path/nonexistent");
@@ -147,7 +158,9 @@ class RecentProjectsServiceTest {
     }
 
     @Test
-    void removeRecentProjectIgnoresNull() {
+    void removeRecentProjectIgnoresNull() throws IOException {
+        stubWriteFile();
+
         service.addRecentProject("Existing", "/path/existing");
 
         service.removeRecentProject(null);
@@ -156,7 +169,9 @@ class RecentProjectsServiceTest {
     }
 
     @Test
-    void removeRecentProjectIgnoresBlank() {
+    void removeRecentProjectIgnoresBlank() throws IOException {
+        stubWriteFile();
+
         service.addRecentProject("Existing", "/path/existing");
 
         service.removeRecentProject("   ");
@@ -165,7 +180,9 @@ class RecentProjectsServiceTest {
     }
 
     @Test
-    void addRecentProjectSetsLastOpenedTimestamp() {
+    void addRecentProjectSetsLastOpenedTimestamp() throws IOException {
+        stubWriteFile();
+
         service.addRecentProject("Project", "/path/project");
 
         List<RecentProject> projects = service.getRecentProjects();
@@ -174,7 +191,7 @@ class RecentProjectsServiceTest {
     }
 
     @Test
-    void getRecentProjectsHandlesCorruptJson() throws IOException {
+    void getRecentProjectsHandlesCorruptJson() {
         storedJson = "not valid json";
 
         List<RecentProject> projects = service.getRecentProjects();
@@ -184,6 +201,8 @@ class RecentProjectsServiceTest {
 
     @Test
     void addRecentProjectSavesToStorage() throws IOException {
+        stubWriteFile();
+
         service.addRecentProject("Project", "/path/project");
 
         verify(fileSystemStorage).writeFile(eq("recent-projects.json"), anyString());
@@ -191,12 +210,13 @@ class RecentProjectsServiceTest {
 
     @Test
     void removeRecentProjectSavesToStorage() throws IOException {
+        stubWriteFile();
+
         service.addRecentProject("Project", "/path/project");
         reset(fileSystemStorage);
-        lenient().when(fileSystemStorage.isLocalEnvironment()).thenReturn(false);
-        lenient().when(fileSystemStorage.readFile(anyString())).thenAnswer(inv -> storedJson);
-        lenient()
-                .doAnswer(inv -> {
+        when(fileSystemStorage.isLocalEnvironment()).thenReturn(false);
+        when(fileSystemStorage.readFile(anyString())).thenAnswer(inv -> storedJson);
+        doAnswer(inv -> {
                     storedJson = inv.getArgument(1);
                     return null;
                 })

@@ -50,7 +50,7 @@ class CloudFileSystemStorageServiceTest {
     }
 
     @Test
-    void toAbsolutePathResolvesRelativeToUserRoot() {
+    void toAbsolutePathResolvesRelativeToUserRoot() throws IOException {
         Path result = service.toAbsolutePath("my-project");
         Path expectedUserRoot =
                 tempWorkspaceRoot.resolve("test-user").toAbsolutePath().normalize();
@@ -58,7 +58,7 @@ class CloudFileSystemStorageServiceTest {
     }
 
     @Test
-    void toAbsolutePathReturnsUserRootForEmptyPath() {
+    void toAbsolutePathReturnsUserRootForEmptyPath() throws IOException {
         Path result = service.toAbsolutePath("");
         Path expectedUserRoot =
                 tempWorkspaceRoot.resolve("test-user").toAbsolutePath().normalize();
@@ -66,7 +66,7 @@ class CloudFileSystemStorageServiceTest {
     }
 
     @Test
-    void toAbsolutePathReturnsUserRootForSlash() {
+    void toAbsolutePathReturnsUserRootForSlash() throws IOException {
         Path result = service.toAbsolutePath("/");
         Path expectedUserRoot =
                 tempWorkspaceRoot.resolve("test-user").toAbsolutePath().normalize();
@@ -139,7 +139,7 @@ class CloudFileSystemStorageServiceTest {
     }
 
     @Test
-    void toRelativePathStripsUserRoot() {
+    void toRelativePathStripsUserRoot() throws IOException {
         Path userRoot = tempWorkspaceRoot.resolve("test-user").toAbsolutePath().normalize();
         String absolutePath = userRoot.resolve("project/file.xml").toString();
 
@@ -151,7 +151,7 @@ class CloudFileSystemStorageServiceTest {
     }
 
     @Test
-    void toRelativePathReturnsSlashForUserRoot() {
+    void toRelativePathReturnsSlashForUserRoot() throws IOException {
         Path userRoot = tempWorkspaceRoot.resolve("test-user").toAbsolutePath().normalize();
 
         String relative = service.toRelativePath(userRoot.toString());
@@ -160,13 +160,13 @@ class CloudFileSystemStorageServiceTest {
     }
 
     @Test
-    void toRelativePathReturnsInputIfNotUnderUserRoot() {
+    void toRelativePathReturnsInputIfNotUnderUserRoot() throws IOException {
         String result = service.toRelativePath("/some/other/path");
         assertEquals("/some/other/path", result);
     }
 
     @Test
-    void anonymousUserWhenWorkspaceIdIsNull() {
+    void anonymousUserWhenWorkspaceIdIsNull() throws IOException {
         UserWorkspaceContext anonCtx = new UserWorkspaceContext();
         CloudFileSystemStorageService anonService = new CloudFileSystemStorageService(anonCtx);
         ReflectionTestUtils.setField(anonService, "baseWorkspacePath", tempWorkspaceRoot.toString());

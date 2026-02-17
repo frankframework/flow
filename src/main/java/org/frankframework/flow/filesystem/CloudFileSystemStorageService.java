@@ -30,7 +30,7 @@ public class CloudFileSystemStorageService implements FileSystemStorage {
         this.userContext = userContext;
     }
 
-    private Path getUserRoot() {
+    private Path getUserRoot() throws IOException {
         String workspaceId = userContext.getWorkspaceId();
         if (workspaceId == null) workspaceId = "anonymous";
 
@@ -38,11 +38,7 @@ public class CloudFileSystemStorageService implements FileSystemStorage {
                 Paths.get(baseWorkspacePath, workspaceId).toAbsolutePath().normalize();
 
         if (!Files.exists(userRoot)) {
-            try {
-                Files.createDirectories(userRoot);
-            } catch (IOException e) {
-                throw new RuntimeException("Storage error", e);
-            }
+            Files.createDirectories(userRoot);
         }
 
         try {
@@ -106,12 +102,12 @@ public class CloudFileSystemStorageService implements FileSystemStorage {
     }
 
     @Override
-    public Path toAbsolutePath(String path) {
+    public Path toAbsolutePath(String path) throws IOException {
         return resolveSecurely(path);
     }
 
     @Override
-    public String toRelativePath(String absolutePath) {
+    public String toRelativePath(String absolutePath) throws IOException {
         String normalized = absolutePath.replace("\\", "/");
         String userRoot = getUserRoot().toString().replace("\\", "/");
         if (normalized.startsWith(userRoot)) {
@@ -123,7 +119,7 @@ public class CloudFileSystemStorageService implements FileSystemStorage {
         return normalized;
     }
 
-    private Path resolveSecurely(String path) {
+    private Path resolveSecurely(String path) throws IOException {
         Path root = getUserRoot();
 
         if (path == null || path.isBlank() || path.equals("/") || path.equals("\\")) {
