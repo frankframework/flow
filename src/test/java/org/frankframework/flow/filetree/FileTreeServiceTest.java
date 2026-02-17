@@ -412,7 +412,6 @@ public class FileTreeServiceTest {
     public void getConfigurationsDirectoryTreeThrowsIfDirectoryDoesNotExist()
             throws ProjectNotFoundException, IOException {
         stubToAbsolutePath();
-        when(fileSystemStorage.isLocalEnvironment()).thenReturn(true);
 
         Project project =
                 new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
