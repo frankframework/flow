@@ -11,15 +11,12 @@ import { SidebarSide } from '~/components/sidebars-layout/sidebar-layout-store'
 import SidebarLayout from '~/components/sidebars-layout/sidebar-layout'
 import useTabStore from '~/stores/tab-store'
 import { useShallow } from 'zustand/react/shallow'
-import { ToastContainer } from 'react-toastify'
-import { useTheme } from '~/hooks/use-theme'
 import CodeIcon from '/icons/solar/Code.svg?react'
 import { openInEditor } from '~/actions/navigationActions'
 import Button from '~/components/inputs/button'
 
 export default function Studio() {
   const [showNodeContext, setShowNodeContext] = useState(false)
-  const theme = useTheme()
   const nodeId = useNodeContextStore((state) => state.nodeId)
 
   const { activeTab, activeTabPath } = useTabStore(
@@ -63,7 +60,6 @@ export default function Studio() {
               </Button>
             </div>
             <Flow showNodeContextMenu={setShowNodeContext} />
-            <ToastContainer position="bottom-right" theme={theme} closeOnClick={true} />
           </>
         ) : (
           <div className="text-muted-foreground flex h-full flex-col items-center justify-center p-8 text-center">

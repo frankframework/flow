@@ -30,8 +30,7 @@ import { exportFlowToXml } from '~/routes/studio/flow-to-xml-parser'
 import useNodeContextStore from '~/stores/node-context-store'
 import CreateNodeModal from '~/components/flow/create-node-modal'
 import { useProjectStore } from '~/stores/project-store'
-import { toast, ToastContainer } from 'react-toastify'
-import { useTheme } from '~/hooks/use-theme'
+import { toast } from 'react-toastify'
 import { saveAdapter } from '~/services/adapter-service'
 import { cloneWithRemappedIds } from '~/utils/flow-utils'
 
@@ -53,7 +52,6 @@ const selector = (state: FlowState) => ({
 })
 
 function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b: boolean) => void }>) {
-  const theme = useTheme()
   const [loading, setLoading] = useState(false)
   const { isEditing, setIsEditing, setParentId, setDraggedName } = useNodeContextStore(
     useShallow((s) => ({
@@ -661,7 +659,6 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
           </button>
         </Panel>
       </ReactFlow>
-      <ToastContainer position="bottom-right" theme={theme} closeOnClick={true} />
       <CreateNodeModal
         isOpen={showModal}
         onClose={() => setShowModal(false)}

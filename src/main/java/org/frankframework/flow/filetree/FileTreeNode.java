@@ -10,6 +10,7 @@ public class FileTreeNode {
     private String name;
     private String path;
     private NodeType type;
+    private boolean projectRoot;
     private List<FileTreeNode> children;
 
     public FileTreeNode() {}

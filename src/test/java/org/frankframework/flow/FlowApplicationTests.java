@@ -2,8 +2,10 @@ package org.frankframework.flow;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 
-@SpringBootTest(properties = {"app.project.root=target/test-projects"})
+@SpringBootTest
+@ActiveProfiles("local")
 class FlowApplicationTests {
 
     @Test

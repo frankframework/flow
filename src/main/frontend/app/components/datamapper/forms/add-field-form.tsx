@@ -41,7 +41,7 @@ function AddFieldForm({ fieldType, onSave, parents, formatDefinition, initialDat
     const propertyRules = format?.properties.find((a) => a.name == variableType)
     setDefaultValueRules(propertyRules?.rules)
     setDefaultValueInputType(propertyRules?.type)
-  }, [variableType])
+  }, [fieldType, formatDefinition, variableType])
 
   const isFormIncomplete = !variableType || !label
 

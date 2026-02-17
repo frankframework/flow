@@ -6,10 +6,6 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerFactory;
 import lombok.experimental.UtilityClass;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 
 /**
  * Utility class for creating secure XML parsers and transformers that prevent XXE vulnerabilities.
@@ -66,28 +62,5 @@ public class XmlSecurityUtils {
             throw new IllegalStateException("Could not create secure TransformerFactory: " + e.getMessage());
         }
         return factory;
-    }
-
-    /**
-     * Replaces an element in a document by tag name and attribute value.
-     *
-     * @param document The document to search in
-     * @param tagName The tag name to search for (e.g., "Adapter")
-     * @param attributeName The attribute name to match (e.g., "name")
-     * @param attributeValue The attribute value to match
-     * @param replacementNode The node to replace with
-     * @return true if the element was found and replaced, false otherwise
-     */
-    public static boolean replaceElementByAttribute(
-            Document document, String tagName, String attributeName, String attributeValue, Node replacementNode) {
-        NodeList elements = document.getElementsByTagName(tagName);
-        for (int i = 0; i < elements.getLength(); i++) {
-            Element element = (Element) elements.item(i);
-            if (attributeValue.equals(element.getAttribute(attributeName))) {
-                element.getParentNode().replaceChild(replacementNode, element);
-                return true;
-            }
-        }
-        return false;
     }
 }
