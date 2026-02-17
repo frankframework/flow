@@ -6,7 +6,7 @@ import SidebarLayout from '~/components/sidebars-layout/sidebar-layout'
 import { SidebarSide } from '~/components/sidebars-layout/sidebar-layout-store'
 import SidebarContentClose from '~/components/sidebars-layout/sidebar-content-close'
 import { useTheme } from '~/hooks/use-theme'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useProjectStore } from '~/stores/project-store'
 import EditorFileStructure from '~/components/file-structure/editor-file-structure'
 import useEditorTabStore from '~/stores/editor-tab-store'
@@ -14,6 +14,37 @@ import EditorTabs from '~/components/tabs/editor-tabs'
 import type { ElementDetails, Attribute, EnumValue } from '~/types/ff-doc.types'
 import { useFrankDoc } from '~/providers/frankdoc-provider'
 import { fetchConfiguration, saveConfiguration } from '~/services/configuration-service'
+import { useNavigationStore } from '~/stores/navigation-store'
+import useTabStore from '~/stores/tab-store'
+import RulerCrossPenIcon from '/icons/solar/Ruler Cross Pen.svg?react'
+import { openInStudio } from '~/actions/navigationActions'
+import Button from '~/components/inputs/button'
+
+function findAdaptersInXml(xml: string): { name: string; offset: number }[] {
+  const adapters: { name: string; offset: number }[] = []
+  const regex = /<Adapter\b[^>]*\bname\s*=\s*"([^"]*)"/g
+  let match: RegExpExecArray | null
+  while ((match = regex.exec(xml)) !== null) {
+    adapters.push({ name: match[1], offset: match.index })
+  }
+  return adapters
+}
+
+function lineToOffset(xml: string, lineNumber: number): number {
+  const lines = xml.split('\n')
+  let offset = 0
+  for (let i = 0; i < lineNumber - 1 && i < lines.length; i++) {
+    offset += lines[i].length + 1
+  }
+  return offset
+}
+
+function findAdapterAtOffset(adapters: { name: string; offset: number }[], cursorOffset: number): string {
+  for (let i = adapters.length - 1; i >= 0; i--) {
+    if (adapters[i].offset <= cursorOffset) return adapters[i].name
+  }
+  return adapters[0].name
+}
 
 export default function CodeEditor() {
   const theme = useTheme()
@@ -241,6 +272,25 @@ export default function CodeEditor() {
     }
   }
 
+  const handleOpenInStudio = useCallback(() => {
+    const editorTab = useEditorTabStore.getState().getTab(activeTabFilePath)
+    if (!editorTab) return
+
+    const xml = editorReference.current?.getValue() || xmlContent
+    if (!xml) return
+
+    const adapters = findAdaptersInXml(xml)
+    if (adapters.length === 0) return
+
+    const cursorLine = editorReference.current?.getPosition()?.lineNumber
+    const adapterName =
+      adapters.length === 1 || !cursorLine
+        ? adapters[0].name
+        : findAdapterAtOffset(adapters, lineToOffset(xml, cursorLine))
+
+    openInStudio(adapterName, editorTab.configurationPath)
+  }, [activeTabFilePath, xmlContent])
+
   return (
     <SidebarLayout name="editor">
       <>
@@ -257,8 +307,12 @@ export default function CodeEditor() {
         </div>
         {activeTabFilePath ? (
           <>
-            <div className="border-b-border bg-background flex h-12 items-center border-b p-4">
-              Path: {activeTabPath}
+            <div className="border-b-border bg-background flex h-12 items-center justify-between border-b p-4">
+              <span>Path: {activeTabPath}</span>
+              <Button onClick={handleOpenInStudio} className="flex items-center gap-1.5" title="Open in Studio">
+                <RulerCrossPenIcon className="fill-foreground h-4 w-4" />
+                Open in Studio
+              </Button>
             </div>
             <div className="h-full">
               <Editor
