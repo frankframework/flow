@@ -1,0 +1,299 @@
+{
+  "mutations": [
+    {
+      "name": "Concat",
+      "maxInputs": null,
+      "requiredInputs": 2,
+      "inputs": [
+        {
+          "label": "concatString",
+          "type": "source",
+          "allowDefaultValue": true,
+          "expandable": true,
+          "inputsAllowed": "string"
+        }
+      ],
+      "outputType": "string"
+    },
+    {
+      "name": "Translate",
+      "maxInputs": 3,
+      "requiredInputs": 3,
+      "inputs": [
+        {
+          "label": "input",
+          "type": "source",
+          "allowDefaultValue": true,
+          "expandable": false,
+          "inputsAllowed": "string"
+        },
+        {
+          "label": "charsToBeReplaced",
+          "type": "attribute",
+          "allowDefaultValue": true,
+          "expandable": false,
+          "inputsAllowed": "string"
+        },
+        {
+          "label": "replacedWithChars",
+          "type": "attribute",
+          "allowDefaultValue": true,
+          "expandable": false,
+          "inputsAllowed": "string"
+        }
+      ],
+      "outputType": "string"
+    },
+    {
+      "name": "Replace",
+      "maxInputs": 3,
+      "requiredInputs": 3,
+      "inputs": [
+        {
+          "label": "input",
+          "type": "source",
+          "allowDefaultValue": true,
+          "expandable": false,
+          "inputsAllowed": "string"
+        },
+        {
+          "label": "pattern",
+          "type": "attribute",
+          "allowDefaultValue": true,
+          "expandable": false,
+          "inputsAllowed": "string"
+        },
+        {
+          "label": "replacedBy",
+          "type": "attribute",
+          "allowDefaultValue": true,
+          "expandable": false,
+          "inputsAllowed": "string"
+        }
+      ],
+      "outputType": "string"
+    },
+    {
+      "name": "Substring",
+      "maxInputs": 3,
+      "requiredInputs": 3,
+      "inputs": [
+        {
+          "label": "input",
+          "type": "source",
+          "allowDefaultValue": true,
+          "expandable": false,
+          "inputsAllowed": "string"
+        },
+        {
+          "label": "start",
+          "type": "attribute",
+          "allowDefaultValue": false,
+          "expandable": false,
+          "inputsAllowed": "number"
+        },
+        {
+          "label": "length",
+          "type": "attribute",
+          "allowDefaultValue": false,
+          "expandable": false,
+          "inputsAllowed": "number"
+        }
+      ],
+      "outputType": "string"
+    },
+    {
+      "name": "SubstringBefore",
+      "maxInputs": 2,
+      "requiredInputs": 2,
+      "inputs": [
+        {
+          "label": "input",
+          "type": "source",
+          "allowDefaultValue": true,
+          "expandable": false,
+          "inputsAllowed": "string"
+        },
+        {
+          "label": "beforeValue",
+          "type": "attribute",
+          "allowDefaultValue": true,
+          "expandable": false,
+          "inputsAllowed": "string"
+        }
+      ],
+      "outputType": "string"
+    },
+    {
+      "name": "SubstringAfter",
+      "maxInputs": 2,
+      "requiredInputs": 2,
+      "inputs": [
+        {
+          "label": "input",
+          "type": "source",
+          "allowDefaultValue": true,
+          "expandable": false,
+          "inputsAllowed": "string"
+        },
+        {
+          "label": "afterValue",
+          "type": "attribute",
+          "allowDefaultValue": true,
+          "expandable": false,
+          "inputsAllowed": "string"
+        }
+      ],
+      "outputType": "string"
+    },
+    {
+      "name": "ValueOf",
+      "maxInputs": 1,
+      "requiredInputs": 1,
+      "inputs": [
+        {
+          "label": "expression",
+          "type": "attribute",
+          "allowDefaultValue": false,
+          "expandable": false,
+          "inputsAllowed": "string"
+        }
+      ],
+      "outputType": "string"
+    },
+    {
+      "name": "Choose",
+      "maxInputs": 3,
+      "requiredInputs": 3,
+      "inputs": [
+        {
+          "label": "statement",
+          "type": "source",
+          "allowDefaultValue": false,
+          "expandable": false,
+          "inputsAllowed": "boolean"
+        },
+        {
+          "label": "sourceIfTrue",
+          "type": "source",
+          "allowDefaultValue": true,
+          "expandable": false,
+          "inputsAllowed": "all"
+        },
+        {
+          "label": "Else",
+          "type": "source",
+          "allowDefaultValue": true,
+          "expandable": false,
+          "inputsAllowed": "all"
+        }
+      ],
+      "outputType": "string"
+    },
+    {
+      "name": "GenerateId",
+      "maxInputs": 1,
+      "requiredInputs": 0,
+      "inputs": [
+        {
+          "label": "nodeset",
+          "type": "attribute",
+          "allowDefaultValue": true,
+          "expandable": false,
+          "inputsAllowed": "string"
+        }
+      ],
+      "outputType": "string"
+    },
+    {
+      "name": "LocalName",
+      "maxInputs": 1,
+      "requiredInputs": 1,
+      "inputs": [
+        {
+          "label": "input",
+          "type": "source",
+          "allowDefaultValue": false,
+          "expandable": false,
+          "inputsAllowed": "string"
+        }
+      ],
+      "outputType": "string"
+    },
+    {
+      "name": "NormalizeSpace",
+      "maxInputs": 1,
+      "requiredInputs": 1,
+      "inputs": [
+        {
+          "label": "input",
+          "type": "source",
+          "allowDefaultValue": true,
+          "expandable": false,
+          "inputsAllowed": "string"
+        }
+      ],
+      "outputType": "string"
+    },
+    {
+      "name": "Round",
+      "maxInputs": 1,
+      "requiredInputs": 1,
+      "inputs": [
+        {
+          "label": "input",
+          "type": "source",
+          "allowDefaultValue": false,
+          "expandable": false,
+          "inputsAllowed": "number"
+        }
+      ],
+      "outputType": "number"
+    },
+    {
+      "name": "CastToString",
+      "maxInputs": 1,
+      "requiredInputs": 1,
+      "inputs": [
+        {
+          "label": "input",
+          "type": "source",
+          "allowDefaultValue": false,
+          "expandable": false,
+          "inputsAllowed": "all"
+        }
+      ],
+      "outputType": "string"
+    },
+    {
+      "name": "CastToNumber",
+      "maxInputs": 1,
+      "requiredInputs": 1,
+      "inputs": [
+        {
+          "label": "input",
+          "type": "source",
+          "allowDefaultValue": false,
+          "expandable": false,
+          "inputsAllowed": "all"
+        }
+      ],
+      "outputType": "number"
+    },
+    {
+      "name": "CastToBoolean",
+      "maxInputs": 1,
+      "requiredInputs": 1,
+      "inputs": [
+        {
+          "label": "input",
+          "type": "source",
+          "allowDefaultValue": false,
+          "expandable": false,
+          "inputsAllowed": "all"
+        }
+      ],
+      "outputType": "boolean"
+    }
+  ]
+}

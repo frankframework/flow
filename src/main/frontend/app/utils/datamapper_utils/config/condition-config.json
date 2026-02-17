@@ -1,0 +1,219 @@
+{
+  "operators": {
+    "numberOperator": {
+      "label": "Number comparison operator",
+      "allowedValues": ["=", "!=", ">", ">=", "<", "<="],
+      "resultType": "boolean"
+    },
+    "logicOperator": {
+      "label": "",
+      "allowedValues": ["==", "AND", "OR", "XOR"],
+      "resultType": "boolean"
+    }
+  },
+  "conditions": [
+    {
+      "name": "Custom",
+      "maxInputs": 1,
+      "requiredInputs": 1,
+      "inputs": [
+        {
+          "label": "expression",
+          "type": "attribute",
+          "allowDefaultValue": false,
+          "inputsAllowed": "string"
+        }
+      ]
+    },
+    {
+      "name": "Exists",
+      "maxInputs": 1,
+      "requiredInputs": 1,
+      "inputs": [
+        {
+          "label": "input",
+          "type": "source",
+          "allowDefaultValue": false,
+          "inputsAllowed": "all"
+        }
+      ]
+    },
+    {
+      "name": "EmptyCheck",
+      "maxInputs": 1,
+      "requiredInputs": 1,
+      "inputs": [
+        {
+          "label": "input",
+          "type": "source",
+          "allowDefaultValue": false,
+          "inputsAllowed": "all"
+        }
+      ]
+    },
+    {
+      "name": "NullCheck",
+      "maxInputs": 1,
+      "requiredInputs": 1,
+      "inputs": [
+        {
+          "label": "input",
+          "type": "source",
+          "allowDefaultValue": false,
+          "inputsAllowed": "all"
+        }
+      ]
+    },
+    {
+      "name": "Count",
+      "maxInputs": 3,
+      "requiredInputs": 3,
+      "inputs": [
+        {
+          "label": "input",
+          "type": "source",
+          "allowDefaultValue": false,
+          "inputsAllowed": "array"
+        },
+        {
+          "label": "operator",
+          "type": "numberOperator",
+          "allowDefaultValue": false,
+          "inputsAllowed": "numberOperator"
+        },
+        {
+          "label": "value",
+          "type": "source",
+          "allowDefaultValue": true,
+          "inputsAllowed": "number"
+        }
+      ]
+    },
+    {
+      "name": "ValueEquals",
+      "maxInputs": 2,
+      "requiredInputs": 2,
+      "inputs": [
+        {
+          "label": "input",
+          "type": "source",
+          "allowDefaultValue": true,
+          "inputsAllowed": "all"
+        },
+        {
+          "label": "value",
+          "type": "source",
+          "allowDefaultValue": true,
+          "inputsAllowed": "all"
+        }
+      ]
+    },
+    {
+      "name": "Equation",
+      "maxInputs": 3,
+      "requiredInputs": 3,
+      "inputs": [
+        {
+          "label": "input",
+          "type": "source",
+          "allowDefaultValue": true,
+          "inputsAllowed": "number"
+        },
+        {
+          "label": "operator",
+          "type": "numberOperator",
+          "allowDefaultValue": false,
+          "inputsAllowed": "numberOperator"
+        },
+        {
+          "label": "value",
+          "type": "source",
+          "allowDefaultValue": true,
+          "inputsAllowed": "number"
+        }
+      ]
+    },
+    {
+      "name": "Contains",
+      "maxInputs": 2,
+      "requiredInputs": 2,
+      "inputs": [
+        {
+          "label": "input",
+          "type": "source",
+          "allowDefaultValue": true,
+          "inputsAllowed": "string"
+        },
+        {
+          "label": "value",
+          "type": "source",
+          "allowDefaultValue": true,
+          "inputsAllowed": "string"
+        }
+      ]
+    },
+    {
+      "name": "StartsWith",
+      "maxInputs": 2,
+      "requiredInputs": 2,
+      "inputs": [
+        {
+          "label": "input",
+          "type": "source",
+          "allowDefaultValue": true,
+          "inputsAllowed": "string"
+        },
+        {
+          "label": "value",
+          "type": "source",
+          "allowDefaultValue": true,
+          "inputsAllowed": "string"
+        }
+      ]
+    },
+    {
+      "name": "EndsWith",
+      "maxInputs": 2,
+      "requiredInputs": 2,
+      "inputs": [
+        {
+          "label": "input",
+          "type": "source",
+          "allowDefaultValue": true,
+          "inputsAllowed": "string"
+        },
+        {
+          "label": "value",
+          "type": "source",
+          "allowDefaultValue": true,
+          "inputsAllowed": "string"
+        }
+      ]
+    },
+    {
+      "name": "ConditionGroup",
+      "maxInputs": null,
+      "requiredInputs": 3,
+      "inputs": [
+        {
+          "label": "condition",
+          "type": "source",
+          "allowDefaultValue": false,
+          "inputsAllowed": "boolean"
+        },
+        {
+          "label": "operator",
+          "type": "logicOperator",
+          "allowDefaultValue": false,
+          "inputsAllowed": "logicOperator"
+        },
+        {
+          "label": "condition",
+          "type": "source",
+          "allowDefaultValue": false,
+          "inputsAllowed": "boolean"
+        }
+      ]
+    }
+  ]
+}

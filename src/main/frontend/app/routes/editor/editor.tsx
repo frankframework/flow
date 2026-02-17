@@ -1,4 +1,5 @@
 import Editor, { type Monaco, type OnMount } from '@monaco-editor/react'
+import { useShallow } from 'zustand/react/shallow'
 import { toast, ToastContainer } from 'react-toastify'
 import SidebarHeader from '~/components/sidebars-layout/sidebar-header'
 import SidebarLayout from '~/components/sidebars-layout/sidebar-layout'
@@ -52,6 +53,11 @@ export default function CodeEditor() {
   const editorReference = useRef<Parameters<OnMount>[0] | null>(null)
   const decorationIdsReference = useRef<string[]>([])
   const [isSaving, setIsSaving] = useState(false)
+  const { activeTabPath } = useEditorTabStore(
+    useShallow((state) => ({
+      activeTabPath: state.activeTabFilePath ? state.tabs[state.activeTabFilePath]?.configurationPath : undefined,
+    })),
+  )
 
   const handleEditorMount: OnMount = (editor, _monacoInstance) => {
     editorReference.current = editor
@@ -309,7 +315,7 @@ export default function CodeEditor() {
         {activeTabFilePath ? (
           <>
             <div className="border-b-border bg-background flex h-12 items-center justify-between border-b p-4">
-              <span>Path: {activeTabFilePath}</span>
+              <span>Path: {activeTabPath}</span>
               <button
                 onClick={handleOpenInStudio}
                 className="border-border bg-background hover:bg-foreground-active flex items-center gap-1.5 rounded border px-2.5 py-1 text-sm"

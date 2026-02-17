@@ -31,7 +31,7 @@ export default function StudioContext() {
   const componentLookup = filters?.Components
     ? Object.entries(filters.Components).reduce<Record<string, string>>((acc, [type, names]) => {
         for (const name of names) {
-          acc[name] = type.toLowerCase()
+          acc[name] = type
         }
         return acc
       }, {})

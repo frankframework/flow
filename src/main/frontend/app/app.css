@@ -1,9 +1,9 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 @custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
 
 @theme {
-  --font-inter: "Inter", var(--font-sans);
+  --font-inter: 'Inter', var(--font-sans);
 
   --color-brand: #fdc300;
 
@@ -16,10 +16,14 @@
   --color-foreground: inherit;
   --color-foreground-muted: inherit;
   --color-foreground-active: inherit;
+  --color-error: inherit;
+  --color-info: inherit;
+  --color-success: inherit;
+  --color-warning: inherit;
 }
 
 @layer base {
-  [data-theme="light"] {
+  [data-theme='light'] {
     --color-hover: var(--color-neutral-100);
     --color-selected: var(--color-neutral-200);
     --color-border: var(--color-neutral-300);
@@ -28,36 +32,40 @@
     --color-foreground: var(--color-neutral-950);
     --color-foreground-muted: var(--color-neutral-600);
     --color-foreground-active: var(--color-brand);
+    --color-error: #ff2424;
+    --color-info: #1389ff;
+    --color-warning: var(--color-brand);
+    --color-success: #247d12;
 
     /* Node styling */
-    --type-pipe: #68D250;
-    --type-listener: #D250BF;
-    --type-receiver: #D250BF;
-    --type-sender: #30CCAF;
-    --type-validator: #3079CC;
-    --type-wrapper: #4A30CC;
+    --type-pipe: #68d250;
+    --type-listener: #d250bf;
+    --type-receiver: #d250bf;
+    --type-sender: #30ccaf;
+    --type-validator: #3079cc;
+    --type-wrapper: #4a30cc;
     --type-job: #fd7200;
-    --type-exit: #E84E4E;
+    --type-exit: #e84e4e;
     --type-errormessageformatter: #ff2424;
     --type-param: #1389ff;
-    --type-other: #FDC300;
+    --type-other: #fdc300;
     --type-sticky-note: #facc15;
 
     /* Palette Styling */
-    --palette-pipes: #68D250;
-    --palette-listeners: #D250BF;
-    --palette-senders: #30CCAF;
-    --palette-validators: #3079CC;
-    --palette-batch: #FDC300;
+    --palette-pipes: #68d250;
+    --palette-listeners: #d250bf;
+    --palette-senders: #30ccaf;
+    --palette-validators: #3079cc;
+    --palette-batch: #fdc300;
     --palette-scheduling: #fd7200;
     --palette-errormessageformatters: #ff2424;
-    --palette-other: #FDC300;
+    --palette-other: #fdc300;
     --palette-parameters: #1389ff;
     --palette-monitoring: #00ff84;
-    --palette-transactionalstorages: #FDC300;
+    --palette-transactionalstorages: #fdc300;
   }
 
-  [data-theme="dark"] {
+  [data-theme='dark'] {
     --color-hover: var(--color-neutral-800);
     --color-selected: var(--color-neutral-700);
     --color-border: var(--color-neutral-600); /* 950 also looks good, but less for inputs and stuff */
@@ -66,14 +74,18 @@
     --color-foreground: var(--color-neutral-100);
     --color-foreground-muted: var(--color-neutral-400);
     --color-foreground-active: var(--color-brand);
+    --color-error: #ff2424;
+    --color-info: #1389ff;
+    --color-warning: var(--color-brand);
+    --color-success: #247d12;
 
     /* Node styling */
     --type-pipe: #136502;
     --type-listener: #853279;
     --type-receiver: #7e3072;
     --type-sender: #1c7c6a;
-    --type-validator: #3079CC;
-    --type-wrapper: #4A30CC;
+    --type-validator: #3079cc;
+    --type-wrapper: #4a30cc;
     --type-job: #9a4602;
     --type-exit: #882e2e;
     --type-errormessageformatter: #7b1313;
@@ -84,7 +96,7 @@
     --palette-pipes: #136502;
     --palette-listeners: #853279;
     --palette-senders: #1c7c6a;
-    --palette-validators: #3079CC;
+    --palette-validators: #3079cc;
     --palette-batch: #9c7800;
     --palette-scheduling: #9a4602;
     --palette-errormessageformatters: #7b1313;
@@ -93,7 +105,6 @@
     --palette-monitoring: #01924c;
     --palette-transactionalstorages: #9c7800;
   }
-
 }
 
 html,
@@ -108,7 +119,7 @@ body {
 }
 
 .monaco-editor .highlight-line {
-  @apply bg-yellow-200/30 border-l-4 border-yellow-400 transition-colors;
+  @apply border-l-4 border-yellow-400 bg-yellow-200/30 transition-colors;
 }
 
 :root {
