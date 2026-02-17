@@ -173,13 +173,18 @@ public class ProjectService {
     private Project loadProjectFromStorage(String path) throws IOException {
         Path absPath = fileSystemStorage.toAbsolutePath(path);
 
+        validatePathSafety(absPath);
+
         if (!Files.exists(absPath) || !Files.isDirectory(absPath)) {
             throw new IOException("Invalid project path: " + absPath);
         }
 
         Project project = new Project(absPath.getFileName().toString(), absPath.toString());
 
-        Path configDir = absPath.resolve(CONFIGURATIONS_DIR);
+        Path configDir = absPath.resolve(CONFIGURATIONS_DIR).normalize();
+
+        validatePathSafety(configDir);
+
         if (!Files.exists(configDir)) {
             return project;
         }
@@ -197,6 +202,13 @@ public class ProjectService {
             });
         }
         return project;
+    }
+
+    private static void validatePathSafety(Path path) {
+        String pathStr = path.toString();
+        if (pathStr.contains("..")) {
+            throw new SecurityException("Path traversal is not allowed: " + pathStr);
+        }
     }
 
     public void exportProjectAsZip(String projectName, OutputStream outputStream)

@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -32,7 +33,7 @@ public class LocalFileSystemStorageService implements FileSystemStorage {
 
     @Override
     public List<FilesystemEntry> listDirectory(String path) throws IOException {
-        Path dir = Paths.get(path).toAbsolutePath().normalize();
+        Path dir = sanitizePath(path);
         List<FilesystemEntry> entries = new ArrayList<>();
 
         try (Stream<Path> stream = Files.list(dir)) {
@@ -47,23 +48,41 @@ public class LocalFileSystemStorageService implements FileSystemStorage {
 
     @Override
     public String readFile(String path) throws IOException {
-        return Files.readString(Paths.get(path), StandardCharsets.UTF_8);
+        return Files.readString(sanitizePath(path), StandardCharsets.UTF_8);
     }
 
     @Override
     public void writeFile(String path, String content) throws IOException {
-        Files.writeString(Paths.get(path), content, StandardCharsets.UTF_8);
+        Files.writeString(sanitizePath(path), content, StandardCharsets.UTF_8);
     }
 
     @Override
     public Path createProjectDirectory(String path) throws IOException {
-        Path dir = Paths.get(path);
+        Path dir = sanitizePath(path);
         Files.createDirectories(dir);
         return dir;
     }
 
     @Override
     public Path toAbsolutePath(String path) {
-        return Paths.get(path).toAbsolutePath().normalize();
+        return sanitizePath(path);
+    }
+
+    private static Path sanitizePath(String path) {
+        if (path == null || path.isBlank()) {
+            throw new SecurityException("Path must not be empty");
+        }
+
+        try {
+            Path normalized = Paths.get(path).toAbsolutePath().normalize();
+
+            if (path.contains("..")) {
+                throw new SecurityException("Path traversal is not allowed: " + path);
+            }
+
+            return normalized;
+        } catch (InvalidPathException e) {
+            throw new SecurityException("Invalid path: " + path, e);
+        }
     }
 }
