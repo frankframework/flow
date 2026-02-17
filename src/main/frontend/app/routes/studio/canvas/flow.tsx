@@ -645,7 +645,7 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
         onConnectEnd={handleConnectEnd}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
-        deleteKeyCode={'Delete'}
+        deleteKeyCode={['Delete', 'Backspace']}
         minZoom={0.2}
       >
         <Controls position="top-left" style={{ color: '#000' }}></Controls>
