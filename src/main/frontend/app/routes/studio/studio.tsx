@@ -13,9 +13,9 @@ import useTabStore from '~/stores/tab-store'
 import { useShallow } from 'zustand/react/shallow'
 import { ToastContainer } from 'react-toastify'
 import { useTheme } from '~/hooks/use-theme'
-import useEditorTabStore from '~/stores/editor-tab-store'
-import { useNavigationStore } from '~/stores/navigation-store'
 import CodeIcon from '/icons/solar/Code.svg?react'
+import { openInEditor } from '~/actions/navigationActions'
+import Button from '~/components/inputs/button'
 
 export default function Studio() {
   const [showNodeContext, setShowNodeContext] = useState(false)
@@ -32,15 +32,10 @@ export default function Studio() {
   const handleOpenInEditor = useCallback(() => {
     if (!activeTabPath) return
 
-    const { setTabData, setActiveTab, getTab } = useEditorTabStore.getState()
-    if (!getTab(activeTabPath)) {
-      setTabData(activeTabPath, {
-        name: activeTabPath,
-        configurationPath: activeTabPath,
-      })
-    }
-    setActiveTab(activeTabPath)
-    useNavigationStore.getState().navigate('editor')
+    const fileName = activeTabPath.split(/[/\\]/).pop()
+    if (!fileName) return
+
+    openInEditor(fileName, activeTabPath)
   }, [activeTabPath])
 
   return (
@@ -62,14 +57,10 @@ export default function Studio() {
           <>
             <div className="border-b-border bg-background flex h-12 items-center justify-between border-b p-4">
               <span>Path: {activeTabPath}</span>
-              <button
-                onClick={handleOpenInEditor}
-                className="border-border bg-background hover:bg-foreground-active flex items-center gap-1.5 rounded border px-2.5 py-1 text-sm"
-                title="Open in Editor"
-              >
+              <Button onClick={handleOpenInEditor} title="Open in Editor">
                 <CodeIcon className="fill-foreground h-4 w-4" />
                 Open in Editor
-              </button>
+              </Button>
             </div>
             <Flow showNodeContextMenu={setShowNodeContext} />
             <ToastContainer position="bottom-right" theme={theme} closeOnClick={true} />

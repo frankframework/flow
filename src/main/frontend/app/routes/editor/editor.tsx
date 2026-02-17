@@ -17,6 +17,8 @@ import { fetchConfiguration, saveConfiguration } from '~/services/configuration-
 import { useNavigationStore } from '~/stores/navigation-store'
 import useTabStore from '~/stores/tab-store'
 import RulerCrossPenIcon from '/icons/solar/Ruler Cross Pen.svg?react'
+import { openInStudio } from '~/actions/navigationActions'
+import Button from '~/components/inputs/button'
 
 function findAdaptersInXml(xml: string): { name: string; offset: number }[] {
   const adapters: { name: string; offset: number }[] = []
@@ -286,16 +288,7 @@ export default function CodeEditor() {
         ? adapters[0].name
         : findAdapterAtOffset(adapters, lineToOffset(xml, cursorLine))
 
-    const { setTabData, setActiveTab, getTab } = useTabStore.getState()
-    if (!getTab(adapterName)) {
-      setTabData(adapterName, {
-        name: adapterName,
-        configurationPath: editorTab.configurationPath,
-        flowJson: {},
-      })
-    }
-    setActiveTab(adapterName)
-    useNavigationStore.getState().navigate('studio')
+    openInStudio(adapterName, editorTab.configurationPath)
   }, [activeTabFilePath, xmlContent])
 
   return (
@@ -316,14 +309,10 @@ export default function CodeEditor() {
           <>
             <div className="border-b-border bg-background flex h-12 items-center justify-between border-b p-4">
               <span>Path: {activeTabPath}</span>
-              <button
-                onClick={handleOpenInStudio}
-                className="border-border bg-background hover:bg-foreground-active flex items-center gap-1.5 rounded border px-2.5 py-1 text-sm"
-                title="Open in Studio"
-              >
+              <Button onClick={handleOpenInStudio} className="flex items-center gap-1.5" title="Open in Studio">
                 <RulerCrossPenIcon className="fill-foreground h-4 w-4" />
                 Open in Studio
-              </button>
+              </Button>
             </div>
             <div className="h-full">
               <Editor
