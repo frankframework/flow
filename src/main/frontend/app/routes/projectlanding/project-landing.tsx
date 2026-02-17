@@ -2,16 +2,7 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router'
 import FfIcon from '/icons/custom/ff!-icon.svg?react'
 import ArchiveIcon from '/icons/solar/Archive.svg?react'
-import { toast } from 'react-toastify'
-import { useRecentProjects } from '~/hooks/use-projects'
 import { useProjectStore } from '~/stores/project-store'
-import {
-  openProject,
-  createProject,
-  cloneProject,
-  exportProject,
-  importProjectFolder,
-} from '~/services/project-service'
 
 import ProjectRow from './project-row'
 import Search from '~/components/search/search'
@@ -24,6 +15,15 @@ import { fetchAppInfo } from '~/services/app-info-service'
 import { removeRecentProject } from '~/services/recent-project-service'
 import useTabStore from '~/stores/tab-store'
 import useEditorTabStore from '~/stores/editor-tab-store'
+import {
+  cloneProject,
+  createProject,
+  exportProject,
+  importProjectFolder,
+  openProject,
+} from '~/services/project-service'
+import { useRecentProjects } from '~/hooks/use-projects'
+import { showErrorToast } from '~/components/toast'
 
 export default function ProjectLanding() {
   const navigate = useNavigate()
@@ -58,7 +58,7 @@ export default function ProjectLanding() {
           setRootLocationName(info.workspaceRoot)
         }
       } catch {
-        toast.error('Failed to fetch app info, defaulting to local mode.')
+        showErrorToast('Failed to fetch app info, defaulting to local mode.')
       }
     }
     loadAppInfo()
@@ -66,7 +66,7 @@ export default function ProjectLanding() {
 
   useEffect(() => {
     if (apiError) {
-      toast.error(`Could not load in projects: ${apiError.message}`)
+      showErrorToast(`Could not load in projects: ${apiError.message}`)
     }
   }, [apiError])
 
@@ -78,7 +78,7 @@ export default function ProjectLanding() {
         setProject(project)
         navigate(`/studio/${encodeURIComponent(project.name)}`)
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'Failed to open project')
+        showErrorToast(error instanceof Error ? error.message : 'Failed to open project')
       } finally {
         setIsOpeningProject(false)
       }
@@ -99,7 +99,7 @@ export default function ProjectLanding() {
       setIsModalOpen(false)
       navigate(`/studio/${encodeURIComponent(project.name)}`)
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to create project')
+      showErrorToast(error instanceof Error ? error.message : 'Failed to create project')
     } finally {
       setIsOpeningProject(false)
     }
@@ -113,7 +113,7 @@ export default function ProjectLanding() {
       setIsCloneModalOpen(false)
       navigate(`/studio/${encodeURIComponent(project.name)}`)
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to clone project from GitHub')
+      showErrorToast(error instanceof Error ? error.message : 'Failed to clone project from GitHub')
     } finally {
       setIsOpeningProject(false)
     }
@@ -124,7 +124,7 @@ export default function ProjectLanding() {
       await removeRecentProject(rootPath)
       refetch()
     } catch {
-      toast.error('Failed to remove recent opened project')
+      showErrorToast('Failed to remove recent opened project')
     }
   }
 
@@ -133,7 +133,7 @@ export default function ProjectLanding() {
     try {
       await exportProject(projectName)
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to export project')
+      showErrorToast(error instanceof Error ? error.message : 'Failed to export project')
     }
   }
 
@@ -148,7 +148,7 @@ export default function ProjectLanding() {
       refetch()
       navigate(`/studio/${encodeURIComponent(project.name)}`)
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to import project')
+      showErrorToast(error instanceof Error ? error.message : 'Failed to import project')
     } finally {
       setIsOpeningProject(false)
     }
@@ -231,7 +231,7 @@ export default function ProjectLanding() {
 const Header = () => (
   <header className="mb-6 flex w-2/5 items-center gap-3">
     <FfIcon className="h-12 w-auto" />
-    <h1 className="text-lg font-semibold text-slate-800">Frank!Flow</h1>
+    <h1 className="text-lg font-semibold text-slate-800">Flow</h1>
   </header>
 )
 

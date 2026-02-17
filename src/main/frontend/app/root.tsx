@@ -1,11 +1,10 @@
 import { useEffect } from 'react'
 import { isRouteErrorResponse, Links, Meta, Outlet, Scripts, ScrollRestoration } from 'react-router'
-import { ToastContainer } from 'react-toastify'
-import 'react-toastify/dist/ReactToastify.css'
 import type { Route } from './+types/root'
 import 'allotment/dist/style.css'
 import './app.css'
 import { useTheme } from '~/hooks/use-theme'
+import { Toast } from './components/toast'
 
 export const links: Route.LinksFunction = () => [
   { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
@@ -41,12 +40,7 @@ function ThemeProvider({ children }: { children: React.ReactNode }) {
     document.documentElement.dataset.theme = theme
   }, [theme])
 
-  return (
-    <>
-      {children}
-      <ToastContainer theme={theme} position="bottom-right" />
-    </>
-  )
+  return <>{children}</>
 }
 
 export function Layout({ children }: Readonly<{ children: React.ReactNode }>) {
@@ -60,7 +54,10 @@ export function Layout({ children }: Readonly<{ children: React.ReactNode }>) {
         <Links />
       </head>
       <body>
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          {children}
+          <Toast />
+        </ThemeProvider>
         <ScrollRestoration />
         <Scripts />
       </body>
