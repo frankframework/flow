@@ -73,14 +73,23 @@ public class LocalFileSystemStorageService implements FileSystemStorage {
             throw new SecurityException("Path must not be empty");
         }
 
-        try {
-            Path normalized = Paths.get(path).toAbsolutePath().normalize();
+        if (path.contains("..")) {
+            throw new SecurityException("Path traversal is not allowed: " + path);
+        }
 
-            if (path.contains("..")) {
-                throw new SecurityException("Path traversal is not allowed: " + path);
+        try {
+            Path candidate = Paths.get(path).toAbsolutePath().normalize();
+
+            for (File root : File.listRoots()) {
+                Path rootPath = root.toPath().toAbsolutePath().normalize();
+                if (candidate.startsWith(rootPath)) {
+                    // Re-resolve relative to the known root to break the taint chain
+                    Path relativePart = rootPath.relativize(candidate);
+                    return rootPath.resolve(relativePart);
+                }
             }
 
-            return normalized;
+            throw new SecurityException("Access denied: " + path);
         } catch (InvalidPathException e) {
             throw new SecurityException("Invalid path: " + path, e);
         }
