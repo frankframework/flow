@@ -22,7 +22,7 @@ public interface FileSystemStorage {
     void writeFile(String path, String content) throws IOException;
 
     /**
-     * MMakes new folder in directory
+     * Makes new folder in directory
      */
     Path createProjectDirectory(String path) throws IOException;
 
