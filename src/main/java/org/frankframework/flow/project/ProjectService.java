@@ -125,18 +125,26 @@ public class ProjectService {
         return loadProjectAndCache(path);
     }
 
-    public Project cloneAndOpenProject(String repoUrl, String localPath) throws IOException {
+    public Project cloneAndOpenProject(String repoUrl, String localPath, String token) throws IOException {
         Path targetDir = fileSystemStorage.toAbsolutePath(localPath);
 
         if (Files.exists(targetDir)) {
             throw new IllegalArgumentException("Project already exists at: " + targetDir);
         }
 
-        try (Git git = Git.cloneRepository()
-                .setURI(repoUrl)
-                .setDirectory(targetDir.toFile())
-                .call()) {
-            log.info("Cloned repository {} to {}", repoUrl, targetDir);
+        try {
+            var cloneCommand = Git.cloneRepository().setURI(repoUrl).setDirectory(targetDir.toFile());
+
+            org.eclipse.jgit.transport.CredentialsProvider credentials =
+                    org.frankframework.flow.git.GitCredentialHelper.resolveForUrl(
+                            repoUrl, token, fileSystemStorage.isLocalEnvironment());
+            if (credentials != null) {
+                cloneCommand.setCredentialsProvider(credentials);
+            }
+
+            try (Git git = cloneCommand.call()) {
+                log.info("Cloned repository {} to {}", repoUrl, targetDir);
+            }
         } catch (GitAPIException e) {
             throw new IOException("git clone failed: " + e.getMessage(), e);
         }

@@ -1,9 +1,18 @@
 import { create } from 'zustand'
 import { subscribeWithSelector } from 'zustand/middleware'
 
-interface EditorTabData {
+export interface DiffTabData {
+  oldContent: string
+  newContent: string
+  filePath: string
+  hunks: import('~/types/git.types').GitHunk[]
+}
+
+export interface EditorTabData {
   name: string
   configurationPath: string
+  type?: 'editor' | 'diff'
+  diffData?: DiffTabData
 }
 
 interface EditorTabStoreState {

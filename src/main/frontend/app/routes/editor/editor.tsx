@@ -1,9 +1,9 @@
 import Editor, { type Monaco, type OnMount } from '@monaco-editor/react'
 import { useShallow } from 'zustand/react/shallow'
-import SidebarHeader from '~/components/sidebars-layout/sidebar-header'
 import SidebarLayout from '~/components/sidebars-layout/sidebar-layout'
-import { SidebarSide } from '~/components/sidebars-layout/sidebar-layout-store'
 import SidebarContentClose from '~/components/sidebars-layout/sidebar-content-close'
+import { SidebarSide } from '~/components/sidebars-layout/sidebar-layout-store'
+import SidebarClose from '~/components/sidebars-layout/sidebar-close'
 import { useTheme } from '~/hooks/use-theme'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useProjectStore } from '~/stores/project-store'
@@ -16,33 +16,19 @@ import { fetchConfiguration, saveConfiguration } from '~/services/configuration-
 import RulerCrossPenIcon from '/icons/solar/Ruler Cross Pen.svg?react'
 import { openInStudio } from '~/actions/navigationActions'
 import Button from '~/components/inputs/button'
-import { showErrorToast, showSuccessToast } from '~/components/toast'
+import { showErrorToastFrom } from '~/components/toast'
+import GitPanel from '~/components/git/git-panel'
+import DiffTabView from '~/components/git/diff-tab-view'
+import clsx from 'clsx'
+import { useGitStore } from '~/stores/git-store'
+import { stageHunks, fetchFileDiff, fetchGitStatus } from '~/services/git-service'
+import { findAdaptersInXml, lineToOffset, findAdapterAtOffset } from './xml-utils'
 
-function findAdaptersInXml(xml: string): { name: string; offset: number }[] {
-  const adapters: { name: string; offset: number }[] = []
-  const regex = /<Adapter\b[^>]*\bname\s*=\s*"([^"]*)"/g
-  let match: RegExpExecArray | null
-  while ((match = regex.exec(xml)) !== null) {
-    adapters.push({ name: match[1], offset: match.index })
-  }
-  return adapters
-}
+type LeftTab = 'files' | 'git'
+type SaveStatus = 'idle' | 'saving' | 'saved'
 
-function lineToOffset(xml: string, lineNumber: number): number {
-  const lines = xml.split('\n')
-  let offset = 0
-  for (let i = 0; i < lineNumber - 1 && i < lines.length; i++) {
-    offset += lines[i].length + 1
-  }
-  return offset
-}
-
-function findAdapterAtOffset(adapters: { name: string; offset: number }[], cursorOffset: number): string {
-  for (let i = adapters.length - 1; i >= 0; i--) {
-    if (adapters[i].offset <= cursorOffset) return adapters[i].name
-  }
-  return adapters[0].name
-}
+const AUTO_SAVE_DELAY = 1500
+const SAVED_DISPLAY_DURATION = 2000
 
 export default function CodeEditor() {
   const theme = useTheme()
@@ -52,30 +38,140 @@ export default function CodeEditor() {
   const [xmlContent, setXmlContent] = useState<string>('')
   const editorReference = useRef<Parameters<OnMount>[0] | null>(null)
   const decorationIdsReference = useRef<string[]>([])
-  const [isSaving, setIsSaving] = useState(false)
-  const { activeTabPath } = useEditorTabStore(
-    useShallow((state) => ({
-      activeTabPath: state.activeTabFilePath ? state.tabs[state.activeTabFilePath]?.configurationPath : undefined,
-    })),
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
+  const [leftTab, setLeftTab] = useState<LeftTab>('files')
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const activeTab = useEditorTabStore(
+    useShallow((state) => {
+      const tab = state.activeTabFilePath ? state.tabs[state.activeTabFilePath] : undefined
+      return {
+        configurationPath: tab?.configurationPath,
+        type: tab?.type ?? 'editor',
+        diffData: tab?.diffData,
+      }
+    }),
   )
 
-  const handleEditorMount: OnMount = (editor, _monacoInstance) => {
+  const isDiffTab = activeTab.type === 'diff'
+
+  const refreshOpenDiffs = useCallback(async (projectName: string) => {
+    const tabStore = useEditorTabStore.getState()
+    const gitStore = useGitStore.getState()
+
+    try {
+      const newStatus = await fetchGitStatus(projectName)
+      gitStore.setStatus(newStatus)
+    } catch {
+      /* ignore */
+    }
+
+    for (const [tabId, tab] of Object.entries(tabStore.tabs)) {
+      if (tab.type === 'diff' && tab.diffData) {
+        try {
+          const diff = await fetchFileDiff(projectName, tab.diffData.filePath)
+          tabStore.setTabData(tabId, {
+            ...tab,
+            diffData: {
+              oldContent: diff.oldContent,
+              newContent: diff.newContent,
+              filePath: diff.filePath,
+              hunks: diff.hunks,
+            },
+          })
+          gitStore.initFileHunks(tab.diffData.filePath, diff.hunks.length)
+        } catch {
+          /* ignore - file may no longer have changes */
+        }
+      }
+    }
+  }, [])
+
+  const performSave = useCallback(
+    async (content?: string) => {
+      if (!project || !activeTabFilePath || isDiffTab) return
+
+      const updatedContent = content ?? editorReference.current?.getValue?.()
+      if (!updatedContent) return
+
+      const configPath = useEditorTabStore.getState().getTab(activeTabFilePath)?.configurationPath
+      if (!configPath) return
+
+      setSaveStatus('saving')
+      try {
+        await saveConfiguration(project.name, configPath, updatedContent)
+        setSaveStatus('saved')
+        if (savedTimerRef.current) clearTimeout(savedTimerRef.current)
+        savedTimerRef.current = setTimeout(() => setSaveStatus('idle'), SAVED_DISPLAY_DURATION)
+
+        refreshOpenDiffs(project.name)
+      } catch (error) {
+        showErrorToastFrom('Error saving', error)
+        setSaveStatus('idle')
+      }
+    },
+    [project, activeTabFilePath, isDiffTab, refreshOpenDiffs],
+  )
+
+  const flushPendingSave = useCallback(() => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current)
+      debounceTimerRef.current = null
+      performSave()
+    }
+  }, [performSave])
+
+  const scheduleSave = useCallback(() => {
+    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current)
+    debounceTimerRef.current = setTimeout(() => {
+      debounceTimerRef.current = null
+      performSave()
+    }, AUTO_SAVE_DELAY)
+  }, [performSave])
+
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current)
+      if (savedTimerRef.current) clearTimeout(savedTimerRef.current)
+    }
+  }, [])
+
+  const handleEditorMount: OnMount = (editor, monacoInstance) => {
     editorReference.current = editor
+
+    editor.addAction({
+      id: 'save-file',
+      label: 'Save File',
+      keybindings: [monacoInstance.KeyMod.CtrlCmd | monacoInstance.KeyCode.KeyS],
+      run: () => {
+        if (debounceTimerRef.current) {
+          clearTimeout(debounceTimerRef.current)
+          debounceTimerRef.current = null
+        }
+        performSave()
+      },
+    })
   }
 
   useEffect(() => {
     const unsubActiveTab = useEditorTabStore.subscribe(
       (state) => state.activeTabFilePath,
-      (newActiveTab) => {
+      (newActiveTab, oldActiveTab) => {
+        if (oldActiveTab && oldActiveTab !== newActiveTab) {
+          flushPendingSave()
+        }
         setActiveTabFilePath(newActiveTab)
       },
     )
     return () => {
       unsubActiveTab()
     }
-  }, [])
+  }, [flushPendingSave])
 
   useEffect(() => {
+    if (isDiffTab) return
+
     const abortController = new AbortController()
 
     async function fetchXml() {
@@ -96,14 +192,13 @@ export default function CodeEditor() {
     fetchXml()
 
     return () => abortController.abort()
-  }, [project, activeTabFilePath])
+  }, [project, activeTabFilePath, isDiffTab])
 
   useEffect(() => {
-    if (!xmlContent || !activeTabFilePath || !editorReference.current) return
+    if (!xmlContent || !activeTabFilePath || !editorReference.current || isDiffTab) return
 
     const editor = editorReference.current
 
-    // Wait for the editor to have a model
     const model = editor.getModel()
     if (!model) return
 
@@ -113,7 +208,6 @@ export default function CodeEditor() {
 
     const lineNumber = matchIndex + 1
 
-    // Reveal & highlight immediately if model exists
     editor.revealLineNearTop(lineNumber)
     editor.setPosition({ lineNumber, column: 1 })
     editor.focus()
@@ -129,17 +223,14 @@ export default function CodeEditor() {
     ])
     decorationIdsReference.current = newDecorations.getRanges().map(() => '')
 
-    // Remove highlight after 2s
     const timeout = setTimeout(() => {
       newDecorations.clear()
     }, 2000)
 
-    // Optional cleanup if component unmounts before timeout
     return () => clearTimeout(timeout)
-  }, [xmlContent, activeTabFilePath])
+  }, [xmlContent, activeTabFilePath, isDiffTab])
 
   useEffect(() => {
-    // Handles all the suggestions
     if (!editorReference.current) return
     const monacoInstance = (globalThis as { monaco?: Monaco }).monaco
     if (!monacoInstance) return
@@ -159,7 +250,6 @@ export default function CodeEditor() {
       return line.slice(0, position.column - 1)
     }
 
-    // Element suggestions
     const elementProvider = monacoInstance.languages.registerCompletionItemProvider('xml', {
       triggerCharacters: ['<'],
       provideCompletionItems: (model: ITextModel, position: Position) => {
@@ -243,32 +333,11 @@ export default function CodeEditor() {
       },
     })
 
-    // Cleanup
     return () => {
       elementProvider.dispose()
       attributeProvider.dispose()
     }
   }, [elements])
-
-  const handleSave = async () => {
-    if (!project || !activeTabFilePath) return
-
-    const editor = editorReference.current
-    const updatedContent = editor?.getValue?.()
-    if (!updatedContent) return
-
-    setIsSaving(true)
-
-    try {
-      await saveConfiguration(project.name, activeTabFilePath, updatedContent)
-      showSuccessToast('Succesfully saved content')
-    } catch (error) {
-      showErrorToast(`Error saving configuration: ${error instanceof Error ? error.message : error}`)
-      console.error('Error saving configuration:', error)
-    } finally {
-      setIsSaving(false)
-    }
-  }
 
   const handleOpenInStudio = useCallback(() => {
     const editorTab = useEditorTabStore.getState().getTab(activeTabFilePath)
@@ -289,11 +358,55 @@ export default function CodeEditor() {
     openInStudio(adapterName, editorTab.configurationPath)
   }, [activeTabFilePath, xmlContent])
 
+  const handleStageSelectedHunks = useCallback(async () => {
+    if (!activeTab.diffData || !project) return
+    const filePath = activeTab.diffData.filePath
+    const hunkState = useGitStore.getState().fileHunkStates[filePath]
+    if (!hunkState || hunkState.selectedHunks.size === 0) return
+    try {
+      await stageHunks(project.name, filePath, [...hunkState.selectedHunks])
+      useGitStore.getState().clearFileHunks(filePath)
+    } catch (error) {
+      showErrorToastFrom('Failed to stage hunks', error)
+    }
+  }, [activeTab.diffData, project])
+
+  const isGitRepo = !!project?.isGitRepository
+
   return (
     <SidebarLayout name="editor">
       <>
-        <SidebarHeader side={SidebarSide.LEFT} title="Files" />
-        <EditorFileStructure />
+        <div className="flex h-12 items-center justify-between px-4">
+          <SidebarClose side={SidebarSide.LEFT} />
+          <div className="border-border flex overflow-hidden rounded border text-sm">
+            <button
+              onClick={() => setLeftTab('files')}
+              className={clsx(
+                'px-3 py-1 transition-colors',
+                leftTab === 'files'
+                  ? 'bg-selected text-foreground font-medium'
+                  : 'hover:bg-foreground-active text-muted-foreground',
+              )}
+            >
+              Files
+            </button>
+            {isGitRepo && (
+              <button
+                onClick={() => setLeftTab('git')}
+                className={clsx(
+                  'border-border border-l px-3 py-1 transition-colors',
+                  leftTab === 'git'
+                    ? 'bg-selected text-foreground font-medium'
+                    : 'hover:bg-foreground-active text-muted-foreground',
+                )}
+              >
+                Git
+              </button>
+            )}
+          </div>
+        </div>
+        {leftTab === 'files' && <EditorFileStructure />}
+        {leftTab !== 'files' && isGitRepo && <GitPanel projectName={project!.name} />}
       </>
       <>
         <div className="flex">
@@ -301,27 +414,42 @@ export default function CodeEditor() {
           <div className="grow overflow-x-auto">
             <EditorTabs />
           </div>
-          <SidebarContentClose side={SidebarSide.RIGHT} />
         </div>
         {activeTabFilePath ? (
-          <>
-            <div className="border-b-border bg-background flex h-12 items-center justify-between border-b p-4">
-              <span>Path: {activeTabPath}</span>
-              <Button onClick={handleOpenInStudio} className="flex items-center gap-1.5" title="Open in Studio">
-                <RulerCrossPenIcon className="fill-foreground h-4 w-4" />
-                Open in Studio
-              </Button>
-            </div>
-            <div className="h-full">
-              <Editor
-                language="xml"
-                theme={`vs-${theme}`}
-                value={xmlContent}
-                onMount={handleEditorMount}
-                options={{ automaticLayout: true, quickSuggestions: false }}
-              />
-            </div>
-          </>
+          isDiffTab && activeTab.diffData ? (
+            <DiffTabView diffData={activeTab.diffData} onStageSelected={handleStageSelectedHunks} />
+          ) : (
+            <>
+              <div className="border-b-border bg-background flex h-12 items-center justify-between border-b p-4">
+                <span>Path: {activeTab.configurationPath}</span>
+                <div className="flex items-center gap-2">
+                  <span
+                    className={clsx(
+                      'text-muted-foreground text-xs transition-opacity duration-300',
+                      saveStatus === 'idle' ? 'opacity-0' : 'opacity-100',
+                    )}
+                  >
+                    {saveStatus === 'saving' && 'Saving...'}
+                    {saveStatus === 'saved' && 'Saved'}
+                  </span>
+                  <Button onClick={handleOpenInStudio} className="flex items-center gap-1.5" title="Open in Studio">
+                    <RulerCrossPenIcon className="fill-foreground h-4 w-4" />
+                    Open in Studio
+                  </Button>
+                </div>
+              </div>
+              <div className="h-full">
+                <Editor
+                  language="xml"
+                  theme={`vs-${theme}`}
+                  value={xmlContent}
+                  onMount={handleEditorMount}
+                  onChange={scheduleSave}
+                  options={{ automaticLayout: true, quickSuggestions: false }}
+                />
+              </div>
+            </>
+          )
         ) : (
           <div className="text-muted-foreground flex h-full flex-col items-center justify-center p-8 text-center">
             <div className="border-border bg-background/40 max-w-md rounded-2xl border border-dashed p-10 shadow-inner backdrop-blur-sm">
@@ -330,18 +458,6 @@ export default function CodeEditor() {
             </div>
           </div>
         )}
-      </>
-      <>
-        <SidebarHeader side={SidebarSide.RIGHT} title="Preview" />
-        <div className="flex w-full items-center justify-center">
-          <button
-            onClick={handleSave}
-            disabled={isSaving || !activeTabFilePath}
-            className="border-border bg-background hover:bg-foreground-active my-2 rounded border px-3 py-1 disabled:opacity-50"
-          >
-            {isSaving ? 'Saving...' : 'Save XML'}
-          </button>
-        </div>
       </>
     </SidebarLayout>
   )
