@@ -29,7 +29,7 @@ export async function getAdaptersFromConfiguration(projectName: string, filepath
   const xmlDoc = parser.parseFromString(xmlString, 'text/xml')
 
   const adapters: AdapterInfo[] = []
-  const adapterElements = xmlDoc.querySelectorAll('Adapter')
+  const adapterElements = xmlDoc.querySelectorAll('Adapter, adapter')
 
   for (const adapter of adapterElements) {
     const name = adapter.getAttribute('name')
@@ -38,7 +38,7 @@ export async function getAdaptersFromConfiguration(projectName: string, filepath
     let listenerType: string | null = null
     const children = adapter.querySelectorAll('*')
     for (const child of children) {
-      if (child.tagName.includes('Listener')) {
+      if (child.tagName.includes('Listener') || child.tagName.includes('listener')) {
         listenerType = child.tagName
         break
       }
@@ -64,7 +64,7 @@ export async function getAdapterFromConfiguration(
   const parser = new DOMParser()
   const xmlDoc = parser.parseFromString(xmlString, 'text/xml')
 
-  const adapterList = xmlDoc.querySelectorAll('Adapter')
+  const adapterList = xmlDoc.querySelectorAll('Adapter, adapter')
   for (const adapter of adapterList) {
     if (adapter.getAttribute('name') === adapterName) {
       return adapter
@@ -84,7 +84,7 @@ export async function getAdapterListenerType(
   // Look through all child elements inside the adapter
   const children = adapterElement.querySelectorAll('*')
   for (const child of children) {
-    if (child.tagName.includes('Listener')) {
+    if (child.tagName.includes('Listener') || child.tagName.includes('listener')) {
       return child.tagName // Return the tag name, e.g., "JavaListener"
     }
   }
