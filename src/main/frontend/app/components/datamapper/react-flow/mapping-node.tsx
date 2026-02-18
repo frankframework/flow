@@ -17,7 +17,7 @@ function MappingNode({ id, data, onClick, onDelete, onEdit }: MappingNodePropert
   return (
     <div
       onClick={() => onClick?.(id)}
-      className="relative flex max-h-[50px] w-[MAPPING_WIDTH] justify-between overflow-hidden rounded-md p-2"
+      className={`relative flex max-h-[50px] justify-between overflow-hidden rounded-md p-2`}
       style={{
         backgroundColor: data.colour || 'var(--color-backdrop)',
         width: `${MAPPING_WIDTH}px`,
