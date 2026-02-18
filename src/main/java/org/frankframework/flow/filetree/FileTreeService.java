@@ -94,7 +94,7 @@ public class FileTreeService {
         try {
             var project = projectService.getProject(projectName);
             Path projectPath = fileSystemStorage.toAbsolutePath(project.getRootPath());
-            Path dirPath = projectPath.resolve(directoryPath).normalize();
+            Path dirPath = fileSystemStorage.toAbsolutePath(directoryPath).normalize();
 
             if (!dirPath.startsWith(projectPath)) {
                 throw new SecurityException("Invalid path: outside project directory");
@@ -104,7 +104,9 @@ public class FileTreeService {
                 throw new IllegalArgumentException("Directory does not exist: " + dirPath);
             }
 
-            return buildShallowTree(dirPath);
+            boolean useRelativePaths = !fileSystemStorage.isLocalEnvironment();
+            Path relativizeRoot = useRelativePaths ? fileSystemStorage.toAbsolutePath("") : projectPath;
+            return buildShallowTree(dirPath, relativizeRoot, useRelativePaths);
         } catch (ProjectNotFoundException e) {
             throw new IllegalArgumentException("Project does not exist: " + projectName);
         }
@@ -113,16 +115,16 @@ public class FileTreeService {
     public FileTreeNode getShallowConfigurationsDirectoryTree(String projectName) throws IOException {
         try {
             var project = projectService.getProject(projectName);
-            Path configDirPath = fileSystemStorage
-                    .toAbsolutePath(project.getRootPath())
-                    .resolve("src/main/configurations")
-                    .normalize();
+            Path projectPath = fileSystemStorage.toAbsolutePath(project.getRootPath());
+            Path configDirPath = projectPath.resolve("src/main/configurations").normalize();
 
             if (!Files.exists(configDirPath) || !Files.isDirectory(configDirPath)) {
                 throw new IllegalArgumentException("Configurations directory does not exist: " + configDirPath);
             }
 
-            return buildShallowTree(configDirPath);
+            boolean useRelativePaths = !fileSystemStorage.isLocalEnvironment();
+            Path relativizeRoot = useRelativePaths ? fileSystemStorage.toAbsolutePath("") : projectPath;
+            return buildShallowTree(configDirPath, relativizeRoot, useRelativePaths);
         } catch (ProjectNotFoundException e) {
             throw new IllegalArgumentException("Configurations directory does not exist: " + projectName);
         }
@@ -197,16 +199,7 @@ public class FileTreeService {
     private FileTreeNode buildTree(Path path, Path relativizeRoot, boolean useRelativePaths) throws IOException {
         FileTreeNode node = new FileTreeNode();
         node.setName(path.getFileName().toString());
-
-        if (useRelativePaths) {
-            String relativePath = relativizeRoot.relativize(path).toString().replace("\\", "/");
-            if (relativePath.isEmpty()) {
-                relativePath = ".";
-            }
-            node.setPath(relativePath);
-        } else {
-            node.setPath(path.toAbsolutePath().toString());
-        }
+        node.setPath(toNodePath(path, relativizeRoot, useRelativePaths));
 
         if (Files.isDirectory(path)) {
             node.setType(NodeType.DIRECTORY);
@@ -231,11 +224,19 @@ public class FileTreeService {
         return node;
     }
 
+    private String toNodePath(Path path, Path relativizeRoot, boolean useRelativePaths) {
+        if (!useRelativePaths) {
+            return path.toAbsolutePath().toString();
+        }
+        String relativePath = relativizeRoot.relativize(path).toString().replace("\\", "/");
+        return relativePath.isEmpty() ? "." : relativePath;
+    }
+
     // Method to build a shallow tree (only immediate children)
-    private FileTreeNode buildShallowTree(Path path) throws IOException {
+    private FileTreeNode buildShallowTree(Path path, Path relativizeRoot, boolean useRelativePaths) throws IOException {
         FileTreeNode node = new FileTreeNode();
         node.setName(path.getFileName().toString());
-        node.setPath(path.toAbsolutePath().toString());
+        node.setPath(toNodePath(path, relativizeRoot, useRelativePaths));
 
         if (!Files.isDirectory(path)) {
             throw new IllegalArgumentException("Path is not a directory: " + path);
@@ -247,14 +248,8 @@ public class FileTreeService {
             List<FileTreeNode> children = stream.map(p -> {
                         FileTreeNode child = new FileTreeNode();
                         child.setName(p.getFileName().toString());
-                        child.setPath(p.toAbsolutePath().toString());
-
-                        if (Files.isDirectory(p)) {
-                            child.setType(NodeType.DIRECTORY);
-                        } else {
-                            child.setType(NodeType.FILE);
-                        }
-
+                        child.setPath(toNodePath(p, relativizeRoot, useRelativePaths));
+                        child.setType(Files.isDirectory(p) ? NodeType.DIRECTORY : NodeType.FILE);
                         return child;
                     })
                     .toList();

@@ -20,8 +20,7 @@ import { showErrorToastFrom } from '~/components/toast'
 import GitPanel from '~/components/git/git-panel'
 import DiffTabView from '~/components/git/diff-tab-view'
 import clsx from 'clsx'
-import { useGitStore } from '~/stores/git-store'
-import { fetchFileDiff, fetchGitStatus } from '~/services/git-service'
+import { refreshOpenDiffs } from '~/services/git-service'
 import { findAdaptersInXml, lineToOffset, findAdapterAtOffset } from './xml-utils'
 
 type LeftTab = 'files' | 'git'
@@ -56,38 +55,6 @@ export default function CodeEditor() {
 
   const isDiffTab = activeTab.type === 'diff'
 
-  const refreshOpenDiffs = useCallback(async (projectName: string) => {
-    const tabStore = useEditorTabStore.getState()
-    const gitStore = useGitStore.getState()
-
-    try {
-      const newStatus = await fetchGitStatus(projectName)
-      gitStore.setStatus(newStatus)
-    } catch {
-      /* ignore */
-    }
-
-    for (const [tabId, tab] of Object.entries(tabStore.tabs)) {
-      if (tab.type === 'diff' && tab.diffData) {
-        try {
-          const diff = await fetchFileDiff(projectName, tab.diffData.filePath)
-          tabStore.setTabData(tabId, {
-            ...tab,
-            diffData: {
-              oldContent: diff.oldContent,
-              newContent: diff.newContent,
-              filePath: diff.filePath,
-              hunks: diff.hunks,
-            },
-          })
-          gitStore.initFileHunks(tab.diffData.filePath, diff.hunks.length)
-        } catch {
-          /* ignore - file may no longer have changes */
-        }
-      }
-    }
-  }, [])
-
   const performSave = useCallback(
     async (content?: string) => {
       if (!project || !activeTabFilePath || isDiffTab) return
@@ -111,7 +78,7 @@ export default function CodeEditor() {
         setSaveStatus('idle')
       }
     },
-    [project, activeTabFilePath, isDiffTab, refreshOpenDiffs],
+    [project, activeTabFilePath, isDiffTab],
   )
 
   const flushPendingSave = useCallback(() => {
@@ -393,7 +360,9 @@ export default function CodeEditor() {
           </div>
         </div>
         {leftTab === 'files' && <EditorFileStructure />}
-        {leftTab !== 'files' && isGitRepo && <GitPanel projectName={project!.name} />}
+        {leftTab !== 'files' && isGitRepo && (
+          <GitPanel projectName={project!.name} hasStoredToken={project!.hasStoredToken} />
+        )}
       </>
       <>
         <div className="flex">

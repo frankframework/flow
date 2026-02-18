@@ -226,15 +226,19 @@ public class GitService {
     public GitPushResultDTO push(String projectName, String token)
             throws ProjectNotFoundException, IOException, NotAGitRepositoryException, GitOperationException {
         log.debug("Pushing changes for project '{}'", projectName);
+        String effectiveToken = resolveToken(projectName, token);
         try (Git git = openGit(projectName)) {
             PushCommand pushCommand = git.push();
-            applyCredentials(pushCommand, git.getRepository(), token);
+            applyCredentials(pushCommand, git.getRepository(), effectiveToken);
 
             Iterable<PushResult> results = pushCommand.call();
             return buildPushResult(projectName, results);
         } catch (GitAPIException e) {
             log.error("Failed to push for project '{}': {}", projectName, e.getMessage(), e);
-            throw new GitOperationException("Failed to push", e);
+            String message = !fileSystemStorage.isLocalEnvironment()
+                    ? "Push failed — check your Personal Access Token (PAT) input"
+                    : "Failed to push";
+            throw new GitOperationException(message, e);
         }
     }
 
@@ -244,15 +248,19 @@ public class GitService {
     public GitPullResultDTO pull(String projectName, String token)
             throws ProjectNotFoundException, IOException, NotAGitRepositoryException, GitOperationException {
         log.debug("Pulling changes for project '{}'", projectName);
+        String effectiveToken = resolveToken(projectName, token);
         try (Git git = openGit(projectName)) {
             PullCommand pullCommand = git.pull();
-            applyCredentials(pullCommand, git.getRepository(), token);
+            applyCredentials(pullCommand, git.getRepository(), effectiveToken);
 
             PullResult result = pullCommand.call();
             return buildPullResult(projectName, result);
         } catch (GitAPIException e) {
             log.error("Failed to pull for project '{}': {}", projectName, e.getMessage(), e);
-            throw new GitOperationException("Failed to pull", e);
+            String message = !fileSystemStorage.isLocalEnvironment()
+                    ? "Pull failed — check your Personal Access Token (PAT) input"
+                    : "Failed to pull";
+            throw new GitOperationException(message, e);
         }
     }
 
@@ -288,6 +296,18 @@ public class GitService {
     /**
      * Resolves credentials and applies them to the given PushCommand. It uses the GitCredentialHelper to determine the appropriate credentials based on the repository configuration and the provided token. If credentials are found, they are set on the PushCommand to enable authenticated pushes to remote repositories that require it.
      */
+    /** Uses the explicit token if provided, otherwise falls back to the project's stored clone token. */
+    private String resolveToken(String projectName, String explicitToken) {
+        if (explicitToken != null && !explicitToken.isBlank()) {
+            return explicitToken;
+        }
+        try {
+            return projectService.getProject(projectName).getGitToken();
+        } catch (ProjectNotFoundException e) {
+            return null;
+        }
+    }
+
     private void applyCredentials(PushCommand command, Repository repo, String token) {
         CredentialsProvider credentials =
                 GitCredentialHelper.resolve(repo, token, fileSystemStorage.isLocalEnvironment());

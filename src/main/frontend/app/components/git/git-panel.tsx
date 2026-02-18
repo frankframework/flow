@@ -8,6 +8,7 @@ import {
   commitChanges,
   pushChanges,
   pullChanges,
+  refreshOpenDiffs,
 } from '~/services/git-service'
 import { showErrorToastFrom, showInfoToast, showSuccessToast, showErrorToast } from '~/components/toast'
 import useEditorTabStore from '~/stores/editor-tab-store'
@@ -17,9 +18,10 @@ import GitCommitBox from './git-commit-box'
 
 interface GitPanelProps {
   projectName: string
+  hasStoredToken: boolean
 }
 
-export default function GitPanel({ projectName }: GitPanelProps) {
+export default function GitPanel({ projectName, hasStoredToken }: GitPanelProps) {
   const {
     status,
     selectedFile,
@@ -118,6 +120,7 @@ export default function GitPanel({ projectName }: GitPanelProps) {
       }
 
       await refreshStatus()
+      await refreshOpenDiffs(projectName)
       showSuccessToast(`Committed: ${result.commitId.slice(0, 7)}`)
     } catch (error) {
       showErrorToastFrom('Failed to commit', error)
@@ -158,6 +161,7 @@ export default function GitPanel({ projectName }: GitPanelProps) {
         showErrorToast(result.message)
       }
       await refreshStatus()
+      await refreshOpenDiffs(projectName)
     } catch (error) {
       showErrorToastFrom('Failed to pull', error)
     }
@@ -174,6 +178,7 @@ export default function GitPanel({ projectName }: GitPanelProps) {
         onPull={handlePull}
         token={token}
         onTokenChange={setToken}
+        hasStoredToken={hasStoredToken}
       />
       <GitChanges
         status={status}

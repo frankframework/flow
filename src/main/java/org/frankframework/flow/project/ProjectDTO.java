@@ -9,4 +9,5 @@ public record ProjectDTO(
         String rootPath,
         List<String> filepaths,
         Map<FilterType, Boolean> filters,
-        boolean isGitRepository) {}
+        boolean isGitRepository,
+        boolean hasStoredToken) {}
