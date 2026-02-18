@@ -5,12 +5,14 @@ import { sortChildren } from './tree-utilities'
 export interface FileNode {
   name: string
   path: string
+  projectRoot?: boolean
 }
 
 export interface FileTreeNode {
   name: string
   path: string
   type: 'FILE' | 'DIRECTORY'
+  projectRoot?: boolean
   children?: FileTreeNode[]
 }
 
@@ -22,11 +24,11 @@ export default class EditorFilesDataProvider implements TreeDataProvider {
 
   constructor(projectName: string) {
     this.projectName = projectName
-    this.loadRoot()
+    void this.fetchAndBuildTree()
   }
 
-  /** Fetch root directory from backend and build the provider's data */
-  private async loadRoot() {
+  /** Fetch file tree from backend and build the provider's data */
+  private async fetchAndBuildTree() {
     try {
       if (!this.projectName) return
 
@@ -40,27 +42,12 @@ export default class EditorFilesDataProvider implements TreeDataProvider {
 
       this.data['root'] = {
         index: 'root',
-        data: { name: tree.name, path: tree.path },
+        data: { name: tree.name, path: tree.path, projectRoot: true },
         isFolder: true,
         children: [],
       }
 
-      // Sort directories first, then files, both alphabetically
-      const sortedChildren = sortChildren(tree.children)
-
-      for (const child of sortedChildren) {
-        const childIndex = `root/${child.name}`
-
-        this.data[childIndex] = {
-          index: childIndex,
-          data: { name: child.name, path: child.path },
-          isFolder: child.type === 'DIRECTORY',
-          children: child.type === 'DIRECTORY' ? [] : undefined,
-        }
-
-        this.data['root'].children!.push(childIndex)
-      }
-
+      this.data['root'].children = this.buildChildren('root', tree.children)
       this.loadedDirectories.add(tree.path)
       this.notifyListeners(['root'])
     } catch (error) {
@@ -79,34 +66,35 @@ export default class EditorFilesDataProvider implements TreeDataProvider {
       const directory = await fetchDirectoryByPath(this.projectName, item.data.path)
       if (!directory) {
         console.warn('[EditorFilesDataProvider] Received empty directory from API')
-        this.data = {}
         return
       }
 
-      const sortedChildren = sortChildren(directory.children)
-
-      const children: TreeItemIndex[] = []
-
-      for (const child of sortedChildren) {
-        const childIndex = `${itemId}/${child.name}`
-
-        this.data[childIndex] = {
-          index: childIndex,
-          data: { name: child.name, path: child.path },
-          isFolder: child.type === 'DIRECTORY',
-          children: child.type === 'DIRECTORY' ? [] : undefined,
-        }
-
-        children.push(childIndex)
-      }
-
-      item.children = children
-
+      item.children = this.buildChildren(itemId, directory.children)
       this.loadedDirectories.add(item.data.path)
       this.notifyListeners([itemId])
     } catch (error) {
       console.error('Failed to load directory', error)
     }
+  }
+
+  private buildChildren(parentIndex: TreeItemIndex, children?: FileTreeNode[]): TreeItemIndex[] {
+    const sorted = sortChildren(children)
+    const childIds: TreeItemIndex[] = []
+
+    for (const child of sorted) {
+      const childIndex = `${parentIndex}/${child.name}`
+
+      this.data[childIndex] = {
+        index: childIndex,
+        data: { name: child.name, path: child.path },
+        isFolder: child.type === 'DIRECTORY',
+        children: child.type === 'DIRECTORY' ? [] : undefined,
+      }
+
+      childIds.push(childIndex)
+    }
+
+    return childIds
   }
 
   public async getAllItems(): Promise<TreeItem<FileNode>[]> {

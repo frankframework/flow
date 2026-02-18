@@ -7,7 +7,7 @@ import type {
   PropertyDefinition,
 } from '~/types/datamapper_types/data-types'
 import type { CustomNodeData, NodeLabels } from '~/types/datamapper_types/node-types'
-import { showWarningToast } from '../../toast'
+import { showWarningToast } from '~/components/toast'
 import Input from '~/components/inputs/input'
 import Dropdown from '~/components/inputs/dropdown'
 import Button from '~/components/inputs/button'
@@ -41,7 +41,7 @@ function AddFieldForm({ fieldType, onSave, parents, formatDefinition, initialDat
     const propertyRules = format?.properties.find((a) => a.name == variableType)
     setDefaultValueRules(propertyRules?.rules)
     setDefaultValueInputType(propertyRules?.type)
-  }, [variableType])
+  }, [fieldType, formatDefinition, variableType])
 
   const isFormIncomplete = !variableType || !label
 

@@ -22,8 +22,8 @@ import { ChildNodeComponent, type ChildNode } from './child-node'
 import { findChildRecursive } from '~/stores/child-utilities'
 import { canAcceptChildStatic } from './node-utilities'
 import type { ElementDetails } from '@frankframework/ff-doc'
-import { toast } from 'react-toastify'
 import { DeprecatedPopover } from './components/deprecated-popover'
+import { showWarningToast } from '~/components/toast'
 
 export type FrankNodeType = Node<{
   subtype: string
@@ -110,7 +110,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
     (handleType: string) => {
       // Prevent adding duplicate handle types
       if (hasHandleOfType(handleType)) {
-        toast.warn(`Handle of type "${handleType}" is already present!`)
+        showWarningToast(`Handle of type "${handleType}" is already present!`)
         console.warn(`Handle of type "${handleType}" is already present!`)
         return
       }
@@ -166,7 +166,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
     )
 
     if (existing) {
-      toast.warn(`Handle of type "${newType}" is already present!`)
+      showWarningToast(`Handle of type "${newType}" is already present!`)
       console.warn(`Handle of type "${newType}" is already present!`)
       return
     }

@@ -54,10 +54,9 @@ export default function Dropdown({
 
   useEffect(() => {
     if (isOpen) {
-      setHighlightedIndex(getSelectedIndex())
       dropdownReference.current?.focus()
     }
-  }, [isOpen, getSelectedIndex])
+  }, [isOpen])
 
   useEffect(() => {
     if (isOpen && highlightedIndex >= 0 && optionsReference.current[highlightedIndex]) {
@@ -116,18 +115,34 @@ export default function Dropdown({
     }
   }
 
+  useEffect(() => {
+    if (!isOpen) return
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (!dropdownReference.current) return
+
+      if (!dropdownReference.current.contains(event.target as Node)) {
+        closeDropdown()
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [isOpen])
+
   const handleOpenDropdownKeyDown = (event: React.KeyboardEvent) => {
     switch (event.key) {
       case 'ArrowDown': {
         event.preventDefault()
-        setHighlightedIndex((previousIndex) =>
-          previousIndex < optionsArray.length - 1 ? previousIndex + 1 : previousIndex,
-        )
+        setHighlightedIndex((prev) => Math.min(prev + 1, optionsArray.length - 1))
         break
       }
       case 'ArrowUp': {
         event.preventDefault()
-        setHighlightedIndex((previousIndex) => (previousIndex > 0 ? previousIndex - 1 : 0))
+        setHighlightedIndex((prev) => Math.max(prev - 1, 0))
         break
       }
       case 'Enter': {
@@ -150,36 +165,35 @@ export default function Dropdown({
   }
 
   return (
-    <div
-      ref={dropdownReference}
-      className={clsx('relative inline-block w-full', disabled && 'cursor-not-allowed opacity-50', className)}
-      tabIndex={disabled ? undefined : 0}
-      onKeyDown={handleKeyDown}
-      aria-expanded={isOpen}
-      role="combobox"
-      onBlur={closeDropdown}
-      id={id}
-      aria-controls="listbox"
-      aria-haspopup="listbox"
-    >
+    <div ref={dropdownReference} className="inline-block">
       <div
-        onClick={toggleDropdown}
-        className={clsx(
-          'border-border bg-backdrop flex items-center justify-between rounded-md border px-3 py-2',
-          disabled ? 'cursor-not-allowed' : 'cursor-pointer',
-          isOpen ? 'bg-selected' : 'hover:bg-hover',
-        )}
+        className={clsx('relative inline-block w-full', disabled && 'cursor-not-allowed opacity-50', className)}
+        tabIndex={disabled ? undefined : 0}
+        onKeyDown={handleKeyDown}
+        aria-expanded={isOpen}
+        role="combobox"
+        id={id}
+        aria-controls="listbox"
+        aria-haspopup="listbox"
       >
-        <span className={clsx('text-foreground block truncate sm:text-sm', !selectedValue && 'text-gray-400')}>
-          {getSelectedLabel()}
-        </span>
-        <AltArrowDownIcon className={clsx('fill-foreground h-4 w-4', isOpen && 'rotate-180')} />
+        <div
+          onClick={toggleDropdown}
+          className={clsx(
+            'border-border bg-backdrop flex items-center justify-between rounded-md border px-3 py-2',
+            disabled ? 'cursor-not-allowed' : 'cursor-pointer',
+            isOpen ? 'bg-selected' : 'hover:bg-hover',
+          )}
+        >
+          <span className={clsx('text-foreground block truncate sm:text-sm', !selectedValue && 'text-gray-400')}>
+            {getSelectedLabel()}
+          </span>
+          <AltArrowDownIcon className={clsx('fill-foreground h-4 w-4', isOpen && 'rotate-180')} />
+        </div>
       </div>
-
       {isOpen && !disabled && (
         <ul
           ref={listReference}
-          className="border-border text-foreground bg-background absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md border py-1 shadow-lg"
+          className="border-border text-foreground bg-background absolute z-200 mt-1 max-h-60 overflow-auto rounded-md border py-1 shadow-lg"
         >
           {optionsArray.length > 0 ? (
             Object.entries(options).map(([value, label], index) => (

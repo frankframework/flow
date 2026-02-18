@@ -29,7 +29,10 @@ export default function ConfigurationTile({ filepath, relativePath }: Readonly<C
   }
 
   const handleOpenInEditor = () => {
-    openInEditor(relativePath, filepath)
+    const fileName = relativePath.split(/[/\\]/).pop()
+    if (!fileName) return
+
+    openInEditor(fileName, filepath)
   }
 
   return (

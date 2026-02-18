@@ -13,4 +13,6 @@ COPY --chown=spring ./target/flow*.jar /app/flow.jar
 
 EXPOSE 8080
 
+ENV SPRING_PROFILES_ACTIVE=cloud
+
 CMD ["java","-jar","/app/flow.jar"]

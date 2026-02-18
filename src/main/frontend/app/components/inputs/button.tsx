@@ -9,7 +9,7 @@ export default function Button({
   return (
     <button
       className={clsx(
-        'border-border hover:bg-hover active:bg-selected text-foreground bg-backdrop rounded-md border px-4 py-2',
+        'border-border hover:bg-hover active:bg-selected text-foreground bg-backdrop rounded-md border px-4 py-2 hover:cursor-pointer',
         className,
       )}
       {...properties}

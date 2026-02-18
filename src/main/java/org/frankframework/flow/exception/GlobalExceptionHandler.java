@@ -1,6 +1,7 @@
 package org.frankframework.flow.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
+import java.io.IOException;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -42,5 +43,22 @@ public class GlobalExceptionHandler {
                 HttpStatus.BAD_REQUEST.getReasonPhrase());
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    @ExceptionHandler(IOException.class)
+    public ResponseEntity<ErrorResponse> handleIOException(IOException exception, HttpServletRequest request) {
+        log.error(
+                "I/O error: {} - Method: {} URL: {}",
+                exception.getMessage(),
+                request.getMethod(),
+                request.getRequestURI(),
+                exception);
+
+        ErrorResponse response = new ErrorResponse(
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                List.of("A filesystem error occurred: " + exception.getMessage()),
+                HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase());
+
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
     }
 }

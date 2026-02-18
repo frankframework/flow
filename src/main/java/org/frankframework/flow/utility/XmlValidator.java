@@ -5,13 +5,13 @@ import java.io.StringReader;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import lombok.experimental.UtilityClass;
 import org.frankframework.flow.project.InvalidXmlContentException;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
+@UtilityClass
 public class XmlValidator {
-
-    private XmlValidator() {}
 
     public static void validateXml(String xmlContent) throws InvalidXmlContentException {
         if (xmlContent == null || xmlContent.isBlank()) {

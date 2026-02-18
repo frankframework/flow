@@ -4,6 +4,20 @@ export function apiUrl(path: string): string {
   return `${variables.apiBaseUrl}/api${path}`
 }
 
+const getAnonymousSessionId = () => {
+  const STORAGE_KEY = 'frankflow_anon_session_id'
+  let id = sessionStorage.getItem(STORAGE_KEY)
+  if (!id) {
+    id = crypto.randomUUID()
+    sessionStorage.setItem(STORAGE_KEY, id)
+  }
+  return id
+}
+
+const getAuthToken = () => {
+  return localStorage.getItem('access_token') || null
+}
+
 interface BackendErrorResponse {
   httpStatus: number
   messages: string[]
@@ -22,9 +36,26 @@ export class ApiError extends Error {
 }
 
 export async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
-  const headers: HeadersInit = options?.body ? { 'Content-Type': 'application/json' } : {}
+  const isFormData = options?.body instanceof FormData
 
-  const response = await fetch(apiUrl(path), { ...options, headers: { ...headers, ...options?.headers } })
+  const defaultHeaders: Record<string, string> =
+    options?.body && !isFormData ? { 'Content-Type': 'application/json' } : {}
+
+  const headers: Record<string, string> = {
+    ...defaultHeaders,
+    'X-Session-ID': getAnonymousSessionId(),
+    ...(options?.headers as Record<string, string>),
+  }
+
+  const token = getAuthToken()
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`
+  }
+
+  const response = await fetch(apiUrl(path), {
+    ...options,
+    headers,
+  })
 
   if (!response.ok) {
     const contentType = response.headers.get('content-type')

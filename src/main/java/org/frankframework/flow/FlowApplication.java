@@ -6,13 +6,16 @@ import static org.springframework.web.servlet.function.RouterFunctions.route;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.web.servlet.function.RequestPredicate;
 import org.springframework.web.servlet.function.RouterFunction;
 import org.springframework.web.servlet.function.ServerResponse;
 
 @SpringBootApplication
+@EnableScheduling
 public class FlowApplication {
 
     public static void main(String[] args) {
@@ -21,7 +24,7 @@ public class FlowApplication {
     }
 
     public static SpringApplication configureApplication() {
-        return new SpringApplication(FlowApplication.class);
+        return new SpringApplicationBuilder(FlowApplication.class).build();
     }
 
     /**
