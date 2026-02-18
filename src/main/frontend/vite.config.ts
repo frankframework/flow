@@ -7,9 +7,18 @@ import mdx from '@mdx-js/rollup'
 import dotenv from 'dotenv'
 
 dotenv.config({ quiet: true })
+import remarkGfm from 'remark-gfm'
 
 export default defineConfig({
-  plugins: [tailwindcss(), mdx(), reactRouter(), tsconfigPaths(), svgr()],
+  plugins: [
+    tailwindcss(),
+    mdx({
+      remarkPlugins: [remarkGfm],
+    }),
+    reactRouter(),
+    tsconfigPaths(),
+    svgr(),
+  ],
   server: {
     port: 3000,
   },

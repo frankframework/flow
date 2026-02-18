@@ -15,7 +15,7 @@ const toastBaseCard =
 const defaultStyle = 'items-end justify-end pointer-events-none'
 const toastStyles = {
   ERROR: {
-    container: 'items-center justify-center bg-black/50',
+    container: defaultStyle,
     card: `${toastBaseCard} bg-error`,
     icon: '',
     defaultDuration: 2000,

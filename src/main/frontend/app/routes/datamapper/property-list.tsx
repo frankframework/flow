@@ -98,7 +98,7 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
       setEditingMapping,
       openMapping,
     })
-  }, []) //UseMemo is used here to ensure nodetype is not changed throughout rerenders. If the variable is update reactflow throws a warning in the console;
+  }, [flow, openMapping]) //UseMemo is used here to ensure nodetype is not changed throughout rerenders. If the variable is update reactflow throws a warning in the console;
 
   useEffect(() => {
     if (!reactFlowInstance) return
@@ -117,7 +117,7 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
     return () => {
       window.removeEventListener('resize', updateSize)
     }
-  }, [reactFlowInstance])
+  }, [flow, reactFlowInstance])
 
   useEffect(() => {
     if (!reactFlowInstance) return
@@ -126,12 +126,12 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
       type: 'SET_PROPERTY_DATA',
       payload: reactFlowInstance.toObject(),
     })
-  }, [reactFlowNodes, edges])
+  }, [reactFlowNodes, edges, reactFlowInstance, configDispatch])
 
   //Updates the outer canvas whenever something is added
   useEffect(() => {
     setCanvasSize((size) => flow.updateCanvasSize(reactFlowNodes, size))
-  }, [reactFlowNodes])
+  }, [flow, reactFlowNodes])
 
   useEffect(() => {
     if (!reactFlowInstance || initHasRun.current) return
@@ -150,7 +150,7 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
       flow.importMultipleSchematics(sourceSchematics)
     }
     clearFiles()
-  }, [reactFlowInstance])
+  }, [clearFiles, config.propertyData.nodes, flow, reactFlowInstance, sourceSchematics, targetSchematic])
 
   const onReactFlowNodeChange = useCallback(
     (changes: NodeChange[]) => setReactFlowNodes((nodes) => applyNodeChanges(changes, nodes) as Node[]),
@@ -191,7 +191,7 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
     }
 
     restoreFlow()
-  }, [setReactFlowNodes])
+  }, [config.propertyData, flow])
 
   function openMapping() {
     requestAnimationFrame(() => {

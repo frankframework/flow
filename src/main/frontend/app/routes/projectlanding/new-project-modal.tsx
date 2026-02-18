@@ -1,81 +1,130 @@
-import { useEffect, useState } from 'react'
-import { fetchProjectRoot } from '~/services/project-service'
+import { useState, useEffect } from 'react'
+import DirectoryPicker from '~/components/directory-picker/directory-picker'
+import { filesystemService } from '~/services/filesystem-service'
 
 interface NewProjectModalProperties {
   isOpen: boolean
+  isLocal: boolean
   onClose: () => void
-  onCreate: (name: string, rootPath: string) => void
+  onCreate: (pathOrName: string) => void
 }
 
-export default function NewProjectModal({ isOpen, onClose, onCreate }: Readonly<NewProjectModalProperties>) {
+export default function NewProjectModal({ isOpen, isLocal, onClose, onCreate }: Readonly<NewProjectModalProperties>) {
   const [name, setName] = useState('')
-  const [rootPath, setRootPath] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [location, setLocation] = useState('')
+  const [showPicker, setShowPicker] = useState(false)
 
   useEffect(() => {
-    if (!isOpen) return
-
-    const fetchData = async () => {
-      setLoading(true)
-      setError(null)
-
-      try {
-        const rootData = await fetchProjectRoot()
-        setRootPath(rootData.rootPath)
-      } catch (error) {
-        setError(error instanceof Error ? error.message : 'Failed to fetch project data')
-      } finally {
-        setLoading(false)
-      }
+    if (isOpen && isLocal) {
+      filesystemService
+        .getDefaultPath()
+        .then(setLocation)
+        .catch(() => setLocation(''))
+    } else if (isOpen) {
+      setLocation('')
     }
-
-    fetchData()
-  }, [isOpen])
+  }, [isOpen, isLocal])
 
   if (!isOpen) return null
 
-  const handleCreate = async () => {
+  const handleCreate = () => {
     if (!name.trim()) return
-    onCreate(name, rootPath)
+    if (isLocal && !location) return
+
+    if (isLocal) {
+      const separator = location.includes('/') ? '/' : '\\'
+      const absolutePath = `${location}${separator}${name.trim()}`
+      onCreate(absolutePath)
+    } else {
+      const trimmedName = name.trim()
+      const path = location ? `${location}/${trimmedName}` : trimmedName
+      onCreate(path)
+    }
+
+    handleClose()
+  }
+
+  const handleClose = () => {
+    setName('')
+    setLocation('')
+    setShowPicker(false)
     onClose()
   }
 
   return (
-    <div className="bg-background/50 absolute inset-0 z-50 flex items-center justify-center">
-      <div className="bg-background border-border relative h-[400px] w-[600px] rounded-lg border p-6 shadow-lg">
-        <h2 className="mb-4 text-lg font-semibold">Add Project</h2>
-        <p className="mb-4">Add a new project in {rootPath}</p>
+    <>
+      <div className="bg-background/50 absolute inset-0 z-50 flex items-center justify-center">
+        <div className="bg-background border-border relative h-[400px] w-[600px] rounded-lg border p-6 shadow-lg">
+          <h2 className="mb-4 text-lg font-semibold">New Project</h2>
+          <p className="text-foreground-muted mb-4 text-sm">
+            {isLocal ? 'Create a new Frank! project on disk' : 'Create a new project in the workspace'}
+          </p>
 
-        <div className="mb-4 flex items-center gap-2">
-          {loading && <p className="text-muted-foreground">Loading rootfolder...</p>}
-          {error && <p className="text-destructive">{error}</p>}
-          <label className="text-sm font-medium">Projectname</label>
-          <input
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            className="border-border bg-background focus:border-foreground-active focus:ring-foreground-active w-full rounded border px-2 py-1 text-sm transition focus:ring-2 focus:outline-none"
-            placeholder="Enter project name"
-            aria-label="project name"
-          />
-        </div>
+          <div className="mb-4">
+            <label className="mb-1 block text-sm font-medium">Location</label>
+            <div className="flex items-center gap-2">
+              <input
+                value={location || (isLocal ? '' : 'Workspace root')}
+                readOnly
+                className="border-border bg-backdrop w-full rounded border px-2 py-1 text-sm"
+                placeholder={isLocal ? 'Select a parent directory...' : 'Workspace root (or browse for subfolder)'}
+              />
 
-        <div className="flex gap-2">
-          <button
-            onClick={handleCreate}
-            className="bg-backdrop hover:bg-background border-border rounded border px-4 py-2 hover:cursor-pointer"
-          >
-            Create Project
-          </button>
+              <button
+                onClick={() => setShowPicker(true)}
+                className="bg-backdrop hover:bg-background border-border rounded border px-3 py-1 text-sm whitespace-nowrap hover:cursor-pointer"
+              >
+                Browse...
+              </button>
+            </div>
+          </div>
 
-          <button
-            onClick={onClose}
-            className="bg-background border-border hover:bg-backdrop absolute top-3 right-3 cursor-pointer rounded border px-3 py-1"
-          >
-            Close
-          </button>
+          <div className="mb-4">
+            <label className="mb-1 block text-sm font-medium">Project Name</label>
+            <input
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              className="border-border bg-background focus:border-foreground-active focus:ring-foreground-active w-full rounded border px-2 py-1 text-sm transition focus:ring-2 focus:outline-none"
+              placeholder="Enter project name"
+            />
+          </div>
+
+          {name.trim() && (
+            <p className="text-foreground-muted mb-4 text-xs">
+              Project will be created at:{' '}
+              {isLocal
+                ? `${location}${location.includes('/') ? '/' : '\\'}${name.trim()}`
+                : `${location ? `${location}/` : ''}${name.trim()}`}
+            </p>
+          )}
+
+          <div className="flex gap-2">
+            <button
+              onClick={handleCreate}
+              disabled={!name.trim() || (isLocal && !location)}
+              className="bg-backdrop hover:bg-background border-border rounded border px-4 py-2 hover:cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Create Project
+            </button>
+
+            <button
+              onClick={handleClose}
+              className="bg-background border-border hover:bg-backdrop absolute top-3 right-3 cursor-pointer rounded border px-3 py-1"
+            >
+              Close
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+
+      <DirectoryPicker
+        isOpen={showPicker}
+        onSelect={(path) => {
+          setLocation(path)
+          setShowPicker(false)
+        }}
+        onCancel={() => setShowPicker(false)}
+      />
+    </>
   )
 }
