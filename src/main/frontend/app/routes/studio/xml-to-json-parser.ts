@@ -139,8 +139,10 @@ function buildNodeNameToIdMap(nodes: FlowNode[]): Map<string, string> {
  * @returns An array of FrankEdge objects representing all generated edges
  */
 function extractEdgesFromAdapter(adapter: Element, nodes: FlowNode[]): FrankEdge[] {
-  const pipelineElement = adapter.querySelector('Pipeline')
+  const pipelineElement = [...adapter.children].find((el) => el.tagName.toLowerCase() === 'pipeline') || null
+
   if (!pipelineElement) return []
+  console.log('pipeline found')
 
   const edges: FrankEdge[] = []
   const nameToId = buildNodeNameToIdMap(nodes)
@@ -346,10 +348,14 @@ function addImplicitSuccessExitEdge(
 
 function collectPipelineElements(adapter: Element): Element[] {
   const elements: Element[] = []
-  const receiverElements = adapter.querySelectorAll('Adapter > Receiver')
+  const receiverElements = [...adapter.querySelectorAll('*')].filter(
+    (el) => el.parentElement?.tagName.toLowerCase() === 'adapter' && el.tagName.toLowerCase() === 'receiver',
+  )
+
   for (const receiver of receiverElements) elements.push(receiver)
 
-  const pipelineElement = adapter.querySelector('Pipeline')
+  const pipelineElement = [...adapter.children].find((el) => el.tagName.toLowerCase() === 'pipeline') || null
+
   if (!pipelineElement) return elements
 
   const firstPipeName = pipelineElement.getAttribute('firstPipe')
@@ -431,7 +437,7 @@ function convertAdapterToFlowNodes(adapter: Element): FlowNode[] {
   const elements = collectPipelineElements(adapter)
 
   for (const element of elements) {
-    if (element.tagName === 'Exits') {
+    if (element.tagName.toLowerCase() === 'exits') {
       processExitElements(element, exitNodes)
       continue
     }
@@ -498,7 +504,7 @@ function convertElementToNode(element: Element, idCounter: IdCounter, sourceHand
 
 function convertChildren(elements: Element[], idCounter: IdCounter): ChildNode[] {
   return elements
-    .filter((child) => child.tagName !== 'Forward')
+    .filter((child) => child.tagName.toLowerCase() !== 'forward')
     .map((child) => {
       const childAttributes: Record<string, string> = {}
       const childId = (idCounter.current++).toString()
