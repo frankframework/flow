@@ -32,6 +32,7 @@ export interface FlowState {
   viewport: { x: number; y: number; zoom: number }
   nodeIdCounter: number
   isDragging: boolean
+  isResizing: boolean
   isPerformingAction: boolean
   isInternalChange: boolean
   history: FlowSnapshot[]
@@ -108,6 +109,7 @@ const useFlowStore = create<FlowState>()(
     viewport: { x: 0, y: 0, zoom: 1 },
     nodeIdCounter: nextFreeNumericId(initialNodes),
     isDragging: false,
+    isResizing: false,
     isPerformingAction: false,
     isInternalChange: false,
     history: [],
@@ -136,15 +138,34 @@ const useFlowStore = create<FlowState>()(
         (change) => change.type === 'position' && 'dragging' in change && change.dragging === false,
       )
 
+      // Detect resize start
+      const resizeStart = changes.some(
+        (change) =>
+          change.type === 'dimensions' && 'resizing' in change && change.resizing === true && !state.isResizing,
+      )
+
+      const resizeEnd = changes.some(
+        (change) => change.type === 'dimensions' && 'resizing' in change && change.resizing === false,
+      )
+
+      // Logic that runs when a drag/resize starts or ends. We want to save to history at the start of a drag or resize, but not on every position/dimension change during said action.
+      if (dragStart || resizeStart) {
+        state.saveToHistory()
+      }
       let nextIsDragging = state.isDragging
+      let nextIsResizing = state.isResizing
+
       if (dragStart) nextIsDragging = true
       if (dragEnd) nextIsDragging = false
+
+      if (resizeStart) nextIsResizing = true
+      if (resizeEnd) nextIsResizing = false
+
       set((state) => ({
         nodes: applyNodeChanges(changes, state.nodes),
         isDragging: nextIsDragging,
+        isResizing: nextIsResizing,
       }))
-
-      if (dragStart) get().saveToHistory()
     },
     onEdgesChange: (changes) => {
       const state = get()
