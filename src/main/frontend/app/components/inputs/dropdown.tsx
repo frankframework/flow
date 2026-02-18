@@ -49,10 +49,6 @@ export default function Dropdown({
   }, [disabled, isOpen])
 
   useEffect(() => {
-    setSelectedValue(value)
-  }, [value])
-
-  useEffect(() => {
     if (isOpen) {
       dropdownReference.current?.focus()
     }
