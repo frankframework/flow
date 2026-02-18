@@ -4,6 +4,7 @@
   filepaths: string[]
   filters: Record<string, boolean>
   isGitRepository: boolean
+  hasStoredToken: boolean
 }
 
 export interface RecentProject {

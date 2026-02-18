@@ -215,11 +215,15 @@ public class ProjectController {
             log.info("Could not determine if project is a git repository: " + e.getMessage());
         }
 
+        boolean hasStoredToken =
+                project.getGitToken() != null && !project.getGitToken().isBlank();
+
         return new ProjectDTO(
                 project.getName(),
                 cleanPath,
                 filepaths,
                 project.getProjectSettings().getFilters(),
-                isGitRepo);
+                isGitRepo,
+                hasStoredToken);
     }
 }

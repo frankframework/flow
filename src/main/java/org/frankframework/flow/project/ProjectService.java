@@ -149,7 +149,11 @@ public class ProjectService {
             throw new IOException("git clone failed: " + e.getMessage(), e);
         }
 
-        return loadProjectAndCache(targetDir.toString());
+        Project project = loadProjectAndCache(targetDir.toString());
+        if (token != null && !token.isBlank()) {
+            project.setGitToken(token);
+        }
+        return project;
     }
 
     public void invalidateCache() {

@@ -9,9 +9,18 @@ interface GitToolbarProps {
   onPull: () => void
   token: string
   onTokenChange: (token: string) => void
+  hasStoredToken: boolean
 }
 
-export default function GitToolbar({ status, onRefresh, onPush, onPull, token, onTokenChange }: GitToolbarProps) {
+export default function GitToolbar({
+  status,
+  onRefresh,
+  onPush,
+  onPull,
+  token,
+  onTokenChange,
+  hasStoredToken,
+}: GitToolbarProps) {
   const [isPushing, setIsPushing] = useState(false)
   const [isPulling, setIsPulling] = useState(false)
   const [showToken, setShowToken] = useState(false)
@@ -105,7 +114,9 @@ export default function GitToolbar({ status, onRefresh, onPush, onPull, token, o
             type="password"
             value={token}
             onChange={(e) => onTokenChange(e.target.value)}
-            placeholder="Personal access token (for private repos)"
+            placeholder={
+              hasStoredToken ? 'Using saved token (override here)' : 'Personal access token (for private repos)'
+            }
             className="border-border bg-background text-foreground placeholder:text-muted-foreground w-full rounded border px-2 py-1 text-xs focus:outline-none"
           />
         </div>

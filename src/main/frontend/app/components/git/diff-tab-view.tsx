@@ -5,7 +5,8 @@ import { useTheme } from '~/hooks/use-theme'
 import { useGitStore } from '~/stores/git-store'
 import type { DiffTabData } from '~/stores/editor-tab-store'
 import type { GitHunk } from '~/types/git.types'
-import type { editor } from 'monaco-editor'
+
+type CodeEditor = ReturnType<MonacoDiffEditor['getModifiedEditor']>
 
 function getLanguage(filePath: string): string {
   if (filePath.endsWith('.xml')) return 'xml'
@@ -14,13 +15,13 @@ function getLanguage(filePath: string): string {
 }
 
 function applyHunkDecorations(
-  modifiedEditor: editor.IStandaloneCodeEditor,
+  modifiedEditor: CodeEditor,
   monaco: Monaco,
   hunks: GitHunk[],
   selectedHunks: Set<number>,
   prevDecorations: string[],
 ): string[] {
-  const decorations: editor.IModelDeltaDecoration[] = []
+  const decorations: Parameters<CodeEditor['deltaDecorations']>[1] = []
 
   for (const hunk of hunks) {
     if (hunk.newCount <= 0) continue
@@ -107,7 +108,7 @@ export default function DiffTabView({ diffData }: DiffTabViewProps) {
       decorationsRef.current,
     )
 
-    modifiedEditor.onMouseDown((e: editor.IEditorMouseEvent) => {
+    modifiedEditor.onMouseDown((e) => {
       const targetType = e.target.type
       if (targetType === monaco.editor.MouseTargetType.GUTTER_GLYPH_MARGIN) {
         const lineNumber = e.target.position?.lineNumber
