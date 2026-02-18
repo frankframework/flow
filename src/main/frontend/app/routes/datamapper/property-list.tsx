@@ -98,7 +98,7 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
       setEditingMapping,
       openMapping,
     })
-  }, [flow, openMapping]) //UseMemo is used here to ensure nodetype is not changed throughout rerenders. If the variable is update reactflow throws a warning in the console;
+  }, []) //UseMemo is used here to ensure nodetype is not changed throughout rerenders. If the variable is update reactflow throws a warning in the console;
 
   useEffect(() => {
     if (!reactFlowInstance) return
@@ -117,7 +117,7 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
     return () => {
       window.removeEventListener('resize', updateSize)
     }
-  }, [flow, reactFlowInstance])
+  }, [reactFlowInstance])
 
   useEffect(() => {
     if (!reactFlowInstance) return
@@ -126,12 +126,12 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
       type: 'SET_PROPERTY_DATA',
       payload: reactFlowInstance.toObject(),
     })
-  }, [reactFlowNodes, edges, reactFlowInstance, configDispatch])
+  }, [reactFlowNodes, edges])
 
   //Updates the outer canvas whenever something is added
   useEffect(() => {
     setCanvasSize((size) => flow.updateCanvasSize(reactFlowNodes, size))
-  }, [flow, reactFlowNodes])
+  }, [reactFlowNodes])
 
   useEffect(() => {
     if (!reactFlowInstance || initHasRun.current) return
@@ -150,7 +150,7 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
       flow.importMultipleSchematics(sourceSchematics)
     }
     clearFiles()
-  }, [clearFiles, config.propertyData.nodes, flow, reactFlowInstance, sourceSchematics, targetSchematic])
+  }, [reactFlowInstance])
 
   const onReactFlowNodeChange = useCallback(
     (changes: NodeChange[]) => setReactFlowNodes((nodes) => applyNodeChanges(changes, nodes) as Node[]),
@@ -191,7 +191,7 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
     }
 
     restoreFlow()
-  }, [config.propertyData, flow])
+  }, [setReactFlowNodes])
 
   function openMapping() {
     requestAnimationFrame(() => {
