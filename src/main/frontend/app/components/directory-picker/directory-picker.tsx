@@ -3,6 +3,7 @@ import FolderIcon from '/icons/solar/Folder.svg?react'
 import { filesystemService } from '~/services/filesystem-service'
 import type { FilesystemEntry } from '~/types/filesystem.types'
 import { ApiError } from '~/utils/api'
+import Button from '../inputs/button'
 
 interface DirectoryPickerProperties {
   isOpen: boolean
@@ -85,22 +86,22 @@ export default function DirectoryPicker({
       <div className="bg-background border-border flex h-[450px] w-[500px] flex-col rounded-lg border shadow-lg">
         <div className="border-border flex items-center justify-between border-b px-4 py-3">
           <h3 className="text-sm font-semibold">Select Directory</h3>
-          <button
+          <Button
             onClick={onCancel}
             className="text-foreground-muted hover:text-foreground cursor-pointer text-lg leading-none"
           >
             &times;
-          </button>
+          </Button>
         </div>
 
         <div className="border-border flex items-center gap-2 border-b px-4 py-2">
-          <button
+          <Button
             onClick={handleNavigateUp}
             disabled={!canGoUp}
-            className="bg-backdrop border-border cursor-pointer rounded border px-2 py-0.5 text-xs disabled:opacity-30"
+            className="disabled:text-foreground-muted text-xs disabled:opacity-30"
           >
             ..
-          </button>
+          </Button>
           <span className="text-foreground-muted truncate text-xs">{currentPath || rootLabel}</span>
         </div>
 
@@ -137,19 +138,14 @@ export default function DirectoryPicker({
             {activePath || 'Select a directory'}
           </span>
           <div className="flex gap-2">
-            <button
-              onClick={onCancel}
-              className="border-border hover:bg-backdrop cursor-pointer rounded border px-3 py-1 text-sm"
-            >
-              Cancel
-            </button>
-            <button
+            <Button onClick={onCancel}>Cancel</Button>
+            <Button
               onClick={() => onSelect(activePath)}
               disabled={!activePath}
-              className="bg-backdrop hover:bg-background border-border cursor-pointer rounded border px-3 py-1 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+              className="disabled:text-foreground-muted disabled:cursor-not-allowed disabled:opacity-50"
             >
               Select
-            </button>
+            </Button>
           </div>
         </div>
       </div>

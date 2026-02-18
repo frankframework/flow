@@ -308,7 +308,7 @@ export default function CodeEditor() {
             <div className="border-b-border bg-background flex h-12 items-center justify-between border-b p-4">
               <span>Path: {activeTabPath}</span>
               <Button onClick={handleOpenInStudio} className="flex items-center gap-1.5" title="Open in Studio">
-                <RulerCrossPenIcon className="fill-foreground h-4 w-4" />
+                <RulerCrossPenIcon className="h-4 w-4 fill-current" />
                 Open in Studio
               </Button>
             </div>
@@ -334,13 +334,13 @@ export default function CodeEditor() {
       <>
         <SidebarHeader side={SidebarSide.RIGHT} title="Preview" />
         <div className="flex w-full items-center justify-center">
-          <button
+          <Button
             onClick={handleSave}
             disabled={isSaving || !activeTabFilePath}
-            className="border-border bg-background hover:bg-foreground-active my-2 rounded border px-3 py-1 disabled:opacity-50"
+            className="disabled:text-foreground-muted disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isSaving ? 'Saving...' : 'Save XML'}
-          </button>
+          </Button>
         </div>
       </>
     </SidebarLayout>

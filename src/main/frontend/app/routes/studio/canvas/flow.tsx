@@ -33,6 +33,7 @@ import { useProjectStore } from '~/stores/project-store'
 import { saveAdapter } from '~/services/adapter-service'
 import { cloneWithRemappedIds } from '~/utils/flow-utils'
 import { showErrorToast, showSuccessToast } from '~/components/toast'
+import Button from '~/components/inputs/button'
 
 export type FlowNode = FrankNodeType | ExitNode | StickyNote | GroupNode | Node
 
@@ -651,12 +652,9 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
         <Controls position="top-left" style={{ color: '#000' }}></Controls>
         <Background variant={BackgroundVariant.Dots} size={3} gap={100}></Background>
         <Panel position="top-center">
-          <button
-            className="border-border hover:bg-hover bg-background border p-2 hover:cursor-pointer"
-            onClick={saveFlow}
-          >
+          <Button className="bg-background" onClick={saveFlow}>
             Save XML
-          </button>
+          </Button>
         </Panel>
       </ReactFlow>
       <CreateNodeModal

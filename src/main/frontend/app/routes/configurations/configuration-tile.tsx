@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import RulerCrossPenIcon from '/icons/solar/Ruler Cross Pen.svg?react'
 import CodeIcon from '/icons/solar/Code.svg?react'
 import { openInStudio, openInEditor } from '~/actions/navigationActions'
+import Button from '~/components/inputs/button'
 
 interface ConfigurationTileProperties {
   filepath: string
@@ -62,13 +63,10 @@ export default function ConfigurationTile({ filepath, relativePath }: Readonly<C
 
       {/* Bottom action */}
       <div className="border-border mt-3 flex justify-center border-t">
-        <button
-          className="bg-primary text-primary-foreground hover:text-foreground-active flex items-center gap-1 rounded px-3 py-2 font-medium transition hover:cursor-pointer"
-          onClick={handleOpenInEditor}
-        >
+        <Button className="mt-3 flex items-center gap-1" onClick={handleOpenInEditor}>
           <CodeIcon className="h-4 w-4 fill-current" />
           <span className="whitespace-nowrap">Open in Editor</span>
-        </button>
+        </Button>
       </div>
     </div>
   )
