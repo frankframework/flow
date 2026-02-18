@@ -33,7 +33,7 @@ export default function GitCommitBox({
       <button
         onClick={onCommit}
         disabled={!canCommit}
-        className="bg-brand hover:bg-brand/90 mt-1.5 w-full rounded px-2 py-1.5 text-xs font-medium text-white disabled:opacity-50"
+        className="bg-brand hover:bg-brand/90 mt-1.5 w-full cursor-pointer rounded px-2 py-1.5 text-xs font-medium text-white disabled:opacity-50"
       >
         {isLoading ? 'Committing...' : 'Commit'}
       </button>

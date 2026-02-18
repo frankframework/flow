@@ -76,7 +76,7 @@ function FileSection({
     <div className={clsx('border-l-2', config.accent)}>
       <button
         onClick={() => setCollapsed(!collapsed)}
-        className="text-foreground hover:bg-hover flex w-full items-center gap-1.5 px-3 py-1.5 text-left text-xs font-semibold"
+        className="text-foreground hover:bg-hover flex w-full cursor-pointer items-center gap-1.5 px-3 py-1.5 text-left text-xs font-semibold"
       >
         <span className="w-3 text-[10px]">{collapsed ? '▸' : '▾'}</span>
         <span className="flex-1">{title}</span>
