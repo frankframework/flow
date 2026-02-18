@@ -66,7 +66,8 @@ public class FileTreeServiceTest {
     private void stubToAbsolutePath() throws IOException {
         when(fileSystemStorage.toAbsolutePath(anyString())).thenAnswer(invocation -> {
             String path = invocation.getArgument(0);
-            return Paths.get(path);
+            Path p = Paths.get(path);
+            return p.isAbsolute() ? p : tempProjectRoot.resolve(p).normalize();
         });
     }
 

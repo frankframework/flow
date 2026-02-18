@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Paths;
@@ -58,9 +59,10 @@ class ProjectControllerTest {
     private org.frankframework.flow.security.UserWorkspaceContext userWorkspaceContext;
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws IOException {
         Mockito.reset(projectService);
         when(fileSystemStorage.toRelativePath(anyString())).thenAnswer(inv -> inv.getArgument(0));
+        when(fileSystemStorage.toAbsolutePath(anyString())).thenAnswer(inv -> Paths.get(inv.<String>getArgument(0)));
     }
 
     private Project mockProject() {

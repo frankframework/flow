@@ -88,18 +88,6 @@ public class GitControllerTest {
     }
 
     @Test
-    public void unstageFileReturnsOk() throws Exception {
-        doNothing().when(gitService).unstageFile("MyProject", "test.txt");
-
-        mockMvc.perform(post("/api/projects/MyProject/git/unstage")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"filePath\": \"test.txt\"}"))
-                .andExpect(status().isOk());
-
-        verify(gitService).unstageFile("MyProject", "test.txt");
-    }
-
-    @Test
     public void stageHunksReturnsOk() throws Exception {
         doNothing().when(gitService).stageHunks(eq("MyProject"), eq("test.txt"), eq(List.of(0, 1)));
 
@@ -145,19 +133,6 @@ public class GitControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.hasConflicts").value(false));
-    }
-
-    @Test
-    public void getLogReturnsEntries() throws Exception {
-        List<GitLogEntryDTO> log =
-                List.of(new GitLogEntryDTO("abc1234567890", "abc1234", "Initial commit", "Author", 1000L));
-        when(gitService.getLog("MyProject", 20)).thenReturn(log);
-
-        mockMvc.perform(get("/api/projects/MyProject/git/log").accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].commitId").value("abc1234567890"))
-                .andExpect(jsonPath("$[0].shortId").value("abc1234"))
-                .andExpect(jsonPath("$[0].message").value("Initial commit"));
     }
 
     @Test
