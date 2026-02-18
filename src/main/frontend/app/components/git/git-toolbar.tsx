@@ -54,7 +54,7 @@ export default function GitToolbar({ status, onRefresh, onPush, onPull, token, o
         </div>
         <button
           onClick={onRefresh}
-          className="border-border bg-background hover:bg-foreground-active rounded border px-2 py-1 text-xs"
+          className="border-border bg-background hover:bg-foreground-active cursor-pointer rounded border px-2 py-1 text-xs"
           title="Refresh status"
         >
           ↻
@@ -67,7 +67,7 @@ export default function GitToolbar({ status, onRefresh, onPush, onPull, token, o
             disabled={isPulling}
             className={clsx(
               'flex-1 rounded border py-1.5 text-xs transition-colors disabled:opacity-50',
-              'border-border bg-background hover:bg-foreground-active',
+              'border-border bg-background hover:bg-foreground-active cursor-pointer',
             )}
             title="Pull"
           >
@@ -78,7 +78,7 @@ export default function GitToolbar({ status, onRefresh, onPush, onPull, token, o
             disabled={isPushing || (status?.ahead ?? 0) === 0}
             className={clsx(
               'flex-1 rounded border py-1.5 text-xs transition-colors disabled:opacity-50',
-              'border-border bg-background hover:bg-foreground-active',
+              'border-border bg-background hover:bg-foreground-active cursor-pointer',
             )}
             title={status.ahead === 0 ? 'Nothing to push' : 'Push'}
           >
@@ -89,7 +89,7 @@ export default function GitToolbar({ status, onRefresh, onPush, onPull, token, o
               onClick={() => setShowToken(!showToken)}
               className={clsx(
                 'rounded border px-2 py-1.5 text-xs',
-                'border-border',
+                'border-border cursor-pointer',
                 showToken ? 'bg-selected' : 'bg-background hover:bg-foreground-active',
               )}
               title="Authentication token for private repos"

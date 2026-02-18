@@ -106,7 +106,7 @@ export default function CloneProjectModal({
 
           {!isLocal && (
             <div className="mb-4">
-              <label className="mb-1 block text-sm font-medium">Access Token (optional)</label>
+              <label className="mb-1 block text-sm font-medium">Access Token</label>
               <input
                 type="password"
                 value={token}

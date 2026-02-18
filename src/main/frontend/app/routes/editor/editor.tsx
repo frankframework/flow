@@ -21,7 +21,7 @@ import GitPanel from '~/components/git/git-panel'
 import DiffTabView from '~/components/git/diff-tab-view'
 import clsx from 'clsx'
 import { useGitStore } from '~/stores/git-store'
-import { stageHunks, fetchFileDiff, fetchGitStatus } from '~/services/git-service'
+import { fetchFileDiff, fetchGitStatus } from '~/services/git-service'
 import { findAdaptersInXml, lineToOffset, findAdapterAtOffset } from './xml-utils'
 
 type LeftTab = 'files' | 'git'
@@ -358,19 +358,6 @@ export default function CodeEditor() {
     openInStudio(adapterName, editorTab.configurationPath)
   }, [activeTabFilePath, xmlContent])
 
-  const handleStageSelectedHunks = useCallback(async () => {
-    if (!activeTab.diffData || !project) return
-    const filePath = activeTab.diffData.filePath
-    const hunkState = useGitStore.getState().fileHunkStates[filePath]
-    if (!hunkState || hunkState.selectedHunks.size === 0) return
-    try {
-      await stageHunks(project.name, filePath, [...hunkState.selectedHunks])
-      useGitStore.getState().clearFileHunks(filePath)
-    } catch (error) {
-      showErrorToastFrom('Failed to stage hunks', error)
-    }
-  }, [activeTab.diffData, project])
-
   const isGitRepo = !!project?.isGitRepository
 
   return (
@@ -382,7 +369,7 @@ export default function CodeEditor() {
             <button
               onClick={() => setLeftTab('files')}
               className={clsx(
-                'px-3 py-1 transition-colors',
+                'cursor-pointer px-3 py-1 transition-colors',
                 leftTab === 'files'
                   ? 'bg-selected text-foreground font-medium'
                   : 'hover:bg-foreground-active text-muted-foreground',
@@ -394,7 +381,7 @@ export default function CodeEditor() {
               <button
                 onClick={() => setLeftTab('git')}
                 className={clsx(
-                  'border-border border-l px-3 py-1 transition-colors',
+                  'border-border cursor-pointer border-l px-3 py-1 transition-colors',
                   leftTab === 'git'
                     ? 'bg-selected text-foreground font-medium'
                     : 'hover:bg-foreground-active text-muted-foreground',
@@ -417,7 +404,7 @@ export default function CodeEditor() {
         </div>
         {activeTabFilePath ? (
           isDiffTab && activeTab.diffData ? (
-            <DiffTabView diffData={activeTab.diffData} onStageSelected={handleStageSelectedHunks} />
+            <DiffTabView diffData={activeTab.diffData} />
           ) : (
             <>
               <div className="border-b-border bg-background flex h-12 items-center justify-between border-b p-4">

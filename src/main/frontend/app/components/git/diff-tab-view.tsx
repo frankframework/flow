@@ -52,10 +52,9 @@ function applyHunkDecorations(
 
 interface DiffTabViewProps {
   diffData: DiffTabData
-  onStageSelected: () => void
 }
 
-export default function DiffTabView({ diffData, onStageSelected }: DiffTabViewProps) {
+export default function DiffTabView({ diffData }: DiffTabViewProps) {
   const theme = useTheme()
   const { fileHunkStates, toggleFileHunk } = useGitStore(
     useShallow((s) => ({
@@ -131,17 +130,8 @@ export default function DiffTabView({ diffData, onStageSelected }: DiffTabViewPr
 
   return (
     <>
-      <div className="border-b-border bg-background flex h-12 items-center justify-between border-b px-4">
+      <div className="border-b-border bg-background flex h-12 items-center border-b px-4">
         <span className="text-sm font-medium">{filePath}</span>
-        {hunks.length > 0 && (
-          <button
-            onClick={onStageSelected}
-            disabled={selectedHunks.size === 0}
-            className="border-border bg-background hover:bg-foreground-active rounded border px-3 py-1 text-xs font-medium disabled:opacity-50"
-          >
-            Stage Selected ({selectedHunks.size}/{hunks.length})
-          </button>
-        )}
       </div>
       <div className="min-h-0 flex-1">
         <DiffEditor
