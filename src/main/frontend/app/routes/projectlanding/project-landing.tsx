@@ -105,10 +105,10 @@ export default function ProjectLanding() {
     }
   }
 
-  const onCloneProject = async (repoUrl: string, localPath: string) => {
+  const onCloneProject = async (repoUrl: string, localPath: string, token?: string) => {
     setIsOpeningProject(true)
     try {
-      const project = await cloneProject(repoUrl, localPath)
+      const project = await cloneProject(repoUrl, localPath, token)
       setProject(project)
       setIsCloneModalOpen(false)
       navigate(`/studio/${encodeURIComponent(project.name)}`)

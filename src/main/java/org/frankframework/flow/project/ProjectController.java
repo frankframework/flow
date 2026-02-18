@@ -2,10 +2,12 @@ package org.frankframework.flow.project;
 
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 import org.frankframework.flow.adapter.AdapterNotFoundException;
 import org.frankframework.flow.adapter.AdapterUpdateDTO;
 import org.frankframework.flow.configuration.Configuration;
@@ -30,6 +32,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+@Slf4j
 @RestController
 @RequestMapping("/projects")
 public class ProjectController {
@@ -91,7 +94,8 @@ public class ProjectController {
 
     @PostMapping("/clone")
     public ResponseEntity<ProjectDTO> cloneProject(@RequestBody ProjectCloneDTO projectCloneDTO) throws IOException {
-        Project project = projectService.cloneAndOpenProject(projectCloneDTO.repoUrl(), projectCloneDTO.localPath());
+        Project project = projectService.cloneAndOpenProject(
+                projectCloneDTO.repoUrl(), projectCloneDTO.localPath(), projectCloneDTO.token());
         recentProjectsService.addRecentProject(project.getName(), project.getRootPath());
         return ResponseEntity.ok(toDto(project));
     }
@@ -203,10 +207,19 @@ public class ProjectController {
                 .map(fileSystemStorage::toRelativePath)
                 .toList();
 
+        boolean isGitRepo = false;
+        try {
+            Path absPath = fileSystemStorage.toAbsolutePath(project.getRootPath());
+            isGitRepo = Files.isDirectory(absPath.resolve(".git"));
+        } catch (IOException e) {
+            log.info("Could not determine if project is a git repository: " + e.getMessage());
+        }
+
         return new ProjectDTO(
                 project.getName(),
                 cleanPath,
                 filepaths,
-                project.getProjectSettings().getFilters());
+                project.getProjectSettings().getFilters(),
+                isGitRepo);
     }
 }

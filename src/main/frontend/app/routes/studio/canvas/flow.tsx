@@ -7,7 +7,6 @@ import {
   type Node,
   type OnConnectStart,
   type OnConnectEnd,
-  Panel,
   ReactFlow,
   ReactFlowProvider,
   useReactFlow,
@@ -32,7 +31,8 @@ import CreateNodeModal from '~/components/flow/create-node-modal'
 import { useProjectStore } from '~/stores/project-store'
 import { saveAdapter } from '~/services/adapter-service'
 import { cloneWithRemappedIds } from '~/utils/flow-utils'
-import { showErrorToast, showSuccessToast } from '~/components/toast'
+import { showErrorToast } from '~/components/toast'
+import clsx from 'clsx'
 
 export type FlowNode = FrankNodeType | ExitNode | StickyNote | GroupNode | Node
 
@@ -51,6 +51,10 @@ const selector = (state: FlowState) => ({
   onReconnect: state.onReconnect,
 })
 
+type SaveStatus = 'idle' | 'saving' | 'saved'
+const AUTO_SAVE_DELAY = 2000
+const SAVED_DISPLAY_DURATION = 2000
+
 function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b: boolean) => void }>) {
   const [loading, setLoading] = useState(false)
   const { isEditing, setIsEditing, setParentId, setDraggedName } = useNodeContextStore(
@@ -68,6 +72,10 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
     edges: Edge[]
   } | null>(null)
 
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
   const nodeTypes = {
     frankNode: FrankNodeComponent,
     exitNode: ExitNodeComponent,
@@ -83,6 +91,49 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
     useShallow(selector),
   )
   const project = useProjectStore.getState().project
+
+  const saveFlow = useCallback(async () => {
+    const flowData = reactFlowRef.current.toObject()
+    const activeTabName = useTabStore.getState().activeTab
+    const configurationPath = useTabStore.getState().getTab(activeTabName)?.configurationPath
+
+    if (!configurationPath || !project) return
+
+    const xmlString = exportFlowToXml(flowData, activeTabName)
+
+    setSaveStatus('saving')
+    try {
+      await saveAdapter(project.name, xmlString, activeTabName, configurationPath)
+      setSaveStatus('saved')
+      if (savedTimerRef.current) clearTimeout(savedTimerRef.current)
+      savedTimerRef.current = setTimeout(() => setSaveStatus('idle'), SAVED_DISPLAY_DURATION)
+    } catch (error) {
+      console.error('Failed to save XML:', error)
+      showErrorToast(`Failed to save XML: ${error instanceof Error ? error.message : error}`)
+      setSaveStatus('idle')
+    }
+  }, [project])
+
+  const scheduleAutoSave = useCallback(() => {
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current)
+    autoSaveTimerRef.current = setTimeout(() => {
+      autoSaveTimerRef.current = null
+      saveFlow()
+    }, AUTO_SAVE_DELAY)
+  }, [saveFlow])
+
+  useEffect(() => {
+    return () => {
+      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current)
+      if (savedTimerRef.current) clearTimeout(savedTimerRef.current)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (nodes.length > 0) {
+      scheduleAutoSave()
+    }
+  }, [nodes, edges, scheduleAutoSave])
 
   const sourceInfoReference = useRef<{
     nodeId: string | null
@@ -456,7 +507,7 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
     }
 
     flowStore.addNode(newNode)
-    // If there’s a source node, create an edge from it
+    // If there's a source node, create an edge from it
     if (sourceInfo?.nodeId && sourceInfo.handleType === 'source') {
       const newEdge: Edge = {
         id: `e${sourceInfo.nodeId}-${newId}`,
@@ -597,24 +648,6 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
     return () => unsubscribe()
   }, [layoutGraph])
 
-  const saveFlow = async () => {
-    const flowData = reactFlow.toObject()
-    const activeTabName = useTabStore.getState().activeTab
-    const configurationPath = useTabStore.getState().getTab(activeTabName)?.configurationPath
-
-    if (!configurationPath || !project) return
-
-    const xmlString = exportFlowToXml(flowData, activeTabName)
-
-    try {
-      await saveAdapter(project.name, xmlString, activeTabName, configurationPath)
-      showSuccessToast('Flow saved successfully!')
-    } catch (error) {
-      console.error('Failed to save XML:', error)
-      showErrorToast(`Failed to save XML: ${error instanceof Error ? error.message : error}`)
-    }
-  }
-
   return (
     <div
       className="relative h-full w-full"
@@ -650,15 +683,20 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
       >
         <Controls position="top-left" style={{ color: '#000' }}></Controls>
         <Background variant={BackgroundVariant.Dots} size={3} gap={100}></Background>
-        <Panel position="top-center">
-          <button
-            className="border-border hover:bg-hover bg-background border p-2 hover:cursor-pointer"
-            onClick={saveFlow}
-          >
-            Save XML
-          </button>
-        </Panel>
       </ReactFlow>
+
+      <div className="absolute top-2 left-1/2 -translate-x-1/2">
+        <span
+          className={clsx(
+            'text-muted-foreground rounded bg-black/30 px-2 py-1 text-xs backdrop-blur-sm transition-opacity duration-300',
+            saveStatus === 'idle' ? 'opacity-0' : 'opacity-100',
+          )}
+        >
+          {saveStatus === 'saving' && 'Saving...'}
+          {saveStatus === 'saved' && 'Saved'}
+        </span>
+      </div>
+
       <CreateNodeModal
         isOpen={showModal}
         onClose={() => setShowModal(false)}

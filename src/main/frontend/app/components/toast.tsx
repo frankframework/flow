@@ -71,6 +71,11 @@ export function showErrorToast(message: string, title = 'Error') {
   showToast({ type: 'ERROR', title, message })
 }
 
+/** Shows an error toast with a prefix, extracting the message from an unknown error. */
+export function showErrorToastFrom(prefix: string, error: unknown) {
+  showErrorToast(`${prefix}: ${error instanceof Error ? error.message : String(error)}`)
+}
+
 export function Toast() {
   const [toast, setToast] = useState<ToastOptions | null>(null)
   const theme = useTheme()

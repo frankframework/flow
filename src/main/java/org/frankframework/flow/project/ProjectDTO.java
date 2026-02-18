@@ -4,4 +4,9 @@ import java.util.List;
 import java.util.Map;
 import org.frankframework.flow.projectsettings.FilterType;
 
-public record ProjectDTO(String name, String rootPath, List<String> filepaths, Map<FilterType, Boolean> filters) {}
+public record ProjectDTO(
+        String name,
+        String rootPath,
+        List<String> filepaths,
+        Map<FilterType, Boolean> filters,
+        boolean isGitRepository) {}
