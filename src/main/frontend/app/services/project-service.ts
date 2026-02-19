@@ -54,9 +54,9 @@ export async function toggleProjectFilter(projectName: string, filter: string, e
 
 export async function exportProject(projectName: string): Promise<void> {
   const url = apiUrl(`/projects/${encodeURIComponent(projectName)}/export`)
-  const sessionId = sessionStorage.getItem('frankflow_anon_session_id') ?? ''
+  const workspaceId = localStorage.getItem('frankflow_workspace_id') ?? ''
 
-  const headers: Record<string, string> = { 'X-Session-ID': sessionId }
+  const headers: Record<string, string> = { 'X-Workspace-ID': workspaceId }
   const token = localStorage.getItem('access_token')
   if (token) headers['Authorization'] = `Bearer ${token}`
 

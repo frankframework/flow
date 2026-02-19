@@ -12,15 +12,15 @@ interface ProjectStoreState {
 export const useProjectStore = create<ProjectStoreState>((set) => ({
   project: undefined,
   setProject: (project: Project) => {
-    sessionStorage.setItem(SESSION_KEY, project.name)
+    localStorage.setItem(SESSION_KEY, project.name)
     set({ project })
   },
   clearProject: () => {
-    sessionStorage.removeItem(SESSION_KEY)
+    localStorage.removeItem(SESSION_KEY)
     set({ project: undefined })
   },
 }))
 
 export function getStoredProjectName(): string | null {
-  return sessionStorage.getItem(SESSION_KEY)
+  return localStorage.getItem(SESSION_KEY)
 }

@@ -4,12 +4,12 @@ export function apiUrl(path: string): string {
   return `${variables.apiBaseUrl}/api${path}`
 }
 
-const getAnonymousSessionId = () => {
-  const STORAGE_KEY = 'frankflow_anon_session_id'
-  let id = sessionStorage.getItem(STORAGE_KEY)
+const getWorkspaceId = () => {
+  const STORAGE_KEY = 'frankflow_workspace_id'
+  let id = localStorage.getItem(STORAGE_KEY)
   if (!id) {
     id = crypto.randomUUID()
-    sessionStorage.setItem(STORAGE_KEY, id)
+    localStorage.setItem(STORAGE_KEY, id)
   }
   return id
 }
@@ -43,7 +43,7 @@ export async function apiFetch<T>(path: string, options?: RequestInit): Promise<
 
   const headers: Record<string, string> = {
     ...defaultHeaders,
-    'X-Session-ID': getAnonymousSessionId(),
+    'X-Workspace-ID': getWorkspaceId(),
     ...(options?.headers as Record<string, string>),
   }
 

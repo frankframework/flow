@@ -22,7 +22,7 @@ export default function AppLayout() {
         useProjectStore.getState().setProject(fetched)
       })
       .catch(() => {
-        sessionStorage.removeItem('active-project-name')
+        localStorage.removeItem('active-project-name')
       })
       .finally(() => {
         setRestoring(false)

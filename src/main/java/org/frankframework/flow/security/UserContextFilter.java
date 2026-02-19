@@ -21,7 +21,7 @@ import org.springframework.stereotype.Component;
 public class UserContextFilter extends HttpFilter {
 
     private static final String BEARER_PREFIX = "Bearer ";
-    private static final int SESSION_HASH_LENGTH = 16;
+    private static final int HASH_LENGTH = 16;
     private static final int MIN_JWT_PARTS = 2;
 
     private final UserWorkspaceContext userWorkspaceContext;
@@ -52,21 +52,21 @@ public class UserContextFilter extends HttpFilter {
             if (userId != null) return sanitize(userId);
         }
 
-        String sessionId = request.getHeader("X-Session-ID");
-        if (sessionId != null && !sessionId.isBlank()) {
-            return "anon-" + hashSessionId(sessionId);
+        String workspaceId = request.getHeader("X-Workspace-ID");
+        if (workspaceId != null && !workspaceId.isBlank()) {
+            return "anon-" + hashId(workspaceId);
         }
 
         return "anonymous";
     }
 
-    private String hashSessionId(String sessionId) {
+    private String hashId(String id) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(sessionId.getBytes(StandardCharsets.UTF_8));
-            return HexFormat.of().formatHex(hash).substring(0, SESSION_HASH_LENGTH);
+            byte[] hash = digest.digest(id.getBytes(StandardCharsets.UTF_8));
+            return HexFormat.of().formatHex(hash).substring(0, HASH_LENGTH);
         } catch (NoSuchAlgorithmException e) {
-            return sanitize(sessionId);
+            return sanitize(id);
         }
     }
 

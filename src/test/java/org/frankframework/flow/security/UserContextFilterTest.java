@@ -73,7 +73,7 @@ class UserContextFilterTest {
         MockHttpServletRequest request = new MockHttpServletRequest();
         MockHttpServletResponse response = new MockHttpServletResponse();
 
-        request.addHeader("X-Session-ID", "my-session-123");
+        request.addHeader("X-Workspace-ID", "my-session-123");
 
         filter.doFilter(request, response, filterChain);
 
@@ -139,7 +139,7 @@ class UserContextFilterTest {
     void handlesBlankSessionId() throws IOException, ServletException {
         MockHttpServletRequest request = new MockHttpServletRequest();
         MockHttpServletResponse response = new MockHttpServletResponse();
-        request.addHeader("X-Session-ID", "   ");
+        request.addHeader("X-Workspace-ID", "   ");
 
         filter.doFilter(request, response, filterChain);
 
@@ -171,7 +171,7 @@ class UserContextFilterTest {
     void consistentSessionHashing() throws IOException, ServletException {
         MockHttpServletRequest request1 = new MockHttpServletRequest();
         MockHttpServletResponse response1 = new MockHttpServletResponse();
-        request1.addHeader("X-Session-ID", "same-session");
+        request1.addHeader("X-Workspace-ID", "same-session");
         filter.doFilter(request1, response1, filterChain);
         String firstId = userWorkspaceContext.getWorkspaceId();
 
@@ -180,7 +180,7 @@ class UserContextFilterTest {
         UserContextFilter filter2 = new UserContextFilter(ctx2, objectMapper);
         MockHttpServletRequest request2 = new MockHttpServletRequest();
         MockHttpServletResponse response2 = new MockHttpServletResponse();
-        request2.addHeader("X-Session-ID", "same-session");
+        request2.addHeader("X-Workspace-ID", "same-session");
         filter2.doFilter(request2, response2, filterChain);
 
         assertEquals(firstId, ctx2.getWorkspaceId());
