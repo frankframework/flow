@@ -21,6 +21,9 @@ import FilesDataProvider from '~/components/file-structure/studio-files-data-pro
 import { useProjectStore } from '~/stores/project-store'
 import type { FileNode } from './editor-data-provider'
 import { useProjectTree } from '~/hooks/use-project-tree'
+import { useFileTreeContextMenu } from './use-file-tree-context-menu'
+import FileTreeDialogs from './file-tree-dialogs'
+import InlineRenameInput from './inline-rename-input'
 
 const TREE_ID = 'studio-files-tree'
 
@@ -54,6 +57,11 @@ export default function StudioFileStructure() {
   const getTab = useTabStore((state) => state.getTab)
 
   const { data: treeData, isLoading: isTreeLoading } = useProjectTree(project?.name)
+
+  const ctxMenu = useFileTreeContextMenu({
+    projectName: project?.name,
+    dataProvider,
+  })
 
   useEffect(() => {
     if (!project || !treeData) return
@@ -111,10 +119,8 @@ export default function StudioFileStructure() {
       const path = item.data.path
 
       if (path.endsWith('.xml') && dataProvider) {
-        // XML configs can contain adapters
         if (dataProvider) await dataProvider.loadAdapters(item.index)
       } else {
-        // Normal directory
         if (dataProvider) await dataProvider.loadDirectory(item.index)
       }
     },
@@ -151,7 +157,6 @@ export default function StudioFileStructure() {
         return
       }
 
-      // Leaf node: open adapter
       const data = item.data
       if (typeof data === 'object' && data !== null && 'adapterName' in data && 'configPath' in data) {
         const { adapterName, configPath } = data as { adapterName: string; configPath: string }
@@ -214,7 +219,7 @@ export default function StudioFileStructure() {
     const Icon = context.isExpanded ? AltArrowDownIcon : AltArrowRightIcon
 
     const handleArrowClick = async (event: React.MouseEvent) => {
-      event.stopPropagation() // prevent triggering item click
+      event.stopPropagation()
       await loadFolderContents(item)
       context.toggleExpandedState()
     }
@@ -233,8 +238,6 @@ export default function StudioFileStructure() {
     item: TreeItem<FileNode>
     context: TreeItemRenderContext
   }) => {
-    const searchLower = searchTerm.toLowerCase()
-    const titleLower = title.toLowerCase()
     const listenerType =
       !item.isFolder && typeof item.data === 'object' && item.data && 'listenerName' in item.data
         ? (item.data as { listenerName: string | null }).listenerName
@@ -246,6 +249,24 @@ export default function StudioFileStructure() {
     } else {
       Icon = getListenerIcon(listenerType)
     }
+
+    const isFsNode = typeof item.data === 'object' && item.data !== null && 'path' in item.data
+
+    if (ctxMenu.renamingItemId === item.index && isFsNode) {
+      return (
+        <InlineRenameInput
+          icon={Icon}
+          value={ctxMenu.renameValue}
+          onChange={ctxMenu.setRenameValue}
+          onSubmit={ctxMenu.submitRename}
+          onCancel={() => ctxMenu.setRenamingItemId(null)}
+          itemIndex={item.index}
+        />
+      )
+    }
+
+    const searchLower = searchTerm.toLowerCase()
+    const titleLower = title.toLowerCase()
 
     let highlightedTitle: JSX.Element | string = title
 
@@ -269,7 +290,10 @@ export default function StudioFileStructure() {
     const isHighlighted = highlightedItemId == item.index
 
     return (
-      <>
+      <div
+        className="flex min-w-0 items-center"
+        onContextMenu={isFsNode ? (e) => ctxMenu.openContextMenu(e, item.index) : undefined}
+      >
         <Icon className="fill-foreground w-4 flex-shrink-0" />
         <span
           className={`font-inter ml-1 overflow-hidden text-nowrap text-ellipsis ${
@@ -278,7 +302,7 @@ export default function StudioFileStructure() {
         >
           {highlightedTitle}
         </span>
-      </>
+      </div>
     )
   }
 
@@ -305,6 +329,20 @@ export default function StudioFileStructure() {
           <Tree treeId={TREE_ID} rootItem="root" ref={tree} treeLabel="Files" />
         </UncontrolledTreeEnvironment>
       </div>
+
+      <FileTreeDialogs
+        contextMenu={ctxMenu.contextMenu}
+        nameDialog={ctxMenu.nameDialog}
+        deleteTarget={ctxMenu.deleteTarget}
+        onNewFile={ctxMenu.handleNewFile}
+        onNewFolder={ctxMenu.handleNewFolder}
+        onRename={ctxMenu.handleRename}
+        onDelete={ctxMenu.handleDelete}
+        onConfirmDelete={ctxMenu.confirmDelete}
+        onCloseContextMenu={() => ctxMenu.setContextMenu(null)}
+        onCloseNameDialog={() => ctxMenu.setNameDialog(null)}
+        onCloseDeleteDialog={() => ctxMenu.setDeleteTarget(null)}
+      />
     </>
   )
 }
