@@ -54,19 +54,21 @@ export interface MutationInput {
 export interface Mapping {
   id: string
   sources: Property[]
-  targets: Property[]
+  target: Property
   mutations: Mutation[]
   conditions: Condition[]
   conditional: Condition | null
   output: string
 }
 
+export interface Target extends Property {
+  mapping?: Mapping
+}
+
 export interface MappingFile {
   sourceType: string
   targetType: string
-  sourceStructure: Property[]
-  targetStructure: Property[]
-  mappings: Mapping[]
+  targetStructure: Target[]
 }
 
 export interface MutationTypeInput {
