@@ -647,12 +647,12 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
         if (!reactFlowRef.current || !oldNodes) return
 
         // Compare old vs new node data
-        for (const node of newNodes) {
-          const oldNode = oldNodes.find((n) => n.id === node.id)
+        for (const newNode of newNodes) {
+          const oldNode = oldNodes.find((oldNode) => oldNode.id === newNode.id)
           if (!oldNode) continue
 
-          if (oldNode.data !== node.data) {
-            updateNodeInternals(node.id)
+          if (oldNode.data !== newNode.data) {
+            updateNodeInternals(newNode.id)
           }
         }
       },
