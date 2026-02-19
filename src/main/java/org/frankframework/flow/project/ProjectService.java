@@ -15,13 +15,16 @@ import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.transport.CredentialsProvider;
 import org.frankframework.flow.adapter.AdapterNotFoundException;
 import org.frankframework.flow.configuration.Configuration;
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
 import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.frankframework.flow.filesystem.FilesystemEntry;
+import org.frankframework.flow.git.GitCredentialHelper;
 import org.frankframework.flow.projectsettings.FilterType;
 import org.frankframework.flow.projectsettings.InvalidFilterTypeException;
 import org.frankframework.flow.recentproject.RecentProject;
@@ -121,7 +124,11 @@ public class ProjectService {
         return loadProjectAndCache(projectPath.toString());
     }
 
-    public Project openProjectFromDisk(String path) throws IOException {
+    public Project openProjectFromDisk(String path) throws IOException, ProjectNotFoundException {
+        Path absPath = fileSystemStorage.toAbsolutePath(path);
+        if (!Files.exists(absPath) || !Files.isDirectory(absPath)) {
+            throw new ProjectNotFoundException("Project not found at: " + path);
+        }
         return loadProjectAndCache(path);
     }
 
@@ -129,15 +136,14 @@ public class ProjectService {
         Path targetDir = fileSystemStorage.toAbsolutePath(localPath);
 
         if (Files.exists(targetDir)) {
-            throw new IllegalArgumentException("Project already exists at: " + targetDir);
+            throw new IllegalArgumentException("Project already exists at: " + localPath);
         }
 
         try {
-            var cloneCommand = Git.cloneRepository().setURI(repoUrl).setDirectory(targetDir.toFile());
+            CloneCommand cloneCommand = Git.cloneRepository().setURI(repoUrl).setDirectory(targetDir.toFile());
 
-            org.eclipse.jgit.transport.CredentialsProvider credentials =
-                    org.frankframework.flow.git.GitCredentialHelper.resolveForUrl(
-                            repoUrl, token, fileSystemStorage.isLocalEnvironment());
+            CredentialsProvider credentials =
+                    GitCredentialHelper.resolveForUrl(repoUrl, token, fileSystemStorage.isLocalEnvironment());
             if (credentials != null) {
                 cloneCommand.setCredentialsProvider(credentials);
             }
@@ -146,7 +152,12 @@ public class ProjectService {
                 log.info("Cloned repository {} to {}", repoUrl, targetDir);
             }
         } catch (GitAPIException e) {
-            throw new IOException("git clone failed: " + e.getMessage(), e);
+            String msg = e.getMessage() != null ? e.getMessage().toLowerCase() : "";
+            if (msg.contains("auth") || msg.contains("not permitted") || msg.contains("403") || msg.contains("401")) {
+                throw new IllegalArgumentException(
+                        "Clone failed — authentication error. Please provide a valid Personal Access Token (PAT)", e);
+            }
+            throw new IllegalArgumentException("Clone failed: " + e.getMessage(), e);
         }
 
         Project project = loadProjectAndCache(targetDir.toString());
