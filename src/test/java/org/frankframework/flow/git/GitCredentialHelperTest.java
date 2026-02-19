@@ -170,8 +170,7 @@ public class GitCredentialHelperTest {
         Repository repo = mock(Repository.class);
         StoredConfig config = mock(StoredConfig.class);
         when(repo.getConfig()).thenReturn(config);
-        when(config.getString("remote", "origin", "url"))
-                .thenReturn("https://gitlab.example.com:8443/group/repo.git");
+        when(config.getString("remote", "origin", "url")).thenReturn("https://gitlab.example.com:8443/group/repo.git");
 
         CredentialsProvider result = GitCredentialHelper.resolve(repo, null, true);
         assertTrue(result == null || result instanceof UsernamePasswordCredentialsProvider);
@@ -182,8 +181,7 @@ public class GitCredentialHelperTest {
         Repository repo = mock(Repository.class);
         StoredConfig config = mock(StoredConfig.class);
         when(repo.getConfig()).thenReturn(config);
-        when(config.getString("remote", "origin", "url"))
-                .thenReturn("https://github.com/org/sub/deep/repo.git");
+        when(config.getString("remote", "origin", "url")).thenReturn("https://github.com/org/sub/deep/repo.git");
 
         CredentialsProvider result = GitCredentialHelper.resolve(repo, null, true);
         assertTrue(result == null || result instanceof UsernamePasswordCredentialsProvider);
@@ -275,8 +273,7 @@ public class GitCredentialHelperTest {
 
     @Test
     void resolveForUrlLocalWithHttpDoesNotThrow() {
-        CredentialsProvider result =
-                GitCredentialHelper.resolveForUrl("http://example.com/repo.git", null, true);
+        CredentialsProvider result = GitCredentialHelper.resolveForUrl("http://example.com/repo.git", null, true);
         assertTrue(result == null || result instanceof UsernamePasswordCredentialsProvider);
     }
 
@@ -296,22 +293,19 @@ public class GitCredentialHelperTest {
 
     @Test
     void resolveForUrlLocalWithNoPathDoesNotThrow() {
-        CredentialsProvider result =
-                GitCredentialHelper.resolveForUrl("https://example.com", null, true);
+        CredentialsProvider result = GitCredentialHelper.resolveForUrl("https://example.com", null, true);
         assertTrue(result == null || result instanceof UsernamePasswordCredentialsProvider);
     }
 
     @Test
     void resolveForUrlLocalWithUserInfoDoesNotThrow() {
-        CredentialsProvider result =
-                GitCredentialHelper.resolveForUrl("https://user@github.com/repo.git", null, true);
+        CredentialsProvider result = GitCredentialHelper.resolveForUrl("https://user@github.com/repo.git", null, true);
         assertTrue(result == null || result instanceof UsernamePasswordCredentialsProvider);
     }
 
     @Test
     void resolveForUrlLocalWithFragmentDoesNotThrow() {
-        CredentialsProvider result =
-                GitCredentialHelper.resolveForUrl("https://github.com/repo.git#main", null, true);
+        CredentialsProvider result = GitCredentialHelper.resolveForUrl("https://github.com/repo.git#main", null, true);
         assertTrue(result == null || result instanceof UsernamePasswordCredentialsProvider);
     }
 
