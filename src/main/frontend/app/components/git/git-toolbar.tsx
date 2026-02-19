@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import clsx from 'clsx'
 import type { GitStatus } from '~/types/git.types'
+import Button from '~/components/inputs/button'
 
 interface GitToolbarProps {
   status: GitStatus | null
@@ -61,50 +62,36 @@ export default function GitToolbar({
             </span>
           )}
         </div>
-        <button
-          onClick={onRefresh}
-          className="border-border bg-background hover:bg-foreground-active cursor-pointer rounded border px-2 py-1 text-xs"
-          title="Refresh status"
-        >
+        <Button onClick={onRefresh} className="px-2 py-1 text-xs" title="Refresh status">
           ↻
-        </button>
+        </Button>
       </div>
       {status?.hasRemote && (
         <div className="flex gap-1.5 px-2 pb-2">
-          <button
+          <Button
             onClick={handlePull}
             disabled={isPulling}
-            className={clsx(
-              'flex-1 rounded border py-1.5 text-xs transition-colors disabled:opacity-50',
-              'border-border bg-background hover:bg-foreground-active cursor-pointer',
-            )}
+            className="flex-1 py-1.5 text-xs disabled:opacity-50"
             title="Pull"
           >
             {isPulling ? '...' : '↓ Pull'}
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={handlePush}
             disabled={isPushing || (status?.ahead ?? 0) === 0}
-            className={clsx(
-              'flex-1 rounded border py-1.5 text-xs transition-colors disabled:opacity-50',
-              'border-border bg-background hover:bg-foreground-active cursor-pointer',
-            )}
+            className="flex-1 py-1.5 text-xs disabled:opacity-50"
             title={status.ahead === 0 ? 'Nothing to push' : 'Push'}
           >
             {isPushing ? '...' : '↑ Push'}
-          </button>
+          </Button>
           {!status?.isLocal && (
-            <button
+            <Button
               onClick={() => setShowToken(!showToken)}
-              className={clsx(
-                'rounded border px-2 py-1.5 text-xs',
-                'border-border cursor-pointer',
-                showToken ? 'bg-selected' : 'bg-background hover:bg-foreground-active',
-              )}
+              className={clsx('px-2 py-1.5 text-xs', showToken && 'bg-selected')}
               title="Authentication token for private repos"
             >
               🔑
-            </button>
+            </Button>
           )}
         </div>
       )}

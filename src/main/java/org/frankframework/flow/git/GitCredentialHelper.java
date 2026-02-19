@@ -13,22 +13,6 @@ import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 
-/**
- * Resolves credentials for git operations.
- *
- * <ul>
- *   <li><b>Cloud / production</b>: only explicit PAT tokens are used. The system
- *       credential helper is never invoked — there is no shared credential store
- *       across visitors.</li>
- *   <li><b>Local development</b>: if no explicit token is provided, falls back to
- *       the developer's own {@code git credential fill} (Git Credential Manager,
- *       macOS Keychain, etc.). Git may or may not be installed.</li>
- * </ul>
- *
- * <p>To satisfy SonarQube S4036, the git executable is resolved to an absolute
- * path before being passed to {@link ProcessBuilder}. Resolution is lazy — it
- * only happens when a local user actually triggers a credential lookup.
- */
 @Slf4j
 public final class GitCredentialHelper {
 

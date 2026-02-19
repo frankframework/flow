@@ -22,11 +22,11 @@ import DiffTabView from '~/components/git/diff-tab-view'
 import clsx from 'clsx'
 import { refreshOpenDiffs } from '~/services/git-service'
 import { findAdaptersInXml, lineToOffset, findAdapterAtOffset } from './xml-utils'
+import useAutosaveStore from '~/stores/autosave-store'
 
 type LeftTab = 'files' | 'git'
 type SaveStatus = 'idle' | 'saving' | 'saved'
 
-const AUTO_SAVE_DELAY = 1500
 const SAVED_DISPLAY_DURATION = 2000
 
 export default function CodeEditor() {
@@ -52,6 +52,8 @@ export default function CodeEditor() {
       }
     }),
   )
+
+  const refreshCounter = useEditorTabStore((state) => state.refreshCounter)
 
   const isDiffTab = activeTab.type === 'diff'
 
@@ -89,13 +91,17 @@ export default function CodeEditor() {
     }
   }, [performSave])
 
+  const autosaveEnabled = useAutosaveStore((s) => s.enabled)
+  const autosaveDelay = useAutosaveStore((s) => s.delayMs)
+
   const scheduleSave = useCallback(() => {
+    if (!autosaveEnabled) return
     if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current)
     debounceTimerRef.current = setTimeout(() => {
       debounceTimerRef.current = null
       performSave()
-    }, AUTO_SAVE_DELAY)
-  }, [performSave])
+    }, autosaveDelay)
+  }, [performSave, autosaveEnabled, autosaveDelay])
 
   useEffect(() => {
     return () => {
@@ -159,7 +165,7 @@ export default function CodeEditor() {
     fetchXml()
 
     return () => abortController.abort()
-  }, [project, activeTabFilePath, isDiffTab])
+  }, [project, activeTabFilePath, isDiffTab, refreshCounter])
 
   useEffect(() => {
     if (!xmlContent || !activeTabFilePath || !editorReference.current || isDiffTab) return

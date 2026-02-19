@@ -33,6 +33,7 @@ import { saveAdapter } from '~/services/adapter-service'
 import { cloneWithRemappedIds } from '~/utils/flow-utils'
 import { showErrorToast } from '~/components/toast'
 import clsx from 'clsx'
+import useAutosaveStore from '~/stores/autosave-store'
 
 export type FlowNode = FrankNodeType | ExitNode | StickyNote | GroupNode | Node
 
@@ -52,7 +53,6 @@ const selector = (state: FlowState) => ({
 })
 
 type SaveStatus = 'idle' | 'saving' | 'saved'
-const AUTO_SAVE_DELAY = 2000
 const SAVED_DISPLAY_DURATION = 2000
 
 function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b: boolean) => void }>) {
@@ -114,13 +114,17 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
     }
   }, [project])
 
+  const autosaveEnabled = useAutosaveStore((s) => s.enabled)
+  const autosaveDelay = useAutosaveStore((s) => s.delayMs)
+
   const scheduleAutoSave = useCallback(() => {
+    if (!autosaveEnabled) return
     if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current)
     autoSaveTimerRef.current = setTimeout(() => {
       autoSaveTimerRef.current = null
       saveFlow()
-    }, AUTO_SAVE_DELAY)
-  }, [saveFlow])
+    }, autosaveDelay)
+  }, [saveFlow, autosaveEnabled, autosaveDelay])
 
   useEffect(() => {
     return () => {

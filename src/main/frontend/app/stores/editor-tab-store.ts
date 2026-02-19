@@ -18,18 +18,21 @@ export interface EditorTabData {
 interface EditorTabStoreState {
   tabs: Record<string, EditorTabData>
   activeTabFilePath: string
+  refreshCounter: number
   setTabData: (tabId: string, data: EditorTabData) => void
   getTab: (tabId: string) => EditorTabData | undefined
   setActiveTab: (tabId: string) => void
   removeTab: (tabId: string) => void
   removeTabAndSelectFallback: (tabId: string) => void
   clearTabs: () => void
+  refreshAllTabs: () => void
 }
 
 const useEditorTabStore = create<EditorTabStoreState>()(
   subscribeWithSelector((set, get) => ({
     tabs: {},
     activeTabFilePath: '',
+    refreshCounter: 0,
     setTabData: (tabId, data) =>
       set((state) => ({
         tabs: {
@@ -61,6 +64,7 @@ const useEditorTabStore = create<EditorTabStoreState>()(
         }
       }),
     clearTabs: () => set({ tabs: {}, activeTabFilePath: '' }),
+    refreshAllTabs: () => set((state) => ({ refreshCounter: state.refreshCounter + 1 })),
   })),
 )
 

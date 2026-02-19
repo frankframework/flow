@@ -156,6 +156,7 @@ export default function GitPanel({ projectName, hasStoredToken }: GitPanelProps)
           showInfoToast(result.message)
         } else {
           showSuccessToast(result.message)
+          useEditorTabStore.getState().refreshAllTabs()
         }
       } else {
         showErrorToast(result.message)
