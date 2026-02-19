@@ -136,7 +136,6 @@ export default function CodeEditor() {
       contextMenuOrder: 2,
       keybindings: [monacoInstance.KeyMod.Shift | monacoInstance.KeyMod.Alt | monacoInstance.KeyCode.KeyF],
       run: () => {
-        console.log('running')
         if (activeTabFilePath.endsWith('.xml')) {
           const current = editor.getValue()
           const updated = normalizeFrankElements(current)
@@ -151,7 +150,7 @@ export default function CodeEditor() {
           ])
           editor.pushUndoStop()
         }
-      },
+      }, 
     })
   }
 
