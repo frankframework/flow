@@ -32,7 +32,7 @@ export default function ConfirmDeleteDialog({ name, isFolder, onConfirm, onCance
     >
       <div className="bg-background border-border w-80 rounded-md border p-4 shadow-lg">
         <p className="text-foreground mb-4 text-sm">
-          Delete {isFolder ? 'folder' : 'file'} <strong>'{name}'</strong>?
+          Delete {isFolder ? 'folder' : 'file'} <strong>&#39;{name}&#39;</strong>?
         </p>
         <div className="flex justify-end gap-2">
           <Button onClick={onCancel} className="px-3 py-1 text-sm">
