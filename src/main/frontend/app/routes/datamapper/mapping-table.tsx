@@ -7,6 +7,9 @@ import type { ConfigActions } from '~/stores/datamapper_state/mappingListConfig/
 import type { Mutation, Condition, MappingListConfig } from '~/types/datamapper_types/config-types'
 import type { MappingNode, MappingConfig } from '~/types/datamapper_types/node-types'
 import { getNodesByTypeAndId, createMappingNode, deleteMappingNode } from '~/utils/datamapper_utils/react-node-utils'
+import Button from '~/components/inputs/button'
+import EditButton from '~/components/datamapper/basic-components/edit-button'
+import DeleteButton from '~/components/datamapper/basic-components/delete-button'
 
 interface MappingRow {
   id: string
@@ -37,15 +40,6 @@ function flowToMappingTable(nodes: Node[], edges: Edge[]): MappingRow[] {
       const conditions = mappingNode.data?.conditions ?? []
       const conditional = mappingNode.data?.conditional ?? null
 
-      const outputLabel = (() => {
-        const outputId = mappingNode.data?.output
-        if (!outputId) return ''
-
-        const mutation = mutations.find((mutation) => mutation.id === outputId)
-        const condition = conditions.find((condition) => condition.id == outputId)
-        return mutation?.name ?? condition?.name ?? getLabel(outputId)
-      })()
-
       return {
         id: mappingNode.id,
         sourcesNames: incomingEdges.map((edge) => getLabel(edge.source)),
@@ -54,7 +48,7 @@ function flowToMappingTable(nodes: Node[], edges: Edge[]): MappingRow[] {
         mutations,
         conditions,
         conditional,
-        outputLabel,
+        outputLabel: mappingNode.data.outputLabel ?? '',
       }
     })
 }
@@ -108,7 +102,7 @@ function MappingTable({ config, configDispatch }: PropertyListProperties) {
       {/* -------------------------------- Header -------------------------------- */}
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-xl font-bold">Mapping Table</h2>
-        <button
+        <Button
           className="border-border bg-foreground-active text-foreground hover:bg-hover fixed right-20 rounded-2xl border px-4 py-2"
           onClick={() => {
             setEditingMapping(null)
@@ -116,7 +110,7 @@ function MappingTable({ config, configDispatch }: PropertyListProperties) {
           }}
         >
           Add Mapping
-        </button>
+        </Button>
       </div>
 
       <div className="border-border w-full overflow-y-auto border p-4">
@@ -189,20 +183,15 @@ function MappingTable({ config, configDispatch }: PropertyListProperties) {
 
                 {/* Actions */}
                 <td className="border px-3 py-2 align-top">
-                  <button
-                    className="px-1 text-3xl hover:opacity-80"
-                    onClick={(e) => {
-                      e.stopPropagation()
+                  <EditButton
+                    onClick={() => {
                       const mappingNode = nodes.find((node) => node.id === row.id)
                       setEditingMapping((mappingNode?.data as MappingConfig) ?? null)
                       setModalOpen(true)
                     }}
-                  >
-                    ✏️
-                  </button>
+                  />
 
-                  <button
-                    className="text-error px-1 text-4xl font-bold hover:opacity-80"
+                  <DeleteButton
                     onClick={() => {
                       const { remainingNodes, remainingEdges } = deleteMappingNode(row.id, nodes, edges)
 
@@ -216,9 +205,7 @@ function MappingTable({ config, configDispatch }: PropertyListProperties) {
 
                       setRefresh((count) => count + 1)
                     }}
-                  >
-                    &times;
-                  </button>
+                  />
                 </td>
               </tr>
             ))}

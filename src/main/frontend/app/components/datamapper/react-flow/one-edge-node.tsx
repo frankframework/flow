@@ -3,6 +3,9 @@ import { Handle, Position, type Node, useNodeConnections } from '@xyflow/react'
 import clsx from 'clsx'
 import type { CustomNodeData } from '~/types/datamapper_types/node-types'
 import { PROPERTY_WIDTH } from '~/utils/datamapper_utils/const'
+import EditButton from '../basic-components/edit-button'
+import DeleteButton from '../basic-components/delete-button'
+import HighlightButton from '../basic-components/highlight-button'
 
 export interface OneEdgeNodeProperties {
   id: string
@@ -51,41 +54,27 @@ function OneEdgeNode({ id, data, variant = 'source', onEdit, onDelete, onHighlig
       <div className="ml-2 text-left">{data.label}</div>
 
       {/* Footer */}
-      <div className="mt-auto ml-auto flex items-center justify-between text-sm opacity-80">
+      <div className="ml-auto flex items-center text-sm opacity-80">
         <span>({data.variableType})</span>
 
-        <div className="flex gap-3">
-          <button
-            className="text-lg hover:opacity-70"
-            onClick={(event) => {
-              event.stopPropagation()
+        <div className="ml-4 flex h-[22px] gap-3">
+          <HighlightButton
+            onClick={() => {
               onHighlight?.(id)
             }}
-          >
-            💡
-            {/* <Magnifier className={'fill-yellow-400'} /> Commented this out, want to replace it with a better icon*/}
-          </button>
+          />
 
-          <button
-            className="text-lg hover:opacity-70"
-            onClick={(event) => {
-              event.stopPropagation()
+          <EditButton
+            onClick={() => {
               onEdit?.(data)
             }}
-          >
-            ✏️
-            {/* <Settings className={'fill-border'} /> Commented this out, want to replace it with a better icon*/}
-          </button>
+          />
 
-          <button
-            className="text-error text-xl font-bold hover:opacity-80"
-            onClick={(event) => {
-              event.stopPropagation()
+          <DeleteButton
+            onClick={() => {
               onDelete?.(id)
             }}
-          >
-            &times;
-          </button>
+          />
         </div>
       </div>
 
