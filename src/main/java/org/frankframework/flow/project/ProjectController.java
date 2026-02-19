@@ -101,7 +101,8 @@ public class ProjectController {
     }
 
     @PostMapping("/open")
-    public ResponseEntity<ProjectDTO> openProject(@RequestBody ProjectCreateDTO projectCreateDTO) throws IOException {
+    public ResponseEntity<ProjectDTO> openProject(@RequestBody ProjectCreateDTO projectCreateDTO)
+            throws IOException, ProjectNotFoundException {
         Project project = projectService.openProjectFromDisk(projectCreateDTO.rootPath());
         recentProjectsService.addRecentProject(project.getName(), project.getRootPath());
         return ResponseEntity.ok(toDto(project));
