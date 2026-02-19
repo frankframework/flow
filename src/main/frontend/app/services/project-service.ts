@@ -13,10 +13,10 @@ export async function openProject(rootPath: string): Promise<Project> {
   })
 }
 
-export async function cloneProject(repoUrl: string, localPath: string): Promise<Project> {
+export async function cloneProject(repoUrl: string, localPath: string, token?: string): Promise<Project> {
   return apiFetch<Project>('/projects/clone', {
     method: 'POST',
-    body: JSON.stringify({ repoUrl, localPath }),
+    body: JSON.stringify({ repoUrl, localPath, token: token || null }),
   })
 }
 
