@@ -51,10 +51,7 @@ public final class GitCredentialHelper {
         }
 
         if (isLocalEnvironment && repo != null) {
-            CredentialsProvider systemCredentials = fromRemoteUrl(repo);
-            if (systemCredentials != null) {
-                return systemCredentials;
-            }
+            return fromRemoteUrl(repo);
         }
 
         return null;
@@ -168,6 +165,10 @@ public final class GitCredentialHelper {
                 return new UsernamePasswordCredentialsProvider(username, password);
             }
 
+            return null;
+        } catch (InterruptedException e) {
+            log.debug("Git credential helper interrupted");
+            Thread.currentThread().interrupt();
             return null;
         } catch (Exception e) {
             log.debug("Failed to query system git credential helper: {}", e.getMessage());

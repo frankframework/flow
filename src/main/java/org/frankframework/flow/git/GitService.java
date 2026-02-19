@@ -152,7 +152,7 @@ public class GitService {
             throws ProjectNotFoundException, IOException, NotAGitRepositoryException, GitOperationException {
         log.debug("Staging file '{}' in project '{}'", filePath, projectName);
         try (Git git = openGit(projectName)) {
-            Path workingFile = git.getRepository().getWorkTree().toPath().resolve(filePath);
+            Path workingFile = safeResolvePath(git.getRepository(), filePath);
             if (Files.exists(workingFile)) {
                 git.add().addFilepattern(filePath).call();
             } else {
@@ -182,7 +182,7 @@ public class GitService {
      * Stages specific hunks of a file by computing the diff between the HEAD version and the working tree version, applying only the selected hunks to create a patched version of the file, and then writing that patched content directly to the git index. This allows for partial staging of changes at the hunk level, rather than staging the entire file. The method handles exceptions related to repository access and git operations, and logs relevant information for debugging purposes.
      */
     public void stageHunks(String projectName, String filePath, List<Integer> hunkIndices)
-            throws ProjectNotFoundException, IOException, NotAGitRepositoryException, GitOperationException {
+            throws ProjectNotFoundException, IOException, NotAGitRepositoryException {
         log.debug("Staging hunks {} for file '{}' in project '{}'", hunkIndices, filePath, projectName);
         try (Git git = openGit(projectName)) {
             Repository repo = git.getRepository();
@@ -295,8 +295,8 @@ public class GitService {
 
     /**
      * Resolves credentials and applies them to the given PushCommand. It uses the GitCredentialHelper to determine the appropriate credentials based on the repository configuration and the provided token. If credentials are found, they are set on the PushCommand to enable authenticated pushes to remote repositories that require it.
-     */
-    /** Uses the explicit token if provided, otherwise falls back to the project's stored clone token. */
+     * Uses the explicit token if provided, otherwise falls back to the project's stored clone token.
+     **/
     private String resolveToken(String projectName, String explicitToken) {
         if (explicitToken != null && !explicitToken.isBlank()) {
             return explicitToken;
@@ -520,7 +520,7 @@ public class GitService {
      * @throws IOException if an I/O error occurs while reading the file from the working tree
      */
     private String readWorkingVersion(Repository repo, String filePath) throws IOException {
-        Path workingFile = repo.getWorkTree().toPath().resolve(filePath);
+        Path workingFile = safeResolvePath(repo, filePath);
         return Files.exists(workingFile) ? Files.readString(workingFile, StandardCharsets.UTF_8) : "";
     }
 
@@ -637,5 +637,18 @@ public class GitService {
             throw new NotAGitRepositoryException(projectName);
         }
         return Git.open(projectPath.toFile());
+    }
+
+    /**
+     * Safely resolves a user-provided file path against the repository working tree,
+     * ensuring the result stays within the repo root to prevent path traversal attacks.
+     */
+    private Path safeResolvePath(Repository repo, String filePath) {
+        Path repoRoot = repo.getWorkTree().toPath().normalize();
+        Path resolved = repoRoot.resolve(filePath).normalize();
+        if (!resolved.startsWith(repoRoot)) {
+            throw new SecurityException("Invalid path: outside repository directory");
+        }
+        return resolved;
     }
 }
