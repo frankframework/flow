@@ -102,7 +102,7 @@ function AddMappingForm({ onSave, sources, targets, initialData }: MappingModalP
   const handleSave = () => {
     onSave({
       id: initialData?.id,
-      outputLabel: unfilteredOutputs.find((t) => t.id === output)?.label,
+      outputLabel: unfilteredOutputs.find((unfilteredOutput) => unfilteredOutput.id === output)?.label,
       colour: initialData?.colour,
       sources: sourceIds,
       target: targetId,
@@ -136,7 +136,9 @@ function AddMappingForm({ onSave, sources, targets, initialData }: MappingModalP
                     id={value.toString()}
                     value={id}
                     onChange={(event) => updateArrayItem(setSourceIds, value, event)}
-                    options={Object.fromEntries(sources.map((source) => [source.id, `${source.label} (${source.type})`]))}
+                    options={Object.fromEntries(
+                      sources.map((source) => [source.id, `${source.label} (${source.type})`]),
+                    )}
                   />
                   <DeleteButton onClick={() => deleteArrayItem(setSourceIds, value)} />
                 </div>
