@@ -5,6 +5,8 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jgit.lib.Repository;
@@ -12,28 +14,36 @@ import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 
 /**
- * Delegates credential resolution to the system's git credential helper
- * (e.g. Git Credential Manager, macOS Keychain, credential-cache).
+ * Resolves credentials for git operations.
  *
- * <p>Calls {@code git credential fill} as a subprocess, which invokes whatever
- * credential helper the user has configured in their git config.
+ * <ul>
+ *   <li><b>Cloud / production</b>: only explicit PAT tokens are used. The system
+ *       credential helper is never invoked — there is no shared credential store
+ *       across visitors.</li>
+ *   <li><b>Local development</b>: if no explicit token is provided, falls back to
+ *       the developer's own {@code git credential fill} (Git Credential Manager,
+ *       macOS Keychain, etc.). Git may or may not be installed.</li>
+ * </ul>
+ *
+ * <p>To satisfy SonarQube S4036, the git executable is resolved to an absolute
+ * path before being passed to {@link ProcessBuilder}. Resolution is lazy — it
+ * only happens when a local user actually triggers a credential lookup.
  */
 @Slf4j
 public final class GitCredentialHelper {
 
     private static final long PROCESS_TIMEOUT_SECONDS = 10;
 
+    private static volatile String gitExecutable;
+    private static volatile boolean gitResolved;
+
     private GitCredentialHelper() {}
 
     /**
      * Resolves credentials for git operations using a fallback chain:
-     * 1. If a token is explicitly provided, use it directly
-     * 2. For local environments, try the system git credential helper
-     * 3. Return null if nothing works (JGit will fail with auth error)
-     *
-     * @param repo repository to read the remote URL from (may be null for clone)
-     * @param explicitToken user-provided token, or null
-     * @param isLocalEnvironment true for local profile
+     * If a token is explicitly provided, use it directly.
+     * For local environments only, try the system git credential helper.
+     * Return null if nothing works (JGit will fail with an auth error).
      */
     public static CredentialsProvider resolve(Repository repo, String explicitToken, boolean isLocalEnvironment) {
         if (explicitToken != null && !explicitToken.isBlank()) {
@@ -41,9 +51,9 @@ public final class GitCredentialHelper {
         }
 
         if (isLocalEnvironment && repo != null) {
-            CredentialsProvider systemCreds = fromRemoteUrl(repo);
-            if (systemCreds != null) {
-                return systemCreds;
+            CredentialsProvider systemCredentials = fromRemoteUrl(repo);
+            if (systemCredentials != null) {
+                return systemCredentials;
             }
         }
 
@@ -91,7 +101,6 @@ public final class GitCredentialHelper {
     private static URI parseGitUri(String remoteUrl) {
         try {
             if (remoteUrl.startsWith("git@")) {
-                // ssh git url's wont be handled by git credential helper, so this will skip it.
                 return null;
             }
             return new URI(remoteUrl);
@@ -102,8 +111,14 @@ public final class GitCredentialHelper {
     }
 
     private static CredentialsProvider queryGitCredential(URI uri) {
+        String gitPath = getGitExecutable();
+        if (gitPath == null) {
+            log.debug("Git executable not found on this system; skipping credential helper");
+            return null;
+        }
+
         try {
-            ProcessBuilder pb = new ProcessBuilder("git", "credential", "fill");
+            ProcessBuilder pb = new ProcessBuilder(gitPath, "credential", "fill");
             pb.redirectErrorStream(false);
             Process process = pb.start();
 
@@ -158,5 +173,54 @@ public final class GitCredentialHelper {
             log.debug("Failed to query system git credential helper: {}", e.getMessage());
             return null;
         }
+    }
+
+    /**
+     * Lazily resolves the absolute path to the git executable. Only runs once,
+     * and only when a local-environment credential lookup actually needs it.
+     * On cloud/production this method is never called.
+     */
+    private static String getGitExecutable() {
+        if (!gitResolved) {
+            synchronized (GitCredentialHelper.class) {
+                if (!gitResolved) {
+                    gitExecutable = findGitOnPath();
+                    gitResolved = true;
+                }
+            }
+        }
+        return gitExecutable;
+    }
+
+    /**
+     * Searches PATH for the git executable and returns its absolute path.
+     * Uses absolute paths in ProcessBuilder to satisfy SonarQube S4036.
+     */
+    private static String findGitOnPath() {
+        boolean isWindows = System.getProperty("os.name", "").toLowerCase().contains("win");
+        String[] candidates = isWindows ? new String[] {"git.exe", "git.cmd"} : new String[] {"git"};
+
+        String pathEnv = System.getenv("PATH");
+        if (pathEnv == null) {
+            log.debug("PATH environment variable not set; git credential helper unavailable");
+            return null;
+        }
+
+        String separator = isWindows ? ";" : ":";
+        for (String dir : pathEnv.split(separator)) {
+            Path dirPath = Path.of(dir);
+            if (!Files.isDirectory(dirPath)) continue;
+            for (String candidate : candidates) {
+                Path exe = dirPath.resolve(candidate);
+                if (Files.isRegularFile(exe) && Files.isExecutable(exe)) {
+                    String absolutePath = exe.toAbsolutePath().toString();
+                    log.debug("Resolved git executable: {}", absolutePath);
+                    return absolutePath;
+                }
+            }
+        }
+
+        log.debug("Git not found on PATH; credential helper unavailable");
+        return null;
     }
 }
