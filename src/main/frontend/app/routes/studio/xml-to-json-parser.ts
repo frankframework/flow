@@ -160,7 +160,7 @@ function extractEdgesFromAdapter(adapter: Element, nodes: FlowNode[]): FrankEdge
     sourcesWithSuccessExitForward,
   )
 
-  addReceiverToFirstPipeEdges(adapter, nodes, edges, forwardIndexBySourceId)
+  addReceiverToFirstPipeEdges(nodes, edges, forwardIndexBySourceId)
 
   addSequentialFallbackEdges(
     nodes,
@@ -193,7 +193,9 @@ function addExplicitForwardEdges(
     const sourceId = nameToId.get(sourceName)
     if (!sourceId) continue
 
-    const forwards = element.querySelectorAll('Forward')
+    const forwards = [...element.querySelectorAll('*')].filter((el) => el.tagName.toLowerCase() === 'forward')
+    console.log(forwards)
+
     addForwardEdges(
       forwards,
       sourceId,
@@ -210,7 +212,7 @@ function addExplicitForwardEdges(
  * Handles creating edges from a set of <Forward> elements
  */
 function addForwardEdges(
-  forwards: NodeListOf<Element>,
+  forwards: Element[],
   sourceId: string,
   nodes: FlowNode[],
   edges: FrankEdge[],
@@ -248,7 +250,6 @@ function addForwardEdges(
 }
 
 function addReceiverToFirstPipeEdges(
-  adapter: Element,
   nodes: FlowNode[],
   edges: FrankEdge[],
   forwardIndexBySourceId: Map<string, number>,
@@ -485,14 +486,15 @@ function convertElementToNode(element: Element, idCounter: IdCounter, sourceHand
     }
   }
 
+  const subType = resolveSubtype(element)
   const frankNode: FrankNodeType = {
     id: thisId,
     type: 'frankNode',
     position: { x: 0, y: 0 },
     data: {
       name: element.getAttribute('name') || '',
-      type: getElementTypeFromName(element.tagName),
-      subtype: element.tagName,
+      type: getElementTypeFromName(subType),
+      subtype: subType ?? element.tagName,
       children: convertChildren([...element.children], idCounter),
       sourceHandles,
       attributes: Object.keys(attributes).length > 0 ? attributes : undefined,
@@ -514,11 +516,12 @@ function convertChildren(elements: Element[], idCounter: IdCounter): ChildNode[]
         }
       }
 
+      const subType = resolveSubtype(child)
       return {
         id: childId,
         name: child.getAttribute('name') || undefined,
-        subtype: child.tagName,
-        type: getElementTypeFromName(child.tagName),
+        subtype: subType,
+        type: getElementTypeFromName(subType),
         attributes: Object.keys(childAttributes).length > 0 ? childAttributes : undefined,
         children: convertChildren([...child.children], idCounter),
       }
@@ -561,6 +564,24 @@ function isNodeTargeted(nodeId: string, edges: FrankEdge[]): boolean {
 
 function isFrankNode(node: FlowNode): node is FrankNodeType {
   return node.type === 'frankNode' && node.data !== undefined && 'type' in node.data
+}
+
+/**  Converts the tagname of a non capitalized element that has a classname attribute to the last part of said classname, e.g.:
+ * <pipe name="uploadFiles" className="org.frankframework.pipes.ForEachChildElementPipe" />
+ * Becomes <ForEachChildElementPipe name="uploadFiles" />
+ */
+function resolveSubtype(element: Element): string {
+  const tagName = element.tagName
+  const className = element.getAttribute('className')
+
+  const isLowerCaseTag = tagName === tagName.toLowerCase()
+
+  if (isLowerCaseTag && className) {
+    const parts = className.split('.')
+    return parts.at(-1)! // last part of full class name
+  }
+
+  return tagName
 }
 
 interface FrankEdge {
