@@ -6,6 +6,7 @@ import {
   renameInProject,
   deleteInProject,
 } from '~/services/project-service'
+import { showErrorToastFrom } from '~/components/toast'
 
 export interface ContextMenuState {
   position: { x: number; y: number }
@@ -17,6 +18,7 @@ export interface ContextMenuState {
 
 export interface NameDialogState {
   title: string
+  initialValue?: string
   onSubmit: (name: string) => void
 }
 
@@ -42,7 +44,12 @@ interface UseFileTreeContextMenuOptions {
 export function getParentItemId(itemId: TreeItemIndex): TreeItemIndex {
   const str = String(itemId)
   const lastSlash = str.lastIndexOf('/')
-  return lastSlash > 0 ? str.substring(0, lastSlash) : 'root'
+  return lastSlash > 0 ? str.slice(0, Math.max(0, lastSlash)) : 'root'
+}
+
+function ensureXmlExtension(name: string): string {
+  if (name.includes('.')) return name
+  return `${name}.xml`
 }
 
 export function useFileTreeContextMenu({
@@ -54,8 +61,6 @@ export function useFileTreeContextMenu({
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null)
   const [nameDialog, setNameDialog] = useState<NameDialogState | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<DeleteTargetState | null>(null)
-  const [renamingItemId, setRenamingItemId] = useState<TreeItemIndex | null>(null)
-  const [renameValue, setRenameValue] = useState('')
 
   const openContextMenu = useCallback(
     async (e: React.MouseEvent, itemId: TreeItemIndex) => {
@@ -86,11 +91,12 @@ export function useFileTreeContextMenu({
     setNameDialog({
       title: 'New File',
       onSubmit: async (name: string) => {
+        const fileName = ensureXmlExtension(name)
         try {
-          await createFileInProject(projectName, parentPath, name)
+          await createFileInProject(projectName, parentPath, fileName)
           await dataProvider.reloadDirectory(parentItemId)
-        } catch (err) {
-          console.error('Failed to create file:', err)
+        } catch (error) {
+          showErrorToastFrom('Failed to create file', error)
         }
         setNameDialog(null)
       },
@@ -109,8 +115,8 @@ export function useFileTreeContextMenu({
         try {
           await createFolderInProject(projectName, parentPath, name)
           await dataProvider.reloadDirectory(parentItemId)
-        } catch (err) {
-          console.error('Failed to create folder:', err)
+        } catch (error) {
+          showErrorToastFrom('Failed to create folder', error)
         }
         setNameDialog(null)
       },
@@ -118,32 +124,32 @@ export function useFileTreeContextMenu({
   }, [contextMenu, projectName, dataProvider])
 
   const handleRename = useCallback(() => {
-    if (!contextMenu) return
-    setRenamingItemId(contextMenu.itemId)
-    setRenameValue(contextMenu.name)
+    if (!contextMenu || !projectName || !dataProvider) return
+    const itemId = contextMenu.itemId
+    const oldName = contextMenu.name
+    const oldPath = contextMenu.path
     setContextMenu(null)
-  }, [contextMenu])
 
-  const submitRename = useCallback(
-    async (itemId: TreeItemIndex, newName: string) => {
-      if (!projectName || !dataProvider) return
-      setRenamingItemId(null)
-
-      const item = await dataProvider.getTreeItem(itemId)
-      if (!item || newName === item.data.name) return
-
-      const oldPath = item.data.path
-      try {
-        await renameInProject(projectName, oldPath, newName)
-        const parentId = getParentItemId(itemId)
-        await dataProvider.reloadDirectory(parentId)
-        onAfterRename?.(oldPath, newName)
-      } catch (err) {
-        console.error('Failed to rename:', err)
-      }
-    },
-    [projectName, dataProvider, onAfterRename],
-  )
+    setNameDialog({
+      title: 'Rename',
+      initialValue: oldName,
+      onSubmit: async (newName: string) => {
+        if (newName === oldName) {
+          setNameDialog(null)
+          return
+        }
+        try {
+          await renameInProject(projectName, oldPath, newName)
+          const parentId = getParentItemId(itemId)
+          await dataProvider.reloadDirectory(parentId)
+          onAfterRename?.(oldPath, newName)
+        } catch (error) {
+          showErrorToastFrom('Failed to rename', error)
+        }
+        setNameDialog(null)
+      },
+    })
+  }, [contextMenu, projectName, dataProvider, onAfterRename])
 
   const handleDelete = useCallback(() => {
     if (!contextMenu) return
@@ -163,8 +169,8 @@ export function useFileTreeContextMenu({
       await deleteInProject(projectName, deleteTarget.path)
       onAfterDelete?.(deleteTarget.path)
       await dataProvider.reloadDirectory(deleteTarget.parentItemId)
-    } catch (err) {
-      console.error('Failed to delete:', err)
+    } catch (error) {
+      showErrorToastFrom('Failed to delete', error)
     }
     setDeleteTarget(null)
   }, [deleteTarget, projectName, dataProvider, onAfterDelete])
@@ -176,15 +182,10 @@ export function useFileTreeContextMenu({
     setNameDialog,
     deleteTarget,
     setDeleteTarget,
-    renamingItemId,
-    setRenamingItemId,
-    renameValue,
-    setRenameValue,
     openContextMenu,
     handleNewFile,
     handleNewFolder,
     handleRename,
-    submitRename,
     handleDelete,
     confirmDelete,
   }

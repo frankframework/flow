@@ -45,7 +45,7 @@ export default function ContextMenu({
   return createPortal(
     <div
       ref={menuRef}
-      className="bg-background border-border fixed z-50 rounded-md border shadow-md"
+      className="bg-background border-border fixed z-50 overflow-hidden rounded-md border py-1 shadow-md"
       style={{ left: position.x, top: position.y }}
     >
       {isFolder && (

@@ -93,11 +93,7 @@ export async function createFolderInProject(
   })
 }
 
-export async function renameInProject(
-  projectName: string,
-  oldPath: string,
-  newName: string,
-): Promise<FileTreeNode> {
+export async function renameInProject(projectName: string, oldPath: string, newName: string): Promise<FileTreeNode> {
   return apiFetch<FileTreeNode>(`/projects/${encodeURIComponent(projectName)}/files/rename`, {
     method: 'PATCH',
     body: JSON.stringify({ oldPath, newName }),
@@ -105,10 +101,9 @@ export async function renameInProject(
 }
 
 export async function deleteInProject(projectName: string, path: string): Promise<void> {
-  await apiFetch<void>(
-    `/projects/${encodeURIComponent(projectName)}/files?path=${encodeURIComponent(path)}`,
-    { method: 'DELETE' },
-  )
+  await apiFetch<void>(`/projects/${encodeURIComponent(projectName)}/files?path=${encodeURIComponent(path)}`, {
+    method: 'DELETE',
+  })
 }
 
 export async function importProjectFolder(files: FileList): Promise<Project> {

@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
+import Button from '~/components/inputs/button'
 
 interface ConfirmDeleteDialogProps {
   name: string
@@ -34,12 +35,12 @@ export default function ConfirmDeleteDialog({ name, isFolder, onConfirm, onCance
           Delete {isFolder ? 'folder' : 'file'} <strong>'{name}'</strong>?
         </p>
         <div className="flex justify-end gap-2">
-          <button onClick={onCancel} className="text-muted-foreground hover:text-foreground px-3 py-1 text-sm">
+          <Button onClick={onCancel} className="px-3 py-1 text-sm">
             Cancel
-          </button>
-          <button onClick={onConfirm} className="rounded-md bg-red-600 px-3 py-1 text-sm text-white hover:bg-red-700">
+          </Button>
+          <Button onClick={onConfirm} className="bg-red-600 px-3 py-1 text-sm text-white hover:bg-red-700">
             Delete
-          </button>
+          </Button>
         </div>
       </div>
     </div>,

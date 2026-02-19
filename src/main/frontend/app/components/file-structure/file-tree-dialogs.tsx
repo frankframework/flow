@@ -45,7 +45,12 @@ export default function FileTreeDialogs({
       )}
 
       {nameDialog && (
-        <NameInputDialog title={nameDialog.title} onSubmit={nameDialog.onSubmit} onCancel={onCloseNameDialog} />
+        <NameInputDialog
+          title={nameDialog.title}
+          initialValue={nameDialog.initialValue}
+          onSubmit={nameDialog.onSubmit}
+          onCancel={onCloseNameDialog}
+        />
       )}
 
       {deleteTarget && (

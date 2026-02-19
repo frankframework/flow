@@ -21,9 +21,6 @@ import FilesDataProvider from '~/components/file-structure/studio-files-data-pro
 import { useProjectStore } from '~/stores/project-store'
 import type { FileNode } from './editor-data-provider'
 import { useProjectTree } from '~/hooks/use-project-tree'
-import { useFileTreeContextMenu } from './use-file-tree-context-menu'
-import FileTreeDialogs from './file-tree-dialogs'
-import InlineRenameInput from './inline-rename-input'
 
 const TREE_ID = 'studio-files-tree'
 
@@ -57,11 +54,6 @@ export default function StudioFileStructure() {
   const getTab = useTabStore((state) => state.getTab)
 
   const { data: treeData, isLoading: isTreeLoading } = useProjectTree(project?.name)
-
-  const ctxMenu = useFileTreeContextMenu({
-    projectName: project?.name,
-    dataProvider,
-  })
 
   useEffect(() => {
     if (!project || !treeData) return
@@ -250,21 +242,6 @@ export default function StudioFileStructure() {
       Icon = getListenerIcon(listenerType)
     }
 
-    const isFsNode = typeof item.data === 'object' && item.data !== null && 'path' in item.data
-
-    if (ctxMenu.renamingItemId === item.index && isFsNode) {
-      return (
-        <InlineRenameInput
-          icon={Icon}
-          value={ctxMenu.renameValue}
-          onChange={ctxMenu.setRenameValue}
-          onSubmit={ctxMenu.submitRename}
-          onCancel={() => ctxMenu.setRenamingItemId(null)}
-          itemIndex={item.index}
-        />
-      )
-    }
-
     const searchLower = searchTerm.toLowerCase()
     const titleLower = title.toLowerCase()
 
@@ -290,10 +267,7 @@ export default function StudioFileStructure() {
     const isHighlighted = highlightedItemId == item.index
 
     return (
-      <div
-        className="flex min-w-0 items-center"
-        onContextMenu={isFsNode ? (e) => ctxMenu.openContextMenu(e, item.index) : undefined}
-      >
+      <div className="flex min-w-0 cursor-pointer items-center">
         <Icon className="fill-foreground w-4 flex-shrink-0" />
         <span
           className={`font-inter ml-1 overflow-hidden text-nowrap text-ellipsis ${
@@ -329,20 +303,6 @@ export default function StudioFileStructure() {
           <Tree treeId={TREE_ID} rootItem="root" ref={tree} treeLabel="Files" />
         </UncontrolledTreeEnvironment>
       </div>
-
-      <FileTreeDialogs
-        contextMenu={ctxMenu.contextMenu}
-        nameDialog={ctxMenu.nameDialog}
-        deleteTarget={ctxMenu.deleteTarget}
-        onNewFile={ctxMenu.handleNewFile}
-        onNewFolder={ctxMenu.handleNewFolder}
-        onRename={ctxMenu.handleRename}
-        onDelete={ctxMenu.handleDelete}
-        onConfirmDelete={ctxMenu.confirmDelete}
-        onCloseContextMenu={() => ctxMenu.setContextMenu(null)}
-        onCloseNameDialog={() => ctxMenu.setNameDialog(null)}
-        onCloseDeleteDialog={() => ctxMenu.setDeleteTarget(null)}
-      />
     </>
   )
 }

@@ -22,6 +22,7 @@ import org.frankframework.flow.projectsettings.InvalidFilterTypeException;
 import org.frankframework.flow.recentproject.RecentProjectsService;
 import org.frankframework.flow.utility.XmlValidator;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -205,29 +206,29 @@ public class ProjectController {
     }
 
     @PostMapping("/{projectName}/files")
-    public ResponseEntity<FileTreeNode> createFile(
-            @PathVariable String projectName, @RequestBody FileCreateDTO dto) throws IOException {
+    public ResponseEntity<FileTreeNode> createFile(@PathVariable String projectName, @RequestBody FileCreateDTO dto)
+            throws IOException {
         FileTreeNode node = fileTreeService.createFile(projectName, dto.path(), dto.name());
-        return ResponseEntity.status(201).body(node);
+        return ResponseEntity.status(HttpStatus.CREATED.value()).body(node);
     }
 
     @PostMapping("/{projectName}/folders")
-    public ResponseEntity<FileTreeNode> createFolder(
-            @PathVariable String projectName, @RequestBody FileCreateDTO dto) throws IOException {
+    public ResponseEntity<FileTreeNode> createFolder(@PathVariable String projectName, @RequestBody FileCreateDTO dto)
+            throws IOException {
         FileTreeNode node = fileTreeService.createFolder(projectName, dto.path(), dto.name());
-        return ResponseEntity.status(201).body(node);
+        return ResponseEntity.status(HttpStatus.CREATED.value()).body(node);
     }
 
     @PatchMapping("/{projectName}/files/rename")
-    public ResponseEntity<FileTreeNode> renameFile(
-            @PathVariable String projectName, @RequestBody FileRenameDTO dto) throws IOException {
+    public ResponseEntity<FileTreeNode> renameFile(@PathVariable String projectName, @RequestBody FileRenameDTO dto)
+            throws IOException {
         FileTreeNode node = fileTreeService.renameFile(projectName, dto.oldPath(), dto.newName());
         return ResponseEntity.ok(node);
     }
 
     @DeleteMapping("/{projectName}/files")
-    public ResponseEntity<Void> deleteFile(
-            @PathVariable String projectName, @RequestParam String path) throws IOException {
+    public ResponseEntity<Void> deleteFile(@PathVariable String projectName, @RequestParam String path)
+            throws IOException {
         fileTreeService.deleteFile(projectName, path);
         return ResponseEntity.noContent().build();
     }

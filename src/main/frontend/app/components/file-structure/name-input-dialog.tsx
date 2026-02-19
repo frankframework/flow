@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import Button from '~/components/inputs/button'
 
 interface NameInputDialogProps {
   title: string
@@ -71,15 +72,12 @@ export default function NameInputDialog({ title, initialValue = '', onSubmit, on
         />
         {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
         <div className="mt-3 flex justify-end gap-2">
-          <button onClick={onCancel} className="text-muted-foreground hover:text-foreground px-3 py-1 text-sm">
+          <Button onClick={onCancel} className="px-3 py-1 text-sm">
             Cancel
-          </button>
-          <button
-            onClick={handleSubmit}
-            className="bg-primary text-primary-foreground rounded-md px-3 py-1 text-sm hover:opacity-90"
-          >
+          </Button>
+          <Button onClick={handleSubmit} className="px-3 py-1 text-sm">
             OK
-          </button>
+          </Button>
         </div>
       </div>
     </div>,

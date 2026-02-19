@@ -22,7 +22,6 @@ import { useProjectStore } from '~/stores/project-store'
 import EditorFilesDataProvider, { type FileNode } from './editor-data-provider'
 import { useFileTreeContextMenu } from './use-file-tree-context-menu'
 import FileTreeDialogs from './file-tree-dialogs'
-import InlineRenameInput from './inline-rename-input'
 
 const TREE_ID = 'editor-files-tree'
 
@@ -52,7 +51,7 @@ export default function EditorFileStructure() {
       const tab = getTab(oldPath)
       if (tab) {
         removeTab(oldPath)
-        const newPath = oldPath.substring(0, oldPath.lastIndexOf('/') + 1) + newName
+        const newPath = oldPath.slice(0, Math.max(0, oldPath.lastIndexOf('/') + 1)) + newName
         setTabData(newPath, { ...tab, name: newName, configurationPath: newPath })
         setActiveTab(newPath)
       }
@@ -235,19 +234,6 @@ export default function EditorFileStructure() {
   }) => {
     const Icon = item.isFolder ? (context.isExpanded ? FolderOpenIcon : FolderIcon) : CodeIcon
 
-    if (ctxMenu.renamingItemId === item.index) {
-      return (
-        <InlineRenameInput
-          icon={Icon}
-          value={ctxMenu.renameValue}
-          onChange={ctxMenu.setRenameValue}
-          onSubmit={ctxMenu.submitRename}
-          onCancel={() => ctxMenu.setRenamingItemId(null)}
-          itemIndex={item.index}
-        />
-      )
-    }
-
     const searchLower = searchTerm.toLowerCase()
     const titleLower = title.toLowerCase()
 
@@ -272,7 +258,10 @@ export default function EditorFileStructure() {
     const isHighlighted = highlightedItemId === item.index
 
     return (
-      <div className="flex min-w-0 items-center" onContextMenu={(e) => ctxMenu.openContextMenu(e, item.index)}>
+      <div
+        className="flex h-full w-full cursor-pointer items-center"
+        onContextMenu={(e) => ctxMenu.openContextMenu(e, item.index)}
+      >
         {Icon && <Icon className="fill-foreground w-4 flex-shrink-0" />}
         <span
           className={`ml-1 overflow-hidden text-nowrap text-ellipsis ${
