@@ -142,7 +142,6 @@ function extractEdgesFromAdapter(adapter: Element, nodes: FlowNode[]): FrankEdge
   const pipelineElement = [...adapter.children].find((el) => el.tagName.toLowerCase() === 'pipeline') || null
 
   if (!pipelineElement) return []
-  console.log('pipeline found')
 
   const edges: FrankEdge[] = []
   const nameToId = buildNodeNameToIdMap(nodes)
@@ -194,7 +193,6 @@ function addExplicitForwardEdges(
     if (!sourceId) continue
 
     const forwards = [...element.querySelectorAll('*')].filter((el) => el.tagName.toLowerCase() === 'forward')
-    console.log(forwards)
 
     addForwardEdges(
       forwards,
@@ -375,11 +373,17 @@ function collectPipelineElements(adapter: Element): Element[] {
 }
 
 function extractSourceHandles(element: Element): SourceHandle[] {
-  const forwardElements = [...element.querySelectorAll('Forward')]
+  let forwardElements = [...element.querySelectorAll('Forward')]
 
-  // No forwards? Create a single implicit success handle
+  // Check if forwards are lower case instead
   if (forwardElements.length === 0) {
-    return [{ type: 'success', index: 1 }]
+    console.log('No <Forward> found')
+    forwardElements = [...element.querySelectorAll('forward')]
+    // No forwards? Create a single implicit success handle
+    if (forwardElements.length === 0) {
+      console.log('No <forward> found either')
+      return [{ type: 'success', index: 1 }]
+    }
   }
 
   const handles: SourceHandle[] = forwardElements.map((forward, index) => {
@@ -478,23 +482,24 @@ function convertAdapterToFlowNodes(adapter: Element): FlowNode[] {
 
 function convertElementToNode(element: Element, idCounter: IdCounter, sourceHandles: SourceHandle[]): FrankNodeType {
   const thisId = (idCounter.current++).toString()
-  // Extract attributes for this element except "name"
+  const { subtype, usedClassName } = resolveSubtype(element)
+
+  // Extract attributes for this element except "name" and "className"
   const attributes: Record<string, string> = {}
   for (const attribute of element.attributes) {
-    if (attribute.name !== 'name') {
+    if (attribute.name !== 'name' && !(usedClassName && attribute.name === 'className')) {
       attributes[attribute.name] = attribute.value
     }
   }
 
-  const subType = resolveSubtype(element)
   const frankNode: FrankNodeType = {
     id: thisId,
     type: 'frankNode',
     position: { x: 0, y: 0 },
     data: {
       name: element.getAttribute('name') || '',
-      type: getElementTypeFromName(subType),
-      subtype: subType ?? element.tagName,
+      type: getElementTypeFromName(subtype),
+      subtype: subtype,
       children: convertChildren([...element.children], idCounter),
       sourceHandles,
       attributes: Object.keys(attributes).length > 0 ? attributes : undefined,
@@ -508,20 +513,21 @@ function convertChildren(elements: Element[], idCounter: IdCounter): ChildNode[]
   return elements
     .filter((child) => child.tagName.toLowerCase() !== 'forward')
     .map((child) => {
-      const childAttributes: Record<string, string> = {}
       const childId = (idCounter.current++).toString()
+      const { subtype, usedClassName } = resolveSubtype(child)
+
+      const childAttributes: Record<string, string> = {}
       for (const attribute of child.attributes) {
-        if (attribute.name !== 'name') {
+        if (attribute.name !== 'name' && !(usedClassName && attribute.name === 'className')) {
           childAttributes[attribute.name] = attribute.value
         }
       }
 
-      const subType = resolveSubtype(child)
       return {
         id: childId,
         name: child.getAttribute('name') || undefined,
-        subtype: subType,
-        type: getElementTypeFromName(subType),
+        subtype: subtype,
+        type: getElementTypeFromName(subtype),
         attributes: Object.keys(childAttributes).length > 0 ? childAttributes : undefined,
         children: convertChildren([...child.children], idCounter),
       }
@@ -570,7 +576,7 @@ function isFrankNode(node: FlowNode): node is FrankNodeType {
  * <pipe name="uploadFiles" className="org.frankframework.pipes.ForEachChildElementPipe" />
  * Becomes <ForEachChildElementPipe name="uploadFiles" />
  */
-function resolveSubtype(element: Element): string {
+function resolveSubtype(element: Element): { subtype: string; usedClassName: boolean } {
   const tagName = element.tagName
   const className = element.getAttribute('className')
 
@@ -578,10 +584,21 @@ function resolveSubtype(element: Element): string {
 
   if (isLowerCaseTag && className) {
     const parts = className.split('.')
-    return parts.at(-1)! // last part of full class name
+    return {
+      subtype: parts.at(-1)!.trim(),
+      usedClassName: true,
+    }
   }
 
-  return tagName
+  return {
+    subtype: capitalize(tagName),
+    usedClassName: false,
+  }
+}
+
+function capitalize(value: string): string {
+  if (!value) return value
+  return value.charAt(0).toUpperCase() + value.slice(1)
 }
 
 interface FrankEdge {

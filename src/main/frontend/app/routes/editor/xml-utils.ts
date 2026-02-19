@@ -28,3 +28,61 @@ export function findAdapterAtOffset(adapters: AdapterLocation[], cursorOffset: n
   }
   return adapters[0].name
 }
+
+/**  Converts the tagname of a non capitalized element that has a classname attribute to the last part of said classname, e.g.:
+ * <pipe name="uploadFiles" className="org.frankframework.pipes.ForEachChildElementPipe" />
+ * Becomes <ForEachChildElementPipe name="uploadFiles" />
+ *
+ * Also updates all other elements to be capitalized, e.g.:
+ * <param /> becomes <Param />
+ */
+export function normalizeFrankElements(xml: string): string {
+  const parser = new DOMParser()
+  const serializer = new XMLSerializer()
+
+  const doc = parser.parseFromString(xml, 'application/xml')
+
+  // Get all elements
+  const elements = [...doc.querySelectorAll('*')]
+
+  for (const element of elements) {
+    const originalTag = element.tagName
+    const className = element.getAttribute('className')
+
+    const isLowerCase = originalTag === originalTag.toLowerCase()
+
+    let newTagName: string | null = null
+
+    if (isLowerCase && className) {
+      // Use last part of className
+      const parts = className.split('.')
+      newTagName = parts.at(-1)!.trim()
+      element.removeAttribute('className')
+    } else if (isLowerCase) {
+      // Just capitalize
+      newTagName = originalTag.charAt(0).toUpperCase() + originalTag.slice(1)
+    }
+
+    if (newTagName && newTagName !== originalTag) {
+      renameElement(element, newTagName, doc)
+    }
+  }
+
+  return serializer.serializeToString(doc)
+}
+
+function renameElement(element: Element, newTagName: string, doc: Document) {
+  const newElement = doc.createElement(newTagName)
+
+  // Copy attributes
+  for (const attr of element.attributes) {
+    newElement.setAttribute(attr.name, attr.value)
+  }
+
+  // Move children
+  while (element.firstChild) {
+    newElement.append(element.firstChild)
+  }
+
+  element.parentNode?.replaceChild(newElement, element)
+}

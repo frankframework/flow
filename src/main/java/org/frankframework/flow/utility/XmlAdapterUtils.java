@@ -11,19 +11,30 @@ import org.w3c.dom.*;
 public class XmlAdapterUtils {
 
     /**
-     * Replaces an Adapter element (matched by name attribute) inside the given configuration document.
+     * Replaces an Adapter element (matched by name attribute) inside the given
+     * configuration document.
      */
-    public static boolean replaceAdapterInDocument(Document configDoc, String adapterName, Node newAdapterNode) {
+    public static boolean replaceAdapterInDocument(
+            Document configDoc,
+            String adapterName,
+            Node newAdapterNode) {
         NodeList adapters = configDoc.getElementsByTagName("Adapter");
+
+        // If no uppercase matches found, try lowercase
+        if (adapters.getLength() == 0) {
+            adapters = configDoc.getElementsByTagName("adapter");
+        }
 
         for (int i = 0; i < adapters.getLength(); i++) {
             Element adapter = (Element) adapters.item(i);
+
             if (adapterName.equals(adapter.getAttribute("name"))) {
                 Node importedNode = configDoc.importNode(newAdapterNode, true);
                 adapter.getParentNode().replaceChild(importedNode, adapter);
                 return true;
             }
         }
+
         return false;
     }
 
@@ -31,8 +42,7 @@ public class XmlAdapterUtils {
      * Converts a DOM Document to a formatted XML string.
      */
     public static String convertDocumentToString(Document doc) throws Exception {
-        Transformer transformer =
-                XmlSecurityUtils.createSecureTransformerFactory().newTransformer();
+        Transformer transformer = XmlSecurityUtils.createSecureTransformerFactory().newTransformer();
 
         transformer.setOutputProperty(OutputKeys.INDENT, "yes");
         transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
