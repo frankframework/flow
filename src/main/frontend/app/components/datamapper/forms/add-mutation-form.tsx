@@ -10,6 +10,7 @@ import type {
 import Input from '~/components/inputs/input'
 import Dropdown from '~/components/inputs/dropdown'
 import Button from '~/components/inputs/button'
+import DeleteButton from '../basic-components/delete-button'
 
 function AddMutationForm({
   sources,
@@ -225,11 +226,7 @@ function MutationInputField({
         )}
       </div>
 
-      {showDelete && (
-        <button type="button" onClick={onDelete} className="text-error m-2 text-xl">
-          &times;
-        </button>
-      )}
+      {showDelete && onDelete && <DeleteButton onClick={onDelete} />}
     </div>
   )
 }

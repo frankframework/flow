@@ -23,6 +23,7 @@ import org.w3c.dom.*;
 public class Project {
     private String name;
     private String rootPath;
+    private String gitToken;
     private final ArrayList<Configuration> configurations;
     private final ProjectSettings projectSettings;
 
