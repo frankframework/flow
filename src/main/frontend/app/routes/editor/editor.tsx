@@ -128,13 +128,13 @@ export default function CodeEditor() {
       },
     })
 
-    // Shift + Alt + F to normalize all frank elements
+    // Ctrl + Shift + F to normalize all frank elements
     editor.addAction({
       id: 'normalize-frank-elements',
       label: 'Normalize Frank Elements',
       contextMenuGroupId: 'navigation', // shows in right-click menu
       contextMenuOrder: 2,
-      keybindings: [monacoInstance.KeyMod.Shift | monacoInstance.KeyMod.Alt | monacoInstance.KeyCode.KeyF],
+      keybindings: [monacoInstance.KeyMod.Ctrl | monacoInstance.KeyMod.Shift | monacoInstance.KeyCode.KeyF],
       run: () => {
         if (activeTabFilePath.endsWith('.xml')) {
           const current = editor.getValue()
