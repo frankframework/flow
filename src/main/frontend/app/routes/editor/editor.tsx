@@ -134,8 +134,9 @@ export default function CodeEditor() {
       label: 'Normalize Frank Elements',
       contextMenuGroupId: 'navigation', // shows in right-click menu
       contextMenuOrder: 2,
-      keybindings: [monacoInstance.KeyMod.Ctrl | monacoInstance.KeyMod.Shift | monacoInstance.KeyCode.KeyF],
+      keybindings: [monacoInstance.KeyMod.CtrlCmd | monacoInstance.KeyMod.Shift | monacoInstance.KeyCode.KeyF],
       run: () => {
+        console.log('running')
         if (activeTabFilePath.endsWith('.xml')) {
           const current = editor.getValue()
           const updated = normalizeFrankElements(current)

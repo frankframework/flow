@@ -85,7 +85,8 @@ export async function getAdapterListenerType(
   const children = adapterElement.querySelectorAll('*')
   for (const child of children) {
     if (child.tagName.includes('Listener') || child.tagName.includes('listener')) {
-      return child.tagName // Return the tag name, e.g., "JavaListener"
+      const { subtype } = resolveSubtype(child)
+      return subtype // Return the tag name, e.g., "JavaListener"
     }
   }
 
@@ -192,7 +193,7 @@ function addExplicitForwardEdges(
     const sourceId = nameToId.get(sourceName)
     if (!sourceId) continue
 
-    const forwards = [...element.querySelectorAll('*')].filter((el) => el.tagName.toLowerCase() === 'forward')
+    const forwards = [...element.querySelectorAll('Forward'), ...element.querySelectorAll('forward')]
 
     addForwardEdges(
       forwards,
@@ -347,9 +348,10 @@ function addImplicitSuccessExitEdge(
 
 function collectPipelineElements(adapter: Element): Element[] {
   const elements: Element[] = []
-  const receiverElements = [...adapter.querySelectorAll('*')].filter(
-    (el) => el.parentElement?.tagName.toLowerCase() === 'adapter' && el.tagName.toLowerCase() === 'receiver',
-  )
+  const receiverElements = [
+    ...adapter.querySelectorAll(':scope > Receiver'),
+    ...adapter.querySelectorAll(':scope > receiver'),
+  ]
 
   for (const receiver of receiverElements) elements.push(receiver)
 
@@ -377,11 +379,9 @@ function extractSourceHandles(element: Element): SourceHandle[] {
 
   // Check if forwards are lower case instead
   if (forwardElements.length === 0) {
-    console.log('No <Forward> found')
     forwardElements = [...element.querySelectorAll('forward')]
     // No forwards? Create a single implicit success handle
     if (forwardElements.length === 0) {
-      console.log('No <forward> found either')
       return [{ type: 'success', index: 1 }]
     }
   }
