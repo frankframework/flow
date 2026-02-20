@@ -11,7 +11,7 @@ interface AutosaveState {
 const useAutosaveStore = create<AutosaveState>()(
   persist(
     (set) => ({
-      enabled: false,
+      enabled: true,
       delayMs: 1500,
       setEnabled: (enabled) => set({ enabled }),
       setDelayMs: (delayMs) => set({ delayMs: Math.max(500, delayMs) }),
