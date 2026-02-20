@@ -14,10 +14,7 @@ public class XmlAdapterUtils {
      * Replaces an Adapter element (matched by name attribute) inside the given
      * configuration document.
      */
-    public static boolean replaceAdapterInDocument(
-            Document configDoc,
-            String adapterName,
-            Node newAdapterNode) {
+    public static boolean replaceAdapterInDocument(Document configDoc, String adapterName, Node newAdapterNode) {
         NodeList adapters = configDoc.getElementsByTagName("Adapter");
 
         // If no uppercase matches found, try lowercase
@@ -42,7 +39,8 @@ public class XmlAdapterUtils {
      * Converts a DOM Document to a formatted XML string.
      */
     public static String convertDocumentToString(Document doc) throws Exception {
-        Transformer transformer = XmlSecurityUtils.createSecureTransformerFactory().newTransformer();
+        Transformer transformer =
+                XmlSecurityUtils.createSecureTransformerFactory().newTransformer();
 
         transformer.setOutputProperty(OutputKeys.INDENT, "yes");
         transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
