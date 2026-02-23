@@ -18,7 +18,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 @Service
-@Profile("cloud")
 @Slf4j
 public class CloudFileSystemStorageService implements FileSystemStorage {
     @Value("${frankflow.workspace.root:/tmp/frankflow/workspace}")
