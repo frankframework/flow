@@ -119,7 +119,7 @@ export default function Root() {
             </div>
 
             {/* Main content */}
-            <div className="w-full overflow-auto p-4" style={{ maxHeight: 'calc(90vh - 10px - 46px - 16px)' }}>
+            <div className="w-full overflow-auto p-4" style={{ maxHeight: 'calc(96vh - 93px)' }}>
               {route === 'Initialize' && (
                 <Initialize
                   config={mappingListConfig}

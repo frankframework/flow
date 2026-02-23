@@ -107,6 +107,36 @@ export function KeybindsTable() {
               )}
             </td>
           </tr>
+          <tr>
+            <td>Undo</td>
+            <td>
+              {platform === 'win' ? (
+                <>
+                  <span className="key">Ctrl</span> + <span className="key">Z</span>
+                </>
+              ) : (
+                <>
+                  <span className="key">⌘</span> + <span className="key">Z</span>
+                </>
+              )}
+            </td>
+          </tr>
+          <tr>
+            <td>Redo</td>
+            <td>
+              {platform === 'win' ? (
+                <>
+                  <span className="key">Ctrl</span> + <span className="key">Y</span> / <span className="key">Ctrl</span>{' '}
+                  + <span className="key">Shift</span> + <span className="key">Z</span>
+                </>
+              ) : (
+                <>
+                  <span className="key">⌘</span> + <span className="key">Y</span> / <span className="key">⌘</span> +{' '}
+                  <span className="key">Shift</span> + <span className="key">Z</span>
+                </>
+              )}
+            </td>
+          </tr>
         </tbody>
       </table>
     </div>

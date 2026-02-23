@@ -7,7 +7,7 @@ interface CloneProjectModalProperties {
   isOpen: boolean
   isLocal: boolean
   onClose: () => void
-  onClone: (repoUrl: string, localPath: string) => void
+  onClone: (repoUrl: string, localPath: string, token?: string) => void
 }
 
 export default function CloneProjectModal({
@@ -18,6 +18,7 @@ export default function CloneProjectModal({
 }: Readonly<CloneProjectModalProperties>) {
   const [repoUrl, setRepoUrl] = useState('')
   const [location, setLocation] = useState('')
+  const [token, setToken] = useState('')
   const [showPicker, setShowPicker] = useState(false)
 
   useEffect(() => {
@@ -52,13 +53,14 @@ export default function CloneProjectModal({
       finalPath = location ? `${location}/${name}` : name
     }
 
-    onClone(repoUrl.trim(), finalPath)
+    onClone(repoUrl.trim(), finalPath, token || undefined)
     handleClose()
   }
 
   const handleClose = () => {
     setRepoUrl('')
     setLocation('')
+    setToken('')
     setShowPicker(false)
     onClose()
   }
@@ -66,7 +68,7 @@ export default function CloneProjectModal({
   return (
     <>
       <div className="bg-background/50 absolute inset-0 z-50 flex items-center justify-center">
-        <div className="bg-background border-border relative h-[400px] w-[600px] rounded-lg border p-6 shadow-lg">
+        <div className="bg-background border-border relative w-[600px] rounded-lg border p-6 shadow-lg">
           <h2 className="mb-4 text-lg font-semibold">Clone Repository</h2>
           <p className="text-foreground-muted mb-4 text-sm">
             {isLocal ? 'Clone a Git repository to a local folder' : 'Clone a Git repository into the workspace'}
@@ -99,6 +101,20 @@ export default function CloneProjectModal({
               aria-label="repository url"
             />
           </div>
+
+          {!isLocal && (
+            <div className="mb-4">
+              <label className="mb-1 block text-sm font-medium">Access Token</label>
+              <input
+                type="password"
+                value={token}
+                onChange={(event) => setToken(event.target.value)}
+                className="border-border bg-background focus:border-foreground-active focus:ring-foreground-active w-full rounded border px-2 py-1 text-sm transition focus:ring-2 focus:outline-none"
+                placeholder="Personal access token for private repos"
+                aria-label="access token"
+              />
+            </div>
+          )}
 
           {repoName && (
             <p className="text-foreground-muted mb-4 text-xs">
