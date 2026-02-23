@@ -135,13 +135,11 @@ export default function CodeEditor() {
       contextMenuGroupId: 'navigation', // shows in right-click menu
       contextMenuOrder: 2,
       keybindings: [monacoInstance.KeyMod.CtrlCmd | monacoInstance.KeyMod.Shift | monacoInstance.KeyCode.KeyF],
-      run: () => {
-        console.log('running')
+      run: async () => {
         if (activeTabFilePath.endsWith('.xml')) {
           const current = editor.getValue()
-          const updated = normalizeFrankElements(current)
+          const updated = await normalizeFrankElements(current)
 
-          // Use executeEdits so undo stack is preserved
           editor.pushUndoStop()
           editor.executeEdits('normalize-frank', [
             {
@@ -151,7 +149,7 @@ export default function CodeEditor() {
           ])
           editor.pushUndoStop()
         }
-      }, 
+      },
     })
   }
 

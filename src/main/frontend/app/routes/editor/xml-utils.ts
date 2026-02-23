@@ -1,3 +1,7 @@
+import { showErrorToast } from '~/components/toast'
+import { normalizeXml } from '~/services/xml-service'
+import { ApiError } from '~/utils/api'
+
 interface AdapterLocation {
   name: string
   offset: number
@@ -36,53 +40,25 @@ export function findAdapterAtOffset(adapters: AdapterLocation[], cursorOffset: n
  * Also updates all other elements to be capitalized, e.g.:
  * <param /> becomes <Param />
  */
-export function normalizeFrankElements(xml: string): string {
-  const parser = new DOMParser()
-  const serializer = new XMLSerializer()
+export async function normalizeFrankElements(xml: string): Promise<string> {
+  try {
+    const response = await normalizeXml(xml)
 
-  const doc = parser.parseFromString(xml, 'application/xml')
-
-  // Get all elements
-  const elements = [...doc.querySelectorAll('*')]
-
-  for (const element of elements) {
-    const originalTag = element.tagName
-    const className = element.getAttribute('className')
-
-    const isLowerCase = originalTag === originalTag.toLowerCase()
-
-    let newTagName: string | null = null
-
-    if (isLowerCase && className) {
-      // Use last part of className
-      const parts = className.split('.')
-      newTagName = parts.at(-1)!.trim()
-      element.removeAttribute('className')
-    } else if (isLowerCase) {
-      // Just capitalize
-      newTagName = originalTag.charAt(0).toUpperCase() + originalTag.slice(1)
+    if (response?.xmlContent) {
+      return response.xmlContent
     }
 
-    if (newTagName && newTagName !== originalTag) {
-      renameElement(element, newTagName, doc)
+    showErrorToast('Normalization failed: Invalid server response.')
+    return xml
+  } catch (error) {
+    console.error('Normalization error:', error)
+
+    if (error instanceof ApiError) {
+      showErrorToast(error.messages?.join(', ') ?? 'Normalization failed.')
+    } else {
+      showErrorToast('Failed to normalize XML. Please check the console.')
     }
+
+    return xml
   }
-
-  return serializer.serializeToString(doc)
-}
-
-function renameElement(element: Element, newTagName: string, doc: Document) {
-  const newElement = doc.createElement(newTagName)
-
-  // Copy attributes
-  for (const attr of element.attributes) {
-    newElement.setAttribute(attr.name, attr.value)
-  }
-
-  // Move children
-  while (element.firstChild) {
-    newElement.append(element.firstChild)
-  }
-
-  element.parentNode?.replaceChild(newElement, element)
 }
