@@ -8,9 +8,9 @@ import org.frankframework.flow.utility.XmlAdapterUtils;
 import org.frankframework.flow.utility.XmlValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.junit.jupiter.api.extension.ExtendWith;
 
 @ExtendWith(MockitoExtension.class)
 class XmlServiceTest {
@@ -43,8 +43,8 @@ class XmlServiceTest {
                     .when(() -> XmlValidator.validateXml(xml))
                     .thenThrow(new InvalidXmlContentException("Invalid XML"));
 
-            InvalidXmlContentException ex = assertThrows(InvalidXmlContentException.class,
-                    () -> xmlService.validateXml(xml));
+            InvalidXmlContentException ex =
+                    assertThrows(InvalidXmlContentException.class, () -> xmlService.validateXml(xml));
 
             assertEquals("Invalid XML", ex.getMessage());
         }
@@ -78,8 +78,8 @@ class XmlServiceTest {
                     .when(() -> XmlValidator.validateXml(xml))
                     .thenThrow(new InvalidXmlContentException("Invalid XML"));
 
-            InvalidXmlContentException ex = assertThrows(InvalidXmlContentException.class,
-                    () -> xmlService.normalizeElementsInXml(xml));
+            InvalidXmlContentException ex =
+                    assertThrows(InvalidXmlContentException.class, () -> xmlService.normalizeElementsInXml(xml));
 
             assertEquals("Invalid XML", ex.getMessage());
         }
