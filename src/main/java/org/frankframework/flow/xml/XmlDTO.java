@@ -1,5 +1,3 @@
 package org.frankframework.flow.xml;
 
-public record XmlDTO(String xmlContent) {
-    
-}
+public record XmlDTO(String xmlContent) {}

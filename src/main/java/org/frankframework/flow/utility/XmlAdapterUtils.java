@@ -3,7 +3,6 @@ package org.frankframework.flow.utility;
 import java.io.ByteArrayInputStream;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
-
 import javax.xml.transform.*;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
@@ -42,7 +41,8 @@ public class XmlAdapterUtils {
      * Converts a DOM Document to a formatted XML string.
      */
     public static String convertDocumentToString(Document doc) throws Exception {
-        Transformer transformer = XmlSecurityUtils.createSecureTransformerFactory().newTransformer();
+        Transformer transformer =
+                XmlSecurityUtils.createSecureTransformerFactory().newTransformer();
 
         transformer.setOutputProperty(OutputKeys.INDENT, "yes");
         transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
@@ -67,7 +67,7 @@ public class XmlAdapterUtils {
     public static String normalizeFrankElements(String xmlContent) throws Exception {
 
         Document configDoc = XmlSecurityUtils.createSecureDocumentBuilder()
-                    .parse(new ByteArrayInputStream(xmlContent.getBytes(StandardCharsets.UTF_8)));
+                .parse(new ByteArrayInputStream(xmlContent.getBytes(StandardCharsets.UTF_8)));
         NodeList nodeList = configDoc.getElementsByTagName("*");
 
         // Because NodeList is live, first copy elements into a list
