@@ -59,7 +59,7 @@ public class RunCypressE2eTest {
     private static void startApplication() {
         SpringApplication springApplication = FlowApplication.configureApplication();
 
-        run = springApplication.run();
+        run = springApplication.run("--spring.profiles.active=cloud");
 
         assertTrue(run.isRunning());
         await().pollInterval(5, TimeUnit.SECONDS)
