@@ -44,7 +44,9 @@ class XmlControllerTest {
     void validateXmlShouldReturn400WhenInvalid() throws Exception {
         XmlDTO dto = new XmlDTO("<invalid>");
 
-        doThrow(new InvalidXmlContentException("Invalid XML")).when(xmlService).validateXml(anyString());
+        doThrow(new InvalidXmlContentException("Invalid XML", null))
+                .when(xmlService)
+                .validateXml(anyString());
 
         mockMvc.perform(post("/xml/validate")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -70,7 +72,8 @@ class XmlControllerTest {
     void normalizeXmlShouldReturn400WhenInvalidXml() throws Exception {
         XmlDTO dto = new XmlDTO("<invalid>");
 
-        when(xmlService.normalizeElementsInXml(anyString())).thenThrow(new InvalidXmlContentException("Invalid XML"));
+        when(xmlService.normalizeElementsInXml(anyString()))
+                .thenThrow(new InvalidXmlContentException("Invalid XML", null));
 
         mockMvc.perform(post("/xml/normalize")
                         .contentType(MediaType.APPLICATION_JSON)

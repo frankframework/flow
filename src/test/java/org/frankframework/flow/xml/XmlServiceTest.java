@@ -41,7 +41,7 @@ class XmlServiceTest {
         try (MockedStatic<XmlValidator> validatorMock = mockStatic(XmlValidator.class)) {
             validatorMock
                     .when(() -> XmlValidator.validateXml(xml))
-                    .thenThrow(new InvalidXmlContentException("Invalid XML"));
+                    .thenThrow(new InvalidXmlContentException("Invalid XML", null));
 
             InvalidXmlContentException ex =
                     assertThrows(InvalidXmlContentException.class, () -> xmlService.validateXml(xml));
@@ -76,7 +76,7 @@ class XmlServiceTest {
         try (MockedStatic<XmlValidator> validatorMock = mockStatic(XmlValidator.class)) {
             validatorMock
                     .when(() -> XmlValidator.validateXml(xml))
-                    .thenThrow(new InvalidXmlContentException("Invalid XML"));
+                    .thenThrow(new InvalidXmlContentException("Invalid XML", null));
 
             InvalidXmlContentException ex =
                     assertThrows(InvalidXmlContentException.class, () -> xmlService.normalizeElementsInXml(xml));
