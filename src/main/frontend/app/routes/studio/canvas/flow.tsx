@@ -35,7 +35,6 @@ import { cloneWithRemappedIds } from '~/utils/flow-utils'
 import { showErrorToast } from '~/components/toast'
 import clsx from 'clsx'
 import useAutosaveStore from '~/stores/autosave-store'
-import Button from '~/components/inputs/button'
 
 export type FlowNode = FrankNodeType | ExitNode | StickyNote | GroupNode | Node
 
