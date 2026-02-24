@@ -434,6 +434,11 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
         event.preventDefault()
         handleGrouping()
       }
+
+      if (isCmdOrCtrl && event.key.toLowerCase() === 's') {
+        event.preventDefault()
+        saveFlow()
+      }
     }
 
     globalThis.addEventListener('keydown', handleKeyDown)
