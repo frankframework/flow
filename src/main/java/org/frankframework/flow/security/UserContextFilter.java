@@ -74,6 +74,7 @@ public class UserContextFilter extends HttpFilter {
         Cookie cookie = new Cookie("JSESSIONID", session.getId());
         cookie.setPath(contextPath.isEmpty() ? "/" : contextPath);
         cookie.setHttpOnly(true);
+        cookie.setSecure(request.isSecure());
         cookie.setMaxAge(SESSION_MAX_AGE);
         response.addCookie(cookie);
     }
