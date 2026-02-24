@@ -1,4 +1,4 @@
-import { useSettingsStore } from '~/routes/settings/settings-store'
+import { useSettingsStore } from '~/stores/settings-store'
 import { useTheme } from '~/hooks/use-theme'
 
 //TEMPORARY COMPONENT ONLY USED FOR TESTING

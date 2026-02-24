@@ -325,7 +325,7 @@ export default function NodeContext({
           <Button
             onClick={handleSave}
             disabled={!canSave}
-            className={`w-auto ${canSave ? '' : 'cursor-not-allowed opacity-50'}`}
+            className="disabled:text-foreground-muted w-auto disabled:cursor-not-allowed disabled:opacity-50"
           >
             Save & Close
           </Button>
