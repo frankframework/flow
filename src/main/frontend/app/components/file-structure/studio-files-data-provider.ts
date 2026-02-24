@@ -11,7 +11,20 @@ export default class FilesDataProvider implements TreeDataProvider {
 
   constructor(projectName: string) {
     this.projectName = projectName
-    this.loadRoot()
+  }
+
+  public async init(expandedItems: string[] = []) {
+    await this.loadRoot()
+
+    const sortedIds = [...expandedItems].toSorted((a, b) => a.split('/').length - b.split('/').length)
+    for (const id of sortedIds) {
+      if (id === 'root') continue
+
+      const item = this.data[id]
+      if (!item || !item.isFolder) continue
+
+      await (item.data.path?.endsWith('.xml') ? this.loadAdapters(id) : this.loadDirectory(id))
+    }
   }
 
   // Load root directory

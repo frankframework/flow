@@ -19,6 +19,7 @@ import {
 } from 'react-complex-tree'
 import FilesDataProvider from '~/components/file-structure/studio-files-data-provider'
 import { useProjectStore } from '~/stores/project-store'
+import { useTreeStore } from '~/stores/tree-store'
 import type { FileNode } from './editor-data-provider'
 import { useProjectTree } from '~/hooks/use-project-tree'
 
@@ -40,6 +41,8 @@ function getItemTitle(item: TreeItem<FileNode>): string {
 
 export default function StudioFileStructure() {
   const project = useProjectStore((state) => state.project)
+  const { studioExpandedItems, addStudioExpandedItem, removeStudioExpandedItem } = useTreeStore()
+
   const [searchTerm, setSearchTerm] = useState('')
   const [matchingItemIds, setMatchingItemIds] = useState<string[]>([])
   const [activeMatchIndex, setActiveMatchIndex] = useState<number>(-1)
@@ -58,16 +61,26 @@ export default function StudioFileStructure() {
   useEffect(() => {
     if (!project || !treeData) return
 
+    let isMounted = true
+
     const initProvider = async () => {
       setProviderLoading(true)
 
       const provider = new FilesDataProvider(project.name)
-      setDataProvider(provider)
-      setProviderLoading(false)
+      await provider.init(studioExpandedItems)
+
+      if (isMounted) {
+        setDataProvider(provider)
+        setProviderLoading(false)
+      }
     }
 
     initProvider()
-  }, [project, treeData])
+
+    return () => {
+      isMounted = false
+    }
+  }, [project, studioExpandedItems, treeData])
 
   useEffect(() => {
     const findMatchingItems = async () => {
@@ -145,7 +158,6 @@ export default function StudioFileStructure() {
       if (!item) return
 
       if (item.isFolder) {
-        await loadFolderContents(item)
         return
       }
 
@@ -155,7 +167,7 @@ export default function StudioFileStructure() {
         openNewTab(adapterName, configPath)
       }
     },
-    [dataProvider, loadFolderContents, openNewTab],
+    [dataProvider, openNewTab],
   )
 
   useEffect(() => {
@@ -210,7 +222,7 @@ export default function StudioFileStructure() {
 
     const Icon = context.isExpanded ? AltArrowDownIcon : AltArrowRightIcon
 
-    const handleArrowClick = async (event: React.MouseEvent) => {
+    const handleArrowClick = (event: React.MouseEvent) => {
       event.stopPropagation()
       await loadFolderContents(item)
       context.toggleExpandedState()
@@ -271,7 +283,7 @@ export default function StudioFileStructure() {
         <Icon className="fill-foreground w-4 flex-shrink-0" />
         <span
           className={`font-inter ml-1 overflow-hidden text-nowrap text-ellipsis ${
-            isHighlighted ? 'outline-foreground-active rounded-sm px-1 outline outline-2' : ''
+            isHighlighted ? 'outline-foreground-active rounded-sm px-1 outline' : ''
           }`}
         >
           {highlightedTitle}
@@ -290,7 +302,18 @@ export default function StudioFileStructure() {
       <Search onChange={(event) => setSearchTerm(event.target.value)} />
       <div className="overflow-auto pr-2">
         <UncontrolledTreeEnvironment
-          viewState={{}}
+          viewState={{
+            [TREE_ID]: {
+              expandedItems: studioExpandedItems,
+            },
+          }}
+          onExpandItem={async (item) => {
+            addStudioExpandedItem(String(item.index))
+            if (dataProvider) await loadFolderContents(item as TreeItem<FileNode>)
+          }}
+          onCollapseItem={(item) => {
+            removeStudioExpandedItem(String(item.index))
+          }}
           getItemTitle={getItemTitle}
           dataProvider={dataProvider}
           onSelectItems={handleItemClick}
