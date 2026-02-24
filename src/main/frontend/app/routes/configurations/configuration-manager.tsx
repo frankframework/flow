@@ -7,6 +7,7 @@ import { useState } from 'react'
 import AddConfigurationModal from './add-configuration-modal'
 import { useProjectTree } from '~/hooks/use-project-tree'
 import LoadingSpinner from '~/components/loading-spinner'
+import { useCallback } from 'react'
 
 export interface FileTreeNode {
   name: string
@@ -56,8 +57,14 @@ export default function ConfigurationManager() {
   const currentProject = useProjectStore((state) => state.project)
   const navigate = useNavigate()
   const [showModal, setShowModal] = useState(false)
+  const [treeVersion, setTreeVersion] = useState(0)
 
-  const { data: tree, isLoading } = useProjectTree(currentProject?.name)
+  const { data: tree, isLoading } = useProjectTree(currentProject?.name, treeVersion)
+
+  const handleConfigAdded = useCallback(() => {
+    setShowModal(false)
+    setTreeVersion((v) => v + 1)
+  }, [])
 
   const configFiles = (() => {
     if (!tree) return []
@@ -114,7 +121,12 @@ export default function ConfigurationManager() {
           <AddConfigurationTile onClick={() => setShowModal(true)} />
         </div>
       </div>
-      <AddConfigurationModal isOpen={showModal} onClose={() => setShowModal(false)} currentProject={currentProject} />
+      <AddConfigurationModal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        onSuccess={handleConfigAdded}
+        currentProject={currentProject}
+      />
     </div>
   )
 }
