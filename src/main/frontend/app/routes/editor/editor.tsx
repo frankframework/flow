@@ -21,7 +21,7 @@ import GitPanel from '~/components/git/git-panel'
 import DiffTabView from '~/components/git/diff-tab-view'
 import clsx from 'clsx'
 import { refreshOpenDiffs } from '~/services/git-service'
-import { findAdaptersInXml, lineToOffset, findAdapterAtOffset } from './xml-utils'
+import { findAdaptersInXml, lineToOffset, findAdapterAtOffset, normalizeFrankElements } from './xml-utils'
 import useAutosaveStore from '~/stores/autosave-store'
 
 type LeftTab = 'files' | 'git'
@@ -116,6 +116,8 @@ export default function CodeEditor() {
     editor.addAction({
       id: 'save-file',
       label: 'Save File',
+      contextMenuGroupId: 'navigation', // shows in right-click menu
+      contextMenuOrder: 1,
       keybindings: [monacoInstance.KeyMod.CtrlCmd | monacoInstance.KeyCode.KeyS],
       run: () => {
         if (debounceTimerRef.current) {
@@ -123,6 +125,30 @@ export default function CodeEditor() {
           debounceTimerRef.current = null
         }
         performSave()
+      },
+    })
+
+    // Ctrl + Shift + F to normalize all frank elements
+    editor.addAction({
+      id: 'normalize-frank-elements',
+      label: 'Normalize Frank Elements',
+      contextMenuGroupId: 'navigation', // shows in right-click menu
+      contextMenuOrder: 2,
+      keybindings: [monacoInstance.KeyMod.CtrlCmd | monacoInstance.KeyMod.Shift | monacoInstance.KeyCode.KeyF],
+      run: async () => {
+        if (activeTabFilePath.endsWith('.xml')) {
+          const current = editor.getValue()
+          const updated = await normalizeFrankElements(current)
+
+          editor.pushUndoStop()
+          editor.executeEdits('normalize-frank', [
+            {
+              range: editor.getModel()!.getFullModelRange(),
+              text: updated,
+            },
+          ])
+          editor.pushUndoStop()
+        }
       },
     })
   }
