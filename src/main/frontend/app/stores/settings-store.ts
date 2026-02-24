@@ -77,7 +77,7 @@ const defaultGeneralSettings: GeneralSettings = {
   theme: 'system',
   autoUpdates: true,
   autoSave: {
-    enabled: false,
+    enabled: true,
     delayMs: 1500,
   },
 }
