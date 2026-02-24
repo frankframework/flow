@@ -7,12 +7,14 @@ import Button from '~/components/inputs/button'
 interface AddConfigurationModalProperties {
   isOpen: boolean
   onClose: () => void
+  onSuccess?: () => void
   currentProject?: Project
 }
 
 export default function AddConfigurationModal({
   isOpen,
   onClose,
+  onSuccess,
   currentProject,
 }: Readonly<AddConfigurationModalProperties>) {
   const [loading, setLoading] = useState(false)
@@ -40,6 +42,7 @@ export default function AddConfigurationModal({
 
       const updatedProject = await createConfiguration(currentProject.name, configname)
       setProject(updatedProject)
+      onSuccess?.()
       onClose()
     } catch (error_: unknown) {
       setError(error_ instanceof Error ? error_.message : 'Failed to add configuration')
