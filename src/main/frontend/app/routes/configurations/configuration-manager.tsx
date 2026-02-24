@@ -205,7 +205,7 @@ export default function ConfigurationManager() {
         <Search value={searchQuery} onChange={handleSearch} />
       </div>
 
-      <div className="flex flex-wrap gap-4">
+      <div className="border-border bg-backdrop flex flex-wrap gap-4 rounded border p-4">
         <AnimatePresence>
           {filteredConfigurations.map((file) => (
             <motion.div
