@@ -24,6 +24,12 @@ export interface GeneralSettings {
   language: string
   telemetry: boolean
   autoUpdates: boolean
+  autoSave: AutosaveSettings
+}
+
+export interface AutosaveSettings {
+  enabled: boolean
+  delayMs: number
 }
 
 export interface SettingsState {
@@ -70,6 +76,10 @@ const defaultGeneralSettings: GeneralSettings = {
   telemetry: true,
   theme: 'system',
   autoUpdates: true,
+  autoSave: {
+    enabled: true,
+    delayMs: 1500,
+  },
 }
 
 export const useSettingsStore = create<SettingsState>()(

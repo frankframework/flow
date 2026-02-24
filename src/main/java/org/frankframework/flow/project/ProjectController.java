@@ -110,7 +110,8 @@ public class ProjectController {
 
     @PostMapping("/{projectname}/configurations/{configname}")
     public ResponseEntity<ProjectDTO> addConfiguration(
-            @PathVariable String projectname, @PathVariable String configname) throws ProjectNotFoundException {
+            @PathVariable String projectname, @PathVariable String configname)
+            throws ProjectNotFoundException, IOException {
         Project project = projectService.addConfiguration(projectname, configname);
         return ResponseEntity.ok(toDto(project));
     }
