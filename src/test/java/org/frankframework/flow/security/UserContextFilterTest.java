@@ -6,9 +6,11 @@ import static org.mockito.Mockito.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.Objects;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -41,8 +43,7 @@ class UserContextFilterTest {
         String payload = Base64.getUrlEncoder()
                 .withoutPadding()
                 .encodeToString("{\"sub\":\"user123\"}".getBytes(StandardCharsets.UTF_8));
-        String jwt = "header." + payload + ".signature";
-        request.addHeader("Authorization", "Bearer " + jwt);
+        request.addHeader("Authorization", "Bearer header." + payload + ".signature");
 
         filter.doFilter(request, response, filterChain);
 
@@ -59,38 +60,55 @@ class UserContextFilterTest {
         String payload = Base64.getUrlEncoder()
                 .withoutPadding()
                 .encodeToString("{\"preferred_username\":\"jdoe\"}".getBytes(StandardCharsets.UTF_8));
-        String jwt = "header." + payload + ".signature";
-        request.addHeader("Authorization", "Bearer " + jwt);
+        request.addHeader("Authorization", "Bearer header." + payload + ".signature");
 
         filter.doFilter(request, response, filterChain);
 
-        assertTrue(userWorkspaceContext.isInitialized());
         assertEquals("jdoe", userWorkspaceContext.getWorkspaceId());
     }
 
     @Test
-    void usesSessionIdWhenNoJwt() throws IOException, ServletException {
+    void generatesWorkspaceIdAndStoresInSession() throws IOException, ServletException {
         MockHttpServletRequest request = new MockHttpServletRequest();
         MockHttpServletResponse response = new MockHttpServletResponse();
-
-        request.addHeader("X-Workspace-ID", "my-session-123");
 
         filter.doFilter(request, response, filterChain);
 
         assertTrue(userWorkspaceContext.isInitialized());
-        assertTrue(userWorkspaceContext.getWorkspaceId().startsWith("anon-"));
-        assertEquals(5 + 16, userWorkspaceContext.getWorkspaceId().length()); // "anon-" + 16 hex chars
+        String workspaceId = userWorkspaceContext.getWorkspaceId();
+        assertTrue(workspaceId.startsWith("anon-"));
+        assertEquals(5 + 16, workspaceId.length());
+        assertEquals(
+                workspaceId, Objects.requireNonNull(request.getSession(false)).getAttribute("workspaceId"));
     }
 
     @Test
-    void defaultsToAnonymousWithoutHeaders() throws IOException, ServletException {
-        MockHttpServletRequest request = new MockHttpServletRequest();
-        MockHttpServletResponse response = new MockHttpServletResponse();
+    void returnsSameWorkspaceIdForSameSession() throws IOException, ServletException {
+        MockHttpServletRequest request1 = new MockHttpServletRequest();
+        filter.doFilter(request1, new MockHttpServletResponse(), filterChain);
+        String firstId = userWorkspaceContext.getWorkspaceId();
 
-        filter.doFilter(request, response, filterChain);
+        UserWorkspaceContext ctx2 = new UserWorkspaceContext();
+        UserContextFilter filter2 = new UserContextFilter(ctx2, objectMapper);
+        MockHttpServletRequest request2 = new MockHttpServletRequest();
+        request2.setSession(Objects.requireNonNull(request1.getSession(false)));
 
-        assertTrue(userWorkspaceContext.isInitialized());
-        assertEquals("anonymous", userWorkspaceContext.getWorkspaceId());
+        filter2.doFilter(request2, new MockHttpServletResponse(), filterChain);
+
+        assertEquals(firstId, ctx2.getWorkspaceId(), "Same session must yield the same workspace ID");
+    }
+
+    @Test
+    void differentSessionsGetDifferentWorkspaceIds() throws IOException, ServletException {
+        MockHttpServletRequest request1 = new MockHttpServletRequest();
+        filter.doFilter(request1, new MockHttpServletResponse(), filterChain);
+        String id1 = userWorkspaceContext.getWorkspaceId();
+
+        UserWorkspaceContext ctx2 = new UserWorkspaceContext();
+        UserContextFilter filter2 = new UserContextFilter(ctx2, objectMapper);
+        filter2.doFilter(new MockHttpServletRequest(), new MockHttpServletResponse(), filterChain);
+
+        assertNotEquals(id1, ctx2.getWorkspaceId(), "Different sessions should get different workspace IDs");
     }
 
     @Test
@@ -98,10 +116,9 @@ class UserContextFilterTest {
         userWorkspaceContext.initialize("pre-set-id");
 
         MockHttpServletRequest request = new MockHttpServletRequest();
-        MockHttpServletResponse response = new MockHttpServletResponse();
         request.addHeader("Authorization", "Bearer invalid");
 
-        filter.doFilter(request, response, filterChain);
+        filter.doFilter(request, new MockHttpServletResponse(), filterChain);
 
         assertEquals("pre-set-id", userWorkspaceContext.getWorkspaceId());
     }
@@ -109,52 +126,59 @@ class UserContextFilterTest {
     @Test
     void handlesInvalidJwtGracefully() throws IOException, ServletException {
         MockHttpServletRequest request = new MockHttpServletRequest();
-        MockHttpServletResponse response = new MockHttpServletResponse();
         request.addHeader("Authorization", "Bearer not-a-valid-jwt");
 
-        filter.doFilter(request, response, filterChain);
+        filter.doFilter(request, new MockHttpServletResponse(), filterChain);
 
         assertTrue(userWorkspaceContext.isInitialized());
-        assertEquals("anonymous", userWorkspaceContext.getWorkspaceId());
+        assertTrue(
+                userWorkspaceContext.getWorkspaceId().startsWith("anon-"),
+                "Invalid JWT should fall back to session-based workspace ID");
     }
 
     @Test
     void sanitizesSpecialCharactersInUserId() throws IOException, ServletException {
         MockHttpServletRequest request = new MockHttpServletRequest();
-        MockHttpServletResponse response = new MockHttpServletResponse();
-
         String payload = Base64.getUrlEncoder()
                 .withoutPadding()
                 .encodeToString("{\"sub\":\"user!@#$%^&\"}".getBytes(StandardCharsets.UTF_8));
-        String jwt = "header." + payload + ".signature";
-        request.addHeader("Authorization", "Bearer " + jwt);
+        request.addHeader("Authorization", "Bearer header." + payload + ".sig");
 
-        filter.doFilter(request, response, filterChain);
+        filter.doFilter(request, new MockHttpServletResponse(), filterChain);
 
-        String workspaceId = userWorkspaceContext.getWorkspaceId();
-        assertTrue(workspaceId.matches("[a-zA-Z0-9.@_-]+"));
-    }
-
-    @Test
-    void handlesBlankSessionId() throws IOException, ServletException {
-        MockHttpServletRequest request = new MockHttpServletRequest();
-        MockHttpServletResponse response = new MockHttpServletResponse();
-        request.addHeader("X-Workspace-ID", "   ");
-
-        filter.doFilter(request, response, filterChain);
-
-        assertEquals("anonymous", userWorkspaceContext.getWorkspaceId());
+        assertTrue(userWorkspaceContext.getWorkspaceId().matches("[a-zA-Z0-9.@_-]+"));
     }
 
     @Test
     void handlesJwtWithOnlyOnePartGracefully() throws IOException, ServletException {
         MockHttpServletRequest request = new MockHttpServletRequest();
-        MockHttpServletResponse response = new MockHttpServletResponse();
         request.addHeader("Authorization", "Bearer singlepart");
 
-        filter.doFilter(request, response, filterChain);
+        filter.doFilter(request, new MockHttpServletResponse(), filterChain);
 
-        assertEquals("anonymous", userWorkspaceContext.getWorkspaceId());
+        assertTrue(userWorkspaceContext.getWorkspaceId().startsWith("anon-"));
+    }
+
+    @Test
+    void renewsSessionCookieOnEveryRequest() throws IOException, ServletException {
+        MockHttpServletRequest request1 = new MockHttpServletRequest();
+        MockHttpServletResponse response1 = new MockHttpServletResponse();
+        filter.doFilter(request1, response1, filterChain);
+
+        Cookie renewedCookie = response1.getCookie("JSESSIONID");
+        assertNotNull(renewedCookie, "JSESSIONID cookie should be set");
+        assertEquals(86_400, renewedCookie.getMaxAge(), "Cookie should be refreshed to 24 h on every request");
+
+        UserWorkspaceContext ctx2 = new UserWorkspaceContext();
+        UserContextFilter filter2 = new UserContextFilter(ctx2, objectMapper);
+        MockHttpServletRequest request2 = new MockHttpServletRequest();
+        request2.setSession(Objects.requireNonNull(request1.getSession(false)));
+        MockHttpServletResponse response2 = new MockHttpServletResponse();
+        filter2.doFilter(request2, response2, filterChain);
+
+        Cookie refreshedCookie = response2.getCookie("JSESSIONID");
+        assertNotNull(refreshedCookie, "JSESSIONID cookie should be refreshed on the second request too");
+        assertEquals(86_400, refreshedCookie.getMaxAge());
     }
 
     @Test
@@ -165,24 +189,5 @@ class UserContextFilterTest {
         filter.doFilter(request, response, filterChain);
 
         verify(filterChain).doFilter(request, response);
-    }
-
-    @Test
-    void consistentSessionHashing() throws IOException, ServletException {
-        MockHttpServletRequest request1 = new MockHttpServletRequest();
-        MockHttpServletResponse response1 = new MockHttpServletResponse();
-        request1.addHeader("X-Workspace-ID", "same-session");
-        filter.doFilter(request1, response1, filterChain);
-        String firstId = userWorkspaceContext.getWorkspaceId();
-
-        // Create a fresh context for the second request
-        UserWorkspaceContext ctx2 = new UserWorkspaceContext();
-        UserContextFilter filter2 = new UserContextFilter(ctx2, objectMapper);
-        MockHttpServletRequest request2 = new MockHttpServletRequest();
-        MockHttpServletResponse response2 = new MockHttpServletResponse();
-        request2.addHeader("X-Workspace-ID", "same-session");
-        filter2.doFilter(request2, response2, filterChain);
-
-        assertEquals(firstId, ctx2.getWorkspaceId());
     }
 }

@@ -54,13 +54,12 @@ export async function toggleProjectFilter(projectName: string, filter: string, e
 
 export async function exportProject(projectName: string): Promise<void> {
   const url = apiUrl(`/projects/${encodeURIComponent(projectName)}/export`)
-  const workspaceId = localStorage.getItem('frankflow_workspace_id') ?? ''
 
-  const headers: Record<string, string> = { 'X-Workspace-ID': workspaceId }
+  const headers: Record<string, string> = {}
   const token = localStorage.getItem('access_token')
   if (token) headers['Authorization'] = `Bearer ${token}`
 
-  const response = await fetch(url, { headers })
+  const response = await fetch(url, { headers, credentials: 'include' })
   if (!response.ok) throw new Error('Export failed')
 
   const blob = await response.blob()

@@ -4,15 +4,14 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpFilter;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
-import java.util.HexFormat;
+import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -23,6 +22,8 @@ public class UserContextFilter extends HttpFilter {
     private static final String BEARER_PREFIX = "Bearer ";
     private static final int HASH_LENGTH = 16;
     private static final int MIN_JWT_PARTS = 2;
+    private static final String SESSION_WORKSPACE_KEY = "workspaceId";
+    private static final int SESSION_MAX_AGE = 86_400;
 
     private final UserWorkspaceContext userWorkspaceContext;
     private final ObjectMapper objectMapper;
@@ -42,6 +43,8 @@ public class UserContextFilter extends HttpFilter {
             log.debug("Context initialized for workspace: {}", workspaceId);
         }
 
+        refreshSessionCookie(request, response);
+
         chain.doFilter(request, response);
     }
 
@@ -52,22 +55,27 @@ public class UserContextFilter extends HttpFilter {
             if (userId != null) return sanitize(userId);
         }
 
-        String workspaceId = request.getHeader("X-Workspace-ID");
-        if (workspaceId != null && !workspaceId.isBlank()) {
-            return "anon-" + hashId(workspaceId);
+        HttpSession session = request.getSession(true);
+        String workspaceId = (String) session.getAttribute(SESSION_WORKSPACE_KEY);
+        if (workspaceId == null) {
+            workspaceId =
+                    "anon-" + UUID.randomUUID().toString().replace("-", "").substring(0, HASH_LENGTH);
+            session.setAttribute(SESSION_WORKSPACE_KEY, workspaceId);
+            log.debug("Created new workspace for session: {}", workspaceId);
         }
-
-        return "anonymous";
+        return workspaceId;
     }
 
-    private String hashId(String id) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(id.getBytes(StandardCharsets.UTF_8));
-            return HexFormat.of().formatHex(hash).substring(0, HASH_LENGTH);
-        } catch (NoSuchAlgorithmException e) {
-            return sanitize(id);
-        }
+    private void refreshSessionCookie(HttpServletRequest request, HttpServletResponse response) {
+        HttpSession session = request.getSession(false);
+        if (session == null) return;
+
+        String contextPath = request.getContextPath();
+        Cookie cookie = new Cookie("JSESSIONID", session.getId());
+        cookie.setPath(contextPath.isEmpty() ? "/" : contextPath);
+        cookie.setHttpOnly(true);
+        cookie.setMaxAge(SESSION_MAX_AGE);
+        response.addCookie(cookie);
     }
 
     private String sanitize(String input) {

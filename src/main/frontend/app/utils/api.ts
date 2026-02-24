@@ -4,16 +4,6 @@ export function apiUrl(path: string): string {
   return `${variables.apiBaseUrl}/api${path}`
 }
 
-const getWorkspaceId = () => {
-  const STORAGE_KEY = 'frankflow_workspace_id'
-  let id = localStorage.getItem(STORAGE_KEY)
-  if (!id) {
-    id = crypto.randomUUID()
-    localStorage.setItem(STORAGE_KEY, id)
-  }
-  return id
-}
-
 const getAuthToken = () => {
   return localStorage.getItem('access_token') || null
 }
@@ -43,7 +33,6 @@ export async function apiFetch<T>(path: string, options?: RequestInit): Promise<
 
   const headers: Record<string, string> = {
     ...defaultHeaders,
-    'X-Workspace-ID': getWorkspaceId(),
     ...(options?.headers as Record<string, string>),
   }
 
@@ -55,6 +44,7 @@ export async function apiFetch<T>(path: string, options?: RequestInit): Promise<
   const response = await fetch(apiUrl(path), {
     ...options,
     headers,
+    credentials: 'include',
   })
 
   if (!response.ok) {
