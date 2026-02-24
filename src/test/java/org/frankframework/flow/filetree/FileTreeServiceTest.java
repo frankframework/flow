@@ -481,7 +481,6 @@ public class FileTreeServiceTest {
     @DisplayName("Should create a file and return a FileTreeNode with FILE type")
     void createFile_Success() throws IOException, ProjectNotFoundException {
         stubToAbsolutePath();
-        stubCreateFile();
 
         Project project =
                 new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
@@ -500,7 +499,6 @@ public class FileTreeServiceTest {
     @DisplayName("Should create a file correctly when parent path already ends with a slash")
     void createFile_ParentPathWithTrailingSlash_DoesNotDoubleSlash() throws IOException, ProjectNotFoundException {
         stubToAbsolutePath();
-        stubCreateFile();
 
         Project project =
                 new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
@@ -830,13 +828,6 @@ public class FileTreeServiceTest {
                 IllegalArgumentException.class,
                 () -> fileTreeService.updateFileContent(dir.toAbsolutePath().toString(), "new content"));
         assertTrue(ex.getMessage().contains("Cannot update a directory"));
-    }
-
-    private void stubCreateFile() throws IOException {
-        when(fileSystemStorage.createFile(anyString())).thenAnswer(invocation -> {
-            String path = invocation.getArgument(0);
-            return FileOperations.createFile(Paths.get(path));
-        });
     }
 
     private void stubCreateProjectDirectory() throws IOException {
