@@ -2,6 +2,7 @@ package org.frankframework.flow.filetree;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
@@ -154,7 +155,6 @@ public class FileTreeService {
         String fullPath = parentPath.endsWith("/") ? parentPath + fileName : parentPath + "/" + fileName;
         validateWithinProject(projectName, fullPath);
 
-        Path created = fileSystemStorage.createFile(fullPath);
         invalidateTreeCache(projectName);
 
         FileTreeNode node = new FileTreeNode();
@@ -299,7 +299,7 @@ public class FileTreeService {
                             try {
                                 return buildTree(p, relativizeRoot, useRelativePaths);
                             } catch (IOException e) {
-                                throw new RuntimeException(e);
+                                throw new UncheckedIOException(e);
                             }
                         })
                         .collect(Collectors.toList());

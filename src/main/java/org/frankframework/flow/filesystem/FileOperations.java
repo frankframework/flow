@@ -1,6 +1,7 @@
 package org.frankframework.flow.filesystem;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -24,7 +25,7 @@ public final class FileOperations {
                     try {
                         Files.delete(p);
                     } catch (IOException e) {
-                        throw new RuntimeException("Failed to delete: " + p, e);
+                        throw new UncheckedIOException("Failed to delete: " + p, e);
                     }
                 });
             }
