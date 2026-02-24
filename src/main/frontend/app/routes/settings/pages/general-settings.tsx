@@ -1,8 +1,7 @@
 import Toggle from '~/components/inputs/toggle'
-import { type GeneralSettings as GeneralSettingsType, useSettingsStore } from '../settings-store'
+import { type GeneralSettings as GeneralSettingsType, useSettingsStore } from '../../../stores/settings-store'
 import RadioList from '~/components/inputs/radio-list'
 import ValidatedInput from '~/components/inputs/validatedInput'
-import { clsx } from 'clsx'
 
 export default function GeneralSettings() {
   const { general, setGeneralSettings } = useSettingsStore()
@@ -38,7 +37,7 @@ export default function GeneralSettings() {
           </div>
           <div className="mt-2 flex items-center gap-4">
             <label className="mb-2 block" htmlFor="autosave-delay">
-              Autosave Delay (ms)
+              Autosave Delay (ms) <p className="text-muted-foreground text-sm">(Saves after X ms of inactivity)</p>
             </label>
 
             <ValidatedInput

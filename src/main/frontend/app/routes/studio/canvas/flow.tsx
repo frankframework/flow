@@ -34,7 +34,7 @@ import { saveAdapter } from '~/services/adapter-service'
 import { cloneWithRemappedIds } from '~/utils/flow-utils'
 import { showErrorToast } from '~/components/toast'
 import clsx from 'clsx'
-import useAutosaveStore from '~/stores/autosave-store'
+import { useSettingsStore } from '~/stores/settings-store'
 
 export type FlowNode = FrankNodeType | ExitNode | StickyNote | GroupNode | Node
 
@@ -117,14 +117,15 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
     }
   }, [project])
 
-  const autosaveEnabled = useAutosaveStore((s) => s.enabled)
-  const autosaveDelay = useAutosaveStore((s) => s.delayMs)
+  const autosaveEnabled = useSettingsStore((s) => s.general.autoSave.enabled)
+  const autosaveDelay = useSettingsStore((s) => s.general.autoSave.delayMs)
 
   const scheduleAutoSave = useCallback(() => {
     if (!autosaveEnabled) return
     if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current)
     autoSaveTimerRef.current = setTimeout(() => {
       autoSaveTimerRef.current = null
+      console.log(`Auto-saving flow after ${autosaveDelay}ms of inactivity...`)
       saveFlow()
     }, autosaveDelay)
   }, [saveFlow, autosaveEnabled, autosaveDelay])
