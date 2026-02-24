@@ -12,3 +12,7 @@ export interface RecentProject {
   rootPath: string
   lastOpened: string
 }
+
+export interface XmlResponse {
+  xmlContent: string
+}

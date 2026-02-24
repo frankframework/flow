@@ -1,3 +1,7 @@
+import { showErrorToast } from '~/components/toast'
+import { normalizeXml } from '~/services/xml-service'
+import { ApiError } from '~/utils/api'
+
 interface AdapterLocation {
   name: string
   offset: number
@@ -27,4 +31,34 @@ export function findAdapterAtOffset(adapters: AdapterLocation[], cursorOffset: n
     if (adapters[i].offset <= cursorOffset) return adapters[i].name
   }
   return adapters[0].name
+}
+
+/**  Converts the tagname of a non capitalized element that has a classname attribute to the last part of said classname, e.g.:
+ * <pipe name="uploadFiles" className="org.frankframework.pipes.ForEachChildElementPipe" />
+ * Becomes <ForEachChildElementPipe name="uploadFiles" />
+ *
+ * Also updates all other elements to be capitalized, e.g.:
+ * <param /> becomes <Param />
+ */
+export async function normalizeFrankElements(xml: string): Promise<string> {
+  try {
+    const response = await normalizeXml(xml)
+
+    if (response?.xmlContent) {
+      return response.xmlContent
+    }
+
+    showErrorToast('Normalization failed: Invalid server response.')
+    return xml
+  } catch (error) {
+    console.error('Normalization error:', error)
+
+    if (error instanceof ApiError) {
+      showErrorToast(error.messages?.join(', ') ?? 'Normalization failed.')
+    } else {
+      showErrorToast('Failed to normalize XML. Please check the console.')
+    }
+
+    return xml
+  }
 }
