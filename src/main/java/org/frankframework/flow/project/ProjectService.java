@@ -371,7 +371,12 @@ public class ProjectService {
             throw new SecurityException("Invalid configuration name: " + configurationName);
         }
 
-        String defaultXml = "<Configuration><Adapter name='new adapter'></Adapter></Configuration>";
+        String defaultXml = new String(
+                new ClassPathResource("templates/default-configuration.xml")
+                        .getInputStream()
+                        .readAllBytes(),
+                StandardCharsets.UTF_8);
+
         fileSystemStorage.writeFile(filePath.toString(), defaultXml);
 
         Configuration configuration = new Configuration(filePath.toString());
