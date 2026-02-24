@@ -1,6 +1,3 @@
-import { useProjectStore } from '~/stores/project-store'
-import { getAdapterNamesFromConfiguration } from '../studio/xml-to-json-parser'
-import { useEffect, useState } from 'react'
 import RulerCrossPenIcon from '/icons/solar/Ruler Cross Pen.svg?react'
 import CodeIcon from '/icons/solar/Code.svg?react'
 import { openInStudio, openInEditor } from '~/actions/navigationActions'
@@ -9,22 +6,14 @@ import Button from '~/components/inputs/button'
 interface ConfigurationTileProperties {
   filepath: string
   relativePath: string
+  adapterNames: string[]
 }
 
-export default function ConfigurationTile({ filepath, relativePath }: Readonly<ConfigurationTileProperties>) {
-  const projectName = useProjectStore((state) => state.project?.name)
-
-  const [adapterNames, setAdapterNames] = useState<string[]>([])
-
-  useEffect(() => {
-    if (!projectName || !filepath) {
-      setAdapterNames([])
-      return
-    }
-
-    getAdapterNamesFromConfiguration(projectName, filepath).then(setAdapterNames)
-  }, [projectName, filepath])
-
+export default function ConfigurationTile({
+  filepath,
+  relativePath,
+  adapterNames,
+}: Readonly<ConfigurationTileProperties>) {
   const handleOpenInStudio = (adapterName: string) => {
     openInStudio(adapterName, filepath)
   }

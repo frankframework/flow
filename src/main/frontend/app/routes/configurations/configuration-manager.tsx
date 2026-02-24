@@ -3,14 +3,14 @@ import ConfigurationTile from './configuration-tile'
 import ArrowLeftIcon from '/icons/solar/Alt Arrow Left.svg?react'
 import { useNavigate } from 'react-router'
 import AddConfigurationTile from './add-configuration-tile'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, type ChangeEvent, useMemo } from 'react'
 import AddConfigurationModal from './add-configuration-modal'
 import LoadingSpinner from '~/components/loading-spinner'
-<<<<<<< fix/peristent-create-configuration
 import { fetchProjectTree } from '~/services/project-service'
-=======
 import Button from '~/components/inputs/button'
->>>>>>> master
+import { getAdapterNamesFromConfiguration } from '../studio/xml-to-json-parser'
+import Search from '~/components/search/search'
+import { motion, AnimatePresence } from 'framer-motion'
 
 export interface FileTreeNode {
   name: string
@@ -62,6 +62,11 @@ export default function ConfigurationManager() {
   const [showModal, setShowModal] = useState(false)
   const [tree, setTree] = useState<FileTreeNode | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [filesWithAdapters, setFilesWithAdapters] = useState<
+    { path: string; relativePath: string; adapterNames: string[] }[]
+  >([])
+  const [searchQuery, setSearchQuery] = useState('')
+  const [debouncedQuery, setDebouncedQuery] = useState(searchQuery)
 
   const loadTree = useCallback(
     (signal?: AbortSignal) => {
@@ -94,7 +99,7 @@ export default function ConfigurationManager() {
     loadTree()
   }, [loadTree])
 
-  const configFiles = (() => {
+  const configFiles = useMemo(() => {
     if (!tree) return []
 
     const configurationDirectory = findConfigurationsDir(tree)
@@ -106,7 +111,66 @@ export default function ConfigurationManager() {
       relativePath: file.path.replace(`${configurationDirectory.path}\\`, '').replaceAll('\\', '/'),
       path: file.path,
     }))
-  })()
+  }, [tree])
+
+  const handleSearch = (event: ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(event.target.value)
+  }
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedQuery(searchQuery)
+    }, 200)
+
+    return () => clearTimeout(handler)
+  }, [searchQuery])
+
+  useEffect(() => {
+    if (!currentProject?.name || configFiles.length === 0) {
+      setFilesWithAdapters([])
+      return
+    }
+
+    let cancelled = false
+
+    const loadAdapters = async () => {
+      const results = await Promise.all(
+        configFiles.map(async (file) => {
+          const adapterNames = await getAdapterNamesFromConfiguration(currentProject.name, file.path)
+
+          return {
+            path: file.path,
+            relativePath: file.relativePath,
+            adapterNames,
+          }
+        }),
+      )
+
+      if (cancelled) return
+
+      // Only keep files that actually contain adapters
+      const filtered = results.filter((file) => file.adapterNames.length > 0)
+
+      setFilesWithAdapters(filtered)
+    }
+    loadAdapters()
+
+    return () => {
+      cancelled = true
+    }
+  }, [configFiles, currentProject?.name])
+
+  const filteredConfigurations = useMemo(() => {
+    if (!debouncedQuery.trim()) return filesWithAdapters
+
+    const query = debouncedQuery.toLowerCase()
+
+    return filesWithAdapters.filter((file) => {
+      const matchesFile = file.relativePath.toLowerCase().includes(query)
+      const matchesAdapter = file.adapterNames.some((adapter) => adapter.toLowerCase().includes(query))
+      return matchesFile || matchesAdapter
+    })
+  }, [filesWithAdapters, debouncedQuery])
 
   if (!currentProject) {
     return (
@@ -134,17 +198,37 @@ export default function ConfigurationManager() {
         <p>Return To Projects</p>
       </div>
 
-      <p className="ml-2">
-        Configurations within <span className="font-bold">{currentProject.name}</span>/src/main/configurations:
-      </p>
-      <div className="bg-backdrop border-border w-full flex-1 overflow-y-auto rounded border p-2">
-        <div className="flex flex-wrap gap-4">
-          {configFiles.map((file) => (
-            <ConfigurationTile key={file.path} filepath={file.path} relativePath={file.relativePath} />
-          ))}
+      <div className="mb-4 flex items-center justify-between">
+        <p className="ml-2">
+          Configurations within <span className="font-bold">{currentProject.name}</span>/src/main/configurations:
+        </p>
+        <Search value={searchQuery} onChange={handleSearch} />
+      </div>
 
-          <AddConfigurationTile onClick={() => setShowModal(true)} />
-        </div>
+      <div className="flex flex-wrap gap-4">
+        <AnimatePresence>
+          {filteredConfigurations.map((file) => (
+            <motion.div
+              key={file.path}
+              layout
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{
+                layout: { duration: 0.25, ease: 'easeInOut' },
+                opacity: { duration: 0.15 },
+              }}
+            >
+              <ConfigurationTile
+                filepath={file.path}
+                relativePath={file.relativePath}
+                adapterNames={file.adapterNames}
+              />
+            </motion.div>
+          ))}
+        </AnimatePresence>
+
+        <AddConfigurationTile onClick={() => setShowModal(true)} />
       </div>
       <AddConfigurationModal
         isOpen={showModal}
