@@ -3,11 +3,10 @@ import ConfigurationTile from './configuration-tile'
 import ArrowLeftIcon from '/icons/solar/Alt Arrow Left.svg?react'
 import { useNavigate } from 'react-router'
 import AddConfigurationTile from './add-configuration-tile'
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import AddConfigurationModal from './add-configuration-modal'
-import { useProjectTree } from '~/hooks/use-project-tree'
 import LoadingSpinner from '~/components/loading-spinner'
-import { useCallback } from 'react'
+import { fetchProjectTree } from '~/services/project-service'
 
 export interface FileTreeNode {
   name: string
@@ -57,14 +56,39 @@ export default function ConfigurationManager() {
   const currentProject = useProjectStore((state) => state.project)
   const navigate = useNavigate()
   const [showModal, setShowModal] = useState(false)
-  const [treeVersion, setTreeVersion] = useState(0)
+  const [tree, setTree] = useState<FileTreeNode | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
 
-  const { data: tree, isLoading } = useProjectTree(currentProject?.name, treeVersion)
+  const loadTree = useCallback(
+    (signal?: AbortSignal) => {
+      if (!currentProject?.name) return
+      setIsLoading(true)
+      fetchProjectTree(currentProject.name, signal)
+        .then((data) => {
+          if (!signal?.aborted) {
+            setTree(data)
+            setIsLoading(false)
+          }
+        })
+        .catch(() => {
+          if (!signal?.aborted) {
+            setIsLoading(false)
+          }
+        })
+    },
+    [currentProject?.name],
+  )
+
+  useEffect(() => {
+    const controller = new AbortController()
+    loadTree(controller.signal)
+    return () => controller.abort()
+  }, [loadTree])
 
   const handleConfigAdded = useCallback(() => {
     setShowModal(false)
-    setTreeVersion((v) => v + 1)
-  }, [])
+    loadTree()
+  }, [loadTree])
 
   const configFiles = (() => {
     if (!tree) return []
