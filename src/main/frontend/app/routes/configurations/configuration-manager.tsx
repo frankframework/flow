@@ -7,6 +7,7 @@ import { useState } from 'react'
 import AddConfigurationModal from './add-configuration-modal'
 import { useProjectTree } from '~/hooks/use-project-tree'
 import LoadingSpinner from '~/components/loading-spinner'
+import Button from '~/components/inputs/button'
 
 export interface FileTreeNode {
   name: string
@@ -77,12 +78,9 @@ export default function ConfigurationManager() {
     return (
       <div className="bg-backdrop flex h-full w-full flex-col items-center justify-center p-6">
         <div className="text-muted-foreground mb-4">No project selected.</div>
-        <button
-          onClick={() => navigate('/')}
-          className="bg-background border-border hover:text-foreground-active rounded border px-4 py-2"
-        >
+        <Button onClick={() => navigate('/')} className="bg-background">
           Return to Projects
-        </button>
+        </Button>
       </div>
     )
   }

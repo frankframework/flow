@@ -421,7 +421,7 @@ export default function CodeEditor() {
                     {saveStatus === 'saved' && 'Saved'}
                   </span>
                   <Button onClick={handleOpenInStudio} className="flex items-center gap-1.5" title="Open in Studio">
-                    <RulerCrossPenIcon className="fill-foreground h-4 w-4" />
+                    <RulerCrossPenIcon className="h-4 w-4 fill-current" />
                     Open in Studio
                   </Button>
                 </div>
