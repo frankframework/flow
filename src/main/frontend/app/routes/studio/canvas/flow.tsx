@@ -125,7 +125,6 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
     if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current)
     autoSaveTimerRef.current = setTimeout(() => {
       autoSaveTimerRef.current = null
-      console.log(`Auto-saving flow after ${autosaveDelay}ms of inactivity...`)
       saveFlow()
     }, autosaveDelay)
   }, [saveFlow, autosaveEnabled, autosaveDelay])

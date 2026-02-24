@@ -99,7 +99,6 @@ export default function CodeEditor() {
     if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current)
     debounceTimerRef.current = setTimeout(() => {
       debounceTimerRef.current = null
-      console.log(`Auto-saving after ${autosaveDelay}ms of inactivity...`)
       performSave()
     }, autosaveDelay)
   }, [performSave, autosaveEnabled, autosaveDelay])
