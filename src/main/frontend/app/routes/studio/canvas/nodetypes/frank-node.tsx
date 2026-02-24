@@ -24,6 +24,7 @@ import { canAcceptChildStatic } from './node-utilities'
 import type { ElementDetails } from '@frankframework/ff-doc'
 import { DeprecatedPopover } from './components/deprecated-popover'
 import { showWarningToast } from '~/components/toast'
+import { useHandleTypes } from '~/hooks/use-handle-types'
 
 export type FrankNodeType = Node<{
   subtype: string
@@ -59,6 +60,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
   const [showDeprecated, setShowDeprecated] = useState(false)
   const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null)
   const dangerTriangleReference = useRef<HTMLDivElement>(null)
+  const availableHandleTypes = useHandleTypes(frankElement?.forwards)
 
   const updateNodeInternals = useUpdateNodeInternals()
 
@@ -74,6 +76,19 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
   const firstHandlePosition = useMemo(() => {
     return (dimensions.height - (properties.data.sourceHandles.length - 1) * handleSpacing) / 2
   }, [dimensions.height, properties.data.sourceHandles.length])
+
+  const allForwardTypesUsed = useMemo(() => {
+    if (availableHandleTypes.length === 0) return true
+
+    // If custom is allowed, the "+" should always remain visible
+    if (availableHandleTypes.includes('custom')) {
+      return false
+    }
+
+    const existingTypes = new Set(properties.data.sourceHandles.map((handle) => handle.type))
+
+    return availableHandleTypes.every((type) => existingTypes.has(type))
+  }, [availableHandleTypes, properties.data.sourceHandles])
 
   useEffect(() => {
     if (dragOver && containerReference.current) {
@@ -101,6 +116,9 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
 
   const hasHandleOfType = useCallback(
     (type: string) => {
+      // Custom handles are never considered duplicates
+      if (type === 'custom') return false
+
       return properties.data.sourceHandles.some((handle) => handle.type === type)
     },
     [properties.data.sourceHandles],
@@ -396,19 +414,20 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
           </div>
         )}
       </div>
-      <Handle
-        type="target"
-        position={Position.Left}
-        className="flex items-center justify-center text-white"
-        style={{
-          left: '-15px',
-          width: '15px',
-          height: '15px',
-          backgroundColor: '#B2B2B2',
-        }}
-      >
-        {/* Use inline styling to prevent ReactFlow override on certain properties */}
-      </Handle>
+      {/* Receivers can only have outgoing connections, so we hide the input handle for them */}
+      {frankElement?.name && frankElement.name !== 'Receiver' && (
+        <Handle
+          type="target"
+          position={Position.Left}
+          className="flex items-center justify-center text-white"
+          style={{
+            left: '-15px',
+            width: '15px',
+            height: '15px',
+            backgroundColor: '#B2B2B2',
+          }}
+        />
+      )}
       {properties.data.sourceHandles.map((handle) => (
         <CustomHandle
           key={handle.type + handle.index}
@@ -421,17 +440,20 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
           typesAllowed={frankElement?.forwards}
         />
       ))}
-      <div
-        onClick={(event) => {
-          toggleHandleMenu(event)
-        }}
-        className="nodrag absolute right-[-23px] h-[15px] w-[15px] cursor-pointer justify-center rounded-full border bg-gray-400 text-center text-[8px] font-bold text-white"
-        style={{
-          top: `${firstHandlePosition + properties.data.sourceHandles.length * handleSpacing + handleSpacing}px`,
-        }}
-      >
-        +
-      </div>
+      {/* Only show the add handle button if there are available handle types that are not yet used on this node */}
+      {!allForwardTypesUsed && (
+        <div
+          onClick={(event) => {
+            toggleHandleMenu(event)
+          }}
+          className="nodrag absolute right-[-23px] h-[15px] w-[15px] cursor-pointer justify-center rounded-full border bg-gray-400 text-center text-[8px] font-bold text-white"
+          style={{
+            top: `${firstHandlePosition + properties.data.sourceHandles.length * handleSpacing + handleSpacing}px`,
+          }}
+        >
+          +
+        </div>
+      )}
       {isHandleMenuOpen && (
         <HandleMenu
           position={handleMenuPosition}
