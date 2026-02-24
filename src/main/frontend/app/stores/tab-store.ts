@@ -1,11 +1,14 @@
 import { create } from 'zustand'
 import { subscribeWithSelector } from 'zustand/middleware'
+import type { FlowSnapshot } from './flow-store'
 
 export interface TabData {
   name: string
   icon?: React.ComponentType<React.SVGProps<SVGSVGElement>>
   flowJson?: Record<string, unknown>
   configurationPath: string
+  history?: FlowSnapshot[]
+  future?: FlowSnapshot[]
 }
 
 interface TabStoreState {

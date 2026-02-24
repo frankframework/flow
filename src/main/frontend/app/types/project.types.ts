@@ -3,14 +3,16 @@
   rootPath: string
   filepaths: string[]
   filters: Record<string, boolean>
-}
-
-export interface ProjectCreateDTO {
-  rootPath: string
+  isGitRepository: boolean
+  hasStoredToken: boolean
 }
 
 export interface RecentProject {
   name: string
   rootPath: string
   lastOpened: string
+}
+
+export interface XmlResponse {
+  xmlContent: string
 }

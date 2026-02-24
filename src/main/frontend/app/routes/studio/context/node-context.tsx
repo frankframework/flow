@@ -22,15 +22,18 @@ export default function NodeContext({
   const [inputValues, setInputValues] = useState<Record<number, string>>({})
 
   const { elements, ffDoc } = useFrankDoc()
-  const { attributes, setIsEditing, parentId, setParentId, childParentId } = useNodeContextStore(
-    useShallow((s) => ({
-      attributes: s.attributes,
-      setIsEditing: s.setIsEditing,
-      parentId: s.parentId,
-      setParentId: s.setParentId,
-      childParentId: s.childParentId,
-    })),
-  )
+  const { attributes, isNewNode, setIsEditing, setIsNewNode, parentId, setParentId, childParentId } =
+    useNodeContextStore(
+      useShallow((s) => ({
+        attributes: s.attributes,
+        isNewNode: s.isNewNode,
+        setIsEditing: s.setIsEditing,
+        setIsNewNode: s.setIsNewNode,
+        parentId: s.parentId,
+        setParentId: s.setParentId,
+        childParentId: s.childParentId,
+      })),
+    )
 
   const validateMandatoryFields = useCallback(
     (validations: Record<number, string>) => {
@@ -192,7 +195,7 @@ export default function NodeContext({
       const parentNode = nodes.find((n) => n.id === parentId.toString())
       if (!parentNode || !isFrankNode(parentNode)) return
 
-      // 🔍 Find the child recursively
+      // Find the child recursively
       const existingChild = findChildRecursive(parentNode.data.children, nodeId.toString())
 
       if (!existingChild) {
@@ -200,7 +203,7 @@ export default function NodeContext({
         return
       }
 
-      // ✅ Build updated child (preserves type, subtype, children, etc.)
+      // Build updated child (preserves type, subtype, children, etc.)
       const updatedChild = {
         ...existingChild,
         ...(nameField && { name: nameField.value }),
@@ -208,6 +211,14 @@ export default function NodeContext({
       }
 
       // Update child recursively in store
+      if (isNewNode) {
+        updateChild(parentNode.id, updatedChild, { isNewNode: true })
+        setIsNewNode(false)
+        setIsEditing(false)
+        setShowNodeContext(false)
+        setParentId(null)
+        return
+      }
       updateChild(parentNode.id, updatedChild)
 
       // Close context
@@ -218,6 +229,17 @@ export default function NodeContext({
     }
 
     // Else: updating a top-level Frank node
+    // Set attributes with newNode flag to keep the adding of a node a single action for the undo stack, instead of add node + set attributes being two separate actions
+    if (isNewNode) {
+      setAttributes(nodeId.toString(), newAttributesObject, { isNewNode: true })
+      if (nameField) {
+        setNodeName(nodeId.toString(), nameField.value, { isNewNode: true })
+      }
+      setIsNewNode(false)
+      setIsEditing(false)
+      setShowNodeContext(false)
+      return
+    }
     setAttributes(nodeId.toString(), newAttributesObject)
 
     if (nameField) {
@@ -238,6 +260,7 @@ export default function NodeContext({
     }
     deleteNode(nodeId.toString())
     setIsEditing(false)
+    setIsNewNode(false)
     setShowNodeContext(false)
   }
 
@@ -302,7 +325,7 @@ export default function NodeContext({
           <Button
             onClick={handleSave}
             disabled={!canSave}
-            className={`w-auto ${canSave ? '' : 'cursor-not-allowed opacity-50'}`}
+            className="disabled:text-foreground-muted w-auto disabled:cursor-not-allowed disabled:opacity-50"
           >
             Save & Close
           </Button>

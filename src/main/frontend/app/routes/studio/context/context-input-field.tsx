@@ -48,16 +48,21 @@ export default function ContextInputField({
   // Render integer-only input
   if (type === 'int') {
     return (
-      <input
-        id={id}
-        type="text"
-        inputMode="numeric"
-        value={value}
-        onChange={(event) => onChange(event.currentTarget.value)}
-        onKeyDown={onKeyDown}
-        pattern="[0-9]*"
-        className="border-border focus:border-foreground-active mt-1 w-full rounded-md border px-3 py-2 shadow-sm focus:ring-0 focus:outline-none sm:text-sm"
-      />
+      <div className="relative mt-1">
+        <input
+          id={id}
+          type="text"
+          inputMode="numeric"
+          value={value}
+          onChange={(event) => onChange(event.currentTarget.value)}
+          onKeyDown={onKeyDown}
+          pattern="[0-9]*"
+          className="border-border focus:border-foreground-active w-full rounded-md border px-3 py-2 pr-12 shadow-sm focus:ring-0 focus:outline-none sm:text-sm"
+        />
+        <span className="text-muted-foreground pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-xs">
+          int
+        </span>
+      </div>
     )
   }
 
