@@ -151,15 +151,17 @@ public class XmlAdapterUtils {
 
         String result = baseName;
 
-        if (result.endsWith("Pipe")) {
-            result = result.substring(0, result.length() - 4);
+        String pipeSuffix = "Pipe";
+        if (result.endsWith(pipeSuffix)) {
+            result = result.substring(0, result.length() - pipeSuffix.length());
         }
 
-        if (result.endsWith("Wrapper")) {
-            result = result.substring(0, result.length() - 7);
+        String wrapperSuffix = "Wrapper";
+        if (result.endsWith(wrapperSuffix)) {
+            result = result.substring(0, result.length() - wrapperSuffix.length());
         }
 
-        return result + direction + "Wrapper";
+        return result + direction + wrapperSuffix;
     }
 
     private static String transformValidator(String tagName, String baseName) {
@@ -167,12 +169,13 @@ public class XmlAdapterUtils {
         String direction = tagName.startsWith("input") ? "Input" : "Output";
 
         String result = baseName;
+        String validatorSuffix = "Validator";
 
-        if (result.endsWith("Validator")) {
-            result = result.substring(0, result.length() - 9);
+        if (result.endsWith(validatorSuffix)) {
+            result = result.substring(0, result.length() - validatorSuffix.length());
         }
 
-        return result + direction + "Validator";
+        return result + direction + validatorSuffix;
     }
 
     private static String capitalize(String value) {
