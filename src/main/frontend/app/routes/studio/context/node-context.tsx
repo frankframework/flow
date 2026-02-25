@@ -312,8 +312,6 @@ export default function NodeContext({
     <>
       <div className="flex-1 overflow-y-auto px-4">
         <div className="bg-background w-full space-y-4 rounded-md p-6">
-          <h1>For node with id: {nodeId}</h1>
-
           {categorizedAttributes.map(([key, attribute, originalIndex]: [string, AttributeType, number]) => (
             <div key={originalIndex}>
               <ContextInput
