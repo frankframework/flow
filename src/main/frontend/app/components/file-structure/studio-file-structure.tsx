@@ -80,7 +80,7 @@ export default function StudioFileStructure() {
     return () => {
       isMounted = false
     }
-  }, [project, studioExpandedItems, treeData])
+  }, [project, treeData])
 
   useEffect(() => {
     const findMatchingItems = async () => {
