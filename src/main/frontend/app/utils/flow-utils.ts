@@ -55,35 +55,49 @@ export function translateElementFromOldToNewFormat(element: Element): { subtype:
 }
 
 function transformByTag(tagName: string, baseName: string): string {
-  // pipe: use basename as-is
   if (tagName === 'pipe') {
     return baseName
   }
 
-  // inputWrapper / outputWrapper
+  if (tagName === 'messageLog') {
+    return transformMessageLog(baseName)
+  }
+
   if (tagName === 'inputWrapper' || tagName === 'outputWrapper') {
-    const direction = tagName.startsWith('input') ? 'Input' : 'Output'
-
-    // Remove trailing "Pipe" if present
-    const withoutPipe = baseName.endsWith('Pipe') ? baseName.slice(0, -4) : baseName
-
-    // Remove trailing "Wrapper" if present
-    const withoutWrapper = withoutPipe.endsWith('Wrapper') ? withoutPipe.slice(0, -7) : withoutPipe
-
-    return `${withoutWrapper}${direction}Wrapper`
+    return transformWrapper(tagName, baseName)
   }
 
-  // inputValidator / outputValidator
   if (tagName === 'inputValidator' || tagName === 'outputValidator') {
-    const direction = tagName.startsWith('input') ? 'Input' : 'Output'
-
-    const withoutValidator = baseName.endsWith('Validator') ? baseName.slice(0, -9) : baseName
-
-    return `${withoutValidator}${direction}Validator`
+    return transformValidator(tagName, baseName)
   }
 
-  // fallback
   return baseName
+}
+
+function transformMessageLog(baseName: string): string {
+  const suffix = 'TransactionalStorage'
+
+  const prefix = baseName.endsWith(suffix) ? baseName.slice(0, -suffix.length) : baseName
+
+  return `${prefix}MessageLog`
+}
+
+function transformWrapper(tagName: string, baseName: string): string {
+  const direction = tagName.startsWith('input') ? 'Input' : 'Output'
+
+  const withoutPipe = baseName.endsWith('Pipe') ? baseName.slice(0, -4) : baseName
+
+  const withoutWrapper = withoutPipe.endsWith('Wrapper') ? withoutPipe.slice(0, -7) : withoutPipe
+
+  return `${withoutWrapper}${direction}Wrapper`
+}
+
+function transformValidator(tagName: string, baseName: string): string {
+  const direction = tagName.startsWith('input') ? 'Input' : 'Output'
+
+  const withoutValidator = baseName.endsWith('Validator') ? baseName.slice(0, -9) : baseName
+
+  return `${withoutValidator}${direction}Validator`
 }
 
 function capitalize(value: string): string {
