@@ -155,6 +155,7 @@ public class FileTreeService {
         String fullPath = parentPath.endsWith("/") ? parentPath + fileName : parentPath + "/" + fileName;
         validateWithinProject(projectName, fullPath);
 
+        fileSystemStorage.createFile(fullPath);
         invalidateTreeCache(projectName);
 
         FileTreeNode node = new FileTreeNode();

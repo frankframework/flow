@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom'
 interface ContextMenuProps {
   position: { x: number; y: number }
   isFolder: boolean
+  isRoot?: boolean
   onNewFile: () => void
   onNewFolder: () => void
   onRename: () => void
@@ -14,6 +15,7 @@ interface ContextMenuProps {
 export default function ContextMenu({
   position,
   isFolder,
+  isRoot = false,
   onNewFile,
   onNewFolder,
   onRename,
@@ -58,12 +60,16 @@ export default function ContextMenu({
           </div>
         </>
       )}
-      <div className={itemClass} onClick={onRename}>
-        Rename
-      </div>
-      <div className={`${itemClass} text-red-500`} onClick={onDelete}>
-        Delete
-      </div>
+      {!isRoot && (
+        <div className={itemClass} onClick={onRename}>
+          Rename
+        </div>
+      )}
+      {!isRoot && (
+        <div className={`${itemClass} text-red-500`} onClick={onDelete}>
+          Delete
+        </div>
+      )}
     </div>,
     document.body,
   )

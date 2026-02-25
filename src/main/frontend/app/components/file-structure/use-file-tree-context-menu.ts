@@ -12,6 +12,7 @@ export interface ContextMenuState {
   position: { x: number; y: number }
   itemId: TreeItemIndex
   isFolder: boolean
+  isRoot: boolean
   path: string
   name: string
 }
@@ -30,7 +31,7 @@ export interface DeleteTargetState {
 }
 
 interface DataProviderLike {
-  getTreeItem(itemId: TreeItemIndex): Promise<{ data: { path: string; name: string }; isFolder?: boolean } | undefined>
+  getTreeItem(itemId: TreeItemIndex): Promise<{ data: { path: string; name: string; projectRoot?: boolean }; isFolder?: boolean } | undefined>
   reloadDirectory(itemId: TreeItemIndex): Promise<void>
 }
 
@@ -75,6 +76,7 @@ export function useFileTreeContextMenu({
         position: { x: e.clientX, y: e.clientY },
         itemId,
         isFolder: !!item.isFolder,
+        isRoot: !!item.data.projectRoot,
         path: item.data.path,
         name: item.data.name,
       })

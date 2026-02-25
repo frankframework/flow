@@ -1,6 +1,14 @@
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import Button from '~/components/inputs/button'
+import ValidatedInput from '~/components/inputs/validatedInput'
+
+const namePatterns: Record<string, RegExp> = {
+  'Cannot be empty': /^(?!\s*$).+/,
+  'Cannot contain /': /^[^/]*$/,
+  'Cannot contain \\': /^[^\\]*$/,
+  'Cannot contain ..': /^(?!.*\.\.).*$/,
+}
 
 interface NameInputDialogProps {
   title: string
@@ -9,31 +17,13 @@ interface NameInputDialogProps {
   onCancel: () => void
 }
 
-function validateName(name: string): string | null {
-  if (!name || name.trim() === '') return 'Name cannot be empty'
-  if (name.includes('/')) return 'Name cannot contain /'
-  if (name.includes('\\')) return 'Name cannot contain \\'
-  if (name.includes('..')) return 'Name cannot contain ..'
-  return null
-}
-
 export default function NameInputDialog({ title, initialValue = '', onSubmit, onCancel }: NameInputDialogProps) {
   const [value, setValue] = useState(initialValue)
-  const [error, setError] = useState<string | null>(null)
-  const inputRef = useRef<HTMLInputElement>(null)
+  const [isValid, setIsValid] = useState(false)
   const overlayRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
-    inputRef.current?.focus()
-    inputRef.current?.select()
-  }, [])
-
   const handleSubmit = () => {
-    const err = validateName(value)
-    if (err) {
-      setError(err)
-      return
-    }
+    if (!isValid) return
     onSubmit(value.trim())
   }
 
@@ -59,23 +49,20 @@ export default function NameInputDialog({ title, initialValue = '', onSubmit, on
     >
       <div className="bg-background border-border w-80 rounded-md border p-4 shadow-lg">
         <p className="text-foreground mb-2 text-sm font-medium">{title}</p>
-        <input
-          ref={inputRef}
-          type="text"
+        <ValidatedInput
+          autoFocus
+          onFocus={(e) => e.target.select()}
           value={value}
-          onChange={(e) => {
-            setValue(e.target.value)
-            setError(null)
-          }}
+          patterns={namePatterns}
+          onValidChange={setIsValid}
+          onChange={(e) => setValue(e.target.value)}
           onKeyDown={handleKeyDown}
-          className="bg-background border-border text-foreground w-full rounded-md border px-2 py-1 text-sm focus:outline-none"
         />
-        {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
         <div className="mt-3 flex justify-end gap-2">
           <Button onClick={onCancel} className="px-3 py-1 text-sm">
             Cancel
           </Button>
-          <Button onClick={handleSubmit} className="px-3 py-1 text-sm">
+          <Button onClick={handleSubmit} disabled={!isValid} className="px-3 py-1 text-sm">
             OK
           </Button>
         </div>

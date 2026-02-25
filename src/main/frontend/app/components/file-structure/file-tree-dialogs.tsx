@@ -36,6 +36,7 @@ export default function FileTreeDialogs({
         <ContextMenu
           position={contextMenu.position}
           isFolder={contextMenu.isFolder}
+          isRoot={contextMenu.isRoot}
           onNewFile={onNewFile}
           onNewFolder={onNewFolder}
           onRename={onRename}

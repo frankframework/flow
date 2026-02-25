@@ -43,6 +43,7 @@ export default function EditorFileStructure() {
   const setActiveTab = useEditorTabStore((state) => state.setActiveTab)
   const getTab = useEditorTabStore((state) => state.getTab)
   const removeTab = useEditorTabStore((state) => state.removeTab)
+  const removeTabAndSelectFallback = useEditorTabStore((state) => state.removeTabAndSelectFallback)
 
   const [dataProvider, setDataProvider] = useState<EditorFilesDataProvider | null>(null)
 
@@ -51,7 +52,8 @@ export default function EditorFileStructure() {
       const tab = getTab(oldPath)
       if (tab) {
         removeTab(oldPath)
-        const newPath = oldPath.slice(0, Math.max(0, oldPath.lastIndexOf('/') + 1)) + newName
+        const lastSep = Math.max(oldPath.lastIndexOf('/'), oldPath.lastIndexOf('\\'))
+        const newPath = oldPath.slice(0, Math.max(0, lastSep + 1)) + newName
         setTabData(newPath, { ...tab, name: newName, configurationPath: newPath })
         setActiveTab(newPath)
       }
@@ -61,9 +63,9 @@ export default function EditorFileStructure() {
 
   const onAfterDelete = useCallback(
     (path: string) => {
-      if (getTab(path)) removeTab(path)
+      if (getTab(path)) removeTabAndSelectFallback(path)
     },
-    [getTab, removeTab],
+    [getTab, removeTabAndSelectFallback],
   )
 
   const ctxMenu = useFileTreeContextMenu({
@@ -279,7 +281,12 @@ export default function EditorFileStructure() {
   return (
     <>
       <Search onChange={(e) => setSearchTerm(e.target.value)} />
-      <div className="overflow-auto pr-2">
+      <div
+        className="h-full overflow-auto pr-2"
+        onContextMenu={(e) => {
+          void ctxMenu.openContextMenu(e, 'root')
+        }}
+      >
         <UncontrolledTreeEnvironment
           viewState={{}}
           getItemTitle={getItemTitle}
