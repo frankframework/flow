@@ -34,13 +34,19 @@ export function exportFlowToXml(json: ReactFlowJson, adaptername: string): strin
 
   const receiverNodes = validNodes.filter((n) => n.data.type?.toLowerCase() === 'receiver')
   const startNodes = receiverNodes.filter((n) => !incoming[n.id])
-  const sortedIds =
-    startNodes.length > 0
-      ? topologicalSort(
-          startNodes.map((n) => n.id),
-          outgoing,
-        )
-      : validNodes.map((node) => node.id)
+  let sortedIds: string[]
+  if (startNodes.length > 0) {
+    sortedIds = topologicalSort(
+      startNodes.map((n) => n.id),
+      outgoing,
+    )
+
+    const sortedSet = new Set(sortedIds)
+    const unconnectedIds = validNodes.map((n) => n.id).filter((id) => !sortedSet.has(id))
+    sortedIds = [...sortedIds, ...unconnectedIds]
+  } else {
+    sortedIds = validNodes.map((node) => node.id)
+  }
 
   const exitNodes = validNodes.filter((n) => n.data.type?.toLowerCase() === 'exit')
   const exitNodeIds = new Set(exitNodes.map((n) => n.id))

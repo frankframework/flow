@@ -6,11 +6,8 @@ import AddConfigurationTile from './add-configuration-tile'
 import { useState, useEffect, useCallback } from 'react'
 import AddConfigurationModal from './add-configuration-modal'
 import LoadingSpinner from '~/components/loading-spinner'
-<<<<<<< fix/peristent-create-configuration
 import { fetchProjectTree } from '~/services/project-service'
-=======
 import Button from '~/components/inputs/button'
->>>>>>> master
 
 export interface FileTreeNode {
   name: string
