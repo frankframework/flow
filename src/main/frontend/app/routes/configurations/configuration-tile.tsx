@@ -26,7 +26,7 @@ export default function ConfigurationTile({
   }
 
   return (
-    <div className="border-border bg-background relative m-2 flex h-75 w-100 flex-col rounded border p-4 shadow-sm">
+    <div className="border-border bg-background relative flex h-75 w-100 flex-col rounded border p-4 shadow-sm">
       {/* Header */}
       <div className="text-foreground mb-3 truncate text-sm font-semibold" title={relativePath}>
         {relativePath}
