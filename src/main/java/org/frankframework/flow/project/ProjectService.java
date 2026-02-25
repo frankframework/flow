@@ -19,6 +19,7 @@ import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.transport.CredentialsProvider;
+import org.frankframework.flow.adapter.AdapterElementDTO;
 import org.frankframework.flow.adapter.AdapterNotFoundException;
 import org.frankframework.flow.configuration.Configuration;
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
@@ -122,6 +123,39 @@ public class ProjectService {
                 defaultXml);
 
         return loadProjectAndCache(projectPath.toString());
+    }
+
+    public AdapterElementDTO getAdapterElement(String adapterName, String configurationPath)
+            throws ProjectNotFoundException, ConfigurationNotFoundException, AdapterNotFoundException {
+        Project project = getProjects().stream()
+                .filter(p -> p.getConfigurations().stream()
+                        .anyMatch(c -> c.getFilepath().equals(configurationPath)))
+                .findFirst()
+                .orElseThrow(() -> new ProjectNotFoundException("Project not found for configuration: " + configurationPath));
+
+        Configuration config = project.getConfigurations().stream()
+                .filter(c -> c.getFilepath().equals(configurationPath))
+                .findFirst()
+                .orElseThrow(() -> new ConfigurationNotFoundException("Configuration not found: " + configurationPath));
+
+        try {
+            Document configDoc = XmlSecurityUtils.createSecureDocumentBuilder()
+                    .parse(new ByteArrayInputStream(config.getXmlContent().getBytes(StandardCharsets.UTF_8)));
+
+            Node adapterNode = XmlAdapterUtils.findAdapterInDocument(configDoc, adapterName)
+                    .orElseThrow(() -> new AdapterNotFoundException("Adapter not found: " + adapterName));
+
+            String adapterXml = XmlAdapterUtils.convertNodeToString(adapterNode);
+            return new AdapterElementDTO(adapterXml);
+        } catch (AdapterNotFoundException | ConfigurationNotFoundException | ProjectNotFoundException e) {
+            throw e;
+        } catch (SAXParseException e) {
+            log.warn("Invalid XML in configuration {}: {}", configurationPath, e.getMessage());
+            throw new ConfigurationNotFoundException("Configuration XML is invalid: " + configurationPath, e);
+        } catch (Exception e) {
+            log.error("Unexpected error retrieving adapter element: {}", e.getMessage(), e);
+            throw new AdapterNotFoundException("Error retrieving adapter element: " + adapterName, e);
+        }
     }
 
     public Project openProjectFromDisk(String path) throws IOException, ProjectNotFoundException {

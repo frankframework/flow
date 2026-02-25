@@ -26,6 +26,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -74,6 +75,16 @@ public class ProjectController {
         } else {
             return fileTreeService.getConfigurationsDirectoryTree(name);
         }
+    }
+
+    @GetMapping(value = "/{adapterName}", params = "configurationPath")
+    public AdapterElement getAdapterElement(
+            @PathVariable String adapterName,
+            @RequestParam String configurationPath) throws IOException {
+
+        // Call your service to fetch the adapter element based on adapterName and
+        // configurationPath
+        return projectService.getAdapterElement(adapterName, configurationPath);
     }
 
     @GetMapping("/{projectName}")
@@ -176,8 +187,8 @@ public class ProjectController {
             @PathVariable String projectName, @RequestBody AdapterUpdateDTO dto)
             throws AdapterNotFoundException, ConfigurationNotFoundException, IOException {
         Path configPath = Paths.get(dto.configurationPath());
-        boolean updated =
-                fileTreeService.updateAdapterFromFile(projectName, configPath, dto.adapterName(), dto.adapterXml());
+        boolean updated = fileTreeService.updateAdapterFromFile(projectName, configPath, dto.adapterName(),
+                dto.adapterXml());
         return updated ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
     }
 
@@ -249,8 +260,7 @@ public class ProjectController {
             log.info("Could not determine if project is a git repository: " + e.getMessage());
         }
 
-        boolean hasStoredToken =
-                project.getGitToken() != null && !project.getGitToken().isBlank();
+        boolean hasStoredToken = project.getGitToken() != null && !project.getGitToken().isBlank();
 
         return new ProjectDTO(
                 project.getName(),

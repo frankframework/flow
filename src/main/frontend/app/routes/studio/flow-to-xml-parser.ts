@@ -25,7 +25,7 @@ function escapeXml(string_: string): string {
   return string_.replaceAll('&', '&amp;').replaceAll('"', '&quot;')
 }
 
-export function exportFlowToXml(json: ReactFlowJson, adaptername: string): string {
+export function exportFlowToXml(json: ReactFlowJson, configurationPath: string, adapterName: string): string {
   const { nodes, edges } = json
   const validNodes = nodes.filter((node) => hasDataProperty(node))
   const nodeMap = new Map(validNodes.map((n) => [n.id, n]))
