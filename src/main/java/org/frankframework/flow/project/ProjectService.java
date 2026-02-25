@@ -358,9 +358,29 @@ public class ProjectService {
         }
     }
 
-    public Project addConfiguration(String projectName, String configurationName) throws ProjectNotFoundException {
+    public Project addConfiguration(String projectName, String configurationName)
+            throws ProjectNotFoundException, IOException {
         Project project = getProject(projectName);
-        Configuration configuration = new Configuration(configurationName);
+
+        Path absProjectPath = fileSystemStorage.toAbsolutePath(project.getRootPath());
+        Path configDir = absProjectPath.resolve(CONFIGURATIONS_DIR).normalize();
+        Files.createDirectories(configDir);
+
+        Path filePath = configDir.resolve(configurationName).normalize();
+        if (!filePath.startsWith(configDir)) {
+            throw new SecurityException("Invalid configuration name: " + configurationName);
+        }
+
+        String defaultXml = new String(
+                new ClassPathResource("templates/default-configuration.xml")
+                        .getInputStream()
+                        .readAllBytes(),
+                StandardCharsets.UTF_8);
+
+        fileSystemStorage.writeFile(filePath.toString(), defaultXml);
+
+        Configuration configuration = new Configuration(filePath.toString());
+        configuration.setXmlContent(defaultXml);
         project.addConfiguration(configuration);
         return project;
     }

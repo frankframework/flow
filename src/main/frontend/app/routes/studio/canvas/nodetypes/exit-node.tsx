@@ -3,7 +3,7 @@ import { ResizeIcon } from '~/routes/studio/canvas/nodetypes/frank-node'
 import { FlowConfig } from '~/routes/studio/canvas/flow.config'
 import useNodeContextStore from '~/stores/node-context-store'
 import { useNodeContextMenu } from '~/routes/studio/canvas/flow'
-import { useSettingsStore } from '~/routes/settings/settings-store'
+import { useSettingsStore } from '~/stores/settings-store'
 import { useFrankDoc } from '~/providers/frankdoc-provider'
 import type { Attribute } from '@frankframework/ff-doc'
 

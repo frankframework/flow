@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import ArrowDownIcon from 'icons/solar/Alt Arrow Down.svg?react'
 import ArrowRightIcon from 'icons/solar/Alt Arrow Right.svg?react'
-import { useSettingsStore } from '~/routes/settings/settings-store'
+import { useSettingsStore } from '~/stores/settings-store'
 import useNodeContextStore from '~/stores/node-context-store'
 import type { ElementDetails } from '@frankframework/ff-doc'
 import { getElementTypeFromName } from '../node-translator-module'
