@@ -41,7 +41,8 @@ public class XmlAdapterUtils {
      * Converts a DOM Document to a formatted XML string.
      */
     public static String convertDocumentToString(Document doc) throws Exception {
-        Transformer transformer = XmlSecurityUtils.createSecureTransformerFactory().newTransformer();
+        Transformer transformer =
+                XmlSecurityUtils.createSecureTransformerFactory().newTransformer();
 
         transformer.setOutputProperty(OutputKeys.INDENT, "yes");
         transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
@@ -83,8 +84,7 @@ public class XmlAdapterUtils {
             String originalTag = element.getTagName();
             String className = element.getAttribute("className");
 
-            boolean startsWithLowercase = !originalTag.isEmpty() &&
-                    Character.isLowerCase(originalTag.charAt(0));
+            boolean startsWithLowercase = !originalTag.isEmpty() && Character.isLowerCase(originalTag.charAt(0));
 
             String newTagName = null;
 
@@ -114,7 +114,6 @@ public class XmlAdapterUtils {
     private static String transformByTag(String tagName, String baseName) {
 
         switch (tagName) {
-
             case "pipe":
                 return baseName;
 
@@ -177,8 +176,7 @@ public class XmlAdapterUtils {
     }
 
     private static String capitalize(String value) {
-        if (value == null || value.isEmpty())
-            return value;
+        if (value == null || value.isEmpty()) return value;
         return value.substring(0, 1).toUpperCase() + value.substring(1);
     }
 

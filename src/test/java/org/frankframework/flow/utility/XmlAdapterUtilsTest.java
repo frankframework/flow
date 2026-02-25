@@ -72,7 +72,8 @@ class XmlAdapterUtilsTest {
 
     @Test
     void normalizeFrankElementsShouldTransformMessageLog() throws Exception {
-        String xml = "<messageLog className=\"org.frankframework.jdbc.JdbcTransactionalStorage\" slotId=\"ApiListenerDuplicateCheck\" />";
+        String xml =
+                "<messageLog className=\"org.frankframework.jdbc.JdbcTransactionalStorage\" slotId=\"ApiListenerDuplicateCheck\" />";
         String result = XmlAdapterUtils.normalizeFrankElements(xml);
 
         Document doc = parseXml(result);
