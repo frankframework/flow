@@ -29,3 +29,64 @@ export function cloneWithRemappedIds<T>(value: T, idMap: Map<string, string>, ge
 
   return value
 }
+
+/**  Converts the tagname of a non capitalized element that has a classname attribute to the last part of said classname, e.g.:
+ * <pipe name="uploadFiles" className="org.frankframework.pipes.ForEachChildElementPipe" />
+ * Becomes <ForEachChildElementPipe name="uploadFiles" />
+ */
+export function translateElementFromOldToNewFormat(element: Element): { subtype: string; usedClassName: boolean } {
+  const tagName = element.tagName
+  const className = element.getAttribute('className')
+  const isLegacyTag = tagName[0] === tagName[0].toLowerCase()
+
+  if (!isLegacyTag || !className) {
+    return {
+      subtype: capitalize(tagName),
+      usedClassName: false,
+    }
+  }
+
+  const baseName = className.split('.').at(-1)!.trim()
+
+  return {
+    subtype: transformByTag(tagName, baseName),
+    usedClassName: true,
+  }
+}
+
+function transformByTag(tagName: string, baseName: string): string {
+  // pipe: use basename as-is
+  if (tagName === 'pipe') {
+    return baseName
+  }
+
+  // inputWrapper / outputWrapper
+  if (tagName === 'inputWrapper' || tagName === 'outputWrapper') {
+    const direction = tagName.startsWith('input') ? 'Input' : 'Output'
+
+    // Remove trailing "Pipe" if present
+    const withoutPipe = baseName.endsWith('Pipe') ? baseName.slice(0, -4) : baseName
+
+    // Remove trailing "Wrapper" if present
+    const withoutWrapper = withoutPipe.endsWith('Wrapper') ? withoutPipe.slice(0, -7) : withoutPipe
+
+    return `${withoutWrapper}${direction}Wrapper`
+  }
+
+  // inputValidator / outputValidator
+  if (tagName === 'inputValidator' || tagName === 'outputValidator') {
+    const direction = tagName.startsWith('input') ? 'Input' : 'Output'
+
+    const withoutValidator = baseName.endsWith('Validator') ? baseName.slice(0, -9) : baseName
+
+    return `${withoutValidator}${direction}Validator`
+  }
+
+  // fallback
+  return baseName
+}
+
+function capitalize(value: string): string {
+  if (!value) return value
+  return value.charAt(0).toUpperCase() + value.slice(1)
+}

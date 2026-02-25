@@ -4,6 +4,7 @@ import type { ExitNode } from '~/routes/studio/canvas/nodetypes/exit-node'
 import type { FrankNodeType } from '~/routes/studio/canvas/nodetypes/frank-node'
 import type { ChildNode } from '~/routes/studio/canvas/nodetypes/child-node'
 import { fetchConfiguration } from '~/services/configuration-service'
+import { translateElementFromOldToNewFormat } from '~/utils/flow-utils'
 
 interface IdCounter {
   current: number
@@ -85,7 +86,7 @@ export async function getAdapterListenerType(
   const children = adapterElement.querySelectorAll('*')
   for (const child of children) {
     if (child.tagName.includes('Listener') || child.tagName.includes('listener')) {
-      const { subtype } = resolveSubtype(child)
+      const { subtype } = translateElementFromOldToNewFormat(child)
       return subtype // Return the tag name, e.g., "JavaListener"
     }
   }
@@ -440,6 +441,7 @@ function convertAdapterToFlowNodes(adapter: Element): FlowNode[] {
   const exitNodes: ExitNode[] = []
   const idCounter: IdCounter = { current: 0 }
   const elements = collectPipelineElements(adapter)
+  console.log(elements)
 
   for (const element of elements) {
     if (element.tagName.toLowerCase() === 'exits') {
@@ -482,7 +484,7 @@ function convertAdapterToFlowNodes(adapter: Element): FlowNode[] {
 
 function convertElementToNode(element: Element, idCounter: IdCounter, sourceHandles: SourceHandle[]): FrankNodeType {
   const thisId = (idCounter.current++).toString()
-  const { subtype, usedClassName } = resolveSubtype(element)
+  const { subtype, usedClassName } = translateElementFromOldToNewFormat(element)
 
   // Extract attributes for this element except "name" and "className"
   const attributes: Record<string, string> = {}
@@ -514,7 +516,7 @@ function convertChildren(elements: Element[], idCounter: IdCounter): ChildNode[]
     .filter((child) => child.tagName.toLowerCase() !== 'forward')
     .map((child) => {
       const childId = (idCounter.current++).toString()
-      const { subtype, usedClassName } = resolveSubtype(child)
+      const { subtype, usedClassName } = translateElementFromOldToNewFormat(child)
 
       const childAttributes: Record<string, string> = {}
       for (const attribute of child.attributes) {
@@ -576,30 +578,6 @@ function isFrankNode(node: FlowNode): node is FrankNodeType {
  * <pipe name="uploadFiles" className="org.frankframework.pipes.ForEachChildElementPipe" />
  * Becomes <ForEachChildElementPipe name="uploadFiles" />
  */
-function resolveSubtype(element: Element): { subtype: string; usedClassName: boolean } {
-  const tagName = element.tagName
-  const className = element.getAttribute('className')
-
-  const isLowerCaseTag = tagName === tagName.toLowerCase()
-
-  if (isLowerCaseTag && className) {
-    const parts = className.split('.')
-    return {
-      subtype: parts.at(-1)!.trim(),
-      usedClassName: true,
-    }
-  }
-
-  return {
-    subtype: capitalize(tagName),
-    usedClassName: false,
-  }
-}
-
-function capitalize(value: string): string {
-  if (!value) return value
-  return value.charAt(0).toUpperCase() + value.slice(1)
-}
 
 interface FrankEdge {
   id: string
