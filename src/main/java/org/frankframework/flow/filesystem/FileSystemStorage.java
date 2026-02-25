@@ -29,6 +29,21 @@ public interface FileSystemStorage {
     Path toAbsolutePath(String path) throws IOException;
 
     /**
+     * Creates an empty file at the given path, including parent directories.
+     */
+    Path createFile(String path) throws IOException;
+
+    /**
+     * Deletes a file or directory (recursively if directory).
+     */
+    void delete(String path) throws IOException;
+
+    /**
+     * Renames/moves a file or directory from oldPath to newPath.
+     */
+    Path rename(String oldPath, String newPath) throws IOException;
+
+    /**
      * Strips the workspace root prefix from a path.
      * Local: returns the path unchanged.
      * Cloud: returns the path relative to the user's workspace root.

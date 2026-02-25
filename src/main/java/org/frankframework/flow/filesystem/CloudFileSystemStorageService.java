@@ -122,6 +122,21 @@ public class CloudFileSystemStorageService implements FileSystemStorage {
         return normalized;
     }
 
+    @Override
+    public Path createFile(String path) throws IOException {
+        return FileOperations.createFile(resolveSecurely(path));
+    }
+
+    @Override
+    public void delete(String path) throws IOException {
+        FileOperations.deleteRecursively(resolveSecurely(path));
+    }
+
+    @Override
+    public Path rename(String oldPath, String newPath) throws IOException {
+        return FileOperations.rename(resolveSecurely(oldPath), resolveSecurely(newPath));
+    }
+
     private Path resolveSecurely(String path) throws IOException {
         Path root = getOrCreateUserRoot();
 
