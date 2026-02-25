@@ -19,7 +19,7 @@ export default function ExitNodeComponent(properties: NodeProps<ExitNode>) {
   const minNodeHeight = FlowConfig.EXIT_DEFAULT_HEIGHT
   const showNodeContextMenu = useNodeContextMenu()
   const { elements } = useFrankDoc()
-  const { setNodeId, setAttributes, setIsEditing } = useNodeContextStore()
+  const { setNodeId, setAttributes, setIsEditing, setEditingSubtype } = useNodeContextStore()
   const gradientEnabled = useSettingsStore((state) => state.studio.gradient)
 
   const editNode = () => {
@@ -33,6 +33,7 @@ export default function ExitNodeComponent(properties: NodeProps<ExitNode>) {
     )?.attributes
     setNodeId(+properties.id)
     setAttributes(attributes)
+    setEditingSubtype(properties.data.subtype)
     showNodeContextMenu(true)
     setIsEditing(true)
   }

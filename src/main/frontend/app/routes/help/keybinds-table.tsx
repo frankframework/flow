@@ -50,8 +50,16 @@ export function KeybindsTable() {
       ),
     },
     {
-      action: 'Edit Node',
+      action: 'Edit MessageFormatter',
       keybind: <span className="key">Double-click</span>,
+    },
+    {
+      action: 'Close Edit Panel',
+      keybind: <span className="key">Esc</span>,
+    },
+    {
+      action: 'Close Palette Panel',
+      keybind: <span className="key">Esc</span>,
     },
     {
       action: 'Add Sticky Note',

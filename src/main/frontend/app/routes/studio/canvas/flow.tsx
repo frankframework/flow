@@ -58,13 +58,14 @@ const SAVED_DISPLAY_DURATION = 2000
 
 function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b: boolean) => void }>) {
   const [loading, setLoading] = useState(false)
-  const { isEditing, setIsEditing, setIsNewNode, setParentId, setDraggedName } = useNodeContextStore(
+  const { setIsEditing, setIsNewNode, setParentId, setDraggedName, setEditingSubtype } = useNodeContextStore(
     useShallow((s) => ({
       isEditing: s.isEditing,
       setIsEditing: s.setIsEditing,
       setIsNewNode: s.setIsNewNode,
       setParentId: s.setParentId,
       setDraggedName: s.setDraggedName,
+      setEditingSubtype: s.setEditingSubtype,
     })),
   )
   const [showModal, setShowModal] = useState(false)
@@ -395,7 +396,10 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
   }, [])
 
   useEffect(() => {
+    // TODO rework this in the overarching shortcut event system
     const handleKeyDown = (event: KeyboardEvent) => {
+      closeEditNodeContextOnEscape(event)
+
       const tagName = (event.target as HTMLElement).tagName
       const isTyping = ['INPUT', 'TEXTAREA'].includes(tagName) || (event.target as HTMLElement).isContentEditable
 
@@ -442,7 +446,15 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
 
     globalThis.addEventListener('keydown', handleKeyDown)
     return () => globalThis.removeEventListener('keydown', handleKeyDown)
-  }, [copySelection, pasteSelection, handleGrouping])
+  }, [copySelection, pasteSelection, handleGrouping, showNodeContextMenu, setIsEditing])
+
+  function closeEditNodeContextOnEscape(event: KeyboardEvent): void {
+    if (event.key === 'Escape') {
+      showNodeContextMenu(false)
+      setIsEditing(false)
+      return
+    }
+  }
 
   const groupNodes = (nodesToGroup: FlowNode[], currentNodes: FlowNode[]) => {
     const minX = Math.min(...nodesToGroup.map((node) => node.position.x))
@@ -508,6 +520,7 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
   ) {
     showNodeContextMenu(true)
     setIsNewNode(true)
+    setEditingSubtype(elementName)
     setIsEditing(true)
 
     const flowStore = useFlowStore.getState()
@@ -715,7 +728,6 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
           <div className="border-border h-10 w-10 animate-spin rounded-full border-t-2 border-b-2"></div>
         </div>
       )}
-      {!isEditing || <div className="absolute inset-0 z-50 cursor-not-allowed bg-black/20" />}
 
       <ReactFlow
         fitView

@@ -46,8 +46,16 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
   const [canDropDraggedElement, setCanDropDraggedElement] = useState(false)
   const showNodeContextMenu = useNodeContextMenu()
   const { elements, filters } = useFrankDoc()
-  const { setNodeId, setIsNewNode, setAttributes, setParentId, setIsEditing, setDraggedName, draggedName } =
-    useNodeContextStore()
+  const {
+    setNodeId,
+    setIsNewNode,
+    setAttributes,
+    setParentId,
+    setIsEditing,
+    setDraggedName,
+    draggedName,
+    setEditingSubtype,
+  } = useNodeContextStore()
   const gradientEnabled = useSettingsStore((state) => state.studio.gradient)
   // Store the associated Frank element
   const frankElement = useMemo(() => {
@@ -159,6 +167,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
     const attributes = frankElement.attributes
     setNodeId(+properties.id)
     setAttributes(attributes)
+    setEditingSubtype(properties.data.subtype)
     showNodeContextMenu(true)
     setIsEditing(true)
   }
@@ -173,6 +182,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
     setParentId(properties.id) // The FrankNode stays the parent for editing purposes
     setNodeId(+childId) // Correctly set the clicked child id
     setAttributes(attributes)
+    setEditingSubtype(child.subtype)
     showNodeContextMenu(true)
     setIsEditing(true)
   }
@@ -250,6 +260,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
       }
 
       setIsNewNode(true)
+      setEditingSubtype(dropped.name)
       showNodeContextMenu(true)
       setIsEditing(true)
       setParentId(properties.id)
@@ -269,6 +280,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
       setDraggedName,
       canAcceptChild,
       setIsNewNode,
+      setEditingSubtype,
       showNodeContextMenu,
       setIsEditing,
       setParentId,

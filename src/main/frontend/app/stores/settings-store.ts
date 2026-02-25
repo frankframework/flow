@@ -116,6 +116,21 @@ export const useSettingsStore = create<SettingsState>()(
     }),
     {
       name: 'application-settings',
+      merge: (persistedState, currentState) => {
+        const persisted = (persistedState ?? {}) as Partial<SettingsState>
+        return {
+          ...currentState,
+          ...persisted,
+          general: {
+            ...currentState.general,
+            ...persisted.general,
+            autoSave: {
+              ...currentState.general.autoSave,
+              ...persisted.general?.autoSave,
+            },
+          },
+        }
+      },
     },
   ),
 )
