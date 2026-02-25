@@ -55,7 +55,7 @@ export default function Studio() {
             <div className="border-b-border bg-background flex h-12 items-center justify-between border-b p-4">
               <span>Path: {activeTabPath}</span>
               <Button onClick={handleOpenInEditor} className="flex items-center gap-1.5" title="Open in Editor">
-                <CodeIcon className="fill-foreground h-4 w-4" />
+                <CodeIcon className="h-4 w-4 fill-current" />
                 Open in Editor
               </Button>
             </div>

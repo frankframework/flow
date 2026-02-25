@@ -1,8 +1,8 @@
-import type { ElementDetails } from '@frankframework/ff-doc'
 import { useMemo, useState, type ChangeEvent } from 'react'
 import useFlowStore from '~/stores/flow-store'
 import useNodeContextStore from '~/stores/node-context-store'
 import { useFrankDoc } from '~/providers/frankdoc-provider'
+import Button from '../inputs/button'
 
 interface CreateNodeModalProperties {
   isOpen: boolean
@@ -87,38 +87,37 @@ function CreateNodeModal({
           placeholder="Search elements..."
           value={search}
           onChange={(event) => handleOnChange(event)}
-          className="border-border mb-3 w-full rounded border px-3 py-2 focus:ring focus:ring-blue-200 focus:outline-none"
+          className="border-border focus:ring-foreground-active mb-3 w-full rounded border px-3 py-2 focus:ring focus:outline-none"
         />
-        <div className="relative">
-          <select
-            value={selectedElement}
-            onChange={(event) => setSelectedElement(event.target.value)}
-            className="border-border bg-background w-full rounded border px-3 py-2 focus:ring focus:ring-blue-200 focus:outline-none"
-            size={6}
-          >
+        <div className="border-border bg-background mb-2 w-full rounded border">
+          <ul className="max-h-[150px] overflow-y-auto">
             {filteredElements.length > 0 ? (
-              filteredElements.map((element: ElementDetails) => (
-                <option key={element.name} value={element.name}>
-                  {element.name}
-                </option>
-              ))
+              filteredElements.map((element) => {
+                const isSelected = selectedElement === element.name
+
+                return (
+                  <li
+                    key={element.name}
+                    onClick={() => setSelectedElement(element.name)}
+                    onDoubleClick={handleCreateNode}
+                    className={`cursor-pointer px-3 py-2 ${
+                      isSelected ? 'bg-foreground-active text-background' : 'hover:bg-foreground-active/10'
+                    }`}
+                  >
+                    {element.name}
+                  </li>
+                )
+              })
             ) : (
-              <option disabled>No results found</option>
+              <li className="text-muted-foreground px-3 py-2">No results found</li>
             )}
-          </select>
+          </ul>
         </div>
-        <button
-          onClick={onClose}
-          className="bg-background border-border hover:bg-background absolute top-3 right-3 cursor-pointer rounded border px-3 py-1"
-        >
+
+        <Button onClick={onClose} className="absolute top-3 right-3">
           Close
-        </button>
-        <button
-          onClick={handleCreateNode}
-          className="bg-foreground-active/75 hover:bg-foreground-active my-2 cursor-pointer rounded px-3 py-1"
-        >
-          Create Node
-        </button>
+        </Button>
+        <Button onClick={handleCreateNode}>Create Node</Button>
       </div>
     </div>
   )

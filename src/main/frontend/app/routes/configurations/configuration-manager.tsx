@@ -3,10 +3,11 @@ import ConfigurationTile from './configuration-tile'
 import ArrowLeftIcon from '/icons/solar/Alt Arrow Left.svg?react'
 import { useNavigate } from 'react-router'
 import AddConfigurationTile from './add-configuration-tile'
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import AddConfigurationModal from './add-configuration-modal'
-import { useProjectTree } from '~/hooks/use-project-tree'
 import LoadingSpinner from '~/components/loading-spinner'
+import { fetchProjectTree } from '~/services/project-service'
+import Button from '~/components/inputs/button'
 
 export interface FileTreeNode {
   name: string
@@ -56,8 +57,39 @@ export default function ConfigurationManager() {
   const currentProject = useProjectStore((state) => state.project)
   const navigate = useNavigate()
   const [showModal, setShowModal] = useState(false)
+  const [tree, setTree] = useState<FileTreeNode | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
 
-  const { data: tree, isLoading } = useProjectTree(currentProject?.name)
+  const loadTree = useCallback(
+    (signal?: AbortSignal) => {
+      if (!currentProject?.name) return
+      setIsLoading(true)
+      fetchProjectTree(currentProject.name, signal)
+        .then((data) => {
+          if (!signal?.aborted) {
+            setTree(data)
+            setIsLoading(false)
+          }
+        })
+        .catch(() => {
+          if (!signal?.aborted) {
+            setIsLoading(false)
+          }
+        })
+    },
+    [currentProject?.name],
+  )
+
+  useEffect(() => {
+    const controller = new AbortController()
+    loadTree(controller.signal)
+    return () => controller.abort()
+  }, [loadTree])
+
+  const handleConfigAdded = useCallback(() => {
+    setShowModal(false)
+    loadTree()
+  }, [loadTree])
 
   const configFiles = (() => {
     if (!tree) return []
@@ -77,12 +109,9 @@ export default function ConfigurationManager() {
     return (
       <div className="bg-backdrop flex h-full w-full flex-col items-center justify-center p-6">
         <div className="text-muted-foreground mb-4">No project selected.</div>
-        <button
-          onClick={() => navigate('/')}
-          className="bg-background border-border hover:text-foreground-active rounded border px-4 py-2"
-        >
+        <Button onClick={() => navigate('/')} className="bg-background">
           Return to Projects
-        </button>
+        </Button>
       </div>
     )
   }
@@ -114,7 +143,12 @@ export default function ConfigurationManager() {
           <AddConfigurationTile onClick={() => setShowModal(true)} />
         </div>
       </div>
-      <AddConfigurationModal isOpen={showModal} onClose={() => setShowModal(false)} currentProject={currentProject} />
+      <AddConfigurationModal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        onSuccess={handleConfigAdded}
+        currentProject={currentProject}
+      />
     </div>
   )
 }

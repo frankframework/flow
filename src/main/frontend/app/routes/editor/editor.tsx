@@ -22,7 +22,7 @@ import DiffTabView from '~/components/git/diff-tab-view'
 import clsx from 'clsx'
 import { refreshOpenDiffs } from '~/services/git-service'
 import { findAdaptersInXml, lineToOffset, findAdapterAtOffset, normalizeFrankElements } from './xml-utils'
-import useAutosaveStore from '~/stores/autosave-store'
+import { useSettingsStore } from '~/stores/settings-store'
 
 type LeftTab = 'files' | 'git'
 type SaveStatus = 'idle' | 'saving' | 'saved'
@@ -91,8 +91,8 @@ export default function CodeEditor() {
     }
   }, [performSave])
 
-  const autosaveEnabled = useAutosaveStore((s) => s.enabled)
-  const autosaveDelay = useAutosaveStore((s) => s.delayMs)
+  const autosaveEnabled = useSettingsStore((s) => s.general.autoSave.enabled)
+  const autosaveDelay = useSettingsStore((s) => s.general.autoSave.delayMs)
 
   const scheduleSave = useCallback(() => {
     if (!autosaveEnabled) return
@@ -421,7 +421,7 @@ export default function CodeEditor() {
                     {saveStatus === 'saved' && 'Saved'}
                   </span>
                   <Button onClick={handleOpenInStudio} className="flex items-center gap-1.5" title="Open in Studio">
-                    <RulerCrossPenIcon className="fill-foreground h-4 w-4" />
+                    <RulerCrossPenIcon className="h-4 w-4 fill-current" />
                     Open in Studio
                   </Button>
                 </div>
