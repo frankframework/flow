@@ -2,16 +2,19 @@ import { useState } from 'react'
 import { useProjectStore } from '~/stores/project-store'
 import { createConfiguration } from '~/services/configuration-service'
 import type { Project } from '~/types/project.types'
+import Button from '~/components/inputs/button'
 
 interface AddConfigurationModalProperties {
   isOpen: boolean
   onClose: () => void
+  onSuccess?: () => void
   currentProject?: Project
 }
 
 export default function AddConfigurationModal({
   isOpen,
   onClose,
+  onSuccess,
   currentProject,
 }: Readonly<AddConfigurationModalProperties>) {
   const [loading, setLoading] = useState(false)
@@ -39,6 +42,7 @@ export default function AddConfigurationModal({
 
       const updatedProject = await createConfiguration(currentProject.name, configname)
       setProject(updatedProject)
+      onSuccess?.()
       onClose()
     } catch (error_: unknown) {
       setError(error_ instanceof Error ? error_.message : 'Failed to add configuration')
@@ -77,20 +81,13 @@ export default function AddConfigurationModal({
         </div>
 
         <div className="flex gap-2">
-          <button
-            onClick={handleAdd}
-            disabled={loading}
-            className="bg-backdrop hover:bg-background border-border rounded border px-4 py-2 hover:cursor-pointer disabled:opacity-50"
-          >
+          <Button onClick={handleAdd} disabled={loading} className="disabled:opacity-50">
             {loading ? 'Adding...' : `Add ${displayFilename || 'configuration'} to ${currentProject.name}`}
-          </button>
+          </Button>
 
-          <button
-            onClick={onClose}
-            className="bg-background border-border hover:bg-backdrop absolute top-3 right-3 cursor-pointer rounded border px-3 py-1"
-          >
+          <Button onClick={onClose} className="absolute top-3 right-3">
             Close
-          </button>
+          </Button>
         </div>
 
         {error && <p className="mt-4 text-sm text-red-500">{error}</p>}
