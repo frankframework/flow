@@ -39,10 +39,11 @@ public class XmlAdapterUtils {
 
     /**
      * Converts a DOM Node to a formatted XML string.
-     * @throws TransformerException 
+     * @throws TransformerException
      */
     public static String convertNodeToString(Node node) throws TransformerException {
-        Transformer transformer = XmlSecurityUtils.createSecureTransformerFactory().newTransformer();
+        Transformer transformer =
+                XmlSecurityUtils.createSecureTransformerFactory().newTransformer();
 
         transformer.setOutputProperty(OutputKeys.INDENT, "yes");
         transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");

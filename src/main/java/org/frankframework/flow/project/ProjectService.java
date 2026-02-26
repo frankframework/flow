@@ -14,10 +14,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
-
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
-
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
@@ -131,12 +129,9 @@ public class ProjectService {
         return loadProjectAndCache(projectPath.toString());
     }
 
-    public XmlDTO getAdapterElement(
-            String projectName,
-            String configurationPath,
-            String adapterName)
+    public XmlDTO getAdapterElement(String projectName, String configurationPath, String adapterName)
             throws ProjectNotFoundException, ConfigurationNotFoundException, AdapterNotFoundException, IOException,
-            ApiException, SAXException, ParserConfigurationException, TransformerException {
+                    ApiException, SAXException, ParserConfigurationException, TransformerException {
 
         Project project = getProject(projectName);
 
@@ -176,8 +171,8 @@ public class ProjectService {
         try {
             CloneCommand cloneCommand = Git.cloneRepository().setURI(repoUrl).setDirectory(targetDir.toFile());
 
-            CredentialsProvider credentials = GitCredentialHelper.resolveForUrl(repoUrl, token,
-                    fileSystemStorage.isLocalEnvironment());
+            CredentialsProvider credentials =
+                    GitCredentialHelper.resolveForUrl(repoUrl, token, fileSystemStorage.isLocalEnvironment());
             if (credentials != null) {
                 cloneCommand.setCredentialsProvider(credentials);
             }
@@ -279,7 +274,8 @@ public class ProjectService {
                 Stream<Path> paths = Files.walk(projectPath)) {
             paths.filter(Files::isRegularFile).forEach(filePath -> {
                 try {
-                    String entryName = projectPath.relativize(filePath).toString().replace("\\", "/");
+                    String entryName =
+                            projectPath.relativize(filePath).toString().replace("\\", "/");
                     zos.putNextEntry(new ZipEntry(entryName));
                     Files.copy(filePath, zos);
                     zos.closeEntry();

@@ -7,12 +7,9 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
-
 import lombok.extern.slf4j.Slf4j;
-
 import org.frankframework.flow.adapter.AdapterNotFoundException;
 import org.frankframework.flow.adapter.AdapterUpdateDTO;
 import org.frankframework.flow.configuration.Configuration;
@@ -84,11 +81,11 @@ public class ProjectController {
         }
     }
 
-    @GetMapping(value = "/{projectName}/adapters/{adapterName}", params = { "configurationPath" })
+    @GetMapping(
+            value = "/{projectName}/adapters/{adapterName}",
+            params = {"configurationPath"})
     public XmlDTO getAdapterElement(
-            @PathVariable String projectName,
-            @PathVariable String adapterName,
-            @RequestParam String configurationPath)
+            @PathVariable String projectName, @PathVariable String adapterName, @RequestParam String configurationPath)
             throws IOException, ApiException, SAXException, ParserConfigurationException, TransformerException {
 
         return projectService.getAdapterElement(projectName, configurationPath, adapterName);
@@ -182,7 +179,7 @@ public class ProjectController {
             XmlValidator.validateXml(configurationDTO.content());
         }
         try {
-            fileTreeService.updateFileContent(projectName,configurationDTO.filepath(), configurationDTO.content());
+            fileTreeService.updateFileContent(projectName, configurationDTO.filepath(), configurationDTO.content());
             return ResponseEntity.ok().build();
         } catch (IllegalArgumentException e) {
             throw new ConfigurationNotFoundException("Invalid file path: " + configurationDTO.filepath());
@@ -194,8 +191,8 @@ public class ProjectController {
             @PathVariable String projectName, @RequestBody AdapterUpdateDTO dto)
             throws AdapterNotFoundException, ConfigurationNotFoundException, IOException {
         Path configPath = Paths.get(dto.configurationPath());
-        boolean updated = fileTreeService.updateAdapterFromFile(projectName, configPath, dto.adapterName(),
-                dto.adapterXml());
+        boolean updated =
+                fileTreeService.updateAdapterFromFile(projectName, configPath, dto.adapterName(), dto.adapterXml());
         return updated ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
     }
 
@@ -267,7 +264,8 @@ public class ProjectController {
             log.info("Could not determine if project is a git repository: " + e.getMessage());
         }
 
-        boolean hasStoredToken = project.getGitToken() != null && !project.getGitToken().isBlank();
+        boolean hasStoredToken =
+                project.getGitToken() != null && !project.getGitToken().isBlank();
 
         return new ProjectDTO(
                 project.getName(),

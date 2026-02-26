@@ -52,7 +52,8 @@ public class FileTreeService {
         return fileSystemStorage.readFile(filepath);
     }
 
-    public void updateFileContent(String projectName, String filepath, String newContent) throws IOException, ProjectNotFoundException, ConfigurationNotFoundException {
+    public void updateFileContent(String projectName, String filepath, String newContent)
+            throws IOException, ProjectNotFoundException, ConfigurationNotFoundException {
         Path filePath = fileSystemStorage.toAbsolutePath(filepath);
 
         if (!Files.exists(filePath)) {
