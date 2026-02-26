@@ -250,7 +250,7 @@ class ProjectControllerTest {
                     .andExpect(jsonPath("$.httpStatus").value(400))
                     .andExpect(jsonPath("$.messages[0]").value("Malformed XML"));
 
-            verify(fileTreeService, never()).updateFileContent(TEST_PROJECT_NAME, anyString(), anyString());
+            verify(fileTreeService, never()).updateFileContent(eq(TEST_PROJECT_NAME), anyString(), anyString());
         }
     }
 
