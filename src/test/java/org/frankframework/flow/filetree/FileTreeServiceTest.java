@@ -833,7 +833,8 @@ public class FileTreeServiceTest {
 
         IllegalArgumentException ex = assertThrows(
                 IllegalArgumentException.class,
-                () -> fileTreeService.updateFileContent(dir.toAbsolutePath().toString(), "new content"));
+                () -> fileTreeService.updateFileContent(
+                        TEST_PROJECT_NAME, dir.toAbsolutePath().toString(), "new content"));
         assertTrue(ex.getMessage().contains("Cannot update a directory"));
     }
 
