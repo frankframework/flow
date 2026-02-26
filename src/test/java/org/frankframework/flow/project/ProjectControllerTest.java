@@ -1,5 +1,7 @@
 package org.frankframework.flow.project;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -57,6 +59,8 @@ class ProjectControllerTest {
 
     @MockitoBean
     private org.frankframework.flow.security.UserWorkspaceContext userWorkspaceContext;
+
+    private static final String TEST_PROJECT_NAME = "FrankFlowTestProject";
 
     @BeforeEach
     void setUp() throws IOException {
@@ -179,7 +183,7 @@ class ProjectControllerTest {
         String filepath = "config1.xml";
         String xmlContent = "<xml>updated</xml>";
 
-        doNothing().when(fileTreeService).updateFileContent(filepath, xmlContent);
+        doNothing().when(fileTreeService).updateFileContent("MyProject", filepath, xmlContent);
 
         mockMvc.perform(
                         put("/api/projects/MyProject/configuration")
@@ -193,7 +197,7 @@ class ProjectControllerTest {
                                 """))
                 .andExpect(status().isOk());
 
-        verify(fileTreeService).updateFileContent(filepath, xmlContent);
+        verify(fileTreeService).updateFileContent(TEST_PROJECT_NAME, filepath, xmlContent);
     }
 
     @Test
@@ -203,7 +207,7 @@ class ProjectControllerTest {
 
         doThrow(new IllegalArgumentException("Invalid path"))
                 .when(fileTreeService)
-                .updateFileContent(filepath, xmlContent);
+                .updateFileContent(TEST_PROJECT_NAME, filepath, xmlContent);
 
         mockMvc.perform(
                         put("/api/projects/MyProject/configuration")
@@ -219,7 +223,7 @@ class ProjectControllerTest {
                 .andExpect(jsonPath("$.httpStatus").value(404))
                 .andExpect(jsonPath("$.messages[0]").value("Invalid file path: " + filepath));
 
-        verify(fileTreeService).updateFileContent(filepath, xmlContent);
+        verify(fileTreeService).updateFileContent(TEST_PROJECT_NAME, filepath, xmlContent);
     }
 
     @Test
@@ -246,7 +250,7 @@ class ProjectControllerTest {
                     .andExpect(jsonPath("$.httpStatus").value(400))
                     .andExpect(jsonPath("$.messages[0]").value("Malformed XML"));
 
-            verify(fileTreeService, never()).updateFileContent(anyString(), anyString());
+            verify(fileTreeService, never()).updateFileContent(TEST_PROJECT_NAME, anyString(), anyString());
         }
     }
 
