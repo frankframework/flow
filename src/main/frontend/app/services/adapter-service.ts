@@ -15,3 +15,12 @@ export async function saveAdapter(
     }),
   })
 }
+
+export async function getAdapter(projectName: string, adapterName: string, configPath: string): Promise<void> {
+  await apiFetch<void>(
+    `/projects/${encodeURIComponent(projectName)}/adapters/${encodeURIComponent(adapterName)}?configurationPath=${encodeURIComponent(configPath)}`,
+    {
+      method: 'GET',
+    },
+  )
+}

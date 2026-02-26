@@ -1,6 +1,7 @@
 import type { FlowNode } from '~/routes/studio/canvas/flow'
 import type { Edge } from '@xyflow/react'
 import type { ChildNode } from './canvas/nodetypes/child-node'
+import { getAdapter } from '~/services/adapter-service'
 
 interface ReactFlowJson {
   nodes: FlowNode[]
@@ -25,7 +26,14 @@ function escapeXml(string_: string): string {
   return string_.replaceAll('&', '&amp;').replaceAll('"', '&quot;')
 }
 
-export function exportFlowToXml(json: ReactFlowJson, configurationPath: string, adapterName: string): string {
+export async function exportFlowToXml(
+  json: ReactFlowJson,
+  projectName: string,
+  configurationPath: string,
+  adapterName: string,
+): Promise<string> {
+  // const adapter = await getAdapter(projectName, adapterName, configurationPath)
+  // console.log(adapter)
   const { nodes, edges } = json
   const validNodes = nodes.filter((node) => hasDataProperty(node))
   const nodeMap = new Map(validNodes.map((n) => [n.id, n]))
@@ -69,7 +77,7 @@ export function exportFlowToXml(json: ReactFlowJson, configurationPath: string, 
   const exitsXml = exitNodes.length > 0 ? `      <Exits>\n${generateExitsXml(exitNodes)}\n      </Exits>` : ''
 
   return `
-  <Adapter name="${adaptername}" description="Auto-generated from React Flow JSON">
+  <Adapter name="NewAdapter" description="Auto-generated from React Flow JSON">
 ${receivers.join('\n')}
     <Pipeline>
 ${exitsXml}

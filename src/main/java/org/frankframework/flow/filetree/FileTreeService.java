@@ -272,7 +272,7 @@ public class FileTreeService {
                 throw new AdapterNotFoundException("Adapter not found: " + adapterName);
             }
 
-            String updatedXml = XmlAdapterUtils.convertDocumentToString(configDoc);
+            String updatedXml = XmlAdapterUtils.convertNodeToString(configDoc);
 
             Files.writeString(absConfigFile, updatedXml, StandardCharsets.UTF_8, StandardOpenOption.TRUNCATE_EXISTING);
 

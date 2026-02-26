@@ -7,12 +7,19 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.TransformerException;
+
 import lombok.extern.slf4j.Slf4j;
+
+import org.frankframework.flow.adapter.AdapterElementDTO;
 import org.frankframework.flow.adapter.AdapterNotFoundException;
 import org.frankframework.flow.adapter.AdapterUpdateDTO;
 import org.frankframework.flow.configuration.Configuration;
 import org.frankframework.flow.configuration.ConfigurationDTO;
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
+import org.frankframework.flow.exception.ApiException;
 import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.frankframework.flow.filetree.FileCreateDTO;
 import org.frankframework.flow.filetree.FileRenameDTO;
@@ -26,7 +33,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -36,6 +42,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import org.xml.sax.SAXException;
 
 @Slf4j
 @RestController
@@ -77,14 +84,13 @@ public class ProjectController {
         }
     }
 
-    @GetMapping(value = "/{adapterName}", params = "configurationPath")
-    public AdapterElement getAdapterElement(
-            @PathVariable String adapterName,
-            @RequestParam String configurationPath) throws IOException {
+    @GetMapping(value = "/{projectName}/adapters", params = { "configurationPath", "adapterName" })
+    public AdapterElementDTO getAdapterElement(
+            @PathVariable String projectName,
+            @RequestParam String configurationPath,
+            @RequestParam String adapterName) throws IOException, ApiException, SAXException, ParserConfigurationException, TransformerException {
 
-        // Call your service to fetch the adapter element based on adapterName and
-        // configurationPath
-        return projectService.getAdapterElement(adapterName, configurationPath);
+        return projectService.getAdapterElement(projectName, configurationPath, adapterName);
     }
 
     @GetMapping("/{projectName}")
