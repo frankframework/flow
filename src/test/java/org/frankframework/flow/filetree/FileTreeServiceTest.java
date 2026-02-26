@@ -135,7 +135,8 @@ public class FileTreeServiceTest {
         Files.writeString(file, "old content");
 
         String newContent = "new content";
-        fileTreeService.updateFileContent(TEST_PROJECT_NAME, file.toAbsolutePath().toString(), newContent);
+        fileTreeService.updateFileContent(
+                TEST_PROJECT_NAME, file.toAbsolutePath().toString(), newContent);
 
         assertEquals(newContent, Files.readString(file));
     }
@@ -146,7 +147,9 @@ public class FileTreeServiceTest {
         stubToAbsolutePath();
 
         String path = tempProjectRoot.resolve("missing-file.xml").toString();
-        assertThrows(IllegalArgumentException.class, () -> fileTreeService.updateFileContent(TEST_PROJECT_NAME, path, "data"));
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> fileTreeService.updateFileContent(TEST_PROJECT_NAME, path, "data"));
     }
 
     @Test
