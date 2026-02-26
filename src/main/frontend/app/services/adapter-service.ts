@@ -1,3 +1,4 @@
+import type { XmlResponse } from '~/types/project.types'
 import { apiFetch } from '~/utils/api'
 
 export async function saveAdapter(
@@ -16,8 +17,8 @@ export async function saveAdapter(
   })
 }
 
-export async function getAdapter(projectName: string, adapterName: string, configPath: string): Promise<void> {
-  await apiFetch<void>(
+export async function getAdapter(projectName: string, adapterName: string, configPath: string): Promise<XmlResponse> {
+  return apiFetch<XmlResponse>(
     `/projects/${encodeURIComponent(projectName)}/adapters/${encodeURIComponent(adapterName)}?configurationPath=${encodeURIComponent(configPath)}`,
     {
       method: 'GET',

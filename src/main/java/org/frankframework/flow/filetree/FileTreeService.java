@@ -52,7 +52,7 @@ public class FileTreeService {
         return fileSystemStorage.readFile(filepath);
     }
 
-    public void updateFileContent(String filepath, String newContent) throws IOException {
+    public void updateFileContent(String projectName, String filepath, String newContent) throws IOException, ProjectNotFoundException, ConfigurationNotFoundException {
         Path filePath = fileSystemStorage.toAbsolutePath(filepath);
 
         if (!Files.exists(filePath)) {
@@ -64,6 +64,7 @@ public class FileTreeService {
         }
 
         fileSystemStorage.writeFile(filepath, newContent);
+        projectService.updateConfigurationXml(projectName, filepath, newContent);
         invalidateTreeCache();
     }
 
@@ -279,7 +280,7 @@ public class FileTreeService {
             invalidateTreeCache(projectName);
             return true;
 
-        } catch (AdapterNotFoundException | ConfigurationNotFoundException e) {
+        } catch (AdapterNotFoundException e) {
             throw e;
         } catch (Exception e) {
             System.err.println("Error updating adapter in file: " + e.getMessage());

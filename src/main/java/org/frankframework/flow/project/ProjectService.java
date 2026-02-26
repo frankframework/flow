@@ -23,7 +23,6 @@ import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.transport.CredentialsProvider;
-import org.frankframework.flow.adapter.AdapterElementDTO;
 import org.frankframework.flow.adapter.AdapterNotFoundException;
 import org.frankframework.flow.configuration.Configuration;
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
@@ -37,9 +36,9 @@ import org.frankframework.flow.recentproject.RecentProject;
 import org.frankframework.flow.recentproject.RecentProjectsService;
 import org.frankframework.flow.utility.XmlAdapterUtils;
 import org.frankframework.flow.utility.XmlSecurityUtils;
+import org.frankframework.flow.xml.XmlDTO;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.w3c.dom.Document;
@@ -132,7 +131,7 @@ public class ProjectService {
         return loadProjectAndCache(projectPath.toString());
     }
 
-    public AdapterElementDTO getAdapterElement(
+    public XmlDTO getAdapterElement(
             String projectName,
             String configurationPath,
             String adapterName)
@@ -156,7 +155,7 @@ public class ProjectService {
         }
 
         String adapterXml = XmlAdapterUtils.convertNodeToString(adapterNode);
-        return new AdapterElementDTO(adapterXml);
+        return new XmlDTO(adapterXml);
     }
 
     public Project openProjectFromDisk(String path) throws IOException, ProjectNotFoundException {
@@ -316,7 +315,6 @@ public class ProjectService {
 
     public boolean updateConfigurationXml(String projectName, String filepath, String xmlContent)
             throws ProjectNotFoundException, ConfigurationNotFoundException, IOException {
-
         Project project = getProject(projectName);
 
         Configuration targetConfig = project.getConfigurations().stream()
@@ -325,7 +323,6 @@ public class ProjectService {
                 .orElseThrow(() -> new ConfigurationNotFoundException(
                         String.format("Configuration with filepath: %s not found", filepath)));
 
-        fileSystemStorage.writeFile(filepath, xmlContent);
         targetConfig.setXmlContent(xmlContent);
         return true;
     }
@@ -381,7 +378,7 @@ public class ProjectService {
             String xmlOutput = XmlAdapterUtils.convertNodeToString(configDoc);
             config.setXmlContent(xmlOutput);
             return true;
-        } catch (AdapterNotFoundException | ConfigurationNotFoundException | ProjectNotFoundException e) {
+        } catch (AdapterNotFoundException e) {
             throw e;
         } catch (SAXParseException e) {
             log.warn("Invalid XML for adapter {}: {}", adapterName, e.getMessage());

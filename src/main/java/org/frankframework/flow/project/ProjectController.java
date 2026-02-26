@@ -13,7 +13,6 @@ import javax.xml.transform.TransformerException;
 
 import lombok.extern.slf4j.Slf4j;
 
-import org.frankframework.flow.adapter.AdapterElementDTO;
 import org.frankframework.flow.adapter.AdapterNotFoundException;
 import org.frankframework.flow.adapter.AdapterUpdateDTO;
 import org.frankframework.flow.configuration.Configuration;
@@ -28,6 +27,7 @@ import org.frankframework.flow.filetree.FileTreeService;
 import org.frankframework.flow.projectsettings.InvalidFilterTypeException;
 import org.frankframework.flow.recentproject.RecentProjectsService;
 import org.frankframework.flow.utility.XmlValidator;
+import org.frankframework.flow.xml.XmlDTO;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -84,11 +84,12 @@ public class ProjectController {
         }
     }
 
-    @GetMapping(value = "/{projectName}/adapters", params = { "configurationPath", "adapterName" })
-    public AdapterElementDTO getAdapterElement(
+    @GetMapping(value = "/{projectName}/adapters/{adapterName}", params = { "configurationPath" })
+    public XmlDTO getAdapterElement(
             @PathVariable String projectName,
-            @RequestParam String configurationPath,
-            @RequestParam String adapterName) throws IOException, ApiException, SAXException, ParserConfigurationException, TransformerException {
+            @PathVariable String adapterName,
+            @RequestParam String configurationPath)
+            throws IOException, ApiException, SAXException, ParserConfigurationException, TransformerException {
 
         return projectService.getAdapterElement(projectName, configurationPath, adapterName);
     }
@@ -175,13 +176,13 @@ public class ProjectController {
     @PutMapping("/{projectName}/configuration")
     public ResponseEntity<Void> updateConfiguration(
             @PathVariable String projectName, @RequestBody ConfigurationDTO configurationDTO)
-            throws ConfigurationNotFoundException, InvalidXmlContentException, IOException {
+            throws ConfigurationNotFoundException, InvalidXmlContentException, IOException, ProjectNotFoundException {
 
         if (configurationDTO.filepath().toLowerCase().endsWith(".xml")) {
             XmlValidator.validateXml(configurationDTO.content());
         }
         try {
-            fileTreeService.updateFileContent(configurationDTO.filepath(), configurationDTO.content());
+            fileTreeService.updateFileContent(projectName,configurationDTO.filepath(), configurationDTO.content());
             return ResponseEntity.ok().build();
         } catch (IllegalArgumentException e) {
             throw new ConfigurationNotFoundException("Invalid file path: " + configurationDTO.filepath());
