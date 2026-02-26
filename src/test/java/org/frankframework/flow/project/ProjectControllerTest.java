@@ -183,10 +183,10 @@ class ProjectControllerTest {
         String filepath = "config1.xml";
         String xmlContent = "<xml>updated</xml>";
 
-        doNothing().when(fileTreeService).updateFileContent("MyProject", filepath, xmlContent);
+        doNothing().when(fileTreeService).updateFileContent(TEST_PROJECT_NAME, filepath, xmlContent);
 
         mockMvc.perform(
-                        put("/api/projects/MyProject/configuration")
+                        put("/api/projects/" + TEST_PROJECT_NAME + "/configuration")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(
                                         """
@@ -210,7 +210,7 @@ class ProjectControllerTest {
                 .updateFileContent(TEST_PROJECT_NAME, filepath, xmlContent);
 
         mockMvc.perform(
-                        put("/api/projects/MyProject/configuration")
+                        put("/api/projects/" + TEST_PROJECT_NAME + "/configuration")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(
                                         """
@@ -237,7 +237,7 @@ class ProjectControllerTest {
                     .thenThrow(new InvalidXmlContentException("Malformed XML", null));
 
             mockMvc.perform(
-                            put("/api/projects/MyProject/configuration")
+                            put("/api/projects/" + TEST_PROJECT_NAME + "/configuration")
                                     .contentType(MediaType.APPLICATION_JSON)
                                     .content(
                                             """
