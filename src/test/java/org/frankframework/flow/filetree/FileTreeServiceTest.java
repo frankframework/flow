@@ -1,7 +1,10 @@
 package org.frankframework.flow.filetree;
 
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 import java.io.IOException;
@@ -30,7 +33,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
- * Validates filesystem operations, recursive tree building, and XML adapter updates.
+ * Validates filesystem operations, recursive tree building, and XML adapter
+ * updates.
  */
 @ExtendWith(MockitoExtension.class)
 public class FileTreeServiceTest {
@@ -489,13 +493,13 @@ public class FileTreeServiceTest {
         when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
 
         String parentPath = tempProjectRoot.toAbsolutePath().toString();
-        FileTreeNode node = fileTreeService.createFile(TEST_PROJECT_NAME, parentPath, "newFile.xml");
+        FileTreeNode node = fileTreeService.createFile(TEST_PROJECT_NAME, parentPath, "newFile.json");
 
         assertNotNull(node);
-        assertEquals("newFile.xml", node.getName());
+        assertEquals("newFile.json", node.getName());
         assertEquals(NodeType.FILE, node.getType());
-        assertTrue(node.getPath().endsWith("newFile.xml"));
-        assertTrue(Files.exists(tempProjectRoot.resolve("newFile.xml")), "File must exist on disk after creation");
+        assertTrue(node.getPath().endsWith("newFile.json"));
+        assertTrue(Files.exists(tempProjectRoot.resolve("newFile.json")), "File must exist on disk after creation");
     }
 
     @Test
@@ -510,13 +514,13 @@ public class FileTreeServiceTest {
         when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
 
         String parentPath = tempProjectRoot.toAbsolutePath() + "/";
-        FileTreeNode node = fileTreeService.createFile(TEST_PROJECT_NAME, parentPath, "trailing.xml");
+        FileTreeNode node = fileTreeService.createFile(TEST_PROJECT_NAME, parentPath, "trailing.json");
 
         assertNotNull(node);
-        assertEquals("trailing.xml", node.getName());
+        assertEquals("trailing.json", node.getName());
         assertEquals(NodeType.FILE, node.getType());
         assertFalse(node.getPath().contains("//"), "Path must not contain double slashes");
-        assertTrue(Files.exists(tempProjectRoot.resolve("trailing.xml")), "File must exist on disk after creation");
+        assertTrue(Files.exists(tempProjectRoot.resolve("trailing.json")), "File must exist on disk after creation");
     }
 
     @Test
@@ -531,7 +535,7 @@ public class FileTreeServiceTest {
         String outsidePath = tempProjectRoot.getParent().toAbsolutePath().toString();
         assertThrows(
                 SecurityException.class,
-                () -> fileTreeService.createFile(TEST_PROJECT_NAME, outsidePath, "escape.xml"));
+                () -> fileTreeService.createFile(TEST_PROJECT_NAME, outsidePath, "escape.json"));
     }
 
     @Test
@@ -540,7 +544,25 @@ public class FileTreeServiceTest {
         when(projectService.getProject("Unknown")).thenThrow(new ProjectNotFoundException("err"));
 
         assertThrows(
-                IllegalArgumentException.class, () -> fileTreeService.createFile("Unknown", "/some/path", "file.xml"));
+                IllegalArgumentException.class, () -> fileTreeService.createFile("Unknown", "/some/path", "file.json"));
+    }
+
+    @Test
+    @DisplayName("Should create configuration when creating an .xml file")
+    void createFile_ShouldDelegateToProjectService_WhenXml() throws Exception {
+        stubToAbsolutePath();
+
+        Project project =
+                new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+
+        when(projectService.addConfigurationToFolder(eq(TEST_PROJECT_NAME), eq("config.xml"), anyString()))
+                .thenReturn(project);
+
+        FileTreeNode node = fileTreeService.createFile(
+                TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString(), "config.xml");
+
+        assertNull(node);
+        verify(projectService).addConfigurationToFolder(eq(TEST_PROJECT_NAME), eq("config.xml"), anyString());
     }
 
     @Test
