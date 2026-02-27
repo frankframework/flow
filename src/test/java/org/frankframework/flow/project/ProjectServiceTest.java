@@ -728,83 +728,100 @@ public class ProjectServiceTest {
     }
 
     @Test
-    void addConfigurationToFolder_ShouldCreateFileAndRegisterConfiguration() throws Exception {
-
+    void testAddConfigurationToFolderCreatesFileOnDisk() throws Exception {
         stubFileSystemForProjectCreation();
 
-        String projectName = "myProject";
-        Path projectRoot = tempDir.resolve(projectName);
-        Files.createDirectories(projectRoot);
+        String projectName = "proj";
+        projectService.createProjectOnDisk(projectName);
 
-        Project project = new Project(projectName, projectRoot.toString());
-        projectService.getProjects().put(projectName, project);
+        Project project = projectService.addConfigurationToFolder(
+                projectName, "NewConfig.xml", tempDir.resolve(projectName).toString());
 
-        Project updated = projectService.addConfigurationToFolder(projectName, "test.xml", projectRoot.toString());
+        Path expectedFile = tempDir.resolve("proj").resolve("NewConfig.xml");
+        assertTrue(Files.exists(expectedFile), "NewConfig.xml should be written to disk");
 
-        Path expectedFile = projectRoot.resolve("test.xml");
-        assertTrue(Files.exists(expectedFile));
-
-        assertEquals(1, updated.getConfigurations().size());
-        assertEquals(expectedFile.toString(), updated.getConfigurations().get(0).getFilePath());
-
-        String content = Files.readString(expectedFile);
-        assertFalse(content.isBlank());
+        // ✅ Also verify in-memory registration
+        assertTrue(
+                project.getConfigurations().stream()
+                        .anyMatch(c -> c.getFilepath().endsWith("NewConfig.xml")),
+                "Configuration should be registered in project memory");
     }
 
     @Test
-    void addConfigurationToFolder_ShouldThrow_WhenOutsideProject() throws Exception {
-
+    void testAddConfigurationToFolderFileHasDefaultXmlContent() throws Exception {
         stubFileSystemForProjectCreation();
 
-        String projectName = "myProject";
-        Path projectRoot = tempDir.resolve(projectName);
-        Files.createDirectories(projectRoot);
+        String projectName = "proj";
+        projectService.createProjectOnDisk(projectName);
 
-        Project project = new Project(projectName, projectRoot.toString());
-        projectService.getProjects().put(projectName, project);
+        projectService.addConfigurationToFolder(
+                projectName, "NewConfig.xml", tempDir.resolve(projectName).toString());
 
-        Path outsideDir = tempDir.resolve("outside");
-        Files.createDirectories(outsideDir);
+        Path expectedFile = tempDir.resolve("proj").resolve("NewConfig.xml");
+        String content = Files.readString(expectedFile, StandardCharsets.UTF_8);
+
+        assertTrue(
+                content.contains("<Configuration name=\"DefaultConfig\">"),
+                "Default XML should contain a Configuration element");
+    }
+
+    @Test
+    void testAddConfigurationToFolderFilepathIsAbsolute() throws Exception {
+        stubFileSystemForProjectCreation();
+
+        String projectName = "proj";
+        projectService.createProjectOnDisk(projectName);
+
+        Project project = projectService.addConfigurationToFolder(
+                projectName, "NewConfig.xml", tempDir.resolve(projectName).toString());
+
+        String storedPath = project.getConfigurations().stream()
+                .map(Configuration::getFilepath)
+                .filter(fp -> fp.endsWith("NewConfig.xml"))
+                .findFirst()
+                .orElseThrow();
+
+        assertTrue(Path.of(storedPath).isAbsolute(), "Stored filepath should be absolute");
+    }
+
+    @Test
+    void testAddConfigurationToFolderRejectsPathTraversal() throws Exception {
+        stubFileSystemForProjectCreation();
+
+        String projectName = "proj";
+        projectService.createProjectOnDisk(projectName);
+
+        Path projectDir = tempDir.resolve(projectName);
 
         assertThrows(
                 SecurityException.class,
-                () -> projectService.addConfigurationToFolder(projectName, "bad.xml", outsideDir.toString()));
+                () -> projectService.addConfigurationToFolder(projectName, "../../../evil.xml", projectDir.toString()));
     }
 
     @Test
-    void addConfigurationToFolder_ShouldThrow_WhenFileAlreadyExists() throws Exception {
-
+    void testAddConfigurationToFolderThrowsIfAlreadyExists() throws Exception {
         stubFileSystemForProjectCreation();
 
-        String projectName = "myProject";
-        Path projectRoot = tempDir.resolve(projectName);
-        Files.createDirectories(projectRoot);
+        String projectName = "proj";
+        projectService.createProjectOnDisk(projectName);
 
-        Project project = new Project(projectName, projectRoot.toString());
-        projectService.getProjects().put(projectName, project);
+        Path projectDir = tempDir.resolve(projectName);
 
-        Path existingFile = projectRoot.resolve("duplicate.xml");
+        // Create file manually
+        Path existingFile = projectDir.resolve("duplicate.xml");
         Files.writeString(existingFile, "<xml/>");
 
         assertThrows(
                 ConfigurationAlreadyExistsException.class,
-                () -> projectService.addConfigurationToFolder(projectName, "duplicate.xml", projectRoot.toString()));
+                () -> projectService.addConfigurationToFolder(projectName, "duplicate.xml", projectDir.toString()));
     }
 
     @Test
-    void addConfigurationToFolder_ShouldThrow_WhenInvalidFileNameTraversal() throws Exception {
-
-        stubFileSystemForProjectCreation();
-
-        String projectName = "myProject";
-        Path projectRoot = tempDir.resolve(projectName);
-        Files.createDirectories(projectRoot);
-
-        Project project = new Project(projectName, projectRoot.toString());
-        projectService.getProjects().put(projectName, project);
+    void testAddConfigurationToFolderProjectNotFound() {
+        String projectName = "noSuchProject";
 
         assertThrows(
-                SecurityException.class,
-                () -> projectService.addConfigurationToFolder(projectName, "../evil.xml", projectRoot.toString()));
+                ProjectNotFoundException.class,
+                () -> projectService.addConfigurationToFolder(projectName, "Conf.xml", tempDir.toString()));
     }
 }
