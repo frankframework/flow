@@ -13,6 +13,7 @@ import org.frankframework.flow.adapter.AdapterUpdateDTO;
 import org.frankframework.flow.configuration.Configuration;
 import org.frankframework.flow.configuration.ConfigurationDTO;
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
+import org.frankframework.flow.exception.ApiException;
 import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.frankframework.flow.filetree.FileCreateDTO;
 import org.frankframework.flow.filetree.FileRenameDTO;
@@ -208,7 +209,7 @@ public class ProjectController {
 
     @PostMapping("/{projectName}/files")
     public ResponseEntity<FileTreeNode> createFile(@PathVariable String projectName, @RequestBody FileCreateDTO dto)
-            throws IOException {
+            throws IOException, ProjectNotFoundException, ApiException {
         FileTreeNode node = fileTreeService.createFile(projectName, dto.path(), dto.name());
         return ResponseEntity.status(HttpStatus.CREATED.value()).body(node);
     }

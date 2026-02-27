@@ -6,7 +6,7 @@ import AddConfigurationTile from './add-configuration-tile'
 import { useState, useEffect, useCallback } from 'react'
 import AddConfigurationModal from './add-configuration-modal'
 import LoadingSpinner from '~/components/loading-spinner'
-import { fetchProjectTree } from '~/services/project-service'
+import { deleteInProject, fetchProjectTree } from '~/services/project-service'
 import Button from '~/components/inputs/button'
 
 export interface FileTreeNode {
@@ -59,6 +59,7 @@ export default function ConfigurationManager() {
   const [showModal, setShowModal] = useState(false)
   const [tree, setTree] = useState<FileTreeNode | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [configurationsDir, setConfigurationsDir] = useState<FileTreeNode | null>(null)
 
   const loadTree = useCallback(
     (signal?: AbortSignal) => {
@@ -86,10 +87,23 @@ export default function ConfigurationManager() {
     return () => controller.abort()
   }, [loadTree])
 
+  useEffect(() => {
+    if (tree) {
+      const configDir = findConfigurationsDir(tree)
+      setConfigurationsDir(configDir)
+    }
+  }, [tree])
+
   const handleConfigAdded = useCallback(() => {
     setShowModal(false)
     loadTree()
   }, [loadTree])
+
+  const handleDelete = async (filepath: string) => {
+    if (!currentProject?.name) return
+    await deleteInProject(currentProject.name, filepath)
+    loadTree()
+  }
 
   const configFiles = (() => {
     if (!tree) return []
@@ -137,7 +151,12 @@ export default function ConfigurationManager() {
       <div className="bg-backdrop border-border w-full flex-1 overflow-y-auto rounded border p-2">
         <div className="flex flex-wrap gap-4">
           {configFiles.map((file) => (
-            <ConfigurationTile key={file.path} filepath={file.path} relativePath={file.relativePath} />
+            <ConfigurationTile
+              key={file.path}
+              filepath={file.path}
+              relativePath={file.relativePath}
+              onDelete={() => handleDelete(file.path)}
+            />
           ))}
 
           <AddConfigurationTile onClick={() => setShowModal(true)} />
@@ -148,6 +167,7 @@ export default function ConfigurationManager() {
         onClose={() => setShowModal(false)}
         onSuccess={handleConfigAdded}
         currentProject={currentProject}
+        configurationsDirPath={configurationsDir?.path ?? ''}
       />
     </div>
   )

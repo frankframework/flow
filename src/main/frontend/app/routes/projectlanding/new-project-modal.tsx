@@ -67,8 +67,9 @@ export default function NewProjectModal({ isOpen, isLocal, onClose, onCreate }: 
               <input
                 value={location || (isLocal ? '' : 'Workspace root')}
                 readOnly
-                className="border-border bg-backdrop h-8 w-full rounded border px-2 py-1 text-sm"
+                className="border-border bg-background focus:border-foreground-active focus:ring-foreground-active w-full rounded border px-2 py-1 text-sm transition focus:ring-2 focus:outline-none"
                 placeholder={isLocal ? 'Select a parent directory...' : 'Workspace root (or browse for subfolder)'}
+                onDoubleClick={() => setShowPicker(true)}
               />
 
               <Button onClick={() => setShowPicker(true)} className="h-8 text-sm">
@@ -119,6 +120,7 @@ export default function NewProjectModal({ isOpen, isLocal, onClose, onCreate }: 
           setShowPicker(false)
         }}
         onCancel={() => setShowPicker(false)}
+        initialPath={location}
       />
     </>
   )

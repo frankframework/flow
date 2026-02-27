@@ -15,6 +15,7 @@ import java.util.Comparator;
 import java.util.List;
 import org.frankframework.flow.adapter.AdapterNotFoundException;
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
+import org.frankframework.flow.exception.ApiException;
 import org.frankframework.flow.filesystem.FileOperations;
 import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.frankframework.flow.project.Project;
@@ -479,7 +480,7 @@ public class FileTreeServiceTest {
 
     @Test
     @DisplayName("Should create a file and return a FileTreeNode with FILE type")
-    void createFile_Success() throws IOException, ProjectNotFoundException {
+    void createFile_Success() throws IOException, ProjectNotFoundException, ApiException {
         stubToAbsolutePath();
         stubCreateFile();
 
@@ -499,7 +500,8 @@ public class FileTreeServiceTest {
 
     @Test
     @DisplayName("Should create a file correctly when parent path already ends with a slash")
-    void createFile_ParentPathWithTrailingSlash_DoesNotDoubleSlash() throws IOException, ProjectNotFoundException {
+    void createFile_ParentPathWithTrailingSlash_DoesNotDoubleSlash()
+            throws IOException, ProjectNotFoundException, ApiException {
         stubToAbsolutePath();
         stubCreateFile();
 

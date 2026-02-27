@@ -80,9 +80,9 @@ export default function CloneProjectModal({
               <input
                 value={location || (isLocal ? '' : 'Workspace root')}
                 readOnly
-                className="border-border bg-backdrop h-8 w-full rounded border px-2 py-1 text-sm"
+                className="border-border bg-background focus:border-foreground-active focus:ring-foreground-active w-full rounded border px-2 py-1 text-sm transition focus:ring-2 focus:outline-none"
                 placeholder={isLocal ? 'Select a parent directory...' : 'Workspace root (or browse for subfolder)'}
-                aria-label="clone location"
+                onDoubleClick={() => setShowPicker(true)}
               />
 
               <Button onClick={() => setShowPicker(true)} className="h-8 text-sm">
@@ -148,6 +148,7 @@ export default function CloneProjectModal({
           setShowPicker(false)
         }}
         onCancel={() => setShowPicker(false)}
+        initialPath={location}
       />
     </>
   )

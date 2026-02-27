@@ -248,7 +248,7 @@ const Sidebar = ({
   onCloneClick: () => void
   onImportClick: () => void
 }) => (
-  <nav className="border-border flex w-1/4 flex-col gap-3 border-r bg-slate-50/50 p-4">
+  <nav className="border-border flex w-1/4 flex-col gap-3 border-r p-4">
     <ActionButton label={isLocal ? 'Open Local Folder' : 'Open Workspace Project'} onClick={onOpenClick} />
     <ActionButton label="Clone Repository" onClick={onCloneClick} />
     <ActionButton label="New Project" onClick={onNewClick} />
