@@ -2,6 +2,7 @@ package org.frankframework.flow.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
+import java.nio.file.FileAlreadyExistsException;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -43,6 +44,23 @@ public class GlobalExceptionHandler {
                 HttpStatus.BAD_REQUEST.getReasonPhrase());
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    @ExceptionHandler(FileAlreadyExistsException.class)
+    public ResponseEntity<ErrorResponse> handleFileAlreadyExistsException(
+            FileAlreadyExistsException exception, HttpServletRequest request) {
+        log.warn(
+                "File already exists: {} - Method: {} URL: {}",
+                exception.getMessage(),
+                request.getMethod(),
+                request.getRequestURI());
+
+        ErrorResponse response = new ErrorResponse(
+                HttpStatus.CONFLICT.value(),
+                List.of("A file or folder with that name already exists"),
+                HttpStatus.CONFLICT.getReasonPhrase());
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
     }
 
     @ExceptionHandler(IOException.class)

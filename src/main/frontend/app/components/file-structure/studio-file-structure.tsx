@@ -111,10 +111,8 @@ export default function StudioFileStructure() {
       const path = item.data.path
 
       if (path.endsWith('.xml') && dataProvider) {
-        // XML configs can contain adapters
         if (dataProvider) await dataProvider.loadAdapters(item.index)
       } else {
-        // Normal directory
         if (dataProvider) await dataProvider.loadDirectory(item.index)
       }
     },
@@ -151,7 +149,6 @@ export default function StudioFileStructure() {
         return
       }
 
-      // Leaf node: open adapter
       const data = item.data
       if (typeof data === 'object' && data !== null && 'adapterName' in data && 'configPath' in data) {
         const { adapterName, configPath } = data as { adapterName: string; configPath: string }
@@ -214,7 +211,7 @@ export default function StudioFileStructure() {
     const Icon = context.isExpanded ? AltArrowDownIcon : AltArrowRightIcon
 
     const handleArrowClick = async (event: React.MouseEvent) => {
-      event.stopPropagation() // prevent triggering item click
+      event.stopPropagation()
       await loadFolderContents(item)
       context.toggleExpandedState()
     }
@@ -233,8 +230,6 @@ export default function StudioFileStructure() {
     item: TreeItem<FileNode>
     context: TreeItemRenderContext
   }) => {
-    const searchLower = searchTerm.toLowerCase()
-    const titleLower = title.toLowerCase()
     const listenerType =
       !item.isFolder && typeof item.data === 'object' && item.data && 'listenerName' in item.data
         ? (item.data as { listenerName: string | null }).listenerName
@@ -246,6 +241,9 @@ export default function StudioFileStructure() {
     } else {
       Icon = getListenerIcon(listenerType)
     }
+
+    const searchLower = searchTerm.toLowerCase()
+    const titleLower = title.toLowerCase()
 
     let highlightedTitle: JSX.Element | string = title
 
@@ -269,7 +267,7 @@ export default function StudioFileStructure() {
     const isHighlighted = highlightedItemId == item.index
 
     return (
-      <>
+      <div className="flex min-w-0 cursor-pointer items-center">
         <Icon className="fill-foreground w-4 flex-shrink-0" />
         <span
           className={`font-inter ml-1 overflow-hidden text-nowrap text-ellipsis ${
@@ -278,7 +276,7 @@ export default function StudioFileStructure() {
         >
           {highlightedTitle}
         </span>
-      </>
+      </div>
     )
   }
 

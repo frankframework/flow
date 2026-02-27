@@ -2,7 +2,9 @@ package org.frankframework.flow.filetree;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
@@ -148,6 +150,95 @@ public class FileTreeService {
         }
     }
 
+    public FileTreeNode createFile(String projectName, String parentPath, String fileName) throws IOException {
+        validateFileName(fileName);
+        String fullPath = parentPath.endsWith("/") ? parentPath + fileName : parentPath + "/" + fileName;
+        validateWithinProject(projectName, fullPath);
+
+        fileSystemStorage.createFile(fullPath);
+        invalidateTreeCache(projectName);
+
+        FileTreeNode node = new FileTreeNode();
+        node.setName(fileName);
+        node.setPath(fullPath);
+        node.setType(NodeType.FILE);
+        return node;
+    }
+
+    public FileTreeNode createFolder(String projectName, String parentPath, String folderName) throws IOException {
+        validateFileName(folderName);
+        String fullPath = parentPath.endsWith("/") ? parentPath + folderName : parentPath + "/" + folderName;
+        validateWithinProject(projectName, fullPath);
+
+        fileSystemStorage.createProjectDirectory(fullPath);
+        invalidateTreeCache(projectName);
+
+        FileTreeNode node = new FileTreeNode();
+        node.setName(folderName);
+        node.setPath(fullPath);
+        node.setType(NodeType.DIRECTORY);
+        return node;
+    }
+
+    public FileTreeNode renameFile(String projectName, String oldPath, String newName) throws IOException {
+        validateFileName(newName);
+        validateWithinProject(projectName, oldPath);
+
+        Path oldAbsPath = fileSystemStorage.toAbsolutePath(oldPath);
+        Path newAbsPath = oldAbsPath.getParent().resolve(newName);
+        String newPath = newAbsPath.toString();
+
+        if (!fileSystemStorage.isLocalEnvironment()) {
+            String parentRelative = oldPath.contains("/") ? oldPath.substring(0, oldPath.lastIndexOf('/')) : "";
+            newPath = parentRelative.isEmpty() ? newName : parentRelative + "/" + newName;
+        }
+
+        validateWithinProject(projectName, newPath);
+
+        if (Files.exists(newAbsPath)) {
+            throw new FileAlreadyExistsException("A file or folder with that name already exists: " + newName);
+        }
+
+        fileSystemStorage.rename(oldPath, newPath);
+        invalidateTreeCache(projectName);
+
+        boolean isDir = Files.isDirectory(newAbsPath);
+        FileTreeNode node = new FileTreeNode();
+        node.setName(newName);
+        node.setPath(newPath);
+        node.setType(isDir ? NodeType.DIRECTORY : NodeType.FILE);
+        return node;
+    }
+
+    public void deleteFile(String projectName, String path) throws IOException {
+        validateWithinProject(projectName, path);
+        fileSystemStorage.delete(path);
+        invalidateTreeCache(projectName);
+    }
+
+    private void validateWithinProject(String projectName, String path) throws IOException {
+        try {
+            var project = projectService.getProject(projectName);
+            Path projectPath = fileSystemStorage.toAbsolutePath(project.getRootPath());
+            Path targetPath = fileSystemStorage.toAbsolutePath(path).normalize();
+
+            if (!targetPath.startsWith(projectPath)) {
+                throw new SecurityException("Path is outside project directory");
+            }
+        } catch (ProjectNotFoundException e) {
+            throw new IllegalArgumentException("Project does not exist: " + projectName);
+        }
+    }
+
+    private void validateFileName(String name) {
+        if (name == null || name.isBlank()) {
+            throw new IllegalArgumentException("File name must not be empty");
+        }
+        if (name.contains("/") || name.contains("\\") || name.contains("..")) {
+            throw new IllegalArgumentException("File name contains invalid characters: " + name);
+        }
+    }
+
     public void invalidateTreeCache() {
         treeCache.clear();
     }
@@ -209,7 +300,7 @@ public class FileTreeService {
                             try {
                                 return buildTree(p, relativizeRoot, useRelativePaths);
                             } catch (IOException e) {
-                                throw new RuntimeException(e);
+                                throw new UncheckedIOException(e);
                             }
                         })
                         .collect(Collectors.toList());
