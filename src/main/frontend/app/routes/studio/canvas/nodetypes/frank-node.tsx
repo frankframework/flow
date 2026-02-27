@@ -80,14 +80,14 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
   const allForwardTypesUsed = useMemo(() => {
     if (availableHandleTypes.length === 0) return true
 
-    // If custom is allowed, the "+" should always remain visible
+    // If custom is allowed, "+" should always remain visible
     if (availableHandleTypes.includes('custom')) {
       return false
     }
 
-    const existingTypes = new Set(properties.data.sourceHandles.map((handle) => handle.type))
+    const existingTypesCount = properties.data.sourceHandles.length
 
-    return availableHandleTypes.every((type) => existingTypes.has(type))
+    return existingTypesCount >= availableHandleTypes.length
   }, [availableHandleTypes, properties.data.sourceHandles])
 
   useEffect(() => {

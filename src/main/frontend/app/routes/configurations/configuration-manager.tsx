@@ -133,6 +133,8 @@ export default function ConfigurationManager() {
 
     let cancelled = false
 
+    // Runs asynchronously in the background to load adapter names
+    // without blocking the UI. State is updated once all files are processed.
     const loadAdapters = async () => {
       const results = await Promise.all(
         configFiles.map(async (file) => {
