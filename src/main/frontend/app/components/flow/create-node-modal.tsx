@@ -1,4 +1,3 @@
-import type { ElementDetails } from '@frankframework/ff-doc'
 import { useMemo, useState, type ChangeEvent } from 'react'
 import useFlowStore from '~/stores/flow-store'
 import useNodeContextStore from '~/stores/node-context-store'

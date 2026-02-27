@@ -9,7 +9,7 @@ interface AdapterLocation {
 
 export function findAdaptersInXml(xml: string): AdapterLocation[] {
   const adapters: AdapterLocation[] = []
-  const regex = /<Adapter\b[^>]*\bname\s*=\s*"([^"]*)"/g
+  const regex = /<adapter\b[^>]*\bname\s*=\s*"([^"]*)"/gi
   let match: RegExpExecArray | null
   while ((match = regex.exec(xml)) !== null) {
     adapters.push({ name: match[1], offset: match.index })
@@ -55,8 +55,6 @@ export async function normalizeFrankElements(xml: string): Promise<string> {
 
     if (error instanceof ApiError) {
       showErrorToast(error.messages?.join(', ') ?? 'Normalization failed.')
-    } else {
-      showErrorToast('Failed to normalize XML. Please check the console.')
     }
 
     return xml
