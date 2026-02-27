@@ -17,7 +17,6 @@ interface ConfigurationTileProperties {
 export default function ConfigurationTile({ filepath, relativePath, onDelete }: Readonly<ConfigurationTileProperties>) {
   const projectName = useProjectStore((state) => state.project?.name)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
-  const [deleting, setDeleting] = useState(false)
 
   const [adapterNames, setAdapterNames] = useState<string[]>([])
 
@@ -43,10 +42,8 @@ export default function ConfigurationTile({ filepath, relativePath, onDelete }: 
 
   const handleConfirmDelete = async () => {
     try {
-      setDeleting(true)
       await onDelete()
     } finally {
-      setDeleting(false)
       setShowDeleteDialog(false)
     }
   }

@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { useProjectStore } from '~/stores/project-store'
-import { createConfiguration } from '~/services/configuration-service'
 import type { Project } from '~/types/project.types'
 import Button from '~/components/inputs/button'
 import DirectoryPicker from '~/components/directory-picker/directory-picker'
