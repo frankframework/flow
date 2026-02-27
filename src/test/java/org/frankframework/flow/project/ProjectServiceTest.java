@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.frankframework.flow.adapter.AdapterNotFoundException;
 import org.frankframework.flow.configuration.Configuration;
+import org.frankframework.flow.configuration.ConfigurationAlreadyExistsException;
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
 import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.frankframework.flow.projectsettings.FilterType;
@@ -54,7 +55,8 @@ public class ProjectServiceTest {
     }
 
     /**
-     * Sets up all stubs needed for tests that create projects on disk and then interact with them.
+     * Sets up all stubs needed for tests that create projects on disk and then
+     * interact with them.
      */
     private void stubFileSystemForProjectCreation() throws IOException {
         when(fileSystemStorage.createProjectDirectory(anyString())).thenAnswer(invocation -> {
@@ -723,5 +725,86 @@ public class ProjectServiceTest {
 
         assertThrows(
                 ProjectNotFoundException.class, () -> projectService.addConfiguration("noSuchProject", "Conf.xml"));
+    }
+
+    @Test
+    void addConfigurationToFolder_ShouldCreateFileAndRegisterConfiguration() throws Exception {
+
+        stubFileSystemForProjectCreation();
+
+        String projectName = "myProject";
+        Path projectRoot = tempDir.resolve(projectName);
+        Files.createDirectories(projectRoot);
+
+        Project project = new Project(projectName, projectRoot.toString());
+        projectService.getProjects().put(projectName, project);
+
+        Project updated = projectService.addConfigurationToFolder(projectName, "test.xml", projectRoot.toString());
+
+        Path expectedFile = projectRoot.resolve("test.xml");
+        assertTrue(Files.exists(expectedFile));
+
+        assertEquals(1, updated.getConfigurations().size());
+        assertEquals(expectedFile.toString(), updated.getConfigurations().get(0).getFilePath());
+
+        String content = Files.readString(expectedFile);
+        assertFalse(content.isBlank());
+    }
+
+    @Test
+    void addConfigurationToFolder_ShouldThrow_WhenOutsideProject() throws Exception {
+
+        stubFileSystemForProjectCreation();
+
+        String projectName = "myProject";
+        Path projectRoot = tempDir.resolve(projectName);
+        Files.createDirectories(projectRoot);
+
+        Project project = new Project(projectName, projectRoot.toString());
+        projectService.getProjects().put(projectName, project);
+
+        Path outsideDir = tempDir.resolve("outside");
+        Files.createDirectories(outsideDir);
+
+        assertThrows(
+                SecurityException.class,
+                () -> projectService.addConfigurationToFolder(projectName, "bad.xml", outsideDir.toString()));
+    }
+
+    @Test
+    void addConfigurationToFolder_ShouldThrow_WhenFileAlreadyExists() throws Exception {
+
+        stubFileSystemForProjectCreation();
+
+        String projectName = "myProject";
+        Path projectRoot = tempDir.resolve(projectName);
+        Files.createDirectories(projectRoot);
+
+        Project project = new Project(projectName, projectRoot.toString());
+        projectService.getProjects().put(projectName, project);
+
+        Path existingFile = projectRoot.resolve("duplicate.xml");
+        Files.writeString(existingFile, "<xml/>");
+
+        assertThrows(
+                ConfigurationAlreadyExistsException.class,
+                () -> projectService.addConfigurationToFolder(projectName, "duplicate.xml", projectRoot.toString()));
+    }
+
+    @Test
+    void addConfigurationToFolder_ShouldThrow_WhenInvalidFileNameTraversal() throws Exception {
+
+        stubFileSystemForProjectCreation();
+
+        String projectName = "myProject";
+        Path projectRoot = tempDir.resolve(projectName);
+        Files.createDirectories(projectRoot);
+
+        Project project = new Project(projectName, projectRoot.toString());
+        projectService.getProjects().put(projectName, project);
+
+        assertThrows(
+                SecurityException.class,
+                () -> projectService.addConfigurationToFolder(projectName, "../evil.xml", projectRoot.toString()));
     }
 }
