@@ -441,7 +441,6 @@ function convertAdapterToFlowNodes(adapter: Element): FlowNode[] {
   const exitNodes: ExitNode[] = []
   const idCounter: IdCounter = { current: 0 }
   const elements = collectPipelineElements(adapter)
-  console.log(elements)
 
   for (const element of elements) {
     if (element.tagName.toLowerCase() === 'exits') {
