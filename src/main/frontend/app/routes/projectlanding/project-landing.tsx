@@ -248,7 +248,7 @@ const Sidebar = ({
   onCloneClick: () => void
   onImportClick: () => void
 }) => (
-  <nav className="border-border flex w-1/4 flex-col gap-3 border-r bg-slate-50/50 p-4">
+  <nav className="border-border flex w-1/4 min-w-[200px] flex-col gap-3 border-r bg-slate-50/50 p-4">
     <ActionButton label={isLocal ? 'Open Local Folder' : 'Open Workspace Project'} onClick={onOpenClick} />
     <ActionButton label="Clone Repository" onClick={onCloneClick} />
     <ActionButton label="New Project" onClick={onNewClick} />
@@ -289,7 +289,7 @@ const ProjectList = ({
 
 const Toolbar = ({ onSearchChange }: { onSearchChange: (val: string) => void }) => (
   <div className="border-border flex h-12 border-b">
-    <div className="border-border flex w-1/4 items-center border-r px-4 text-xs font-bold tracking-wider text-slate-500 uppercase">
+    <div className="border-border flex w-1/4 min-w-[200px] items-center border-r px-4 text-xs font-bold tracking-wider text-slate-500 uppercase">
       <ArchiveIcon className="mr-2 h-4 w-4" /> Recent
     </div>
     <div className="flex flex-1 items-center px-4">
