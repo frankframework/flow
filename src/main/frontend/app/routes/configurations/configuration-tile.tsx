@@ -1,6 +1,3 @@
-import { useProjectStore } from '~/stores/project-store'
-import { getAdapterNamesFromConfiguration } from '../studio/xml-to-json-parser'
-import { useEffect, useState } from 'react'
 import RulerCrossPenIcon from '/icons/solar/Ruler Cross Pen.svg?react'
 import TrashBinIcon from '/icons/solar/Trash Bin.svg?react'
 import CodeIcon from '/icons/solar/Code.svg?react'
@@ -11,10 +8,16 @@ import ConfirmDeleteDialog from '~/components/file-structure/confirm-delete-dial
 interface ConfigurationTileProperties {
   filepath: string
   relativePath: string
+  adapterNames: string[]
   onDelete: () => Promise<void>
 }
 
-export default function ConfigurationTile({ filepath, relativePath, onDelete }: Readonly<ConfigurationTileProperties>) {
+export default function ConfigurationTile({
+  filepath,
+  relativePath,
+  adapterNames,
+  onDelete,
+}: Readonly<ConfigurationTileProperties>) {
   const projectName = useProjectStore((state) => state.project?.name)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
 
@@ -49,7 +52,7 @@ export default function ConfigurationTile({ filepath, relativePath, onDelete }: 
   }
 
   return (
-    <div className="border-border bg-background relative m-2 flex h-75 w-100 flex-col rounded border p-4 shadow-sm">
+    <div className="border-border bg-background relative flex h-75 w-100 flex-col rounded border p-4 shadow-sm">
       {/* Header */}
       <div className="text-foreground mb-3 truncate text-sm font-semibold" title={relativePath}>
         {relativePath}

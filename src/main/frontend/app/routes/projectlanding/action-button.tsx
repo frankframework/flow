@@ -8,7 +8,7 @@ interface ActionButtonProperties {
 
 export default function ActionButton({ onClick, label }: Readonly<ActionButtonProperties>) {
   return (
-    <Button className="justify-left flex border-none" onClick={onClick}>
+    <Button className="justify-left flex border-none text-sm whitespace-nowrap" onClick={onClick}>
       {label}
     </Button>
   )
