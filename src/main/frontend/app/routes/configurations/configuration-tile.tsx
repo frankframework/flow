@@ -33,11 +33,8 @@ export default function ConfigurationTile({
   }
 
   const handleConfirmDelete = async () => {
-    try {
-      await onDelete()
-    } finally {
-      setShowDeleteDialog(false)
-    }
+    await onDelete()
+    setShowDeleteDialog(false)
   }
 
   return (
