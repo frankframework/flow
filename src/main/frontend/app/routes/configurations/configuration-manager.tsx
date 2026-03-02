@@ -10,7 +10,6 @@ import { deleteInProject, fetchProjectTree } from '~/services/project-service'
 import Button from '~/components/inputs/button'
 import { getAdapterNamesFromConfiguration } from '../studio/xml-to-json-parser'
 import Search from '~/components/search/search'
-import { motion, AnimatePresence } from 'framer-motion'
 
 export interface FileTreeNode {
   name: string
