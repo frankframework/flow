@@ -63,6 +63,17 @@
     --palette-parameters: #1389ff;
     --palette-monitoring: #00ff84;
     --palette-transactionalstorages: #fdc300;
+
+    /* Label styling */
+    --label-components: #edfeea;
+    --label-category: #feeaf0;
+    --label-eip: #eaf0fe;
+    --label-type: #feeaf0;
+
+    --label-border-components: #a5f994;
+    --label-border-category: #f994b3;
+    --label-border-eip: #94b3f9;
+    --label-border-type: #f994b3;
   }
 
   [data-theme='dark'] {
@@ -104,6 +115,17 @@
     --palette-parameters: #0d4a87;
     --palette-monitoring: #01924c;
     --palette-transactionalstorages: #9c7800;
+
+    /* Label styling */
+    --label-components: #20930c;
+    --label-category: #bf063e;
+    --label-eip: #123ea2;
+    --label-type: #bf063e;
+
+    --label-border-components: #89be7e;
+    --label-border-category: #e37294;
+    --label-border-eip: #5174c7;
+    --label-border-type: #e37294;
   }
 }
 

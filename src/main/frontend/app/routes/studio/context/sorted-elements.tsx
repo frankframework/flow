@@ -7,6 +7,7 @@ import type { ElementDetails } from '@frankframework/ff-doc'
 import { getElementTypeFromName } from '../node-translator-module'
 import DangerIcon from '../../../../icons/solar/Danger Triangle.svg?react'
 import { DeprecatedListPopover } from './deprecated-list-popover'
+import ElementHoverCard from './element-hover-card'
 
 interface Properties {
   type: string
@@ -19,6 +20,9 @@ export default function SortedElements({ type, items, onDragStart, searchTerm }:
   const [isExpanded, setIsExpanded] = useState(false)
   const gradientEnabled = useSettingsStore((state) => state.studio.gradient)
   const { setDraggedName } = useNodeContextStore((state) => state)
+  const [hoveredRect, setHoveredRect] = useState<DOMRect | null>(null)
+  const [hoveredElement, setHoveredElement] = useState<ElementDetails | null>(null)
+  const [lockedElement, setLockedElement] = useState<ElementDetails | null>(null)
 
   const toggleExpansion = () => {
     setIsExpanded(!isExpanded)
@@ -38,8 +42,12 @@ export default function SortedElements({ type, items, onDragStart, searchTerm }:
         onClick={toggleExpansion}
         className="text-foreground-muted hover:text-foreground-active flex w-full cursor-pointer items-center gap-1 text-left text-sm font-semibold capitalize"
       >
-        {shouldExpand ? <ArrowDownIcon className="fill-current" /> : <ArrowRightIcon className="fill-current" />}
-        {type}
+        {shouldExpand ? (
+          <ArrowDownIcon className="h-4 w-4 fill-current" />
+        ) : (
+          <ArrowRightIcon className="h-4 w-4 fill-current" />
+        )}
+        <span className="min-w-0 truncate">{type}</span>
       </button>
 
       {shouldExpand && (
@@ -52,8 +60,25 @@ export default function SortedElements({ type, items, onDragStart, searchTerm }:
                 key={value.name}
                 className="border-border m-2 flex cursor-move items-center justify-between rounded border p-4"
                 draggable
-                onDragStart={onDragStart(value)}
+                onClick={() => console.log(lockedElement)}
+                onDragStart={(event) => {
+                  setHoveredRect(null)
+                  setHoveredElement(null)
+                  setLockedElement(null)
+                  onDragStart(value)(event)
+                }}
                 onDragEnd={() => setDraggedName(null)}
+                onMouseEnter={(event) => {
+                  setLockedElement(null) // unlock previous element
+                  const rect = event.currentTarget.getBoundingClientRect()
+                  setHoveredRect(rect)
+                  setHoveredElement(value)
+                }}
+                onMouseLeave={() => {
+                  if (lockedElement?.name === value.name) return
+                  setHoveredElement(null)
+                  setHoveredRect(null)
+                }}
                 style={{
                   background: gradientEnabled
                     ? `radial-gradient(
@@ -79,6 +104,20 @@ export default function SortedElements({ type, items, onDragStart, searchTerm }:
           })}
         </div>
       )}
+      {(hoveredRect && hoveredElement) || lockedElement ? (
+        <ElementHoverCard
+          key={(lockedElement ?? hoveredElement)!.name}
+          anchorRect={hoveredRect!}
+          element={lockedElement ?? hoveredElement!}
+          isLocked={!!lockedElement}
+          onComplete={() => setLockedElement(hoveredElement)}
+          onUnlock={() => {
+            setLockedElement(null)
+            setHoveredElement(null)
+            setHoveredRect(null)
+          }}
+        />
+      ) : null}
     </div>
   )
 }
