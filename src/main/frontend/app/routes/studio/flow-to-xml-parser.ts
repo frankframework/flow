@@ -141,7 +141,11 @@ function generateXmlElement(
   const forwards = (edgeMap.get(node.id) || [])
     .map(({ label, targetId }) => {
       const forwardTarget = nodeMap.get(targetId)
-      const targetName = (forwardTarget?.data as NodeData)?.name || 'Unknown Target'
+      const targetName = (forwardTarget?.data as NodeData)?.name || ''
+      if (targetName === '') {
+        console.warn(`Target node with ID ${targetId} does not have a name attribute.`)
+        return ''
+      }
       // If saving from flow to xml, all edges will be considered explicit Forwards.
       return `    <Forward name="${escapeXml(label)}" path="${escapeXml(targetName)}" />`
     })
