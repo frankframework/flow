@@ -4,6 +4,7 @@ import CodeIcon from '/icons/solar/Code.svg?react'
 import { openInStudio, openInEditor } from '~/actions/navigationActions'
 import Button from '~/components/inputs/button'
 import ConfirmDeleteDialog from '~/components/file-structure/confirm-delete-dialog'
+import { useState } from 'react'
 
 interface ConfigurationTileProperties {
   filepath: string
@@ -18,19 +19,7 @@ export default function ConfigurationTile({
   adapterNames,
   onDelete,
 }: Readonly<ConfigurationTileProperties>) {
-  const projectName = useProjectStore((state) => state.project?.name)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
-
-  const [adapterNames, setAdapterNames] = useState<string[]>([])
-
-  useEffect(() => {
-    if (!projectName || !filepath) {
-      setAdapterNames([])
-      return
-    }
-
-    getAdapterNamesFromConfiguration(projectName, filepath).then(setAdapterNames)
-  }, [projectName, filepath])
 
   const handleOpenInStudio = (adapterName: string) => {
     openInStudio(adapterName, filepath)

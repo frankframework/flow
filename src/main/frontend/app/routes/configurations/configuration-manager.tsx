@@ -222,28 +222,15 @@ export default function ConfigurationManager() {
       </div>
 
       <div className="border-border bg-backdrop flex flex-wrap gap-4 self-start rounded border p-4">
-        <AnimatePresence>
-          {filteredConfigurations.map((file) => (
-            <motion.div
-              key={file.path}
-              layout
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              transition={{
-                layout: { duration: 0.25, ease: 'easeInOut' },
-                opacity: { duration: 0.15 },
-              }}
-            >
-              <ConfigurationTile
-                filepath={file.path}
-                relativePath={file.relativePath}
-                adapterNames={file.adapterNames}
-                onDelete={() => handleDelete(file.path)}
-              />
-            </motion.div>
-          ))}
-        </AnimatePresence>
+        {filteredConfigurations.map((file) => (
+          <ConfigurationTile
+            key={file.path}
+            filepath={file.path}
+            relativePath={file.relativePath}
+            adapterNames={file.adapterNames}
+            onDelete={() => handleDelete(file.path)}
+          />
+        ))}
 
         <AddConfigurationTile onClick={() => setShowModal(true)} />
       </div>
