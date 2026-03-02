@@ -86,7 +86,8 @@ public class XmlAdapterUtils {
     /**
      * Normalizes Frank elements:
      * - If element name is lowercase and has className attribute:
-     * rename to last segment of className and remove className attribute
+     * follow case specific rules to determine new tag name based on className and
+     * element type
      * - If element name is lowercase without className:
      * capitalize first letter
      */
@@ -109,19 +110,22 @@ public class XmlAdapterUtils {
             String originalTag = element.getTagName();
             String className = element.getAttribute("className");
 
-            boolean isLowerCase = originalTag.equals(originalTag.toLowerCase());
+            boolean startsWithLowercase = !originalTag.isEmpty() && Character.isLowerCase(originalTag.charAt(0));
 
             String newTagName = null;
 
-            if (isLowerCase && className != null && !className.isEmpty()) {
-                // Use last part of className
+            if (startsWithLowercase && className != null && !className.isEmpty()) {
+
                 String[] parts = className.split("\\.");
-                newTagName = parts[parts.length - 1].trim();
+                String baseName = parts[parts.length - 1].trim();
+
+                newTagName = transformByTag(originalTag, baseName);
+
                 element.removeAttribute("className");
 
-            } else if (isLowerCase) {
-                // Just capitalize first letter
-                newTagName = originalTag.substring(0, 1).toUpperCase() + originalTag.substring(1);
+            } else if (startsWithLowercase) {
+
+                newTagName = capitalize(originalTag);
             }
 
             if (newTagName != null && !newTagName.equals(originalTag)) {
@@ -130,6 +134,79 @@ public class XmlAdapterUtils {
         }
 
         return convertNodeToString(configDoc);
+    }
+
+    /* Method to help transform element tags */
+    private static String transformByTag(String tagName, String baseName) {
+
+        switch (tagName) {
+            case "pipe":
+                return baseName;
+
+            case "messageLog":
+                return transformMessageLog(baseName);
+
+            case "inputWrapper":
+            case "outputWrapper":
+                return transformWrapper(tagName, baseName);
+
+            case "inputValidator":
+            case "outputValidator":
+                return transformValidator(tagName, baseName);
+
+            default:
+                return baseName;
+        }
+    }
+
+    private static String transformMessageLog(String baseName) {
+
+        String suffix = "TransactionalStorage";
+
+        if (baseName.endsWith(suffix)) {
+            String prefix = baseName.substring(0, baseName.length() - suffix.length());
+            return prefix + "MessageLog";
+        }
+
+        return baseName + "MessageLog";
+    }
+
+    private static String transformWrapper(String tagName, String baseName) {
+
+        String direction = tagName.startsWith("input") ? "Input" : "Output";
+
+        String result = baseName;
+
+        String pipeSuffix = "Pipe";
+        if (result.endsWith(pipeSuffix)) {
+            result = result.substring(0, result.length() - pipeSuffix.length());
+        }
+
+        String wrapperSuffix = "Wrapper";
+        if (result.endsWith(wrapperSuffix)) {
+            result = result.substring(0, result.length() - wrapperSuffix.length());
+        }
+
+        return result + direction + wrapperSuffix;
+    }
+
+    private static String transformValidator(String tagName, String baseName) {
+
+        String direction = tagName.startsWith("input") ? "Input" : "Output";
+
+        String result = baseName;
+        String validatorSuffix = "Validator";
+
+        if (result.endsWith(validatorSuffix)) {
+            result = result.substring(0, result.length() - validatorSuffix.length());
+        }
+
+        return result + direction + validatorSuffix;
+    }
+
+    private static String capitalize(String value) {
+        if (value == null || value.isEmpty()) return value;
+        return value.substring(0, 1).toUpperCase() + value.substring(1);
     }
 
     /* Helper method to rename an element in a DOM document */

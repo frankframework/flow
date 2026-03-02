@@ -74,6 +74,63 @@ class XmlAdapterUtilsTest {
     }
 
     @Test
+    void normalizeFrankElementsShouldTransformMessageLog() throws Exception {
+        String xml =
+                "<messageLog className=\"org.frankframework.jdbc.JdbcTransactionalStorage\" slotId=\"ApiListenerDuplicateCheck\" />";
+        String result = XmlAdapterUtils.normalizeFrankElements(xml);
+
+        Document doc = parseXml(result);
+        Element root = doc.getDocumentElement();
+
+        assertEquals("JdbcMessageLog", root.getTagName());
+        assertEquals("ApiListenerDuplicateCheck", root.getAttribute("slotId"));
+    }
+
+    @Test
+    void normalizeFrankElementsShouldTransformInputValidator() throws Exception {
+        String xml = "<inputValidator className=\"org.frankframework.extensions.api.ApiWsdlXmlValidator\" />";
+        String result = XmlAdapterUtils.normalizeFrankElements(xml);
+
+        Document doc = parseXml(result);
+        Element root = doc.getDocumentElement();
+
+        assertEquals("ApiWsdlXmlInputValidator", root.getTagName());
+    }
+
+    @Test
+    void normalizeFrankElementsShouldTransformOutputValidator() throws Exception {
+        String xml = "<outputValidator className=\"org.frankframework.extensions.api.ApiWsdlXmlValidator\" />";
+        String result = XmlAdapterUtils.normalizeFrankElements(xml);
+
+        Document doc = parseXml(result);
+        Element root = doc.getDocumentElement();
+
+        assertEquals("ApiWsdlXmlOutputValidator", root.getTagName());
+    }
+
+    @Test
+    void normalizeFrankElementsShouldTransformInputWrapper() throws Exception {
+        String xml = "<inputWrapper className=\"org.frankframework.extensions.api.ApiSoapWrapperPipe\" />";
+        String result = XmlAdapterUtils.normalizeFrankElements(xml);
+
+        Document doc = parseXml(result);
+        Element root = doc.getDocumentElement();
+
+        assertEquals("ApiSoapInputWrapper", root.getTagName());
+    }
+
+    @Test
+    void normalizeFrankElementsShouldTransformOutputWrapper() throws Exception {
+        String xml = "<outputWrapper className=\"org.frankframework.extensions.api.ApiSoapWrapperPipe\" />";
+        String result = XmlAdapterUtils.normalizeFrankElements(xml);
+
+        Document doc = parseXml(result);
+        Element root = doc.getDocumentElement();
+
+        assertEquals("ApiSoapOutputWrapper", root.getTagName());
+    }
+
+    @Test
     void shouldFindAdapterByNameUppercaseTag() throws Exception {
         String xml =
                 """

@@ -160,11 +160,15 @@ function generateXmlElement(
   const childXml = children.map((child: ChildNode) => generateChildXml(child, 4)).join('\n')
 
   const forwards = (edgeMap.get(node.id) || [])
-    .filter(({ targetId }) => exitNodeIds.has(targetId))
     .map(({ label, targetId }) => {
-      const exitTarget = nodeMap.get(targetId)
-      const exitName = (exitTarget?.data as NodeData).name || 'Exit'
-      return `    <Forward name="${escapeXml(label)}" path="${escapeXml(exitName)}" />`
+      const forwardTarget = nodeMap.get(targetId)
+      const targetName = (forwardTarget?.data as NodeData)?.name || ''
+      if (targetName === '') {
+        console.warn(`Target node with ID ${targetId} does not have a name attribute.`)
+        return ''
+      }
+      // If saving from flow to xml, all edges will be considered explicit Forwards.
+      return `    <Forward name="${escapeXml(label)}" path="${escapeXml(targetName)}" />`
     })
     .join('\n')
 
