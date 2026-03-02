@@ -224,7 +224,6 @@ export default function StudioFileStructure() {
 
     const handleArrowClick = (event: React.MouseEvent) => {
       event.stopPropagation()
-      await loadFolderContents(item)
       context.toggleExpandedState()
     }
 
