@@ -8,6 +8,7 @@ interface CloneProjectModalProperties {
   isLocal: boolean
   onClose: () => void
   onClone: (repoUrl: string, localPath: string, token?: string) => void
+  initialPath?: string
 }
 
 export default function CloneProjectModal({
@@ -15,6 +16,7 @@ export default function CloneProjectModal({
   isLocal,
   onClose,
   onClone,
+  initialPath,
 }: Readonly<CloneProjectModalProperties>) {
   const [repoUrl, setRepoUrl] = useState('')
   const [location, setLocation] = useState('')
@@ -23,14 +25,18 @@ export default function CloneProjectModal({
 
   useEffect(() => {
     if (isOpen && isLocal) {
-      filesystemService
-        .getDefaultPath()
-        .then(setLocation)
-        .catch(() => setLocation(''))
+      if (initialPath) {
+        setLocation(initialPath)
+      } else {
+        filesystemService
+          .getDefaultPath()
+          .then(setLocation)
+          .catch(() => setLocation(''))
+      }
     } else if (isOpen) {
-      setLocation('')
+      setLocation(initialPath ?? '')
     }
-  }, [isOpen, isLocal])
+  }, [isOpen, isLocal, initialPath])
 
   if (!isOpen) return null
 
@@ -80,9 +86,9 @@ export default function CloneProjectModal({
               <input
                 value={location || (isLocal ? '' : 'Workspace root')}
                 readOnly
-                className="border-border bg-backdrop h-8 w-full rounded border px-2 py-1 text-sm"
+                className="border-border bg-background focus:border-foreground-active focus:ring-foreground-active w-full rounded border px-2 py-1 text-sm transition focus:ring-2 focus:outline-none"
                 placeholder={isLocal ? 'Select a parent directory...' : 'Workspace root (or browse for subfolder)'}
-                aria-label="clone location"
+                onDoubleClick={() => setShowPicker(true)}
               />
 
               <Button onClick={() => setShowPicker(true)} className="h-8 text-sm">
@@ -148,6 +154,7 @@ export default function CloneProjectModal({
           setShowPicker(false)
         }}
         onCancel={() => setShowPicker(false)}
+        initialPath={location}
       />
     </>
   )

@@ -1,19 +1,26 @@
 import RulerCrossPenIcon from '/icons/solar/Ruler Cross Pen.svg?react'
+import TrashBinIcon from '/icons/solar/Trash Bin.svg?react'
 import CodeIcon from '/icons/solar/Code.svg?react'
 import { openInStudio, openInEditor } from '~/actions/navigationActions'
 import Button from '~/components/inputs/button'
+import ConfirmDeleteDialog from '~/components/file-structure/confirm-delete-dialog'
+import { useState } from 'react'
 
 interface ConfigurationTileProperties {
   filepath: string
   relativePath: string
   adapterNames: string[]
+  onDelete: () => Promise<void>
 }
 
 export default function ConfigurationTile({
   filepath,
   relativePath,
   adapterNames,
+  onDelete,
 }: Readonly<ConfigurationTileProperties>) {
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+
   const handleOpenInStudio = (adapterName: string) => {
     openInStudio(adapterName, filepath)
   }
@@ -25,12 +32,23 @@ export default function ConfigurationTile({
     openInEditor(fileName, filepath)
   }
 
+  const handleConfirmDelete = async () => {
+    await onDelete()
+    setShowDeleteDialog(false)
+  }
+
   return (
     <div className="border-border bg-background relative flex h-75 w-100 flex-col rounded border p-4 shadow-sm">
       {/* Header */}
       <div className="text-foreground mb-3 truncate text-sm font-semibold" title={relativePath}>
         {relativePath}
       </div>
+      <button
+        onClick={() => setShowDeleteDialog(true)}
+        className="text-foreground-muted hover:text-error absolute top-3 right-3 transition hover:cursor-pointer"
+      >
+        <TrashBinIcon className="h-4 w-4 fill-current" />
+      </button>
 
       {/* Adapter list */}
       {adapterNames.length > 0 ? (
@@ -57,6 +75,14 @@ export default function ConfigurationTile({
           <span className="whitespace-nowrap">Open in Editor</span>
         </Button>
       </div>
+      {showDeleteDialog && (
+        <ConfirmDeleteDialog
+          name={relativePath.split(/[/\\]/).pop() ?? relativePath}
+          isFolder={false}
+          onCancel={() => setShowDeleteDialog(false)}
+          onConfirm={handleConfirmDelete}
+        />
+      )}
     </div>
   )
 }

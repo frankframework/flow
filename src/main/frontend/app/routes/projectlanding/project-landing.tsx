@@ -161,6 +161,8 @@ export default function ProjectLanding() {
   const projects = recentProjects ?? []
   const filteredProjects = projects.filter((project) => project.name.toLowerCase().includes(searchTerm.toLowerCase()))
 
+  const lastRecentRootPath = projects[0]?.rootPath
+
   if (isLoading || isOpeningProject) return <LoadingState />
 
   return (
@@ -200,12 +202,14 @@ export default function ProjectLanding() {
         onClose={() => setIsModalOpen(false)}
         onCreate={onCreateProject}
         isLocal={isLocalEnvironment}
+        initialPath={lastRecentRootPath}
       />
       <CloneProjectModal
         isOpen={isCloneModalOpen}
         isLocal={isLocalEnvironment}
         onClose={() => setIsCloneModalOpen(false)}
         onClone={onCloneProject}
+        initialPath={lastRecentRootPath}
       />
       {!isLocalEnvironment && (
         <input
@@ -223,6 +227,7 @@ export default function ProjectLanding() {
         onSelect={onOpenFolder}
         onCancel={() => setIsOpenPickerOpen(false)}
         rootLabel={rootLocationName}
+        initialPath={lastRecentRootPath}
       />
     </div>
   )
@@ -248,7 +253,7 @@ const Sidebar = ({
   onCloneClick: () => void
   onImportClick: () => void
 }) => (
-  <nav className="border-border flex w-1/4 min-w-[200px] flex-col gap-3 border-r bg-slate-50/50 p-4">
+  <nav className="border-border flex w-1/4 min-w-[200px] flex-col gap-3 border-r p-4">
     <ActionButton label={isLocal ? 'Open Local Folder' : 'Open Workspace Project'} onClick={onOpenClick} />
     <ActionButton label="Clone Repository" onClick={onCloneClick} />
     <ActionButton label="New Project" onClick={onNewClick} />

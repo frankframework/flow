@@ -8,23 +8,34 @@ interface NewProjectModalProperties {
   isLocal: boolean
   onClose: () => void
   onCreate: (pathOrName: string) => void
+  initialPath?: string
 }
 
-export default function NewProjectModal({ isOpen, isLocal, onClose, onCreate }: Readonly<NewProjectModalProperties>) {
+export default function NewProjectModal({
+  isOpen,
+  isLocal,
+  onClose,
+  onCreate,
+  initialPath,
+}: Readonly<NewProjectModalProperties>) {
   const [name, setName] = useState('')
   const [location, setLocation] = useState('')
   const [showPicker, setShowPicker] = useState(false)
 
   useEffect(() => {
     if (isOpen && isLocal) {
-      filesystemService
-        .getDefaultPath()
-        .then(setLocation)
-        .catch(() => setLocation(''))
+      if (initialPath) {
+        setLocation(initialPath)
+      } else {
+        filesystemService
+          .getDefaultPath()
+          .then(setLocation)
+          .catch(() => setLocation(''))
+      }
     } else if (isOpen) {
-      setLocation('')
+      setLocation(initialPath ?? '')
     }
-  }, [isOpen, isLocal])
+  }, [isOpen, isLocal, initialPath])
 
   if (!isOpen) return null
 
@@ -67,8 +78,9 @@ export default function NewProjectModal({ isOpen, isLocal, onClose, onCreate }: 
               <input
                 value={location || (isLocal ? '' : 'Workspace root')}
                 readOnly
-                className="border-border bg-backdrop h-8 w-full rounded border px-2 py-1 text-sm"
+                className="border-border bg-background focus:border-foreground-active focus:ring-foreground-active w-full rounded border px-2 py-1 text-sm transition focus:ring-2 focus:outline-none"
                 placeholder={isLocal ? 'Select a parent directory...' : 'Workspace root (or browse for subfolder)'}
+                onDoubleClick={() => setShowPicker(true)}
               />
 
               <Button onClick={() => setShowPicker(true)} className="h-8 text-sm">
@@ -119,6 +131,7 @@ export default function NewProjectModal({ isOpen, isLocal, onClose, onCreate }: 
           setShowPicker(false)
         }}
         onCancel={() => setShowPicker(false)}
+        initialPath={location}
       />
     </>
   )

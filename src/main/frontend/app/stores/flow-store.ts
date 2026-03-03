@@ -241,7 +241,7 @@ const useFlowStore = create<FlowState>()(
       if (!isNewNode) get().saveToHistory()
       set({
         nodes: get().nodes.map((node) => {
-          if (node.id === nodeId && isFrankNode(node)) {
+          if (node.id === nodeId && (isFrankNode(node) || isExitNode(node))) {
             return { ...node, data: { ...node.data, attributes } }
           }
           return node
@@ -250,7 +250,7 @@ const useFlowStore = create<FlowState>()(
     },
     getAttributes: (nodeId: string) => {
       const node = get().nodes.find((node) => node.id === nodeId)
-      if (node && isFrankNode(node)) {
+      if (node && (isFrankNode(node) || isExitNode(node))) {
         return node.data.attributes || null
       }
       return null
