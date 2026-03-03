@@ -26,8 +26,12 @@ interface CreateNodeModalProperties {
 }
 
 function getElementNamesForType(fullName: string, types: FFDocJson['types'], elements: Elements): Set<string> {
-  const fullNames = new Set(types[fullName] ?? [])
-  return new Set(Object.entries(elements).filter(([_, el]) => fullNames.has(el.className)).map(([name]) => name))
+  const fullNames = new Set(types[fullName])
+  return new Set(
+    Object.entries(elements)
+      .filter(([_, el]) => fullNames.has(el.className))
+      .map(([name]) => name),
+  )
 }
 
 function CreateNodeModal({
