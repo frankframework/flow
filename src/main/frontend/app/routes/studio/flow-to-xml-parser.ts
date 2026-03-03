@@ -202,9 +202,19 @@ ${spaces}</${child.subtype}>`
 function generateExitsXml(exitNodes: FlowNode[]): string {
   return exitNodes
     .map((node) => {
-      const name = escapeXml((node.data as NodeData).name)
-      const state = name.toLowerCase().includes('bad') || name.toLowerCase().includes('fail') ? 'error' : 'success'
+      const data = node.data as NodeData
+      const name = escapeXml(data.name)
+      const state = getExitState(data)
+
       return `      <Exit name="${name}" state="${state}" />`
     })
     .join('\n')
+}
+
+function getExitState(data: NodeData): string {
+  const storedState = data.attributes?.state
+  if (storedState) return storedState
+
+  const name = data.name.toLowerCase()
+  return name.includes('bad') || name.includes('fail') ? 'error' : 'success'
 }
