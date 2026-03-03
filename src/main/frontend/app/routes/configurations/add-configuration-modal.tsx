@@ -28,11 +28,7 @@ export default function AddConfigurationModal({
   const setProject = useProjectStore((s) => s.setProject)
 
   useEffect(() => {
-    if (configurationsDirPath) {
-      setRootLocationName(configurationsDirPath)
-    } else {
-      setRootLocationName('')
-    }
+    setRootLocationName(configurationsDirPath ?? '')
   }, [configurationsDirPath])
 
   if (!isOpen || !currentProject) return null
@@ -74,6 +70,7 @@ export default function AddConfigurationModal({
   }
 
   const handleClickedOutside = (event: React.MouseEvent<HTMLDivElement>) => {
+    console.log(event.target, event.currentTarget)
     if (event.target === event.currentTarget) {
       handleClose()
     }
