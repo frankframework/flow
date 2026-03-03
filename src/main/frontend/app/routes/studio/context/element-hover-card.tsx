@@ -23,15 +23,27 @@ export default function ElementHoverCard({
   const offset = 10 // distance between anchor and tooltip
 
   useLayoutEffect(() => {
-    if (!ref.current) return
+    if (!ref.current || !anchorRect) return
 
-    const tooltipWidth = ref.current.offsetWidth
+    const tooltip = ref.current
+    const tooltipHeight = tooltip.offsetHeight
+    const tooltipWidth = tooltip.offsetWidth
 
-    if (anchorRect === null) return
-    const top = anchorRect.top + anchorRect.height / 2
-    const left = anchorRect.left - tooltipWidth
+    const viewportHeight = window.innerHeight
+    const margin = 8 // space from top/bottom of screen
 
-    setPosition({ top, left })
+    // Desired centered position
+    const centeredTop = anchorRect.top + anchorRect.height / 2 - tooltipHeight / 2
+
+    // Clamp within viewport
+    const clampedTop = Math.min(Math.max(centeredTop, margin), viewportHeight - tooltipHeight - margin)
+
+    const left = anchorRect.left - tooltipWidth - offset
+
+    setPosition({
+      top: clampedTop,
+      left,
+    })
   }, [anchorRect])
 
   useEffect(() => {
@@ -51,10 +63,10 @@ export default function ElementHoverCard({
       }
     }
 
-    document.addEventListener('mousedown', handleClickOutside)
+    document.addEventListener('pointerdown', handleClickOutside, true)
 
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('pointerdown', handleClickOutside, true)
     }
   }, [isLocked, onUnlock])
 
@@ -65,7 +77,6 @@ export default function ElementHoverCard({
         position: 'fixed',
         top: position.top,
         left: position.left - offset,
-        transform: 'translateY(-50%)',
         pointerEvents: isLocked ? 'auto' : 'none',
         zIndex: 50,
       }}
@@ -82,7 +93,7 @@ export default function ElementHoverCard({
           }}
         />
       </div>
-      <div className="flex-1 overflow-x-hidden overflow-y-auto p-5">
+      <div className="flex-1 overflow-x-auto overflow-y-auto p-5">
         <p className="text-foreground-muted">{element.labels.Components}</p>
         <h2 className="mb-2 font-semibold">{element.name}</h2>
         <div className="py-2">
