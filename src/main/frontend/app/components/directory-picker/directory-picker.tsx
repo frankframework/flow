@@ -85,7 +85,7 @@ export default function DirectoryPicker({
 
   return (
     <div className="bg-background/50 absolute inset-0 z-[60] flex items-center justify-center">
-      <div className="bg-background border-border flex h-[450px] w-[500px] flex-col rounded-lg border shadow-lg">
+      <div className="bg-background border-border flex h-[450px] w-1/3 min-w-[500px] flex-col rounded-lg border shadow-lg">
         <div className="border-border flex items-center justify-between border-b px-4 py-3">
           <h3 className="text-sm font-semibold">Select Directory</h3>
           <Button
@@ -136,9 +136,7 @@ export default function DirectoryPicker({
         </div>
 
         <div className="border-border flex items-center justify-between border-t px-4 py-3">
-          <span className="text-foreground-muted max-w-[280px] truncate text-xs">
-            {activePath || 'Select a directory'}
-          </span>
+          <span className="text-foreground-muted truncate text-xs">{activePath || 'Select a directory'}</span>
           <div className="flex gap-2">
             <Button onClick={onCancel}>Cancel</Button>
             <Button

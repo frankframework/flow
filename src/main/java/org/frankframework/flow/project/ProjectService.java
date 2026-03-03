@@ -23,6 +23,7 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.transport.CredentialsProvider;
 import org.frankframework.flow.adapter.AdapterNotFoundException;
 import org.frankframework.flow.configuration.Configuration;
+import org.frankframework.flow.configuration.ConfigurationAlreadyExistsException;
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
 import org.frankframework.flow.exception.ApiException;
 import org.frankframework.flow.filesystem.FileSystemStorage;
@@ -396,6 +397,42 @@ public class ProjectService {
         Path filePath = configDir.resolve(configurationName).normalize();
         if (!filePath.startsWith(configDir)) {
             throw new SecurityException("Invalid configuration name: " + configurationName);
+        }
+
+        String defaultXml = new String(
+                new ClassPathResource("templates/default-configuration.xml")
+                        .getInputStream()
+                        .readAllBytes(),
+                StandardCharsets.UTF_8);
+
+        fileSystemStorage.writeFile(filePath.toString(), defaultXml);
+
+        Configuration configuration = new Configuration(filePath.toString());
+        configuration.setXmlContent(defaultXml);
+        project.addConfiguration(configuration);
+        return project;
+    }
+
+    public Project addConfigurationToFolder(String projectName, String configurationName, String folderpath)
+            throws ProjectNotFoundException, IOException, ApiException {
+        Project project = getProject(projectName);
+
+        Path absProjectPath = fileSystemStorage.toAbsolutePath(project.getRootPath());
+        Path targetDir = fileSystemStorage.toAbsolutePath(folderpath);
+
+        if (!targetDir.startsWith(absProjectPath)) {
+            throw new SecurityException("Configuration location must be within the project directory");
+        }
+
+        Files.createDirectories(targetDir);
+
+        Path filePath = targetDir.resolve(configurationName).normalize();
+        if (!filePath.startsWith(targetDir)) {
+            throw new SecurityException("Invalid configuration name: " + configurationName);
+        }
+
+        if (Files.exists(filePath)) {
+            throw new ConfigurationAlreadyExistsException(configurationName + " already exists at: " + filePath);
         }
 
         String defaultXml = new String(

@@ -223,7 +223,7 @@ public class ProjectController {
 
     @PostMapping("/{projectName}/files")
     public ResponseEntity<FileTreeNode> createFile(@PathVariable String projectName, @RequestBody FileCreateDTO dto)
-            throws IOException {
+            throws IOException, ProjectNotFoundException, ApiException {
         FileTreeNode node = fileTreeService.createFile(projectName, dto.path(), dto.name());
         return ResponseEntity.status(HttpStatus.CREATED.value()).body(node);
     }

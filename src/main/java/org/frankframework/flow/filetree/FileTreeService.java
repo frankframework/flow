@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.frankframework.flow.adapter.AdapterNotFoundException;
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
+import org.frankframework.flow.exception.ApiException;
 import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.frankframework.flow.project.ProjectNotFoundException;
 import org.frankframework.flow.project.ProjectService;
@@ -152,10 +153,16 @@ public class FileTreeService {
         }
     }
 
-    public FileTreeNode createFile(String projectName, String parentPath, String fileName) throws IOException {
+    public FileTreeNode createFile(String projectName, String parentPath, String fileName)
+            throws IOException, ProjectNotFoundException, ApiException {
         validateFileName(fileName);
         String fullPath = parentPath.endsWith("/") ? parentPath + fileName : parentPath + "/" + fileName;
         validateWithinProject(projectName, fullPath);
+
+        if (fileName.toLowerCase().endsWith(".xml")) {
+            projectService.addConfigurationToFolder(projectName, fileName, parentPath);
+            return null;
+        }
 
         fileSystemStorage.createFile(fullPath);
         invalidateTreeCache(projectName);

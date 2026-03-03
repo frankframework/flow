@@ -6,11 +6,10 @@ import AddConfigurationTile from './add-configuration-tile'
 import { useState, useEffect, useCallback, type ChangeEvent, useMemo } from 'react'
 import AddConfigurationModal from './add-configuration-modal'
 import LoadingSpinner from '~/components/loading-spinner'
-import { fetchProjectTree } from '~/services/project-service'
+import { deleteInProject, fetchProjectTree } from '~/services/project-service'
 import Button from '~/components/inputs/button'
 import { getAdapterNamesFromConfiguration } from '../studio/xml-to-json-parser'
 import Search from '~/components/search/search'
-import { motion, AnimatePresence } from 'framer-motion'
 
 export interface FileTreeNode {
   name: string
@@ -62,6 +61,7 @@ export default function ConfigurationManager() {
   const [showModal, setShowModal] = useState(false)
   const [tree, setTree] = useState<FileTreeNode | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [configurationsDir, setConfigurationsDir] = useState<FileTreeNode | null>(null)
   const [filesWithAdapters, setFilesWithAdapters] = useState<
     { path: string; relativePath: string; adapterNames: string[] }[]
   >([])
@@ -94,10 +94,23 @@ export default function ConfigurationManager() {
     return () => controller.abort()
   }, [loadTree])
 
+  useEffect(() => {
+    if (tree) {
+      const configDir = findConfigurationsDir(tree)
+      setConfigurationsDir(configDir)
+    }
+  }, [tree])
+
   const handleConfigAdded = useCallback(() => {
     setShowModal(false)
     loadTree()
   }, [loadTree])
+
+  const handleDelete = async (filepath: string) => {
+    if (!currentProject?.name) return
+    await deleteInProject(currentProject.name, filepath)
+    loadTree()
+  }
 
   const configFiles = useMemo(() => {
     if (!tree) return []
@@ -200,6 +213,7 @@ export default function ConfigurationManager() {
         <p>Return To Projects</p>
       </div>
 
+      <h1 className="ml-2 text-2xl font-bold">Configuration Manager</h1>
       <div className="mb-4 flex items-center justify-between">
         <p className="ml-2">
           Configurations within <span className="font-bold">{currentProject.name}</span>/src/main/configurations:
@@ -208,27 +222,15 @@ export default function ConfigurationManager() {
       </div>
 
       <div className="border-border bg-backdrop flex flex-wrap gap-4 self-start rounded border p-4">
-        <AnimatePresence>
-          {filteredConfigurations.map((file) => (
-            <motion.div
-              key={file.path}
-              layout
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              transition={{
-                layout: { duration: 0.25, ease: 'easeInOut' },
-                opacity: { duration: 0.15 },
-              }}
-            >
-              <ConfigurationTile
-                filepath={file.path}
-                relativePath={file.relativePath}
-                adapterNames={file.adapterNames}
-              />
-            </motion.div>
-          ))}
-        </AnimatePresence>
+        {filteredConfigurations.map((file) => (
+          <ConfigurationTile
+            key={file.path}
+            filepath={file.path}
+            relativePath={file.relativePath}
+            adapterNames={file.adapterNames}
+            onDelete={() => handleDelete(file.path)}
+          />
+        ))}
 
         <AddConfigurationTile onClick={() => setShowModal(true)} />
       </div>
@@ -237,6 +239,7 @@ export default function ConfigurationManager() {
         onClose={() => setShowModal(false)}
         onSuccess={handleConfigAdded}
         currentProject={currentProject}
+        configurationsDirPath={configurationsDir?.path ?? ''}
       />
     </div>
   )
