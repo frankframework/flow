@@ -20,13 +20,13 @@ export function openInStudio(adapterName: string, filepath: string) {
 export function openInEditor(relativePath: string, filepath: string) {
   const { setTabData, setActiveTab, getTab } = useEditorTabStore.getState()
 
-  if (!getTab(relativePath)) {
-    setTabData(relativePath, {
+  if (!getTab(filepath)) {
+    setTabData(filepath, {
       name: relativePath,
       configurationPath: filepath,
     })
   }
 
-  setActiveTab(relativePath)
+  setActiveTab(filepath)
   useNavigationStore.getState().navigate('editor')
 }

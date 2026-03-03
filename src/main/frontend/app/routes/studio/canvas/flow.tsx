@@ -114,7 +114,7 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
 
     if (!configurationPath || !project) return
 
-    const xmlString = exportFlowToXml(flowData, activeTabName)
+    const xmlString = await exportFlowToXml(flowData, project.name, configurationPath, activeTabName)
 
     setSaveStatus('saving')
     try {
