@@ -24,7 +24,18 @@ export default class EditorFilesDataProvider implements TreeDataProvider {
 
   constructor(projectName: string) {
     this.projectName = projectName
-    void this.fetchAndBuildTree()
+  }
+
+  /** Initialize tree and recursively load expanded folders */
+  public async init(expandedItems: string[] = []) {
+    await this.fetchAndBuildTree()
+
+    const sortedIds = [...expandedItems].toSorted((a, b) => a.split('/').length - b.split('/').length)
+
+    for (const id of sortedIds) {
+      if (id === 'root') continue
+      await this.loadDirectory(id)
+    }
   }
 
   /** Fetch file tree from backend and build the provider's data */

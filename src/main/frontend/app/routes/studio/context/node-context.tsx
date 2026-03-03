@@ -20,6 +20,7 @@ export default function NodeContext({
   const [showAll, setShowAll] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
   const [inputValues, setInputValues] = useState<Record<number, string>>({})
+  const [initiallyFilledIndexes, setInitiallyFilledIndexes] = useState<Set<number>>(new Set())
 
   const { elements, ffDoc } = useFrankDoc()
   const { attributes, isNewNode, setIsEditing, setIsNewNode, parentId, setParentId, childParentId } =
@@ -153,6 +154,15 @@ export default function NodeContext({
         newValues[index] = (currentAttributes as Record<string, string>)[key] ?? ''
       }
       setInputValues(newValues)
+
+      const filledIndexes = new Set<number>()
+      for (const [index, value] of Object.entries(newValues)) {
+        if (value?.toString().trim()) {
+          filledIndexes.add(Number(index))
+        }
+      }
+
+      setInitiallyFilledIndexes(filledIndexes)
     }
   }, [attributes, nodeId, getNestedChildAttributes, getFirstLevelChildAttributes, getTopLevelNodeAttributes])
 
@@ -276,7 +286,27 @@ export default function NodeContext({
     ? Object.entries(attributes).map(([k, v], index) => [k, v as AttributeType, index])
     : []
 
-  const displayedAttributes = entriesWithIndex.filter(([_, attribute]) => showAll || attribute.mandatory)
+  const categorizedAttributes = (() => {
+    if (!attributes) return []
+
+    const mandatory: [string, AttributeType, number][] = []
+    const filled: [string, AttributeType, number][] = []
+    const rest: [string, AttributeType, number][] = []
+
+    for (const entry of entriesWithIndex) {
+      const [_, attribute, index] = entry
+
+      if (attribute.mandatory) {
+        mandatory.push(entry)
+      } else if (initiallyFilledIndexes.has(index)) {
+        filled.push(entry)
+      } else {
+        rest.push(entry)
+      }
+    }
+
+    return [...mandatory, ...filled, ...(showAll ? rest : [])]
+  })()
 
   return (
     <>
@@ -284,7 +314,7 @@ export default function NodeContext({
         <div className="bg-background w-full space-y-4 rounded-md p-6">
           <h1>For node with id: {nodeId}</h1>
 
-          {displayedAttributes.map(([key, attribute, originalIndex]: [string, AttributeType, number]) => (
+          {categorizedAttributes.map(([key, attribute, originalIndex]: [string, AttributeType, number]) => (
             <div key={originalIndex}>
               <ContextInput
                 id={`ctx-${originalIndex}`}
@@ -313,7 +343,7 @@ export default function NodeContext({
 
           <div className="pt-4">
             <Button onClick={() => setShowAll((p) => !p)} className="w-full">
-              {showAll ? 'Hide optional attributes' : 'Show all attributes'}
+              {showAll ? 'Hide empty attributes' : 'Show all attributes'}
             </Button>
           </div>
         </div>
