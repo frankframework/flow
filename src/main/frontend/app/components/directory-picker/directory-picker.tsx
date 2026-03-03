@@ -10,6 +10,7 @@ interface DirectoryPickerProperties {
   onSelect: (absolutePath: string) => void
   onCancel: () => void
   rootLabel?: string
+  initialPath?: string
 }
 
 export default function DirectoryPicker({
@@ -17,6 +18,7 @@ export default function DirectoryPicker({
   onSelect,
   onCancel,
   rootLabel = 'Computer',
+  initialPath,
 }: Readonly<DirectoryPickerProperties>) {
   const [currentPath, setCurrentPath] = useState('')
   const [entries, setEntries] = useState<FilesystemEntry[]>([])
@@ -47,9 +49,9 @@ export default function DirectoryPicker({
   useEffect(() => {
     if (isOpen) {
       setSelectedEntry(null)
-      loadEntries('')
+      loadEntries(initialPath ?? '')
     }
-  }, [isOpen, loadEntries])
+  }, [isOpen, loadEntries, initialPath])
 
   if (!isOpen) return null
 
