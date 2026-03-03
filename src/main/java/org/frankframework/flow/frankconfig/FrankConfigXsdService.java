@@ -1,4 +1,4 @@
-package org.frankframework.flow.frankdoc;
+package org.frankframework.flow.frankconfig;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -20,6 +20,7 @@ public class FrankConfigXsdService {
             log.info("Fetching FrankConfig XSD from {}", FRANKCONFIG_XSD_URL);
             return restTemplate.getForObject(FRANKCONFIG_XSD_URL, String.class);
         } catch (Exception exception) {
+            log.error("Failed to fetch FrankConfig XSD from {}", FRANKCONFIG_XSD_URL, exception);
             throw new FrankConfigXsdNotFoundException("Failed to fetch FrankConfig XSD", exception);
         }
     }

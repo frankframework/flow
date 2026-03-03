@@ -1,4 +1,4 @@
-package org.frankframework.flow.frankdoc;
+package org.frankframework.flow.frankconfig;
 
 import org.frankframework.flow.exception.ApiException;
 import org.springframework.http.HttpStatus;
