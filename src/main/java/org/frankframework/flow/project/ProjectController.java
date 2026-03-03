@@ -7,12 +7,15 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.TransformerException;
 import lombok.extern.slf4j.Slf4j;
 import org.frankframework.flow.adapter.AdapterNotFoundException;
 import org.frankframework.flow.adapter.AdapterUpdateDTO;
 import org.frankframework.flow.configuration.Configuration;
 import org.frankframework.flow.configuration.ConfigurationDTO;
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
+import org.frankframework.flow.exception.ApiException;
 import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.frankframework.flow.filetree.FileCreateDTO;
 import org.frankframework.flow.filetree.FileRenameDTO;
@@ -21,6 +24,7 @@ import org.frankframework.flow.filetree.FileTreeService;
 import org.frankframework.flow.projectsettings.InvalidFilterTypeException;
 import org.frankframework.flow.recentproject.RecentProjectsService;
 import org.frankframework.flow.utility.XmlValidator;
+import org.frankframework.flow.xml.XmlDTO;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -35,6 +39,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import org.xml.sax.SAXException;
 
 @Slf4j
 @RestController
@@ -74,6 +79,16 @@ public class ProjectController {
         } else {
             return fileTreeService.getConfigurationsDirectoryTree(name);
         }
+    }
+
+    @GetMapping(
+            value = "/{projectName}/adapters/{adapterName}",
+            params = {"configurationPath"})
+    public XmlDTO getAdapterElement(
+            @PathVariable String projectName, @PathVariable String adapterName, @RequestParam String configurationPath)
+            throws IOException, ApiException, SAXException, ParserConfigurationException, TransformerException {
+
+        return projectService.getAdapterElement(projectName, configurationPath, adapterName);
     }
 
     @GetMapping("/{projectName}")
@@ -158,13 +173,13 @@ public class ProjectController {
     @PutMapping("/{projectName}/configuration")
     public ResponseEntity<Void> updateConfiguration(
             @PathVariable String projectName, @RequestBody ConfigurationDTO configurationDTO)
-            throws ConfigurationNotFoundException, InvalidXmlContentException, IOException {
+            throws ConfigurationNotFoundException, InvalidXmlContentException, IOException, ProjectNotFoundException {
 
         if (configurationDTO.filepath().toLowerCase().endsWith(".xml")) {
             XmlValidator.validateXml(configurationDTO.content());
         }
         try {
-            fileTreeService.updateFileContent(configurationDTO.filepath(), configurationDTO.content());
+            fileTreeService.updateFileContent(projectName, configurationDTO.filepath(), configurationDTO.content());
             return ResponseEntity.ok().build();
         } catch (IllegalArgumentException e) {
             throw new ConfigurationNotFoundException("Invalid file path: " + configurationDTO.filepath());

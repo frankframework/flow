@@ -38,9 +38,10 @@ public class XmlAdapterUtils {
     }
 
     /**
-     * Converts a DOM Document to a formatted XML string.
+     * Converts a DOM Node to a formatted XML string.
+     * @throws TransformerException
      */
-    public static String convertDocumentToString(Document doc) throws Exception {
+    public static String convertNodeToString(Node node) throws TransformerException {
         Transformer transformer =
                 XmlSecurityUtils.createSecureTransformerFactory().newTransformer();
 
@@ -51,10 +52,35 @@ public class XmlAdapterUtils {
         transformer.setOutputProperty("{http://xml.apache.org/xalan}line-separator", "\n");
 
         StringWriter writer = new StringWriter();
-        transformer.transform(new DOMSource(doc), new StreamResult(writer));
+        transformer.transform(new DOMSource(node), new StreamResult(writer));
 
         // Remove empty lines
         return writer.toString().replaceAll("(?m)^[ \t]*\r?\n", "");
+    }
+
+    /**
+     * Finds and returns an Adapter element (matched by name attribute)
+     * inside the given configuration document.
+     *
+     * @return the Adapter node if found, otherwise null
+     */
+    public static Node findAdapterInDocument(Document configDoc, String adapterName) {
+        NodeList adapters = configDoc.getElementsByTagName("Adapter");
+
+        // If no uppercase matches found, try lowercase
+        if (adapters.getLength() == 0) {
+            adapters = configDoc.getElementsByTagName("adapter");
+        }
+
+        for (int i = 0; i < adapters.getLength(); i++) {
+            Element adapter = (Element) adapters.item(i);
+
+            if (adapterName.equals(adapter.getAttribute("name"))) {
+                return adapter;
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -107,7 +133,7 @@ public class XmlAdapterUtils {
             }
         }
 
-        return convertDocumentToString(configDoc);
+        return convertNodeToString(configDoc);
     }
 
     /* Method to help transform element tags */

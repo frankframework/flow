@@ -1,6 +1,7 @@
 import type { FlowNode } from '~/routes/studio/canvas/flow'
 import type { Edge } from '@xyflow/react'
 import type { ChildNode } from './canvas/nodetypes/child-node'
+import { getAdapter } from '~/services/adapter-service'
 
 interface ReactFlowJson {
   nodes: FlowNode[]
@@ -25,7 +26,19 @@ function escapeXml(string_: string): string {
   return string_.replaceAll('&', '&amp;').replaceAll('"', '&quot;')
 }
 
-export function exportFlowToXml(json: ReactFlowJson, adaptername: string): string {
+export async function exportFlowToXml(
+  json: ReactFlowJson,
+  projectName: string,
+  configurationPath: string,
+  adapterName: string,
+): Promise<string> {
+  // Fetch the adapter XML to extract attributes for the Adapter element
+  const adapterXml = await getAdapter(projectName, adapterName, configurationPath).then(
+    (response) => response.xmlContent,
+  )
+  const adapterAttributes = getAdapterAttributes(adapterXml)
+
+  // Transform the React Flow JSON into XML
   const { nodes, edges } = json
   const validNodes = nodes.filter((node) => hasDataProperty(node))
   const nodeMap = new Map(validNodes.map((n) => [n.id, n]))
@@ -69,7 +82,7 @@ export function exportFlowToXml(json: ReactFlowJson, adaptername: string): strin
   const exitsXml = exitNodes.length > 0 ? `      <Exits>\n${generateExitsXml(exitNodes)}\n      </Exits>` : ''
 
   return `
-  <Adapter name="${adaptername}" description="Auto-generated from React Flow JSON">
+  <Adapter ${adapterAttributes}>
 ${receivers.join('\n')}
     <Pipeline>
 ${exitsXml}
@@ -100,6 +113,14 @@ function buildEdgeMaps(edges: Edge[]) {
   }
 
   return { outgoing, incoming, edgeMap }
+}
+
+function getAdapterAttributes(adapterXml: string): string {
+  const parser = new DOMParser()
+  const doc = parser.parseFromString(adapterXml, 'application/xml')
+  const adapterElement = doc.documentElement
+  const attributes = [...adapterElement.attributes].map((attr) => `${attr.name}="${attr.value}"`).join(' ')
+  return attributes
 }
 
 function topologicalSort(startNodes: string[], outgoing: Record<string, string[]>): string[] {
