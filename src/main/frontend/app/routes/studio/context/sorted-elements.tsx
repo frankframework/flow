@@ -60,7 +60,6 @@ export default function SortedElements({ type, items, onDragStart, searchTerm }:
                 key={value.name}
                 className="border-border m-2 flex cursor-move items-center justify-between rounded border p-4"
                 draggable
-                onClick={() => console.log(lockedElement)}
                 onDragStart={(event) => {
                   setHoveredRect(null)
                   setHoveredElement(null)

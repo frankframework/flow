@@ -69,11 +69,13 @@
     --label-category: #feeaf0;
     --label-eip: #eaf0fe;
     --label-type: #feeaf0;
+    --label-deprecated: #a8a8a8;
 
     --label-border-components: #a5f994;
     --label-border-category: #f994b3;
     --label-border-eip: #94b3f9;
     --label-border-type: #f994b3;
+    --label-border-deprecated: #444444;
   }
 
   [data-theme='dark'] {
@@ -121,11 +123,13 @@
     --label-category: #bf063e;
     --label-eip: #123ea2;
     --label-type: #bf063e;
+    --label-deprecated: #444444;
 
     --label-border-components: #89be7e;
     --label-border-category: #e37294;
     --label-border-eip: #5174c7;
     --label-border-type: #e37294;
+    --label-border-deprecated: #b6b6b6;
   }
 }
 

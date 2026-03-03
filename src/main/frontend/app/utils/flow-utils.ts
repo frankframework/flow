@@ -30,6 +30,15 @@ export function cloneWithRemappedIds<T>(value: T, idMap: Map<string, string>, ge
   return value
 }
 
+// Helper function from frank-doc https://github.com/frankframework/frank-doc/blob/master/frank-doc-frontend/src/app/app.service.ts
+export function getFirstLabelGroup(filters: Record<string, string> | undefined): [string, string] {
+  const defaultLabelGroup: [string, string] = ['-', '-']
+  if (!filters) return defaultLabelGroup
+  const labelGroups = Object.entries(filters)
+  if (labelGroups.length === 0) return defaultLabelGroup
+  return labelGroups[0]
+}
+
 /**  Converts the tagname of a non capitalized element that has a classname attribute to the last part of said classname, e.g.:
  * <pipe name="uploadFiles" className="org.frankframework.pipes.ForEachChildElementPipe" />
  * Becomes <ForEachChildElementPipe name="uploadFiles" />
