@@ -19,7 +19,8 @@ export default function ExitNodeComponent(properties: NodeProps<ExitNode>) {
   const minNodeHeight = FlowConfig.EXIT_DEFAULT_HEIGHT
   const showNodeContextMenu = useNodeContextMenu()
   const { elements } = useFrankDoc()
-  const { setNodeId, setAttributes, setIsEditing } = useNodeContextStore()
+  const { setNodeId, setAttributes, setIsEditing, setEditingSubtype, setParentId, setChildParentId } =
+    useNodeContextStore()
   const gradientEnabled = useSettingsStore((state) => state.studio.gradient)
 
   const editNode = () => {
@@ -31,8 +32,11 @@ export default function ExitNodeComponent(properties: NodeProps<ExitNode>) {
     const attributes = Object.values(recordElements).find(
       (element) => element.name === properties.data.subtype,
     )?.attributes
+    setParentId(null)
+    setChildParentId(null)
     setNodeId(+properties.id)
     setAttributes(attributes)
+    setEditingSubtype(properties.data.subtype)
     showNodeContextMenu(true)
     setIsEditing(true)
   }
@@ -74,9 +78,7 @@ export default function ExitNodeComponent(properties: NodeProps<ExitNode>) {
           }}
         >
           <h1 className="font-bold">{properties.data.subtype}</h1>
-          <p className="overflow-hidden text-sm tracking-wider overflow-ellipsis whitespace-nowrap">
-            {properties.data.name.toUpperCase()}
-          </p>
+          <p className="overflow-hidden text-sm overflow-ellipsis whitespace-nowrap">{properties.data.name}</p>
         </div>
       </div>
       <Handle
