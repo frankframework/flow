@@ -70,7 +70,6 @@ export default function AddConfigurationModal({
   }
 
   const handleClickedOutside = (event: React.MouseEvent<HTMLDivElement>) => {
-    console.log(event.target, event.currentTarget)
     if (event.target === event.currentTarget) {
       handleClose()
     }
