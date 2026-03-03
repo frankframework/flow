@@ -18,13 +18,13 @@ public class MappingGeneratorService {
 
         // 2. Compile XSLT
         XsltCompiler compiler = processor.newXsltCompiler();
-        XsltExecutable executable = compiler.compile(new StreamSource(new File("D:\\School\\WeAreFrank\\flow\\src\\main\\java\\org\\frankframework\\flow\\datamapper\\mappingGenerator.xslt")));
+        XsltExecutable executable = compiler.compile(new StreamSource(new File("src/main/java/org/frankframework/flow/datamapper/mappingGenerator.xslt")));
 
         // 3. Load 3.0 transformer
         Xslt30Transformer transformer = executable.load30();
 
         // 4. Setup output
-        Serializer out = processor.newSerializer(new File("output.xml"));
+        Serializer out = processor.newSerializer(new File("output.xslt"));
         out.setOutputProperty(Serializer.Property.METHOD, "xml");
         out.setOutputProperty(Serializer.Property.INDENT, "yes");
 
