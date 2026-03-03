@@ -31,7 +31,9 @@ export interface DeleteTargetState {
 }
 
 interface DataProviderLike {
-  getTreeItem(itemId: TreeItemIndex): Promise<{ data: { path: string; name: string; projectRoot?: boolean }; isFolder?: boolean } | undefined>
+  getTreeItem(
+    itemId: TreeItemIndex,
+  ): Promise<{ data: { path: string; name: string; projectRoot?: boolean }; isFolder?: boolean } | undefined>
   reloadDirectory(itemId: TreeItemIndex): Promise<void>
 }
 
