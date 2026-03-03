@@ -1,19 +1,12 @@
 import useNodeContextStore from '~/stores/node-context-store'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import useFlowStore, { isFrankNode } from '~/stores/flow-store'
 import Button from '~/components/inputs/button'
 import { useShallow } from 'zustand/react/shallow'
 import ContextInput from './context-input'
 import { findChildRecursive } from '~/stores/child-utilities'
 import { useFrankDoc } from '~/providers/frankdoc-provider'
-import { getInheritedProperties, groupAttributesByMandatory } from '@frankframework/ff-doc'
 import type { Attribute } from '@frankframework/ff-doc'
-
-interface AttributeGroup {
-  parentElementName: string
-  required: [string, Attribute][]
-  optional: [string, Attribute][]
-}
 
 export default function NodeContext({
   nodeId,
@@ -27,71 +20,35 @@ export default function NodeContext({
   const [canSave, setCanSave] = useState(false)
   const [showAll, setShowAll] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
-  const [inputValues, setInputValues] = useState<Record<number, string>>({})
-  const [initiallyFilledIndexes, setInitiallyFilledIndexes] = useState<Set<number>>(new Set())
+  const [inputValues, setInputValues] = useState<Record<string, string>>({})
+  const [initiallyFilledKeys, setInitiallyFilledKeys] = useState<Set<string>>(new Set())
   const [initialValues, setInitialValues] = useState<Record<string, string>>({})
 
   const { elements, ffDoc } = useFrankDoc()
-  const { attributes, isNewNode, setIsEditing, setIsNewNode, parentId, setParentId, setChildParentId, childParentId, editingSubtype, setIsDirty } =
-    useNodeContextStore(
-      useShallow((s) => ({
-        attributes: s.attributes,
-        isNewNode: s.isNewNode,
-        setIsEditing: s.setIsEditing,
-        setIsNewNode: s.setIsNewNode,
-        parentId: s.parentId,
-        setParentId: s.setParentId,
-        setChildParentId: s.setChildParentId,
-        childParentId: s.childParentId,
-        editingSubtype: s.editingSubtype,
-        setIsDirty: s.setIsDirty,
-      })),
-    )
+  const {
+    attributes,
+    isNewNode,
+    setIsEditing,
+    setIsNewNode,
+    parentId,
+    setParentId,
+    setChildParentId,
+    childParentId,
+    setIsDirty,
+  } = useNodeContextStore(
+    useShallow((s) => ({
+      attributes: s.attributes,
+      isNewNode: s.isNewNode,
+      setIsEditing: s.setIsEditing,
+      setIsNewNode: s.setIsNewNode,
+      parentId: s.parentId,
+      setParentId: s.setParentId,
+      setChildParentId: s.setChildParentId,
+      childParentId: s.childParentId,
+      setIsDirty: s.setIsDirty,
+    })),
+  )
 
-  // Build attribute groups ordered exactly as in FrankDoc:
-  // 1. Element's own attributes (in JSON order)
-  // 2. Direct parent's attributes (in JSON order)
-  // 3. Grandparent's attributes, etc.
-  const attributeGroups = useMemo((): AttributeGroup[] => {
-    if (!ffDoc || !editingSubtype || !elements) return []
-
-    // Get the class name from the processed element
-    const processedElement = (elements as Record<string, { className: string }>)[editingSubtype]
-    if (!processedElement) return []
-
-    const className = processedElement.className
-    const rawElement = ffDoc.elements[className]
-    if (!rawElement) return []
-
-    const toGroup = (name: string, attrs: Record<string, Attribute>): AttributeGroup => {
-      const { required, optional } = groupAttributesByMandatory(attrs)
-      return {
-        parentElementName: name,
-        required: Object.entries(required) as [string, Attribute][],
-        optional: Object.entries(optional) as [string, Attribute][],
-      }
-    }
-
-    const groups: AttributeGroup[] = []
-
-    // Own attributes first (in JSON order, split into required/optional)
-    if (rawElement.attributes) {
-      groups.push(toGroup(editingSubtype, rawElement.attributes))
-    }
-
-    // Walk parent chain: direct parent first, grandparent second, etc.
-    const inherited = getInheritedProperties(rawElement, ffDoc.elements, ffDoc.enums)
-    for (const parentName of inherited.parentElements) {
-      const parentRaw = ffDoc.elements[parentName]
-      if (!parentRaw || !parentRaw.attributes) continue
-      const displayName = parentRaw.name ?? parentName.split('.').pop() ?? parentName
-      groups.push(toGroup(displayName, parentRaw.attributes))
-    }
-
-    return groups
-  }, [ffDoc, editingSubtype, elements])
-
-  // Validation uses store's attributes (always available) with key-based access
   const validateMandatoryFields = useCallback(
     (validations: Record<string, string>) => {
       if (!attributes) return true
@@ -189,6 +146,7 @@ export default function NodeContext({
     [parentId, childParentId, getAttributes, getNodeName],
   )
 
+  // Load existing attribute values into the form (key-based)
   useEffect(() => {
     if (Number.isNaN(nodeId)) return
     if (!attributes) {
@@ -209,14 +167,13 @@ export default function NodeContext({
       setInputValues(newValues)
       setInitialValues(newValues)
 
-      const filledIndexes = new Set<number>()
-      for (const [index, value] of Object.entries(newValues)) {
+      const filledKeys = new Set<string>()
+      for (const [key, value] of Object.entries(newValues)) {
         if (value?.toString().trim()) {
-          filledIndexes.add(Number(index))
+          filledKeys.add(key)
         }
       }
-
-      setInitiallyFilledIndexes(filledIndexes)
+      setInitiallyFilledKeys(filledKeys)
     }
   }, [attributes, nodeId, getNestedChildAttributes, getFirstLevelChildAttributes, getTopLevelNodeAttributes])
 
@@ -290,25 +247,21 @@ export default function NodeContext({
       if (nameField) {
         setNodeName(nodeId.toString(), nameField.value, { isNewNode: true })
       }
-
       setIsNewNode(false)
       setIsEditing(false)
       setShowNodeContext(false)
       return
     }
     setAttributes(nodeId.toString(), newAttributesObject)
-
     if (nameField) {
       setNodeName(nodeId.toString(), nameField.value)
     }
-
     setIsEditing(false)
     setShowNodeContext(false)
   }
 
   const canSaveRef = useRef(canSave)
   canSaveRef.current = canSave
-
   const handleSaveRef = useRef(handleSave)
   handleSaveRef.current = handleSave
 
@@ -319,9 +272,7 @@ export default function NodeContext({
         if (canSaveRef.current) handleSaveRef.current()
       }
     }
-
     globalThis.addEventListener('keydown', onKey)
-
     return () => globalThis.removeEventListener('keydown', onKey)
   }, [])
 
@@ -340,28 +291,25 @@ export default function NodeContext({
     setShowNodeContext(false)
   }
 
-  interface AttributeType {
-    mandatory?: boolean
-    type?: string
-    enum?: string
-    description?: string
-  }
+  // Build sorted attribute list: mandatory first, then initially-filled, then rest
+  const entriesWithIndex: [string, Attribute, number][] = attributes
+    ? Object.entries(attributes).map(([k, v], index) => [k, v as Attribute, index])
+    : []
 
   const currentName = inputValues['name'] ?? ''
 
   const categorizedAttributes = (() => {
     if (!attributes) return []
 
-    const mandatory: [string, AttributeType, number][] = []
-    const filled: [string, AttributeType, number][] = []
-    const rest: [string, AttributeType, number][] = []
+    const mandatory: [string, Attribute, number][] = []
+    const filled: [string, Attribute, number][] = []
+    const rest: [string, Attribute, number][] = []
 
     for (const entry of entriesWithIndex) {
-      const [_, attribute, index] = entry
-
+      const [key, attribute] = entry
       if (attribute.mandatory) {
         mandatory.push(entry)
-      } else if (initiallyFilledIndexes.has(index)) {
+      } else if (initiallyFilledKeys.has(key)) {
         filled.push(entry)
       } else {
         rest.push(entry)
@@ -371,36 +319,39 @@ export default function NodeContext({
     return [...mandatory, ...filled, ...(showAll ? rest : [])]
   })()
 
+  const makeEnumOptions = (attribute: Attribute) => {
+    if (attribute.enum && ffDoc?.enums?.[attribute.enum]) {
+      return Object.keys(ffDoc.enums[attribute.enum]).reduce(
+        (result, key) => ({ ...result, [key]: key }),
+        {} as Record<string, string>,
+      )
+    }
+    return
+  }
+
   return (
     <>
       <div className="flex-1 overflow-y-auto px-4">
         {currentName && <h2 className="mb-2 font-semibold">{currentName}</h2>}
         <div className="bg-background w-full space-y-4 rounded-md p-6">
-          {categorizedAttributes.map(([key, attribute, originalIndex]: [string, AttributeType, number]) => (
-                  <div key={originalIndex}>
-                    <ContextInput
-                            id={`ctx-${originalIndex}`}
-                            value={inputValues[originalIndex] ?? ''}
-                            onChange={(value: string) => {
-                              setInputValues((previous) => {
-                                const updated = { ...previous, [originalIndex]: value }
-                                validateForm(updated)
-                                return updated
-                              })
-                            }}
-                            label={key}
-                            attribute={attribute}
-                            enumOptions={
-                              attribute.enum && ffDoc?.enums?.[attribute.enum]
-                                      ? Object.keys(ffDoc.enums[attribute.enum]).reduce(
-                                              (result, key) => ({ ...result, [key]: key }),
-                                              {} as Record<string, string>,
-                                      )
-                                      : undefined
-                            }
-                            elements={elements ?? undefined}
-                    />
-                  </div>
+          {categorizedAttributes.map(([key, attribute, originalIndex]) => (
+            <div key={originalIndex}>
+              <ContextInput
+                id={`ctx-${originalIndex}`}
+                value={inputValues[key] ?? ''}
+                onChange={(value: string) => {
+                  setInputValues((previous) => {
+                    const updated = { ...previous, [key]: value }
+                    validateForm(updated)
+                    return updated
+                  })
+                }}
+                label={key}
+                attribute={attribute}
+                enumOptions={makeEnumOptions(attribute)}
+                elements={elements ?? undefined}
+              />
+            </div>
           ))}
 
           <div className="pt-4">

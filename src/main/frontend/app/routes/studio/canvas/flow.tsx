@@ -58,19 +58,27 @@ const SAVED_DISPLAY_DURATION = 2000
 
 function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b: boolean) => void }>) {
   const [loading, setLoading] = useState(false)
-  const { isEditing, isDirty, setIsEditing, setIsNewNode, setParentId, setChildParentId, setDraggedName, setEditingSubtype } =
-    useNodeContextStore(
-      useShallow((s) => ({
-        isEditing: s.isEditing,
-        isDirty: s.isDirty,
-        setIsEditing: s.setIsEditing,
-        setIsNewNode: s.setIsNewNode,
-        setParentId: s.setParentId,
-        setChildParentId: s.setChildParentId,
-        setDraggedName: s.setDraggedName,
-        setEditingSubtype: s.setEditingSubtype,
-      })),
-    )
+  const {
+    isEditing,
+    isDirty,
+    setIsEditing,
+    setIsNewNode,
+    setParentId,
+    setChildParentId,
+    setDraggedName,
+    setEditingSubtype,
+  } = useNodeContextStore(
+    useShallow((s) => ({
+      isEditing: s.isEditing,
+      isDirty: s.isDirty,
+      setIsEditing: s.setIsEditing,
+      setIsNewNode: s.setIsNewNode,
+      setParentId: s.setParentId,
+      setChildParentId: s.setChildParentId,
+      setDraggedName: s.setDraggedName,
+      setEditingSubtype: s.setEditingSubtype,
+    })),
+  )
   const [showModal, setShowModal] = useState(false)
   const [edgeDropPositions, setEdgeDropPositions] = useState<{ x: number; y: number } | null>(null)
   const clipboardRef = useRef<{
@@ -759,9 +767,19 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
           }}
         >
           <div className="pointer-events-none absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-3 rounded bg-black/30 px-3 py-2 text-xs text-white backdrop-blur-sm">
-            <span><kbd className="rounded border border-white/40 bg-white/15 px-1.5 py-0.5 font-mono text-xs text-white">Esc</kbd> Discard</span>
+            <span>
+              <kbd className="rounded border border-white/40 bg-white/15 px-1.5 py-0.5 font-mono text-xs text-white">
+                Esc
+              </kbd>{' '}
+              Discard
+            </span>
             <span className="opacity-40">|</span>
-            <span><kbd className="rounded border border-white/40 bg-white/15 px-1.5 py-0.5 font-mono text-xs text-white">Ctrl+Enter</kbd> Save</span>
+            <span>
+              <kbd className="rounded border border-white/40 bg-white/15 px-1.5 py-0.5 font-mono text-xs text-white">
+                Ctrl+Enter
+              </kbd>{' '}
+              Save
+            </span>
           </div>
         </div>
       )}
