@@ -1,4 +1,7 @@
 import Editor, { type Monaco, type OnMount } from '@monaco-editor/react'
+import XsdManager from 'monaco-xsd-code-completion/esm/XsdManager'
+import XsdFeatures from 'monaco-xsd-code-completion/esm/XsdFeatures'
+import 'monaco-xsd-code-completion/src/style.css'
 import { useShallow } from 'zustand/react/shallow'
 import SidebarLayout from '~/components/sidebars-layout/sidebar-layout'
 import SidebarContentClose from '~/components/sidebars-layout/sidebar-content-close'
@@ -10,8 +13,6 @@ import { useProjectStore } from '~/stores/project-store'
 import EditorFileStructure from '~/components/file-structure/editor-file-structure'
 import useEditorTabStore from '~/stores/editor-tab-store'
 import EditorTabs from '~/components/tabs/editor-tabs'
-import type { ElementDetails, Attribute, EnumValue } from '~/types/ff-doc.types'
-import { useFFDoc } from '@frankframework/doc-library-react'
 import { fetchConfiguration, saveConfiguration } from '~/services/configuration-service'
 import RulerCrossPenIcon from '/icons/solar/Ruler Cross Pen.svg?react'
 import { openInStudio } from '~/actions/navigationActions'
@@ -23,6 +24,7 @@ import clsx from 'clsx'
 import { refreshOpenDiffs } from '~/services/git-service'
 import { findAdaptersInXml, lineToOffset, findAdapterIndexAtOffset, normalizeFrankElements } from './xml-utils'
 import { useSettingsStore } from '~/stores/settings-store'
+import { useFrankConfigXsd } from '~/providers/frankconfig-xsd-provider'
 
 type LeftTab = 'files' | 'git'
 type SaveStatus = 'idle' | 'saving' | 'saved'
@@ -31,14 +33,15 @@ const SAVED_DISPLAY_DURATION = 2000
 
 export default function CodeEditor() {
   const theme = useTheme()
-  const { elements } = useFFDoc()
   const project = useProjectStore.getState().project
+  const { xsdContent } = useFrankConfigXsd()
   const [activeTabFilePath, setActiveTabFilePath] = useState<string>(useEditorTabStore.getState().activeTabFilePath)
   const [xmlContent, setXmlContent] = useState<string>('')
-  const editorReference = useRef<Parameters<OnMount>[0] | null>(null)
-  const decorationIdsReference = useRef<string[]>([])
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
   const [leftTab, setLeftTab] = useState<LeftTab>('files')
+  const [editorMounted, setEditorMounted] = useState(false)
+  const editorReference = useRef<Parameters<OnMount>[0] | null>(null)
+  const monacoReference = useRef<Monaco | null>(null)
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -54,7 +57,6 @@ export default function CodeEditor() {
   )
 
   const refreshCounter = useEditorTabStore((state) => state.refreshCounter)
-
   const isDiffTab = activeTab.type === 'diff'
 
   const performSave = useCallback(
@@ -73,7 +75,6 @@ export default function CodeEditor() {
         setSaveStatus('saved')
         if (savedTimerRef.current) clearTimeout(savedTimerRef.current)
         savedTimerRef.current = setTimeout(() => setSaveStatus('idle'), SAVED_DISPLAY_DURATION)
-
         refreshOpenDiffs(project.name)
       } catch (error) {
         showErrorToastFrom('Error saving', error)
@@ -110,13 +111,25 @@ export default function CodeEditor() {
     }
   }, [])
 
+  useEffect(() => {
+    if (!editorMounted || !xsdContent || !editorReference.current || !monacoReference.current) return
+    const xsdManager = new XsdManager(editorReference.current)
+    xsdManager.set({ path: 'FrankConfig.xsd', value: xsdContent, alwaysInclude: true })
+    const xsdFeatures = new XsdFeatures(xsdManager, monacoReference.current, editorReference.current)
+    xsdFeatures.addCompletion()
+    xsdFeatures.addValidation()
+    xsdFeatures.addReformatAction()
+  }, [editorMounted, xsdContent])
+
   const handleEditorMount: OnMount = (editor, monacoInstance) => {
     editorReference.current = editor
+    monacoReference.current = monacoInstance
+    setEditorMounted(true)
 
     editor.addAction({
       id: 'save-file',
       label: 'Save File',
-      contextMenuGroupId: 'navigation', // shows in right-click menu
+      contextMenuGroupId: 'navigation',
       contextMenuOrder: 1,
       keybindings: [monacoInstance.KeyMod.CtrlCmd | monacoInstance.KeyCode.KeyS],
       run: () => {
@@ -128,25 +141,18 @@ export default function CodeEditor() {
       },
     })
 
-    // Ctrl + Shift + F to normalize all frank elements
     editor.addAction({
       id: 'normalize-frank-elements',
       label: 'Normalize Frank Elements',
-      contextMenuGroupId: 'navigation', // shows in right-click menu
+      contextMenuGroupId: 'navigation',
       contextMenuOrder: 2,
       keybindings: [monacoInstance.KeyMod.CtrlCmd | monacoInstance.KeyMod.Shift | monacoInstance.KeyCode.KeyF],
       run: async () => {
         if (activeTabFilePath.endsWith('.xml')) {
           const current = editor.getValue()
           const updated = await normalizeFrankElements(current)
-
           editor.pushUndoStop()
-          editor.executeEdits('normalize-frank', [
-            {
-              range: editor.getModel()!.getFullModelRange(),
-              text: updated,
-            },
-          ])
+          editor.executeEdits('normalize-frank', [{ range: editor.getModel()!.getFullModelRange(), text: updated }])
           editor.pushUndoStop()
         }
       },
@@ -157,15 +163,11 @@ export default function CodeEditor() {
     const unsubActiveTab = useEditorTabStore.subscribe(
       (state) => state.activeTabFilePath,
       (newActiveTab, oldActiveTab) => {
-        if (oldActiveTab && oldActiveTab !== newActiveTab) {
-          flushPendingSave()
-        }
+        if (oldActiveTab && oldActiveTab !== newActiveTab) flushPendingSave()
         setActiveTabFilePath(newActiveTab)
       },
     )
-    return () => {
-      unsubActiveTab()
-    }
+    return unsubActiveTab
   }, [flushPendingSave])
 
   useEffect(() => {
@@ -178,18 +180,13 @@ export default function CodeEditor() {
         const configPath = useEditorTabStore.getState().getTab(activeTabFilePath)?.configurationPath
         if (!configPath || !project) return
         const xmlString = await fetchConfiguration(project.name, configPath, abortController.signal)
-        if (!abortController.signal.aborted) {
-          setXmlContent(xmlString)
-        }
+        if (!abortController.signal.aborted) setXmlContent(xmlString)
       } catch (error) {
-        if (!abortController.signal.aborted) {
-          console.error('Failed to load XML:', error)
-        }
+        if (!abortController.signal.aborted) console.error('Failed to load XML:', error)
       }
     }
 
     fetchXml()
-
     return () => abortController.abort()
   }, [project, activeTabFilePath, isDiffTab, refreshCounter])
 
@@ -197,7 +194,6 @@ export default function CodeEditor() {
     if (!xmlContent || !activeTabFilePath || !editorReference.current || isDiffTab) return
 
     const editor = editorReference.current
-
     const model = editor.getModel()
     if (!model) return
 
@@ -206,137 +202,20 @@ export default function CodeEditor() {
     if (matchIndex === -1) return
 
     const lineNumber = matchIndex + 1
-
     editor.revealLineNearTop(lineNumber)
     editor.setPosition({ lineNumber, column: 1 })
     editor.focus()
 
-    const newDecorations = editor.createDecorationsCollection([
+    const decorations = editor.createDecorationsCollection([
       {
         range: { startLineNumber: lineNumber, startColumn: 1, endLineNumber: lineNumber, endColumn: 1 },
-        options: {
-          isWholeLine: true,
-          className: 'highlight-line',
-        },
+        options: { isWholeLine: true, className: 'highlight-line' },
       },
     ])
-    decorationIdsReference.current = newDecorations.getRanges().map(() => '')
 
-    const timeout = setTimeout(() => {
-      newDecorations.clear()
-    }, 2000)
-
+    const timeout = setTimeout(() => decorations.clear(), 2000)
     return () => clearTimeout(timeout)
   }, [xmlContent, activeTabFilePath, isDiffTab])
-
-  useEffect(() => {
-    if (!editorReference.current) return
-    const monacoInstance = (globalThis as { monaco?: Monaco }).monaco
-    if (!monacoInstance) return
-
-    type CompletionProvider = Parameters<Monaco['languages']['registerCompletionItemProvider']>[1]
-    type ProvideCompletionItems = CompletionProvider['provideCompletionItems']
-    type ITextModel = Parameters<ProvideCompletionItems>[0]
-    type Position = Parameters<ProvideCompletionItems>[1]
-
-    const isCursorInsideAttributeValue = (model: ITextModel, position: Position) => {
-      const text = getTextBeforeCursor(model, position)
-      return /="[^"]*$/.test(text)
-    }
-
-    const getTextBeforeCursor = (model: ITextModel, position: Position) => {
-      const line = model.getLineContent(position.lineNumber)
-      return line.slice(0, position.column - 1)
-    }
-
-    const elementProvider = monacoInstance.languages.registerCompletionItemProvider('xml', {
-      triggerCharacters: ['<'],
-      provideCompletionItems: (model: ITextModel, position: Position) => {
-        if (isCursorInsideAttributeValue(model, position)) {
-          return { suggestions: [] }
-        }
-
-        if (!elements) return { suggestions: [] }
-
-        return {
-          suggestions: Object.values(elements).map((el) => {
-            const element = el as ElementDetails
-            const mandatoryAttributes = Object.entries((element.attributes || {}) as Record<string, Attribute>)
-              .filter(([, attribute]) => attribute.mandatory)
-              .map(([name], index) => {
-                if (index === 0) return `${name}="\${1}"`
-                return `${name}="\${${index + 2}}"`
-              })
-              .join(' ')
-
-            const mandatoryAttributesWithSpace = mandatoryAttributes ? ` ${mandatoryAttributes}` : ''
-            const openingTag = `${element.name}${mandatoryAttributesWithSpace}>`
-            const closingTag = `</${element.name}>`
-
-            const insertText = `${openingTag}$0${closingTag}`
-
-            return {
-              label: element.name,
-              kind: monacoInstance.languages.CompletionItemKind.Class,
-              insertText,
-              insertTextRules: monacoInstance.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-              documentation: element.description || '',
-            }
-          }),
-        }
-      },
-    })
-
-    const attributeProvider = monacoInstance.languages.registerCompletionItemProvider('xml', {
-      triggerCharacters: [' '],
-      provideCompletionItems: (model: ITextModel, position: Position) => {
-        if (isCursorInsideAttributeValue(model, position)) {
-          return { suggestions: [] }
-        }
-
-        const textBeforeCursor = getTextBeforeCursor(model, position)
-        const tagMatch = textBeforeCursor.match(/<(\w+)/)
-        if (!tagMatch) return { suggestions: [] }
-
-        const tagName = tagMatch[1]
-        if (!elements) return { suggestions: [] }
-        const el = elements[tagName]
-        if (!el || !el.attributes) return { suggestions: [] }
-
-        const element = el as ElementDetails
-
-        const attributeSuggestions = Object.entries((element.attributes || {}) as Record<string, Attribute>).flatMap(
-          ([attributeName, attribute]) => {
-            if (attribute.enum && element.enums && element.enums[attribute.enum]) {
-              const enumRecord = element.enums[attribute.enum] as Record<string, EnumValue>
-              const enumValues = Object.entries(enumRecord)
-              return enumValues.map(([value]) => ({
-                label: `${attributeName}="${value}"`,
-                kind: monacoInstance.languages.CompletionItemKind.Enum,
-                insertText: `${attributeName}="${value}"`,
-                documentation: (attribute.description as string) || '',
-              }))
-            }
-
-            return {
-              label: attributeName,
-              kind: monacoInstance.languages.CompletionItemKind.Property,
-              insertText: `${attributeName}="\${1}"`,
-              insertTextRules: monacoInstance.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-              documentation: attribute.description || '',
-            }
-          },
-        )
-
-        return { suggestions: attributeSuggestions }
-      },
-    })
-
-    return () => {
-      elementProvider.dispose()
-      attributeProvider.dispose()
-    }
-  }, [elements])
 
   const handleOpenInStudio = useCallback(() => {
     const editorTab = useEditorTabStore.getState().getTab(activeTabFilePath)
