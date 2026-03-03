@@ -14,6 +14,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.TransformerException;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
@@ -22,6 +24,7 @@ import org.eclipse.jgit.transport.CredentialsProvider;
 import org.frankframework.flow.adapter.AdapterNotFoundException;
 import org.frankframework.flow.configuration.Configuration;
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
+import org.frankframework.flow.exception.ApiException;
 import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.frankframework.flow.filesystem.FilesystemEntry;
 import org.frankframework.flow.git.GitCredentialHelper;
@@ -31,12 +34,14 @@ import org.frankframework.flow.recentproject.RecentProject;
 import org.frankframework.flow.recentproject.RecentProjectsService;
 import org.frankframework.flow.utility.XmlAdapterUtils;
 import org.frankframework.flow.utility.XmlSecurityUtils;
+import org.frankframework.flow.xml.XmlDTO;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
+import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
 @Slf4j
@@ -122,6 +127,30 @@ public class ProjectService {
                 defaultXml);
 
         return loadProjectAndCache(projectPath.toString());
+    }
+
+    public XmlDTO getAdapterElement(String projectName, String configurationPath, String adapterName)
+            throws ProjectNotFoundException, ConfigurationNotFoundException, AdapterNotFoundException, IOException,
+                    ApiException, SAXException, ParserConfigurationException, TransformerException {
+
+        Project project = getProject(projectName);
+
+        Configuration config = project.getConfigurations().stream()
+                .filter(c -> c.getFilepath().equals(configurationPath))
+                .findFirst()
+                .orElseThrow(() -> new ConfigurationNotFoundException(
+                        String.format("Configuration with filepath: %s not found", configurationPath)));
+
+        Document configDoc = XmlSecurityUtils.createSecureDocumentBuilder()
+                .parse(new ByteArrayInputStream(config.getXmlContent().getBytes(StandardCharsets.UTF_8)));
+
+        Node adapterNode = XmlAdapterUtils.findAdapterInDocument(configDoc, adapterName);
+        if (adapterNode == null) {
+            throw new AdapterNotFoundException("Adapter not found: " + adapterName);
+        }
+
+        String adapterXml = XmlAdapterUtils.convertNodeToString(adapterNode);
+        return new XmlDTO(adapterXml);
     }
 
     public Project openProjectFromDisk(String path) throws IOException, ProjectNotFoundException {
@@ -282,7 +311,6 @@ public class ProjectService {
 
     public boolean updateConfigurationXml(String projectName, String filepath, String xmlContent)
             throws ProjectNotFoundException, ConfigurationNotFoundException, IOException {
-
         Project project = getProject(projectName);
 
         Configuration targetConfig = project.getConfigurations().stream()
@@ -291,7 +319,6 @@ public class ProjectService {
                 .orElseThrow(() -> new ConfigurationNotFoundException(
                         String.format("Configuration with filepath: %s not found", filepath)));
 
-        fileSystemStorage.writeFile(filepath, xmlContent);
         targetConfig.setXmlContent(xmlContent);
         return true;
     }
@@ -344,10 +371,10 @@ public class ProjectService {
                 throw new AdapterNotFoundException("Adapter not found: " + adapterName);
             }
 
-            String xmlOutput = XmlAdapterUtils.convertDocumentToString(configDoc);
+            String xmlOutput = XmlAdapterUtils.convertNodeToString(configDoc);
             config.setXmlContent(xmlOutput);
             return true;
-        } catch (AdapterNotFoundException | ConfigurationNotFoundException | ProjectNotFoundException e) {
+        } catch (AdapterNotFoundException e) {
             throw e;
         } catch (SAXParseException e) {
             log.warn("Invalid XML for adapter {}: {}", adapterName, e.getMessage());
