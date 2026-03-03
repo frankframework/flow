@@ -756,7 +756,7 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
 
       {isEditing && (
         <div
-          className="absolute inset-0 z-10 cursor-default"
+          className={clsx('absolute inset-0 z-10', isDirty ? 'cursor-not-allowed bg-black/10' : 'cursor-default')}
           onClick={() => {
             if (!isDirty) {
               showNodeContextMenu(false)
