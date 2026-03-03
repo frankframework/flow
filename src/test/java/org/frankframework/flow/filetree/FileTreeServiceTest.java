@@ -132,7 +132,8 @@ public class FileTreeServiceTest {
 
     @Test
     @DisplayName("Should successfully overwrite a file with new content")
-    public void updateFileContent_Success() throws IOException {
+    public void updateFileContent_Success()
+            throws IOException, ProjectNotFoundException, ConfigurationNotFoundException {
         stubToAbsolutePath();
         stubWriteFile();
 
@@ -140,7 +141,8 @@ public class FileTreeServiceTest {
         Files.writeString(file, "old content");
 
         String newContent = "new content";
-        fileTreeService.updateFileContent(file.toAbsolutePath().toString(), newContent);
+        fileTreeService.updateFileContent(
+                TEST_PROJECT_NAME, file.toAbsolutePath().toString(), newContent);
 
         assertEquals(newContent, Files.readString(file));
     }
@@ -151,7 +153,9 @@ public class FileTreeServiceTest {
         stubToAbsolutePath();
 
         String path = tempProjectRoot.resolve("missing-file.xml").toString();
-        assertThrows(IllegalArgumentException.class, () -> fileTreeService.updateFileContent(path, "data"));
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> fileTreeService.updateFileContent(TEST_PROJECT_NAME, path, "data"));
     }
 
     @Test
@@ -254,7 +258,7 @@ public class FileTreeServiceTest {
 
     @Test
     @DisplayName("Should handle multiple consecutive file operations correctly")
-    void integration_MultipleOperations() throws IOException {
+    void integration_MultipleOperations() throws IOException, ProjectNotFoundException, ConfigurationNotFoundException {
         stubToAbsolutePath();
         stubReadFile();
         stubWriteFile();
@@ -265,8 +269,8 @@ public class FileTreeServiceTest {
         Files.writeString(f1, "initial");
         Files.writeString(f2, "initial");
 
-        fileTreeService.updateFileContent(f1.toString(), "one");
-        fileTreeService.updateFileContent(f2.toString(), "two");
+        fileTreeService.updateFileContent(TEST_PROJECT_NAME, f1.toString(), "one");
+        fileTreeService.updateFileContent(TEST_PROJECT_NAME, f2.toString(), "two");
 
         assertEquals("one", fileTreeService.readFileContent(f1.toString()));
         assertEquals("two", fileTreeService.readFileContent(f2.toString()));
@@ -855,7 +859,8 @@ public class FileTreeServiceTest {
 
         IllegalArgumentException ex = assertThrows(
                 IllegalArgumentException.class,
-                () -> fileTreeService.updateFileContent(dir.toAbsolutePath().toString(), "new content"));
+                () -> fileTreeService.updateFileContent(
+                        TEST_PROJECT_NAME, dir.toAbsolutePath().toString(), "new content"));
         assertTrue(ex.getMessage().contains("Cannot update a directory"));
     }
 

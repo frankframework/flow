@@ -4,11 +4,13 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
 import java.util.List;
+import javax.xml.parsers.ParserConfigurationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.xml.sax.SAXException;
 
 @Slf4j
 @RestControllerAdvice
@@ -75,6 +77,42 @@ public class GlobalExceptionHandler {
         ErrorResponse response = new ErrorResponse(
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 List.of("A filesystem error occurred: " + exception.getMessage()),
+                HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase());
+
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+    }
+
+    @ExceptionHandler(SAXException.class)
+    public ResponseEntity<ErrorResponse> handleSaxException(SAXException exception, HttpServletRequest request) {
+        log.error(
+                "XML parsing error: {} - Method: {} URL: {}",
+                exception.getMessage(),
+                request.getMethod(),
+                request.getRequestURI(),
+                exception);
+
+        ErrorResponse response = new ErrorResponse(
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                List.of("Invalid XML content: " + exception.getMessage()),
+                HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase());
+
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+    }
+
+    @ExceptionHandler(ParserConfigurationException.class)
+    public ResponseEntity<ErrorResponse> handleParserConfigurationException(
+            ParserConfigurationException exception, HttpServletRequest request) {
+
+        log.error(
+                "XML parser configuration error: {} - Method: {} URL: {}",
+                exception.getMessage(),
+                request.getMethod(),
+                request.getRequestURI(),
+                exception);
+
+        ErrorResponse response = new ErrorResponse(
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                List.of("XML parser configuration error: " + exception.getMessage()),
                 HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase());
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);

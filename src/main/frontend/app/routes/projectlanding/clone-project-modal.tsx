@@ -8,6 +8,7 @@ interface CloneProjectModalProperties {
   isLocal: boolean
   onClose: () => void
   onClone: (repoUrl: string, localPath: string, token?: string) => void
+  initialPath?: string
 }
 
 export default function CloneProjectModal({
@@ -15,6 +16,7 @@ export default function CloneProjectModal({
   isLocal,
   onClose,
   onClone,
+  initialPath,
 }: Readonly<CloneProjectModalProperties>) {
   const [repoUrl, setRepoUrl] = useState('')
   const [location, setLocation] = useState('')
@@ -23,14 +25,18 @@ export default function CloneProjectModal({
 
   useEffect(() => {
     if (isOpen && isLocal) {
-      filesystemService
-        .getDefaultPath()
-        .then(setLocation)
-        .catch(() => setLocation(''))
+      if (initialPath) {
+        setLocation(initialPath)
+      } else {
+        filesystemService
+          .getDefaultPath()
+          .then(setLocation)
+          .catch(() => setLocation(''))
+      }
     } else if (isOpen) {
-      setLocation('')
+      setLocation(initialPath ?? '')
     }
-  }, [isOpen, isLocal])
+  }, [isOpen, isLocal, initialPath])
 
   if (!isOpen) return null
 

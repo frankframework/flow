@@ -23,6 +23,7 @@ import org.frankframework.flow.projectsettings.FilterType;
 import org.frankframework.flow.projectsettings.InvalidFilterTypeException;
 import org.frankframework.flow.recentproject.RecentProject;
 import org.frankframework.flow.recentproject.RecentProjectsService;
+import org.frankframework.flow.xml.XmlDTO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,6 +32,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
+import org.xml.sax.SAXException;
 
 @ExtendWith(MockitoExtension.class)
 public class ProjectServiceTest {
@@ -725,6 +727,91 @@ public class ProjectServiceTest {
 
         assertThrows(
                 ProjectNotFoundException.class, () -> projectService.addConfiguration("noSuchProject", "Conf.xml"));
+    }
+
+    @Test
+    void getAdapterElementReturnsXmlDTOSuccessfully() throws Exception {
+        stubFileSystemForProjectCreation();
+
+        projectService.createProjectOnDisk("proj");
+        Project project = projectService.getProject("proj");
+
+        String xml =
+                """
+                <Configuration>
+                    <Adapter name="A1">
+                        <Settings>123</Settings>
+                    </Adapter>
+                </Configuration>
+                """;
+
+        Configuration config = new Configuration("conf.xml");
+        config.setXmlContent(xml);
+        project.getConfigurations().add(config);
+
+        XmlDTO result = projectService.getAdapterElement("proj", "conf.xml", "A1");
+
+        assertNotNull(result);
+        assertTrue(result.xmlContent().contains("<Settings>123</Settings>"));
+    }
+
+    @Test
+    void getAdapterElementProjectNotFoundThrows() {
+        ProjectNotFoundException ex = assertThrows(
+                ProjectNotFoundException.class,
+                () -> projectService.getAdapterElement("unknownProj", "conf.xml", "A1"));
+
+        assertTrue(ex.getMessage().contains("unknownProj"));
+    }
+
+    @Test
+    void getAdapterElementConfigurationNotFoundThrows() throws Exception {
+        stubFileSystemForProjectCreation();
+        projectService.createProjectOnDisk("proj");
+
+        ConfigurationNotFoundException ex = assertThrows(
+                ConfigurationNotFoundException.class,
+                () -> projectService.getAdapterElement("proj", "missing.xml", "A1"));
+
+        assertEquals("Configuration with filepath: missing.xml not found", ex.getMessage());
+    }
+
+    @Test
+    void getAdapterElementAdapterNotFoundThrows() throws Exception {
+        stubFileSystemForProjectCreation();
+        projectService.createProjectOnDisk("proj");
+        Project project = projectService.getProject("proj");
+
+        String xml =
+                """
+                <Configuration>
+                    <Adapter name="Other"/>
+                </Configuration>
+                """;
+
+        Configuration config = new Configuration("conf.xml");
+        config.setXmlContent(xml);
+        project.getConfigurations().add(config);
+
+        AdapterNotFoundException ex = assertThrows(
+                AdapterNotFoundException.class, () -> projectService.getAdapterElement("proj", "conf.xml", "A1"));
+
+        assertEquals("Adapter not found: A1", ex.getMessage());
+    }
+
+    @Test
+    void getAdapterElementWithInvalidXmlThrowsException() throws Exception {
+        stubFileSystemForProjectCreation();
+        projectService.createProjectOnDisk("proj");
+        Project project = projectService.getProject("proj");
+
+        String invalidXml = "<Configuration><Adapter></Configuration>"; // malformed
+
+        Configuration config = new Configuration("conf.xml");
+        config.setXmlContent(invalidXml);
+        project.getConfigurations().add(config);
+
+        assertThrows(SAXException.class, () -> projectService.getAdapterElement("proj", "conf.xml", "A1"));
     }
 
     @Test

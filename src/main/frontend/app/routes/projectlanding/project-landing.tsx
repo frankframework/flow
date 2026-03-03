@@ -161,6 +161,8 @@ export default function ProjectLanding() {
   const projects = recentProjects ?? []
   const filteredProjects = projects.filter((project) => project.name.toLowerCase().includes(searchTerm.toLowerCase()))
 
+  const lastRecentRootPath = projects[0]?.rootPath
+
   if (isLoading || isOpeningProject) return <LoadingState />
 
   return (
@@ -200,12 +202,14 @@ export default function ProjectLanding() {
         onClose={() => setIsModalOpen(false)}
         onCreate={onCreateProject}
         isLocal={isLocalEnvironment}
+        initialPath={lastRecentRootPath}
       />
       <CloneProjectModal
         isOpen={isCloneModalOpen}
         isLocal={isLocalEnvironment}
         onClose={() => setIsCloneModalOpen(false)}
         onClone={onCloneProject}
+        initialPath={lastRecentRootPath}
       />
       {!isLocalEnvironment && (
         <input
@@ -223,6 +227,7 @@ export default function ProjectLanding() {
         onSelect={onOpenFolder}
         onCancel={() => setIsOpenPickerOpen(false)}
         rootLabel={rootLocationName}
+        initialPath={lastRecentRootPath}
       />
     </div>
   )

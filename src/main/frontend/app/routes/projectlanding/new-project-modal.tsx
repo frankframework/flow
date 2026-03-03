@@ -8,23 +8,34 @@ interface NewProjectModalProperties {
   isLocal: boolean
   onClose: () => void
   onCreate: (pathOrName: string) => void
+  initialPath?: string
 }
 
-export default function NewProjectModal({ isOpen, isLocal, onClose, onCreate }: Readonly<NewProjectModalProperties>) {
+export default function NewProjectModal({
+  isOpen,
+  isLocal,
+  onClose,
+  onCreate,
+  initialPath,
+}: Readonly<NewProjectModalProperties>) {
   const [name, setName] = useState('')
   const [location, setLocation] = useState('')
   const [showPicker, setShowPicker] = useState(false)
 
   useEffect(() => {
     if (isOpen && isLocal) {
-      filesystemService
-        .getDefaultPath()
-        .then(setLocation)
-        .catch(() => setLocation(''))
+      if (initialPath) {
+        setLocation(initialPath)
+      } else {
+        filesystemService
+          .getDefaultPath()
+          .then(setLocation)
+          .catch(() => setLocation(''))
+      }
     } else if (isOpen) {
-      setLocation('')
+      setLocation(initialPath ?? '')
     }
-  }, [isOpen, isLocal])
+  }, [isOpen, isLocal, initialPath])
 
   if (!isOpen) return null
 
