@@ -51,6 +51,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
     setIsNewNode,
     setAttributes,
     setParentId,
+    setChildParentId,
     setIsEditing,
     setDraggedName,
     draggedName,
@@ -165,6 +166,8 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
   const editNode = () => {
     if (!frankElement) return
     const attributes = frankElement.attributes
+    setParentId(null)
+    setChildParentId(null)
     setNodeId(+properties.id)
     setAttributes(attributes)
     setEditingSubtype(properties.data.subtype)
@@ -179,8 +182,10 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
     const recordElements = elements as Record<string, ElementDetails>
     const attributes = Object.values(recordElements).find((element) => element.name === child.subtype)?.attributes
 
-    setParentId(properties.id) // The FrankNode stays the parent for editing purposes
-    setNodeId(+childId) // Correctly set the clicked child id
+    const isFirstLevel = properties.data.children.some((c) => c.id === childId)
+    setParentId(properties.id)
+    setChildParentId(isFirstLevel ? null : properties.id)
+    setNodeId(+childId)
     setAttributes(attributes)
     setEditingSubtype(child.subtype)
     showNodeContextMenu(true)
@@ -264,6 +269,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
       showNodeContextMenu(true)
       setIsEditing(true)
       setParentId(properties.id)
+      setChildParentId(null)
 
       const child: ChildNode = {
         id: newId,
@@ -347,9 +353,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
           }}
         >
           <h1 className="font-bold">{properties.data.subtype}</h1>
-          <p className="overflow-hidden text-sm tracking-wider overflow-ellipsis whitespace-nowrap">
-            {properties.data.name.toUpperCase()}
-          </p>
+          <p className="overflow-hidden text-sm overflow-ellipsis whitespace-nowrap">{properties.data.name}</p>
           {isDeprecated && frankElement?.deprecated && (
             <>
               <div

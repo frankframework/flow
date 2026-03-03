@@ -50,11 +50,20 @@ export function KeybindsTable() {
       ),
     },
     {
-      action: 'Edit MessageFormatter',
-      keybind: <span className="key">Double-click</span>,
+      action: 'Save Node',
+      keybind:
+        platform === 'win' ? (
+          <>
+            <span className="key">Ctrl</span> + <span className="key">Enter</span>
+          </>
+        ) : (
+          <>
+            <span className="key">⌘</span> + <span className="key">Enter</span>
+          </>
+        ),
     },
     {
-      action: 'Close Edit Panel',
+      action: 'Discard / Close Edit Panel',
       keybind: <span className="key">Esc</span>,
     },
     {

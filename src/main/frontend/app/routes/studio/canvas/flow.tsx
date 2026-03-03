@@ -58,16 +58,19 @@ const SAVED_DISPLAY_DURATION = 2000
 
 function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b: boolean) => void }>) {
   const [loading, setLoading] = useState(false)
-  const { setIsEditing, setIsNewNode, setParentId, setDraggedName, setEditingSubtype } = useNodeContextStore(
-    useShallow((s) => ({
-      isEditing: s.isEditing,
-      setIsEditing: s.setIsEditing,
-      setIsNewNode: s.setIsNewNode,
-      setParentId: s.setParentId,
-      setDraggedName: s.setDraggedName,
-      setEditingSubtype: s.setEditingSubtype,
-    })),
-  )
+  const { isEditing, isDirty, setIsEditing, setIsNewNode, setParentId, setChildParentId, setDraggedName, setEditingSubtype } =
+    useNodeContextStore(
+      useShallow((s) => ({
+        isEditing: s.isEditing,
+        isDirty: s.isDirty,
+        setIsEditing: s.setIsEditing,
+        setIsNewNode: s.setIsNewNode,
+        setParentId: s.setParentId,
+        setChildParentId: s.setChildParentId,
+        setDraggedName: s.setDraggedName,
+        setEditingSubtype: s.setEditingSubtype,
+      })),
+    )
   const [showModal, setShowModal] = useState(false)
   const [edgeDropPositions, setEdgeDropPositions] = useState<{ x: number; y: number } | null>(null)
   const clipboardRef = useRef<{
@@ -446,14 +449,26 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
 
     globalThis.addEventListener('keydown', handleKeyDown)
     return () => globalThis.removeEventListener('keydown', handleKeyDown)
-  }, [copySelection, pasteSelection, handleGrouping, showNodeContextMenu, setIsEditing])
+  }, [copySelection, pasteSelection, handleGrouping, showNodeContextMenu, setIsEditing, setParentId, setChildParentId])
 
   function closeEditNodeContextOnEscape(event: KeyboardEvent): void {
-    if (event.key === 'Escape') {
-      showNodeContextMenu(false)
-      setIsEditing(false)
-      return
+    if (event.key !== 'Escape') return
+
+    const { isNewNode, nodeId, parentId } = useNodeContextStore.getState()
+
+    if (isNewNode) {
+      if (parentId) {
+        useFlowStore.getState().deleteChild(parentId, nodeId.toString())
+      } else {
+        useFlowStore.getState().deleteNode(nodeId.toString())
+      }
+      useNodeContextStore.getState().setIsNewNode(false)
     }
+
+    showNodeContextMenu(false)
+    setIsEditing(false)
+    setParentId(null)
+    setChildParentId(null)
   }
 
   const groupNodes = (nodesToGroup: FlowNode[], currentNodes: FlowNode[]) => {
@@ -522,6 +537,8 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
     setIsNewNode(true)
     setEditingSubtype(elementName)
     setIsEditing(true)
+    setParentId(null)
+    setChildParentId(null)
 
     const flowStore = useFlowStore.getState()
     const newId = flowStore.getNextNodeId()
@@ -729,6 +746,26 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
         </div>
       )}
 
+      {isEditing && (
+        <div
+          className="absolute inset-0 z-10 cursor-default"
+          onClick={() => {
+            if (!isDirty) {
+              showNodeContextMenu(false)
+              setIsEditing(false)
+              setParentId(null)
+              setChildParentId(null)
+            }
+          }}
+        >
+          <div className="pointer-events-none absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-3 rounded bg-black/30 px-3 py-2 text-xs text-white backdrop-blur-sm">
+            <span><kbd className="rounded border border-white/40 bg-white/15 px-1.5 py-0.5 font-mono text-xs text-white">Esc</kbd> Discard</span>
+            <span className="opacity-40">|</span>
+            <span><kbd className="rounded border border-white/40 bg-white/15 px-1.5 py-0.5 font-mono text-xs text-white">Ctrl+Enter</kbd> Save</span>
+          </div>
+        </div>
+      )}
+
       <ReactFlow
         fitView
         nodes={nodes}
@@ -745,7 +782,7 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
         onConnectEnd={handleConnectEnd}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
-        deleteKeyCode={['Delete', 'Backspace']}
+        deleteKeyCode={isEditing ? null : ['Delete', 'Backspace']}
         minZoom={0.2}
       >
         <Controls position="top-left" style={{ color: '#000' }}></Controls>
