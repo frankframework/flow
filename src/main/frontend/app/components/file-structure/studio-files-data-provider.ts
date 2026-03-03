@@ -116,14 +116,15 @@ export default class FilesDataProvider implements TreeDataProvider {
     try {
       const adapterNames = await getAdapterNamesFromConfiguration(this.projectName, item.data.path)
 
-      for (const adapterName of adapterNames) {
-        const adapterIndex = `${itemId}/${adapterName}`
+      for (const [i, adapterName] of adapterNames.entries()) {
+        const adapterIndex = `${itemId}/${adapterName}::${i}`
         this.data[adapterIndex] = {
           index: adapterIndex,
           data: {
             adapterName,
             configPath: item.data.path,
-            listenerName: await getAdapterListenerType(this.projectName, item.data.path, adapterName),
+            adapterPosition: i,
+            listenerName: await getAdapterListenerType(this.projectName, item.data.path, adapterName, i),
           },
           isFolder: false,
         }

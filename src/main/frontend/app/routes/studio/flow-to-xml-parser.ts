@@ -31,11 +31,13 @@ export async function exportFlowToXml(
   projectName: string,
   configurationPath: string,
   adapterName: string,
+  existingAdapterXml?: string,
 ): Promise<string> {
-  // Fetch the adapter XML to extract attributes for the Adapter element
-  const adapterXml = await getAdapter(projectName, adapterName, configurationPath).then(
-    (response) => response.xmlContent,
-  )
+  // Use provided adapter XML if available (handles duplicate-named adapters correctly),
+  // otherwise fall back to fetching by name from the API
+  const adapterXml =
+    existingAdapterXml ??
+    (await getAdapter(projectName, adapterName, configurationPath).then((response) => response.xmlContent))
   const adapterAttributes = getAdapterAttributes(adapterXml)
 
   // Transform the React Flow JSON into XML

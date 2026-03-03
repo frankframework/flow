@@ -7,6 +7,7 @@ export interface TabData {
   icon?: React.ComponentType<React.SVGProps<SVGSVGElement>>
   flowJson?: Record<string, unknown>
   configurationPath: string
+  adapterPosition?: number
   history?: FlowSnapshot[]
   future?: FlowSnapshot[]
 }

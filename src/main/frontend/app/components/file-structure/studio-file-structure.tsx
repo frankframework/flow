@@ -133,16 +133,18 @@ export default function StudioFileStructure() {
   )
 
   const openNewTab = useCallback(
-    (adapterName: string, configPath: string) => {
-      if (!getTab(adapterName)) {
-        setTabData(adapterName, {
+    (adapterName: string, configPath: string, adapterPosition: number) => {
+      const tabId = `${configPath}::${adapterName}::${adapterPosition}`
+      if (!getTab(tabId)) {
+        setTabData(tabId, {
           name: adapterName,
           configurationPath: configPath,
+          adapterPosition,
           flowJson: {},
         })
       }
 
-      setActiveTab(adapterName)
+      setActiveTab(tabId)
     },
     [getTab, setTabData, setActiveTab],
   )
@@ -163,8 +165,12 @@ export default function StudioFileStructure() {
 
       const data = item.data
       if (typeof data === 'object' && data !== null && 'adapterName' in data && 'configPath' in data) {
-        const { adapterName, configPath } = data as { adapterName: string; configPath: string }
-        openNewTab(adapterName, configPath)
+        const { adapterName, configPath, adapterPosition } = data as {
+          adapterName: string
+          configPath: string
+          adapterPosition: number
+        }
+        openNewTab(adapterName, configPath, adapterPosition ?? 0)
       }
     },
     [dataProvider, openNewTab],
