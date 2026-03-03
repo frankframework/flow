@@ -33,6 +33,13 @@ export function findAdapterAtOffset(adapters: AdapterLocation[], cursorOffset: n
   return adapters[0].name
 }
 
+export function findAdapterIndexAtOffset(adapters: AdapterLocation[], cursorOffset: number): number {
+  for (let i = adapters.length - 1; i >= 0; i--) {
+    if (adapters[i].offset <= cursorOffset) return i
+  }
+  return 0
+}
+
 /**  Converts the tagname of a non capitalized element that has a classname attribute to the last part of said classname, e.g.:
  * <pipe name="uploadFiles" className="org.frankframework.pipes.ForEachChildElementPipe" />
  * Becomes <ForEachChildElementPipe name="uploadFiles" />

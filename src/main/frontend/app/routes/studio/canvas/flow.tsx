@@ -107,12 +107,10 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
 
     setSaveStatus('saving')
     try {
-      // Fetch the full configuration XML (reads directly by filepath — no registry lookup)
       const fullConfigXml = await fetchConfiguration(project.name, configurationPath)
       const configDoc = new DOMParser().parseFromString(fullConfigXml, 'text/xml')
       const allAdapters = [...configDoc.querySelectorAll('Adapter, adapter')]
 
-      // Find the specific adapter to replace (by position for duplicate-named adapters)
       const existingAdapter =
         adapterPosition === undefined
           ? (allAdapters.find((a) => a.getAttribute('name') === adapterName) ?? null)
@@ -122,10 +120,8 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
         throw new Error(`Could not find adapter "${adapterName}" at position ${adapterPosition} in configuration`)
       }
 
-      // Serialize the existing adapter element so exportFlowToXml can extract its attributes
       const existingAdapterXml = new XMLSerializer().serializeToString(existingAdapter)
 
-      // Generate the new adapter XML from the current flow
       const newAdapterXml = await exportFlowToXml(
         flowData,
         project.name,
@@ -134,17 +130,14 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
         existingAdapterXml,
       )
 
-      // Parse the generated adapter element and replace the old one in the config document
       const newAdapterDoc = new DOMParser().parseFromString(`<root>${newAdapterXml}</root>`, 'text/xml')
       const newAdapterEl = newAdapterDoc.querySelector('Adapter, adapter')
       if (!newAdapterEl) throw new Error('Failed to parse generated adapter XML')
 
       existingAdapter.parentNode!.replaceChild(configDoc.importNode(newAdapterEl, true), existingAdapter)
 
-      // Serialize back to string and strip any added XML declaration
       const updatedConfigXml = new XMLSerializer().serializeToString(configDoc).replace(/^<\?xml[^?]*\?>\s*/, '')
 
-      // Save the full configuration file (writes directly by filepath — no registry lookup)
       await saveConfiguration(project.name, configurationPath, updatedConfigXml)
 
       setSaveStatus('saved')
