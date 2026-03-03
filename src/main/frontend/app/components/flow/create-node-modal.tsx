@@ -3,6 +3,7 @@ import useFlowStore from '~/stores/flow-store'
 import useNodeContextStore from '~/stores/node-context-store'
 import { useFrankDoc } from '~/providers/frankdoc-provider'
 import Button from '../inputs/button'
+import type { Elements, FFDocJson } from '@frankframework/ff-doc'
 
 interface CreateNodeModalProperties {
   isOpen: boolean
@@ -24,6 +25,15 @@ interface CreateNodeModalProperties {
   }
 }
 
+function getElementNamesForType(fullName: string, types: FFDocJson['types'], elements: Elements): Set<string> {
+  const fullNames = new Set(types[fullName])
+  return new Set(
+    Object.entries(elements)
+      .filter(([_, el]) => fullNames.has(el.className))
+      .map(([name]) => name),
+  )
+}
+
 function CreateNodeModal({
   isOpen,
   onClose,
@@ -31,28 +41,56 @@ function CreateNodeModal({
   positions,
   sourceInfo,
 }: Readonly<CreateNodeModalProperties>) {
-  const { elements } = useFrankDoc()
+  const { elements, ffDoc } = useFrankDoc()
   const { setAttributes, setNodeId } = useNodeContextStore((state) => state)
+  const nodes = useFlowStore((state) => state.nodes)
   const [search, setSearch] = useState('')
   const [selectedElement, setSelectedElement] = useState<string>('')
-
-  // Convert elements (object) into an array for easy iteration
 
   const elementArray = useMemo(() => {
     if (!elements) return []
     return Object.values(elements).toSorted((a, b) => a.name.localeCompare(b.name))
   }, [elements])
-  // Filter based on search input
+
+  const pipeElements = useMemo(() => {
+    if (!ffDoc || !elements) return new Set<string>()
+    return getElementNamesForType('org.frankframework.core.IPipe', ffDoc.types, elements)
+  }, [ffDoc, elements])
+
+  const exitElements = useMemo(() => {
+    if (!ffDoc || !elements) return new Set<string>()
+    return getElementNamesForType('org.frankframework.core.PipeLineExit', ffDoc.types, elements)
+  }, [ffDoc, elements])
+
+  const allowedElements = useMemo(() => {
+    if (!sourceInfo?.nodeId) return null
+
+    const sourceNode = nodes.find((n) => n.id === sourceInfo.nodeId)
+    const subtype =
+      sourceNode?.data && 'subtype' in sourceNode.data ? (sourceNode.data as { subtype: string }).subtype : ''
+
+    if (pipeElements.has(subtype)) return new Set([...pipeElements, ...exitElements])
+
+    return pipeElements
+  }, [sourceInfo?.nodeId, nodes, pipeElements, exitElements])
 
   const filteredElements = useMemo(() => {
-    return elementArray.filter((element) => element.name.toLowerCase().includes(search.toLowerCase()))
-  }, [elementArray, search])
+    return elementArray.filter(
+      (element) =>
+        (!allowedElements || allowedElements.has(element.name)) &&
+        element.name.toLowerCase().includes(search.toLowerCase()),
+    )
+  }, [elementArray, search, allowedElements])
 
   const handleOnChange = (event: ChangeEvent<HTMLInputElement>) => {
     const newSearch = event.target.value
     setSearch(newSearch)
     const filtered = elementArray
-      .filter((element) => element.name.toLowerCase().includes(newSearch.toLowerCase()))
+      .filter(
+        (element) =>
+          (!allowedElements || allowedElements.has(element.name)) &&
+          element.name.toLowerCase().includes(newSearch.toLowerCase()),
+      )
       .toSorted((a, b) => a.name.localeCompare(b.name))
 
     // Automatically select the first match (if any)
