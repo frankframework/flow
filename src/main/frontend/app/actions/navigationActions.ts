@@ -2,18 +2,21 @@ import useTabStore from '~/stores/tab-store'
 import useEditorTabStore from '~/stores/editor-tab-store'
 import { useNavigationStore } from '~/stores/navigation-store'
 
-export function openInStudio(adapterName: string, filepath: string) {
+export function openInStudio(adapterName: string, filepath: string, adapterPosition: number) {
   const { setTabData, setActiveTab, getTab } = useTabStore.getState()
 
-  if (!getTab(adapterName)) {
-    setTabData(adapterName, {
+  const tabId = `${filepath}::${adapterName}::${adapterPosition}`
+
+  if (!getTab(tabId)) {
+    setTabData(tabId, {
       name: adapterName,
       configurationPath: filepath,
+      adapterPosition,
       flowJson: {},
     })
   }
 
-  setActiveTab(adapterName)
+  setActiveTab(tabId)
   useNavigationStore.getState().navigate('studio')
 }
 

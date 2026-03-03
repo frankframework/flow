@@ -21,8 +21,8 @@ export default function ConfigurationTile({
 }: Readonly<ConfigurationTileProperties>) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
 
-  const handleOpenInStudio = (adapterName: string) => {
-    openInStudio(adapterName, filepath)
+  const handleOpenInStudio = (adapterName: string, adapterPosition: number) => {
+    openInStudio(adapterName, filepath, adapterPosition)
   }
 
   const handleOpenInEditor = () => {
@@ -43,12 +43,13 @@ export default function ConfigurationTile({
       <div className="text-foreground mb-3 truncate text-sm font-semibold" title={relativePath}>
         {relativePath}
       </div>
-      <button
+
+      <Button
         onClick={() => setShowDeleteDialog(true)}
         className="text-foreground-muted hover:text-error absolute top-3 right-3 transition hover:cursor-pointer"
       >
         <TrashBinIcon className="h-4 w-4 fill-current" />
-      </button>
+      </Button>
 
       {/* Adapter list */}
       {adapterNames.length > 0 ? (
@@ -58,8 +59,13 @@ export default function ConfigurationTile({
           </h1>
           <div className="bg-backdrop border-border flex-1 overflow-y-auto rounded border p-2">
             <ul className="space-y-2">
-              {adapterNames.map((name) => (
-                <AdapterListItem key={name} name={name} onOpenInStudio={handleOpenInStudio} />
+              {adapterNames.map((name, index) => (
+                <AdapterListItem
+                  key={`${name}-${index}`}
+                  name={name}
+                  adapterPosition={index}
+                  onOpenInStudio={handleOpenInStudio}
+                />
               ))}
             </ul>
           </div>
@@ -89,10 +95,11 @@ export default function ConfigurationTile({
 
 interface AdapterListItemProps {
   name: string
-  onOpenInStudio: (name: string) => void
+  adapterPosition: number
+  onOpenInStudio: (name: string, adapterPosition: number) => void
 }
 
-function AdapterListItem({ name, onOpenInStudio }: AdapterListItemProps) {
+function AdapterListItem({ name, adapterPosition, onOpenInStudio }: AdapterListItemProps) {
   return (
     <li className="border-border bg-background flex items-center rounded border px-2 py-1">
       {/* Adapter name – 2/3 */}
@@ -103,7 +110,7 @@ function AdapterListItem({ name, onOpenInStudio }: AdapterListItemProps) {
       {/* Button – 1/3 */}
       <button
         className="bg-primary text-primary-foreground hover:text-foreground-active ml-2 flex w-1/3 items-center justify-center gap-1 rounded px-2 py-1 text-xs font-medium transition hover:cursor-pointer"
-        onClick={() => onOpenInStudio(name)}
+        onClick={() => onOpenInStudio(name, adapterPosition)}
       >
         <RulerCrossPenIcon className="h-4 w-4 fill-current" />
         <span className="whitespace-normal">Open in Studio</span>

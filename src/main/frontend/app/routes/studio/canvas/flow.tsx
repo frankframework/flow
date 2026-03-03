@@ -30,7 +30,7 @@ import { exportFlowToXml } from '~/routes/studio/flow-to-xml-parser'
 import useNodeContextStore from '~/stores/node-context-store'
 import CreateNodeModal from '~/components/flow/create-node-modal'
 import { useProjectStore } from '~/stores/project-store'
-import { saveAdapter } from '~/services/adapter-service'
+import { fetchConfiguration, saveConfiguration } from '~/services/configuration-service'
 import { cloneWithRemappedIds } from '~/utils/flow-utils'
 import { showErrorToast } from '~/components/toast'
 import clsx from 'clsx'
@@ -97,16 +97,49 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
 
   const saveFlow = useCallback(async () => {
     const flowData = reactFlowRef.current.toObject()
-    const activeTabName = useTabStore.getState().activeTab
-    const configurationPath = useTabStore.getState().getTab(activeTabName)?.configurationPath
+    const activeTabKey = useTabStore.getState().activeTab
+    const tabData = useTabStore.getState().getTab(activeTabKey)
+    const configurationPath = tabData?.configurationPath
+    const adapterName = tabData?.name
+    const adapterPosition = tabData?.adapterPosition
 
-    if (!configurationPath || !project) return
-
-    const xmlString = await exportFlowToXml(flowData, project.name, configurationPath, activeTabName)
+    if (!configurationPath || !adapterName || !project) return
 
     setSaveStatus('saving')
     try {
-      await saveAdapter(project.name, xmlString, activeTabName, configurationPath)
+      const fullConfigXml = await fetchConfiguration(project.name, configurationPath)
+      const configDoc = new DOMParser().parseFromString(fullConfigXml, 'text/xml')
+      const allAdapters = [...configDoc.querySelectorAll('Adapter, adapter')]
+
+      const existingAdapter =
+        adapterPosition === undefined
+          ? (allAdapters.find((a) => a.getAttribute('name') === adapterName) ?? null)
+          : (allAdapters[adapterPosition] ?? null)
+
+      if (!existingAdapter) {
+        throw new Error(`Could not find adapter "${adapterName}" at position ${adapterPosition} in configuration`)
+      }
+
+      const existingAdapterXml = new XMLSerializer().serializeToString(existingAdapter)
+
+      const newAdapterXml = await exportFlowToXml(
+        flowData,
+        project.name,
+        configurationPath,
+        adapterName,
+        existingAdapterXml,
+      )
+
+      const newAdapterDoc = new DOMParser().parseFromString(`<root>${newAdapterXml}</root>`, 'text/xml')
+      const newAdapterEl = newAdapterDoc.querySelector('Adapter, adapter')
+      if (!newAdapterEl) throw new Error('Failed to parse generated adapter XML')
+
+      existingAdapter.parentNode!.replaceChild(configDoc.importNode(newAdapterEl, true), existingAdapter)
+
+      const updatedConfigXml = new XMLSerializer().serializeToString(configDoc).replace(/^<\?xml[^?]*\?>\s*/, '')
+
+      await saveConfiguration(project.name, configurationPath, updatedConfigXml)
+
       setSaveStatus('saved')
       if (savedTimerRef.current) clearTimeout(savedTimerRef.current)
       savedTimerRef.current = setTimeout(() => setSaveStatus('idle'), SAVED_DISPLAY_DURATION)
@@ -576,12 +609,9 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
   )
 
   useEffect(() => {
-    function restoreFlowFromTab(tabId: string) {
-      const tabStore = useTabStore.getState()
+    function restoreFlowFromTab(tab: TabData) {
       const flowStore = useFlowStore.getState()
-
-      const tabData = tabStore.getTab(tabId)
-      const flowJson = tabData?.flowJson
+      const flowJson = tab.flowJson
 
       if (flowJson) {
         flowStore.setNodes(Array.isArray(flowJson.nodes) ? flowJson.nodes : [])
@@ -589,8 +619,8 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
         const viewport = flowJson.viewport as { x: number; y: number; zoom: number } | undefined
         flowStore.setViewport(viewport && true ? viewport : { x: 0, y: 0, zoom: 1 })
 
-        flowStore.setHistory(tabData.history ?? [])
-        flowStore.setFuture(tabData.future ?? [])
+        flowStore.setHistory(tab.history ?? [])
+        flowStore.setFuture(tab.future ?? [])
       } else {
         clearFlow()
       }
@@ -607,10 +637,15 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
       setLoading(true)
       try {
         if (tab.flowJson && Object.keys(tab.flowJson).length > 0) {
-          restoreFlowFromTab(tab.name)
+          restoreFlowFromTab(tab)
         } else if (tab.configurationPath && tab.name) {
           if (!currentProject) return
-          const adapter = await getAdapterFromConfiguration(currentProject.name, tab.configurationPath, tab.name)
+          const adapter = await getAdapterFromConfiguration(
+            currentProject.name,
+            tab.configurationPath,
+            tab.name,
+            tab.adapterPosition,
+          )
           if (!adapter) return
           const adapterJson = await convertAdapterXmlToJson(adapter)
           flowStore.setEdges(adapterJson.edges)
