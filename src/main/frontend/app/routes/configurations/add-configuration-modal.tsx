@@ -95,9 +95,27 @@ export default function AddConfigurationModal({
       className="bg-background/50 absolute inset-0 z-50 flex items-center justify-center"
       onClick={handleClickedOutside}
     >
-      <div className="bg-background border-border relative h-[400px] w-1/3 min-w-[600px] rounded-lg border p-6 shadow-lg">
+      <div className="bg-background border-border relative h-[400px] w-1/3 min-w-[800px] rounded-lg border p-6 shadow-lg">
         <h2 className="mb-4 text-lg font-semibold">Add Configuration</h2>
         <p className="mb-4">Add a new configuration file.</p>
+
+        <div className="mb-4 flex items-center gap-2">
+          <label className="text-sm font-medium" htmlFor="configuration-filename-input">
+            Location
+          </label>
+          <div className="ml-2 flex w-full items-center">
+            <label
+              className="border-border bg-background w-full rounded border px-2 py-1 text-sm transition"
+              aria-label="folder location"
+              onDoubleClick={() => setIsOpenPickerOpen(true)}
+            >
+              {rootLocationName || configurationsDirPath}
+            </label>
+          </div>
+          <Button onClick={() => setIsOpenPickerOpen(true)} className="ml-2 h-8 text-sm">
+            Browse...
+          </Button>
+        </div>
 
         <div className="mb-4 flex items-center gap-2">
           <label className="text-sm font-medium" htmlFor="configuration-filename-input">
@@ -113,24 +131,6 @@ export default function AddConfigurationModal({
               aria-label="configuration filename"
             />
           </div>
-        </div>
-
-        <div className="mb-4 flex items-center gap-2">
-          <label className="text-sm font-medium" htmlFor="configuration-filename-input">
-            Location
-          </label>
-          <div className="ml-2 flex w-full items-center">
-            <label
-              className="border-border bg-background focus:border-foreground-active focus:ring-foreground-active w-full rounded border px-2 py-1 text-sm transition focus:ring-2 focus:outline-none"
-              aria-label="folder location"
-              onDoubleClick={() => setIsOpenPickerOpen(true)}
-            >
-              {rootLocationName || configurationsDirPath}
-            </label>
-          </div>
-          <Button onClick={() => setIsOpenPickerOpen(true)} className="ml-2 h-8 text-sm">
-            Browse...
-          </Button>
         </div>
 
         <div className="flex gap-2">

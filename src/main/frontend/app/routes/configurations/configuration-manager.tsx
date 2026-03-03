@@ -213,6 +213,7 @@ export default function ConfigurationManager() {
         <p>Return To Projects</p>
       </div>
 
+      <h1 className="ml-2 text-2xl font-bold">Configuration Manager</h1>
       <div className="mb-4 flex items-center justify-between">
         <p className="ml-2">
           Configurations within <span className="font-bold">{currentProject.name}</span>/src/main/configurations:
