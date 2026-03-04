@@ -2,6 +2,7 @@ import Editor, { type Monaco, type OnMount } from '@monaco-editor/react'
 import XsdManager from 'monaco-xsd-code-completion/esm/XsdManager'
 import XsdFeatures from 'monaco-xsd-code-completion/esm/XsdFeatures'
 import 'monaco-xsd-code-completion/src/style.css'
+import { validateXML } from 'xmllint-wasm'
 import { useShallow } from 'zustand/react/shallow'
 import SidebarLayout from '~/components/sidebars-layout/sidebar-layout'
 import SidebarContentClose from '~/components/sidebars-layout/sidebar-content-close'
@@ -14,6 +15,7 @@ import EditorFileStructure from '~/components/file-structure/editor-file-structu
 import useEditorTabStore from '~/stores/editor-tab-store'
 import EditorTabs from '~/components/tabs/editor-tabs'
 import { fetchConfiguration, saveConfiguration } from '~/services/configuration-service'
+import { fetchFrankConfigXsd } from '~/services/xsd-service'
 import RulerCrossPenIcon from '/icons/solar/Ruler Cross Pen.svg?react'
 import { openInStudio } from '~/actions/navigationActions'
 import Button from '~/components/inputs/button'
@@ -22,28 +24,57 @@ import GitPanel from '~/components/git/git-panel'
 import DiffTabView from '~/components/git/diff-tab-view'
 import clsx from 'clsx'
 import { refreshOpenDiffs } from '~/services/git-service'
-import { findAdaptersInXml, lineToOffset, findAdapterIndexAtOffset, normalizeFrankElements } from './xml-utils'
+import { findAdapterAtOffset, findAdaptersInXml, lineToOffset, normalizeFrankElements } from './xml-utils'
 import { useSettingsStore } from '~/stores/settings-store'
-import { useFrankConfigXsd } from '~/providers/frankconfig-xsd-provider'
 
 type LeftTab = 'files' | 'git'
 type SaveStatus = 'idle' | 'saving' | 'saved'
 
 const SAVED_DISPLAY_DURATION = 2000
 
+/**
+ * Given the content of a line and an xmllint error message, return the column range
+ * of the specific token responsible (element tag or attribute name).
+ * Falls back to first non-whitespace → end of line.
+ */
+function findErrorRange(lineContent: string, message: string): { startColumn: number; endColumn: number } {
+  const elementMatch = message.match(/[Ee]lement [\u2018\u2019'"'{]?([\w:.-]+)[\u2018\u2019'"'}]?/)
+  if (elementMatch) {
+    const localName = elementMatch[1].includes(':') ? elementMatch[1].split(':').pop()! : elementMatch[1]
+    const openIdx = lineContent.indexOf(`<${localName}`)
+    if (openIdx !== -1) return { startColumn: openIdx + 1, endColumn: openIdx + 1 + localName.length + 1 }
+    const closeIdx = lineContent.indexOf(`</${localName}`)
+    if (closeIdx !== -1) return { startColumn: closeIdx + 1, endColumn: closeIdx + 2 + localName.length + 1 }
+  }
+
+  const attrMatch = message.match(/[Aa]ttribute [\u2018\u2019'"'{]?([\w:.-]+)[\u2018\u2019'"'}]?/)
+  if (attrMatch) {
+    const localName = attrMatch[1].includes(':') ? attrMatch[1].split(':').pop()! : attrMatch[1]
+    const idx = lineContent.search(new RegExp(String.raw`\b${localName}\s*=`))
+    if (idx >= 0) return { startColumn: idx + 1, endColumn: idx + localName.length + 1 }
+  }
+
+  const firstNonWs = lineContent.search(/\S/)
+  return { startColumn: firstNonWs >= 0 ? firstNonWs + 1 : 1, endColumn: lineContent.length + 1 }
+}
+
 export default function CodeEditor() {
   const theme = useTheme()
   const project = useProjectStore.getState().project
-  const { xsdContent } = useFrankConfigXsd()
   const [activeTabFilePath, setActiveTabFilePath] = useState<string>(useEditorTabStore.getState().activeTabFilePath)
   const [xmlContent, setXmlContent] = useState<string>('')
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
   const [leftTab, setLeftTab] = useState<LeftTab>('files')
   const [editorMounted, setEditorMounted] = useState(false)
+  const [xsdLoaded, setXsdLoaded] = useState(false)
   const editorReference = useRef<Parameters<OnMount>[0] | null>(null)
   const monacoReference = useRef<Monaco | null>(null)
+  const xsdContentRef = useRef<string | null>(null)
+  const errorDecorationsRef = useRef<{ clear: () => void } | null>(null)
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const validationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const validationCounterRef = useRef(0)
 
   const activeTab = useEditorTabStore(
     useShallow((state) => {
@@ -108,18 +139,156 @@ export default function CodeEditor() {
     return () => {
       if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current)
       if (savedTimerRef.current) clearTimeout(savedTimerRef.current)
+      if (validationTimerRef.current) clearTimeout(validationTimerRef.current)
     }
   }, [])
 
+  /** Apply decorations + markers for a set of errors. Replaces any previous set. */
+  const applyValidationDecorations = useCallback(
+    (errors: { message: string; lineNumber: number; startColumn: number; endColumn: number }[]) => {
+      const monaco = monacoReference.current
+      const editor = editorReference.current
+      if (!monaco || !editor) return
+
+      const model = editor.getModel()
+      if (!model) return
+
+      if (errorDecorationsRef.current) {
+        errorDecorationsRef.current.clear()
+        errorDecorationsRef.current = null
+      }
+
+      if (errors.length > 0) {
+        // createDecorationsCollection + inlineClassName gives reliable dotted underlines
+        // (setModelMarkers alone relies on SVG data URIs that can be CSP-blocked)
+        errorDecorationsRef.current = editor.createDecorationsCollection(
+          errors.map((e) => ({
+            range: {
+              startLineNumber: e.lineNumber,
+              startColumn: e.startColumn,
+              endLineNumber: e.lineNumber,
+              endColumn: e.endColumn,
+            },
+            options: {
+              inlineClassName: 'xml-lint xml-lint--fatal-error',
+              hoverMessage: { value: `**XSD:** ${e.message}` },
+              overviewRuler: { color: '#ff2424', position: 4 },
+            },
+          })),
+        )
+      }
+
+      // setModelMarkers keeps Monaco gutter icons + F8 error navigation
+      monaco.editor.setModelMarkers(
+        model,
+        'xsd-validation',
+        errors.map((e) => ({
+          startLineNumber: e.lineNumber,
+          startColumn: e.startColumn,
+          endLineNumber: e.lineNumber,
+          endColumn: e.endColumn,
+          message: e.message,
+          severity: monaco.MarkerSeverity.Error,
+        })),
+      )
+    },
+    [],
+  )
+
+  const runSchemaValidation = useCallback(
+    async (content: string) => {
+      const monaco = monacoReference.current
+      const editor = editorReference.current
+      const xsdContent = xsdContentRef.current
+      if (!monaco || !editor || !xsdContent) return
+
+      const validationId = ++validationCounterRef.current
+
+      try {
+        const result = await validateXML({
+          xml: [{ fileName: 'config.xml', contents: content }],
+          schema: [{ fileName: 'FrankConfig.xsd', contents: xsdContent }],
+        })
+
+        if (validationId !== validationCounterRef.current) return
+
+        const model = editor.getModel()
+        if (!model) return
+
+        const totalLines = model.getLineCount()
+
+        // If validation failed but no errors were reported, the XML is too broken to parse.
+        if (!result.valid && result.errors.length === 0) {
+          applyValidationDecorations([
+            { message: 'XML is not well-formed', lineNumber: 1, startColumn: 1, endColumn: model.getLineMaxColumn(1) },
+          ])
+          return
+        }
+
+        // One error per line max — prevents cascade flooding when one invalid element
+        // shifts the expected XSD sequence and produces dozens of follow-up errors.
+        const seen = new Set<number>()
+        const errors = result.errors
+          .map((e) => {
+            const lineNumber = Math.max(1, Math.min(e.loc?.lineNumber ?? 1, totalLines))
+            const lineContent = model.getLineContent(lineNumber)
+            const { startColumn, endColumn } = findErrorRange(lineContent, e.message)
+            return { message: e.message, lineNumber, startColumn, endColumn }
+          })
+          .filter((e) => {
+            if (seen.has(e.lineNumber)) return false
+            seen.add(e.lineNumber)
+            return true
+          })
+
+        applyValidationDecorations(errors)
+      } catch {
+        if (validationId !== validationCounterRef.current) return
+        // validateXML threw — XML has a fatal parse error. Show it at line 1.
+        const model = editor.getModel()
+        if (!model) return
+        applyValidationDecorations([
+          { message: 'XML is not well-formed', lineNumber: 1, startColumn: 1, endColumn: model.getLineMaxColumn(1) },
+        ])
+      }
+    },
+    [applyValidationDecorations],
+  )
+
+  const scheduleSchemaValidation = useCallback(
+    (content: string) => {
+      if (validationTimerRef.current) clearTimeout(validationTimerRef.current)
+      validationTimerRef.current = setTimeout(() => {
+        validationTimerRef.current = null
+        runSchemaValidation(content)
+      }, 800)
+    },
+    [runSchemaValidation],
+  )
+
   useEffect(() => {
-    if (!editorMounted || !xsdContent || !editorReference.current || !monacoReference.current) return
+    if (!editorMounted || !editorReference.current || !monacoReference.current) return
+
     const xsdManager = new XsdManager(editorReference.current)
-    xsdManager.set({ path: 'FrankConfig.xsd', value: xsdContent, alwaysInclude: true })
     const xsdFeatures = new XsdFeatures(xsdManager, monacoReference.current, editorReference.current)
+
     xsdFeatures.addCompletion()
-    xsdFeatures.addValidation()
+    xsdFeatures.addGenerateAction()
     xsdFeatures.addReformatAction()
-  }, [editorMounted, xsdContent])
+
+    fetchFrankConfigXsd()
+      .then((xsdContent) => {
+        xsdContentRef.current = xsdContent
+        xsdManager.set({
+          path: 'FrankConfig.xsd',
+          value: xsdContent,
+          namespace: 'xs',
+          alwaysInclude: true,
+        })
+        setXsdLoaded(true)
+      })
+      .catch(console.error)
+  }, [editorMounted])
 
   const handleEditorMount: OnMount = (editor, monacoInstance) => {
     editorReference.current = editor
@@ -160,14 +329,13 @@ export default function CodeEditor() {
   }
 
   useEffect(() => {
-    const unsubActiveTab = useEditorTabStore.subscribe(
+    return useEditorTabStore.subscribe(
       (state) => state.activeTabFilePath,
       (newActiveTab, oldActiveTab) => {
         if (oldActiveTab && oldActiveTab !== newActiveTab) flushPendingSave()
         setActiveTabFilePath(newActiveTab)
       },
     )
-    return unsubActiveTab
   }, [flushPendingSave])
 
   useEffect(() => {
@@ -189,6 +357,24 @@ export default function CodeEditor() {
     fetchXml()
     return () => abortController.abort()
   }, [project, activeTabFilePath, isDiffTab, refreshCounter])
+
+  useEffect(() => {
+    if (errorDecorationsRef.current) {
+      errorDecorationsRef.current.clear()
+      errorDecorationsRef.current = null
+    }
+    const monaco = monacoReference.current
+    const editor = editorReference.current
+    if (monaco && editor) {
+      const model = editor.getModel()
+      if (model) monaco.editor.setModelMarkers(model, 'xsd-validation', [])
+    }
+  }, [activeTabFilePath])
+
+  useEffect(() => {
+    if (!xmlContent || !xsdLoaded || isDiffTab) return
+    runSchemaValidation(xmlContent)
+  }, [xmlContent, xsdLoaded, isDiffTab, runSchemaValidation])
 
   useEffect(() => {
     if (!xmlContent || !activeTabFilePath || !editorReference.current || isDiffTab) return
@@ -309,7 +495,10 @@ export default function CodeEditor() {
                   theme={`vs-${theme}`}
                   value={xmlContent}
                   onMount={handleEditorMount}
-                  onChange={scheduleSave}
+                  onChange={(value) => {
+                    scheduleSave()
+                    if (value) scheduleSchemaValidation(value)
+                  }}
                   options={{ automaticLayout: true, quickSuggestions: false }}
                 />
               </div>

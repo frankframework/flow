@@ -19,6 +19,9 @@ export default defineConfig({
     tsconfigPaths(),
     svgr(),
   ],
+  optimizeDeps: {
+    exclude: ['xmllint-wasm'],
+  },
   server: {
     port: 3000,
   },

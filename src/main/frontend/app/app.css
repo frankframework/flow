@@ -148,6 +148,13 @@ body {
   @apply border-l-4 border-yellow-400 bg-yellow-200/30 transition-colors;
 }
 
+/* XSD validation inline error underline.
+   The monaco-xsd-code-completion library defines .xml-lint--fetal (typo), not .xml-lint--fatal-error,
+   so we define the red color ourselves here. */
+.monaco-editor .xml-lint.xml-lint--fatal-error {
+  border-color: #ff2424;
+}
+
 .monaco-editor .hunk-glyph-unchecked,
 .monaco-editor .hunk-glyph-checked {
   cursor: pointer !important;
