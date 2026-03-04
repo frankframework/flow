@@ -21,26 +21,86 @@
                 xmlns:datamapper="http://example.com/datamapper"
                 exclude-result-prefixes="datamapper"&gt;
         </xsl:text>
-        <xsl:element name="xsl:output">
-            <xsl:attribute name="method">xml</xsl:attribute>
-            <xsl:attribute name="indent">yes</xsl:attribute>
-        </xsl:element>
+        <xsl:choose>
+            <xsl:when test="$data?targetType = 'JSON'">
+                <xsl:element name="xsl:output">
+                    <xsl:attribute name="method">text</xsl:attribute>
+                    <xsl:attribute name="indent">no</xsl:attribute>
+                </xsl:element>
+            </xsl:when>
+            <xsl:otherwise>
+                <xsl:element name="xsl:output">
+                    <xsl:attribute name="method">xml</xsl:attribute>
+                    <xsl:attribute name="indent">yes</xsl:attribute>
+                </xsl:element>
+            </xsl:otherwise>
+        </xsl:choose>
+
         <xsl:if test="$data?sourceType = 'JSON'">
-            <xsl:element name="xsl:variable"><xsl:attribute name="name">jsonPath</xsl:attribute><xsl:attribute name="select">/params/jsonPath/text()</xsl:attribute></xsl:element>
-            <xsl:element name="xsl:variable"><xsl:attribute name="name">data</xsl:attribute><xsl:attribute name="select">json-doc($jsonPath)</xsl:attribute></xsl:element>
+            <xsl:element name="xsl:variable">
+                <xsl:attribute name="name">jsonPath</xsl:attribute>
+                <xsl:attribute name="select">/params/jsonPath/text()</xsl:attribute>
+            </xsl:element>
+            <xsl:element name="xsl:variable">
+                <xsl:attribute name="name">data</xsl:attribute>
+                <xsl:attribute name="select">json-doc($jsonPath)</xsl:attribute>
+            </xsl:element>
         </xsl:if>
 
         <xsl:call-template name="functions"/>
 
-        <xsl:element name="xsl:template">
-            <xsl:attribute name="match">/<xsl:if test = "$data?sourceType = 'XML'"> source</xsl:if></xsl:attribute>
-            <xsl:for-each select="$data?targetStructure?*">
-                <xsl:call-template name="outer-property">
-                    <xsl:with-param name="node" select="."/>
-                    <xsl:with-param name="data" select="$data"/>
-                </xsl:call-template>
-            </xsl:for-each>
-        </xsl:element>
+        <xsl:choose>
+            <xsl:when test="$data?targetType = 'JSON'">
+                <xsl:element name="xsl:template">
+                    <xsl:if test="$data?sourceType = 'XML'"><xsl:attribute name="match">/source</xsl:attribute></xsl:if>
+                    <xsl:attribute name="name">source</xsl:attribute>
+
+                    <xsl:element name="xsl:variable">
+                        <xsl:attribute name="name">xmlOutput</xsl:attribute>
+                        <xsl:for-each select="$data?targetStructure?*">
+                            <xsl:call-template name="outer-property">
+                                <xsl:with-param name="node" select="."/>
+                                <xsl:with-param name="data" select="$data"/>
+                            </xsl:call-template>
+                        </xsl:for-each>
+
+                    </xsl:element>
+                    <xsl:element name="xsl:value-of">
+                        <xsl:attribute name="select">datamapper:xml-to-json($xmlOutput/*)</xsl:attribute>
+                    </xsl:element>
+
+                </xsl:element>
+                <xsl:element name="xsl:template">
+                    <xsl:attribute name="match">/</xsl:attribute>
+                    <xsl:choose>
+                        <xsl:when test="$data?sourceType = 'XML'">
+                            <xsl:element name="xsl:apply-templates">
+                                <xsl:attribute name="select">source</xsl:attribute>
+                            </xsl:element>
+                        </xsl:when>
+                        <xsl:otherwise>
+                            <xsl:element name="xsl:call-template">
+                                <xsl:attribute name="name">source</xsl:attribute>
+                            </xsl:element>
+                        </xsl:otherwise>
+                    </xsl:choose>
+                </xsl:element>
+
+            </xsl:when>
+            <xsl:when test="$data?targetType = 'XML'">
+                <xsl:element name="xsl:template">
+                    <xsl:attribute name="match">/
+                        <xsl:if test="$data?sourceType = 'XML'">source</xsl:if>
+                    </xsl:attribute>
+                    <xsl:for-each select="$data?targetStructure?*">
+                        <xsl:call-template name="outer-property">
+                            <xsl:with-param name="node" select="."/>
+                            <xsl:with-param name="data" select="$data"/>
+                        </xsl:call-template>
+                    </xsl:for-each>
+                </xsl:element>
+            </xsl:when>
+        </xsl:choose>
         <xsl:text disable-output-escaping="yes">
             &lt;/xsl:stylesheet&gt;
         </xsl:text>
@@ -72,19 +132,22 @@
                     <xsl:attribute name="name">
                         <xsl:value-of select="?id"></xsl:value-of>
                     </xsl:attribute>
-<!--                    The empty XSL-Ifs here exists to ensure no empty newline gets added-->
-                    <xsl:attribute name="select">datamapper:<xsl:value-of select="?mutationType?name"/>(<xsl:if test="true()"></xsl:if>
+                    <!--                    The empty XSL-Ifs here exists to ensure no empty newline gets added-->
+                    <xsl:attribute name="select">datamapper:<xsl:value-of select="?mutationType?name"/>(
+                        <xsl:if test="true()"></xsl:if>
                         <xsl:if test="?mutationType?inputs?1?expandable = true()">(</xsl:if>
                         <xsl:for-each select="?inputs?*">
                             <xsl:choose>
-                                <xsl:when test="compare(?type, 'source')">'<xsl:value-of select="?value"/>'<xsl:if test="true()"></xsl:if>
+                                <xsl:when test="compare(?type, 'source')">'<xsl:value-of select="?value"/>'
+                                    <xsl:if test="true()"></xsl:if>
                                 </xsl:when>
                                 <xsl:otherwise>$<xsl:value-of select="?sourceId"/>
                                 </xsl:otherwise>
                             </xsl:choose>
                             <xsl:if test="position() != last()">,</xsl:if>
                         </xsl:for-each>
-                        <xsl:if test="true()"></xsl:if>)<xsl:if test="true()"></xsl:if>
+                        <xsl:if test="true()"></xsl:if>)
+                        <xsl:if test="true()"></xsl:if>
                         <xsl:if test="?mutationType?inputs?1?expandable = true()">)</xsl:if>
                     </xsl:attribute>
                 </xsl:element>
@@ -95,18 +158,21 @@
                     <xsl:attribute name="name">
                         <xsl:value-of select="?id"></xsl:value-of>
                     </xsl:attribute>
-                    <xsl:attribute name="select">datamapper:<xsl:value-of select="?type?name"/>(<xsl:if test="true()"></xsl:if>
+                    <xsl:attribute name="select">datamapper:<xsl:value-of select="?type?name"/>(
+                        <xsl:if test="true()"></xsl:if>
                         <xsl:for-each select="?inputs?*">
                             <xsl:choose>
                                 <xsl:when test="compare(?type, 'source')">'<xsl:value-of select="?value"
-                                                                                         disable-output-escaping="yes"/>'<xsl:if test="true()"></xsl:if>
+                                                                                         disable-output-escaping="yes"/>'
+                                    <xsl:if test="true()"></xsl:if>
                                 </xsl:when>
                                 <xsl:otherwise>$<xsl:value-of select="?sourceId"/>
                                 </xsl:otherwise>
                             </xsl:choose>
                             <xsl:if test="position() != last()">,</xsl:if>
                         </xsl:for-each>
-                        <xsl:if test="true()"></xsl:if>)<xsl:if test="true()"></xsl:if>
+                        <xsl:if test="true()"></xsl:if>)
+                        <xsl:if test="true()"></xsl:if>
                     </xsl:attribute>
                 </xsl:element>
             </xsl:for-each>

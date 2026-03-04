@@ -1,10 +1,10 @@
 package org.frankframework.flow.datamapper;
 
-
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -24,20 +24,22 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
 
-import static org.junit.Assert.assertEquals;
-
-
 public class MappingGeneratorServiceTest {
-    private MappingGeneratorService service;
 
+    private MappingGeneratorService service;
+    private Processor processor;
+    private XsltCompiler compiler;
 
     @BeforeEach
     void setUp() throws IOException {
         service = new MappingGeneratorService();
+        processor = new Processor(false);
+        compiler = processor.newXsltCompiler();
     }
 
     @AfterEach
-    void tearDown() throws IOException {
+    void tearDown() {
+        // nothing to clean up
     }
 
     @Test
@@ -49,87 +51,85 @@ public class MappingGeneratorServiceTest {
     public void testXMLtoXMLGeneratedMapping() throws Exception {
         service.generate("src/test/resources/datamapper/inputXmlToXml.json");
 
-        // 1. Create processor (false = no schema validation)
-        Processor processor = new Processor(false);
-
-        // 2. Compile XSLT
-        XsltCompiler compiler = processor.newXsltCompiler();
-        XsltExecutable executable = compiler.compile(
-                new StreamSource(new File("output.xslt"))
-        );
-
-        // 3. Load transformer
+        XsltExecutable executable = compiler.compile(new StreamSource(new File("output.xslt")));
         XsltTransformer transformer = executable.load();
 
-        // 4. Provide XML input
-        StreamSource xmlSource = new StreamSource(
-                new File("src/test/resources/datamapper/inputData.xml")
-        );
-        transformer.setSource(xmlSource);
+        transformer.setSource(new StreamSource(new File("src/test/resources/datamapper/inputData.xml")));
 
-        // 5. Setup output file
         StringWriter writer = new StringWriter();
         Serializer out = processor.newSerializer(writer);
-        out.setOutputProperty(Serializer.Property.METHOD, "xml");
-        out.setOutputProperty(Serializer.Property.INDENT, "yes");
-
         transformer.setDestination(out);
 
-        // 6. Run transformation
         transformer.transform();
 
-        System.out.println("Transformation complete!");
-
-        // 7. Parse expected AND actual results
         Document expectedResult = parse("src/test/resources/datamapper/outputData.xml");
-
-
-        // 8. Compare documents
         Assertions.assertEquals(toString(expectedResult).trim(), writer.toString().trim());
     }
+
+    @Test
+    public void testXMLtoJSONGeneratedMapping() throws Exception {
+        service.generate("src/test/resources/datamapper/inputXmlToJson.json");
+
+        XsltExecutable executable = compiler.compile(new StreamSource(new File("output.xslt")));
+        Xslt30Transformer transformer = executable.load30();
+
+        StreamSource xmlSource = new StreamSource(new File("src/test/resources/datamapper/inputData.xml"));
+        StringWriter writer = new StringWriter();
+        Serializer out = processor.newSerializer(writer);
+
+        transformer.transform(xmlSource, out);
+
+        Path path = Paths.get("src/test/resources/datamapper/outputData.json");
+        String expectedResult = Files.readString(path);
+
+        Assertions.assertEquals(expectedResult.trim(), writer.toString().trim());
+    }
+
     @Test
     public void testJSONtoXMLGeneratedMapping() throws Exception {
         service.generate("src/test/resources/datamapper/inputJsonToXml.json");
 
-        // 1. Create processor (false = no schema validation)
-        Processor processor = new Processor(false);
+        XsltExecutable executable = compiler.compile(new StreamSource(new File("output.xslt")));
+        Xslt30Transformer transformer = executable.load30();
 
-        // 2. Compile XSLT
-        XsltCompiler compiler = processor.newXsltCompiler();
-        XsltExecutable executable = compiler.compile(
-                new StreamSource(new File("output.xslt"))
-        );
-
-        // 3. Load transformer
-        Xslt30Transformer transformer = executable.load30();;
-
-
-        // 5. Setup output file
         StringWriter writer = new StringWriter();
         Serializer out = processor.newSerializer(writer);
-        out.setOutputProperty(Serializer.Property.METHOD, "xml");
-        out.setOutputProperty(Serializer.Property.INDENT, "yes");
 
+        Path absolutePath = Paths.get("").toAbsolutePath()
+                .resolve("src/test/resources/datamapper/inputData.json");
+        StreamSource paramsSource = new StreamSource(
+                new StringReader("<params><jsonPath>" + absolutePath.toUri() + "</jsonPath></params>")
+        );
 
-        Path projectRoot = Paths.get("").toAbsolutePath();
-        Path absolutePath = projectRoot.resolve("src/test/resources/datamapper/inputData.json");
-
-        String xmlParams = "<params><jsonPath>" + absolutePath.toUri() + "</jsonPath></params>";
-        StreamSource paramsSource = new StreamSource(new StringReader(xmlParams));
-        // 6. Run transformation
         transformer.transform(paramsSource, out);
 
-
-        System.out.println("Transformation complete!");
-
-        // 7. Parse expected AND actual results
         Document expectedResult = parse("src/test/resources/datamapper/outputData.xml");
-
-
-        // 8. Compare documents
         Assertions.assertEquals(toString(expectedResult).trim(), writer.toString().trim());
     }
 
+    @Test
+    public void testJSONtoJSONGeneratedMapping() throws Exception {
+        service.generate("src/test/resources/datamapper/inputJsonToJson.json");
+
+        XsltExecutable executable = compiler.compile(new StreamSource(new File("output.xslt")));
+        Xslt30Transformer transformer = executable.load30();
+
+        StringWriter writer = new StringWriter();
+        Serializer out = processor.newSerializer(writer);
+
+        Path absolutePath = Paths.get("").toAbsolutePath()
+                .resolve("src/test/resources/datamapper/inputData.json");
+        StreamSource paramsSource = new StreamSource(
+                new StringReader("<params><jsonPath>" + absolutePath.toUri() + "</jsonPath></params>")
+        );
+
+        transformer.transform(paramsSource, out);
+
+        Path path = Paths.get("src/test/resources/datamapper/outputData.json");
+        String expectedResult = Files.readString(path);
+
+        Assertions.assertEquals(expectedResult.trim(), writer.toString().trim());
+    }
 
     private Document parse(String path) throws Exception {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
