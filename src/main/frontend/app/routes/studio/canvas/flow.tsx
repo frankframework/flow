@@ -224,13 +224,13 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
   const layoutGraph = useCallback((nodes: Node[], edges: Edge[], direction: 'TB' | 'LR' = 'LR'): Node[] => {
     const dagreGraph = new Dagre.graphlib.Graph()
     dagreGraph.setDefaultEdgeLabel(() => ({}))
-    dagreGraph.setGraph({ rankdir: direction })
+    dagreGraph.setGraph({ rankdir: direction, ranksep: 300, nodesep: 200 })
 
     // Only add nodes to Dagre that need layout (position x=0 and y=0)
     for (const node of nodes) {
       if (node.position.x === 0 && node.position.y === 0) {
         dagreGraph.setNode(node.id, {
-          width: node.width, // Safe to assume it exists, because measured always gets set in xml-to-json-parser
+          width: node.width,
           height: node.height,
         })
       }
