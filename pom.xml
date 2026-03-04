@@ -43,6 +43,19 @@
             <organization>Frank!Framework</organization>
             <organizationUrl>https://frankframework.org</organizationUrl>
         </developer>
+		<developer>
+			<name>Sergi Philipsen</name>
+			<email>sergi@frankframework.org</email>
+			<organization>Frank!Framework</organization>
+			<organizationUrl>https://frankframework.org</organizationUrl>
+		</developer>
+		<developer>
+            <name>Vivy Booman</name>
+            <email>vivy@frankframework.org</email>
+            <organization>Frank!Framework</organization>
+            <organizationUrl>https://frankframework.org</organizationUrl>
+        </developer>
+
 	</developers>
 
 	<properties>
@@ -66,8 +79,8 @@
         <junit.includedTags/>
 
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<maven.compiler.source>21</maven.compiler.source>
-		<maven.compiler.target>21</maven.compiler.target>
+		<maven.compiler.source>25</maven.compiler.source>
+		<maven.compiler.target>25</maven.compiler.target>
 	</properties>
 
 	<dependencyManagement>
@@ -195,6 +208,7 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<configuration>
+					<release>${java.version}</release>
 					<source>${java.version}</source>
 					<target>${java.version}</target>
 					<annotationProcessorPaths>
@@ -204,7 +218,6 @@
 							<version>${lombok.version}</version>
 						</path>
 					</annotationProcessorPaths>
-					<compilerArgs>--enable-preview</compilerArgs>
 				</configuration>
 			</plugin>
 
