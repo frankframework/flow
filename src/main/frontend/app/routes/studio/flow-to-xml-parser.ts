@@ -31,14 +31,14 @@ export async function exportFlowToXml(
   projectName: string,
   configurationPath: string,
   adapterName: string,
+  existingAdapterXml?: string,
 ): Promise<string> {
-  // Fetch the adapter XML to extract attributes for the Adapter element
-  const adapterXml = await getAdapter(projectName, adapterName, configurationPath).then(
-    (response) => response.xmlContent,
-  )
+  const adapterXml: string =
+    existingAdapterXml === undefined
+      ? await getAdapter(projectName, adapterName, configurationPath).then((response) => response.xmlContent)
+      : existingAdapterXml
   const adapterAttributes = getAdapterAttributes(adapterXml)
 
-  // Transform the React Flow JSON into XML
   const { nodes, edges } = json
   const validNodes = nodes.filter((node) => hasDataProperty(node))
   const nodeMap = new Map(validNodes.map((n) => [n.id, n]))
@@ -119,8 +119,7 @@ function getAdapterAttributes(adapterXml: string): string {
   const parser = new DOMParser()
   const doc = parser.parseFromString(adapterXml, 'application/xml')
   const adapterElement = doc.documentElement
-  const attributes = [...adapterElement.attributes].map((attr) => `${attr.name}="${attr.value}"`).join(' ')
-  return attributes
+  return [...adapterElement.attributes].map((attr) => `${attr.name}="${attr.value}"`).join(' ')
 }
 
 function topologicalSort(startNodes: string[], outgoing: Record<string, string[]>): string[] {

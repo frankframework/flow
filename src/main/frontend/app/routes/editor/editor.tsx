@@ -21,7 +21,7 @@ import GitPanel from '~/components/git/git-panel'
 import DiffTabView from '~/components/git/diff-tab-view'
 import clsx from 'clsx'
 import { refreshOpenDiffs } from '~/services/git-service'
-import { findAdaptersInXml, lineToOffset, findAdapterAtOffset, normalizeFrankElements } from './xml-utils'
+import { findAdaptersInXml, lineToOffset, findAdapterIndexAtOffset, normalizeFrankElements } from './xml-utils'
 import { useSettingsStore } from '~/stores/settings-store'
 
 type LeftTab = 'files' | 'git'
@@ -349,12 +349,10 @@ export default function CodeEditor() {
     if (adapters.length === 0) return
 
     const cursorLine = editorReference.current?.getPosition()?.lineNumber
-    const adapterName =
-      adapters.length === 1 || !cursorLine
-        ? adapters[0].name
-        : findAdapterAtOffset(adapters, lineToOffset(xml, cursorLine))
+    const adapterPosition =
+      adapters.length === 1 || !cursorLine ? 0 : findAdapterIndexAtOffset(adapters, lineToOffset(xml, cursorLine))
 
-    openInStudio(adapterName, editorTab.configurationPath)
+    openInStudio(adapters[adapterPosition].name, editorTab.configurationPath, adapterPosition)
   }, [activeTabFilePath, xmlContent])
 
   const isGitRepo = !!project?.isGitRepository

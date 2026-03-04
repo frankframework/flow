@@ -30,7 +30,7 @@ import { exportFlowToXml } from '~/routes/studio/flow-to-xml-parser'
 import useNodeContextStore from '~/stores/node-context-store'
 import CreateNodeModal from '~/components/flow/create-node-modal'
 import { useProjectStore } from '~/stores/project-store'
-import { saveAdapter } from '~/services/adapter-service'
+import { fetchConfiguration, saveConfiguration } from '~/services/configuration-service'
 import { cloneWithRemappedIds } from '~/utils/flow-utils'
 import { showErrorToast } from '~/components/toast'
 import clsx from 'clsx'
@@ -58,13 +58,25 @@ const SAVED_DISPLAY_DURATION = 2000
 
 function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b: boolean) => void }>) {
   const [loading, setLoading] = useState(false)
-  const { isEditing, setIsEditing, setIsNewNode, setParentId, setDraggedName } = useNodeContextStore(
+  const {
+    isEditing,
+    isDirty,
+    setIsEditing,
+    setIsNewNode,
+    setParentId,
+    setChildParentId,
+    setDraggedName,
+    setEditingSubtype,
+  } = useNodeContextStore(
     useShallow((s) => ({
       isEditing: s.isEditing,
+      isDirty: s.isDirty,
       setIsEditing: s.setIsEditing,
       setIsNewNode: s.setIsNewNode,
       setParentId: s.setParentId,
+      setChildParentId: s.setChildParentId,
       setDraggedName: s.setDraggedName,
+      setEditingSubtype: s.setEditingSubtype,
     })),
   )
   const [showModal, setShowModal] = useState(false)
@@ -97,16 +109,49 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
 
   const saveFlow = useCallback(async () => {
     const flowData = reactFlowRef.current.toObject()
-    const activeTabName = useTabStore.getState().activeTab
-    const configurationPath = useTabStore.getState().getTab(activeTabName)?.configurationPath
+    const activeTabKey = useTabStore.getState().activeTab
+    const tabData = useTabStore.getState().getTab(activeTabKey)
+    const configurationPath = tabData?.configurationPath
+    const adapterName = tabData?.name
+    const adapterPosition = tabData?.adapterPosition
 
-    if (!configurationPath || !project) return
-
-    const xmlString = await exportFlowToXml(flowData, project.name, configurationPath, activeTabName)
+    if (!configurationPath || !adapterName || !project) return
 
     setSaveStatus('saving')
     try {
-      await saveAdapter(project.name, xmlString, activeTabName, configurationPath)
+      const fullConfigXml = await fetchConfiguration(project.name, configurationPath)
+      const configDoc = new DOMParser().parseFromString(fullConfigXml, 'text/xml')
+      const allAdapters = [...configDoc.querySelectorAll('Adapter, adapter')]
+
+      const existingAdapter =
+        adapterPosition === undefined
+          ? (allAdapters.find((a) => a.getAttribute('name') === adapterName) ?? null)
+          : (allAdapters[adapterPosition] ?? null)
+
+      if (!existingAdapter) {
+        throw new Error(`Could not find adapter "${adapterName}" at position ${adapterPosition} in configuration`)
+      }
+
+      const existingAdapterXml = new XMLSerializer().serializeToString(existingAdapter)
+
+      const newAdapterXml = await exportFlowToXml(
+        flowData,
+        project.name,
+        configurationPath,
+        adapterName,
+        existingAdapterXml,
+      )
+
+      const newAdapterDoc = new DOMParser().parseFromString(`<root>${newAdapterXml}</root>`, 'text/xml')
+      const newAdapterEl = newAdapterDoc.querySelector('Adapter, adapter')
+      if (!newAdapterEl) throw new Error('Failed to parse generated adapter XML')
+
+      existingAdapter.parentNode!.replaceChild(configDoc.importNode(newAdapterEl, true), existingAdapter)
+
+      const updatedConfigXml = new XMLSerializer().serializeToString(configDoc).replace(/^<\?xml[^?]*\?>\s*/, '')
+
+      await saveConfiguration(project.name, configurationPath, updatedConfigXml)
+
       setSaveStatus('saved')
       if (savedTimerRef.current) clearTimeout(savedTimerRef.current)
       savedTimerRef.current = setTimeout(() => setSaveStatus('idle'), SAVED_DISPLAY_DURATION)
@@ -395,7 +440,10 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
   }, [])
 
   useEffect(() => {
+    // TODO rework this in the overarching shortcut event system
     const handleKeyDown = (event: KeyboardEvent) => {
+      closeEditNodeContextOnEscape(event)
+
       const tagName = (event.target as HTMLElement).tagName
       const isTyping = ['INPUT', 'TEXTAREA'].includes(tagName) || (event.target as HTMLElement).isContentEditable
 
@@ -442,7 +490,27 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
 
     globalThis.addEventListener('keydown', handleKeyDown)
     return () => globalThis.removeEventListener('keydown', handleKeyDown)
-  }, [copySelection, pasteSelection, handleGrouping])
+  }, [copySelection, pasteSelection, handleGrouping, showNodeContextMenu, setIsEditing, setParentId, setChildParentId])
+
+  function closeEditNodeContextOnEscape(event: KeyboardEvent): void {
+    if (event.key !== 'Escape') return
+
+    const { isNewNode, nodeId, parentId } = useNodeContextStore.getState()
+
+    if (isNewNode) {
+      if (parentId) {
+        useFlowStore.getState().deleteChild(parentId, nodeId.toString())
+      } else {
+        useFlowStore.getState().deleteNode(nodeId.toString())
+      }
+      useNodeContextStore.getState().setIsNewNode(false)
+    }
+
+    showNodeContextMenu(false)
+    setIsEditing(false)
+    setParentId(null)
+    setChildParentId(null)
+  }
 
   const groupNodes = (nodesToGroup: FlowNode[], currentNodes: FlowNode[]) => {
     const minX = Math.min(...nodesToGroup.map((node) => node.position.x))
@@ -508,7 +576,10 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
   ) {
     showNodeContextMenu(true)
     setIsNewNode(true)
+    setEditingSubtype(elementName)
     setIsEditing(true)
+    setParentId(null)
+    setChildParentId(null)
 
     const flowStore = useFlowStore.getState()
     const newId = flowStore.getNextNodeId()
@@ -576,12 +647,9 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
   )
 
   useEffect(() => {
-    function restoreFlowFromTab(tabId: string) {
-      const tabStore = useTabStore.getState()
+    function restoreFlowFromTab(tab: TabData) {
       const flowStore = useFlowStore.getState()
-
-      const tabData = tabStore.getTab(tabId)
-      const flowJson = tabData?.flowJson
+      const flowJson = tab.flowJson
 
       if (flowJson) {
         flowStore.setNodes(Array.isArray(flowJson.nodes) ? flowJson.nodes : [])
@@ -589,8 +657,8 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
         const viewport = flowJson.viewport as { x: number; y: number; zoom: number } | undefined
         flowStore.setViewport(viewport && true ? viewport : { x: 0, y: 0, zoom: 1 })
 
-        flowStore.setHistory(tabData.history ?? [])
-        flowStore.setFuture(tabData.future ?? [])
+        flowStore.setHistory(tab.history ?? [])
+        flowStore.setFuture(tab.future ?? [])
       } else {
         clearFlow()
       }
@@ -607,10 +675,15 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
       setLoading(true)
       try {
         if (tab.flowJson && Object.keys(tab.flowJson).length > 0) {
-          restoreFlowFromTab(tab.name)
+          restoreFlowFromTab(tab)
         } else if (tab.configurationPath && tab.name) {
           if (!currentProject) return
-          const adapter = await getAdapterFromConfiguration(currentProject.name, tab.configurationPath, tab.name)
+          const adapter = await getAdapterFromConfiguration(
+            currentProject.name,
+            tab.configurationPath,
+            tab.name,
+            tab.adapterPosition,
+          )
           if (!adapter) return
           const adapterJson = await convertAdapterXmlToJson(adapter)
           flowStore.setEdges(adapterJson.edges)
@@ -715,7 +788,36 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
           <div className="border-border h-10 w-10 animate-spin rounded-full border-t-2 border-b-2"></div>
         </div>
       )}
-      {!isEditing || <div className="absolute inset-0 z-50 cursor-not-allowed bg-black/20" />}
+
+      {isEditing && (
+        <div
+          className={clsx('absolute inset-0 z-10', isDirty ? 'cursor-not-allowed bg-black/10' : 'cursor-default')}
+          onClick={() => {
+            if (!isDirty) {
+              showNodeContextMenu(false)
+              setIsEditing(false)
+              setParentId(null)
+              setChildParentId(null)
+            }
+          }}
+        >
+          <div className="pointer-events-none absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-3 rounded bg-black/30 px-3 py-2 text-xs text-white backdrop-blur-sm">
+            <span>
+              <kbd className="rounded border border-white/40 bg-white/15 px-1.5 py-0.5 font-mono text-xs text-white">
+                Esc
+              </kbd>{' '}
+              Discard
+            </span>
+            <span className="opacity-40">|</span>
+            <span>
+              <kbd className="rounded border border-white/40 bg-white/15 px-1.5 py-0.5 font-mono text-xs text-white">
+                Ctrl+Enter
+              </kbd>{' '}
+              Save
+            </span>
+          </div>
+        </div>
+      )}
 
       <ReactFlow
         fitView
@@ -733,7 +835,7 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
         onConnectEnd={handleConnectEnd}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
-        deleteKeyCode={['Delete', 'Backspace']}
+        deleteKeyCode={isEditing ? null : ['Delete', 'Backspace']}
         minZoom={0.2}
       >
         <Controls position="top-left" style={{ color: '#000' }}></Controls>

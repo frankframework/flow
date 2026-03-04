@@ -42,24 +42,6 @@ export const initialNodes: Node[] = [
     type: 'frankNode',
   },
   {
-    id: '2',
-    position: { x: 900, y: 0 },
-    data: {
-      subtype: 'XsltPipe',
-      type: 'Pipe',
-      name: 'Xml to Json',
-      sourceHandles: [
-        { type: 'success', index: 1 },
-        { type: 'failure', index: 2 },
-      ],
-      attributes: {
-        xpathExpression: "concat('{&quot;temperature&quot;:', /current/temperature/@value, '}')",
-      },
-      children: [],
-    },
-    type: 'frankNode',
-  },
-  {
     id: '3',
     position: { x: 1350, y: -200 },
     data: {

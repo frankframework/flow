@@ -60,27 +60,28 @@ export async function getAdapterFromConfiguration(
   projectname: string,
   filename: string,
   adapterName: string,
+  adapterPosition?: number,
 ): Promise<Element | null> {
   const xmlString = await getXmlString(projectname, filename)
   const parser = new DOMParser()
   const xmlDoc = parser.parseFromString(xmlString, 'text/xml')
 
-  const adapterList = xmlDoc.querySelectorAll('Adapter, adapter')
-  for (const adapter of adapterList) {
-    if (adapter.getAttribute('name') === adapterName) {
-      return adapter
-    }
+  const adapterList = [...xmlDoc.querySelectorAll('Adapter, adapter')]
+
+  if (adapterPosition !== undefined) {
+    return adapterList[adapterPosition] ?? null
   }
 
-  return null
+  return adapterList.find((a) => a.getAttribute('name') === adapterName) ?? null
 }
 
 export async function getAdapterListenerType(
   projectName: string,
   filename: string,
   adapterName: string,
+  adapterPosition?: number,
 ): Promise<string | null> {
-  const adapterElement = await getAdapterFromConfiguration(projectName, filename, adapterName)
+  const adapterElement = await getAdapterFromConfiguration(projectName, filename, adapterName, adapterPosition)
   if (!adapterElement) return null
   // Look through all child elements inside the adapter
   const children = adapterElement.querySelectorAll('*')

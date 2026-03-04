@@ -178,7 +178,7 @@ export function ChildNodeComponent({
         }}
       >
         <h1 className="font-bold">{child.subtype}</h1>
-        <p className="overflow-hidden text-sm whitespace-nowrap">{child.name?.toUpperCase()}</p>
+        <p className="overflow-hidden text-sm whitespace-nowrap">{child.name}</p>
       </div>
 
       {/* Body */}

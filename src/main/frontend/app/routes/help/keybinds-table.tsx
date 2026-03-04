@@ -50,8 +50,25 @@ export function KeybindsTable() {
       ),
     },
     {
-      action: 'Edit Node',
-      keybind: <span className="key">Double-click</span>,
+      action: 'Save Node',
+      keybind:
+        platform === 'win' ? (
+          <>
+            <span className="key">Ctrl</span> + <span className="key">Enter</span>
+          </>
+        ) : (
+          <>
+            <span className="key">⌘</span> + <span className="key">Enter</span>
+          </>
+        ),
+    },
+    {
+      action: 'Discard / Close Edit Panel',
+      keybind: <span className="key">Esc</span>,
+    },
+    {
+      action: 'Close Palette Panel',
+      keybind: <span className="key">Esc</span>,
     },
     {
       action: 'Add Sticky Note',
