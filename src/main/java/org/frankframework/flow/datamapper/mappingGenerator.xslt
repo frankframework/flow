@@ -11,11 +11,12 @@
     <!-- Entry point -->
     <xsl:template name="main" match="/">
 
+
         <xsl:variable name="data" select="json-doc($jsonPath)"/>
         <!--        Output XSLT stylesheet, using xsl:text here because it's the only way to pass xmlns attributes-->
         <xsl:text disable-output-escaping="yes">
             &lt;xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-                version="2.0"
+                version="3.0"
                 xmlns:xs="http://www.w3.org/2001/XMLSchema"
                 xmlns:datamapper="http://example.com/datamapper"
                 exclude-result-prefixes="datamapper"&gt;
@@ -24,11 +25,15 @@
             <xsl:attribute name="method">xml</xsl:attribute>
             <xsl:attribute name="indent">yes</xsl:attribute>
         </xsl:element>
+        <xsl:if test="$data?sourceType = 'JSON'">
+            <xsl:element name="xsl:variable"><xsl:attribute name="name">jsonPath</xsl:attribute><xsl:attribute name="select">/params/jsonPath/text()</xsl:attribute></xsl:element>
+            <xsl:element name="xsl:variable"><xsl:attribute name="name">data</xsl:attribute><xsl:attribute name="select">json-doc($jsonPath)</xsl:attribute></xsl:element>
+        </xsl:if>
 
         <xsl:call-template name="functions"/>
 
         <xsl:element name="xsl:template">
-            <xsl:attribute name="match">/source</xsl:attribute>
+            <xsl:attribute name="match">/<xsl:if test = "$data?sourceType = 'XML'"> source</xsl:if></xsl:attribute>
             <xsl:for-each select="$data?targetStructure?*">
                 <xsl:call-template name="outer-property">
                     <xsl:with-param name="node" select="."/>
@@ -57,6 +62,7 @@
                         <xsl:value-of select="?internalId"></xsl:value-of>
                     </xsl:attribute>
                     <xsl:attribute name="select">
+                        <xsl:if test="$data?sourceType = 'JSON'">$data?</xsl:if>
                         <xsl:value-of select="?label"/>
                     </xsl:attribute>
                 </xsl:element>

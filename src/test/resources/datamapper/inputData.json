@@ -1,0 +1,22 @@
+{
+
+    "firstName": "John",
+    "lastName": "Doe",
+    "username": "johndoe92",
+    "email": "john.doe@example.com",
+    "age": 25,
+    "role": "allowed",
+
+    "orderId": "12345",
+    "totalPrice": 199.99,
+    "paymentStatus": "paid",
+
+    "productId": "id123",
+    "price": 49.99,
+    "stock": 10,
+
+    "width": 50,
+    "height": 100,
+    "depth": 30
+
+}
