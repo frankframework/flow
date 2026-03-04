@@ -133,7 +133,7 @@ public class FileTreeServiceTest {
     @Test
     @DisplayName("Should successfully overwrite a file with new content")
     public void updateFileContent_Success()
-            throws IOException, ProjectNotFoundException, ConfigurationNotFoundException {
+            throws IOException, ProjectNotFoundException, ConfigurationNotFoundException, Exception {
         stubToAbsolutePath();
         stubWriteFile();
 
@@ -258,7 +258,7 @@ public class FileTreeServiceTest {
 
     @Test
     @DisplayName("Should handle multiple consecutive file operations correctly")
-    void integration_MultipleOperations() throws IOException, ProjectNotFoundException, ConfigurationNotFoundException {
+    void integration_MultipleOperations() throws IOException, ProjectNotFoundException, ConfigurationNotFoundException, Exception {
         stubToAbsolutePath();
         stubReadFile();
         stubWriteFile();

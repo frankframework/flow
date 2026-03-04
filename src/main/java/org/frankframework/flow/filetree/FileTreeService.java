@@ -14,13 +14,16 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import javax.xml.transform.TransformerException;
+
 import org.frankframework.flow.adapter.AdapterNotFoundException;
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
 import org.frankframework.flow.exception.ApiException;
 import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.frankframework.flow.project.ProjectNotFoundException;
 import org.frankframework.flow.project.ProjectService;
-import org.frankframework.flow.utility.XmlAdapterUtils;
+import org.frankframework.flow.utility.XmlConfigurationUtils;
 import org.frankframework.flow.utility.XmlSecurityUtils;
 import org.springframework.stereotype.Service;
 import org.w3c.dom.Document;
@@ -53,8 +56,8 @@ public class FileTreeService {
         return fileSystemStorage.readFile(filepath);
     }
 
-    public void updateFileContent(String projectName, String filepath, String newContent)
-            throws IOException, ProjectNotFoundException, ConfigurationNotFoundException {
+    public String updateFileContent(String projectName, String filepath, String newContent)
+            throws IOException, ProjectNotFoundException, ConfigurationNotFoundException, Exception, TransformerException {
         Path filePath = fileSystemStorage.toAbsolutePath(filepath);
 
         if (!Files.exists(filePath)) {
@@ -65,9 +68,13 @@ public class FileTreeService {
             throw new IllegalArgumentException("Cannot update a directory: " + filepath);
         }
 
-        fileSystemStorage.writeFile(filepath, newContent);
-        projectService.updateConfigurationXml(projectName, filepath, newContent);
+        Document updatedContent = XmlConfigurationUtils.insertFlowNamespace(newContent);
+        String updatedXmlString = XmlConfigurationUtils.convertNodeToString(updatedContent);
+
+        fileSystemStorage.writeFile(filepath, updatedXmlString);
+        projectService.updateConfigurationXml(projectName, filepath, updatedXmlString);
         invalidateTreeCache();
+        return updatedXmlString;
     }
 
     public FileTreeNode getProjectTree(String projectName) throws IOException {
@@ -275,13 +282,13 @@ public class FileTreeService {
 
             Node newAdapterNode = newAdapterDoc.getDocumentElement();
 
-            boolean replaced = XmlAdapterUtils.replaceAdapterInDocument(configDoc, adapterName, newAdapterNode);
+            boolean replaced = XmlConfigurationUtils.replaceAdapterInDocument(configDoc, adapterName, newAdapterNode);
 
             if (!replaced) {
                 throw new AdapterNotFoundException("Adapter not found: " + adapterName);
             }
 
-            String updatedXml = XmlAdapterUtils.convertNodeToString(configDoc);
+            String updatedXml = XmlConfigurationUtils.convertNodeToString(configDoc);
 
             Files.writeString(absConfigFile, updatedXml, StandardCharsets.UTF_8, StandardOpenOption.TRUNCATE_EXISTING);
 

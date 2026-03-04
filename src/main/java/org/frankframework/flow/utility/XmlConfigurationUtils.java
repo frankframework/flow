@@ -1,16 +1,55 @@
 package org.frankframework.flow.utility;
 
 import java.io.ByteArrayInputStream;
+import java.io.StringReader;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.*;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import lombok.experimental.UtilityClass;
 import org.w3c.dom.*;
+import org.xml.sax.InputSource;
 
 @UtilityClass
-public class XmlAdapterUtils {
+public class XmlConfigurationUtils {
+
+    /**
+     * Checks if a configuration document has the flow namespace included.
+     * If not: it includes it
+     */
+    public static Document insertFlowNamespace(String configurationXml) throws Exception {
+
+        if (configurationXml == null || configurationXml.isBlank()) {
+            return null;
+        }
+
+        // Parse XML string into Document
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        factory.setNamespaceAware(true);
+
+        DocumentBuilder builder = factory.newDocumentBuilder();
+        Document configDoc = builder.parse(new InputSource(new StringReader(configurationXml)));
+
+        NodeList configurationNodes = configDoc.getElementsByTagName("Configuration");
+
+        for (int i = 0; i < configurationNodes.getLength(); i++) {
+            Element configuration = (Element) configurationNodes.item(i);
+
+            // Check if the flow namespace is already declared
+            if (!configuration.hasAttribute("xmlns:flow")) {
+                configuration.setAttributeNS(
+                        "http://www.w3.org/2000/xmlns/",
+                        "xmlns:flow",
+                        "urn:frank-flow");
+            }
+        }
+
+        return configDoc;
+    }
 
     /**
      * Replaces an Adapter element (matched by name attribute) inside the given
@@ -39,11 +78,11 @@ public class XmlAdapterUtils {
 
     /**
      * Converts a DOM Node to a formatted XML string.
+     * 
      * @throws TransformerException
      */
     public static String convertNodeToString(Node node) throws TransformerException {
-        Transformer transformer =
-                XmlSecurityUtils.createSecureTransformerFactory().newTransformer();
+        Transformer transformer = XmlSecurityUtils.createSecureTransformerFactory().newTransformer();
 
         transformer.setOutputProperty(OutputKeys.INDENT, "yes");
         transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
@@ -205,7 +244,8 @@ public class XmlAdapterUtils {
     }
 
     private static String capitalize(String value) {
-        if (value == null || value.isEmpty()) return value;
+        if (value == null || value.isEmpty())
+            return value;
         return value.substring(0, 1).toUpperCase() + value.substring(1);
     }
 

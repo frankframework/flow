@@ -33,7 +33,7 @@ import org.frankframework.flow.projectsettings.FilterType;
 import org.frankframework.flow.projectsettings.InvalidFilterTypeException;
 import org.frankframework.flow.recentproject.RecentProject;
 import org.frankframework.flow.recentproject.RecentProjectsService;
-import org.frankframework.flow.utility.XmlAdapterUtils;
+import org.frankframework.flow.utility.XmlConfigurationUtils;
 import org.frankframework.flow.utility.XmlSecurityUtils;
 import org.frankframework.flow.xml.XmlDTO;
 import org.springframework.context.annotation.Lazy;
@@ -145,12 +145,12 @@ public class ProjectService {
         Document configDoc = XmlSecurityUtils.createSecureDocumentBuilder()
                 .parse(new ByteArrayInputStream(config.getXmlContent().getBytes(StandardCharsets.UTF_8)));
 
-        Node adapterNode = XmlAdapterUtils.findAdapterInDocument(configDoc, adapterName);
+        Node adapterNode = XmlConfigurationUtils.findAdapterInDocument(configDoc, adapterName);
         if (adapterNode == null) {
             throw new AdapterNotFoundException("Adapter not found: " + adapterName);
         }
 
-        String adapterXml = XmlAdapterUtils.convertNodeToString(adapterNode);
+        String adapterXml = XmlConfigurationUtils.convertNodeToString(adapterNode);
         return new XmlDTO(adapterXml);
     }
 
@@ -368,11 +368,11 @@ public class ProjectService {
 
             Node newAdapterNode = configDoc.importNode(newAdapterDoc.getDocumentElement(), true);
 
-            if (!XmlAdapterUtils.replaceAdapterInDocument(configDoc, adapterName, newAdapterNode)) {
+            if (!XmlConfigurationUtils.replaceAdapterInDocument(configDoc, adapterName, newAdapterNode)) {
                 throw new AdapterNotFoundException("Adapter not found: " + adapterName);
             }
 
-            String xmlOutput = XmlAdapterUtils.convertNodeToString(configDoc);
+            String xmlOutput = XmlConfigurationUtils.convertNodeToString(configDoc);
             config.setXmlContent(xmlOutput);
             return true;
         } catch (AdapterNotFoundException e) {

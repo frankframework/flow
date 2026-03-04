@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import org.frankframework.flow.project.InvalidXmlContentException;
-import org.frankframework.flow.utility.XmlAdapterUtils;
+import org.frankframework.flow.utility.XmlConfigurationUtils;
 import org.frankframework.flow.utility.XmlValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -56,16 +56,16 @@ class XmlServiceTest {
         String normalizedXml = "<Adapter/>";
 
         try (MockedStatic<XmlValidator> validatorMock = mockStatic(XmlValidator.class);
-                MockedStatic<XmlAdapterUtils> adapterMock = mockStatic(XmlAdapterUtils.class)) {
+                MockedStatic<XmlConfigurationUtils> adapterMock = mockStatic(XmlConfigurationUtils.class)) {
 
-            adapterMock.when(() -> XmlAdapterUtils.normalizeFrankElements(xml)).thenReturn(normalizedXml);
+            adapterMock.when(() -> XmlConfigurationUtils.normalizeFrankElements(xml)).thenReturn(normalizedXml);
 
             String result = xmlService.normalizeElementsInXml(xml);
 
             assertEquals(normalizedXml, result);
 
             validatorMock.verify(() -> XmlValidator.validateXml(xml));
-            adapterMock.verify(() -> XmlAdapterUtils.normalizeFrankElements(xml));
+            adapterMock.verify(() -> XmlConfigurationUtils.normalizeFrankElements(xml));
         }
     }
 
@@ -90,10 +90,10 @@ class XmlServiceTest {
         String xml = "<adapter/>";
 
         try (MockedStatic<XmlValidator> validatorMock = mockStatic(XmlValidator.class);
-                MockedStatic<XmlAdapterUtils> adapterMock = mockStatic(XmlAdapterUtils.class)) {
+                MockedStatic<XmlConfigurationUtils> adapterMock = mockStatic(XmlConfigurationUtils.class)) {
 
             adapterMock
-                    .when(() -> XmlAdapterUtils.normalizeFrankElements(xml))
+                    .when(() -> XmlConfigurationUtils.normalizeFrankElements(xml))
                     .thenThrow(new RuntimeException("Adapter failed"));
 
             RuntimeException ex = assertThrows(RuntimeException.class, () -> xmlService.normalizeElementsInXml(xml));
@@ -101,7 +101,7 @@ class XmlServiceTest {
             assertEquals("Adapter failed", ex.getMessage());
 
             validatorMock.verify(() -> XmlValidator.validateXml(xml));
-            adapterMock.verify(() -> XmlAdapterUtils.normalizeFrankElements(xml));
+            adapterMock.verify(() -> XmlConfigurationUtils.normalizeFrankElements(xml));
         }
     }
 }

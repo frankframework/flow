@@ -1,5 +1,5 @@
 import { apiFetch } from '~/utils/api'
-import type { Project } from '~/types/project.types'
+import type { Project, XmlResponse } from '~/types/project.types'
 
 export async function fetchConfiguration(projectName: string, filepath: string, signal?: AbortSignal): Promise<string> {
   const data = await apiFetch<{ content: string }>(`/projects/${encodeURIComponent(projectName)}/configuration`, {
@@ -10,8 +10,8 @@ export async function fetchConfiguration(projectName: string, filepath: string, 
   return data.content
 }
 
-export async function saveConfiguration(projectName: string, filepath: string, content: string): Promise<void> {
-  await apiFetch<void>(`/projects/${encodeURIComponent(projectName)}/configuration`, {
+export async function saveConfiguration(projectName: string, filepath: string, content: string): Promise<XmlResponse> {
+  return apiFetch<XmlResponse>(`/projects/${encodeURIComponent(projectName)}/configuration`, {
     method: 'PUT',
     body: JSON.stringify({ filepath, content }),
   })

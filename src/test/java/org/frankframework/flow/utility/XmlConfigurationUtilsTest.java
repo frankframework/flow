@@ -10,7 +10,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
-class XmlAdapterUtilsTest {
+class XmlConfigurationUtilsTest {
 
     private Document parseXml(String xml) throws Exception {
         return DocumentBuilderFactory.newInstance()
@@ -21,7 +21,7 @@ class XmlAdapterUtilsTest {
     @Test
     void normalizeFrankElementsShouldCapitalizeLowercaseTag() throws Exception {
         String xml = "<adapter></adapter>";
-        String result = XmlAdapterUtils.normalizeFrankElements(xml);
+        String result = XmlConfigurationUtils.normalizeFrankElements(xml);
 
         Document doc = parseXml(result);
         Element root = doc.getDocumentElement();
@@ -31,7 +31,7 @@ class XmlAdapterUtilsTest {
     @Test
     void normalizeFrankElementsShouldRenameTagUsingClassName() throws Exception {
         String xml = "<adapter className=\"org.example.MyAdapter\"></adapter>";
-        String result = XmlAdapterUtils.normalizeFrankElements(xml);
+        String result = XmlConfigurationUtils.normalizeFrankElements(xml);
 
         Document doc = parseXml(result);
         Element root = doc.getDocumentElement();
@@ -41,7 +41,7 @@ class XmlAdapterUtilsTest {
     @Test
     void normalizeFrankElementsShouldPreserveAttributes() throws Exception {
         String xml = "<adapter id=\"1\" className=\"org.example.MyAdapter\" enabled=\"true\"></adapter>";
-        String result = XmlAdapterUtils.normalizeFrankElements(xml);
+        String result = XmlConfigurationUtils.normalizeFrankElements(xml);
 
         Document doc = parseXml(result);
         Element root = doc.getDocumentElement();
@@ -53,7 +53,7 @@ class XmlAdapterUtilsTest {
     @Test
     void normalizeFrankElementsShouldPreserveChildElements() throws Exception {
         String xml = "<adapter><child/></adapter>";
-        String result = XmlAdapterUtils.normalizeFrankElements(xml);
+        String result = XmlConfigurationUtils.normalizeFrankElements(xml);
 
         Document doc = parseXml(result);
         Element root = doc.getDocumentElement();
@@ -64,7 +64,7 @@ class XmlAdapterUtilsTest {
     @Test
     void normalizeFrankElementsShouldHandleMultipleElements() throws Exception {
         String xml = "<root><adapter className=\"org.example.A\"></adapter><adapter></adapter></root>";
-        String result = XmlAdapterUtils.normalizeFrankElements(xml);
+        String result = XmlConfigurationUtils.normalizeFrankElements(xml);
 
         Document doc = parseXml(result);
         Element root = doc.getDocumentElement();
@@ -75,9 +75,8 @@ class XmlAdapterUtilsTest {
 
     @Test
     void normalizeFrankElementsShouldTransformMessageLog() throws Exception {
-        String xml =
-                "<messageLog className=\"org.frankframework.jdbc.JdbcTransactionalStorage\" slotId=\"ApiListenerDuplicateCheck\" />";
-        String result = XmlAdapterUtils.normalizeFrankElements(xml);
+        String xml = "<messageLog className=\"org.frankframework.jdbc.JdbcTransactionalStorage\" slotId=\"ApiListenerDuplicateCheck\" />";
+        String result = XmlConfigurationUtils.normalizeFrankElements(xml);
 
         Document doc = parseXml(result);
         Element root = doc.getDocumentElement();
@@ -89,7 +88,7 @@ class XmlAdapterUtilsTest {
     @Test
     void normalizeFrankElementsShouldTransformInputValidator() throws Exception {
         String xml = "<inputValidator className=\"org.frankframework.extensions.api.ApiWsdlXmlValidator\" />";
-        String result = XmlAdapterUtils.normalizeFrankElements(xml);
+        String result = XmlConfigurationUtils.normalizeFrankElements(xml);
 
         Document doc = parseXml(result);
         Element root = doc.getDocumentElement();
@@ -100,7 +99,7 @@ class XmlAdapterUtilsTest {
     @Test
     void normalizeFrankElementsShouldTransformOutputValidator() throws Exception {
         String xml = "<outputValidator className=\"org.frankframework.extensions.api.ApiWsdlXmlValidator\" />";
-        String result = XmlAdapterUtils.normalizeFrankElements(xml);
+        String result = XmlConfigurationUtils.normalizeFrankElements(xml);
 
         Document doc = parseXml(result);
         Element root = doc.getDocumentElement();
@@ -111,7 +110,7 @@ class XmlAdapterUtilsTest {
     @Test
     void normalizeFrankElementsShouldTransformInputWrapper() throws Exception {
         String xml = "<inputWrapper className=\"org.frankframework.extensions.api.ApiSoapWrapperPipe\" />";
-        String result = XmlAdapterUtils.normalizeFrankElements(xml);
+        String result = XmlConfigurationUtils.normalizeFrankElements(xml);
 
         Document doc = parseXml(result);
         Element root = doc.getDocumentElement();
@@ -122,7 +121,7 @@ class XmlAdapterUtilsTest {
     @Test
     void normalizeFrankElementsShouldTransformOutputWrapper() throws Exception {
         String xml = "<outputWrapper className=\"org.frankframework.extensions.api.ApiSoapWrapperPipe\" />";
-        String result = XmlAdapterUtils.normalizeFrankElements(xml);
+        String result = XmlConfigurationUtils.normalizeFrankElements(xml);
 
         Document doc = parseXml(result);
         Element root = doc.getDocumentElement();
@@ -132,15 +131,14 @@ class XmlAdapterUtilsTest {
 
     @Test
     void shouldFindAdapterByNameUppercaseTag() throws Exception {
-        String xml =
-                """
+        String xml = """
                 <Adapters>
                     <Adapter name="TestAdapter"/>
                 </Adapters>
                 """;
 
         Document doc = parseXml(xml);
-        Node node = XmlAdapterUtils.findAdapterInDocument(doc, "TestAdapter");
+        Node node = XmlConfigurationUtils.findAdapterInDocument(doc, "TestAdapter");
 
         assertNotNull(node);
         assertEquals("Adapter", node.getNodeName());
@@ -149,15 +147,14 @@ class XmlAdapterUtilsTest {
 
     @Test
     void shouldFindAdapterByNameLowercaseTag() throws Exception {
-        String xml =
-                """
+        String xml = """
                 <adapters>
                     <adapter name="lowerAdapter"/>
                 </adapters>
                 """;
 
         Document doc = parseXml(xml);
-        Node node = XmlAdapterUtils.findAdapterInDocument(doc, "lowerAdapter");
+        Node node = XmlConfigurationUtils.findAdapterInDocument(doc, "lowerAdapter");
 
         assertNotNull(node);
         assertEquals("adapter", node.getNodeName()); // original tag name is lowercase
@@ -169,15 +166,14 @@ class XmlAdapterUtilsTest {
         String xml = "<Adapters><Adapter name=\"OtherAdapter\"/></Adapters>";
 
         Document doc = parseXml(xml);
-        Node node = XmlAdapterUtils.findAdapterInDocument(doc, "MissingAdapter");
+        Node node = XmlConfigurationUtils.findAdapterInDocument(doc, "MissingAdapter");
 
         assertNull(node);
     }
 
     @Test
     void shouldReturnFirstMatchingAdapterIfMultiple() throws Exception {
-        String xml =
-                """
+        String xml = """
                 <Adapters>
                     <Adapter name="A"/>
                     <Adapter name="B"/>
@@ -186,7 +182,7 @@ class XmlAdapterUtilsTest {
                 """;
 
         Document doc = parseXml(xml);
-        Node node = XmlAdapterUtils.findAdapterInDocument(doc, "A");
+        Node node = XmlConfigurationUtils.findAdapterInDocument(doc, "A");
 
         assertNotNull(node);
         assertEquals("A", node.getAttributes().getNamedItem("name").getNodeValue());
@@ -199,8 +195,50 @@ class XmlAdapterUtilsTest {
         String xml = "<root></root>";
 
         Document doc = parseXml(xml);
-        Node node = XmlAdapterUtils.findAdapterInDocument(doc, "AnyAdapter");
+        Node node = XmlConfigurationUtils.findAdapterInDocument(doc, "AnyAdapter");
 
         assertNull(node);
+    }
+
+    @Test
+    void addsFlowNamespaceWhenMissing() throws Exception {
+        String xml = """
+                <Configuration name="TestConfig">
+                    <Adapter name="A"/>
+                </Configuration>
+                """;
+
+        Document updated = XmlConfigurationUtils.insertFlowNamespace(xml);
+
+        Element configuration = updated.getDocumentElement();
+        String namespace = configuration.getAttribute("xmlns:flow");
+
+        assertEquals("urn:frank-flow", namespace);
+    }
+
+    @Test
+    void doesNotDuplicateFlowNamespaceWhenAlreadyPresent() throws Exception {
+        String xml = """
+                <Configuration name="TestConfig" xmlns:flow="urn:frank-flow">
+                    <Adapter name="A"/>
+                </Configuration>
+                """;
+
+        Document updated = XmlConfigurationUtils.insertFlowNamespace(xml);
+
+        Element configuration = updated.getDocumentElement();
+
+        assertEquals("urn:frank-flow", configuration.getAttribute("xmlns:flow"));
+
+        // Ensure only one xmlns:flow attribute exists
+        long count = 0;
+        var attributes = configuration.getAttributes();
+        for (int i = 0; i < attributes.getLength(); i++) {
+            if ("xmlns:flow".equals(attributes.item(i).getNodeName())) {
+                count++;
+            }
+        }
+
+        assertEquals(1, count);
     }
 }

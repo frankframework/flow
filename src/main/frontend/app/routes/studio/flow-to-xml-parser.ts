@@ -2,6 +2,7 @@ import type { FlowNode } from '~/routes/studio/canvas/flow'
 import type { Edge } from '@xyflow/react'
 import type { ChildNode } from './canvas/nodetypes/child-node'
 import { getAdapter } from '~/services/adapter-service'
+import { FlowConfig } from './canvas/flow.config'
 
 interface ReactFlowJson {
   nodes: FlowNode[]
@@ -149,12 +150,21 @@ function generateXmlElement(
   nodeMap: Map<string, FlowNode>,
 ): string {
   const { subtype, name } = node.data as NodeData
+  const { x, y } = node.position
+  let width = FlowConfig.NODE_DEFAULT_WIDTH
+  let height = FlowConfig.NODE_DEFAULT_HEIGHT
+  if (node.measured && node.measured.width && node.measured.height) {
+    width = node.measured.width
+    height = node.measured.height
+  }
   const attributes = (node.data as NodeData).attributes || {}
   const children = (node.data as NodeData).children || []
 
   const attributeString = ` name="${escapeXml(name)}"${Object.entries(attributes)
     .map(([key, value]) => ` ${key}="${escapeXml(value)}"`)
     .join('')}`
+
+  const flowNamespaceString = `flow:y="${y}" flow:x="${x}" flow:width="${width}" flow:height="${height}"`
 
   const childXml = children.map((child: ChildNode) => generateChildXml(child, 4)).join('\n')
 
@@ -172,7 +182,9 @@ function generateXmlElement(
     .join('\n')
 
   const content = [childXml, forwards].filter(Boolean).join('\n')
-  return content ? `  <${subtype}${attributeString}>\n${content}\n  </${subtype}>` : `  <${subtype}${attributeString}/>`
+  return content
+    ? `  <${subtype}${attributeString} ${flowNamespaceString} >\n${content}\n  </${subtype}>`
+    : `  <${subtype}${attributeString} ${flowNamespaceString} />`
 }
 
 function generateChildXml(child: ChildNode, indent: number): string {
@@ -202,10 +214,18 @@ function generateExitsXml(exitNodes: FlowNode[]): string {
   return exitNodes
     .map((node) => {
       const data = node.data as NodeData
+      const { x, y } = node.position
+      let width = FlowConfig.EXIT_DEFAULT_WIDTH
+      let height = FlowConfig.EXIT_DEFAULT_HEIGHT
+      if (node.measured && node.measured.width && node.measured.height) {
+        width = node.measured.width
+        height = node.measured.height
+      }
       const name = escapeXml(data.name)
       const state = getExitState(data)
+      const flowNamespaceString = `flow:y="${y}" flow:x="${x}" flow:width="${width}" flow:height="${height}"`
 
-      return `      <Exit name="${name}" state="${state}" />`
+      return `      <Exit name="${name}" state="${state}" ${flowNamespaceString} />`
     })
     .join('\n')
 }
