@@ -115,11 +115,8 @@ public class ProjectService {
 
         Files.createDirectories(projectPath.resolve(CONFIGURATIONS_DIR));
 
-        String defaultXml = new String(
-                new ClassPathResource("templates/default-configuration.xml")
-                        .getInputStream()
-                        .readAllBytes(),
-                StandardCharsets.UTF_8);
+        ClassPathResource resource = new ClassPathResource("templates/default-configuration.xml");
+        String defaultXml = Files.readString(Path.of(resource.getURI()), StandardCharsets.UTF_8);
         fileSystemStorage.writeFile(
                 projectPath
                         .resolve(CONFIGURATIONS_DIR)

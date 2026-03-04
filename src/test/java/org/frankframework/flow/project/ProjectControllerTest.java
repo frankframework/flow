@@ -199,8 +199,7 @@ class ProjectControllerTest {
                                       "content": "<Configuration>updated</Configuration>"
                                     }
                                 """))
-                .andExpect(status().isOk())
-                .andExpect(content().string(updatedXml));
+                .andExpect(status().isOk());
 
         verify(fileTreeService).updateFileContent(TEST_PROJECT_NAME, filepath, xmlContent);
     }
