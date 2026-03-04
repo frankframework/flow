@@ -4,8 +4,8 @@ import java.io.ByteArrayInputStream;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
+import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.*;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
@@ -26,11 +26,8 @@ public class XmlConfigurationUtils {
             return null;
         }
 
-        // Parse XML string into Document
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        factory.setNamespaceAware(true);
+        DocumentBuilder builder = XmlSecurityUtils.createSecureDocumentBuilder();
 
-        DocumentBuilder builder = factory.newDocumentBuilder();
         Document configDoc = builder.parse(new InputSource(new StringReader(configurationXml)));
 
         NodeList configurationNodes = configDoc.getElementsByTagName("Configuration");
@@ -38,9 +35,8 @@ public class XmlConfigurationUtils {
         for (int i = 0; i < configurationNodes.getLength(); i++) {
             Element configuration = (Element) configurationNodes.item(i);
 
-            // Check if the flow namespace is already declared
             if (!configuration.hasAttribute("xmlns:flow")) {
-                configuration.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns:flow", "urn:frank-flow");
+                configuration.setAttributeNS(XMLConstants.XMLNS_ATTRIBUTE_NS_URI, "xmlns:flow", "urn:frank-flow");
             }
         }
 
