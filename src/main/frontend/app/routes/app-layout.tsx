@@ -1,5 +1,6 @@
 import Navbar from '~/components/navbar/navbar'
 import { FrankDocProvider } from '~/providers/frankdoc-provider'
+import { FrankConfigXsdProvider } from '~/providers/frankconfig-xsd-provider'
 import AppContent from '~/components/app-content'
 import { useEffect, useState } from 'react'
 import { useProjectStore, getStoredProjectName } from '~/stores/project-store'
@@ -39,12 +40,14 @@ export default function AppLayout() {
 
   return (
     <FrankDocProvider>
-      <div className="flex h-screen">
-        <Navbar />
-        <main className="grow overflow-auto">
-          <AppContent />
-        </main>
-      </div>
+      <FrankConfigXsdProvider>
+        <div className="flex h-screen">
+          <Navbar />
+          <main className="grow overflow-auto">
+            <AppContent />
+          </main>
+        </div>
+      </FrankConfigXsdProvider>
     </FrankDocProvider>
   )
 }
