@@ -1,9 +1,9 @@
 import { useEffect } from 'react'
 import { isRouteErrorResponse, Links, Meta, Outlet, Scripts, ScrollRestoration } from 'react-router'
+import { useTheme } from '~/hooks/use-theme'
 import type { Route } from './+types/root'
 import 'allotment/dist/style.css'
 import './app.css'
-import { useTheme } from '~/hooks/use-theme'
 import { Toast } from './components/toast'
 
 export const links: Route.LinksFunction = () => [
@@ -92,5 +92,13 @@ export function ErrorBoundary({ error }: Readonly<Route.ErrorBoundaryProps>) {
         </pre>
       )}
     </main>
+  )
+}
+
+export function HydrateFallback() {
+  return (
+    <div className="flex h-screen w-full animate-pulse items-center justify-center text-slate-400">
+      Initializing Flow...
+    </div>
   )
 }
