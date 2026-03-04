@@ -183,21 +183,24 @@ class ProjectControllerTest {
     @Test
     void updateConfigurationSuccessReturns200() throws Exception {
         String filepath = "config1.xml";
-        String xmlContent = "<xml>updated</xml>";
+        String xmlContent = "<Configuration>updated</Configuration>";
+        String updatedXml = "<Configuration xmlns:flow=\"urn:frank-flow\">updated</Configuration>";
 
-        doNothing().when(fileTreeService).updateFileContent(TEST_PROJECT_NAME, filepath, xmlContent);
+        when(fileTreeService.updateFileContent(TEST_PROJECT_NAME, filepath, xmlContent))
+                .thenReturn(updatedXml);
 
         mockMvc.perform(
                         put("/api/projects/" + TEST_PROJECT_NAME + "/configuration")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(
                                         """
-                                        {
-                                          "filepath": "config1.xml",
-                                          "content": "<xml>updated</xml>"
-                                        }
-                                        """))
-                .andExpect(status().isOk());
+                                    {
+                                      "filepath": "config1.xml",
+                                      "content": "<Configuration>updated</Configuration>"
+                                    }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(content().string(updatedXml));
 
         verify(fileTreeService).updateFileContent(TEST_PROJECT_NAME, filepath, xmlContent);
     }
