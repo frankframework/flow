@@ -87,11 +87,11 @@ public class FileTreeServiceTest {
 
     private void stubWriteFile() throws IOException {
         doAnswer(invocation -> {
-            String path = invocation.getArgument(0);
-            String content = invocation.getArgument(1);
-            Files.writeString(Paths.get(path), content);
-            return null;
-        })
+                    String path = invocation.getArgument(0);
+                    String content = invocation.getArgument(1);
+                    Files.writeString(Paths.get(path), content);
+                    return null;
+                })
                 .when(fileSystemStorage)
                 .writeFile(anyString(), anyString());
     }
@@ -142,9 +142,7 @@ public class FileTreeServiceTest {
         String newContent = "<Configuration>new content</Configuration>";
 
         fileTreeService.updateFileContent(
-                TEST_PROJECT_NAME,
-                file.toAbsolutePath().toString(),
-                newContent);
+                TEST_PROJECT_NAME, file.toAbsolutePath().toString(), newContent);
 
         String written = Files.readString(file);
 
@@ -175,7 +173,8 @@ public class FileTreeServiceTest {
         Path dir2 = Files.createDirectory(dir1.resolve("dir2"));
         Files.writeString(dir2.resolve("fileC.xml"), "C");
 
-        Project project = new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+        Project project =
+                new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
         when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
 
         FileTreeNode tree = fileTreeService.getProjectTree(TEST_PROJECT_NAME);
@@ -274,15 +273,9 @@ public class FileTreeServiceTest {
         Files.writeString(f1, "<Configuration>initial</Configuration>");
         Files.writeString(f2, "<Configuration>initial</Configuration>");
 
-        fileTreeService.updateFileContent(
-                TEST_PROJECT_NAME,
-                f1.toString(),
-                "<Configuration>one</Configuration>");
+        fileTreeService.updateFileContent(TEST_PROJECT_NAME, f1.toString(), "<Configuration>one</Configuration>");
 
-        fileTreeService.updateFileContent(
-                TEST_PROJECT_NAME,
-                f2.toString(),
-                "<Configuration>two</Configuration>");
+        fileTreeService.updateFileContent(TEST_PROJECT_NAME, f2.toString(), "<Configuration>two</Configuration>");
 
         assertTrue(fileTreeService.readFileContent(f1.toString()).contains("one"));
         assertTrue(fileTreeService.readFileContent(f2.toString()).contains("two"));
@@ -295,7 +288,8 @@ public class FileTreeServiceTest {
         Files.writeString(tempProjectRoot.resolve("config1.xml"), "<config/>");
         Files.writeString(tempProjectRoot.resolve("readme.txt"), "hello");
 
-        Project project = new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+        Project project =
+                new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
         when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
 
         FileTreeNode node = fileTreeService.getShallowDirectoryTree(TEST_PROJECT_NAME, ".");
@@ -313,7 +307,8 @@ public class FileTreeServiceTest {
     void getShallowDirectoryTreeThrowsSecurityExceptionForPathTraversal() throws ProjectNotFoundException, IOException {
         stubToAbsolutePath();
 
-        Project project = new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+        Project project =
+                new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
         when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
 
         SecurityException ex = assertThrows(
@@ -327,7 +322,8 @@ public class FileTreeServiceTest {
             throws ProjectNotFoundException, IOException {
         stubToAbsolutePath();
 
-        Project project = new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+        Project project =
+                new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
         when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
 
         IllegalArgumentException ex = assertThrows(
@@ -347,7 +343,8 @@ public class FileTreeServiceTest {
         Files.writeString(configsDir.resolve("config1.xml"), "<config/>");
         Files.writeString(configsDir.resolve("readme.txt"), "hello");
 
-        Project project = new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+        Project project =
+                new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
         when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
 
         FileTreeNode node = fileTreeService.getShallowConfigurationsDirectoryTree(TEST_PROJECT_NAME);
@@ -367,7 +364,8 @@ public class FileTreeServiceTest {
             throws ProjectNotFoundException, IOException {
         stubToAbsolutePath();
 
-        Project project = new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+        Project project =
+                new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
         when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
 
         IllegalArgumentException ex = assertThrows(
@@ -402,7 +400,8 @@ public class FileTreeServiceTest {
         Files.createDirectory(subDir);
         Files.writeString(subDir.resolve("nested.xml"), "<nested></nested>");
 
-        Project project = new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+        Project project =
+                new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
         when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
 
         FileTreeNode node = fileTreeService.getConfigurationsDirectoryTree(TEST_PROJECT_NAME);
@@ -430,7 +429,8 @@ public class FileTreeServiceTest {
             throws ProjectNotFoundException, IOException {
         stubToAbsolutePath();
 
-        Project project = new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+        Project project =
+                new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
         when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
 
         IllegalArgumentException ex = assertThrows(
@@ -497,7 +497,8 @@ public class FileTreeServiceTest {
         stubToAbsolutePath();
         stubCreateFile();
 
-        Project project = new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+        Project project =
+                new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
         when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
 
         String parentPath = tempProjectRoot.toAbsolutePath().toString();
@@ -517,7 +518,8 @@ public class FileTreeServiceTest {
         stubToAbsolutePath();
         stubCreateFile();
 
-        Project project = new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+        Project project =
+                new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
         when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
 
         String parentPath = tempProjectRoot.toAbsolutePath() + "/";
@@ -535,7 +537,8 @@ public class FileTreeServiceTest {
     void createFile_OutsideProject_ThrowsSecurityException() throws IOException, ProjectNotFoundException {
         stubToAbsolutePath();
 
-        Project project = new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+        Project project =
+                new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
         when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
 
         String outsidePath = tempProjectRoot.getParent().toAbsolutePath().toString();
@@ -558,7 +561,8 @@ public class FileTreeServiceTest {
     void createFile_ShouldDelegateToProjectService_WhenXml() throws Exception {
         stubToAbsolutePath();
 
-        Project project = new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+        Project project =
+                new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
 
         when(projectService.addConfigurationToFolder(eq(TEST_PROJECT_NAME), eq("config.xml"), anyString()))
                 .thenReturn(project);
@@ -577,7 +581,8 @@ public class FileTreeServiceTest {
         stubToAbsolutePath();
         stubCreateProjectDirectory();
 
-        Project project = new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+        Project project =
+                new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
         when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
 
         String parentPath = tempProjectRoot.toAbsolutePath().toString();
@@ -612,7 +617,8 @@ public class FileTreeServiceTest {
         stubRename();
         when(fileSystemStorage.isLocalEnvironment()).thenReturn(true);
 
-        Project project = new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+        Project project =
+                new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
         when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
 
         Path oldFile = Files.writeString(tempProjectRoot.resolve("old.xml"), "content");
@@ -633,7 +639,8 @@ public class FileTreeServiceTest {
         stubRename();
         when(fileSystemStorage.isLocalEnvironment()).thenReturn(true);
 
-        Project project = new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+        Project project =
+                new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
         when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
 
         Path oldDir = Files.createDirectory(tempProjectRoot.resolve("oldDir"));
@@ -652,7 +659,8 @@ public class FileTreeServiceTest {
             throws IOException, ProjectNotFoundException {
         stubToAbsolutePath();
 
-        Project project = new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+        Project project =
+                new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
         when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
 
         Files.writeString(tempProjectRoot.resolve("old.xml"), "content");
@@ -679,7 +687,8 @@ public class FileTreeServiceTest {
         when(fileSystemStorage.isLocalEnvironment()).thenReturn(false);
         when(fileSystemStorage.rename(anyString(), anyString())).thenReturn(null);
 
-        Project project = new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+        Project project =
+                new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
         when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
 
         Path subDir = Files.createDirectory(tempProjectRoot.resolve("subdir"));
@@ -699,7 +708,8 @@ public class FileTreeServiceTest {
         when(fileSystemStorage.isLocalEnvironment()).thenReturn(false);
         when(fileSystemStorage.rename(anyString(), anyString())).thenReturn(null);
 
-        Project project = new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+        Project project =
+                new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
         when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
 
         Files.writeString(tempProjectRoot.resolve("old.xml"), "content");
@@ -716,7 +726,8 @@ public class FileTreeServiceTest {
         stubToAbsolutePath();
         stubDelete();
 
-        Project project = new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+        Project project =
+                new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
         when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
 
         Path fileToDelete = Files.writeString(tempProjectRoot.resolve("toDelete.xml"), "content");
@@ -741,7 +752,8 @@ public class FileTreeServiceTest {
         stubToAbsolutePath();
         when(fileSystemStorage.isLocalEnvironment()).thenReturn(true);
 
-        Project project = new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+        Project project =
+                new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
         when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
 
         fileTreeService.getProjectTree(TEST_PROJECT_NAME);
@@ -757,7 +769,8 @@ public class FileTreeServiceTest {
         stubToAbsolutePath();
         when(fileSystemStorage.isLocalEnvironment()).thenReturn(true);
 
-        Project project = new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+        Project project =
+                new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
         when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
 
         fileTreeService.getProjectTree(TEST_PROJECT_NAME);
@@ -773,7 +786,8 @@ public class FileTreeServiceTest {
         stubToAbsolutePath();
         when(fileSystemStorage.isLocalEnvironment()).thenReturn(true);
 
-        Project project = new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+        Project project =
+                new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
         when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
 
         FileTreeNode first = fileTreeService.getProjectTree(TEST_PROJECT_NAME);
@@ -791,7 +805,8 @@ public class FileTreeServiceTest {
 
         Files.writeString(tempProjectRoot.resolve("test.xml"), "content");
 
-        Project project = new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+        Project project =
+                new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
         when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
 
         FileTreeNode tree = fileTreeService.getProjectTree(TEST_PROJECT_NAME);
@@ -808,11 +823,12 @@ public class FileTreeServiceTest {
         stubToAbsolutePath();
 
         Path nonExistentDir = tempProjectRoot.resolve("nonexistent");
-        Project project = new Project(TEST_PROJECT_NAME, nonExistentDir.toAbsolutePath().toString());
+        Project project =
+                new Project(TEST_PROJECT_NAME, nonExistentDir.toAbsolutePath().toString());
         when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
 
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> fileTreeService.getProjectTree(TEST_PROJECT_NAME));
+        IllegalArgumentException ex =
+                assertThrows(IllegalArgumentException.class, () -> fileTreeService.getProjectTree(TEST_PROJECT_NAME));
         assertTrue(ex.getMessage().contains("Project directory does not exist"));
     }
 
@@ -824,7 +840,8 @@ public class FileTreeServiceTest {
 
         Files.writeString(tempProjectRoot.resolve("file.xml"), "<config/>");
 
-        Project project = new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+        Project project =
+                new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
         when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
 
         FileTreeNode node = fileTreeService.getShallowDirectoryTree(
@@ -870,10 +887,10 @@ public class FileTreeServiceTest {
 
     private void stubDelete() throws IOException {
         doAnswer(invocation -> {
-            String path = invocation.getArgument(0);
-            FileOperations.deleteRecursively(Paths.get(path));
-            return null;
-        })
+                    String path = invocation.getArgument(0);
+                    FileOperations.deleteRecursively(Paths.get(path));
+                    return null;
+                })
                 .when(fileSystemStorage)
                 .delete(anyString());
     }
