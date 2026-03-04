@@ -68,6 +68,9 @@ importers:
       tailwind-merge:
         specifier: ^3.3.0
         version: 3.4.0
+      xmllint-wasm:
+        specifier: ^5.1.0
+        version: 5.1.0(@types/node@20.19.26)
       zustand:
         specifier: ^5.0.3
         version: 5.0.9(@types/react@19.2.7)(react@19.2.1)(use-sync-external-store@1.6.0(react@19.2.1))
@@ -4899,6 +4902,12 @@ packages:
     resolution: {integrity: sha512-z9s6k3wxE+aZHgXYxSTpGDo7BYOUfJsIRyoZiX6HTjwpwfS2wpQBQKa2fD+ShLyPkqDYo5ud7KitmLZ2Cd6r0g==}
     engines: {node: '>=10.0.0'}
     deprecated: Deprecated due to CVE-2021-21366 resolved in 0.5.0
+
+  xmllint-wasm@5.1.0:
+    resolution: {integrity: sha512-6HCIJKAJWt96UzA2dgPXsnMuYQihD7U1DU9Tu3BdXqVruha1KV8nUofOxbw8f5ULgQGdNsJMwtX3dyaTHd9hQQ==}
+    engines: {node: '>=16'}
+    peerDependencies:
+      '@types/node': '>=16'
 
   xpath@0.0.29:
     resolution: {integrity: sha512-W6vSxu0tmHCW01EwDXx45/BAAl8lBJjcRB6eSswMuycOVbUkYskG3W1LtCxcesVel/RaNe/pxtd3FWLiqHGweA==}
@@ -10368,6 +10377,10 @@ snapshots:
   xmlchars@2.2.0: {}
 
   xmldom@0.3.0: {}
+
+  xmllint-wasm@5.1.0(@types/node@20.19.26):
+    dependencies:
+      '@types/node': 20.19.26
 
   xpath@0.0.29: {}
 

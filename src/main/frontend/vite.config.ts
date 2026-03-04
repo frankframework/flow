@@ -25,6 +25,9 @@ export default defineConfig({
     tsconfigPaths(),
     svgr(),
   ],
+  optimizeDeps: {
+    exclude: ['xmllint-wasm'],
+  },
   resolve: {
     alias: {
       '@frankframework/ff-doc/react': path.join(ffDocRoot, 'react/frankframework-ff-doc.mjs'),
