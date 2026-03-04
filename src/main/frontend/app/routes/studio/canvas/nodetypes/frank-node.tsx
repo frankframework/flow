@@ -16,12 +16,12 @@ import { useNodeContextMenu } from '~/routes/studio/canvas/flow'
 import useNodeContextStore from '~/stores/node-context-store'
 import { getElementTypeFromName } from '~/routes/studio/node-translator-module'
 import { useSettingsStore } from '~/stores/settings-store'
-import { useFrankDoc } from '~/providers/frankdoc-provider'
+import { useFFDoc } from '@frankframework/doc-library-react'
 import HandleMenu from './components/handle-menu'
 import { ChildNodeComponent, type ChildNode } from './child-node'
 import { findChildRecursive } from '~/stores/child-utilities'
 import { canAcceptChildStatic } from './node-utilities'
-import type { ElementDetails } from '@frankframework/ff-doc'
+import type { ElementDetails } from '@frankframework/doc-library-core'
 import { DeprecatedPopover } from './components/deprecated-popover'
 import { showWarningToast } from '~/components/toast'
 import { useHandleTypes } from '~/hooks/use-handle-types'
@@ -45,7 +45,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
   const [dragOver, setDragOver] = useState(false)
   const [canDropDraggedElement, setCanDropDraggedElement] = useState(false)
   const showNodeContextMenu = useNodeContextMenu()
-  const { elements, filters } = useFrankDoc()
+  const { elements, filters } = useFFDoc()
   const {
     setNodeId,
     setIsNewNode,

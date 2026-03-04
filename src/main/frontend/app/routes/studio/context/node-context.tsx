@@ -5,8 +5,8 @@ import Button from '~/components/inputs/button'
 import { useShallow } from 'zustand/react/shallow'
 import ContextInput from './context-input'
 import { findChildRecursive } from '~/stores/child-utilities'
-import { useFrankDoc } from '~/providers/frankdoc-provider'
-import type { Attribute } from '@frankframework/ff-doc'
+import { useFFDoc } from '@frankframework/doc-library-react'
+import type { Attribute } from '@frankframework/doc-library-core'
 
 export default function NodeContext({
   nodeId,
@@ -24,7 +24,7 @@ export default function NodeContext({
   const [initiallyFilledKeys, setInitiallyFilledKeys] = useState<Set<string>>(new Set())
   const [initialValues, setInitialValues] = useState<Record<string, string>>({})
 
-  const { elements, ffDoc } = useFrankDoc()
+  const { elements, ffDoc } = useFFDoc()
   const {
     attributes,
     isNewNode,
