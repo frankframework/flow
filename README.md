@@ -2,7 +2,7 @@
 
 Easily create configurations for the Frank!Framework with the Flow Studio and Editor! 
 
-Please use profile on locally:
+Please use profile on local machine:
 -Dspring.profiles.active=local
 or with docker
 -Dspring.profiles.active=cloud
