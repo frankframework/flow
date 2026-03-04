@@ -14,9 +14,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
 import javax.xml.transform.TransformerException;
-
 import org.frankframework.flow.adapter.AdapterNotFoundException;
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
 import org.frankframework.flow.exception.ApiException;
@@ -57,7 +55,8 @@ public class FileTreeService {
     }
 
     public String updateFileContent(String projectName, String filepath, String newContent)
-            throws IOException, ProjectNotFoundException, ConfigurationNotFoundException, Exception, TransformerException {
+            throws IOException, ProjectNotFoundException, ConfigurationNotFoundException, Exception,
+                    TransformerException {
         Path filePath = fileSystemStorage.toAbsolutePath(filepath);
 
         if (!Files.exists(filePath)) {

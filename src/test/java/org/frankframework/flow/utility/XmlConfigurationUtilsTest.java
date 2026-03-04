@@ -75,7 +75,8 @@ class XmlConfigurationUtilsTest {
 
     @Test
     void normalizeFrankElementsShouldTransformMessageLog() throws Exception {
-        String xml = "<messageLog className=\"org.frankframework.jdbc.JdbcTransactionalStorage\" slotId=\"ApiListenerDuplicateCheck\" />";
+        String xml =
+                "<messageLog className=\"org.frankframework.jdbc.JdbcTransactionalStorage\" slotId=\"ApiListenerDuplicateCheck\" />";
         String result = XmlConfigurationUtils.normalizeFrankElements(xml);
 
         Document doc = parseXml(result);
@@ -131,7 +132,8 @@ class XmlConfigurationUtilsTest {
 
     @Test
     void shouldFindAdapterByNameUppercaseTag() throws Exception {
-        String xml = """
+        String xml =
+                """
                 <Adapters>
                     <Adapter name="TestAdapter"/>
                 </Adapters>
@@ -147,7 +149,8 @@ class XmlConfigurationUtilsTest {
 
     @Test
     void shouldFindAdapterByNameLowercaseTag() throws Exception {
-        String xml = """
+        String xml =
+                """
                 <adapters>
                     <adapter name="lowerAdapter"/>
                 </adapters>
@@ -173,7 +176,8 @@ class XmlConfigurationUtilsTest {
 
     @Test
     void shouldReturnFirstMatchingAdapterIfMultiple() throws Exception {
-        String xml = """
+        String xml =
+                """
                 <Adapters>
                     <Adapter name="A"/>
                     <Adapter name="B"/>
@@ -202,7 +206,8 @@ class XmlConfigurationUtilsTest {
 
     @Test
     void addsFlowNamespaceWhenMissing() throws Exception {
-        String xml = """
+        String xml =
+                """
                 <Configuration name="TestConfig">
                     <Adapter name="A"/>
                 </Configuration>
@@ -218,7 +223,8 @@ class XmlConfigurationUtilsTest {
 
     @Test
     void doesNotDuplicateFlowNamespaceWhenAlreadyPresent() throws Exception {
-        String xml = """
+        String xml =
+                """
                 <Configuration name="TestConfig" xmlns:flow="urn:frank-flow">
                     <Adapter name="A"/>
                 </Configuration>

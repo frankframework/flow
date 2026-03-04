@@ -58,7 +58,9 @@ class XmlServiceTest {
         try (MockedStatic<XmlValidator> validatorMock = mockStatic(XmlValidator.class);
                 MockedStatic<XmlConfigurationUtils> adapterMock = mockStatic(XmlConfigurationUtils.class)) {
 
-            adapterMock.when(() -> XmlConfigurationUtils.normalizeFrankElements(xml)).thenReturn(normalizedXml);
+            adapterMock
+                    .when(() -> XmlConfigurationUtils.normalizeFrankElements(xml))
+                    .thenReturn(normalizedXml);
 
             String result = xmlService.normalizeElementsInXml(xml);
 

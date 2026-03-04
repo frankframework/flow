@@ -34,8 +34,8 @@ export type FrankNodeType = Node<{
   attributes?: Record<string, string>
   children: ChildNode[]
 }> & {
-  width: number
-  height: number
+  width?: number
+  height?: number
 }
 
 export default function FrankNode(properties: NodeProps<FrankNodeType>) {

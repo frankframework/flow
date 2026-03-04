@@ -4,7 +4,6 @@ import java.io.ByteArrayInputStream;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
-
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.*;
@@ -41,10 +40,7 @@ public class XmlConfigurationUtils {
 
             // Check if the flow namespace is already declared
             if (!configuration.hasAttribute("xmlns:flow")) {
-                configuration.setAttributeNS(
-                        "http://www.w3.org/2000/xmlns/",
-                        "xmlns:flow",
-                        "urn:frank-flow");
+                configuration.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns:flow", "urn:frank-flow");
             }
         }
 
@@ -78,11 +74,12 @@ public class XmlConfigurationUtils {
 
     /**
      * Converts a DOM Node to a formatted XML string.
-     * 
+     *
      * @throws TransformerException
      */
     public static String convertNodeToString(Node node) throws TransformerException {
-        Transformer transformer = XmlSecurityUtils.createSecureTransformerFactory().newTransformer();
+        Transformer transformer =
+                XmlSecurityUtils.createSecureTransformerFactory().newTransformer();
 
         transformer.setOutputProperty(OutputKeys.INDENT, "yes");
         transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
@@ -244,8 +241,7 @@ public class XmlConfigurationUtils {
     }
 
     private static String capitalize(String value) {
-        if (value == null || value.isEmpty())
-            return value;
+        if (value == null || value.isEmpty()) return value;
         return value.substring(0, 1).toUpperCase() + value.substring(1);
     }
 

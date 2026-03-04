@@ -258,7 +258,8 @@ public class FileTreeServiceTest {
 
     @Test
     @DisplayName("Should handle multiple consecutive file operations correctly")
-    void integration_MultipleOperations() throws IOException, ProjectNotFoundException, ConfigurationNotFoundException, Exception {
+    void integration_MultipleOperations()
+            throws IOException, ProjectNotFoundException, ConfigurationNotFoundException, Exception {
         stubToAbsolutePath();
         stubReadFile();
         stubWriteFile();
