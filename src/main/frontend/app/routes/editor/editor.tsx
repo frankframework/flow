@@ -2,7 +2,7 @@ import Editor, { type Monaco, type OnMount } from '@monaco-editor/react'
 import XsdManager from 'monaco-xsd-code-completion/esm/XsdManager'
 import XsdFeatures from 'monaco-xsd-code-completion/esm/XsdFeatures'
 import 'monaco-xsd-code-completion/src/style.css'
-import { validateXML } from 'xmllint-wasm'
+import { validateXML, type XMLValidationError } from 'xmllint-wasm'
 import { useShallow } from 'zustand/react/shallow'
 import SidebarLayout from '~/components/sidebars-layout/sidebar-layout'
 import SidebarContentClose from '~/components/sidebars-layout/sidebar-content-close'
@@ -24,38 +24,112 @@ import GitPanel from '~/components/git/git-panel'
 import DiffTabView from '~/components/git/diff-tab-view'
 import clsx from 'clsx'
 import { refreshOpenDiffs } from '~/services/git-service'
-import { findAdapterAtOffset, findAdaptersInXml, lineToOffset, normalizeFrankElements } from './xml-utils'
+import { findAdapterIndexAtOffset, findAdaptersInXml, lineToOffset, normalizeFrankElements } from './xml-utils'
 import { useSettingsStore } from '~/stores/settings-store'
 
 type LeftTab = 'files' | 'git'
 type SaveStatus = 'idle' | 'saving' | 'saved'
+interface ValidationError {
+  message: string
+  lineNumber: number
+  startColumn: number
+  endColumn: number
+}
+interface TextModel {
+  getLineContent: (n: number) => string
+  getLineCount: () => number
+  getLineMaxColumn: (n: number) => number
+}
 
 const SAVED_DISPLAY_DURATION = 2000
+const ELEMENT_ERROR_RE = /[Ee]lement [\u2018\u2019'"'{]?([\w:.-]+)[\u2018\u2019'"'}]?/
+const ATTRIBUTE_ERROR_RE = /[Aa]ttribute [\u2018\u2019'"'{]?([\w:.-]+)[\u2018\u2019'"'}]?/
 
-/**
- * Given the content of a line and an xmllint error message, return the column range
- * of the specific token responsible (element tag or attribute name).
- * Falls back to first non-whitespace → end of line.
- */
-function findErrorRange(lineContent: string, message: string): { startColumn: number; endColumn: number } {
-  const elementMatch = message.match(/[Ee]lement [\u2018\u2019'"'{]?([\w:.-]+)[\u2018\u2019'"'}]?/)
-  if (elementMatch) {
-    const localName = elementMatch[1].includes(':') ? elementMatch[1].split(':').pop()! : elementMatch[1]
-    const openIdx = lineContent.indexOf(`<${localName}`)
-    if (openIdx !== -1) return { startColumn: openIdx + 1, endColumn: openIdx + 1 + localName.length + 1 }
-    const closeIdx = lineContent.indexOf(`</${localName}`)
-    if (closeIdx !== -1) return { startColumn: closeIdx + 1, endColumn: closeIdx + 2 + localName.length + 1 }
-  }
+function extractLocalName(name: string): string {
+  return name.includes(':') ? name.split(':').pop()! : name
+}
 
-  const attrMatch = message.match(/[Aa]ttribute [\u2018\u2019'"'{]?([\w:.-]+)[\u2018\u2019'"'}]?/)
-  if (attrMatch) {
-    const localName = attrMatch[1].includes(':') ? attrMatch[1].split(':').pop()! : attrMatch[1]
-    const idx = lineContent.search(new RegExp(String.raw`\b${localName}\s*=`))
-    if (idx >= 0) return { startColumn: idx + 1, endColumn: idx + localName.length + 1 }
-  }
+function findElementRange(lineContent: string, localName: string): { startColumn: number; endColumn: number } | null {
+  const openIdx = lineContent.indexOf(`<${localName}`)
+  if (openIdx !== -1) return { startColumn: openIdx + 1, endColumn: openIdx + 1 + localName.length + 1 }
+  const closeIdx = lineContent.indexOf(`</${localName}`)
+  if (closeIdx !== -1) return { startColumn: closeIdx + 1, endColumn: closeIdx + 2 + localName.length + 1 }
+  return null
+}
 
+function findAttributeRange(lineContent: string, localName: string): { startColumn: number; endColumn: number } | null {
+  const idx = lineContent.search(new RegExp(String.raw`\b${localName}\s*=`))
+  if (idx < 0) return null
+  return { startColumn: idx + 1, endColumn: idx + localName.length + 1 }
+}
+
+function fallbackRange(lineContent: string): { startColumn: number; endColumn: number } {
   const firstNonWs = lineContent.search(/\S/)
   return { startColumn: firstNonWs >= 0 ? firstNonWs + 1 : 1, endColumn: lineContent.length + 1 }
+}
+
+function findErrorRange(lineContent: string, message: string): { startColumn: number; endColumn: number } {
+  const elementMatch = message.match(ELEMENT_ERROR_RE)
+  if (elementMatch) {
+    const range = findElementRange(lineContent, extractLocalName(elementMatch[1]))
+    if (range) return range
+  }
+
+  const attrMatch = message.match(ATTRIBUTE_ERROR_RE)
+  if (attrMatch) {
+    const range = findAttributeRange(lineContent, extractLocalName(attrMatch[1]))
+    if (range) return range
+  }
+
+  return fallbackRange(lineContent)
+}
+
+function notWellFormedError(model: TextModel): ValidationError {
+  return { message: 'XML is not well-formed', lineNumber: 1, startColumn: 1, endColumn: model.getLineMaxColumn(1) }
+}
+
+function mapToValidationErrors(rawErrors: readonly XMLValidationError[], model: TextModel): ValidationError[] {
+  const totalLines = model.getLineCount()
+  const seen = new Set<number>()
+
+  return rawErrors
+    .map((e) => {
+      const lineNumber = Math.max(1, Math.min(e.loc?.lineNumber ?? 1, totalLines))
+      const { startColumn, endColumn } = findErrorRange(model.getLineContent(lineNumber), e.message)
+      return { message: e.message, lineNumber, startColumn, endColumn }
+    })
+    .filter((e) => {
+      if (seen.has(e.lineNumber)) return false
+      seen.add(e.lineNumber)
+      return true
+    })
+}
+
+function toDecoration(e: ValidationError) {
+  return {
+    range: {
+      startLineNumber: e.lineNumber,
+      startColumn: e.startColumn,
+      endLineNumber: e.lineNumber,
+      endColumn: e.endColumn,
+    },
+    options: {
+      inlineClassName: 'xml-lint xml-lint--fatal-error',
+      hoverMessage: { value: `**XSD:** ${e.message}` },
+      overviewRuler: { color: '#ff2424', position: 4 },
+    },
+  }
+}
+
+function toMarker(e: ValidationError, severity: number) {
+  return {
+    startLineNumber: e.lineNumber,
+    startColumn: e.startColumn,
+    endLineNumber: e.lineNumber,
+    endColumn: e.endColumn,
+    message: e.message,
+    severity,
+  }
 }
 
 export default function CodeEditor() {
@@ -143,57 +217,29 @@ export default function CodeEditor() {
     }
   }, [])
 
-  /** Apply decorations + markers for a set of errors. Replaces any previous set. */
-  const applyValidationDecorations = useCallback(
-    (errors: { message: string; lineNumber: number; startColumn: number; endColumn: number }[]) => {
-      const monaco = monacoReference.current
-      const editor = editorReference.current
-      if (!monaco || !editor) return
+  const applyValidationDecorations = useCallback((errors: ValidationError[]) => {
+    const monaco = monacoReference.current
+    const editor = editorReference.current
+    if (!monaco || !editor) return
 
-      const model = editor.getModel()
-      if (!model) return
+    const model = editor.getModel()
+    if (!model) return
 
-      if (errorDecorationsRef.current) {
-        errorDecorationsRef.current.clear()
-        errorDecorationsRef.current = null
-      }
+    if (errorDecorationsRef.current) {
+      errorDecorationsRef.current.clear()
+      errorDecorationsRef.current = null
+    }
 
-      if (errors.length > 0) {
-        // createDecorationsCollection + inlineClassName gives reliable dotted underlines
-        // (setModelMarkers alone relies on SVG data URIs that can be CSP-blocked)
-        errorDecorationsRef.current = editor.createDecorationsCollection(
-          errors.map((e) => ({
-            range: {
-              startLineNumber: e.lineNumber,
-              startColumn: e.startColumn,
-              endLineNumber: e.lineNumber,
-              endColumn: e.endColumn,
-            },
-            options: {
-              inlineClassName: 'xml-lint xml-lint--fatal-error',
-              hoverMessage: { value: `**XSD:** ${e.message}` },
-              overviewRuler: { color: '#ff2424', position: 4 },
-            },
-          })),
-        )
-      }
+    if (errors.length > 0) {
+      errorDecorationsRef.current = editor.createDecorationsCollection(errors.map((element) => toDecoration(element)))
+    }
 
-      // setModelMarkers keeps Monaco gutter icons + F8 error navigation
-      monaco.editor.setModelMarkers(
-        model,
-        'xsd-validation',
-        errors.map((e) => ({
-          startLineNumber: e.lineNumber,
-          startColumn: e.startColumn,
-          endLineNumber: e.lineNumber,
-          endColumn: e.endColumn,
-          message: e.message,
-          severity: monaco.MarkerSeverity.Error,
-        })),
-      )
-    },
-    [],
-  )
+    monaco.editor.setModelMarkers(
+      model,
+      'xsd-validation',
+      errors.map((e) => toMarker(e, monaco.MarkerSeverity.Error)),
+    )
+  }, [])
 
   const runSchemaValidation = useCallback(
     async (content: string) => {
@@ -215,41 +261,17 @@ export default function CodeEditor() {
         const model = editor.getModel()
         if (!model) return
 
-        const totalLines = model.getLineCount()
-
-        // If validation failed but no errors were reported, the XML is too broken to parse.
         if (!result.valid && result.errors.length === 0) {
-          applyValidationDecorations([
-            { message: 'XML is not well-formed', lineNumber: 1, startColumn: 1, endColumn: model.getLineMaxColumn(1) },
-          ])
+          applyValidationDecorations([notWellFormedError(model)])
           return
         }
 
-        // One error per line max — prevents cascade flooding when one invalid element
-        // shifts the expected XSD sequence and produces dozens of follow-up errors.
-        const seen = new Set<number>()
-        const errors = result.errors
-          .map((e) => {
-            const lineNumber = Math.max(1, Math.min(e.loc?.lineNumber ?? 1, totalLines))
-            const lineContent = model.getLineContent(lineNumber)
-            const { startColumn, endColumn } = findErrorRange(lineContent, e.message)
-            return { message: e.message, lineNumber, startColumn, endColumn }
-          })
-          .filter((e) => {
-            if (seen.has(e.lineNumber)) return false
-            seen.add(e.lineNumber)
-            return true
-          })
-
-        applyValidationDecorations(errors)
+        applyValidationDecorations(mapToValidationErrors(result.errors, model))
       } catch {
         if (validationId !== validationCounterRef.current) return
-        // validateXML threw — XML has a fatal parse error. Show it at line 1.
         const model = editor.getModel()
         if (!model) return
-        applyValidationDecorations([
-          { message: 'XML is not well-formed', lineNumber: 1, startColumn: 1, endColumn: model.getLineMaxColumn(1) },
-        ])
+        applyValidationDecorations([notWellFormedError(model)])
       }
     },
     [applyValidationDecorations],
@@ -279,12 +301,7 @@ export default function CodeEditor() {
     fetchFrankConfigXsd()
       .then((xsdContent) => {
         xsdContentRef.current = xsdContent
-        xsdManager.set({
-          path: 'FrankConfig.xsd',
-          value: xsdContent,
-          namespace: 'xs',
-          alwaysInclude: true,
-        })
+        xsdManager.set({ path: 'FrankConfig.xsd', value: xsdContent, namespace: 'xs', alwaysInclude: true })
         setXsdLoaded(true)
       })
       .catch(console.error)
