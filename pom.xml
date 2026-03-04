@@ -394,8 +394,8 @@
 			<id>docker</id>
 			<properties>
 				<config.image.repository>ghcr.io/frankframework</config.image.repository>
-				<config.image.name>webapp-template</config.image.name>
-				<config.image.tag>${config.image.name}</config.image.tag>
+				<config.image.name>${config.image.name}</config.image.name>
+				<config.image.tag>${config.image.tag}</config.image.tag>
 			</properties>
 			<build>
 				<plugins>
