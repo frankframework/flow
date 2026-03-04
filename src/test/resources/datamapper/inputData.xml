@@ -1,22 +1,21 @@
-{
-  "source": {
-    "firstName": "John",
-    "lastName": "Doe",
-    "username": "johndoe92",
-    "email": "john.doe@example.com",
-    "age": 25,
-    "role": "allowed",
+<?xml version="1.0" encoding="UTF-8"?>
+<source>
+<firstName>John</firstName>
+<lastName>Doe</lastName>
+<username>johndoe92</username>
+<email>john.doe@example.com</email>
+<age>25</age>
+<role>allowed</role>
 
-    "orderId": 12345,
-    "totalPrice": 199.99,
-    "paymentStatus": "paid",
+<orderId>12345</orderId>
+<totalPrice>199.99</totalPrice>
+<paymentStatus>paid</paymentStatus>
 
-    "productId": "id123",
-    "price": 49.99,
-    "stock": 10,
+<productId>id123</productId>
+<price>49.99</price>
+<stock>10</stock>
 
-    "width": 50,
-    "height": 100,
-    "depth": 30
-  }
-}
+<width>50</width>
+<height>100</height>
+<depth>30</depth>
+</source>

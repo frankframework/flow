@@ -1,9 +1,9 @@
 package org.frankframework.flow.datamapper;
 
 
-
 import java.io.File;
 import java.io.IOException;
+import java.io.StringWriter;
 
 import net.sf.saxon.s9api.*;
 import org.junit.jupiter.api.AfterEach;
@@ -14,6 +14,11 @@ import org.w3c.dom.Document;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
 
 import static org.junit.Assert.assertEquals;
@@ -21,7 +26,6 @@ import static org.junit.Assert.assertEquals;
 
 public class MappingGeneratorServiceTest {
     private MappingGeneratorService service;
-
 
 
     @BeforeEach
@@ -35,30 +39,34 @@ public class MappingGeneratorServiceTest {
 
     @Test
     public void generateMapping() throws SaxonApiException {
-        service.generate();
+        service.generate("src/test/resources/datamapper/input.json");
     }
+
     @Test
     public void testGeneratedMapping() throws Exception {
-        service.generate();
+        service.generate("src/test/resources/datamapper/input.json");
 
         // 1. Create processor (false = no schema validation)
         Processor processor = new Processor(false);
 
-        // 2. Compile XSLT (1.0 works fine here)
+        // 2. Compile XSLT
         XsltCompiler compiler = processor.newXsltCompiler();
         XsltExecutable executable = compiler.compile(
                 new StreamSource(new File("output.xslt"))
         );
 
-        // 3. Load transformer (NOT load30)
+        // 3. Load transformer
         XsltTransformer transformer = executable.load();
 
-        // 4. Provide XML input (REQUIRED in XSLT 1.0)
-        StreamSource xmlSource = new StreamSource(new File("src/test/resources/datamapper/inputData.xml"));
+        // 4. Provide XML input
+        StreamSource xmlSource = new StreamSource(
+                new File("src/test/resources/datamapper/inputData.xml")
+        );
         transformer.setSource(xmlSource);
 
-        // 5. Setup output
-        Serializer out = processor.newSerializer(new File("output.xml"));
+        // 5. Setup output file
+        StringWriter writer = new StringWriter();
+        Serializer out = processor.newSerializer(writer);
         out.setOutputProperty(Serializer.Property.METHOD, "xml");
         out.setOutputProperty(Serializer.Property.INDENT, "yes");
 
@@ -68,9 +76,13 @@ public class MappingGeneratorServiceTest {
         transformer.transform();
 
         System.out.println("Transformation complete!");
+
+        // 7. Parse expected AND actual results
         Document expectedResult = parse("src/test/resources/datamapper/outputData.xml");
 
-        Assertions.assertEquals(expectedResult, out);
+
+        // 8. Compare documents
+        Assertions.assertEquals(toString(expectedResult).trim(), writer.toString().trim());
     }
 
 
@@ -83,5 +95,17 @@ public class MappingGeneratorServiceTest {
         Document document = builder.parse(new File(path));
         document.normalizeDocument();
         return document;
+    }
+
+    private String toString(Document doc) throws Exception {
+        TransformerFactory tf = TransformerFactory.newInstance();
+        Transformer transformer = tf.newTransformer();
+        transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "false");
+        transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+
+        StringWriter writer = new StringWriter();
+        transformer.transform(new DOMSource(doc), new StreamResult(writer));
+
+        return writer.toString().trim();
     }
 }

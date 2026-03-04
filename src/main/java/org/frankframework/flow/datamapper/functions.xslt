@@ -4,7 +4,7 @@
                 xmlns:map="http://www.w3.org/2005/xpath-functions/map"
                 xmlns:func="http://exslt.org/functions"
 >
-<xsl:template name="functions" match="/">
+<xsl:template name="functions" >
 
 <xsl:element name="xsl:function">
     <xsl:attribute name="name">datamapper:Concat</xsl:attribute>

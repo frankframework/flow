@@ -6,10 +6,12 @@
 >
     <xsl:output method="xml" indent="yes"/>
     <xsl:include href="functions.xslt"/>
+    <xsl:variable name="jsonPath" select="/params/jsonPath/text()"/>
+
     <!-- Entry point -->
     <xsl:template name="main" match="/">
 
-        <xsl:variable name="data" select="json-doc('input.json')"/>
+        <xsl:variable name="data" select="json-doc($jsonPath)"/>
         <!--        Output XSLT stylesheet, using xsl:text here because it's the only way to pass xmlns attributes-->
         <xsl:text disable-output-escaping="yes">
             &lt;xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
