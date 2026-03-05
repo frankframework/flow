@@ -24,15 +24,9 @@ export default function Root() {
   const routes = ['Initialize', 'Properties', 'Mappings', 'Advanced']
   const project = useProjectStore.getState().project
 
-  const initMappingListConfig = (): MappingListConfig => {
-    let stored = ''
-    return stored ? (JSON.parse(stored) as MappingListConfig) : DEFAULT_MAPPING_LIST_CONFIG
-  }
-
   const [mappingListConfig, dispatchMappingListConfig] = useReducer(
     mappingListConfigReducer,
-    undefined,
-    initMappingListConfig,
+    DEFAULT_MAPPING_LIST_CONFIG,
   )
 
   useEffect(() => {
