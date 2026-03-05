@@ -36,7 +36,7 @@ public class MappingGeneratorService {
                         new File("src/main/java/org/frankframework/flow/datamapper/mappingGenerator.xslt")));
         Xslt30Transformer transformer = executable.load30();
 
-        // Wrap jsonPath in a minimal XML document
+
         String xmlParams = "<params><jsonPath>" + absolutePath.toUri() + "</jsonPath></params>";
         StreamSource paramsSource = new StreamSource(new StringReader(xmlParams));
 
@@ -44,9 +44,8 @@ public class MappingGeneratorService {
         out.setOutputProperty(Serializer.Property.METHOD, "xml");
         out.setOutputProperty(Serializer.Property.INDENT, "yes");
 
-        // Pass the XML wrapper as the source
-        transformer.transform(paramsSource, out);
 
-        System.out.println("Transformation complete!");
+        transformer.transform(paramsSource, out);
+        
     }
 }
