@@ -1,1 +1,877 @@
-{"sourceType":"XML","targetType":"XML","targetStructure":[{"type":"object","internalId":"target-table-group-17","label":"orders","defaultValue":"","parent":"target-table","children":[{"type":"object","internalId":"target-table-group-17-group-18","label":"user","defaultValue":"","parent":"target-table-group-17","children":[{"type":"string","internalId":"target-table-group-17-group-18-item-19","label":"fullname","defaultValue":"","parent":"target-table-group-17-group-18","mapping":{"id":"mapping-1o5u3f0kvmn","sources":[{"type":"string","internalId":"source-table-group-16-group-20-item-21","label":"firstName","defaultValue":"","parent":"source-table-group-16-group-20"},{"type":"string","internalId":"source-table-group-16-group-20-item-22","label":"lastName","defaultValue":"","parent":"source-table-group-16-group-20"}],"target":{"type":"string","internalId":"target-table-group-17-group-18-item-19","label":"fullname","defaultValue":"","parent":"target-table-group-17-group-18"},"mutations":[{"id":"mutation-_r_9_","name":"Concat Firstname + Lastname","mutationType":{"name":"Concat","maxInputs":null,"requiredInputs":2,"inputs":[{"label":"concatString","type":"source","allowDefaultValue":true,"expandable":true,"inputsAllowed":"string"}],"outputType":"string"},"inputs":[{"type":"source","value":"firstName","sourceId":"source-table-group-16-group-20-item-21"},{"type":"defaultValue","value":"  ","sourceId":"defaultValue"},{"type":"source","value":"lastName","sourceId":"source-table-group-16-group-20-item-22"}]}],"conditions":[],"conditional":null,"output":"mutation-_r_9_"}},{"type":"string","internalId":"target-table-group-17-group-18-item-20","label":"username","defaultValue":"","parent":"target-table-group-17-group-18","mapping":{"id":"mapping-ca58i5zh7xe","sources":[{"type":"string","internalId":"source-table-group-16-item-17","label":"username","defaultValue":"","parent":"source-table-group-16"}],"target":{"type":"string","internalId":"target-table-group-17-group-18-item-20","label":"username","defaultValue":"","parent":"target-table-group-17-group-18"},"mutations":[],"conditions":[],"conditional":null,"output":"source-table-group-16-item-17"}},{"type":"string","internalId":"target-table-group-17-group-18-item-21","label":"email","defaultValue":"","parent":"target-table-group-17-group-18","mapping":{"id":"mapping-ow9jrf8lri8","sources":[{"type":"string","internalId":"source-table-group-16-item-18","label":"email","defaultValue":"","parent":"source-table-group-16"}],"target":{"type":"string","internalId":"target-table-group-17-group-18-item-21","label":"email","defaultValue":"","parent":"target-table-group-17-group-18"},"mutations":[],"conditions":[],"conditional":null,"output":"source-table-group-16-item-18"}},{"type":"boolean","internalId":"target-table-group-17-group-18-item-22","label":"isAdult","defaultValue":"","parent":"target-table-group-17-group-18","mapping":{"id":"mapping-t9b1ib8jnpf","sources":[{"type":"integer","internalId":"source-table-group-16-group-20-item-23","label":"birthYear","defaultValue":"","parent":"source-table-group-16-group-20"}],"target":{"type":"boolean","internalId":"target-table-group-17-group-18-item-22","label":"isAdult","defaultValue":"","parent":"target-table-group-17-group-18"},"mutations":[],"conditions":[{"id":"condition-_r_g_","name":"naam","type":{"name":"Equation","maxInputs":3,"requiredInputs":3,"inputs":[{"label":"input","type":"source","allowDefaultValue":true,"inputsAllowed":"number"},{"label":"operator","type":"numberOperator","allowDefaultValue":false,"inputsAllowed":"numberOperator"},{"label":"value","type":"source","allowDefaultValue":true,"inputsAllowed":"number"}]},"inputs":[{"type":"source","sourceId":"source-table-group-16-group-20-item-23","value":""},{"type":"operator","value":"<"},{"type":"defaultValue","value":"2026-18"}]}],"conditional":null,"output":"condition-_r_g_"}},{"type":"boolean","internalId":"target-table-group-17-group-18-item-23","label":"status","defaultValue":"","parent":"target-table-group-17-group-18","mapping":{"id":"mapping-e1ctntdfhm6","sources":[{"type":"string","internalId":"source-table-group-16-item-19","label":"status","defaultValue":"","parent":"source-table-group-16"}],"target":{"type":"boolean","internalId":"target-table-group-17-group-18-item-23","label":"status","defaultValue":"","parent":"target-table-group-17-group-18"},"mutations":[],"conditions":[{"id":"condition-_r_i_","name":"Check allowed","type":{"name":"ValueEquals","maxInputs":2,"requiredInputs":2,"inputs":[{"label":"input","type":"source","allowDefaultValue":true,"inputsAllowed":"all"},{"label":"value","type":"source","allowDefaultValue":true,"inputsAllowed":"all"}]},"inputs":[{"type":"source","sourceId":"source-table-group-16-item-19","value":""},{"type":"defaultValue","value":"allowed"}]}],"conditional":null,"output":"condition-_r_i_"}}]},{"type":"object","internalId":"target-table-group-17-group-24","label":"order","defaultValue":"","parent":"target-table-group-17","children":[{"type":"string","internalId":"target-table-group-17-group-24-item-25","label":"orderId","defaultValue":"","parent":"target-table-group-17-group-24","mapping":{"id":"mapping-2c3gnm4sago","sources":[{"type":"number","internalId":"source-table-group-4-item-5","label":"orderId","defaultValue":"","parent":"source-table-group-4"}],"target":{"type":"string","internalId":"target-table-group-17-group-24-item-25","label":"orderId","defaultValue":"","parent":"target-table-group-17-group-24"},"mutations":[{"id":"mutation-_r_n_","name":"ToString","mutationType":{"name":"CastToString","maxInputs":1,"requiredInputs":1,"inputs":[{"label":"input","type":"source","allowDefaultValue":false,"expandable":false,"inputsAllowed":"all"}],"outputType":"string"},"inputs":[{"type":"source","sourceId":"source-table-group-4-item-5","value":"orderId"}]}],"conditions":[],"conditional":null,"output":"mutation-_r_n_"}},{"type":"string","internalId":"target-table-group-17-group-24-item-26","label":"totalPrice","defaultValue":"","parent":"target-table-group-17-group-24","mapping":{"id":"mapping-0nrz9p38l70p","sources":[{"type":"number","internalId":"source-table-group-6-item-8","label":"price","defaultValue":"","parent":"source-table-group-6"},{"type":"string","internalId":"source-table-group-6-item-9","label":"currency","defaultValue":"","parent":"source-table-group-6"}],"target":{"type":"string","internalId":"target-table-group-17-group-24-item-26","label":"totalPrice","defaultValue":"","parent":"target-table-group-17-group-24"},"mutations":[{"id":"mutation-_r_r_","name":"ToString","mutationType":{"name":"CastToString","maxInputs":1,"requiredInputs":1,"inputs":[{"label":"input","type":"source","allowDefaultValue":false,"expandable":false,"inputsAllowed":"all"}],"outputType":"string"},"inputs":[{"type":"source","sourceId":"source-table-group-6-item-8","value":"price"}]},{"id":"mutation-_r_t_","name":"Concat","mutationType":{"name":"Concat","maxInputs":null,"requiredInputs":2,"inputs":[{"label":"concatString","type":"source","allowDefaultValue":true,"expandable":true,"inputsAllowed":"string"}],"outputType":"string"},"inputs":[{"type":"source","sourceId":"mutation-_r_r_","value":"ToString"},{"type":"source","value":"currency","sourceId":"source-table-group-6-item-9"}]}],"conditions":[],"conditional":null,"output":"mutation-_r_t_"}},{"type":"boolean","internalId":"target-table-group-17-group-24-item-27","label":"paid","defaultValue":"true","parent":"target-table-group-17-group-24","mapping":{"id":"mapping-zzsn4ozlj7g","sources":[{"type":"number","internalId":"source-table-item-1","label":"amountPaid","defaultValue":"","parent":"source-table"},{"type":"number","internalId":"source-table-item-0","label":"totalPrice","defaultValue":"","parent":"source-table"}],"target":{"type":"boolean","internalId":"target-table-group-17-group-24-item-27","label":"paid","defaultValue":"true","parent":"target-table-group-17-group-24"},"mutations":[],"conditions":[{"id":"condition-_r_p_","name":"EQ","type":{"name":"ValueEquals","maxInputs":2,"requiredInputs":2,"inputs":[{"label":"input","type":"source","allowDefaultValue":true,"inputsAllowed":"all"},{"label":"value","type":"source","allowDefaultValue":true,"inputsAllowed":"all"}]},"inputs":[{"type":"source","sourceId":"source-table-item-0","value":""},{"type":"source","sourceId":"source-table-item-1","value":""}]}],"conditional":null,"output":"condition-_r_p_"}},{"type":"object","internalId":"target-table-group-17-group-24-group-28","label":"receipt","defaultValue":"","parent":"target-table-group-17-group-24","children":[{"type":"string","internalId":"target-table-group-17-group-24-group-28-item-29","label":"productId","defaultValue":"","parent":"target-table-group-17-group-24-group-28","mapping":{"id":"mapping-1na7z9kvjl5","sources":[{"type":"string","internalId":"source-table-group-6-item-7","label":"productId","defaultValue":"","parent":"source-table-group-6"}],"target":{"type":"string","internalId":"target-table-group-17-group-24-group-28-item-29","label":"productId","defaultValue":"","parent":"target-table-group-17-group-24-group-28"},"mutations":[{"id":"mutation-_r_q_","name":"13. Vervangt “id” in product id met “Product”: om het naar producttype zijn naam te mappen","mutationType":{"name":"Replace","maxInputs":3,"requiredInputs":3,"inputs":[{"label":"input","type":"source","allowDefaultValue":true,"expandable":false,"inputsAllowed":"string"},{"label":"pattern","type":"attribute","allowDefaultValue":true,"expandable":false,"inputsAllowed":"string"},{"label":"replacedBy","type":"attribute","allowDefaultValue":true,"expandable":false,"inputsAllowed":"string"}],"outputType":"string"},"inputs":[{"type":"source","sourceId":"source-table-group-6-item-7","value":"productId"},{"type":"attribute","value":"id"},{"type":"attribute","value":"Product"}]}],"conditions":[],"conditional":null,"output":"mutation-_r_q_"}},{"type":"string","internalId":"target-table-group-17-group-24-group-28-item-30","label":"price","defaultValue":"","parent":"target-table-group-17-group-24-group-28","mapping":{"id":"mapping-c3fxc0slf6q","sources":[{"type":"number","internalId":"source-table-item-0","label":"totalPrice","defaultValue":"","parent":"source-table"}],"target":{"type":"string","internalId":"target-table-group-17-group-24-group-28-item-30","label":"price","defaultValue":"","parent":"target-table-group-17-group-24-group-28"},"mutations":[{"id":"mutation-_r_o_","name":"ToString","mutationType":{"name":"CastToString","maxInputs":1,"requiredInputs":1,"inputs":[{"label":"input","type":"source","allowDefaultValue":false,"expandable":false,"inputsAllowed":"all"}],"outputType":"string"},"inputs":[{"type":"source","sourceId":"source-table-item-0","value":"totalPrice"}]}],"conditions":[],"conditional":null,"output":"mutation-_r_o_"}},{"type":"boolean","internalId":"target-table-group-17-group-24-group-28-item-31","label":"instock","defaultValue":"","parent":"target-table-group-17-group-24-group-28","mapping":{"id":"mapping-o6yharqrxsd","sources":[{"type":"string","internalId":"source-table-group-6-item-10","label":"amountOfitems","defaultValue":"","parent":"source-table-group-6"}],"target":{"type":"boolean","internalId":"target-table-group-17-group-24-group-28-item-31","label":"instock","defaultValue":"","parent":"target-table-group-17-group-24-group-28"},"mutations":[],"conditions":[{"id":"condition-_r_u_","name":"NotNull","type":{"name":"NullCheck","maxInputs":1,"requiredInputs":1,"inputs":[{"label":"input","type":"source","allowDefaultValue":false,"inputsAllowed":"all"}]},"inputs":[{"type":"","value":""}]}],"conditional":{"id":"condition-_r_u_","name":"NotNull","type":{"name":"NullCheck","maxInputs":1,"requiredInputs":1,"inputs":[{"label":"input","type":"source","allowDefaultValue":false,"inputsAllowed":"all"}]},"inputs":[{"type":"","value":""}]},"output":"condition-_r_u_"}},{"type":"string","internalId":"target-table-group-17-group-24-group-28-item-32","label":"dimension","defaultValue":"","parent":"target-table-group-17-group-24-group-28","mapping":{"id":"mapping-f7wbnj4pef4","sources":[{"type":"number","internalId":"source-table-group-6-group-11-item-12","label":"width","defaultValue":"","parent":"source-table-group-6-group-11"},{"type":"number","internalId":"source-table-group-6-group-11-item-13","label":"height","defaultValue":"","parent":"source-table-group-6-group-11"},{"type":"number","internalId":"source-table-group-6-group-11-item-14","label":"depth","defaultValue":"","parent":"source-table-group-6-group-11"},{"type":"string","internalId":"source-table-group-6-group-11-item-15","label":"unit","defaultValue":"","parent":"source-table-group-6-group-11"}],"target":{"type":"string","internalId":"target-table-group-17-group-24-group-28-item-32","label":"dimension","defaultValue":"","parent":"target-table-group-17-group-24-group-28"},"mutations":[{"id":"mutation-_r_10_","name":"ToString Width","mutationType":{"name":"CastToString","maxInputs":1,"requiredInputs":1,"inputs":[{"label":"input","type":"source","allowDefaultValue":false,"expandable":false,"inputsAllowed":"all"}],"outputType":"string"},"inputs":[{"type":"source","sourceId":"source-table-group-6-group-11-item-12","value":"width"}]},{"id":"mutation-_r_12_","name":"ToString Height","mutationType":{"name":"CastToString","maxInputs":1,"requiredInputs":1,"inputs":[{"label":"input","type":"source","allowDefaultValue":false,"expandable":false,"inputsAllowed":"all"}],"outputType":"string"},"inputs":[{"type":"source","sourceId":"source-table-group-6-group-11-item-13","value":"height"}]},{"id":"mutation-_r_15_","name":"ToString Depth","mutationType":{"name":"CastToString","maxInputs":1,"requiredInputs":1,"inputs":[{"label":"input","type":"source","allowDefaultValue":false,"expandable":false,"inputsAllowed":"all"}],"outputType":"string"},"inputs":[{"type":"source","sourceId":"source-table-group-6-group-11-item-14","value":"depth"}]},{"id":"mutation-_r_17_","name":"Concat","mutationType":{"name":"Concat","maxInputs":null,"requiredInputs":2,"inputs":[{"label":"concatString","type":"source","allowDefaultValue":true,"expandable":true,"inputsAllowed":"string"}],"outputType":"string"},"inputs":[{"type":"source","sourceId":"mutation-_r_10_","value":"ToString Width"},{"type":"source","value":"unit","sourceId":"source-table-group-6-group-11-item-15"},{"type":"defaultValue","value":", ","sourceId":"defaultValue"},{"type":"source","value":"ToString Height","sourceId":"mutation-_r_12_"},{"type":"source","value":"unit","sourceId":"source-table-group-6-group-11-item-15"},{"type":"defaultValue","value":", ","sourceId":"defaultValue"},{"type":"source","value":"ToString Depth","sourceId":"mutation-_r_15_"},{"type":"source","value":"unit","sourceId":"source-table-group-6-group-11-item-15"}]}],"conditions":[],"conditional":null,"output":"mutation-_r_17_"}}]}]}]}]}
+{
+	"sourceType": "XML",
+	"targetType": "XML",
+	"targetStructure": [
+		{
+			"type": "object",
+			"internalId": "target-table-group-17",
+			"label": "orders",
+			"defaultValue": "",
+			"parent": "target-table",
+			"children": [
+				{
+					"type": "object",
+					"internalId": "target-table-group-17-group-18",
+					"label": "user",
+					"defaultValue": "",
+					"parent": "target-table-group-17",
+					"children": [
+						{
+							"type": "string",
+							"internalId": "target-table-group-17-group-18-item-19",
+							"label": "fullname",
+							"defaultValue": "",
+							"parent": "target-table-group-17-group-18",
+							"mapping": {
+								"id": "mapping-1o5u3f0kvmn",
+								"sources": [
+									{
+										"type": "string",
+										"internalId": "source-table-group-16-group-20-item-21",
+										"label": "firstName",
+										"defaultValue": "",
+										"parent": "source-table-group-16-group-20"
+									},
+									{
+										"type": "string",
+										"internalId": "source-table-group-16-group-20-item-22",
+										"label": "lastName",
+										"defaultValue": "",
+										"parent": "source-table-group-16-group-20"
+									}
+								],
+								"target": {
+									"type": "string",
+									"internalId": "target-table-group-17-group-18-item-19",
+									"label": "fullname",
+									"defaultValue": "",
+									"parent": "target-table-group-17-group-18"
+								},
+								"mutations": [
+									{
+										"id": "mutation-_r_9_",
+										"name": "Concat Firstname + Lastname",
+										"mutationType": {
+											"name": "Concat",
+											"maxInputs": null,
+											"requiredInputs": 2,
+											"inputs": [
+												{
+													"label": "concatString",
+													"type": "source",
+													"allowDefaultValue": true,
+													"expandable": true,
+													"inputsAllowed": "string"
+												}
+											],
+											"outputType": "string"
+										},
+										"inputs": [
+											{ "type": "source", "value": "firstName", "sourceId": "source-table-group-16-group-20-item-21" },
+											{ "type": "defaultValue", "value": "  ", "sourceId": "defaultValue" },
+											{ "type": "source", "value": "lastName", "sourceId": "source-table-group-16-group-20-item-22" }
+										]
+									}
+								],
+								"conditions": [],
+								"conditional": null,
+								"output": "mutation-_r_9_"
+							}
+						},
+						{
+							"type": "string",
+							"internalId": "target-table-group-17-group-18-item-20",
+							"label": "username",
+							"defaultValue": "",
+							"parent": "target-table-group-17-group-18",
+							"mapping": {
+								"id": "mapping-ca58i5zh7xe",
+								"sources": [
+									{
+										"type": "string",
+										"internalId": "source-table-group-16-item-17",
+										"label": "username",
+										"defaultValue": "",
+										"parent": "source-table-group-16"
+									}
+								],
+								"target": {
+									"type": "string",
+									"internalId": "target-table-group-17-group-18-item-20",
+									"label": "username",
+									"defaultValue": "",
+									"parent": "target-table-group-17-group-18"
+								},
+								"mutations": [],
+								"conditions": [],
+								"conditional": null,
+								"output": "source-table-group-16-item-17"
+							}
+						},
+						{
+							"type": "string",
+							"internalId": "target-table-group-17-group-18-item-21",
+							"label": "email",
+							"defaultValue": "",
+							"parent": "target-table-group-17-group-18",
+							"mapping": {
+								"id": "mapping-ow9jrf8lri8",
+								"sources": [
+									{
+										"type": "string",
+										"internalId": "source-table-group-16-item-18",
+										"label": "email",
+										"defaultValue": "",
+										"parent": "source-table-group-16"
+									}
+								],
+								"target": {
+									"type": "string",
+									"internalId": "target-table-group-17-group-18-item-21",
+									"label": "email",
+									"defaultValue": "",
+									"parent": "target-table-group-17-group-18"
+								},
+								"mutations": [],
+								"conditions": [],
+								"conditional": null,
+								"output": "source-table-group-16-item-18"
+							}
+						},
+						{
+							"type": "boolean",
+							"internalId": "target-table-group-17-group-18-item-22",
+							"label": "isAdult",
+							"defaultValue": "",
+							"parent": "target-table-group-17-group-18",
+							"mapping": {
+								"id": "mapping-t9b1ib8jnpf",
+								"sources": [
+									{
+										"type": "integer",
+										"internalId": "source-table-group-16-group-20-item-23",
+										"label": "birthYear",
+										"defaultValue": "",
+										"parent": "source-table-group-16-group-20"
+									}
+								],
+								"target": {
+									"type": "boolean",
+									"internalId": "target-table-group-17-group-18-item-22",
+									"label": "isAdult",
+									"defaultValue": "",
+									"parent": "target-table-group-17-group-18"
+								},
+								"mutations": [],
+								"conditions": [
+									{
+										"id": "condition-_r_g_",
+										"name": "naam",
+										"type": {
+											"name": "Equation",
+											"maxInputs": 3,
+											"requiredInputs": 3,
+											"inputs": [
+												{ "label": "input", "type": "source", "allowDefaultValue": true, "inputsAllowed": "number" },
+												{
+													"label": "operator",
+													"type": "numberOperator",
+													"allowDefaultValue": false,
+													"inputsAllowed": "numberOperator"
+												},
+												{ "label": "value", "type": "source", "allowDefaultValue": true, "inputsAllowed": "number" }
+											]
+										},
+										"inputs": [
+											{ "type": "source", "sourceId": "source-table-group-16-group-20-item-23", "value": "" },
+											{ "type": "operator", "value": "<" },
+											{ "type": "defaultValue", "value": "2026-18" }
+										]
+									}
+								],
+								"conditional": null,
+								"output": "condition-_r_g_"
+							}
+						},
+						{
+							"type": "boolean",
+							"internalId": "target-table-group-17-group-18-item-23",
+							"label": "status",
+							"defaultValue": "",
+							"parent": "target-table-group-17-group-18",
+							"mapping": {
+								"id": "mapping-e1ctntdfhm6",
+								"sources": [
+									{
+										"type": "string",
+										"internalId": "source-table-group-16-item-19",
+										"label": "status",
+										"defaultValue": "",
+										"parent": "source-table-group-16"
+									}
+								],
+								"target": {
+									"type": "boolean",
+									"internalId": "target-table-group-17-group-18-item-23",
+									"label": "status",
+									"defaultValue": "",
+									"parent": "target-table-group-17-group-18"
+								},
+								"mutations": [],
+								"conditions": [
+									{
+										"id": "condition-_r_i_",
+										"name": "Check allowed",
+										"type": {
+											"name": "ValueEquals",
+											"maxInputs": 2,
+											"requiredInputs": 2,
+											"inputs": [
+												{ "label": "input", "type": "source", "allowDefaultValue": true, "inputsAllowed": "all" },
+												{ "label": "value", "type": "source", "allowDefaultValue": true, "inputsAllowed": "all" }
+											]
+										},
+										"inputs": [
+											{ "type": "source", "sourceId": "source-table-group-16-item-19", "value": "" },
+											{ "type": "defaultValue", "value": "allowed" }
+										]
+									}
+								],
+								"conditional": null,
+								"output": "condition-_r_i_"
+							}
+						}
+					]
+				},
+				{
+					"type": "object",
+					"internalId": "target-table-group-17-group-24",
+					"label": "order",
+					"defaultValue": "",
+					"parent": "target-table-group-17",
+					"children": [
+						{
+							"type": "string",
+							"internalId": "target-table-group-17-group-24-item-25",
+							"label": "orderId",
+							"defaultValue": "",
+							"parent": "target-table-group-17-group-24",
+							"mapping": {
+								"id": "mapping-2c3gnm4sago",
+								"sources": [
+									{
+										"type": "number",
+										"internalId": "source-table-group-4-item-5",
+										"label": "orderId",
+										"defaultValue": "",
+										"parent": "source-table-group-4"
+									}
+								],
+								"target": {
+									"type": "string",
+									"internalId": "target-table-group-17-group-24-item-25",
+									"label": "orderId",
+									"defaultValue": "",
+									"parent": "target-table-group-17-group-24"
+								},
+								"mutations": [
+									{
+										"id": "mutation-_r_n_",
+										"name": "ToString",
+										"mutationType": {
+											"name": "CastToString",
+											"maxInputs": 1,
+											"requiredInputs": 1,
+											"inputs": [
+												{ "label": "input", "type": "source", "allowDefaultValue": false, "expandable": false, "inputsAllowed": "all" }
+											],
+											"outputType": "string"
+										},
+										"inputs": [{ "type": "source", "sourceId": "source-table-group-4-item-5", "value": "orderId" }]
+									}
+								],
+								"conditions": [],
+								"conditional": null,
+								"output": "mutation-_r_n_"
+							}
+						},
+						{
+							"type": "string",
+							"internalId": "target-table-group-17-group-24-item-26",
+							"label": "totalPrice",
+							"defaultValue": "",
+							"parent": "target-table-group-17-group-24",
+							"mapping": {
+								"id": "mapping-0nrz9p38l70p",
+								"sources": [
+									{
+										"type": "number",
+										"internalId": "source-table-group-6-item-8",
+										"label": "price",
+										"defaultValue": "",
+										"parent": "source-table-group-6"
+									},
+									{
+										"type": "string",
+										"internalId": "source-table-group-6-item-9",
+										"label": "currency",
+										"defaultValue": "",
+										"parent": "source-table-group-6"
+									}
+								],
+								"target": {
+									"type": "string",
+									"internalId": "target-table-group-17-group-24-item-26",
+									"label": "totalPrice",
+									"defaultValue": "",
+									"parent": "target-table-group-17-group-24"
+								},
+								"mutations": [
+									{
+										"id": "mutation-_r_r_",
+										"name": "ToString",
+										"mutationType": {
+											"name": "CastToString",
+											"maxInputs": 1,
+											"requiredInputs": 1,
+											"inputs": [
+												{ "label": "input", "type": "source", "allowDefaultValue": false, "expandable": false, "inputsAllowed": "all" }
+											],
+											"outputType": "string"
+										},
+										"inputs": [{ "type": "source", "sourceId": "source-table-group-6-item-8", "value": "price" }]
+									},
+									{
+										"id": "mutation-_r_t_",
+										"name": "Concat",
+										"mutationType": {
+											"name": "Concat",
+											"maxInputs": null,
+											"requiredInputs": 2,
+											"inputs": [
+												{
+													"label": "concatString",
+													"type": "source",
+													"allowDefaultValue": true,
+													"expandable": true,
+													"inputsAllowed": "string"
+												}
+											],
+											"outputType": "string"
+										},
+										"inputs": [
+											{ "type": "source", "sourceId": "mutation-_r_r_", "value": "ToString" },
+											{ "type": "source", "value": "currency", "sourceId": "source-table-group-6-item-9" }
+										]
+									}
+								],
+								"conditions": [],
+								"conditional": null,
+								"output": "mutation-_r_t_"
+							}
+						},
+						{
+							"type": "boolean",
+							"internalId": "target-table-group-17-group-24-item-27",
+							"label": "paid",
+							"defaultValue": "true",
+							"parent": "target-table-group-17-group-24",
+							"mapping": {
+								"id": "mapping-zzsn4ozlj7g",
+								"sources": [
+									{
+										"type": "number",
+										"internalId": "source-table-item-1",
+										"label": "amountPaid",
+										"defaultValue": "",
+										"parent": "source-table"
+									},
+									{
+										"type": "number",
+										"internalId": "source-table-item-0",
+										"label": "totalPrice",
+										"defaultValue": "",
+										"parent": "source-table"
+									}
+								],
+								"target": {
+									"type": "boolean",
+									"internalId": "target-table-group-17-group-24-item-27",
+									"label": "paid",
+									"defaultValue": "true",
+									"parent": "target-table-group-17-group-24"
+								},
+								"mutations": [],
+								"conditions": [
+									{
+										"id": "condition-_r_p_",
+										"name": "EQ",
+										"type": {
+											"name": "ValueEquals",
+											"maxInputs": 2,
+											"requiredInputs": 2,
+											"inputs": [
+												{ "label": "input", "type": "source", "allowDefaultValue": true, "inputsAllowed": "all" },
+												{ "label": "value", "type": "source", "allowDefaultValue": true, "inputsAllowed": "all" }
+											]
+										},
+										"inputs": [
+											{ "type": "source", "sourceId": "source-table-item-0", "value": "" },
+											{ "type": "source", "sourceId": "source-table-item-1", "value": "" }
+										]
+									}
+								],
+								"conditional": null,
+								"output": "condition-_r_p_"
+							}
+						},
+						{
+							"type": "object",
+							"internalId": "target-table-group-17-group-24-group-28",
+							"label": "receipt",
+							"defaultValue": "",
+							"parent": "target-table-group-17-group-24",
+							"children": [
+								{
+									"type": "string",
+									"internalId": "target-table-group-17-group-24-group-28-item-29",
+									"label": "productId",
+									"defaultValue": "",
+									"parent": "target-table-group-17-group-24-group-28",
+									"mapping": {
+										"id": "mapping-1na7z9kvjl5",
+										"sources": [
+											{
+												"type": "string",
+												"internalId": "source-table-group-6-item-7",
+												"label": "productId",
+												"defaultValue": "",
+												"parent": "source-table-group-6"
+											}
+										],
+										"target": {
+											"type": "string",
+											"internalId": "target-table-group-17-group-24-group-28-item-29",
+											"label": "productId",
+											"defaultValue": "",
+											"parent": "target-table-group-17-group-24-group-28"
+										},
+										"mutations": [
+											{
+												"id": "mutation-_r_q_",
+												"name": "13. Vervangt “id” in product id met “Product”: om het naar producttype zijn naam te mappen",
+												"mutationType": {
+													"name": "Replace",
+													"maxInputs": 3,
+													"requiredInputs": 3,
+													"inputs": [
+														{
+															"label": "input",
+															"type": "source",
+															"allowDefaultValue": true,
+															"expandable": false,
+															"inputsAllowed": "string"
+														},
+														{
+															"label": "pattern",
+															"type": "attribute",
+															"allowDefaultValue": true,
+															"expandable": false,
+															"inputsAllowed": "string"
+														},
+														{
+															"label": "replacedBy",
+															"type": "attribute",
+															"allowDefaultValue": true,
+															"expandable": false,
+															"inputsAllowed": "string"
+														}
+													],
+													"outputType": "string"
+												},
+												"inputs": [
+													{ "type": "source", "sourceId": "source-table-group-6-item-7", "value": "productId" },
+													{ "type": "attribute", "value": "id" },
+													{ "type": "attribute", "value": "Product" }
+												]
+											}
+										],
+										"conditions": [],
+										"conditional": null,
+										"output": "mutation-_r_q_"
+									}
+								},
+								{
+									"type": "string",
+									"internalId": "target-table-group-17-group-24-group-28-item-30",
+									"label": "price",
+									"defaultValue": "",
+									"parent": "target-table-group-17-group-24-group-28",
+									"mapping": {
+										"id": "mapping-c3fxc0slf6q",
+										"sources": [
+											{
+												"type": "number",
+												"internalId": "source-table-item-0",
+												"label": "totalPrice",
+												"defaultValue": "",
+												"parent": "source-table"
+											}
+										],
+										"target": {
+											"type": "string",
+											"internalId": "target-table-group-17-group-24-group-28-item-30",
+											"label": "price",
+											"defaultValue": "",
+											"parent": "target-table-group-17-group-24-group-28"
+										},
+										"mutations": [
+											{
+												"id": "mutation-_r_o_",
+												"name": "ToString",
+												"mutationType": {
+													"name": "CastToString",
+													"maxInputs": 1,
+													"requiredInputs": 1,
+													"inputs": [
+														{
+															"label": "input",
+															"type": "source",
+															"allowDefaultValue": false,
+															"expandable": false,
+															"inputsAllowed": "all"
+														}
+													],
+													"outputType": "string"
+												},
+												"inputs": [{ "type": "source", "sourceId": "source-table-item-0", "value": "totalPrice" }]
+											}
+										],
+										"conditions": [],
+										"conditional": null,
+										"output": "mutation-_r_o_"
+									}
+								},
+								{
+									"type": "boolean",
+									"internalId": "target-table-group-17-group-24-group-28-item-31",
+									"label": "instock",
+									"defaultValue": "",
+									"parent": "target-table-group-17-group-24-group-28",
+									"mapping": {
+										"id": "mapping-o6yharqrxsd",
+										"sources": [
+											{
+												"type": "string",
+												"internalId": "source-table-group-6-item-10",
+												"label": "amountOfitems",
+												"defaultValue": "",
+												"parent": "source-table-group-6"
+											}
+										],
+										"target": {
+											"type": "boolean",
+											"internalId": "target-table-group-17-group-24-group-28-item-31",
+											"label": "instock",
+											"defaultValue": "",
+											"parent": "target-table-group-17-group-24-group-28"
+										},
+										"mutations": [],
+										"conditions": [
+											{
+												"id": "condition-_r_u_",
+												"name": "NotNull",
+												"type": {
+													"name": "NullCheck",
+													"maxInputs": 1,
+													"requiredInputs": 1,
+													"inputs": [{ "label": "input", "type": "source", "allowDefaultValue": false, "inputsAllowed": "all" }]
+												},
+												"inputs": [{ "type": "", "value": "" }]
+											}
+										],
+										"conditional": {
+											"id": "condition-_r_u_",
+											"name": "NotNull",
+											"type": {
+												"name": "NullCheck",
+												"maxInputs": 1,
+												"requiredInputs": 1,
+												"inputs": [{ "label": "input", "type": "source", "allowDefaultValue": false, "inputsAllowed": "all" }]
+											},
+											"inputs": [{ "type": "", "value": "" }]
+										},
+										"output": "condition-_r_u_"
+									}
+								},
+								{
+									"type": "string",
+									"internalId": "target-table-group-17-group-24-group-28-item-32",
+									"label": "dimension",
+									"defaultValue": "",
+									"parent": "target-table-group-17-group-24-group-28",
+									"mapping": {
+										"id": "mapping-f7wbnj4pef4",
+										"sources": [
+											{
+												"type": "number",
+												"internalId": "source-table-group-6-group-11-item-12",
+												"label": "width",
+												"defaultValue": "",
+												"parent": "source-table-group-6-group-11"
+											},
+											{
+												"type": "number",
+												"internalId": "source-table-group-6-group-11-item-13",
+												"label": "height",
+												"defaultValue": "",
+												"parent": "source-table-group-6-group-11"
+											},
+											{
+												"type": "number",
+												"internalId": "source-table-group-6-group-11-item-14",
+												"label": "depth",
+												"defaultValue": "",
+												"parent": "source-table-group-6-group-11"
+											},
+											{
+												"type": "string",
+												"internalId": "source-table-group-6-group-11-item-15",
+												"label": "unit",
+												"defaultValue": "",
+												"parent": "source-table-group-6-group-11"
+											}
+										],
+										"target": {
+											"type": "string",
+											"internalId": "target-table-group-17-group-24-group-28-item-32",
+											"label": "dimension",
+											"defaultValue": "",
+											"parent": "target-table-group-17-group-24-group-28"
+										},
+										"mutations": [
+											{
+												"id": "mutation-_r_10_",
+												"name": "ToString Width",
+												"mutationType": {
+													"name": "CastToString",
+													"maxInputs": 1,
+													"requiredInputs": 1,
+													"inputs": [
+														{
+															"label": "input",
+															"type": "source",
+															"allowDefaultValue": false,
+															"expandable": false,
+															"inputsAllowed": "all"
+														}
+													],
+													"outputType": "string"
+												},
+												"inputs": [{ "type": "source", "sourceId": "source-table-group-6-group-11-item-12", "value": "width" }]
+											},
+											{
+												"id": "mutation-_r_12_",
+												"name": "ToString Height",
+												"mutationType": {
+													"name": "CastToString",
+													"maxInputs": 1,
+													"requiredInputs": 1,
+													"inputs": [
+														{
+															"label": "input",
+															"type": "source",
+															"allowDefaultValue": false,
+															"expandable": false,
+															"inputsAllowed": "all"
+														}
+													],
+													"outputType": "string"
+												},
+												"inputs": [{ "type": "source", "sourceId": "source-table-group-6-group-11-item-13", "value": "height" }]
+											},
+											{
+												"id": "mutation-_r_15_",
+												"name": "ToString Depth",
+												"mutationType": {
+													"name": "CastToString",
+													"maxInputs": 1,
+													"requiredInputs": 1,
+													"inputs": [
+														{
+															"label": "input",
+															"type": "source",
+															"allowDefaultValue": false,
+															"expandable": false,
+															"inputsAllowed": "all"
+														}
+													],
+													"outputType": "string"
+												},
+												"inputs": [{ "type": "source", "sourceId": "source-table-group-6-group-11-item-14", "value": "depth" }]
+											},
+											{
+												"id": "mutation-_r_17_",
+												"name": "Concat",
+												"mutationType": {
+													"name": "Concat",
+													"maxInputs": null,
+													"requiredInputs": 2,
+													"inputs": [
+														{
+															"label": "concatString",
+															"type": "source",
+															"allowDefaultValue": true,
+															"expandable": true,
+															"inputsAllowed": "string"
+														}
+													],
+													"outputType": "string"
+												},
+												"inputs": [
+													{ "type": "source", "sourceId": "mutation-_r_10_", "value": "ToString Width" },
+													{ "type": "source", "value": "unit", "sourceId": "source-table-group-6-group-11-item-15" },
+													{ "type": "defaultValue", "value": ", ", "sourceId": "defaultValue" },
+													{ "type": "source", "value": "ToString Height", "sourceId": "mutation-_r_12_" },
+													{ "type": "source", "value": "unit", "sourceId": "source-table-group-6-group-11-item-15" },
+													{ "type": "defaultValue", "value": ", ", "sourceId": "defaultValue" },
+													{ "type": "source", "value": "ToString Depth", "sourceId": "mutation-_r_15_" },
+													{ "type": "source", "value": "unit", "sourceId": "source-table-group-6-group-11-item-15" }
+												]
+											}
+										],
+										"conditions": [],
+										"conditional": null,
+										"output": "mutation-_r_17_"
+									}
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	],
+	"sourceStructure": [
+		{ "type": "number", "internalId": "source-table-item-0", "label": "totalPrice", "defaultValue": "", "parent": "source-table" },
+		{ "type": "number", "internalId": "source-table-item-1", "label": "amountPaid", "defaultValue": "", "parent": "source-table" },
+		{
+			"type": "object",
+			"internalId": "source-table-group-2",
+			"label": "customer",
+			"defaultValue": "",
+			"parent": "source-table",
+			"children": [
+				{ "type": "number", "internalId": "source-table-group-2-item-3", "label": "customerId", "defaultValue": "", "parent": "source-table-group-2" }
+			]
+		},
+		{
+			"type": "object",
+			"internalId": "source-table-group-4",
+			"label": "receipt",
+			"defaultValue": "",
+			"parent": "source-table",
+			"children": [
+				{ "type": "number", "internalId": "source-table-group-4-item-5", "label": "orderId", "defaultValue": "", "parent": "source-table-group-4" }
+			]
+		},
+		{
+			"type": "schematic",
+			"internalId": "source-table-group-6",
+			"label": "productSchema",
+			"defaultValue": "",
+			"parent": "source-table",
+			"children": [
+				{ "type": "string", "internalId": "source-table-group-6-item-7", "label": "productId", "defaultValue": "", "parent": "source-table-group-6" },
+				{ "type": "number", "internalId": "source-table-group-6-item-8", "label": "price", "defaultValue": "", "parent": "source-table-group-6" },
+				{ "type": "string", "internalId": "source-table-group-6-item-9", "label": "currency", "defaultValue": "", "parent": "source-table-group-6" },
+				{
+					"type": "string",
+					"internalId": "source-table-group-6-item-10",
+					"label": "amountOfitems",
+					"defaultValue": "",
+					"parent": "source-table-group-6"
+				},
+				{
+					"type": "object",
+					"internalId": "source-table-group-6-group-11",
+					"label": "dimensions",
+					"defaultValue": "",
+					"parent": "source-table-group-6",
+					"children": [
+						{
+							"type": "number",
+							"internalId": "source-table-group-6-group-11-item-12",
+							"label": "width",
+							"defaultValue": "",
+							"parent": "source-table-group-6-group-11"
+						},
+						{
+							"type": "number",
+							"internalId": "source-table-group-6-group-11-item-13",
+							"label": "height",
+							"defaultValue": "",
+							"parent": "source-table-group-6-group-11"
+						},
+						{
+							"type": "number",
+							"internalId": "source-table-group-6-group-11-item-14",
+							"label": "depth",
+							"defaultValue": "",
+							"parent": "source-table-group-6-group-11"
+						},
+						{
+							"type": "string",
+							"internalId": "source-table-group-6-group-11-item-15",
+							"label": "unit",
+							"defaultValue": "",
+							"parent": "source-table-group-6-group-11"
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "schematic",
+			"internalId": "source-table-group-16",
+			"label": "userSchema",
+			"defaultValue": "",
+			"parent": "source-table",
+			"children": [
+				{ "type": "string", "internalId": "source-table-group-16-item-17", "label": "username", "defaultValue": "", "parent": "source-table-group-16" },
+				{ "type": "string", "internalId": "source-table-group-16-item-18", "label": "email", "defaultValue": "", "parent": "source-table-group-16" },
+				{ "type": "string", "internalId": "source-table-group-16-item-19", "label": "status", "defaultValue": "", "parent": "source-table-group-16" },
+				{
+					"type": "object",
+					"internalId": "source-table-group-16-group-20",
+					"label": "profile",
+					"defaultValue": "",
+					"parent": "source-table-group-16",
+					"children": [
+						{
+							"type": "string",
+							"internalId": "source-table-group-16-group-20-item-21",
+							"label": "firstName",
+							"defaultValue": "",
+							"parent": "source-table-group-16-group-20"
+						},
+						{
+							"type": "string",
+							"internalId": "source-table-group-16-group-20-item-22",
+							"label": "lastName",
+							"defaultValue": "",
+							"parent": "source-table-group-16-group-20"
+						},
+						{
+							"type": "integer",
+							"internalId": "source-table-group-16-group-20-item-23",
+							"label": "birthYear",
+							"defaultValue": "",
+							"parent": "source-table-group-16-group-20"
+						}
+					]
+				}
+			]
+		}
+	]
+}

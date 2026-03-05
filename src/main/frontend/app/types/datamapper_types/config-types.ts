@@ -69,6 +69,7 @@ export interface MappingFile {
   sourceType: string
   targetType: string
   targetStructure: Target[]
+  sourceStructure: Property[]
 }
 
 export interface MutationTypeInput {

@@ -1,21 +1,36 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <source>
-<firstName>John</firstName>
-<lastName>Doe</lastName>
-<username>johndoe92</username>
-<email>john.doe@example.com</email>
-<age>25</age>
-<role>allowed</role>
+    <totalPrice>199.99</totalPrice>
+    <amountPaid>199.99</amountPaid>
 
-<orderId>12345</orderId>
-<totalPrice>199.99</totalPrice>
-<paymentStatus>paid</paymentStatus>
+    <customer>
+        <customerId>1</customerId>
+    </customer>
 
-<productId>id123</productId>
-<price>49.99</price>
-<stock>10</stock>
+    <receipt>
+        <orderId>12345</orderId>
+    </receipt>
 
-<width>50</width>
-<height>100</height>
-<depth>30</depth>
+    <productSchema>
+        <productId>id123</productId>
+        <price>49.99</price>
+        <currency>USD</currency>
+        <amountOfitems>10</amountOfitems>
+        <dimensions>
+            <width>50</width>
+            <height>100</height>
+            <depth>30</depth>
+            <unit>cm</unit>
+        </dimensions>
+    </productSchema>
+
+    <userSchema>
+        <username>johndoe92</username>
+        <email>john.doe@example.com</email>
+        <status>banned</status>
+        <profile>
+            <firstName>John</firstName>
+            <lastName>Doe</lastName>
+            <birthYear>2030</birthYear>
+        </profile>
+    </userSchema>
 </source>

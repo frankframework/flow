@@ -9,12 +9,12 @@
     </user>
     <order>
         <orderId>12345</orderId>
-        <totalPrice>49.99</totalPrice>
-        <paid>false</paid>
+        <totalPrice>49.99USD</totalPrice>
+        <paid>true</paid>
         <receipt>
             <productId>Product123</productId>
             <price>199.99</price>
-            <dimension>50, 100, 30</dimension>
+            <dimension>50cm, 100cm, 30cm</dimension>
         </receipt>
     </order>
 </orders>

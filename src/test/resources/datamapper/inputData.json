@@ -1,18 +1,32 @@
 {
-    "firstName": "John",
-    "lastName": "Doe",
-    "username": "johndoe92",
-    "email": "john.doe@example.com",
-    "age": 25,
-    "role": "allowed",
-    "orderId": "12345",
     "totalPrice": 199.99,
-    "paymentStatus": "paid",
-    "productId": "id123",
-    "price": 49.99,
-    "stock": 10,
-    "width": 50,
-    "height": 100,
-    "depth": 30
-
+    "amountPaid": 199.99,
+    "customer": {
+        "customerId": 1
+    },
+    "receipt": {
+        "orderId": 12345
+    },
+    "productSchema": {
+        "productId": "id123",
+        "price": 49.99,
+        "currency": "USD",
+        "amountOfitems": "10",
+        "dimensions": {
+            "width": 50,
+            "height": 100,
+            "depth": 30,
+            "unit": "cm"
+        }
+    },
+    "userSchema": {
+        "username": "johndoe92",
+        "email": "john.doe@example.com",
+        "status": "banned",
+        "profile": {
+            "firstName": "John",
+            "lastName": "Doe",
+            "birthYear": "2030"
+        }
+    }
 }

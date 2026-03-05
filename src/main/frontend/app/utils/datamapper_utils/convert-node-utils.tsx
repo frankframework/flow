@@ -12,10 +12,20 @@ export function convertMappingConfigToMappingFile(mappingConfig: MappingListConf
       'targetOnly',
       mappings,
     ),
+    sourceStructure: convertNodesToProperty(
+      mappingConfig.propertyData.nodes as FlowNode[],
+      'source-table',
+      'sourceOnly',
+    ),
   }
 }
 
-function convertNodesToProperty(nodes: FlowNode[], parentId: string, basicNode: string, mappings: Mapping[]): Target[] {
+function convertNodesToProperty(
+  nodes: FlowNode[],
+  parentId: string,
+  basicNode: string,
+  mappings?: Mapping[],
+): Target[] {
   return nodes
     .filter(
       (node) =>
@@ -25,11 +35,12 @@ function convertNodesToProperty(nodes: FlowNode[], parentId: string, basicNode: 
     .map((node) => {
       let property = nodeToProperty(node as PropertyNode)
 
-      if (node.type === 'labeledGroup') {
+      if (node.type === 'labeledGroup' || node.type === 'extraSourceNode') {
         property.children = convertNodesToProperty(nodes, node.id, basicNode, mappings)
       }
       let targetProperty = property as Target
-      targetProperty.mapping = mappings.findLast((mapping) => mapping.target.internalId == property.internalId)
+      if (mappings)
+        targetProperty.mapping = mappings.findLast((mapping) => mapping.target.internalId == property.internalId)
       return property
     })
 }

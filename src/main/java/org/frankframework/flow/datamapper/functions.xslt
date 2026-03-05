@@ -115,9 +115,9 @@
                     <xsl:attribute name="test">contains($text, $search)</xsl:attribute>
                     <xsl:element name="xsl:sequence">
                         <xsl:attribute name="select">
-                            concat(substring-before($text, $search),
-                            $replace,
-                            datamapper:Replace(substring-after($text, $search), $search, $replace))
+                            <xsl:text>concat(substring-before($text, $search), </xsl:text>
+                            <xsl:text>$replace, </xsl:text>
+                            <xsl:text>datamapper:Replace(substring-after($text, $search), $search, $replace))</xsl:text>
                         </xsl:attribute>
                     </xsl:element>
                 </xsl:element>
@@ -161,8 +161,8 @@
                             </xsl:element>
                             <xsl:element name="xsl:value-of">
                                 <xsl:attribute name="select">
-                                    concat('&quot;', name(), '&quot;:',
-                                    if ($value = '') then 'null' else concat('&quot;', $value, '&quot;'))
+                                    <xsl:text>concat('&quot;', name(), '&quot;:',</xsl:text>
+                                    <xsl:text> if ($value = '') then 'null' else concat('&quot;', $value, '&quot;'))</xsl:text>
                                 </xsl:attribute>
                             </xsl:element>
                             <xsl:element name="xsl:if">
@@ -217,8 +217,8 @@
                                             </xsl:element>
                                             <xsl:element name="xsl:value-of">
                                                 <xsl:attribute name="select">
-                                                    concat('&quot;', $name, '&quot;:',
-                                                    if ($value = '') then 'null' else concat('&quot;', $value, '&quot;'))
+                                                    <xsl:text>concat('&quot;', $name, '&quot;:',</xsl:text>
+                                                    <xsl:text> if ($value = '') then 'null' else concat('&quot;', $value, '&quot;'))</xsl:text>
                                                 </xsl:attribute>
                                             </xsl:element>
                                         </xsl:element>
@@ -227,7 +227,7 @@
                                         <xsl:element name="xsl:otherwise">
                                             <xsl:element name="xsl:value-of">
                                                 <xsl:attribute name="select">
-                                                    concat('&quot;', $name, '&quot;:', datamapper:xml-to-json($child/*))
+                                                    <xsl:text>concat('&quot;', $name, '&quot;:', datamapper:xml-to-json($child/*))</xsl:text>
                                                 </xsl:attribute>
                                             </xsl:element>
                                         </xsl:element>
@@ -238,18 +238,18 @@
                                 <xsl:element name="xsl:otherwise">
                                     <xsl:element name="xsl:value-of">
                                         <xsl:attribute name="select">
-                                            concat('&quot;', $name, '&quot;:[',
-                                            string-join(
-                                            for $c in $group
-                                            return
-                                            if (not($c/*)) then
-                                            let $val := normalize-space($c) return
-                                            if ($val = '') then 'null' else concat('&quot;', $val, '&quot;')
-                                            else
-                                            datamapper:xml-to-json($c/*)
-                                            , ','
-                                            ), ']'
-                                            )
+                                            <xsl:text>concat('&quot;', $name, '&quot;:[', </xsl:text>
+                                            <xsl:text>string-join( </xsl:text>
+                                            <xsl:text>for $c in $group </xsl:text>
+                                            <xsl:text>return </xsl:text>
+                                            <xsl:text>if (not($c/*)) then </xsl:text>
+                                            <xsl:text>let $val := normalize-space($c) return </xsl:text>
+                                            <xsl:text>if ($val = '') then 'null' else concat('&quot;', $val, '&quot;') </xsl:text>
+                                            <xsl:text>else </xsl:text>
+                                            <xsl:text>datamapper:xml-to-json($c/*) </xsl:text>
+                                            <xsl:text>, ',' </xsl:text>
+                                            <xsl:text>), ']' </xsl:text>
+                                            <xsl:text>) </xsl:text>
                                         </xsl:attribute>
                                     </xsl:element>
                                 </xsl:element>
@@ -258,7 +258,9 @@
 
                             <xsl:element name="xsl:if">
                                 <xsl:attribute name="test">position() != last()</xsl:attribute>
-                                <xsl:element name="xsl:text">,</xsl:element>
+                                <xsl:element name="xsl:text">
+                                    <xsl:text>,</xsl:text>
+                                </xsl:element>
                             </xsl:element>
 
                         </xsl:element>
