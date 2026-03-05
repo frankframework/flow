@@ -1,4 +1,4 @@
-import type { Child, Filters } from '@frankframework/doc-library-react'
+import type { Child, Filters } from '@frankframework/doc-library-core'
 
 export interface FrankElement {
   children?: Child[]

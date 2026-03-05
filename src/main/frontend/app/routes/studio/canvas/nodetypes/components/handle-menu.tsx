@@ -1,7 +1,7 @@
 import React from 'react'
 import HandleMenuItem from './handle-menu-item'
 import { translateHandleTypeToColour } from './handle'
-import type { ElementProperty } from '@frankframework/doc-library-react'
+import type { ElementProperty } from '@frankframework/doc-library-core'
 import { useHandleTypes } from '~/hooks/use-handle-types'
 
 interface HandleMenuProperties {
