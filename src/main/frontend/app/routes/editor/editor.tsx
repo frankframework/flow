@@ -11,7 +11,7 @@ import EditorFileStructure from '~/components/file-structure/editor-file-structu
 import useEditorTabStore from '~/stores/editor-tab-store'
 import EditorTabs from '~/components/tabs/editor-tabs'
 import type { ElementDetails, Attribute, EnumValue } from '~/types/ff-doc.types'
-import { useFrankDoc } from '~/providers/frankdoc-provider'
+import { useFFDoc } from '@frankframework/doc-library-react'
 import { fetchConfiguration, saveConfiguration } from '~/services/configuration-service'
 import RulerCrossPenIcon from '/icons/solar/Ruler Cross Pen.svg?react'
 import { openInStudio } from '~/actions/navigationActions'
@@ -31,7 +31,7 @@ const SAVED_DISPLAY_DURATION = 2000
 
 export default function CodeEditor() {
   const theme = useTheme()
-  const { elements } = useFrankDoc()
+  const { elements } = useFFDoc()
   const project = useProjectStore.getState().project
   const [activeTabFilePath, setActiveTabFilePath] = useState<string>(useEditorTabStore.getState().activeTabFilePath)
   const [xmlContent, setXmlContent] = useState<string>('')

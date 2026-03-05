@@ -1,9 +1,9 @@
 import { useMemo, useState, type ChangeEvent } from 'react'
 import useFlowStore from '~/stores/flow-store'
 import useNodeContextStore from '~/stores/node-context-store'
-import { useFrankDoc } from '~/providers/frankdoc-provider'
+import { useFFDoc } from '@frankframework/doc-library-react'
 import Button from '../inputs/button'
-import type { Elements, FFDocJson } from '@frankframework/ff-doc'
+import type { Elements, FFDocJson } from '@frankframework/doc-library-core'
 
 interface CreateNodeModalProperties {
   isOpen: boolean
@@ -41,7 +41,7 @@ function CreateNodeModal({
   positions,
   sourceInfo,
 }: Readonly<CreateNodeModalProperties>) {
-  const { elements, ffDoc } = useFrankDoc()
+  const { elements, ffDoc } = useFFDoc()
   const { setAttributes, setNodeId } = useNodeContextStore((state) => state)
   const nodes = useFlowStore((state) => state.nodes)
   const [search, setSearch] = useState('')

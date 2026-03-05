@@ -1,9 +1,9 @@
 /**
  * Shared FF Doc type definitions
- * Extracted from @frankframework/ff-doc using TypeScript utility types
+ * Extracted from @frankframework/doc-library-react using TypeScript utility types
  */
 
-import { useFFDoc } from '@frankframework/ff-doc/react'
+import { useFFDoc } from '@frankframework/doc-library-react'
 
 type FFDocReturn = ReturnType<typeof useFFDoc>
 export type Elements = NonNullable<FFDocReturn['elements']>
