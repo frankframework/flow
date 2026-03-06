@@ -21,6 +21,7 @@ import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
 import net.sf.saxon.s9api.*;
 import org.frankframework.flow.filesystem.FileSystemStorage;
+import org.frankframework.flow.filetree.FileTreeService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,11 +32,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.w3c.dom.Document;
 
 @ExtendWith(MockitoExtension.class)
-public class MappingGeneratorServiceTest {
+public class DatamapperGeneratorServiceTest {
     @Mock
     private FileSystemStorage fileSystemStorage;
+    @Mock
+    private FileTreeService fileTreeService;
 
-    private MappingGeneratorService service;
+    private DatamapperGeneratorService service;
     private Processor processor;
     private XsltCompiler compiler;
 
@@ -53,7 +56,7 @@ public class MappingGeneratorServiceTest {
         stubToAbsolutePath();
         tempProjectRoot = Files.createTempDirectory("flow_unit_test");
 
-        service = new MappingGeneratorService(fileSystemStorage);
+        service = new DatamapperGeneratorService(fileSystemStorage,fileTreeService);
         processor = new Processor(false);
         compiler = processor.newXsltCompiler();
     }

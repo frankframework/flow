@@ -1,0 +1,26 @@
+package org.frankframework.flow.datamapper;
+
+import java.io.IOException;
+import net.sf.saxon.s9api.SaxonApiException;
+import org.frankframework.flow.configuration.ConfigurationNotFoundException;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/datamapper/")
+public class DatamapperGeneratorController {
+    private final DatamapperGeneratorService datamapperGeneratorService;
+
+    public DatamapperGeneratorController(DatamapperGeneratorService datamapperGeneratorService)
+            throws IOException, ConfigurationNotFoundException, SaxonApiException {
+        this.datamapperGeneratorService = datamapperGeneratorService;
+    }
+
+    @PutMapping("/{projectName}/generate")
+    public ResponseEntity<Void> updateConfiguration(@PathVariable String projectName, @RequestBody String content)
+            throws ConfigurationNotFoundException, IOException, SaxonApiException {
+
+        datamapperGeneratorService.generateFromProject(projectName, content);
+        return ResponseEntity.ok().build();
+    }
+}
