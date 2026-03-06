@@ -16,6 +16,8 @@ import MappingTable from './mapping-table'
 import { ReactFlowProvider } from '@xyflow/react'
 import { FileProvider } from '~/stores/datamapper_state/schemaQueue/schema-queue-context'
 import Button from '~/components/inputs/button'
+import { useProjectStore } from '~/stores/project-store'
+import { generateDatamapperXSLT } from '~/services/datamapper-generation-service'
 
 export default function Root() {
   const [route, setRoute] = useState('Initialize')
@@ -25,6 +27,7 @@ export default function Root() {
     const stored = localStorage.getItem(FLOW_KEY)
     return stored ? (JSON.parse(stored) as MappingListConfig) : DEFAULT_MAPPING_LIST_CONFIG
   }
+  const project = useProjectStore.getState().project
 
   const [mappingListConfig, dispatchMappingListConfig] = useReducer(
     mappingListConfigReducer,
@@ -65,11 +68,17 @@ export default function Root() {
             Test External node log
           </button>
           <button
-            className="border-border hover:bg-hover active:bg-selected hidden w-48 rounded-md border bg-red-500 px-4 py-2 text-sm"
+            className="border-border hover:bg-hover active:bg-selected w-48 rounded-md border bg-red-500 px-4 py-2 text-sm"
             onClick={() => {
               const dataString = `data:text/json;charset=utf-8,${encodeURIComponent(
                 JSON.stringify(convertMappingConfigToMappingFile(mappingListConfig)),
               )}`
+              if (project) {
+                generateDatamapperXSLT(
+                  project?.name,
+                  JSON.stringify(convertMappingConfigToMappingFile(mappingListConfig)),
+                )
+              }
               const link = document.createElement('a')
               link.href = dataString
               link.download = 'mapping-file.json'

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<orders>
+    <user>
+        <fullname>John  Doe</fullname>
+        <username>johndoe92</username>
+        <email>john.doe@example.com</email>
+        <isAdult>false</isAdult>
+        <status>false</status>
+    </user>
+    <order>
+        <orderId>12345</orderId>
+        <totalPrice>49.99USD</totalPrice>
+        <paid>true</paid>
+        <receipt>
+            <productId>Product123</productId>
+            <price>199.99</price>
+            <dimension>50cm, 100cm, 30cm</dimension>
+        </receipt>
+    </order>
+</orders>
