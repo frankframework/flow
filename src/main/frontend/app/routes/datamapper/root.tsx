@@ -16,21 +16,36 @@ import MappingTable from './mapping-table'
 import { ReactFlowProvider } from '@xyflow/react'
 import { FileProvider } from '~/stores/datamapper_state/schemaQueue/schema-queue-context'
 import Button from '~/components/inputs/button'
+import { saveDatamapperConfiguration, fetchDatamapperConfiguration } from '~/services/datamapper-service'
+import { useProjectStore } from '~/stores/project-store'
 
 export default function Root() {
   const [route, setRoute] = useState('Initialize')
   const routes = ['Initialize', 'Properties', 'Mappings', 'Advanced']
-
-  const initMappingListConfig = (): MappingListConfig => {
-    const stored = localStorage.getItem(FLOW_KEY)
-    return stored ? (JSON.parse(stored) as MappingListConfig) : DEFAULT_MAPPING_LIST_CONFIG
-  }
+  const project = useProjectStore.getState().project
 
   const [mappingListConfig, dispatchMappingListConfig] = useReducer(
     mappingListConfigReducer,
-    undefined,
-    initMappingListConfig,
+    DEFAULT_MAPPING_LIST_CONFIG,
   )
+
+  useEffect(() => {
+    const loadConfig = async () => {
+      if (project) {
+        const config = await fetchDatamapperConfiguration(project.name)
+        console.dir(config)
+        console.log('test')
+
+        dispatchMappingListConfig({
+          type: 'IMPORT_CONFIG',
+          payload: config,
+        })
+      }
+    }
+
+    loadConfig()
+  }, [])
+
   const handleManualConfigExport = () => {
     const dataString = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(mappingListConfig))}`
     const link = document.createElement('a')
@@ -42,8 +57,12 @@ export default function Root() {
   const [confirmed, setConfirmed] = useState<boolean>(!!localStorage.getItem(FLOW_KEY))
 
   useEffect(() => {
-    const timeout = setTimeout(() => {
+    const timeout = setTimeout(async () => {
       localStorage.setItem(FLOW_KEY, JSON.stringify(mappingListConfig))
+      if (!project || !mappingListConfig.formatTypes.source || !mappingListConfig.formatTypes.target) {
+        return
+      }
+      await saveDatamapperConfiguration(project?.name, JSON.stringify(mappingListConfig))
     }, 300)
     return () => clearTimeout(timeout)
   }, [mappingListConfig])
