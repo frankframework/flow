@@ -100,7 +100,7 @@ public class DatamapperConfigServiceTest {
         stubGetConfigurationsDirectoryTree();
 
         Path datamapperDir = tempProjectRoot.resolve("datamapper");
-        if(!Files.isDirectory(datamapperDir)) {
+        if (!Files.isDirectory(datamapperDir)) {
             Files.createDirectories(datamapperDir);
         }
         Path file = datamapperDir.resolve("configuration.json");
@@ -130,7 +130,7 @@ public class DatamapperConfigServiceTest {
         stubGetConfigurationsDirectoryTree();
 
         Path datamapperDir = tempProjectRoot.resolve("datamapper");
-        if(!Files.isDirectory(datamapperDir)) {
+        if (!Files.isDirectory(datamapperDir)) {
             Files.createDirectories(datamapperDir);
         }
         Path file = datamapperDir.resolve("configuration.json");
@@ -153,7 +153,7 @@ public class DatamapperConfigServiceTest {
         stubGetConfigurationsDirectoryTree();
 
         Path datamapperDir = tempProjectRoot.resolve("datamapper");
-        if(!Files.isDirectory(datamapperDir)) {
+        if (!Files.isDirectory(datamapperDir)) {
             Files.createDirectories(datamapperDir);
         }
         Path file = datamapperDir.resolve("configuration.json");
