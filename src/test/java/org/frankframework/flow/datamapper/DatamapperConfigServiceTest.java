@@ -98,7 +98,7 @@ public class DatamapperConfigServiceTest {
         stubReadFile();
         stubGetConfigurationsDirectoryTree();
 
-        Path file = tempProjectRoot.resolve("datamapper\\configuration.json");
+        Path file = tempProjectRoot.resolve("datamapper/configuration.json");
         String content = "<test>data</test>";
         Files.createDirectory(tempProjectRoot.resolve("datamapper"));
         Files.writeString(file, content, StandardCharsets.UTF_8);
@@ -124,7 +124,7 @@ public class DatamapperConfigServiceTest {
         stubWriteFile();
         stubGetConfigurationsDirectoryTree();
 
-        Path file = tempProjectRoot.resolve("datamapper\\configuration.json");
+        Path file = tempProjectRoot.resolve("datamapper/configuration.json");
         String content = "<test>data</test>";
         Files.createDirectory(tempProjectRoot.resolve("datamapper"));
         Files.writeString(file, content, StandardCharsets.UTF_8);
@@ -143,7 +143,7 @@ public class DatamapperConfigServiceTest {
         stubWriteFile();
         stubGetConfigurationsDirectoryTree();
 
-        Path file = tempProjectRoot.resolve("datamapper\\configuration.json");
+        Path file = tempProjectRoot.resolve("datamapper/configuration.json");
 
         //        Files.createDirectory(tempProjectRoot.resolve("datamapper"));
 
