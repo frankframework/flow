@@ -5,30 +5,72 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
 import org.frankframework.flow.filesystem.FileSystemStorage;
-import org.frankframework.flow.project.ProjectNotFoundException;
+import org.frankframework.flow.filetree.FileTreeService;
 import org.springframework.stereotype.Service;
 
 @Service
 public class DatamapperConfigService {
     private final FileSystemStorage fileSystemStorage;
+    private final FileTreeService fileTreeService;
 
-    public DatamapperConfigService(FileSystemStorage fileSystemStorage) {
+    public DatamapperConfigService(FileSystemStorage fileSystemStorage, FileTreeService fileTreeService) {
         this.fileSystemStorage = fileSystemStorage;
+        this.fileTreeService = fileTreeService;
     }
 
-    public void updateFileContent(String filepath, String newContent)
-            throws IOException, ProjectNotFoundException, ConfigurationNotFoundException {
-
-        Path filePath = fileSystemStorage.toAbsolutePath(filepath);
-
-        if (!Files.exists(filePath)) {
-            Files.createFile(filePath);
+    private String getConfigFilePath(String projectName) throws ConfigurationNotFoundException {
+        try {
+            String configFilePath = fileTreeService.getConfigurationsDirectoryTree(projectName).getPath()
+                    + "\\datamapper\\configuration.json";
+            return configFilePath;
         }
-
-        if (Files.isDirectory(filePath)) {
-            throw new IllegalArgumentException("Cannot update a directory: " + filepath);
-        }
-
-        fileSystemStorage.writeFile(filepath, newContent);
+        catch (IOException e){
+            throw new ConfigurationNotFoundException(
+                    "Failed to resolve configuration file path for project: " + projectName);
+            }
     }
-}
+
+    public void updateFileContent(String projectName, String newContent) throws ConfigurationNotFoundException {
+        Path absoluteFilePath;
+
+        try {
+            absoluteFilePath = fileSystemStorage.toAbsolutePath(getConfigFilePath(projectName));
+            String datamapperFilePath = fileTreeService.getConfigurationsDirectoryTree(projectName).getPath() + "\\datamapper";
+
+            if(!Files.isDirectory(Path.of(datamapperFilePath))){
+                Files.createDirectory(Path.of(datamapperFilePath));
+            }
+        } catch (IOException e) {
+            throw new ConfigurationNotFoundException(
+                    "Failed to resolve configuration file path for project: " + projectName);
+        }
+
+        if (Files.isDirectory(absoluteFilePath)) {
+            throw new ConfigurationNotFoundException(
+                    "Cannot update configuration because path is a directory: " + absoluteFilePath);
+        }
+
+        try {
+            //TODO MAKE SURE DATAMAPPER FOLDER EXISTS
+            if (Files.notExists(absoluteFilePath)) {
+                fileSystemStorage.createFile(String.valueOf(absoluteFilePath));
+            }
+
+            fileSystemStorage.writeFile(absoluteFilePath.toString(), newContent);
+
+        } catch (IOException e) {
+            throw new ConfigurationNotFoundException("Failed to update configuration file: " + absoluteFilePath);
+        }
+    }
+
+    public String getConfig(String projectName) throws ConfigurationNotFoundException {
+        try {
+            String filePath = this.getConfigFilePath(projectName);
+            return fileSystemStorage.readFile(filePath);
+        }catch (IOException e){
+            throw new ConfigurationNotFoundException(
+                    "Failed to resolve configuration file path for project: " + projectName);
+        }
+        }
+    }
+
