@@ -21,10 +21,8 @@ public class DatamapperConfigController {
     public ResponseEntity<String> getConfiguration(@PathVariable String projectName)
             throws ConfigurationNotFoundException, IOException {
 
-
-            String content = datamapperConfigService.getConfig(projectName);
-            return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(content);
-
+        String content = datamapperConfigService.getConfig(projectName);
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(content);
     }
 
     @PutMapping("/{projectName}/configuration")

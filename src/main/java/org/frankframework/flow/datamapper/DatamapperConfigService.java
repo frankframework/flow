@@ -20,14 +20,14 @@ public class DatamapperConfigService {
 
     private String getConfigFilePath(String projectName) throws ConfigurationNotFoundException {
         try {
-            String configFilePath = fileTreeService.getConfigurationsDirectoryTree(projectName).getPath()
-                    + "\\datamapper\\configuration.json";
+            String configFilePath =
+                    fileTreeService.getConfigurationsDirectoryTree(projectName).getPath()
+                            + "\\datamapper\\configuration.json";
             return configFilePath;
-        }
-        catch (IOException e){
+        } catch (IOException e) {
             throw new ConfigurationNotFoundException(
                     "Failed to resolve configuration file path for project: " + projectName);
-            }
+        }
     }
 
     public void updateFileContent(String projectName, String newContent) throws ConfigurationNotFoundException {
@@ -35,9 +35,10 @@ public class DatamapperConfigService {
 
         try {
             absoluteFilePath = fileSystemStorage.toAbsolutePath(getConfigFilePath(projectName));
-            String datamapperFilePath = fileTreeService.getConfigurationsDirectoryTree(projectName).getPath() + "\\datamapper";
+            String datamapperFilePath =
+                    fileTreeService.getConfigurationsDirectoryTree(projectName).getPath() + "\\datamapper";
 
-            if(!Files.isDirectory(Path.of(datamapperFilePath))){
+            if (!Files.isDirectory(Path.of(datamapperFilePath))) {
                 Files.createDirectory(Path.of(datamapperFilePath));
             }
         } catch (IOException e) {
@@ -51,7 +52,7 @@ public class DatamapperConfigService {
         }
 
         try {
-            //TODO MAKE SURE DATAMAPPER FOLDER EXISTS
+            // TODO MAKE SURE DATAMAPPER FOLDER EXISTS
             if (Files.notExists(absoluteFilePath)) {
                 fileSystemStorage.createFile(String.valueOf(absoluteFilePath));
             }
@@ -67,10 +68,9 @@ public class DatamapperConfigService {
         try {
             String filePath = this.getConfigFilePath(projectName);
             return fileSystemStorage.readFile(filePath);
-        }catch (IOException e){
+        } catch (IOException e) {
             throw new ConfigurationNotFoundException(
                     "Failed to resolve configuration file path for project: " + projectName);
         }
-        }
     }
-
+}
