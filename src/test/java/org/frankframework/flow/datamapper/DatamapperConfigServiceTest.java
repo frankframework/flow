@@ -46,6 +46,7 @@ public class DatamapperConfigServiceTest {
 
     @AfterEach
     public void tearDown() throws IOException {
+
         if (tempProjectRoot != null && Files.exists(tempProjectRoot)) {
             try (var stream = Files.walk(tempProjectRoot)) {
                 stream.sorted(Comparator.reverseOrder()).forEach(p -> {
@@ -98,9 +99,13 @@ public class DatamapperConfigServiceTest {
         stubReadFile();
         stubGetConfigurationsDirectoryTree();
 
-        Path file = tempProjectRoot.resolve("datamapper/configuration.json");
+        Path datamapperDir = tempProjectRoot.resolve("datamapper");
+        if(!Files.isDirectory(datamapperDir)) {
+            Files.createDirectories(datamapperDir);
+        }
+        Path file = datamapperDir.resolve("configuration.json");
         String content = "<test>data</test>";
-        Files.createDirectory(tempProjectRoot.resolve("datamapper"));
+
         Files.writeString(file, content, StandardCharsets.UTF_8);
 
         String result = datamapperConfigService.getConfig(TEST_PROJECT_NAME);
@@ -124,9 +129,13 @@ public class DatamapperConfigServiceTest {
         stubWriteFile();
         stubGetConfigurationsDirectoryTree();
 
-        Path file = tempProjectRoot.resolve("datamapper/configuration.json");
+        Path datamapperDir = tempProjectRoot.resolve("datamapper");
+        if(!Files.isDirectory(datamapperDir)) {
+            Files.createDirectories(datamapperDir);
+        }
+        Path file = datamapperDir.resolve("configuration.json");
         String content = "<test>data</test>";
-        Files.createDirectory(tempProjectRoot.resolve("datamapper"));
+
         Files.writeString(file, content, StandardCharsets.UTF_8);
 
         String newContent = "new content";
@@ -143,7 +152,11 @@ public class DatamapperConfigServiceTest {
         stubWriteFile();
         stubGetConfigurationsDirectoryTree();
 
-        Path file = tempProjectRoot.resolve("datamapper/configuration.json");
+        Path datamapperDir = tempProjectRoot.resolve("datamapper");
+        if(!Files.isDirectory(datamapperDir)) {
+            Files.createDirectories(datamapperDir);
+        }
+        Path file = datamapperDir.resolve("configuration.json");
 
         //        Files.createDirectory(tempProjectRoot.resolve("datamapper"));
 
