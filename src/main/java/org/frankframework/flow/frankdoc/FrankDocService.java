@@ -7,13 +7,8 @@ import org.springframework.web.client.RestTemplate;
 @Service
 @Slf4j
 public class FrankDocService {
-    private static final String FRANKDOC_JSON_URL = "https://frankdoc.frankframework.org/js/frankdoc.json";
-
-    private final RestTemplate restTemplate;
-
-    public FrankDocService(RestTemplate restTemplate) {
-        this.restTemplate = restTemplate;
-    }
+    private final String FRANKDOC_JSON_URL = "https://frankdoc.frankframework.org/js/frankdoc.json";
+    private final RestTemplate restTemplate = new RestTemplate();
 
     /**
      * Fetches the FrankDoc JSON from the external URL.
