@@ -237,7 +237,7 @@
 						<trimTrailingWhitespace/>
 						<endWithNewline/>
 						<indent>
-							<spaces>true</spaces>
+							<tabs>true</tabs>
 							<spacesPerTab>4</spacesPerTab>
 						</indent>
 						<palantirJavaFormat/>
