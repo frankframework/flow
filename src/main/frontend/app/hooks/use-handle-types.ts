@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import type { ElementProperty } from '@frankframework/ff-doc'
+import type { ElementProperty } from '@frankframework/doc-library-core'
 
 export function useHandleTypes(typesAllowed?: Record<string, ElementProperty>) {
   return useMemo(() => {

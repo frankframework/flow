@@ -7,10 +7,10 @@ import {
   type Node,
   type OnConnectStart,
   type OnConnectEnd,
-  Panel,
   ReactFlow,
   ReactFlowProvider,
   useReactFlow,
+  useUpdateNodeInternals,
 } from '@xyflow/react'
 import Dagre from '@dagrejs/dagre'
 import '@xyflow/react/dist/style.css'
@@ -30,9 +30,11 @@ import { exportFlowToXml } from '~/routes/studio/flow-to-xml-parser'
 import useNodeContextStore from '~/stores/node-context-store'
 import CreateNodeModal from '~/components/flow/create-node-modal'
 import { useProjectStore } from '~/stores/project-store'
-import { saveAdapter } from '~/services/adapter-service'
+import { fetchConfiguration, saveConfiguration } from '~/services/configuration-service'
 import { cloneWithRemappedIds } from '~/utils/flow-utils'
-import { showErrorToast, showSuccessToast } from '~/components/toast'
+import { showErrorToast } from '~/components/toast'
+import clsx from 'clsx'
+import { useSettingsStore } from '~/stores/settings-store'
 
 export type FlowNode = FrankNodeType | ExitNode | StickyNote | GroupNode | Node
 
@@ -51,14 +53,30 @@ const selector = (state: FlowState) => ({
   onReconnect: state.onReconnect,
 })
 
+type SaveStatus = 'idle' | 'saving' | 'saved'
+const SAVED_DISPLAY_DURATION = 2000
+
 function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b: boolean) => void }>) {
   const [loading, setLoading] = useState(false)
-  const { isEditing, setIsEditing, setParentId, setDraggedName } = useNodeContextStore(
+  const {
+    isEditing,
+    isDirty,
+    setIsEditing,
+    setIsNewNode,
+    setParentId,
+    setChildParentId,
+    setDraggedName,
+    setEditingSubtype,
+  } = useNodeContextStore(
     useShallow((s) => ({
       isEditing: s.isEditing,
+      isDirty: s.isDirty,
       setIsEditing: s.setIsEditing,
+      setIsNewNode: s.setIsNewNode,
       setParentId: s.setParentId,
+      setChildParentId: s.setChildParentId,
       setDraggedName: s.setDraggedName,
+      setEditingSubtype: s.setEditingSubtype,
     })),
   )
   const [showModal, setShowModal] = useState(false)
@@ -68,6 +86,10 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
     edges: Edge[]
   } | null>(null)
 
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
   const nodeTypes = {
     frankNode: FrankNodeComponent,
     exitNode: ExitNodeComponent,
@@ -75,6 +97,7 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
     groupNode: GroupNodeComponent,
   }
   const edgeTypes = { frankEdge: FrankEdgeComponent }
+  const updateNodeInternals = useUpdateNodeInternals()
   const reactFlow = useReactFlow()
   const reactFlowRef = useRef(reactFlow)
   reactFlowRef.current = reactFlow
@@ -83,6 +106,86 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
     useShallow(selector),
   )
   const project = useProjectStore.getState().project
+
+  const saveFlow = useCallback(async () => {
+    const flowData = reactFlowRef.current.toObject()
+    const activeTabKey = useTabStore.getState().activeTab
+    const tabData = useTabStore.getState().getTab(activeTabKey)
+    const configurationPath = tabData?.configurationPath
+    const adapterName = tabData?.name
+    const adapterPosition = tabData?.adapterPosition
+
+    if (!configurationPath || !adapterName || !project) return
+
+    setSaveStatus('saving')
+    try {
+      const fullConfigXml = await fetchConfiguration(project.name, configurationPath)
+      const configDoc = new DOMParser().parseFromString(fullConfigXml, 'text/xml')
+      const allAdapters = [...configDoc.querySelectorAll('Adapter, adapter')]
+
+      const existingAdapter =
+        adapterPosition === undefined
+          ? (allAdapters.find((a) => a.getAttribute('name') === adapterName) ?? null)
+          : (allAdapters[adapterPosition] ?? null)
+
+      if (!existingAdapter) {
+        throw new Error(`Could not find adapter "${adapterName}" at position ${adapterPosition} in configuration`)
+      }
+
+      const existingAdapterXml = new XMLSerializer().serializeToString(existingAdapter)
+
+      const newAdapterXml = await exportFlowToXml(
+        flowData,
+        project.name,
+        configurationPath,
+        adapterName,
+        existingAdapterXml,
+      )
+
+      const newAdapterDoc = new DOMParser().parseFromString(`<root>${newAdapterXml}</root>`, 'text/xml')
+      const newAdapterEl = newAdapterDoc.querySelector('Adapter, adapter')
+      if (!newAdapterEl) throw new Error('Failed to parse generated adapter XML')
+
+      existingAdapter.parentNode!.replaceChild(configDoc.importNode(newAdapterEl, true), existingAdapter)
+
+      const updatedConfigXml = new XMLSerializer().serializeToString(configDoc).replace(/^<\?xml[^?]*\?>\s*/, '')
+
+      await saveConfiguration(project.name, configurationPath, updatedConfigXml)
+
+      setSaveStatus('saved')
+      if (savedTimerRef.current) clearTimeout(savedTimerRef.current)
+      savedTimerRef.current = setTimeout(() => setSaveStatus('idle'), SAVED_DISPLAY_DURATION)
+    } catch (error) {
+      console.error('Failed to save XML:', error)
+      showErrorToast(`Failed to save XML: ${error instanceof Error ? error.message : error}`)
+      setSaveStatus('idle')
+    }
+  }, [project])
+
+  const autosaveEnabled = useSettingsStore((s) => s.general.autoSave.enabled)
+  const autosaveDelay = useSettingsStore((s) => s.general.autoSave.delayMs)
+
+  const scheduleAutoSave = useCallback(() => {
+    if (!autosaveEnabled) return
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current)
+    autoSaveTimerRef.current = setTimeout(() => {
+      autoSaveTimerRef.current = null
+      saveFlow()
+    }, autosaveDelay)
+  }, [saveFlow, autosaveEnabled, autosaveDelay])
+
+  useEffect(() => {
+    return () => {
+      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current)
+      if (savedTimerRef.current) clearTimeout(savedTimerRef.current)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (nodes.length > 0) {
+      scheduleAutoSave()
+    }
+  }, [nodes, edges, scheduleAutoSave])
 
   const sourceInfoReference = useRef<{
     nodeId: string | null
@@ -337,7 +440,10 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
   }, [])
 
   useEffect(() => {
+    // TODO rework this in the overarching shortcut event system
     const handleKeyDown = (event: KeyboardEvent) => {
+      closeEditNodeContextOnEscape(event)
+
       const tagName = (event.target as HTMLElement).tagName
       const isTyping = ['INPUT', 'TEXTAREA'].includes(tagName) || (event.target as HTMLElement).isContentEditable
 
@@ -355,15 +461,56 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
         pasteSelection()
       }
 
+      if (isCmdOrCtrl && event.key.toLowerCase() === 'z') {
+        event.preventDefault()
+        // Redo if Shift is also pressed, otherwise undo
+        if (event.shiftKey) {
+          useFlowStore.getState().redo()
+        } else {
+          useFlowStore.getState().undo()
+        }
+      }
+
+      // Or redo with Cmd/Ctrl + Y, which is common on Windows
+      if (isCmdOrCtrl && event.key.toLowerCase() === 'y') {
+        event.preventDefault()
+        useFlowStore.getState().redo()
+      }
+
       if (event.key === 'g' || event.key === 'G') {
         event.preventDefault()
         handleGrouping()
+      }
+
+      if (isCmdOrCtrl && event.key.toLowerCase() === 's') {
+        event.preventDefault()
+        saveFlow()
       }
     }
 
     globalThis.addEventListener('keydown', handleKeyDown)
     return () => globalThis.removeEventListener('keydown', handleKeyDown)
-  }, [copySelection, pasteSelection, handleGrouping])
+  }, [copySelection, pasteSelection, handleGrouping, showNodeContextMenu, setIsEditing, setParentId, setChildParentId])
+
+  function closeEditNodeContextOnEscape(event: KeyboardEvent): void {
+    if (event.key !== 'Escape') return
+
+    const { isNewNode, nodeId, parentId } = useNodeContextStore.getState()
+
+    if (isNewNode) {
+      if (parentId) {
+        useFlowStore.getState().deleteChild(parentId, nodeId.toString())
+      } else {
+        useFlowStore.getState().deleteNode(nodeId.toString())
+      }
+      useNodeContextStore.getState().setIsNewNode(false)
+    }
+
+    showNodeContextMenu(false)
+    setIsEditing(false)
+    setParentId(null)
+    setChildParentId(null)
+  }
 
   const groupNodes = (nodesToGroup: FlowNode[], currentNodes: FlowNode[]) => {
     const minX = Math.min(...nodesToGroup.map((node) => node.position.x))
@@ -428,7 +575,11 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
     sourceInfo?: { nodeId: string | null; handleId: string | null; handleType: 'source' | 'target' | null },
   ) {
     showNodeContextMenu(true)
+    setIsNewNode(true)
+    setEditingSubtype(elementName)
     setIsEditing(true)
+    setParentId(null)
+    setChildParentId(null)
 
     const flowStore = useFlowStore.getState()
     const newId = flowStore.getNextNodeId()
@@ -456,7 +607,7 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
     }
 
     flowStore.addNode(newNode)
-    // If there’s a source node, create an edge from it
+    // If there's a source node, create an edge from it
     if (sourceInfo?.nodeId && sourceInfo.handleType === 'source') {
       const newEdge: Edge = {
         id: `e${sourceInfo.nodeId}-${newId}`,
@@ -496,30 +647,26 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
   )
 
   useEffect(() => {
-    function restoreFlowFromTab(tabId: string) {
-      const tabStore = useTabStore.getState()
+    function restoreFlowFromTab(tab: TabData) {
       const flowStore = useFlowStore.getState()
-
-      const tabData = tabStore.getTab(tabId)
-      const flowJson = tabData?.flowJson
+      const flowJson = tab.flowJson
 
       if (flowJson) {
         flowStore.setNodes(Array.isArray(flowJson.nodes) ? flowJson.nodes : [])
         flowStore.setEdges(Array.isArray(flowJson.edges) ? flowJson.edges : [])
         const viewport = flowJson.viewport as { x: number; y: number; zoom: number } | undefined
         flowStore.setViewport(viewport && true ? viewport : { x: 0, y: 0, zoom: 1 })
+
+        flowStore.setHistory(tab.history ?? [])
+        flowStore.setFuture(tab.future ?? [])
       } else {
-        flowStore.setNodes([])
-        flowStore.setEdges([])
-        flowStore.setViewport({ x: 0, y: 0, zoom: 1 })
+        clearFlow()
       }
     }
 
     function clearFlow() {
       const flowStore = useFlowStore.getState()
-      flowStore.setNodes([])
-      flowStore.setEdges([])
-      flowStore.setViewport({ x: 0, y: 0, zoom: 1 })
+      flowStore.resetStore()
     }
 
     async function loadFlowFromTab(tab: TabData) {
@@ -528,16 +675,23 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
       setLoading(true)
       try {
         if (tab.flowJson && Object.keys(tab.flowJson).length > 0) {
-          restoreFlowFromTab(tab.name)
+          restoreFlowFromTab(tab)
         } else if (tab.configurationPath && tab.name) {
           if (!currentProject) return
-          const adapter = await getAdapterFromConfiguration(currentProject.name, tab.configurationPath, tab.name)
+          const adapter = await getAdapterFromConfiguration(
+            currentProject.name,
+            tab.configurationPath,
+            tab.name,
+            tab.adapterPosition,
+          )
           if (!adapter) return
           const adapterJson = await convertAdapterXmlToJson(adapter)
           flowStore.setEdges(adapterJson.edges)
           flowStore.setViewport({ x: 0, y: 0, zoom: 1 })
           const laidOutNodes = layoutGraph(adapterJson.nodes, adapterJson.edges, 'LR')
           flowStore.setNodes(laidOutNodes)
+          flowStore.setHistory([])
+          flowStore.setFuture([])
         }
       } catch (error) {
         console.error('Error loading tab flow:', error)
@@ -562,6 +716,8 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
           ...flowData,
           viewport,
         },
+        history: flowStore.history,
+        future: flowStore.future,
       })
     }
 
@@ -597,23 +753,28 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
     return () => unsubscribe()
   }, [layoutGraph])
 
-  const saveFlow = async () => {
-    const flowData = reactFlow.toObject()
-    const activeTabName = useTabStore.getState().activeTab
-    const configurationPath = useTabStore.getState().getTab(activeTabName)?.configurationPath
+  // Listen for node data changes to trigger internals update for connected edges and handles
+  // Added for undo/redo and direct data changes to ensure handles stay positioned properly
+  useEffect(() => {
+    const unsub = useFlowStore.subscribe(
+      (state) => state.nodes, // selector: subscribe only to nodes
+      (newNodes, oldNodes) => {
+        if (!reactFlowRef.current || !oldNodes) return
 
-    if (!configurationPath || !project) return
+        // Compare old vs new node data
+        for (const newNode of newNodes) {
+          const oldNode = oldNodes.find((oldNode) => oldNode.id === newNode.id)
+          if (!oldNode) continue
 
-    const xmlString = exportFlowToXml(flowData, activeTabName)
+          if (oldNode.data !== newNode.data) {
+            updateNodeInternals(newNode.id)
+          }
+        }
+      },
+    )
 
-    try {
-      await saveAdapter(project.name, xmlString, activeTabName, configurationPath)
-      showSuccessToast('Flow saved successfully!')
-    } catch (error) {
-      console.error('Failed to save XML:', error)
-      showErrorToast(`Failed to save XML: ${error instanceof Error ? error.message : error}`)
-    }
-  }
+    return () => unsub()
+  }, [updateNodeInternals])
 
   return (
     <div
@@ -627,7 +788,36 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
           <div className="border-border h-10 w-10 animate-spin rounded-full border-t-2 border-b-2"></div>
         </div>
       )}
-      {!isEditing || <div className="absolute inset-0 z-50 cursor-not-allowed bg-black/20" />}
+
+      {isEditing && (
+        <div
+          className={clsx('absolute inset-0 z-10', isDirty ? 'cursor-not-allowed bg-black/10' : 'cursor-default')}
+          onClick={() => {
+            if (!isDirty) {
+              showNodeContextMenu(false)
+              setIsEditing(false)
+              setParentId(null)
+              setChildParentId(null)
+            }
+          }}
+        >
+          <div className="pointer-events-none absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-3 rounded bg-black/30 px-3 py-2 text-xs text-white backdrop-blur-sm">
+            <span>
+              <kbd className="rounded border border-white/40 bg-white/15 px-1.5 py-0.5 font-mono text-xs text-white">
+                Esc
+              </kbd>{' '}
+              Discard
+            </span>
+            <span className="opacity-40">|</span>
+            <span>
+              <kbd className="rounded border border-white/40 bg-white/15 px-1.5 py-0.5 font-mono text-xs text-white">
+                Ctrl+Enter
+              </kbd>{' '}
+              Save
+            </span>
+          </div>
+        </div>
+      )}
 
       <ReactFlow
         fitView
@@ -645,20 +835,25 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
         onConnectEnd={handleConnectEnd}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
-        deleteKeyCode={['Delete', 'Backspace']}
+        deleteKeyCode={isEditing ? null : ['Delete', 'Backspace']}
         minZoom={0.2}
       >
         <Controls position="top-left" style={{ color: '#000' }}></Controls>
         <Background variant={BackgroundVariant.Dots} size={3} gap={100}></Background>
-        <Panel position="top-center">
-          <button
-            className="border-border hover:bg-hover bg-background border p-2 hover:cursor-pointer"
-            onClick={saveFlow}
-          >
-            Save XML
-          </button>
-        </Panel>
       </ReactFlow>
+
+      <div className="absolute top-2 left-1/2 -translate-x-1/2">
+        <span
+          className={clsx(
+            'text-muted-foreground rounded bg-black/30 px-2 py-1 text-xs backdrop-blur-sm transition-opacity duration-300',
+            saveStatus === 'idle' ? 'opacity-0' : 'opacity-100',
+          )}
+        >
+          {saveStatus === 'saving' && 'Saving...'}
+          {saveStatus === 'saved' && 'Saved'}
+        </span>
+      </div>
+
       <CreateNodeModal
         isOpen={showModal}
         onClose={() => setShowModal(false)}

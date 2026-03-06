@@ -19,7 +19,10 @@ import {
 
 import useEditorTabStore from '~/stores/editor-tab-store'
 import { useProjectStore } from '~/stores/project-store'
+import { useTreeStore } from '~/stores/tree-store'
 import EditorFilesDataProvider, { type FileNode } from './editor-data-provider'
+import { useFileTreeContextMenu } from './use-file-tree-context-menu'
+import FileTreeDialogs from './file-tree-dialogs'
 
 const TREE_ID = 'editor-files-tree'
 
@@ -29,6 +32,7 @@ function getItemTitle(item: TreeItem<FileNode>): string {
 
 export default function EditorFileStructure() {
   const project = useProjectStore((state) => state.project)
+  const { editorExpandedItems, addEditorExpandedItem, removeEditorExpandedItem } = useTreeStore()
 
   const [searchTerm, setSearchTerm] = useState('')
   const [matchingItemIds, setMatchingItemIds] = useState<string[]>([])
@@ -40,8 +44,38 @@ export default function EditorFileStructure() {
   const setTabData = useEditorTabStore((state) => state.setTabData)
   const setActiveTab = useEditorTabStore((state) => state.setActiveTab)
   const getTab = useEditorTabStore((state) => state.getTab)
+  const removeTab = useEditorTabStore((state) => state.removeTab)
+  const removeTabAndSelectFallback = useEditorTabStore((state) => state.removeTabAndSelectFallback)
 
   const [dataProvider, setDataProvider] = useState<EditorFilesDataProvider | null>(null)
+
+  const onAfterRename = useCallback(
+    (oldPath: string, newName: string) => {
+      const tab = getTab(oldPath)
+      if (tab) {
+        removeTab(oldPath)
+        const lastSep = Math.max(oldPath.lastIndexOf('/'), oldPath.lastIndexOf('\\'))
+        const newPath = oldPath.slice(0, Math.max(0, lastSep + 1)) + newName
+        setTabData(newPath, { ...tab, name: newName, configurationPath: newPath })
+        setActiveTab(newPath)
+      }
+    },
+    [getTab, removeTab, setTabData, setActiveTab],
+  )
+
+  const onAfterDelete = useCallback(
+    (path: string) => {
+      if (getTab(path)) removeTabAndSelectFallback(path)
+    },
+    [getTab, removeTabAndSelectFallback],
+  )
+
+  const ctxMenu = useFileTreeContextMenu({
+    projectName: project?.name,
+    dataProvider,
+    onAfterRename,
+    onAfterDelete,
+  })
 
   useEffect(() => {
     if (!project?.name) return
@@ -50,6 +84,7 @@ export default function EditorFileStructure() {
 
     const initProvider = async () => {
       const provider = new EditorFilesDataProvider(project.name)
+      await provider.init(editorExpandedItems)
 
       if (isMounted) {
         setDataProvider(provider)
@@ -61,7 +96,7 @@ export default function EditorFileStructure() {
     return () => {
       isMounted = false
     }
-  }, [project?.name])
+  }, [editorExpandedItems, project?.name])
 
   useEffect(() => {
     const findMatchingItems = async () => {
@@ -116,13 +151,11 @@ export default function EditorFileStructure() {
       const item = await dataProvider.getTreeItem(itemId)
       if (!item) return
 
-      // Fetch contents and expand folder if folder
+      // Toggle expanded state managed by onExpandItem naturally if needed
       if (item.isFolder) {
-        await dataProvider.loadDirectory(itemId)
         return
       }
 
-      // Load file in editor tab if file
       openFileTab(item.data.path, item.data.name)
     },
     [dataProvider, openFileTab],
@@ -182,14 +215,8 @@ export default function EditorFileStructure() {
     if (!item.isFolder) return null
     const Icon = context.isExpanded ? AltArrowDownIcon : AltArrowRightIcon
 
-    const handleClick = async (event: React.MouseEvent) => {
+    const handleClick = (event: React.MouseEvent) => {
       event.stopPropagation()
-
-      // Only load when expanding
-      if (!context.isExpanded && dataProvider) {
-        await dataProvider.loadDirectory(item.index)
-      }
-
       context.toggleExpandedState()
     }
 
@@ -231,16 +258,19 @@ export default function EditorFileStructure() {
     const isHighlighted = highlightedItemId === item.index
 
     return (
-      <>
+      <div
+        className="flex h-full w-full cursor-pointer items-center"
+        onContextMenu={(e) => ctxMenu.openContextMenu(e, item.index)}
+      >
         {Icon && <Icon className="fill-foreground w-4 flex-shrink-0" />}
         <span
           className={`ml-1 overflow-hidden text-nowrap text-ellipsis ${
-            isHighlighted ? 'outline-foreground-active rounded-sm px-1 outline outline-2' : ''
+            isHighlighted ? 'outline-foreground-active rounded-sm px-1 outline-2' : ''
           }`}
         >
           {highlightedTitle}
         </span>
-      </>
+      </div>
     )
   }
 
@@ -249,9 +279,25 @@ export default function EditorFileStructure() {
   return (
     <>
       <Search onChange={(e) => setSearchTerm(e.target.value)} />
-      <div className="overflow-auto pr-2">
+      <div
+        className="h-full overflow-auto pr-2"
+        onContextMenu={(e) => {
+          void ctxMenu.openContextMenu(e, 'root')
+        }}
+      >
         <UncontrolledTreeEnvironment
-          viewState={{}}
+          viewState={{
+            [TREE_ID]: {
+              expandedItems: editorExpandedItems,
+            },
+          }}
+          onExpandItem={async (item) => {
+            addEditorExpandedItem(String(item.index))
+            if (dataProvider) await dataProvider.loadDirectory(item.index)
+          }}
+          onCollapseItem={(item) => {
+            removeEditorExpandedItem(String(item.index))
+          }}
           getItemTitle={getItemTitle}
           dataProvider={dataProvider}
           onSelectItems={handleItemClickAsync}
@@ -262,6 +308,20 @@ export default function EditorFileStructure() {
           <Tree treeId={TREE_ID} rootItem="root" ref={tree} treeLabel="Files" />
         </UncontrolledTreeEnvironment>
       </div>
+
+      <FileTreeDialogs
+        contextMenu={ctxMenu.contextMenu}
+        nameDialog={ctxMenu.nameDialog}
+        deleteTarget={ctxMenu.deleteTarget}
+        onNewFile={ctxMenu.handleNewFile}
+        onNewFolder={ctxMenu.handleNewFolder}
+        onRename={ctxMenu.handleRename}
+        onDelete={ctxMenu.handleDelete}
+        onConfirmDelete={ctxMenu.confirmDelete}
+        onCloseContextMenu={() => ctxMenu.setContextMenu(null)}
+        onCloseNameDialog={() => ctxMenu.setNameDialog(null)}
+        onCloseDeleteDialog={() => ctxMenu.setDeleteTarget(null)}
+      />
     </>
   )
 }

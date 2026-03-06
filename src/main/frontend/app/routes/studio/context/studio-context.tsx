@@ -4,15 +4,15 @@ import { useState } from 'react'
 import SortedElements from '~/routes/studio/context/sorted-elements'
 import Search from '~/components/search/search'
 import { useProjectStore } from '~/stores/project-store'
-import type { ElementDetails } from '@frankframework/ff-doc'
-import { useFrankDoc } from '~/providers/frankdoc-provider'
+import type { ElementDetails } from '@frankframework/doc-library-core'
+import { useFFDoc } from '@frankframework/doc-library-react'
 import LoadingSpinner from '~/components/loading-spinner'
 
 export default function StudioContext() {
   const { setAttributes, setNodeId, setDraggedName } = useNodeContextStore((state) => state)
   const [searchTerm, setSearchTerm] = useState('')
   const project = useProjectStore((state) => state.project)
-  const { filters, elements, isLoading } = useFrankDoc()
+  const { filters, elements, isLoading } = useFFDoc()
 
   if (isLoading || !elements) {
     return (

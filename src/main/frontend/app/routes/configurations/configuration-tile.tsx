@@ -1,31 +1,28 @@
-import { useProjectStore } from '~/stores/project-store'
-import { getAdapterNamesFromConfiguration } from '../studio/xml-to-json-parser'
-import { useEffect, useState } from 'react'
 import RulerCrossPenIcon from '/icons/solar/Ruler Cross Pen.svg?react'
+import TrashBinIcon from '/icons/solar/Trash Bin.svg?react'
 import CodeIcon from '/icons/solar/Code.svg?react'
 import { openInStudio, openInEditor } from '~/actions/navigationActions'
+import Button from '~/components/inputs/button'
+import ConfirmDeleteDialog from '~/components/file-structure/confirm-delete-dialog'
+import { useState } from 'react'
 
 interface ConfigurationTileProperties {
   filepath: string
   relativePath: string
+  adapterNames: string[]
+  onDelete: () => Promise<void>
 }
 
-export default function ConfigurationTile({ filepath, relativePath }: Readonly<ConfigurationTileProperties>) {
-  const projectName = useProjectStore((state) => state.project?.name)
+export default function ConfigurationTile({
+  filepath,
+  relativePath,
+  adapterNames,
+  onDelete,
+}: Readonly<ConfigurationTileProperties>) {
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
 
-  const [adapterNames, setAdapterNames] = useState<string[]>([])
-
-  useEffect(() => {
-    if (!projectName || !filepath) {
-      setAdapterNames([])
-      return
-    }
-
-    getAdapterNamesFromConfiguration(projectName, filepath).then(setAdapterNames)
-  }, [projectName, filepath])
-
-  const handleOpenInStudio = (adapterName: string) => {
-    openInStudio(adapterName, filepath)
+  const handleOpenInStudio = (adapterName: string, adapterPosition: number) => {
+    openInStudio(adapterName, filepath, adapterPosition)
   }
 
   const handleOpenInEditor = () => {
@@ -35,12 +32,24 @@ export default function ConfigurationTile({ filepath, relativePath }: Readonly<C
     openInEditor(fileName, filepath)
   }
 
+  const handleConfirmDelete = async () => {
+    await onDelete()
+    setShowDeleteDialog(false)
+  }
+
   return (
-    <div className="border-border bg-background relative m-2 flex h-75 w-100 flex-col rounded border p-4 shadow-sm">
+    <div className="border-border bg-background relative flex h-75 w-100 flex-col rounded border p-4 shadow-sm">
       {/* Header */}
       <div className="text-foreground mb-3 truncate text-sm font-semibold" title={relativePath}>
         {relativePath}
       </div>
+
+      <Button
+        onClick={() => setShowDeleteDialog(true)}
+        className="text-foreground-muted hover:text-error absolute top-3 right-3 transition hover:cursor-pointer"
+      >
+        <TrashBinIcon className="h-4 w-4 fill-current" />
+      </Button>
 
       {/* Adapter list */}
       {adapterNames.length > 0 ? (
@@ -50,8 +59,13 @@ export default function ConfigurationTile({ filepath, relativePath }: Readonly<C
           </h1>
           <div className="bg-backdrop border-border flex-1 overflow-y-auto rounded border p-2">
             <ul className="space-y-2">
-              {adapterNames.map((name) => (
-                <AdapterListItem key={name} name={name} onOpenInStudio={handleOpenInStudio} />
+              {adapterNames.map((name, index) => (
+                <AdapterListItem
+                  key={`${name}-${index}`}
+                  name={name}
+                  adapterPosition={index}
+                  onOpenInStudio={handleOpenInStudio}
+                />
               ))}
             </ul>
           </div>
@@ -62,24 +76,30 @@ export default function ConfigurationTile({ filepath, relativePath }: Readonly<C
 
       {/* Bottom action */}
       <div className="border-border mt-3 flex justify-center border-t">
-        <button
-          className="bg-primary text-primary-foreground hover:text-foreground-active flex items-center gap-1 rounded px-3 py-2 font-medium transition hover:cursor-pointer"
-          onClick={handleOpenInEditor}
-        >
+        <Button className="mt-3 flex items-center gap-1" onClick={handleOpenInEditor}>
           <CodeIcon className="h-4 w-4 fill-current" />
           <span className="whitespace-nowrap">Open in Editor</span>
-        </button>
+        </Button>
       </div>
+      {showDeleteDialog && (
+        <ConfirmDeleteDialog
+          name={relativePath.split(/[/\\]/).pop() ?? relativePath}
+          isFolder={false}
+          onCancel={() => setShowDeleteDialog(false)}
+          onConfirm={handleConfirmDelete}
+        />
+      )}
     </div>
   )
 }
 
 interface AdapterListItemProps {
   name: string
-  onOpenInStudio: (name: string) => void
+  adapterPosition: number
+  onOpenInStudio: (name: string, adapterPosition: number) => void
 }
 
-function AdapterListItem({ name, onOpenInStudio }: AdapterListItemProps) {
+function AdapterListItem({ name, adapterPosition, onOpenInStudio }: AdapterListItemProps) {
   return (
     <li className="border-border bg-background flex items-center rounded border px-2 py-1">
       {/* Adapter name – 2/3 */}
@@ -90,7 +110,7 @@ function AdapterListItem({ name, onOpenInStudio }: AdapterListItemProps) {
       {/* Button – 1/3 */}
       <button
         className="bg-primary text-primary-foreground hover:text-foreground-active ml-2 flex w-1/3 items-center justify-center gap-1 rounded px-2 py-1 text-xs font-medium transition hover:cursor-pointer"
-        onClick={() => onOpenInStudio(name)}
+        onClick={() => onOpenInStudio(name, adapterPosition)}
       >
         <RulerCrossPenIcon className="h-4 w-4 fill-current" />
         <span className="whitespace-normal">Open in Studio</span>

@@ -17,7 +17,9 @@ import Button from '~/components/inputs/button'
 
 export default function Studio() {
   const [showNodeContext, setShowNodeContext] = useState(false)
-  const nodeId = useNodeContextStore((state) => state.nodeId)
+  const { nodeId, editingSubtype } = useNodeContextStore(
+    useShallow((s) => ({ nodeId: s.nodeId, editingSubtype: s.editingSubtype })),
+  )
 
   const { activeTab, activeTabPath } = useTabStore(
     useShallow((state) => ({
@@ -55,7 +57,7 @@ export default function Studio() {
             <div className="border-b-border bg-background flex h-12 items-center justify-between border-b p-4">
               <span>Path: {activeTabPath}</span>
               <Button onClick={handleOpenInEditor} className="flex items-center gap-1.5" title="Open in Editor">
-                <CodeIcon className="fill-foreground h-4 w-4" />
+                <CodeIcon className="h-4 w-4 fill-current" />
                 Open in Editor
               </Button>
             </div>
@@ -73,7 +75,10 @@ export default function Studio() {
         )}
       </>
       <>
-        <SidebarHeader side={SidebarSide.RIGHT} title={showNodeContext ? 'Edit node' : 'Palette'} />
+        <SidebarHeader
+          side={SidebarSide.RIGHT}
+          title={showNodeContext ? `Edit ${editingSubtype ?? 'node'}` : 'Palette'}
+        />
         {showNodeContext ? <NodeContext nodeId={nodeId} setShowNodeContext={setShowNodeContext} /> : <StudioContext />}
       </>
     </SidebarLayout>

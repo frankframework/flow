@@ -38,11 +38,24 @@
 			<organizationUrl>https://frankframework.org</organizationUrl>
 		</developer>
 		<developer>
-            <name>Stijn Potters</name>
-            <email>stijn.potters@frankframework.org</email>
-            <organization>Frank!Framework</organization>
-            <organizationUrl>https://frankframework.org</organizationUrl>
-        </developer>
+			<name>Stijn Potters</name>
+			<email>stijn.potters@frankframework.org</email>
+			<organization>Frank!Framework</organization>
+			<organizationUrl>https://frankframework.org</organizationUrl>
+		</developer>
+		<developer>
+			<name>Sergi Philipsen</name>
+			<email>sergi@frankframework.org</email>
+			<organization>Frank!Framework</organization>
+			<organizationUrl>https://frankframework.org</organizationUrl>
+		</developer>
+		<developer>
+			<name>Vivy Booman</name>
+			<email>vivy@frankframework.org</email>
+			<organization>Frank!Framework</organization>
+			<organizationUrl>https://frankframework.org</organizationUrl>
+		</developer>
+
 	</developers>
 
 	<properties>
@@ -63,11 +76,11 @@
 		</sonar.coverage.jacoco.xmlReportPaths>
 
 		<junit.excludedTags/>
-        <junit.includedTags/>
+		<junit.includedTags/>
 
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<maven.compiler.source>21</maven.compiler.source>
-		<maven.compiler.target>21</maven.compiler.target>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<maven.compiler.source>25</maven.compiler.source>
+		<maven.compiler.target>25</maven.compiler.target>
 	</properties>
 
 	<dependencyManagement>
@@ -143,10 +156,10 @@
 			<artifactId>junit-jupiter</artifactId>
 			<scope>test</scope>
 		</dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-actuator</artifactId>
-        </dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
+		</dependency>
 		<dependency>
 			<groupId>io.github.wimdeblauwe</groupId>
 			<artifactId>testcontainers-cypress</artifactId>
@@ -200,6 +213,7 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<configuration>
+					<release>${java.version}</release>
 					<source>${java.version}</source>
 					<target>${java.version}</target>
 					<annotationProcessorPaths>
@@ -209,7 +223,6 @@
 							<version>${lombok.version}</version>
 						</path>
 					</annotationProcessorPaths>
-					<compilerArgs>--enable-preview</compilerArgs>
 				</configuration>
 			</plugin>
 
@@ -223,8 +236,8 @@
 							<include>src/main/java/**/*.java</include>
 							<include>src/test/java/**/*.java</include>
 						</includes>
-						<importOrder />
-						<removeUnusedImports />
+						<importOrder/>
+						<removeUnusedImports/>
 						<toggleOffOn/>
 						<trimTrailingWhitespace/>
 						<endWithNewline/>
@@ -382,50 +395,50 @@
 	</build>
 
 	<profiles>
-        <profile>
-            <id>docker</id>
-            <properties>
-                <config.image.repository>ghcr.io/frankframework</config.image.repository>
-                <config.image.name>webapp-template</config.image.name>
-                <config.image.tag>${config.image.name}</config.image.tag>
-            </properties>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-antrun-plugin</artifactId>
-                        <version>3.1.0</version>
-                        <executions>
-                            <execution>
-                                <id>prepare-package</id>
-                                <phase>package</phase>
-                                <configuration>
-                                    <target>
-                                        <exec executable="docker" failonerror="true">
-                                            <arg value="build"/>
-                                            <arg value="-f"/>
-                                            <arg value="docker/Dockerfile"/>
-                                            <arg value="--no-cache"/>
-                                            <arg value="-t"/>
-                                            <arg value="${config.image.tag}:latest"/>
-                                            <arg value="-t"/>
-                                            <arg value="${config.image.tag}:${revision}"/>
-                                            <arg value="-t"/>
-                                            <arg value="${config.image.repository}/${config.image.tag}:latest"/>
-                                            <arg value="-t"/>
-                                            <arg value="${config.image.repository}/${config.image.tag}:${revision}"/>
-                                            <arg value="."/>
-                                        </exec>
-                                    </target>
-                                </configuration>
-                                <goals>
-                                    <goal>run</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
+		<profile>
+			<id>docker</id>
+			<properties>
+				<config.image.repository>ghcr.io/frankframework</config.image.repository>
+				<config.image.name>${config.image.name}</config.image.name>
+				<config.image.tag>${config.image.tag}</config.image.tag>
+			</properties>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-antrun-plugin</artifactId>
+						<version>3.1.0</version>
+						<executions>
+							<execution>
+								<id>prepare-package</id>
+								<phase>package</phase>
+								<configuration>
+									<target>
+										<exec executable="docker" failonerror="true">
+											<arg value="build"/>
+											<arg value="-f"/>
+											<arg value="docker/Dockerfile"/>
+											<arg value="--no-cache"/>
+											<arg value="-t"/>
+											<arg value="${config.image.tag}:latest"/>
+											<arg value="-t"/>
+											<arg value="${config.image.tag}:${revision}"/>
+											<arg value="-t"/>
+											<arg value="${config.image.repository}/${config.image.tag}:latest"/>
+											<arg value="-t"/>
+											<arg value="${config.image.repository}/${config.image.tag}:${revision}"/>
+											<arg value="."/>
+										</exec>
+									</target>
+								</configuration>
+								<goals>
+									<goal>run</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
 		</profile>
 	</profiles>
 </project>

@@ -1,6 +1,8 @@
 import { Handle, Position } from '@xyflow/react'
 import type { CustomNodeData } from '~/types/datamapper_types/node-types'
 import { GROUP_WIDTH } from '~/utils/datamapper_utils/const'
+import HighlightButton from '../basic-components/highlight-button'
+import DeleteButton from '../basic-components/delete-button'
 
 export interface ExtraSourceNodeProperties {
   id: string
@@ -23,24 +25,16 @@ function ExtraSourceNode({ id, data, onDelete, onHighlight }: ExtraSourceNodePro
       <div className="border-border bg-info absolute bottom-0 flex w-full items-center justify-between rounded-md border px-4 py-2 text-sm opacity-80">
         <span>(Source )</span>
         <div className="flex gap-3">
-          <button
-            className="text-lg hover:opacity-70"
-            onClick={(event) => {
-              event.stopPropagation()
+          <HighlightButton
+            onClick={() => {
               onHighlight?.(id)
             }}
-          >
-            💡
-          </button>
-          <button
-            className="text-error text-xl font-bold hover:opacity-80"
-            onClick={(event) => {
-              event.stopPropagation()
+          />
+          <DeleteButton
+            onClick={() => {
               onDelete?.(id)
             }}
-          >
-            &times;
-          </button>
+          />
         </div>
       </div>
       <Handle type="target" position={Position.Top} style={{ opacity: 0 }} />

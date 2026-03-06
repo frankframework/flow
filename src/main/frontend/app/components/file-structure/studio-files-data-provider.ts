@@ -11,7 +11,20 @@ export default class FilesDataProvider implements TreeDataProvider {
 
   constructor(projectName: string) {
     this.projectName = projectName
-    this.loadRoot()
+  }
+
+  public async init(expandedItems: string[] = []) {
+    await this.loadRoot()
+
+    const sortedIds = [...expandedItems].toSorted((a, b) => a.split('/').length - b.split('/').length)
+    for (const id of sortedIds) {
+      if (id === 'root') continue
+
+      const item = this.data[id]
+      if (!item || !item.isFolder) continue
+
+      await (item.data.path?.endsWith('.xml') ? this.loadAdapters(id) : this.loadDirectory(id))
+    }
   }
 
   // Load root directory
@@ -103,14 +116,15 @@ export default class FilesDataProvider implements TreeDataProvider {
     try {
       const adapterNames = await getAdapterNamesFromConfiguration(this.projectName, item.data.path)
 
-      for (const adapterName of adapterNames) {
-        const adapterIndex = `${itemId}/${adapterName}`
+      for (const [i, adapterName] of adapterNames.entries()) {
+        const adapterIndex = `${itemId}/${adapterName}::${i}`
         this.data[adapterIndex] = {
           index: adapterIndex,
           data: {
             adapterName,
             configPath: item.data.path,
-            listenerName: await getAdapterListenerType(this.projectName, item.data.path, adapterName),
+            adapterPosition: i,
+            listenerName: await getAdapterListenerType(this.projectName, item.data.path, adapterName, i),
           },
           isFolder: false,
         }
@@ -122,6 +136,34 @@ export default class FilesDataProvider implements TreeDataProvider {
     } catch (error) {
       console.error(`Failed to load adapters for ${item.data.path}`, error)
     }
+  }
+
+  public async reloadDirectory(itemId: TreeItemIndex): Promise<void> {
+    const item = this.data[itemId]
+    if (!item || !item.isFolder) return
+
+    this.loadedDirectories.delete(item.data.path)
+    this.removeSubtree(itemId)
+    item.children = []
+    await this.loadDirectory(itemId)
+  }
+
+  private removeSubtree(parentId: TreeItemIndex): void {
+    const item = this.data[parentId]
+    if (!item?.children) return
+
+    for (const childId of item.children) {
+      this.removeSubtree(childId)
+      const child = this.data[childId]
+      if (child?.isFolder && child.data?.path) {
+        this.loadedDirectories.delete(child.data.path)
+      }
+      delete this.data[childId]
+    }
+  }
+
+  public getItemByPath(path: string): TreeItem | undefined {
+    return Object.values(this.data).find((item) => item.data?.path === path)
   }
 
   public async getAllItems(): Promise<TreeItem[]> {

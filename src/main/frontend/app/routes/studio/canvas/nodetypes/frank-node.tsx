@@ -15,15 +15,16 @@ import { FlowConfig } from '~/routes/studio/canvas/flow.config'
 import { useNodeContextMenu } from '~/routes/studio/canvas/flow'
 import useNodeContextStore from '~/stores/node-context-store'
 import { getElementTypeFromName } from '~/routes/studio/node-translator-module'
-import { useSettingsStore } from '~/routes/settings/settings-store'
-import { useFrankDoc } from '~/providers/frankdoc-provider'
+import { useSettingsStore } from '~/stores/settings-store'
+import { useFFDoc } from '@frankframework/doc-library-react'
 import HandleMenu from './components/handle-menu'
 import { ChildNodeComponent, type ChildNode } from './child-node'
 import { findChildRecursive } from '~/stores/child-utilities'
 import { canAcceptChildStatic } from './node-utilities'
-import type { ElementDetails } from '@frankframework/ff-doc'
+import type { ElementDetails } from '@frankframework/doc-library-core'
 import { DeprecatedPopover } from './components/deprecated-popover'
 import { showWarningToast } from '~/components/toast'
+import { useHandleTypes } from '~/hooks/use-handle-types'
 
 export type FrankNodeType = Node<{
   subtype: string
@@ -44,8 +45,18 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
   const [dragOver, setDragOver] = useState(false)
   const [canDropDraggedElement, setCanDropDraggedElement] = useState(false)
   const showNodeContextMenu = useNodeContextMenu()
-  const { elements, filters } = useFrankDoc()
-  const { setNodeId, setAttributes, setParentId, setIsEditing, setDraggedName, draggedName } = useNodeContextStore()
+  const { elements, filters } = useFFDoc()
+  const {
+    setNodeId,
+    setIsNewNode,
+    setAttributes,
+    setParentId,
+    setChildParentId,
+    setIsEditing,
+    setDraggedName,
+    draggedName,
+    setEditingSubtype,
+  } = useNodeContextStore()
   const gradientEnabled = useSettingsStore((state) => state.studio.gradient)
   // Store the associated Frank element
   const frankElement = useMemo(() => {
@@ -58,6 +69,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
   const [showDeprecated, setShowDeprecated] = useState(false)
   const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null)
   const dangerTriangleReference = useRef<HTMLDivElement>(null)
+  const availableHandleTypes = useHandleTypes(frankElement?.forwards)
 
   const updateNodeInternals = useUpdateNodeInternals()
 
@@ -73,6 +85,19 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
   const firstHandlePosition = useMemo(() => {
     return (dimensions.height - (properties.data.sourceHandles.length - 1) * handleSpacing) / 2
   }, [dimensions.height, properties.data.sourceHandles.length])
+
+  const allForwardTypesUsed = useMemo(() => {
+    if (availableHandleTypes.length === 0) return true
+
+    // If custom is allowed, "+" should always remain visible
+    if (availableHandleTypes.includes('custom')) {
+      return false
+    }
+
+    const existingTypesCount = properties.data.sourceHandles.length
+
+    return existingTypesCount >= availableHandleTypes.length
+  }, [availableHandleTypes, properties.data.sourceHandles])
 
   useEffect(() => {
     if (dragOver && containerReference.current) {
@@ -100,6 +125,9 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
 
   const hasHandleOfType = useCallback(
     (type: string) => {
+      // Custom handles are never considered duplicates
+      if (type === 'custom') return false
+
       return properties.data.sourceHandles.some((handle) => handle.type === type)
     },
     [properties.data.sourceHandles],
@@ -138,8 +166,11 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
   const editNode = () => {
     if (!frankElement) return
     const attributes = frankElement.attributes
+    setParentId(null)
+    setChildParentId(null)
     setNodeId(+properties.id)
     setAttributes(attributes)
+    setEditingSubtype(properties.data.subtype)
     showNodeContextMenu(true)
     setIsEditing(true)
   }
@@ -151,9 +182,12 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
     const recordElements = elements as Record<string, ElementDetails>
     const attributes = Object.values(recordElements).find((element) => element.name === child.subtype)?.attributes
 
-    setParentId(properties.id) // The FrankNode stays the parent for editing purposes
-    setNodeId(+childId) // Correctly set the clicked child id
+    const isFirstLevel = properties.data.children.some((c) => c.id === childId)
+    setParentId(properties.id)
+    setChildParentId(isFirstLevel ? null : properties.id)
+    setNodeId(+childId)
     setAttributes(attributes)
+    setEditingSubtype(child.subtype)
     showNodeContextMenu(true)
     setIsEditing(true)
   }
@@ -230,9 +264,12 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
         return
       }
 
+      setIsNewNode(true)
+      setEditingSubtype(dropped.name)
       showNodeContextMenu(true)
       setIsEditing(true)
       setParentId(properties.id)
+      setChildParentId(null)
 
       const child: ChildNode = {
         id: newId,
@@ -248,6 +285,8 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
     [
       setDraggedName,
       canAcceptChild,
+      setIsNewNode,
+      setEditingSubtype,
       showNodeContextMenu,
       setIsEditing,
       setParentId,
@@ -314,9 +353,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
           }}
         >
           <h1 className="font-bold">{properties.data.subtype}</h1>
-          <p className="overflow-hidden text-sm tracking-wider overflow-ellipsis whitespace-nowrap">
-            {properties.data.name.toUpperCase()}
-          </p>
+          <p className="overflow-hidden text-sm overflow-ellipsis whitespace-nowrap">{properties.data.name}</p>
           {isDeprecated && frankElement?.deprecated && (
             <>
               <div
@@ -393,19 +430,20 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
           </div>
         )}
       </div>
-      <Handle
-        type="target"
-        position={Position.Left}
-        className="flex items-center justify-center text-white"
-        style={{
-          left: '-15px',
-          width: '15px',
-          height: '15px',
-          backgroundColor: '#B2B2B2',
-        }}
-      >
-        {/* Use inline styling to prevent ReactFlow override on certain properties */}
-      </Handle>
+      {/* Receivers can only have outgoing connections, so we hide the input handle for them */}
+      {frankElement?.name && frankElement.name !== 'Receiver' && (
+        <Handle
+          type="target"
+          position={Position.Left}
+          className="flex items-center justify-center text-white"
+          style={{
+            left: '-15px',
+            width: '15px',
+            height: '15px',
+            backgroundColor: '#B2B2B2',
+          }}
+        />
+      )}
       {properties.data.sourceHandles.map((handle) => (
         <CustomHandle
           key={handle.type + handle.index}
@@ -418,17 +456,20 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
           typesAllowed={frankElement?.forwards}
         />
       ))}
-      <div
-        onClick={(event) => {
-          toggleHandleMenu(event)
-        }}
-        className="nodrag absolute right-[-23px] h-[15px] w-[15px] cursor-pointer justify-center rounded-full border bg-gray-400 text-center text-[8px] font-bold text-white"
-        style={{
-          top: `${firstHandlePosition + properties.data.sourceHandles.length * handleSpacing + handleSpacing}px`,
-        }}
-      >
-        +
-      </div>
+      {/* Only show the add handle button if there are available handle types that are not yet used on this node */}
+      {!allForwardTypesUsed && (
+        <div
+          onClick={(event) => {
+            toggleHandleMenu(event)
+          }}
+          className="nodrag absolute right-[-23px] h-[15px] w-[15px] cursor-pointer justify-center rounded-full border bg-gray-400 text-center text-[8px] font-bold text-white"
+          style={{
+            top: `${firstHandlePosition + properties.data.sourceHandles.length * handleSpacing + handleSpacing}px`,
+          }}
+        >
+          +
+        </div>
+      )}
       {isHandleMenuOpen && (
         <HandleMenu
           position={handleMenuPosition}

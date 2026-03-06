@@ -24,6 +24,12 @@ export interface GeneralSettings {
   language: string
   telemetry: boolean
   autoUpdates: boolean
+  autoSave: AutosaveSettings
+}
+
+export interface AutosaveSettings {
+  enabled: boolean
+  delayMs: number
 }
 
 export interface SettingsState {
@@ -57,7 +63,7 @@ const defaultEditorSettings: EditorSettings = {
 const defaultStudioSettings: StudioSettings = {
   previewOnSave: true,
   autoRefresh: true,
-  gradient: true,
+  gradient: false,
 }
 
 const defaultProjectSettings: ProjectSettings = {
@@ -70,6 +76,10 @@ const defaultGeneralSettings: GeneralSettings = {
   telemetry: true,
   theme: 'system',
   autoUpdates: true,
+  autoSave: {
+    enabled: true,
+    delayMs: 1500,
+  },
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -106,6 +116,21 @@ export const useSettingsStore = create<SettingsState>()(
     }),
     {
       name: 'application-settings',
+      merge: (persistedState, currentState) => {
+        const persisted = (persistedState ?? {}) as Partial<SettingsState>
+        return {
+          ...currentState,
+          ...persisted,
+          general: {
+            ...currentState.general,
+            ...persisted.general,
+            autoSave: {
+              ...currentState.general.autoSave,
+              ...persisted.general?.autoSave,
+            },
+          },
+        }
+      },
     },
   ),
 )

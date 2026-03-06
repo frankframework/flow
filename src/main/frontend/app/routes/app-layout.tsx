@@ -1,11 +1,12 @@
+import { FFDocProvider } from '@frankframework/doc-library-react'
 import Navbar from '~/components/navbar/navbar'
-import { FrankDocProvider } from '~/providers/frankdoc-provider'
 import AppContent from '~/components/app-content'
 import { useEffect, useState } from 'react'
 import { useProjectStore, getStoredProjectName } from '~/stores/project-store'
 import { fetchProject } from '~/services/project-service'
 import LoadingSpinner from '~/components/loading-spinner'
 import type { Project } from '~/types/project.types'
+import { apiUrl } from '~/utils/api'
 
 export default function AppLayout() {
   const [restoring, setRestoring] = useState(!!getStoredProjectName())
@@ -38,13 +39,13 @@ export default function AppLayout() {
   }
 
   return (
-    <FrankDocProvider>
+    <FFDocProvider jsonUrl={apiUrl('/json/frankdoc')}>
       <div className="flex h-screen">
         <Navbar />
         <main className="grow overflow-auto">
           <AppContent />
         </main>
       </div>
-    </FrankDocProvider>
+    </FFDocProvider>
   )
 }

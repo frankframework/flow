@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react'
 import DirectoryPicker from '~/components/directory-picker/directory-picker'
+import Button from '~/components/inputs/button'
 import { filesystemService } from '~/services/filesystem-service'
 
 interface CloneProjectModalProperties {
   isOpen: boolean
   isLocal: boolean
   onClose: () => void
-  onClone: (repoUrl: string, localPath: string) => void
+  onClone: (repoUrl: string, localPath: string, token?: string) => void
+  initialPath?: string
 }
 
 export default function CloneProjectModal({
@@ -14,21 +16,27 @@ export default function CloneProjectModal({
   isLocal,
   onClose,
   onClone,
+  initialPath,
 }: Readonly<CloneProjectModalProperties>) {
   const [repoUrl, setRepoUrl] = useState('')
   const [location, setLocation] = useState('')
+  const [token, setToken] = useState('')
   const [showPicker, setShowPicker] = useState(false)
 
   useEffect(() => {
     if (isOpen && isLocal) {
-      filesystemService
-        .getDefaultPath()
-        .then(setLocation)
-        .catch(() => setLocation(''))
+      if (initialPath) {
+        setLocation(initialPath)
+      } else {
+        filesystemService
+          .getDefaultPath()
+          .then(setLocation)
+          .catch(() => setLocation(''))
+      }
     } else if (isOpen) {
-      setLocation('')
+      setLocation(initialPath ?? '')
     }
-  }, [isOpen, isLocal])
+  }, [isOpen, isLocal, initialPath])
 
   if (!isOpen) return null
 
@@ -51,13 +59,14 @@ export default function CloneProjectModal({
       finalPath = location ? `${location}/${name}` : name
     }
 
-    onClone(repoUrl.trim(), finalPath)
+    onClone(repoUrl.trim(), finalPath, token || undefined)
     handleClose()
   }
 
   const handleClose = () => {
     setRepoUrl('')
     setLocation('')
+    setToken('')
     setShowPicker(false)
     onClose()
   }
@@ -65,7 +74,7 @@ export default function CloneProjectModal({
   return (
     <>
       <div className="bg-background/50 absolute inset-0 z-50 flex items-center justify-center">
-        <div className="bg-background border-border relative h-[400px] w-[600px] rounded-lg border p-6 shadow-lg">
+        <div className="bg-background border-border relative w-[600px] rounded-lg border p-6 shadow-lg">
           <h2 className="mb-4 text-lg font-semibold">Clone Repository</h2>
           <p className="text-foreground-muted mb-4 text-sm">
             {isLocal ? 'Clone a Git repository to a local folder' : 'Clone a Git repository into the workspace'}
@@ -77,17 +86,14 @@ export default function CloneProjectModal({
               <input
                 value={location || (isLocal ? '' : 'Workspace root')}
                 readOnly
-                className="border-border bg-backdrop w-full rounded border px-2 py-1 text-sm"
+                className="border-border bg-background focus:border-foreground-active focus:ring-foreground-active w-full rounded border px-2 py-1 text-sm transition focus:ring-2 focus:outline-none"
                 placeholder={isLocal ? 'Select a parent directory...' : 'Workspace root (or browse for subfolder)'}
-                aria-label="clone location"
+                onDoubleClick={() => setShowPicker(true)}
               />
 
-              <button
-                onClick={() => setShowPicker(true)}
-                className="bg-backdrop hover:bg-background border-border rounded border px-3 py-1 text-sm whitespace-nowrap hover:cursor-pointer"
-              >
+              <Button onClick={() => setShowPicker(true)} className="h-8 text-sm">
                 Browse...
-              </button>
+              </Button>
             </div>
           </div>
 
@@ -102,6 +108,20 @@ export default function CloneProjectModal({
             />
           </div>
 
+          {!isLocal && (
+            <div className="mb-4">
+              <label className="mb-1 block text-sm font-medium">Access Token</label>
+              <input
+                type="password"
+                value={token}
+                onChange={(event) => setToken(event.target.value)}
+                className="border-border bg-background focus:border-foreground-active focus:ring-foreground-active w-full rounded border px-2 py-1 text-sm transition focus:ring-2 focus:outline-none"
+                placeholder="Personal access token for private repos"
+                aria-label="access token"
+              />
+            </div>
+          )}
+
           {repoName && (
             <p className="text-foreground-muted mb-4 text-xs">
               Will clone to:{' '}
@@ -112,20 +132,17 @@ export default function CloneProjectModal({
           )}
 
           <div className="flex gap-2">
-            <button
+            <Button
               onClick={handleClone}
               disabled={!repoUrl.trim() || (isLocal && !location)}
-              className="bg-backdrop hover:bg-background border-border rounded border px-4 py-2 hover:cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+              className="disabled:text-foreground-muted disabled:cursor-not-allowed disabled:opacity-50"
             >
               Clone
-            </button>
+            </Button>
 
-            <button
-              onClick={handleClose}
-              className="bg-background border-border hover:bg-backdrop absolute top-3 right-3 cursor-pointer rounded border px-3 py-1"
-            >
+            <Button onClick={handleClose} className="absolute top-3 right-3">
               Close
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -137,6 +154,7 @@ export default function CloneProjectModal({
           setShowPicker(false)
         }}
         onCancel={() => setShowPicker(false)}
+        initialPath={location}
       />
     </>
   )

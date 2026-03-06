@@ -33,6 +33,7 @@ export interface NodeLabels {
 export type MappingConfig = {
   id?: string
   label?: string
+  outputLabel?: string
   colour?: string
   sources: string[]
   target: string

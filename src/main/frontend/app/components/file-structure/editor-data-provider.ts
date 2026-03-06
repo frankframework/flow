@@ -24,7 +24,18 @@ export default class EditorFilesDataProvider implements TreeDataProvider {
 
   constructor(projectName: string) {
     this.projectName = projectName
-    void this.fetchAndBuildTree()
+  }
+
+  /** Initialize tree and recursively load expanded folders */
+  public async init(expandedItems: string[] = []) {
+    await this.fetchAndBuildTree()
+
+    const sortedIds = [...expandedItems].toSorted((a, b) => a.split('/').length - b.split('/').length)
+
+    for (const id of sortedIds) {
+      if (id === 'root') continue
+      await this.loadDirectory(id)
+    }
   }
 
   /** Fetch file tree from backend and build the provider's data */
@@ -95,6 +106,34 @@ export default class EditorFilesDataProvider implements TreeDataProvider {
     }
 
     return childIds
+  }
+
+  public async reloadDirectory(itemId: TreeItemIndex): Promise<void> {
+    const item = this.data[itemId]
+    if (!item || !item.isFolder) return
+
+    this.loadedDirectories.delete(item.data.path)
+    this.removeSubtree(itemId)
+    item.children = []
+    await this.loadDirectory(itemId)
+  }
+
+  private removeSubtree(parentId: TreeItemIndex): void {
+    const item = this.data[parentId]
+    if (!item?.children) return
+
+    for (const childId of item.children) {
+      this.removeSubtree(childId)
+      const child = this.data[childId]
+      if (child?.isFolder && child.data?.path) {
+        this.loadedDirectories.delete(child.data.path)
+      }
+      delete this.data[childId]
+    }
+  }
+
+  public getItemByPath(path: string): TreeItem<FileNode> | undefined {
+    return Object.values(this.data).find((item) => item.data.path === path)
   }
 
   public async getAllItems(): Promise<TreeItem<FileNode>[]> {

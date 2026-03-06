@@ -1,6 +1,7 @@
 import type { FlowNode } from '~/routes/studio/canvas/flow'
 import type { Edge } from '@xyflow/react'
 import type { ChildNode } from './canvas/nodetypes/child-node'
+import { getAdapter } from '~/services/adapter-service'
 
 interface ReactFlowJson {
   nodes: FlowNode[]
@@ -25,7 +26,19 @@ function escapeXml(string_: string): string {
   return string_.replaceAll('&', '&amp;').replaceAll('"', '&quot;')
 }
 
-export function exportFlowToXml(json: ReactFlowJson, adaptername: string): string {
+export async function exportFlowToXml(
+  json: ReactFlowJson,
+  projectName: string,
+  configurationPath: string,
+  adapterName: string,
+  existingAdapterXml?: string,
+): Promise<string> {
+  const adapterXml: string =
+    existingAdapterXml === undefined
+      ? await getAdapter(projectName, adapterName, configurationPath).then((response) => response.xmlContent)
+      : existingAdapterXml
+  const adapterAttributes = getAdapterAttributes(adapterXml)
+
   const { nodes, edges } = json
   const validNodes = nodes.filter((node) => hasDataProperty(node))
   const nodeMap = new Map(validNodes.map((n) => [n.id, n]))
@@ -34,13 +47,19 @@ export function exportFlowToXml(json: ReactFlowJson, adaptername: string): strin
 
   const receiverNodes = validNodes.filter((n) => n.data.type?.toLowerCase() === 'receiver')
   const startNodes = receiverNodes.filter((n) => !incoming[n.id])
-  const sortedIds =
-    startNodes.length > 0
-      ? topologicalSort(
-          startNodes.map((n) => n.id),
-          outgoing,
-        )
-      : validNodes.map((node) => node.id)
+  let sortedIds: string[]
+  if (startNodes.length > 0) {
+    sortedIds = topologicalSort(
+      startNodes.map((n) => n.id),
+      outgoing,
+    )
+
+    const sortedSet = new Set(sortedIds)
+    const unconnectedIds = validNodes.map((n) => n.id).filter((id) => !sortedSet.has(id))
+    sortedIds = [...sortedIds, ...unconnectedIds]
+  } else {
+    sortedIds = validNodes.map((node) => node.id)
+  }
 
   const exitNodes = validNodes.filter((n) => n.data.type?.toLowerCase() === 'exit')
   const exitNodeIds = new Set(exitNodes.map((n) => n.id))
@@ -63,7 +82,7 @@ export function exportFlowToXml(json: ReactFlowJson, adaptername: string): strin
   const exitsXml = exitNodes.length > 0 ? `      <Exits>\n${generateExitsXml(exitNodes)}\n      </Exits>` : ''
 
   return `
-  <Adapter name="${adaptername}" description="Auto-generated from React Flow JSON">
+  <Adapter ${adapterAttributes}>
 ${receivers.join('\n')}
     <Pipeline>
 ${exitsXml}
@@ -94,6 +113,13 @@ function buildEdgeMaps(edges: Edge[]) {
   }
 
   return { outgoing, incoming, edgeMap }
+}
+
+function getAdapterAttributes(adapterXml: string): string {
+  const parser = new DOMParser()
+  const doc = parser.parseFromString(adapterXml, 'application/xml')
+  const adapterElement = doc.documentElement
+  return [...adapterElement.attributes].map((attr) => `${attr.name}="${attr.value}"`).join(' ')
 }
 
 function topologicalSort(startNodes: string[], outgoing: Record<string, string[]>): string[] {
@@ -133,11 +159,15 @@ function generateXmlElement(
   const childXml = children.map((child: ChildNode) => generateChildXml(child, 4)).join('\n')
 
   const forwards = (edgeMap.get(node.id) || [])
-    .filter(({ targetId }) => exitNodeIds.has(targetId))
     .map(({ label, targetId }) => {
-      const exitTarget = nodeMap.get(targetId)
-      const exitName = (exitTarget?.data as NodeData).name || 'Exit'
-      return `    <Forward name="${escapeXml(label)}" path="${escapeXml(exitName)}" />`
+      const forwardTarget = nodeMap.get(targetId)
+      const targetName = (forwardTarget?.data as NodeData)?.name || ''
+      if (targetName === '') {
+        console.warn(`Target node with ID ${targetId} does not have a name attribute.`)
+        return ''
+      }
+      // If saving from flow to xml, all edges will be considered explicit Forwards.
+      return `    <Forward name="${escapeXml(label)}" path="${escapeXml(targetName)}" />`
     })
     .join('\n')
 
@@ -171,9 +201,19 @@ ${spaces}</${child.subtype}>`
 function generateExitsXml(exitNodes: FlowNode[]): string {
   return exitNodes
     .map((node) => {
-      const name = escapeXml((node.data as NodeData).name)
-      const state = name.toLowerCase().includes('bad') || name.toLowerCase().includes('fail') ? 'error' : 'success'
+      const data = node.data as NodeData
+      const name = escapeXml(data.name)
+      const state = getExitState(data)
+
       return `      <Exit name="${name}" state="${state}" />`
     })
     .join('\n')
+}
+
+function getExitState(data: NodeData): string {
+  const storedState = data.attributes?.state
+  if (storedState) return storedState
+
+  const name = data.name.toLowerCase()
+  return name.includes('bad') || name.includes('fail') ? 'error' : 'success'
 }
