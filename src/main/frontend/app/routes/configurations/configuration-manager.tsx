@@ -3,10 +3,13 @@ import ConfigurationTile from './configuration-tile'
 import ArrowLeftIcon from '/icons/solar/Alt Arrow Left.svg?react'
 import { useNavigate } from 'react-router'
 import AddConfigurationTile from './add-configuration-tile'
-import { useState } from 'react'
+import { useState, useEffect, useCallback, type ChangeEvent, useMemo } from 'react'
 import AddConfigurationModal from './add-configuration-modal'
-import { useProjectTree } from '~/hooks/use-project-tree'
 import LoadingSpinner from '~/components/loading-spinner'
+import { deleteInProject, fetchProjectTree } from '~/services/project-service'
+import Button from '~/components/inputs/button'
+import { getAdapterNamesFromConfiguration } from '../studio/xml-to-json-parser'
+import Search from '~/components/search/search'
 
 export interface FileTreeNode {
   name: string
@@ -56,10 +59,60 @@ export default function ConfigurationManager() {
   const currentProject = useProjectStore((state) => state.project)
   const navigate = useNavigate()
   const [showModal, setShowModal] = useState(false)
+  const [tree, setTree] = useState<FileTreeNode | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [configurationsDir, setConfigurationsDir] = useState<FileTreeNode | null>(null)
+  const [filesWithAdapters, setFilesWithAdapters] = useState<
+    { path: string; relativePath: string; adapterNames: string[] }[]
+  >([])
+  const [searchQuery, setSearchQuery] = useState('')
+  const [debouncedQuery, setDebouncedQuery] = useState(searchQuery)
 
-  const { data: tree, isLoading } = useProjectTree(currentProject?.name)
+  const loadTree = useCallback(
+    (signal?: AbortSignal) => {
+      if (!currentProject?.name) return
+      setIsLoading(true)
+      fetchProjectTree(currentProject.name, signal)
+        .then((data) => {
+          if (!signal?.aborted) {
+            setTree(data)
+            setIsLoading(false)
+          }
+        })
+        .catch(() => {
+          if (!signal?.aborted) {
+            setIsLoading(false)
+          }
+        })
+    },
+    [currentProject?.name],
+  )
 
-  const configFiles = (() => {
+  useEffect(() => {
+    const controller = new AbortController()
+    loadTree(controller.signal)
+    return () => controller.abort()
+  }, [loadTree])
+
+  useEffect(() => {
+    if (tree) {
+      const configDir = findConfigurationsDir(tree)
+      setConfigurationsDir(configDir)
+    }
+  }, [tree])
+
+  const handleConfigAdded = useCallback(() => {
+    setShowModal(false)
+    loadTree()
+  }, [loadTree])
+
+  const handleDelete = async (filepath: string) => {
+    if (!currentProject?.name) return
+    await deleteInProject(currentProject.name, filepath)
+    loadTree()
+  }
+
+  const configFiles = useMemo(() => {
     if (!tree) return []
 
     const configurationDirectory = findConfigurationsDir(tree)
@@ -71,18 +124,76 @@ export default function ConfigurationManager() {
       relativePath: file.path.replace(`${configurationDirectory.path}\\`, '').replaceAll('\\', '/'),
       path: file.path,
     }))
-  })()
+  }, [tree])
+
+  const handleSearch = (event: ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(event.target.value)
+  }
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedQuery(searchQuery)
+    }, 200)
+
+    return () => clearTimeout(handler)
+  }, [searchQuery])
+
+  useEffect(() => {
+    if (!currentProject?.name || configFiles.length === 0) {
+      setFilesWithAdapters([])
+      return
+    }
+
+    let cancelled = false
+
+    // Runs asynchronously in the background to load adapter names
+    // without blocking the UI. State is updated once all files are processed.
+    const loadAdapters = async () => {
+      const results = await Promise.all(
+        configFiles.map(async (file) => {
+          const adapterNames = await getAdapterNamesFromConfiguration(currentProject.name, file.path)
+
+          return {
+            path: file.path,
+            relativePath: file.relativePath,
+            adapterNames,
+          }
+        }),
+      )
+
+      if (cancelled) return
+
+      // Only keep files that actually contain adapters
+      const filtered = results.filter((file) => file.adapterNames.length > 0)
+
+      setFilesWithAdapters(filtered)
+    }
+    loadAdapters()
+
+    return () => {
+      cancelled = true
+    }
+  }, [configFiles, currentProject?.name])
+
+  const filteredConfigurations = useMemo(() => {
+    if (!debouncedQuery.trim()) return filesWithAdapters
+
+    const query = debouncedQuery.toLowerCase()
+
+    return filesWithAdapters.filter((file) => {
+      const matchesFile = file.relativePath.toLowerCase().includes(query)
+      const matchesAdapter = file.adapterNames.some((adapter) => adapter.toLowerCase().includes(query))
+      return matchesFile || matchesAdapter
+    })
+  }, [filesWithAdapters, debouncedQuery])
 
   if (!currentProject) {
     return (
       <div className="bg-backdrop flex h-full w-full flex-col items-center justify-center p-6">
         <div className="text-muted-foreground mb-4">No project selected.</div>
-        <button
-          onClick={() => navigate('/')}
-          className="bg-background border-border hover:text-foreground-active rounded border px-4 py-2"
-        >
+        <Button onClick={() => navigate('/')} className="bg-background">
           Return to Projects
-        </button>
+        </Button>
       </div>
     )
   }
@@ -102,19 +213,34 @@ export default function ConfigurationManager() {
         <p>Return To Projects</p>
       </div>
 
-      <p className="ml-2">
-        Configurations within <span className="font-bold">{currentProject.name}</span>/src/main/configurations:
-      </p>
-      <div className="bg-backdrop border-border w-full flex-1 overflow-y-auto rounded border p-2">
-        <div className="flex flex-wrap gap-4">
-          {configFiles.map((file) => (
-            <ConfigurationTile key={file.path} filepath={file.path} relativePath={file.relativePath} />
-          ))}
-
-          <AddConfigurationTile onClick={() => setShowModal(true)} />
-        </div>
+      <h1 className="ml-2 text-2xl font-bold">Configuration Manager</h1>
+      <div className="mb-4 flex items-center justify-between">
+        <p className="ml-2">
+          Configurations within <span className="font-bold">{currentProject.name}</span>/src/main/configurations:
+        </p>
+        <Search value={searchQuery} onChange={handleSearch} />
       </div>
-      <AddConfigurationModal isOpen={showModal} onClose={() => setShowModal(false)} currentProject={currentProject} />
+
+      <div className="border-border bg-backdrop flex flex-wrap gap-4 self-start rounded border p-4">
+        {filteredConfigurations.map((file) => (
+          <ConfigurationTile
+            key={file.path}
+            filepath={file.path}
+            relativePath={file.relativePath}
+            adapterNames={file.adapterNames}
+            onDelete={() => handleDelete(file.path)}
+          />
+        ))}
+
+        <AddConfigurationTile onClick={() => setShowModal(true)} />
+      </div>
+      <AddConfigurationModal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        onSuccess={handleConfigAdded}
+        currentProject={currentProject}
+        configurationsDirPath={configurationsDir?.path ?? ''}
+      />
     </div>
   )
 }

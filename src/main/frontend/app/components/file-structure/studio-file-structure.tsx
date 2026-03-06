@@ -19,6 +19,7 @@ import {
 } from 'react-complex-tree'
 import FilesDataProvider from '~/components/file-structure/studio-files-data-provider'
 import { useProjectStore } from '~/stores/project-store'
+import { useTreeStore } from '~/stores/tree-store'
 import type { FileNode } from './editor-data-provider'
 import { useProjectTree } from '~/hooks/use-project-tree'
 
@@ -40,6 +41,8 @@ function getItemTitle(item: TreeItem<FileNode>): string {
 
 export default function StudioFileStructure() {
   const project = useProjectStore((state) => state.project)
+  const { studioExpandedItems, addStudioExpandedItem, removeStudioExpandedItem } = useTreeStore()
+
   const [searchTerm, setSearchTerm] = useState('')
   const [matchingItemIds, setMatchingItemIds] = useState<string[]>([])
   const [activeMatchIndex, setActiveMatchIndex] = useState<number>(-1)
@@ -58,15 +61,25 @@ export default function StudioFileStructure() {
   useEffect(() => {
     if (!project || !treeData) return
 
+    let isMounted = true
+
     const initProvider = async () => {
       setProviderLoading(true)
 
       const provider = new FilesDataProvider(project.name)
-      setDataProvider(provider)
-      setProviderLoading(false)
+      await provider.init(studioExpandedItems)
+
+      if (isMounted) {
+        setDataProvider(provider)
+        setProviderLoading(false)
+      }
     }
 
     initProvider()
+
+    return () => {
+      isMounted = false
+    }
   }, [project, treeData])
 
   useEffect(() => {
@@ -111,10 +124,8 @@ export default function StudioFileStructure() {
       const path = item.data.path
 
       if (path.endsWith('.xml') && dataProvider) {
-        // XML configs can contain adapters
         if (dataProvider) await dataProvider.loadAdapters(item.index)
       } else {
-        // Normal directory
         if (dataProvider) await dataProvider.loadDirectory(item.index)
       }
     },
@@ -122,16 +133,18 @@ export default function StudioFileStructure() {
   )
 
   const openNewTab = useCallback(
-    (adapterName: string, configPath: string) => {
-      if (!getTab(adapterName)) {
-        setTabData(adapterName, {
+    (adapterName: string, configPath: string, adapterPosition: number) => {
+      const tabId = `${configPath}::${adapterName}::${adapterPosition}`
+      if (!getTab(tabId)) {
+        setTabData(tabId, {
           name: adapterName,
           configurationPath: configPath,
+          adapterPosition,
           flowJson: {},
         })
       }
 
-      setActiveTab(adapterName)
+      setActiveTab(tabId)
     },
     [getTab, setTabData, setActiveTab],
   )
@@ -147,18 +160,20 @@ export default function StudioFileStructure() {
       if (!item) return
 
       if (item.isFolder) {
-        await loadFolderContents(item)
         return
       }
 
-      // Leaf node: open adapter
       const data = item.data
       if (typeof data === 'object' && data !== null && 'adapterName' in data && 'configPath' in data) {
-        const { adapterName, configPath } = data as { adapterName: string; configPath: string }
-        openNewTab(adapterName, configPath)
+        const { adapterName, configPath, adapterPosition } = data as {
+          adapterName: string
+          configPath: string
+          adapterPosition: number
+        }
+        openNewTab(adapterName, configPath, adapterPosition ?? 0)
       }
     },
-    [dataProvider, loadFolderContents, openNewTab],
+    [dataProvider, openNewTab],
   )
 
   useEffect(() => {
@@ -213,9 +228,8 @@ export default function StudioFileStructure() {
 
     const Icon = context.isExpanded ? AltArrowDownIcon : AltArrowRightIcon
 
-    const handleArrowClick = async (event: React.MouseEvent) => {
-      event.stopPropagation() // prevent triggering item click
-      await loadFolderContents(item)
+    const handleArrowClick = (event: React.MouseEvent) => {
+      event.stopPropagation()
       context.toggleExpandedState()
     }
 
@@ -233,8 +247,6 @@ export default function StudioFileStructure() {
     item: TreeItem<FileNode>
     context: TreeItemRenderContext
   }) => {
-    const searchLower = searchTerm.toLowerCase()
-    const titleLower = title.toLowerCase()
     const listenerType =
       !item.isFolder && typeof item.data === 'object' && item.data && 'listenerName' in item.data
         ? (item.data as { listenerName: string | null }).listenerName
@@ -246,6 +258,9 @@ export default function StudioFileStructure() {
     } else {
       Icon = getListenerIcon(listenerType)
     }
+
+    const searchLower = searchTerm.toLowerCase()
+    const titleLower = title.toLowerCase()
 
     let highlightedTitle: JSX.Element | string = title
 
@@ -269,16 +284,16 @@ export default function StudioFileStructure() {
     const isHighlighted = highlightedItemId == item.index
 
     return (
-      <>
+      <div className="flex min-w-0 cursor-pointer items-center">
         <Icon className="fill-foreground w-4 flex-shrink-0" />
         <span
           className={`font-inter ml-1 overflow-hidden text-nowrap text-ellipsis ${
-            isHighlighted ? 'outline-foreground-active rounded-sm px-1 outline outline-2' : ''
+            isHighlighted ? 'outline-foreground-active rounded-sm px-1 outline' : ''
           }`}
         >
           {highlightedTitle}
         </span>
-      </>
+      </div>
     )
   }
 
@@ -292,7 +307,18 @@ export default function StudioFileStructure() {
       <Search onChange={(event) => setSearchTerm(event.target.value)} />
       <div className="overflow-auto pr-2">
         <UncontrolledTreeEnvironment
-          viewState={{}}
+          viewState={{
+            [TREE_ID]: {
+              expandedItems: studioExpandedItems,
+            },
+          }}
+          onExpandItem={async (item) => {
+            addStudioExpandedItem(String(item.index))
+            if (dataProvider) await loadFolderContents(item as TreeItem<FileNode>)
+          }}
+          onCollapseItem={(item) => {
+            removeStudioExpandedItem(String(item.index))
+          }}
           getItemTitle={getItemTitle}
           dataProvider={dataProvider}
           onSelectItems={handleItemClick}

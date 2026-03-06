@@ -68,6 +68,21 @@ public class LocalFileSystemStorageService implements FileSystemStorage {
         return sanitizePath(path);
     }
 
+    @Override
+    public Path createFile(String path) throws IOException {
+        return FileOperations.createFile(sanitizePath(path));
+    }
+
+    @Override
+    public void delete(String path) throws IOException {
+        FileOperations.deleteRecursively(sanitizePath(path));
+    }
+
+    @Override
+    public Path rename(String oldPath, String newPath) throws IOException {
+        return FileOperations.rename(sanitizePath(oldPath), sanitizePath(newPath));
+    }
+
     private static Path sanitizePath(String path) {
         if (path == null || path.isBlank()) {
             throw new SecurityException("Path must not be empty");

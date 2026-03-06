@@ -1,4 +1,4 @@
-import { type GeneralSettings, useSettingsStore } from '~/routes/settings/settings-store'
+import { type GeneralSettings, useSettingsStore } from '~/stores/settings-store'
 import { useEffect, useState } from 'react'
 
 type LightOrDarkTheme = Exclude<GeneralSettings['theme'], 'system'>

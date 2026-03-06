@@ -63,6 +63,19 @@
     --palette-parameters: #1389ff;
     --palette-monitoring: #00ff84;
     --palette-transactionalstorages: #fdc300;
+
+    /* Label styling */
+    --label-components: #edfeea;
+    --label-category: #feeaf0;
+    --label-eip: #eaf0fe;
+    --label-type: #feeaf0;
+    --label-deprecated: #a8a8a8;
+
+    --label-border-components: #a5f994;
+    --label-border-category: #f994b3;
+    --label-border-eip: #94b3f9;
+    --label-border-type: #f994b3;
+    --label-border-deprecated: #444444;
   }
 
   [data-theme='dark'] {
@@ -104,6 +117,19 @@
     --palette-parameters: #0d4a87;
     --palette-monitoring: #01924c;
     --palette-transactionalstorages: #9c7800;
+
+    /* Label styling */
+    --label-components: #20930c;
+    --label-category: #bf063e;
+    --label-eip: #123ea2;
+    --label-type: #bf063e;
+    --label-deprecated: #444444;
+
+    --label-border-components: #89be7e;
+    --label-border-category: #e37294;
+    --label-border-eip: #5174c7;
+    --label-border-type: #e37294;
+    --label-border-deprecated: #b6b6b6;
   }
 }
 
@@ -120,6 +146,43 @@ body {
 
 .monaco-editor .highlight-line {
   @apply border-l-4 border-yellow-400 bg-yellow-200/30 transition-colors;
+}
+
+.monaco-editor .hunk-glyph-unchecked,
+.monaco-editor .hunk-glyph-checked {
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+}
+
+.monaco-editor .hunk-glyph-unchecked::after,
+.monaco-editor .hunk-glyph-checked::after {
+  content: '';
+  display: block;
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  margin-left: 6px;
+  margin-top: 2px;
+  border: 1.5px solid #6b7280;
+  background: transparent;
+  box-sizing: border-box;
+}
+
+.monaco-editor .hunk-glyph-checked::after {
+  border-color: #22c55e;
+  background: #22c55e;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath d='M3.5 7.5L5.5 9.5L10.5 4.5' stroke='white' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-size: 14px 14px;
+}
+
+.monaco-editor .hunk-glyph-unchecked:hover::after {
+  border-color: #22c55e;
+}
+
+.monaco-editor .hunk-line-selected {
+  background: rgba(34, 197, 94, 0.08) !important;
 }
 
 :root {

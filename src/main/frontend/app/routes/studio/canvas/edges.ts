@@ -9,17 +9,8 @@ export const initialEdges = [
     type: 'frankEdge',
   },
   {
-    id: '1-2',
+    id: '1-3',
     source: '1',
-    target: '2',
-    data: {
-      label: 'SUCCESS',
-    },
-    type: 'frankEdge',
-  },
-  {
-    id: '2-3',
-    source: '2',
     target: '3',
     data: {
       label: 'SUCCESS',
@@ -32,16 +23,6 @@ export const initialEdges = [
     target: '4',
     data: {
       label: 'SUCCESS',
-    },
-    type: 'frankEdge',
-  },
-  {
-    id: '2-5',
-    source: '2',
-    sourceHandle: '2',
-    target: '5',
-    data: {
-      label: 'FAILURE',
     },
     type: 'frankEdge',
   },

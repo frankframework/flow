@@ -1,4 +1,4 @@
-import { useSettingsStore } from '~/routes/settings/settings-store'
+import { useSettingsStore } from '~/stores/settings-store'
 import Toggle from '~/components/inputs/toggle'
 import InputWithLabel from '~/components/inputs/input-with-label'
 

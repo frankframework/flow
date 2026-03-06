@@ -1,26 +1,38 @@
 import { create } from 'zustand'
 import { subscribeWithSelector } from 'zustand/middleware'
 
-interface EditorTabData {
+export interface DiffTabData {
+  oldContent: string
+  newContent: string
+  filePath: string
+  hunks: import('~/types/git.types').GitHunk[]
+}
+
+export interface EditorTabData {
   name: string
   configurationPath: string
+  type?: 'editor' | 'diff'
+  diffData?: DiffTabData
 }
 
 interface EditorTabStoreState {
   tabs: Record<string, EditorTabData>
   activeTabFilePath: string
+  refreshCounter: number
   setTabData: (tabId: string, data: EditorTabData) => void
   getTab: (tabId: string) => EditorTabData | undefined
   setActiveTab: (tabId: string) => void
   removeTab: (tabId: string) => void
   removeTabAndSelectFallback: (tabId: string) => void
   clearTabs: () => void
+  refreshAllTabs: () => void
 }
 
 const useEditorTabStore = create<EditorTabStoreState>()(
   subscribeWithSelector((set, get) => ({
     tabs: {},
     activeTabFilePath: '',
+    refreshCounter: 0,
     setTabData: (tabId, data) =>
       set((state) => ({
         tabs: {
@@ -52,6 +64,7 @@ const useEditorTabStore = create<EditorTabStoreState>()(
         }
       }),
     clearTabs: () => set({ tabs: {}, activeTabFilePath: '' }),
+    refreshAllTabs: () => set((state) => ({ refreshCounter: state.refreshCounter + 1 })),
   })),
 )
 

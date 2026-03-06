@@ -1,4 +1,5 @@
 import React from 'react'
+import Button from '~/components/inputs/button'
 
 interface ActionButtonProperties {
   onClick?: React.MouseEventHandler<HTMLButtonElement>
@@ -7,8 +8,8 @@ interface ActionButtonProperties {
 
 export default function ActionButton({ onClick, label }: Readonly<ActionButtonProperties>) {
   return (
-    <button className="hover:bg-backdrop w-full rounded px-2 py-2 text-left hover:cursor-pointer" onClick={onClick}>
+    <Button className="justify-left flex border-none text-sm whitespace-nowrap" onClick={onClick}>
       {label}
-    </button>
+    </Button>
   )
 }

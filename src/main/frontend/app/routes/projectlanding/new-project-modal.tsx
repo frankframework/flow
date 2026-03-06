@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import DirectoryPicker from '~/components/directory-picker/directory-picker'
+import Button from '~/components/inputs/button'
 import { filesystemService } from '~/services/filesystem-service'
 
 interface NewProjectModalProperties {
@@ -7,23 +8,34 @@ interface NewProjectModalProperties {
   isLocal: boolean
   onClose: () => void
   onCreate: (pathOrName: string) => void
+  initialPath?: string
 }
 
-export default function NewProjectModal({ isOpen, isLocal, onClose, onCreate }: Readonly<NewProjectModalProperties>) {
+export default function NewProjectModal({
+  isOpen,
+  isLocal,
+  onClose,
+  onCreate,
+  initialPath,
+}: Readonly<NewProjectModalProperties>) {
   const [name, setName] = useState('')
   const [location, setLocation] = useState('')
   const [showPicker, setShowPicker] = useState(false)
 
   useEffect(() => {
     if (isOpen && isLocal) {
-      filesystemService
-        .getDefaultPath()
-        .then(setLocation)
-        .catch(() => setLocation(''))
+      if (initialPath) {
+        setLocation(initialPath)
+      } else {
+        filesystemService
+          .getDefaultPath()
+          .then(setLocation)
+          .catch(() => setLocation(''))
+      }
     } else if (isOpen) {
-      setLocation('')
+      setLocation(initialPath ?? '')
     }
-  }, [isOpen, isLocal])
+  }, [isOpen, isLocal, initialPath])
 
   if (!isOpen) return null
 
@@ -66,16 +78,14 @@ export default function NewProjectModal({ isOpen, isLocal, onClose, onCreate }: 
               <input
                 value={location || (isLocal ? '' : 'Workspace root')}
                 readOnly
-                className="border-border bg-backdrop w-full rounded border px-2 py-1 text-sm"
+                className="border-border bg-background focus:border-foreground-active focus:ring-foreground-active w-full rounded border px-2 py-1 text-sm transition focus:ring-2 focus:outline-none"
                 placeholder={isLocal ? 'Select a parent directory...' : 'Workspace root (or browse for subfolder)'}
+                onDoubleClick={() => setShowPicker(true)}
               />
 
-              <button
-                onClick={() => setShowPicker(true)}
-                className="bg-backdrop hover:bg-background border-border rounded border px-3 py-1 text-sm whitespace-nowrap hover:cursor-pointer"
-              >
+              <Button onClick={() => setShowPicker(true)} className="h-8 text-sm">
                 Browse...
-              </button>
+              </Button>
             </div>
           </div>
 
@@ -99,20 +109,17 @@ export default function NewProjectModal({ isOpen, isLocal, onClose, onCreate }: 
           )}
 
           <div className="flex gap-2">
-            <button
+            <Button
               onClick={handleCreate}
               disabled={!name.trim() || (isLocal && !location)}
-              className="bg-backdrop hover:bg-background border-border rounded border px-4 py-2 hover:cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+              className="disabled:text-foreground-muted disabled:cursor-not-allowed disabled:opacity-50"
             >
               Create Project
-            </button>
+            </Button>
 
-            <button
-              onClick={handleClose}
-              className="bg-background border-border hover:bg-backdrop absolute top-3 right-3 cursor-pointer rounded border px-3 py-1"
-            >
+            <Button onClick={handleClose} className="absolute top-3 right-3">
               Close
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -124,6 +131,7 @@ export default function NewProjectModal({ isOpen, isLocal, onClose, onCreate }: 
           setShowPicker(false)
         }}
         onCancel={() => setShowPicker(false)}
+        initialPath={location}
       />
     </>
   )
