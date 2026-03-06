@@ -1,279 +1,153 @@
 <xsl:stylesheet version="3.0"
                 xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
                 xmlns:xs="http://www.w3.org/2001/XMLSchema"
-                xmlns:map="http://www.w3.org/2005/xpath-functions/map"
-                xmlns:func="http://exslt.org/functions"
->
+                xmlns:outputxsl="http://www.w3.org/1999/XSL/TransformAlias">
+
+    <xsl:namespace-alias stylesheet-prefix="outputxsl" result-prefix="xsl"/>
+
     <xsl:template name="functions">
 
-        <xsl:element name="xsl:function">
-            <xsl:attribute name="name">datamapper:Concat</xsl:attribute>
-
-            <xsl:element name="xsl:param">
-                <xsl:attribute name="name">items</xsl:attribute>
-                <xsl:attribute name="as">xs:string*</xsl:attribute>
-            </xsl:element>
-
-            <xsl:element name="xsl:sequence">
-                <xsl:attribute name="select">string-join($items, '')</xsl:attribute>
-            </xsl:element>
-        </xsl:element>
+        <outputxsl:function name="datamapper:Concat">
+            <outputxsl:param name="items" as="xs:string*"/>
+            <outputxsl:sequence select="string-join($items, '')"/>
+        </outputxsl:function>
 
         <!-- Equation -->
-        <xsl:element name="xsl:function">
-            <xsl:attribute name="name">datamapper:Equation</xsl:attribute>
+        <outputxsl:function name="datamapper:Equation">
 
-            <xsl:element name="xsl:param">
-                <xsl:attribute name="name">left</xsl:attribute>
-            </xsl:element>
+            <outputxsl:param name="left"/>
+            <outputxsl:param name="op"/>
+            <outputxsl:param name="right"/>
 
-            <xsl:element name="xsl:param">
-                <xsl:attribute name="name">op</xsl:attribute>
-            </xsl:element>
+            <outputxsl:choose>
 
-            <xsl:element name="xsl:param">
-                <xsl:attribute name="name">right</xsl:attribute>
-            </xsl:element>
+                <outputxsl:when test="$op = '&lt;'">
+                    <outputxsl:sequence select="$left &lt; $right"/>
+                </outputxsl:when>
 
-            <xsl:element name="xsl:choose">
-                <xsl:element name="xsl:when">
-                    <xsl:attribute name="test">$op = '&lt;'</xsl:attribute>
-                    <xsl:element name="xsl:sequence">
-                        <xsl:attribute name="select">$left &lt; $right</xsl:attribute>
-                    </xsl:element>
-                </xsl:element>
-                <xsl:element name="xsl:when">
-                    <xsl:attribute name="test">$op = '&gt;'</xsl:attribute>
-                    <xsl:element name="xsl:sequence">
-                        <xsl:attribute name="select">$left &gt; $right</xsl:attribute>
-                    </xsl:element>
-                </xsl:element>
-                <xsl:element name="xsl:when">
-                    <xsl:attribute name="test">$op = '='</xsl:attribute>
-                    <xsl:element name="xsl:sequence">
-                        <xsl:attribute name="select">$left = $right</xsl:attribute>
-                    </xsl:element>
-                </xsl:element>
-                <xsl:element name="xsl:otherwise">
-                    <xsl:element name="xsl:sequence">
-                        <xsl:attribute name="select">false()</xsl:attribute>
-                    </xsl:element>
-                </xsl:element>
-            </xsl:element>
-        </xsl:element>
+                <outputxsl:when test="$op = '&gt;'">
+                    <outputxsl:sequence select="$left &gt; $right"/>
+                </outputxsl:when>
+
+                <outputxsl:when test="$op = '='">
+                    <outputxsl:sequence select="$left = $right"/>
+                </outputxsl:when>
+
+                <outputxsl:otherwise>
+                    <outputxsl:sequence select="false()"/>
+                </outputxsl:otherwise>
+
+            </outputxsl:choose>
+
+        </outputxsl:function>
 
         <!-- ValueEquals -->
-        <xsl:element name="xsl:function">
-            <xsl:attribute name="name">datamapper:ValueEquals</xsl:attribute>
-            <xsl:element name="xsl:param">
-                <xsl:attribute name="name">a</xsl:attribute>
-            </xsl:element>
-            <xsl:element name="xsl:param">
-                <xsl:attribute name="name">b</xsl:attribute>
-            </xsl:element>
-            <xsl:element name="xsl:sequence">
-                <xsl:attribute name="select">$a = $b</xsl:attribute>
-            </xsl:element>
-        </xsl:element>
+        <outputxsl:function name="datamapper:ValueEquals">
+            <outputxsl:param name="a"/>
+            <outputxsl:param name="b"/>
+            <outputxsl:sequence select="$a = $b"/>
+        </outputxsl:function>
 
         <!-- CastToString -->
-        <xsl:element name="xsl:function">
-            <xsl:attribute name="name">datamapper:CastToString</xsl:attribute>
-            <xsl:element name="xsl:param">
-                <xsl:attribute name="name">a</xsl:attribute>
-            </xsl:element>
-            <xsl:element name="xsl:sequence">
-                <xsl:attribute name="select">string($a)</xsl:attribute>
-            </xsl:element>
-        </xsl:element>
-
+        <outputxsl:function name="datamapper:CastToString">
+            <outputxsl:param name="a"/>
+            <outputxsl:sequence select="string($a)"/>
+        </outputxsl:function>
 
         <!-- Nullcheck -->
-        <xsl:element name="xsl:function">
-            <xsl:attribute name="name">datamapper:NullCheck</xsl:attribute>
-            <xsl:element name="xsl:param">
-                <xsl:attribute name="name">a</xsl:attribute>
-            </xsl:element>
-            <xsl:element name="xsl:sequence">
-                <xsl:attribute name="select">string-length($a) &gt; 0</xsl:attribute>
-            </xsl:element>
-        </xsl:element>
+        <outputxsl:function name="datamapper:NullCheck">
+            <outputxsl:param name="a"/>
+            <outputxsl:sequence select="string-length($a) &gt; 0"/>
+        </outputxsl:function>
+
         <!-- Replace -->
-        <xsl:element name="xsl:function">
-            <xsl:attribute name="name">datamapper:Replace</xsl:attribute>
-            <xsl:element name="xsl:param">
-                <xsl:attribute name="name">text</xsl:attribute>
-            </xsl:element>
-            <xsl:element name="xsl:param">
-                <xsl:attribute name="name">search</xsl:attribute>
-            </xsl:element>
-            <xsl:element name="xsl:param">
-                <xsl:attribute name="name">replace</xsl:attribute>
-            </xsl:element>
-            <xsl:element name="xsl:choose">
-                <xsl:element name="xsl:when">
-                    <xsl:attribute name="test">contains($text, $search)</xsl:attribute>
-                    <xsl:element name="xsl:sequence">
-                        <xsl:attribute name="select">
-                            <xsl:text>concat(substring-before($text, $search), </xsl:text>
-                            <xsl:text>$replace, </xsl:text>
-                            <xsl:text>datamapper:Replace(substring-after($text, $search), $search, $replace))</xsl:text>
-                        </xsl:attribute>
-                    </xsl:element>
-                </xsl:element>
-                <xsl:element name="xsl:otherwise">
-                    <xsl:element name="xsl:sequence">
-                        <xsl:attribute name="select">$text</xsl:attribute>
-                    </xsl:element>
-                </xsl:element>
-            </xsl:element>
-        </xsl:element>
-        <xsl:element name="xsl:function">
-            <xsl:attribute name="name">datamapper:xml-to-json</xsl:attribute>
-            <xsl:attribute name="as">xs:string</xsl:attribute>
+        <outputxsl:function name="datamapper:Replace">
 
-            <!-- Parameter nodes -->
-            <xsl:element name="xsl:param">
-                <xsl:attribute name="name">nodes</xsl:attribute>
-                <xsl:attribute name="as">element()*</xsl:attribute>
-            </xsl:element>
+            <outputxsl:param name="text"/>
+            <outputxsl:param name="search"/>
+            <outputxsl:param name="replace"/>
 
-            <xsl:element name="xsl:choose">
+            <outputxsl:choose>
+
+                <outputxsl:when test="contains($text, $search)">
+                    <outputxsl:sequence
+                            select="concat(substring-before($text, $search),$replace,datamapper:Replace(substring-after($text, $search), $search, $replace))"/>
+                </outputxsl:when>
+
+                <outputxsl:otherwise>
+                    <outputxsl:sequence select="$text"/>
+                </outputxsl:otherwise>
+
+            </outputxsl:choose>
+
+        </outputxsl:function>
+
+        <outputxsl:function name="datamapper:xml-to-json" as="xs:string">
+            <outputxsl:param name="nodes" as="element()*"/>
+
+            <outputxsl:choose>
 
                 <!-- No nodes -->
-                <xsl:element name="xsl:when">
+                <outputxsl:when test="empty($nodes)">
                     <xsl:attribute name="test">empty($nodes)</xsl:attribute>
                     <xsl:element name="xsl:sequence">
                         <xsl:attribute name="select">''</xsl:attribute>
                     </xsl:element>
-                </xsl:element>
+                </outputxsl:when>
 
                 <!-- Leaf nodes -->
-                <xsl:element name="xsl:when">
-                    <xsl:attribute name="test">every $n in $nodes satisfies not($n/*)</xsl:attribute>
-                    <xsl:element name="xsl:variable">
-                        <xsl:attribute name="name">leaf-json</xsl:attribute>
-                        <xsl:element name="xsl:for-each">
-                            <xsl:attribute name="select">$nodes</xsl:attribute>
-                            <xsl:element name="xsl:variable">
-                                <xsl:attribute name="name">value</xsl:attribute>
-                                <xsl:attribute name="select">normalize-space(.)</xsl:attribute>
-                            </xsl:element>
-                            <xsl:element name="xsl:value-of">
-                                <xsl:attribute name="select">
-                                    <xsl:text>concat('&quot;', name(), '&quot;:',</xsl:text>
-                                    <xsl:text> if ($value = '') then 'null' else concat('&quot;', $value, '&quot;'))</xsl:text>
-                                </xsl:attribute>
-                            </xsl:element>
-                            <xsl:element name="xsl:if">
-                                <xsl:attribute name="test">position() != last()</xsl:attribute>
-                                <xsl:element name="xsl:text">,</xsl:element>
-                            </xsl:element>
-                        </xsl:element>
-                    </xsl:element>
-                    <xsl:element name="xsl:sequence">
+                <outputxsl:when test="every $n in $nodes satisfies not($n/*)">
+                    <outputxsl:variable name="leaf-json">
+                        <outputxsl:for-each select="$nodes">
+                            <outputxsl:variable name="value" select="normalize-space(.)"/>
+                            <outputxsl:value-of
+                                    select="concat('&quot;', name(), '&quot;:', if ($value = '') then 'null' else concat('&quot;', $value, '&quot;'))"/>
+                            <outputxsl:if test="position() != last()">
+                                <xsl:text>,</xsl:text>
+                            </outputxsl:if>
+                        </outputxsl:for-each>
+                    </outputxsl:variable>
+                    <outputxsl:sequence>
                         <xsl:attribute name="select">concat('{', $leaf-json, '}')</xsl:attribute>
-                    </xsl:element>
-                </xsl:element>
-
-                <!-- Nodes with children -->
-                <xsl:element name="xsl:otherwise">
-
-                    <xsl:element name="xsl:variable">
-                        <xsl:attribute name="name">unique-names</xsl:attribute>
-                        <xsl:attribute name="select">distinct-values($nodes/name())</xsl:attribute>
-                    </xsl:element>
-
-                    <xsl:element name="xsl:variable">
-                        <xsl:attribute name="name">child-json</xsl:attribute>
-                        <xsl:element name="xsl:for-each">
-                            <xsl:attribute name="select">$unique-names</xsl:attribute>
-                            <xsl:element name="xsl:variable">
-                                <xsl:attribute name="name">name</xsl:attribute>
-                                <xsl:attribute name="select">.</xsl:attribute>
-                            </xsl:element>
-                            <xsl:element name="xsl:variable">
-                                <xsl:attribute name="name">group</xsl:attribute>
-                                <xsl:attribute name="select">$nodes[name() = $name]</xsl:attribute>
-                            </xsl:element>
-
-                            <xsl:element name="xsl:choose">
-
-                                <!-- Single node -->
-                                <xsl:element name="xsl:when">
-                                    <xsl:attribute name="test">count($group) = 1</xsl:attribute>
-                                    <xsl:element name="xsl:variable">
-                                        <xsl:attribute name="name">child</xsl:attribute>
-                                        <xsl:attribute name="select">$group[1]</xsl:attribute>
-                                    </xsl:element>
-
-                                    <xsl:element name="xsl:choose">
-                                        <!-- Leaf node -->
-                                        <xsl:element name="xsl:when">
-                                            <xsl:attribute name="test">not($child/*)</xsl:attribute>
-                                            <xsl:element name="xsl:variable">
-                                                <xsl:attribute name="name">value</xsl:attribute>
-                                                <xsl:attribute name="select">normalize-space($child)</xsl:attribute>
-                                            </xsl:element>
-                                            <xsl:element name="xsl:value-of">
-                                                <xsl:attribute name="select">
-                                                    <xsl:text>concat('&quot;', $name, '&quot;:',</xsl:text>
-                                                    <xsl:text> if ($value = '') then 'null' else concat('&quot;', $value, '&quot;'))</xsl:text>
-                                                </xsl:attribute>
-                                            </xsl:element>
-                                        </xsl:element>
-
-                                        <!-- Node with children -->
-                                        <xsl:element name="xsl:otherwise">
-                                            <xsl:element name="xsl:value-of">
-                                                <xsl:attribute name="select">
-                                                    <xsl:text>concat('&quot;', $name, '&quot;:', datamapper:xml-to-json($child/*))</xsl:text>
-                                                </xsl:attribute>
-                                            </xsl:element>
-                                        </xsl:element>
-                                    </xsl:element>
-                                </xsl:element>
-
-                                <!-- Multiple nodes with same name -->
-                                <xsl:element name="xsl:otherwise">
-                                    <xsl:element name="xsl:value-of">
-                                        <xsl:attribute name="select">
-                                            <xsl:text>concat('&quot;', $name, '&quot;:[', </xsl:text>
-                                            <xsl:text>string-join( </xsl:text>
-                                            <xsl:text>for $c in $group </xsl:text>
-                                            <xsl:text>return </xsl:text>
-                                            <xsl:text>if (not($c/*)) then </xsl:text>
-                                            <xsl:text>let $val := normalize-space($c) return </xsl:text>
-                                            <xsl:text>if ($val = '') then 'null' else concat('&quot;', $val, '&quot;') </xsl:text>
-                                            <xsl:text>else </xsl:text>
-                                            <xsl:text>datamapper:xml-to-json($c/*) </xsl:text>
-                                            <xsl:text>, ',' </xsl:text>
-                                            <xsl:text>), ']' </xsl:text>
-                                            <xsl:text>) </xsl:text>
-                                        </xsl:attribute>
-                                    </xsl:element>
-                                </xsl:element>
-
-                            </xsl:element>
-
-                            <xsl:element name="xsl:if">
-                                <xsl:attribute name="test">position() != last()</xsl:attribute>
-                                <xsl:element name="xsl:text">
-                                    <xsl:text>,</xsl:text>
-                                </xsl:element>
-                            </xsl:element>
-
-                        </xsl:element>
-                    </xsl:element>
-
-                    <xsl:element name="xsl:sequence">
+                    </outputxsl:sequence>
+                </outputxsl:when>
+                <outputxsl:otherwise>
+                    <outputxsl:variable name="unique-names" select="distinct-values($nodes/name())"/>
+                    <outputxsl:variable name="child-json">
+                        <outputxsl:for-each select="$unique-names">
+                            <outputxsl:variable name="name" select="."/>
+                            <outputxsl:variable name="group" select="$nodes[name() = $name]"/>
+                            <outputxsl:choose>
+                                <outputxsl:when test="count($group) = 1">
+                                    <outputxsl:variable name="child" select="$group[1]"/>
+                                    <outputxsl:choose>
+                                        <outputxsl:when test="not($child/*)">
+                                            <outputxsl:variable name="value" select="normalize-space($child)"/>
+                                            <outputxsl:value-of
+                                                    select="concat('&#34;', $name, '&#34;:', if ($value = '') then 'null' else concat('&#34;', $value, '&#34;'))"/>
+                                        </outputxsl:when>
+                                        <outputxsl:otherwise>
+                                            <outputxsl:value-of
+                                                    select="concat('&#34;', $name, '&#34;:', datamapper:xml-to-json($child/*))"/>
+                                        </outputxsl:otherwise>
+                                    </outputxsl:choose>
+                                </outputxsl:when>
+                                <outputxsl:otherwise>
+                                    <outputxsl:value-of
+                                            select="concat('&#34;', $name, '&#34;:[', string-join( for $c in $group return if (not($c/*)) then let $val := normalize-space($c) return if ($val = '') then 'null' else concat('&#34;', $val, '&#34;') else datamapper:xml-to-json($c/*) , ',' ), ']' ) "/>
+                                </outputxsl:otherwise>
+                            </outputxsl:choose>
+                            <outputxsl:if test="position() != last()">
+                                <outputxsl:text>,</outputxsl:text>
+                            </outputxsl:if>
+                        </outputxsl:for-each>
+                    </outputxsl:variable>
+                    <outputxsl:sequence>
                         <xsl:attribute name="select">concat('{', $child-json, '}')</xsl:attribute>
-                    </xsl:element>
-
-                </xsl:element>
-
-            </xsl:element>
-        </xsl:element>
-
+                    </outputxsl:sequence>
+                </outputxsl:otherwise>
+            </outputxsl:choose>
+        </outputxsl:function>
     </xsl:template>
+
 </xsl:stylesheet>

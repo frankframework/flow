@@ -89,7 +89,7 @@
                               version="3.0"
                               xmlns:xs="http://www.w3.org/2001/XMLSchema"
                               xmlns:datamapper="http://example.com/datamapper"
-                              exclude-result-prefixes="datamapper"
+                              exclude-result-prefixes="datamapper xs map func"
         >
             <xsl:choose>
                 <xsl:when test="$data?targetType = 'JSON'">
