@@ -20,9 +20,13 @@ public class DatamapperConfigService {
 
     private String getConfigFilePath(String projectName) throws ConfigurationNotFoundException {
         try {
-            String configFilePath =
-                    fileTreeService.getConfigurationsDirectoryTree(projectName).getPath()
-                            + "\\datamapper\\configuration.json";
+
+            String configFilePath = Path.of(fileTreeService
+                            .getConfigurationsDirectoryTree(projectName)
+                            .getPath())
+                    .resolve("datamapper")
+                    .resolve("configuration.json")
+                    .toString();
             return configFilePath;
         } catch (IOException e) {
             throw new ConfigurationNotFoundException(
@@ -35,8 +39,11 @@ public class DatamapperConfigService {
 
         try {
             absoluteFilePath = fileSystemStorage.toAbsolutePath(getConfigFilePath(projectName));
-            String datamapperFilePath =
-                    fileTreeService.getConfigurationsDirectoryTree(projectName).getPath() + "\\datamapper";
+            String datamapperFilePath = Path.of(fileTreeService
+                            .getConfigurationsDirectoryTree(projectName)
+                            .getPath())
+                    .resolve("datamapper")
+                    .toString();
 
             if (!Files.isDirectory(Path.of(datamapperFilePath))) {
                 Files.createDirectory(Path.of(datamapperFilePath));
