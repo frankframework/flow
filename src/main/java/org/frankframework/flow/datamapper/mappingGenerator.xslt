@@ -4,8 +4,14 @@
                 xmlns:map="http://www.w3.org/2005/xpath-functions/map"
                 xmlns:func="http://exslt.org/functions"
                 xmlns:datamapper="http://example.com/datamapper"
-                exclude-result-prefixes="datamapper"
+
+                xmlns:outputxsl="http://www.w3.org/1999/XSL/TransformAlias"
+
+
 >
+    <xsl:namespace-alias stylesheet-prefix="outputxsl" result-prefix="xsl"/>
+    <!--    <xsl:namespace-alias stylesheet-prefix="outputxmlns" result-prefix="xml"/>-->
+
     <xsl:output method="xml" indent="yes"/>
     <xsl:include href="functions.xslt"/>
     <xsl:variable name="jsonPath" select="/params/jsonPath/text()"/>
@@ -39,6 +45,37 @@
                     else ()
     "/>
     </xsl:function>
+    <xsl:function name="datamapper:createFunction" as="xs:string">
+        <xsl:param name="type"/>
+        <xsl:param name="name"/>
+        <xsl:param name="inputs"/>
+
+        <xsl:variable name="args">
+            <xsl:if test="$type?inputs?1?expandable = true()">
+                <xsl:text>(</xsl:text>
+            </xsl:if>
+            <xsl:for-each select="$inputs?*">
+                <xsl:choose>
+                    <xsl:when test="?type != 'source'">
+                        <xsl:text>'</xsl:text>
+                        <xsl:value-of select="?value"/>
+                        <xsl:text>'</xsl:text>
+                    </xsl:when>
+                    <xsl:otherwise>
+                        <xsl:text>$</xsl:text>
+                        <xsl:value-of select="?sourceId"/>
+                    </xsl:otherwise>
+                </xsl:choose>
+                <xsl:if test="position() != last()">,</xsl:if>
+            </xsl:for-each>
+            <xsl:if test="$type?inputs?1?expandable = true()">
+                <xsl:text>)</xsl:text>
+            </xsl:if>
+
+        </xsl:variable>
+
+        <xsl:sequence select="concat('datamapper:', $type?name, '(', $args, ')')"/>
+    </xsl:function>
     <!-- Entry point -->
     <xsl:template name="main" match="/">
 
@@ -46,98 +83,78 @@
         <xsl:variable name="data" select="json-doc($jsonPath)"/>
 
         <!--        Output XSLT stylesheet, using xsl:text here because it's the only way to pass xmlns attributes-->
-        <xsl:text disable-output-escaping="yes">
-            &lt;xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-                version="3.0"
-                xmlns:xs="http://www.w3.org/2001/XMLSchema"
-                xmlns:datamapper="http://example.com/datamapper"
-                exclude-result-prefixes="datamapper"&gt;
-        </xsl:text>
-        <xsl:choose>
-            <xsl:when test="$data?targetType = 'JSON'">
-                <xsl:element name="xsl:output">
-                    <xsl:attribute name="method">text</xsl:attribute>
-                    <xsl:attribute name="indent">no</xsl:attribute>
-                </xsl:element>
-            </xsl:when>
-            <xsl:otherwise>
-                <xsl:element name="xsl:output">
-                    <xsl:attribute name="method">xml</xsl:attribute>
-                    <xsl:attribute name="indent">yes</xsl:attribute>
-                </xsl:element>
-            </xsl:otherwise>
-        </xsl:choose>
 
-        <xsl:if test="$data?sourceType = 'JSON'">
-            <xsl:element name="xsl:variable">
-                <xsl:attribute name="name">jsonPath</xsl:attribute>
-                <xsl:attribute name="select">/params/jsonPath/text()</xsl:attribute>
-            </xsl:element>
-            <xsl:element name="xsl:variable">
-                <xsl:attribute name="name">data</xsl:attribute>
-                <xsl:attribute name="select">json-doc($jsonPath)</xsl:attribute>
-            </xsl:element>
-        </xsl:if>
 
-        <xsl:call-template name="functions"/>
+        <outputxsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+                              version="3.0"
+                              xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                              xmlns:datamapper="http://example.com/datamapper"
+                              exclude-result-prefixes="datamapper"
+        >
+            <xsl:choose>
+                <xsl:when test="$data?targetType = 'JSON'">
+                    <outputxsl:output method="text" indent="no"/>
+                </xsl:when>
+                <xsl:otherwise>
+                    <outputxsl:output method="xml" indent="yes"/>
+                </xsl:otherwise>
+            </xsl:choose>
 
-        <xsl:choose>
-            <xsl:when test="$data?targetType = 'JSON'">
-                <xsl:element name="xsl:template">
-                    <xsl:if test="$data?sourceType = 'XML'">
-                        <xsl:attribute name="match">/source</xsl:attribute>
-                    </xsl:if>
-                    <xsl:attribute name="name">source</xsl:attribute>
+            <xsl:if test="$data?sourceType = 'JSON'">
+                <outputxsl:variable name="jsonPath" select="/params/jsonPath/text()"/>
+                <outputxsl:variable name="data" select="json-doc($jsonPath)"/>
+            </xsl:if>
 
-                    <xsl:element name="xsl:variable">
-                        <xsl:attribute name="name">xmlOutput</xsl:attribute>
+            <xsl:call-template name="functions"/>
+
+            <xsl:choose>
+                <xsl:when test="$data?targetType = 'JSON'">
+                    <outputxsl:template name="source">
+                        <xsl:if test="$data?sourceType = 'XML'">
+                            <xsl:attribute name="match">/source</xsl:attribute>
+                        </xsl:if>
+
+                        <outputxsl:variable name="xmlOutput">
+                            <xsl:for-each select="$data?targetStructure?*">
+                                <xsl:call-template name="outer-property">
+                                    <xsl:with-param name="node" select="."/>
+                                    <xsl:with-param name="data" select="$data"/>
+                                </xsl:call-template>
+                            </xsl:for-each>
+                        </outputxsl:variable>
+                        <outputxsl:value-of select="datamapper:xml-to-json($xmlOutput/*)"></outputxsl:value-of>
+                    </outputxsl:template>
+
+                    <outputxsl:template match="/">
+                        <xsl:choose>
+                            <xsl:when test="$data?sourceType = 'XML'">
+                                <outputxsl:apply-templates select="source"/>
+                            </xsl:when>
+                            <xsl:otherwise>
+                                <outputxsl:call-template name="source"/>
+                            </xsl:otherwise>
+                        </xsl:choose>
+                    </outputxsl:template>
+
+                </xsl:when>
+                <xsl:when test="$data?targetType = 'XML'">
+
+                    <outputxsl:template>
+                        <xsl:attribute name="match">
+                            <xsl:text>/</xsl:text>
+                            <xsl:if test="$data?sourceType = 'XML'">source</xsl:if>
+                        </xsl:attribute>
                         <xsl:for-each select="$data?targetStructure?*">
                             <xsl:call-template name="outer-property">
                                 <xsl:with-param name="node" select="."/>
                                 <xsl:with-param name="data" select="$data"/>
                             </xsl:call-template>
                         </xsl:for-each>
+                    </outputxsl:template>
 
-                    </xsl:element>
-                    <xsl:element name="xsl:value-of">
-                        <xsl:attribute name="select">datamapper:xml-to-json($xmlOutput/*)</xsl:attribute>
-                    </xsl:element>
-
-                </xsl:element>
-                <xsl:element name="xsl:template">
-                    <xsl:attribute name="match">/</xsl:attribute>
-                    <xsl:choose>
-                        <xsl:when test="$data?sourceType = 'XML'">
-                            <xsl:element name="xsl:apply-templates">
-                                <xsl:attribute name="select">source</xsl:attribute>
-                            </xsl:element>
-                        </xsl:when>
-                        <xsl:otherwise>
-                            <xsl:element name="xsl:call-template">
-                                <xsl:attribute name="name">source</xsl:attribute>
-                            </xsl:element>
-                        </xsl:otherwise>
-                    </xsl:choose>
-                </xsl:element>
-
-            </xsl:when>
-            <xsl:when test="$data?targetType = 'XML'">
-                <xsl:element name="xsl:template">
-                    <xsl:attribute name="match"><xsl:text>/</xsl:text>
-                        <xsl:if test="$data?sourceType = 'XML'">source</xsl:if>
-                    </xsl:attribute>
-                    <xsl:for-each select="$data?targetStructure?*">
-                        <xsl:call-template name="outer-property">
-                            <xsl:with-param name="node" select="."/>
-                            <xsl:with-param name="data" select="$data"/>
-                        </xsl:call-template>
-                    </xsl:for-each>
-                </xsl:element>
-            </xsl:when>
-        </xsl:choose>
-        <xsl:text disable-output-escaping="yes">
-            &lt;/xsl:stylesheet&gt;
-        </xsl:text>
+                </xsl:when>
+            </xsl:choose>
+        </outputxsl:stylesheet>
     </xsl:template>
 
     <!-- Recursive template for processing targets -->
@@ -156,79 +173,29 @@
                 <xsl:when test="$data?sourceType = 'XML'">/</xsl:when>
             </xsl:choose>
         </xsl:variable>
-        <xsl:element name="xsl:if">
-            <xsl:attribute name="test">true()</xsl:attribute>
+        <outputxsl:if test="true()">
             <xsl:for-each select="$node?mapping?sources?*">
-                <xsl:element name="xsl:variable">
-                    <xsl:attribute name="name">
-                        <xsl:value-of select="?internalId"></xsl:value-of>
-                    </xsl:attribute>
-                    <xsl:attribute name="select">
-                        <xsl:if test="$data?sourceType = 'JSON'">$data?</xsl:if>
-<!--                        <xsl:if test="$data?sourceType = 'XML'"><xsl:value-of select="$operator"></xsl:value-of></xsl:if>-->
-
-                        <xsl:value-of select="datamapper:lookUp($data?sourceStructure, ?internalId, '', $operator)"/>
-                    </xsl:attribute>
-                </xsl:element>
+                <xsl:variable name="location">
+                    <!--                    This is because of how i've setup JSON vs XML, once i've implemented multiple inputs i'll rework this.-->
+                    <xsl:if test="$data?sourceType = 'JSON'">$data?</xsl:if>
+                    <xsl:value-of select="datamapper:lookUp($data?sourceStructure, ?internalId, '', $operator)"/>
+                </xsl:variable>
+                <outputxsl:variable name="{?internalId}" select="{$location}"/>
             </xsl:for-each>
             <xsl:for-each select="$node?mapping?mutations?*">
-                <xsl:element name="xsl:variable">
-                    <xsl:attribute name="name">
-                        <xsl:value-of select="?id"></xsl:value-of>
-                    </xsl:attribute>
-                    <!--                    The empty XSL-Ifs here exists to ensure no empty newline gets added-->
-                    <xsl:attribute name="select">datamapper:<xsl:value-of select="?mutationType?name"/>
-                        <xsl:text>(</xsl:text>
-                        <xsl:if test="?mutationType?inputs?1?expandable = true()">(</xsl:if>
-                        <xsl:for-each select="?inputs?*">
-                            <xsl:choose>
-                                <xsl:when test="compare(?type, 'source')">'<xsl:value-of select="?value"/>
-                                    <xsl:text>'</xsl:text>
-                                </xsl:when>
-                                <xsl:otherwise>$<xsl:value-of select="?sourceId"/>
-                                </xsl:otherwise>
-                            </xsl:choose>
-                            <xsl:if test="position() != last()">,</xsl:if>
-                        </xsl:for-each>
-                        <xsl:text>)</xsl:text>
-                        <xsl:if test="?mutationType?inputs?1?expandable = true()">)</xsl:if>
-                    </xsl:attribute>
-                </xsl:element>
+                <outputxsl:variable name="{?id}" select="{datamapper:createFunction(?mutationType, ?name, ?inputs)}"/>
             </xsl:for-each>
             <xsl:for-each select="$node?mapping?conditions?*">
-
-                <xsl:element name="xsl:variable">
-                    <xsl:attribute name="name">
-                        <xsl:value-of select="?id"></xsl:value-of>
-                    </xsl:attribute>
-                    <xsl:attribute name="select">datamapper:<xsl:value-of select="?type?name"/>
-                        <xsl:text>(</xsl:text>
-                        <xsl:for-each select="?inputs?*">
-                            <xsl:choose>
-                                <xsl:when test="compare(?type, 'source')">'<xsl:value-of select="?value"
-                                                                                         disable-output-escaping="yes"/>
-                                    <xsl:text>'</xsl:text>
-                                </xsl:when>
-                                <xsl:otherwise>$<xsl:value-of select="?sourceId"/>
-                                </xsl:otherwise>
-                            </xsl:choose>
-                            <xsl:if test="position() != last()">,</xsl:if>
-                        </xsl:for-each>
-                        <xsl:text>)</xsl:text>
-                    </xsl:attribute>
-                </xsl:element>
+                <outputxsl:variable name="{?id}" select="{datamapper:createFunction(?type, ?name, ?inputs)}"/>
             </xsl:for-each>
             <xsl:choose>
                 <xsl:when test="not(empty($node?mapping?conditional))">
-                    <xsl:element name="xsl:if">
-                        <xsl:attribute name="test">$<xsl:value-of select="$node?mapping?conditional?id"></xsl:value-of>
-                        </xsl:attribute>
-
+                    <outputxsl:if test="${$node?mapping?conditional?id}">
                         <xsl:call-template name="inner-property">
                             <xsl:with-param name="node" select="."/>
                             <xsl:with-param name="data" select="$data"/>
                         </xsl:call-template>
-                    </xsl:element>
+                    </outputxsl:if>
                 </xsl:when>
                 <xsl:otherwise>
                     <xsl:call-template name="inner-property">
@@ -237,7 +204,7 @@
                     </xsl:call-template>
                 </xsl:otherwise>
             </xsl:choose>
-        </xsl:element>
+        </outputxsl:if>
 
         <!-- Create element with the label -->
 
@@ -247,13 +214,8 @@
         <xsl:param name="data"/>
 
         <xsl:element name="{$node?label}">
-
             <xsl:if test="empty($node?children)">
-                <xsl:element name="xsl:value-of">
-                    <xsl:attribute name="select">$<xsl:value-of select="$node?mapping?output"/>
-                    </xsl:attribute>
-                </xsl:element>
-
+                <outputxsl:value-of select="${$node?mapping?output}"></outputxsl:value-of>
             </xsl:if>
             <!-- Recurse if there are children -->
             <xsl:if test="exists($node?children) and count($node?children) > 0">

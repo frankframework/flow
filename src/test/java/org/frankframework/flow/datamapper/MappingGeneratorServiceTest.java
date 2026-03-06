@@ -1,5 +1,8 @@
 package org.frankframework.flow.datamapper;
 
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
@@ -8,10 +11,16 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Comparator;
-
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import javax.xml.transform.stream.StreamSource;
 import net.sf.saxon.s9api.*;
 import org.frankframework.flow.filesystem.FileSystemStorage;
-import org.frankframework.flow.filetree.FileTreeService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,28 +30,16 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.w3c.dom.Document;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-import javax.xml.transform.stream.StreamSource;
-
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.when;
-
 @ExtendWith(MockitoExtension.class)
 public class MappingGeneratorServiceTest {
     @Mock
     private FileSystemStorage fileSystemStorage;
+
     private MappingGeneratorService service;
     private Processor processor;
     private XsltCompiler compiler;
 
     private Path tempProjectRoot;
-
 
     private void stubToAbsolutePath() throws IOException {
         when(fileSystemStorage.toAbsolutePath(anyString())).thenAnswer(invocation -> {
@@ -50,7 +47,6 @@ public class MappingGeneratorServiceTest {
             return Paths.get(path);
         });
     }
-
 
     @BeforeEach
     void setUp() throws IOException {
@@ -61,9 +57,6 @@ public class MappingGeneratorServiceTest {
         processor = new Processor(false);
         compiler = processor.newXsltCompiler();
     }
-
-
-
 
     @AfterEach
     public void tearDown() throws IOException {
@@ -81,14 +74,17 @@ public class MappingGeneratorServiceTest {
 
     @Test
     public void generateMapping() throws SaxonApiException, IOException {
-        service.generate("src/test/resources/datamapper/inputJsonToXml.json", tempProjectRoot.toAbsolutePath()+ "/output.xslt");
+        service.generate(
+                "src/test/resources/datamapper/inputJsonToXml.json", tempProjectRoot.toAbsolutePath() + "/output.xslt");
     }
 
     @Test
     public void testXMLtoXMLGeneratedMapping() throws Exception {
-        service.generate("src/test/resources/datamapper/inputXmlToXml.json", tempProjectRoot.toAbsolutePath()+ "/output.xslt");
+        service.generate(
+                "src/test/resources/datamapper/inputXmlToXml.json", tempProjectRoot.toAbsolutePath() + "/output.xslt");
 
-        XsltExecutable executable = compiler.compile(new StreamSource(new File(tempProjectRoot.toAbsolutePath()+ "/output.xslt")));
+        XsltExecutable executable =
+                compiler.compile(new StreamSource(new File(tempProjectRoot.toAbsolutePath() + "/output.xslt")));
         XsltTransformer transformer = executable.load();
 
         transformer.setSource(new StreamSource(new File("src/test/resources/datamapper/inputData.xml")));
@@ -100,14 +96,17 @@ public class MappingGeneratorServiceTest {
         transformer.transform();
 
         Document expectedResult = parse("src/test/resources/datamapper/outputData.xml");
-        Assertions.assertEquals(toString(expectedResult).trim(), writer.toString().trim());
+        Assertions.assertEquals(
+                toString(expectedResult).trim(), writer.toString().trim());
     }
 
     @Test
     public void testXMLtoJSONGeneratedMapping() throws Exception {
-        service.generate("src/test/resources/datamapper/inputXmlToJson.json",tempProjectRoot.toAbsolutePath()+ "/output.xslt");
+        service.generate(
+                "src/test/resources/datamapper/inputXmlToJson.json", tempProjectRoot.toAbsolutePath() + "/output.xslt");
 
-        XsltExecutable executable = compiler.compile(new StreamSource(new File(tempProjectRoot.toAbsolutePath()+ "/output.xslt")));
+        XsltExecutable executable =
+                compiler.compile(new StreamSource(new File(tempProjectRoot.toAbsolutePath() + "/output.xslt")));
         Xslt30Transformer transformer = executable.load30();
 
         StreamSource xmlSource = new StreamSource(new File("src/test/resources/datamapper/inputData.xml"));
@@ -124,41 +123,43 @@ public class MappingGeneratorServiceTest {
 
     @Test
     public void testJSONtoXMLGeneratedMapping() throws Exception {
-        service.generate("src/test/resources/datamapper/inputJsonToXml.json",tempProjectRoot.toAbsolutePath()+ "/output.xslt");
+        service.generate(
+                "src/test/resources/datamapper/inputJsonToXml.json", tempProjectRoot.toAbsolutePath() + "/output.xslt");
 
-        XsltExecutable executable = compiler.compile(new StreamSource(new File(tempProjectRoot.toAbsolutePath()+ "/output.xslt")));
+        XsltExecutable executable =
+                compiler.compile(new StreamSource(new File(tempProjectRoot.toAbsolutePath() + "/output.xslt")));
         Xslt30Transformer transformer = executable.load30();
 
         StringWriter writer = new StringWriter();
         Serializer out = processor.newSerializer(writer);
 
-        Path absolutePath = Paths.get("").toAbsolutePath()
-                .resolve("src/test/resources/datamapper/inputData.json");
+        Path absolutePath = Paths.get("").toAbsolutePath().resolve("src/test/resources/datamapper/inputData.json");
         StreamSource paramsSource = new StreamSource(
-                new StringReader("<params><jsonPath>" + absolutePath.toUri() + "</jsonPath></params>")
-        );
+                new StringReader("<params><jsonPath>" + absolutePath.toUri() + "</jsonPath></params>"));
 
         transformer.transform(paramsSource, out);
 
         Document expectedResult = parse("src/test/resources/datamapper/outputData.xml");
-        Assertions.assertEquals(toString(expectedResult).trim(), writer.toString().trim());
+        Assertions.assertEquals(
+                toString(expectedResult).trim(), writer.toString().trim());
     }
 
     @Test
     public void testJSONtoJSONGeneratedMapping() throws Exception {
-        service.generate("src/test/resources/datamapper/inputJsonToJson.json",tempProjectRoot.toAbsolutePath()+ "/output.xslt");
+        service.generate(
+                "src/test/resources/datamapper/inputJsonToJson.json",
+                tempProjectRoot.toAbsolutePath() + "/output.xslt");
 
-        XsltExecutable executable = compiler.compile(new StreamSource(new File(tempProjectRoot.toAbsolutePath()+ "/output.xslt")));
+        XsltExecutable executable =
+                compiler.compile(new StreamSource(new File(tempProjectRoot.toAbsolutePath() + "/output.xslt")));
         Xslt30Transformer transformer = executable.load30();
 
         StringWriter writer = new StringWriter();
         Serializer out = processor.newSerializer(writer);
 
-        Path absolutePath = Paths.get("").toAbsolutePath()
-                .resolve("src/test/resources/datamapper/inputData.json");
+        Path absolutePath = Paths.get("").toAbsolutePath().resolve("src/test/resources/datamapper/inputData.json");
         StreamSource paramsSource = new StreamSource(
-                new StringReader("<params><jsonPath>" + absolutePath.toUri() + "</jsonPath></params>")
-        );
+                new StringReader("<params><jsonPath>" + absolutePath.toUri() + "</jsonPath></params>"));
 
         transformer.transform(paramsSource, out);
 
