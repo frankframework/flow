@@ -138,12 +138,11 @@ class ProjectControllerTest {
 
         when(fileTreeService.readFileContent(filepath)).thenReturn(xmlContent);
 
-        String requestBody =
-                """
-                {
-                  "filepath": "config1.xml"
-                }
-                """;
+        String requestBody = """
+				{
+				"filepath": "config1.xml"
+				}
+				""";
 
         mockMvc.perform(post("/api/projects/MyProject/configuration")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -162,12 +161,11 @@ class ProjectControllerTest {
 
         when(fileTreeService.readFileContent(filepath)).thenThrow(new NoSuchFileException(filepath));
 
-        String requestBody =
-                """
-                {
-                  "filepath": "unknown.xml"
-                }
-                """;
+        String requestBody = """
+				{
+				"filepath": "unknown.xml"
+				}
+				""";
 
         mockMvc.perform(post("/api/projects/MyProject/configuration")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -192,11 +190,11 @@ class ProjectControllerTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(
                                         """
-                                        {
-                                          "filepath": "config1.xml",
-                                          "content": "<xml>updated</xml>"
-                                        }
-                                        """))
+										{
+										"filepath": "config1.xml",
+										"content": "<xml>updated</xml>"
+										}
+										"""))
                 .andExpect(status().isOk());
 
         verify(fileTreeService).updateFileContent(TEST_PROJECT_NAME, filepath, xmlContent);
@@ -216,11 +214,11 @@ class ProjectControllerTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(
                                         """
-                                        {
-                                          "filepath": "unknown.xml",
-                                          "content": "<xml>updated</xml>"
-                                        }
-                                        """))
+										{
+										"filepath": "unknown.xml",
+										"content": "<xml>updated</xml>"
+										}
+										"""))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.httpStatus").value(404))
                 .andExpect(jsonPath("$.messages[0]").value("Invalid file path: " + filepath));
@@ -243,11 +241,11 @@ class ProjectControllerTest {
                                     .contentType(MediaType.APPLICATION_JSON)
                                     .content(
                                             """
-                                            {
-                                              "filepath": "config1.xml",
-                                              "content": "<xml><unclosed></xml>"
-                                            }
-                                            """))
+											{
+											"filepath": "config1.xml",
+											"content": "<xml><unclosed></xml>"
+											}
+											"""))
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.httpStatus").value(400))
                     .andExpect(jsonPath("$.messages[0]").value("Malformed XML"));
@@ -272,12 +270,12 @@ class ProjectControllerTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(
                                         """
-                                        {
-                                          "configurationPath": "config1.xml",
-                                          "adapterName": "MyAdapter",
-                                          "adapterXml": "<adapter>updated</adapter>"
-                                        }
-                                        """))
+										{
+										"configurationPath": "config1.xml",
+										"adapterName": "MyAdapter",
+										"adapterXml": "<adapter>updated</adapter>"
+										}
+										"""))
                 .andExpect(status().isOk());
 
         verify(fileTreeService).updateAdapterFromFile(projectName, Paths.get(configPath), adapterName, adapterXml);
@@ -299,12 +297,12 @@ class ProjectControllerTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(
                                         """
-                                        {
-                                          "configurationPath": "config1.xml",
-                                          "adapterName": "UnknownAdapter",
-                                          "adapterXml": "<adapter>something</adapter>"
-                                        }
-                                        """))
+										{
+										"configurationPath": "config1.xml",
+										"adapterName": "UnknownAdapter",
+										"adapterXml": "<adapter>something</adapter>"
+										}
+										"""))
                 .andExpect(status().isNotFound());
 
         verify(fileTreeService).updateAdapterFromFile(projectName, Paths.get(configPath), adapterName, adapterXml);
@@ -320,16 +318,15 @@ class ProjectControllerTest {
 
         when(projectService.createProjectOnDisk(rootPath)).thenReturn(project);
 
-        mockMvc.perform(
-                        post("/api/projects")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .accept(MediaType.APPLICATION_JSON)
-                                .content(
-                                        """
-                                        {
-                                          "rootPath": "/path/to/new/project"
-                                        }
-                                        """))
+        mockMvc.perform(post("/api/projects")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .content(
+                                """
+										{
+										"rootPath": "/path/to/new/project"
+										}
+										"""))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("NewProject"))
                 .andExpect(jsonPath("$.rootPath").value(rootPath));

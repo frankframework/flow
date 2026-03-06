@@ -304,26 +304,25 @@ public class ProjectServiceTest {
 
         String originalXml =
                 """
-                <Configuration>
-                    <Adapter name="A1">
-                        <Settings>123</Settings>
-                    </Adapter>
-                    <Adapter name="A2">
-                        <Settings>456</Settings>
-                    </Adapter>
-                </Configuration>
-                """;
+				<Configuration>
+					<Adapter name="A1">
+						<Settings>123</Settings>
+					</Adapter>
+					<Adapter name="A2">
+						<Settings>456</Settings>
+					</Adapter>
+				</Configuration>
+				""";
 
         Configuration config = new Configuration("conf.xml");
         config.setXmlContent(originalXml);
         project.getConfigurations().add(config);
 
-        String newAdapterXml =
-                """
-                <Adapter name="A1">
-                    <Settings>999</Settings>
-                </Adapter>
-                """;
+        String newAdapterXml = """
+				<Adapter name="A1">
+					<Settings>999</Settings>
+				</Adapter>
+				""";
 
         boolean result = projectService.updateAdapter("proj", "conf.xml", "A1", newAdapterXml);
 
@@ -365,12 +364,11 @@ public class ProjectServiceTest {
         projectService.createProjectOnDisk("proj");
         Project project = projectService.getProject("proj");
 
-        String xml =
-                """
-                <Configuration>
-                    <Adapter name="Other"/>
-                </Configuration>
-                """;
+        String xml = """
+				<Configuration>
+					<Adapter name="Other"/>
+				</Configuration>
+				""";
 
         Configuration config = new Configuration("conf.xml");
         config.setXmlContent(xml);
@@ -391,12 +389,11 @@ public class ProjectServiceTest {
         projectService.createProjectOnDisk("proj");
         Project project = projectService.getProject("proj");
 
-        String xml =
-                """
-                <Configuration>
-                    <Adapter name="A1"/>
-                </Configuration>
-                """;
+        String xml = """
+				<Configuration>
+					<Adapter name="A1"/>
+				</Configuration>
+				""";
 
         Configuration config = new Configuration("conf.xml");
         config.setXmlContent(xml);
@@ -485,10 +482,10 @@ public class ProjectServiceTest {
 
         String configXml =
                 """
-                <Configuration name="MyConfig">
-                    <Adapter name="ImportedAdapter"/>
-                </Configuration>
-                """;
+				<Configuration name="MyConfig">
+					<Adapter name="ImportedAdapter"/>
+				</Configuration>
+				""";
 
         MockMultipartFile configFile = new MockMultipartFile(
                 "files", "MyConfig.xml", "application/xml", configXml.getBytes(StandardCharsets.UTF_8));
@@ -738,12 +735,12 @@ public class ProjectServiceTest {
 
         String xml =
                 """
-                <Configuration>
-                    <Adapter name="A1">
-                        <Settings>123</Settings>
-                    </Adapter>
-                </Configuration>
-                """;
+				<Configuration>
+					<Adapter name="A1">
+						<Settings>123</Settings>
+					</Adapter>
+				</Configuration>
+				""";
 
         Configuration config = new Configuration("conf.xml");
         config.setXmlContent(xml);
@@ -782,12 +779,11 @@ public class ProjectServiceTest {
         projectService.createProjectOnDisk("proj");
         Project project = projectService.getProject("proj");
 
-        String xml =
-                """
-                <Configuration>
-                    <Adapter name="Other"/>
-                </Configuration>
-                """;
+        String xml = """
+				<Configuration>
+					<Adapter name="Other"/>
+				</Configuration>
+				""";
 
         Configuration config = new Configuration("conf.xml");
         config.setXmlContent(xml);
