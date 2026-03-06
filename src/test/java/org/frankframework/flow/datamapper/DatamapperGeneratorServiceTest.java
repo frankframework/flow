@@ -35,6 +35,7 @@ import org.w3c.dom.Document;
 public class DatamapperGeneratorServiceTest {
     @Mock
     private FileSystemStorage fileSystemStorage;
+
     @Mock
     private FileTreeService fileTreeService;
 
@@ -56,7 +57,7 @@ public class DatamapperGeneratorServiceTest {
         stubToAbsolutePath();
         tempProjectRoot = Files.createTempDirectory("flow_unit_test");
 
-        service = new DatamapperGeneratorService(fileSystemStorage,fileTreeService);
+        service = new DatamapperGeneratorService(fileSystemStorage, fileTreeService);
         processor = new Processor(false);
         compiler = processor.newXsltCompiler();
     }
