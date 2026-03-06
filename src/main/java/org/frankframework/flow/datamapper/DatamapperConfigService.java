@@ -59,7 +59,6 @@ public class DatamapperConfigService {
         }
 
         try {
-            // TODO MAKE SURE DATAMAPPER FOLDER EXISTS
             if (Files.notExists(absoluteFilePath)) {
                 fileSystemStorage.createFile(String.valueOf(absoluteFilePath));
             }
