@@ -6,7 +6,6 @@
     <xsl:namespace-alias stylesheet-prefix="outputxsl" result-prefix="xsl"/>
 
     <xsl:template name="functions">
-
         <outputxsl:function name="datamapper:Concat">
             <outputxsl:param name="items" as="xs:string*"/>
             <outputxsl:sequence select="string-join($items, '')"/>
@@ -14,13 +13,11 @@
 
         <!-- Equation -->
         <outputxsl:function name="datamapper:Equation">
-
             <outputxsl:param name="left"/>
             <outputxsl:param name="op"/>
             <outputxsl:param name="right"/>
 
             <outputxsl:choose>
-
                 <outputxsl:when test="$op = '&lt;'">
                     <outputxsl:sequence select="$left &lt; $right"/>
                 </outputxsl:when>
@@ -36,9 +33,7 @@
                 <outputxsl:otherwise>
                     <outputxsl:sequence select="false()"/>
                 </outputxsl:otherwise>
-
             </outputxsl:choose>
-
         </outputxsl:function>
 
         <!-- ValueEquals -->
@@ -62,13 +57,11 @@
 
         <!-- Replace -->
         <outputxsl:function name="datamapper:Replace">
-
             <outputxsl:param name="text"/>
             <outputxsl:param name="search"/>
             <outputxsl:param name="replace"/>
 
             <outputxsl:choose>
-
                 <outputxsl:when test="contains($text, $search)">
                     <outputxsl:sequence
                             select="concat(substring-before($text, $search),$replace,datamapper:Replace(substring-after($text, $search), $search, $replace))"/>
@@ -77,16 +70,12 @@
                 <outputxsl:otherwise>
                     <outputxsl:sequence select="$text"/>
                 </outputxsl:otherwise>
-
             </outputxsl:choose>
-
         </outputxsl:function>
 
         <outputxsl:function name="datamapper:xml-to-json" as="xs:string">
             <outputxsl:param name="nodes" as="element()*"/>
-
             <outputxsl:choose>
-
                 <!-- No nodes -->
                 <outputxsl:when test="empty($nodes)">
                     <xsl:attribute name="test">empty($nodes)</xsl:attribute>
@@ -94,7 +83,6 @@
                         <xsl:attribute name="select">''</xsl:attribute>
                     </xsl:element>
                 </outputxsl:when>
-
                 <!-- Leaf nodes -->
                 <outputxsl:when test="every $n in $nodes satisfies not($n/*)">
                     <outputxsl:variable name="leaf-json">

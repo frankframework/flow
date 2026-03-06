@@ -78,13 +78,8 @@
     </xsl:function>
     <!-- Entry point -->
     <xsl:template name="main" match="/">
-
-
         <xsl:variable name="data" select="json-doc($jsonPath)"/>
-
         <!--        Output XSLT stylesheet, using xsl:text here because it's the only way to pass xmlns attributes-->
-
-
         <outputxsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
                               version="3.0"
                               xmlns:xs="http://www.w3.org/2001/XMLSchema"
