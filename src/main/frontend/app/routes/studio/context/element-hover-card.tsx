@@ -1,3 +1,4 @@
+import {useFFDoc, useJavadocTransform} from "@frankframework/doc-library-react";
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { ElementDetails } from '~/types/ff-doc.types'
@@ -26,6 +27,10 @@ export default function ElementHoverCard({
   const [labelGroup, label] = getFirstLabelGroup(element.labels)
   const route = element.labels ? [labelGroup, label, element.name].join('/') : element.className
   const frankdocUrl = `https://frankdoc.frankframework.org/#/${route}`
+  const { elements } = useFFDoc()
+  const description = useJavadocTransform(element.description ?? '', elements, false, (link) => {
+    return `<a href="https://frankdoc.frankframework.org/#/${link.href}">{link.text}</a>`
+  })
 
   useLayoutEffect(() => {
     if (!ref.current || !anchorRect) return
@@ -134,7 +139,7 @@ export default function ElementHoverCard({
               </span>
             ))}
         </div>
-        {element.description && <p className="text-sm" dangerouslySetInnerHTML={{ __html: element.description }} />}
+        {element.description && <p className="text-sm" dangerouslySetInnerHTML={{ __html: description.__html }} />}
       </div>
     </div>,
     document.body,
