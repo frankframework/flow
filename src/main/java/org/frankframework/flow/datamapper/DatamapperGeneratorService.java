@@ -5,13 +5,14 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import javax.naming.ConfigurationException;
 import javax.xml.transform.stream.StreamSource;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.saxon.s9api.*;
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
+import org.frankframework.flow.exception.ApiException;
 import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.frankframework.flow.filetree.FileTreeService;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -26,13 +27,13 @@ public class DatamapperGeneratorService {
         this.fileTreeService = fileTreeService;
     }
 
-    private String getConfigFilePath(String projectName) throws ConfigurationNotFoundException {
+    private String getConfigFilePath(String projectName) throws ApiException {
         return Path.of(getDatamapperFilePath(projectName))
                 .resolve("generationFile.json")
                 .toString();
     }
 
-    private String getDatamapperFilePath(String projectName) throws ConfigurationNotFoundException {
+    private String getDatamapperFilePath(String projectName) throws ApiException {
         try {
             return Path.of(fileTreeService
                             .getConfigurationsDirectoryTree(projectName)
@@ -40,13 +41,13 @@ public class DatamapperGeneratorService {
                     .resolve("datamapper")
                     .toString();
         } catch (IOException e) {
-            throw new ConfigurationNotFoundException(
-                    "Failed to resolve configuration file path for project: " + projectName);
+            throw new ApiException(
+                    "Failed to resolve configuration file path for project: " + projectName,
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
-    public void saveGenerationFile(String projectName, String content)
-            throws ConfigurationNotFoundException, ConfigurationException {
+    public void saveGenerationFile(String projectName, String content) throws ApiException {
         Path absoluteFilePath;
 
         try {
@@ -58,13 +59,14 @@ public class DatamapperGeneratorService {
                 Files.createDirectory(path);
             }
         } catch (IOException | ConfigurationNotFoundException e) {
-            throw new ConfigurationNotFoundException(
-                    "Failed to resolve configuration file path for project: " + projectName);
+            throw new ApiException(
+                    "Failed to resolve configuration file path for project: " + projectName, HttpStatus.NOT_FOUND);
         }
 
         if (Files.isDirectory(absoluteFilePath)) {
-            throw new ConfigurationException(
-                    "Cannot update configuration because path is a directory: " + absoluteFilePath);
+            throw new ApiException(
+                    "Cannot update configuration because path is a directory: " + absoluteFilePath,
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
         try {
@@ -75,41 +77,41 @@ public class DatamapperGeneratorService {
             fileSystemStorage.writeFile(absoluteFilePath.toString(), content);
 
         } catch (IOException e) {
-            throw new ConfigurationException("Failed to update configuration file: " + absoluteFilePath);
+            throw new ApiException(
+                    "Failed to update configuration file: " + absoluteFilePath, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
-    private void deleteGenerationFile(String projectName) throws ConfigurationNotFoundException {
+    private void deleteGenerationFile(String projectName) throws ApiException {
         try {
             Path absoluteFilePath = fileSystemStorage.toAbsolutePath(getConfigFilePath(projectName));
             fileSystemStorage.delete(absoluteFilePath.toString());
 
         } catch (IOException e) {
-            throw new ConfigurationNotFoundException("Failed to find configuration for project: " + projectName);
+            throw new ApiException(
+                    "Failed to find configuration for project: " + projectName, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
-    public void generateFromProject(String projectName, String content)
-            throws ConfigurationNotFoundException, ConfigurationException, DatamapperGenerationException {
+    public void generateFromProject(String projectName, String content) throws ApiException {
         saveGenerationFile(projectName, content);
         generate(getConfigFilePath(projectName), getDatamapperFilePath(projectName) + "/export.xslt");
         deleteGenerationFile(projectName);
     }
 
-    public void generate(String jsonPath, String outputPath)
-            throws ConfigurationNotFoundException, DatamapperGenerationException {
+    public void generate(String jsonPath, String outputPath) throws ApiException {
         if (jsonPath == null || jsonPath.isBlank()) {
-            throw new ConfigurationNotFoundException("JSON file path must not be empty");
+            throw new ApiException("JSON file path must not be empty", HttpStatus.BAD_REQUEST);
         }
         Path absolutePath;
         try {
             absolutePath = fileSystemStorage.toAbsolutePath(jsonPath);
         } catch (IOException e) {
-            throw new ConfigurationNotFoundException("Invalid filepath");
+            throw new ApiException("Invalid filepath", HttpStatus.BAD_REQUEST);
         }
 
         if (!Files.exists(absolutePath)) {
-            throw new ConfigurationNotFoundException("JSON file not found: " + absolutePath);
+            throw new ApiException("JSON file not found: " + absolutePath, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
         Processor processor = new Processor(false);
@@ -131,9 +133,9 @@ public class DatamapperGeneratorService {
             out.setOutputProperty(Serializer.Property.INDENT, "yes");
             transformer.transform(paramsSource, out);
         } catch (SaxonApiException e) {
-            throw new DatamapperGenerationException("Error generating new XSLT!");
+            throw new ApiException("Error generating new XSLT!", HttpStatus.INTERNAL_SERVER_ERROR);
         } catch (IOException e) {
-            throw new DatamapperGenerationException("Invalid destination path for XSLT");
+            throw new ApiException("Invalid destination path for XSLT", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }
