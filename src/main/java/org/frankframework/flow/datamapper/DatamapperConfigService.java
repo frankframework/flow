@@ -3,6 +3,7 @@ package org.frankframework.flow.datamapper;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import javax.naming.ConfigurationException;
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
 import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.frankframework.flow.filetree.FileTreeService;
@@ -33,7 +34,8 @@ public class DatamapperConfigService {
         }
     }
 
-    public void updateFileContent(String projectName, String newContent) throws ConfigurationNotFoundException {
+    public void updateFileContent(String projectName, String newContent)
+            throws ConfigurationNotFoundException, ConfigurationException {
         Path absoluteFilePath;
 
         try {
@@ -49,12 +51,11 @@ public class DatamapperConfigService {
                 Files.createDirectory(directoryPath);
             }
         } catch (IOException e) {
-            throw new ConfigurationNotFoundException(
-                    "Failed to resolve configuration file path for project: " + projectName);
+            throw new ConfigurationException("Failed to resolve configuration file path for project: " + projectName);
         }
 
         if (Files.isDirectory(absoluteFilePath)) {
-            throw new ConfigurationNotFoundException(
+            throw new ConfigurationException(
                     "Cannot update configuration because path is a directory: " + absoluteFilePath);
         }
 
@@ -66,7 +67,7 @@ public class DatamapperConfigService {
             fileSystemStorage.writeFile(absoluteFilePath.toString(), newContent);
 
         } catch (IOException e) {
-            throw new ConfigurationNotFoundException("Failed to update configuration file: " + absoluteFilePath);
+            throw new ConfigurationException("Failed to update configuration file: " + absoluteFilePath);
         }
     }
 

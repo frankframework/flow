@@ -6,12 +6,14 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Comparator;
+import javax.naming.ConfigurationException;
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
 import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.frankframework.flow.filetree.FileTreeNode;
@@ -45,17 +47,11 @@ public class DatamapperConfigServiceTest {
 
     @AfterEach
     public void tearDown() throws IOException {
-
         if (tempProjectRoot != null && Files.exists(tempProjectRoot)) {
-            try (var stream = Files.walk(tempProjectRoot)) {
-                stream.sorted(Comparator.reverseOrder()).forEach(p -> {
-                    try {
-                        Files.delete(p);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                });
-            }
+            Files.walk(tempProjectRoot)
+                    .sorted(Comparator.reverseOrder())
+                    .map(Path::toFile)
+                    .forEach(File::delete);
         }
     }
 
@@ -123,7 +119,8 @@ public class DatamapperConfigServiceTest {
 
     @Test
     @DisplayName("Should successfully overwrite a file with new content")
-    public void updateConfigContent_Success() throws IOException, ConfigurationNotFoundException {
+    public void updateConfigContent_Success()
+            throws IOException, ConfigurationNotFoundException, ConfigurationException {
         stubToAbsolutePath();
         stubWriteFile();
         stubGetConfigurationsDirectoryTree();
@@ -145,7 +142,8 @@ public class DatamapperConfigServiceTest {
 
     @Test
     @DisplayName("Should successfully create  a new fille ")
-    public void updateFileNewConfigContent_Success() throws IOException, ConfigurationNotFoundException {
+    public void updateFileNewConfigContent_Success()
+            throws IOException, ConfigurationNotFoundException, ConfigurationException {
         stubToAbsolutePath();
         stubWriteFile();
         stubGetConfigurationsDirectoryTree();
