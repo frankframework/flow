@@ -11,8 +11,7 @@ import org.springframework.web.bind.annotation.*;
 public class DatamapperGeneratorController {
     private final DatamapperGeneratorService datamapperGeneratorService;
 
-    public DatamapperGeneratorController(DatamapperGeneratorService datamapperGeneratorService)
-            throws IOException, ConfigurationNotFoundException, SaxonApiException {
+    public DatamapperGeneratorController(DatamapperGeneratorService datamapperGeneratorService) {
         this.datamapperGeneratorService = datamapperGeneratorService;
     }
 
