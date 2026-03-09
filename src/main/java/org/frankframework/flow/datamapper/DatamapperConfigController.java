@@ -1,8 +1,6 @@
 package org.frankframework.flow.datamapper;
 
-import java.io.IOException;
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
-import org.frankframework.flow.project.ProjectNotFoundException;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,7 +17,7 @@ public class DatamapperConfigController {
 
     @GetMapping("/{projectName}/configuration")
     public ResponseEntity<String> getConfiguration(@PathVariable String projectName)
-            throws ConfigurationNotFoundException, IOException {
+            throws ConfigurationNotFoundException {
 
         String content = datamapperConfigService.getConfig(projectName);
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(content);
@@ -27,7 +25,7 @@ public class DatamapperConfigController {
 
     @PutMapping("/{projectName}/configuration")
     public ResponseEntity<Void> updateConfiguration(@PathVariable String projectName, @RequestBody String content)
-            throws ConfigurationNotFoundException, IOException, ProjectNotFoundException {
+            throws ConfigurationNotFoundException {
 
         try {
             datamapperConfigService.updateFileContent(projectName, content);

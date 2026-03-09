@@ -16,7 +16,6 @@ import org.frankframework.flow.configuration.ConfigurationNotFoundException;
 import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.frankframework.flow.filetree.FileTreeNode;
 import org.frankframework.flow.filetree.FileTreeService;
-import org.frankframework.flow.project.ProjectNotFoundException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -52,7 +51,8 @@ public class DatamapperConfigServiceTest {
                 stream.sorted(Comparator.reverseOrder()).forEach(p -> {
                     try {
                         Files.delete(p);
-                    } catch (IOException ignored) {
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
                     }
                 });
             }
@@ -123,8 +123,7 @@ public class DatamapperConfigServiceTest {
 
     @Test
     @DisplayName("Should successfully overwrite a file with new content")
-    public void updateConfigContent_Success()
-            throws IOException, ProjectNotFoundException, ConfigurationNotFoundException {
+    public void updateConfigContent_Success() throws IOException, ConfigurationNotFoundException {
         stubToAbsolutePath();
         stubWriteFile();
         stubGetConfigurationsDirectoryTree();
@@ -146,8 +145,7 @@ public class DatamapperConfigServiceTest {
 
     @Test
     @DisplayName("Should successfully create  a new fille ")
-    public void updateFileNewConfigContent_Success()
-            throws IOException, ProjectNotFoundException, ConfigurationNotFoundException {
+    public void updateFileNewConfigContent_Success() throws IOException, ConfigurationNotFoundException {
         stubToAbsolutePath();
         stubWriteFile();
         stubGetConfigurationsDirectoryTree();
