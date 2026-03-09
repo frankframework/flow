@@ -1,12 +1,9 @@
 package org.frankframework.flow.datamapper;
 
-import java.io.IOException;
-import net.sf.saxon.s9api.SaxonApiException;
+import javax.naming.ConfigurationException;
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import javax.naming.ConfigurationException;
 
 @RestController
 @RequestMapping("/datamapper/")

@@ -7,10 +7,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import javax.naming.ConfigurationException;
 import javax.xml.transform.stream.StreamSource;
-
 import lombok.extern.slf4j.Slf4j;
 import net.sf.saxon.s9api.*;
-import org.eclipse.jgit.util.IO;
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
 import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.frankframework.flow.filetree.FileTreeService;
@@ -47,7 +45,8 @@ public class DatamapperGeneratorService {
         }
     }
 
-    public void saveGenerationFile(String projectName, String content) throws ConfigurationNotFoundException, ConfigurationException {
+    public void saveGenerationFile(String projectName, String content)
+            throws ConfigurationNotFoundException, ConfigurationException {
         Path absoluteFilePath;
 
         try {
@@ -97,7 +96,8 @@ public class DatamapperGeneratorService {
         deleteGenerationFile(projectName);
     }
 
-    public void generate(String jsonPath, String outputPath) throws ConfigurationNotFoundException, DatamapperGenerationException {
+    public void generate(String jsonPath, String outputPath)
+            throws ConfigurationNotFoundException, DatamapperGenerationException {
         if (jsonPath == null || jsonPath.isBlank()) {
             throw new ConfigurationNotFoundException("JSON file path must not be empty");
         }
@@ -116,23 +116,23 @@ public class DatamapperGeneratorService {
         XsltCompiler compiler = processor.newXsltCompiler();
         XsltExecutable executable = null;
         try {
-            executable = compiler.compile(
-                    new StreamSource(new File("src/main/java/org/frankframework/flow/datamapper/mappingGenerator.xslt")));
+            executable = compiler.compile(new StreamSource(
+                    new File("src/main/java/org/frankframework/flow/datamapper/mappingGenerator.xslt")));
 
-        Xslt30Transformer transformer = executable.load30();
+            Xslt30Transformer transformer = executable.load30();
 
-        String xmlParams = "<params><jsonPath>" + absolutePath.toUri() + "</jsonPath></params>";
-        StreamSource paramsSource = new StreamSource(new StringReader(xmlParams));
+            String xmlParams = "<params><jsonPath>" + absolutePath.toUri() + "</jsonPath></params>";
+            StreamSource paramsSource = new StreamSource(new StringReader(xmlParams));
 
             Serializer out =
                     processor.newSerializer(new File(String.valueOf(fileSystemStorage.toAbsolutePath(outputPath))));
 
-        out.setOutputProperty(Serializer.Property.METHOD, "xml");
-        out.setOutputProperty(Serializer.Property.INDENT, "yes");
-        transformer.transform(paramsSource, out);
+            out.setOutputProperty(Serializer.Property.METHOD, "xml");
+            out.setOutputProperty(Serializer.Property.INDENT, "yes");
+            transformer.transform(paramsSource, out);
         } catch (SaxonApiException e) {
             throw new DatamapperGenerationException("Error generating new XSLT!");
-        } catch (IOException e){
+        } catch (IOException e) {
             throw new DatamapperGenerationException("Invalid destination path for XSLT");
         }
     }

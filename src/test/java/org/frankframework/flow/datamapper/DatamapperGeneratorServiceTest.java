@@ -109,7 +109,9 @@ public class DatamapperGeneratorServiceTest {
 
     @Test
     @DisplayName("Test XSLT generation")
-    public void generateMapping() throws IOException, ParserConfigurationException, SAXException, DatamapperGenerationException, ConfigurationNotFoundException {
+    public void generateMapping()
+            throws IOException, ParserConfigurationException, SAXException, DatamapperGenerationException,
+                    ConfigurationNotFoundException {
         service.generate(
                 "src/test/resources/datamapper/inputJsonToXml.json", tempProjectRoot.toAbsolutePath() + "/output.xslt");
         Document expectedResult = parse("src/test/resources/datamapper/outputData.xml");
@@ -121,7 +123,9 @@ public class DatamapperGeneratorServiceTest {
 
     @Test
     @DisplayName("Test XML to XML mapping")
-    public void testXMLtoXMLGeneratedMapping() throws SaxonApiException, IOException, ParserConfigurationException, SAXException, TransformerException, DatamapperGenerationException, ConfigurationNotFoundException {
+    public void testXMLtoXMLGeneratedMapping()
+            throws SaxonApiException, IOException, ParserConfigurationException, SAXException, TransformerException,
+                    DatamapperGenerationException, ConfigurationNotFoundException {
         service.generate(
                 "src/test/resources/datamapper/inputXmlToXml.json", tempProjectRoot.toAbsolutePath() + "/output.xslt");
 
@@ -144,7 +148,8 @@ public class DatamapperGeneratorServiceTest {
 
     @Test
     @DisplayName("Test XML to Json mapping")
-    public void testXMLtoJSONGeneratedMapping() throws SaxonApiException, IOException, DatamapperGenerationException, ConfigurationNotFoundException {
+    public void testXMLtoJSONGeneratedMapping()
+            throws SaxonApiException, IOException, DatamapperGenerationException, ConfigurationNotFoundException {
         service.generate(
                 "src/test/resources/datamapper/inputXmlToJson.json", tempProjectRoot.toAbsolutePath() + "/output.xslt");
 
@@ -166,7 +171,9 @@ public class DatamapperGeneratorServiceTest {
 
     @Test
     @DisplayName("Test Json to XML mapping")
-    public void testJSONtoXMLGeneratedMapping() throws IOException, SaxonApiException, ParserConfigurationException, SAXException, TransformerException, DatamapperGenerationException, ConfigurationNotFoundException {
+    public void testJSONtoXMLGeneratedMapping()
+            throws IOException, SaxonApiException, ParserConfigurationException, SAXException, TransformerException,
+                    DatamapperGenerationException, ConfigurationNotFoundException {
         service.generate(
                 "src/test/resources/datamapper/inputJsonToXml.json", tempProjectRoot.toAbsolutePath() + "/output.xslt");
 
@@ -190,7 +197,8 @@ public class DatamapperGeneratorServiceTest {
 
     @Test
     @DisplayName("Test Json to Json mapping")
-    public void testJSONtoJSONGeneratedMapping() throws SaxonApiException, IOException, DatamapperGenerationException, ConfigurationNotFoundException {
+    public void testJSONtoJSONGeneratedMapping()
+            throws SaxonApiException, IOException, DatamapperGenerationException, ConfigurationNotFoundException {
         service.generate(
                 "src/test/resources/datamapper/inputJsonToJson.json",
                 tempProjectRoot.toAbsolutePath() + "/output.xslt");
@@ -216,7 +224,8 @@ public class DatamapperGeneratorServiceTest {
 
     @Test
     @DisplayName(("Should overwrite fill successfully"))
-    public void testSaveGenerationFileOverwrite() throws IOException, ConfigurationNotFoundException, ConfigurationException {
+    public void testSaveGenerationFileOverwrite()
+            throws IOException, ConfigurationNotFoundException, ConfigurationException {
         stubToAbsolutePath();
         stubWriteFile();
         stubGetConfigurationsDirectoryTree();
@@ -256,7 +265,9 @@ public class DatamapperGeneratorServiceTest {
 
     @Test
     @DisplayName("Test saving configuration and creating a mapping from it")
-    public void fullGenerateMappingRun() throws IOException, ConfigurationNotFoundException, SaxonApiException, ParserConfigurationException, SAXException, ConfigurationException, DatamapperGenerationException {
+    public void fullGenerateMappingRun()
+            throws IOException, ConfigurationNotFoundException, SaxonApiException, ParserConfigurationException,
+                    SAXException, ConfigurationException, DatamapperGenerationException {
         stubGetConfigurationsDirectoryTree();
         stubWriteFile();
         stubGetConfigurationsDirectoryTree();
@@ -272,7 +283,9 @@ public class DatamapperGeneratorServiceTest {
 
     @Test
     @DisplayName("Test saving configuration deletes temporary config")
-    public void fullGenerateRunDeletesTempConfig() throws IOException, ConfigurationNotFoundException, SaxonApiException, ConfigurationException, DatamapperGenerationException {
+    public void fullGenerateRunDeletesTempConfig()
+            throws IOException, ConfigurationNotFoundException, SaxonApiException, ConfigurationException,
+                    DatamapperGenerationException {
         stubGetConfigurationsDirectoryTree();
         stubWriteFile();
         stubGetConfigurationsDirectoryTree();
@@ -281,7 +294,8 @@ public class DatamapperGeneratorServiceTest {
         String config = Files.readString(Path.of("src/test/resources/datamapper/inputJsonToXml.json"));
         service.generateFromProject(TEST_PROJECT_NAME, config);
 
-        Assertions.assertFalse(Files.exists(Path.of(tempProjectRoot.toAbsolutePath() + "/datamapper/generationFile.json")));
+        Assertions.assertFalse(
+                Files.exists(Path.of(tempProjectRoot.toAbsolutePath() + "/datamapper/generationFile.json")));
     }
 
     private Document parse(String path) throws ParserConfigurationException, IOException, SAXException {
