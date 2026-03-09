@@ -155,7 +155,6 @@ public class DatamapperConfigServiceTest {
             Files.createDirectories(datamapperDir);
         }
         Path file = datamapperDir.resolve("configuration.json");
-        
 
         String newContent = "new content";
         datamapperConfigService.updateFileContent(TEST_PROJECT_NAME, newContent);
