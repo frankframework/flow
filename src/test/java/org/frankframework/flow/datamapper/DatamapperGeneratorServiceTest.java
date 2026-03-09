@@ -77,9 +77,14 @@ public class DatamapperGeneratorServiceTest {
     }
 
     @Test
-    public void generateMapping() throws SaxonApiException, IOException {
+    public void generateMapping() throws Exception {
         service.generate(
                 "src/test/resources/datamapper/inputJsonToXml.json", tempProjectRoot.toAbsolutePath() + "/output.xslt");
+        Document expectedResult = parse("src/test/resources/datamapper/outputData.xml");
+        Document actualResult = parse(tempProjectRoot.toAbsolutePath() + "/output.xslt");
+
+        Assertions.assertEquals(
+                expectedResult.toString().trim(), actualResult.toString().trim());
     }
 
     @Test
