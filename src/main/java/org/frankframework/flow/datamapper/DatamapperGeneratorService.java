@@ -77,10 +77,28 @@ public class DatamapperGeneratorService {
         }
     }
 
+    private void deleteGenerationFile(String projectName) throws ConfigurationNotFoundException {
+        Path absoluteFilePath;
+
+        try {
+            absoluteFilePath = fileSystemStorage.toAbsolutePath(getConfigFilePath(projectName));
+        } catch (IOException | ConfigurationNotFoundException e) {
+            throw new ConfigurationNotFoundException(
+                    "Failed to resolve configuration file path for project: " + projectName);
+        }
+        try {
+            fileSystemStorage.delete(absoluteFilePath.toString());
+
+        } catch (IOException e) {
+            throw new ConfigurationNotFoundException("Failed to update configuration file: " + absoluteFilePath);
+        }
+    }
+
     public void generateFromProject(String projectName, String content)
             throws ConfigurationNotFoundException, IOException, SaxonApiException {
         saveGenerationFile(projectName, content);
         generate(getConfigFilePath(projectName), getDatamapperFilePath(projectName) + "/export.xslt");
+        deleteGenerationFile(projectName);
     }
 
     public void generate(String jsonPath, String outputPath) throws SaxonApiException, IOException {

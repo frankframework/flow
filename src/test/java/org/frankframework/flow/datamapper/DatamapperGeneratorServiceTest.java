@@ -1,12 +1,15 @@
 package org.frankframework.flow.datamapper;
 
+import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -20,12 +23,12 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
 import net.sf.saxon.s9api.*;
+import org.frankframework.flow.configuration.ConfigurationNotFoundException;
+import org.frankframework.flow.filesystem.FileOperations;
 import org.frankframework.flow.filesystem.FileSystemStorage;
+import org.frankframework.flow.filetree.FileTreeNode;
 import org.frankframework.flow.filetree.FileTreeService;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -43,12 +46,43 @@ public class DatamapperGeneratorServiceTest {
     private Processor processor;
     private XsltCompiler compiler;
 
+    private static final String TEST_PROJECT_NAME = "FrankFlowTestProject";
+
     private Path tempProjectRoot;
 
     private void stubToAbsolutePath() throws IOException {
         when(fileSystemStorage.toAbsolutePath(anyString())).thenAnswer(invocation -> {
             String path = invocation.getArgument(0);
             return Paths.get(path);
+        });
+    }
+
+    private void stubDeleteFile() throws IOException {
+        doAnswer(invocation -> {
+                    String path = invocation.getArgument(0);
+                    FileOperations.deleteRecursively(Paths.get(path));
+                    return null;
+                })
+                .when(fileSystemStorage)
+                .delete(anyString());
+    }
+
+    private void stubWriteFile() throws IOException {
+        doAnswer(invocation -> {
+                    String path = invocation.getArgument(0);
+                    String content = invocation.getArgument(1);
+                    Files.writeString(Paths.get(path), content);
+                    return null;
+                })
+                .when(fileSystemStorage)
+                .writeFile(anyString(), anyString());
+    }
+
+    private void stubGetConfigurationsDirectoryTree() throws IOException {
+        when(fileTreeService.getConfigurationsDirectoryTree(anyString())).thenAnswer(invocation -> {
+            FileTreeNode fileTreeNode = new FileTreeNode();
+            fileTreeNode.setPath(tempProjectRoot.toString());
+            return fileTreeNode;
         });
     }
 
@@ -77,6 +111,7 @@ public class DatamapperGeneratorServiceTest {
     }
 
     @Test
+    @DisplayName("Test XSLT generation")
     public void generateMapping() throws Exception {
         service.generate(
                 "src/test/resources/datamapper/inputJsonToXml.json", tempProjectRoot.toAbsolutePath() + "/output.xslt");
@@ -88,6 +123,7 @@ public class DatamapperGeneratorServiceTest {
     }
 
     @Test
+    @DisplayName("Test XML to XML mapping")
     public void testXMLtoXMLGeneratedMapping() throws Exception {
         service.generate(
                 "src/test/resources/datamapper/inputXmlToXml.json", tempProjectRoot.toAbsolutePath() + "/output.xslt");
@@ -110,6 +146,7 @@ public class DatamapperGeneratorServiceTest {
     }
 
     @Test
+    @DisplayName("Test XML to Json mapping")
     public void testXMLtoJSONGeneratedMapping() throws Exception {
         service.generate(
                 "src/test/resources/datamapper/inputXmlToJson.json", tempProjectRoot.toAbsolutePath() + "/output.xslt");
@@ -131,6 +168,7 @@ public class DatamapperGeneratorServiceTest {
     }
 
     @Test
+    @DisplayName("Test Json to XML mapping")
     public void testJSONtoXMLGeneratedMapping() throws Exception {
         service.generate(
                 "src/test/resources/datamapper/inputJsonToXml.json", tempProjectRoot.toAbsolutePath() + "/output.xslt");
@@ -154,6 +192,7 @@ public class DatamapperGeneratorServiceTest {
     }
 
     @Test
+    @DisplayName("Test Json to Json mapping")
     public void testJSONtoJSONGeneratedMapping() throws Exception {
         service.generate(
                 "src/test/resources/datamapper/inputJsonToJson.json",
@@ -176,6 +215,77 @@ public class DatamapperGeneratorServiceTest {
         String expectedResult = Files.readString(path);
 
         Assertions.assertEquals(expectedResult.trim(), writer.toString().trim());
+    }
+
+    @Test
+    @DisplayName(("Should overwrite fill successfully"))
+    public void testSaveGenerationFileOverwrite() throws IOException, ConfigurationNotFoundException {
+        stubToAbsolutePath();
+        stubWriteFile();
+        stubGetConfigurationsDirectoryTree();
+
+        Path datamapperDir = tempProjectRoot.resolve("datamapper");
+        if (!Files.isDirectory(datamapperDir)) {
+            Files.createDirectories(datamapperDir);
+        }
+        Path file = datamapperDir.resolve("generationFile.json");
+        String content = "<test>data</test>";
+
+        Files.writeString(file, content, StandardCharsets.UTF_8);
+
+        String newContent = "new content";
+        service.saveGenerationFile(TEST_PROJECT_NAME, newContent);
+
+        assertEquals(newContent, Files.readString(file));
+    }
+
+    @Test
+    @DisplayName("Should successfully create  a new file ")
+    public void testSaveGenerationFile() throws IOException, ConfigurationNotFoundException {
+        stubToAbsolutePath();
+        stubWriteFile();
+        stubGetConfigurationsDirectoryTree();
+
+        Path datamapperDir = tempProjectRoot.resolve("datamapper");
+        if (!Files.isDirectory(datamapperDir)) {
+            Files.createDirectories(datamapperDir);
+        }
+        Path file = datamapperDir.resolve("generationFile.json");
+        String newContent = "new content";
+        service.saveGenerationFile(TEST_PROJECT_NAME, newContent);
+
+        assertEquals(newContent, Files.readString(file));
+    }
+
+    @Test
+    @DisplayName("Test saving configuration and creating a mapping from it")
+    public void fullGenerateMappingRun() throws Exception {
+        stubGetConfigurationsDirectoryTree();
+        stubWriteFile();
+        stubGetConfigurationsDirectoryTree();
+
+        String config = Files.readString(Path.of("src/test/resources/datamapper/inputJsonToXml.json"));
+        service.generateFromProject(TEST_PROJECT_NAME, config);
+        Document expectedResult = parse("src/test/resources/datamapper/output.xslt");
+        Document actualResult = parse(tempProjectRoot.toAbsolutePath() + "/datamapper/export.xslt");
+
+        Assertions.assertEquals(
+                expectedResult.toString().trim(), actualResult.toString().trim());
+    }
+
+    @Test
+    @DisplayName("Test saving configuration deletes temporary config")
+    public void fullGenerateRunDeletesTempConfig() throws Exception {
+        stubGetConfigurationsDirectoryTree();
+        stubWriteFile();
+        stubGetConfigurationsDirectoryTree();
+        stubDeleteFile();
+
+        String config = Files.readString(Path.of("src/test/resources/datamapper/inputJsonToXml.json"));
+        service.generateFromProject(TEST_PROJECT_NAME, config);
+
+        Assertions.assertEquals(
+                false, Files.exists(Path.of(tempProjectRoot.toAbsolutePath() + "/datamapper/generationFile.json")));
     }
 
     private Document parse(String path) throws Exception {
