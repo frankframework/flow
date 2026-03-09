@@ -4,17 +4,14 @@
                 xmlns:map="http://www.w3.org/2005/xpath-functions/map"
                 xmlns:func="http://exslt.org/functions"
                 xmlns:datamapper="http://example.com/datamapper"
-
                 xmlns:outputxsl="http://www.w3.org/1999/XSL/TransformAlias"
-
-
 >
-    <xsl:namespace-alias stylesheet-prefix="outputxsl" result-prefix="xsl"/>
-    <!--    <xsl:namespace-alias stylesheet-prefix="outputxmlns" result-prefix="xml"/>-->
 
+    <xsl:namespace-alias stylesheet-prefix="outputxsl" result-prefix="xsl"/>
     <xsl:output method="xml" indent="yes"/>
     <xsl:include href="functions.xslt"/>
     <xsl:variable name="jsonPath" select="/params/jsonPath/text()"/>
+
     <xsl:function name="datamapper:lookUp" as="xs:string?">
         <xsl:param name="passedData" as="array(*)?"/>
         <xsl:param name="internalId" as="xs:string"/>
@@ -45,6 +42,7 @@
                     else ()
     "/>
     </xsl:function>
+
     <xsl:function name="datamapper:createFunction" as="xs:string">
         <xsl:param name="type"/>
         <xsl:param name="name"/>

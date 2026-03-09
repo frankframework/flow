@@ -6,6 +6,8 @@ import org.frankframework.flow.configuration.ConfigurationNotFoundException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.naming.ConfigurationException;
+
 @RestController
 @RequestMapping("/datamapper/")
 public class DatamapperGeneratorController {
@@ -17,7 +19,7 @@ public class DatamapperGeneratorController {
 
     @PutMapping("/{projectName}/generate")
     public ResponseEntity<Void> updateConfiguration(@PathVariable String projectName, @RequestBody String content)
-            throws ConfigurationNotFoundException, IOException, SaxonApiException {
+            throws ConfigurationNotFoundException, ConfigurationException, DatamapperGenerationException {
 
         datamapperGeneratorService.generateFromProject(projectName, content);
         return ResponseEntity.ok().build();
