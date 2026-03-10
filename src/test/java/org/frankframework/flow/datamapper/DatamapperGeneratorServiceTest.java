@@ -88,7 +88,6 @@ public class DatamapperGeneratorServiceTest {
 
     @BeforeEach
     void setUp() throws IOException {
-        stubToAbsolutePath();
         tempProjectRoot = Files.createTempDirectory("flow_unit_test");
 
         service = new DatamapperGeneratorService(fileSystemStorage, fileTreeService);
@@ -109,6 +108,8 @@ public class DatamapperGeneratorServiceTest {
     @Test
     @DisplayName("Test XSLT generation")
     public void generateMapping() throws IOException, ParserConfigurationException, SAXException, ApiException {
+        stubToAbsolutePath();
+        
         service.generate(
                 "src/test/resources/datamapper/inputJsonToXml.json", tempProjectRoot.toAbsolutePath() + "/output.xslt");
         Document expectedResult = parse("src/test/resources/datamapper/outputData.xml");
@@ -123,6 +124,7 @@ public class DatamapperGeneratorServiceTest {
     public void testXMLtoXMLGeneratedMapping()
             throws SaxonApiException, IOException, ParserConfigurationException, SAXException, TransformerException,
                     ApiException {
+        stubToAbsolutePath();
         service.generate(
                 "src/test/resources/datamapper/inputXmlToXml.json", tempProjectRoot.toAbsolutePath() + "/output.xslt");
 
@@ -146,6 +148,8 @@ public class DatamapperGeneratorServiceTest {
     @Test
     @DisplayName("Test XML to Json mapping")
     public void testXMLtoJSONGeneratedMapping() throws SaxonApiException, IOException, ApiException {
+        stubToAbsolutePath();
+
         service.generate(
                 "src/test/resources/datamapper/inputXmlToJson.json", tempProjectRoot.toAbsolutePath() + "/output.xslt");
 
@@ -170,6 +174,8 @@ public class DatamapperGeneratorServiceTest {
     public void testJSONtoXMLGeneratedMapping()
             throws IOException, SaxonApiException, ParserConfigurationException, SAXException, TransformerException,
                     ApiException {
+        stubToAbsolutePath();
+
         service.generate(
                 "src/test/resources/datamapper/inputJsonToXml.json", tempProjectRoot.toAbsolutePath() + "/output.xslt");
 
@@ -194,6 +200,8 @@ public class DatamapperGeneratorServiceTest {
     @Test
     @DisplayName("Test Json to Json mapping")
     public void testJSONtoJSONGeneratedMapping() throws SaxonApiException, IOException, ApiException {
+        stubToAbsolutePath();
+
         service.generate(
                 "src/test/resources/datamapper/inputJsonToJson.json",
                 tempProjectRoot.toAbsolutePath() + "/output.xslt");
@@ -220,7 +228,6 @@ public class DatamapperGeneratorServiceTest {
     @Test
     @DisplayName(("Should overwrite fill successfully"))
     public void testSaveGenerationFileOverwrite() throws IOException, ApiException {
-        stubToAbsolutePath();
         stubWriteFile();
         stubGetConfigurationsDirectoryTree();
 
@@ -242,7 +249,6 @@ public class DatamapperGeneratorServiceTest {
     @Test
     @DisplayName("Should successfully create  a new file ")
     public void testSaveGenerationFile() throws IOException, ApiException {
-        stubToAbsolutePath();
         stubWriteFile();
         stubGetConfigurationsDirectoryTree();
 
@@ -263,6 +269,8 @@ public class DatamapperGeneratorServiceTest {
         stubGetConfigurationsDirectoryTree();
         stubWriteFile();
         stubGetConfigurationsDirectoryTree();
+        stubToAbsolutePath();
+
 
         String config = Files.readString(Path.of("src/test/resources/datamapper/inputJsonToXml.json"));
         service.generateFromProject(TEST_PROJECT_NAME, config);
@@ -280,6 +288,8 @@ public class DatamapperGeneratorServiceTest {
         stubWriteFile();
         stubGetConfigurationsDirectoryTree();
         stubDeleteFile();
+        stubToAbsolutePath();
+
 
         String config = Files.readString(Path.of("src/test/resources/datamapper/inputJsonToXml.json"));
         service.generateFromProject(TEST_PROJECT_NAME, config);
