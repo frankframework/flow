@@ -89,22 +89,21 @@ class ProjectTest {
     void updateAdapterReplacesAdapterAndUpdatesXml() {
         String originalXml =
                 """
-                <Configuration>
-                    <Adapter name="OldAdapter">
-                        <Settings>123</Settings>
-                    </Adapter>
-                    <Adapter name="OtherAdapter">
-                        <Settings>456</Settings>
-                    </Adapter>
-                </Configuration>
-                """;
+				<Configuration>
+					<Adapter name="OldAdapter">
+						<Settings>123</Settings>
+					</Adapter>
+					<Adapter name="OtherAdapter">
+						<Settings>456</Settings>
+					</Adapter>
+				</Configuration>
+				""";
 
-        String newAdapterXml =
-                """
-                <Adapter name="OldAdapter">
-                    <Settings>999</Settings>
-                </Adapter>
-                """;
+        String newAdapterXml = """
+				<Adapter name="OldAdapter">
+					<Settings>999</Settings>
+				</Adapter>
+				""";
 
         Configuration config = new Configuration("config1.xml");
         config.setXmlContent(originalXml);
@@ -127,10 +126,10 @@ class ProjectTest {
     void updateAdapterReturnsFalseWhenAdapterNotFound() {
         String originalXml =
                 """
-                <Configuration>
-                    <Adapter name="A1"><X>1</X></Adapter>
-                </Configuration>
-                """;
+				<Configuration>
+					<Adapter name="A1"><X>1</X></Adapter>
+				</Configuration>
+				""";
 
         Configuration config = new Configuration("config1.xml");
         config.setXmlContent(originalXml);

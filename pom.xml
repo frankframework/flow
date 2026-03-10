@@ -172,6 +172,11 @@
 				</exclusion>
 			</exclusions>
 		</dependency>
+		<dependency>
+			<groupId>net.sf.saxon</groupId>
+			<artifactId>Saxon-HE</artifactId>
+			<version>12.9</version>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -237,7 +242,7 @@
 						<trimTrailingWhitespace/>
 						<endWithNewline/>
 						<indent>
-							<spaces>true</spaces>
+							<tabs>true</tabs>
 							<spacesPerTab>4</spacesPerTab>
 						</indent>
 						<palantirJavaFormat/>

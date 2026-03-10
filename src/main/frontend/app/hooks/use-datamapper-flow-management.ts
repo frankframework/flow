@@ -498,24 +498,9 @@ export function useFlowManagement({
       }
     }
 
-    // --- Skip the first root element and add its children under parentId ---
-    if (rootElements.length > 0) {
-      const firstRoot = rootElements[0]
-
-      // If root has inline complexType, traverse its children
-      if (firstRoot['xs:complexType']) {
-        await traverseComplexType(firstRoot['xs:complexType'], parentId!)
-      } else if (typeMap.has(firstRoot['@_type']!)) {
-        // If root references a named complexType
-        await traverseComplexType(typeMap.get(firstRoot['@_type']!)!, parentId!)
-      } else if (firstRoot['@_name'] && !firstRoot['@_type']) {
-        // Root is a primitive? Skip adding node
-      }
-
-      // Add any additional root elements normally
-      for (let i = 1; i < rootElements.length; i++) {
-        await addElementNode(rootElements[i], parentId)
-      }
+    // --- Add ALL root elements, including the first one ---
+    for (const rootElement of rootElements) {
+      await addElementNode(rootElement, parentId)
     }
   }
 

@@ -23,7 +23,6 @@ import org.frankframework.flow.filetree.FileTreeNode;
 import org.frankframework.flow.filetree.FileTreeService;
 import org.frankframework.flow.projectsettings.InvalidFilterTypeException;
 import org.frankframework.flow.recentproject.RecentProjectsService;
-import org.frankframework.flow.utility.XmlValidator;
 import org.frankframework.flow.xml.XmlDTO;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -173,11 +172,7 @@ public class ProjectController {
     @PutMapping("/{projectName}/configuration")
     public ResponseEntity<Void> updateConfiguration(
             @PathVariable String projectName, @RequestBody ConfigurationDTO configurationDTO)
-            throws ConfigurationNotFoundException, InvalidXmlContentException, IOException, ProjectNotFoundException {
-
-        if (configurationDTO.filepath().toLowerCase().endsWith(".xml")) {
-            XmlValidator.validateXml(configurationDTO.content());
-        }
+            throws ConfigurationNotFoundException, IOException, ProjectNotFoundException {
         try {
             fileTreeService.updateFileContent(projectName, configurationDTO.filepath(), configurationDTO.content());
             return ResponseEntity.ok().build();
