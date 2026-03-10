@@ -28,18 +28,15 @@ public class DatamapperGeneratorService {
     }
 
     private String getConfigFilePath(String projectName) throws ApiException {
-        return Path.of(getDatamapperFilePath(projectName))
-                .resolve("generationFile.json")
-                .toString();
+        return getDatamapperDir(projectName).resolve("generationFile.json").toString();
     }
 
-    private String getDatamapperFilePath(String projectName) throws ApiException {
+    private Path getDatamapperDir(String projectName) throws ApiException {
         try {
             return Path.of(fileTreeService
                             .getConfigurationsDirectoryTree(projectName)
                             .getPath())
-                    .resolve("datamapper")
-                    .toString();
+                    .resolve("datamapper");
         } catch (IOException e) {
             throw new ApiException(
                     "Failed to resolve configuration file path for project: " + projectName,
@@ -48,44 +45,43 @@ public class DatamapperGeneratorService {
     }
 
     public void saveGenerationFile(String projectName, String content) throws ApiException {
-        Path absoluteFilePath;
+        Path relativePath;
+        Path datamapperDir = getDatamapperDir(projectName);
 
         try {
-            absoluteFilePath = fileSystemStorage.toAbsolutePath(getConfigFilePath(projectName));
-            String datamapperFilePath = getDatamapperFilePath(projectName);
+            relativePath = Path.of(getConfigFilePath(projectName));
 
-            Path path = Path.of(datamapperFilePath);
-            if (!Files.isDirectory(path)) {
-                Files.createDirectory(path);
+            if (!Files.isDirectory(datamapperDir)) {
+                Files.createDirectory(datamapperDir);
             }
         } catch (IOException | ConfigurationNotFoundException e) {
             throw new ApiException(
                     "Failed to resolve configuration file path for project: " + projectName, HttpStatus.NOT_FOUND);
         }
 
-        if (Files.isDirectory(absoluteFilePath)) {
+        if (Files.isDirectory(relativePath)) {
             throw new ApiException(
-                    "Cannot update configuration because path is a directory: " + absoluteFilePath,
+                    "Cannot update configuration because path is a directory: " + relativePath,
                     HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
         try {
-            if (Files.notExists(absoluteFilePath)) {
-                fileSystemStorage.createFile(String.valueOf(absoluteFilePath));
+            if (Files.notExists(relativePath)) {
+                fileSystemStorage.createFile(relativePath.toString());
             }
 
-            fileSystemStorage.writeFile(absoluteFilePath.toString(), content);
+            fileSystemStorage.writeFile(relativePath.toString(), content);
 
         } catch (IOException e) {
             throw new ApiException(
-                    "Failed to update configuration file: " + absoluteFilePath, HttpStatus.INTERNAL_SERVER_ERROR);
+                    "Failed to update configuration file: " + relativePath, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     private void deleteGenerationFile(String projectName) throws ApiException {
         try {
-            Path absoluteFilePath = fileSystemStorage.toAbsolutePath(getConfigFilePath(projectName));
-            fileSystemStorage.delete(absoluteFilePath.toString());
+
+            fileSystemStorage.delete(getConfigFilePath(projectName));
 
         } catch (IOException e) {
             throw new ApiException(
@@ -95,7 +91,7 @@ public class DatamapperGeneratorService {
 
     public void generateFromProject(String projectName, String content) throws ApiException {
         saveGenerationFile(projectName, content);
-        generate(getConfigFilePath(projectName), getDatamapperFilePath(projectName) + "/export.xslt");
+        generate(getConfigFilePath(projectName), getDatamapperDir(projectName) + "/export.xslt");
         deleteGenerationFile(projectName);
     }
 

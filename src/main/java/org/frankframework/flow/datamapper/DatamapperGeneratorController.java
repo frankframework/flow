@@ -5,7 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/datamapper/")
+@RequestMapping("/datamapper")
 public class DatamapperGeneratorController {
     private final DatamapperGeneratorService datamapperGeneratorService;
 
