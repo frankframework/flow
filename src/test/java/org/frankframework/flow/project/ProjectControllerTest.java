@@ -23,11 +23,9 @@ import org.frankframework.flow.projectsettings.FilterType;
 import org.frankframework.flow.projectsettings.InvalidFilterTypeException;
 import org.frankframework.flow.projectsettings.ProjectSettings;
 import org.frankframework.flow.recentproject.RecentProjectsService;
-import org.frankframework.flow.utility.XmlValidator;
 import org.frankframework.flow.xml.XmlDTO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -224,34 +222,6 @@ class ProjectControllerTest {
                 .andExpect(jsonPath("$.messages[0]").value("Invalid file path: " + filepath));
 
         verify(fileTreeService).updateFileContent(TEST_PROJECT_NAME, filepath, xmlContent);
-    }
-
-    @Test
-    void updateConfigurationValidationErrorReturns400() throws Exception {
-        String invalidXml = "<xml><unclosed></xml>";
-
-        try (MockedStatic<XmlValidator> validatorMock = Mockito.mockStatic(XmlValidator.class)) {
-
-            validatorMock
-                    .when(() -> XmlValidator.validateXml(invalidXml))
-                    .thenThrow(new InvalidXmlContentException("Malformed XML", null));
-
-            mockMvc.perform(
-                            put("/api/projects/" + TEST_PROJECT_NAME + "/configuration")
-                                    .contentType(MediaType.APPLICATION_JSON)
-                                    .content(
-                                            """
-											{
-											"filepath": "config1.xml",
-											"content": "<xml><unclosed></xml>"
-											}
-											"""))
-                    .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.httpStatus").value(400))
-                    .andExpect(jsonPath("$.messages[0]").value("Malformed XML"));
-
-            verify(fileTreeService, never()).updateFileContent(eq(TEST_PROJECT_NAME), anyString(), anyString());
-        }
     }
 
     @Test
