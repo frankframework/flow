@@ -153,6 +153,12 @@ public class ProjectController {
         return fileTreeService.getProjectTree(name);
     }
 
+    @GetMapping("/{projectName}/folder")
+    public FileTreeNode getFolderContents(@PathVariable String projectName, @RequestParam String path)
+            throws IOException {
+        return fileTreeService.getShallowDirectoryTree(projectName, path);
+    }
+
     @PostMapping("/{projectName}/configuration")
     public ResponseEntity<ConfigurationDTO> getConfigurationByPath(
             @PathVariable String projectName, @RequestBody ConfigurationPathDTO requestBody)
@@ -218,7 +224,7 @@ public class ProjectController {
 
     @PostMapping("/{projectName}/files")
     public ResponseEntity<FileTreeNode> createFile(@PathVariable String projectName, @RequestBody FileCreateDTO dto)
-            throws IOException, ProjectNotFoundException, ApiException {
+            throws IOException, ApiException {
         FileTreeNode node = fileTreeService.createFile(projectName, dto.path(), dto.name());
         return ResponseEntity.status(HttpStatus.CREATED.value()).body(node);
     }

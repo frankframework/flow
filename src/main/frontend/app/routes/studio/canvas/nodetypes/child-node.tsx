@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import useFlowStore from '~/stores/flow-store'
 import { getElementTypeFromName } from '../../node-translator-module'
 import useNodeContextStore from '~/stores/node-context-store'
-import { useNodeContextMenu } from '../flow'
+import { useNodeContextMenu } from '../node-context-menu-context'
 import { canAcceptChildStatic, type FrankElement } from './node-utilities'
 import { useFFDoc } from '@frankframework/doc-library-react'
 

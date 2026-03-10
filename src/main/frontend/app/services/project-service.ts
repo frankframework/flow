@@ -1,5 +1,5 @@
 import { apiFetch, apiUrl } from '~/utils/api'
-import type { FileTreeNode } from '~/routes/configurations/configuration-manager'
+import type { FileTreeNode } from '~/types/filesystem.types'
 import type { Project } from '~/types/project.types'
 
 export async function fetchProject(name: string): Promise<Project> {
@@ -31,8 +31,25 @@ export async function fetchProjectTree(projectName: string, signal?: AbortSignal
   return apiFetch<FileTreeNode>(`/projects/${encodeURIComponent(projectName)}/tree/configurations`, { signal })
 }
 
+export async function fetchShallowConfigurationsTree(projectName: string, signal?: AbortSignal): Promise<FileTreeNode> {
+  return apiFetch<FileTreeNode>(`/projects/${encodeURIComponent(projectName)}/tree/configurations?shallow=true`, {
+    signal,
+  })
+}
+
 export async function fetchProjectRootTree(projectName: string, signal?: AbortSignal): Promise<FileTreeNode> {
   return apiFetch<FileTreeNode>(`/projects/${encodeURIComponent(projectName)}/tree`, { signal })
+}
+
+export async function fetchFolderContents(
+  projectName: string,
+  path: string,
+  signal?: AbortSignal,
+): Promise<FileTreeNode> {
+  return apiFetch<FileTreeNode>(
+    `/projects/${encodeURIComponent(projectName)}/folder?path=${encodeURIComponent(path)}`,
+    { signal },
+  )
 }
 
 export async function fetchDirectoryByPath(
@@ -124,3 +141,5 @@ export async function importProjectFolder(files: FileList): Promise<Project> {
     body: formData,
   })
 }
+
+export { type FileTreeNode } from '~/types/filesystem.types'

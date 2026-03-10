@@ -1,15 +1,30 @@
-import type { Disposable, TreeDataProvider, TreeItem, TreeItemIndex } from 'react-complex-tree'
-import { getAdapterListenerType, getAdapterNamesFromConfiguration } from '~/routes/studio/xml-to-json-parser'
+import type { TreeItemIndex } from 'react-complex-tree'
 import { sortChildren } from './tree-utilities'
-import { fetchDirectoryByPath, fetchProjectTree } from '~/services/project-service'
+import { fetchFolderContents, fetchShallowConfigurationsTree } from '~/services/project-service'
+import type { FileTreeNode } from '~/types/filesystem.types'
+import { BaseFilesDataProvider } from './base-files-data-provider'
 
-export default class FilesDataProvider implements TreeDataProvider {
-  private data: Record<TreeItemIndex, TreeItem> = {}
-  private readonly treeChangeListeners: ((changedItemIds: TreeItemIndex[]) => void)[] = []
+export interface StudioFolderData {
+  name: string
+  path: string
+  adapterNames?: string[]
+}
+export interface StudioAdapterData {
+  adapterName: string
+  configPath: string
+  adapterPosition: number
+}
+export type StudioItemData = string | StudioFolderData | StudioAdapterData
+
+function isFolderData(data: StudioItemData): data is StudioFolderData {
+  return typeof data === 'object' && 'path' in data
+}
+
+export default class FilesDataProvider extends BaseFilesDataProvider<StudioItemData> {
   private readonly projectName: string
-  private loadedDirectories = new Set<string>()
 
   constructor(projectName: string) {
+    super()
     this.projectName = projectName
   }
 
@@ -23,16 +38,19 @@ export default class FilesDataProvider implements TreeDataProvider {
       const item = this.data[id]
       if (!item || !item.isFolder) continue
 
-      await (item.data.path?.endsWith('.xml') ? this.loadAdapters(id) : this.loadDirectory(id))
+      if (isFolderData(item.data) && item.data.path.endsWith('.xml')) {
+        this.loadAdapters(id)
+      } else {
+        await this.loadDirectory(id)
+      }
     }
   }
 
-  // Load root directory
   private async loadRoot() {
-    const tree = await fetchProjectTree(this.projectName)
+    const tree = await fetchShallowConfigurationsTree(this.projectName)
 
     if (!tree) {
-      console.warn('[EditorFilesDataProvider] Received empty tree from API')
+      console.warn('[StudioFilesDataProvider] Received empty tree from API')
       this.data = {}
       return
     }
@@ -44,21 +62,8 @@ export default class FilesDataProvider implements TreeDataProvider {
       isFolder: true,
     }
 
-    const sortedChildren = sortChildren(tree.children)
-
-    for (const child of sortedChildren) {
-      const index = `root/${child.name}`
-
-      this.data[index] = {
-        index,
-        data: {
-          name: child.type === 'DIRECTORY' ? child.name : child.name.replace(/\.xml$/, ''),
-          path: child.path,
-        },
-        children: child.type === 'DIRECTORY' || child.name.endsWith('.xml') ? [] : undefined,
-        isFolder: true,
-      }
-
+    for (const child of sortChildren(tree.children)) {
+      const index = this.buildChildItem('root', child)
       this.data['root'].children!.push(index)
     }
 
@@ -68,127 +73,63 @@ export default class FilesDataProvider implements TreeDataProvider {
 
   public async loadDirectory(itemId: TreeItemIndex) {
     const item = this.data[itemId]
-    if (!item || !item.isFolder || this.loadedDirectories.has(item.data.path)) return
+    if (!item || !item.isFolder || !isFolderData(item.data)) return
+    if (this.loadedDirectories.has(item.data.path)) return
 
+    const { path } = item.data
     try {
       if (!item.children) item.children = []
 
-      const directory = await fetchDirectoryByPath(this.projectName, item.data.path)
+      const directory = await fetchFolderContents(this.projectName, path)
       if (!directory) {
         console.warn('[StudioFilesDataProvider] Received empty directory from API')
-        this.data = {}
         return
       }
 
-      const sortedChildren = sortChildren(directory.children)
-
-      const children: TreeItemIndex[] = []
-
-      for (const child of sortedChildren) {
-        const childIndex = `${itemId}/${child.name}`
-        const isFolder = child.type === 'DIRECTORY' || child.name.endsWith('.xml')
-
-        this.data[childIndex] = {
-          index: childIndex,
-          data: {
-            name: isFolder ? child.name.replace(/\.xml$/, '') : child.name,
-            path: child.path,
-          },
-          isFolder,
-          children: isFolder ? [] : undefined,
-        }
-
-        children.push(childIndex)
-      }
-
-      item.children = children
-      this.loadedDirectories.add(item.data.path)
+      item.children = sortChildren(directory.children).map((child) => this.buildChildItem(itemId, child))
+      this.loadedDirectories.add(path)
       this.notifyListeners([itemId])
     } catch (error) {
-      console.error(`Failed to load directory for ${item.data.path}`, error)
+      console.error(`Failed to load directory for ${path}`, error)
     }
   }
 
-  public async loadAdapters(itemId: TreeItemIndex) {
+  public loadAdapters(itemId: TreeItemIndex) {
     const item = this.data[itemId]
-    if (!item || !item.isFolder || this.loadedDirectories.has(item.data.path)) return
+    if (!item || !item.isFolder || !isFolderData(item.data)) return
+    if (this.loadedDirectories.has(item.data.path)) return
 
-    try {
-      const adapterNames = await getAdapterNamesFromConfiguration(this.projectName, item.data.path)
+    const { path, adapterNames = [] } = item.data
 
-      for (const [i, adapterName] of adapterNames.entries()) {
-        const adapterIndex = `${itemId}/${adapterName}::${i}`
-        this.data[adapterIndex] = {
-          index: adapterIndex,
-          data: {
-            adapterName,
-            configPath: item.data.path,
-            adapterPosition: i,
-            listenerName: await getAdapterListenerType(this.projectName, item.data.path, adapterName, i),
-          },
-          isFolder: false,
-        }
-        item.children!.push(adapterIndex)
+    for (const [i, adapterName] of adapterNames.entries()) {
+      const adapterIndex = `${itemId}/${adapterName}::${i}`
+      this.data[adapterIndex] = {
+        index: adapterIndex,
+        data: { adapterName, configPath: path, adapterPosition: i },
+        isFolder: false,
       }
-
-      this.loadedDirectories.add(item.data.path)
-      this.notifyListeners([itemId])
-    } catch (error) {
-      console.error(`Failed to load adapters for ${item.data.path}`, error)
+      item.children!.push(adapterIndex)
     }
-  }
 
-  public async reloadDirectory(itemId: TreeItemIndex): Promise<void> {
-    const item = this.data[itemId]
-    if (!item || !item.isFolder) return
-
-    this.loadedDirectories.delete(item.data.path)
-    this.removeSubtree(itemId)
-    item.children = []
-    await this.loadDirectory(itemId)
-  }
-
-  private removeSubtree(parentId: TreeItemIndex): void {
-    const item = this.data[parentId]
-    if (!item?.children) return
-
-    for (const childId of item.children) {
-      this.removeSubtree(childId)
-      const child = this.data[childId]
-      if (child?.isFolder && child.data?.path) {
-        this.loadedDirectories.delete(child.data.path)
-      }
-      delete this.data[childId]
-    }
-  }
-
-  public getItemByPath(path: string): TreeItem | undefined {
-    return Object.values(this.data).find((item) => item.data?.path === path)
-  }
-
-  public async getAllItems(): Promise<TreeItem[]> {
-    return Object.values(this.data)
-  }
-
-  public async getTreeItem(itemId: TreeItemIndex) {
-    return this.data[itemId]
-  }
-
-  public async onChangeItemChildren(itemId: TreeItemIndex, newChildren: TreeItemIndex[]) {
-    this.data[itemId].children = newChildren
+    this.loadedDirectories.add(path)
     this.notifyListeners([itemId])
   }
 
-  public onDidChangeTreeData(listener: (changedItemIds: TreeItemIndex[]) => void): Disposable {
-    this.treeChangeListeners.push(listener)
-    return {
-      dispose: () => {
-        this.treeChangeListeners.splice(this.treeChangeListeners.indexOf(listener), 1)
-      },
-    }
-  }
+  private buildChildItem(parentId: TreeItemIndex, child: FileTreeNode): TreeItemIndex {
+    const index = `${parentId}/${child.name}`
+    const isFolder = child.type === 'DIRECTORY' || child.name.endsWith('.xml')
 
-  private notifyListeners(itemIds: TreeItemIndex[]) {
-    for (const listener of this.treeChangeListeners) listener(itemIds)
+    this.data[index] = {
+      index,
+      data: {
+        name: isFolder ? child.name.replace(/\.xml$/, '') : child.name,
+        path: child.path,
+        adapterNames: child.adapterNames,
+      },
+      isFolder,
+      children: isFolder ? [] : undefined,
+    }
+
+    return index
   }
 }
