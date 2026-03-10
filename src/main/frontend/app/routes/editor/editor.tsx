@@ -26,6 +26,7 @@ import clsx from 'clsx'
 import { refreshOpenDiffs } from '~/services/git-service'
 import { findAdapterIndexAtOffset, findAdaptersInXml, lineToOffset, normalizeFrankElements } from './xml-utils'
 import { useSettingsStore } from '~/stores/settings-store'
+import { toProjectRelativePath } from '~/utils/path-utils'
 
 type LeftTab = 'files' | 'git'
 type SaveStatus = 'idle' | 'saving' | 'saved'
@@ -489,7 +490,12 @@ export default function CodeEditor() {
           ) : (
             <>
               <div className="border-b-border bg-background flex h-12 items-center justify-between border-b p-4">
-                <span>Path: {activeTab.configurationPath}</span>
+                <span>
+                  Path:{' '}
+                  {activeTab.configurationPath && project
+                    ? toProjectRelativePath(activeTab.configurationPath, project)
+                    : activeTab.configurationPath}
+                </span>
                 <div className="flex items-center gap-2">
                   <span
                     className={clsx(
