@@ -142,7 +142,10 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
         existingAdapterXml,
       )
 
-      const newAdapterDoc = new DOMParser().parseFromString(`<root>${newAdapterXml}</root>`, 'text/xml')
+      const newAdapterDoc = new DOMParser().parseFromString(
+        `<root xmlns:flow="urn:frank-flow">${newAdapterXml}</root>`,
+        'text/xml',
+      )
       const newAdapterEl = newAdapterDoc.querySelector('Adapter, adapter')
       if (!newAdapterEl) throw new Error('Failed to parse generated adapter XML')
 
@@ -221,29 +224,42 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
   const layoutGraph = useCallback((nodes: Node[], edges: Edge[], direction: 'TB' | 'LR' = 'LR'): Node[] => {
     const dagreGraph = new Dagre.graphlib.Graph()
     dagreGraph.setDefaultEdgeLabel(() => ({}))
-    dagreGraph.setGraph({ rankdir: direction })
+    dagreGraph.setGraph({ rankdir: direction, ranksep: 300, nodesep: 200 })
 
+    // Only add nodes to Dagre that need layout (position x=0 and y=0)
     for (const node of nodes) {
-      dagreGraph.setNode(node.id, {
-        width: FlowConfig.NODE_DEFAULT_WIDTH * 1.5,
-        height: FlowConfig.NODE_DEFAULT_HEIGHT * 1.5,
-      })
+      if (node.position.x === 0 && node.position.y === 0) {
+        dagreGraph.setNode(node.id, {
+          width: node.width,
+          height: node.height,
+        })
+      }
     }
 
+    // Add all edges
     for (const edge of edges) {
       dagreGraph.setEdge(edge.source, edge.target)
     }
 
+    // Run Dagre layout
     Dagre.layout(dagreGraph)
 
+    // Map nodes back
     return nodes.map((node) => {
+      // Skip nodes that already have a restored position
+      if (node.position.x !== 0 || node.position.y !== 0) return node
+
       const nodeWithPosition = dagreGraph.node(node.id)
+      if (!nodeWithPosition) return node
+
       return {
         ...node,
         position: {
           x: nodeWithPosition.x,
           y: nodeWithPosition.y,
         },
+        // keep the same measured width/height
+        measured: node.measured,
       }
     })
   }, [])
@@ -596,6 +612,8 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
         x: position.x - width / 2, // Center on cursor
         y: position.y - height / 2,
       },
+      width: FlowConfig.NODE_DEFAULT_WIDTH,
+      height: FlowConfig.NODE_DEFAULT_HEIGHT,
       data: {
         subtype: elementName,
         type: elementType,

@@ -1,4 +1,4 @@
-<Configuration name="DefaultConfig">
+<Configuration name="DefaultConfig" xmlns:flow="urn:frank-flow">
     <Adapter name="SampleAdapter">
         <Receiver name="SampleReceiver">
             <ApiListener method="GET" uriPattern="/sample" />

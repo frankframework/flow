@@ -132,19 +132,22 @@ public class FileTreeServiceTest {
 
     @Test
     @DisplayName("Should successfully overwrite a file with new content")
-    public void updateFileContent_Success()
-            throws IOException, ProjectNotFoundException, ConfigurationNotFoundException {
+    public void updateFileContent_Success() throws Exception {
         stubToAbsolutePath();
         stubWriteFile();
 
         Path file = tempProjectRoot.resolve("update.xml");
-        Files.writeString(file, "old content");
+        Files.writeString(file, "<Configuration>old</Configuration>");
 
-        String newContent = "new content";
+        String newContent = "<Configuration>new content</Configuration>";
+
         fileTreeService.updateFileContent(
                 TEST_PROJECT_NAME, file.toAbsolutePath().toString(), newContent);
 
-        assertEquals(newContent, Files.readString(file));
+        String written = Files.readString(file);
+
+        assertTrue(written.contains("new content"));
+        assertTrue(written.contains("xmlns:flow"));
     }
 
     @Test
@@ -258,7 +261,8 @@ public class FileTreeServiceTest {
 
     @Test
     @DisplayName("Should handle multiple consecutive file operations correctly")
-    void integration_MultipleOperations() throws IOException, ProjectNotFoundException, ConfigurationNotFoundException {
+    void integration_MultipleOperations()
+            throws IOException, ProjectNotFoundException, ConfigurationNotFoundException, Exception {
         stubToAbsolutePath();
         stubReadFile();
         stubWriteFile();
@@ -266,14 +270,15 @@ public class FileTreeServiceTest {
         Path f1 = tempProjectRoot.resolve("f1.xml");
         Path f2 = tempProjectRoot.resolve("f2.xml");
 
-        Files.writeString(f1, "initial");
-        Files.writeString(f2, "initial");
+        Files.writeString(f1, "<Configuration>initial</Configuration>");
+        Files.writeString(f2, "<Configuration>initial</Configuration>");
 
-        fileTreeService.updateFileContent(TEST_PROJECT_NAME, f1.toString(), "one");
-        fileTreeService.updateFileContent(TEST_PROJECT_NAME, f2.toString(), "two");
+        fileTreeService.updateFileContent(TEST_PROJECT_NAME, f1.toString(), "<Configuration>one</Configuration>");
 
-        assertEquals("one", fileTreeService.readFileContent(f1.toString()));
-        assertEquals("two", fileTreeService.readFileContent(f2.toString()));
+        fileTreeService.updateFileContent(TEST_PROJECT_NAME, f2.toString(), "<Configuration>two</Configuration>");
+
+        assertTrue(fileTreeService.readFileContent(f1.toString()).contains("one"));
+        assertTrue(fileTreeService.readFileContent(f2.toString()).contains("two"));
     }
 
     @Test

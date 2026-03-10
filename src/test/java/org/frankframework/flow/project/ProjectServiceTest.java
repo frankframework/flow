@@ -661,7 +661,7 @@ public class ProjectServiceTest {
         Path expectedFile = tempDir.resolve("proj/src/main/configurations/NewConfig.xml");
         String content = Files.readString(expectedFile, StandardCharsets.UTF_8);
         assertTrue(
-                content.contains("<Configuration name=\"DefaultConfig\">"),
+                content.contains("<Configuration name=\"DefaultConfig\""),
                 "Default XML should contain a Configuration element");
     }
 
@@ -848,7 +848,7 @@ public class ProjectServiceTest {
         String content = Files.readString(expectedFile, StandardCharsets.UTF_8);
 
         assertTrue(
-                content.contains("<Configuration name=\"DefaultConfig\">"),
+                content.contains("<Configuration name=\"DefaultConfig\""),
                 "Default XML should contain a Configuration element");
     }
 
