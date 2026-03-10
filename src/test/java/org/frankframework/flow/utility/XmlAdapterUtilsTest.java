@@ -132,12 +132,11 @@ class XmlAdapterUtilsTest {
 
     @Test
     void shouldFindAdapterByNameUppercaseTag() throws Exception {
-        String xml =
-                """
-                <Adapters>
-                    <Adapter name="TestAdapter"/>
-                </Adapters>
-                """;
+        String xml = """
+				<Adapters>
+					<Adapter name="TestAdapter"/>
+				</Adapters>
+				""";
 
         Document doc = parseXml(xml);
         Node node = XmlAdapterUtils.findAdapterInDocument(doc, "TestAdapter");
@@ -149,12 +148,11 @@ class XmlAdapterUtilsTest {
 
     @Test
     void shouldFindAdapterByNameLowercaseTag() throws Exception {
-        String xml =
-                """
-                <adapters>
-                    <adapter name="lowerAdapter"/>
-                </adapters>
-                """;
+        String xml = """
+				<adapters>
+					<adapter name="lowerAdapter"/>
+				</adapters>
+				""";
 
         Document doc = parseXml(xml);
         Node node = XmlAdapterUtils.findAdapterInDocument(doc, "lowerAdapter");
@@ -178,12 +176,12 @@ class XmlAdapterUtilsTest {
     void shouldReturnFirstMatchingAdapterIfMultiple() throws Exception {
         String xml =
                 """
-                <Adapters>
-                    <Adapter name="A"/>
-                    <Adapter name="B"/>
-                    <Adapter name="A"/>
-                </Adapters>
-                """;
+				<Adapters>
+					<Adapter name="A"/>
+					<Adapter name="B"/>
+					<Adapter name="A"/>
+				</Adapters>
+				""";
 
         Document doc = parseXml(xml);
         Node node = XmlAdapterUtils.findAdapterInDocument(doc, "A");
