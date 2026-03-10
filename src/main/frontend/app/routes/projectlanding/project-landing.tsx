@@ -53,10 +53,7 @@ export default function ProjectLanding() {
       try {
         const info = await fetchAppInfo()
         setIsLocalEnvironment(info.isLocal)
-
-        if (info.workspaceRoot) {
-          setRootLocationName(info.workspaceRoot)
-        }
+        setRootLocationName(info.isLocal ? 'Computer' : 'Cloud Workspace')
       } catch {
         showErrorToast('Failed to fetch app info, defaulting to local mode.')
       }

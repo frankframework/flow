@@ -18,6 +18,7 @@ import org.frankframework.flow.adapter.AdapterNotFoundException;
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
 import org.frankframework.flow.exception.ApiException;
 import org.frankframework.flow.filesystem.FileSystemStorage;
+import org.frankframework.flow.project.Project;
 import org.frankframework.flow.project.ProjectNotFoundException;
 import org.frankframework.flow.project.ProjectService;
 import org.frankframework.flow.utility.XmlAdapterUtils;
@@ -77,7 +78,7 @@ public class FileTreeService {
         }
 
         try {
-            var project = projectService.getProject(projectName);
+            Project project = projectService.getProject(projectName);
             Path projectPath = fileSystemStorage.toAbsolutePath(project.getRootPath());
 
             if (!Files.exists(projectPath) || !Files.isDirectory(projectPath)) {
@@ -97,7 +98,7 @@ public class FileTreeService {
 
     public FileTreeNode getShallowDirectoryTree(String projectName, String directoryPath) throws IOException {
         try {
-            var project = projectService.getProject(projectName);
+            Project project = projectService.getProject(projectName);
             Path projectPath = fileSystemStorage.toAbsolutePath(project.getRootPath());
             Path dirPath = fileSystemStorage.toAbsolutePath(directoryPath).normalize();
 
@@ -119,7 +120,7 @@ public class FileTreeService {
 
     public FileTreeNode getShallowConfigurationsDirectoryTree(String projectName) throws IOException {
         try {
-            var project = projectService.getProject(projectName);
+            Project project = projectService.getProject(projectName);
             Path projectPath = fileSystemStorage.toAbsolutePath(project.getRootPath());
             Path configDirPath = projectPath.resolve("src/main/configurations").normalize();
 
@@ -137,7 +138,7 @@ public class FileTreeService {
 
     public FileTreeNode getConfigurationsDirectoryTree(String projectName) throws IOException {
         try {
-            var project = projectService.getProject(projectName);
+            Project project = projectService.getProject(projectName);
             Path projectPath = fileSystemStorage.toAbsolutePath(project.getRootPath());
             Path configDirPath = projectPath.resolve("src/main/configurations").normalize();
 
@@ -227,7 +228,7 @@ public class FileTreeService {
 
     private void validateWithinProject(String projectName, String path) throws IOException {
         try {
-            var project = projectService.getProject(projectName);
+            Project project = projectService.getProject(projectName);
             Path projectPath = fileSystemStorage.toAbsolutePath(project.getRootPath());
             Path targetPath = fileSystemStorage.toAbsolutePath(path).normalize();
 
