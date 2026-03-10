@@ -2,7 +2,6 @@ import { useEffect, useReducer, useState } from 'react'
 
 import PropertyList from './property-list'
 import { showInfoToast, showSuccessToast } from '~/components/toast'
-import ToggleThemeButton from '~/components/datamapper/toggle-theme-button'
 import {
   DEFAULT_MAPPING_LIST_CONFIG,
   mappingListConfigReducer,
@@ -75,10 +74,8 @@ export default function Root() {
       <FileProvider>
         {/* These buttons only exists for testing purposes, ignore the styling on these, they will be removed in later stages */}
         <div className="top fixed right-0 z-60 gap-2">
-          <ToggleThemeButton />
-
           <button
-            className="border-border hover:bg-hover active:bg-selected w-48 rounded-md border bg-red-500 px-4 py-2 text-sm"
+            className="border-border hover:bg-hover active:bg-selected hidden w-48 rounded-md border bg-red-500 px-4 py-2 text-sm"
             onClick={() => {
               console.dir(mappingListConfig)
               showSuccessToast('Logging config to console!', 'Debug')
@@ -108,13 +105,13 @@ export default function Root() {
             Export as final mappingFile
           </button>
           <button
-            className="border-border hover:bg-hover active:bg-selected w-48 rounded-md border bg-red-500 px-4 py-2 text-sm"
+            className="border-border hover:bg-hover active:bg-selected hidden w-48 rounded-md border bg-red-500 px-4 py-2 text-sm"
             onClick={handleManualConfigExport}
           >
             Export configuration
           </button>
           <button
-            className="border-border hover:bg-hover active:bg-selected w-48 rounded-md border bg-red-500 px-4 py-2 text-sm"
+            className="border-border hover:bg-hover active:bg-selected hidden w-48 rounded-md border bg-red-500 px-4 py-2 text-sm"
             onClick={() => {
               localStorage.clear()
               globalThis.location.reload()
