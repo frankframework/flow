@@ -7,7 +7,6 @@ import {
   DEFAULT_MAPPING_LIST_CONFIG,
   mappingListConfigReducer,
 } from '~/stores/datamapper_state/mappingListConfig/reducer'
-import type { MappingListConfig } from '~/types/datamapper_types/config-types'
 import { FLOW_KEY } from '~/utils/datamapper_utils/const'
 import { convertMappingConfigToMappingFile } from '~/utils/datamapper_utils/convert-node-utils'
 import AdvancedEditor from './advanced-editor'
@@ -16,12 +15,17 @@ import MappingTable from './mapping-table'
 import { ReactFlowProvider } from '@xyflow/react'
 import { FileProvider } from '~/stores/datamapper_state/schemaQueue/schema-queue-context'
 import Button from '~/components/inputs/button'
-import { saveDatamapperConfiguration, fetchDatamapperConfiguration } from '~/services/datamapper-service'
+import {
+  saveDatamapperConfiguration,
+  fetchDatamapperConfiguration,
+  generateDatamapperXSLT,
+} from '~/services/datamapper-service'
 import { useProjectStore } from '~/stores/project-store'
 
 export default function Root() {
   const [route, setRoute] = useState('Initialize')
   const routes = ['Initialize', 'Properties', 'Mappings', 'Advanced']
+
   const project = useProjectStore.getState().project
 
   const [mappingListConfig, dispatchMappingListConfig] = useReducer(
@@ -33,8 +37,6 @@ export default function Root() {
     const loadConfig = async () => {
       if (project) {
         const config = await fetchDatamapperConfiguration(project.name)
-        console.dir(config)
-        console.log('test')
 
         dispatchMappingListConfig({
           type: 'IMPORT_CONFIG',
@@ -63,8 +65,9 @@ export default function Root() {
         return
       }
       await saveDatamapperConfiguration(project?.name, JSON.stringify(mappingListConfig))
-    }, 300)
-    return () => clearTimeout(timeout)
+    }, 300) //Save **AFTER** 300 MS
+
+    return () => clearTimeout(timeout) // If another save occurs within the 300MS, Reset timer and save after 300MS
   }, [mappingListConfig])
 
   return (
@@ -84,11 +87,17 @@ export default function Root() {
             Test External node log
           </button>
           <button
-            className="border-border hover:bg-hover active:bg-selected hidden w-48 rounded-md border bg-red-500 px-4 py-2 text-sm"
+            className="border-border hover:bg-hover active:bg-selected w-48 rounded-md border bg-red-500 px-4 py-2 text-sm"
             onClick={() => {
               const dataString = `data:text/json;charset=utf-8,${encodeURIComponent(
                 JSON.stringify(convertMappingConfigToMappingFile(mappingListConfig)),
               )}`
+              if (project) {
+                generateDatamapperXSLT(
+                  project?.name,
+                  JSON.stringify(convertMappingConfigToMappingFile(mappingListConfig)),
+                )
+              }
               const link = document.createElement('a')
               link.href = dataString
               link.download = 'mapping-file.json'

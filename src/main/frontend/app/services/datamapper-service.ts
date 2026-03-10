@@ -15,3 +15,10 @@ export async function saveDatamapperConfiguration(projectName: string, content: 
     body: content,
   })
 }
+
+export async function generateDatamapperXSLT(projectName: string, content: string): Promise<void> {
+  await apiFetch<void>(`/datamapper/${encodeURIComponent(projectName)}/generate`, {
+    method: 'PUT',
+    body: content,
+  })
+}

@@ -1,25 +1,31 @@
-import type { MappingListConfig, MappingFile, Mapping, Property } from '~/types/datamapper_types/config-types'
+import type { MappingListConfig, MappingFile, Mapping, Property, Target } from '~/types/datamapper_types/config-types'
 import type { FlowNode, PropertyNode, MappingNode } from '~/types/datamapper_types/node-types'
 
 export function convertMappingConfigToMappingFile(mappingConfig: MappingListConfig): MappingFile {
+  const mappings = convertNodeToMappings(mappingConfig.propertyData.nodes as FlowNode[])
   return {
     sourceType: mappingConfig.formatTypes.source?.name ?? '',
     targetType: mappingConfig.formatTypes.target?.name ?? '',
+    targetStructure: convertNodesToProperty(
+      mappingConfig.propertyData.nodes as FlowNode[],
+      'target-table',
+      'targetOnly',
+      mappings,
+    ),
     sourceStructure: convertNodesToProperty(
       mappingConfig.propertyData.nodes as FlowNode[],
       'source-table',
       'sourceOnly',
     ),
-    targetStructure: convertNodesToProperty(
-      mappingConfig.propertyData.nodes as FlowNode[],
-      'target-table',
-      'targetOnly',
-    ),
-    mappings: convertNodeToMappings(mappingConfig.propertyData.nodes as FlowNode[]),
   }
 }
 
-function convertNodesToProperty(nodes: FlowNode[], parentId: string, basicNode: string): Property[] {
+function convertNodesToProperty(
+  nodes: FlowNode[],
+  parentId: string,
+  basicNode: string,
+  mappings?: Mapping[],
+): Target[] {
   return nodes
     .filter(
       (node) =>
@@ -29,10 +35,12 @@ function convertNodesToProperty(nodes: FlowNode[], parentId: string, basicNode: 
     .map((node) => {
       let property = nodeToProperty(node as PropertyNode)
 
-      if (node.type === 'labeledGroup') {
-        property.children = convertNodesToProperty(nodes, node.id, basicNode)
+      if (node.type === 'labeledGroup' || node.type === 'extraSourceNode') {
+        property.children = convertNodesToProperty(nodes, node.id, basicNode, mappings)
       }
-
+      let targetProperty = property as Target
+      if (mappings)
+        targetProperty.mapping = mappings.findLast((mapping) => mapping.target.internalId == property.internalId)
       return property
     })
 }
@@ -55,7 +63,7 @@ function nodeToMapping(nodes: FlowNode[], node: MappingNode): Mapping {
   const mapping: Mapping = {
     id: node.id,
     sources: [],
-    targets: [],
+    target: nodeToProperty(nodes.find((n) => n.id === node.data.target) as PropertyNode),
     mutations: node.data.mutations ?? [],
     conditions: node.data.conditions ?? [],
     conditional: node.data.conditional ?? null,
@@ -69,11 +77,6 @@ function nodeToMapping(nodes: FlowNode[], node: MappingNode): Mapping {
         mapping.sources.push(nodeToProperty(sourceNode as PropertyNode))
       }
     }
-
-  const targetNode = nodes.find((n) => n.id === node.data.target)
-  if (targetNode) {
-    mapping.targets.push(nodeToProperty(targetNode as PropertyNode))
-  }
 
   return mapping
 }
