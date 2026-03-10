@@ -109,7 +109,7 @@ public class DatamapperGeneratorServiceTest {
     @DisplayName("Test XSLT generation")
     public void generateMapping() throws IOException, ParserConfigurationException, SAXException, ApiException {
         stubToAbsolutePath();
-        
+
         service.generate(
                 "src/test/resources/datamapper/inputJsonToXml.json", tempProjectRoot.toAbsolutePath() + "/output.xslt");
         Document expectedResult = parse("src/test/resources/datamapper/outputData.xml");
@@ -271,7 +271,6 @@ public class DatamapperGeneratorServiceTest {
         stubGetConfigurationsDirectoryTree();
         stubToAbsolutePath();
 
-
         String config = Files.readString(Path.of("src/test/resources/datamapper/inputJsonToXml.json"));
         service.generateFromProject(TEST_PROJECT_NAME, config);
         Document expectedResult = parse("src/test/resources/datamapper/output.xslt");
@@ -289,7 +288,6 @@ public class DatamapperGeneratorServiceTest {
         stubGetConfigurationsDirectoryTree();
         stubDeleteFile();
         stubToAbsolutePath();
-
 
         String config = Files.readString(Path.of("src/test/resources/datamapper/inputJsonToXml.json"));
         service.generateFromProject(TEST_PROJECT_NAME, config);

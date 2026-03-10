@@ -28,9 +28,7 @@ public class DatamapperGeneratorService {
     }
 
     private String getConfigFilePath(String projectName) throws ApiException {
-        return getDatamapperDir(projectName)
-                .resolve("generationFile.json")
-                .toString();
+        return getDatamapperDir(projectName).resolve("generationFile.json").toString();
     }
 
     private Path getDatamapperDir(String projectName) throws ApiException {
@@ -38,8 +36,7 @@ public class DatamapperGeneratorService {
             return Path.of(fileTreeService
                             .getConfigurationsDirectoryTree(projectName)
                             .getPath())
-                    .resolve("datamapper")
-                    ;
+                    .resolve("datamapper");
         } catch (IOException e) {
             throw new ApiException(
                     "Failed to resolve configuration file path for project: " + projectName,
