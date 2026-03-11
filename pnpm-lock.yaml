@@ -48,8 +48,8 @@ importers:
         specifier: ^5.1.17
         version: 5.1.32
       monaco-xsd-code-completion:
-        specifier: ^0.13.0
-        version: 0.13.0
+        specifier: ^1.0.0
+        version: 1.0.0
       react:
         specifier: ^19.0.0
         version: 19.2.1
@@ -759,9 +759,6 @@ packages:
 
   '@polka/url@1.0.0-next.29':
     resolution: {integrity: sha512-wwQAWhWSuHaag8c4q/KN/vCoeOJYshAIvMQwD4GpSb3OiZklFfvAgmj0VCBBImRpuF/aFgIRzllXlVX93Jevww==}
-
-  '@prettier/plugin-xml@0.12.0':
-    resolution: {integrity: sha512-196oXlmim2SiqeG1jQO5aS/nChI85DvyfIQTBkOiVHHev2j15x4TVxOMGAWHkqdlD8pmCg/KmX8SfFIyT2L7tA==}
 
   '@radix-ui/number@1.1.1':
     resolution: {integrity: sha512-MkKCwxlXTgz6CFoJx3pCwn07GKp36+aZyu/u2Ln2VrA5DcdyCZkASEDBTd8x5whTQQL5CiYf4prXKLcgQdv29g==}
@@ -1505,9 +1502,6 @@ packages:
   '@types/parse-json@4.0.2':
     resolution: {integrity: sha512-dISoDXWWQwUquiKsyZ4Ng+HX2KsPL7LyHKHQwgGFEA3IaKac4Obd+h2a/a6waisAoepJlBcx9paWqjA8/HVjCw==}
 
-  '@types/prettier@2.7.3':
-    resolution: {integrity: sha512-+68kP9yzs4LMp7VNh8gdzMSPZFL44MLGqiHWvttYJe+6qnuVr4Ek9wSBQoveqY/r+LwjCcU29kNVkidwim+kYA==}
-
   '@types/react-dom@19.2.3':
     resolution: {integrity: sha512-jp2L/eY6fn+KgVVQAOqYItbF0VY/YApe5Mz2F0aykSO8gx31bYCZyvSeYxCHKvzHG5eZjc+zyaS5BrBWya2+kQ==}
     peerDependencies:
@@ -1533,17 +1527,11 @@ packages:
   '@types/trusted-types@2.0.7':
     resolution: {integrity: sha512-ScaPdn1dQczgbl0QFTeTOmVHFULt394XJgOQNoyVhZ6r2vLnMLJfBPd53SB52T/3G36VI1/g2MZaX0cwDuXsfw==}
 
-  '@types/turndown@5.0.6':
-    resolution: {integrity: sha512-ru00MoyeeouE5BX4gRL+6m/BsDfbRayOskWqUvh7CLGW+UXxHQItqALa38kKnOiZPqJrtzJUgAC2+F0rL1S4Pg==}
-
   '@types/unist@2.0.11':
     resolution: {integrity: sha512-CmBKiL6NNo/OqgmMn95Fk9Whlp2mtvIv+KNpQKN2F4SjvrEesubTRWGYSg+BnWZOnlCaSTU1sMpsBOzgbYhnsA==}
 
   '@types/unist@3.0.3':
     resolution: {integrity: sha512-ko/gIFJRv177XgZsZcBwnqJN5x/Gien8qNOn0D5bQU/zAzVf9Zt3BlcUiLqhV9y4ARk0GbT3tnUiPNgnTXzc/Q==}
-
-  '@types/xmldom@0.1.34':
-    resolution: {integrity: sha512-7eZFfxI9XHYjJJuugddV6N5YNeXgQE1lArWOcd1eCOKWb/FGs5SIjacSYuEJuwhsGS3gy4RuZ5EUIcqYscuPDA==}
 
   '@types/yauzl@2.10.3':
     resolution: {integrity: sha512-oJoftv0LSuaDZE3Le4DbKX+KS9G36NzOeSap90UIK0yMA/NhKJhqlSGtNDORNRaIbQfzjXDrQa0ytJ6mNRGz/Q==}
@@ -1650,8 +1638,9 @@ packages:
   '@vitest/utils@4.0.15':
     resolution: {integrity: sha512-HXjPW2w5dxhTD0dLwtYHDnelK3j8sR8cWIaLxr22evTyY6q8pRCjZSmhRWVjBaOVXChQd6AwMzi9pucorXCPZA==}
 
-  '@xml-tools/parser@1.0.11':
-    resolution: {integrity: sha512-aKqQ077XnR+oQtHJlrAflaZaL7qZsulWc/i/ZEooar5JiWj1eLt0+Wg28cpa+XLney107wXqneC+oG1IZvxkTA==}
+  '@xmldom/xmldom@0.8.11':
+    resolution: {integrity: sha512-cQzWCtO6C8TQiYl1ruKNn2U6Ao4o4WBBcbL61yJl84x+j5sOWWFU9X7DpND8XZG3daDppSsigMdfAIl2upQBRw==}
+    engines: {node: '>=10.0.0'}
 
   '@xyflow/react@12.10.0':
     resolution: {integrity: sha512-eOtz3whDMWrB4KWVatIBrKuxECHqip6PfA8fTpaS2RUGVpiEAe+nqDKsLqkViVWxDGreq0lWX71Xth/SPAzXiw==}
@@ -1966,9 +1955,6 @@ packages:
 
   character-reference-invalid@2.0.1:
     resolution: {integrity: sha512-iBZ4F4wRbyORVsu0jPV7gXkOsGYjGHPmAyv+HiHG8gi5PtC9KI2j1+v8/tlibRvjoWX027ypmG/n0HtO5t7unw==}
-
-  chevrotain@7.1.1:
-    resolution: {integrity: sha512-wy3mC1x4ye+O+QkEinVJkPf5u2vsrDIYW9G7ZuwFl6v/Yu0LwUuT2POsb+NUWApebyxfkQq6+yDfRExbnI5rcw==}
 
   chokidar@4.0.3:
     resolution: {integrity: sha512-Qgzu8kfBvo+cA4962jnP1KkS6Dop5NS6g7R5LFYJr4b8Ub94PPQXUksCw9PvXoeXPRRddRNC5C1JQUR2SMGtnA==}
@@ -3618,8 +3604,8 @@ packages:
   monaco-editor@0.55.1:
     resolution: {integrity: sha512-jz4x+TJNFHwHtwuV9vA9rMujcZRb0CEilTEwG2rRSpe/A7Jdkuj8xPKttCgOh+v/lkHy7HsZ64oj+q3xoAFl9A==}
 
-  monaco-xsd-code-completion@0.13.0:
-    resolution: {integrity: sha512-/nnxK3NfD7WN8fig9+MTCPXnZBusbf8Wl1XS8WpgNbiC8h+Va9+Q2UVfcq5n26BYv0pQG4G+khZZuE1JTBvCVg==}
+  monaco-xsd-code-completion@1.0.0:
+    resolution: {integrity: sha512-5JcS5Ibyh5SJ4qKuaaMe55Cm5Rub2+T87HEe8L8WTbNZ845/TB03V9WmU8GMDOmCp1knLOtyDQLQvAHdnVRkFQ==}
 
   morgan@1.10.1:
     resolution: {integrity: sha512-223dMRJtI/l25dJKWpgij2cMtywuG/WiUKXdvwfbhGKBhy1puASqXwFzmWZ7+K73vUPoR7SS2Qz2cI/g9MKw0A==}
@@ -3903,13 +3889,13 @@ packages:
       prettier-plugin-svelte:
         optional: true
 
-  prettier@2.8.8:
-    resolution: {integrity: sha512-tdN8qQGvNjw4CHbY+XXk0JgCXn9QiF21a55rBe5LJAU+kDyC4WQn4+awm2Xfk2lQMk5fKup9XgzTZtGkjBdP9Q==}
-    engines: {node: '>=10.13.0'}
-    hasBin: true
-
   prettier@3.7.4:
     resolution: {integrity: sha512-v6UNi1+3hSlVvv8fSaoUbggEM5VErKmmpGA7Pl3HF8V6uKY7rvClBOJlH6yNwQtfTueNkGVpOv/mtWL9L4bgRA==}
+    engines: {node: '>=14'}
+    hasBin: true
+
+  prettier@3.8.1:
+    resolution: {integrity: sha512-UOnG6LftzbdaHZcKoPFtOcCKztrQ57WkHDeRD9t/PTQtmT0NHSeWWepj6pS0z/N7+08BHFDQVUrfmfMRcZwbMg==}
     engines: {node: '>=14'}
     hasBin: true
 
@@ -4106,9 +4092,6 @@ packages:
   regexp-ast-analysis@0.7.1:
     resolution: {integrity: sha512-sZuz1dYW/ZsfG17WSAG7eS85r5a0dDsvg+7BiiYR5o6lKCAtUrEwdmRmaGF6rwVj3LcmAeYkOWKEPlbPzN3Y3A==}
     engines: {node: ^12.0.0 || ^14.0.0 || >=16.0.0}
-
-  regexp-to-ast@0.5.0:
-    resolution: {integrity: sha512-tlbJqcMHnPKI9zSrystikWKwHkBqu2a/Sgw01h3zFjvYrMxEDYHzzoMZnUrbIfpTFEsoRnnviOXNCzFiSc54Qw==}
 
   regexp-tree@0.1.27:
     resolution: {integrity: sha512-iETxpjK6YoRWJG5o6hXLwvjYAoW+FEZn9os0PD/b6AP6xQwsa/Y7lCVgIixBbUPMfhu+i2LtdeAqVTgGlQarfA==}
@@ -4544,8 +4527,8 @@ packages:
     peerDependencies:
       typescript: '>=4.8.4'
 
-  ts-debounce@2.3.0:
-    resolution: {integrity: sha512-j63IP7/unAzovrhVHE7U+fNkvDKwIaLH11dCO9TcRbYOZw1chPL054poqq3ZloyRJ5KwJMeB8csN/vGPPpQJjw==}
+  ts-debounce@4.0.0:
+    resolution: {integrity: sha512-+1iDGY6NmOGidq7i7xZGA4cm8DAa6fqdYcvO5Z6yBevH++Bdo9Qt/mN0TzHUgcCcKv1gmh9+W5dHqz8pMWbCbg==}
 
   tsconfck@3.1.6:
     resolution: {integrity: sha512-ks6Vjr/jEw0P1gmOVwutM3B7fWxoWBL2KRDb1JfqGVawBmO5UsvmWOQFGHBPl5yxYz4eERr19E6L7NMv+Fej4w==}
@@ -4912,20 +4895,11 @@ packages:
   xmlchars@2.2.0:
     resolution: {integrity: sha512-JZnDKK8B0RCDw84FNdDAIpZK+JuJw+s7Lz8nksI7SIuU3UXJJslUthsi+uWBUYOwPFwW7W7PRLRfUKpxjtjFCw==}
 
-  xmldom@0.3.0:
-    resolution: {integrity: sha512-z9s6k3wxE+aZHgXYxSTpGDo7BYOUfJsIRyoZiX6HTjwpwfS2wpQBQKa2fD+ShLyPkqDYo5ud7KitmLZ2Cd6r0g==}
-    engines: {node: '>=10.0.0'}
-    deprecated: Deprecated due to CVE-2021-21366 resolved in 0.5.0
-
   xmllint-wasm@5.1.0:
     resolution: {integrity: sha512-6HCIJKAJWt96UzA2dgPXsnMuYQihD7U1DU9Tu3BdXqVruha1KV8nUofOxbw8f5ULgQGdNsJMwtX3dyaTHd9hQQ==}
     engines: {node: '>=16'}
     peerDependencies:
       '@types/node': '>=16'
-
-  xpath@0.0.29:
-    resolution: {integrity: sha512-W6vSxu0tmHCW01EwDXx45/BAAl8lBJjcRB6eSswMuycOVbUkYskG3W1LtCxcesVel/RaNe/pxtd3FWLiqHGweA==}
-    engines: {node: '>=0.6.0'}
 
   y18n@5.0.8:
     resolution: {integrity: sha512-0pfFzegeDWJHJIAmTLRP2DwHjdF5s7jo9tuztdQxAhINCdvS+3nGINqPd00AphqJR/0LhANUS6/+7SCb98YOfA==}
@@ -5620,11 +5594,6 @@ snapshots:
 
   '@polka/url@1.0.0-next.29': {}
 
-  '@prettier/plugin-xml@0.12.0':
-    dependencies:
-      '@xml-tools/parser': 1.0.11
-      prettier: 3.7.4
-
   '@radix-ui/number@1.1.1': {}
 
   '@radix-ui/primitive@1.1.3': {}
@@ -6301,8 +6270,6 @@ snapshots:
 
   '@types/parse-json@4.0.2': {}
 
-  '@types/prettier@2.7.3': {}
-
   '@types/react-dom@19.2.3(@types/react@19.2.7)':
     dependencies:
       '@types/react': 19.2.7
@@ -6324,13 +6291,9 @@ snapshots:
   '@types/trusted-types@2.0.7':
     optional: true
 
-  '@types/turndown@5.0.6': {}
-
   '@types/unist@2.0.11': {}
 
   '@types/unist@3.0.3': {}
-
-  '@types/xmldom@0.1.34': {}
 
   '@types/yauzl@2.10.3':
     dependencies:
@@ -6492,9 +6455,7 @@ snapshots:
       '@vitest/pretty-format': 4.0.15
       tinyrainbow: 3.0.3
 
-  '@xml-tools/parser@1.0.11':
-    dependencies:
-      chevrotain: 7.1.1
+  '@xmldom/xmldom@0.8.11': {}
 
   '@xyflow/react@12.10.0(@types/react@19.2.7)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)':
     dependencies:
@@ -6830,10 +6791,6 @@ snapshots:
   character-entities@2.0.2: {}
 
   character-reference-invalid@2.0.1: {}
-
-  chevrotain@7.1.1:
-    dependencies:
-      regexp-to-ast: 0.5.0
 
   chokidar@4.0.3:
     dependencies:
@@ -8972,17 +8929,12 @@ snapshots:
       dompurify: 3.2.7
       marked: 14.0.0
 
-  monaco-xsd-code-completion@0.13.0:
+  monaco-xsd-code-completion@1.0.0:
     dependencies:
-      '@prettier/plugin-xml': 0.12.0
-      '@types/prettier': 2.7.3
-      '@types/turndown': 5.0.6
-      '@types/xmldom': 0.1.34
-      prettier: 2.8.8
-      ts-debounce: 2.3.0
+      '@xmldom/xmldom': 0.8.11
+      prettier: 3.8.1
+      ts-debounce: 4.0.0
       turndown: 7.2.2
-      xmldom: 0.3.0
-      xpath: 0.0.29
 
   morgan@1.10.1:
     dependencies:
@@ -9202,9 +9154,9 @@ snapshots:
     dependencies:
       prettier: 3.7.4
 
-  prettier@2.8.8: {}
-
   prettier@3.7.4: {}
+
+  prettier@3.8.1: {}
 
   pretty-bytes@5.6.0: {}
 
@@ -9452,8 +9404,6 @@ snapshots:
     dependencies:
       '@eslint-community/regexpp': 4.12.1
       refa: 0.12.1
-
-  regexp-to-ast@0.5.0: {}
 
   regexp-tree@0.1.27: {}
 
@@ -9985,7 +9935,7 @@ snapshots:
     dependencies:
       typescript: 5.9.3
 
-  ts-debounce@2.3.0: {}
+  ts-debounce@4.0.0: {}
 
   tsconfck@3.1.6(typescript@5.9.3):
     optionalDependencies:
@@ -10375,13 +10325,9 @@ snapshots:
 
   xmlchars@2.2.0: {}
 
-  xmldom@0.3.0: {}
-
   xmllint-wasm@5.1.0(@types/node@20.19.26):
     dependencies:
       '@types/node': 20.19.26
-
-  xpath@0.0.29: {}
 
   y18n@5.0.8: {}
 
