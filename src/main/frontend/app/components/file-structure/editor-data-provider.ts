@@ -1,6 +1,9 @@
-import type { Disposable, TreeDataProvider, TreeItem, TreeItemIndex } from 'react-complex-tree'
-import { fetchDirectoryByPath, fetchProjectRootTree } from '~/services/file-tree-service'
+import type { TreeItem, TreeItemIndex } from 'react-complex-tree'
+import type { FileTreeNode } from '~/types/filesystem.types'
+import { fetchProjectRootTree, fetchDirectoryByPath } from '~/services/file-tree-service'
 import { sortChildren } from './tree-utilities'
+import type { DataProviderLike } from './use-file-tree-context-menu'
+import { BaseFilesDataProvider } from './base-files-data-provider'
 
 export interface FileNode {
   name: string
@@ -8,37 +11,18 @@ export interface FileNode {
   projectRoot?: boolean
 }
 
-export interface FileTreeNode {
-  name: string
-  path: string
-  type: 'FILE' | 'DIRECTORY'
-  projectRoot?: boolean
-  children?: FileTreeNode[]
-}
-
-export default class EditorFilesDataProvider implements TreeDataProvider {
-  private data: Record<TreeItemIndex, TreeItem<FileNode>> = {}
-  private readonly treeChangeListeners: ((changedItemIds: TreeItemIndex[]) => void)[] = []
+export default class EditorFilesDataProvider extends BaseFilesDataProvider<FileNode> implements DataProviderLike {
   private readonly projectName: string
-  private loadedDirectories = new Set<string>()
 
   constructor(projectName: string) {
+    super()
     this.projectName = projectName
   }
 
-  /** Initialize tree and recursively load expanded folders */
-  public async init(expandedItems: string[] = []) {
+  public async init() {
     await this.fetchAndBuildTree()
-
-    const sortedIds = [...expandedItems].toSorted((a, b) => a.split('/').length - b.split('/').length)
-
-    for (const id of sortedIds) {
-      if (id === 'root') continue
-      await this.loadDirectory(id)
-    }
   }
 
-  /** Fetch file tree from backend and build the provider's data */
   private async fetchAndBuildTree() {
     try {
       if (!this.projectName) return
@@ -89,17 +73,21 @@ export default class EditorFilesDataProvider implements TreeDataProvider {
   }
 
   private buildChildren(parentIndex: TreeItemIndex, children?: FileTreeNode[]): TreeItemIndex[] {
-    const sorted = sortChildren(children)
     const childIds: TreeItemIndex[] = []
 
-    for (const child of sorted) {
+    for (const child of sortChildren(children)) {
       const childIndex = `${parentIndex}/${child.name}`
+      const isDirectory = child.type === 'DIRECTORY'
 
       this.data[childIndex] = {
         index: childIndex,
         data: { name: child.name, path: child.path },
-        isFolder: child.type === 'DIRECTORY',
-        children: child.type === 'DIRECTORY' ? [] : undefined,
+        isFolder: isDirectory,
+        children: isDirectory ? this.buildChildren(childIndex, child.children) : undefined,
+      }
+
+      if (isDirectory) {
+        this.loadedDirectories.add(child.path)
       }
 
       childIds.push(childIndex)
@@ -108,78 +96,20 @@ export default class EditorFilesDataProvider implements TreeDataProvider {
     return childIds
   }
 
-  public async reloadDirectory(itemId: TreeItemIndex): Promise<void> {
-    const item = this.data[itemId]
-    if (!item || !item.isFolder) return
-
-    this.loadedDirectories.delete(item.data.path)
-    this.removeSubtree(itemId)
-    item.children = []
-    await this.loadDirectory(itemId)
-  }
-
-  private removeSubtree(parentId: TreeItemIndex): void {
-    const item = this.data[parentId]
-    if (!item?.children) return
-
-    for (const childId of item.children) {
-      this.removeSubtree(childId)
-      const child = this.data[childId]
-      if (child?.isFolder && child.data?.path) {
-        this.loadedDirectories.delete(child.data.path)
-      }
-      delete this.data[childId]
-    }
-  }
-
-  public getItemByPath(path: string): TreeItem<FileNode> | undefined {
-    return Object.values(this.data).find((item) => item.data.path === path)
-  }
-
-  public async getAllItems(): Promise<TreeItem<FileNode>[]> {
-    return Object.values(this.data)
-  }
-
-  public async getTreeItem(itemId: TreeItemIndex): Promise<TreeItem<FileNode>> {
-    const item = this.data[itemId]
-    if (!item) {
-      return {
+  public override async getTreeItem(itemId: TreeItemIndex): Promise<TreeItem<FileNode>> {
+    return (
+      this.data[itemId] ?? {
         index: itemId,
         isFolder: false,
         data: { name: 'Unknown', path: '' },
         children: [],
       }
-    }
-    return item
-  }
-
-  public async onChangeItemChildren(itemId: TreeItemIndex, newChildren: TreeItemIndex[]) {
-    if (this.data[itemId]) {
-      this.data[itemId].children = newChildren
-      this.notifyListeners([itemId])
-    }
-  }
-
-  public onDidChangeTreeData(listener: (changedItemIds: TreeItemIndex[]) => void): Disposable {
-    this.treeChangeListeners.push(listener)
-    return {
-      dispose: () => {
-        const index = this.treeChangeListeners.indexOf(listener)
-        if (index !== -1) {
-          this.treeChangeListeners.splice(index, 1)
-        }
-      },
-    }
+    )
   }
 
   public async onRenameItem(item: TreeItem, name: string): Promise<void> {
     if (this.data[item.index]) {
       this.data[item.index].data.name = name
     }
-  }
-
-  /** Notify all listeners that certain nodes changed */
-  private notifyListeners(itemIds: TreeItemIndex[]) {
-    for (const listener of this.treeChangeListeners) listener(itemIds)
   }
 }
