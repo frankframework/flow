@@ -10,6 +10,7 @@ import type { FileTreeNode } from '~/types/filesystem.types'
 import { deleteInProject, fetchProjectTree } from '~/services/project-service'
 import Button from '~/components/inputs/button'
 import Search from '~/components/search/search'
+import { toRelativePath } from '~/utils/path-utils'
 
 interface ConfigurationFile {
   path: string
@@ -108,18 +109,17 @@ export default function ConfigurationManager() {
   }
 
   const configFiles = useMemo(() => {
-    if (!tree) return []
+    if (!tree || !currentProject) return []
 
     const configurationDirectory = findConfigurationsDir(tree)
     if (!configurationDirectory) return []
 
     const xmlFiles = collectXmlFiles(configurationDirectory)
-    return xmlFiles.map((file) => ({
-      ...file,
-      relativePath: file.path.replace(`${configurationDirectory.path}\\`, '').replaceAll('\\', '/'),
-      path: file.path,
-    }))
-  }, [tree])
+    return xmlFiles.map((file) => {
+      const relativePath = toRelativePath(file.path, 'src/main/configurations/') ?? file.name
+      return { ...file, relativePath, path: file.path }
+    })
+  }, [tree, currentProject])
 
   const handleSearch = (event: ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(event.target.value)

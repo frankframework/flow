@@ -6,6 +6,7 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -314,8 +315,10 @@ public class ProjectService {
             throws ProjectNotFoundException, ConfigurationNotFoundException, IOException {
         Project project = getProject(projectName);
 
+        Path normalizedFilepath = fileSystemStorage.toAbsolutePath(filepath).normalize();
+
         Configuration targetConfig = project.getConfigurations().stream()
-                .filter(c -> c.getFilepath().equals(filepath))
+                .filter(c -> Paths.get(c.getFilepath()).normalize().equals(normalizedFilepath))
                 .findFirst()
                 .orElseThrow(() -> new ConfigurationNotFoundException(
                         String.format("Configuration with filepath: %s not found", filepath)));

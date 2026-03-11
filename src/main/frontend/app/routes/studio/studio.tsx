@@ -11,11 +11,14 @@ import { SidebarSide } from '~/components/sidebars-layout/sidebar-layout-store'
 import SidebarLayout from '~/components/sidebars-layout/sidebar-layout'
 import useTabStore from '~/stores/tab-store'
 import { useShallow } from 'zustand/react/shallow'
+import { useProjectStore } from '~/stores/project-store'
+import { toProjectRelativePath } from '~/utils/path-utils'
 import CodeIcon from '/icons/solar/Code.svg?react'
 import { openInEditor } from '~/actions/navigationActions'
 import Button from '~/components/inputs/button'
 
 export default function Studio() {
+  const project = useProjectStore((state) => state.project)
   const [showNodeContext, setShowNodeContext] = useState(false)
   const { nodeId, editingSubtype } = useNodeContextStore(
     useShallow((s) => ({ nodeId: s.nodeId, editingSubtype: s.editingSubtype })),
@@ -55,7 +58,9 @@ export default function Studio() {
         {activeTab ? (
           <>
             <div className="border-b-border bg-background flex h-12 items-center justify-between border-b p-4">
-              <span>Path: {activeTabPath}</span>
+              <span>
+                Path: {activeTabPath && project ? toProjectRelativePath(activeTabPath, project) : activeTabPath}
+              </span>
               <Button onClick={handleOpenInEditor} className="flex items-center gap-1.5" title="Open in Editor">
                 <CodeIcon className="h-4 w-4 fill-current" />
                 Open in Editor
