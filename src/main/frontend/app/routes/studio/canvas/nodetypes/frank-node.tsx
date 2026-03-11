@@ -12,7 +12,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import useFlowStore from '~/stores/flow-store'
 import { CustomHandle } from '~/routes/studio/canvas/nodetypes/components/handle'
 import { FlowConfig } from '~/routes/studio/canvas/flow.config'
-import { useNodeContextMenu } from '~/routes/studio/canvas/flow'
+import { useNodeContextMenu } from '~/routes/studio/canvas/node-context-menu-context'
 import useNodeContextStore from '~/stores/node-context-store'
 import { getElementTypeFromName } from '~/routes/studio/node-translator-module'
 import { useSettingsStore } from '~/stores/settings-store'

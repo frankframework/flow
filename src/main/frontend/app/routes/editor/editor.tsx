@@ -149,6 +149,7 @@ export default function CodeEditor() {
   const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const validationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const validationCounterRef = useRef(0)
+  const contentCacheRef = useRef<Map<string, string>>(new Map())
 
   const activeTab = useEditorTabStore(
     useShallow((state) => {
@@ -162,6 +163,8 @@ export default function CodeEditor() {
   )
 
   const refreshCounter = useEditorTabStore((state) => state.refreshCounter)
+  const lastRefreshCounterRef = useRef(refreshCounter)
+
   const isDiffTab = activeTab.type === 'diff'
 
   const performSave = useCallback(
@@ -177,6 +180,7 @@ export default function CodeEditor() {
       setSaveStatus('saving')
       try {
         await saveConfiguration(project.name, configPath, updatedContent)
+        contentCacheRef.current.set(activeTabFilePath, updatedContent)
         setSaveStatus('saved')
         if (savedTimerRef.current) clearTimeout(savedTimerRef.current)
         savedTimerRef.current = setTimeout(() => setSaveStatus('idle'), SAVED_DISPLAY_DURATION)
@@ -350,6 +354,13 @@ export default function CodeEditor() {
       (state) => state.activeTabFilePath,
       (newActiveTab, oldActiveTab) => {
         if (oldActiveTab && oldActiveTab !== newActiveTab) flushPendingSave()
+        if (oldActiveTab && oldActiveTab !== newActiveTab) {
+          const currentContent = editorReference.current?.getValue()
+          if (currentContent !== undefined) {
+            contentCacheRef.current.set(oldActiveTab, currentContent)
+          }
+          flushPendingSave()
+        }
         setActiveTabFilePath(newActiveTab)
       },
     )
@@ -364,10 +375,27 @@ export default function CodeEditor() {
       try {
         const configPath = useEditorTabStore.getState().getTab(activeTabFilePath)?.configurationPath
         if (!configPath || !project) return
+
+        const isForceRefresh = refreshCounter !== lastRefreshCounterRef.current
+        lastRefreshCounterRef.current = refreshCounter
+
+        if (!isForceRefresh) {
+          const cached = contentCacheRef.current.get(activeTabFilePath)
+          if (cached !== undefined) {
+            setXmlContent(cached)
+            return
+          }
+        }
+
         const xmlString = await fetchConfiguration(project.name, configPath, abortController.signal)
-        if (!abortController.signal.aborted) setXmlContent(xmlString)
+        if (!abortController.signal.aborted) {
+          contentCacheRef.current.set(activeTabFilePath, xmlString)
+          setXmlContent(xmlString)
+        }
       } catch (error) {
-        if (!abortController.signal.aborted) console.error('Failed to load XML:', error)
+        if (!abortController.signal.aborted) {
+          console.error('Failed to load XML:', error)
+        }
       }
     }
 

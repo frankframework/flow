@@ -48,6 +48,7 @@ export default function EditorFileStructure() {
   const removeTabAndSelectFallback = useEditorTabStore((state) => state.removeTabAndSelectFallback)
 
   const [dataProvider, setDataProvider] = useState<EditorFilesDataProvider | null>(null)
+  const initialExpandedItems = useRef(editorExpandedItems)
 
   const onAfterRename = useCallback(
     (oldPath: string, newName: string) => {
@@ -84,7 +85,7 @@ export default function EditorFileStructure() {
 
     const initProvider = async () => {
       const provider = new EditorFilesDataProvider(project.name)
-      await provider.init(editorExpandedItems)
+      await provider.init()
 
       if (isMounted) {
         setDataProvider(provider)
@@ -96,7 +97,7 @@ export default function EditorFileStructure() {
     return () => {
       isMounted = false
     }
-  }, [editorExpandedItems, project?.name])
+  }, [project?.name])
 
   useEffect(() => {
     const findMatchingItems = async () => {

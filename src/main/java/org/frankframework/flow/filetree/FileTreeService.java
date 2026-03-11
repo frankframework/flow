@@ -9,6 +9,7 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -25,7 +26,9 @@ import org.frankframework.flow.utility.XmlAdapterUtils;
 import org.frankframework.flow.utility.XmlSecurityUtils;
 import org.springframework.stereotype.Service;
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 @Service
 public class FileTreeService {
@@ -155,7 +158,7 @@ public class FileTreeService {
     }
 
     public FileTreeNode createFile(String projectName, String parentPath, String fileName)
-            throws IOException, ProjectNotFoundException, ApiException {
+            throws IOException, ApiException {
         validateFileName(fileName);
         String fullPath = parentPath.endsWith("/") ? parentPath + fileName : parentPath + "/" + fileName;
         validateWithinProject(projectName, fullPath);
@@ -320,9 +323,42 @@ public class FileTreeService {
         } else {
             node.setType(NodeType.FILE);
             node.setChildren(null);
+            if (path.getFileName().toString().toLowerCase().endsWith(".xml")) {
+                node.setAdapterNames(extractAdapterNames(path));
+            }
         }
 
         return node;
+    }
+
+    private List<String> extractAdapterNames(Path xmlFile) {
+        try {
+            Document doc = parseXmlFile(xmlFile);
+            NodeList adapters = findAdapterElements(doc);
+            return collectAdapterNames(adapters);
+        } catch (Exception e) {
+            return List.of();
+        }
+    }
+
+    private Document parseXmlFile(Path xmlFile) throws Exception {
+        return XmlSecurityUtils.createSecureDocumentBuilder().parse(Files.newInputStream(xmlFile));
+    }
+
+    private NodeList findAdapterElements(Document doc) {
+        NodeList adapters = doc.getElementsByTagName("Adapter");
+        return adapters.getLength() > 0 ? adapters : doc.getElementsByTagName("adapter");
+    }
+
+    private List<String> collectAdapterNames(NodeList adapters) {
+        List<String> names = new ArrayList<>();
+        for (int i = 0; i < adapters.getLength(); i++) {
+            String name = ((Element) adapters.item(i)).getAttribute("name");
+            if (!name.isBlank()) {
+                names.add(name);
+            }
+        }
+        return names;
     }
 
     private String toNodePath(Path path, Path relativizeRoot, boolean useRelativePaths) {
@@ -351,6 +387,10 @@ public class FileTreeService {
                         child.setName(p.getFileName().toString());
                         child.setPath(toNodePath(p, relativizeRoot, useRelativePaths));
                         child.setType(Files.isDirectory(p) ? NodeType.DIRECTORY : NodeType.FILE);
+                        if (!Files.isDirectory(p)
+                                && p.getFileName().toString().toLowerCase().endsWith(".xml")) {
+                            child.setAdapterNames(extractAdapterNames(p));
+                        }
                         return child;
                     })
                     .toList();

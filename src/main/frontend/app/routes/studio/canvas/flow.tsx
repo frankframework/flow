@@ -22,7 +22,8 @@ import useFlowStore, { type FlowState } from '~/stores/flow-store'
 import { useShallow } from 'zustand/react/shallow'
 import { FlowConfig } from '~/routes/studio/canvas/flow.config'
 import { getElementTypeFromName } from '~/routes/studio/node-translator-module'
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { NodeContextMenuContext, useNodeContextMenu } from './node-context-menu-context'
 import StickyNoteComponent, { type StickyNote } from '~/routes/studio/canvas/nodetypes/sticky-note'
 import useTabStore, { type TabData } from '~/stores/tab-store'
 import { convertAdapterXmlToJson, getAdapterFromConfiguration } from '~/routes/studio/xml-to-json-parser'
@@ -30,18 +31,13 @@ import { exportFlowToXml } from '~/routes/studio/flow-to-xml-parser'
 import useNodeContextStore from '~/stores/node-context-store'
 import CreateNodeModal from '~/components/flow/create-node-modal'
 import { useProjectStore } from '~/stores/project-store'
-import { fetchConfiguration, saveConfiguration } from '~/services/configuration-service'
+import { clearConfigurationCache, fetchConfigurationCached, saveConfiguration } from '~/services/configuration-service'
 import { cloneWithRemappedIds } from '~/utils/flow-utils'
 import { showErrorToast } from '~/components/toast'
 import clsx from 'clsx'
 import { useSettingsStore } from '~/stores/settings-store'
 
 export type FlowNode = FrankNodeType | ExitNode | StickyNote | GroupNode | Node
-
-const NodeContextMenuContext = createContext<(visible: boolean) => void>(() => {
-  // Empty default function
-})
-export const useNodeContextMenu = () => useContext(NodeContextMenuContext)
 
 const selector = (state: FlowState) => ({
   nodes: state.nodes,
@@ -56,7 +52,8 @@ const selector = (state: FlowState) => ({
 type SaveStatus = 'idle' | 'saving' | 'saved'
 const SAVED_DISPLAY_DURATION = 2000
 
-function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b: boolean) => void }>) {
+function FlowCanvas() {
+  const showNodeContextMenu = useNodeContextMenu()
   const [loading, setLoading] = useState(false)
   const {
     isEditing,
@@ -89,6 +86,7 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const isLoadingTabRef = useRef(false)
 
   const nodeTypes = {
     frankNode: FrankNodeComponent,
@@ -119,7 +117,7 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
 
     setSaveStatus('saving')
     try {
-      const fullConfigXml = await fetchConfiguration(project.name, configurationPath)
+      const fullConfigXml = await fetchConfigurationCached(project.name, configurationPath)
       const configDoc = new DOMParser().parseFromString(fullConfigXml, 'text/xml')
       const allAdapters = [...configDoc.querySelectorAll('Adapter, adapter')]
 
@@ -151,6 +149,7 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
       const updatedConfigXml = new XMLSerializer().serializeToString(configDoc).replace(/^<\?xml[^?]*\?>\s*/, '')
 
       await saveConfiguration(project.name, configurationPath, updatedConfigXml)
+      clearConfigurationCache(project.name, configurationPath)
 
       setSaveStatus('saved')
       if (savedTimerRef.current) clearTimeout(savedTimerRef.current)
@@ -182,7 +181,7 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
   }, [])
 
   useEffect(() => {
-    if (nodes.length > 0) {
+    if (nodes.length > 0 && !isLoadingTabRef.current) {
       scheduleAutoSave()
     }
   }, [nodes, edges, scheduleAutoSave])
@@ -672,6 +671,7 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
     async function loadFlowFromTab(tab: TabData) {
       const flowStore = useFlowStore.getState()
       const currentProject = useProjectStore.getState().project
+      isLoadingTabRef.current = true
       setLoading(true)
       try {
         if (tab.flowJson && Object.keys(tab.flowJson).length > 0) {
@@ -697,6 +697,9 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
         console.error('Error loading tab flow:', error)
       } finally {
         setLoading(false)
+        setTimeout(() => {
+          isLoadingTabRef.current = false
+        }, 0)
       }
     }
 
@@ -869,7 +872,7 @@ export default function Flow({ showNodeContextMenu }: Readonly<{ showNodeContext
   return (
     <NodeContextMenuContext.Provider value={showNodeContextMenu}>
       <ReactFlowProvider>
-        <FlowCanvas showNodeContextMenu={showNodeContextMenu} />
+        <FlowCanvas />
       </ReactFlowProvider>
     </NodeContextMenuContext.Provider>
   )

@@ -30,7 +30,7 @@ export interface DeleteTargetState {
   parentItemId: TreeItemIndex
 }
 
-interface DataProviderLike {
+export interface DataProviderLike {
   getTreeItem(
     itemId: TreeItemIndex,
   ): Promise<{ data: { path: string; name: string; projectRoot?: boolean }; isFolder?: boolean } | undefined>

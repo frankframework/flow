@@ -3,7 +3,7 @@ import JavaIcon from '../../../icons/solar/Cup Hot.svg?react'
 import MessageIcon from '../../../icons/solar/Chat Dots.svg?react'
 import MailIcon from '../../../icons/solar/Mailbox.svg?react'
 import FolderIcon from '../../../icons/solar/Folder.svg?react'
-import type { FileTreeNode } from './editor-data-provider'
+import type { FileTreeNode } from '~/types/filesystem.types'
 
 export function getListenerIcon(listenerType: string | null) {
   if (!listenerType) return CodeIcon

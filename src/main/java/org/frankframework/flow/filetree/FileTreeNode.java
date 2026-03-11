@@ -12,6 +12,7 @@ public class FileTreeNode {
     private NodeType type;
     private boolean projectRoot;
     private List<FileTreeNode> children;
+    private List<String> adapterNames;
 
     public FileTreeNode() {}
 }

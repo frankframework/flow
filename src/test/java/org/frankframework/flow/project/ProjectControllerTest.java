@@ -18,6 +18,7 @@ import java.util.Map;
 import org.frankframework.flow.adapter.AdapterNotFoundException;
 import org.frankframework.flow.configuration.Configuration;
 import org.frankframework.flow.filesystem.FileSystemStorage;
+import org.frankframework.flow.filetree.FileTreeNode;
 import org.frankframework.flow.filetree.FileTreeService;
 import org.frankframework.flow.projectsettings.FilterType;
 import org.frankframework.flow.projectsettings.InvalidFilterTypeException;
@@ -511,6 +512,27 @@ class ProjectControllerTest {
                 .andExpect(jsonPath("$.xmlContent").value(adapterXml));
 
         verify(projectService).getAdapterElement(projectName, configPath, adapterName);
+    }
+
+    @Test
+    void getFolderContentsReturnsShallowDirectoryTree() throws Exception {
+        String projectName = "MyProject";
+        String folderPath = "src/main/configurations";
+
+        FileTreeNode mockNode = new FileTreeNode();
+        mockNode.setName("configurations");
+        mockNode.setPath(folderPath);
+
+        when(fileTreeService.getShallowDirectoryTree(projectName, folderPath)).thenReturn(mockNode);
+
+        mockMvc.perform(get("/api/projects/" + projectName + "/folder")
+                        .param("path", folderPath)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("configurations"))
+                .andExpect(jsonPath("$.path").value(folderPath));
+
+        verify(fileTreeService).getShallowDirectoryTree(projectName, folderPath);
     }
 
     @Test
