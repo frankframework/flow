@@ -29,7 +29,7 @@ export default function ElementHoverCard({
   const frankdocUrl = `https://frankdoc.frankframework.org/#/${route}`
   const { elements } = useFFDoc()
   const description = useJavadocTransform(element.description ?? '', elements, false, (link) => {
-    return `<a href="https://frankdoc.frankframework.org/#/${link.href}">{link.text}</a>`
+    return `<a href="https://frankdoc.frankframework.org/#/${link.href}" target="_blank">${link.text}</a>`
   })
 
   useLayoutEffect(() => {
@@ -139,7 +139,7 @@ export default function ElementHoverCard({
               </span>
             ))}
         </div>
-        {element.description && <p className="text-sm" dangerouslySetInnerHTML={{ __html: description.__html }} />}
+        {element.description && <p className="text-sm" dangerouslySetInnerHTML={description} />}
       </div>
     </div>,
     document.body,
