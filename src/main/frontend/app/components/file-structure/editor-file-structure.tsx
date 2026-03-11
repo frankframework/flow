@@ -85,7 +85,7 @@ export default function EditorFileStructure() {
 
     const initProvider = async () => {
       const provider = new EditorFilesDataProvider(project.name)
-      await provider.init(initialExpandedItems.current)
+      await provider.init()
 
       if (isMounted) {
         setDataProvider(provider)

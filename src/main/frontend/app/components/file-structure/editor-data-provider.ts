@@ -19,7 +19,7 @@ export default class EditorFilesDataProvider extends BaseFilesDataProvider<FileN
     this.projectName = projectName
   }
 
-  public async init(_expandedItems: string[] = []) {
+  public async init() {
     await this.fetchAndBuildTree()
   }
 

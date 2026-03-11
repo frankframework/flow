@@ -23,7 +23,7 @@ import { useShallow } from 'zustand/react/shallow'
 import { FlowConfig } from '~/routes/studio/canvas/flow.config'
 import { getElementTypeFromName } from '~/routes/studio/node-translator-module'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { NodeContextMenuContext } from './node-context-menu-context'
+import { NodeContextMenuContext, useNodeContextMenu } from './node-context-menu-context'
 import StickyNoteComponent, { type StickyNote } from '~/routes/studio/canvas/nodetypes/sticky-note'
 import useTabStore, { type TabData } from '~/stores/tab-store'
 import { convertAdapterXmlToJson, getAdapterFromConfiguration } from '~/routes/studio/xml-to-json-parser'
@@ -52,7 +52,8 @@ const selector = (state: FlowState) => ({
 type SaveStatus = 'idle' | 'saving' | 'saved'
 const SAVED_DISPLAY_DURATION = 2000
 
-function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b: boolean) => void }>) {
+function FlowCanvas() {
+  const showNodeContextMenu = useNodeContextMenu()
   const [loading, setLoading] = useState(false)
   const {
     isEditing,
@@ -871,7 +872,7 @@ export default function Flow({ showNodeContextMenu }: Readonly<{ showNodeContext
   return (
     <NodeContextMenuContext.Provider value={showNodeContextMenu}>
       <ReactFlowProvider>
-        <FlowCanvas showNodeContextMenu={showNodeContextMenu} />
+        <FlowCanvas />
       </ReactFlowProvider>
     </NodeContextMenuContext.Provider>
   )

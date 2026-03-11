@@ -141,5 +141,3 @@ export async function importProjectFolder(files: FileList): Promise<Project> {
     body: formData,
   })
 }
-
-export { type FileTreeNode } from '~/types/filesystem.types'
