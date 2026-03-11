@@ -1,5 +1,5 @@
 import { apiFetch } from '~/utils/api'
-import type { FileTreeNode } from '~/routes/configurations/configuration-manager'
+import type { FileTreeNode } from '~/types/filesystem.types'
 
 export async function fetchProjectTree(projectName: string, signal?: AbortSignal): Promise<FileTreeNode> {
   return apiFetch<FileTreeNode>(`/projects/${encodeURIComponent(projectName)}/tree/configurations`, { signal })
