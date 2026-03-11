@@ -10,6 +10,7 @@ import { deleteInProject, fetchProjectTree } from '~/services/project-service'
 import Button from '~/components/inputs/button'
 import { getAdapterNamesFromConfiguration } from '../studio/xml-to-json-parser'
 import Search from '~/components/search/search'
+import { toRelativePath } from '~/utils/path-utils'
 
 export interface FileTreeNode {
   name: string
@@ -120,10 +121,7 @@ export default function ConfigurationManager() {
 
     const xmlFiles = collectXmlFiles(configurationDirectory)
     return xmlFiles.map((file) => {
-      const normalized = file.path.replaceAll('\\', '/')
-      const marker = 'src/main/configurations/'
-      const idx = normalized.indexOf(marker)
-      const relativePath = idx === -1 ? file.name : normalized.slice(idx + marker.length)
+      const relativePath = toRelativePath(file.path, 'src/main/configurations/') ?? file.name
       return { ...file, relativePath, path: file.path }
     })
   }, [tree, currentProject])
