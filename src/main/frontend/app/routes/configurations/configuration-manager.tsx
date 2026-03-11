@@ -6,16 +6,17 @@ import AddConfigurationTile from './add-configuration-tile'
 import { useState, useEffect, useCallback, type ChangeEvent, useMemo } from 'react'
 import AddConfigurationModal from './add-configuration-modal'
 import LoadingSpinner from '~/components/loading-spinner'
-import type { FileTreeNode } from '~/types/filesystem.types'
-import { deleteInProject, fetchProjectTree } from '~/services/project-service'
+import { deleteInProject, fetchProjectTree } from '~/services/file-tree-service'
 import Button from '~/components/inputs/button'
+import { getAdapterNamesFromConfiguration } from '../studio/xml-to-json-parser'
 import Search from '~/components/search/search'
-import { toRelativePath } from '~/utils/path-utils'
 
-interface ConfigurationFile {
+export interface FileTreeNode {
+  name: string
   path: string
   relativePath: string
-  adapterNames: string[]
+  type: 'FILE' | 'DIRECTORY'
+  children?: FileTreeNode[]
 }
 
 function findConfigurationsDir(node: FileTreeNode | undefined | null): FileTreeNode | null {
@@ -61,6 +62,9 @@ export default function ConfigurationManager() {
   const [tree, setTree] = useState<FileTreeNode | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [configurationsDir, setConfigurationsDir] = useState<FileTreeNode | null>(null)
+  const [filesWithAdapters, setFilesWithAdapters] = useState<
+    { path: string; relativePath: string; adapterNames: string[] }[]
+  >([])
   const [searchQuery, setSearchQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState(searchQuery)
 
@@ -109,17 +113,18 @@ export default function ConfigurationManager() {
   }
 
   const configFiles = useMemo(() => {
-    if (!tree || !currentProject) return []
+    if (!tree) return []
 
     const configurationDirectory = findConfigurationsDir(tree)
     if (!configurationDirectory) return []
 
     const xmlFiles = collectXmlFiles(configurationDirectory)
-    return xmlFiles.map((file) => {
-      const relativePath = toRelativePath(file.path, 'src/main/configurations/') ?? file.name
-      return { ...file, relativePath, path: file.path }
-    })
-  }, [tree, currentProject])
+    return xmlFiles.map((file) => ({
+      ...file,
+      relativePath: file.path.replace(`${configurationDirectory.path}\\`, '').replaceAll('\\', '/'),
+      path: file.path,
+    }))
+  }, [tree])
 
   const handleSearch = (event: ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(event.target.value)
@@ -133,15 +138,42 @@ export default function ConfigurationManager() {
     return () => clearTimeout(handler)
   }, [searchQuery])
 
-  const filesWithAdapters = useMemo((): ConfigurationFile[] => {
-    return configFiles
-      .filter((file) => file.adapterNames && file.adapterNames.length > 0)
-      .map((file) => ({
-        path: file.path,
-        relativePath: file.relativePath,
-        adapterNames: file.adapterNames!,
-      }))
-  }, [configFiles])
+  useEffect(() => {
+    if (!currentProject?.name || configFiles.length === 0) {
+      setFilesWithAdapters([])
+      return
+    }
+
+    let cancelled = false
+
+    // Runs asynchronously in the background to load adapter names
+    // without blocking the UI. State is updated once all files are processed.
+    const loadAdapters = async () => {
+      const results = await Promise.all(
+        configFiles.map(async (file) => {
+          const adapterNames = await getAdapterNamesFromConfiguration(currentProject.name, file.path)
+
+          return {
+            path: file.path,
+            relativePath: file.relativePath,
+            adapterNames,
+          }
+        }),
+      )
+
+      if (cancelled) return
+
+      // Only keep files that actually contain adapters
+      const filtered = results.filter((file) => file.adapterNames.length > 0)
+
+      setFilesWithAdapters(filtered)
+    }
+    loadAdapters()
+
+    return () => {
+      cancelled = true
+    }
+  }, [configFiles, currentProject?.name])
 
   const filteredConfigurations = useMemo(() => {
     if (!debouncedQuery.trim()) return filesWithAdapters

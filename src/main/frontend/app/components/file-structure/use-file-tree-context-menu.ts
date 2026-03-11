@@ -5,7 +5,7 @@ import {
   createFolderInProject,
   renameInProject,
   deleteInProject,
-} from '~/services/project-service'
+} from '~/services/file-tree-service'
 import { showErrorToastFrom } from '~/components/toast'
 
 export interface ContextMenuState {

@@ -1,77 +1,39 @@
 package org.frankframework.flow.filetree;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.frankframework.flow.adapter.AdapterNotFoundException;
-import org.frankframework.flow.configuration.ConfigurationNotFoundException;
+import org.frankframework.flow.configuration.ConfigurationService;
 import org.frankframework.flow.exception.ApiException;
 import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.frankframework.flow.project.Project;
 import org.frankframework.flow.project.ProjectNotFoundException;
 import org.frankframework.flow.project.ProjectService;
-import org.frankframework.flow.utility.XmlAdapterUtils;
-import org.frankframework.flow.utility.XmlSecurityUtils;
 import org.springframework.stereotype.Service;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 
 @Service
 public class FileTreeService {
 
     private final ProjectService projectService;
     private final FileSystemStorage fileSystemStorage;
+    private final ConfigurationService configurationService;
 
     private final Map<String, FileTreeNode> treeCache = new ConcurrentHashMap<>();
 
-    public FileTreeService(ProjectService projectService, FileSystemStorage fileSystemStorage) {
+    public FileTreeService(
+            ProjectService projectService,
+            FileSystemStorage fileSystemStorage,
+            ConfigurationService configurationService) {
         this.projectService = projectService;
         this.fileSystemStorage = fileSystemStorage;
-    }
-
-    public String readFileContent(String filepath) throws IOException {
-        Path filePath = fileSystemStorage.toAbsolutePath(filepath);
-
-        if (!Files.exists(filePath)) {
-            throw new NoSuchFileException("File does not exist: " + filepath);
-        }
-
-        if (Files.isDirectory(filePath)) {
-            throw new IllegalArgumentException("Requested path is a directory, not a file: " + filepath);
-        }
-
-        return fileSystemStorage.readFile(filepath);
-    }
-
-    public void updateFileContent(String projectName, String filepath, String newContent)
-            throws IOException, ProjectNotFoundException, ConfigurationNotFoundException {
-        Path filePath = fileSystemStorage.toAbsolutePath(filepath);
-
-        if (!Files.exists(filePath)) {
-            throw new IllegalArgumentException("File does not exist: " + filepath);
-        }
-
-        if (Files.isDirectory(filePath)) {
-            throw new IllegalArgumentException("Cannot update a directory: " + filepath);
-        }
-
-        fileSystemStorage.writeFile(filepath, newContent);
-        projectService.updateConfigurationXml(projectName, filepath, newContent);
-        invalidateTreeCache();
+        this.configurationService = configurationService;
     }
 
     public FileTreeNode getProjectTree(String projectName) throws IOException {
@@ -164,7 +126,7 @@ public class FileTreeService {
         validateWithinProject(projectName, fullPath);
 
         if (fileName.toLowerCase().endsWith(".xml")) {
-            projectService.addConfigurationToFolder(projectName, fileName, parentPath);
+            configurationService.addConfigurationToFolder(projectName, fileName, parentPath);
             return null;
         }
 
@@ -229,6 +191,14 @@ public class FileTreeService {
         invalidateTreeCache(projectName);
     }
 
+    public void invalidateTreeCache() {
+        treeCache.clear();
+    }
+
+    public void invalidateTreeCache(String projectName) {
+        treeCache.remove(projectName);
+    }
+
     private void validateWithinProject(String projectName, String path) throws IOException {
         try {
             Project project = projectService.getProject(projectName);
@@ -249,54 +219,6 @@ public class FileTreeService {
         }
         if (name.contains("/") || name.contains("\\") || name.contains("..")) {
             throw new IllegalArgumentException("File name contains invalid characters: " + name);
-        }
-    }
-
-    public void invalidateTreeCache() {
-        treeCache.clear();
-    }
-
-    public void invalidateTreeCache(String projectName) {
-        treeCache.remove(projectName);
-    }
-
-    public boolean updateAdapterFromFile(
-            String projectName, Path configurationFile, String adapterName, String newAdapterXml)
-            throws ConfigurationNotFoundException, AdapterNotFoundException, IOException {
-
-        Path absConfigFile = fileSystemStorage.toAbsolutePath(configurationFile.toString());
-
-        if (!Files.exists(absConfigFile)) {
-            throw new ConfigurationNotFoundException("Configuration file not found: " + configurationFile);
-        }
-
-        try {
-            Document configDoc =
-                    XmlSecurityUtils.createSecureDocumentBuilder().parse(Files.newInputStream(absConfigFile));
-
-            Document newAdapterDoc = XmlSecurityUtils.createSecureDocumentBuilder()
-                    .parse(new ByteArrayInputStream(newAdapterXml.getBytes(StandardCharsets.UTF_8)));
-
-            Node newAdapterNode = newAdapterDoc.getDocumentElement();
-
-            boolean replaced = XmlAdapterUtils.replaceAdapterInDocument(configDoc, adapterName, newAdapterNode);
-
-            if (!replaced) {
-                throw new AdapterNotFoundException("Adapter not found: " + adapterName);
-            }
-
-            String updatedXml = XmlAdapterUtils.convertNodeToString(configDoc);
-
-            Files.writeString(absConfigFile, updatedXml, StandardCharsets.UTF_8, StandardOpenOption.TRUNCATE_EXISTING);
-
-            invalidateTreeCache(projectName);
-            return true;
-
-        } catch (AdapterNotFoundException e) {
-            throw e;
-        } catch (Exception e) {
-            System.err.println("Error updating adapter in file: " + e.getMessage());
-            return false;
         }
     }
 
@@ -323,42 +245,9 @@ public class FileTreeService {
         } else {
             node.setType(NodeType.FILE);
             node.setChildren(null);
-            if (path.getFileName().toString().toLowerCase().endsWith(".xml")) {
-                node.setAdapterNames(extractAdapterNames(path));
-            }
         }
 
         return node;
-    }
-
-    private List<String> extractAdapterNames(Path xmlFile) {
-        try {
-            Document doc = parseXmlFile(xmlFile);
-            NodeList adapters = findAdapterElements(doc);
-            return collectAdapterNames(adapters);
-        } catch (Exception e) {
-            return List.of();
-        }
-    }
-
-    private Document parseXmlFile(Path xmlFile) throws Exception {
-        return XmlSecurityUtils.createSecureDocumentBuilder().parse(Files.newInputStream(xmlFile));
-    }
-
-    private NodeList findAdapterElements(Document doc) {
-        NodeList adapters = doc.getElementsByTagName("Adapter");
-        return adapters.getLength() > 0 ? adapters : doc.getElementsByTagName("adapter");
-    }
-
-    private List<String> collectAdapterNames(NodeList adapters) {
-        List<String> names = new ArrayList<>();
-        for (int i = 0; i < adapters.getLength(); i++) {
-            String name = ((Element) adapters.item(i)).getAttribute("name");
-            if (!name.isBlank()) {
-                names.add(name);
-            }
-        }
-        return names;
     }
 
     private String toNodePath(Path path, Path relativizeRoot, boolean useRelativePaths) {
@@ -369,7 +258,6 @@ public class FileTreeService {
         return relativePath.isEmpty() ? "." : relativePath;
     }
 
-    // Method to build a shallow tree (only immediate children)
     private FileTreeNode buildShallowTree(Path path, Path relativizeRoot, boolean useRelativePaths) throws IOException {
         FileTreeNode node = new FileTreeNode();
         node.setName(path.getFileName().toString());
@@ -387,10 +275,6 @@ public class FileTreeService {
                         child.setName(p.getFileName().toString());
                         child.setPath(toNodePath(p, relativizeRoot, useRelativePaths));
                         child.setType(Files.isDirectory(p) ? NodeType.DIRECTORY : NodeType.FILE);
-                        if (!Files.isDirectory(p)
-                                && p.getFileName().toString().toLowerCase().endsWith(".xml")) {
-                            child.setAdapterNames(extractAdapterNames(p));
-                        }
                         return child;
                     })
                     .toList();

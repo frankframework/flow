@@ -48,7 +48,6 @@ export default function EditorFileStructure() {
   const removeTabAndSelectFallback = useEditorTabStore((state) => state.removeTabAndSelectFallback)
 
   const [dataProvider, setDataProvider] = useState<EditorFilesDataProvider | null>(null)
-  const initialExpandedItems = useRef(editorExpandedItems)
 
   const onAfterRename = useCallback(
     (oldPath: string, newName: string) => {

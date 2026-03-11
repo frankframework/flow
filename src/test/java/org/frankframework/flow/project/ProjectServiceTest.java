@@ -14,16 +14,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import org.frankframework.flow.adapter.AdapterNotFoundException;
 import org.frankframework.flow.configuration.Configuration;
-import org.frankframework.flow.configuration.ConfigurationAlreadyExistsException;
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
 import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.frankframework.flow.projectsettings.FilterType;
 import org.frankframework.flow.projectsettings.InvalidFilterTypeException;
 import org.frankframework.flow.recentproject.RecentProject;
 import org.frankframework.flow.recentproject.RecentProjectsService;
-import org.frankframework.flow.xml.XmlDTO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,7 +29,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
-import org.xml.sax.SAXException;
 
 @ExtendWith(MockitoExtension.class)
 public class ProjectServiceTest {
@@ -56,10 +52,6 @@ public class ProjectServiceTest {
         projectService = new ProjectService(fileSystemStorage, recentProjectsService);
     }
 
-    /**
-     * Sets up all stubs needed for tests that create projects on disk and then
-     * interact with them.
-     */
     private void stubFileSystemForProjectCreation() throws IOException {
         when(fileSystemStorage.createProjectDirectory(anyString())).thenAnswer(invocation -> {
             String dirName = invocation.getArgument(0);
@@ -111,7 +103,6 @@ public class ProjectServiceTest {
 
         projectService.createProjectOnDisk(projectName);
 
-        // After creation the project is cached, so getProject should find it
         assertNotNull(projectService.getProject(projectName));
     }
 
@@ -296,118 +287,6 @@ public class ProjectServiceTest {
     }
 
     @Test
-    public void updateAdapterSuccess() throws Exception {
-        stubFileSystemForProjectCreation();
-
-        projectService.createProjectOnDisk("proj");
-        Project project = projectService.getProject("proj");
-
-        String originalXml =
-                """
-				<Configuration>
-					<Adapter name="A1">
-						<Settings>123</Settings>
-					</Adapter>
-					<Adapter name="A2">
-						<Settings>456</Settings>
-					</Adapter>
-				</Configuration>
-				""";
-
-        Configuration config = new Configuration("conf.xml");
-        config.setXmlContent(originalXml);
-        project.getConfigurations().add(config);
-
-        String newAdapterXml = """
-				<Adapter name="A1">
-					<Settings>999</Settings>
-				</Adapter>
-				""";
-
-        boolean result = projectService.updateAdapter("proj", "conf.xml", "A1", newAdapterXml);
-
-        assertTrue(result);
-        String updatedXml = config.getXmlContent();
-        assertTrue(updatedXml.contains("<Settings>999</Settings>"));
-        assertFalse(updatedXml.contains("<Settings>123</Settings>"));
-        assertTrue(updatedXml.contains("A2"), "Other adapters must remain unchanged");
-    }
-
-    @Test
-    public void updateAdapterProjectNotFoundThrows() {
-        when(fileSystemStorage.isLocalEnvironment()).thenReturn(true);
-        when(recentProjectsService.getRecentProjects()).thenReturn(recentProjects);
-
-        ProjectNotFoundException ex = assertThrows(
-                ProjectNotFoundException.class,
-                () -> projectService.updateAdapter("unknownProject", "conf.xml", "A1", "<Adapter name='A1'/>"));
-        assertTrue(ex.getMessage().contains("unknownProject"));
-    }
-
-    @Test
-    public void updateAdapterConfigurationNotFoundThrows() throws Exception {
-        stubFileSystemForProjectCreation();
-
-        projectService.createProjectOnDisk("proj");
-
-        ConfigurationNotFoundException ex = assertThrows(
-                ConfigurationNotFoundException.class,
-                () -> projectService.updateAdapter("proj", "missing.xml", "A1", "<Adapter name='A1'/>"));
-
-        assertEquals("Configuration not found: missing.xml", ex.getMessage());
-    }
-
-    @Test
-    public void updateAdapterAdapterNotFoundThrows() throws Exception {
-        stubFileSystemForProjectCreation();
-
-        projectService.createProjectOnDisk("proj");
-        Project project = projectService.getProject("proj");
-
-        String xml = """
-				<Configuration>
-					<Adapter name="Other"/>
-				</Configuration>
-				""";
-
-        Configuration config = new Configuration("conf.xml");
-        config.setXmlContent(xml);
-        project.getConfigurations().add(config);
-
-        AdapterNotFoundException ex = assertThrows(
-                AdapterNotFoundException.class,
-                () -> projectService.updateAdapter("proj", "conf.xml", "A1", "<Adapter name='A1'/>"));
-
-        assertEquals("Adapter not found: A1", ex.getMessage());
-        assertEquals(xml, config.getXmlContent());
-    }
-
-    @Test
-    public void updateAdapterInvalidXmlReturnsFalse() throws Exception {
-        stubFileSystemForProjectCreation();
-
-        projectService.createProjectOnDisk("proj");
-        Project project = projectService.getProject("proj");
-
-        String xml = """
-				<Configuration>
-					<Adapter name="A1"/>
-				</Configuration>
-				""";
-
-        Configuration config = new Configuration("conf.xml");
-        config.setXmlContent(xml);
-        project.getConfigurations().add(config);
-
-        String invalidXml = "<Adapter><broken>";
-
-        boolean result = projectService.updateAdapter("proj", "conf.xml", "A1", invalidXml);
-
-        assertFalse(result);
-        assertEquals(xml, config.getXmlContent());
-    }
-
-    @Test
     public void importProjectFromFilesSuccess() throws Exception {
         when(fileSystemStorage.createProjectDirectory(anyString())).thenAnswer(invocation -> {
             String dirName = invocation.getArgument(0);
@@ -459,47 +338,6 @@ public class ProjectServiceTest {
     }
 
     @Test
-    public void importProjectFromFilesLoadsConfigurations() throws Exception {
-        when(fileSystemStorage.createProjectDirectory(anyString())).thenAnswer(invocation -> {
-            String dirName = invocation.getArgument(0);
-            Path dirPath = Path.of(dirName);
-            String projectName = dirPath.getFileName().toString();
-            Path projectDir = tempDir.resolve(projectName);
-            Files.createDirectories(projectDir);
-            return projectDir;
-        });
-
-        when(fileSystemStorage.toAbsolutePath(anyString())).thenAnswer(invocation -> {
-            String path = invocation.getArgument(0);
-            Path p = Path.of(path);
-            if (p.isAbsolute()) {
-                return p;
-            }
-            return tempDir.resolve(path);
-        });
-
-        String projectName = "imported_with_configs";
-
-        String configXml =
-                """
-				<Configuration name="MyConfig">
-					<Adapter name="ImportedAdapter"/>
-				</Configuration>
-				""";
-
-        MockMultipartFile configFile = new MockMultipartFile(
-                "files", "MyConfig.xml", "application/xml", configXml.getBytes(StandardCharsets.UTF_8));
-
-        List<MultipartFile> files = List.of(configFile);
-        List<String> paths = List.of("src/main/configurations/MyConfig.xml");
-
-        Project project = projectService.importProjectFromFiles(projectName, files, paths);
-
-        assertNotNull(project);
-        assertFalse(project.getConfigurations().isEmpty(), "Imported project should have configurations loaded");
-    }
-
-    @Test
     void importProjectFromFilesRejectsPathTraversalWithDoubleDots() throws IOException {
         when(fileSystemStorage.createProjectDirectory(anyString())).thenAnswer(invocation -> {
             String dirName = invocation.getArgument(0);
@@ -543,26 +381,6 @@ public class ProjectServiceTest {
                 SecurityException.class, () -> projectService.importProjectFromFiles(projectName, files, paths));
 
         assertTrue(ex.getMessage().contains("Invalid file path"));
-    }
-
-    @Test
-    void importProjectFromFilesRejectsBackslashPathTraversal() throws IOException {
-        when(fileSystemStorage.createProjectDirectory(anyString())).thenAnswer(invocation -> {
-            String dirName = invocation.getArgument(0);
-            Path projectDir = tempDir.resolve(dirName);
-            Files.createDirectories(projectDir);
-            return projectDir;
-        });
-
-        String projectName = "backslash_project";
-
-        MockMultipartFile maliciousFile = new MockMultipartFile(
-                "files", "evil.xml", "application/xml", "<evil/>".getBytes(StandardCharsets.UTF_8));
-
-        List<MultipartFile> files = List.of(maliciousFile);
-        List<String> paths = List.of("..\\..\\etc\\evil.xml");
-
-        assertThrows(SecurityException.class, () -> projectService.importProjectFromFiles(projectName, files, paths));
     }
 
     @Test
@@ -622,289 +440,5 @@ public class ProjectServiceTest {
         assertNotNull(project);
         assertEquals(projectName, project.getName());
         assertFalse(project.getConfigurations().isEmpty());
-    }
-
-    @Test
-    void testAddConfigurationToProject() throws Exception {
-        stubFileSystemForProjectCreation();
-
-        projectService.createProjectOnDisk("proj");
-
-        Project project = projectService.addConfiguration("proj", "NewConfig.xml");
-
-        boolean hasNewConfig = project.getConfigurations().stream()
-                .anyMatch(c -> Path.of(c.getFilepath()).getFileName().toString().equals("NewConfig.xml"));
-        assertTrue(hasNewConfig, "Project should contain the newly added configuration");
-    }
-
-    @Test
-    void testAddConfigurationCreatesFileOnDisk() throws Exception {
-        stubFileSystemForProjectCreation();
-
-        projectService.createProjectOnDisk("proj");
-        projectService.addConfiguration("proj", "NewConfig.xml");
-
-        Path expectedFile = tempDir.resolve("proj/src/main/configurations/NewConfig.xml");
-        assertTrue(Files.exists(expectedFile), "NewConfig.xml should be written to disk");
-    }
-
-    @Test
-    void testAddConfigurationFileHasDefaultXmlContent() throws Exception {
-        stubFileSystemForProjectCreation();
-
-        projectService.createProjectOnDisk("proj");
-        projectService.addConfiguration("proj", "NewConfig.xml");
-
-        Path expectedFile = tempDir.resolve("proj/src/main/configurations/NewConfig.xml");
-        String content = Files.readString(expectedFile, StandardCharsets.UTF_8);
-        assertTrue(
-                content.contains("<Configuration name=\"DefaultConfig\">"),
-                "Default XML should contain a Configuration element");
-    }
-
-    @Test
-    void testAddConfigurationCreatesDirectoryWhenMissing() throws Exception {
-        String projectName = "no_conf_dir";
-        Path projectDir = tempDir.resolve(projectName);
-        Files.createDirectories(projectDir);
-
-        when(fileSystemStorage.toAbsolutePath(anyString())).thenAnswer(invocation -> {
-            String path = invocation.getArgument(0);
-            Path p = Path.of(path);
-            return p.isAbsolute() ? p : tempDir.resolve(path);
-        });
-        doAnswer(invocation -> {
-                    String path = invocation.getArgument(0);
-                    String content = invocation.getArgument(1);
-                    Path filePath = Path.of(path);
-                    Files.createDirectories(filePath.getParent());
-                    Files.writeString(filePath, content, StandardCharsets.UTF_8);
-                    return null;
-                })
-                .when(fileSystemStorage)
-                .writeFile(anyString(), anyString());
-
-        projectService.openProjectFromDisk(projectDir.toString());
-        projectService.addConfiguration(projectName, "First.xml");
-
-        Path configDir = projectDir.resolve("src/main/configurations");
-        assertTrue(Files.isDirectory(configDir), "Configurations directory should be created");
-        assertTrue(Files.exists(configDir.resolve("First.xml")), "First.xml should be written inside the directory");
-    }
-
-    @Test
-    void testAddConfigurationFilepathIsAbsolute() throws Exception {
-        stubFileSystemForProjectCreation();
-
-        projectService.createProjectOnDisk("proj");
-        Project project = projectService.addConfiguration("proj", "NewConfig.xml");
-
-        String storedPath = project.getConfigurations().stream()
-                .map(Configuration::getFilepath)
-                .filter(fp -> fp.endsWith("NewConfig.xml"))
-                .findFirst()
-                .orElseThrow();
-
-        assertTrue(Path.of(storedPath).isAbsolute(), "Stored filepath should be absolute");
-    }
-
-    @Test
-    void testAddConfigurationRejectsPathTraversal() throws Exception {
-        stubFileSystemForProjectCreation();
-
-        projectService.createProjectOnDisk("proj");
-
-        assertThrows(SecurityException.class, () -> projectService.addConfiguration("proj", "../../../evil.xml"));
-    }
-
-    @Test
-    void testAddConfigurationProjectNotFound() {
-        when(fileSystemStorage.isLocalEnvironment()).thenReturn(true);
-        when(recentProjectsService.getRecentProjects()).thenReturn(recentProjects);
-
-        assertThrows(
-                ProjectNotFoundException.class, () -> projectService.addConfiguration("noSuchProject", "Conf.xml"));
-    }
-
-    @Test
-    void getAdapterElementReturnsXmlDTOSuccessfully() throws Exception {
-        stubFileSystemForProjectCreation();
-
-        projectService.createProjectOnDisk("proj");
-        Project project = projectService.getProject("proj");
-
-        String xml =
-                """
-				<Configuration>
-					<Adapter name="A1">
-						<Settings>123</Settings>
-					</Adapter>
-				</Configuration>
-				""";
-
-        Configuration config = new Configuration("conf.xml");
-        config.setXmlContent(xml);
-        project.getConfigurations().add(config);
-
-        XmlDTO result = projectService.getAdapterElement("proj", "conf.xml", "A1");
-
-        assertNotNull(result);
-        assertTrue(result.xmlContent().contains("<Settings>123</Settings>"));
-    }
-
-    @Test
-    void getAdapterElementProjectNotFoundThrows() {
-        ProjectNotFoundException ex = assertThrows(
-                ProjectNotFoundException.class,
-                () -> projectService.getAdapterElement("unknownProj", "conf.xml", "A1"));
-
-        assertTrue(ex.getMessage().contains("unknownProj"));
-    }
-
-    @Test
-    void getAdapterElementConfigurationNotFoundThrows() throws Exception {
-        stubFileSystemForProjectCreation();
-        projectService.createProjectOnDisk("proj");
-
-        ConfigurationNotFoundException ex = assertThrows(
-                ConfigurationNotFoundException.class,
-                () -> projectService.getAdapterElement("proj", "missing.xml", "A1"));
-
-        assertEquals("Configuration with filepath: missing.xml not found", ex.getMessage());
-    }
-
-    @Test
-    void getAdapterElementAdapterNotFoundThrows() throws Exception {
-        stubFileSystemForProjectCreation();
-        projectService.createProjectOnDisk("proj");
-        Project project = projectService.getProject("proj");
-
-        String xml = """
-				<Configuration>
-					<Adapter name="Other"/>
-				</Configuration>
-				""";
-
-        Configuration config = new Configuration("conf.xml");
-        config.setXmlContent(xml);
-        project.getConfigurations().add(config);
-
-        AdapterNotFoundException ex = assertThrows(
-                AdapterNotFoundException.class, () -> projectService.getAdapterElement("proj", "conf.xml", "A1"));
-
-        assertEquals("Adapter not found: A1", ex.getMessage());
-    }
-
-    @Test
-    void getAdapterElementWithInvalidXmlThrowsException() throws Exception {
-        stubFileSystemForProjectCreation();
-        projectService.createProjectOnDisk("proj");
-        Project project = projectService.getProject("proj");
-
-        String invalidXml = "<Configuration><Adapter></Configuration>"; // malformed
-
-        Configuration config = new Configuration("conf.xml");
-        config.setXmlContent(invalidXml);
-        project.getConfigurations().add(config);
-
-        assertThrows(SAXException.class, () -> projectService.getAdapterElement("proj", "conf.xml", "A1"));
-    }
-
-    @Test
-    void testAddConfigurationToFolderCreatesFileOnDisk() throws Exception {
-        stubFileSystemForProjectCreation();
-
-        String projectName = "proj";
-        projectService.createProjectOnDisk(projectName);
-
-        Project project = projectService.addConfigurationToFolder(
-                projectName, "NewConfig.xml", tempDir.resolve(projectName).toString());
-
-        Path expectedFile = tempDir.resolve("proj").resolve("NewConfig.xml");
-        assertTrue(Files.exists(expectedFile), "NewConfig.xml should be written to disk");
-
-        // ✅ Also verify in-memory registration
-        assertTrue(
-                project.getConfigurations().stream()
-                        .anyMatch(c -> c.getFilepath().endsWith("NewConfig.xml")),
-                "Configuration should be registered in project memory");
-    }
-
-    @Test
-    void testAddConfigurationToFolderFileHasDefaultXmlContent() throws Exception {
-        stubFileSystemForProjectCreation();
-
-        String projectName = "proj";
-        projectService.createProjectOnDisk(projectName);
-
-        projectService.addConfigurationToFolder(
-                projectName, "NewConfig.xml", tempDir.resolve(projectName).toString());
-
-        Path expectedFile = tempDir.resolve("proj").resolve("NewConfig.xml");
-        String content = Files.readString(expectedFile, StandardCharsets.UTF_8);
-
-        assertTrue(
-                content.contains("<Configuration name=\"DefaultConfig\">"),
-                "Default XML should contain a Configuration element");
-    }
-
-    @Test
-    void testAddConfigurationToFolderFilepathIsAbsolute() throws Exception {
-        stubFileSystemForProjectCreation();
-
-        String projectName = "proj";
-        projectService.createProjectOnDisk(projectName);
-
-        Project project = projectService.addConfigurationToFolder(
-                projectName, "NewConfig.xml", tempDir.resolve(projectName).toString());
-
-        String storedPath = project.getConfigurations().stream()
-                .map(Configuration::getFilepath)
-                .filter(fp -> fp.endsWith("NewConfig.xml"))
-                .findFirst()
-                .orElseThrow();
-
-        assertTrue(Path.of(storedPath).isAbsolute(), "Stored filepath should be absolute");
-    }
-
-    @Test
-    void testAddConfigurationToFolderRejectsPathTraversal() throws Exception {
-        stubFileSystemForProjectCreation();
-
-        String projectName = "proj";
-        projectService.createProjectOnDisk(projectName);
-
-        Path projectDir = tempDir.resolve(projectName);
-
-        assertThrows(
-                SecurityException.class,
-                () -> projectService.addConfigurationToFolder(projectName, "../../../evil.xml", projectDir.toString()));
-    }
-
-    @Test
-    void testAddConfigurationToFolderThrowsIfAlreadyExists() throws Exception {
-        stubFileSystemForProjectCreation();
-
-        String projectName = "proj";
-        projectService.createProjectOnDisk(projectName);
-
-        Path projectDir = tempDir.resolve(projectName);
-
-        // Create file manually
-        Path existingFile = projectDir.resolve("duplicate.xml");
-        Files.writeString(existingFile, "<xml/>");
-
-        assertThrows(
-                ConfigurationAlreadyExistsException.class,
-                () -> projectService.addConfigurationToFolder(projectName, "duplicate.xml", projectDir.toString()));
-    }
-
-    @Test
-    void testAddConfigurationToFolderProjectNotFound() {
-        String projectName = "noSuchProject";
-
-        assertThrows(
-                ProjectNotFoundException.class,
-                () -> projectService.addConfigurationToFolder(projectName, "Conf.xml", tempDir.toString()));
     }
 }
