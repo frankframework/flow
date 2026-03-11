@@ -1,6 +1,6 @@
 import type { TreeItem, TreeItemIndex } from 'react-complex-tree'
 import type { FileTreeNode } from '~/types/filesystem.types'
-import { fetchDirectoryByPath, fetchProjectRootTree } from '~/services/project-service'
+import { fetchProjectRootTree, fetchDirectoryByPath } from '~/services/file-tree-service'
 import { sortChildren } from './tree-utilities'
 import type { DataProviderLike } from './use-file-tree-context-menu'
 import { BaseFilesDataProvider } from './base-files-data-provider'

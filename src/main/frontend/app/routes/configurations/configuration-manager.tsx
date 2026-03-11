@@ -7,7 +7,7 @@ import { useState, useEffect, useCallback, type ChangeEvent, useMemo } from 'rea
 import AddConfigurationModal from './add-configuration-modal'
 import LoadingSpinner from '~/components/loading-spinner'
 import type { FileTreeNode } from '~/types/filesystem.types'
-import { deleteInProject, fetchProjectTree } from '~/services/project-service'
+import { deleteInProject, fetchProjectTree } from '~/services/file-tree-service'
 import Button from '~/components/inputs/button'
 import Search from '~/components/search/search'
 import { toRelativePath } from '~/utils/path-utils'

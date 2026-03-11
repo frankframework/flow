@@ -3,7 +3,8 @@ import { useProjectStore } from '~/stores/project-store'
 import type { Project } from '~/types/project.types'
 import Button from '~/components/inputs/button'
 import DirectoryPicker from '~/components/directory-picker/directory-picker'
-import { createFileInProject, fetchProject } from '~/services/project-service'
+import { createFileInProject } from '~/services/file-tree-service'
+import { fetchProject } from '~/services/project-service'
 
 interface AddConfigurationModalProperties {
   isOpen: boolean
