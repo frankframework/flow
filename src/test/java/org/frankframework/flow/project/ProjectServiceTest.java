@@ -8,15 +8,22 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Stream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 import org.frankframework.flow.configuration.Configuration;
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
 import org.frankframework.flow.filesystem.FileSystemStorage;
+import org.frankframework.flow.filesystem.FilesystemEntry;
 import org.frankframework.flow.projectsettings.FilterType;
 import org.frankframework.flow.projectsettings.InvalidFilterTypeException;
 import org.frankframework.flow.recentproject.RecentProject;
@@ -440,5 +447,277 @@ public class ProjectServiceTest {
         assertNotNull(project);
         assertEquals(projectName, project.getName());
         assertFalse(project.getConfigurations().isEmpty());
+    }
+
+    @Test
+    void testOpenProjectFromDiskThrowsWhenPathDoesNotExist() throws Exception {
+        when(fileSystemStorage.toAbsolutePath(anyString())).thenAnswer(invocation -> {
+            String path = invocation.getArgument(0);
+            Path p = Path.of(path);
+            return p.isAbsolute() ? p : tempDir.resolve(path);
+        });
+
+        assertThrows(ProjectNotFoundException.class, () -> projectService.openProjectFromDisk("nonexistent_project"));
+    }
+
+    @Test
+    void testOpenProjectFromDiskThrowsWhenPathIsAFile() throws Exception {
+        when(fileSystemStorage.toAbsolutePath(anyString())).thenAnswer(invocation -> {
+            String path = invocation.getArgument(0);
+            Path p = Path.of(path);
+            return p.isAbsolute() ? p : tempDir.resolve(path);
+        });
+
+        Path file = tempDir.resolve("not_a_directory.xml");
+        Files.writeString(file, "<config/>", StandardCharsets.UTF_8);
+
+        assertThrows(ProjectNotFoundException.class, () -> projectService.openProjectFromDisk(file.toString()));
+    }
+
+    @Test
+    void testOpenProjectFromDiskLoadsEmptyProject_whenNoConfigurationsDir() throws Exception {
+        when(fileSystemStorage.toAbsolutePath(anyString())).thenAnswer(invocation -> {
+            String path = invocation.getArgument(0);
+            Path p = Path.of(path);
+            return p.isAbsolute() ? p : tempDir.resolve(path);
+        });
+
+        Path projDir = tempDir.resolve("empty_proj");
+        Files.createDirectory(projDir);
+
+        Project project = projectService.openProjectFromDisk(projDir.toString());
+
+        assertNotNull(project);
+        assertEquals("empty_proj", project.getName());
+        assertTrue(project.getConfigurations().isEmpty(), "No configurations dir means empty config list");
+    }
+
+    @Test
+    void testGetProjectsFromWorkspaceScan() throws Exception {
+        when(fileSystemStorage.isLocalEnvironment()).thenReturn(false);
+
+        Path projDir = tempDir.resolve("scanned_proj");
+        Files.createDirectories(projDir.resolve("src/main/configurations"));
+        Files.writeString(
+                projDir.resolve("src/main/configurations/Config.xml"),
+                "<Configuration><Adapter name='A'/></Configuration>",
+                StandardCharsets.UTF_8);
+
+        when(fileSystemStorage.listRoots())
+                .thenReturn(List.of(new FilesystemEntry("scanned_proj", projDir.toString(), "directory", true)));
+
+        when(fileSystemStorage.toAbsolutePath(anyString())).thenAnswer(invocation -> {
+            String path = invocation.getArgument(0);
+            Path p = Path.of(path);
+            return p.isAbsolute() ? p : tempDir.resolve(path);
+        });
+
+        when(fileSystemStorage.readFile(anyString())).thenAnswer(invocation -> {
+            String path = invocation.getArgument(0);
+            return Files.readString(Path.of(path), StandardCharsets.UTF_8);
+        });
+
+        List<Project> projects = projectService.getProjects();
+
+        assertEquals(1, projects.size());
+        assertEquals("scanned_proj", projects.getFirst().getName());
+        assertFalse(projects.getFirst().getConfigurations().isEmpty());
+    }
+
+    @Test
+    void testGetProjectsFromWorkspaceScanSkipsInvalidEntries() throws Exception {
+        when(fileSystemStorage.isLocalEnvironment()).thenReturn(false);
+
+        Path validDir = tempDir.resolve("valid_proj");
+        Files.createDirectory(validDir);
+
+        Path invalidDir = tempDir.resolve("nonexistent_proj"); // does not exist
+
+        when(fileSystemStorage.listRoots())
+                .thenReturn(List.of(
+                        new FilesystemEntry("valid_proj", validDir.toString(), "directory", true),
+                        new FilesystemEntry("nonexistent_proj", invalidDir.toString(), "directory", true)));
+
+        when(fileSystemStorage.toAbsolutePath(anyString())).thenAnswer(invocation -> {
+            String path = invocation.getArgument(0);
+            Path p = Path.of(path);
+            return p.isAbsolute() ? p : tempDir.resolve(path);
+        });
+
+        List<Project> projects = projectService.getProjects();
+
+        assertEquals(1, projects.size(), "Invalid workspace entry should be silently skipped");
+        assertEquals("valid_proj", projects.getFirst().getName());
+    }
+
+    @Test
+    void testGetProjectsSkipsInvalidRecentProjects() throws Exception {
+        when(fileSystemStorage.isLocalEnvironment()).thenReturn(true);
+        stubFileSystemForProjectCreation();
+
+        projectService.createProjectOnDisk("valid_proj");
+        Path validPath = tempDir.resolve("valid_proj");
+        Path invalidPath = tempDir.resolve("nonexistent_proj");
+
+        recentProjects.add(new RecentProject("valid_proj", validPath.toString(), "2026-01-01T00:00:00Z"));
+        recentProjects.add(new RecentProject("nonexistent_proj", invalidPath.toString(), "2026-01-01T00:00:00Z"));
+
+        when(recentProjectsService.getRecentProjects()).thenReturn(recentProjects);
+
+        projectService.invalidateCache();
+
+        List<Project> projects = projectService.getProjects();
+
+        assertEquals(1, projects.size(), "Stale recent project should be silently skipped");
+        assertEquals("valid_proj", projects.getFirst().getName());
+    }
+
+    @Test
+    void testExportProjectAsZipContainsProjectFiles() throws Exception {
+        stubFileSystemForProjectCreation();
+
+        projectService.createProjectOnDisk("export_proj");
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        projectService.exportProjectAsZip("export_proj", baos);
+
+        byte[] zipBytes = baos.toByteArray();
+        assertTrue(zipBytes.length > 0, "Zip output should not be empty");
+
+        boolean foundConfigXml = false;
+        try (ZipInputStream zis = new ZipInputStream(new ByteArrayInputStream(zipBytes))) {
+            ZipEntry entry;
+            while ((entry = zis.getNextEntry()) != null) {
+                if (entry.getName().contains("Configuration.xml")) {
+                    foundConfigXml = true;
+                }
+                zis.closeEntry();
+            }
+        }
+        assertTrue(foundConfigXml, "Zip should contain the default Configuration.xml");
+    }
+
+    @Test
+    void testExportProjectAsZipThrowsWhenProjectNotFound() {
+        when(fileSystemStorage.isLocalEnvironment()).thenReturn(true);
+        when(recentProjectsService.getRecentProjects()).thenReturn(recentProjects);
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+        assertThrows(ProjectNotFoundException.class, () -> projectService.exportProjectAsZip("nonexistent", baos));
+    }
+
+    @Test
+    void testExportProjectAsZipThrowsWhenDirectoryDeletedAfterCaching() throws Exception {
+        stubFileSystemForProjectCreation();
+
+        projectService.createProjectOnDisk("deleteme_proj");
+
+        Path projDir = tempDir.resolve("deleteme_proj");
+        try (Stream<Path> paths = Files.walk(projDir)) {
+            paths.sorted(Comparator.reverseOrder()).forEach(p -> {
+                try {
+                    Files.delete(p);
+                } catch (IOException e) {
+                    // ignore
+                }
+            });
+        }
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+        assertThrows(ProjectNotFoundException.class, () -> projectService.exportProjectAsZip("deleteme_proj", baos));
+    }
+
+    @Test
+    void testToDtoReturnsCorrectFields() throws Exception {
+        stubFileSystemForProjectCreation();
+        when(fileSystemStorage.toRelativePath(anyString())).thenAnswer(inv -> inv.getArgument(0));
+
+        projectService.createProjectOnDisk("dto_proj");
+        Project project = projectService.getProject("dto_proj");
+
+        ProjectDTO dto = projectService.toDto(project);
+
+        assertNotNull(dto);
+        assertEquals("dto_proj", dto.name());
+        assertNotNull(dto.rootPath());
+        assertFalse(dto.filepaths().isEmpty(), "Should include configuration file paths");
+        assertFalse(dto.isGitRepository(), "Plain temp dir should not be detected as git repo");
+        assertFalse(dto.hasStoredToken());
+    }
+
+    @Test
+    void testToDtoDetectsGitRepository() throws Exception {
+        stubFileSystemForProjectCreation();
+        when(fileSystemStorage.toRelativePath(anyString())).thenAnswer(inv -> inv.getArgument(0));
+
+        projectService.createProjectOnDisk("git_proj");
+        Project project = projectService.getProject("git_proj");
+
+        Path projAbsPath = fileSystemStorage.toAbsolutePath(project.getRootPath());
+        Files.createDirectory(projAbsPath.resolve(".git"));
+
+        ProjectDTO dto = projectService.toDto(project);
+
+        assertTrue(dto.isGitRepository(), "Project with .git dir should be detected as git repository");
+    }
+
+    @Test
+    void testToDtoReportsHasStoredToken_whenTokenIsSet() throws Exception {
+        stubFileSystemForProjectCreation();
+        when(fileSystemStorage.toRelativePath(anyString())).thenAnswer(inv -> inv.getArgument(0));
+
+        projectService.createProjectOnDisk("token_proj");
+        Project project = projectService.getProject("token_proj");
+        project.setGitToken("ghp_secrettoken123");
+
+        ProjectDTO dto = projectService.toDto(project);
+
+        assertTrue(dto.hasStoredToken());
+    }
+
+    @Test
+    void testToDtoReportsNoStoredToken_whenTokenIsBlank() throws Exception {
+        stubFileSystemForProjectCreation();
+        when(fileSystemStorage.toRelativePath(anyString())).thenAnswer(inv -> inv.getArgument(0));
+
+        projectService.createProjectOnDisk("blank_token_proj");
+        Project project = projectService.getProject("blank_token_proj");
+        project.setGitToken("   ");
+
+        ProjectDTO dto = projectService.toDto(project);
+
+        assertFalse(dto.hasStoredToken(), "A blank/whitespace token should not count as stored");
+    }
+
+    @Test
+    void testToDtoMapsConfigurationFilepaths() throws Exception {
+        stubFileSystemForProjectCreation();
+        when(fileSystemStorage.toRelativePath(anyString())).thenAnswer(inv -> inv.getArgument(0));
+
+        projectService.createProjectOnDisk("filepath_proj");
+        Project project = projectService.getProject("filepath_proj");
+
+        ProjectDTO dto = projectService.toDto(project);
+
+        assertEquals(
+                project.getConfigurations().size(),
+                dto.filepaths().size(),
+                "DTO filepaths count should match number of configurations");
+    }
+
+    @Test
+    void testCloneAndOpenProjectThrowsWhenTargetDirectoryAlreadyExists() throws Exception {
+        Path existing = tempDir.resolve("already_exists");
+        Files.createDirectory(existing);
+
+        when(fileSystemStorage.toAbsolutePath("already_exists")).thenReturn(existing);
+
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class,
+                () -> projectService.cloneAndOpenProject("https://example.com/repo.git", "already_exists", null));
+
+        assertTrue(ex.getMessage().contains("already_exists"));
     }
 }

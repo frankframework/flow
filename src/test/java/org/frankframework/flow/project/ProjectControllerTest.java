@@ -19,6 +19,8 @@ import org.frankframework.flow.projectsettings.FilterType;
 import org.frankframework.flow.projectsettings.InvalidFilterTypeException;
 import org.frankframework.flow.projectsettings.ProjectSettings;
 import org.frankframework.flow.recentproject.RecentProjectsService;
+import org.frankframework.flow.security.UserContextFilter;
+import org.frankframework.flow.security.UserWorkspaceContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -47,12 +49,10 @@ class ProjectControllerTest {
     private FileSystemStorage fileSystemStorage;
 
     @MockitoBean
-    private org.frankframework.flow.security.UserContextFilter userContextFilter;
+    private UserContextFilter userContextFilter;
 
     @MockitoBean
-    private org.frankframework.flow.security.UserWorkspaceContext userWorkspaceContext;
-
-    private static final String TEST_PROJECT_NAME = "FrankFlowTestProject";
+    private UserWorkspaceContext userWorkspaceContext;
 
     @BeforeEach
     void setUp() throws IOException {
