@@ -657,7 +657,7 @@ public class ProjectServiceTest {
     @Test
     void testToDtoMapsConfigurationFilepaths() throws Exception {
         stubFileSystemForProjectCreation();
-        lenient().when(fileSystemStorage.toRelativePath(anyString())).thenAnswer(inv -> inv.getArgument(0));
+        when(fileSystemStorage.toRelativePath(anyString())).thenAnswer(inv -> inv.getArgument(0));
 
         projectService.createProjectOnDisk("filepath_proj");
         Project project = projectService.getProject("filepath_proj");
