@@ -118,7 +118,7 @@ public class CloudFileSystemStorageService implements FileSystemStorage {
             while (relative.startsWith("/")) {
                 relative = relative.substring(1);
             }
-            return relative.isEmpty() ? "" : relative;
+            return relative;
         }
         return normalized;
     }
