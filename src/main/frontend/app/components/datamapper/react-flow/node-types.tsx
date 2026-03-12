@@ -7,6 +7,7 @@ import type { NodeTypes, Node } from '@xyflow/react'
 import ExtraSourceNode, { type ExtraSourceNodeProperties } from './extra-source-node'
 import type { useFlowManagement } from '~/hooks/use-datamapper-flow-management'
 import type { CustomNodeData, MappingConfig } from '~/types/datamapper_types/node-types'
+import ArrayGroupNode, { type ArrayGroupNodeProperties } from './array-group-node'
 
 interface GetNodeTypesParameters {
   flow: ReturnType<typeof useFlowManagement>
@@ -67,6 +68,21 @@ export const getNodeTypes = ({
         if (data) {
           setEditingNode(data)
           openModelType.current = 'target'
+          setAddFieldModal(true)
+        }
+      }}
+      onDelete={(id) => flow.deleteNode(id)}
+    />
+  ),
+  arrayGroup: (node: ArrayGroupNodeProperties) => (
+    <ArrayGroupNode
+      {...node}
+      variant="source"
+      onHighlight={(id) => flow.highlightFromPropertyNode(id)}
+      onEdit={(data) => {
+        if (data) {
+          setEditingNode(data)
+          openModelType.current = 'source'
           setAddFieldModal(true)
         }
       }}

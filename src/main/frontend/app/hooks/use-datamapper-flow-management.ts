@@ -71,8 +71,10 @@ export function useFlowManagement({
     //Set the correct type of the node
     let type: string
 
-    if (data.variableType.includes('object') || data.variableType.includes('array')) {
+    if (data.variableType.includes('object')) {
       type = 'labeledGroup'
+    } else if (data.variableType.includes('array')) {
+      type = 'arrayGroup'
     } else if (data.variableType.includes('schematic')) {
       type = 'extraSourceNode'
     } else {
@@ -174,8 +176,11 @@ export function useFlowManagement({
       if (duplicate) throw new DuplicateLabelException('Duplicate property not allowed! Change property name.')
     }
     //Change type to object if needed.
-    const updatedType =
-      data.variableType.includes('object') || data.variableType.includes('array') ? 'labeledGroup' : `${side}Only`
+    const updatedType = data.variableType.includes('object')
+      ? 'labeledGroup'
+      : data.variableType.includes('array')
+        ? 'arrayGroup'
+        : `${side}Only`
     data.variableTypeBasic = formatType?.properties.find(
       (propertyDefinition) => propertyDefinition.name == updatedType,
     )?.type
@@ -208,7 +213,11 @@ export function useFlowManagement({
       const parentId = nodeToDelete.parentId
       let updatedNodes = previous.filter((node) => node.id !== id)
       //If item is a group
-      if (nodeToDelete.type == 'labeledGroup' || nodeToDelete?.type === 'extraSourceNode') {
+      if (
+        nodeToDelete.type == 'labeledGroup' ||
+        nodeToDelete?.type === 'extraSourceNode' ||
+        nodeToDelete.type == 'arrayGroup'
+      ) {
         //remove all child elements
         updatedNodes = updatedNodes.filter((node) => !node.parentId?.startsWith(id))
       }
@@ -317,7 +326,7 @@ export function useFlowManagement({
   function getNodeAndChildren(nodeId: string): Set<string> {
     const node = reactFlowInstance.getNode(nodeId)
 
-    if (node && (node.type === 'labeledGroup' || node.type === 'extraSourceNode')) {
+    if (node && (node.type === 'labeledGroup' || node.type === 'extraSourceNode' || node.type == 'arrayNode')) {
       return new Set(
         reactFlowInstance
           .getNodes()
@@ -575,7 +584,10 @@ export function useFlowManagement({
       //Get height of previous item, or set height to 2/3 of standard height
       const measuredHeight = reactFlowInstance?.getNode(previousItem.id)?.measured?.height ?? OBJECT_HEIGHT / 1.5
       newY += (previousItem.position.y ?? 0) + measuredHeight + ITEM_GAP
-    } else if (parentNode && (parentNode.type == 'labeledGroup' || parentNode?.type === 'extraSourceNode')) {
+    } else if (
+      parentNode &&
+      (parentNode.type == 'labeledGroup' || parentNode?.type === 'extraSourceNode' || parentNode.type == 'arrayGroup')
+    ) {
       // If the item is the first in a group, add group padding
       newY += GROUP_PADDING_TOP
     } else {
@@ -594,7 +606,9 @@ export function useFlowManagement({
       const parentNode = reactFlowInstance.getNode(parentId)
       //Add the correct initial padding for the first item
       let yOffset: number =
-        parentNode?.type == 'labeledGroup' || parentNode?.type === 'extraSourceNode' ? GROUP_PADDING_TOP : ITEM_GAP
+        parentNode?.type == 'labeledGroup' || parentNode?.type === 'extraSourceNode' || parentNode?.type == 'arrayGroup'
+          ? GROUP_PADDING_TOP
+          : ITEM_GAP
 
       //Get all children of parent and sort them by position
       const children = nodes
@@ -609,7 +623,12 @@ export function useFlowManagement({
         //Add height and padding to next child height
         yOffset += height + ITEM_GAP
       }
-      if (parentNode?.type == 'labeledGroup' || parentNode?.type === 'extraSourceNode') yOffset += GROUP_PADDING_TOP
+      if (
+        parentNode?.type == 'labeledGroup' ||
+        parentNode?.type === 'extraSourceNode' ||
+        parentNode?.type == 'arrayGroup'
+      )
+        yOffset += GROUP_PADDING_TOP
 
       //Set height for parent
       nodes = nodes.map((node) => (node.id === parentId ? { ...node, height: yOffset } : node))
