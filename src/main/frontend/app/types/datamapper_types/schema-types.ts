@@ -36,7 +36,7 @@ export interface XsdComplexType {
 
 export interface XsdSequence {
   xs: {
-    element: XsdElement | XsdElement[]
+    element: XsdElement[]
   }
 }
 
