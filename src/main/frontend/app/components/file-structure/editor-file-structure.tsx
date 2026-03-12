@@ -220,7 +220,13 @@ export default function EditorFileStructure() {
       context.toggleExpandedState()
     }
 
-    return <Icon onClick={handleClick} className="rct-tree-item-arrow-isFolder rct-tree-item-arrow fill-foreground" />
+    return (
+      <Icon
+        onClick={handleClick}
+        onContextMenu={(e) => ctxMenu.openContextMenu(e, item.index)}
+        className="rct-tree-item-arrow-isFolder rct-tree-item-arrow fill-foreground"
+      />
+    )
   }
 
   const renderItemTitle = ({

@@ -316,7 +316,8 @@ public class ProjectService {
             s.filter(p -> p.toString().endsWith(".xml")).forEach(p -> {
                 try {
                     String content = fileSystemStorage.readFile(p.toString());
-                    Configuration c = new Configuration(p.toString());
+                    String relativePath = fileSystemStorage.toRelativePath(p.toString());
+                    Configuration c = new Configuration(relativePath);
                     c.setXmlContent(content);
                     project.addConfiguration(c);
                 } catch (IOException e) {

@@ -228,7 +228,11 @@ export default function StudioFileStructure() {
     }
 
     return (
-      <Icon onClick={handleArrowClick} className="rct-tree-item-arrow-isFolder rct-tree-item-arrow fill-foreground" />
+      <Icon
+        onClick={handleArrowClick}
+        onContextMenu={(e: React.MouseEvent) => e.stopPropagation()}
+        className="rct-tree-item-arrow-isFolder rct-tree-item-arrow fill-foreground"
+      />
     )
   }
 

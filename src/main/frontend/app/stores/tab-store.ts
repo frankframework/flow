@@ -20,6 +20,7 @@ interface TabStoreState {
   setActiveTab: (tabId: string | undefined) => void
   removeTab: (tabId: string) => void
   removeTabAndSelectFallback: (tabId: string) => void
+  removeTabsForConfig: (configPath: string) => void
   clearTabs: () => void
 }
 
@@ -49,6 +50,19 @@ const useTabStore = create<TabStoreState>()(
       set((state) => {
         const newTabs = { ...state.tabs }
         delete newTabs[tabId]
+        const remainingKeys = Object.keys(newTabs)
+        return {
+          tabs: newTabs,
+          activeTab: remainingKeys.includes(state.activeTab) ? state.activeTab : (remainingKeys.at(-1) ?? ''),
+        }
+      }),
+    removeTabsForConfig: (configPath) =>
+      set((state) => {
+        const newTabs = { ...state.tabs }
+        for (const [tabId, tab] of Object.entries(newTabs)) {
+          if (tab.configurationPath === configPath) delete newTabs[tabId]
+        }
+
         const remainingKeys = Object.keys(newTabs)
         return {
           tabs: newTabs,

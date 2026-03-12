@@ -32,6 +32,7 @@ import useNodeContextStore from '~/stores/node-context-store'
 import CreateNodeModal from '~/components/flow/create-node-modal'
 import { useProjectStore } from '~/stores/project-store'
 import { clearConfigurationCache, fetchConfigurationCached, saveConfiguration } from '~/services/configuration-service'
+import useEditorTabStore from '~/stores/editor-tab-store'
 import { cloneWithRemappedIds } from '~/utils/flow-utils'
 import { showErrorToast } from '~/components/toast'
 import clsx from 'clsx'
@@ -58,6 +59,7 @@ function FlowCanvas() {
   const {
     isEditing,
     isDirty,
+    pendingImmediateSave,
     setIsEditing,
     setIsNewNode,
     setParentId,
@@ -68,6 +70,7 @@ function FlowCanvas() {
     useShallow((s) => ({
       isEditing: s.isEditing,
       isDirty: s.isDirty,
+      pendingImmediateSave: s.pendingImmediateSave,
       setIsEditing: s.setIsEditing,
       setIsNewNode: s.setIsNewNode,
       setParentId: s.setParentId,
@@ -150,6 +153,7 @@ function FlowCanvas() {
 
       await saveConfiguration(project.name, configurationPath, updatedConfigXml)
       clearConfigurationCache(project.name, configurationPath)
+      useEditorTabStore.getState().refreshAllTabs()
 
       setSaveStatus('saved')
       if (savedTimerRef.current) clearTimeout(savedTimerRef.current)
@@ -185,6 +189,16 @@ function FlowCanvas() {
       scheduleAutoSave()
     }
   }, [nodes, edges, scheduleAutoSave])
+
+  useEffect(() => {
+    if (!pendingImmediateSave) return
+    useNodeContextStore.getState().setPendingImmediateSave(false)
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current)
+      autoSaveTimerRef.current = null
+    }
+    void saveFlow()
+  }, [pendingImmediateSave, saveFlow])
 
   const sourceInfoReference = useRef<{
     nodeId: string | null

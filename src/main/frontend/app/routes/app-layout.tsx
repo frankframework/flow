@@ -3,8 +3,8 @@ import Navbar from '~/components/navbar/navbar'
 import { FrankConfigXsdProvider } from '~/providers/frankconfig-xsd-provider'
 import AppContent from '~/components/app-content'
 import { useEffect, useState } from 'react'
-import { useProjectStore, getStoredProjectName } from '~/stores/project-store'
-import { fetchProject } from '~/services/project-service'
+import { useProjectStore, getStoredProjectName, getStoredProjectRootPath } from '~/stores/project-store'
+import { fetchProject, openProject } from '~/services/project-service'
 import LoadingSpinner from '~/components/loading-spinner'
 import type { Project } from '~/types/project.types'
 import { apiUrl } from '~/utils/api'
@@ -19,12 +19,15 @@ export default function AppLayout() {
       return
     }
 
+    const rootPath = getStoredProjectRootPath()
+
     fetchProject(storedName)
+      .catch(() => (rootPath ? openProject(rootPath) : Promise.reject(new Error('No root path stored'))))
       .then((fetched: Project) => {
         useProjectStore.getState().setProject(fetched)
       })
       .catch(() => {
-        sessionStorage.removeItem('active-project-name')
+        useProjectStore.getState().clearProject()
       })
       .finally(() => {
         setRestoring(false)

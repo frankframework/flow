@@ -6,6 +6,9 @@ import {
   renameInProject,
   deleteInProject,
 } from '~/services/file-tree-service'
+import { clearConfigurationCache } from '~/services/configuration-service'
+import useTabStore from '~/stores/tab-store'
+import useEditorTabStore from '~/stores/editor-tab-store'
 import { showErrorToastFrom } from '~/components/toast'
 
 export interface ContextMenuState {
@@ -144,6 +147,9 @@ export function useFileTreeContextMenu({
         }
         try {
           await renameInProject(projectName, oldPath, newName)
+          clearConfigurationCache(projectName, oldPath)
+          useTabStore.getState().removeTabsForConfig(oldPath)
+          useEditorTabStore.getState().refreshAllTabs()
           const parentId = getParentItemId(itemId)
           await dataProvider.reloadDirectory(parentId)
           onAfterRename?.(oldPath, newName)
@@ -171,6 +177,9 @@ export function useFileTreeContextMenu({
 
     try {
       await deleteInProject(projectName, deleteTarget.path)
+      clearConfigurationCache(projectName, deleteTarget.path)
+      useTabStore.getState().removeTabsForConfig(deleteTarget.path)
+      useEditorTabStore.getState().refreshAllTabs()
       onAfterDelete?.(deleteTarget.path)
       await dataProvider.reloadDirectory(deleteTarget.parentItemId)
     } catch (error) {

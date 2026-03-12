@@ -86,7 +86,7 @@ export default class EditorFilesDataProvider extends BaseFilesDataProvider<FileN
         children: isDirectory ? this.buildChildren(childIndex, child.children) : undefined,
       }
 
-      if (isDirectory) {
+      if (isDirectory && child.children != null) {
         this.loadedDirectories.add(child.path)
       }
 

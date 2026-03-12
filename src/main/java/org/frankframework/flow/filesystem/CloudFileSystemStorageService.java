@@ -70,15 +70,13 @@ public class CloudFileSystemStorageService implements FileSystemStorage {
 
     @Override
     public List<FilesystemEntry> listDirectory(String path) throws IOException {
-        Path userRoot = getOrCreateUserRoot();
         Path dir = resolveSecurely(path);
 
         List<FilesystemEntry> entries = new ArrayList<>();
 
         try (Stream<Path> stream = Files.list(dir)) {
             stream.filter(Files::isDirectory).sorted().forEach(p -> {
-                String relativePath =
-                        userRoot.relativize(p.toAbsolutePath()).toString().replace("\\", "/");
+                String relativePath = toRelativePath(p.toAbsolutePath().toString());
                 boolean isProjectRoot = Files.isDirectory(p.resolve("src/main/configurations"));
 
                 entries.add(new FilesystemEntry(p.getFileName().toString(), relativePath, "DIRECTORY", isProjectRoot));
@@ -113,11 +111,14 @@ public class CloudFileSystemStorageService implements FileSystemStorage {
     public String toRelativePath(String absolutePath) {
         String normalized = absolutePath.replace("\\", "/");
         String userRoot = getUserRootPath().toString().replace("\\", "/");
+
         if (normalized.startsWith(userRoot)) {
             String relative = normalized.substring(userRoot.length());
-            if (relative.isEmpty()) return "/";
-            if (!relative.startsWith("/")) relative = "/" + relative;
-            return relative;
+
+            while (relative.startsWith("/")) {
+                relative = relative.substring(1);
+            }
+            return relative.isEmpty() ? "" : relative;
         }
         return normalized;
     }

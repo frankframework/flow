@@ -7,6 +7,7 @@ interface NodeContextStore {
   isEditing: boolean
   isNewNode: boolean
   isDirty: boolean
+  pendingImmediateSave: boolean
   parentId: string | null
   childParentId: string | null
   draggedName: string | null
@@ -16,6 +17,7 @@ interface NodeContextStore {
   setIsEditing: (value: boolean) => void
   setIsNewNode: (value: boolean) => void
   setIsDirty: (v: boolean) => void
+  setPendingImmediateSave: (v: boolean) => void
   resetAttributes: () => void
   setParentId: (id: string | null) => void
   setChildParentId: (id: string | null) => void
@@ -29,6 +31,7 @@ const useNodeContextStore = create<NodeContextStore>((set) => ({
   isEditing: false,
   isNewNode: false,
   isDirty: false,
+  pendingImmediateSave: false,
   parentId: null,
   childParentId: null,
   draggedName: null,
@@ -38,6 +41,7 @@ const useNodeContextStore = create<NodeContextStore>((set) => ({
   setIsEditing: (value) => set({ isEditing: value }),
   setIsNewNode: (value) => set({ isNewNode: value }),
   setIsDirty: (isDirty) => set({ isDirty }),
+  setPendingImmediateSave: (pendingImmediateSave) => set({ pendingImmediateSave }),
   resetAttributes: () => set({ attributes: undefined }),
   setParentId: (parentId: string | null) => set({ parentId }),
   setChildParentId: (childParentId: string | null) => set({ childParentId }),

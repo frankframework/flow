@@ -1,6 +1,6 @@
 import type { TreeItemIndex } from 'react-complex-tree'
 import { sortChildren } from './tree-utilities'
-import { fetchProjectTree, fetchDirectoryByPath } from '~/services/file-tree-service'
+import { fetchShallowConfigurationsTree, fetchDirectoryByPath } from '~/services/file-tree-service'
 import type { FileTreeNode } from '~/types/filesystem.types'
 import { BaseFilesDataProvider } from './base-files-data-provider'
 
@@ -47,7 +47,7 @@ export default class FilesDataProvider extends BaseFilesDataProvider<StudioItemD
   }
 
   private async loadRoot() {
-    const tree = await fetchProjectTree(this.projectName)
+    const tree = await fetchShallowConfigurationsTree(this.projectName)
 
     if (!tree) {
       console.warn('[StudioFilesDataProvider] Received empty tree from API')

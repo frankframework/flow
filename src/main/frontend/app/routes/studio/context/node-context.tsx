@@ -35,6 +35,7 @@ export default function NodeContext({
     setChildParentId,
     childParentId,
     setIsDirty,
+    setPendingImmediateSave,
   } = useNodeContextStore(
     useShallow((s) => ({
       attributes: s.attributes,
@@ -46,6 +47,7 @@ export default function NodeContext({
       setChildParentId: s.setChildParentId,
       childParentId: s.childParentId,
       setIsDirty: s.setIsDirty,
+      setPendingImmediateSave: s.setPendingImmediateSave,
     })),
   )
 
@@ -232,6 +234,7 @@ export default function NodeContext({
         setShowNodeContext(false)
         setParentId(null)
         setChildParentId(null)
+        setPendingImmediateSave(true)
         return
       }
       updateChild(parentNode.id, updatedChild)
@@ -239,6 +242,7 @@ export default function NodeContext({
       setShowNodeContext(false)
       setParentId(null)
       setChildParentId(null)
+      setPendingImmediateSave(true)
       return
     }
 
@@ -250,6 +254,7 @@ export default function NodeContext({
       setIsNewNode(false)
       setIsEditing(false)
       setShowNodeContext(false)
+      setPendingImmediateSave(true)
       return
     }
     setAttributes(nodeId.toString(), newAttributesObject)
@@ -258,6 +263,7 @@ export default function NodeContext({
     }
     setIsEditing(false)
     setShowNodeContext(false)
+    setPendingImmediateSave(true)
   }
 
   const canSaveRef = useRef(canSave)
