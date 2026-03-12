@@ -134,10 +134,10 @@ public class FileTreeService {
 
         if (fileName.toLowerCase().endsWith(".xml")) {
             configurationService.addConfigurationToFolder(projectName, fileName, parentPath);
-            return null;
+        } else {
+            fileSystemStorage.createFile(fullPath);
         }
 
-        fileSystemStorage.createFile(fullPath);
         invalidateTreeCache(projectName);
 
         FileTreeNode node = new FileTreeNode();

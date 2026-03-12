@@ -107,13 +107,12 @@ class ConfigurationServiceTest {
         Path file = tempDir.resolve("config.xml");
         Files.writeString(file, "<old/>", StandardCharsets.UTF_8);
 
-        when(projectService.updateConfigurationXml("proj", file.toString(), "<new/>"))
-                .thenReturn(true);
-
+        // Call the service
         configurationService.updateConfiguration("proj", file.toString(), "<new/>");
 
+        // Verify the file was physically written to disk
         assertEquals("<new/>", Files.readString(file, StandardCharsets.UTF_8));
-        verify(projectService).updateConfigurationXml("proj", file.toString(), "<new/>");
+        verify(fileSystemStorage).writeFile(file.toString(), "<new/>");
     }
 
     @Test
@@ -131,7 +130,6 @@ class ConfigurationServiceTest {
     void addConfiguration_Success() throws Exception {
         stubToAbsolutePath();
         stubWriteFile();
-        when(fileSystemStorage.toRelativePath(anyString())).thenAnswer(inv -> inv.getArgument(0));
 
         Path projectDir = tempDir.resolve("myproject");
         Files.createDirectories(projectDir);
@@ -142,12 +140,10 @@ class ConfigurationServiceTest {
         Project result = configurationService.addConfiguration("myproject", "NewConfig.xml");
 
         assertNotNull(result);
+
+        // Verify the file was created on disk
         Path expectedFile = projectDir.resolve("src/main/configurations/NewConfig.xml");
         assertTrue(Files.exists(expectedFile), "NewConfig.xml should be created on disk");
-        assertTrue(
-                result.getConfigurations().stream()
-                        .anyMatch(c -> c.getFilepath().endsWith("NewConfig.xml")),
-                "Configuration should be registered in project");
     }
 
     @Test
@@ -175,7 +171,6 @@ class ConfigurationServiceTest {
     void addConfigurationToFolder_Success() throws Exception {
         stubToAbsolutePath();
         stubWriteFile();
-        when(fileSystemStorage.toRelativePath(anyString())).thenAnswer(inv -> inv.getArgument(0));
 
         Path projectDir = tempDir.resolve("myproject");
         Files.createDirectories(projectDir);
@@ -187,9 +182,9 @@ class ConfigurationServiceTest {
                 configurationService.addConfigurationToFolder("myproject", "Nested.xml", projectDir.toString());
 
         assertNotNull(result);
-        assertTrue(Files.exists(projectDir.resolve("Nested.xml")), "Nested.xml should be created");
-        assertTrue(result.getConfigurations().stream()
-                .anyMatch(c -> c.getFilepath().endsWith("Nested.xml")));
+
+        // Verify the file was created on disk
+        assertTrue(Files.exists(projectDir.resolve("Nested.xml")), "Nested.xml should be created on disk");
     }
 
     @Test

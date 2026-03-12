@@ -148,7 +148,9 @@ export function useFileTreeContextMenu({
         try {
           await renameInProject(projectName, oldPath, newName)
           clearConfigurationCache(projectName, oldPath)
-          useTabStore.getState().removeTabsForConfig(oldPath)
+          const lastSep = Math.max(oldPath.lastIndexOf('/'), oldPath.lastIndexOf('\\'))
+          const newPath = oldPath.slice(0, Math.max(0, lastSep + 1)) + newName
+          useTabStore.getState().renameTabsForConfig(oldPath, newPath)
           useEditorTabStore.getState().refreshAllTabs()
           const parentId = getParentItemId(itemId)
           await dataProvider.reloadDirectory(parentId)

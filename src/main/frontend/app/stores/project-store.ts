@@ -4,7 +4,6 @@ import { useTreeStore } from '~/stores/tree-store'
 import useTabStore from '~/stores/tab-store'
 import useEditorTabStore from '~/stores/editor-tab-store'
 
-const STORAGE_KEY = 'active-project-name'
 const STORAGE_ROOT_PATH_KEY = 'active-project-root-path'
 
 interface ProjectStoreState {
@@ -24,11 +23,9 @@ export const useProjectStore = create<ProjectStoreState>((set) => ({
       }
       return { project }
     })
-    localStorage.setItem(STORAGE_KEY, project.name)
     localStorage.setItem(STORAGE_ROOT_PATH_KEY, project.rootPath)
   },
   clearProject: () => {
-    localStorage.removeItem(STORAGE_KEY)
     localStorage.removeItem(STORAGE_ROOT_PATH_KEY)
     useTreeStore.getState().clearExpandedItems()
     useTabStore.getState().clearTabs()
@@ -36,10 +33,6 @@ export const useProjectStore = create<ProjectStoreState>((set) => ({
     set({ project: undefined })
   },
 }))
-
-export function getStoredProjectName(): string | null {
-  return localStorage.getItem(STORAGE_KEY)
-}
 
 export function getStoredProjectRootPath(): string | null {
   return localStorage.getItem(STORAGE_ROOT_PATH_KEY)

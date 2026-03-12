@@ -59,7 +59,6 @@ function FlowCanvas() {
   const {
     isEditing,
     isDirty,
-    pendingImmediateSave,
     setIsEditing,
     setIsNewNode,
     setParentId,
@@ -70,7 +69,6 @@ function FlowCanvas() {
     useShallow((s) => ({
       isEditing: s.isEditing,
       isDirty: s.isDirty,
-      pendingImmediateSave: s.pendingImmediateSave,
       setIsEditing: s.setIsEditing,
       setIsNewNode: s.setIsNewNode,
       setParentId: s.setParentId,
@@ -109,18 +107,20 @@ function FlowCanvas() {
   const project = useProjectStore.getState().project
 
   const saveFlow = useCallback(async () => {
-    const flowData = reactFlowRef.current.toObject()
+    const { nodes: flowNodes, edges: flowEdges, viewport: flowViewport } = useFlowStore.getState()
+    const flowData = { nodes: flowNodes, edges: flowEdges, viewport: flowViewport }
+    const currentProject = useProjectStore.getState().project
     const activeTabKey = useTabStore.getState().activeTab
     const tabData = useTabStore.getState().getTab(activeTabKey)
     const configurationPath = tabData?.configurationPath
     const adapterName = tabData?.name
     const adapterPosition = tabData?.adapterPosition
 
-    if (!configurationPath || !adapterName || !project) return
+    if (!configurationPath || !adapterName || !currentProject) return
 
     setSaveStatus('saving')
     try {
-      const fullConfigXml = await fetchConfigurationCached(project.name, configurationPath)
+      const fullConfigXml = await fetchConfigurationCached(currentProject.name, configurationPath)
       const configDoc = new DOMParser().parseFromString(fullConfigXml, 'text/xml')
       const allAdapters = [...configDoc.querySelectorAll('Adapter, adapter')]
 
@@ -137,7 +137,7 @@ function FlowCanvas() {
 
       const newAdapterXml = await exportFlowToXml(
         flowData,
-        project.name,
+        currentProject.name,
         configurationPath,
         adapterName,
         existingAdapterXml,
@@ -151,8 +151,8 @@ function FlowCanvas() {
 
       const updatedConfigXml = new XMLSerializer().serializeToString(configDoc).replace(/^<\?xml[^?]*\?>\s*/, '')
 
-      await saveConfiguration(project.name, configurationPath, updatedConfigXml)
-      clearConfigurationCache(project.name, configurationPath)
+      await saveConfiguration(currentProject.name, configurationPath, updatedConfigXml)
+      clearConfigurationCache(currentProject.name, configurationPath)
       useEditorTabStore.getState().refreshAllTabs()
 
       setSaveStatus('saved')
@@ -191,15 +191,15 @@ function FlowCanvas() {
   }, [nodes, edges, scheduleAutoSave])
 
   useEffect(() => {
-    if (!pendingImmediateSave) return
-    if (autoSaveTimerRef.current) {
-      clearTimeout(autoSaveTimerRef.current)
-      autoSaveTimerRef.current = null
-    }
-    void saveFlow().finally(() => {
-      useNodeContextStore.getState().setPendingImmediateSave(false)
+    useNodeContextStore.getState().registerSaveFlow(async () => {
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current)
+        autoSaveTimerRef.current = null
+      }
+      await saveFlow()
     })
-  }, [pendingImmediateSave, saveFlow])
+    return () => useNodeContextStore.getState().registerSaveFlow(null)
+  }, [saveFlow])
 
   const sourceInfoReference = useRef<{
     nodeId: string | null

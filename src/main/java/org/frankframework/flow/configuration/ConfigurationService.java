@@ -40,7 +40,7 @@ public class ConfigurationService {
     }
 
     public void updateConfiguration(String projectName, String filepath, String content)
-            throws IOException, ConfigurationNotFoundException, ProjectNotFoundException {
+            throws IOException, ConfigurationNotFoundException {
         Path absolutePath = fileSystemStorage.toAbsolutePath(filepath);
 
         if (!Files.exists(absolutePath)) {
@@ -51,8 +51,8 @@ public class ConfigurationService {
             throw new ConfigurationNotFoundException("Invalid file path: " + filepath);
         }
 
+        // Just write to the disk. ProjectService reads directly from disk now!
         fileSystemStorage.writeFile(absolutePath.toString(), content);
-        projectService.updateConfigurationXml(projectName, filepath, content);
     }
 
     public Project addConfiguration(String projectName, String configurationName)
@@ -74,10 +74,7 @@ public class ConfigurationService {
         String defaultXml = loadDefaultConfigurationXml();
         fileSystemStorage.writeFile(filePath.toString(), defaultXml);
 
-        String relativePath = fileSystemStorage.toRelativePath(filePath.toString());
-        Configuration configuration = new Configuration(relativePath);
-        configuration.setXmlContent(defaultXml);
-        project.addConfiguration(configuration);
+        // Returning the project handles everything, as 'toDto' will pick up the new file
         return project;
     }
 
@@ -108,10 +105,6 @@ public class ConfigurationService {
         String defaultXml = loadDefaultConfigurationXml();
         fileSystemStorage.writeFile(filePath.toString(), defaultXml);
 
-        String relativePath = fileSystemStorage.toRelativePath(filePath.toString());
-        Configuration configuration = new Configuration(relativePath);
-        configuration.setXmlContent(defaultXml);
-        project.addConfiguration(configuration);
         return project;
     }
 

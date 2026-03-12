@@ -84,7 +84,7 @@ export default function EditorFileStructure() {
 
     const initProvider = async () => {
       const provider = new EditorFilesDataProvider(project.name)
-      await provider.init()
+      await provider.init(editorExpandedItems)
 
       if (isMounted) {
         setDataProvider(provider)
@@ -151,7 +151,6 @@ export default function EditorFileStructure() {
       const item = await dataProvider.getTreeItem(itemId)
       if (!item) return
 
-      // Toggle expanded state managed by onExpandItem naturally if needed
       if (item.isFolder) {
         return
       }
@@ -213,6 +212,7 @@ export default function EditorFileStructure() {
 
   const renderItemArrow = ({ item, context }: { item: TreeItem; context: TreeItemRenderContext }) => {
     if (!item.isFolder) return null
+
     const Icon = context.isExpanded ? AltArrowDownIcon : AltArrowRightIcon
 
     const handleClick = (event: React.MouseEvent) => {
@@ -244,6 +244,7 @@ export default function EditorFileStructure() {
     const titleLower = title.toLowerCase()
 
     let highlightedTitle: JSX.Element | string = title
+
     if (searchTerm && titleLower.includes(searchLower)) {
       const parts = title.split(new RegExp(`(${searchTerm})`, 'gi'))
       highlightedTitle = (

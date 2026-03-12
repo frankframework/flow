@@ -17,8 +17,6 @@ import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.transport.CredentialsProvider;
-import org.frankframework.flow.configuration.Configuration;
-import org.frankframework.flow.configuration.ConfigurationNotFoundException;
 import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.frankframework.flow.filesystem.FilesystemEntry;
 import org.frankframework.flow.git.GitCredentialHelper;
@@ -39,6 +37,7 @@ public class ProjectService {
     private final FileSystemStorage fileSystemStorage;
     private final RecentProjectsService recentProjectsService;
 
+    // Cache is now ONLY for lightweight Project state (Tokens, Filters), NOT files.
     private final Map<String, Project> projectCache = new ConcurrentHashMap<>();
 
     public ProjectService(FileSystemStorage fileSystemStorage, @Lazy RecentProjectsService recentProjectsService) {
@@ -166,20 +165,6 @@ public class ProjectService {
         projectCache.entrySet().removeIf(e -> e.getValue().getName().equals(projectName));
     }
 
-    public boolean updateConfigurationXml(String projectName, String filepath, String xmlContent)
-            throws ProjectNotFoundException, ConfigurationNotFoundException {
-        Project project = getProject(projectName);
-
-        Configuration targetConfig = project.getConfigurations().stream()
-                .filter(c -> c.getFilepath().equals(filepath))
-                .findFirst()
-                .orElseThrow(() -> new ConfigurationNotFoundException(
-                        String.format("Configuration with filepath: %s not found", filepath)));
-
-        targetConfig.setXmlContent(xmlContent);
-        return true;
-    }
-
     public Project enableFilter(String projectName, String type)
             throws ProjectNotFoundException, InvalidFilterTypeException {
         Project project = getProject(projectName);
@@ -244,10 +229,9 @@ public class ProjectService {
 
     public ProjectDTO toDto(Project project) {
         String cleanPath = fileSystemStorage.toRelativePath(project.getRootPath());
-        List<String> filepaths = project.getConfigurations().stream()
-                .map(Configuration::getFilepath)
-                .map(fileSystemStorage::toRelativePath)
-                .toList();
+
+        // Dynamically fetch configurations from disk as the single source of truth
+        List<String> filepaths = getConfigurationFilesDynamically(project.getRootPath());
 
         boolean isGitRepo = false;
         try {
@@ -267,6 +251,27 @@ public class ProjectService {
                 project.getProjectSettings().getFilters(),
                 isGitRepo,
                 hasStoredToken);
+    }
+
+    private List<String> getConfigurationFilesDynamically(String projectRoot) {
+        try {
+            Path absPath = fileSystemStorage.toAbsolutePath(projectRoot);
+            Path configDir = absPath.resolve(CONFIGURATIONS_DIR).normalize();
+
+            if (!Files.exists(configDir) || !Files.isDirectory(configDir)) {
+                return List.of();
+            }
+
+            try (Stream<Path> stream = Files.walk(configDir)) {
+                return stream.filter(Files::isRegularFile)
+                        .filter(p -> p.toString().toLowerCase().endsWith(".xml"))
+                        .map(p -> fileSystemStorage.toRelativePath(p.toString()))
+                        .toList();
+            }
+        } catch (IOException e) {
+            log.error("Failed to read configurations from disk for project {}", projectRoot, e);
+            return List.of();
+        }
     }
 
     private FilterType parseFilterType(String type) throws InvalidFilterTypeException {
@@ -302,30 +307,9 @@ public class ProjectService {
             throw new IOException("Invalid project path: " + absPath);
         }
 
-        Project project = new Project(absPath.getFileName().toString(), absPath.toString());
-
-        Path configDir = absPath.resolve(CONFIGURATIONS_DIR).normalize();
-
-        validatePathSafety(configDir);
-
-        if (!Files.exists(configDir)) {
-            return project;
-        }
-
-        try (Stream<Path> s = Files.walk(configDir)) {
-            s.filter(p -> p.toString().endsWith(".xml")).forEach(p -> {
-                try {
-                    String content = fileSystemStorage.readFile(p.toString());
-                    String relativePath = fileSystemStorage.toRelativePath(p.toString());
-                    Configuration c = new Configuration(relativePath);
-                    c.setXmlContent(content);
-                    project.addConfiguration(c);
-                } catch (IOException e) {
-                    log.error("Error reading config file {}: {}", p, e.getMessage(), e);
-                }
-            });
-        }
-        return project;
+        // We no longer read XML files into memory here.
+        // We just return the lightweight project object.
+        return new Project(absPath.getFileName().toString(), absPath.toString());
     }
 
     private static void validatePathSafety(Path path) {
