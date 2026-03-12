@@ -131,6 +131,7 @@ class ConfigurationServiceTest {
     void addConfiguration_Success() throws Exception {
         stubToAbsolutePath();
         stubWriteFile();
+        when(fileSystemStorage.toRelativePath(anyString())).thenAnswer(inv -> inv.getArgument(0));
 
         Path projectDir = tempDir.resolve("myproject");
         Files.createDirectories(projectDir);
@@ -174,6 +175,7 @@ class ConfigurationServiceTest {
     void addConfigurationToFolder_Success() throws Exception {
         stubToAbsolutePath();
         stubWriteFile();
+        when(fileSystemStorage.toRelativePath(anyString())).thenAnswer(inv -> inv.getArgument(0));
 
         Path projectDir = tempDir.resolve("myproject");
         Files.createDirectories(projectDir);

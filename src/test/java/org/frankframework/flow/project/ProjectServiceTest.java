@@ -184,6 +184,7 @@ public class ProjectServiceTest {
     @Test
     public void testUpdateConfigurationXmlSuccess() throws Exception {
         stubFileSystemForProjectCreation();
+        when(fileSystemStorage.toRelativePath(anyString())).thenAnswer(invocation -> invocation.getArgument(0));
 
         projectService.createProjectOnDisk("proj");
         Project project = projectService.getProject("proj");
@@ -211,6 +212,7 @@ public class ProjectServiceTest {
     @Test
     public void testUpdateConfigurationXmlConfigNotFound() throws Exception {
         stubFileSystemForProjectCreation();
+        when(fileSystemStorage.toRelativePath(anyString())).thenAnswer(invocation -> invocation.getArgument(0));
 
         projectService.createProjectOnDisk("proj");
 
