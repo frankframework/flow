@@ -88,11 +88,6 @@ public class ProjectServiceTest {
                 })
                 .when(fileSystemStorage)
                 .writeFile(anyString(), anyString());
-
-        lenient().when(fileSystemStorage.readFile(anyString())).thenAnswer(invocation -> {
-            String path = invocation.getArgument(0);
-            return Files.readString(Path.of(path), StandardCharsets.UTF_8);
-        });
     }
 
     @Test
@@ -134,7 +129,7 @@ public class ProjectServiceTest {
     @Test
     public void testCreateProjectOnDiskHasConfigurationsInDto() throws IOException, ProjectNotFoundException {
         stubFileSystemForProjectCreation();
-        lenient().when(fileSystemStorage.toRelativePath(anyString())).thenAnswer(inv -> inv.getArgument(0));
+        when(fileSystemStorage.toRelativePath(anyString())).thenAnswer(inv -> inv.getArgument(0));
 
         String projectName = "loaded_proj";
 
@@ -397,7 +392,7 @@ public class ProjectServiceTest {
             return tempDir.resolve(path);
         });
 
-        lenient().when(fileSystemStorage.toRelativePath(anyString())).thenAnswer(inv -> inv.getArgument(0));
+        when(fileSystemStorage.toRelativePath(anyString())).thenAnswer(inv -> inv.getArgument(0));
 
         String projectName = "manual_project";
         Path projectDir = tempDir.resolve(projectName);
@@ -481,7 +476,7 @@ public class ProjectServiceTest {
             return p.isAbsolute() ? p : tempDir.resolve(path);
         });
 
-        lenient().when(fileSystemStorage.toRelativePath(anyString())).thenAnswer(inv -> inv.getArgument(0));
+        when(fileSystemStorage.toRelativePath(anyString())).thenAnswer(inv -> inv.getArgument(0));
 
         List<Project> projects = projectService.getProjects();
 
@@ -600,7 +595,7 @@ public class ProjectServiceTest {
     @Test
     void testToDtoReturnsCorrectFields() throws Exception {
         stubFileSystemForProjectCreation();
-        lenient().when(fileSystemStorage.toRelativePath(anyString())).thenAnswer(inv -> inv.getArgument(0));
+        when(fileSystemStorage.toRelativePath(anyString())).thenAnswer(inv -> inv.getArgument(0));
 
         projectService.createProjectOnDisk("dto_proj");
         Project project = projectService.getProject("dto_proj");
@@ -618,7 +613,7 @@ public class ProjectServiceTest {
     @Test
     void testToDtoDetectsGitRepository() throws Exception {
         stubFileSystemForProjectCreation();
-        lenient().when(fileSystemStorage.toRelativePath(anyString())).thenAnswer(inv -> inv.getArgument(0));
+        when(fileSystemStorage.toRelativePath(anyString())).thenAnswer(inv -> inv.getArgument(0));
 
         projectService.createProjectOnDisk("git_proj");
         Project project = projectService.getProject("git_proj");
@@ -634,7 +629,7 @@ public class ProjectServiceTest {
     @Test
     void testToDtoReportsHasStoredToken_whenTokenIsSet() throws Exception {
         stubFileSystemForProjectCreation();
-        lenient().when(fileSystemStorage.toRelativePath(anyString())).thenAnswer(inv -> inv.getArgument(0));
+        when(fileSystemStorage.toRelativePath(anyString())).thenAnswer(inv -> inv.getArgument(0));
 
         projectService.createProjectOnDisk("token_proj");
         Project project = projectService.getProject("token_proj");
@@ -648,7 +643,7 @@ public class ProjectServiceTest {
     @Test
     void testToDtoReportsNoStoredToken_whenTokenIsBlank() throws Exception {
         stubFileSystemForProjectCreation();
-        lenient().when(fileSystemStorage.toRelativePath(anyString())).thenAnswer(inv -> inv.getArgument(0));
+        when(fileSystemStorage.toRelativePath(anyString())).thenAnswer(inv -> inv.getArgument(0));
 
         projectService.createProjectOnDisk("blank_token_proj");
         Project project = projectService.getProject("blank_token_proj");

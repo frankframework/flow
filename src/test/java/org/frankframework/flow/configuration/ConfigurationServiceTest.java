@@ -107,10 +107,8 @@ class ConfigurationServiceTest {
         Path file = tempDir.resolve("config.xml");
         Files.writeString(file, "<old/>", StandardCharsets.UTF_8);
 
-        // Call the service
         configurationService.updateConfiguration("proj", file.toString(), "<new/>");
 
-        // Verify the file was physically written to disk
         assertEquals("<new/>", Files.readString(file, StandardCharsets.UTF_8));
         verify(fileSystemStorage).writeFile(file.toString(), "<new/>");
     }
@@ -141,7 +139,6 @@ class ConfigurationServiceTest {
 
         assertNotNull(result);
 
-        // Verify the file was created on disk
         Path expectedFile = projectDir.resolve("src/main/configurations/NewConfig.xml");
         assertTrue(Files.exists(expectedFile), "NewConfig.xml should be created on disk");
     }
@@ -183,7 +180,6 @@ class ConfigurationServiceTest {
 
         assertNotNull(result);
 
-        // Verify the file was created on disk
         assertTrue(Files.exists(projectDir.resolve("Nested.xml")), "Nested.xml should be created on disk");
     }
 

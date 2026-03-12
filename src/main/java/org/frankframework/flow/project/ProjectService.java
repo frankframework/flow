@@ -307,8 +307,6 @@ public class ProjectService {
             throw new IOException("Invalid project path: " + absPath);
         }
 
-        // We no longer read XML files into memory here.
-        // We just return the lightweight project object.
         return new Project(absPath.getFileName().toString(), absPath.toString());
     }
 
