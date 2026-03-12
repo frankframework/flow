@@ -192,12 +192,13 @@ function FlowCanvas() {
 
   useEffect(() => {
     if (!pendingImmediateSave) return
-    useNodeContextStore.getState().setPendingImmediateSave(false)
     if (autoSaveTimerRef.current) {
       clearTimeout(autoSaveTimerRef.current)
       autoSaveTimerRef.current = null
     }
-    void saveFlow()
+    void saveFlow().finally(() => {
+      useNodeContextStore.getState().setPendingImmediateSave(false)
+    })
   }, [pendingImmediateSave, saveFlow])
 
   const sourceInfoReference = useRef<{

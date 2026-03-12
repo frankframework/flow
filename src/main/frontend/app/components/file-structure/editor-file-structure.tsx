@@ -223,7 +223,7 @@ export default function EditorFileStructure() {
     return (
       <Icon
         onClick={handleClick}
-        onContextMenu={(e) => ctxMenu.openContextMenu(e, item.index)}
+        onContextMenu={(mouseEvent) => ctxMenu.openContextMenu(mouseEvent, item.index)}
         className="rct-tree-item-arrow-isFolder rct-tree-item-arrow fill-foreground"
       />
     )
