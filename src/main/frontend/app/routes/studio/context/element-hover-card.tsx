@@ -1,4 +1,4 @@
-import {useFFDoc, useJavadocTransform} from "@frankframework/doc-library-react";
+import { useFFDoc, useJavadocTransform } from '@frankframework/doc-library-react'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { ElementDetails } from '~/types/ff-doc.types'
