@@ -1,3 +1,4 @@
+import {useFFDoc, useJavadocTransform} from "@frankframework/doc-library-react";
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { ElementDetails } from '~/types/ff-doc.types'
@@ -26,6 +27,10 @@ export default function ElementHoverCard({
   const [labelGroup, label] = getFirstLabelGroup(element.labels)
   const route = element.labels ? [labelGroup, label, element.name].join('/') : element.className
   const frankdocUrl = `https://frankdoc.frankframework.org/#/${route}`
+  const { elements } = useFFDoc()
+  const description = useJavadocTransform(element.description ?? '', elements, false, (link) => {
+    return `<a href="https://frankdoc.frankframework.org/#/${link.href}" target="_blank">${link.text}</a>`
+  })
 
   useLayoutEffect(() => {
     if (!ref.current || !anchorRect) return
@@ -87,7 +92,7 @@ export default function ElementHoverCard({
       }}
       className="border-border bg-background flex max-h-[70vh] max-w-[40vw] flex-col rounded-md border text-sm shadow-lg"
     >
-      <div className="bg-backdrop h-[4px] w-full flex-shrink-0">
+      <div className="bg-backdrop h-1 w-full shrink-0">
         <div
           className="bg-foreground-active h-full transition-all duration-1000 ease-linear"
           style={{ width: `${fillWidth}%` }}
@@ -115,7 +120,7 @@ export default function ElementHoverCard({
           {element.deprecated && (
             <span
               key={'deprecated'}
-              className="mr-1 rounded-full border border-[var(--label-border-deprecated)] bg-[var(--label-deprecated)] p-2"
+              className="mr-1 rounded-full border border-(--label-border-deprecated) bg-(--label-deprecated) p-2"
             >
               Deprecated
             </span>
@@ -134,7 +139,7 @@ export default function ElementHoverCard({
               </span>
             ))}
         </div>
-        {element.description && <p className="text-sm" dangerouslySetInnerHTML={{ __html: element.description }} />}
+        {element.description && <p className="text-sm" dangerouslySetInnerHTML={description} />}
       </div>
     </div>,
     document.body,
