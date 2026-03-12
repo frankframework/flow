@@ -1,4 +1,4 @@
-import { type Dispatch, type SetStateAction, useState } from 'react'
+import { type Dispatch, useState } from 'react'
 import SourceDefinitionComponent from '~/components/datamapper/source-schema-definition'
 import UploadImportButton from '~/components/datamapper/upload-import-button'
 import Button from '~/components/inputs/button'
@@ -12,10 +12,9 @@ interface InitializeProperties {
   config: MappingListConfig
   configDispatch: Dispatch<ConfigActions>
   confirmed: boolean
-  setConfirmed: Dispatch<SetStateAction<boolean>>
 }
 
-function Initialize({ config, configDispatch, confirmed, setConfirmed }: InitializeProperties) {
+function Initialize({ config, configDispatch, confirmed }: InitializeProperties) {
   const datatypes: DataTypeSchema = datatypesJson as DataTypeSchema
   const [sources, setSources] = useState<number[]>([])
 
@@ -27,6 +26,8 @@ function Initialize({ config, configDispatch, confirmed, setConfirmed }: Initial
 
   const configTargetDispatch = (value: string) =>
     configDispatch({ type: 'SET_TARGET_FORMAT', payload: findDataType(value) })
+
+  const configConfirmDispatched = () => configDispatch({ type: 'SET_STAGE', payload: 'Mapping' })
 
   // Manual export
   const handleManualExport = () => {
@@ -85,7 +86,7 @@ function Initialize({ config, configDispatch, confirmed, setConfirmed }: Initial
         <Button
           className="bg-foreground-active disabled:bg-backdrop disabled:text-foreground-muted font-medium text-[var(--color-neutral-900)] transition hover:brightness-110"
           disabled={confirmed || !config.formatTypes.target || !config.formatTypes.source}
-          onClick={() => setConfirmed(true)}
+          onClick={configConfirmDispatched}
         >
           Confirm types
         </Button>
