@@ -32,6 +32,7 @@ import useNodeContextStore from '~/stores/node-context-store'
 import CreateNodeModal from '~/components/flow/create-node-modal'
 import { useProjectStore } from '~/stores/project-store'
 import { clearConfigurationCache, fetchConfigurationCached, saveConfiguration } from '~/services/configuration-service'
+import useEditorTabStore from '~/stores/editor-tab-store'
 import { cloneWithRemappedIds } from '~/utils/flow-utils'
 import { showErrorToast } from '~/components/toast'
 import clsx from 'clsx'
@@ -106,18 +107,20 @@ function FlowCanvas() {
   const project = useProjectStore.getState().project
 
   const saveFlow = useCallback(async () => {
-    const flowData = reactFlowRef.current.toObject()
+    const { nodes: flowNodes, edges: flowEdges, viewport: flowViewport } = useFlowStore.getState()
+    const flowData = { nodes: flowNodes, edges: flowEdges, viewport: flowViewport }
+    const currentProject = useProjectStore.getState().project
     const activeTabKey = useTabStore.getState().activeTab
     const tabData = useTabStore.getState().getTab(activeTabKey)
     const configurationPath = tabData?.configurationPath
     const adapterName = tabData?.name
     const adapterPosition = tabData?.adapterPosition
 
-    if (!configurationPath || !adapterName || !project) return
+    if (!configurationPath || !adapterName || !currentProject) return
 
     setSaveStatus('saving')
     try {
-      const fullConfigXml = await fetchConfigurationCached(project.name, configurationPath)
+      const fullConfigXml = await fetchConfigurationCached(currentProject.name, configurationPath)
       const configDoc = new DOMParser().parseFromString(fullConfigXml, 'text/xml')
       const allAdapters = [...configDoc.querySelectorAll('Adapter, adapter')]
 
@@ -134,7 +137,7 @@ function FlowCanvas() {
 
       const newAdapterXml = await exportFlowToXml(
         flowData,
-        project.name,
+        currentProject.name,
         configurationPath,
         adapterName,
         existingAdapterXml,
@@ -148,8 +151,9 @@ function FlowCanvas() {
 
       const updatedConfigXml = new XMLSerializer().serializeToString(configDoc).replace(/^<\?xml[^?]*\?>\s*/, '')
 
-      await saveConfiguration(project.name, configurationPath, updatedConfigXml)
-      clearConfigurationCache(project.name, configurationPath)
+      await saveConfiguration(currentProject.name, configurationPath, updatedConfigXml)
+      clearConfigurationCache(currentProject.name, configurationPath)
+      useEditorTabStore.getState().refreshAllTabs()
 
       setSaveStatus('saved')
       if (savedTimerRef.current) clearTimeout(savedTimerRef.current)
@@ -185,6 +189,17 @@ function FlowCanvas() {
       scheduleAutoSave()
     }
   }, [nodes, edges, scheduleAutoSave])
+
+  useEffect(() => {
+    useNodeContextStore.getState().registerSaveFlow(async () => {
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current)
+        autoSaveTimerRef.current = null
+      }
+      await saveFlow()
+    })
+    return () => useNodeContextStore.getState().registerSaveFlow(null)
+  }, [saveFlow])
 
   const sourceInfoReference = useRef<{
     nodeId: string | null

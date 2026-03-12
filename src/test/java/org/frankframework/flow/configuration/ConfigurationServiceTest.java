@@ -107,13 +107,10 @@ class ConfigurationServiceTest {
         Path file = tempDir.resolve("config.xml");
         Files.writeString(file, "<old/>", StandardCharsets.UTF_8);
 
-        when(projectService.updateConfigurationXml("proj", file.toString(), "<new/>"))
-                .thenReturn(true);
-
         configurationService.updateConfiguration("proj", file.toString(), "<new/>");
 
         assertEquals("<new/>", Files.readString(file, StandardCharsets.UTF_8));
-        verify(projectService).updateConfigurationXml("proj", file.toString(), "<new/>");
+        verify(fileSystemStorage).writeFile(file.toString(), "<new/>");
     }
 
     @Test
@@ -141,12 +138,9 @@ class ConfigurationServiceTest {
         Project result = configurationService.addConfiguration("myproject", "NewConfig.xml");
 
         assertNotNull(result);
+
         Path expectedFile = projectDir.resolve("src/main/configurations/NewConfig.xml");
         assertTrue(Files.exists(expectedFile), "NewConfig.xml should be created on disk");
-        assertTrue(
-                result.getConfigurations().stream()
-                        .anyMatch(c -> c.getFilepath().endsWith("NewConfig.xml")),
-                "Configuration should be registered in project");
     }
 
     @Test
@@ -185,9 +179,8 @@ class ConfigurationServiceTest {
                 configurationService.addConfigurationToFolder("myproject", "Nested.xml", projectDir.toString());
 
         assertNotNull(result);
-        assertTrue(Files.exists(projectDir.resolve("Nested.xml")), "Nested.xml should be created");
-        assertTrue(result.getConfigurations().stream()
-                .anyMatch(c -> c.getFilepath().endsWith("Nested.xml")));
+
+        assertTrue(Files.exists(projectDir.resolve("Nested.xml")), "Nested.xml should be created on disk");
     }
 
     @Test

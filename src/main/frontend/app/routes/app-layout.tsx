@@ -3,28 +3,27 @@ import Navbar from '~/components/navbar/navbar'
 import { FrankConfigXsdProvider } from '~/providers/frankconfig-xsd-provider'
 import AppContent from '~/components/app-content'
 import { useEffect, useState } from 'react'
-import { useProjectStore, getStoredProjectName } from '~/stores/project-store'
-import { fetchProject } from '~/services/project-service'
+import { useProjectStore, getStoredProjectRootPath } from '~/stores/project-store'
+import { openProject } from '~/services/project-service'
 import LoadingSpinner from '~/components/loading-spinner'
-import type { Project } from '~/types/project.types'
 import { apiUrl } from '~/utils/api'
 
 export default function AppLayout() {
-  const [restoring, setRestoring] = useState(!!getStoredProjectName())
+  const [restoring, setRestoring] = useState(!!getStoredProjectRootPath())
 
   useEffect(() => {
-    const storedName = getStoredProjectName()
-    if (!storedName) {
+    const rootPath = getStoredProjectRootPath()
+    if (!rootPath) {
       setRestoring(false)
       return
     }
 
-    fetchProject(storedName)
-      .then((fetched: Project) => {
+    openProject(rootPath)
+      .then((fetched) => {
         useProjectStore.getState().setProject(fetched)
       })
       .catch(() => {
-        sessionStorage.removeItem('active-project-name')
+        useProjectStore.getState().clearProject()
       })
       .finally(() => {
         setRestoring(false)

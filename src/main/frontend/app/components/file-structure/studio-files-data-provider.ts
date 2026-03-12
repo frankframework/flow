@@ -46,6 +46,13 @@ export default class FilesDataProvider extends BaseFilesDataProvider<StudioItemD
     }
   }
 
+  public override async reloadDirectory(_itemId: TreeItemIndex): Promise<void> {
+    this.data = {}
+    this.loadedDirectories.clear()
+    await this.loadRoot()
+    this.notifyListeners(Object.keys(this.data))
+  }
+
   private async loadRoot() {
     const tree = await fetchProjectTree(this.projectName)
 
@@ -128,6 +135,24 @@ export default class FilesDataProvider extends BaseFilesDataProvider<StudioItemD
       },
       isFolder,
       children: isFolder ? [] : undefined,
+    }
+
+    if (isFolder && child.name.endsWith('.xml') && child.adapterNames?.length) {
+      for (const [i, adapterName] of child.adapterNames.entries()) {
+        const adapterIndex = `${index}/${adapterName}::${i}`
+        this.data[adapterIndex] = {
+          index: adapterIndex,
+          data: { adapterName, configPath: child.path, adapterPosition: i },
+          isFolder: false,
+        }
+        this.data[index].children!.push(adapterIndex)
+      }
+      this.loadedDirectories.add(child.path)
+    } else if (child.type === 'DIRECTORY' && child.children != null) {
+      for (const subChild of sortChildren(child.children)) {
+        this.data[index].children!.push(this.buildChildItem(index, subChild))
+      }
+      this.loadedDirectories.add(child.path)
     }
 
     return index

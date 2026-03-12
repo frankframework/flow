@@ -5,6 +5,12 @@ export async function fetchProjectTree(projectName: string, signal?: AbortSignal
   return apiFetch<FileTreeNode>(`/projects/${encodeURIComponent(projectName)}/tree/configurations`, { signal })
 }
 
+export async function fetchShallowConfigurationsTree(projectName: string, signal?: AbortSignal): Promise<FileTreeNode> {
+  return apiFetch<FileTreeNode>(`/projects/${encodeURIComponent(projectName)}/tree/configurations?shallow=true`, {
+    signal,
+  })
+}
+
 export async function fetchProjectRootTree(projectName: string, signal?: AbortSignal): Promise<FileTreeNode> {
   return apiFetch<FileTreeNode>(`/projects/${encodeURIComponent(projectName)}/tree`, { signal })
 }
