@@ -92,7 +92,7 @@ export default function ElementHoverCard({
       }}
       className="border-border bg-background flex max-h-[70vh] max-w-[40vw] flex-col rounded-md border text-sm shadow-lg"
     >
-      <div className="bg-backdrop h-[4px] w-full flex-shrink-0">
+      <div className="bg-backdrop h-1 w-full shrink-0">
         <div
           className="bg-foreground-active h-full transition-all duration-1000 ease-linear"
           style={{ width: `${fillWidth}%` }}
@@ -120,7 +120,7 @@ export default function ElementHoverCard({
           {element.deprecated && (
             <span
               key={'deprecated'}
-              className="mr-1 rounded-full border border-[var(--label-border-deprecated)] bg-[var(--label-deprecated)] p-2"
+              className="mr-1 rounded-full border border-(--label-border-deprecated) bg-(--label-deprecated) p-2"
             >
               Deprecated
             </span>
