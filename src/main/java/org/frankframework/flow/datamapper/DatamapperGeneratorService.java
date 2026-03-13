@@ -2,7 +2,9 @@ package org.frankframework.flow.datamapper;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.StringReader;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import javax.xml.transform.stream.StreamSource;
@@ -27,29 +29,28 @@ public class DatamapperGeneratorService {
         this.fileTreeService = fileTreeService;
     }
 
-    private String getConfigFilePath(String projectName) throws ApiException {
-        return getDatamapperDir(projectName).resolve("generationFile.json").toString();
+    private Path getConfigFilePath(String projectName) throws ConfigurationNotFoundException {
+        return getDatamapperDir(projectName).resolve("generationFile.json");
     }
 
-    private Path getDatamapperDir(String projectName) throws ApiException {
+    private Path getDatamapperDir(String projectName) throws ConfigurationNotFoundException{
         try {
-            return Path.of(fileTreeService
+            return fileSystemStorage.toAbsolutePath(fileTreeService
                             .getConfigurationsDirectoryTree(projectName)
                             .getPath())
                     .resolve("datamapper");
         } catch (IOException e) {
-            throw new ApiException(
-                    "Failed to resolve configuration file path for project: " + projectName,
-                    HttpStatus.INTERNAL_SERVER_ERROR);
+            throw new ConfigurationNotFoundException(
+                    "Failed to resolve configuration file path for project: " + projectName);
         }
     }
 
     public void saveGenerationFile(String projectName, String content) throws ApiException {
-        Path relativePath;
+        Path configurationPath;
         Path datamapperDir = getDatamapperDir(projectName);
 
         try {
-            relativePath = Path.of(getConfigFilePath(projectName));
+            configurationPath = getConfigFilePath(projectName);
 
             if (!Files.isDirectory(datamapperDir)) {
                 Files.createDirectory(datamapperDir);
@@ -59,29 +60,29 @@ public class DatamapperGeneratorService {
                     "Failed to resolve configuration file path for project: " + projectName, HttpStatus.NOT_FOUND);
         }
 
-        if (Files.isDirectory(relativePath)) {
+        if (Files.isDirectory(configurationPath)) {
             throw new ApiException(
-                    "Cannot update configuration because path is a directory: " + relativePath,
+                    "Cannot update configuration because path is a directory: " + configurationPath,
                     HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
         try {
-            if (Files.notExists(relativePath)) {
-                fileSystemStorage.createFile(relativePath.toString());
+            if (Files.notExists(configurationPath)) {
+                fileSystemStorage.createFile(configurationPath.toString());
             }
 
-            fileSystemStorage.writeFile(relativePath.toString(), content);
+            fileSystemStorage.writeFile(configurationPath.toString(), content);
 
         } catch (IOException e) {
             throw new ApiException(
-                    "Failed to update configuration file: " + relativePath, HttpStatus.INTERNAL_SERVER_ERROR);
+                    "Failed to update configuration file: " + configurationPath, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     private void deleteGenerationFile(String projectName) throws ApiException {
         try {
 
-            fileSystemStorage.delete(getConfigFilePath(projectName));
+            fileSystemStorage.delete(getConfigFilePath(projectName).toString());
 
         } catch (IOException e) {
             throw new ApiException(
@@ -91,7 +92,7 @@ public class DatamapperGeneratorService {
 
     public void generateFromProject(String projectName, String content) throws ApiException {
         saveGenerationFile(projectName, content);
-        generate(getConfigFilePath(projectName), getDatamapperDir(projectName) + "/export.xslt");
+        generate(getConfigFilePath(projectName).toString(), getDatamapperDir(projectName).resolve("export.xslt").toString());
         deleteGenerationFile(projectName);
     }
 
@@ -114,16 +115,23 @@ public class DatamapperGeneratorService {
         XsltCompiler compiler = processor.newXsltCompiler();
         XsltExecutable executable = null;
         try {
-            executable = compiler.compile(new StreamSource(
-                    new File("src/main/java/org/frankframework/flow/datamapper/mappingGenerator.xslt")));
+            URL xsltUrl = getClass().getClassLoader().getResource("datamapper/mappingGenerator.xslt");
+
+            if (xsltUrl == null) {
+                throw new RuntimeException("mappingGenerator.xslt not found");
+            }
+
+            StreamSource source = new StreamSource(xsltUrl.openStream());
+            source.setSystemId(xsltUrl.toExternalForm());
+
+            executable = compiler.compile(source);
 
             Xslt30Transformer transformer = executable.load30();
 
             String xmlParams = "<params><jsonPath>" + absolutePath.toUri() + "</jsonPath></params>";
             StreamSource paramsSource = new StreamSource(new StringReader(xmlParams));
-
             Serializer out =
-                    processor.newSerializer(new File(String.valueOf(fileSystemStorage.toAbsolutePath(outputPath))));
+                    processor.newSerializer(fileSystemStorage.toAbsolutePath(outputPath).toFile());
 
             out.setOutputProperty(Serializer.Property.METHOD, "xml");
             out.setOutputProperty(Serializer.Property.INDENT, "yes");

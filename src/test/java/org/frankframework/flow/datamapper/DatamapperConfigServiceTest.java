@@ -94,6 +94,8 @@ public class DatamapperConfigServiceTest {
     public void readFileContent_Success() throws IOException, ConfigurationNotFoundException {
         stubReadFile();
         stubGetConfigurationsDirectoryTree();
+        stubToAbsolutePath();
+
 
         Path datamapperDir = tempProjectRoot.resolve("datamapper");
         if (!Files.isDirectory(datamapperDir)) {
@@ -113,6 +115,7 @@ public class DatamapperConfigServiceTest {
     public void readFileContent_FileNotFound() throws IOException {
         stubReadFile();
         stubGetConfigurationsDirectoryTree();
+        stubToAbsolutePath();
 
         assertThrows(ConfigurationNotFoundException.class, () -> datamapperConfigService.getConfig(TEST_PROJECT_NAME));
     }
