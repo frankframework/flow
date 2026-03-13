@@ -40,7 +40,8 @@ public class DatamapperGeneratorService {
                     .resolve("datamapper");
         } catch (IOException e) {
             throw new ApiException(
-                    "Failed to resolve configuration file path for project: " + projectName, HttpStatus.INTERNAL_SERVER_ERROR);
+                    "Failed to resolve configuration file path for project: " + projectName,
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
