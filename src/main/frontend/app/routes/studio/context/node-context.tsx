@@ -232,6 +232,7 @@ export default function NodeContext({
         setShowNodeContext(false)
         setParentId(null)
         setChildParentId(null)
+        void useNodeContextStore.getState().saveFlow?.()
         return
       }
       updateChild(parentNode.id, updatedChild)
@@ -239,6 +240,7 @@ export default function NodeContext({
       setShowNodeContext(false)
       setParentId(null)
       setChildParentId(null)
+      void useNodeContextStore.getState().saveFlow?.()
       return
     }
 
@@ -250,6 +252,7 @@ export default function NodeContext({
       setIsNewNode(false)
       setIsEditing(false)
       setShowNodeContext(false)
+      void useNodeContextStore.getState().saveFlow?.()
       return
     }
     setAttributes(nodeId.toString(), newAttributesObject)
@@ -258,6 +261,7 @@ export default function NodeContext({
     }
     setIsEditing(false)
     setShowNodeContext(false)
+    void useNodeContextStore.getState().saveFlow?.()
   }
 
   const canSaveRef = useRef(canSave)

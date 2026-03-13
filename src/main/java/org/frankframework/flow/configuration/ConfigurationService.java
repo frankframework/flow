@@ -36,23 +36,23 @@ public class ConfigurationService {
             throw new ConfigurationNotFoundException("Invalid configuration path: " + filepath);
         }
 
-        return fileSystemStorage.readFile(filepath);
+        return fileSystemStorage.readFile(filePath.toString());
     }
 
     public void updateConfiguration(String projectName, String filepath, String content)
-            throws IOException, ConfigurationNotFoundException, ProjectNotFoundException {
-        Path filePath = fileSystemStorage.toAbsolutePath(filepath);
+            throws IOException, ConfigurationNotFoundException {
+        Path absolutePath = fileSystemStorage.toAbsolutePath(filepath);
 
-        if (!Files.exists(filePath)) {
+        if (!Files.exists(absolutePath)) {
             throw new ConfigurationNotFoundException("Invalid file path: " + filepath);
         }
 
-        if (Files.isDirectory(filePath)) {
+        if (Files.isDirectory(absolutePath)) {
             throw new ConfigurationNotFoundException("Invalid file path: " + filepath);
         }
 
-        fileSystemStorage.writeFile(filepath, content);
-        projectService.updateConfigurationXml(projectName, filepath, content);
+        // Just write to the disk. ProjectService reads directly from disk now!
+        fileSystemStorage.writeFile(absolutePath.toString(), content);
     }
 
     public Project addConfiguration(String projectName, String configurationName)
@@ -61,7 +61,10 @@ public class ConfigurationService {
 
         Path absProjectPath = fileSystemStorage.toAbsolutePath(project.getRootPath());
         Path configDir = absProjectPath.resolve(CONFIGURATIONS_DIR).normalize();
-        Files.createDirectories(configDir);
+
+        if (!Files.exists(configDir)) {
+            Files.createDirectories(configDir);
+        }
 
         Path filePath = configDir.resolve(configurationName).normalize();
         if (!filePath.startsWith(configDir)) {
@@ -71,9 +74,7 @@ public class ConfigurationService {
         String defaultXml = loadDefaultConfigurationXml();
         fileSystemStorage.writeFile(filePath.toString(), defaultXml);
 
-        Configuration configuration = new Configuration(filePath.toString());
-        configuration.setXmlContent(defaultXml);
-        project.addConfiguration(configuration);
+        // Returning the project handles everything, as 'toDto' will pick up the new file
         return project;
     }
 
@@ -88,7 +89,9 @@ public class ConfigurationService {
             throw new SecurityException("Configuration location must be within the project directory");
         }
 
-        Files.createDirectories(targetDir);
+        if (!Files.exists(targetDir)) {
+            Files.createDirectories(targetDir);
+        }
 
         Path filePath = targetDir.resolve(configurationName).normalize();
         if (!filePath.startsWith(targetDir)) {
@@ -102,9 +105,6 @@ public class ConfigurationService {
         String defaultXml = loadDefaultConfigurationXml();
         fileSystemStorage.writeFile(filePath.toString(), defaultXml);
 
-        Configuration configuration = new Configuration(filePath.toString());
-        configuration.setXmlContent(defaultXml);
-        project.addConfiguration(configuration);
         return project;
     }
 
