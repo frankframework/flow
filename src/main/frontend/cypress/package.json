@@ -2,11 +2,16 @@
   "name": "ff-frontend-flow-e2e",
   "version": "0.0.0",
   "private": true,
-  "devDependencies": {
-    "cypress": "^15.0.0",
-    "cypress-multi-reporters": "^2.0.5",
-    "mocha": "^11.7.2",
-    "mochawesome": "^7.1.3"
+  "scripts": {
+    "postinstall": "cypress install",
+    "test": "cypress run",
+    "test:open": "cypress open"
   },
-  "packageManager": "pnpm@10.14.0+sha512.ad27a79641b49c3e481a16a805baa71817a04bbe06a38d17e60e2eaee83f6a146c6a688125f5792e48dd5ba30e7da52a5cda4c3992b9ccf333f9ce223af84748"
+  "devDependencies": {
+    "cypress": "^15.11.0",
+    "cypress-multi-reporters": "^2.0.5",
+    "mocha": "^11.7.5",
+    "mochawesome": "^7.1.4"
+  },
+  "packageManager": "pnpm@10.32.1+sha512.a706938f0e89ac1456b6563eab4edf1d1faf3368d1191fc5c59790e96dc918e4456ab2e67d613de1043d2e8c81f87303e6b40d4ffeca9df15ef1ad567348f2be"
 }

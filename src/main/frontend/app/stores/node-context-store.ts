@@ -1,5 +1,5 @@
+import type { Attribute } from '@frankframework/doc-library-core'
 import { create } from 'zustand'
-import type { Attribute } from '~/types/ff-doc.types'
 
 interface NodeContextStore {
   attributes: Record<string, Attribute> | undefined
