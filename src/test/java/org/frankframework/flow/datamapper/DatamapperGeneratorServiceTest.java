@@ -230,6 +230,7 @@ public class DatamapperGeneratorServiceTest {
     public void testSaveGenerationFileOverwrite() throws IOException, ApiException {
         stubWriteFile();
         stubGetConfigurationsDirectoryTree();
+        stubToAbsolutePath();
 
         Path datamapperDir = tempProjectRoot.resolve("datamapper");
         if (!Files.isDirectory(datamapperDir)) {
@@ -251,6 +252,7 @@ public class DatamapperGeneratorServiceTest {
     public void testSaveGenerationFile() throws IOException, ApiException {
         stubWriteFile();
         stubGetConfigurationsDirectoryTree();
+        stubToAbsolutePath();
 
         Path datamapperDir = tempProjectRoot.resolve("datamapper");
         if (!Files.isDirectory(datamapperDir)) {
