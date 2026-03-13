@@ -19,8 +19,30 @@ export default class EditorFilesDataProvider extends BaseFilesDataProvider<FileN
     this.projectName = projectName
   }
 
-  public async init() {
+  private expandedItems: string[] = []
+
+  public async init(expandedItems: string[] = []) {
+    this.expandedItems = expandedItems
     await this.fetchAndBuildTree()
+    await this.preloadExpandedItems()
+  }
+
+  private async preloadExpandedItems() {
+    const sortedIds = [...this.expandedItems].toSorted((a, b) => a.split('/').length - b.split('/').length)
+    for (const id of sortedIds) {
+      if (id === 'root') continue
+      const item = this.data[id]
+      if (!item || !item.isFolder) continue
+      await this.loadDirectory(id)
+    }
+  }
+
+  public override async reloadDirectory(_itemId: TreeItemIndex): Promise<void> {
+    this.data = {}
+    this.loadedDirectories.clear()
+    await this.fetchAndBuildTree()
+    await this.preloadExpandedItems()
+    this.notifyListeners(Object.keys(this.data))
   }
 
   private async fetchAndBuildTree() {
@@ -86,7 +108,7 @@ export default class EditorFilesDataProvider extends BaseFilesDataProvider<FileN
         children: isDirectory ? this.buildChildren(childIndex, child.children) : undefined,
       }
 
-      if (isDirectory) {
+      if (isDirectory && child.children != null) {
         this.loadedDirectories.add(child.path)
       }
 

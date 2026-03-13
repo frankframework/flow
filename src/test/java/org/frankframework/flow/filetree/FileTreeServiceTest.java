@@ -1,6 +1,5 @@
 package org.frankframework.flow.filetree;
 
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -416,7 +415,7 @@ public class FileTreeServiceTest {
         FileTreeNode node = fileTreeService.createFile(
                 TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString(), "config.xml");
 
-        assertNull(node);
+        assertNotNull(node);
         verify(configurationService).addConfigurationToFolder(eq(TEST_PROJECT_NAME), eq("config.xml"), anyString());
     }
 

@@ -71,7 +71,7 @@ export function useFlowManagement({
     //Set the correct type of the node
     let type: string
 
-    if (data.variableType.includes('object')) {
+    if (data.variableType.includes('object') || data.variableType.includes('array')) {
       type = 'labeledGroup'
     } else if (data.variableType.includes('schematic')) {
       type = 'extraSourceNode'
@@ -90,7 +90,11 @@ export function useFlowManagement({
     }
 
     //Add empty padding in case the item is an object, purely visual
-    if (data.variableType.includes('object') || data.variableType.includes('schematic')) {
+    if (
+      data.variableType.includes('object') ||
+      data.variableType.includes('schematic') ||
+      data.variableType.includes('array')
+    ) {
       newNode.height = GROUP_PADDING_TOP * 3
     }
 
@@ -128,7 +132,7 @@ export function useFlowManagement({
       const counter = side === 'source' ? sourceIdCounter.current++ : targetIdCounter.current++
       //use counter in id
       resolvedId =
-        variableType === 'object' || variableType === 'schematic'
+        variableType === 'object' || variableType === 'schematic' || variableType == 'array'
           ? `${parentId}-group-${counter}`
           : `${parentId}-item-${counter}`
     }
@@ -170,7 +174,8 @@ export function useFlowManagement({
       if (duplicate) throw new DuplicateLabelException('Duplicate property not allowed! Change property name.')
     }
     //Change type to object if needed.
-    const updatedType = data.variableType.includes('object') ? 'labeledGroup' : `${side}Only`
+    const updatedType =
+      data.variableType.includes('object') || data.variableType.includes('array') ? 'labeledGroup' : `${side}Only`
     data.variableTypeBasic = formatType?.properties.find(
       (propertyDefinition) => propertyDefinition.name == updatedType,
     )?.type
@@ -379,7 +384,7 @@ export function useFlowManagement({
         currentNodeId = await addNodeSequential(
           side,
           labelPrefix || 'Array',
-          'array', // treat arrays as objects
+          'array',
           object.defaultValue,
           parentNodeId,
         )
@@ -395,67 +400,74 @@ export function useFlowManagement({
 
   // Imports an XSD schema into a table
   async function importXsdSchema(xmlText: string, side: 'source' | 'target', parentId: string | null) {
-    // Initialize SAX parser
     const parser = new SAXParser(true, { trim: true, normalize: true })
 
-    // Map to store named complex types
     const typeMap = new Map<string, XsdComplexType>()
-    const complexStack: XsdComplexType[] = [] // Stack for nested complex types
-    const rootElements: XsdElement[] = [] // Root-level elements
+    const complexStack: XsdComplexType[] = []
+    const rootElements: XsdElement[] = []
 
-    // Handler for opening tags
     parser.onopentag = (node: { name: string; attributes: SaxAttributes }) => {
       const { name: tagName, attributes: attrs } = node
 
-      // Detect complexType definition
+      // complexType
       if (tagName.endsWith('complexType')) {
-        const typeName = attrs['name'] ?? ''
-        complexStack.push({ '@_name': typeName, 'xs:sequence': undefined })
+        const typeName = attrs['name'] || ''
+        const complexType: XsdComplexType = { '@_name': typeName || undefined, 'xs:sequence': undefined }
+
+        // Attach to current element if unnamed
+        const currentElement =
+          complexStack.length > 0 ? complexStack.at(-1)!['xs:sequence']?.xs.element?.at(-1) : rootElements.at(-1)
+
+        if (currentElement && !typeName) currentElement['xs:complexType'] = complexType
+
+        complexStack.push(complexType)
       }
 
-      // Detect sequence inside a complexType
+      // sequence
       if ((tagName === 'xs:sequence' || tagName === 'xsd:sequence') && complexStack.length > 0) {
         complexStack.at(-1)!['xs:sequence'] = { xs: { element: [] } }
       }
 
-      // Detect element definitions
+      // element
       if (tagName.endsWith('element')) {
         const element: XsdElement = {
           '@_name': attrs['name'],
           '@_type': attrs['type'],
           '@_maxOccurs': attrs['maxOccurs'],
+          '@_minOccurs': attrs['minOccurs'],
           '@_default': attrs['default'],
         }
 
-        // If inside a sequence of a complexType, add to sequence
         if (complexStack.length > 0 && complexStack.at(-1)!['xs:sequence']) {
-          const lastSequence = complexStack.at(-1)!['xs:sequence']!.xs.element
-          if (Array.isArray(lastSequence)) {
-            lastSequence.push(element)
-          }
+          complexStack.at(-1)!['xs:sequence']!.xs.element.push(element)
         } else {
-          // Otherwise, this is a root-level element
           rootElements.push(element)
         }
       }
+
+      // attribute
+      if (tagName.endsWith('attribute') && complexStack.length > 0) {
+        const currentType = complexStack.at(-1)!
+        if (!currentType['xs:attribute']) currentType['xs:attribute'] = []
+        currentType['xs:attribute'].push({
+          '@_name': attrs['name'],
+          '@_type': attrs['type'],
+          '@_use': attrs['use'],
+        })
+      }
     }
 
-    // Handler for closing tags
     parser.onclosetag = (tagName: string) => {
-      // Complete a complexType and store it in the map
       if (tagName.endsWith('complexType') && complexStack.length > 0) {
         const completed = complexStack.pop()!
         if (completed['@_name']) typeMap.set(completed['@_name'], completed)
       }
     }
 
-    // Parse the XML
     parser.write(xmlText).close()
 
-    // Track already visited types to prevent infinite recursion
     const visitedTypes = new Set<string>()
 
-    // Adds a single element node to the table
     async function addElementNode(element: XsdElement, parentNodeId: string | null) {
       const name = element['@_name']
       const typeName = element['@_type']
@@ -464,21 +476,16 @@ export function useFlowManagement({
       const isArray = element['@_maxOccurs'] && element['@_maxOccurs'] !== '1'
       let nodeId: string
 
-      // If element type is a named complexType
       if (typeName && typeMap.has(typeName)) {
         nodeId = await addNodeSequential(side, name, isArray ? 'array' : 'object', undefined, parentNodeId)
-
-        // Traverse children of complexType if not already visited
         if (!visitedTypes.has(typeName)) {
           visitedTypes.add(typeName)
           await traverseComplexType(typeMap.get(typeName)!, nodeId)
         }
       } else if (element['xs:complexType']) {
-        // Inline complexType definition
         nodeId = await addNodeSequential(side, name, isArray ? 'array' : 'object', undefined, parentNodeId)
         await traverseComplexType(element['xs:complexType'], nodeId)
       } else {
-        // Primitive type or unknown type
         const prop = resolveType(side, typeName)
         nodeId = await addNodeSequential(side, name, prop.name, element['@_default'], parentNodeId)
       }
@@ -486,41 +493,41 @@ export function useFlowManagement({
       return nodeId
     }
 
-    // Traverses a complexType and adds all its child elements
     async function traverseComplexType(type: XsdComplexType, parentNodeId: string) {
       const sequence = type['xs:sequence']
-      if (!sequence?.xs?.element) return
+      if (sequence?.xs?.element) {
+        const elements: XsdElement[] = Array.isArray(sequence.xs.element) ? sequence.xs.element : [sequence.xs.element]
+        for (const elem of elements) {
+          await addElementNode(elem, parentNodeId)
+        }
+      }
 
-      const elements: XsdElement[] = Array.isArray(sequence.xs.element) ? sequence.xs.element : [sequence.xs.element]
-
-      for (const element of elements) {
-        await addElementNode(element, parentNodeId)
+      if (type['xs:attribute']) {
+        for (const attr of type['xs:attribute']) {
+          const prop = resolveType(side, attr['@_type'])
+          await addNodeSequential(side, attr['@_name'], prop.name, undefined, parentNodeId)
+        }
       }
     }
 
-    // --- Add ALL root elements, including the first one ---
     for (const rootElement of rootElements) {
       await addElementNode(rootElement, parentId)
     }
   }
 
-  // Resolves primitive type or fallback
+  // Resolves primitive type
   function resolveType(side: 'source' | 'target', rawType?: string): { name: string; basicType: string } {
     const format = config.formatTypes?.[side]
     if (!format) throw new Error(`No format configuration for side "${side}"`)
 
     if (!rawType) {
-      const fallback = format.properties.find((property) => property.name === 'string')
-      if (!fallback) throw new Error('No default string type configured')
-      return { name: fallback.name, basicType: fallback.type }
+      throw new Error('No default string type configured')
     }
 
     const normalized = rawType.replace(/^xs:/, '').replace(/^xsd:/, '').toLowerCase()
-    const property = format.properties.find((property) => property.name === normalized)
+    const property = format.properties.find((property) => property.name.toLowerCase() === normalized)
 
-    if (!property) {
-      throw new Error(`Type "${normalized}" is not configured for format "${format.name}"`)
-    }
+    if (!property) throw new Error(`Type "${normalized}" is not configured for format "${format.name}"`)
 
     return { name: property.name, basicType: property.type }
   }
@@ -670,7 +677,6 @@ export function useFlowManagement({
       parentId = await addNodeSequential(side, name, 'schematic')
     }
     const text = await file.text()
-
     if (config.formatTypes[side]?.schemaFileExtension === '.schema.json') {
       const parsed = JSON.parse(text)
       await importJsonSchema(parsed, side, parentId)

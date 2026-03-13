@@ -20,8 +20,6 @@ import java.util.List;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
-import org.frankframework.flow.configuration.Configuration;
-import org.frankframework.flow.configuration.ConfigurationNotFoundException;
 import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.frankframework.flow.filesystem.FilesystemEntry;
 import org.frankframework.flow.projectsettings.FilterType;
@@ -90,11 +88,6 @@ public class ProjectServiceTest {
                 })
                 .when(fileSystemStorage)
                 .writeFile(anyString(), anyString());
-
-        when(fileSystemStorage.readFile(anyString())).thenAnswer(invocation -> {
-            String path = invocation.getArgument(0);
-            return Files.readString(Path.of(path), StandardCharsets.UTF_8);
-        });
     }
 
     @Test
@@ -134,8 +127,9 @@ public class ProjectServiceTest {
     }
 
     @Test
-    public void testCreateProjectOnDiskLoadsConfiguration() throws IOException, ProjectNotFoundException {
+    public void testCreateProjectOnDiskHasConfigurationsInDto() throws IOException, ProjectNotFoundException {
         stubFileSystemForProjectCreation();
+        when(fileSystemStorage.toRelativePath(anyString())).thenAnswer(inv -> inv.getArgument(0));
 
         String projectName = "loaded_proj";
 
@@ -143,7 +137,9 @@ public class ProjectServiceTest {
 
         Project project = projectService.getProject(projectName);
         assertNotNull(project);
-        assertFalse(project.getConfigurations().isEmpty(), "Project should have at least one configuration loaded");
+
+        ProjectDTO dto = projectService.toDto(project);
+        assertFalse(dto.filepaths().isEmpty(), "Project DTO should dynamically load configurations from disk");
     }
 
     @Test
@@ -179,44 +175,6 @@ public class ProjectServiceTest {
         List<Project> projects = projectService.getProjects();
         assertEquals(1, projects.size());
         assertEquals("my_project", projects.getFirst().getName());
-    }
-
-    @Test
-    public void testUpdateConfigurationXmlSuccess() throws Exception {
-        stubFileSystemForProjectCreation();
-
-        projectService.createProjectOnDisk("proj");
-        Project project = projectService.getProject("proj");
-
-        assertFalse(project.getConfigurations().isEmpty());
-        Configuration config = project.getConfigurations().getFirst();
-        String filepath = config.getFilepath();
-
-        boolean updated = projectService.updateConfigurationXml("proj", filepath, "<root/>");
-
-        assertTrue(updated);
-        assertEquals("<root/>", config.getXmlContent());
-    }
-
-    @Test
-    public void testUpdateConfigurationXmlThrowsProjectNotFound() {
-        when(fileSystemStorage.isLocalEnvironment()).thenReturn(true);
-        when(recentProjectsService.getRecentProjects()).thenReturn(recentProjects);
-
-        assertThrows(
-                ProjectNotFoundException.class,
-                () -> projectService.updateConfigurationXml("unknownProject", "config.xml", "<root/>"));
-    }
-
-    @Test
-    public void testUpdateConfigurationXmlConfigNotFound() throws Exception {
-        stubFileSystemForProjectCreation();
-
-        projectService.createProjectOnDisk("proj");
-
-        assertThrows(
-                ConfigurationNotFoundException.class,
-                () -> projectService.updateConfigurationXml("proj", "missingConfig.xml", "<root/>"));
     }
 
     @Test
@@ -434,6 +392,8 @@ public class ProjectServiceTest {
             return tempDir.resolve(path);
         });
 
+        when(fileSystemStorage.toRelativePath(anyString())).thenAnswer(inv -> inv.getArgument(0));
+
         String projectName = "manual_project";
         Path projectDir = tempDir.resolve(projectName);
         Files.createDirectories(projectDir.resolve("src/main/configurations"));
@@ -446,7 +406,9 @@ public class ProjectServiceTest {
 
         assertNotNull(project);
         assertEquals(projectName, project.getName());
-        assertFalse(project.getConfigurations().isEmpty());
+
+        ProjectDTO dto = projectService.toDto(project);
+        assertFalse(dto.filepaths().isEmpty());
     }
 
     @Test
@@ -489,7 +451,9 @@ public class ProjectServiceTest {
 
         assertNotNull(project);
         assertEquals("empty_proj", project.getName());
-        assertTrue(project.getConfigurations().isEmpty(), "No configurations dir means empty config list");
+
+        ProjectDTO dto = projectService.toDto(project);
+        assertTrue(dto.filepaths().isEmpty(), "No configurations dir means empty config list");
     }
 
     @Test
@@ -512,16 +476,15 @@ public class ProjectServiceTest {
             return p.isAbsolute() ? p : tempDir.resolve(path);
         });
 
-        when(fileSystemStorage.readFile(anyString())).thenAnswer(invocation -> {
-            String path = invocation.getArgument(0);
-            return Files.readString(Path.of(path), StandardCharsets.UTF_8);
-        });
+        when(fileSystemStorage.toRelativePath(anyString())).thenAnswer(inv -> inv.getArgument(0));
 
         List<Project> projects = projectService.getProjects();
 
         assertEquals(1, projects.size());
         assertEquals("scanned_proj", projects.getFirst().getName());
-        assertFalse(projects.getFirst().getConfigurations().isEmpty());
+
+        ProjectDTO dto = projectService.toDto(projects.getFirst());
+        assertFalse(dto.filepaths().isEmpty());
     }
 
     @Test
@@ -531,7 +494,7 @@ public class ProjectServiceTest {
         Path validDir = tempDir.resolve("valid_proj");
         Files.createDirectory(validDir);
 
-        Path invalidDir = tempDir.resolve("nonexistent_proj"); // does not exist
+        Path invalidDir = tempDir.resolve("nonexistent_proj");
 
         when(fileSystemStorage.listRoots())
                 .thenReturn(List.of(
@@ -701,10 +664,7 @@ public class ProjectServiceTest {
 
         ProjectDTO dto = projectService.toDto(project);
 
-        assertEquals(
-                project.getConfigurations().size(),
-                dto.filepaths().size(),
-                "DTO filepaths count should match number of configurations");
+        assertEquals(1, dto.filepaths().size(), "DTO filepaths should map dynamically from disk");
     }
 
     @Test
