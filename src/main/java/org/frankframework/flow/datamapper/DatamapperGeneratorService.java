@@ -27,11 +27,11 @@ public class DatamapperGeneratorService {
         this.fileTreeService = fileTreeService;
     }
 
-    private Path getConfigFilePath(String projectName) throws ConfigurationNotFoundException {
+    private Path getConfigFilePath(String projectName) throws ApiException {
         return getDatamapperDir(projectName).resolve("generationFile.json");
     }
 
-    private Path getDatamapperDir(String projectName) throws ConfigurationNotFoundException {
+    private Path getDatamapperDir(String projectName) throws ApiException {
         try {
             return fileSystemStorage
                     .toAbsolutePath(fileTreeService
@@ -39,8 +39,8 @@ public class DatamapperGeneratorService {
                             .getPath())
                     .resolve("datamapper");
         } catch (IOException e) {
-            throw new ConfigurationNotFoundException(
-                    "Failed to resolve configuration file path for project: " + projectName);
+            throw new ApiException(
+                    "Failed to resolve configuration file path for project: " + projectName, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
