@@ -1,5 +1,5 @@
 import type { Node, Edge } from '@xyflow/react'
-import type { NodeLabels, MappingConfig } from '~/types/datamapper_types/node-types'
+import type { NodeLabels, MappingConfig, ArrayMappingConfig } from '~/types/datamapper_types/node-types'
 
 interface GetNodesOptions {
   typeIncludes?: string | string[]
@@ -15,6 +15,12 @@ export interface DeleteMappingNodeResult {
 export interface MappingNodeResult {
   updatedNodes: Node[]
   updatedEdges: Edge[]
+}
+interface MappingEdgeInput {
+  id?: string
+  sources: string[]
+  target: string
+  colour: string
 }
 
 export function getNodesByTypeAndId(nodes: Node[] | null | undefined, options: GetNodesOptions = {}): NodeLabels[] {
@@ -113,21 +119,19 @@ function createRandomColour() {
     .padStart(6, '0')}`
 }
 
-function buildMappingEdges(mappingConfig: MappingConfig): Edge[] {
-  const { id, sources, target, colour } = mappingConfig
-
+function buildMappingEdges({ id, sources, target, colour }: MappingEdgeInput): Edge[] {
   return [
     ...sources.map((sourceId) => ({
       id: `${sourceId}-${id}`,
       source: sourceId,
-      target: id!,
+      target: id,
       style: { stroke: colour, strokeWidth: 2 },
       selectable: true,
       data: { hidden: false },
     })),
     {
       id: `${id}-${target}`,
-      source: id!,
+      source: id,
       target,
       style: { stroke: colour, strokeWidth: 2 },
       selectable: true,
@@ -179,6 +183,38 @@ function createNewMappingNode(mappingConfig: MappingConfig, allNodes: Node[], al
     id,
     parentId: 'mapping-table',
     type: 'mappingNode',
+    position: { x: 0, y: resolvedY },
+    data: newMappingConfig,
+  }
+
+  return {
+    updatedNodes: [...allNodes, newNode],
+    updatedEdges: [...allEdges, ...buildMappingEdges(newMappingConfig)],
+  }
+}
+
+function createNewArrayMappingNode(
+  mappingConfig: ArrayMappingConfig,
+  allNodes: Node[],
+  allEdges: Edge[],
+): MappingNodeResult {
+  const id = createMappingId()
+  const colour = createRandomColour()
+
+  const newMappingConfig: ArrayMappingConfig = {
+    ...mappingConfig,
+    id,
+    colour,
+  }
+
+  const centerPosition = calculateMappingCenter([newMappingConfig.source], newMappingConfig.target, allNodes)
+
+  const resolvedY = resolveVerticalOverlap(centerPosition.y, allNodes)
+
+  const newNode: Node = {
+    id,
+    parentId: 'mapping-table',
+    type: 'arrayMappingNode',
     position: { x: 0, y: resolvedY },
     data: newMappingConfig,
   }
