@@ -74,7 +74,7 @@ export const getNodeTypes = ({
       onDelete={(id) => flow.deleteNode(id)}
     />
   ),
-  arrayGroup: (node: ArrayGroupNodeProperties) => (
+  sourceArrayGroup: (node: ArrayGroupNodeProperties) => (
     <ArrayGroupNode
       {...node}
       variant="source"
@@ -83,6 +83,21 @@ export const getNodeTypes = ({
         if (data) {
           setEditingNode(data)
           openModelType.current = 'source'
+          setAddFieldModal(true)
+        }
+      }}
+      onDelete={(id) => flow.deleteNode(id)}
+    />
+  ),
+  targetArrayGroup: (node: ArrayGroupNodeProperties) => (
+    <ArrayGroupNode
+      {...node}
+      variant="target"
+      onHighlight={(id) => flow.highlightFromPropertyNode(id)}
+      onEdit={(data) => {
+        if (data) {
+          setEditingNode(data)
+          openModelType.current = 'target'
           setAddFieldModal(true)
         }
       }}

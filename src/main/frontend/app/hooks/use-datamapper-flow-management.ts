@@ -47,6 +47,24 @@ function getConnectedNodes(edges: Edge[], from: Set<string>, exclude: Set<string
   return result
 }
 
+function isGroup(variableType: string): boolean {
+  return variableType.includes('object') || variableType.includes('schematic') || variableType.includes('array')
+}
+function isNodeGroup(nodeType: string): boolean {
+  return nodeType.includes('labeledGroup') || nodeType.includes('ArrayGroup') || nodeType.includes('extraSourceNode')
+}
+function getType(id: string, parentId: string): string {
+  if (id.includes('object')) {
+    return 'labeledGroup'
+  } else if (id.includes('array')) {
+    return `${parentId.includes('source-table') ? 'source' : 'target'}ArrayGroup`
+  } else if (id.includes('schematic')) {
+    return 'extraSourceNode'
+  } else {
+    return parentId.includes('source-table') ? 'sourceOnly' : 'targetOnly'
+  }
+}
+
 export class DuplicateLabelException extends Error {
   constructor(message: string) {
     super(message)
@@ -71,15 +89,7 @@ export function useFlowManagement({
     //Set the correct type of the node
     let type: string
 
-    if (data.variableType.includes('object')) {
-      type = 'labeledGroup'
-    } else if (data.variableType.includes('array')) {
-      type = 'arrayGroup'
-    } else if (data.variableType.includes('schematic')) {
-      type = 'extraSourceNode'
-    } else {
-      type = data.parentId.includes('source-table') ? 'sourceOnly' : 'targetOnly'
-    }
+    type = getType(data.variableType, data.parentId)
 
     //Create the node Obj
     const newNode: Node = {
@@ -92,11 +102,7 @@ export function useFlowManagement({
     }
 
     //Add empty padding in case the item is an object, purely visual
-    if (
-      data.variableType.includes('object') ||
-      data.variableType.includes('schematic') ||
-      data.variableType.includes('array')
-    ) {
+    if (isGroup(data.variableType)) {
       newNode.height = GROUP_PADDING_TOP * 3
     }
 
@@ -133,10 +139,7 @@ export function useFlowManagement({
       //increment the right counter
       const counter = side === 'source' ? sourceIdCounter.current++ : targetIdCounter.current++
       //use counter in id
-      resolvedId =
-        variableType === 'object' || variableType === 'schematic' || variableType == 'array'
-          ? `${parentId}-group-${counter}`
-          : `${parentId}-item-${counter}`
+      resolvedId = isGroup(variableType) ? `${parentId}-group-${counter}` : `${parentId}-item-${counter}`
     }
 
     //Generate reactflow object from the values
@@ -176,11 +179,7 @@ export function useFlowManagement({
       if (duplicate) throw new DuplicateLabelException('Duplicate property not allowed! Change property name.')
     }
     //Change type to object if needed.
-    const updatedType = data.variableType.includes('object')
-      ? 'labeledGroup'
-      : data.variableType.includes('array')
-        ? 'arrayGroup'
-        : `${side}Only`
+    const updatedType = getType(data.variableType, data.parentId)
     data.variableTypeBasic = formatType?.properties.find(
       (propertyDefinition) => propertyDefinition.name == updatedType,
     )?.type
@@ -213,11 +212,7 @@ export function useFlowManagement({
       const parentId = nodeToDelete.parentId
       let updatedNodes = previous.filter((node) => node.id !== id)
       //If item is a group
-      if (
-        nodeToDelete.type == 'labeledGroup' ||
-        nodeToDelete?.type === 'extraSourceNode' ||
-        nodeToDelete.type == 'arrayGroup'
-      ) {
+      if (nodeToDelete.type && isNodeGroup(nodeToDelete.type)) {
         //remove all child elements
         updatedNodes = updatedNodes.filter((node) => !node.parentId?.startsWith(id))
       }
@@ -326,7 +321,7 @@ export function useFlowManagement({
   function getNodeAndChildren(nodeId: string): Set<string> {
     const node = reactFlowInstance.getNode(nodeId)
 
-    if (node && (node.type === 'labeledGroup' || node.type === 'extraSourceNode' || node.type == 'arrayNode')) {
+    if (node && node.type && isNodeGroup(node.type)) {
       return new Set(
         reactFlowInstance
           .getNodes()
@@ -584,10 +579,7 @@ export function useFlowManagement({
       //Get height of previous item, or set height to 2/3 of standard height
       const measuredHeight = reactFlowInstance?.getNode(previousItem.id)?.measured?.height ?? OBJECT_HEIGHT / 1.5
       newY += (previousItem.position.y ?? 0) + measuredHeight + ITEM_GAP
-    } else if (
-      parentNode &&
-      (parentNode.type == 'labeledGroup' || parentNode?.type === 'extraSourceNode' || parentNode.type == 'arrayGroup')
-    ) {
+    } else if (parentNode && parentNode.type && isNodeGroup(parentNode.type)) {
       // If the item is the first in a group, add group padding
       newY += GROUP_PADDING_TOP
     } else {
@@ -605,10 +597,7 @@ export function useFlowManagement({
     while (parentId) {
       const parentNode = reactFlowInstance.getNode(parentId)
       //Add the correct initial padding for the first item
-      let yOffset: number =
-        parentNode?.type == 'labeledGroup' || parentNode?.type === 'extraSourceNode' || parentNode?.type == 'arrayGroup'
-          ? GROUP_PADDING_TOP
-          : ITEM_GAP
+      let yOffset: number = parentNode && parentNode.type && isNodeGroup(parentNode.type) ? GROUP_PADDING_TOP : ITEM_GAP
 
       //Get all children of parent and sort them by position
       const children = nodes
@@ -623,12 +612,7 @@ export function useFlowManagement({
         //Add height and padding to next child height
         yOffset += height + ITEM_GAP
       }
-      if (
-        parentNode?.type == 'labeledGroup' ||
-        parentNode?.type === 'extraSourceNode' ||
-        parentNode?.type == 'arrayGroup'
-      )
-        yOffset += GROUP_PADDING_TOP
+      if (parentNode && parentNode.type && isNodeGroup(parentNode.type)) yOffset += GROUP_PADDING_TOP
 
       //Set height for parent
       nodes = nodes.map((node) => (node.id === parentId ? { ...node, height: yOffset } : node))

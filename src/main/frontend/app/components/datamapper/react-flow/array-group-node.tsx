@@ -50,18 +50,18 @@ function ArrayGroupNode({ id, data, variant = 'source', onEdit, onDelete, onHigh
             }}
           />
         </div>
+        <Handle
+          key={variant}
+          type={variant}
+          position={variant === 'source' ? Position.Right : Position.Left}
+          isConnectable={isConnectable}
+          style={{
+            width: 10,
+            height: 10,
+          }} //Can't set this with tailwind for some reason
+          className={`${variant == 'source' ? '' : 'translate-x-[5px]'} transition-opacity transition-transform ${isConnectable ? 'opacity-100' : 'opacity-0'} `}
+        />
       </div>
-      <Handle
-        key={variant}
-        type={variant}
-        position={variant === 'source' ? Position.Right : Position.Left}
-        isConnectable={isConnectable}
-        style={{
-          width: 10,
-          height: 10,
-        }} //Can't set this with tailwind for some reason
-        className={`${variant == 'source' ? '' : 'translate-x-[5px]'} transition-opacity transition-transform ${isConnectable ? 'opacity-100' : 'opacity-0'} `}
-      />
 
       {/* Hidden opposite handle */}
       <Handle
