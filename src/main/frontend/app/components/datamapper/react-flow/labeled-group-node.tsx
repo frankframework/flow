@@ -23,7 +23,7 @@ function LabeledGroupNode({ id, data, onEdit, onDelete, onHighlight }: LabeledGr
       <div className="bg-backdrop w-full rounded-md px-2 py-2 text-sm font-semibold">{data.label ?? 'Group'}</div>
 
       <div className="bg-backdrop border-border absolute bottom-0 flex w-full items-center justify-between rounded-md border px-4 py-2 text-sm opacity-80">
-        <span>(Object)</span>
+        <span>({data.variableType})</span>
         <div className="flex gap-3">
           <HighlightButton
             onClick={() => {
