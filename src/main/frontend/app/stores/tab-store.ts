@@ -20,6 +20,8 @@ interface TabStoreState {
   setActiveTab: (tabId: string | undefined) => void
   removeTab: (tabId: string) => void
   removeTabAndSelectFallback: (tabId: string) => void
+  removeTabsForConfig: (configPath: string) => void
+  renameTabsForConfig: (oldConfigPath: string, newConfigPath: string) => void
   clearTabs: () => void
 }
 
@@ -54,6 +56,34 @@ const useTabStore = create<TabStoreState>()(
           tabs: newTabs,
           activeTab: remainingKeys.includes(state.activeTab) ? state.activeTab : (remainingKeys.at(-1) ?? ''),
         }
+      }),
+    removeTabsForConfig: (configPath) =>
+      set((state) => {
+        const newTabs = { ...state.tabs }
+        for (const [tabId, tab] of Object.entries(newTabs)) {
+          if (tab.configurationPath === configPath) delete newTabs[tabId]
+        }
+
+        const remainingKeys = Object.keys(newTabs)
+        return {
+          tabs: newTabs,
+          activeTab: remainingKeys.includes(state.activeTab) ? state.activeTab : (remainingKeys.at(-1) ?? ''),
+        }
+      }),
+    renameTabsForConfig: (oldConfigPath, newConfigPath) =>
+      set((state) => {
+        const newTabs: Record<string, TabData> = {}
+        let newActiveTab = state.activeTab
+        for (const [tabId, tab] of Object.entries(state.tabs)) {
+          if (tab.configurationPath === oldConfigPath) {
+            const newTabId = tabId.replace(oldConfigPath, newConfigPath)
+            newTabs[newTabId] = { ...tab, configurationPath: newConfigPath }
+            if (state.activeTab === tabId) newActiveTab = newTabId
+          } else {
+            newTabs[tabId] = tab
+          }
+        }
+        return { tabs: newTabs, activeTab: newActiveTab }
       }),
     clearTabs: () => set({ tabs: {}, activeTab: '' }),
   })),

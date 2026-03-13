@@ -3,6 +3,7 @@ import type { MappingListConfig } from '~/types/datamapper_types/config-types'
 import type { DataTypeSchema } from '~/types/datamapper_types/data-types'
 
 export const DEFAULT_MAPPING_LIST_CONFIG: MappingListConfig = {
+  stage: 'INIT',
   formatTypes: {
     source: null,
     target: null,
@@ -19,6 +20,7 @@ export type ConfigActions =
   | { type: 'SET_TARGET_FORMAT'; payload: DataTypeSchema[number] | null }
   | { type: 'SET_SOURCE_PATH'; payload: string }
   | { type: 'SET_TARGET_PATH'; payload: string }
+  | { type: 'SET_STAGE'; payload: string }
   | { type: 'IMPORT_CONFIG'; payload: MappingListConfig }
   | { type: 'SET_PROPERTY_DATA'; payload: ReactFlowJsonObject }
   | {
@@ -51,7 +53,9 @@ export function mappingListConfigReducer(state: MappingListConfig, action: Confi
     case 'IMPORT_CONFIG': {
       return action.payload
     }
-
+    case 'SET_STAGE': {
+      return { ...state, stage: action.payload }
+    }
     case 'SET_PROPERTY_DATA': {
       return {
         ...state,

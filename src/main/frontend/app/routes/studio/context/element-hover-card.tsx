@@ -1,7 +1,7 @@
-import {useFFDoc, useJavadocTransform} from "@frankframework/doc-library-react";
+import type { ElementDetails } from '@frankframework/doc-library-core'
+import { useFFDoc, useJavadocTransform } from '@frankframework/doc-library-react'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import type { ElementDetails } from '~/types/ff-doc.types'
 import { getFirstLabelGroup } from '~/utils/flow-utils'
 import ExternalLinkIcon from '../../../../icons/solar/External Link.svg?react'
 
