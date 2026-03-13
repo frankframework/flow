@@ -525,8 +525,6 @@ export function useFlowManagement({
     }
 
     const normalized = rawType.replace(/^xs:/, '').replace(/^xsd:/, '').toLowerCase()
-    console.dir(normalized)
-    console.dir(format.properties)
     const property = format.properties.find((property) => property.name.toLowerCase() === normalized)
 
     if (!property) throw new Error(`Type "${normalized}" is not configured for format "${format.name}"`)
