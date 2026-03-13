@@ -1,8 +1,6 @@
 package org.frankframework.flow.datamapper;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.StringReader;
 import java.net.URL;
 import java.nio.file.Files;
@@ -33,9 +31,10 @@ public class DatamapperGeneratorService {
         return getDatamapperDir(projectName).resolve("generationFile.json");
     }
 
-    private Path getDatamapperDir(String projectName) throws ConfigurationNotFoundException{
+    private Path getDatamapperDir(String projectName) throws ConfigurationNotFoundException {
         try {
-            return fileSystemStorage.toAbsolutePath(fileTreeService
+            return fileSystemStorage
+                    .toAbsolutePath(fileTreeService
                             .getConfigurationsDirectoryTree(projectName)
                             .getPath())
                     .resolve("datamapper");
@@ -92,7 +91,9 @@ public class DatamapperGeneratorService {
 
     public void generateFromProject(String projectName, String content) throws ApiException {
         saveGenerationFile(projectName, content);
-        generate(getConfigFilePath(projectName).toString(), getDatamapperDir(projectName).resolve("export.xslt").toString());
+        generate(
+                getConfigFilePath(projectName).toString(),
+                getDatamapperDir(projectName).resolve("export.xslt").toString());
         deleteGenerationFile(projectName);
     }
 
@@ -130,8 +131,8 @@ public class DatamapperGeneratorService {
 
             String xmlParams = "<params><jsonPath>" + absolutePath.toUri() + "</jsonPath></params>";
             StreamSource paramsSource = new StreamSource(new StringReader(xmlParams));
-            Serializer out =
-                    processor.newSerializer(fileSystemStorage.toAbsolutePath(outputPath).toFile());
+            Serializer out = processor.newSerializer(
+                    fileSystemStorage.toAbsolutePath(outputPath).toFile());
 
             out.setOutputProperty(Serializer.Property.METHOD, "xml");
             out.setOutputProperty(Serializer.Property.INDENT, "yes");

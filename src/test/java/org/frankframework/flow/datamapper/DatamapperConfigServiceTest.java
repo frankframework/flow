@@ -96,7 +96,6 @@ public class DatamapperConfigServiceTest {
         stubGetConfigurationsDirectoryTree();
         stubToAbsolutePath();
 
-
         Path datamapperDir = tempProjectRoot.resolve("datamapper");
         if (!Files.isDirectory(datamapperDir)) {
             Files.createDirectories(datamapperDir);

@@ -23,9 +23,10 @@ public class DatamapperConfigService {
         return getDatamapperDir(projectName).resolve("configuration.json");
     }
 
-    private Path getDatamapperDir(String projectName) throws ConfigurationNotFoundException{
+    private Path getDatamapperDir(String projectName) throws ConfigurationNotFoundException {
         try {
-            return fileSystemStorage.toAbsolutePath(fileTreeService
+            return fileSystemStorage
+                    .toAbsolutePath(fileTreeService
                             .getConfigurationsDirectoryTree(projectName)
                             .getPath())
                     .resolve("datamapper");
@@ -43,12 +44,11 @@ public class DatamapperConfigService {
         try {
             absoluteFilePath = getConfigFilePath(projectName);
 
-
-            dataMapperDir = fileSystemStorage.toAbsolutePath(fileTreeService
+            dataMapperDir = fileSystemStorage
+                    .toAbsolutePath(fileTreeService
                             .getConfigurationsDirectoryTree(projectName)
                             .getPath())
                     .resolve("datamapper");
-
 
             if (!Files.isDirectory(dataMapperDir)) {
                 Files.createDirectory(dataMapperDir);
@@ -77,7 +77,7 @@ public class DatamapperConfigService {
     public String getConfig(String projectName) throws ConfigurationNotFoundException {
         try {
             String filePath = this.getConfigFilePath(projectName).toString();
-            if(!Files.exists(Path.of(filePath))){
+            if (!Files.exists(Path.of(filePath))) {
                 fileSystemStorage.createFile(filePath);
             }
             return fileSystemStorage.readFile(filePath);

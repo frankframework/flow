@@ -231,7 +231,6 @@ public class DatamapperGeneratorServiceTest {
         stubWriteFile();
         stubGetConfigurationsDirectoryTree();
         stubToAbsolutePath();
-        
 
         Path datamapperDir = tempProjectRoot.resolve("datamapper");
         if (!Files.isDirectory(datamapperDir)) {
