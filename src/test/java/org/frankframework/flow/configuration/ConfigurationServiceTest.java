@@ -109,8 +109,8 @@ class ConfigurationServiceTest {
 
         configurationService.updateConfiguration("proj", file.toString(), "<new/>");
 
-        assertEquals("<new/>", Files.readString(file, StandardCharsets.UTF_8));
-        verify(fileSystemStorage).writeFile(file.toString(), "<new/>");
+        assertEquals("<new/>\n", Files.readString(file, StandardCharsets.UTF_8));
+        verify(fileSystemStorage).writeFile(file.toString(), "<new/>\n");
     }
 
     @Test

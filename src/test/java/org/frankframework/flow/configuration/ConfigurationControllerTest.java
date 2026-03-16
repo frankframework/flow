@@ -1,5 +1,6 @@
 package org.frankframework.flow.configuration;
 
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -102,7 +103,8 @@ class ConfigurationControllerTest {
         String filepath = "config1.xml";
         String xmlContent = "<xml>updated</xml>";
 
-        doNothing().when(configurationService).updateConfiguration(TEST_PROJECT_NAME, filepath, xmlContent);
+        when(configurationService.updateConfiguration(TEST_PROJECT_NAME, filepath, xmlContent))
+                .thenReturn(xmlContent);
 
         mockMvc.perform(
                         put("/api/projects/" + TEST_PROJECT_NAME + "/configuration")
