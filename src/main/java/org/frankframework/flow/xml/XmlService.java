@@ -9,7 +9,7 @@ import org.xml.sax.SAXException;
 public class XmlService {
     public String normalizeElementsInXml(String xmlContent) throws Exception {
         try {
-            return XmlAdapterUtils.normalizeFrankElements(xmlContent);
+            return XmlConfigurationUtils.normalizeFrankElements(xmlContent);
         } catch (SAXException e) {
             throw new InvalidXmlContentException("Invalid XML", e);
         }

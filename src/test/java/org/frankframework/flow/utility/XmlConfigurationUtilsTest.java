@@ -204,12 +204,11 @@ class XmlConfigurationUtilsTest {
 
     @Test
     void addsFlowNamespaceWhenMissing() throws Exception {
-        String xml =
-                """
-                <Configuration name="TestConfig">
-                    <Adapter name="A"/>
-                </Configuration>
-                """;
+        String xml = """
+				<Configuration name="TestConfig">
+					<Adapter name="A"/>
+				</Configuration>
+				""";
 
         Document updated = XmlConfigurationUtils.insertFlowNamespace(xml);
 
@@ -223,10 +222,10 @@ class XmlConfigurationUtilsTest {
     void doesNotDuplicateFlowNamespaceWhenAlreadyPresent() throws Exception {
         String xml =
                 """
-                <Configuration name="TestConfig" xmlns:flow="urn:frank-flow">
-                    <Adapter name="A"/>
-                </Configuration>
-                """;
+				<Configuration name="TestConfig" xmlns:flow="urn:frank-flow">
+					<Adapter name="A"/>
+				</Configuration>
+				""";
 
         Document updated = XmlConfigurationUtils.insertFlowNamespace(xml);
 

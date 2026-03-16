@@ -1,17 +1,20 @@
 package org.frankframework.flow.utility;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.*;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import lombok.experimental.UtilityClass;
 import org.w3c.dom.*;
 import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 
 @UtilityClass
 public class XmlConfigurationUtils {
@@ -19,8 +22,12 @@ public class XmlConfigurationUtils {
     /**
      * Checks if a configuration document has the flow namespace included.
      * If not: it includes it
+     * @throws ParserConfigurationException
+     * @throws IOException
+     * @throws SAXException
      */
-    public static Document insertFlowNamespace(String configurationXml) throws Exception {
+    public static Document insertFlowNamespace(String configurationXml)
+            throws ParserConfigurationException, SAXException, IOException {
 
         if (configurationXml == null || configurationXml.isBlank()) {
             return null;

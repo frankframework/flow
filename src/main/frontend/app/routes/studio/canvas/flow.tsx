@@ -238,7 +238,11 @@ function FlowCanvas() {
   const layoutGraph = useCallback((nodes: Node[], edges: Edge[], direction: 'TB' | 'LR' = 'LR'): Node[] => {
     const dagreGraph = new Dagre.graphlib.Graph()
     dagreGraph.setDefaultEdgeLabel(() => ({}))
-    dagreGraph.setGraph({ rankdir: direction, ranksep: 300, nodesep: 200 })
+    dagreGraph.setGraph({
+      rankdir: direction,
+      ranksep: FlowConfig.LAYOUT_HORIZONTAL_OFFSET,
+      nodesep: FlowConfig.LAYOUT_VERTICAL_OFFSET,
+    })
 
     // Only add nodes to Dagre that need layout (position x=0 and y=0)
     for (const node of nodes) {

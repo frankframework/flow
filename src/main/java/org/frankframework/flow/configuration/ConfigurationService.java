@@ -4,13 +4,18 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.TransformerException;
 import org.frankframework.flow.exception.ApiException;
 import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.frankframework.flow.project.Project;
 import org.frankframework.flow.project.ProjectNotFoundException;
 import org.frankframework.flow.project.ProjectService;
+import org.frankframework.flow.utility.XmlConfigurationUtils;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
+import org.w3c.dom.Document;
+import org.xml.sax.SAXException;
 
 @Service
 public class ConfigurationService {
@@ -39,8 +44,9 @@ public class ConfigurationService {
         return fileSystemStorage.readFile(filePath.toString());
     }
 
-    public void updateConfiguration(String projectName, String filepath, String content)
-            throws IOException, ConfigurationNotFoundException {
+    public String updateConfiguration(String projectName, String filepath, String content)
+            throws IOException, ConfigurationNotFoundException, ParserConfigurationException, SAXException,
+                    TransformerException {
         Path absolutePath = fileSystemStorage.toAbsolutePath(filepath);
 
         if (!Files.exists(absolutePath)) {
@@ -50,9 +56,12 @@ public class ConfigurationService {
         if (Files.isDirectory(absolutePath)) {
             throw new ConfigurationNotFoundException("Invalid file path: " + filepath);
         }
+        Document updatedDocument = XmlConfigurationUtils.insertFlowNamespace(content);
+        String updatedContent = XmlConfigurationUtils.convertNodeToString(updatedDocument);
 
         // Just write to the disk. ProjectService reads directly from disk now!
-        fileSystemStorage.writeFile(absolutePath.toString(), content);
+        fileSystemStorage.writeFile(absolutePath.toString(), updatedContent);
+        return updatedContent;
     }
 
     public Project addConfiguration(String projectName, String configurationName)

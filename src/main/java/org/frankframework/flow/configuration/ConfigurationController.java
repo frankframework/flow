@@ -1,11 +1,14 @@
 package org.frankframework.flow.configuration;
 
 import java.io.IOException;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.TransformerException;
 import lombok.extern.slf4j.Slf4j;
 import org.frankframework.flow.project.Project;
 import org.frankframework.flow.project.ProjectDTO;
 import org.frankframework.flow.project.ProjectNotFoundException;
 import org.frankframework.flow.project.ProjectService;
+import org.frankframework.flow.xml.XmlDTO;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -13,6 +16,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.xml.sax.SAXException;
 
 @Slf4j
 @RestController
@@ -35,11 +39,14 @@ public class ConfigurationController {
     }
 
     @PutMapping("/{projectName}/configuration")
-    public ResponseEntity<Void> updateConfiguration(
+    public ResponseEntity<XmlDTO> updateConfiguration(
             @PathVariable String projectName, @RequestBody ConfigurationDTO configurationDTO)
-            throws ConfigurationNotFoundException, IOException, ProjectNotFoundException {
-        configurationService.updateConfiguration(projectName, configurationDTO.filepath(), configurationDTO.content());
-        return ResponseEntity.ok().build();
+            throws ConfigurationNotFoundException, IOException, ProjectNotFoundException, ParserConfigurationException,
+                    SAXException, TransformerException {
+        String updatedContent = configurationService.updateConfiguration(
+                projectName, configurationDTO.filepath(), configurationDTO.content());
+        XmlDTO xmlDTO = new XmlDTO(updatedContent);
+        return ResponseEntity.ok(xmlDTO);
     }
 
     @PostMapping("/{projectName}/configurations/{configName}")

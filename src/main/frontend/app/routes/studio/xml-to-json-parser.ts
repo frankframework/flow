@@ -430,7 +430,7 @@ function processExitElements(element: Element, exitNodes: ExitNode[]) {
         name,
         type: 'Exit',
         subtype: 'Exit',
-        attributes: Object.keys(attributes).length > 0 ? attributes : {},
+        attributes,
       },
     }
     exitNodes.push(exitNode)
@@ -465,7 +465,7 @@ function convertAdapterToFlowNodes(adapter: Element): FlowNode[] {
           name,
           type: 'Exit',
           subtype: 'Exit',
-          attributes: Object.keys(attributes).length > 0 ? attributes : {},
+          attributes,
         },
       }
       exitNodes.push(exitNode)
