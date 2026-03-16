@@ -17,14 +17,18 @@ import AddFieldForm from '~/components/datamapper/forms/add-field-form'
 import AddMappingForm from '~/components/datamapper/forms/add-mapping-form'
 import Modal from '~/components/modal'
 import { getNodeTypes } from '~/components/datamapper/react-flow/node-types'
-import { showErrorToast, showSuccessToast } from '~/components/toast'
+import { showErrorToast, showInfoToast, showSuccessToast } from '~/components/toast'
 import { useFlowManagement, DuplicateLabelException } from '~/hooks/use-datamapper-flow-management'
 import type { ConfigActions } from '~/stores/datamapper_state/mappingListConfig/reducer'
 import { useFile } from '~/stores/datamapper_state/schemaQueue/schema-queue-context'
 import type { MappingListConfig } from '~/types/datamapper_types/config-types'
-import type { CustomNodeData, MappingConfig, NodeLabels } from '~/types/datamapper_types/node-types'
+import type { ArrayMappingConfig, CustomNodeData, MappingConfig, NodeLabels } from '~/types/datamapper_types/node-types'
 import { TABLE_WIDTH } from '~/utils/datamapper_utils/const'
-import { getNodesByTypeAndId, createMappingNode } from '~/utils/datamapper_utils/react-node-utils'
+import {
+  getNodesByTypeAndId,
+  createMappingNode,
+  createNewArrayMappingNode,
+} from '~/utils/datamapper_utils/react-node-utils'
 import Button from '~/components/inputs/button'
 
 interface PropertyListProperties {
@@ -193,7 +197,6 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
         },
       })),
     )
-
     openMapping()
 
     return
@@ -209,29 +212,64 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
 
   function openMapping() {
     requestAnimationFrame(() => {
-      const sources = getNodesByTypeAndId(reactFlowInstance.getNodes(), {
-        typeIncludes: 'sourceOnly',
-
+      const unfilteredSources = getNodesByTypeAndId(reactFlowInstance.getNodes(), {
+        typeIncludes: 'source',
         includeChecked: true,
       })
       const targets = getNodesByTypeAndId(reactFlowInstance.getNodes(), {
-        typeIncludes: 'targetOnly',
+        typeIncludes: 'target',
         includeChecked: true,
       })
+      const sources = unfilteredSources.filter((source) => source.parentArray == undefined)
+      if (targets.length > 0) {
+        const parentArrayId = targets.find((target) => target.checked)?.parentArray
+        if (parentArrayId) {
+          const arrayMapping = reactFlowInstance.getNodes().find((node) => node.data.target == parentArrayId)
 
+          if (arrayMapping) {
+            sources.push(...unfilteredSources.filter((source) => source.parentArray == arrayMapping.data.source))
+          }
+        }
+      }
+      let isArrayMapping = false
       if (!editingMapping) {
         const checkedSources = sources.filter((source) => source.checked)
+        if (checkedSources.length != unfilteredSources.filter((source) => source.checked).length) {
+          showErrorToast('Mapping item in source array only allowed within a for each')
+          return
+        }
         const checkedTargets = targets.filter((target) => target.checked)
+
         if (checkedSources.length > 1 && checkedTargets.length > 1) {
           showErrorToast('Many to Many mapping not supported!')
           return
         }
+        const arrayMappings = checkedSources.filter((source) => source.type?.includes('array'))
+
+        if (arrayMappings.length == checkedSources.length && checkedTargets[0].type?.includes('array')) {
+          isArrayMapping = true
+          let arraymappingConfig: ArrayMappingConfig = {
+            source: checkedSources[0].id,
+            target: checkedTargets[0].id,
+          }
+          const { updatedNodes, updatedEdges } = createNewArrayMappingNode(
+            arraymappingConfig,
+            reactFlowInstance.getNodes(),
+            reactFlowInstance.getEdges(),
+          )
+          setReactFlowNodes(updatedNodes)
+          setEdges(updatedEdges)
+        } else if (arrayMappings.length > 0 || checkedTargets[0].type?.includes('array')) {
+          showErrorToast('Invalid mapping configuration, arrays cannot be mapped with normal properties')
+          return
+        }
       }
-
-      setMappingSources(sources)
-      setMappingTargets(targets)
-
-      setAddMappingModal(true)
+      if (!isArrayMapping) {
+        console.dir(targets[0])
+        setMappingSources(sources.filter((source) => source.id?.includes('item')))
+        setMappingTargets(targets.filter((target) => target.id?.includes('item')))
+        setAddMappingModal(true)
+      }
     })
   }
 
@@ -278,6 +316,15 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
     setEditingMapping(null)
     setAddMappingModal(false)
     showSuccessToast('Added mapping succesfully!')
+    setReactFlowNodes((previous) =>
+      previous.map((node) => ({
+        ...node,
+        data: {
+          ...node.data,
+          checked: false,
+        },
+      })),
+    )
   }
   function openAddFieldModal(modelType: 'source' | 'target') {
     possibleParentGroups.current = getNodesByTypeAndId(reactFlowInstance?.getNodes(), {

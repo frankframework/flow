@@ -1,7 +1,6 @@
 import { Handle, Position } from '@xyflow/react'
 import type { ArrayMappingConfig } from '~/types/datamapper_types/node-types'
 import DeleteButton from '../basic-components/delete-button'
-import EditButton from '../basic-components/edit-button'
 import { MAPPING_WIDTH } from '~/utils/datamapper_utils/const'
 
 export interface ArrayMappingNodeProperties {
@@ -10,10 +9,9 @@ export interface ArrayMappingNodeProperties {
   data: ArrayMappingConfig
   onClick?: (id: string) => void
   onDelete?: (id: string) => void
-  onEdit?: (data: ArrayMappingConfig) => void
 }
 
-function ArrayMappingNode({ id, data, onClick, onDelete, onEdit }: ArrayMappingNodeProperties) {
+function ArrayMappingNode({ id, data, onClick, onDelete }: ArrayMappingNodeProperties) {
   return (
     <div
       onClick={() => onClick?.(id)}
@@ -24,19 +22,13 @@ function ArrayMappingNode({ id, data, onClick, onDelete, onEdit }: ArrayMappingN
       }}
     >
       {/* Left: Label */}
+
       <div className="flex flex-1 items-center overflow-hidden">
-        <div className="truncate text-xs text-white drop-shadow-sm">For each {data.label}</div>
+        <div className="truncate text-xs text-white drop-shadow-sm">For each of Array </div>
       </div>
 
       {/* Right: Buttons (top and bottom) */}
       <div className="z-5 flex h-[25px] w-[5px] flex-col justify-between">
-        <EditButton
-          className="absolute right-0 bottom-5 text-sm"
-          onClick={() => {
-            onEdit?.(data)
-          }}
-        />
-
         <DeleteButton
           className="absolute top-4 right-0 z-4"
           onClick={() => {

@@ -8,6 +8,8 @@ import ExtraSourceNode, { type ExtraSourceNodeProperties } from './extra-source-
 import type { useFlowManagement } from '~/hooks/use-datamapper-flow-management'
 import type { CustomNodeData, MappingConfig } from '~/types/datamapper_types/node-types'
 import ArrayGroupNode, { type ArrayGroupNodeProperties } from './array-group-node'
+import type { ArrayMappingNodeProperties } from './array-mapping-node'
+import ArrayMappingNode from './array-mapping-node'
 
 interface GetNodeTypesParameters {
   flow: ReturnType<typeof useFlowManagement>
@@ -119,6 +121,15 @@ export const getNodeTypes = ({
         setEditingMapping(data)
         openMapping()
       }}
+      onDelete={(id) => {
+        flow.deleteMapping(id)
+      }}
+    />
+  ),
+  arrayMappingNode: (node: ArrayMappingNodeProperties) => (
+    <ArrayMappingNode
+      {...node}
+      onClick={(id) => flow.highlightFromMappingNode(id)}
       onDelete={(id) => {
         flow.deleteMapping(id)
       }}

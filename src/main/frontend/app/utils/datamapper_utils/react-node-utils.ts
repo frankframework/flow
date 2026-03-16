@@ -17,10 +17,20 @@ export interface MappingNodeResult {
   updatedEdges: Edge[]
 }
 interface MappingEdgeInput {
-  id?: string
+  id: string
   sources: string[]
   target: string
   colour: string
+}
+function recurseFindArray(node: Node, nodes: Node[]) {
+  const parent = nodes.find((parent) => parent.id == node.parentId)
+  if (!parent) {
+    return
+  }
+  if (parent.type?.includes('Array')) {
+    return parent.id
+  }
+  recurseFindArray(parent, nodes)
 }
 
 export function getNodesByTypeAndId(nodes: Node[] | null | undefined, options: GetNodesOptions = {}): NodeLabels[] {
@@ -43,6 +53,7 @@ export function getNodesByTypeAndId(nodes: Node[] | null | undefined, options: G
           id: node.id,
           type: node.data.variableTypeBasic,
           label: typeof node.data?.label === 'string' ? node.data.label : '',
+          parentArray: recurseFindArray(node, nodes),
           ...(options.includeChecked ? { checked: node.data?.checked as boolean } : {}),
         }) as NodeLabels,
     )
@@ -124,14 +135,14 @@ function buildMappingEdges({ id, sources, target, colour }: MappingEdgeInput): E
     ...sources.map((sourceId) => ({
       id: `${sourceId}-${id}`,
       source: sourceId,
-      target: id,
+      target: id!,
       style: { stroke: colour, strokeWidth: 2 },
       selectable: true,
       data: { hidden: false },
     })),
     {
       id: `${id}-${target}`,
-      source: id,
+      source: id!,
       target,
       style: { stroke: colour, strokeWidth: 2 },
       selectable: true,
@@ -158,10 +169,15 @@ function updateExistingMappingNode(
   const updatedNodes = allNodes.map((node) => (node.id === mappingConfig.id ? { ...node, data: mappingConfig } : node))
 
   const cleanedEdges = removeEdgesForNode(mappingConfig.id!, allEdges)
-
+  const mappingEdgeInput: MappingEdgeInput = {
+    id: mappingConfig.id ?? '',
+    colour: mappingConfig.colour ?? '',
+    sources: mappingConfig.sources,
+    target: mappingConfig.target,
+  }
   return {
     updatedNodes,
-    updatedEdges: [...cleanedEdges, ...buildMappingEdges(mappingConfig)],
+    updatedEdges: [...cleanedEdges, ...buildMappingEdges(mappingEdgeInput)],
   }
 }
 
@@ -186,28 +202,35 @@ function createNewMappingNode(mappingConfig: MappingConfig, allNodes: Node[], al
     position: { x: 0, y: resolvedY },
     data: newMappingConfig,
   }
-
+  const mappingEdgeInput: MappingEdgeInput = {
+    id,
+    colour,
+    sources: mappingConfig.sources,
+    target: mappingConfig.target,
+  }
   return {
     updatedNodes: [...allNodes, newNode],
-    updatedEdges: [...allEdges, ...buildMappingEdges(newMappingConfig)],
+    updatedEdges: [...allEdges, ...buildMappingEdges(mappingEdgeInput)],
   }
 }
 
-function createNewArrayMappingNode(
+export function createNewArrayMappingNode(
   mappingConfig: ArrayMappingConfig,
   allNodes: Node[],
   allEdges: Edge[],
 ): MappingNodeResult {
   const id = createMappingId()
-  const colour = createRandomColour()
 
-  const newMappingConfig: ArrayMappingConfig = {
-    ...mappingConfig,
+  mappingConfig.colour = createRandomColour()
+
+  const mappingEdgeInput: MappingEdgeInput = {
     id,
-    colour,
+    colour: mappingConfig.colour,
+    sources: [mappingConfig.source],
+    target: mappingConfig.target,
   }
 
-  const centerPosition = calculateMappingCenter([newMappingConfig.source], newMappingConfig.target, allNodes)
+  const centerPosition = calculateMappingCenter([mappingConfig.source], mappingConfig.target, allNodes)
 
   const resolvedY = resolveVerticalOverlap(centerPosition.y, allNodes)
 
@@ -216,12 +239,11 @@ function createNewArrayMappingNode(
     parentId: 'mapping-table',
     type: 'arrayMappingNode',
     position: { x: 0, y: resolvedY },
-    data: newMappingConfig,
+    data: mappingConfig,
   }
-
   return {
     updatedNodes: [...allNodes, newNode],
-    updatedEdges: [...allEdges, ...buildMappingEdges(newMappingConfig)],
+    updatedEdges: [...allEdges, ...buildMappingEdges(mappingEdgeInput)],
   }
 }
 

@@ -28,6 +28,7 @@ export interface NodeLabels {
   label: string
   checked?: boolean
   type?: string
+  parentArray?: string
 }
 
 export type MappingConfig = {
