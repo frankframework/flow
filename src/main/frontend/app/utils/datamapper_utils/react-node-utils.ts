@@ -22,7 +22,7 @@ interface MappingEdgeInput {
   target: string
   colour: string
 }
-function recurseFindArray(node: Node, nodes: Node[]) {
+export function recurseFindArray(node: Node, nodes: Node[]) {
   const parent = nodes.find((parent) => parent.id == node.parentId)
   if (!parent) {
     return
@@ -31,6 +31,23 @@ function recurseFindArray(node: Node, nodes: Node[]) {
     return parent.id
   }
   recurseFindArray(parent, nodes)
+}
+export function isGroup(variableType: string): boolean {
+  return variableType.includes('object') || variableType.includes('schematic') || variableType.includes('array')
+}
+export function isNodeGroup(nodeType: string): boolean {
+  return nodeType.includes('labeledGroup') || nodeType.includes('ArrayGroup') || nodeType.includes('extraSourceNode')
+}
+export function getType(id: string, parentId: string): string {
+  if (id.includes('object')) {
+    return 'labeledGroup'
+  } else if (id.includes('array')) {
+    return `${parentId.includes('source-table') ? 'source' : 'target'}ArrayGroup`
+  } else if (id.includes('schematic')) {
+    return 'extraSourceNode'
+  } else {
+    return parentId.includes('source-table') ? 'sourceOnly' : 'targetOnly'
+  }
 }
 
 export function getNodesByTypeAndId(nodes: Node[] | null | undefined, options: GetNodesOptions = {}): NodeLabels[] {

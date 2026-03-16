@@ -60,5 +60,8 @@ export type PropertyNode = Node<CustomNodeData> & {
 export type MappingNode = Node<MappingConfig> & {
   type: 'mappingNode'
 }
+export type ArrayMappingNode = Node<ArrayMappingConfig> & {
+  type: 'arrayMappingNode'
+}
 
-export type FlowNode = PropertyNode | MappingNode
+export type FlowNode = PropertyNode | MappingNode | ArrayMappingNode

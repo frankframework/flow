@@ -14,7 +14,7 @@ import {
   TABLE_WIDTH,
   MAPPING_TABLE_WIDTH,
 } from '~/utils/datamapper_utils/const'
-import { deleteMappingNode } from '~/utils/datamapper_utils/react-node-utils'
+import { deleteMappingNode, getType, isGroup, isNodeGroup } from '~/utils/datamapper_utils/react-node-utils'
 
 interface UseFlowManagementProperties {
   reactFlowInstance: ReactFlowInstance
@@ -45,24 +45,6 @@ function getConnectedNodes(edges: Edge[], from: Set<string>, exclude: Set<string
   }
 
   return result
-}
-
-function isGroup(variableType: string): boolean {
-  return variableType.includes('object') || variableType.includes('schematic') || variableType.includes('array')
-}
-function isNodeGroup(nodeType: string): boolean {
-  return nodeType.includes('labeledGroup') || nodeType.includes('ArrayGroup') || nodeType.includes('extraSourceNode')
-}
-function getType(id: string, parentId: string): string {
-  if (id.includes('object')) {
-    return 'labeledGroup'
-  } else if (id.includes('array')) {
-    return `${parentId.includes('source-table') ? 'source' : 'target'}ArrayGroup`
-  } else if (id.includes('schematic')) {
-    return 'extraSourceNode'
-  } else {
-    return parentId.includes('source-table') ? 'sourceOnly' : 'targetOnly'
-  }
 }
 
 export class DuplicateLabelException extends Error {

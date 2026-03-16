@@ -265,7 +265,6 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
         }
       }
       if (!isArrayMapping) {
-        console.dir(targets[0])
         setMappingSources(sources.filter((source) => source.id?.includes('item')))
         setMappingTargets(targets.filter((target) => target.id?.includes('item')))
         setAddMappingModal(true)

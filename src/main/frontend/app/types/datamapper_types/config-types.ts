@@ -18,6 +18,7 @@ export interface Property {
   defaultValue: string
   parent: string
   children?: Property[]
+  parentArray?: string
 }
 
 export interface Source {
