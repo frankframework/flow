@@ -139,16 +139,30 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
 
     if (config.propertyData.nodes && config.propertyData.nodes.length > 1) {
       onRestore()
-    } else {
-      // Dummy data creation function, to be removed later maybe a if development check here would be nice?
-      // initFlowNodes(flow, config)
     }
-    if (targetSchematic) {
-      flow.importSchematic(targetSchematic, 'target')
+    const loadSchematics = async () => {
+      try {
+        if (config.propertyData.nodes && config.propertyData.nodes.length > 1) {
+          onRestore()
+        }
+
+        if (targetSchematic) {
+          await flow.importSchematic(targetSchematic, 'target')
+        }
+
+        if (sourceSchematics.length > 0) {
+          await flow.importMultipleSchematics(sourceSchematics)
+        }
+      } catch (error) {
+        if (error instanceof Error) {
+          showErrorToast(error.message)
+        }
+      } finally {
+        clearFiles()
+      }
     }
-    if (sourceSchematics.length > 0) {
-      flow.importMultipleSchematics(sourceSchematics)
-    }
+
+    loadSchematics()
     clearFiles()
   }, [reactFlowInstance])
 

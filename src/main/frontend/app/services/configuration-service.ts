@@ -1,6 +1,28 @@
 import { apiFetch } from '~/utils/api'
 import type { Project, XmlResponse } from '~/types/project.types'
 
+const configCache = new Map<string, string>()
+
+export function clearConfigurationCache(projectName?: string, filepath?: string) {
+  if (projectName && filepath) {
+    configCache.delete(`${projectName}:${filepath}`)
+  } else {
+    configCache.clear()
+  }
+}
+
+export async function fetchConfigurationCached(
+  projectName: string,
+  filepath: string,
+  signal?: AbortSignal,
+): Promise<string> {
+  const key = `${projectName}:${filepath}`
+  if (configCache.has(key)) return configCache.get(key)!
+  const xml = await fetchConfiguration(projectName, filepath, signal)
+  configCache.set(key, xml)
+  return xml
+}
+
 export async function fetchConfiguration(projectName: string, filepath: string, signal?: AbortSignal): Promise<string> {
   const data = await apiFetch<{ content: string }>(`/projects/${encodeURIComponent(projectName)}/configuration`, {
     method: 'POST',

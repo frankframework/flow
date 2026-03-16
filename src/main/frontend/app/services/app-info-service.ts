@@ -2,7 +2,6 @@
 
 export interface AppInfo {
   isLocal: boolean
-  workspaceRoot: string
 }
 
 export async function fetchAppInfo(signal?: AbortSignal): Promise<AppInfo> {

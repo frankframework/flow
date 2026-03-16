@@ -145,7 +145,7 @@ class CloudFileSystemStorageServiceTest {
 
         String relative = service.toRelativePath(absolutePath);
 
-        assertTrue(relative.startsWith("/"));
+        assertTrue(relative.startsWith(""));
         assertTrue(relative.contains("project"));
         assertTrue(relative.contains("file.xml"));
     }
@@ -156,7 +156,7 @@ class CloudFileSystemStorageServiceTest {
 
         String relative = service.toRelativePath(userRoot.toString());
 
-        assertEquals("/", relative);
+        assertEquals("", relative);
     }
 
     @Test

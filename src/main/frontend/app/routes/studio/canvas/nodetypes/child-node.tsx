@@ -2,9 +2,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import useFlowStore from '~/stores/flow-store'
 import { getElementTypeFromName } from '../../node-translator-module'
 import useNodeContextStore from '~/stores/node-context-store'
-import { useNodeContextMenu } from '../flow'
+import { useNodeContextMenu } from '../node-context-menu-context'
 import { canAcceptChildStatic, type FrankElement } from './node-utilities'
-import { useFrankDoc } from '~/providers/frankdoc-provider'
+import { useFFDoc } from '@frankframework/doc-library-react'
 
 export interface ChildNode {
   id: string
@@ -37,7 +37,7 @@ export function ChildNodeComponent({
   const [dragOver, setDragOver] = useState(false)
   const [canDropDraggedElement, setCanDropDraggedElement] = useState(false)
   const [dragForbidden, setDragForbidden] = useState(false)
-  const { elements, filters } = useFrankDoc()
+  const { elements, filters } = useFFDoc()
   // Store the associated Frank element
   const frankElement = useMemo(() => {
     if (!elements) return null

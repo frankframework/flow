@@ -1,7 +1,7 @@
 import { Handle, Position, useNodeConnections, useReactFlow } from '@xyflow/react'
 import { useState } from 'react'
 import HandleMenuItem from './handle-menu-item'
-import type { ElementProperty } from '@frankframework/ff-doc'
+import type { ElementProperty } from '@frankframework/doc-library-core'
 import { useHandleTypes } from '~/hooks/use-handle-types'
 
 interface HandleProperties {

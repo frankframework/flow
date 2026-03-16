@@ -3,7 +3,7 @@ import { getElementTypeFromName } from '~/routes/studio/node-translator-module'
 import type { ExitNode } from '~/routes/studio/canvas/nodetypes/exit-node'
 import type { FrankNodeType } from '~/routes/studio/canvas/nodetypes/frank-node'
 import type { ChildNode } from '~/routes/studio/canvas/nodetypes/child-node'
-import { fetchConfiguration } from '~/services/configuration-service'
+import { fetchConfigurationCached } from '~/services/configuration-service'
 import { translateElementFromOldToNewFormat } from '~/utils/flow-utils'
 import { FlowConfig } from './canvas/flow.config'
 
@@ -16,17 +16,13 @@ interface SourceHandle {
   index: number
 }
 
-export async function getXmlString(projectName: string, filepath: string): Promise<string> {
-  return fetchConfiguration(projectName, filepath)
-}
-
 export interface AdapterInfo {
   name: string
   listenerType: string | null
 }
 
 export async function getAdaptersFromConfiguration(projectName: string, filepath: string): Promise<AdapterInfo[]> {
-  const xmlString = await getXmlString(projectName, filepath)
+  const xmlString = await fetchConfigurationCached(projectName, filepath)
   const parser = new DOMParser()
   const xmlDoc = parser.parseFromString(xmlString, 'text/xml')
 
@@ -63,7 +59,7 @@ export async function getAdapterFromConfiguration(
   adapterName: string,
   adapterPosition?: number,
 ): Promise<Element | null> {
-  const xmlString = await getXmlString(projectname, filename)
+  const xmlString = await fetchConfigurationCached(projectname, filename)
   const parser = new DOMParser()
   const xmlDoc = parser.parseFromString(xmlString, 'text/xml')
 

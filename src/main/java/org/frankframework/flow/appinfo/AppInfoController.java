@@ -17,10 +17,6 @@ public class AppInfoController {
 
     @GetMapping
     public Map<String, Object> getInfo() {
-        return Map.of(
-                "isLocal",
-                fileSystemStorage.isLocalEnvironment(),
-                "workspaceRoot",
-                fileSystemStorage.isLocalEnvironment() ? "Computer" : "Cloud Workspace");
+        return Map.of("isLocal", fileSystemStorage.isLocalEnvironment());
     }
 }

@@ -1,8 +1,8 @@
 import React, { useState } from 'react'
 import HelpIcon from '/icons/solar/Help.svg?react'
-import { useJavadocTransform } from '@frankframework/ff-doc/react'
+import { useJavadocTransform } from '@frankframework/doc-library-react'
 import ContextInputField from './context-input-field'
-import type { Attribute, Elements } from '@frankframework/ff-doc'
+import type { Attribute, Elements } from '@frankframework/doc-library-core'
 
 export interface ContextInputProperties {
   id: string

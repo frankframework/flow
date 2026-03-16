@@ -4,3 +4,6 @@ declare module '*.mdx' {
   const component: ComponentType
   export default component
 }
+
+declare module 'monaco-xsd-code-completion/esm/XsdManager'
+declare module 'monaco-xsd-code-completion/esm/XsdFeatures'

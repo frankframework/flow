@@ -1,4 +1,4 @@
-import type { Child, Filters } from '@frankframework/ff-doc'
+import type { Child, Filters } from '@frankframework/doc-library-core'
 
 export interface FrankElement {
   children?: Child[]

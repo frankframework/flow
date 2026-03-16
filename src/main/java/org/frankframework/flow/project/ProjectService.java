@@ -1,6 +1,5 @@
 package org.frankframework.flow.project;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
@@ -9,23 +8,15 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.TransformerException;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.transport.CredentialsProvider;
-import org.frankframework.flow.adapter.AdapterNotFoundException;
-import org.frankframework.flow.configuration.Configuration;
-import org.frankframework.flow.configuration.ConfigurationAlreadyExistsException;
-import org.frankframework.flow.configuration.ConfigurationNotFoundException;
-import org.frankframework.flow.exception.ApiException;
 import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.frankframework.flow.filesystem.FilesystemEntry;
 import org.frankframework.flow.git.GitCredentialHelper;
@@ -33,17 +24,10 @@ import org.frankframework.flow.projectsettings.FilterType;
 import org.frankframework.flow.projectsettings.InvalidFilterTypeException;
 import org.frankframework.flow.recentproject.RecentProject;
 import org.frankframework.flow.recentproject.RecentProjectsService;
-import org.frankframework.flow.utility.XmlConfigurationUtils;
-import org.frankframework.flow.utility.XmlSecurityUtils;
-import org.frankframework.flow.xml.XmlDTO;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import org.w3c.dom.Document;
-import org.w3c.dom.Node;
-import org.xml.sax.SAXException;
-import org.xml.sax.SAXParseException;
 
 @Slf4j
 @Service
@@ -53,6 +37,7 @@ public class ProjectService {
     private final FileSystemStorage fileSystemStorage;
     private final RecentProjectsService recentProjectsService;
 
+    // Cache is now ONLY for lightweight Project state (Tokens, Filters), NOT files.
     private final Map<String, Project> projectCache = new ConcurrentHashMap<>();
 
     public ProjectService(FileSystemStorage fileSystemStorage, @Lazy RecentProjectsService recentProjectsService) {
@@ -112,7 +97,6 @@ public class ProjectService {
 
     public Project createProjectOnDisk(String path) throws IOException {
         Path projectPath = fileSystemStorage.createProjectDirectory(path);
-
         Files.createDirectories(projectPath.resolve(CONFIGURATIONS_DIR));
 
         ClassPathResource resource = new ClassPathResource("templates/default-configuration.xml");
@@ -125,30 +109,6 @@ public class ProjectService {
                 defaultXml);
 
         return loadProjectAndCache(projectPath.toString());
-    }
-
-    public XmlDTO getAdapterElement(String projectName, String configurationPath, String adapterName)
-            throws ProjectNotFoundException, ConfigurationNotFoundException, AdapterNotFoundException, IOException,
-                    ApiException, SAXException, ParserConfigurationException, TransformerException {
-
-        Project project = getProject(projectName);
-
-        Configuration config = project.getConfigurations().stream()
-                .filter(c -> c.getFilepath().equals(configurationPath))
-                .findFirst()
-                .orElseThrow(() -> new ConfigurationNotFoundException(
-                        String.format("Configuration with filepath: %s not found", configurationPath)));
-
-        Document configDoc = XmlSecurityUtils.createSecureDocumentBuilder()
-                .parse(new ByteArrayInputStream(config.getXmlContent().getBytes(StandardCharsets.UTF_8)));
-
-        Node adapterNode = XmlConfigurationUtils.findAdapterInDocument(configDoc, adapterName);
-        if (adapterNode == null) {
-            throw new AdapterNotFoundException("Adapter not found: " + adapterName);
-        }
-
-        String adapterXml = XmlConfigurationUtils.convertNodeToString(adapterNode);
-        return new XmlDTO(adapterXml);
     }
 
     public Project openProjectFromDisk(String path) throws IOException, ProjectNotFoundException {
@@ -202,61 +162,18 @@ public class ProjectService {
         projectCache.entrySet().removeIf(e -> e.getValue().getName().equals(projectName));
     }
 
-    private Project loadProjectCached(String path) throws IOException {
-        String cacheKey = fileSystemStorage.toAbsolutePath(path).toString();
-        Project cached = projectCache.get(cacheKey);
-        if (cached != null) {
-            return cached;
-        }
-        return loadProjectAndCache(path);
-    }
-
-    private Project loadProjectAndCache(String path) throws IOException {
-        Project project = loadProjectFromStorage(path);
-        String cacheKey = fileSystemStorage.toAbsolutePath(path).toString();
-        projectCache.put(cacheKey, project);
+    public Project enableFilter(String projectName, String type)
+            throws ProjectNotFoundException, InvalidFilterTypeException {
+        Project project = getProject(projectName);
+        project.enableFilter(parseFilterType(type));
         return project;
     }
 
-    private Project loadProjectFromStorage(String path) throws IOException {
-        Path absPath = fileSystemStorage.toAbsolutePath(path);
-
-        validatePathSafety(absPath);
-
-        if (!Files.exists(absPath) || !Files.isDirectory(absPath)) {
-            throw new IOException("Invalid project path: " + absPath);
-        }
-
-        Project project = new Project(absPath.getFileName().toString(), absPath.toString());
-
-        Path configDir = absPath.resolve(CONFIGURATIONS_DIR).normalize();
-
-        validatePathSafety(configDir);
-
-        if (!Files.exists(configDir)) {
-            return project;
-        }
-
-        try (Stream<Path> s = Files.walk(configDir)) {
-            s.filter(p -> p.toString().endsWith(".xml")).forEach(p -> {
-                try {
-                    String content = fileSystemStorage.readFile(p.toString());
-                    Configuration c = new Configuration(p.toString());
-                    c.setXmlContent(content);
-                    project.addConfiguration(c);
-                } catch (IOException e) {
-                    log.error("Error reading config file {}: {}", p, e.getMessage(), e);
-                }
-            });
-        }
+    public Project disableFilter(String projectName, String type)
+            throws ProjectNotFoundException, InvalidFilterTypeException {
+        Project project = getProject(projectName);
+        project.disableFilter(parseFilterType(type));
         return project;
-    }
-
-    private static void validatePathSafety(Path path) {
-        String pathStr = path.toString();
-        if (pathStr.contains("..")) {
-            throw new SecurityException("Path traversal is not allowed: " + pathStr);
-        }
     }
 
     public void exportProjectAsZip(String projectName, OutputStream outputStream)
@@ -307,32 +224,51 @@ public class ProjectService {
         return loadProjectAndCache(projectDir.toString());
     }
 
-    public boolean updateConfigurationXml(String projectName, String filepath, String xmlContent)
-            throws ProjectNotFoundException, ConfigurationNotFoundException, IOException {
-        Project project = getProject(projectName);
+    public ProjectDTO toDto(Project project) {
+        String cleanPath = fileSystemStorage.toRelativePath(project.getRootPath());
 
-        Configuration targetConfig = project.getConfigurations().stream()
-                .filter(c -> c.getFilepath().equals(filepath))
-                .findFirst()
-                .orElseThrow(() -> new ConfigurationNotFoundException(
-                        String.format("Configuration with filepath: %s not found", filepath)));
+        // Dynamically fetch configurations from disk as the single source of truth
+        List<String> filepaths = getConfigurationFilesDynamically(project.getRootPath());
 
-        targetConfig.setXmlContent(xmlContent);
-        return true;
+        boolean isGitRepo = false;
+        try {
+            Path absPath = fileSystemStorage.toAbsolutePath(project.getRootPath());
+            isGitRepo = Files.isDirectory(absPath.resolve(".git"));
+        } catch (IOException e) {
+            log.info("Could not determine if project is a git repository: {}", e.getMessage());
+        }
+
+        boolean hasStoredToken =
+                project.getGitToken() != null && !project.getGitToken().isBlank();
+
+        return new ProjectDTO(
+                project.getName(),
+                cleanPath,
+                filepaths,
+                project.getProjectSettings().getFilters(),
+                isGitRepo,
+                hasStoredToken);
     }
 
-    public Project enableFilter(String projectName, String type)
-            throws ProjectNotFoundException, InvalidFilterTypeException {
-        Project project = getProject(projectName);
-        project.enableFilter(parseFilterType(type));
-        return project;
-    }
+    private List<String> getConfigurationFilesDynamically(String projectRoot) {
+        try {
+            Path absPath = fileSystemStorage.toAbsolutePath(projectRoot);
+            Path configDir = absPath.resolve(CONFIGURATIONS_DIR).normalize();
 
-    public Project disableFilter(String projectName, String type)
-            throws ProjectNotFoundException, InvalidFilterTypeException {
-        Project project = getProject(projectName);
-        project.disableFilter(parseFilterType(type));
-        return project;
+            if (!Files.exists(configDir) || !Files.isDirectory(configDir)) {
+                return List.of();
+            }
+
+            try (Stream<Path> stream = Files.walk(configDir)) {
+                return stream.filter(Files::isRegularFile)
+                        .filter(p -> p.toString().toLowerCase().endsWith(".xml"))
+                        .map(p -> fileSystemStorage.toRelativePath(p.toString()))
+                        .toList();
+            }
+        } catch (IOException e) {
+            log.error("Failed to read configurations from disk for project {}", projectRoot, e);
+            return List.of();
+        }
     }
 
     private FilterType parseFilterType(String type) throws InvalidFilterTypeException {
@@ -343,106 +279,38 @@ public class ProjectService {
         }
     }
 
-    public boolean updateAdapter(String projectName, String configurationPath, String adapterName, String newAdapterXml)
-            throws ProjectNotFoundException, ConfigurationNotFoundException, AdapterNotFoundException {
-        Project project = getProject(projectName);
-        Optional<Configuration> configOptional = project.getConfigurations().stream()
-                .filter(configuration -> configuration.getFilepath().equals(configurationPath))
-                .findFirst();
-
-        if (configOptional.isEmpty()) {
-            throw new ConfigurationNotFoundException("Configuration not found: " + configurationPath);
+    private Project loadProjectCached(String path) throws IOException {
+        String cacheKey = fileSystemStorage.toAbsolutePath(path).toString();
+        Project cached = projectCache.get(cacheKey);
+        if (cached != null) {
+            return cached;
         }
-
-        Configuration config = configOptional.get();
-
-        try {
-            Document configDoc = XmlSecurityUtils.createSecureDocumentBuilder()
-                    .parse(new ByteArrayInputStream(config.getXmlContent().getBytes(StandardCharsets.UTF_8)));
-
-            Document newAdapterDoc = XmlSecurityUtils.createSecureDocumentBuilder()
-                    .parse(new ByteArrayInputStream(newAdapterXml.getBytes(StandardCharsets.UTF_8)));
-
-            Node newAdapterNode = configDoc.importNode(newAdapterDoc.getDocumentElement(), true);
-
-            if (!XmlConfigurationUtils.replaceAdapterInDocument(configDoc, adapterName, newAdapterNode)) {
-                throw new AdapterNotFoundException("Adapter not found: " + adapterName);
-            }
-
-            String xmlOutput = XmlConfigurationUtils.convertNodeToString(configDoc);
-            config.setXmlContent(xmlOutput);
-            return true;
-        } catch (AdapterNotFoundException e) {
-            throw e;
-        } catch (SAXParseException e) {
-            log.warn("Invalid XML for adapter {}: {}", adapterName, e.getMessage());
-            return false;
-        } catch (Exception e) {
-            log.error("Unexpected error updating adapter: {}", e.getMessage(), e);
-            return false;
-        }
+        return loadProjectAndCache(path);
     }
 
-    public Project addConfiguration(String projectName, String configurationName)
-            throws ProjectNotFoundException, IOException {
-        Project project = getProject(projectName);
-
-        Path absProjectPath = fileSystemStorage.toAbsolutePath(project.getRootPath());
-        Path configDir = absProjectPath.resolve(CONFIGURATIONS_DIR).normalize();
-        Files.createDirectories(configDir);
-
-        Path filePath = configDir.resolve(configurationName).normalize();
-        if (!filePath.startsWith(configDir)) {
-            throw new SecurityException("Invalid configuration name: " + configurationName);
-        }
-
-        String defaultXml = new String(
-                new ClassPathResource("templates/default-configuration.xml")
-                        .getInputStream()
-                        .readAllBytes(),
-                StandardCharsets.UTF_8);
-
-        fileSystemStorage.writeFile(filePath.toString(), defaultXml);
-
-        Configuration configuration = new Configuration(filePath.toString());
-        configuration.setXmlContent(defaultXml);
-        project.addConfiguration(configuration);
+    private Project loadProjectAndCache(String path) throws IOException {
+        Project project = loadProjectFromStorage(path);
+        String cacheKey = fileSystemStorage.toAbsolutePath(path).toString();
+        projectCache.put(cacheKey, project);
         return project;
     }
 
-    public Project addConfigurationToFolder(String projectName, String configurationName, String folderpath)
-            throws ProjectNotFoundException, IOException, ApiException {
-        Project project = getProject(projectName);
+    private Project loadProjectFromStorage(String path) throws IOException {
+        Path absPath = fileSystemStorage.toAbsolutePath(path);
 
-        Path absProjectPath = fileSystemStorage.toAbsolutePath(project.getRootPath());
-        Path targetDir = fileSystemStorage.toAbsolutePath(folderpath);
+        validatePathSafety(absPath);
 
-        if (!targetDir.startsWith(absProjectPath)) {
-            throw new SecurityException("Configuration location must be within the project directory");
+        if (!Files.exists(absPath) || !Files.isDirectory(absPath)) {
+            throw new IOException("Invalid project path: " + absPath);
         }
 
-        Files.createDirectories(targetDir);
+        return new Project(absPath.getFileName().toString(), absPath.toString());
+    }
 
-        Path filePath = targetDir.resolve(configurationName).normalize();
-        if (!filePath.startsWith(targetDir)) {
-            throw new SecurityException("Invalid configuration name: " + configurationName);
+    private static void validatePathSafety(Path path) {
+        String pathStr = path.toString();
+        if (pathStr.contains("..")) {
+            throw new SecurityException("Path traversal is not allowed: " + pathStr);
         }
-
-        if (Files.exists(filePath)) {
-            throw new ConfigurationAlreadyExistsException(configurationName + " already exists at: " + filePath);
-        }
-
-        String defaultXml = new String(
-                new ClassPathResource("templates/default-configuration.xml")
-                        .getInputStream()
-                        .readAllBytes(),
-                StandardCharsets.UTF_8);
-
-        fileSystemStorage.writeFile(filePath.toString(), defaultXml);
-
-        Configuration configuration = new Configuration(filePath.toString());
-        configuration.setXmlContent(defaultXml);
-        project.addConfiguration(configuration);
-        return project;
     }
 }

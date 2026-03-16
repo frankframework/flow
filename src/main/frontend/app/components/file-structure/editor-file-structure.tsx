@@ -3,7 +3,7 @@ import Search from '~/components/search/search'
 import LoadingSpinner from '~/components/loading-spinner'
 import FolderIcon from '../../../icons/solar/Folder.svg?react'
 import FolderOpenIcon from '../../../icons/solar/Folder Open.svg?react'
-import 'react-complex-tree/lib/style-modern.css'
+import '/styles/editor-files.css'
 import AltArrowRightIcon from '../../../icons/solar/Alt Arrow Right.svg?react'
 import AltArrowDownIcon from '../../../icons/solar/Alt Arrow Down.svg?react'
 import CodeIcon from '../../../icons/solar/Code.svg?react'
@@ -96,7 +96,7 @@ export default function EditorFileStructure() {
     return () => {
       isMounted = false
     }
-  }, [editorExpandedItems, project?.name])
+  }, [project?.name])
 
   useEffect(() => {
     const findMatchingItems = async () => {
@@ -151,7 +151,6 @@ export default function EditorFileStructure() {
       const item = await dataProvider.getTreeItem(itemId)
       if (!item) return
 
-      // Toggle expanded state managed by onExpandItem naturally if needed
       if (item.isFolder) {
         return
       }
@@ -213,6 +212,7 @@ export default function EditorFileStructure() {
 
   const renderItemArrow = ({ item, context }: { item: TreeItem; context: TreeItemRenderContext }) => {
     if (!item.isFolder) return null
+
     const Icon = context.isExpanded ? AltArrowDownIcon : AltArrowRightIcon
 
     const handleClick = (event: React.MouseEvent) => {
@@ -220,7 +220,13 @@ export default function EditorFileStructure() {
       context.toggleExpandedState()
     }
 
-    return <Icon onClick={handleClick} className="rct-tree-item-arrow-isFolder rct-tree-item-arrow fill-foreground" />
+    return (
+      <Icon
+        onClick={handleClick}
+        onContextMenu={(mouseEvent) => ctxMenu.openContextMenu(mouseEvent, item.index)}
+        className="rct-tree-item-arrow-isFolder rct-tree-item-arrow fill-foreground"
+      />
+    )
   }
 
   const renderItemTitle = ({
@@ -238,6 +244,7 @@ export default function EditorFileStructure() {
     const titleLower = title.toLowerCase()
 
     let highlightedTitle: JSX.Element | string = title
+
     if (searchTerm && titleLower.includes(searchLower)) {
       const parts = title.split(new RegExp(`(${searchTerm})`, 'gi'))
       highlightedTitle = (
