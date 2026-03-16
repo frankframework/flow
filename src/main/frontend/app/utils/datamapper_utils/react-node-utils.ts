@@ -107,7 +107,7 @@ function resolveVerticalOverlap(desiredY: number, allNodes: Node[], minDistance 
     hasOverlap = false
 
     for (const node of allNodes) {
-      if (node.type !== 'mappingNode') continue
+      if (!node.type?.toLocaleLowerCase().includes('mappingnode')) continue
 
       if (Math.abs(node.position.y - y) < minDistance) {
         y += offset
