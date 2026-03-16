@@ -15,7 +15,7 @@ import org.frankframework.flow.exception.ApiException;
 import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.frankframework.flow.project.Project;
 import org.frankframework.flow.project.ProjectService;
-import org.frankframework.flow.utility.XmlAdapterUtils;
+import org.frankframework.flow.utility.XmlConfigurationUtils;
 import org.frankframework.flow.utility.XmlSecurityUtils;
 import org.frankframework.flow.xml.XmlDTO;
 import org.springframework.stereotype.Service;
@@ -49,12 +49,12 @@ public class AdapterService {
         Document configDoc = XmlSecurityUtils.createSecureDocumentBuilder()
                 .parse(new ByteArrayInputStream(config.getXmlContent().getBytes(StandardCharsets.UTF_8)));
 
-        Node adapterNode = XmlAdapterUtils.findAdapterInDocument(configDoc, adapterName);
+        Node adapterNode = XmlConfigurationUtils.findAdapterInDocument(configDoc, adapterName);
         if (adapterNode == null) {
             throw new AdapterNotFoundException("Adapter not found: " + adapterName);
         }
 
-        return new XmlDTO(XmlAdapterUtils.convertNodeToString(adapterNode));
+        return new XmlDTO(XmlConfigurationUtils.convertNodeToString(adapterNode));
     }
 
     public boolean updateAdapter(Path configurationFile, String adapterName, String newAdapterXml)
@@ -75,11 +75,11 @@ public class AdapterService {
 
             Node newAdapterNode = newAdapterDoc.getDocumentElement();
 
-            if (!XmlAdapterUtils.replaceAdapterInDocument(configDoc, adapterName, newAdapterNode)) {
+            if (!XmlConfigurationUtils.replaceAdapterInDocument(configDoc, adapterName, newAdapterNode)) {
                 throw new AdapterNotFoundException("Adapter not found: " + adapterName);
             }
 
-            String updatedXml = XmlAdapterUtils.convertNodeToString(configDoc);
+            String updatedXml = XmlConfigurationUtils.convertNodeToString(configDoc);
             Files.writeString(absConfigFile, updatedXml, StandardCharsets.UTF_8, StandardOpenOption.TRUNCATE_EXISTING);
             return true;
 
