@@ -40,11 +40,11 @@ public class ConfigurationController {
 
 	@PutMapping("/{projectName}/configuration")
 	public ResponseEntity<XmlDTO> updateConfiguration(
-			@PathVariable String projectName, @RequestBody ConfigurationDTO configurationDTO)
-			throws ConfigurationNotFoundException, IOException, ProjectNotFoundException, ParserConfigurationException,
+			@RequestBody ConfigurationDTO configurationDTO)
+			throws ConfigurationNotFoundException, IOException, ParserConfigurationException,
 					SAXException, TransformerException {
 		String updatedContent = configurationService.updateConfiguration(
-				projectName, configurationDTO.filepath(), configurationDTO.content());
+				configurationDTO.filepath(), configurationDTO.content());
 		XmlDTO xmlDTO = new XmlDTO(updatedContent);
 		return ResponseEntity.ok(xmlDTO);
 	}

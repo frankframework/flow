@@ -44,7 +44,7 @@ public class ConfigurationService {
 		return fileSystemStorage.readFile(filePath.toString());
 	}
 
-	public String updateConfiguration(String projectName, String filepath, String content)
+	public String updateConfiguration(String filepath, String content)
 			throws IOException, ConfigurationNotFoundException, ParserConfigurationException, SAXException,
 					TransformerException {
 		Path absolutePath = fileSystemStorage.toAbsolutePath(filepath);

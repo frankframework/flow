@@ -129,8 +129,12 @@ public class XmlConfigurationUtils {
 	 * element type
 	 * - If element name is lowercase without className:
 	 * capitalize first letter
+	 * @throws ParserConfigurationException 
+	 * @throws IOException 
+	 * @throws SAXException 
+	 * @throws TransformerException 
 	 */
-	public static String normalizeFrankElements(String xmlContent) throws Exception {
+	public static String normalizeFrankElements(String xmlContent) throws SAXException, IOException, ParserConfigurationException, TransformerException  {
 
 		Document configDoc = XmlSecurityUtils.createSecureDocumentBuilder()
 				.parse(new ByteArrayInputStream(xmlContent.getBytes(StandardCharsets.UTF_8)));
