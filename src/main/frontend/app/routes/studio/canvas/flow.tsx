@@ -38,6 +38,7 @@ import { cloneWithRemappedIds } from '~/utils/flow-utils'
 import { showErrorToast } from '~/components/toast'
 import clsx from 'clsx'
 import { useSettingsStore } from '~/stores/settings-store'
+import { useShortcut } from '~/hooks/use-shortcut'
 
 export type FlowNode = FrankNodeType | ExitNode | StickyNote | GroupNode | Node
 
@@ -475,62 +476,7 @@ function FlowCanvas() {
     flowStore.setEdges([...deselectedEdges, ...newEdges])
   }, [])
 
-  useEffect(() => {
-    // TODO rework this in the overarching shortcut event system
-    const handleKeyDown = (event: KeyboardEvent) => {
-      closeEditNodeContextOnEscape(event)
-
-      const tagName = (event.target as HTMLElement).tagName
-      const isTyping = ['INPUT', 'TEXTAREA'].includes(tagName) || (event.target as HTMLElement).isContentEditable
-
-      if (isTyping) return
-
-      const isCmdOrCtrl = event.metaKey || event.ctrlKey
-
-      if (isCmdOrCtrl && event.key.toLowerCase() === 'c') {
-        event.preventDefault()
-        copySelection()
-      }
-
-      if (isCmdOrCtrl && event.key.toLowerCase() === 'v') {
-        event.preventDefault()
-        pasteSelection()
-      }
-
-      if (isCmdOrCtrl && event.key.toLowerCase() === 'z') {
-        event.preventDefault()
-        // Redo if Shift is also pressed, otherwise undo
-        if (event.shiftKey) {
-          useFlowStore.getState().redo()
-        } else {
-          useFlowStore.getState().undo()
-        }
-      }
-
-      // Or redo with Cmd/Ctrl + Y, which is common on Windows
-      if (isCmdOrCtrl && event.key.toLowerCase() === 'y') {
-        event.preventDefault()
-        useFlowStore.getState().redo()
-      }
-
-      if (event.key === 'g' || event.key === 'G') {
-        event.preventDefault()
-        handleGrouping()
-      }
-
-      if (isCmdOrCtrl && event.key.toLowerCase() === 's') {
-        event.preventDefault()
-        saveFlow()
-      }
-    }
-
-    globalThis.addEventListener('keydown', handleKeyDown)
-    return () => globalThis.removeEventListener('keydown', handleKeyDown)
-  }, [copySelection, pasteSelection, handleGrouping, showNodeContextMenu, setIsEditing, setParentId, setChildParentId])
-
-  function closeEditNodeContextOnEscape(event: KeyboardEvent): void {
-    if (event.key !== 'Escape') return
-
+  function closeEditNodeContextOnEscape(): void {
     const { isNewNode, nodeId, parentId } = useNodeContextStore.getState()
 
     if (isNewNode) {
@@ -547,6 +493,17 @@ function FlowCanvas() {
     setParentId(null)
     setChildParentId(null)
   }
+
+  useShortcut({
+    'studio.copy': () => copySelection(),
+    'studio.paste': () => pasteSelection(),
+    'studio.undo': () => useFlowStore.getState().undo(),
+    'studio.redo': () => useFlowStore.getState().redo(),
+    'studio.redo-alt': () => useFlowStore.getState().redo(),
+    'studio.group': () => handleGrouping(),
+    'studio.save': () => saveFlow(),
+    'studio.close-context': () => closeEditNodeContextOnEscape(),
+  })
 
   const groupNodes = (nodesToGroup: FlowNode[], currentNodes: FlowNode[]) => {
     const minX = Math.min(...nodesToGroup.map((node) => node.position.x))
