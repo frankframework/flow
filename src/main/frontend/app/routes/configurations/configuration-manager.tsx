@@ -11,6 +11,7 @@ import { deleteInProject, fetchProjectTree } from '~/services/file-tree-service'
 import Button from '~/components/inputs/button'
 import Search from '~/components/search/search'
 import { toRelativePath } from '~/utils/path-utils'
+import { useDebounce } from '~/hooks/use-debounce'
 
 interface ConfigurationFile {
   path: string
@@ -62,7 +63,7 @@ export default function ConfigurationManager() {
   const [isLoading, setIsLoading] = useState(false)
   const [configurationsDir, setConfigurationsDir] = useState<FileTreeNode | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
-  const [debouncedQuery, setDebouncedQuery] = useState(searchQuery)
+  const debouncedQuery = useDebounce(searchQuery, 200)
 
   const loadTree = useCallback(
     (signal?: AbortSignal) => {
@@ -124,14 +125,6 @@ export default function ConfigurationManager() {
   const handleSearch = (event: ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(event.target.value)
   }
-
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedQuery(searchQuery)
-    }, 200)
-
-    return () => clearTimeout(handler)
-  }, [searchQuery])
 
   const filesWithAdapters = useMemo((): ConfigurationFile[] => {
     return configFiles

@@ -23,6 +23,7 @@ import { useTreeStore } from '~/stores/tree-store'
 import EditorFilesDataProvider, { type FileNode } from './editor-data-provider'
 import { useFileTreeContextMenu } from './use-file-tree-context-menu'
 import FileTreeDialogs from './file-tree-dialogs'
+import { useDebounce } from '~/hooks/use-debounce'
 
 const TREE_ID = 'editor-files-tree'
 
@@ -35,6 +36,7 @@ export default function EditorFileStructure() {
   const { editorExpandedItems, addEditorExpandedItem, removeEditorExpandedItem } = useTreeStore()
 
   const [searchTerm, setSearchTerm] = useState('')
+  const debouncedSearchTerm = useDebounce(searchTerm, 300)
   const [matchingItemIds, setMatchingItemIds] = useState<string[]>([])
   const [activeMatchIndex, setActiveMatchIndex] = useState<number>(-1)
   const [highlightedItemId, setHighlightedItemId] = useState<string | null>(null)
@@ -102,7 +104,7 @@ export default function EditorFileStructure() {
     const findMatchingItems = async () => {
       if (!dataProvider) return
 
-      if (!searchTerm) {
+      if (!debouncedSearchTerm) {
         setMatchingItemIds([])
         setActiveMatchIndex(-1)
         setHighlightedItemId(null)
@@ -110,7 +112,7 @@ export default function EditorFileStructure() {
       }
 
       const allItems = await dataProvider.getAllItems()
-      const lower = searchTerm.toLowerCase()
+      const lower = debouncedSearchTerm.toLowerCase()
 
       const matches = allItems
         .filter((item) => getItemTitle(item).toLowerCase().includes(lower))
@@ -128,7 +130,7 @@ export default function EditorFileStructure() {
     }
 
     findMatchingItems()
-  }, [searchTerm, dataProvider])
+  }, [debouncedSearchTerm, dataProvider])
 
   const openFileTab = useCallback(
     (filePath: string, fileName: string) => {
@@ -194,12 +196,12 @@ export default function EditorFileStructure() {
   useEffect(() => {
     if (!tree.current) return
 
-    if (searchTerm) {
+    if (debouncedSearchTerm) {
       tree.current.expandAll()
     } else {
       tree.current.collapseAll()
     }
-  }, [searchTerm])
+  }, [debouncedSearchTerm])
 
   useEffect(() => {
     if (activeMatchIndex === -1 || !tree.current) return

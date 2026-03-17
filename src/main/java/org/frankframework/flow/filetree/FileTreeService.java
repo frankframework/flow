@@ -320,4 +320,25 @@ public class FileTreeService {
 
         return node;
     }
+
+    public List<FileIndexEntryDTO> getProjectFileIndex(String projectName) throws IOException, ProjectNotFoundException {
+        Project project = projectService.getProject(projectName);
+        Path projectPath = fileSystemStorage.toAbsolutePath(project.getRootPath());
+
+        if (!Files.exists(projectPath) || !Files.isDirectory(projectPath)) {
+            throw new ProjectNotFoundException("Project directory does not exist: " + projectName);
+        }
+
+        boolean useRelativePaths = !fileSystemStorage.isLocalEnvironment();
+        Path relativizeRoot = useRelativePaths ? fileSystemStorage.toAbsolutePath("") : projectPath;
+
+        try (Stream<Path> stream = Files.walk(projectPath)) {
+            return stream
+                    .filter(Files::isRegularFile)
+                    .map(path -> new FileIndexEntryDTO(
+                            path.getFileName().toString(),
+                            toNodePath(path, relativizeRoot, useRelativePaths)))
+                    .toList();
+        }
+    }   
 }

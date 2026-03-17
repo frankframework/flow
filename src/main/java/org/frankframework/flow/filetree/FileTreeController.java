@@ -1,7 +1,10 @@
 package org.frankframework.flow.filetree;
 
 import java.io.IOException;
+import java.util.List;
+
 import org.frankframework.flow.exception.ApiException;
+import org.frankframework.flow.project.ProjectNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -27,6 +30,11 @@ public class FileTreeController {
     @GetMapping("/{name}/tree")
     public FileTreeNode getProjectTree(@PathVariable String name) throws IOException {
         return fileTreeService.getProjectTree(name);
+    }
+
+    @GetMapping("/{name}/index")
+    public List<FileIndexEntryDTO> getProjectTreeIndex(@PathVariable String name) throws IOException, ProjectNotFoundException {
+        return fileTreeService.getProjectFileIndex(name);
     }
 
     @GetMapping("/{name}/tree/configurations")
