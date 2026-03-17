@@ -35,11 +35,13 @@ export function useShortcutListener() {
       const { shortcuts } = useShortcutStore.getState()
 
       for (const shortcut of shortcuts.values()) {
-        if (shortcut.displayOnly) continue
-        if (!shortcut.handler) continue
-        if (shortcut.scope !== 'global' && shortcut.scope !== currentRoute) continue
-        if (!matchesShortcut(event, shortcut)) continue
-        if (!shortcut.allowInInput && isTyping(event)) continue
+        if (
+          shortcut.displayOnly ||
+          !shortcut.handler ||
+          (shortcut.scope !== 'global' && shortcut.scope !== currentRoute) ||
+          !matchesShortcut(event, shortcut) ||
+          !shortcut.allowInInput && isTyping(event)
+        ) continue
 
         event.preventDefault()
         shortcut.handler()
