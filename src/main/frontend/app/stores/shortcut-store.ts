@@ -32,7 +32,9 @@ export const ALL_SHORTCUTS: Omit<ShortcutDefinition, 'handler'>[] = [
   { id: 'studio.undo', label: 'Undo', scope: 'studio', key: 'z', modifiers: { cmdOrCtrl: true } },
   { id: 'studio.redo', label: 'Redo', scope: 'studio', key: 'z', modifiers: { cmdOrCtrl: true, shift: true } },
   { id: 'studio.redo-alt', label: 'Redo', scope: 'studio', key: 'y', modifiers: { cmdOrCtrl: true } },
+  { id: 'studio.cut', label: 'Cut Selection', scope: 'studio', key: 'x', modifiers: { cmdOrCtrl: true } },
   { id: 'studio.group', label: 'Group Selection', scope: 'studio', key: 'g' },
+  { id: 'studio.ungroup', label: 'Ungroup Selection', scope: 'studio', key: 'g', modifiers: { shift: true } },
   { id: 'studio.save', label: 'Save Changes', scope: 'studio', key: 's', modifiers: { cmdOrCtrl: true } },
   {
     id: 'studio.close-context',
@@ -52,7 +54,14 @@ export const ALL_SHORTCUTS: Omit<ShortcutDefinition, 'handler'>[] = [
   },
 
   // Editor
-  { id: 'editor.save', label: 'Save Changes', scope: 'editor', key: 's', modifiers: { cmdOrCtrl: true }, displayOnly: true },
+  {
+    id: 'editor.save',
+    label: 'Save Changes',
+    scope: 'editor',
+    key: 's',
+    modifiers: { cmdOrCtrl: true },
+    displayOnly: true,
+  },
   {
     id: 'editor.normalize',
     label: 'Normalize Frank Elements',

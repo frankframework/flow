@@ -39,6 +39,7 @@ import { showErrorToast } from '~/components/toast'
 import clsx from 'clsx'
 import { useSettingsStore } from '~/stores/settings-store'
 import { useShortcut } from '~/hooks/use-shortcut'
+import CanvasContextMenu from '~/components/flow/canvas-context-menu'
 
 export type FlowNode = FrankNodeType | ExitNode | StickyNote | GroupNode | Node
 
@@ -87,6 +88,9 @@ function FlowCanvas() {
   } | null>(null)
 
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; flowPos: { x: number; y: number } } | null>(
+    null,
+  )
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isLoadingTabRef = useRef(false)
@@ -497,10 +501,12 @@ function FlowCanvas() {
   useShortcut({
     'studio.copy': () => copySelection(),
     'studio.paste': () => pasteSelection(),
+    'studio.cut': () => cutSelection(),
     'studio.undo': () => useFlowStore.getState().undo(),
     'studio.redo': () => useFlowStore.getState().redo(),
     'studio.redo-alt': () => useFlowStore.getState().redo(),
     'studio.group': () => handleGrouping(),
+    'studio.ungroup': () => handleUngroup(),
     'studio.save': () => saveFlow(),
     'studio.close-context': () => closeEditNodeContextOnEscape(),
   })
@@ -618,25 +624,51 @@ function FlowCanvas() {
     }
   }
 
+  const addStickyNote = useCallback((flowPos: { x: number; y: number }) => {
+    const newId = useFlowStore.getState().getNextNodeId()
+
+    const stickyNote: StickyNote = {
+      id: newId,
+      position: {
+        x: flowPos.x,
+        y: flowPos.y,
+      },
+      data: {
+        content: 'New Sticky Note',
+      },
+      type: 'stickyNote',
+    }
+    useFlowStore.getState().addNode(stickyNote)
+  }, [])
+
+  const cutSelection = useCallback(() => {
+    copySelection()
+    const flowStore = useFlowStore.getState()
+    const selectedNodes = flowStore.nodes.filter((n) => n.selected)
+    if (selectedNodes.length === 0) return
+
+    const selectedNodeIds = new Set(selectedNodes.map((n) => n.id))
+    const remainingNodes = flowStore.nodes.filter((n) => !selectedNodeIds.has(n.id))
+    const remainingEdges = flowStore.edges.filter(
+      (e) => !selectedNodeIds.has(e.source) && !selectedNodeIds.has(e.target),
+    )
+    flowStore.setNodes(remainingNodes)
+    flowStore.setEdges(remainingEdges)
+  }, [copySelection])
+
+  const handleUngroup = useCallback(() => {
+    const selectedNodes = nodes.filter((n) => n.selected)
+    if (selectedNodes.length === 0) return
+    if (!allSelectedInSameGroup(selectedNodes)) return
+    handleDegroupSingleGroup(selectedNodes)
+  }, [nodes, allSelectedInSameGroup, handleDegroupSingleGroup])
+
   const handleRightMouseButtonClick = useCallback(
     (event: React.MouseEvent) => {
       event.preventDefault()
       const { screenToFlowPosition } = reactFlow
-      const position = screenToFlowPosition({ x: event.clientX, y: event.clientY })
-      const newId = useFlowStore.getState().getNextNodeId()
-
-      const stickyNote: StickyNote = {
-        id: newId,
-        position: {
-          x: position.x - FlowConfig.STICKY_NOTE_DEFAULT_WIDTH / 2,
-          y: position.y - FlowConfig.STICKY_NOTE_DEFAULT_HEIGHT / 2,
-        },
-        data: {
-          content: 'New Sticky Note',
-        },
-        type: 'stickyNote',
-      }
-      useFlowStore.getState().addNode(stickyNote)
+      const flowPos = screenToFlowPosition({ x: event.clientX, y: event.clientY })
+      setContextMenu({ x: event.clientX, y: event.clientY, flowPos })
     },
     [reactFlow],
   )
@@ -834,6 +866,7 @@ function FlowCanvas() {
         onConnectEnd={handleConnectEnd}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
+        onPaneClick={() => setContextMenu(null)}
         deleteKeyCode={isEditing ? null : ['Delete', 'Backspace']}
         minZoom={0.2}
       >
@@ -860,6 +893,22 @@ function FlowCanvas() {
         positions={edgeDropPositions}
         sourceInfo={sourceInfoReference.current}
       />
+
+      {contextMenu && (
+        <CanvasContextMenu
+          position={{ x: contextMenu.x, y: contextMenu.y }}
+          onClose={() => setContextMenu(null)}
+          onAddNote={() => addStickyNote(contextMenu.flowPos)}
+          onGroup={handleGrouping}
+          onUngroup={handleUngroup}
+          onCut={cutSelection}
+          onCopy={copySelection}
+          onPaste={pasteSelection}
+          hasSelection={nodes.some((n) => n.selected)}
+          hasGroupedSelection={nodes.some((n) => n.selected) && allSelectedInSameGroup(nodes.filter((n) => n.selected))}
+          hasClipboard={clipboardRef.current !== null}
+        />
+      )}
     </div>
   )
 }
