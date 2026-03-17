@@ -7,6 +7,8 @@ import '/styles/editor-files.css'
 import AltArrowRightIcon from '../../../icons/solar/Alt Arrow Right.svg?react'
 import AltArrowDownIcon from '../../../icons/solar/Alt Arrow Down.svg?react'
 import CodeIcon from '../../../icons/solar/Code.svg?react'
+import { useShortcut } from '~/hooks/use-shortcut'
+import type { ContextMenuState } from './use-file-tree-context-menu'
 
 import {
   Tree,
@@ -48,6 +50,7 @@ export default function EditorFileStructure() {
   const removeTabAndSelectFallback = useEditorTabStore((state) => state.removeTabAndSelectFallback)
 
   const [dataProvider, setDataProvider] = useState<EditorFilesDataProvider | null>(null)
+  const [selectedItemId, setSelectedItemId] = useState<TreeItemIndex | null>(null)
 
   const onAfterRename = useCallback(
     (oldPath: string, newName: string) => {
@@ -75,6 +78,42 @@ export default function EditorFileStructure() {
     dataProvider,
     onAfterRename,
     onAfterDelete,
+  })
+
+  const buildContextForItem = useCallback(
+    async (itemId: TreeItemIndex): Promise<ContextMenuState | undefined> => {
+      if (!dataProvider) return undefined
+      const item = await dataProvider.getTreeItem(itemId)
+      if (!item) return undefined
+      return {
+        position: { x: 0, y: 0 },
+        itemId,
+        isFolder: !!item.isFolder,
+        isRoot: !!item.data.projectRoot,
+        path: item.data.path,
+        name: item.data.name,
+      }
+    },
+    [dataProvider],
+  )
+
+  const triggerExplorerAction = useCallback(
+    (action: (ctx: ContextMenuState) => void, requireSelection: boolean) => {
+      const itemId = selectedItemId ?? (requireSelection ? null : 'root')
+      if (!itemId || (itemId === 'root' && requireSelection)) return
+      void buildContextForItem(itemId).then((ctx) => {
+        if (ctx) action(ctx)
+      })
+    },
+    [selectedItemId, buildContextForItem],
+  )
+
+  useShortcut({
+    'explorer.new-file': () => triggerExplorerAction(ctxMenu.handleNewFile, false),
+    'explorer.new-folder': () => triggerExplorerAction(ctxMenu.handleNewFolder, false),
+    'explorer.rename': () => triggerExplorerAction(ctxMenu.handleRename, true),
+    'explorer.delete': () => triggerExplorerAction(ctxMenu.handleDelete, true),
+    'explorer.delete-mac': () => triggerExplorerAction(ctxMenu.handleDelete, true),
   })
 
   useEffect(() => {
@@ -148,6 +187,7 @@ export default function EditorFileStructure() {
       if (!dataProvider || itemIds.length === 0) return
 
       const itemId = itemIds[0]
+      setSelectedItemId(itemId)
       const item = await dataProvider.getTreeItem(itemId)
       if (!item) return
 

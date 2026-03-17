@@ -6,7 +6,6 @@ const scopeLabels: Record<string, string> = {
   global: 'Global Keybinds',
   studio: 'Studio Keybinds',
   editor: 'Editor Keybinds',
-  configurations: 'Configurations Keybinds',
   help: 'Help Keybinds',
   settings: 'Settings Keybinds',
   datamapper: 'Datamapper Keybinds',
@@ -46,9 +45,14 @@ export function KeybindsTable() {
   const grouped = new Map<string, Omit<ShortcutDefinition, 'handler'>[]>()
   for (const shortcut of ALL_SHORTCUTS) {
     if (shortcut.id.endsWith('-alt')) continue
-    const scope = shortcut.scope
-    if (!grouped.has(scope)) grouped.set(scope, [])
-    grouped.get(scope)!.push(shortcut)
+
+    let displayScope = shortcut.scope as string
+    if (shortcut.id.startsWith('explorer.')) {
+      displayScope = 'editor-file-explorer'
+    }
+
+    if (!grouped.has(displayScope)) grouped.set(displayScope, [])
+    grouped.get(displayScope)?.push(shortcut)
   }
 
   return (
@@ -57,8 +61,8 @@ export function KeybindsTable() {
         <span className="mb-1 text-sm font-medium">Platform</span>
         <SwitchToggle
           options={['PC', 'Mac']}
-          value={platform === 'win' ? 'PC' : 'Mac'}
-          onChange={(value) => setPlatform(value === 'PC' ? 'win' : 'mac')}
+          value={platform === 'pc' ? 'PC' : 'Mac'}
+          onChange={(value) => setPlatform(value === 'PC' ? 'pc' : 'mac')}
         />
       </div>
 

@@ -89,90 +89,106 @@ export function useFileTreeContextMenu({
     [dataProvider],
   )
 
-  const handleNewFile = useCallback(() => {
-    if (!contextMenu || !projectName || !dataProvider) return
-    const parentPath = contextMenu.path
-    const parentItemId = contextMenu.itemId
-    setContextMenu(null)
+  const handleNewFile = useCallback(
+    (ctx?: ContextMenuState) => {
+      const menu = ctx ?? contextMenu
+      if (!menu || !projectName || !dataProvider) return
+      const parentPath = menu.path
+      const parentItemId = menu.itemId
+      setContextMenu(null)
 
-    setNameDialog({
-      title: 'New File',
-      onSubmit: async (name: string) => {
-        const fileName = ensureXmlExtension(name)
-        try {
-          await createFileInProject(projectName, parentPath, fileName)
-          await dataProvider.reloadDirectory(parentItemId)
-        } catch (error) {
-          showErrorToastFrom('Failed to create file', error)
-        }
-        setNameDialog(null)
-      },
-    })
-  }, [contextMenu, projectName, dataProvider])
-
-  const handleNewFolder = useCallback(() => {
-    if (!contextMenu || !projectName || !dataProvider) return
-    const parentPath = contextMenu.path
-    const parentItemId = contextMenu.itemId
-    setContextMenu(null)
-
-    setNameDialog({
-      title: 'New Folder',
-      onSubmit: async (name: string) => {
-        try {
-          await createFolderInProject(projectName, parentPath, name)
-          await dataProvider.reloadDirectory(parentItemId)
-        } catch (error) {
-          showErrorToastFrom('Failed to create folder', error)
-        }
-        setNameDialog(null)
-      },
-    })
-  }, [contextMenu, projectName, dataProvider])
-
-  const handleRename = useCallback(() => {
-    if (!contextMenu || !projectName || !dataProvider) return
-    const itemId = contextMenu.itemId
-    const oldName = contextMenu.name
-    const oldPath = contextMenu.path
-    setContextMenu(null)
-
-    setNameDialog({
-      title: 'Rename',
-      initialValue: oldName,
-      onSubmit: async (newName: string) => {
-        if (newName === oldName) {
+      setNameDialog({
+        title: 'New File',
+        onSubmit: async (name: string) => {
+          const fileName = ensureXmlExtension(name)
+          try {
+            await createFileInProject(projectName, parentPath, fileName)
+            await dataProvider.reloadDirectory(parentItemId)
+          } catch (error) {
+            showErrorToastFrom('Failed to create file', error)
+          }
           setNameDialog(null)
-          return
-        }
-        try {
-          await renameInProject(projectName, oldPath, newName)
-          clearConfigurationCache(projectName, oldPath)
-          const lastSep = Math.max(oldPath.lastIndexOf('/'), oldPath.lastIndexOf('\\'))
-          const newPath = oldPath.slice(0, Math.max(0, lastSep + 1)) + newName
-          useTabStore.getState().renameTabsForConfig(oldPath, newPath)
-          useEditorTabStore.getState().refreshAllTabs()
-          const parentId = getParentItemId(itemId)
-          await dataProvider.reloadDirectory(parentId)
-          onAfterRename?.(oldPath, newName)
-        } catch (error) {
-          showErrorToastFrom('Failed to rename', error)
-        }
-        setNameDialog(null)
-      },
-    })
-  }, [contextMenu, projectName, dataProvider, onAfterRename])
+        },
+      })
+    },
+    [contextMenu, projectName, dataProvider],
+  )
 
-  const handleDelete = useCallback(() => {
-    if (!contextMenu) return
-    setDeleteTarget({
-      name: contextMenu.name,
-      path: contextMenu.path,
-      isFolder: contextMenu.isFolder,
-      parentItemId: getParentItemId(contextMenu.itemId),
-    })
-    setContextMenu(null)
-  }, [contextMenu])
+  const handleNewFolder = useCallback(
+    (ctx?: ContextMenuState) => {
+      const menu = ctx ?? contextMenu
+      if (!menu || !projectName || !dataProvider) return
+      const parentPath = menu.path
+      const parentItemId = menu.itemId
+      setContextMenu(null)
+
+      setNameDialog({
+        title: 'New Folder',
+        onSubmit: async (name: string) => {
+          try {
+            await createFolderInProject(projectName, parentPath, name)
+            await dataProvider.reloadDirectory(parentItemId)
+          } catch (error) {
+            showErrorToastFrom('Failed to create folder', error)
+          }
+          setNameDialog(null)
+        },
+      })
+    },
+    [contextMenu, projectName, dataProvider],
+  )
+
+  const handleRename = useCallback(
+    (ctx?: ContextMenuState) => {
+      const menu = ctx ?? contextMenu
+      if (!menu || !projectName || !dataProvider) return
+      const itemId = menu.itemId
+      const oldName = menu.name
+      const oldPath = menu.path
+      setContextMenu(null)
+
+      setNameDialog({
+        title: 'Rename',
+        initialValue: oldName,
+        onSubmit: async (newName: string) => {
+          if (newName === oldName) {
+            setNameDialog(null)
+            return
+          }
+          try {
+            await renameInProject(projectName, oldPath, newName)
+            clearConfigurationCache(projectName, oldPath)
+            const lastSep = Math.max(oldPath.lastIndexOf('/'), oldPath.lastIndexOf('\\'))
+            const newPath = oldPath.slice(0, Math.max(0, lastSep + 1)) + newName
+            useTabStore.getState().renameTabsForConfig(oldPath, newPath)
+            useEditorTabStore.getState().refreshAllTabs()
+            const parentId = getParentItemId(itemId)
+            await dataProvider.reloadDirectory(parentId)
+            onAfterRename?.(oldPath, newName)
+          } catch (error) {
+            showErrorToastFrom('Failed to rename', error)
+          }
+          setNameDialog(null)
+        },
+      })
+    },
+    [contextMenu, projectName, dataProvider, onAfterRename],
+  )
+
+  const handleDelete = useCallback(
+    (ctx?: ContextMenuState) => {
+      const menu = ctx ?? contextMenu
+      if (!menu) return
+      setDeleteTarget({
+        name: menu.name,
+        path: menu.path,
+        isFolder: menu.isFolder,
+        parentItemId: getParentItemId(menu.itemId),
+      })
+      setContextMenu(null)
+    },
+    [contextMenu],
+  )
 
   const confirmDelete = useCallback(async () => {
     if (!deleteTarget || !projectName || !dataProvider) return

@@ -16,11 +16,7 @@ function matchesShortcut(event: KeyboardEvent, shortcut: ShortcutDefinition): bo
   const mods = shortcut.modifiers ?? {}
   const cmdOrCtrl = event.metaKey || event.ctrlKey
 
-  if (
-    mods.cmdOrCtrl === cmdOrCtrl && 
-    mods.shift === event.shiftKey && 
-    mods.alt === event.altKey
-  ) return true
+  if (!!mods.cmdOrCtrl === cmdOrCtrl && !!mods.shift === event.shiftKey && !!mods.alt === event.altKey) return true
   return false
 }
 
@@ -36,8 +32,9 @@ export function useShortcutListener() {
           !shortcut.handler ||
           (shortcut.scope !== 'global' && shortcut.scope !== currentRoute) ||
           !matchesShortcut(event, shortcut) ||
-          !shortcut.allowInInput && isTyping(event)
-        ) continue
+          (!shortcut.allowInInput && isTyping(event))
+        )
+          continue
 
         event.preventDefault()
         shortcut.handler()

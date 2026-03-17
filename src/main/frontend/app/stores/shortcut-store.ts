@@ -12,13 +12,13 @@ export interface ShortcutDefinition {
   handler?: () => void
 }
 
-export type Platform = 'mac' | 'win'
+export type Platform = 'mac' | 'pc'
 
 function detectPlatform(): Platform {
   if (typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.userAgent)) {
     return 'mac'
   }
-  return 'win'
+  return 'pc'
 }
 
 /**
@@ -68,6 +68,20 @@ export const ALL_SHORTCUTS: Omit<ShortcutDefinition, 'handler'>[] = [
     scope: 'editor',
     key: 'f',
     modifiers: { cmdOrCtrl: true, shift: true },
+    displayOnly: true,
+  },
+
+  // Editor File Explorer
+  { id: 'explorer.new-file', label: 'New File', scope: 'editor', key: 'n' },
+  { id: 'explorer.new-folder', label: 'New Folder', scope: 'editor', key: 'n', modifiers: { shift: true } },
+  { id: 'explorer.rename', label: 'Rename Item', scope: 'editor', key: 'r' },
+  { id: 'explorer.delete', label: 'Delete Item', scope: 'editor', key: 'delete' },
+  {
+    id: 'explorer.delete-mac',
+    label: 'Delete Item (Mac)',
+    scope: 'editor',
+    key: 'backspace',
+    modifiers: { cmdOrCtrl: true },
     displayOnly: true,
   },
 ]
