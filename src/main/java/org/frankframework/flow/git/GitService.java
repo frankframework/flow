@@ -36,6 +36,7 @@ import org.eclipse.jgit.lib.ObjectInserter;
 import org.eclipse.jgit.lib.PersonIdent;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevTree;
 import org.eclipse.jgit.revwalk.RevWalk;
@@ -198,27 +199,31 @@ public class GitService {
 		}
 	}
 
-	/**
-	 * Creates a new git commit for the specified project with the given commit message. It uses JGit to perform the commit operation, and then constructs a GitCommitResultDTO containing the commit ID, full message, author name, and timestamp of the commit. The method handles exceptions related to repository access and git operations, and logs relevant information for debugging purposes.
-	 */
-	public GitCommitResultDTO commit(String projectName, String message)
-			throws ProjectNotFoundException, IOException, NotAGitRepositoryException, GitOperationException {
-		log.debug("Creating commit in project '{}' with message: '{}'", projectName, message);
-		try (Git git = openGit(projectName)) {
-			RevCommit commit = git.commit().setMessage(message).setSign(false).call();
-			PersonIdent author = commit.getAuthorIdent();
-			String shortId = commit.getId().abbreviate(SHORT_ID_LENGTH).name();
-			log.info("Commit created: {} by {} - '{}'", shortId, author.getName(), message);
-			return new GitCommitResultDTO(
-					commit.getId().getName(),
-					commit.getFullMessage(),
-					author.getName(),
-					author.getWhenAsInstant().toEpochMilli());
-		} catch (GitAPIException e) {
-			log.error("Failed to commit in project '{}': {}", projectName, e.getMessage(), e);
-			throw new GitOperationException("Failed to commit", e);
-		}
-	}
+    /**
+     * Creates a new git commit for the specified project with the given commit message. It uses JGit to perform the commit operation, and then constructs a GitCommitResultDTO containing the commit ID, full message, author name, and timestamp of the commit. The method handles exceptions related to repository access and git operations, and logs relevant information for debugging purposes.
+     */
+    public GitCommitResultDTO commit(String projectName, String message)
+            throws ProjectNotFoundException, IOException, NotAGitRepositoryException, GitOperationException {
+        log.debug("Creating commit in project '{}' with message: '{}'", projectName, message);
+        try (Git git = openGit(projectName)) {
+            RevCommit commit = git.commit()
+                    .setMessage(message)
+                    .setSign(false)
+                    .setNoVerify(true)
+                    .call();
+            PersonIdent author = commit.getAuthorIdent();
+            String shortId = commit.getId().abbreviate(SHORT_ID_LENGTH).name();
+            log.info("Commit created: {} by {} - '{}'", shortId, author.getName(), message);
+            return new GitCommitResultDTO(
+                    commit.getId().getName(),
+                    commit.getFullMessage(),
+                    author.getName(),
+                    author.getWhenAsInstant().toEpochMilli());
+        } catch (GitAPIException e) {
+            log.error("Failed to commit in project '{}': {}", projectName, e.getMessage(), e);
+            throw new GitOperationException("Failed to commit", e);
+        }
+    }
 
 	/**
 	 * Performs a git push operation for the specified project, using JGit to push changes to the remote repository. It applies credentials if a token is provided, and then analyzes the PushResult to determine if the push was successful and constructs a user-friendly message summarizing the outcome of the push for each ref update. The method returns a GitPushResultDTO indicating whether the push was successful overall and includes a descriptive message for the user.
@@ -623,21 +628,52 @@ public class GitService {
 		return fileSystemStorage.toAbsolutePath(rootPath);
 	}
 
-	/**
-	 * Opens the Git repository for the given project name. Validates that the .git directory exists.
-	 * @param projectName the name of the project whose Git repository to open
-	 * @return a Git instance for the project's repository
-	 * @throws ProjectNotFoundException if the project does not exist
-	 * @throws IOException if an I/O error occurs while accessing the project directory
-	 * @throws NotAGitRepositoryException if the project directory is not a Git repository (i.e., missing .git folder)
-	 */
-	private Git openGit(String projectName) throws ProjectNotFoundException, IOException, NotAGitRepositoryException {
-		Path projectPath = getProjectPath(projectName);
-		if (!Files.isDirectory(projectPath.resolve(".git"))) {
-			throw new NotAGitRepositoryException(projectName);
-		}
-		return Git.open(projectPath.toFile());
-	}
+    /**
+     * Opens the Git repository for the given project name. Validates that the .git directory exists.
+     * @param projectName the name of the project whose Git repository to open
+     * @return a Git instance for the project's repository
+     * @throws ProjectNotFoundException if the project does not exist
+     * @throws IOException if an I/O error occurs while accessing the project directory
+     * @throws NotAGitRepositoryException if the project directory is not a Git repository (i.e., missing .git folder)
+     */
+    private Git openGit(String projectName) throws ProjectNotFoundException, IOException, NotAGitRepositoryException {
+        Path projectPath = getProjectPath(projectName);
+        if (!Files.isDirectory(projectPath.resolve(".git"))) {
+            throw new NotAGitRepositoryException(projectName);
+        }
+
+        Git git = Git.open(projectPath.toFile());
+
+        try {
+            hardenRepository(git.getRepository());
+        } catch (IOException e) {
+            git.close();
+            throw e;
+        }
+
+        return git;
+    }
+
+    /**
+     * Hardens a repository's configuration to prevent the execution of unwanted or malicious scripts.
+     *
+     * disables all git hooks (pre-commit, post-checkout, etc.).
+     * prevents symlinks that could escape the repo root.
+     *
+     * These settings are written to the repo's local {.git/config} and do not affect the
+     * remote repository or the user's project files.
+     */
+    public static void hardenRepository(Repository repo) throws IOException {
+        StoredConfig config = repo.getConfig();
+        config.setString("core", null, "hooksPath", "/dev/null");
+        config.setBoolean("core", null, "symlinks", false);
+
+        for (String subsection : config.getSubsections("filter")) {
+            config.unsetSection("filter", subsection);
+        }
+
+        config.save();
+    }
 
 	/**
 	 * Safely resolves a user-provided file path against the repository working tree,

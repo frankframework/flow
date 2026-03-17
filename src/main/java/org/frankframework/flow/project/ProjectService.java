@@ -20,6 +20,7 @@ import org.eclipse.jgit.transport.CredentialsProvider;
 import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.frankframework.flow.filesystem.FilesystemEntry;
 import org.frankframework.flow.git.GitCredentialHelper;
+import org.frankframework.flow.git.GitService;
 import org.frankframework.flow.projectsettings.FilterType;
 import org.frankframework.flow.projectsettings.InvalidFilterTypeException;
 import org.frankframework.flow.recentproject.RecentProject;
@@ -135,17 +136,18 @@ public class ProjectService {
 				cloneCommand.setCredentialsProvider(credentials);
 			}
 
-			try (Git git = cloneCommand.call()) {
-				log.info("Cloned repository {} to {}", repoUrl, targetDir);
-			}
-		} catch (GitAPIException e) {
-			String msg = e.getMessage() != null ? e.getMessage().toLowerCase() : "";
-			if (msg.contains("auth") || msg.contains("not permitted") || msg.contains("403") || msg.contains("401")) {
-				throw new IllegalArgumentException(
-						"Clone failed — authentication error. Please provide a valid Personal Access Token (PAT)", e);
-			}
-			throw new IllegalArgumentException("Clone failed: " + e.getMessage(), e);
-		}
+            try (Git git = cloneCommand.call()) {
+                log.info("Cloned repository {} to {}", repoUrl, targetDir);
+                GitService.hardenRepository(git.getRepository());
+            }
+        } catch (GitAPIException e) {
+            String msg = e.getMessage() != null ? e.getMessage().toLowerCase() : "";
+            if (msg.contains("auth") || msg.contains("not permitted") || msg.contains("403") || msg.contains("401")) {
+                throw new IllegalArgumentException(
+                        "Clone failed — authentication error. Please provide a valid Personal Access Token (PAT)", e);
+            }
+            throw new IllegalArgumentException("Clone failed: " + e.getMessage(), e);
+        }
 
 		Project project = loadProjectAndCache(targetDir.toString());
 		if (token != null && !token.isBlank()) {
