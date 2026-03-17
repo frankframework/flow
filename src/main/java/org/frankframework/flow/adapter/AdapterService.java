@@ -27,67 +27,67 @@ import org.xml.sax.SAXException;
 @Service
 public class AdapterService {
 
-    private final ProjectService projectService;
-    private final FileSystemStorage fileSystemStorage;
+	private final ProjectService projectService;
+	private final FileSystemStorage fileSystemStorage;
 
-    public AdapterService(ProjectService projectService, FileSystemStorage fileSystemStorage) {
-        this.projectService = projectService;
-        this.fileSystemStorage = fileSystemStorage;
-    }
+	public AdapterService(ProjectService projectService, FileSystemStorage fileSystemStorage) {
+		this.projectService = projectService;
+		this.fileSystemStorage = fileSystemStorage;
+	}
 
-    public XmlDTO getAdapter(String projectName, String configurationPath, String adapterName)
-            throws IOException, ApiException, SAXException, ParserConfigurationException, TransformerException {
+	public XmlDTO getAdapter(String projectName, String configurationPath, String adapterName)
+			throws IOException, ApiException, SAXException, ParserConfigurationException, TransformerException {
 
-        Project project = projectService.getProject(projectName);
+		Project project = projectService.getProject(projectName);
 
-        Configuration config = project.getConfigurations().stream()
-                .filter(c -> c.getFilepath().equals(configurationPath))
-                .findFirst()
-                .orElseThrow(() -> new ConfigurationNotFoundException(
-                        String.format("Configuration with filepath: %s not found", configurationPath)));
+		Configuration config = project.getConfigurations().stream()
+				.filter(c -> c.getFilepath().equals(configurationPath))
+				.findFirst()
+				.orElseThrow(() -> new ConfigurationNotFoundException(
+						String.format("Configuration with filepath: %s not found", configurationPath)));
 
-        Document configDoc = XmlSecurityUtils.createSecureDocumentBuilder()
-                .parse(new ByteArrayInputStream(config.getXmlContent().getBytes(StandardCharsets.UTF_8)));
+		Document configDoc = XmlSecurityUtils.createSecureDocumentBuilder()
+				.parse(new ByteArrayInputStream(config.getXmlContent().getBytes(StandardCharsets.UTF_8)));
 
-        Node adapterNode = XmlConfigurationUtils.findAdapterInDocument(configDoc, adapterName);
-        if (adapterNode == null) {
-            throw new AdapterNotFoundException("Adapter not found: " + adapterName);
-        }
+		Node adapterNode = XmlConfigurationUtils.findAdapterInDocument(configDoc, adapterName);
+		if (adapterNode == null) {
+			throw new AdapterNotFoundException("Adapter not found: " + adapterName);
+		}
 
-        return new XmlDTO(XmlConfigurationUtils.convertNodeToString(adapterNode));
-    }
+		return new XmlDTO(XmlConfigurationUtils.convertNodeToString(adapterNode));
+	}
 
-    public boolean updateAdapter(Path configurationFile, String adapterName, String newAdapterXml)
-            throws ConfigurationNotFoundException, AdapterNotFoundException, IOException {
+	public boolean updateAdapter(Path configurationFile, String adapterName, String newAdapterXml)
+			throws ConfigurationNotFoundException, AdapterNotFoundException, IOException {
 
-        Path absConfigFile = fileSystemStorage.toAbsolutePath(configurationFile.toString());
+		Path absConfigFile = fileSystemStorage.toAbsolutePath(configurationFile.toString());
 
-        if (!Files.exists(absConfigFile)) {
-            throw new ConfigurationNotFoundException("Configuration file not found: " + configurationFile);
-        }
+		if (!Files.exists(absConfigFile)) {
+			throw new ConfigurationNotFoundException("Configuration file not found: " + configurationFile);
+		}
 
-        try {
-            Document configDoc =
-                    XmlSecurityUtils.createSecureDocumentBuilder().parse(Files.newInputStream(absConfigFile));
+		try {
+			Document configDoc =
+					XmlSecurityUtils.createSecureDocumentBuilder().parse(Files.newInputStream(absConfigFile));
 
-            Document newAdapterDoc = XmlSecurityUtils.createSecureDocumentBuilder()
-                    .parse(new ByteArrayInputStream(newAdapterXml.getBytes(StandardCharsets.UTF_8)));
+			Document newAdapterDoc = XmlSecurityUtils.createSecureDocumentBuilder()
+					.parse(new ByteArrayInputStream(newAdapterXml.getBytes(StandardCharsets.UTF_8)));
 
-            Node newAdapterNode = newAdapterDoc.getDocumentElement();
+			Node newAdapterNode = newAdapterDoc.getDocumentElement();
 
-            if (!XmlConfigurationUtils.replaceAdapterInDocument(configDoc, adapterName, newAdapterNode)) {
-                throw new AdapterNotFoundException("Adapter not found: " + adapterName);
-            }
+			if (!XmlConfigurationUtils.replaceAdapterInDocument(configDoc, adapterName, newAdapterNode)) {
+				throw new AdapterNotFoundException("Adapter not found: " + adapterName);
+			}
 
-            String updatedXml = XmlConfigurationUtils.convertNodeToString(configDoc);
-            Files.writeString(absConfigFile, updatedXml, StandardCharsets.UTF_8, StandardOpenOption.TRUNCATE_EXISTING);
-            return true;
+			String updatedXml = XmlConfigurationUtils.convertNodeToString(configDoc);
+			Files.writeString(absConfigFile, updatedXml, StandardCharsets.UTF_8, StandardOpenOption.TRUNCATE_EXISTING);
+			return true;
 
-        } catch (AdapterNotFoundException e) {
-            throw e;
-        } catch (Exception e) {
-            log.error("Error updating adapter in file: {}", e.getMessage(), e);
-            return false;
-        }
-    }
+		} catch (AdapterNotFoundException e) {
+			throw e;
+		} catch (Exception e) {
+			log.error("Error updating adapter in file: {}", e.getMessage(), e);
+			return false;
+		}
+	}
 }

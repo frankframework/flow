@@ -18,39 +18,39 @@ import org.springframework.test.web.servlet.MockMvc;
 @AutoConfigureMockMvc(addFilters = false)
 class FrankConfigXsdControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+	@Autowired
+	private MockMvc mockMvc;
 
-    @MockitoBean
-    private FrankConfigXsdService frankConfigXsdService;
+	@MockitoBean
+	private FrankConfigXsdService frankConfigXsdService;
 
-    @MockitoBean
-    private UserContextFilter userContextFilter;
+	@MockitoBean
+	private UserContextFilter userContextFilter;
 
-    @MockitoBean
-    private UserWorkspaceContext userWorkspaceContext;
+	@MockitoBean
+	private UserWorkspaceContext userWorkspaceContext;
 
-    @Test
-    void getFrankConfigXsdReturnsXmlContent() throws Exception {
-        String xsdContent = "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\"></xs:schema>";
-        when(frankConfigXsdService.getFrankConfigXsd()).thenReturn(xsdContent);
+	@Test
+	void getFrankConfigXsdReturnsXmlContent() throws Exception {
+		String xsdContent = "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\"></xs:schema>";
+		when(frankConfigXsdService.getFrankConfigXsd()).thenReturn(xsdContent);
 
-        mockMvc.perform(get("/api/xsd/frankconfig").accept(MediaType.TEXT_XML))
-                .andExpect(status().isOk())
-                .andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_XML))
-                .andExpect(content().string(xsdContent));
+		mockMvc.perform(get("/api/xsd/frankconfig").accept(MediaType.TEXT_XML))
+				.andExpect(status().isOk())
+				.andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_XML))
+				.andExpect(content().string(xsdContent));
 
-        verify(frankConfigXsdService).getFrankConfigXsd();
-    }
+		verify(frankConfigXsdService).getFrankConfigXsd();
+	}
 
-    @Test
-    void getFrankConfigXsdServiceFailsReturns404() throws Exception {
-        when(frankConfigXsdService.getFrankConfigXsd())
-                .thenThrow(
-                        new FrankConfigXsdNotFoundException("Failed to fetch FrankConfig XSD", new RuntimeException()));
+	@Test
+	void getFrankConfigXsdServiceFailsReturns404() throws Exception {
+		when(frankConfigXsdService.getFrankConfigXsd())
+				.thenThrow(
+						new FrankConfigXsdNotFoundException("Failed to fetch FrankConfig XSD", new RuntimeException()));
 
-        mockMvc.perform(get("/api/xsd/frankconfig")).andExpect(status().isNotFound());
+		mockMvc.perform(get("/api/xsd/frankconfig")).andExpect(status().isNotFound());
 
-        verify(frankConfigXsdService).getFrankConfigXsd();
-    }
+		verify(frankConfigXsdService).getFrankConfigXsd();
+	}
 }

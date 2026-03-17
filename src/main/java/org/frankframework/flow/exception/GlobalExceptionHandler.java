@@ -16,105 +16,105 @@ import org.xml.sax.SAXException;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(ApiException.class)
-    public ResponseEntity<ErrorResponse> handleApiException(ApiException exception) {
-        log.error(
-                "Exception occurred: {} - {}", exception.getClass().getSimpleName(), exception.getMessage(), exception);
+	@ExceptionHandler(ApiException.class)
+	public ResponseEntity<ErrorResponse> handleApiException(ApiException exception) {
+		log.error(
+				"Exception occurred: {} - {}", exception.getClass().getSimpleName(), exception.getMessage(), exception);
 
-        List<String> messages = exception.getMessage() == null ? List.of() : List.of(exception.getMessage());
+		List<String> messages = exception.getMessage() == null ? List.of() : List.of(exception.getMessage());
 
-        ErrorResponse response = new ErrorResponse(
-                exception.getStatusCode().value(),
-                messages,
-                exception.getStatusCode().getReasonPhrase());
+		ErrorResponse response = new ErrorResponse(
+				exception.getStatusCode().value(),
+				messages,
+				exception.getStatusCode().getReasonPhrase());
 
-        return ResponseEntity.status(exception.getStatusCode()).body(response);
-    }
+		return ResponseEntity.status(exception.getStatusCode()).body(response);
+	}
 
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<ErrorResponse> handleIllegalArgumentException(
-            IllegalArgumentException exception, HttpServletRequest request) {
-        log.warn(
-                "Invalid argument: {} - Method: {} URL: {}",
-                exception.getMessage(),
-                request.getMethod(),
-                request.getRequestURI());
+	@ExceptionHandler(IllegalArgumentException.class)
+	public ResponseEntity<ErrorResponse> handleIllegalArgumentException(
+			IllegalArgumentException exception, HttpServletRequest request) {
+		log.warn(
+				"Invalid argument: {} - Method: {} URL: {}",
+				exception.getMessage(),
+				request.getMethod(),
+				request.getRequestURI());
 
-        ErrorResponse response = new ErrorResponse(
-                HttpStatus.BAD_REQUEST.value(),
-                List.of(exception.getMessage()),
-                HttpStatus.BAD_REQUEST.getReasonPhrase());
+		ErrorResponse response = new ErrorResponse(
+				HttpStatus.BAD_REQUEST.value(),
+				List.of(exception.getMessage()),
+				HttpStatus.BAD_REQUEST.getReasonPhrase());
 
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-    }
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+	}
 
-    @ExceptionHandler(FileAlreadyExistsException.class)
-    public ResponseEntity<ErrorResponse> handleFileAlreadyExistsException(
-            FileAlreadyExistsException exception, HttpServletRequest request) {
-        log.warn(
-                "File already exists: {} - Method: {} URL: {}",
-                exception.getMessage(),
-                request.getMethod(),
-                request.getRequestURI());
+	@ExceptionHandler(FileAlreadyExistsException.class)
+	public ResponseEntity<ErrorResponse> handleFileAlreadyExistsException(
+			FileAlreadyExistsException exception, HttpServletRequest request) {
+		log.warn(
+				"File already exists: {} - Method: {} URL: {}",
+				exception.getMessage(),
+				request.getMethod(),
+				request.getRequestURI());
 
-        ErrorResponse response = new ErrorResponse(
-                HttpStatus.CONFLICT.value(),
-                List.of("A file or folder with that name already exists"),
-                HttpStatus.CONFLICT.getReasonPhrase());
+		ErrorResponse response = new ErrorResponse(
+				HttpStatus.CONFLICT.value(),
+				List.of("A file or folder with that name already exists"),
+				HttpStatus.CONFLICT.getReasonPhrase());
 
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
-    }
+		return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+	}
 
-    @ExceptionHandler(IOException.class)
-    public ResponseEntity<ErrorResponse> handleIOException(IOException exception, HttpServletRequest request) {
-        log.error(
-                "I/O error: {} - Method: {} URL: {}",
-                exception.getMessage(),
-                request.getMethod(),
-                request.getRequestURI(),
-                exception);
+	@ExceptionHandler(IOException.class)
+	public ResponseEntity<ErrorResponse> handleIOException(IOException exception, HttpServletRequest request) {
+		log.error(
+				"I/O error: {} - Method: {} URL: {}",
+				exception.getMessage(),
+				request.getMethod(),
+				request.getRequestURI(),
+				exception);
 
-        ErrorResponse response = new ErrorResponse(
-                HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                List.of("A filesystem error occurred: " + exception.getMessage()),
-                HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase());
+		ErrorResponse response = new ErrorResponse(
+				HttpStatus.INTERNAL_SERVER_ERROR.value(),
+				List.of("A filesystem error occurred: " + exception.getMessage()),
+				HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase());
 
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-    }
+		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+	}
 
-    @ExceptionHandler(SAXException.class)
-    public ResponseEntity<ErrorResponse> handleSaxException(SAXException exception, HttpServletRequest request) {
-        log.error(
-                "XML parsing error: {} - Method: {} URL: {}",
-                exception.getMessage(),
-                request.getMethod(),
-                request.getRequestURI(),
-                exception);
+	@ExceptionHandler(SAXException.class)
+	public ResponseEntity<ErrorResponse> handleSaxException(SAXException exception, HttpServletRequest request) {
+		log.error(
+				"XML parsing error: {} - Method: {} URL: {}",
+				exception.getMessage(),
+				request.getMethod(),
+				request.getRequestURI(),
+				exception);
 
-        ErrorResponse response = new ErrorResponse(
-                HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                List.of("Invalid XML content: " + exception.getMessage()),
-                HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase());
+		ErrorResponse response = new ErrorResponse(
+				HttpStatus.INTERNAL_SERVER_ERROR.value(),
+				List.of("Invalid XML content: " + exception.getMessage()),
+				HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase());
 
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-    }
+		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+	}
 
-    @ExceptionHandler(ParserConfigurationException.class)
-    public ResponseEntity<ErrorResponse> handleParserConfigurationException(
-            ParserConfigurationException exception, HttpServletRequest request) {
+	@ExceptionHandler(ParserConfigurationException.class)
+	public ResponseEntity<ErrorResponse> handleParserConfigurationException(
+			ParserConfigurationException exception, HttpServletRequest request) {
 
-        log.error(
-                "XML parser configuration error: {} - Method: {} URL: {}",
-                exception.getMessage(),
-                request.getMethod(),
-                request.getRequestURI(),
-                exception);
+		log.error(
+				"XML parser configuration error: {} - Method: {} URL: {}",
+				exception.getMessage(),
+				request.getMethod(),
+				request.getRequestURI(),
+				exception);
 
-        ErrorResponse response = new ErrorResponse(
-                HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                List.of("XML parser configuration error: " + exception.getMessage()),
-                HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase());
+		ErrorResponse response = new ErrorResponse(
+				HttpStatus.INTERNAL_SERVER_ERROR.value(),
+				List.of("XML parser configuration error: " + exception.getMessage()),
+				HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase());
 
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-    }
+		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+	}
 }

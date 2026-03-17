@@ -42,92 +42,92 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 @Testcontainers(disabledWithoutDocker = true)
 @Tag("integration")
 public class RunCypressE2eTest {
-    private static final String SPRING_BASE_URL = "http://localhost:8080";
-    private static final String TEST_CONTAINER_BASE_URL = "http://host.testcontainers.internal:8080";
-    private static final Path MOCHAWESOME_REPORTS_DIR =
-            Paths.get("target/test-classes/e2e/cypress/test-results/reports/mochawesome");
+	private static final String SPRING_BASE_URL = "http://localhost:8080";
+	private static final String TEST_CONTAINER_BASE_URL = "http://host.testcontainers.internal:8080";
+	private static final Path MOCHAWESOME_REPORTS_DIR =
+			Paths.get("target/test-classes/e2e/cypress/test-results/reports/mochawesome");
 
-    private static CypressContainer container;
-    private static ConfigurableApplicationContext run;
+	private static CypressContainer container;
+	private static ConfigurableApplicationContext run;
 
-    @BeforeAll
-    static void setUp() {
-        startApplication();
-        startTestContainer();
-    }
+	@BeforeAll
+	static void setUp() {
+		startApplication();
+		startTestContainer();
+	}
 
-    private static void startApplication() {
-        SpringApplication springApplication = FlowApplication.configureApplication();
+	private static void startApplication() {
+		SpringApplication springApplication = FlowApplication.configureApplication();
 
-        run = springApplication.run("--spring.profiles.active=cloud");
+		run = springApplication.run("--spring.profiles.active=cloud");
 
-        assertTrue(run.isRunning());
-        await().pollInterval(5, TimeUnit.SECONDS)
-                .atMost(Duration.ofMinutes(5))
-                .until(RunCypressE2eTest::isApplicationHealthy);
-    }
+		assertTrue(run.isRunning());
+		await().pollInterval(5, TimeUnit.SECONDS)
+				.atMost(Duration.ofMinutes(5))
+				.until(RunCypressE2eTest::isApplicationHealthy);
+	}
 
-    private static boolean isApplicationHealthy() {
-        try {
-            String url = SPRING_BASE_URL + "/actuator/health";
-            HttpRequest req = HttpRequest.newBuilder(URI.create(url)).GET().build();
-            HttpResponse<String> resp = HttpClient.newHttpClient().send(req, HttpResponse.BodyHandlers.ofString());
-            return resp.statusCode() == 200 && resp.body().contains("UP");
-        } catch (Exception e) {
-            return false;
-        }
-    }
+	private static boolean isApplicationHealthy() {
+		try {
+			String url = SPRING_BASE_URL + "/actuator/health";
+			HttpRequest req = HttpRequest.newBuilder(URI.create(url)).GET().build();
+			HttpResponse<String> resp = HttpClient.newHttpClient().send(req, HttpResponse.BodyHandlers.ofString());
+			return resp.statusCode() == 200 && resp.body().contains("UP");
+		} catch (Exception e) {
+			return false;
+		}
+	}
 
-    public static void startTestContainer() {
-        org.testcontainers.Testcontainers.exposeHostPorts(8080);
+	public static void startTestContainer() {
+		org.testcontainers.Testcontainers.exposeHostPorts(8080);
 
-        container = new CypressContainer("cypress/included:15.0.0");
+		container = new CypressContainer("cypress/included:15.0.0");
 
-        container.withBaseUrl(TEST_CONTAINER_BASE_URL);
-        container.withMochawesomeReportsAt(MOCHAWESOME_REPORTS_DIR);
-        container.withClasspathResourcePath("e2e");
-        container.withWorkingDirectory("/e2e/cypress");
-        container.withLogConsumer(new Log4j2LogConsumer("CypressContainer", "CYPRESS"));
+		container.withBaseUrl(TEST_CONTAINER_BASE_URL);
+		container.withMochawesomeReportsAt(MOCHAWESOME_REPORTS_DIR);
+		container.withClasspathResourcePath("e2e");
+		container.withWorkingDirectory("/e2e/cypress");
+		container.withLogConsumer(new Log4j2LogConsumer("CypressContainer", "CYPRESS"));
 
-        container.start();
-        assertTrue(container.isRunning());
-    }
+		container.start();
+		assertTrue(container.isRunning());
+	}
 
-    @AfterAll
-    static void tearDown() {
-        if (run == null) return;
+	@AfterAll
+	static void tearDown() {
+		if (run == null) return;
 
-        run.stop();
-        container.stop();
+		run.stop();
+		container.stop();
 
-        assertFalse(run.isRunning());
-        assertFalse(container.isRunning());
+		assertFalse(run.isRunning());
+		assertFalse(container.isRunning());
 
-        run.close();
-    }
+		run.close();
+	}
 
-    @TestFactory
-    @Nonnull
-    Stream<DynamicContainer> runCypressTests() throws InterruptedException, IOException, TimeoutException {
-        CypressTestResults testResults = container.getTestResults();
+	@TestFactory
+	@Nonnull
+	Stream<DynamicContainer> runCypressTests() throws InterruptedException, IOException, TimeoutException {
+		CypressTestResults testResults = container.getTestResults();
 
-        if (testResults.getNumberOfFailingTests() > 0) {
-            throw new AssertionError("Cypress tests failed! " + testResults.getNumberOfFailingTests()
-                    + " test(s) failed.\n\n" + testResults);
-        }
+		if (testResults.getNumberOfFailingTests() > 0) {
+			throw new AssertionError("Cypress tests failed! " + testResults.getNumberOfFailingTests()
+					+ " test(s) failed.\n\n" + testResults);
+		}
 
-        return testResults.getSuites().stream().map(this::createContainerFromSuite);
-    }
+		return testResults.getSuites().stream().map(this::createContainerFromSuite);
+	}
 
-    private DynamicContainer createContainerFromSuite(CypressTestSuite suite) {
-        Stream<DynamicTest> dynamicTests = suite.getTests().stream()
-                .map(test -> DynamicTest.dynamicTest(test.getDescription(), () -> {
-                    if (!test.isSuccess()) {
-                        assertTrue(isApplicationHealthy(), "!! application not reachable !!");
-                    }
-                    assertTrue(test.isSuccess(), test::getErrorMessage);
-                }));
+	private DynamicContainer createContainerFromSuite(CypressTestSuite suite) {
+		Stream<DynamicTest> dynamicTests = suite.getTests().stream()
+				.map(test -> DynamicTest.dynamicTest(test.getDescription(), () -> {
+					if (!test.isSuccess()) {
+						assertTrue(isApplicationHealthy(), "!! application not reachable !!");
+					}
+					assertTrue(test.isSuccess(), test::getErrorMessage);
+				}));
 
-        return DynamicContainer.dynamicContainer(suite.getTitle(), dynamicTests);
-    }
+		return DynamicContainer.dynamicContainer(suite.getTitle(), dynamicTests);
+	}
 }

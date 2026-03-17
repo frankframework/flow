@@ -23,37 +23,37 @@ import org.xml.sax.SAXException;
 @RequestMapping("/projects")
 public class ConfigurationController {
 
-    private final ConfigurationService configurationService;
-    private final ProjectService projectService;
+	private final ConfigurationService configurationService;
+	private final ProjectService projectService;
 
-    public ConfigurationController(ConfigurationService configurationService, ProjectService projectService) {
-        this.configurationService = configurationService;
-        this.projectService = projectService;
-    }
+	public ConfigurationController(ConfigurationService configurationService, ProjectService projectService) {
+		this.configurationService = configurationService;
+		this.projectService = projectService;
+	}
 
-    @PostMapping("/{projectName}/configuration")
-    public ResponseEntity<ConfigurationDTO> getConfigurationByPath(@RequestBody ConfigurationPathDTO requestBody)
-            throws ConfigurationNotFoundException, IOException {
-        String content = configurationService.getConfigurationContent(requestBody.filepath());
-        return ResponseEntity.ok(new ConfigurationDTO(requestBody.filepath(), content));
-    }
+	@PostMapping("/{projectName}/configuration")
+	public ResponseEntity<ConfigurationDTO> getConfigurationByPath(@RequestBody ConfigurationPathDTO requestBody)
+			throws ConfigurationNotFoundException, IOException {
+		String content = configurationService.getConfigurationContent(requestBody.filepath());
+		return ResponseEntity.ok(new ConfigurationDTO(requestBody.filepath(), content));
+	}
 
-    @PutMapping("/{projectName}/configuration")
-    public ResponseEntity<XmlDTO> updateConfiguration(
-            @PathVariable String projectName, @RequestBody ConfigurationDTO configurationDTO)
-            throws ConfigurationNotFoundException, IOException, ProjectNotFoundException, ParserConfigurationException,
-                    SAXException, TransformerException {
-        String updatedContent = configurationService.updateConfiguration(
-                projectName, configurationDTO.filepath(), configurationDTO.content());
-        XmlDTO xmlDTO = new XmlDTO(updatedContent);
-        return ResponseEntity.ok(xmlDTO);
-    }
+	@PutMapping("/{projectName}/configuration")
+	public ResponseEntity<XmlDTO> updateConfiguration(
+			@PathVariable String projectName, @RequestBody ConfigurationDTO configurationDTO)
+			throws ConfigurationNotFoundException, IOException, ProjectNotFoundException, ParserConfigurationException,
+					SAXException, TransformerException {
+		String updatedContent = configurationService.updateConfiguration(
+				projectName, configurationDTO.filepath(), configurationDTO.content());
+		XmlDTO xmlDTO = new XmlDTO(updatedContent);
+		return ResponseEntity.ok(xmlDTO);
+	}
 
-    @PostMapping("/{projectName}/configurations/{configName}")
-    public ResponseEntity<ProjectDTO> addConfiguration(
-            @PathVariable String projectName, @PathVariable String configName)
-            throws ProjectNotFoundException, IOException {
-        Project project = configurationService.addConfiguration(projectName, configName);
-        return ResponseEntity.ok(projectService.toDto(project));
-    }
+	@PostMapping("/{projectName}/configurations/{configName}")
+	public ResponseEntity<ProjectDTO> addConfiguration(
+			@PathVariable String projectName, @PathVariable String configName)
+			throws ProjectNotFoundException, IOException {
+		Project project = configurationService.addConfiguration(projectName, configName);
+		return ResponseEntity.ok(projectService.toDto(project));
+	}
 }

@@ -12,16 +12,16 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/xsd/frankconfig")
 public class FrankConfigXsdController {
 
-    private final FrankConfigXsdService frankConfigXsdService;
+	private final FrankConfigXsdService frankConfigXsdService;
 
-    public FrankConfigXsdController(FrankConfigXsdService frankConfigXsdService) {
-        this.frankConfigXsdService = frankConfigXsdService;
-    }
+	public FrankConfigXsdController(FrankConfigXsdService frankConfigXsdService) {
+		this.frankConfigXsdService = frankConfigXsdService;
+	}
 
-    @GetMapping(produces = MediaType.TEXT_XML_VALUE)
-    public ResponseEntity<String> getFrankConfigXsd() throws FrankConfigXsdNotFoundException {
-        String xsd = frankConfigXsdService.getFrankConfigXsd();
-        log.info("Fetched FrankConfig XSD");
-        return ResponseEntity.ok(xsd);
-    }
+	@GetMapping(produces = MediaType.TEXT_XML_VALUE)
+	public ResponseEntity<String> getFrankConfigXsd() throws FrankConfigXsdNotFoundException {
+		String xsd = frankConfigXsdService.getFrankConfigXsd();
+		log.info("Fetched FrankConfig XSD");
+		return ResponseEntity.ok(xsd);
+	}
 }

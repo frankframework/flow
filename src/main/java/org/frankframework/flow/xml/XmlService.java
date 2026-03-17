@@ -7,11 +7,11 @@ import org.xml.sax.SAXException;
 
 @Service
 public class XmlService {
-    public String normalizeElementsInXml(String xmlContent) throws Exception {
-        try {
-            return XmlConfigurationUtils.normalizeFrankElements(xmlContent);
-        } catch (SAXException e) {
-            throw new InvalidXmlContentException("Invalid XML", e);
-        }
-    }
+	public String normalizeElementsInXml(String xmlContent) throws Exception {
+		try {
+			return XmlConfigurationUtils.normalizeFrankElements(xmlContent);
+		} catch (SAXException e) {
+			throw new InvalidXmlContentException("Invalid XML", e);
+		}
+	}
 }

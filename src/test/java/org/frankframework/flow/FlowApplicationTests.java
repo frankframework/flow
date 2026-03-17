@@ -8,6 +8,6 @@ import org.springframework.test.context.ActiveProfiles;
 @ActiveProfiles("local")
 class FlowApplicationTests {
 
-    @Test
-    void contextLoads() {}
+	@Test
+	void contextLoads() {}
 }

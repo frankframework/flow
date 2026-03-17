@@ -19,41 +19,41 @@ import org.springframework.util.FileSystemUtils;
 @Service
 @Profile("cloud")
 public class WorkspaceCleanupService {
-    private static final long CLEANUP_INTERVAL_MS = 3_600_000L;
+	private static final long CLEANUP_INTERVAL_MS = 3_600_000L;
 
-    @Value("${frankflow.workspace.root:/tmp/frankflow/workspace}")
-    private String workspaceRootPath;
+	@Value("${frankflow.workspace.root:/tmp/frankflow/workspace}")
+	private String workspaceRootPath;
 
-    @Value("${frankflow.workspace.retention-hours:24}")
-    private int retentionHours;
+	@Value("${frankflow.workspace.retention-hours:24}")
+	private int retentionHours;
 
-    @Scheduled(fixedRate = CLEANUP_INTERVAL_MS)
-    public void cleanupOldWorkspaces() {
-        log.info("Starting workspace cleanup check...");
+	@Scheduled(fixedRate = CLEANUP_INTERVAL_MS)
+	public void cleanupOldWorkspaces() {
+		log.info("Starting workspace cleanup check...");
 
-        Path root = Paths.get(workspaceRootPath);
-        if (!Files.exists(root)) {
-            log.info("Workspace root does not exist yet, skipping cleanup: {}", root);
-            return;
-        }
+		Path root = Paths.get(workspaceRootPath);
+		if (!Files.exists(root)) {
+			log.info("Workspace root does not exist yet, skipping cleanup: {}", root);
+			return;
+		}
 
-        Instant cutoffTime = Instant.now().minus(retentionHours, ChronoUnit.HOURS);
+		Instant cutoffTime = Instant.now().minus(retentionHours, ChronoUnit.HOURS);
 
-        try (Stream<Path> sessions = Files.list(root)) {
-            sessions.filter(Files::isDirectory).forEach(sessionDir -> {
-                try {
-                    FileTime lastModifiedTime = Files.getLastModifiedTime(sessionDir);
+		try (Stream<Path> sessions = Files.list(root)) {
+			sessions.filter(Files::isDirectory).forEach(sessionDir -> {
+				try {
+					FileTime lastModifiedTime = Files.getLastModifiedTime(sessionDir);
 
-                    if (lastModifiedTime.toInstant().isBefore(cutoffTime)) {
-                        log.info("Deleting expired workspace: {}", sessionDir);
-                        FileSystemUtils.deleteRecursively(sessionDir);
-                    }
-                } catch (IOException e) {
-                    log.error("Failed to clean up session: {}", sessionDir, e);
-                }
-            });
-        } catch (IOException e) {
-            log.error("Error accessing workspace root for cleanup", e);
-        }
-    }
+					if (lastModifiedTime.toInstant().isBefore(cutoffTime)) {
+						log.info("Deleting expired workspace: {}", sessionDir);
+						FileSystemUtils.deleteRecursively(sessionDir);
+					}
+				} catch (IOException e) {
+					log.error("Failed to clean up session: {}", sessionDir, e);
+				}
+			});
+		} catch (IOException e) {
+			log.error("Error accessing workspace root for cleanup", e);
+		}
+	}
 }

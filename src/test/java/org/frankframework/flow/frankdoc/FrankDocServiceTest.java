@@ -14,36 +14,36 @@ import org.springframework.web.client.RestTemplate;
 @ExtendWith(MockitoExtension.class)
 class FrankDocServiceTest {
 
-    @Mock
-    private RestTemplate restTemplate;
+	@Mock
+	private RestTemplate restTemplate;
 
-    private FrankDocService frankDocService;
+	private FrankDocService frankDocService;
 
-    private static final String FRANKDOC_URL = "https://frankdoc.frankframework.org/js/frankdoc.json";
+	private static final String FRANKDOC_URL = "https://frankdoc.frankframework.org/js/frankdoc.json";
 
-    @BeforeEach
-    void setUp() {
-        frankDocService = new FrankDocService(restTemplate);
-    }
+	@BeforeEach
+	void setUp() {
+		frankDocService = new FrankDocService(restTemplate);
+	}
 
-    @Test
-    void getFrankDocJsonReturnsJsonContent() throws FrankDocJsonNotFoundException {
-        String expectedJson = "{\"version\":\"1.0\",\"types\":{}}";
-        when(restTemplate.getForObject(FRANKDOC_URL, String.class)).thenReturn(expectedJson);
+	@Test
+	void getFrankDocJsonReturnsJsonContent() throws FrankDocJsonNotFoundException {
+		String expectedJson = "{\"version\":\"1.0\",\"types\":{}}";
+		when(restTemplate.getForObject(FRANKDOC_URL, String.class)).thenReturn(expectedJson);
 
-        String result = frankDocService.getFrankDocJson();
+		String result = frankDocService.getFrankDocJson();
 
-        assertEquals(expectedJson, result);
-        verify(restTemplate).getForObject(FRANKDOC_URL, String.class);
-    }
+		assertEquals(expectedJson, result);
+		verify(restTemplate).getForObject(FRANKDOC_URL, String.class);
+	}
 
-    @Test
-    void getFrankDocJsonThrowsWhenRestTemplateFails() {
-        when(restTemplate.getForObject(FRANKDOC_URL, String.class))
-                .thenThrow(new RestClientException("Connection refused"));
+	@Test
+	void getFrankDocJsonThrowsWhenRestTemplateFails() {
+		when(restTemplate.getForObject(FRANKDOC_URL, String.class))
+				.thenThrow(new RestClientException("Connection refused"));
 
-        assertThrows(FrankDocJsonNotFoundException.class, () -> frankDocService.getFrankDocJson());
+		assertThrows(FrankDocJsonNotFoundException.class, () -> frankDocService.getFrankDocJson());
 
-        verify(restTemplate).getForObject(FRANKDOC_URL, String.class);
-    }
+		verify(restTemplate).getForObject(FRANKDOC_URL, String.class);
+	}
 }

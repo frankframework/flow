@@ -12,11 +12,11 @@ import org.springframework.web.context.annotation.RequestScope;
 @Setter
 public class UserWorkspaceContext implements Serializable {
 
-    private String workspaceId;
-    private boolean initialized = false;
+	private String workspaceId;
+	private boolean initialized = false;
 
-    public void initialize(String id) {
-        this.workspaceId = id;
-        this.initialized = true;
-    }
+	public void initialize(String id) {
+		this.workspaceId = id;
+		this.initialized = true;
+	}
 }

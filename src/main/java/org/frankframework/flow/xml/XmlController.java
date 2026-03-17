@@ -10,16 +10,16 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/xml")
 public class XmlController {
 
-    private final XmlService xmlService;
+	private final XmlService xmlService;
 
-    public XmlController(XmlService xmlService) {
-        this.xmlService = xmlService;
-    }
+	public XmlController(XmlService xmlService) {
+		this.xmlService = xmlService;
+	}
 
-    @PostMapping("/normalize")
-    public ResponseEntity<XmlDTO> normalizeXml(@RequestBody XmlDTO xmlValidateDTO) throws Exception {
+	@PostMapping("/normalize")
+	public ResponseEntity<XmlDTO> normalizeXml(@RequestBody XmlDTO xmlValidateDTO) throws Exception {
 
-        String normalizedXml = xmlService.normalizeElementsInXml(xmlValidateDTO.xmlContent());
-        return ResponseEntity.ok(new XmlDTO(normalizedXml));
-    }
+		String normalizedXml = xmlService.normalizeElementsInXml(xmlValidateDTO.xmlContent());
+		return ResponseEntity.ok(new XmlDTO(normalizedXml));
+	}
 }

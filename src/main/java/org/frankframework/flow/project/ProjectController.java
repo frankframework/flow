@@ -24,87 +24,87 @@ import org.springframework.web.multipart.MultipartFile;
 @RequestMapping("/projects")
 public class ProjectController {
 
-    private final ProjectService projectService;
-    private final RecentProjectsService recentProjectsService;
+	private final ProjectService projectService;
+	private final RecentProjectsService recentProjectsService;
 
-    public ProjectController(ProjectService projectService, RecentProjectsService recentProjectsService) {
-        this.projectService = projectService;
-        this.recentProjectsService = recentProjectsService;
-    }
+	public ProjectController(ProjectService projectService, RecentProjectsService recentProjectsService) {
+		this.projectService = projectService;
+		this.recentProjectsService = recentProjectsService;
+	}
 
-    @GetMapping
-    public ResponseEntity<List<ProjectDTO>> getAllProjects() {
-        List<Project> projects = projectService.getProjects();
-        List<ProjectDTO> dtos =
-                projects.stream().map(this.projectService::toDto).toList();
-        return ResponseEntity.ok(dtos);
-    }
+	@GetMapping
+	public ResponseEntity<List<ProjectDTO>> getAllProjects() {
+		List<Project> projects = projectService.getProjects();
+		List<ProjectDTO> dtos =
+				projects.stream().map(this.projectService::toDto).toList();
+		return ResponseEntity.ok(dtos);
+	}
 
-    @GetMapping("/{projectName}")
-    public ResponseEntity<ProjectDTO> getProject(@PathVariable String projectName) throws ProjectNotFoundException {
-        Project project = projectService.getProject(projectName);
-        return ResponseEntity.ok(projectService.toDto(project));
-    }
+	@GetMapping("/{projectName}")
+	public ResponseEntity<ProjectDTO> getProject(@PathVariable String projectName) throws ProjectNotFoundException {
+		Project project = projectService.getProject(projectName);
+		return ResponseEntity.ok(projectService.toDto(project));
+	}
 
-    @PostMapping
-    public ResponseEntity<ProjectDTO> createProject(@RequestBody ProjectCreateDTO projectCreateDTO) throws IOException {
-        Project project = projectService.createProjectOnDisk(projectCreateDTO.rootPath());
-        recentProjectsService.addRecentProject(project.getName(), project.getRootPath());
-        return ResponseEntity.ok(projectService.toDto(project));
-    }
+	@PostMapping
+	public ResponseEntity<ProjectDTO> createProject(@RequestBody ProjectCreateDTO projectCreateDTO) throws IOException {
+		Project project = projectService.createProjectOnDisk(projectCreateDTO.rootPath());
+		recentProjectsService.addRecentProject(project.getName(), project.getRootPath());
+		return ResponseEntity.ok(projectService.toDto(project));
+	}
 
-    @PostMapping("/clone")
-    public ResponseEntity<ProjectDTO> cloneProject(
-            @RequestBody ProjectCloneDTO projectCloneDTO, ServletResponse servletResponse) throws IOException {
-        Project project = projectService.cloneAndOpenProject(
-                projectCloneDTO.repoUrl(), projectCloneDTO.localPath(), projectCloneDTO.token());
-        recentProjectsService.addRecentProject(project.getName(), project.getRootPath());
-        return ResponseEntity.ok(projectService.toDto(project));
-    }
+	@PostMapping("/clone")
+	public ResponseEntity<ProjectDTO> cloneProject(
+			@RequestBody ProjectCloneDTO projectCloneDTO, ServletResponse servletResponse) throws IOException {
+		Project project = projectService.cloneAndOpenProject(
+				projectCloneDTO.repoUrl(), projectCloneDTO.localPath(), projectCloneDTO.token());
+		recentProjectsService.addRecentProject(project.getName(), project.getRootPath());
+		return ResponseEntity.ok(projectService.toDto(project));
+	}
 
-    @PostMapping("/open")
-    public ResponseEntity<ProjectDTO> openProject(@RequestBody ProjectCreateDTO projectCreateDTO)
-            throws IOException, ProjectNotFoundException {
-        Project project = projectService.openProjectFromDisk(projectCreateDTO.rootPath());
-        recentProjectsService.addRecentProject(project.getName(), project.getRootPath());
-        return ResponseEntity.ok(projectService.toDto(project));
-    }
+	@PostMapping("/open")
+	public ResponseEntity<ProjectDTO> openProject(@RequestBody ProjectCreateDTO projectCreateDTO)
+			throws IOException, ProjectNotFoundException {
+		Project project = projectService.openProjectFromDisk(projectCreateDTO.rootPath());
+		recentProjectsService.addRecentProject(project.getName(), project.getRootPath());
+		return ResponseEntity.ok(projectService.toDto(project));
+	}
 
-    @PatchMapping("/{projectname}/filters/{type}/enable")
-    public ResponseEntity<ProjectDTO> enableFilter(@PathVariable String projectname, @PathVariable String type)
-            throws ProjectNotFoundException, InvalidFilterTypeException {
-        Project project = projectService.enableFilter(projectname, type);
-        return ResponseEntity.ok(projectService.toDto(project));
-    }
+	@PatchMapping("/{projectname}/filters/{type}/enable")
+	public ResponseEntity<ProjectDTO> enableFilter(@PathVariable String projectname, @PathVariable String type)
+			throws ProjectNotFoundException, InvalidFilterTypeException {
+		Project project = projectService.enableFilter(projectname, type);
+		return ResponseEntity.ok(projectService.toDto(project));
+	}
 
-    @PatchMapping("/{projectname}/filters/{type}/disable")
-    public ResponseEntity<ProjectDTO> disableFilter(@PathVariable String projectname, @PathVariable String type)
-            throws ProjectNotFoundException, InvalidFilterTypeException {
-        Project project = projectService.disableFilter(projectname, type);
-        return ResponseEntity.ok(projectService.toDto(project));
-    }
+	@PatchMapping("/{projectname}/filters/{type}/disable")
+	public ResponseEntity<ProjectDTO> disableFilter(@PathVariable String projectname, @PathVariable String type)
+			throws ProjectNotFoundException, InvalidFilterTypeException {
+		Project project = projectService.disableFilter(projectname, type);
+		return ResponseEntity.ok(projectService.toDto(project));
+	}
 
-    @GetMapping("/{projectName}/export")
-    public void exportProject(@PathVariable String projectName, HttpServletResponse response)
-            throws IOException, ProjectNotFoundException {
-        response.setContentType("application/zip");
-        response.setHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + projectName + ".zip\"");
-        projectService.exportProjectAsZip(projectName, response.getOutputStream());
-    }
+	@GetMapping("/{projectName}/export")
+	public void exportProject(@PathVariable String projectName, HttpServletResponse response)
+			throws IOException, ProjectNotFoundException {
+		response.setContentType("application/zip");
+		response.setHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + projectName + ".zip\"");
+		projectService.exportProjectAsZip(projectName, response.getOutputStream());
+	}
 
-    @PostMapping("/import")
-    public ResponseEntity<ProjectDTO> importProject(
-            @RequestParam("files") List<MultipartFile> files,
-            @RequestParam("paths") List<String> paths,
-            @RequestParam("projectName") String projectName)
-            throws IOException {
+	@PostMapping("/import")
+	public ResponseEntity<ProjectDTO> importProject(
+			@RequestParam("files") List<MultipartFile> files,
+			@RequestParam("paths") List<String> paths,
+			@RequestParam("projectName") String projectName)
+			throws IOException {
 
-        if (files.isEmpty() || files.size() != paths.size()) {
-            return ResponseEntity.badRequest().build();
-        }
+		if (files.isEmpty() || files.size() != paths.size()) {
+			return ResponseEntity.badRequest().build();
+		}
 
-        Project project = projectService.importProjectFromFiles(projectName, files, paths);
-        recentProjectsService.addRecentProject(project.getName(), project.getRootPath());
-        return ResponseEntity.ok(projectService.toDto(project));
-    }
+		Project project = projectService.importProjectFromFiles(projectName, files, paths);
+		recentProjectsService.addRecentProject(project.getName(), project.getRootPath());
+		return ResponseEntity.ok(projectService.toDto(project));
+	}
 }
