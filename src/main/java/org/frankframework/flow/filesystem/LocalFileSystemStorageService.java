@@ -16,96 +16,96 @@ import org.springframework.stereotype.Service;
 @Service
 @Profile("local")
 public class LocalFileSystemStorageService implements FileSystemStorage {
-    @Override
-    public boolean isLocalEnvironment() {
-        return true;
-    }
+	@Override
+	public boolean isLocalEnvironment() {
+		return true;
+	}
 
-    @Override
-    public List<FilesystemEntry> listRoots() {
-        List<FilesystemEntry> entries = new ArrayList<>();
-        for (File root : File.listRoots()) {
-            String absolutePath = root.getAbsolutePath();
-            entries.add(new FilesystemEntry(absolutePath, absolutePath, "DIRECTORY", false));
-        }
-        return entries;
-    }
+	@Override
+	public List<FilesystemEntry> listRoots() {
+		List<FilesystemEntry> entries = new ArrayList<>();
+		for (File root : File.listRoots()) {
+			String absolutePath = root.getAbsolutePath();
+			entries.add(new FilesystemEntry(absolutePath, absolutePath, "DIRECTORY", false));
+		}
+		return entries;
+	}
 
-    @Override
-    public List<FilesystemEntry> listDirectory(String path) throws IOException {
-        Path dir = sanitizePath(path);
-        List<FilesystemEntry> entries = new ArrayList<>();
+	@Override
+	public List<FilesystemEntry> listDirectory(String path) throws IOException {
+		Path dir = sanitizePath(path);
+		List<FilesystemEntry> entries = new ArrayList<>();
 
-        try (Stream<Path> stream = Files.list(dir)) {
-            stream.filter(Files::isDirectory).sorted().forEach(p -> {
-                boolean isProjectRoot = Files.isDirectory(p.resolve("src/main/configurations"));
-                entries.add(new FilesystemEntry(
-                        p.getFileName().toString(), p.toAbsolutePath().toString(), "DIRECTORY", isProjectRoot));
-            });
-        }
-        return entries;
-    }
+		try (Stream<Path> stream = Files.list(dir)) {
+			stream.filter(Files::isDirectory).sorted().forEach(p -> {
+				boolean isProjectRoot = Files.isDirectory(p.resolve("src/main/configurations"));
+				entries.add(new FilesystemEntry(
+						p.getFileName().toString(), p.toAbsolutePath().toString(), "DIRECTORY", isProjectRoot));
+			});
+		}
+		return entries;
+	}
 
-    @Override
-    public String readFile(String path) throws IOException {
-        return Files.readString(sanitizePath(path), StandardCharsets.UTF_8);
-    }
+	@Override
+	public String readFile(String path) throws IOException {
+		return Files.readString(sanitizePath(path), StandardCharsets.UTF_8);
+	}
 
-    @Override
-    public void writeFile(String path, String content) throws IOException {
-        Files.writeString(sanitizePath(path), content, StandardCharsets.UTF_8);
-    }
+	@Override
+	public void writeFile(String path, String content) throws IOException {
+		Files.writeString(sanitizePath(path), content, StandardCharsets.UTF_8);
+	}
 
-    @Override
-    public Path createProjectDirectory(String path) throws IOException {
-        Path dir = sanitizePath(path);
-        Files.createDirectories(dir);
-        return dir;
-    }
+	@Override
+	public Path createProjectDirectory(String path) throws IOException {
+		Path dir = sanitizePath(path);
+		Files.createDirectories(dir);
+		return dir;
+	}
 
-    @Override
-    public Path toAbsolutePath(String path) {
-        return sanitizePath(path);
-    }
+	@Override
+	public Path toAbsolutePath(String path) {
+		return sanitizePath(path);
+	}
 
-    @Override
-    public Path createFile(String path) throws IOException {
-        return FileOperations.createFile(sanitizePath(path));
-    }
+	@Override
+	public Path createFile(String path) throws IOException {
+		return FileOperations.createFile(sanitizePath(path));
+	}
 
-    @Override
-    public void delete(String path) throws IOException {
-        FileOperations.deleteRecursively(sanitizePath(path));
-    }
+	@Override
+	public void delete(String path) throws IOException {
+		FileOperations.deleteRecursively(sanitizePath(path));
+	}
 
-    @Override
-    public Path rename(String oldPath, String newPath) throws IOException {
-        return FileOperations.rename(sanitizePath(oldPath), sanitizePath(newPath));
-    }
+	@Override
+	public Path rename(String oldPath, String newPath) throws IOException {
+		return FileOperations.rename(sanitizePath(oldPath), sanitizePath(newPath));
+	}
 
-    private static Path sanitizePath(String path) {
-        if (path == null || path.isBlank()) {
-            throw new SecurityException("Path must not be empty");
-        }
+	private static Path sanitizePath(String path) {
+		if (path == null || path.isBlank()) {
+			throw new SecurityException("Path must not be empty");
+		}
 
-        if (path.contains("..")) {
-            throw new SecurityException("Path traversal is not allowed: " + path);
-        }
+		if (path.contains("..")) {
+			throw new SecurityException("Path traversal is not allowed: " + path);
+		}
 
-        try {
-            Path candidate = Paths.get(path).toAbsolutePath().normalize();
+		try {
+			Path candidate = Paths.get(path).toAbsolutePath().normalize();
 
-            for (File root : File.listRoots()) {
-                Path rootPath = root.toPath().toAbsolutePath().normalize();
-                if (candidate.startsWith(rootPath)) {
-                    Path relativePart = rootPath.relativize(candidate);
-                    return rootPath.resolve(relativePart);
-                }
-            }
+			for (File root : File.listRoots()) {
+				Path rootPath = root.toPath().toAbsolutePath().normalize();
+				if (candidate.startsWith(rootPath)) {
+					Path relativePart = rootPath.relativize(candidate);
+					return rootPath.resolve(relativePart);
+				}
+			}
 
-            throw new SecurityException("Access denied: " + path);
-        } catch (InvalidPathException e) {
-            throw new SecurityException("Invalid path: " + path, e);
-        }
-    }
+			throw new SecurityException("Access denied: " + path);
+		} catch (InvalidPathException e) {
+			throw new SecurityException("Invalid path: " + path, e);
+		}
+	}
 }

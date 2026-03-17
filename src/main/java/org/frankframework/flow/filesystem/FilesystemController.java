@@ -15,33 +15,33 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/filesystem")
 public class FilesystemController {
 
-    private final FileSystemStorage fileSystemStorage;
+	private final FileSystemStorage fileSystemStorage;
 
-    public FilesystemController(FileSystemStorage fileSystemStorage) {
-        this.fileSystemStorage = fileSystemStorage;
-    }
+	public FilesystemController(FileSystemStorage fileSystemStorage) {
+		this.fileSystemStorage = fileSystemStorage;
+	}
 
-    @GetMapping("/browse")
-    public ResponseEntity<List<FilesystemEntry>> browse(@RequestParam(required = false, defaultValue = "") String path)
-            throws IOException {
+	@GetMapping("/browse")
+	public ResponseEntity<List<FilesystemEntry>> browse(@RequestParam(required = false, defaultValue = "") String path)
+			throws IOException {
 
-        List<FilesystemEntry> entries;
-        if (path.isBlank()) {
-            entries = fileSystemStorage.listRoots();
-        } else {
-            try {
-                entries = fileSystemStorage.listDirectory(path);
-            } catch (AccessDeniedException e) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-            }
-        }
+		List<FilesystemEntry> entries;
+		if (path.isBlank()) {
+			entries = fileSystemStorage.listRoots();
+		} else {
+			try {
+				entries = fileSystemStorage.listDirectory(path);
+			} catch (AccessDeniedException e) {
+				return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+			}
+		}
 
-        return ResponseEntity.ok(entries);
-    }
+		return ResponseEntity.ok(entries);
+	}
 
-    @GetMapping("/default-path")
-    public ResponseEntity<Map<String, String>> defaultPath() {
-        String home = System.getProperty("user.home");
-        return ResponseEntity.ok(Map.of("path", home));
-    }
+	@GetMapping("/default-path")
+	public ResponseEntity<Map<String, String>> defaultPath() {
+		String home = System.getProperty("user.home");
+		return ResponseEntity.ok(Map.of("path", home));
+	}
 }
