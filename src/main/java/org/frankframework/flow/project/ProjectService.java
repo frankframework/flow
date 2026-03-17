@@ -20,6 +20,7 @@ import org.eclipse.jgit.transport.CredentialsProvider;
 import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.frankframework.flow.filesystem.FilesystemEntry;
 import org.frankframework.flow.git.GitCredentialHelper;
+import org.frankframework.flow.git.GitService;
 import org.frankframework.flow.projectsettings.FilterType;
 import org.frankframework.flow.projectsettings.InvalidFilterTypeException;
 import org.frankframework.flow.recentproject.RecentProject;
@@ -140,6 +141,7 @@ public class ProjectService {
 
             try (Git git = cloneCommand.call()) {
                 log.info("Cloned repository {} to {}", repoUrl, targetDir);
+                GitService.hardenRepository(git.getRepository());
             }
         } catch (GitAPIException e) {
             String msg = e.getMessage() != null ? e.getMessage().toLowerCase() : "";
