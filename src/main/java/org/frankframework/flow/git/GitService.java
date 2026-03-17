@@ -641,8 +641,16 @@ public class GitService {
         if (!Files.isDirectory(projectPath.resolve(".git"))) {
             throw new NotAGitRepositoryException(projectName);
         }
+
         Git git = Git.open(projectPath.toFile());
-        hardenRepository(git.getRepository());
+
+        try {
+            hardenRepository(git.getRepository());
+        } catch (IOException e) {
+            git.close();
+            throw e;
+        }
+
         return git;
     }
 
