@@ -19,15 +19,17 @@ public class DatamapperConfigService {
         this.fileTreeService = fileTreeService;
     }
 
-    private String getConfigFilePath(String projectName) throws ConfigurationNotFoundException {
-        try {
+    private Path getConfigFilePath(String projectName) throws ConfigurationNotFoundException {
+        return getDatamapperDir(projectName).resolve("configuration.json");
+    }
 
-            return Path.of(fileTreeService
+    private Path getDatamapperDir(String projectName) throws ConfigurationNotFoundException {
+        try {
+            return fileSystemStorage
+                    .toAbsolutePath(fileTreeService
                             .getConfigurationsDirectoryTree(projectName)
                             .getPath())
-                    .resolve("datamapper")
-                    .resolve("configuration.json")
-                    .toString();
+                    .resolve("datamapper");
         } catch (IOException e) {
             throw new ConfigurationNotFoundException(
                     "Failed to resolve configuration file path for project: " + projectName);
@@ -38,20 +40,21 @@ public class DatamapperConfigService {
             throws ConfigurationNotFoundException, ConfigurationException {
         Path absoluteFilePath;
 
+        Path dataMapperDir = null;
         try {
-            absoluteFilePath = fileSystemStorage.toAbsolutePath(getConfigFilePath(projectName));
-            String datamapperFilePath = Path.of(fileTreeService
+            absoluteFilePath = getConfigFilePath(projectName);
+
+            dataMapperDir = fileSystemStorage
+                    .toAbsolutePath(fileTreeService
                             .getConfigurationsDirectoryTree(projectName)
                             .getPath())
-                    .resolve("datamapper")
-                    .toString();
+                    .resolve("datamapper");
 
-            Path directoryPath = Path.of(datamapperFilePath);
-            if (!Files.isDirectory(directoryPath)) {
-                Files.createDirectory(directoryPath);
+            if (!Files.isDirectory(dataMapperDir)) {
+                Files.createDirectory(dataMapperDir);
             }
         } catch (IOException e) {
-            throw new ConfigurationException("Failed to resolve configuration file path for project: " + projectName);
+            throw new ConfigurationException("Can't create datamapper directory on " + e.getMessage());
         }
 
         if (Files.isDirectory(absoluteFilePath)) {
@@ -73,7 +76,10 @@ public class DatamapperConfigService {
 
     public String getConfig(String projectName) throws ConfigurationNotFoundException {
         try {
-            String filePath = this.getConfigFilePath(projectName);
+            String filePath = this.getConfigFilePath(projectName).toString();
+            if (!Files.exists(Path.of(filePath))) {
+                fileSystemStorage.createFile(filePath);
+            }
             return fileSystemStorage.readFile(filePath);
         } catch (IOException e) {
             throw new ConfigurationNotFoundException(

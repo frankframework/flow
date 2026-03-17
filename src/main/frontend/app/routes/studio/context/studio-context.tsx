@@ -72,9 +72,12 @@ export default function StudioContext() {
 
     for (const value of Object.values(elementsToGroup)) {
       if (seen.has(value.name)) continue
-      seen.add(value.name)
 
-      const type = componentLookup[value.name] ?? 'other'
+      const type = componentLookup[value.name]
+
+      if (!type) continue
+
+      seen.add(value.name)
 
       if (!grouped[type]) grouped[type] = []
       grouped[type].push(value)
