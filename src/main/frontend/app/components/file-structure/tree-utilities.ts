@@ -32,3 +32,15 @@ export function sortChildren(children?: FileTreeNode[]): FileTreeNode[] {
     return a.name.localeCompare(b.name)
   })
 }
+
+export function getParentFolders(itemId: string): string[] {
+  const parts = itemId.split('/')
+  const folders: string[] = []
+
+  for (let i = 1; i < parts.length; i++) {
+    const path = parts.slice(0, i).join('/')
+    folders.push(path)
+  }
+
+  return folders
+}

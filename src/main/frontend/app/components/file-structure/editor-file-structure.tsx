@@ -31,6 +31,21 @@ function getItemTitle(item: TreeItem<FileNode>): string {
   return typeof item.data.name === 'string' ? item.data.name : 'Unnamed'
 }
 
+const getParentPaths = (filePath: string, rootPath: string) => {
+  const normalized = filePath.replaceAll('\\', '/')
+  const parts = normalized.slice(rootPath.length).split('/').filter(Boolean)
+  const paths: string[] = []
+  let current = 'root'
+
+  for (const part of parts.slice(0, -1)) {
+    // exclude the file itself
+    current = `${current}/${part}`
+    paths.push(current)
+  }
+
+  return paths
+}
+
 export default function EditorFileStructure() {
   const project = useProjectStore((state) => state.project)
   const { editorExpandedItems, addEditorExpandedItem, removeEditorExpandedItem } = useTreeStore()
@@ -194,14 +209,57 @@ export default function EditorFileStructure() {
   }, [matchingItemIds, highlightedItemId, handleItemClickAsync])
 
   useEffect(() => {
-    if (!tree.current) return
+    if (!dataProvider || !tree.current) return
 
-    if (debouncedSearchTerm) {
-      tree.current.expandAll()
-    } else {
-      tree.current.collapseAll()
+    const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+
+    const handleSearch = async () => {
+      const term = debouncedSearchTerm.toLowerCase()
+      if (!term) {
+        setMatchingItemIds([])
+        setActiveMatchIndex(-1)
+        setHighlightedItemId(null)
+        return
+      }
+      const allItems = await dataProvider.getAllItems()
+      const matches = allItems
+        .filter((item) => getItemTitle(item).toLowerCase().includes(term))
+        .map((item) => item.index as string)
+
+      setMatchingItemIds(matches)
+
+      if (matches.length === 0) {
+        setActiveMatchIndex(-1)
+        setHighlightedItemId(null)
+        return
+      }
+
+      const expandParent = async (itemId: string) => {
+        const parts = itemId.split('/')
+        let current = 'root'
+        for (let i = 1; i < parts.length - 1; i++) {
+          current += `/${parts[i]}`
+          // Ensure folder is loaded
+          const item = await dataProvider.getTreeItem(current)
+          if (item.isFolder) {
+            await dataProvider.loadDirectory(current)
+            tree.current?.expandItem(current)
+            addEditorExpandedItem(current)
+            await sleep(50) // Breaks without delay..
+          }
+        }
+      }
+
+      for (const matchId of matches) {
+        await expandParent(matchId)
+      }
+
+      setActiveMatchIndex(0)
+      setHighlightedItemId(matches[0])
     }
-  }, [debouncedSearchTerm])
+
+    void handleSearch()
+  }, [debouncedSearchTerm, dataProvider])
 
   useEffect(() => {
     if (activeMatchIndex === -1 || !tree.current) return
@@ -301,8 +359,9 @@ export default function EditorFileStructure() {
             },
           }}
           onExpandItem={async (item) => {
+            if (!item || !dataProvider) return
             addEditorExpandedItem(String(item.index))
-            if (dataProvider) await dataProvider.loadDirectory(item.index)
+            await dataProvider.loadDirectory(item.index)
           }}
           onCollapseItem={(item) => {
             removeEditorExpandedItem(String(item.index))

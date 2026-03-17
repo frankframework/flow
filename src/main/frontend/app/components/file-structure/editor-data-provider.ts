@@ -1,6 +1,6 @@
 import type { TreeItem, TreeItemIndex } from 'react-complex-tree'
-import type { FileTreeNode } from '~/types/filesystem.types'
-import { fetchProjectRootTree, fetchDirectoryByPath } from '~/services/file-tree-service'
+import type { FileIndexEntry, FileTreeNode } from '~/types/filesystem.types'
+import { fetchProjectRootTree, fetchDirectoryByPath, fetchProjectTreeIndex } from '~/services/file-tree-service'
 import { sortChildren } from './tree-utilities'
 import type { DataProviderLike } from './use-file-tree-context-menu'
 import { BaseFilesDataProvider } from './base-files-data-provider'
@@ -13,6 +13,8 @@ export interface FileNode {
 
 export default class EditorFilesDataProvider extends BaseFilesDataProvider<FileNode> implements DataProviderLike {
   private readonly projectName: string
+  fileIndex: FileIndexEntry[] = []
+  projectRootPath = ''
 
   constructor(projectName: string) {
     super()
@@ -50,7 +52,10 @@ export default class EditorFilesDataProvider extends BaseFilesDataProvider<FileN
       if (!this.projectName) return
 
       const tree = await fetchProjectRootTree(this.projectName)
+      const index = await fetchProjectTreeIndex(this.projectName)
+      this.fileIndex = index
 
+      this.projectRootPath = tree.path.replaceAll('\\', '/')
       if (!tree) {
         console.warn('[EditorFilesDataProvider] Received empty tree from API')
         this.data = {}
@@ -133,5 +138,10 @@ export default class EditorFilesDataProvider extends BaseFilesDataProvider<FileN
     if (this.data[item.index]) {
       this.data[item.index].data.name = name
     }
+  }
+
+  public isLoaded(itemId: string) {
+    const item = this.data[itemId]
+    return item?.isFolder && this.loadedDirectories.has(item.data.path)
   }
 }

@@ -334,7 +334,7 @@ public class FileTreeService {
 
         try (Stream<Path> stream = Files.walk(projectPath)) {
             return stream
-                    .filter(Files::isRegularFile)
+                    .filter(Files::exists)
                     .map(path -> new FileIndexEntryDTO(
                             path.getFileName().toString(),
                             toNodePath(path, relativizeRoot, useRelativePaths)))

@@ -15,3 +15,8 @@ export interface FileTreeNode {
   children?: FileTreeNode[]
   adapterNames?: string[]
 }
+
+export interface FileIndexEntry {
+  name: string
+  path: string
+}

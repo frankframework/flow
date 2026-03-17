@@ -1,5 +1,5 @@
 import { apiFetch } from '~/utils/api'
-import type { FileTreeNode } from '~/types/filesystem.types'
+import type { FileIndexEntry, FileTreeNode } from '~/types/filesystem.types'
 
 export async function fetchProjectTree(projectName: string, signal?: AbortSignal): Promise<FileTreeNode> {
   return apiFetch<FileTreeNode>(`/projects/${encodeURIComponent(projectName)}/tree/configurations`, { signal })
@@ -13,6 +13,10 @@ export async function fetchShallowConfigurationsTree(projectName: string, signal
 
 export async function fetchProjectRootTree(projectName: string, signal?: AbortSignal): Promise<FileTreeNode> {
   return apiFetch<FileTreeNode>(`/projects/${encodeURIComponent(projectName)}/tree`, { signal })
+}
+
+export async function fetchProjectTreeIndex(projectName: string): Promise<FileIndexEntry[]> {
+  return apiFetch<FileIndexEntry[]>(`/projects/${encodeURIComponent(projectName)}/index`)
 }
 
 export async function fetchDirectoryByPath(
