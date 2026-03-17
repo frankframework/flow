@@ -107,7 +107,7 @@ class ConfigurationServiceTest {
 		Path file = tempDir.resolve("config.xml");
 		Files.writeString(file, "<old/>", StandardCharsets.UTF_8);
 
-		configurationService.updateConfiguration("proj", file.toString(), "<new/>");
+		configurationService.updateConfiguration(file.toString(), "<new/>");
 
 		assertEquals("<new/>\n", Files.readString(file, StandardCharsets.UTF_8));
 		verify(fileSystemStorage).writeFile(file.toString(), "<new/>\n");
@@ -121,7 +121,7 @@ class ConfigurationServiceTest {
 
 		assertThrows(
 				ConfigurationNotFoundException.class,
-				() -> configurationService.updateConfiguration("proj", path, "<new/>"));
+				() -> configurationService.updateConfiguration(path, "<new/>"));
 	}
 
 	@Test
