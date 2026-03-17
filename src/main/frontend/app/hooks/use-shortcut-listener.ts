@@ -16,16 +16,12 @@ function matchesShortcut(event: KeyboardEvent, shortcut: ShortcutDefinition): bo
   const mods = shortcut.modifiers ?? {}
   const cmdOrCtrl = event.metaKey || event.ctrlKey
 
-  if (mods.cmdOrCtrl && !cmdOrCtrl) return false
-  if (!mods.cmdOrCtrl && cmdOrCtrl) return false
-
-  if (mods.shift && !event.shiftKey) return false
-  if (!mods.shift && event.shiftKey) return false
-
-  if (mods.alt && !event.altKey) return false
-  if (!mods.alt && event.altKey) return false
-
-  return true
+  if (
+    mods.cmdOrCtrl === cmdOrCtrl && 
+    mods.shift === event.shiftKey && 
+    mods.alt === event.altKey
+  ) return true
+  return false
 }
 
 export function useShortcutListener() {
