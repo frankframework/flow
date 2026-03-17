@@ -34,7 +34,10 @@ export type FrankNodeType = Node<{
   sourceHandles: { type: string; index: number }[]
   attributes?: Record<string, string>
   children: ChildNode[]
-}>
+}> & {
+  width?: number
+  height?: number
+}
 
 export default function FrankNode(properties: NodeProps<FrankNodeType>) {
   const minNodeWidth = FlowConfig.NODE_DEFAULT_WIDTH
@@ -87,8 +90,8 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
   const [handleMenuPosition, setHandleMenuPosition] = useState({ x: 0, y: 0 })
 
   const [dimensions, setDimensions] = useState({
-    width: minNodeWidth, // Initial width
-    height: minNodeHeight, // Initial height
+    width: properties.width!, // Initial width, safe to assume it exists because it gets set manually in xml-to-json-parser
+    height: properties.height!, // Initial height, ''
   })
 
   const firstHandlePosition = useMemo(() => {
@@ -352,8 +355,8 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
       <div
         className={`bg-background flex h-full w-full flex-col items-center overflow-x-visible overflow-y-hidden rounded-md border ${properties.selected ? 'border-blue-500' : 'border-border'}`}
         style={{
-          minHeight: `${minNodeHeight}px`,
           minWidth: `${minNodeWidth}px`,
+          minHeight: `${minNodeHeight}px`,
         }}
         ref={containerReference}
         onDragOver={handleDragOver}

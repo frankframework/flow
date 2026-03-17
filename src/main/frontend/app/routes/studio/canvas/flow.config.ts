@@ -7,4 +7,6 @@ export const FlowConfig = {
   STICKY_NOTE_DEFAULT_HEIGHT: 200,
   COPY_PASTE_OFFSET: 40,
   MAX_HISTORY: 20, // Adjust this value as needed to limit the number of undo steps
+  LAYOUT_HORIZONTAL_OFFSET: 300,
+  LAYOUT_VERTICAL_OFFSET: 200,
 }

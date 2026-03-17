@@ -21,26 +21,26 @@ import org.xml.sax.SAXException;
 @RequestMapping("/projects")
 public class AdapterController {
 
-    private final AdapterService adapterService;
+	private final AdapterService adapterService;
 
-    public AdapterController(AdapterService adapterService) {
-        this.adapterService = adapterService;
-    }
+	public AdapterController(AdapterService adapterService) {
+		this.adapterService = adapterService;
+	}
 
-    @GetMapping(
-            value = "/{projectName}/adapters/{adapterName}",
-            params = {"configurationPath"})
-    public XmlDTO getAdapter(
-            @PathVariable String projectName, @PathVariable String adapterName, @RequestParam String configurationPath)
-            throws IOException, ApiException, SAXException, ParserConfigurationException, TransformerException {
-        return adapterService.getAdapter(projectName, configurationPath, adapterName);
-    }
+	@GetMapping(
+			value = "/{projectName}/adapters/{adapterName}",
+			params = {"configurationPath"})
+	public XmlDTO getAdapter(
+			@PathVariable String projectName, @PathVariable String adapterName, @RequestParam String configurationPath)
+			throws IOException, ApiException, SAXException, ParserConfigurationException, TransformerException {
+		return adapterService.getAdapter(projectName, configurationPath, adapterName);
+	}
 
-    @PutMapping("/{projectName}/adapters")
-    public ResponseEntity<Void> updateAdapter(@RequestBody AdapterUpdateDTO dto)
-            throws AdapterNotFoundException, ConfigurationNotFoundException, IOException {
-        boolean updated =
-                adapterService.updateAdapter(Paths.get(dto.configurationPath()), dto.adapterName(), dto.adapterXml());
-        return updated ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
-    }
+	@PutMapping("/{projectName}/adapters")
+	public ResponseEntity<Void> updateAdapter(@RequestBody AdapterUpdateDTO dto)
+			throws AdapterNotFoundException, ConfigurationNotFoundException, IOException {
+		boolean updated =
+				adapterService.updateAdapter(Paths.get(dto.configurationPath()), dto.adapterName(), dto.adapterXml());
+		return updated ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
+	}
 }

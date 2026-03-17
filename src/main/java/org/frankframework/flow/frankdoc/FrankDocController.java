@@ -12,16 +12,16 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/json/frankdoc")
 public class FrankDocController {
 
-    private final FrankDocService frankDocService;
+	private final FrankDocService frankDocService;
 
-    public FrankDocController(FrankDocService frankDocService) {
-        this.frankDocService = frankDocService;
-    }
+	public FrankDocController(FrankDocService frankDocService) {
+		this.frankDocService = frankDocService;
+	}
 
-    @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<String> getFrankDocJson() throws FrankDocJsonNotFoundException {
-        String frankDocJson = frankDocService.getFrankDocJson();
-        log.info("Fetched FrankDoc JSON");
-        return ResponseEntity.ok(frankDocJson);
-    }
+	@GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity<String> getFrankDocJson() throws FrankDocJsonNotFoundException {
+		String frankDocJson = frankDocService.getFrankDocJson();
+		log.info("Fetched FrankDoc JSON");
+		return ResponseEntity.ok(frankDocJson);
+	}
 }

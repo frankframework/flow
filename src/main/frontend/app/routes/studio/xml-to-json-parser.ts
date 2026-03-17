@@ -5,6 +5,7 @@ import type { FrankNodeType } from '~/routes/studio/canvas/nodetypes/frank-node'
 import type { ChildNode } from '~/routes/studio/canvas/nodetypes/child-node'
 import { fetchConfigurationCached } from '~/services/configuration-service'
 import { translateElementFromOldToNewFormat } from '~/utils/flow-utils'
+import { FlowConfig } from './canvas/flow.config'
 
 interface IdCounter {
   current: number
@@ -413,17 +414,20 @@ function extractSourceHandles(element: Element): SourceHandle[] {
 function processExitElements(element: Element, exitNodes: ExitNode[]) {
   const exits = [...element.children]
   for (const exit of exits) {
-    const attributes: Record<string, string> = {}
-    for (const attr of exit.attributes) {
-      attributes[attr.name] = attr.value
-    }
+    const { attributes, name, x, y, width, height } = parseElementAttributes(
+      exit.attributes,
+      FlowConfig.EXIT_DEFAULT_WIDTH,
+      FlowConfig.EXIT_DEFAULT_HEIGHT,
+    )
 
     const exitNode: ExitNode = {
       id: '',
       type: 'exitNode',
-      position: { x: 0, y: 0 },
+      position: { x, y },
+      width,
+      height,
       data: {
-        name: exit.getAttribute('name') || '',
+        name,
         type: 'Exit',
         subtype: 'Exit',
         attributes,
@@ -445,16 +449,20 @@ function convertAdapterToFlowNodes(adapter: Element): FlowNode[] {
       continue
     }
     if (element.tagName.toLowerCase() === 'exit') {
-      const attributes: Record<string, string> = {}
-      for (const attr of element.attributes) {
-        attributes[attr.name] = attr.value
-      }
+      const { attributes, name, x, y, width, height } = parseElementAttributes(
+        element.attributes,
+        FlowConfig.EXIT_DEFAULT_WIDTH,
+        FlowConfig.EXIT_DEFAULT_HEIGHT,
+      )
+
       const exitNode: ExitNode = {
         id: '',
         type: 'exitNode',
-        position: { x: 0, y: 0 },
+        position: { x, y },
+        width,
+        height,
         data: {
-          name: element.getAttribute('name') || '',
+          name,
           type: 'Exit',
           subtype: 'Exit',
           attributes,
@@ -482,22 +490,23 @@ function convertElementToNode(element: Element, idCounter: IdCounter, sourceHand
   const thisId = (idCounter.current++).toString()
   const { subtype, usedClassName } = translateElementFromOldToNewFormat(element)
 
-  // Extract attributes for this element except "name" and "className"
-  const attributes: Record<string, string> = {}
-  for (const attribute of element.attributes) {
-    if (attribute.name !== 'name' && !(usedClassName && attribute.name === 'className')) {
-      attributes[attribute.name] = attribute.value
-    }
-  }
+  const { attributes, name, x, y, width, height } = parseElementAttributes(
+    element.attributes,
+    FlowConfig.NODE_DEFAULT_WIDTH,
+    FlowConfig.NODE_DEFAULT_HEIGHT,
+    usedClassName,
+  )
 
   const frankNode: FrankNodeType = {
     id: thisId,
     type: 'frankNode',
-    position: { x: 0, y: 0 },
+    position: { x, y },
+    width,
+    height,
     data: {
-      name: element.getAttribute('name') || '',
+      name,
       type: getElementTypeFromName(subtype),
-      subtype: subtype,
+      subtype,
       children: convertChildren([...element.children], idCounter),
       sourceHandles,
       attributes: Object.keys(attributes).length > 0 ? attributes : undefined,
@@ -570,10 +579,59 @@ function isFrankNode(node: FlowNode): node is FrankNodeType {
   return node.type === 'frankNode' && node.data !== undefined && 'type' in node.data
 }
 
-/**  Converts the tagname of a non capitalized element that has a classname attribute to the last part of said classname, e.g.:
- * <pipe name="uploadFiles" className="org.frankframework.pipes.ForEachChildElementPipe" />
- * Becomes <ForEachChildElementPipe name="uploadFiles" />
- */
+function parseElementAttributes(
+  attrs: NamedNodeMap,
+  defaultWidth: number,
+  defaultHeight: number,
+  skipClassName = false,
+): ParsedAttributes {
+  const attributes: Record<string, string> = {}
+
+  let name = ''
+  let x = 0
+  let y = 0
+  let width = defaultWidth
+  let height = defaultHeight
+
+  for (const attr of attrs) {
+    const attrName = attr.name
+    const value = attr.value
+
+    // Capture name attribute
+    if (attrName === 'name') {
+      name = value
+      continue
+    }
+
+    // Optionally skip className
+    if (skipClassName && attrName === 'className') continue
+
+    // Flow coordinates
+    if (attrName === 'flow:x') {
+      x = Number(value) || 0
+      continue
+    }
+    if (attrName === 'flow:y') {
+      y = Number(value) || 0
+      continue
+    }
+
+    // Flow size
+    if (attrName === 'flow:width') {
+      width = Number(value) || defaultWidth
+      continue
+    }
+    if (attrName === 'flow:height') {
+      height = Number(value) || defaultHeight
+      continue
+    }
+
+    // Store all other attributes
+    attributes[attrName] = value
+  }
+
+  return { attributes, name, x, y, width, height }
+}
 
 interface FrankEdge {
   id: string
@@ -581,4 +639,13 @@ interface FrankEdge {
   target: string
   sourceHandle?: string
   type: 'frankEdge'
+}
+
+interface ParsedAttributes {
+  attributes: Record<string, string>
+  name: string
+  x: number
+  y: number
+  width: number
+  height: number
 }
