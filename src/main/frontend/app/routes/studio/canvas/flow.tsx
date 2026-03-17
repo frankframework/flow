@@ -32,6 +32,7 @@ import useNodeContextStore from '~/stores/node-context-store'
 import CreateNodeModal from '~/components/flow/create-node-modal'
 import { useProjectStore } from '~/stores/project-store'
 import { clearConfigurationCache, fetchConfigurationCached, saveConfiguration } from '~/services/configuration-service'
+import { refreshOpenDiffs } from '~/services/git-service'
 import useEditorTabStore from '~/stores/editor-tab-store'
 import { cloneWithRemappedIds } from '~/utils/flow-utils'
 import { showErrorToast } from '~/components/toast'
@@ -157,6 +158,7 @@ function FlowCanvas() {
       await saveConfiguration(currentProject.name, configurationPath, updatedConfigXml)
       clearConfigurationCache(currentProject.name, configurationPath)
       useEditorTabStore.getState().refreshAllTabs()
+      if (currentProject.isGitRepository) refreshOpenDiffs(currentProject.name)
 
       setSaveStatus('saved')
       if (savedTimerRef.current) clearTimeout(savedTimerRef.current)

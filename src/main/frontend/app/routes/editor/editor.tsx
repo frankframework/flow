@@ -186,7 +186,7 @@ export default function CodeEditor() {
         setSaveStatus('saved')
         if (savedTimerRef.current) clearTimeout(savedTimerRef.current)
         savedTimerRef.current = setTimeout(() => setSaveStatus('idle'), SAVED_DISPLAY_DURATION)
-        refreshOpenDiffs(project.name)
+        if (project.isGitRepository) refreshOpenDiffs(project.name)
       } catch (error) {
         showErrorToastFrom('Error saving', error)
         setSaveStatus('idle')
