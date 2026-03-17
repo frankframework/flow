@@ -36,6 +36,7 @@ import org.eclipse.jgit.lib.ObjectInserter;
 import org.eclipse.jgit.lib.PersonIdent;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevTree;
 import org.eclipse.jgit.revwalk.RevWalk;
@@ -205,7 +206,11 @@ public class GitService {
             throws ProjectNotFoundException, IOException, NotAGitRepositoryException, GitOperationException {
         log.debug("Creating commit in project '{}' with message: '{}'", projectName, message);
         try (Git git = openGit(projectName)) {
-            RevCommit commit = git.commit().setMessage(message).setSign(false).call();
+            RevCommit commit = git.commit()
+                    .setMessage(message)
+                    .setSign(false)
+                    .setNoVerify(true)
+                    .call();
             PersonIdent author = commit.getAuthorIdent();
             String shortId = commit.getId().abbreviate(SHORT_ID_LENGTH).name();
             log.info("Commit created: {} by {} - '{}'", shortId, author.getName(), message);
@@ -636,7 +641,38 @@ public class GitService {
         if (!Files.isDirectory(projectPath.resolve(".git"))) {
             throw new NotAGitRepositoryException(projectName);
         }
-        return Git.open(projectPath.toFile());
+
+        Git git = Git.open(projectPath.toFile());
+
+        try {
+            hardenRepository(git.getRepository());
+        } catch (IOException e) {
+            git.close();
+            throw e;
+        }
+
+        return git;
+    }
+
+    /**
+     * Hardens a repository's configuration to prevent the execution of unwanted or malicious scripts.
+     *
+     * disables all git hooks (pre-commit, post-checkout, etc.).
+     * prevents symlinks that could escape the repo root.
+     *
+     * These settings are written to the repo's local {.git/config} and do not affect the
+     * remote repository or the user's project files.
+     */
+    public static void hardenRepository(Repository repo) throws IOException {
+        StoredConfig config = repo.getConfig();
+        config.setString("core", null, "hooksPath", "/dev/null");
+        config.setBoolean("core", null, "symlinks", false);
+
+        for (String subsection : config.getSubsections("filter")) {
+            config.unsetSection("filter", subsection);
+        }
+
+        config.save();
     }
 
     /**
