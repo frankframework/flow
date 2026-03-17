@@ -13,6 +13,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.Comparator;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -89,6 +90,10 @@ public class DatamapperGeneratorServiceTest {
     @BeforeEach
     void setUp() throws IOException {
         tempProjectRoot = Files.createTempDirectory("flow_unit_test");
+        Files.copy(Paths.get("src/test/resources/datamapper/productSchema.xml"), tempProjectRoot.resolve("productSchema.xml"), StandardCopyOption.REPLACE_EXISTING);
+        Files.copy(Paths.get("src/test/resources/datamapper/userSchema.xml"), tempProjectRoot.resolve("userSchema.xml"), StandardCopyOption.REPLACE_EXISTING);
+        Files.copy(Paths.get("src/test/resources/datamapper/productSchema.json"), tempProjectRoot.resolve("productSchema.json"), StandardCopyOption.REPLACE_EXISTING);
+        Files.copy(Paths.get("src/test/resources/datamapper/userSchema.json"), tempProjectRoot.resolve("userSchema.json"), StandardCopyOption.REPLACE_EXISTING);
 
         service = new DatamapperGeneratorService(fileSystemStorage, fileTreeService);
         processor = new Processor(false);
@@ -105,7 +110,7 @@ public class DatamapperGeneratorServiceTest {
         }
     }
 
-//    @Test
+    @Test
     @DisplayName("Test XSLT generation")
     public void generateMapping() throws IOException, ParserConfigurationException, SAXException, ApiException {
         stubToAbsolutePath();
@@ -119,7 +124,7 @@ public class DatamapperGeneratorServiceTest {
                 expectedResult.toString().trim(), actualResult.toString().trim());
     }
 
-//    @Test
+    @Test
     @DisplayName("Test XML to XML mapping")
     public void testXMLtoXMLGeneratedMapping()
             throws SaxonApiException, IOException, ParserConfigurationException, SAXException, TransformerException,
@@ -144,7 +149,7 @@ public class DatamapperGeneratorServiceTest {
         Assertions.assertEquals(
                 toString(expectedResult).trim(), writer.toString().trim());
     }
-//    @Test
+    @Test
     @DisplayName("Test XML to XML mapping with arrays")
     public void testXMLtoXMLWithArraysGeneratedMapping()
             throws SaxonApiException, IOException, ParserConfigurationException, SAXException, TransformerException,
@@ -194,31 +199,30 @@ public class DatamapperGeneratorServiceTest {
         Assertions.assertEquals(expectedResult.trim(), writer.toString().trim());
     }
     @Test
-    @DisplayName("ManualTest XML to Json mapping")
-    public void testManualXMLtoJSONGeneratedMapping() throws SaxonApiException, IOException, ApiException {
+    @DisplayName("Test XML to Json with arrays mapping")
+    public void testManualXMLtoJSONWithArraysGeneratedMapping() throws SaxonApiException, IOException, ApiException {
         stubToAbsolutePath();
 
         service.generate(
-                "src/test/resources/datamapper/inputXmlToJsonWithArray.json", "./output.xslt");
+                "src/test/resources/datamapper/inputXmlToJsonWithArray.json",  tempProjectRoot.toAbsolutePath() +"/output.xslt");
 
         XsltExecutable executable =
-                compiler.compile(new StreamSource(new File("./output.xslt")));
+                compiler.compile(new StreamSource(new File( tempProjectRoot.toAbsolutePath() +"/output.xslt")));
         Xslt30Transformer transformer = executable.load30();
 
         StreamSource xmlSource = new StreamSource(new File("src/test/resources/datamapper/inputDataWithArray.xml"));
-        File outputFile = new File("./actualOutput.json");
-        Serializer out = processor.newSerializer(outputFile);
 
+        StringWriter writer = new StringWriter();
+        Serializer out = processor.newSerializer(writer);
 
         transformer.transform(xmlSource, out);
 
         Path path = Paths.get("src/test/resources/datamapper/outputData.json");
         String expectedResult = Files.readString(path);
 
-//        Assertions.assertEquals(expectedResult.trim(), writer.toString().trim());
+        Assertions.assertEquals(expectedResult.trim(), writer.toString().trim());
     }
-
-//    @Test
+    @Test
     @DisplayName("Test Json to XML mapping")
     public void testJSONtoXMLGeneratedMapping()
             throws IOException, SaxonApiException, ParserConfigurationException, SAXException, TransformerException,
@@ -226,10 +230,10 @@ public class DatamapperGeneratorServiceTest {
         stubToAbsolutePath();
 
         service.generate(
-                "src/test/resources/datamapper/inputJsonToXml.json", tempProjectRoot.toAbsolutePath() + "/output.xslt");
+                "src/test/resources/datamapper/inputJsonToXml.json",  tempProjectRoot.toAbsolutePath() +"/output.xslt");
 
         XsltExecutable executable =
-                compiler.compile(new StreamSource(new File(tempProjectRoot.toAbsolutePath() + "/output.xslt")));
+                compiler.compile(new StreamSource(new File( tempProjectRoot.toAbsolutePath() +"/output.xslt")));
         Xslt30Transformer transformer = executable.load30();
 
         StringWriter writer = new StringWriter();
@@ -246,25 +250,27 @@ public class DatamapperGeneratorServiceTest {
                 toString(expectedResult).trim(), writer.toString().trim());
     }
 
-//    @Test
+    @Test
     @DisplayName("Test Json to Json mapping")
     public void testJSONtoJSONGeneratedMapping() throws SaxonApiException, IOException, ApiException {
         stubToAbsolutePath();
 
         service.generate(
-                "src/test/resources/datamapper/inputJsonToJson.json",
-                tempProjectRoot.toAbsolutePath() + "/output.xslt");
+                "src/test/resources/datamapper/inputJsonToJson.json",  tempProjectRoot.toAbsolutePath() +"/output.xslt");
 
         XsltExecutable executable =
-                compiler.compile(new StreamSource(new File(tempProjectRoot.toAbsolutePath() + "/output.xslt")));
+                compiler.compile(new StreamSource(new File( tempProjectRoot.toAbsolutePath() +"/output.xslt")));
         Xslt30Transformer transformer = executable.load30();
 
         StringWriter writer = new StringWriter();
         Serializer out = processor.newSerializer(writer);
 
+
         Path absolutePath = Paths.get("").toAbsolutePath().resolve("src/test/resources/datamapper/inputData.json");
         StreamSource paramsSource = new StreamSource(
-                new StringReader("<params><jsonPath>" + absolutePath.toUri() + "</jsonPath></params>"));
+                new StringReader("<params><jsonPath>" + absolutePath.toUri() + "</jsonPath></params>"),
+                absolutePath.getParent().toUri().toString()
+        );
 
         transformer.transform(paramsSource, out);
 
@@ -274,7 +280,7 @@ public class DatamapperGeneratorServiceTest {
         Assertions.assertEquals(expectedResult.trim(), writer.toString().trim());
     }
 
-//    @Test
+    @Test
     @DisplayName(("Should overwrite fill successfully"))
     public void testSaveGenerationFileOverwrite() throws IOException, ApiException {
         stubWriteFile();
@@ -295,7 +301,7 @@ public class DatamapperGeneratorServiceTest {
         assertEquals(newContent, Files.readString(file));
     }
 
-//    @Test
+    @Test
     @DisplayName("Should successfully create a new file ")
     public void testSaveGenerationFile() throws IOException, ApiException {
         stubWriteFile();
@@ -312,7 +318,7 @@ public class DatamapperGeneratorServiceTest {
         assertEquals(newContent, Files.readString(file));
     }
 
-//    @Test
+    @Test
     @DisplayName("Test saving configuration and creating a mapping from it")
     public void fullGenerateMappingRun() throws IOException, ParserConfigurationException, SAXException, ApiException {
         stubGetConfigurationsDirectoryTree();
@@ -329,7 +335,7 @@ public class DatamapperGeneratorServiceTest {
                 expectedResult.toString().trim(), actualResult.toString().trim());
     }
 
-//    @Test
+    @Test
     @DisplayName("Test saving configuration deletes temporary config")
     public void fullGenerateRunDeletesTempConfig() throws IOException, ApiException {
         stubGetConfigurationsDirectoryTree();

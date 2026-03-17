@@ -1,4 +1,4 @@
-<productSchema>
+<products>
     <productId>id123</productId>
     <price>49.99</price>
     <currency>USD</currency>
@@ -9,4 +9,4 @@
         <depth>30</depth>
         <unit>cm</unit>
     </dimensions>
-</productSchema>
+</products>

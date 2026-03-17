@@ -1,4 +1,4 @@
-
+<schema>
 <shiporder>
     <orderid>SO12345</orderid>
     <orderperson>John Smith</orderperson>
@@ -31,3 +31,4 @@
     </item>
 
 </shiporder>
+</schema>
