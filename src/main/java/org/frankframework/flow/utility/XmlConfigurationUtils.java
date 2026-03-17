@@ -129,10 +129,10 @@ public class XmlConfigurationUtils {
 	 * element type
 	 * - If element name is lowercase without className:
 	 * capitalize first letter
-	 * @throws ParserConfigurationException 
-	 * @throws IOException 
-	 * @throws SAXException 
-	 * @throws TransformerException 
+	 * @throws ParserConfigurationException
+	 * @throws IOException
+	 * @throws SAXException
+	 * @throws TransformerException
 	 */
 	public static String normalizeFrankElements(String xmlContent) throws SAXException, IOException, ParserConfigurationException, TransformerException  {
 
