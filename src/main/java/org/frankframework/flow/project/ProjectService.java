@@ -17,6 +17,7 @@ import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.transport.CredentialsProvider;
+import org.frankframework.flow.git.GitService;
 import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.frankframework.flow.filesystem.FilesystemEntry;
 import org.frankframework.flow.git.GitCredentialHelper;
@@ -140,6 +141,7 @@ public class ProjectService {
 
             try (Git git = cloneCommand.call()) {
                 log.info("Cloned repository {} to {}", repoUrl, targetDir);
+                GitService.hardenRepository(git.getRepository());
             }
         } catch (GitAPIException e) {
             String msg = e.getMessage() != null ? e.getMessage().toLowerCase() : "";
