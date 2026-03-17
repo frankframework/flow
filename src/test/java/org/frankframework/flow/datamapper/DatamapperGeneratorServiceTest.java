@@ -170,7 +170,7 @@ public class DatamapperGeneratorServiceTest {
 
         transformer.transform();
 
-        Document expectedResult = parse("src/test/resources/datamapper/outputData.xml");
+        Document expectedResult = parse("src/test/resources/datamapper/outputDataWithArray.xml");
         Assertions.assertEquals(
                 toString(expectedResult).trim(), writer.toString().trim());
     }
@@ -217,7 +217,7 @@ public class DatamapperGeneratorServiceTest {
 
         transformer.transform(xmlSource, out);
 
-        Path path = Paths.get("src/test/resources/datamapper/outputData.json");
+        Path path = Paths.get("src/test/resources/datamapper/outputDataWithArray.json");
         String expectedResult = Files.readString(path);
 
         Assertions.assertEquals(expectedResult.trim(), writer.toString().trim());
@@ -264,6 +264,8 @@ public class DatamapperGeneratorServiceTest {
 
         StringWriter writer = new StringWriter();
         Serializer out = processor.newSerializer(writer);
+//        File outputFile = new File("output.json"); // or .json depending on your transform
+//        Serializer out = processor.newSerializer(outputFile);
 
 
         Path absolutePath = Paths.get("").toAbsolutePath().resolve("src/test/resources/datamapper/inputData.json");

@@ -126,9 +126,7 @@
             <xsl:choose>
                 <xsl:when test="$data?targetType = 'JSON'">
                     <outputxsl:template name="source">
-                        <xsl:if test="$data?sourceType = 'XML'">
-                            <xsl:attribute name="match">/</xsl:attribute>
-                        </xsl:if>
+                        <xsl:attribute name="match">/</xsl:attribute>
                         <outputxsl:variable name="xmlOutput">
                             <xsl:for-each select="$data?sourceStructure?*">
                                 <xsl:if test="?type = 'schematic'">
