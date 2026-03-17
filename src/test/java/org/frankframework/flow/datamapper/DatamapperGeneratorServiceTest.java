@@ -90,10 +90,22 @@ public class DatamapperGeneratorServiceTest {
     @BeforeEach
     void setUp() throws IOException {
         tempProjectRoot = Files.createTempDirectory("flow_unit_test");
-        Files.copy(Paths.get("src/test/resources/datamapper/productSchema.xml"), tempProjectRoot.resolve("productSchema.xml"), StandardCopyOption.REPLACE_EXISTING);
-        Files.copy(Paths.get("src/test/resources/datamapper/userSchema.xml"), tempProjectRoot.resolve("userSchema.xml"), StandardCopyOption.REPLACE_EXISTING);
-        Files.copy(Paths.get("src/test/resources/datamapper/productSchema.json"), tempProjectRoot.resolve("productSchema.json"), StandardCopyOption.REPLACE_EXISTING);
-        Files.copy(Paths.get("src/test/resources/datamapper/userSchema.json"), tempProjectRoot.resolve("userSchema.json"), StandardCopyOption.REPLACE_EXISTING);
+        Files.copy(
+                Paths.get("src/test/resources/datamapper/productSchema.xml"),
+                tempProjectRoot.resolve("productSchema.xml"),
+                StandardCopyOption.REPLACE_EXISTING);
+        Files.copy(
+                Paths.get("src/test/resources/datamapper/userSchema.xml"),
+                tempProjectRoot.resolve("userSchema.xml"),
+                StandardCopyOption.REPLACE_EXISTING);
+        Files.copy(
+                Paths.get("src/test/resources/datamapper/productSchema.json"),
+                tempProjectRoot.resolve("productSchema.json"),
+                StandardCopyOption.REPLACE_EXISTING);
+        Files.copy(
+                Paths.get("src/test/resources/datamapper/userSchema.json"),
+                tempProjectRoot.resolve("userSchema.json"),
+                StandardCopyOption.REPLACE_EXISTING);
 
         service = new DatamapperGeneratorService(fileSystemStorage, fileTreeService);
         processor = new Processor(false);
@@ -149,14 +161,16 @@ public class DatamapperGeneratorServiceTest {
         Assertions.assertEquals(
                 toString(expectedResult).trim(), writer.toString().trim());
     }
+
     @Test
     @DisplayName("Test XML to XML mapping with arrays")
     public void testXMLtoXMLWithArraysGeneratedMapping()
             throws SaxonApiException, IOException, ParserConfigurationException, SAXException, TransformerException,
-            ApiException {
+                    ApiException {
         stubToAbsolutePath();
         service.generate(
-                "src/test/resources/datamapper/inputXmlToXmlWithArray.json", tempProjectRoot.toAbsolutePath() + "/output.xslt");
+                "src/test/resources/datamapper/inputXmlToXmlWithArray.json",
+                tempProjectRoot.toAbsolutePath() + "/output.xslt");
 
         XsltExecutable executable =
                 compiler.compile(new StreamSource(new File(tempProjectRoot.toAbsolutePath() + "/output.xslt")));
@@ -198,16 +212,18 @@ public class DatamapperGeneratorServiceTest {
 
         Assertions.assertEquals(expectedResult.trim(), writer.toString().trim());
     }
+
     @Test
     @DisplayName("Test XML to Json with arrays mapping")
     public void testManualXMLtoJSONWithArraysGeneratedMapping() throws SaxonApiException, IOException, ApiException {
         stubToAbsolutePath();
 
         service.generate(
-                "src/test/resources/datamapper/inputXmlToJsonWithArray.json",  tempProjectRoot.toAbsolutePath() +"/output.xslt");
+                "src/test/resources/datamapper/inputXmlToJsonWithArray.json",
+                tempProjectRoot.toAbsolutePath() + "/output.xslt");
 
         XsltExecutable executable =
-                compiler.compile(new StreamSource(new File( tempProjectRoot.toAbsolutePath() +"/output.xslt")));
+                compiler.compile(new StreamSource(new File(tempProjectRoot.toAbsolutePath() + "/output.xslt")));
         Xslt30Transformer transformer = executable.load30();
 
         StreamSource xmlSource = new StreamSource(new File("src/test/resources/datamapper/inputDataWithArray.xml"));
@@ -222,6 +238,7 @@ public class DatamapperGeneratorServiceTest {
 
         Assertions.assertEquals(expectedResult.trim(), writer.toString().trim());
     }
+
     @Test
     @DisplayName("Test Json to XML mapping")
     public void testJSONtoXMLGeneratedMapping()
@@ -230,10 +247,10 @@ public class DatamapperGeneratorServiceTest {
         stubToAbsolutePath();
 
         service.generate(
-                "src/test/resources/datamapper/inputJsonToXml.json",  tempProjectRoot.toAbsolutePath() +"/output.xslt");
+                "src/test/resources/datamapper/inputJsonToXml.json", tempProjectRoot.toAbsolutePath() + "/output.xslt");
 
         XsltExecutable executable =
-                compiler.compile(new StreamSource(new File( tempProjectRoot.toAbsolutePath() +"/output.xslt")));
+                compiler.compile(new StreamSource(new File(tempProjectRoot.toAbsolutePath() + "/output.xslt")));
         Xslt30Transformer transformer = executable.load30();
 
         StringWriter writer = new StringWriter();
@@ -256,23 +273,22 @@ public class DatamapperGeneratorServiceTest {
         stubToAbsolutePath();
 
         service.generate(
-                "src/test/resources/datamapper/inputJsonToJson.json",  tempProjectRoot.toAbsolutePath() +"/output.xslt");
+                "src/test/resources/datamapper/inputJsonToJson.json",
+                tempProjectRoot.toAbsolutePath() + "/output.xslt");
 
         XsltExecutable executable =
-                compiler.compile(new StreamSource(new File( tempProjectRoot.toAbsolutePath() +"/output.xslt")));
+                compiler.compile(new StreamSource(new File(tempProjectRoot.toAbsolutePath() + "/output.xslt")));
         Xslt30Transformer transformer = executable.load30();
 
         StringWriter writer = new StringWriter();
         Serializer out = processor.newSerializer(writer);
-//        File outputFile = new File("output.json"); // or .json depending on your transform
-//        Serializer out = processor.newSerializer(outputFile);
-
+        //        File outputFile = new File("output.json"); // or .json depending on your transform
+        //        Serializer out = processor.newSerializer(outputFile);
 
         Path absolutePath = Paths.get("").toAbsolutePath().resolve("src/test/resources/datamapper/inputData.json");
         StreamSource paramsSource = new StreamSource(
                 new StringReader("<params><jsonPath>" + absolutePath.toUri() + "</jsonPath></params>"),
-                absolutePath.getParent().toUri().toString()
-        );
+                absolutePath.getParent().toUri().toString());
 
         transformer.transform(paramsSource, out);
 
