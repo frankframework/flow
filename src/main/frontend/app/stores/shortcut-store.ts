@@ -21,33 +21,6 @@ function detectPlatform(): Platform {
   return 'win'
 }
 
-function buildInitialShortcuts(): Map<string, ShortcutDefinition> {
-  const map = new Map<string, ShortcutDefinition>()
-  for (const def of ALL_SHORTCUTS) {
-    map.set(def.id, { ...def })
-  }
-  return map
-}
-
-interface ShortcutState {
-  platform: Platform
-  shortcuts: Map<string, ShortcutDefinition>
-  setHandler: (id: string, handler: (() => void) | undefined) => void
-}
-
-export const useShortcutStore = create<ShortcutState>((set) => ({
-  platform: detectPlatform(),
-  shortcuts: buildInitialShortcuts(),
-  setHandler: (id, handler) =>
-    set((state) => {
-      const existing = state.shortcuts.get(id)
-      if (!existing) return state
-      const next = new Map(state.shortcuts)
-      next.set(id, { ...existing, handler })
-      return { shortcuts: next }
-    }),
-}))
-
 /**
  * Static registry of all shortcut definitions (without handlers).
  * Always available for the keybinds help table regardless of which components are mounted.
@@ -89,3 +62,30 @@ export const ALL_SHORTCUTS: Omit<ShortcutDefinition, 'handler'>[] = [
     displayOnly: true,
   },
 ]
+
+function buildInitialShortcuts(): Map<string, ShortcutDefinition> {
+  const map = new Map<string, ShortcutDefinition>()
+  for (const def of ALL_SHORTCUTS) {
+    map.set(def.id, { ...def })
+  }
+  return map
+}
+
+interface ShortcutState {
+  platform: Platform
+  shortcuts: Map<string, ShortcutDefinition>
+  setHandler: (id: string, handler: (() => void) | undefined) => void
+}
+
+export const useShortcutStore = create<ShortcutState>((set) => ({
+  platform: detectPlatform(),
+  shortcuts: buildInitialShortcuts(),
+  setHandler: (id, handler) =>
+    set((state) => {
+      const existing = state.shortcuts.get(id)
+      if (!existing) return state
+      const next = new Map(state.shortcuts)
+      next.set(id, { ...existing, handler })
+      return { shortcuts: next }
+    }),
+}))

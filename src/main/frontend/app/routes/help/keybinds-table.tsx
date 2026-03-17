@@ -56,9 +56,9 @@ export function KeybindsTable() {
       <div className="flex flex-col items-center">
         <span className="mb-1 text-sm font-medium">Platform</span>
         <SwitchToggle
-          options={['Windows', 'macOS']}
-          value={platform === 'win' ? 'Windows' : 'macOS'}
-          onChange={(value) => setPlatform(value === 'Windows' ? 'win' : 'mac')}
+          options={['PC', 'Mac']}
+          value={platform === 'win' ? 'PC' : 'Mac'}
+          onChange={(value) => setPlatform(value === 'PC' ? 'win' : 'mac')}
         />
       </div>
 
