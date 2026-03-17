@@ -1,0 +1,10 @@
+<userSchema>
+    <username>johndoe92</username>
+    <email>john.doe@example.com</email>
+    <status>banned</status>
+    <profile>
+        <firstName>John</firstName>
+        <lastName>Doe</lastName>
+        <birthYear>2030</birthYear>
+    </profile>
+</userSchema>

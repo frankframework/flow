@@ -79,14 +79,14 @@ public class DatamapperGeneratorService {
     }
 
     private void deleteGenerationFile(String projectName) throws ApiException {
-        try {
-
-            fileSystemStorage.delete(getConfigFilePath(projectName));
-
-        } catch (IOException e) {
-            throw new ApiException(
-                    "Failed to find configuration for project: " + projectName, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+//        try {
+//
+//            fileSystemStorage.delete(getConfigFilePath(projectName));
+//
+//        } catch (IOException e) {
+//            throw new ApiException(
+//                    "Failed to find configuration for project: " + projectName, HttpStatus.INTERNAL_SERVER_ERROR);
+//        }
     }
 
     public void generateFromProject(String projectName, String content) throws ApiException {

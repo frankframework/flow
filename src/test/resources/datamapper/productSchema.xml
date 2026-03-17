@@ -1,0 +1,12 @@
+<productSchema>
+    <productId>id123</productId>
+    <price>49.99</price>
+    <currency>USD</currency>
+    <amountOfitems>10</amountOfitems>
+    <dimensions>
+        <width>50</width>
+        <height>100</height>
+        <depth>30</depth>
+        <unit>cm</unit>
+    </dimensions>
+</productSchema>
