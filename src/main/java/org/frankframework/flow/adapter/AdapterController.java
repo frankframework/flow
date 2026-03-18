@@ -24,48 +24,48 @@ import org.xml.sax.SAXException;
 @RequestMapping("/projects")
 public class AdapterController {
 
-    private final AdapterService adapterService;
+	private final AdapterService adapterService;
 
-    public AdapterController(AdapterService adapterService) {
-        this.adapterService = adapterService;
-    }
+	public AdapterController(AdapterService adapterService) {
+		this.adapterService = adapterService;
+	}
 
-    @GetMapping(
-            value = "/{projectName}/adapters/{adapterName}",
-            params = {"configurationPath"})
-    public XmlDTO getAdapter(
-            @PathVariable String projectName, @PathVariable String adapterName, @RequestParam String configurationPath)
-            throws IOException, ApiException, SAXException, ParserConfigurationException, TransformerException {
-        return adapterService.getAdapter(projectName, configurationPath, adapterName);
-    }
+	@GetMapping(
+			value = "/{projectName}/adapters/{adapterName}",
+			params = {"configurationPath"})
+	public XmlDTO getAdapter(
+			@PathVariable String projectName, @PathVariable String adapterName, @RequestParam String configurationPath)
+			throws IOException, ApiException, SAXException, ParserConfigurationException, TransformerException {
+		return adapterService.getAdapter(projectName, configurationPath, adapterName);
+	}
 
-    @PutMapping("/{projectName}/adapters")
-    public ResponseEntity<Void> updateAdapter(@RequestBody AdapterUpdateDTO dto)
-            throws AdapterNotFoundException, ConfigurationNotFoundException, IOException {
-        boolean updated =
-                adapterService.updateAdapter(Paths.get(dto.configurationPath()), dto.adapterName(), dto.adapterXml());
-        return updated ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
-    }
+	@PutMapping("/{projectName}/adapters")
+	public ResponseEntity<Void> updateAdapter(@RequestBody AdapterUpdateDTO dto)
+			throws AdapterNotFoundException, ConfigurationNotFoundException, IOException {
+		boolean updated =
+				adapterService.updateAdapter(Paths.get(dto.configurationPath()), dto.adapterName(), dto.adapterXml());
+		return updated ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
+	}
 
-    @PostMapping("/{projectName}/adapters")
-    public ResponseEntity<Void> createAdapter(@PathVariable String projectName, @RequestBody AdapterCreateDTO dto)
-            throws ConfigurationNotFoundException, IOException {
-        adapterService.createAdapter(dto.configurationPath(), dto.adapterName());
-        return ResponseEntity.ok().build();
-    }
+	@PostMapping("/{projectName}/adapters")
+	public ResponseEntity<Void> createAdapter(@PathVariable String projectName, @RequestBody AdapterCreateDTO dto)
+			throws ConfigurationNotFoundException, IOException {
+		adapterService.createAdapter(dto.configurationPath(), dto.adapterName());
+		return ResponseEntity.ok().build();
+	}
 
-    @PatchMapping("/{projectName}/adapters/rename")
-    public ResponseEntity<Void> renameAdapter(@PathVariable String projectName, @RequestBody AdapterRenameDTO dto)
-            throws AdapterNotFoundException, ConfigurationNotFoundException, IOException {
-        adapterService.renameAdapter(dto.configurationPath(), dto.oldName(), dto.newName());
-        return ResponseEntity.ok().build();
-    }
+	@PatchMapping("/{projectName}/adapters/rename")
+	public ResponseEntity<Void> renameAdapter(@PathVariable String projectName, @RequestBody AdapterRenameDTO dto)
+			throws AdapterNotFoundException, ConfigurationNotFoundException, IOException {
+		adapterService.renameAdapter(dto.configurationPath(), dto.oldName(), dto.newName());
+		return ResponseEntity.ok().build();
+	}
 
-    @DeleteMapping("/{projectName}/adapters")
-    public ResponseEntity<Void> deleteAdapter(
-            @PathVariable String projectName, @RequestParam String adapterName, @RequestParam String configurationPath)
-            throws AdapterNotFoundException, ConfigurationNotFoundException, IOException {
-        adapterService.deleteAdapter(configurationPath, adapterName);
-        return ResponseEntity.ok().build();
-    }
+	@DeleteMapping("/{projectName}/adapters")
+	public ResponseEntity<Void> deleteAdapter(
+			@PathVariable String projectName, @RequestParam String adapterName, @RequestParam String configurationPath)
+			throws AdapterNotFoundException, ConfigurationNotFoundException, IOException {
+		adapterService.deleteAdapter(configurationPath, adapterName);
+		return ResponseEntity.ok().build();
+	}
 }
