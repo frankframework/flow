@@ -37,55 +37,55 @@ import org.xml.sax.SAXException;
 
 @ExtendWith(MockitoExtension.class)
 public class DatamapperGeneratorServiceTest {
-    @Mock
-    private FileSystemStorage fileSystemStorage;
+	@Mock
+	private FileSystemStorage fileSystemStorage;
 
-    @Mock
-    private FileTreeService fileTreeService;
+	@Mock
+	private FileTreeService fileTreeService;
 
-    private DatamapperGeneratorService service;
-    private Processor processor;
-    private XsltCompiler compiler;
+	private DatamapperGeneratorService service;
+	private Processor processor;
+	private XsltCompiler compiler;
 
-    private static final String TEST_PROJECT_NAME = "FrankFlowTestProject";
+	private static final String TEST_PROJECT_NAME = "FrankFlowTestProject";
 
-    private Path tempProjectRoot;
+	private Path tempProjectRoot;
 
-    private void stubToAbsolutePath() throws IOException {
-        when(fileSystemStorage.toAbsolutePath(anyString())).thenAnswer(invocation -> {
-            String path = invocation.getArgument(0);
-            return Paths.get(path);
-        });
-    }
+	private void stubToAbsolutePath() throws IOException {
+		when(fileSystemStorage.toAbsolutePath(anyString())).thenAnswer(invocation -> {
+			String path = invocation.getArgument(0);
+			return Paths.get(path);
+		});
+	}
 
-    private void stubDeleteFile() throws IOException {
-        doAnswer(invocation -> {
-                    String path = invocation.getArgument(0);
-                    FileOperations.deleteRecursively(Paths.get(path));
-                    return null;
-                })
-                .when(fileSystemStorage)
-                .delete(anyString());
-    }
+	private void stubDeleteFile() throws IOException {
+		doAnswer(invocation -> {
+					String path = invocation.getArgument(0);
+					FileOperations.deleteRecursively(Paths.get(path));
+					return null;
+				})
+				.when(fileSystemStorage)
+				.delete(anyString());
+	}
 
-    private void stubWriteFile() throws IOException {
-        doAnswer(invocation -> {
-                    String path = invocation.getArgument(0);
-                    String content = invocation.getArgument(1);
-                    Files.writeString(Paths.get(path), content);
-                    return null;
-                })
-                .when(fileSystemStorage)
-                .writeFile(anyString(), anyString());
-    }
+	private void stubWriteFile() throws IOException {
+		doAnswer(invocation -> {
+					String path = invocation.getArgument(0);
+					String content = invocation.getArgument(1);
+					Files.writeString(Paths.get(path), content);
+					return null;
+				})
+				.when(fileSystemStorage)
+				.writeFile(anyString(), anyString());
+	}
 
-    private void stubGetConfigurationsDirectoryTree() throws IOException {
-        when(fileTreeService.getConfigurationsDirectoryTree(anyString())).thenAnswer(invocation -> {
-            FileTreeNode fileTreeNode = new FileTreeNode();
-            fileTreeNode.setPath(tempProjectRoot.toString());
-            return fileTreeNode;
-        });
-    }
+	private void stubGetConfigurationsDirectoryTree() throws IOException {
+		when(fileTreeService.getConfigurationsDirectoryTree(anyString())).thenAnswer(invocation -> {
+			FileTreeNode fileTreeNode = new FileTreeNode();
+			fileTreeNode.setPath(tempProjectRoot.toString());
+			return fileTreeNode;
+		});
+	}
 
     @BeforeEach
     void setUp() throws IOException {
@@ -107,60 +107,60 @@ public class DatamapperGeneratorServiceTest {
                 tempProjectRoot.resolve("userSchema.json"),
                 StandardCopyOption.REPLACE_EXISTING);
 
-        service = new DatamapperGeneratorService(fileSystemStorage, fileTreeService);
-        processor = new Processor(false);
-        compiler = processor.newXsltCompiler();
-    }
+		service = new DatamapperGeneratorService(fileSystemStorage, fileTreeService);
+		processor = new Processor(false);
+		compiler = processor.newXsltCompiler();
+	}
 
-    @AfterEach
-    public void tearDown() throws IOException {
-        if (tempProjectRoot != null && Files.exists(tempProjectRoot)) {
-            Files.walk(tempProjectRoot)
-                    .sorted(Comparator.reverseOrder())
-                    .map(Path::toFile)
-                    .forEach(File::delete);
-        }
-    }
+	@AfterEach
+	public void tearDown() throws IOException {
+		if (tempProjectRoot != null && Files.exists(tempProjectRoot)) {
+			Files.walk(tempProjectRoot)
+					.sorted(Comparator.reverseOrder())
+					.map(Path::toFile)
+					.forEach(File::delete);
+		}
+	}
 
-    @Test
-    @DisplayName("Test XSLT generation")
-    public void generateMapping() throws IOException, ParserConfigurationException, SAXException, ApiException {
-        stubToAbsolutePath();
+	@Test
+	@DisplayName("Test XSLT generation")
+	public void generateMapping() throws IOException, ParserConfigurationException, SAXException, ApiException {
+		stubToAbsolutePath();
 
-        service.generate(
-                "src/test/resources/datamapper/inputJsonToXml.json", tempProjectRoot.toAbsolutePath() + "/output.xslt");
-        Document expectedResult = parse("src/test/resources/datamapper/outputData.xml");
-        Document actualResult = parse(tempProjectRoot.toAbsolutePath() + "/output.xslt");
+		service.generate(
+				"src/test/resources/datamapper/inputJsonToXml.json", tempProjectRoot.toAbsolutePath() + "/output.xslt");
+		Document expectedResult = parse("src/test/resources/datamapper/outputData.xml");
+		Document actualResult = parse(tempProjectRoot.toAbsolutePath() + "/output.xslt");
 
-        Assertions.assertEquals(
-                expectedResult.toString().trim(), actualResult.toString().trim());
-    }
+		Assertions.assertEquals(
+				expectedResult.toString().trim(), actualResult.toString().trim());
+	}
 
-    @Test
-    @DisplayName("Test XML to XML mapping")
-    public void testXMLtoXMLGeneratedMapping()
-            throws SaxonApiException, IOException, ParserConfigurationException, SAXException, TransformerException,
-                    ApiException {
-        stubToAbsolutePath();
-        service.generate(
-                "src/test/resources/datamapper/inputXmlToXml.json", tempProjectRoot.toAbsolutePath() + "/output.xslt");
+	@Test
+	@DisplayName("Test XML to XML mapping")
+	public void testXMLtoXMLGeneratedMapping()
+			throws SaxonApiException, IOException, ParserConfigurationException, SAXException, TransformerException,
+					ApiException {
+		stubToAbsolutePath();
+		service.generate(
+				"src/test/resources/datamapper/inputXmlToXml.json", tempProjectRoot.toAbsolutePath() + "/output.xslt");
 
-        XsltExecutable executable =
-                compiler.compile(new StreamSource(new File(tempProjectRoot.toAbsolutePath() + "/output.xslt")));
-        XsltTransformer transformer = executable.load();
+		XsltExecutable executable =
+				compiler.compile(new StreamSource(new File(tempProjectRoot.toAbsolutePath() + "/output.xslt")));
+		XsltTransformer transformer = executable.load();
 
-        transformer.setSource(new StreamSource(new File("src/test/resources/datamapper/inputData.xml")));
+		transformer.setSource(new StreamSource(new File("src/test/resources/datamapper/inputData.xml")));
 
-        StringWriter writer = new StringWriter();
-        Serializer out = processor.newSerializer(writer);
-        transformer.setDestination(out);
+		StringWriter writer = new StringWriter();
+		Serializer out = processor.newSerializer(writer);
+		transformer.setDestination(out);
 
-        transformer.transform();
+		transformer.transform();
 
-        Document expectedResult = parse("src/test/resources/datamapper/outputData.xml");
-        Assertions.assertEquals(
-                toString(expectedResult).trim(), writer.toString().trim());
-    }
+		Document expectedResult = parse("src/test/resources/datamapper/outputData.xml");
+		Assertions.assertEquals(
+				toString(expectedResult).trim(), writer.toString().trim());
+	}
 
     @Test
     @DisplayName("Test XML to XML mapping with arrays")
@@ -194,24 +194,24 @@ public class DatamapperGeneratorServiceTest {
     public void testXMLtoJSONGeneratedMapping() throws SaxonApiException, IOException, ApiException {
         stubToAbsolutePath();
 
-        service.generate(
-                "src/test/resources/datamapper/inputXmlToJson.json", tempProjectRoot.toAbsolutePath() + "/output.xslt");
+		service.generate(
+				"src/test/resources/datamapper/inputXmlToJson.json", tempProjectRoot.toAbsolutePath() + "/output.xslt");
 
-        XsltExecutable executable =
-                compiler.compile(new StreamSource(new File(tempProjectRoot.toAbsolutePath() + "/output.xslt")));
-        Xslt30Transformer transformer = executable.load30();
+		XsltExecutable executable =
+				compiler.compile(new StreamSource(new File(tempProjectRoot.toAbsolutePath() + "/output.xslt")));
+		Xslt30Transformer transformer = executable.load30();
 
-        StreamSource xmlSource = new StreamSource(new File("src/test/resources/datamapper/inputData.xml"));
-        StringWriter writer = new StringWriter();
-        Serializer out = processor.newSerializer(writer);
+		StreamSource xmlSource = new StreamSource(new File("src/test/resources/datamapper/inputData.xml"));
+		StringWriter writer = new StringWriter();
+		Serializer out = processor.newSerializer(writer);
 
-        transformer.transform(xmlSource, out);
+		transformer.transform(xmlSource, out);
 
-        Path path = Paths.get("src/test/resources/datamapper/outputData.json");
-        String expectedResult = Files.readString(path);
+		Path path = Paths.get("src/test/resources/datamapper/outputData.json");
+		String expectedResult = Files.readString(path);
 
-        Assertions.assertEquals(expectedResult.trim(), writer.toString().trim());
-    }
+		Assertions.assertEquals(expectedResult.trim(), writer.toString().trim());
+	}
 
     @Test
     @DisplayName("Test XML to Json with arrays mapping")
@@ -246,39 +246,39 @@ public class DatamapperGeneratorServiceTest {
                     ApiException {
         stubToAbsolutePath();
 
-        service.generate(
-                "src/test/resources/datamapper/inputJsonToXml.json", tempProjectRoot.toAbsolutePath() + "/output.xslt");
+		service.generate(
+				"src/test/resources/datamapper/inputJsonToXml.json", tempProjectRoot.toAbsolutePath() + "/output.xslt");
 
-        XsltExecutable executable =
-                compiler.compile(new StreamSource(new File(tempProjectRoot.toAbsolutePath() + "/output.xslt")));
-        Xslt30Transformer transformer = executable.load30();
+		XsltExecutable executable =
+				compiler.compile(new StreamSource(new File(tempProjectRoot.toAbsolutePath() + "/output.xslt")));
+		Xslt30Transformer transformer = executable.load30();
 
-        StringWriter writer = new StringWriter();
-        Serializer out = processor.newSerializer(writer);
+		StringWriter writer = new StringWriter();
+		Serializer out = processor.newSerializer(writer);
 
-        Path absolutePath = Paths.get("").toAbsolutePath().resolve("src/test/resources/datamapper/inputData.json");
-        StreamSource paramsSource = new StreamSource(
-                new StringReader("<params><jsonPath>" + absolutePath.toUri() + "</jsonPath></params>"));
+		Path absolutePath = Paths.get("").toAbsolutePath().resolve("src/test/resources/datamapper/inputData.json");
+		StreamSource paramsSource = new StreamSource(
+				new StringReader("<params><jsonPath>" + absolutePath.toUri() + "</jsonPath></params>"));
 
-        transformer.transform(paramsSource, out);
+		transformer.transform(paramsSource, out);
 
-        Document expectedResult = parse("src/test/resources/datamapper/outputData.xml");
-        Assertions.assertEquals(
-                toString(expectedResult).trim(), writer.toString().trim());
-    }
+		Document expectedResult = parse("src/test/resources/datamapper/outputData.xml");
+		Assertions.assertEquals(
+				toString(expectedResult).trim(), writer.toString().trim());
+	}
 
-    @Test
-    @DisplayName("Test Json to Json mapping")
-    public void testJSONtoJSONGeneratedMapping() throws SaxonApiException, IOException, ApiException {
-        stubToAbsolutePath();
+	@Test
+	@DisplayName("Test Json to Json mapping")
+	public void testJSONtoJSONGeneratedMapping() throws SaxonApiException, IOException, ApiException {
+		stubToAbsolutePath();
 
-        service.generate(
-                "src/test/resources/datamapper/inputJsonToJson.json",
-                tempProjectRoot.toAbsolutePath() + "/output.xslt");
+		service.generate(
+				"src/test/resources/datamapper/inputJsonToJson.json",
+				tempProjectRoot.toAbsolutePath() + "/output.xslt");
 
-        XsltExecutable executable =
-                compiler.compile(new StreamSource(new File(tempProjectRoot.toAbsolutePath() + "/output.xslt")));
-        Xslt30Transformer transformer = executable.load30();
+		XsltExecutable executable =
+				compiler.compile(new StreamSource(new File(tempProjectRoot.toAbsolutePath() + "/output.xslt")));
+		Xslt30Transformer transformer = executable.load30();
 
         StringWriter writer = new StringWriter();
         Serializer out = processor.newSerializer(writer);
@@ -290,35 +290,35 @@ public class DatamapperGeneratorServiceTest {
                 new StringReader("<params><jsonPath>" + absolutePath.toUri() + "</jsonPath></params>"),
                 absolutePath.getParent().toUri().toString());
 
-        transformer.transform(paramsSource, out);
+		transformer.transform(paramsSource, out);
 
-        Path path = Paths.get("src/test/resources/datamapper/outputData.json");
-        String expectedResult = Files.readString(path);
+		Path path = Paths.get("src/test/resources/datamapper/outputData.json");
+		String expectedResult = Files.readString(path);
 
-        Assertions.assertEquals(expectedResult.trim(), writer.toString().trim());
-    }
+		Assertions.assertEquals(expectedResult.trim(), writer.toString().trim());
+	}
 
-    @Test
-    @DisplayName(("Should overwrite fill successfully"))
-    public void testSaveGenerationFileOverwrite() throws IOException, ApiException {
-        stubWriteFile();
-        stubGetConfigurationsDirectoryTree();
-        stubToAbsolutePath();
+	@Test
+	@DisplayName(("Should overwrite fill successfully"))
+	public void testSaveGenerationFileOverwrite() throws IOException, ApiException {
+		stubWriteFile();
+		stubGetConfigurationsDirectoryTree();
+		stubToAbsolutePath();
 
-        Path datamapperDir = tempProjectRoot.resolve("datamapper");
-        if (!Files.isDirectory(datamapperDir)) {
-            Files.createDirectories(datamapperDir);
-        }
-        Path file = datamapperDir.resolve("generationFile.json");
-        String content = "<test>data</test>";
+		Path datamapperDir = tempProjectRoot.resolve("datamapper");
+		if (!Files.isDirectory(datamapperDir)) {
+			Files.createDirectories(datamapperDir);
+		}
+		Path file = datamapperDir.resolve("generationFile.json");
+		String content = "<test>data</test>";
 
-        Files.writeString(file, content, StandardCharsets.UTF_8);
+		Files.writeString(file, content, StandardCharsets.UTF_8);
 
-        String newContent = "new content";
-        service.saveGenerationFile(TEST_PROJECT_NAME, newContent);
+		String newContent = "new content";
+		service.saveGenerationFile(TEST_PROJECT_NAME, newContent);
 
-        assertEquals(newContent, Files.readString(file));
-    }
+		assertEquals(newContent, Files.readString(file));
+	}
 
     @Test
     @DisplayName("Should successfully create a new file ")
@@ -327,70 +327,70 @@ public class DatamapperGeneratorServiceTest {
         stubGetConfigurationsDirectoryTree();
         stubToAbsolutePath();
 
-        Path datamapperDir = tempProjectRoot.resolve("datamapper");
-        if (!Files.isDirectory(datamapperDir)) {
-            Files.createDirectories(datamapperDir);
-        }
-        Path file = datamapperDir.resolve("generationFile.json");
-        String newContent = "new content";
-        service.saveGenerationFile(TEST_PROJECT_NAME, newContent);
+		Path datamapperDir = tempProjectRoot.resolve("datamapper");
+		if (!Files.isDirectory(datamapperDir)) {
+			Files.createDirectories(datamapperDir);
+		}
+		Path file = datamapperDir.resolve("generationFile.json");
+		String newContent = "new content";
+		service.saveGenerationFile(TEST_PROJECT_NAME, newContent);
 
-        assertEquals(newContent, Files.readString(file));
-    }
+		assertEquals(newContent, Files.readString(file));
+	}
 
-    @Test
-    @DisplayName("Test saving configuration and creating a mapping from it")
-    public void fullGenerateMappingRun() throws IOException, ParserConfigurationException, SAXException, ApiException {
-        stubGetConfigurationsDirectoryTree();
-        stubWriteFile();
-        stubGetConfigurationsDirectoryTree();
-        stubToAbsolutePath();
+	@Test
+	@DisplayName("Test saving configuration and creating a mapping from it")
+	public void fullGenerateMappingRun() throws IOException, ParserConfigurationException, SAXException, ApiException {
+		stubGetConfigurationsDirectoryTree();
+		stubWriteFile();
+		stubGetConfigurationsDirectoryTree();
+		stubToAbsolutePath();
 
-        String config = Files.readString(Path.of("src/test/resources/datamapper/inputJsonToXml.json"));
-        service.generateFromProject(TEST_PROJECT_NAME, config);
-        Document expectedResult = parse("src/test/resources/datamapper/output.xslt");
-        Document actualResult = parse(tempProjectRoot.toAbsolutePath() + "/datamapper/export.xslt");
+		String config = Files.readString(Path.of("src/test/resources/datamapper/inputJsonToXml.json"));
+		service.generateFromProject(TEST_PROJECT_NAME, config);
+		Document expectedResult = parse("src/test/resources/datamapper/output.xslt");
+		Document actualResult = parse(tempProjectRoot.toAbsolutePath() + "/datamapper/export.xslt");
 
-        Assertions.assertEquals(
-                expectedResult.toString().trim(), actualResult.toString().trim());
-    }
+		Assertions.assertEquals(
+				expectedResult.toString().trim(), actualResult.toString().trim());
+	}
 
-    @Test
-    @DisplayName("Test saving configuration deletes temporary config")
-    public void fullGenerateRunDeletesTempConfig() throws IOException, ApiException {
-        stubGetConfigurationsDirectoryTree();
-        stubWriteFile();
-        stubGetConfigurationsDirectoryTree();
-        stubDeleteFile();
-        stubToAbsolutePath();
+	@Test
+	@DisplayName("Test saving configuration deletes temporary config")
+	public void fullGenerateRunDeletesTempConfig() throws IOException, ApiException {
+		stubGetConfigurationsDirectoryTree();
+		stubWriteFile();
+		stubGetConfigurationsDirectoryTree();
+		stubDeleteFile();
+		stubToAbsolutePath();
 
-        String config = Files.readString(Path.of("src/test/resources/datamapper/inputJsonToXml.json"));
-        service.generateFromProject(TEST_PROJECT_NAME, config);
+		String config = Files.readString(Path.of("src/test/resources/datamapper/inputJsonToXml.json"));
+		service.generateFromProject(TEST_PROJECT_NAME, config);
 
-        Assertions.assertFalse(
-                Files.exists(Path.of(tempProjectRoot.toAbsolutePath() + "/datamapper/generationFile.json")));
-    }
+		Assertions.assertFalse(
+				Files.exists(Path.of(tempProjectRoot.toAbsolutePath() + "/datamapper/generationFile.json")));
+	}
 
-    private Document parse(String path) throws ParserConfigurationException, IOException, SAXException {
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        factory.setIgnoringElementContentWhitespace(true);
-        factory.setNamespaceAware(true);
+	private Document parse(String path) throws ParserConfigurationException, IOException, SAXException {
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		factory.setIgnoringElementContentWhitespace(true);
+		factory.setNamespaceAware(true);
 
-        DocumentBuilder builder = factory.newDocumentBuilder();
-        Document document = builder.parse(new File(path));
-        document.normalizeDocument();
-        return document;
-    }
+		DocumentBuilder builder = factory.newDocumentBuilder();
+		Document document = builder.parse(new File(path));
+		document.normalizeDocument();
+		return document;
+	}
 
-    private String toString(Document doc) throws TransformerException {
-        TransformerFactory tf = TransformerFactory.newInstance();
-        Transformer transformer = tf.newTransformer();
-        transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "false");
-        transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+	private String toString(Document doc) throws TransformerException {
+		TransformerFactory tf = TransformerFactory.newInstance();
+		Transformer transformer = tf.newTransformer();
+		transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "false");
+		transformer.setOutputProperty(OutputKeys.INDENT, "yes");
 
-        StringWriter writer = new StringWriter();
-        transformer.transform(new DOMSource(doc), new StreamResult(writer));
+		StringWriter writer = new StringWriter();
+		transformer.transform(new DOMSource(doc), new StreamResult(writer));
 
-        return writer.toString().trim();
-    }
+		return writer.toString().trim();
+	}
 }
