@@ -9,7 +9,7 @@ on:
 
 jobs:
   build:
-    if: github.actor != 'renovate[bot]'
+    if: github.actor != 'renovate[bot]' && github.actor != 'dependabot[bot]'
     name: Build and analyze
     runs-on: ubuntu-latest
     steps:
