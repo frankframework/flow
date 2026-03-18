@@ -1,5 +1,4 @@
 import useNodeContextStore from '~/stores/node-context-store'
-import useFlowStore from '~/stores/flow-store'
 import { useState } from 'react'
 import SortedElements from '~/routes/studio/context/sorted-elements'
 import Search from '~/components/search/search'
@@ -9,7 +8,7 @@ import { useFFDoc } from '@frankframework/doc-library-react'
 import LoadingSpinner from '~/components/loading-spinner'
 
 export default function StudioContext() {
-  const { setAttributes, setNodeId, setDraggedName } = useNodeContextStore((state) => state)
+  const { setDraggedName } = useNodeContextStore((state) => state)
   const [searchTerm, setSearchTerm] = useState('')
   const project = useProjectStore((state) => state.project)
   const { filters, elements, isLoading } = useFFDoc()
@@ -41,8 +40,6 @@ export default function StudioContext() {
     return (event: {
       dataTransfer: { setData: (argument0: string, argument1: string) => void; effectAllowed: string }
     }) => {
-      setAttributes(value.attributes)
-      setNodeId(+useFlowStore.getState().nodeIdCounter)
       setDraggedName(value.name)
       event.dataTransfer.setData('application/reactflow', JSON.stringify(value))
       event.dataTransfer.effectAllowed = 'copyMove'

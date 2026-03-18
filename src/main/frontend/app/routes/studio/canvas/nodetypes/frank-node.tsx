@@ -25,6 +25,7 @@ import type { ElementDetails } from '@frankframework/doc-library-core'
 import { DeprecatedPopover } from './components/deprecated-popover'
 import { showWarningToast } from '~/components/toast'
 import { useHandleTypes } from '~/hooks/use-handle-types'
+import AddSubcomponentModal from '~/components/flow/add-subcomponent-modal'
 
 export type FrankNodeType = Node<{
   subtype: string
@@ -71,8 +72,16 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
   const isDeprecated = frankElement?.deprecated
   const [showDeprecated, setShowDeprecated] = useState(false)
   const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
   const dangerTriangleReference = useRef<HTMLDivElement>(null)
   const availableHandleTypes = useHandleTypes(frankElement?.forwards)
+  const possibleChildren = useMemo(() => {
+    if (!elements || !frankElement) return []
+
+    const recordElements = elements as Record<string, ElementDetails>
+
+    return Object.values(recordElements).filter((element) => canAcceptChildStatic(frankElement, element.name, filters))
+  }, [elements, frankElement, filters])
 
   const updateNodeInternals = useUpdateNodeInternals()
 
@@ -249,6 +258,43 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
     setDragOver(false)
   }
 
+  const createChildFromElement = useCallback(
+    (element: ElementDetails) => {
+      const newId = useFlowStore.getState().getNextNodeId()
+
+      setNodeId(+newId)
+      setAttributes(element.attributes)
+
+      setIsNewNode(true)
+      setEditingSubtype(element.name)
+      showNodeContextMenu(true)
+      setIsEditing(true)
+      setParentId(properties.id)
+      setChildParentId(null)
+
+      const child: ChildNode = {
+        id: newId,
+        subtype: element.name,
+        type: getElementTypeFromName(element.name),
+        name: '',
+        attributes: {},
+        children: [],
+      }
+
+      addChild(properties.id, child)
+    },
+    [
+      properties.id,
+      addChild,
+      setIsNewNode,
+      setEditingSubtype,
+      showNodeContextMenu,
+      setIsEditing,
+      setParentId,
+      setChildParentId,
+    ],
+  )
+
   const handleDropOnNode = useCallback(
     (event: React.DragEvent) => {
       setDragOver(false)
@@ -260,43 +306,18 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
       if (!raw) return
 
       const dropped = JSON.parse(raw)
-      const newId = useFlowStore.getState().getNextNodeId()
 
       if (!canAcceptChild(dropped.name)) {
         console.warn(`Rejected drop: ${dropped.name} is not allowed as child of ${properties.data.subtype}`)
         return
       }
 
-      setIsNewNode(true)
-      setEditingSubtype(dropped.name)
-      showNodeContextMenu(true)
-      setIsEditing(true)
-      setParentId(properties.id)
-      setChildParentId(null)
+      const element = elements?.[dropped.name]
+      if (!element) return
 
-      const child: ChildNode = {
-        id: newId,
-        subtype: dropped.name,
-        type: getElementTypeFromName(dropped.name),
-        name: '',
-        attributes: {},
-        children: [],
-      }
-
-      addChild(properties.id, child)
+      createChildFromElement(element)
     },
-    [
-      setDraggedName,
-      canAcceptChild,
-      setIsNewNode,
-      setEditingSubtype,
-      showNodeContextMenu,
-      setIsEditing,
-      setParentId,
-      properties.id,
-      properties.data.subtype,
-      addChild,
-    ],
+    [setDraggedName, canAcceptChild, properties.data.subtype, elements, createChildFromElement],
   )
 
   useEffect(() => {
@@ -432,6 +453,17 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
             </div>
           </div>
         )}
+        {possibleChildren.length > 0 && (
+          <div
+            className="hover:text-foreground-active text-foreground/30 flex cursor-pointer gap-1 self-start p-1"
+            onClick={() => setIsModalOpen(true)}
+          >
+            <div className="bg-foreground/30 border-border h-4 w-4 justify-center rounded-full border text-center text-[8px] font-bold">
+              +
+            </div>
+            <p className="text-xs">Add a subcomponent</p>
+          </div>
+        )}
       </div>
       {/* Receivers can only have outgoing connections, so we hide the input handle for them */}
       {frankElement?.name && frankElement.name !== 'Receiver' && (
@@ -481,6 +513,14 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
           typesAllowed={frankElement?.forwards}
         />
       )}
+
+      {/* Modal */}
+      <AddSubcomponentModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        possibleChildren={possibleChildren}
+        onAddChild={createChildFromElement}
+      />
     </>
   )
 }
