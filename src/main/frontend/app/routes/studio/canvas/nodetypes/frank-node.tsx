@@ -157,13 +157,13 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
 
   const toggleHandleMenu = (event: React.MouseEvent) => {
     const { clientX, clientY } = event
-    const { screenToFlowPosition } = reactFlow
-    const flowPosition = screenToFlowPosition({ x: clientX, y: clientY })
-    const adjustedX = flowPosition.x - properties.positionAbsoluteX
-    const adjustedY = flowPosition.y - properties.positionAbsoluteY
 
-    setHandleMenuPosition({ x: adjustedX, y: adjustedY })
-    setIsHandleMenuOpen(!isHandleMenuOpen)
+    setHandleMenuPosition({
+      x: clientX,
+      y: clientY,
+    })
+
+    setIsHandleMenuOpen((prev) => !prev)
   }
 
   const editNode = () => {
