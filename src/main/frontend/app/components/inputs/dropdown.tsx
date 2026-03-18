@@ -165,7 +165,7 @@ export default function Dropdown({
   }
 
   return (
-    <div ref={dropdownReference} className="inline-block">
+    <div ref={dropdownReference} className="inline-block w-full">
       <div
         className={clsx('relative inline-block w-full', disabled && 'cursor-not-allowed opacity-50', className)}
         tabIndex={disabled ? undefined : 0}

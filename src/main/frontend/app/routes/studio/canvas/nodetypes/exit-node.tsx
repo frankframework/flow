@@ -2,10 +2,10 @@ import { Handle, type Node, type NodeProps, NodeResizeControl, Position } from '
 import { ResizeIcon } from '~/routes/studio/canvas/nodetypes/frank-node'
 import { FlowConfig } from '~/routes/studio/canvas/flow.config'
 import useNodeContextStore from '~/stores/node-context-store'
-import { useNodeContextMenu } from '~/routes/studio/canvas/flow'
+import { useNodeContextMenu } from '~/routes/studio/canvas/node-context-menu-context'
 import { useSettingsStore } from '~/stores/settings-store'
-import { useFrankDoc } from '~/providers/frankdoc-provider'
-import type { Attribute } from '@frankframework/ff-doc'
+import { useFFDoc } from '@frankframework/doc-library-react'
+import type { Attribute } from '@frankframework/doc-library-core'
 
 export type ExitNode = Node<{
   subtype: string
@@ -18,7 +18,7 @@ export default function ExitNodeComponent(properties: NodeProps<ExitNode>) {
   const minNodeWidth = FlowConfig.EXIT_DEFAULT_WIDTH
   const minNodeHeight = FlowConfig.EXIT_DEFAULT_HEIGHT
   const showNodeContextMenu = useNodeContextMenu()
-  const { elements } = useFrankDoc()
+  const { elements } = useFFDoc()
   const { setNodeId, setAttributes, setIsEditing, setEditingSubtype, setParentId, setChildParentId } =
     useNodeContextStore()
   const gradientEnabled = useSettingsStore((state) => state.studio.gradient)

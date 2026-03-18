@@ -5,8 +5,8 @@ import Button from '~/components/inputs/button'
 import { useShallow } from 'zustand/react/shallow'
 import ContextInput from './context-input'
 import { findChildRecursive } from '~/stores/child-utilities'
-import { useFrankDoc } from '~/providers/frankdoc-provider'
-import type { Attribute } from '@frankframework/ff-doc'
+import { useFFDoc } from '@frankframework/doc-library-react'
+import type { Attribute } from '@frankframework/doc-library-core'
 
 export default function NodeContext({
   nodeId,
@@ -24,7 +24,7 @@ export default function NodeContext({
   const [initiallyFilledKeys, setInitiallyFilledKeys] = useState<Set<string>>(new Set())
   const [initialValues, setInitialValues] = useState<Record<string, string>>({})
 
-  const { elements, ffDoc } = useFrankDoc()
+  const { elements, ffDoc } = useFFDoc()
   const {
     attributes,
     isNewNode,
@@ -232,6 +232,7 @@ export default function NodeContext({
         setShowNodeContext(false)
         setParentId(null)
         setChildParentId(null)
+        void useNodeContextStore.getState().saveFlow?.()
         return
       }
       updateChild(parentNode.id, updatedChild)
@@ -239,6 +240,7 @@ export default function NodeContext({
       setShowNodeContext(false)
       setParentId(null)
       setChildParentId(null)
+      void useNodeContextStore.getState().saveFlow?.()
       return
     }
 
@@ -250,6 +252,7 @@ export default function NodeContext({
       setIsNewNode(false)
       setIsEditing(false)
       setShowNodeContext(false)
+      void useNodeContextStore.getState().saveFlow?.()
       return
     }
     setAttributes(nodeId.toString(), newAttributesObject)
@@ -258,6 +261,7 @@ export default function NodeContext({
     }
     setIsEditing(false)
     setShowNodeContext(false)
+    void useNodeContextStore.getState().saveFlow?.()
   }
 
   const canSaveRef = useRef(canSave)

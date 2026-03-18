@@ -1,13 +1,11 @@
 import { useEffect, useReducer, useState } from 'react'
 
 import PropertyList from './property-list'
-import { showInfoToast, showSuccessToast } from '~/components/toast'
-import ToggleThemeButton from '~/components/datamapper/toggle-theme-button'
+import { showErrorToast, showInfoToast, showSuccessToast } from '~/components/toast'
 import {
   DEFAULT_MAPPING_LIST_CONFIG,
   mappingListConfigReducer,
 } from '~/stores/datamapper_state/mappingListConfig/reducer'
-import type { MappingListConfig } from '~/types/datamapper_types/config-types'
 import { FLOW_KEY } from '~/utils/datamapper_utils/const'
 import { convertMappingConfigToMappingFile } from '~/utils/datamapper_utils/convert-node-utils'
 import AdvancedEditor from './advanced-editor'
@@ -16,21 +14,39 @@ import MappingTable from './mapping-table'
 import { ReactFlowProvider } from '@xyflow/react'
 import { FileProvider } from '~/stores/datamapper_state/schemaQueue/schema-queue-context'
 import Button from '~/components/inputs/button'
+import {
+  saveDatamapperConfiguration,
+  fetchDatamapperConfiguration,
+  generateDatamapperXSLT,
+} from '~/services/datamapper-service'
+import { useProjectStore } from '~/stores/project-store'
 
 export default function Root() {
   const [route, setRoute] = useState('Initialize')
   const routes = ['Initialize', 'Properties', 'Mappings', 'Advanced']
 
-  const initMappingListConfig = (): MappingListConfig => {
-    const stored = localStorage.getItem(FLOW_KEY)
-    return stored ? (JSON.parse(stored) as MappingListConfig) : DEFAULT_MAPPING_LIST_CONFIG
-  }
+  const project = useProjectStore.getState().project
 
   const [mappingListConfig, dispatchMappingListConfig] = useReducer(
     mappingListConfigReducer,
-    undefined,
-    initMappingListConfig,
+    DEFAULT_MAPPING_LIST_CONFIG,
   )
+
+  useEffect(() => {
+    const loadConfig = async () => {
+      if (project) {
+        const config = await fetchDatamapperConfiguration(project.name)
+
+        dispatchMappingListConfig({
+          type: 'IMPORT_CONFIG',
+          payload: config,
+        })
+      }
+    }
+
+    loadConfig()
+  }, [])
+
   const handleManualConfigExport = () => {
     const dataString = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(mappingListConfig))}`
     const link = document.createElement('a')
@@ -39,13 +55,27 @@ export default function Root() {
     link.click()
   }
 
-  const [confirmed, setConfirmed] = useState<boolean>(!!localStorage.getItem(FLOW_KEY))
+  const [confirmed, setConfirmed] = useState<boolean>(mappingListConfig.stage != 'INIT')
+  useEffect(() => {
+    setConfirmed(mappingListConfig.stage !== 'INIT')
+  }, [mappingListConfig.stage])
 
   useEffect(() => {
-    const timeout = setTimeout(() => {
-      localStorage.setItem(FLOW_KEY, JSON.stringify(mappingListConfig))
-    }, 300)
-    return () => clearTimeout(timeout)
+    const timeout = setTimeout(async () => {
+      if (!project || !mappingListConfig.formatTypes.source || !mappingListConfig.formatTypes.target) {
+        if (!project) {
+          showErrorToast('No project selected')
+        }
+        return
+      }
+      try {
+        await saveDatamapperConfiguration(project?.name, JSON.stringify(mappingListConfig))
+      } catch (error) {
+        showErrorToast(error instanceof Error ? error.message : String(error))
+      }
+    }, 300) //Save **AFTER** 300 MS
+
+    return () => clearTimeout(timeout) // If another save occurs within the 300MS, Reset timer and save after 300MS
   }, [mappingListConfig])
 
   return (
@@ -53,8 +83,6 @@ export default function Root() {
       <FileProvider>
         {/* These buttons only exists for testing purposes, ignore the styling on these, they will be removed in later stages */}
         <div className="top fixed right-0 z-60 gap-2">
-          <ToggleThemeButton />
-
           <button
             className="border-border hover:bg-hover active:bg-selected w-48 rounded-md border bg-red-500 px-4 py-2 text-sm"
             onClick={() => {
@@ -65,28 +93,35 @@ export default function Root() {
             Test External node log
           </button>
           <button
-            className="border-border hover:bg-hover active:bg-selected hidden w-48 rounded-md border bg-red-500 px-4 py-2 text-sm"
-            onClick={() => {
-              const dataString = `data:text/json;charset=utf-8,${encodeURIComponent(
-                JSON.stringify(convertMappingConfigToMappingFile(mappingListConfig)),
-              )}`
-              const link = document.createElement('a')
-              link.href = dataString
-              link.download = 'mapping-file.json'
-              link.click()
-              showInfoToast('Downloading file!', 'Debug')
+            className="border-border hover:bg-hover active:bg-selected w-48 rounded-md border bg-red-500 px-4 py-2 text-sm"
+            onClick={async () => {
+              if (!project) {
+                showErrorToast('Not in valid project!')
+                return
+              }
+
+              try {
+                await generateDatamapperXSLT(
+                  project.name,
+                  JSON.stringify(convertMappingConfigToMappingFile(mappingListConfig)),
+                )
+
+                showInfoToast('Exporting file!', 'Debug')
+              } catch (error) {
+                showErrorToast(error instanceof Error ? error.message : String(error))
+              }
             }}
           >
             Export as final mappingFile
           </button>
           <button
-            className="border-border hover:bg-hover active:bg-selected w-48 rounded-md border bg-red-500 px-4 py-2 text-sm"
+            className="border-border hover:bg-hover active:bg-selected hidden w-48 rounded-md border bg-red-500 px-4 py-2 text-sm"
             onClick={handleManualConfigExport}
           >
             Export configuration
           </button>
           <button
-            className="border-border hover:bg-hover active:bg-selected w-48 rounded-md border bg-red-500 px-4 py-2 text-sm"
+            className="border-border hover:bg-hover active:bg-selected hidden w-48 rounded-md border bg-red-500 px-4 py-2 text-sm"
             onClick={() => {
               localStorage.clear()
               globalThis.location.reload()
@@ -125,7 +160,6 @@ export default function Root() {
                   config={mappingListConfig}
                   configDispatch={dispatchMappingListConfig}
                   confirmed={confirmed}
-                  setConfirmed={setConfirmed}
                 />
               )}
               {route === 'Properties' && (

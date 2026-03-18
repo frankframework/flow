@@ -1,5 +1,5 @@
+import type { Attribute } from '@frankframework/doc-library-core'
 import { create } from 'zustand'
-import type { Attribute } from '~/types/ff-doc.types'
 
 interface NodeContextStore {
   attributes: Record<string, Attribute> | undefined
@@ -11,6 +11,7 @@ interface NodeContextStore {
   childParentId: string | null
   draggedName: string | null
   editingSubtype: string | null
+  saveFlow: (() => Promise<void>) | null
   setNodeId: (nodeId: number) => void
   setAttributes: (attributes?: Record<string, Attribute>) => void
   setIsEditing: (value: boolean) => void
@@ -21,6 +22,7 @@ interface NodeContextStore {
   setChildParentId: (id: string | null) => void
   setDraggedName: (name: string | null) => void
   setEditingSubtype: (subtype: string | null) => void
+  registerSaveFlow: (fn: (() => Promise<void>) | null) => void
 }
 
 const useNodeContextStore = create<NodeContextStore>((set) => ({
@@ -33,6 +35,7 @@ const useNodeContextStore = create<NodeContextStore>((set) => ({
   childParentId: null,
   draggedName: null,
   editingSubtype: null,
+  saveFlow: null,
   setNodeId: (nodeId) => set({ nodeId }),
   setAttributes: (attributes) => set({ attributes }),
   setIsEditing: (value) => set({ isEditing: value }),
@@ -43,6 +46,7 @@ const useNodeContextStore = create<NodeContextStore>((set) => ({
   setChildParentId: (childParentId: string | null) => set({ childParentId }),
   setDraggedName: (draggedName) => set({ draggedName }),
   setEditingSubtype: (editingSubtype) => set({ editingSubtype }),
+  registerSaveFlow: (saveFlow) => set({ saveFlow }),
 }))
 
 export default useNodeContextStore

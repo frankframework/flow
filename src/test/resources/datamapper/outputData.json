@@ -1,0 +1,1 @@
+{"orders":{"user":{"fullname":"John Doe","username":"johndoe92","email":"john.doe@example.com","isAdult":"false","status":"false"},"order":{"orderId":"12345","totalPrice":"49.99USD","paid":"true","receipt":{"productId":"Product123","price":"199.99","dimension":"50cm, 100cm, 30cm"}}}}

@@ -5,7 +5,7 @@ import Search from '~/components/search/search'
 import LoadingSpinner from '~/components/loading-spinner'
 import FolderIcon from '../../../icons/solar/Folder.svg?react'
 import FolderOpenIcon from '../../../icons/solar/Folder Open.svg?react'
-import 'react-complex-tree/lib/style-modern.css'
+import '/styles/editor-files.css'
 import AltArrowRightIcon from '../../../icons/solar/Alt Arrow Right.svg?react'
 import AltArrowDownIcon from '../../../icons/solar/Alt Arrow Down.svg?react'
 
@@ -17,15 +17,13 @@ import {
   type TreeItemIndex,
   UncontrolledTreeEnvironment,
 } from 'react-complex-tree'
-import FilesDataProvider from '~/components/file-structure/studio-files-data-provider'
+import FilesDataProvider, { type StudioItemData } from '~/components/file-structure/studio-files-data-provider'
 import { useProjectStore } from '~/stores/project-store'
 import { useTreeStore } from '~/stores/tree-store'
-import type { FileNode } from './editor-data-provider'
-import { useProjectTree } from '~/hooks/use-project-tree'
 
 const TREE_ID = 'studio-files-tree'
 
-function getItemTitle(item: TreeItem<FileNode>): string {
+function getItemTitle(item: TreeItem<StudioItemData>): string {
   if (typeof item.data === 'string') {
     return item.data
   } else if (typeof item.data === 'object' && item.data !== null) {
@@ -56,10 +54,8 @@ export default function StudioFileStructure() {
   const setActiveTab = useTabStore((state) => state.setActiveTab)
   const getTab = useTabStore((state) => state.getTab)
 
-  const { data: treeData, isLoading: isTreeLoading } = useProjectTree(project?.name)
-
   useEffect(() => {
-    if (!project || !treeData) return
+    if (!project) return
 
     let isMounted = true
 
@@ -80,7 +76,7 @@ export default function StudioFileStructure() {
     return () => {
       isMounted = false
     }
-  }, [project, treeData])
+  }, [project])
 
   useEffect(() => {
     const findMatchingItems = async () => {
@@ -96,8 +92,8 @@ export default function StudioFileStructure() {
 
       const lower = searchTerm.toLowerCase()
       const matches = allItems
-        .filter((item: TreeItem<FileNode>) => getItemTitle(item).toLowerCase().includes(lower))
-        .map((item: TreeItem<FileNode>) => String(item.index))
+        .filter((item) => getItemTitle(item).toLowerCase().includes(lower))
+        .map((item) => String(item.index))
 
       setMatchingItemIds(matches)
 
@@ -118,16 +114,14 @@ export default function StudioFileStructure() {
   }
 
   const loadFolderContents = useCallback(
-    async (item: TreeItem<FileNode>) => {
-      if (!item.isFolder) return
+    async (item: TreeItem<StudioItemData>) => {
+      if (!item.isFolder || !dataProvider) return
 
-      const path = item.data.path
+      const data = item.data
+      if (typeof data !== 'object' || !('path' in data)) return
+      const { path } = data
 
-      if (path.endsWith('.xml') && dataProvider) {
-        if (dataProvider) await dataProvider.loadAdapters(item.index)
-      } else {
-        if (dataProvider) await dataProvider.loadDirectory(item.index)
-      }
+      await (path.endsWith('.xml') ? dataProvider.loadAdapters(item.index) : dataProvider.loadDirectory(item.index))
     },
     [dataProvider],
   )
@@ -223,7 +217,7 @@ export default function StudioFileStructure() {
     tree.current.expandAll()
   }, [searchTerm])
 
-  const renderItemArrow = ({ item, context }: { item: TreeItem<FileNode>; context: TreeItemRenderContext }) => {
+  const renderItemArrow = ({ item, context }: { item: TreeItem<StudioItemData>; context: TreeItemRenderContext }) => {
     if (!item.isFolder) return null
 
     const Icon = context.isExpanded ? AltArrowDownIcon : AltArrowRightIcon
@@ -234,7 +228,11 @@ export default function StudioFileStructure() {
     }
 
     return (
-      <Icon onClick={handleArrowClick} className="rct-tree-item-arrow-isFolder rct-tree-item-arrow fill-foreground" />
+      <Icon
+        onClick={handleArrowClick}
+        onContextMenu={(mouseEvent: React.MouseEvent) => mouseEvent.stopPropagation()}
+        className="rct-tree-item-arrow-isFolder rct-tree-item-arrow fill-foreground"
+      />
     )
   }
 
@@ -244,7 +242,7 @@ export default function StudioFileStructure() {
     context,
   }: {
     title: string
-    item: TreeItem<FileNode>
+    item: TreeItem<StudioItemData>
     context: TreeItemRenderContext
   }) => {
     const listenerType =
@@ -298,7 +296,7 @@ export default function StudioFileStructure() {
   }
 
   if (!project) return <p className="text-muted-foreground p-4 text-sm">No Project Selected</p>
-  if (isTreeLoading || providerLoading) return <LoadingSpinner message="Loading configurations..." className="p-8" />
+  if (providerLoading) return <LoadingSpinner message="Loading configurations..." className="p-8" />
   if (!dataProvider)
     return <p className="text-muted-foreground p-4 text-sm">No configurations found in src/main/configurations</p>
 
@@ -314,7 +312,7 @@ export default function StudioFileStructure() {
           }}
           onExpandItem={async (item) => {
             addStudioExpandedItem(String(item.index))
-            if (dataProvider) await loadFolderContents(item as TreeItem<FileNode>)
+            if (dataProvider) await loadFolderContents(item)
           }}
           onCollapseItem={(item) => {
             removeStudioExpandedItem(String(item.index))

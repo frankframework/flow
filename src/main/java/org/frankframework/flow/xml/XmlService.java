@@ -1,22 +1,17 @@
 package org.frankframework.flow.xml;
 
 import org.frankframework.flow.project.InvalidXmlContentException;
-import org.frankframework.flow.utility.XmlAdapterUtils;
-import org.frankframework.flow.utility.XmlValidator;
+import org.frankframework.flow.utility.XmlConfigurationUtils;
 import org.springframework.stereotype.Service;
+import org.xml.sax.SAXException;
 
 @Service
 public class XmlService {
-
-    public XmlService() {}
-
-    public void validateXml(String xmlContent) throws InvalidXmlContentException {
-        XmlValidator.validateXml(xmlContent);
-    }
-
-    public String normalizeElementsInXml(String xmlContent) throws InvalidXmlContentException, Exception {
-        validateXml(xmlContent);
-        String normalizedXml = XmlAdapterUtils.normalizeFrankElements(xmlContent);
-        return normalizedXml;
-    }
+	public String normalizeElementsInXml(String xmlContent) throws Exception {
+		try {
+			return XmlConfigurationUtils.normalizeFrankElements(xmlContent);
+		} catch (SAXException e) {
+			throw new InvalidXmlContentException("Invalid XML", e);
+		}
+	}
 }

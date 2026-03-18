@@ -22,7 +22,8 @@ import useFlowStore, { type FlowState } from '~/stores/flow-store'
 import { useShallow } from 'zustand/react/shallow'
 import { FlowConfig } from '~/routes/studio/canvas/flow.config'
 import { getElementTypeFromName } from '~/routes/studio/node-translator-module'
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { NodeContextMenuContext, useNodeContextMenu } from './node-context-menu-context'
 import StickyNoteComponent, { type StickyNote } from '~/routes/studio/canvas/nodetypes/sticky-note'
 import useTabStore, { type TabData } from '~/stores/tab-store'
 import { convertAdapterXmlToJson, getAdapterFromConfiguration } from '~/routes/studio/xml-to-json-parser'
@@ -30,18 +31,15 @@ import { exportFlowToXml } from '~/routes/studio/flow-to-xml-parser'
 import useNodeContextStore from '~/stores/node-context-store'
 import CreateNodeModal from '~/components/flow/create-node-modal'
 import { useProjectStore } from '~/stores/project-store'
-import { fetchConfiguration, saveConfiguration } from '~/services/configuration-service'
+import { clearConfigurationCache, fetchConfigurationCached, saveConfiguration } from '~/services/configuration-service'
+import { refreshOpenDiffs } from '~/services/git-service'
+import useEditorTabStore from '~/stores/editor-tab-store'
 import { cloneWithRemappedIds } from '~/utils/flow-utils'
 import { showErrorToast } from '~/components/toast'
 import clsx from 'clsx'
 import { useSettingsStore } from '~/stores/settings-store'
 
 export type FlowNode = FrankNodeType | ExitNode | StickyNote | GroupNode | Node
-
-const NodeContextMenuContext = createContext<(visible: boolean) => void>(() => {
-  // Empty default function
-})
-export const useNodeContextMenu = () => useContext(NodeContextMenuContext)
 
 const selector = (state: FlowState) => ({
   nodes: state.nodes,
@@ -56,7 +54,8 @@ const selector = (state: FlowState) => ({
 type SaveStatus = 'idle' | 'saving' | 'saved'
 const SAVED_DISPLAY_DURATION = 2000
 
-function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b: boolean) => void }>) {
+function FlowCanvas() {
+  const showNodeContextMenu = useNodeContextMenu()
   const [loading, setLoading] = useState(false)
   const {
     isEditing,
@@ -89,6 +88,7 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const isLoadingTabRef = useRef(false)
 
   const nodeTypes = {
     frankNode: FrankNodeComponent,
@@ -108,18 +108,20 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
   const project = useProjectStore.getState().project
 
   const saveFlow = useCallback(async () => {
-    const flowData = reactFlowRef.current.toObject()
+    const { nodes: flowNodes, edges: flowEdges, viewport: flowViewport } = useFlowStore.getState()
+    const flowData = { nodes: flowNodes, edges: flowEdges, viewport: flowViewport }
+    const currentProject = useProjectStore.getState().project
     const activeTabKey = useTabStore.getState().activeTab
     const tabData = useTabStore.getState().getTab(activeTabKey)
     const configurationPath = tabData?.configurationPath
     const adapterName = tabData?.name
     const adapterPosition = tabData?.adapterPosition
 
-    if (!configurationPath || !adapterName || !project) return
+    if (!configurationPath || !adapterName || !currentProject) return
 
     setSaveStatus('saving')
     try {
-      const fullConfigXml = await fetchConfiguration(project.name, configurationPath)
+      const fullConfigXml = await fetchConfigurationCached(currentProject.name, configurationPath)
       const configDoc = new DOMParser().parseFromString(fullConfigXml, 'text/xml')
       const allAdapters = [...configDoc.querySelectorAll('Adapter, adapter')]
 
@@ -136,13 +138,16 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
 
       const newAdapterXml = await exportFlowToXml(
         flowData,
-        project.name,
+        currentProject.name,
         configurationPath,
         adapterName,
         existingAdapterXml,
       )
 
-      const newAdapterDoc = new DOMParser().parseFromString(`<root>${newAdapterXml}</root>`, 'text/xml')
+      const newAdapterDoc = new DOMParser().parseFromString(
+        `<root xmlns:flow="urn:frank-flow">${newAdapterXml}</root>`,
+        'text/xml',
+      )
       const newAdapterEl = newAdapterDoc.querySelector('Adapter, adapter')
       if (!newAdapterEl) throw new Error('Failed to parse generated adapter XML')
 
@@ -150,7 +155,10 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
 
       const updatedConfigXml = new XMLSerializer().serializeToString(configDoc).replace(/^<\?xml[^?]*\?>\s*/, '')
 
-      await saveConfiguration(project.name, configurationPath, updatedConfigXml)
+      await saveConfiguration(currentProject.name, configurationPath, updatedConfigXml)
+      clearConfigurationCache(currentProject.name, configurationPath)
+      useEditorTabStore.getState().refreshAllTabs()
+      if (currentProject.isGitRepository) refreshOpenDiffs(currentProject.name)
 
       setSaveStatus('saved')
       if (savedTimerRef.current) clearTimeout(savedTimerRef.current)
@@ -182,10 +190,21 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
   }, [])
 
   useEffect(() => {
-    if (nodes.length > 0) {
+    if (nodes.length > 0 && !isLoadingTabRef.current) {
       scheduleAutoSave()
     }
   }, [nodes, edges, scheduleAutoSave])
+
+  useEffect(() => {
+    useNodeContextStore.getState().registerSaveFlow(async () => {
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current)
+        autoSaveTimerRef.current = null
+      }
+      await saveFlow()
+    })
+    return () => useNodeContextStore.getState().registerSaveFlow(null)
+  }, [saveFlow])
 
   const sourceInfoReference = useRef<{
     nodeId: string | null
@@ -221,29 +240,46 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
   const layoutGraph = useCallback((nodes: Node[], edges: Edge[], direction: 'TB' | 'LR' = 'LR'): Node[] => {
     const dagreGraph = new Dagre.graphlib.Graph()
     dagreGraph.setDefaultEdgeLabel(() => ({}))
-    dagreGraph.setGraph({ rankdir: direction })
+    dagreGraph.setGraph({
+      rankdir: direction,
+      ranksep: FlowConfig.LAYOUT_HORIZONTAL_OFFSET,
+      nodesep: FlowConfig.LAYOUT_VERTICAL_OFFSET,
+    })
 
+    // Only add nodes to Dagre that need layout (position x=0 and y=0)
     for (const node of nodes) {
-      dagreGraph.setNode(node.id, {
-        width: FlowConfig.NODE_DEFAULT_WIDTH * 1.5,
-        height: FlowConfig.NODE_DEFAULT_HEIGHT * 1.5,
-      })
+      if (node.position.x === 0 && node.position.y === 0) {
+        dagreGraph.setNode(node.id, {
+          width: node.width,
+          height: node.height,
+        })
+      }
     }
 
+    // Add all edges
     for (const edge of edges) {
       dagreGraph.setEdge(edge.source, edge.target)
     }
 
+    // Run Dagre layout
     Dagre.layout(dagreGraph)
 
+    // Map nodes back
     return nodes.map((node) => {
+      // Skip nodes that already have a restored position
+      if (node.position.x !== 0 || node.position.y !== 0) return node
+
       const nodeWithPosition = dagreGraph.node(node.id)
+      if (!nodeWithPosition) return node
+
       return {
         ...node,
         position: {
           x: nodeWithPosition.x,
           y: nodeWithPosition.y,
         },
+        // keep the same measured width/height
+        measured: node.measured,
       }
     })
   }, [])
@@ -596,6 +632,8 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
         x: position.x - width / 2, // Center on cursor
         y: position.y - height / 2,
       },
+      width: FlowConfig.NODE_DEFAULT_WIDTH,
+      height: FlowConfig.NODE_DEFAULT_HEIGHT,
       data: {
         subtype: elementName,
         type: elementType,
@@ -672,6 +710,7 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
     async function loadFlowFromTab(tab: TabData) {
       const flowStore = useFlowStore.getState()
       const currentProject = useProjectStore.getState().project
+      isLoadingTabRef.current = true
       setLoading(true)
       try {
         if (tab.flowJson && Object.keys(tab.flowJson).length > 0) {
@@ -697,6 +736,9 @@ function FlowCanvas({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b:
         console.error('Error loading tab flow:', error)
       } finally {
         setLoading(false)
+        setTimeout(() => {
+          isLoadingTabRef.current = false
+        }, 0)
       }
     }
 
@@ -869,7 +911,7 @@ export default function Flow({ showNodeContextMenu }: Readonly<{ showNodeContext
   return (
     <NodeContextMenuContext.Provider value={showNodeContextMenu}>
       <ReactFlowProvider>
-        <FlowCanvas showNodeContextMenu={showNodeContextMenu} />
+        <FlowCanvas />
       </ReactFlowProvider>
     </NodeContextMenuContext.Provider>
   )

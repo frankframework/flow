@@ -4,8 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import org.frankframework.flow.project.InvalidXmlContentException;
-import org.frankframework.flow.utility.XmlAdapterUtils;
-import org.frankframework.flow.utility.XmlValidator;
+import org.frankframework.flow.utility.XmlConfigurationUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,93 +14,55 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class XmlServiceTest {
 
-    private XmlService xmlService;
+	private XmlService xmlService;
 
-    @BeforeEach
-    void setUp() {
-        xmlService = new XmlService();
-    }
+	@BeforeEach
+	void setUp() {
+		xmlService = new XmlService();
+	}
 
-    @Test
-    void validateXmlShouldSucceedWhenXmlIsValid() {
-        String xml = "<root></root>";
+	@Test
+	void normalizeElementsInXmlShouldReturnNormalizedXmlWhenValid() throws Exception {
+		String xml = "<adapter/>";
+		String normalizedXml = "<Adapter/>";
 
-        // Mock static validator
-        try (MockedStatic<XmlValidator> validatorMock = mockStatic(XmlValidator.class)) {
-            assertDoesNotThrow(() -> xmlService.validateXml(xml));
+		try (MockedStatic<XmlConfigurationUtils> adapterMock = mockStatic(XmlConfigurationUtils.class)) {
+			adapterMock
+					.when(() -> XmlConfigurationUtils.normalizeFrankElements(xml))
+					.thenReturn(normalizedXml);
 
-            validatorMock.verify(() -> XmlValidator.validateXml(xml));
-        }
-    }
+			String result = xmlService.normalizeElementsInXml(xml);
 
-    @Test
-    void validateXmlShouldThrowWhenXmlIsInvalid() {
-        String xml = "<invalid>";
+			assertEquals(normalizedXml, result);
 
-        try (MockedStatic<XmlValidator> validatorMock = mockStatic(XmlValidator.class)) {
-            validatorMock
-                    .when(() -> XmlValidator.validateXml(xml))
-                    .thenThrow(new InvalidXmlContentException("Invalid XML", null));
+			adapterMock.verify(() -> XmlConfigurationUtils.normalizeFrankElements(xml));
+		}
+	}
 
-            InvalidXmlContentException ex =
-                    assertThrows(InvalidXmlContentException.class, () -> xmlService.validateXml(xml));
+	@Test
+	void normalizeElementsInXmlShouldThrowWhenXmlIsInvalid() {
+		String xml = "<invalid>";
 
-            assertEquals("Invalid XML", ex.getMessage());
-        }
-    }
+		InvalidXmlContentException ex =
+				assertThrows(InvalidXmlContentException.class, () -> xmlService.normalizeElementsInXml(xml));
 
-    @Test
-    void normalizeElementsInXmlShouldReturnNormalizedXmlWhenValid() throws Exception {
-        String xml = "<adapter/>";
-        String normalizedXml = "<Adapter/>";
+		assertEquals("Invalid XML", ex.getMessage());
+	}
 
-        try (MockedStatic<XmlValidator> validatorMock = mockStatic(XmlValidator.class);
-                MockedStatic<XmlAdapterUtils> adapterMock = mockStatic(XmlAdapterUtils.class)) {
+	@Test
+	void normalizeElementsInXmlShouldThrowWhenAdapterThrowsException() {
+		String xml = "<adapter/>";
 
-            adapterMock.when(() -> XmlAdapterUtils.normalizeFrankElements(xml)).thenReturn(normalizedXml);
+		try (MockedStatic<XmlConfigurationUtils> adapterMock = mockStatic(XmlConfigurationUtils.class)) {
+			adapterMock
+					.when(() -> XmlConfigurationUtils.normalizeFrankElements(xml))
+					.thenThrow(new RuntimeException("Adapter failed"));
 
-            String result = xmlService.normalizeElementsInXml(xml);
+			RuntimeException ex = assertThrows(RuntimeException.class, () -> xmlService.normalizeElementsInXml(xml));
 
-            assertEquals(normalizedXml, result);
+			assertEquals("Adapter failed", ex.getMessage());
 
-            validatorMock.verify(() -> XmlValidator.validateXml(xml));
-            adapterMock.verify(() -> XmlAdapterUtils.normalizeFrankElements(xml));
-        }
-    }
-
-    @Test
-    void normalizeElementsInXmlShouldThrowWhenXmlIsInvalid() {
-        String xml = "<invalid>";
-
-        try (MockedStatic<XmlValidator> validatorMock = mockStatic(XmlValidator.class)) {
-            validatorMock
-                    .when(() -> XmlValidator.validateXml(xml))
-                    .thenThrow(new InvalidXmlContentException("Invalid XML", null));
-
-            InvalidXmlContentException ex =
-                    assertThrows(InvalidXmlContentException.class, () -> xmlService.normalizeElementsInXml(xml));
-
-            assertEquals("Invalid XML", ex.getMessage());
-        }
-    }
-
-    @Test
-    void normalizeElementsInXmlShouldThrowWhenAdapterThrowsException() throws Exception {
-        String xml = "<adapter/>";
-
-        try (MockedStatic<XmlValidator> validatorMock = mockStatic(XmlValidator.class);
-                MockedStatic<XmlAdapterUtils> adapterMock = mockStatic(XmlAdapterUtils.class)) {
-
-            adapterMock
-                    .when(() -> XmlAdapterUtils.normalizeFrankElements(xml))
-                    .thenThrow(new RuntimeException("Adapter failed"));
-
-            RuntimeException ex = assertThrows(RuntimeException.class, () -> xmlService.normalizeElementsInXml(xml));
-
-            assertEquals("Adapter failed", ex.getMessage());
-
-            validatorMock.verify(() -> XmlValidator.validateXml(xml));
-            adapterMock.verify(() -> XmlAdapterUtils.normalizeFrankElements(xml));
-        }
-    }
+			adapterMock.verify(() -> XmlConfigurationUtils.normalizeFrankElements(xml));
+		}
+	}
 }

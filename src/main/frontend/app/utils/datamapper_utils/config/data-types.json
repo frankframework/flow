@@ -5,38 +5,97 @@
     "duplicateKeysAllowed": true,
     "properties": [
       { "name": "string", "type": "string", "rules": [] },
+      { "name": "normalizedString", "type": "string", "rules": [] },
+      { "name": "token", "type": "string", "rules": [] },
+      { "name": "language", "type": "string", "rules": [] },
+      { "name": "Name", "type": "string", "rules": [] },
+      { "name": "NCName", "type": "string", "rules": [] },
+      { "name": "ID", "type": "string", "rules": [] },
+      { "name": "IDREF", "type": "string", "rules": [] },
+      { "name": "IDREFS", "type": "array", "rules": [] },
+      { "name": "ENTITY", "type": "string", "rules": [] },
+      { "name": "ENTITIES", "type": "array", "rules": [] },
+      { "name": "NMTOKEN", "type": "string", "rules": [] },
+      { "name": "NMTOKENS", "type": "array", "rules": [] },
+      { "name": "anyURI", "type": "string", "rules": [] },
+      { "name": "QName", "type": "string", "rules": [] },
+      { "name": "NOTATION", "type": "string", "rules": [] },
+
       {
         "name": "integer",
         "type": "number",
-        "rules": {
-          "minValue": -2147483648,
-          "maxValue": 2147483647,
-          "decimalAllowed": false
-        }
+        "rules": { "minValue": -2147483648, "maxValue": 2147483647, "decimalAllowed": false }
       },
+      { "name": "nonPositiveInteger", "type": "number", "rules": { "maxValue": 0, "decimalAllowed": false } },
+      { "name": "negativeInteger", "type": "number", "rules": { "maxValue": -1, "decimalAllowed": false } },
+      {
+        "name": "long",
+        "type": "number",
+        "rules": { "minValue": -9223372036854775808, "maxValue": 9223372036854775807, "decimalAllowed": false }
+      },
+      {
+        "name": "int",
+        "type": "number",
+        "rules": { "minValue": -2147483648, "maxValue": 2147483647, "decimalAllowed": false }
+      },
+      {
+        "name": "short",
+        "type": "number",
+        "rules": { "minValue": -32768, "maxValue": 32767, "decimalAllowed": false }
+      },
+      { "name": "byte", "type": "number", "rules": { "minValue": -128, "maxValue": 127, "decimalAllowed": false } },
+      { "name": "nonNegativeInteger", "type": "number", "rules": { "minValue": 0, "decimalAllowed": false } },
+      {
+        "name": "unsignedLong",
+        "type": "number",
+        "rules": { "minValue": 0, "maxValue": 18446744073709551615, "decimalAllowed": false }
+      },
+      {
+        "name": "unsignedInt",
+        "type": "number",
+        "rules": { "minValue": 0, "maxValue": 4294967295, "decimalAllowed": false }
+      },
+      {
+        "name": "unsignedShort",
+        "type": "number",
+        "rules": { "minValue": 0, "maxValue": 65535, "decimalAllowed": false }
+      },
+      {
+        "name": "unsignedByte",
+        "type": "number",
+        "rules": { "minValue": 0, "maxValue": 255, "decimalAllowed": false }
+      },
+      { "name": "positiveInteger", "type": "number", "rules": { "minValue": 1, "decimalAllowed": false } },
+
       { "name": "decimal", "type": "number", "rules": [] },
       {
         "name": "float",
         "type": "number",
-        "rules": {
-          "minValue": -3.4028235e38,
-          "maxValue": 3.4028235e38,
-          "decimalAllowed": true
-        }
+        "rules": { "minValue": -3.4028235e38, "maxValue": 3.4028235e38, "decimalAllowed": true }
       },
       {
         "name": "double",
         "type": "number",
-        "rules": {
-          "minValue": -3.4028235e38,
-          "maxValue": 3.4028235e38,
-          "decimalAllowed": true
-        }
+        "rules": { "minValue": -3.4028235e38, "maxValue": 3.4028235e38, "decimalAllowed": true }
       },
+
       { "name": "boolean", "type": "boolean", "rules": [] },
+
+      { "name": "dateTime", "type": "string", "rules": [] },
+      { "name": "time", "type": "string", "rules": [] },
+      { "name": "date", "type": "string", "rules": [] },
+      { "name": "gYearMonth", "type": "string", "rules": [] },
+      { "name": "gYear", "type": "string", "rules": [] },
+      { "name": "gMonthDay", "type": "string", "rules": [] },
+      { "name": "gDay", "type": "string", "rules": [] },
+      { "name": "gMonth", "type": "string", "rules": [] },
+      { "name": "duration", "type": "string", "rules": [] },
+
+      { "name": "base64Binary", "type": "string", "rules": [] },
+      { "name": "hexBinary", "type": "string", "rules": [] },
+
       { "name": "object", "type": "object", "rules": [] },
-      { "name": "datetime", "type": "string", "rules": [] },
-      { "name": "duration", "type": "string", "rules": [] }
+      { "name": "array", "type": "array", "rules": [] }
     ]
   },
   {

@@ -1,0 +1,36 @@
+<source>
+    <totalPrice>199.99</totalPrice>
+    <amountPaid>199.99</amountPaid>
+
+    <customer>
+        <customerId>1</customerId>
+    </customer>
+
+    <receipt>
+        <orderId>12345</orderId>
+    </receipt>
+
+    <productSchema>
+        <productId>id123</productId>
+        <price>49.99</price>
+        <currency>USD</currency>
+        <amountOfitems>10</amountOfitems>
+        <dimensions>
+            <width>50</width>
+            <height>100</height>
+            <depth>30</depth>
+            <unit>cm</unit>
+        </dimensions>
+    </productSchema>
+
+    <userSchema>
+        <username>johndoe92</username>
+        <email>john.doe@example.com</email>
+        <status>banned</status>
+        <profile>
+            <firstName>John</firstName>
+            <lastName>Doe</lastName>
+            <birthYear>2030</birthYear>
+        </profile>
+    </userSchema>
+</source>
