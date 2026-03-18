@@ -154,11 +154,9 @@ class XmlAdapterUtilsTest {
 	}
 
 	@Test
-	void addAdapter_throwsOnMalformedXml() {
-		assertThrows(Exception.class, () -> {
-			Document doc = parseXml("<Configuration/>");
-			XmlAdapterUtils.addAdapterToDocument(doc, "<<not xml>>");
-		});
+	void addAdapter_throwsOnMalformedXml() throws Exception {
+		Document doc = parseXml("<Configuration/>");
+		assertThrows(Exception.class, () -> XmlAdapterUtils.addAdapterToDocument(doc, "<<not xml>>"));
 	}
 
 	@Test
