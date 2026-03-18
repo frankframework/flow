@@ -81,13 +81,6 @@ export const getNodeTypes = ({
       {...node}
       variant="source"
       onHighlight={(id) => flow.highlightFromPropertyNode(id)}
-      onEdit={(data) => {
-        if (data) {
-          setEditingNode(data)
-          openModelType.current = 'source'
-          setAddFieldModal(true)
-        }
-      }}
       onDelete={(id) => flow.deleteNode(id)}
     />
   ),
@@ -96,13 +89,6 @@ export const getNodeTypes = ({
       {...node}
       variant="target"
       onHighlight={(id) => flow.highlightFromPropertyNode(id)}
-      onEdit={(data) => {
-        if (data) {
-          setEditingNode(data)
-          openModelType.current = 'target'
-          setAddFieldModal(true)
-        }
-      }}
       onDelete={(id) => flow.deleteNode(id)}
     />
   ),

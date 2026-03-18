@@ -2,7 +2,6 @@ import { Handle, Position, useNodeConnections, type Node } from '@xyflow/react'
 import type { CustomNodeData } from '~/types/datamapper_types/node-types'
 import { GROUP_WIDTH } from '~/utils/datamapper_utils/const'
 import HighlightButton from '../basic-components/highlight-button'
-import EditButton from '../basic-components/edit-button'
 import DeleteButton from '../basic-components/delete-button'
 import clsx from 'clsx'
 
@@ -10,12 +9,11 @@ export interface ArrayGroupNodeProperties {
   id: string
   data: CustomNodeData
   variant?: 'source' | 'target'
-  onEdit?: (data: CustomNodeData) => void
   onDelete?: (id: string) => void
   onHighlight?: (id: string) => void
 }
 
-function ArrayGroupNode({ id, data, variant = 'source', onEdit, onDelete, onHighlight }: ArrayGroupNodeProperties) {
+function ArrayGroupNode({ id, data, variant = 'source', onDelete, onHighlight }: ArrayGroupNodeProperties) {
   const checked = data?.checked
 
   const connections = useNodeConnections({

@@ -282,8 +282,6 @@ public class DatamapperGeneratorServiceTest {
 
         StringWriter writer = new StringWriter();
         Serializer out = processor.newSerializer(writer);
-        //        File outputFile = new File("output.json"); // or .json depending on your transform
-        //        Serializer out = processor.newSerializer(outputFile);
 
         Path absolutePath = Paths.get("").toAbsolutePath().resolve("src/test/resources/datamapper/inputData.json");
         StreamSource paramsSource = new StreamSource(
