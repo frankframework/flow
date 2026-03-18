@@ -1,39 +1,20 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect } from 'react'
 import HandleMenuItem from './handle-menu-item'
 import { translateHandleTypeToColour } from './handle'
 import type { ElementProperty } from '@frankframework/doc-library-core'
 import { useHandleTypes } from '~/hooks/use-handle-types'
 import { createPortal } from 'react-dom'
-import { useReactFlow } from '@xyflow/react'
 
 interface HandleMenuProperties {
+  title: string
   position: { x: number; y: number }
   onClose: () => void
   onSelect: (type: string) => void
   typesAllowed?: Record<string, ElementProperty>
 }
 
-const HandleMenu: React.FC<HandleMenuProperties> = ({ position, onClose, onSelect, typesAllowed }) => {
+const HandleMenu: React.FC<HandleMenuProperties> = ({ title, position, onClose, onSelect, typesAllowed }) => {
   const handleTypes = useHandleTypes(typesAllowed)
-
-  const { getViewport } = useReactFlow()
-
-  // Hooking into the viewport to detect if any panning/zooming was done in the flow canvas, which closes the menu
-  useEffect(() => {
-    let prev = getViewport()
-
-    const interval = setInterval(() => {
-      const next = getViewport()
-
-      if (next.x !== prev.x || next.y !== prev.y || next.zoom !== prev.zoom) {
-        onClose()
-      }
-
-      prev = next
-    }, 0)
-
-    return () => clearInterval(interval)
-  }, [getViewport, onClose])
 
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
@@ -50,27 +31,19 @@ const HandleMenu: React.FC<HandleMenuProperties> = ({ position, onClose, onSelec
     }
   }, [onClose])
 
-  useEffect(() => {
-    const handleScroll = () => {
-      console.log('Scrolling!')
-      onClose()
-    }
-
-    globalThis.addEventListener('scroll', handleScroll, true)
-
-    return () => {
-      globalThis.removeEventListener('scroll', handleScroll, true)
-    }
-  }, [onClose])
-
-  const handleClose = (event: React.MouseEvent<HTMLDivElement>) => {
+  const handleOverlayEvent = (event: React.MouseEvent<HTMLDivElement> | React.WheelEvent<HTMLDivElement>) => {
     if (event.target === event.currentTarget) {
       onClose()
     }
   }
 
   return createPortal(
-    <div className="fixed inset-0 z-50" onClick={handleClose}>
+    <div
+      className="fixed inset-0 z-50"
+      onContextMenu={handleOverlayEvent}
+      onClick={handleOverlayEvent}
+      onWheel={handleOverlayEvent}
+    >
       <div
         className="nodrag bg-background border-border absolute border shadow-md"
         style={{
@@ -79,7 +52,7 @@ const HandleMenu: React.FC<HandleMenuProperties> = ({ position, onClose, onSelec
         }}
       >
         <div className="w-70">
-          <div className="border-border bg-muted h-10 border-b px-3 py-1 font-bold">Select Handle Type</div>
+          <div className="border-border bg-muted h-10 border-b px-3 py-1 font-bold">{title}</div>
           <ul className="w-full">
             {handleTypes.map((type, index) => (
               <HandleMenuItem

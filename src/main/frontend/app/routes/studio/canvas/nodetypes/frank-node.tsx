@@ -1,12 +1,4 @@
-import {
-  Handle,
-  type Node,
-  type NodeProps,
-  NodeResizeControl,
-  Position,
-  useReactFlow,
-  useUpdateNodeInternals,
-} from '@xyflow/react'
+import { Handle, type Node, type NodeProps, NodeResizeControl, Position, useUpdateNodeInternals } from '@xyflow/react'
 import DangerIcon from '../../../../../icons/solar/Danger Triangle.svg?react'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import useFlowStore from '~/stores/flow-store'
@@ -75,8 +67,6 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
   const availableHandleTypes = useHandleTypes(frankElement?.forwards)
 
   const updateNodeInternals = useUpdateNodeInternals()
-
-  const reactFlow = useReactFlow()
   const [isHandleMenuOpen, setIsHandleMenuOpen] = useState(false)
   const [handleMenuPosition, setHandleMenuPosition] = useState({ x: 0, y: 0 })
 
@@ -475,6 +465,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
       )}
       {isHandleMenuOpen && (
         <HandleMenu
+          title="Select Handle Type"
           position={handleMenuPosition}
           onClose={() => setIsHandleMenuOpen(false)}
           onSelect={handleMenuClick}
