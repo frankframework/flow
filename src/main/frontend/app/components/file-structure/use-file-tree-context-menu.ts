@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import type { TreeItemIndex } from 'react-complex-tree'
 import {
   createFileInProject,
@@ -68,6 +68,10 @@ export function useFileTreeContextMenu({
   const [nameDialog, setNameDialog] = useState<NameDialogState | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<DeleteTargetState | null>(null)
 
+  // Use a ref to always have the latest context menu data available,
+  // avoiding stale closure issues with useCallback.
+  const contextMenuRef = useRef<ContextMenuState | null>(null)
+
   const openContextMenu = useCallback(
     async (e: React.MouseEvent, itemId: TreeItemIndex) => {
       e.preventDefault()
@@ -77,25 +81,38 @@ export function useFileTreeContextMenu({
       const item = await dataProvider.getTreeItem(itemId)
       if (!item) return
 
-      setContextMenu({
+      const state: ContextMenuState = {
         position: { x: e.clientX, y: e.clientY },
         itemId,
         isFolder: !!item.isFolder,
         isRoot: !!item.data.projectRoot,
         path: item.data.path,
         name: item.data.name,
-      })
+      }
+      contextMenuRef.current = state
+      setContextMenu(state)
     },
     [dataProvider],
   )
 
+  const closeContextMenu = useCallback(() => {
+    contextMenuRef.current = null
+    setContextMenu(null)
+  }, [])
+
+  /** Reads context from explicit arg (keyboard shortcuts) or the ref (context menu clicks). */
+  function getMenu(ctx?: ContextMenuState): ContextMenuState | null {
+    if (ctx && typeof ctx === 'object' && 'itemId' in ctx) return ctx
+    return contextMenuRef.current
+  }
+
   const handleNewFile = useCallback(
     (ctx?: ContextMenuState) => {
-      const menu = ctx ?? contextMenu
+      const menu = getMenu(ctx)
       if (!menu || !projectName || !dataProvider) return
       const parentPath = menu.path
       const parentItemId = menu.itemId
-      setContextMenu(null)
+      closeContextMenu()
 
       setNameDialog({
         title: 'New File',
@@ -111,16 +128,16 @@ export function useFileTreeContextMenu({
         },
       })
     },
-    [contextMenu, projectName, dataProvider],
+    [projectName, dataProvider, closeContextMenu],
   )
 
   const handleNewFolder = useCallback(
     (ctx?: ContextMenuState) => {
-      const menu = ctx ?? contextMenu
+      const menu = getMenu(ctx)
       if (!menu || !projectName || !dataProvider) return
       const parentPath = menu.path
       const parentItemId = menu.itemId
-      setContextMenu(null)
+      closeContextMenu()
 
       setNameDialog({
         title: 'New Folder',
@@ -135,17 +152,17 @@ export function useFileTreeContextMenu({
         },
       })
     },
-    [contextMenu, projectName, dataProvider],
+    [projectName, dataProvider, closeContextMenu],
   )
 
   const handleRename = useCallback(
     (ctx?: ContextMenuState) => {
-      const menu = ctx ?? contextMenu
+      const menu = getMenu(ctx)
       if (!menu || !projectName || !dataProvider) return
       const itemId = menu.itemId
       const oldName = menu.name
       const oldPath = menu.path
-      setContextMenu(null)
+      closeContextMenu()
 
       setNameDialog({
         title: 'Rename',
@@ -172,12 +189,12 @@ export function useFileTreeContextMenu({
         },
       })
     },
-    [contextMenu, projectName, dataProvider, onAfterRename],
+    [projectName, dataProvider, onAfterRename, closeContextMenu],
   )
 
   const handleDelete = useCallback(
     (ctx?: ContextMenuState) => {
-      const menu = ctx ?? contextMenu
+      const menu = getMenu(ctx)
       if (!menu) return
       setDeleteTarget({
         name: menu.name,
@@ -185,9 +202,9 @@ export function useFileTreeContextMenu({
         isFolder: menu.isFolder,
         parentItemId: getParentItemId(menu.itemId),
       })
-      setContextMenu(null)
+      closeContextMenu()
     },
-    [contextMenu],
+    [closeContextMenu],
   )
 
   const confirmDelete = useCallback(async () => {
@@ -209,6 +226,7 @@ export function useFileTreeContextMenu({
   return {
     contextMenu,
     setContextMenu,
+    closeContextMenu,
     nameDialog,
     setNameDialog,
     deleteTarget,

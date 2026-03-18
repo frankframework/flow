@@ -22,10 +22,15 @@ function isFolderData(data: StudioItemData): data is StudioFolderData {
 
 export default class FilesDataProvider extends BaseFilesDataProvider<StudioItemData> {
   private readonly projectName: string
+  private rootPath = ''
 
   constructor(projectName: string) {
     super()
     this.projectName = projectName
+  }
+
+  public getRootPath(): string {
+    return this.rootPath
   }
 
   public async init(expandedItems: string[] = []) {
@@ -61,6 +66,8 @@ export default class FilesDataProvider extends BaseFilesDataProvider<StudioItemD
       this.data = {}
       return
     }
+
+    this.rootPath = tree.path
 
     this.data['root'] = {
       index: 'root',

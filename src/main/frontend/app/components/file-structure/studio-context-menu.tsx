@@ -1,27 +1,28 @@
 import { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
+import type { StudioItemType } from './use-studio-context-menu'
 
-interface ContextMenuProps {
+interface StudioContextMenuProps {
   position: { x: number; y: number }
-  isFolder: boolean
-  isRoot?: boolean
-  onNewFile: () => void
+  itemType: StudioItemType
+  onNewConfiguration: () => void
+  onNewAdapter: () => void
   onNewFolder: () => void
   onRename: () => void
   onDelete: () => void
   onClose: () => void
 }
 
-export default function ContextMenu({
+export default function StudioContextMenu({
   position,
-  isFolder,
-  isRoot = false,
-  onNewFile,
+  itemType,
+  onNewConfiguration,
+  onNewAdapter,
   onNewFolder,
   onRename,
   onDelete,
   onClose,
-}: ContextMenuProps) {
+}: StudioContextMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -44,28 +45,39 @@ export default function ContextMenu({
 
   const itemClass = 'px-3 py-1.5 cursor-pointer hover:bg-hover text-sm text-foreground whitespace-nowrap'
 
+  const showNewConfiguration = itemType === 'root' || itemType === 'folder'
+  const showNewFolder = itemType === 'root' || itemType === 'folder'
+  const showNewAdapter = itemType === 'configuration'
+  const showRename = itemType === 'configuration' || itemType === 'adapter' || itemType === 'folder'
+  const showDelete = itemType === 'configuration' || itemType === 'adapter' || itemType === 'folder'
+
   return createPortal(
     <div
       ref={menuRef}
       className="bg-background border-border fixed z-50 overflow-hidden rounded-md border py-1 shadow-md"
       style={{ left: position.x, top: position.y }}
     >
-      {isFolder && (
-        <>
-          <div className={itemClass} onClick={() => onNewFile()}>
-            New File
-          </div>
-          <div className={itemClass} onClick={() => onNewFolder()}>
-            New Folder
-          </div>
-        </>
+      {showNewConfiguration && (
+        <div className={itemClass} onClick={() => onNewConfiguration()}>
+          New Configuration
+        </div>
       )}
-      {!isRoot && (
+      {showNewFolder && (
+        <div className={itemClass} onClick={() => onNewFolder()}>
+          New Folder
+        </div>
+      )}
+      {showNewAdapter && (
+        <div className={itemClass} onClick={() => onNewAdapter()}>
+          New Adapter
+        </div>
+      )}
+      {showRename && (
         <div className={itemClass} onClick={() => onRename()}>
           Rename
         </div>
       )}
-      {!isRoot && (
+      {showDelete && (
         <div className={`${itemClass} text-red-500`} onClick={() => onDelete()}>
           Delete
         </div>

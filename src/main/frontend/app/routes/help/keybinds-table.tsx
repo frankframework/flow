@@ -9,6 +9,9 @@ const scopeLabels: Record<string, string> = {
   help: 'Help Keybinds',
   settings: 'Settings Keybinds',
   datamapper: 'Datamapper Keybinds',
+  'code-editor': 'Code Editor Keybinds',
+  'editor-file-explorer': 'Editor File Explorer Keybinds',
+  'studio-file-explorer': 'Studio File Explorer Keybinds',
 }
 
 function formatKeybind(shortcut: Omit<ShortcutDefinition, 'handler'>, platform: Platform): JSX.Element {
@@ -49,6 +52,10 @@ export function KeybindsTable() {
     let displayScope = shortcut.scope as string
     if (shortcut.id.startsWith('explorer.')) {
       displayScope = 'editor-file-explorer'
+    } else if (shortcut.id.startsWith('studio-explorer.')) {
+      displayScope = 'studio-file-explorer'
+    } else if (shortcut.id.startsWith('editor.')) {
+      displayScope = 'code-editor'
     }
 
     if (!grouped.has(displayScope)) grouped.set(displayScope, [])

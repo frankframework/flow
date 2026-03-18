@@ -365,7 +365,7 @@ export default function EditorFileStructure() {
         onRename={ctxMenu.handleRename}
         onDelete={ctxMenu.handleDelete}
         onConfirmDelete={ctxMenu.confirmDelete}
-        onCloseContextMenu={() => ctxMenu.setContextMenu(null)}
+        onCloseContextMenu={ctxMenu.closeContextMenu}
         onCloseNameDialog={() => ctxMenu.setNameDialog(null)}
         onCloseDeleteDialog={() => ctxMenu.setDeleteTarget(null)}
       />
