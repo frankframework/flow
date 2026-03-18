@@ -14,6 +14,30 @@ export interface ShortcutDefinition {
 
 export type Platform = 'mac' | 'pc'
 
+function capitalize(s: string): string {
+  return s.charAt(0).toUpperCase() + s.slice(1)
+}
+
+/**
+ * Builds the display parts for a shortcut's key combination (e.g. ['Ctrl', 'Shift', 'F']).
+ */
+export function formatShortcutParts(
+  shortcut: Pick<ShortcutDefinition, 'key' | 'modifiers'>,
+  platform: Platform,
+): string[] {
+  const parts: string[] = []
+  const mods = shortcut.modifiers ?? {}
+
+  if (mods.cmdOrCtrl) parts.push(platform === 'mac' ? '⌘' : 'Ctrl')
+  if (mods.shift) parts.push('Shift')
+  if (mods.alt) parts.push(platform === 'mac' ? '⌥' : 'Alt')
+
+  const keyLabel = shortcut.key.length === 1 ? shortcut.key.toUpperCase() : capitalize(shortcut.key)
+  parts.push(keyLabel)
+
+  return parts
+}
+
 function detectPlatform(): Platform {
   if (typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.userAgent)) {
     return 'mac'

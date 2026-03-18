@@ -1,6 +1,7 @@
-import { useEffect, useRef } from 'react'
+import { useRef } from 'react'
 import { createPortal } from 'react-dom'
-import { useShortcutStore, type Platform } from '~/stores/shortcut-store'
+import { useContextMenuDismiss } from '~/hooks/use-context-menu-dismiss'
+import { useShortcutStore, formatShortcutParts } from '~/stores/shortcut-store'
 
 interface CanvasContextMenuProps {
   position: { x: number; y: number }
@@ -16,17 +17,11 @@ interface CanvasContextMenuProps {
   hasClipboard: boolean
 }
 
-function formatShortcut(shortcutId: string, platform: Platform): string | null {
-  const shortcut = useShortcutStore.getState().shortcuts.get(shortcutId)
+function formatShortcut(shortcutId: string): string | null {
+  const { shortcuts, platform } = useShortcutStore.getState()
+  const shortcut = shortcuts.get(shortcutId)
   if (!shortcut) return null
-
-  const parts: string[] = []
-  const mods = shortcut.modifiers ?? {}
-  if (mods.cmdOrCtrl) parts.push(platform === 'mac' ? '⌘' : 'Ctrl')
-  if (mods.shift) parts.push('Shift')
-  if (mods.alt) parts.push(platform === 'mac' ? '⌥' : 'Alt')
-  parts.push(shortcut.key.toUpperCase())
-  return parts.join('+')
+  return formatShortcutParts(shortcut, platform).join('+')
 }
 
 export default function CanvasContextMenu({
@@ -43,27 +38,7 @@ export default function CanvasContextMenu({
   hasClipboard,
 }: CanvasContextMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null)
-  const platform = useShortcutStore((s) => s.platform)
-
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        onClose()
-      }
-    }
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-    }
-
-    document.addEventListener('mousedown', handleClickOutside)
-    document.addEventListener('contextmenu', handleClickOutside)
-    document.addEventListener('keydown', handleKeyDown)
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside)
-      document.removeEventListener('contextmenu', handleClickOutside)
-      document.removeEventListener('keydown', handleKeyDown)
-    }
-  }, [onClose])
+  useContextMenuDismiss(menuRef, onClose)
 
   const itemClass = 'flex items-center justify-between gap-6 px-3 py-1.5 text-sm whitespace-nowrap'
   const enabledClass = `${itemClass} cursor-pointer hover:bg-hover text-foreground`
@@ -83,9 +58,7 @@ export default function CanvasContextMenu({
         }
       >
         <span>{label}</span>
-        {shortcutId && (
-          <span className="text-muted-foreground ml-4 text-xs">{formatShortcut(shortcutId, platform)}</span>
-        )}
+        {shortcutId && <span className="text-muted-foreground ml-4 text-xs">{formatShortcut(shortcutId)}</span>}
       </div>
     )
   }

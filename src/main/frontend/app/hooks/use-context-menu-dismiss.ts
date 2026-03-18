@@ -1,11 +1,11 @@
 import { useEffect, type RefObject } from 'react'
 
 /**
- * Closes a context menu when the user clicks outside it or presses Escape.
+ * Closes a context menu when the user clicks outside it, right-clicks outside it, or presses Escape.
  */
 export function useContextMenuDismiss(menuRef: RefObject<HTMLDivElement | null>, onClose: () => void) {
   useEffect(() => {
-    const handleMouseDown = (e: MouseEvent) => {
+    const handleClickOutside = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         onClose()
       }
@@ -14,10 +14,12 @@ export function useContextMenuDismiss(menuRef: RefObject<HTMLDivElement | null>,
       if (e.key === 'Escape') onClose()
     }
 
-    document.addEventListener('mousedown', handleMouseDown)
+    document.addEventListener('mousedown', handleClickOutside)
+    document.addEventListener('contextmenu', handleClickOutside)
     document.addEventListener('keydown', handleKeyDown)
     return () => {
-      document.removeEventListener('mousedown', handleMouseDown)
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('contextmenu', handleClickOutside)
       document.removeEventListener('keydown', handleKeyDown)
     }
   }, [menuRef, onClose])

@@ -1,5 +1,11 @@
 import { useState, type JSX } from 'react'
-import { ALL_SHORTCUTS, useShortcutStore, type Platform, type ShortcutDefinition } from '~/stores/shortcut-store'
+import {
+  ALL_SHORTCUTS,
+  useShortcutStore,
+  formatShortcutParts,
+  type Platform,
+  type ShortcutDefinition,
+} from '~/stores/shortcut-store'
 import SwitchToggle from '~/components/inputs/switch-toggle'
 
 const scopeLabels: Record<string, string> = {
@@ -15,15 +21,7 @@ const scopeLabels: Record<string, string> = {
 }
 
 function formatKeybind(shortcut: Omit<ShortcutDefinition, 'handler'>, platform: Platform): JSX.Element {
-  const parts: string[] = []
-  const mods = shortcut.modifiers ?? {}
-
-  if (mods.cmdOrCtrl) parts.push(platform === 'mac' ? '⌘' : 'Ctrl')
-  if (mods.shift) parts.push('Shift')
-  if (mods.alt) parts.push(platform === 'mac' ? '⌥' : 'Alt')
-
-  const keyLabel = shortcut.key.length === 1 ? shortcut.key.toUpperCase() : capitalize(shortcut.key)
-  parts.push(keyLabel)
+  const parts = formatShortcutParts(shortcut, platform)
 
   return (
     <>
