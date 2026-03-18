@@ -16,6 +16,7 @@ import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.frankframework.flow.project.Project;
 import org.frankframework.flow.project.ProjectService;
 import org.frankframework.flow.utility.XmlAdapterUtils;
+import org.frankframework.flow.utility.XmlConfigurationUtils;
 import org.frankframework.flow.utility.XmlSecurityUtils;
 import org.frankframework.flow.xml.XmlDTO;
 import org.springframework.core.io.ClassPathResource;
@@ -55,7 +56,7 @@ public class AdapterService {
 			throw new AdapterNotFoundException("Adapter not found: " + adapterName);
 		}
 
-		return new XmlDTO(XmlAdapterUtils.convertNodeToString(adapterNode));
+		return new XmlDTO(XmlConfigurationUtils.convertNodeToString(adapterNode));
 	}
 
 	public boolean updateAdapter(Path configurationFile, String adapterName, String newAdapterXml)
@@ -80,7 +81,7 @@ public class AdapterService {
 				throw new AdapterNotFoundException("Adapter not found: " + adapterName);
 			}
 
-			String updatedXml = XmlAdapterUtils.convertNodeToString(configDoc);
+			String updatedXml = XmlConfigurationUtils.convertNodeToString(configDoc);
 			Files.writeString(absConfigFile, updatedXml, StandardCharsets.UTF_8, StandardOpenOption.TRUNCATE_EXISTING);
 			return true;
 
@@ -115,7 +116,7 @@ public class AdapterService {
 
 			XmlAdapterUtils.addAdapterToDocument(configDoc, adapterXml);
 
-			String updatedXml = XmlAdapterUtils.convertNodeToString(configDoc);
+			String updatedXml = XmlConfigurationUtils.convertNodeToString(configDoc);
 			Files.writeString(absConfigFile, updatedXml, StandardCharsets.UTF_8, StandardOpenOption.TRUNCATE_EXISTING);
 		} catch (Exception e) {
 			throw new IOException("Failed to create adapter: " + e.getMessage(), e);
@@ -141,7 +142,7 @@ public class AdapterService {
 				throw new AdapterNotFoundException("Adapter not found: " + oldName);
 			}
 
-			String updatedXml = XmlAdapterUtils.convertNodeToString(configDoc);
+			String updatedXml = XmlConfigurationUtils.convertNodeToString(configDoc);
 			Files.writeString(absConfigFile, updatedXml, StandardCharsets.UTF_8, StandardOpenOption.TRUNCATE_EXISTING);
 		} catch (AdapterNotFoundException e) {
 			throw e;
@@ -169,7 +170,7 @@ public class AdapterService {
 				throw new AdapterNotFoundException("Adapter not found: " + adapterName);
 			}
 
-			String updatedXml = XmlAdapterUtils.convertNodeToString(configDoc);
+			String updatedXml = XmlConfigurationUtils.convertNodeToString(configDoc);
 			Files.writeString(absConfigFile, updatedXml, StandardCharsets.UTF_8, StandardOpenOption.TRUNCATE_EXISTING);
 		} catch (AdapterNotFoundException e) {
 			throw e;
