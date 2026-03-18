@@ -18,9 +18,7 @@ export interface StudioContextMenuState {
   position: { x: number; y: number }
   itemId: TreeItemIndex
   itemType: StudioItemType
-  /** The item's own path: filesystem path for configs/folders, configPath for adapters */
   path: string
-  /** The folder path for creating new items (parent dir for configs, self for folders/root) */
   folderPath: string
   name: string
 }
@@ -43,21 +41,20 @@ export interface StudioDataProviderLike {
   getRootPath(): string
 }
 
-function detectItemType(data: StudioItemData): StudioItemType {
+export function detectItemType(data: StudioItemData): StudioItemType {
   if (typeof data === 'string') return 'root'
   if ('adapterName' in data) return 'adapter'
   if ('path' in data && (data as StudioFolderData).path.endsWith('.xml')) return 'configuration'
   return 'folder'
 }
 
-function getItemName(data: StudioItemData): string {
+export function getItemName(data: StudioItemData): string {
   if (typeof data === 'string') return data
   if ('adapterName' in data) return (data as StudioAdapterData).adapterName
   if ('name' in data) return (data as StudioFolderData).name
   return 'Unnamed'
 }
 
-/** Returns the parent directory of a file/folder path */
 function getParentDir(filePath: string): string {
   const lastSep = Math.max(filePath.lastIndexOf('/'), filePath.lastIndexOf('\\'))
   return lastSep > 0 ? filePath.slice(0, lastSep) : filePath
@@ -68,10 +65,7 @@ function ensureXmlExtension(name: string): string {
   return `${name}.xml`
 }
 
-/**
- * Resolves the item's own path and the folder path for creating new items.
- */
-function resolveItemPaths(
+export function resolveItemPaths(
   data: StudioItemData,
   itemType: StudioItemType,
   dataProvider: StudioDataProviderLike,
@@ -80,16 +74,28 @@ function resolveItemPaths(
     const rootPath = dataProvider.getRootPath()
     return { path: rootPath, folderPath: rootPath }
   }
+
   if (itemType === 'adapter') {
     const configPath = (data as StudioAdapterData).configPath
     return { path: configPath, folderPath: getParentDir(configPath) }
   }
+
   const folderData = data as StudioFolderData
   if (itemType === 'configuration') {
     return { path: folderData.path, folderPath: getParentDir(folderData.path) }
   }
-  // folder
+
   return { path: folderData.path, folderPath: folderData.path }
+}
+
+function removeAdapterTab(configPath: string, adapterName: string): void {
+  const tabStore = useTabStore.getState()
+  const prefix = `${configPath}::${adapterName}::`
+  for (const tabId of Object.keys(tabStore.tabs)) {
+    if (tabId.startsWith(prefix)) {
+      tabStore.removeTabAndSelectFallback(tabId)
+    }
+  }
 }
 
 interface UseStudioContextMenuOptions {
@@ -101,9 +107,6 @@ export function useStudioContextMenu({ projectName, dataProvider }: UseStudioCon
   const [contextMenu, setContextMenu] = useState<StudioContextMenuState | null>(null)
   const [nameDialog, setNameDialog] = useState<NameDialogState | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<DeleteTargetState | null>(null)
-
-  // Use a ref to always have the latest context menu data available,
-  // avoiding stale closure issues with useCallback.
   const contextMenuRef = useRef<StudioContextMenuState | null>(null)
 
   const openContextMenu = useCallback(
@@ -138,15 +141,13 @@ export function useStudioContextMenu({ projectName, dataProvider }: UseStudioCon
     setContextMenu(null)
   }, [])
 
-  /** Reads context from explicit arg (keyboard shortcuts) or the ref (context menu clicks). */
-  function getMenu(ctx?: StudioContextMenuState): StudioContextMenuState | null {
-    if (ctx && typeof ctx === 'object' && 'itemId' in ctx) return ctx
-    return contextMenuRef.current
+  function resolveMenu(menuState?: StudioContextMenuState): StudioContextMenuState | null {
+    return menuState ?? contextMenuRef.current
   }
 
   const handleNewConfiguration = useCallback(
-    (ctx?: StudioContextMenuState) => {
-      const menu = getMenu(ctx)
+    (menuState?: StudioContextMenuState) => {
+      const menu = resolveMenu(menuState)
       if (!menu || !projectName || !dataProvider) return
       closeContextMenu()
 
@@ -168,8 +169,8 @@ export function useStudioContextMenu({ projectName, dataProvider }: UseStudioCon
   )
 
   const handleNewAdapter = useCallback(
-    (ctx?: StudioContextMenuState) => {
-      const menu = getMenu(ctx)
+    (menuState?: StudioContextMenuState) => {
+      const menu = resolveMenu(menuState)
       if (!menu || !projectName || !dataProvider) return
       closeContextMenu()
 
@@ -190,8 +191,8 @@ export function useStudioContextMenu({ projectName, dataProvider }: UseStudioCon
   )
 
   const handleNewFolder = useCallback(
-    (ctx?: StudioContextMenuState) => {
-      const menu = getMenu(ctx)
+    (menuState?: StudioContextMenuState) => {
+      const menu = resolveMenu(menuState)
       if (!menu || !projectName || !dataProvider) return
       closeContextMenu()
 
@@ -212,8 +213,8 @@ export function useStudioContextMenu({ projectName, dataProvider }: UseStudioCon
   )
 
   const handleRename = useCallback(
-    (ctx?: StudioContextMenuState) => {
-      const menu = getMenu(ctx)
+    (menuState?: StudioContextMenuState) => {
+      const menu = resolveMenu(menuState)
       if (!menu || !projectName || !dataProvider) return
       const oldName = menu.name
       closeContextMenu()
@@ -248,8 +249,8 @@ export function useStudioContextMenu({ projectName, dataProvider }: UseStudioCon
   )
 
   const handleDelete = useCallback(
-    (ctx?: StudioContextMenuState) => {
-      const menu = getMenu(ctx)
+    (menuState?: StudioContextMenuState) => {
+      const menu = resolveMenu(menuState)
       if (!menu) return
       setDeleteTarget({
         name: menu.name,
@@ -267,6 +268,7 @@ export function useStudioContextMenu({ projectName, dataProvider }: UseStudioCon
     try {
       if (deleteTarget.itemType === 'adapter') {
         await deleteAdapter(projectName, deleteTarget.name, deleteTarget.path)
+        removeAdapterTab(deleteTarget.path, deleteTarget.name)
       } else {
         await deleteInProject(projectName, deleteTarget.path)
         clearConfigurationCache(projectName, deleteTarget.path)

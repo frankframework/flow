@@ -73,7 +73,7 @@ export default function EditorFileStructure() {
     [getTab, removeTabAndSelectFallback],
   )
 
-  const ctxMenu = useFileTreeContextMenu({
+  const editorContextMenu = useFileTreeContextMenu({
     projectName: project?.name,
     dataProvider,
     onAfterRename,
@@ -98,22 +98,22 @@ export default function EditorFileStructure() {
   )
 
   const triggerExplorerAction = useCallback(
-    (action: (ctx: ContextMenuState) => void, requireSelection: boolean) => {
+    (action: (menuState: ContextMenuState) => void, requireSelection: boolean) => {
       const itemId = selectedItemId ?? (requireSelection ? null : 'root')
       if (!itemId || (itemId === 'root' && requireSelection)) return
-      void buildContextForItem(itemId).then((ctx) => {
-        if (ctx) action(ctx)
+      void buildContextForItem(itemId).then((menuState) => {
+        if (menuState) action(menuState)
       })
     },
     [selectedItemId, buildContextForItem],
   )
 
   useShortcut({
-    'explorer.new-file': () => triggerExplorerAction(ctxMenu.handleNewFile, false),
-    'explorer.new-folder': () => triggerExplorerAction(ctxMenu.handleNewFolder, false),
-    'explorer.rename': () => triggerExplorerAction(ctxMenu.handleRename, true),
-    'explorer.delete': () => triggerExplorerAction(ctxMenu.handleDelete, true),
-    'explorer.delete-mac': () => triggerExplorerAction(ctxMenu.handleDelete, true),
+    'explorer.new-file': () => triggerExplorerAction(editorContextMenu.handleNewFile, false),
+    'explorer.new-folder': () => triggerExplorerAction(editorContextMenu.handleNewFolder, false),
+    'explorer.rename': () => triggerExplorerAction(editorContextMenu.handleRename, true),
+    'explorer.delete': () => triggerExplorerAction(editorContextMenu.handleDelete, true),
+    'explorer.delete-mac': () => triggerExplorerAction(editorContextMenu.handleDelete, true),
   })
 
   useEffect(() => {
@@ -263,7 +263,7 @@ export default function EditorFileStructure() {
     return (
       <Icon
         onClick={handleClick}
-        onContextMenu={(mouseEvent) => ctxMenu.openContextMenu(mouseEvent, item.index)}
+        onContextMenu={(mouseEvent) => editorContextMenu.openContextMenu(mouseEvent, item.index)}
         className="rct-tree-item-arrow-isFolder rct-tree-item-arrow fill-foreground"
       />
     )
@@ -307,7 +307,7 @@ export default function EditorFileStructure() {
     return (
       <div
         className="flex h-full w-full cursor-pointer items-center"
-        onContextMenu={(e) => ctxMenu.openContextMenu(e, item.index)}
+        onContextMenu={(e) => editorContextMenu.openContextMenu(e, item.index)}
       >
         {Icon && <Icon className="fill-foreground w-4 flex-shrink-0" />}
         <span
@@ -329,7 +329,7 @@ export default function EditorFileStructure() {
       <div
         className="h-full overflow-auto pr-2"
         onContextMenu={(e) => {
-          void ctxMenu.openContextMenu(e, 'root')
+          void editorContextMenu.openContextMenu(e, 'root')
         }}
       >
         <UncontrolledTreeEnvironment
@@ -357,17 +357,17 @@ export default function EditorFileStructure() {
       </div>
 
       <FileTreeDialogs
-        contextMenu={ctxMenu.contextMenu}
-        nameDialog={ctxMenu.nameDialog}
-        deleteTarget={ctxMenu.deleteTarget}
-        onNewFile={ctxMenu.handleNewFile}
-        onNewFolder={ctxMenu.handleNewFolder}
-        onRename={ctxMenu.handleRename}
-        onDelete={ctxMenu.handleDelete}
-        onConfirmDelete={ctxMenu.confirmDelete}
-        onCloseContextMenu={ctxMenu.closeContextMenu}
-        onCloseNameDialog={() => ctxMenu.setNameDialog(null)}
-        onCloseDeleteDialog={() => ctxMenu.setDeleteTarget(null)}
+        contextMenu={editorContextMenu.contextMenu}
+        nameDialog={editorContextMenu.nameDialog}
+        deleteTarget={editorContextMenu.deleteTarget}
+        onNewFile={editorContextMenu.handleNewFile}
+        onNewFolder={editorContextMenu.handleNewFolder}
+        onRename={editorContextMenu.handleRename}
+        onDelete={editorContextMenu.handleDelete}
+        onConfirmDelete={editorContextMenu.confirmDelete}
+        onCloseContextMenu={editorContextMenu.closeContextMenu}
+        onCloseNameDialog={() => editorContextMenu.setNameDialog(null)}
+        onCloseDeleteDialog={() => editorContextMenu.setDeleteTarget(null)}
       />
     </>
   )

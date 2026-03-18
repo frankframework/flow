@@ -1,5 +1,6 @@
-import { useEffect, useRef } from 'react'
+import { useRef } from 'react'
 import { createPortal } from 'react-dom'
+import { useContextMenuDismiss } from '~/hooks/use-context-menu-dismiss'
 import type { StudioItemType } from './use-studio-context-menu'
 
 interface StudioContextMenuProps {
@@ -24,24 +25,7 @@ export default function StudioContextMenu({
   onClose,
 }: StudioContextMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    const handleMouseDown = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        onClose()
-      }
-    }
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-    }
-
-    document.addEventListener('mousedown', handleMouseDown)
-    document.addEventListener('keydown', handleKeyDown)
-    return () => {
-      document.removeEventListener('mousedown', handleMouseDown)
-      document.removeEventListener('keydown', handleKeyDown)
-    }
-  }, [onClose])
+  useContextMenuDismiss(menuRef, onClose)
 
   const itemClass = 'px-3 py-1.5 cursor-pointer hover:bg-hover text-sm text-foreground whitespace-nowrap'
 

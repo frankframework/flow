@@ -58,6 +58,11 @@ function ensureXmlExtension(name: string): string {
   return `${name}.xml`
 }
 
+function buildNewPath(oldPath: string, newName: string): string {
+  const lastSep = Math.max(oldPath.lastIndexOf('/'), oldPath.lastIndexOf('\\'))
+  return oldPath.slice(0, Math.max(0, lastSep + 1)) + newName
+}
+
 export function useFileTreeContextMenu({
   projectName,
   dataProvider,
@@ -67,9 +72,6 @@ export function useFileTreeContextMenu({
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null)
   const [nameDialog, setNameDialog] = useState<NameDialogState | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<DeleteTargetState | null>(null)
-
-  // Use a ref to always have the latest context menu data available,
-  // avoiding stale closure issues with useCallback.
   const contextMenuRef = useRef<ContextMenuState | null>(null)
 
   const openContextMenu = useCallback(
@@ -100,15 +102,13 @@ export function useFileTreeContextMenu({
     setContextMenu(null)
   }, [])
 
-  /** Reads context from explicit arg (keyboard shortcuts) or the ref (context menu clicks). */
-  function getMenu(ctx?: ContextMenuState): ContextMenuState | null {
-    if (ctx && typeof ctx === 'object' && 'itemId' in ctx) return ctx
-    return contextMenuRef.current
+  function resolveMenu(menuState?: ContextMenuState): ContextMenuState | null {
+    return menuState ?? contextMenuRef.current
   }
 
   const handleNewFile = useCallback(
-    (ctx?: ContextMenuState) => {
-      const menu = getMenu(ctx)
+    (menuState?: ContextMenuState) => {
+      const menu = resolveMenu(menuState)
       if (!menu || !projectName || !dataProvider) return
       const parentPath = menu.path
       const parentItemId = menu.itemId
@@ -132,8 +132,8 @@ export function useFileTreeContextMenu({
   )
 
   const handleNewFolder = useCallback(
-    (ctx?: ContextMenuState) => {
-      const menu = getMenu(ctx)
+    (menuState?: ContextMenuState) => {
+      const menu = resolveMenu(menuState)
       if (!menu || !projectName || !dataProvider) return
       const parentPath = menu.path
       const parentItemId = menu.itemId
@@ -156,8 +156,8 @@ export function useFileTreeContextMenu({
   )
 
   const handleRename = useCallback(
-    (ctx?: ContextMenuState) => {
-      const menu = getMenu(ctx)
+    (menuState?: ContextMenuState) => {
+      const menu = resolveMenu(menuState)
       if (!menu || !projectName || !dataProvider) return
       const itemId = menu.itemId
       const oldName = menu.name
@@ -175,12 +175,10 @@ export function useFileTreeContextMenu({
           try {
             await renameInProject(projectName, oldPath, newName)
             clearConfigurationCache(projectName, oldPath)
-            const lastSep = Math.max(oldPath.lastIndexOf('/'), oldPath.lastIndexOf('\\'))
-            const newPath = oldPath.slice(0, Math.max(0, lastSep + 1)) + newName
+            const newPath = buildNewPath(oldPath, newName)
             useTabStore.getState().renameTabsForConfig(oldPath, newPath)
             useEditorTabStore.getState().refreshAllTabs()
-            const parentId = getParentItemId(itemId)
-            await dataProvider.reloadDirectory(parentId)
+            await dataProvider.reloadDirectory(getParentItemId(itemId))
             onAfterRename?.(oldPath, newName)
           } catch (error) {
             showErrorToastFrom('Failed to rename', error)
@@ -193,8 +191,8 @@ export function useFileTreeContextMenu({
   )
 
   const handleDelete = useCallback(
-    (ctx?: ContextMenuState) => {
-      const menu = getMenu(ctx)
+    (menuState?: ContextMenuState) => {
+      const menu = resolveMenu(menuState)
       if (!menu) return
       setDeleteTarget({
         name: menu.name,

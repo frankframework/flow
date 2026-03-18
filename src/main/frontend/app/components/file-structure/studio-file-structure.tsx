@@ -23,11 +23,10 @@ import {
 import FilesDataProvider, {
   type StudioItemData,
   type StudioFolderData,
-  type StudioAdapterData,
 } from '~/components/file-structure/studio-files-data-provider'
 import { useProjectStore } from '~/stores/project-store'
 import { useTreeStore } from '~/stores/tree-store'
-import { useStudioContextMenu } from './use-studio-context-menu'
+import { useStudioContextMenu, detectItemType, getItemName, resolveItemPaths } from './use-studio-context-menu'
 import StudioFileTreeDialogs from './studio-file-tree-dialogs'
 
 const TREE_ID = 'studio-files-tree'
@@ -64,7 +63,7 @@ export default function StudioFileStructure() {
   const setActiveTab = useTabStore((state) => state.setActiveTab)
   const getTab = useTabStore((state) => state.getTab)
 
-  const ctxMenu = useStudioContextMenu({
+  const studioContextMenu = useStudioContextMenu({
     projectName: project?.name,
     dataProvider,
   })
@@ -75,67 +74,33 @@ export default function StudioFileStructure() {
       const item = await dataProvider.getTreeItem(itemId)
       if (!item) return undefined
 
-      const data = item.data
-      let itemType: StudioContextMenuState['itemType']
-      let name: string
-      let path: string
-      let folderPath: string
+      const itemType = detectItemType(item.data)
+      const name = getItemName(item.data)
+      const { path, folderPath } = resolveItemPaths(item.data, itemType, dataProvider)
 
-      if (typeof data === 'string') {
-        itemType = 'root'
-        name = data
-        path = dataProvider.getRootPath()
-        folderPath = path
-      } else if ('adapterName' in data) {
-        const d = data as StudioAdapterData
-        itemType = 'adapter'
-        name = d.adapterName
-        path = d.configPath
-        folderPath = path.slice(0, Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\')))
-      } else if ('path' in data && (data as StudioFolderData).path.endsWith('.xml')) {
-        const d = data as StudioFolderData
-        itemType = 'configuration'
-        name = d.name
-        path = d.path
-        folderPath = path.slice(0, Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\')))
-      } else {
-        const d = data as StudioFolderData
-        itemType = 'folder'
-        name = d.name
-        path = d.path
-        folderPath = path
-      }
-
-      return {
-        position: { x: 0, y: 0 },
-        itemId,
-        itemType,
-        path,
-        folderPath,
-        name,
-      }
+      return { position: { x: 0, y: 0 }, itemId, itemType, path, folderPath, name }
     },
     [dataProvider],
   )
 
   const triggerExplorerAction = useCallback(
-    (action: (ctx: StudioContextMenuState) => void, requireSelection: boolean) => {
+    (action: (menuState: StudioContextMenuState) => void, requireSelection: boolean) => {
       const itemId = selectedItemId ?? (requireSelection ? null : 'root')
       if (!itemId || (itemId === 'root' && requireSelection)) return
-      void buildContextForItem(itemId).then((ctx) => {
-        if (ctx) action(ctx)
+      void buildContextForItem(itemId).then((menuState) => {
+        if (menuState) action(menuState)
       })
     },
     [selectedItemId, buildContextForItem],
   )
 
   useShortcut({
-    'studio-explorer.new-config': () => triggerExplorerAction(ctxMenu.handleNewConfiguration, false),
-    'studio-explorer.new-adapter': () => triggerExplorerAction(ctxMenu.handleNewAdapter, false),
-    'studio-explorer.new-folder': () => triggerExplorerAction(ctxMenu.handleNewFolder, false),
-    'studio-explorer.rename': () => triggerExplorerAction(ctxMenu.handleRename, true),
-    'studio-explorer.delete': () => triggerExplorerAction(ctxMenu.handleDelete, true),
-    'studio-explorer.delete-mac': () => triggerExplorerAction(ctxMenu.handleDelete, true),
+    'studio-explorer.new-config': () => triggerExplorerAction(studioContextMenu.handleNewConfiguration, false),
+    'studio-explorer.new-adapter': () => triggerExplorerAction(studioContextMenu.handleNewAdapter, false),
+    'studio-explorer.new-folder': () => triggerExplorerAction(studioContextMenu.handleNewFolder, false),
+    'studio-explorer.rename': () => triggerExplorerAction(studioContextMenu.handleRename, true),
+    'studio-explorer.delete': () => triggerExplorerAction(studioContextMenu.handleDelete, true),
+    'studio-explorer.delete-mac': () => triggerExplorerAction(studioContextMenu.handleDelete, true),
   })
 
   useEffect(() => {
@@ -244,7 +209,6 @@ export default function StudioFileStructure() {
         return
       }
 
-      // Adapter item — open in studio flow tab
       if (typeof data === 'object' && data !== null && 'adapterName' in data && 'configPath' in data) {
         const { adapterName, configPath, adapterPosition } = data as {
           adapterName: string
@@ -317,7 +281,7 @@ export default function StudioFileStructure() {
     return (
       <Icon
         onClick={handleArrowClick}
-        onContextMenu={(mouseEvent: React.MouseEvent) => ctxMenu.openContextMenu(mouseEvent, item.index)}
+        onContextMenu={(mouseEvent: React.MouseEvent) => studioContextMenu.openContextMenu(mouseEvent, item.index)}
         className="rct-tree-item-arrow-isFolder rct-tree-item-arrow fill-foreground"
       />
     )
@@ -380,7 +344,7 @@ export default function StudioFileStructure() {
     return (
       <div
         className="flex min-w-0 cursor-pointer items-center"
-        onContextMenu={(e) => ctxMenu.openContextMenu(e, item.index)}
+        onContextMenu={(e) => studioContextMenu.openContextMenu(e, item.index)}
       >
         <Icon className="fill-foreground w-4 flex-shrink-0" />
         <span
@@ -405,7 +369,7 @@ export default function StudioFileStructure() {
       <div
         className="h-full overflow-auto pr-2"
         onContextMenu={(e) => {
-          void ctxMenu.openContextMenu(e, 'root')
+          void studioContextMenu.openContextMenu(e, 'root')
         }}
       >
         <UncontrolledTreeEnvironment
@@ -435,18 +399,18 @@ export default function StudioFileStructure() {
       </div>
 
       <StudioFileTreeDialogs
-        contextMenu={ctxMenu.contextMenu}
-        nameDialog={ctxMenu.nameDialog}
-        deleteTarget={ctxMenu.deleteTarget}
-        onNewConfiguration={ctxMenu.handleNewConfiguration}
-        onNewAdapter={ctxMenu.handleNewAdapter}
-        onNewFolder={ctxMenu.handleNewFolder}
-        onRename={ctxMenu.handleRename}
-        onDelete={ctxMenu.handleDelete}
-        onConfirmDelete={ctxMenu.confirmDelete}
-        onCloseContextMenu={ctxMenu.closeContextMenu}
-        onCloseNameDialog={() => ctxMenu.setNameDialog(null)}
-        onCloseDeleteDialog={() => ctxMenu.setDeleteTarget(null)}
+        contextMenu={studioContextMenu.contextMenu}
+        nameDialog={studioContextMenu.nameDialog}
+        deleteTarget={studioContextMenu.deleteTarget}
+        onNewConfiguration={studioContextMenu.handleNewConfiguration}
+        onNewAdapter={studioContextMenu.handleNewAdapter}
+        onNewFolder={studioContextMenu.handleNewFolder}
+        onRename={studioContextMenu.handleRename}
+        onDelete={studioContextMenu.handleDelete}
+        onConfirmDelete={studioContextMenu.confirmDelete}
+        onCloseContextMenu={studioContextMenu.closeContextMenu}
+        onCloseNameDialog={() => studioContextMenu.setNameDialog(null)}
+        onCloseDeleteDialog={() => studioContextMenu.setDeleteTarget(null)}
       />
     </>
   )
