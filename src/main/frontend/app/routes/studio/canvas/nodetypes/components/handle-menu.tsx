@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useRef } from 'react'
 import HandleMenuItem from './handle-menu-item'
 import { translateHandleTypeToColour } from './handle'
 import type { ElementProperty } from '@frankframework/doc-library-core'
@@ -15,8 +15,21 @@ interface HandleMenuProperties {
 
 const HandleMenu: React.FC<HandleMenuProperties> = ({ title, position, onClose, onSelect, typesAllowed }) => {
   const handleTypes = useHandleTypes(typesAllowed)
+  const menuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
+    const handleMouseDown = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        onClose()
+      }
+    }
+
+    const handleWheel = (e: WheelEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        onClose()
+      }
+    }
+
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.stopPropagation()
@@ -25,46 +38,38 @@ const HandleMenu: React.FC<HandleMenuProperties> = ({ title, position, onClose, 
     }
 
     globalThis.addEventListener('keydown', handleEsc, { capture: true })
+    globalThis.addEventListener('mousedown', handleMouseDown, { capture: true })
+    globalThis.addEventListener('wheel', handleWheel, { capture: true })
 
     return () => {
       globalThis.removeEventListener('keydown', handleEsc, { capture: true })
+      globalThis.removeEventListener('mousedown', handleMouseDown, { capture: true })
+      globalThis.removeEventListener('wheel', handleWheel, { capture: true })
     }
   }, [onClose])
 
-  const handleOverlayEvent = (event: React.MouseEvent<HTMLDivElement> | React.WheelEvent<HTMLDivElement>) => {
-    if (event.target === event.currentTarget) {
-      onClose()
-    }
-  }
-
   return createPortal(
     <div
-      className="fixed inset-0 z-50"
-      onContextMenu={handleOverlayEvent}
-      onClick={handleOverlayEvent}
-      onWheel={handleOverlayEvent}
+      ref={menuRef}
+      className="nodrag bg-background border-border absolute border shadow-md"
+      style={{
+        left: `${position.x + 10}px`, // offset to the right of cursor
+        top: `${position.y - 5}px`,
+      }}
     >
-      <div
-        className="nodrag bg-background border-border absolute border shadow-md"
-        style={{
-          left: `${position.x + 10}px`, // offset to the right of cursor
-          top: `${position.y - 5}px`,
-        }}
-      >
-        <div className="w-70">
-          <div className="border-border bg-muted h-10 border-b px-3 py-1 font-bold">{title}</div>
-          <ul className="w-full">
-            {handleTypes.map((type, index) => (
-              <HandleMenuItem
-                key={type}
-                label={type}
-                iconColor={translateHandleTypeToColour(type)}
-                onClick={() => onSelect(type)}
-                isLast={index === handleTypes.length - 1}
-              />
-            ))}
-          </ul>
-        </div>
+      <div className="w-70">
+        <div className="border-border bg-muted h-10 border-b px-3 py-1 font-bold">{title}</div>
+        <ul className="w-full">
+          {handleTypes.map((type, index) => (
+            <HandleMenuItem
+              key={type}
+              label={type}
+              iconColor={translateHandleTypeToColour(type)}
+              onClick={() => onSelect(type)}
+              isLast={index === handleTypes.length - 1}
+            />
+          ))}
+        </ul>
       </div>
     </div>,
     document.body,
