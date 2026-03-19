@@ -284,7 +284,14 @@
 
         <xsl:element name="{$node?label}">
             <xsl:if test="empty($node?children)">
-                <outputxsl:value-of select="${$node?mapping?output}"></outputxsl:value-of>
+                <xsl:choose>
+                    <xsl:when test="exists($node?mapping)">
+                        <outputxsl:value-of select="${$node?mapping?output}"/>
+                    </xsl:when>
+                    <xsl:otherwise>
+                        <xsl:value-of select="$node?defaultValue"/>
+                    </xsl:otherwise>
+                </xsl:choose>
             </xsl:if>
 
             <!-- Recurse if there are children -->
