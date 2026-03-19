@@ -1,59 +1,62 @@
 package org.frankframework.flow.configuration;
 
 import java.io.IOException;
+
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
-import lombok.extern.slf4j.Slf4j;
-import org.frankframework.flow.project.Project;
-import org.frankframework.flow.project.ProjectDTO;
-import org.frankframework.flow.project.ProjectNotFoundException;
-import org.frankframework.flow.project.ProjectService;
-import org.frankframework.flow.xml.XmlDTO;
+
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.xml.sax.SAXException;
 
+import lombok.extern.slf4j.Slf4j;
+
+import org.frankframework.flow.exception.ApiException;
+import org.frankframework.flow.xml.XmlDTO;
+
 @Slf4j
 @RestController
-@RequestMapping("/projects")
+@RequestMapping("/projects/{projectName}/configuration")
 public class ConfigurationController {
 
 	private final ConfigurationService configurationService;
-	private final ProjectService projectService;
 
-	public ConfigurationController(ConfigurationService configurationService, ProjectService projectService) {
+	public ConfigurationController(ConfigurationService configurationService) {
 		this.configurationService = configurationService;
-		this.projectService = projectService;
 	}
 
-	@PostMapping("/{projectName}/configuration")
-	public ResponseEntity<ConfigurationDTO> getConfigurationByPath(@RequestBody ConfigurationPathDTO requestBody)
-			throws ConfigurationNotFoundException, IOException {
-		String content = configurationService.getConfigurationContent(requestBody.filepath());
-		return ResponseEntity.ok(new ConfigurationDTO(requestBody.filepath(), content));
+	@GetMapping("/")
+	public ResponseEntity<ConfigurationDTO> getConfigurationByPath(
+			@PathVariable String projectName,
+			@RequestParam String filepath
+	) throws IOException, ApiException {
+		ConfigurationDTO dto = configurationService.getConfigurationContent(projectName, filepath);
+		return ResponseEntity.ok(dto);
 	}
 
-	@PutMapping("/{projectName}/configuration")
+	@PostMapping("/")
 	public ResponseEntity<XmlDTO> updateConfiguration(
-			@RequestBody ConfigurationDTO configurationDTO)
-			throws ConfigurationNotFoundException, IOException, ParserConfigurationException,
-					SAXException, TransformerException {
-		String updatedContent = configurationService.updateConfiguration(
-				configurationDTO.filepath(), configurationDTO.content());
+			@PathVariable String projectName,
+			@RequestBody ConfigurationDTO configurationDTO
+	) throws ApiException, IOException, ParserConfigurationException, SAXException, TransformerException {
+		String updatedContent = configurationService.updateConfiguration(projectName, configurationDTO.filepath(), configurationDTO.content());
 		XmlDTO xmlDTO = new XmlDTO(updatedContent);
 		return ResponseEntity.ok(xmlDTO);
 	}
 
-	@PostMapping("/{projectName}/configurations/{configName}")
-	public ResponseEntity<ProjectDTO> addConfiguration(
-			@PathVariable String projectName, @PathVariable String configName)
-			throws ProjectNotFoundException, IOException {
-		Project project = configurationService.addConfiguration(projectName, configName);
-		return ResponseEntity.ok(projectService.toDto(project));
+	@PostMapping("/{fileName}")
+	public ResponseEntity<XmlDTO> addConfiguration(
+			@PathVariable String projectName,
+			@PathVariable String fileName
+	) throws ApiException, IOException {
+		String content = configurationService.addConfiguration(projectName, fileName);
+		XmlDTO xmlDTO = new XmlDTO(content);
+		return ResponseEntity.ok(xmlDTO);
 	}
 }
