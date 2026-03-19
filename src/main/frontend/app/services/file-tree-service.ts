@@ -2,17 +2,15 @@ import { apiFetch } from '~/utils/api'
 import type { FileTreeNode } from '~/types/filesystem.types'
 
 export async function fetchProjectTree(projectName: string, signal?: AbortSignal): Promise<FileTreeNode> {
-  return apiFetch<FileTreeNode>(`/projects/${encodeURIComponent(projectName)}/tree/configurations`, { signal })
+  return apiFetch<FileTreeNode>(`${getTreeUrl(projectName)}/configurations`, { signal })
 }
 
 export async function fetchShallowConfigurationsTree(projectName: string, signal?: AbortSignal): Promise<FileTreeNode> {
-  return apiFetch<FileTreeNode>(`/projects/${encodeURIComponent(projectName)}/tree/configurations?shallow=true`, {
-    signal,
-  })
+  return apiFetch<FileTreeNode>(`${getTreeUrl(projectName)}/configurations?shallow=true`, { signal })
 }
 
 export async function fetchProjectRootTree(projectName: string, signal?: AbortSignal): Promise<FileTreeNode> {
-  return apiFetch<FileTreeNode>(`/projects/${encodeURIComponent(projectName)}/tree`, { signal })
+  return apiFetch<FileTreeNode>(getTreeUrl(projectName), { signal })
 }
 
 export async function fetchDirectoryByPath(
@@ -48,14 +46,26 @@ export async function createFolderInProject(
 }
 
 export async function renameInProject(projectName: string, oldPath: string, newName: string): Promise<FileTreeNode> {
-  return apiFetch<FileTreeNode>(`/projects/${encodeURIComponent(projectName)}/files/rename`, {
-    method: 'PATCH',
+  return apiFetch<FileTreeNode>(`${getFilesUrl(projectName)}/rename`, {
+    method: 'PATCH', // TODO this should be POST
     body: JSON.stringify({ oldPath, newName }),
   })
 }
 
+// TODO saveFile (none configuration)
+
 export async function deleteInProject(projectName: string, path: string): Promise<void> {
-  await apiFetch<void>(`/projects/${encodeURIComponent(projectName)}/files?path=${encodeURIComponent(path)}`, {
-    method: 'DELETE',
-  })
+  await apiFetch<void>(`${getFilesUrl(projectName)}/${encodeURIComponent(path)}`, { method: 'DELETE' })
+}
+
+function getBaseUrl(projectName: string): string {
+  return `/projects/${encodeURIComponent(projectName)}`
+}
+
+function getFilesUrl(projectName: string): string {
+  return `${getBaseUrl(projectName)}/files`
+}
+
+function getTreeUrl(projectName: string): string {
+  return `${getBaseUrl(projectName)}/tree`
 }
