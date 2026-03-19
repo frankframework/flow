@@ -1,0 +1,10 @@
+{
+  "username": "johndoe92",
+  "email": "john.doe@example.com",
+  "status": "banned",
+  "profile": {
+    "firstName": "John",
+    "lastName": "Doe",
+    "birthYear": "2030"
+  }
+}

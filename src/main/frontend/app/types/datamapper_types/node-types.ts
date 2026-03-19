@@ -28,6 +28,7 @@ export interface NodeLabels {
   label: string
   checked?: boolean
   type?: string
+  parentArray?: string
 }
 
 export type MappingConfig = {
@@ -44,12 +45,23 @@ export type MappingConfig = {
   conditional: Condition | null
 } & Record<string, unknown>
 
+export type ArrayMappingConfig = {
+  id?: string
+  label?: string
+  colour?: string
+  source: string
+  target: string
+} & Record<string, unknown>
+
 export type PropertyNode = Node<CustomNodeData> & {
-  type: 'targetOnly' | 'sourceOnly' | 'labeledGroup' | 'extraSourceNode'
+  type: 'targetArrayGroup' | 'sourceArrayGroup' | 'targetOnly' | 'sourceOnly' | 'labeledGroup' | 'extraSourceNode'
 }
 
 export type MappingNode = Node<MappingConfig> & {
   type: 'mappingNode'
 }
+export type ArrayMappingNode = Node<ArrayMappingConfig> & {
+  type: 'arrayMappingNode'
+}
 
-export type FlowNode = PropertyNode | MappingNode
+export type FlowNode = PropertyNode | MappingNode | ArrayMappingNode

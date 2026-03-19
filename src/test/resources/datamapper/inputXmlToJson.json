@@ -781,23 +781,28 @@
 			"label": "productSchema",
 			"defaultValue": "",
 			"parent": "source-table",
-			"children": [
-				{ "type": "string", "internalId": "source-table-group-6-item-7", "label": "productId", "defaultValue": "", "parent": "source-table-group-6" },
-				{ "type": "number", "internalId": "source-table-group-6-item-8", "label": "price", "defaultValue": "", "parent": "source-table-group-6" },
-				{ "type": "string", "internalId": "source-table-group-6-item-9", "label": "currency", "defaultValue": "", "parent": "source-table-group-6" },
+			"children":[{"type": "object",
+				"internalId": "source-table-group-28",
+				"label": "products",
+				"defaultValue": "",
+				"parent": "source-table-group-6",
+				"children":  [
+				{ "type": "string", "internalId": "source-table-group-6-item-7", "label": "productId", "defaultValue": "", "parent": "source-table-group-28" },
+				{ "type": "number", "internalId": "source-table-group-6-item-8", "label": "price", "defaultValue": "", "parent": "source-table-group-28" },
+				{ "type": "string", "internalId": "source-table-group-6-item-9", "label": "currency", "defaultValue": "", "parent": "source-table-group-28" },
 				{
 					"type": "string",
 					"internalId": "source-table-group-6-item-10",
 					"label": "amountOfitems",
 					"defaultValue": "",
-					"parent": "source-table-group-6"
+					"parent": "source-table-group-28"
 				},
 				{
 					"type": "object",
 					"internalId": "source-table-group-6-group-11",
 					"label": "dimensions",
 					"defaultValue": "",
-					"parent": "source-table-group-6",
+					"parent": "source-table-group-28",
 					"children": [
 						{
 							"type": "number",
@@ -830,23 +835,28 @@
 					]
 				}
 			]
-		},
+		}]},
 		{
 			"type": "schematic",
 			"internalId": "source-table-group-16",
 			"label": "userSchema",
 			"defaultValue": "",
 			"parent": "source-table",
-			"children": [
-				{ "type": "string", "internalId": "source-table-group-16-item-17", "label": "username", "defaultValue": "", "parent": "source-table-group-16" },
-				{ "type": "string", "internalId": "source-table-group-16-item-18", "label": "email", "defaultValue": "", "parent": "source-table-group-16" },
-				{ "type": "string", "internalId": "source-table-group-16-item-19", "label": "status", "defaultValue": "", "parent": "source-table-group-16" },
+			"children":[{"type": "object",
+				"internalId": "source-table-group-30",
+				"label": "users",
+				"defaultValue": "",
+				"parent": "source-table-group-16",
+				"children": [
+				{ "type": "string", "internalId": "source-table-group-16-item-17", "label": "username", "defaultValue": "", "parent": "source-table-group-30" },
+				{ "type": "string", "internalId": "source-table-group-16-item-18", "label": "email", "defaultValue": "", "parent": "source-table-group-30" },
+				{ "type": "string", "internalId": "source-table-group-16-item-19", "label": "status", "defaultValue": "", "parent": "source-table-group-30" },
 				{
 					"type": "object",
 					"internalId": "source-table-group-16-group-20",
 					"label": "profile",
 					"defaultValue": "",
-					"parent": "source-table-group-16",
+					"parent": "source-table-group-30",
 					"children": [
 						{
 							"type": "string",
@@ -871,7 +881,7 @@
 						}
 					]
 				}
-			]
+			]}]
 		}
 	]
 }

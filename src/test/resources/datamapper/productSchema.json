@@ -1,0 +1,12 @@
+{
+  "productId": "id123",
+  "price": 49.99,
+  "currency": "USD",
+  "amountOfitems": "10",
+  "dimensions": {
+    "width": 50,
+    "height": 100,
+    "depth": 30,
+    "unit": "cm"
+  }
+}

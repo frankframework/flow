@@ -17,14 +17,21 @@ import AddFieldForm from '~/components/datamapper/forms/add-field-form'
 import AddMappingForm from '~/components/datamapper/forms/add-mapping-form'
 import Modal from '~/components/modal'
 import { getNodeTypes } from '~/components/datamapper/react-flow/node-types'
-import { showErrorToast, showSuccessToast } from '~/components/toast'
+import { showErrorToast, showInfoToast, showSuccessToast } from '~/components/toast'
 import { useFlowManagement, DuplicateLabelException } from '~/hooks/use-datamapper-flow-management'
 import type { ConfigActions } from '~/stores/datamapper_state/mappingListConfig/reducer'
 import { useFile } from '~/stores/datamapper_state/schemaQueue/schema-queue-context'
 import type { MappingListConfig } from '~/types/datamapper_types/config-types'
-import type { CustomNodeData, MappingConfig, NodeLabels } from '~/types/datamapper_types/node-types'
+import type { ArrayMappingConfig, CustomNodeData, MappingConfig, NodeLabels } from '~/types/datamapper_types/node-types'
 import { TABLE_WIDTH } from '~/utils/datamapper_utils/const'
-import { getNodesByTypeAndId, createMappingNode } from '~/utils/datamapper_utils/react-node-utils'
+import {
+  getNodesByTypeAndId,
+  createMappingNode,
+  createNewArrayMappingNode,
+  validateMapping,
+  getMappingNodes,
+  handleArrayMapping,
+} from '~/utils/datamapper_utils/react-node-utils'
 import Button from '~/components/inputs/button'
 
 interface PropertyListProperties {
@@ -79,6 +86,12 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
   const [mappingSources, setMappingSources] = useState<NodeLabels[]>([])
   const [mappingTargets, setMappingTargets] = useState<NodeLabels[]>([])
   const canvasWidth = useRef<HTMLDivElement>(null)
+
+  const editingMappingRef = useRef<MappingConfig | null>(null)
+
+  useEffect(() => {
+    editingMappingRef.current = editingMapping
+  }, [editingMapping])
 
   const flow = useFlowManagement({
     reactFlowInstance,
@@ -193,7 +206,6 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
         },
       })),
     )
-
     openMapping()
 
     return
@@ -207,31 +219,51 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
     restoreFlow()
   }, [setReactFlowNodes])
 
+  function openMappingModal(sources: NodeLabels[], targets: NodeLabels[]) {
+    setMappingSources(sources.filter((s) => s.id?.includes('item')))
+    setMappingTargets(targets.filter((t) => t.id?.includes('item')))
+    setAddMappingModal(true)
+  }
+
   function openMapping() {
     requestAnimationFrame(() => {
-      const sources = getNodesByTypeAndId(reactFlowInstance.getNodes(), {
-        typeIncludes: 'sourceOnly',
+      const nodes = reactFlowInstance.getNodes()
+      const edges = reactFlowInstance.getEdges()
 
-        includeChecked: true,
-      })
-      const targets = getNodesByTypeAndId(reactFlowInstance.getNodes(), {
-        typeIncludes: 'targetOnly',
-        includeChecked: true,
-      })
+      const { sources, targets, unfilteredSources } = getMappingNodes(nodes, editingMappingRef.current || undefined)
 
-      if (!editingMapping) {
-        const checkedSources = sources.filter((source) => source.checked)
-        const checkedTargets = targets.filter((target) => target.checked)
-        if (checkedSources.length > 1 && checkedTargets.length > 1) {
-          showErrorToast('Many to Many mapping not supported!')
+      if (!editingMappingRef.current) {
+        const error = validateMapping(sources, targets, unfilteredSources)
+        if (error) {
+          showErrorToast(error)
           return
+        }
+
+        const checkedSources = sources.filter((s) => s.checked)
+        const checkedTargets = targets.filter((t) => t.checked)
+
+        try {
+          const isArrayMapping = handleArrayMapping(
+            checkedSources,
+            checkedTargets,
+            nodes,
+            edges,
+            setReactFlowNodes,
+            setEdges,
+          )
+
+          if (isArrayMapping) return
+        } catch (error) {
+          if (error instanceof Error) {
+            showErrorToast(error.message)
+            return
+          } else {
+            throw error
+          }
         }
       }
 
-      setMappingSources(sources)
-      setMappingTargets(targets)
-
-      setAddMappingModal(true)
+      openMappingModal(sources, targets)
     })
   }
 
@@ -278,6 +310,15 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
     setEditingMapping(null)
     setAddMappingModal(false)
     showSuccessToast('Added mapping succesfully!')
+    setReactFlowNodes((previous) =>
+      previous.map((node) => ({
+        ...node,
+        data: {
+          ...node.data,
+          checked: false,
+        },
+      })),
+    )
   }
   function openAddFieldModal(modelType: 'source' | 'target') {
     possibleParentGroups.current = getNodesByTypeAndId(reactFlowInstance?.getNodes(), {

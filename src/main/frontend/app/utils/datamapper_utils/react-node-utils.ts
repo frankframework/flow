@@ -1,5 +1,11 @@
 import type { Node, Edge } from '@xyflow/react'
-import type { NodeLabels, MappingConfig } from '~/types/datamapper_types/node-types'
+import type {
+  NodeLabels,
+  MappingConfig,
+  ArrayMappingConfig,
+  MappingNode,
+  PropertyNode,
+} from '~/types/datamapper_types/node-types'
 
 interface GetNodesOptions {
   typeIncludes?: string | string[]
@@ -15,6 +21,39 @@ export interface DeleteMappingNodeResult {
 export interface MappingNodeResult {
   updatedNodes: Node[]
   updatedEdges: Edge[]
+}
+interface MappingEdgeInput {
+  id: string
+  sources: string[]
+  target: string
+  colour: string
+}
+export function recurseFindArray(node: Node, nodes: Node[]) {
+  const parent = nodes.find((parent) => parent.id == node.parentId)
+  if (!parent) {
+    return
+  }
+  if (parent.type?.includes('Array')) {
+    return parent.id
+  }
+  return recurseFindArray(parent, nodes)
+}
+export function isGroup(variableType: string): boolean {
+  return variableType.includes('object') || variableType.includes('schematic') || variableType.includes('array')
+}
+export function isNodeGroup(nodeType: string): boolean {
+  return nodeType.includes('labeledGroup') || nodeType.includes('ArrayGroup') || nodeType.includes('extraSourceNode')
+}
+export function getType(id: string, parentId: string): string {
+  if (id.includes('object')) {
+    return 'labeledGroup'
+  } else if (id.includes('array')) {
+    return `${parentId.includes('source-table') ? 'source' : 'target'}ArrayGroup`
+  } else if (id.includes('schematic')) {
+    return 'extraSourceNode'
+  } else {
+    return parentId.includes('source-table') ? 'sourceOnly' : 'targetOnly'
+  }
 }
 
 export function getNodesByTypeAndId(nodes: Node[] | null | undefined, options: GetNodesOptions = {}): NodeLabels[] {
@@ -37,6 +76,7 @@ export function getNodesByTypeAndId(nodes: Node[] | null | undefined, options: G
           id: node.id,
           type: node.data.variableTypeBasic,
           label: typeof node.data?.label === 'string' ? node.data.label : '',
+          parentArray: recurseFindArray(node, nodes),
           ...(options.includeChecked ? { checked: node.data?.checked as boolean } : {}),
         }) as NodeLabels,
     )
@@ -90,7 +130,7 @@ function resolveVerticalOverlap(desiredY: number, allNodes: Node[], minDistance 
     hasOverlap = false
 
     for (const node of allNodes) {
-      if (node.type !== 'mappingNode') continue
+      if (!node.type?.toLocaleLowerCase().includes('mappingnode')) continue
 
       if (Math.abs(node.position.y - y) < minDistance) {
         y += offset
@@ -113,9 +153,7 @@ function createRandomColour() {
     .padStart(6, '0')}`
 }
 
-function buildMappingEdges(mappingConfig: MappingConfig): Edge[] {
-  const { id, sources, target, colour } = mappingConfig
-
+function buildMappingEdges({ id, sources, target, colour }: MappingEdgeInput): Edge[] {
   return [
     ...sources.map((sourceId) => ({
       id: `${sourceId}-${id}`,
@@ -154,10 +192,15 @@ function updateExistingMappingNode(
   const updatedNodes = allNodes.map((node) => (node.id === mappingConfig.id ? { ...node, data: mappingConfig } : node))
 
   const cleanedEdges = removeEdgesForNode(mappingConfig.id!, allEdges)
-
+  const mappingEdgeInput: MappingEdgeInput = {
+    id: mappingConfig.id ?? '',
+    colour: mappingConfig.colour ?? '',
+    sources: mappingConfig.sources,
+    target: mappingConfig.target,
+  }
   return {
     updatedNodes,
-    updatedEdges: [...cleanedEdges, ...buildMappingEdges(mappingConfig)],
+    updatedEdges: [...cleanedEdges, ...buildMappingEdges(mappingEdgeInput)],
   }
 }
 
@@ -182,10 +225,48 @@ function createNewMappingNode(mappingConfig: MappingConfig, allNodes: Node[], al
     position: { x: 0, y: resolvedY },
     data: newMappingConfig,
   }
-
+  const mappingEdgeInput: MappingEdgeInput = {
+    id,
+    colour,
+    sources: mappingConfig.sources,
+    target: mappingConfig.target,
+  }
   return {
     updatedNodes: [...allNodes, newNode],
-    updatedEdges: [...allEdges, ...buildMappingEdges(newMappingConfig)],
+    updatedEdges: [...allEdges, ...buildMappingEdges(mappingEdgeInput)],
+  }
+}
+
+export function createNewArrayMappingNode(
+  mappingConfig: ArrayMappingConfig,
+  allNodes: Node[],
+  allEdges: Edge[],
+): MappingNodeResult {
+  const id = createMappingId()
+
+  mappingConfig.colour = createRandomColour()
+
+  const mappingEdgeInput: MappingEdgeInput = {
+    id,
+    colour: mappingConfig.colour,
+    sources: [mappingConfig.source],
+    target: mappingConfig.target,
+  }
+
+  const centerPosition = calculateMappingCenter([mappingConfig.source], mappingConfig.target, allNodes)
+
+  const resolvedY = resolveVerticalOverlap(centerPosition.y, allNodes)
+
+  const newNode: Node = {
+    id,
+    parentId: 'mapping-table',
+    type: 'arrayMappingNode',
+    position: { x: 0, y: resolvedY },
+    data: mappingConfig,
+  }
+  return {
+    updatedNodes: [...allNodes, newNode],
+    updatedEdges: [...allEdges, ...buildMappingEdges(mappingEdgeInput)],
   }
 }
 
@@ -194,4 +275,80 @@ export function deleteMappingNode(nodeId: string, allNodes: Node[], allEdges: Ed
     remainingNodes: allNodes.filter((node) => node.id !== nodeId),
     remainingEdges: removeEdgesForNode(nodeId, allEdges),
   }
+}
+
+export function getMappingNodes(nodes: Node[], mappingConfig?: MappingConfig) {
+  const unfilteredSources = getNodesByTypeAndId(nodes, {
+    typeIncludes: 'source',
+    includeChecked: true,
+  })
+
+  const targets = getNodesByTypeAndId(nodes, {
+    typeIncludes: 'target',
+    includeChecked: true,
+  })
+
+  const sources = unfilteredSources.filter((s) => s.parentArray == undefined)
+
+  let parentArrayId = targets.find((t) => t.checked)?.parentArray
+  if (mappingConfig) {
+    parentArrayId = targets.find((t) => t.id == mappingConfig.target)?.parentArray
+  }
+  if (parentArrayId) {
+    const arrayMapping = nodes.find((n) => n.data.target == parentArrayId)
+
+    if (arrayMapping) {
+      sources.push(...unfilteredSources.filter((s) => s.parentArray == arrayMapping.data.source))
+    }
+  }
+
+  return { sources, targets, unfilteredSources }
+}
+
+export function validateMapping(sources: NodeLabels[], targets: NodeLabels[], unfilteredSources: NodeLabels[]) {
+  const checkedSources = sources.filter((s) => s.checked)
+  const checkedTargets = targets.filter((t) => t.checked)
+
+  if (checkedSources.length !== unfilteredSources.filter((s) => s.checked).length) {
+    return 'Mapping item in source array only allowed within a for each'
+  }
+
+  if (checkedSources.length > 1 && checkedTargets.length > 1) {
+    return 'Many to Many mapping not supported!'
+  }
+
+  return null
+}
+
+export function handleArrayMapping(
+  checkedSources: NodeLabels[],
+  checkedTargets: NodeLabels[],
+  nodes: Node[],
+  edges: Edge[],
+  setNodes: (nodes: Node[]) => void,
+  setEdges: (edges: Edge[]) => void,
+) {
+  const arraySources = checkedSources.filter((s) => s.type?.includes('array'))
+
+  const isTargetArray = checkedTargets[0]?.type?.includes('array')
+
+  if (arraySources.length === checkedSources.length && isTargetArray) {
+    const config = {
+      source: checkedSources[0].id,
+      target: checkedTargets[0].id,
+    }
+
+    const { updatedNodes, updatedEdges } = createNewArrayMappingNode(config, nodes, edges)
+
+    setNodes(updatedNodes)
+    setEdges(updatedEdges)
+
+    return true
+  }
+
+  if (arraySources.length > 0 || isTargetArray) {
+    throw new Error('Invalid mapping configuration, arrays cannot be mapped with normal properties')
+  }
+
+  return false
 }
