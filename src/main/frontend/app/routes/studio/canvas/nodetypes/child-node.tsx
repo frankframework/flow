@@ -31,7 +31,8 @@ export function ChildNodeComponent({
   parentId,
   rootId,
 }: Readonly<ChildNodeProperties>) {
-  const { setParentId, setChildParentId, setIsEditing, setDraggedName, draggedName } = useNodeContextStore()
+  const { setParentId, setChildParentId, setIsEditing, setDraggedName, draggedName, setNodeId, setAttributes } =
+    useNodeContextStore()
   const showNodeContextMenu = useNodeContextMenu()
   const addChildToChild = useFlowStore((state) => state.addChildToChild)
   const [dragOver, setDragOver] = useState(false)
@@ -105,6 +106,8 @@ export function ChildNodeComponent({
         return
       }
 
+      setNodeId(+newId)
+      setAttributes(dropped.attributes)
       showNodeContextMenu(true)
       setIsEditing(true)
       setParentId(rootId)
