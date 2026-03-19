@@ -1,5 +1,3 @@
-import React from 'react'
-
 export interface HandleMenuItemProperties {
   label: string
   iconColor?: string
@@ -7,7 +5,12 @@ export interface HandleMenuItemProperties {
   isLast?: boolean
 }
 
-const HandleMenuItem: React.FC<HandleMenuItemProperties> = ({ label, iconColor: color, onClick, isLast = false }) => {
+export default function HandleMenuItem({
+  label,
+  iconColor: color,
+  onClick,
+  isLast,
+}: Readonly<HandleMenuItemProperties>) {
   return (
     <li
       className={`hover:bg-border border-border flex h-10 cursor-pointer items-center justify-between p-2 ${
@@ -20,5 +23,3 @@ const HandleMenuItem: React.FC<HandleMenuItemProperties> = ({ label, iconColor: 
     </li>
   )
 }
-
-export default HandleMenuItem

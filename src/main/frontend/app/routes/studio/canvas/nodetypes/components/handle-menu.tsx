@@ -13,7 +13,13 @@ interface HandleMenuProperties {
   typesAllowed?: Record<string, ElementProperty>
 }
 
-const HandleMenu: React.FC<HandleMenuProperties> = ({ title, position, onClose, onSelect, typesAllowed }) => {
+export default function HandleMenu({
+  title,
+  position,
+  onClose,
+  onSelect,
+  typesAllowed,
+}: Readonly<HandleMenuProperties>) {
   const handleTypes = useHandleTypes(typesAllowed)
   const menuRef = useRef<HTMLDivElement>(null)
 
@@ -75,5 +81,3 @@ const HandleMenu: React.FC<HandleMenuProperties> = ({ title, position, onClose, 
     document.body,
   )
 }
-
-export default HandleMenu
