@@ -1,5 +1,6 @@
 package org.frankframework.flow.hazelcast;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.net.URI;
@@ -62,14 +63,13 @@ public class HazelcastService {
 
 		List<OutboundGateway.ClusterMember> members = gateway.getMembers();
 		log.debug("Hazelcast cluster members: {}", members.size());
-		members.forEach(m -> log.debug("  member: name={} address={} type={}", m.getName(), m.getAddress(), m.getType()));
-
-		if (members.isEmpty()) {
-			return fetchLocalInstance(gateway);
-		}
+		members.forEach(m -> log.debug("  member: name={} address={} type={} attributes={}", m.getName(), m.getAddress(), m.getType(), m.getAttributes()));
 
 		List<FrankInstanceDTO> result = new ArrayList<>();
 		for (OutboundGateway.ClusterMember member : members) {
+			if (!WORKER_TYPE.equalsIgnoreCase(member.getType())) {
+				continue;
+			}
 			try {
 				List<String> projectPaths = fetchProjectPaths(gateway, member);
 				if (!projectPaths.isEmpty()) {
@@ -79,33 +79,112 @@ public class HazelcastService {
 				log.debug("Member [{}] did not respond ({}), skipping", member.getName(), e.getMessage());
 			}
 		}
+
+		// No WORKER members responded — fall back to frank.base.url-based discovery
+		if (result.isEmpty()) {
+			result.addAll(fetchLocalInstance(gateway));
+		}
 		return result;
 	}
 
 	private List<FrankInstanceDTO> fetchLocalInstance(OutboundGateway outboundGateway) {
-		if (configurationsDirectory == null || configurationsDirectory.isBlank()) {
-			return List.of();
-		}
-		if (!Files.isDirectory(Path.of(configurationsDirectory))) {
-			log.debug("Configurations directory [{}] does not exist", configurationsDirectory);
+		if (frankBaseUrl == null || frankBaseUrl.isBlank()) {
 			return List.of();
 		}
 		if (!isFrankAlive()) {
 			log.debug("Frank at [{}] did not respond", frankBaseUrl);
 			return List.of();
 		}
+
+		// If configurations.directory is set, query the local management bus for project paths
+		if (configurationsDirectory != null && !configurationsDirectory.isBlank()
+				&& Files.isDirectory(Path.of(configurationsDirectory))) {
+			try {
+				Message<String> request = MessageBuilder.withPayload("NONE")
+						.setHeader(BusTopic.TOPIC_HEADER_NAME, BusTopic.CONFIGURATION.name())
+						.setHeader(BusAction.ACTION_HEADER_NAME, BusAction.FIND.name())
+						.build();
+				Message<?> response = outboundGateway.sendSyncMessage(request);
+				List<String> projectPaths = parseProjectPaths(response.getPayload());
+				String name = projectPaths.isEmpty() ? fetchInstanceName() : Path.of(projectPaths.getFirst()).getFileName().toString();
+				return List.of(new FrankInstanceDTO(name, null, projectPaths, true));
+			} catch (Exception e) {
+				log.debug("Failed to fetch local configurations via bus: {}", e.getMessage());
+			}
+		}
+
+		// Fall back: query Frank HTTP API directly for name and configuration paths
+		return fetchInstanceViaHttp();
+	}
+
+	private List<FrankInstanceDTO> fetchInstanceViaHttp() {
+		String name = fetchInstanceName();
+		List<String> projectPaths = fetchProjectPathsViaHttp();
+		if (projectPaths.isEmpty()) {
+			log.debug("No project paths found for Frank at [{}]", frankBaseUrl);
+		}
+		return List.of(new FrankInstanceDTO(name, null, projectPaths, true));
+	}
+
+	private String fetchInstanceName() {
 		try {
-			Message<String> request = MessageBuilder.withPayload("NONE")
-					.setHeader(BusTopic.TOPIC_HEADER_NAME, BusTopic.CONFIGURATION.name())
-					.setHeader(BusAction.ACTION_HEADER_NAME, BusAction.FIND.name())
+			HttpRequest request = HttpRequest.newBuilder()
+					.uri(URI.create(frankBaseUrl + "/iaf/api/server/info"))
+					.timeout(Duration.ofSeconds(2))
+					.GET()
 					.build();
-			Message<?> response = outboundGateway.sendSyncMessage(request);
-			List<String> projectPaths = parseProjectPaths(response.getPayload());
-			String name = projectPaths.isEmpty() ? "local" : Path.of(projectPaths.getFirst()).getFileName().toString();
-			return List.of(new FrankInstanceDTO(name, null, projectPaths, true));
+			HttpResponse<String> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
+			if (response.statusCode() == 200) {
+				JsonNode root = objectMapper.readTree(response.body());
+				// Try multiple possible response structures
+				for (String path : new String[]{"instance/name", "instanceName", "name"}) {
+					String[] parts = path.split("/");
+					JsonNode node = root;
+					for (String part : parts) {
+						node = node.path(part);
+					}
+					String text = node.asText(null);
+					if (text != null && !text.isBlank() && !"null".equals(text)) {
+						return text;
+					}
+				}
+			}
 		} catch (Exception e) {
-			log.debug("Failed to fetch local configurations: {}", e.getMessage());
-			return List.of();
+			log.debug("Failed to fetch instance name from [{}]: {}", frankBaseUrl, e.getMessage());
+		}
+		return deriveName(frankBaseUrl);
+	}
+
+	private List<String> fetchProjectPathsViaHttp() {
+		try {
+			HttpRequest request = HttpRequest.newBuilder()
+					.uri(URI.create(frankBaseUrl + "/iaf/api/server/configurations"))
+					.timeout(Duration.ofSeconds(2))
+					.header("Accept", "application/json")
+					.GET()
+					.build();
+			HttpResponse<String> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
+			if (response.statusCode() == 200 && response.body().trim().startsWith("[")) {
+				return parseProjectPaths(response.body());
+			}
+		} catch (Exception e) {
+			log.debug("Failed to fetch configurations: {}", e.getMessage());
+		}
+		return List.of();
+	}
+
+
+	private String deriveName(String url) {
+		try {
+			URI uri = URI.create(url);
+			String host = uri.getHost();
+			int port = uri.getPort();
+			if (port > 0 && port != 80 && port != 443) {
+				return host + ":" + port;
+			}
+			return host != null ? host : url;
+		} catch (Exception e) {
+			return url;
 		}
 	}
 
