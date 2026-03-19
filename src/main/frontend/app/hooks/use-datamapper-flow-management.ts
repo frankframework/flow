@@ -163,7 +163,7 @@ export function useFlowManagement({
     //Change type to object if needed.
     const updatedType = getType(data.variableType, data.parentId)
     data.variableTypeBasic = formatType?.properties.find(
-      (propertyDefinition) => propertyDefinition.name == updatedType,
+      (propertyDefinition) => propertyDefinition.name == data.variableType,
     )?.type
     //Persist node to reactflow
     setReactFlowNodes((previous) =>

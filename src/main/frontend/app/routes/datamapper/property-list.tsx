@@ -84,6 +84,12 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
   const [mappingTargets, setMappingTargets] = useState<NodeLabels[]>([])
   const canvasWidth = useRef<HTMLDivElement>(null)
 
+  const editingMappingRef = useRef<MappingConfig | null>(null)
+
+  useEffect(() => {
+    editingMappingRef.current = editingMapping
+  }, [editingMapping])
+
   const flow = useFlowManagement({
     reactFlowInstance,
     config,
@@ -232,7 +238,7 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
         }
       }
       let isArrayMapping = false
-      if (!editingMapping) {
+      if (!editingMappingRef.current) {
         const checkedSources = sources.filter((source) => source.checked)
         if (checkedSources.length != unfilteredSources.filter((source) => source.checked).length) {
           showErrorToast('Mapping item in source array only allowed within a for each')
