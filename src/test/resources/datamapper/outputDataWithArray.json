@@ -1,0 +1,1 @@
+{"shiporder":{"besteller":"John Smith","bestemming":{"naam":"Jane Doe","adres":"123 Market Street","stad":"Rotterdam","land":"Netherlands"},"item":[{"titel":"Jane Doe","kwantiteit":"1","prijs":"1200.50"},{"titel":"Jane Doe","kwantiteit":"2","prijs":"25.99"},{"titel":"Jane Doe","kwantiteit":"1","prijs":"89.95"}],"orderid":"SO12345"}}
