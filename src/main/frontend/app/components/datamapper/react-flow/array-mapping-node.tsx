@@ -5,7 +5,6 @@ import { MAPPING_WIDTH } from '~/utils/datamapper_utils/const'
 
 export interface ArrayMappingNodeProperties {
   id: string
-
   data: ArrayMappingConfig
   onClick?: (id: string) => void
   onDelete?: (id: string) => void

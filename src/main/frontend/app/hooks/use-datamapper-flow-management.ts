@@ -69,9 +69,6 @@ export function useFlowManagement({
     //Calculate the position the node is to be placed at. This isn't always very accurate and will be corrected later after adding
     const newY: number = calculateNodePosition(previous, data.parentId)
     //Set the correct type of the node
-    let type: string
-
-    type = getType(data.variableType, data.parentId)
 
     //Create the node Obj
     const newNode: Node = {
@@ -79,7 +76,7 @@ export function useFlowManagement({
       position: { x: 10, y: newY },
       parentId: data.parentId,
       extent: 'parent',
-      type,
+      type: getType(data.variableType, data.parentId),
       data,
     }
 

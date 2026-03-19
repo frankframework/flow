@@ -1,5 +1,11 @@
 import type { Node, Edge } from '@xyflow/react'
-import type { NodeLabels, MappingConfig, ArrayMappingConfig } from '~/types/datamapper_types/node-types'
+import type {
+  NodeLabels,
+  MappingConfig,
+  ArrayMappingConfig,
+  MappingNode,
+  PropertyNode,
+} from '~/types/datamapper_types/node-types'
 
 interface GetNodesOptions {
   typeIncludes?: string | string[]
@@ -30,7 +36,7 @@ export function recurseFindArray(node: Node, nodes: Node[]) {
   if (parent.type?.includes('Array')) {
     return parent.id
   }
-  recurseFindArray(parent, nodes)
+  return recurseFindArray(parent, nodes)
 }
 export function isGroup(variableType: string): boolean {
   return variableType.includes('object') || variableType.includes('schematic') || variableType.includes('array')
@@ -269,4 +275,80 @@ export function deleteMappingNode(nodeId: string, allNodes: Node[], allEdges: Ed
     remainingNodes: allNodes.filter((node) => node.id !== nodeId),
     remainingEdges: removeEdgesForNode(nodeId, allEdges),
   }
+}
+
+export function getMappingNodes(nodes: Node[], mappingConfig?: MappingConfig) {
+  const unfilteredSources = getNodesByTypeAndId(nodes, {
+    typeIncludes: 'source',
+    includeChecked: true,
+  })
+
+  const targets = getNodesByTypeAndId(nodes, {
+    typeIncludes: 'target',
+    includeChecked: true,
+  })
+
+  const sources = unfilteredSources.filter((s) => s.parentArray == undefined)
+
+  let parentArrayId = targets.find((t) => t.checked)?.parentArray
+  if (mappingConfig) {
+    parentArrayId = targets.find((t) => t.id == mappingConfig.target)?.parentArray
+  }
+  if (parentArrayId) {
+    const arrayMapping = nodes.find((n) => n.data.target == parentArrayId)
+
+    if (arrayMapping) {
+      sources.push(...unfilteredSources.filter((s) => s.parentArray == arrayMapping.data.source))
+    }
+  }
+
+  return { sources, targets, unfilteredSources }
+}
+
+export function validateMapping(sources: NodeLabels[], targets: NodeLabels[], unfilteredSources: NodeLabels[]) {
+  const checkedSources = sources.filter((s) => s.checked)
+  const checkedTargets = targets.filter((t) => t.checked)
+
+  if (checkedSources.length !== unfilteredSources.filter((s) => s.checked).length) {
+    return 'Mapping item in source array only allowed within a for each'
+  }
+
+  if (checkedSources.length > 1 && checkedTargets.length > 1) {
+    return 'Many to Many mapping not supported!'
+  }
+
+  return null
+}
+
+export function handleArrayMapping(
+  checkedSources: NodeLabels[],
+  checkedTargets: NodeLabels[],
+  nodes: Node[],
+  edges: Edge[],
+  setNodes: (nodes: Node[]) => void,
+  setEdges: (edges: Edge[]) => void,
+) {
+  const arraySources = checkedSources.filter((s) => s.type?.includes('array'))
+
+  const isTargetArray = checkedTargets[0]?.type?.includes('array')
+
+  if (arraySources.length === checkedSources.length && isTargetArray) {
+    const config = {
+      source: checkedSources[0].id,
+      target: checkedTargets[0].id,
+    }
+
+    const { updatedNodes, updatedEdges } = createNewArrayMappingNode(config, nodes, edges)
+
+    setNodes(updatedNodes)
+    setEdges(updatedEdges)
+
+    return true
+  }
+
+  if (arraySources.length > 0 || isTargetArray) {
+    throw new Error('Invalid mapping configuration, arrays cannot be mapped with normal properties')
+  }
+
+  return false
 }

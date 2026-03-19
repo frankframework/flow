@@ -28,6 +28,9 @@ import {
   getNodesByTypeAndId,
   createMappingNode,
   createNewArrayMappingNode,
+  validateMapping,
+  getMappingNodes,
+  handleArrayMapping,
 } from '~/utils/datamapper_utils/react-node-utils'
 import Button from '~/components/inputs/button'
 
@@ -216,65 +219,51 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
     restoreFlow()
   }, [setReactFlowNodes])
 
+  function openMappingModal(sources: NodeLabels[], targets: NodeLabels[]) {
+    setMappingSources(sources.filter((s) => s.id?.includes('item')))
+    setMappingTargets(targets.filter((t) => t.id?.includes('item')))
+    setAddMappingModal(true)
+  }
+
   function openMapping() {
     requestAnimationFrame(() => {
-      const unfilteredSources = getNodesByTypeAndId(reactFlowInstance.getNodes(), {
-        typeIncludes: 'source',
-        includeChecked: true,
-      })
-      const targets = getNodesByTypeAndId(reactFlowInstance.getNodes(), {
-        typeIncludes: 'target',
-        includeChecked: true,
-      })
-      const sources = unfilteredSources.filter((source) => source.parentArray == undefined)
-      if (targets.length > 0) {
-        const parentArrayId = targets.find((target) => target.checked)?.parentArray
-        if (parentArrayId) {
-          const arrayMapping = reactFlowInstance.getNodes().find((node) => node.data.target == parentArrayId)
+      const nodes = reactFlowInstance.getNodes()
+      const edges = reactFlowInstance.getEdges()
 
-          if (arrayMapping) {
-            sources.push(...unfilteredSources.filter((source) => source.parentArray == arrayMapping.data.source))
-          }
-        }
-      }
-      let isArrayMapping = false
+      const { sources, targets, unfilteredSources } = getMappingNodes(nodes, editingMappingRef.current || undefined)
+
       if (!editingMappingRef.current) {
-        const checkedSources = sources.filter((source) => source.checked)
-        if (checkedSources.length != unfilteredSources.filter((source) => source.checked).length) {
-          showErrorToast('Mapping item in source array only allowed within a for each')
+        const error = validateMapping(sources, targets, unfilteredSources)
+        if (error) {
+          showErrorToast(error)
           return
         }
-        const checkedTargets = targets.filter((target) => target.checked)
 
-        if (checkedSources.length > 1 && checkedTargets.length > 1) {
-          showErrorToast('Many to Many mapping not supported!')
-          return
-        }
-        const arrayMappings = checkedSources.filter((source) => source.type?.includes('array'))
+        const checkedSources = sources.filter((s) => s.checked)
+        const checkedTargets = targets.filter((t) => t.checked)
 
-        if (arrayMappings.length == checkedSources.length && checkedTargets[0].type?.includes('array')) {
-          isArrayMapping = true
-          let arraymappingConfig: ArrayMappingConfig = {
-            source: checkedSources[0].id,
-            target: checkedTargets[0].id,
-          }
-          const { updatedNodes, updatedEdges } = createNewArrayMappingNode(
-            arraymappingConfig,
-            reactFlowInstance.getNodes(),
-            reactFlowInstance.getEdges(),
+        try {
+          const isArrayMapping = handleArrayMapping(
+            checkedSources,
+            checkedTargets,
+            nodes,
+            edges,
+            setReactFlowNodes,
+            setEdges,
           )
-          setReactFlowNodes(updatedNodes)
-          setEdges(updatedEdges)
-        } else if (arrayMappings.length > 0 || checkedTargets[0].type?.includes('array')) {
-          showErrorToast('Invalid mapping configuration, arrays cannot be mapped with normal properties')
-          return
+
+          if (isArrayMapping) return
+        } catch (error) {
+          if (error instanceof Error) {
+            showErrorToast(error.message)
+            return
+          } else {
+            throw error
+          }
         }
       }
-      if (!isArrayMapping) {
-        setMappingSources(sources.filter((source) => source.id?.includes('item')))
-        setMappingTargets(targets.filter((target) => target.id?.includes('item')))
-        setAddMappingModal(true)
-      }
+
+      openMappingModal(sources, targets)
     })
   }
 
