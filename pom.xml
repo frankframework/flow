@@ -61,6 +61,7 @@
 	<properties>
 		<revision>3.0.0-SNAPSHOT</revision>
 		<java.version>21</java.version>
+		<spring-framework.version>7.0.6</spring-framework.version>
 		<jackson.version>2.20.1</jackson.version>
 		<lombok.version>1.18.42</lombok.version>
 		<spotless.version>3.0.0</spotless.version>
@@ -96,6 +97,11 @@
 	</dependencyManagement>
 
 	<dependencies>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-beans</artifactId>
+			<version>${spring-framework.version}</version>
+		</dependency>
 		<!-- Spring Boot starters -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -177,6 +183,12 @@
 			<artifactId>Saxon-HE</artifactId>
 			<version>12.9</version>
 		</dependency>
+		<dependency>
+			<groupId>org.frankframework</groupId>
+			<artifactId>frankframework-management-gateway</artifactId>
+			<version>10.0.0</version>
+			<scope>compile</scope>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -221,6 +233,10 @@
 							<groupId>org.projectlombok</groupId>
 							<artifactId>lombok</artifactId>
 							<version>${lombok.version}</version>
+						</path>
+						<path>
+							<groupId>org.springframework.boot</groupId>
+							<artifactId>spring-boot-configuration-processor</artifactId>
 						</path>
 					</annotationProcessorPaths>
 				</configuration>
