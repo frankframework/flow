@@ -48,12 +48,20 @@ export function KeybindsTable() {
     if (shortcut.id.endsWith('-alt')) continue
 
     let displayScope = shortcut.scope as string
-    if (shortcut.id.startsWith('explorer.')) {
-      displayScope = 'editor-file-explorer'
-    } else if (shortcut.id.startsWith('studio-explorer.')) {
-      displayScope = 'studio-file-explorer'
-    } else if (shortcut.id.startsWith('editor.')) {
-      displayScope = 'code-editor'
+
+    switch (true) {
+      case shortcut.id.startsWith('explorer.'): {
+        displayScope = 'editor-file-explorer'
+        break
+      }
+      case shortcut.id.startsWith('studio-explorer.'): {
+        displayScope = 'studio-file-explorer'
+        break
+      }
+      case shortcut.id.startsWith('editor.'): {
+        displayScope = 'code-editor'
+        break
+      }
     }
 
     if (!grouped.has(displayScope)) grouped.set(displayScope, [])

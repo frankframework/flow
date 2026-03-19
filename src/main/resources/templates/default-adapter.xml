@@ -3,6 +3,6 @@
         <ApiListener method="GET" uriPattern="/api" />
     </Receiver>
     <Pipeline>
-        <FixedResultPipe name="Result" returnString="Hello World" />
+		<EchoPipe name="Result" getInputFromFixedValue="Hello World" />
     </Pipeline>
 </Adapter>

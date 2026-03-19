@@ -63,16 +63,21 @@ export default function StudioFileStructure() {
   const setActiveTab = useTabStore((state) => state.setActiveTab)
   const getTab = useTabStore((state) => state.getTab)
 
+  const expandedItemsRef = useRef(studioExpandedItems)
+  useEffect(() => {
+    expandedItemsRef.current = studioExpandedItems
+  }, [studioExpandedItems])
+
   const studioContextMenu = useStudioContextMenu({
     projectName: project?.name,
     dataProvider,
   })
 
   const buildContextForItem = useCallback(
-    async (itemId: TreeItemIndex): Promise<StudioContextMenuState | undefined> => {
-      if (!dataProvider) return undefined
+    async (itemId: TreeItemIndex): Promise<StudioContextMenuState | null> => {
+      if (!dataProvider) return null
       const item = await dataProvider.getTreeItem(itemId)
-      if (!item) return undefined
+      if (!item) return null
 
       const itemType = detectItemType(item.data)
       const name = getItemName(item.data)
@@ -112,7 +117,7 @@ export default function StudioFileStructure() {
       setProviderLoading(true)
 
       const provider = new FilesDataProvider(project.name)
-      await provider.init(studioExpandedItems)
+      await provider.init(expandedItemsRef.current)
 
       if (isMounted) {
         setDataProvider(provider)
@@ -301,12 +306,11 @@ export default function StudioFileStructure() {
         ? (item.data as { listenerName: string | null }).listenerName
         : null
 
-    const isConfigFile =
-      item.isFolder &&
-      typeof item.data === 'object' &&
-      item.data !== null &&
-      'path' in item.data &&
-      (item.data as StudioFolderData).path.endsWith('.xml')
+    const isObject = typeof item.data === 'object'
+
+    const pathEndsWithXmlExtension = (item.data as Partial<StudioFolderData>).path?.endsWith('.xml')
+
+    const isConfigFile = item.isFolder && isObject && item.data !== null && pathEndsWithXmlExtension
 
     let Icon
     if (isConfigFile) {

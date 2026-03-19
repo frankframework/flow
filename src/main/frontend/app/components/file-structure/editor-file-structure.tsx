@@ -52,6 +52,12 @@ export default function EditorFileStructure() {
   const [dataProvider, setDataProvider] = useState<EditorFilesDataProvider | null>(null)
   const [selectedItemId, setSelectedItemId] = useState<TreeItemIndex | null>(null)
 
+  const expandedItemsRef = useRef(editorExpandedItems)
+
+  useEffect(() => {
+    expandedItemsRef.current = editorExpandedItems
+  }, [editorExpandedItems])
+
   const onAfterRename = useCallback(
     (oldPath: string, newName: string) => {
       const tab = getTab(oldPath)
@@ -81,15 +87,15 @@ export default function EditorFileStructure() {
   })
 
   const buildContextForItem = useCallback(
-    async (itemId: TreeItemIndex): Promise<ContextMenuState | undefined> => {
-      if (!dataProvider) return undefined
+    async (itemId: TreeItemIndex): Promise<ContextMenuState | null> => {
+      if (!dataProvider) return null
       const item = await dataProvider.getTreeItem(itemId)
-      if (!item) return undefined
+      if (!item) return null
       return {
         position: { x: 0, y: 0 },
         itemId,
-        isFolder: !!item.isFolder,
-        isRoot: !!item.data.projectRoot,
+        isFolder: item.isFolder ?? false,
+        isRoot: item.data.projectRoot ?? false,
         path: item.data.path,
         name: item.data.name,
       }
@@ -123,7 +129,7 @@ export default function EditorFileStructure() {
 
     const initProvider = async () => {
       const provider = new EditorFilesDataProvider(project.name)
-      await provider.init(editorExpandedItems)
+      await provider.init(expandedItemsRef.current)
 
       if (isMounted) {
         setDataProvider(provider)

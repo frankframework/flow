@@ -1,11 +1,5 @@
 import type { Node, Edge } from '@xyflow/react'
-import type {
-  NodeLabels,
-  MappingConfig,
-  ArrayMappingConfig,
-  MappingNode,
-  PropertyNode,
-} from '~/types/datamapper_types/node-types'
+import type { NodeLabels, MappingConfig, ArrayMappingConfig } from '~/types/datamapper_types/node-types'
 
 interface GetNodesOptions {
   typeIncludes?: string | string[]

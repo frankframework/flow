@@ -1,38 +1,55 @@
 import { create } from 'zustand'
 import type { AppRoute } from '~/stores/navigation-store'
 
+export type Platform = 'mac' | 'pc'
+
+type PlatformValue<T> = T | Partial<Record<Platform, T>>
+
+export interface KeyModifiers {
+  cmdOrCtrl?: boolean
+  shift?: boolean
+  alt?: boolean
+}
+
 export interface ShortcutDefinition {
   id: string
   label: string
   scope: AppRoute | 'global'
-  key: string
-  modifiers?: { cmdOrCtrl?: boolean; shift?: boolean; alt?: boolean }
+  key: PlatformValue<string>
+  modifiers?: PlatformValue<KeyModifiers>
   allowInInput?: boolean
   displayOnly?: boolean
   handler?: () => void
 }
 
-export type Platform = 'mac' | 'pc'
-
 function capitalize(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1)
+}
+
+export function getPlatformValue<T>(value: PlatformValue<T> | undefined, platform: Platform): T | undefined {
+  if (value === undefined) return undefined
+
+  if (typeof value === 'object' && value !== null && ('mac' in value || 'pc' in value)) {
+    return (value as Record<Platform, T>)[platform]
+  }
+
+  return value as T
 }
 
 /**
  * Builds the display parts for a shortcut's key combination (e.g. ['Ctrl', 'Shift', 'F']).
  */
-export function formatShortcutParts(
-  shortcut: Pick<ShortcutDefinition, 'key' | 'modifiers'>,
-  platform: Platform,
-): string[] {
+export function formatShortcutParts(shortcut: ShortcutDefinition, platform: Platform): string[] {
   const parts: string[] = []
-  const mods = shortcut.modifiers ?? {}
+
+  const activeKey = getPlatformValue(shortcut.key, platform) || ''
+  const mods = getPlatformValue(shortcut.modifiers, platform) ?? {}
 
   if (mods.cmdOrCtrl) parts.push(platform === 'mac' ? '⌘' : 'Ctrl')
   if (mods.shift) parts.push('Shift')
   if (mods.alt) parts.push(platform === 'mac' ? '⌥' : 'Alt')
 
-  const keyLabel = shortcut.key.length === 1 ? shortcut.key.toUpperCase() : capitalize(shortcut.key)
+  const keyLabel = activeKey.length === 1 ? activeKey.toUpperCase() : capitalize(activeKey)
   parts.push(keyLabel)
 
   return parts
@@ -145,14 +162,12 @@ export const ALL_SHORTCUTS: Omit<ShortcutDefinition, 'handler'>[] = [
   { id: 'explorer.new-file', label: 'New File', scope: 'editor', key: 'n' },
   { id: 'explorer.new-folder', label: 'New Folder', scope: 'editor', key: 'n', modifiers: { shift: true } },
   { id: 'explorer.rename', label: 'Rename Item', scope: 'editor', key: 'r' },
-  { id: 'explorer.delete', label: 'Delete Item', scope: 'editor', key: 'delete' },
   {
-    id: 'explorer.delete-mac',
-    label: 'Delete Item (Mac)',
+    id: 'explorer.delete',
+    label: 'Delete Item',
     scope: 'editor',
-    key: 'backspace',
-    modifiers: { cmdOrCtrl: true },
-    displayOnly: true,
+    key: { pc: 'delete', mac: 'backspace' },
+    modifiers: { mac: { cmdOrCtrl: true } },
   },
 
   // Studio File Explorer
@@ -160,14 +175,12 @@ export const ALL_SHORTCUTS: Omit<ShortcutDefinition, 'handler'>[] = [
   { id: 'studio-explorer.new-adapter', label: 'New Adapter', scope: 'studio', key: 'a' },
   { id: 'studio-explorer.new-folder', label: 'New Folder', scope: 'studio', key: 'n', modifiers: { shift: true } },
   { id: 'studio-explorer.rename', label: 'Rename Item', scope: 'studio', key: 'r' },
-  { id: 'studio-explorer.delete', label: 'Delete Item', scope: 'studio', key: 'delete' },
   {
-    id: 'studio-explorer.delete-mac',
-    label: 'Delete Item (Mac)',
+    id: 'studio-explorer.delete',
+    label: 'Delete Item',
     scope: 'studio',
-    key: 'backspace',
-    modifiers: { cmdOrCtrl: true },
-    displayOnly: true,
+    key: { pc: 'delete', mac: 'backspace' },
+    modifiers: { mac: { cmdOrCtrl: true } },
   },
 ]
 

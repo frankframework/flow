@@ -1,10 +1,10 @@
-<Configuration name="DefaultConfig" xmlns:flow="urn:frank-flow">
+<Configuration name="DefaultConfig">
     <Adapter name="SampleAdapter">
         <Receiver name="SampleReceiver">
             <ApiListener method="GET" uriPattern="/sample" />
         </Receiver>
         <Pipeline>
-            <FixedResultPipe name="Result" returnString="Hello from Flow!" />
+			<EchoPipe name="Result" getInputFromFixedValue="Hello World" />
         </Pipeline>
     </Adapter>
 </Configuration>

@@ -29,11 +29,9 @@ export default function StudioContextMenu({
 
   const itemClass = 'px-3 py-1.5 cursor-pointer hover:bg-hover text-sm text-foreground whitespace-nowrap'
 
-  const showNewConfiguration = itemType === 'root' || itemType === 'folder'
-  const showNewFolder = itemType === 'root' || itemType === 'folder'
+  const showNewConfigurationAndNewFolder = itemType === 'root' || itemType === 'folder'
   const showNewAdapter = itemType === 'configuration'
-  const showRename = itemType === 'configuration' || itemType === 'adapter' || itemType === 'folder'
-  const showDelete = itemType === 'configuration' || itemType === 'adapter' || itemType === 'folder'
+  const showRenameAndDelete = itemType === 'configuration' || itemType === 'adapter' || itemType === 'folder'
 
   return createPortal(
     <div
@@ -41,12 +39,12 @@ export default function StudioContextMenu({
       className="bg-background border-border fixed z-50 overflow-hidden rounded-md border py-1 shadow-md"
       style={{ left: position.x, top: position.y }}
     >
-      {showNewConfiguration && (
+      {showNewConfigurationAndNewFolder && (
         <div className={itemClass} onClick={() => onNewConfiguration()}>
           New Configuration
         </div>
       )}
-      {showNewFolder && (
+      {showNewConfigurationAndNewFolder && (
         <div className={itemClass} onClick={() => onNewFolder()}>
           New Folder
         </div>
@@ -56,12 +54,12 @@ export default function StudioContextMenu({
           New Adapter
         </div>
       )}
-      {showRename && (
+      {showRenameAndDelete && (
         <div className={itemClass} onClick={() => onRename()}>
           Rename
         </div>
       )}
-      {showDelete && (
+      {showRenameAndDelete && (
         <div className={`${itemClass} text-red-500`} onClick={() => onDelete()}>
           Delete
         </div>
