@@ -232,12 +232,15 @@ function addForwardEdges(
     const handleIndex = forwardIndexBySourceId.get(sourceId) ?? 1
     forwardIndexBySourceId.set(sourceId, handleIndex + 1)
 
+    const label = forward.getAttribute('name')?.trim() || 'success'
+
     edges.push({
       id: `${sourceId}-${targetNode.id}-${handleIndex}`,
       source: sourceId,
       target: targetNode.id,
       type: 'frankEdge',
       sourceHandle: handleIndex.toString(),
+      data: { label },
     })
 
     if (!explicitTargetsBySourceId.has(sourceId)) {
@@ -277,6 +280,7 @@ function addReceiverToFirstPipeEdges(
       target: firstPipe.id,
       type: 'frankEdge',
       sourceHandle: handleIndex.toString(),
+      data: { label: 'success' },
     })
   }
 }
@@ -317,6 +321,7 @@ function addSequentialFallbackEdges(
       target: next.id,
       sourceHandle: handleIndex.toString(),
       type: 'frankEdge',
+      data: { label: 'success' },
     })
   }
 }
@@ -346,6 +351,7 @@ function addImplicitSuccessExitEdge(
     target: successExit.id,
     type: 'frankEdge',
     sourceHandle: handleIndex.toString(),
+    data: { label: 'success' },
   })
 }
 
@@ -680,6 +686,7 @@ interface FrankEdge {
   target: string
   sourceHandle?: string
   type: 'frankEdge'
+  data: { label: string }
 }
 
 interface ParsedAttributes {

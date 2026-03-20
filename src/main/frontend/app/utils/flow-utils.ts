@@ -1,3 +1,5 @@
+import type { FlowNode } from '~/routes/studio/canvas/flow'
+
 const REFERENCE_KEYS = new Set(['source', 'target', 'parentId'])
 
 // Helper function for copying nodes and edges with new IDs while maintaining relationships
@@ -37,6 +39,18 @@ export function getFirstLabelGroup(filters: Record<string, string> | undefined):
   const labelGroups = Object.entries(filters)
   if (labelGroups.length === 0) return defaultLabelGroup
   return labelGroups[0]
+}
+
+// Gathers the label associated with an edge by checking the sourcehandle, defaults to 'success'
+export function getEdgeLabelFromHandle(node: FlowNode | undefined, handleId: string | null | undefined): string {
+  if (!node?.data || !('sourceHandles' in node.data)) return 'success'
+
+  const handles = (node.data as { sourceHandles?: { type: string; index: number }[] }).sourceHandles ?? []
+  const handleIndex = Number(handleId)
+
+  const matched = handles.find((handle: { index: number }) => handle.index === handleIndex)
+
+  return matched?.type?.toLowerCase() ?? 'success'
 }
 
 /**  Converts the tagname of a non capitalized element that has a classname attribute to the last part of said classname, e.g.:
