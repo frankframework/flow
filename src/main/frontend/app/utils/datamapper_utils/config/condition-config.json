@@ -7,7 +7,7 @@
     },
     "logicOperator": {
       "label": "",
-      "allowedValues": ["==", "AND", "OR", "XOR"],
+      "allowedValues": ["!=", "=", "AND", "OR", "XOR"],
       "resultType": "boolean"
     }
   },
