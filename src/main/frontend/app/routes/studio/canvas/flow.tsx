@@ -34,7 +34,7 @@ import { useProjectStore } from '~/stores/project-store'
 import { clearConfigurationCache, fetchConfigurationCached, saveConfiguration } from '~/services/configuration-service'
 import { refreshOpenDiffs } from '~/services/git-service'
 import useEditorTabStore from '~/stores/editor-tab-store'
-import { cloneWithRemappedIds } from '~/utils/flow-utils'
+import { cloneWithRemappedIds, getEdgeLabelFromHandle } from '~/utils/flow-utils'
 import { showErrorToast } from '~/components/toast'
 import clsx from 'clsx'
 import { useSettingsStore } from '~/stores/settings-store'
@@ -647,13 +647,17 @@ function FlowCanvas() {
     flowStore.addNode(newNode)
     // If there's a source node, create an edge from it
     if (sourceInfo?.nodeId && sourceInfo.handleType === 'source') {
+      const sourceNode = flowStore.nodes.find((n) => n.id === sourceInfo.nodeId)
+
+      const label = getEdgeLabelFromHandle(sourceNode, sourceInfo.handleId)
+
       const newEdge: Edge = {
         id: `e${sourceInfo.nodeId}-${newId}`,
         source: sourceInfo.nodeId,
         sourceHandle: sourceInfo.handleId ?? undefined,
         target: newId.toString(),
         type: 'frankEdge',
-        data: {},
+        data: { label },
       }
 
       flowStore.setEdges(addEdge(newEdge, flowStore.edges))

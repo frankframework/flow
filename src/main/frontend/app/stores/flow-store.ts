@@ -20,6 +20,7 @@ import type { ChildNode } from '~/routes/studio/canvas/nodetypes/child-node'
 import { addChildRecursive, deleteChildRecursive, updateChildRecursive } from './child-utilities'
 import { FlowConfig } from '~/routes/studio/canvas/flow.config'
 import { subscribeWithSelector } from 'zustand/middleware'
+import { getEdgeLabelFromHandle } from '~/utils/flow-utils'
 
 export interface FlowSnapshot {
   nodes: FlowNode[]
@@ -182,16 +183,30 @@ const useFlowStore = create<FlowState>()(
     },
     onConnect: (connection) => {
       get().saveToHistory()
+
+      const { nodes } = get()
+      const sourceNode = nodes.find((n) => n.id === connection.source)
+
+      const label = getEdgeLabelFromHandle(sourceNode, connection.sourceHandle)
+
       const newEdge = {
         ...connection,
         type: 'frankEdge',
+        data: { label },
       }
+
       set({
         edges: addEdge(newEdge, get().edges),
       })
     },
     onReconnect: (oldEdge, newConnection) => {
       get().saveToHistory()
+
+      const { nodes } = get()
+      const sourceNode = nodes.find((n) => n.id === newConnection.source)
+
+      const label = getEdgeLabelFromHandle(sourceNode, newConnection.sourceHandle)
+
       set({
         edges: [
           ...get().edges.filter((edge) => edge.id !== oldEdge.id),
@@ -199,6 +214,7 @@ const useFlowStore = create<FlowState>()(
             ...newConnection,
             id: oldEdge.id,
             type: 'frankEdge',
+            data: { label },
           },
         ],
       })
