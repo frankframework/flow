@@ -25,19 +25,22 @@ export default function Root() {
     mappingListConfigReducer,
     DEFAULT_MAPPING_LIST_CONFIG,
   )
-  const [route, setRoute] = useState('')
+  const [route, setRoute] = useState('Initialize')
 
   useEffect(() => {
     const loadConfig = async () => {
       if (project) {
         const config = await fetchDatamapperConfiguration(project.name)
+        if (config) {
+          dispatchMappingListConfig({
+            type: 'IMPORT_CONFIG',
+            payload: config,
+          })
 
-        dispatchMappingListConfig({
-          type: 'IMPORT_CONFIG',
-          payload: config,
-        })
-
-        setRoute(config.stage == 'Mapping' ? 'Properties' : 'Initialize')
+          setRoute(config.stage == 'Mapping' ? 'Properties' : 'Initialize')
+        } else {
+          setRoute('Initialize')
+        }
       }
     }
 
