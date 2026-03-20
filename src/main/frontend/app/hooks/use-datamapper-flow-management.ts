@@ -5,7 +5,7 @@ import { SAXParser } from 'sax-ts'
 import type { MappingListConfig } from '~/types/datamapper_types/config-types'
 import type { JsonSchema, SaxAttributes, XsdComplexType, XsdElement } from '~/types/datamapper_types/schema-types'
 import type { SourceSchematic } from '~/stores/datamapper_state/schemaQueue/schema-queue-context'
-import type { CustomNodeData } from '~/types/datamapper_types/node-types'
+import type { CustomNodeData, NodeLabels } from '~/types/datamapper_types/node-types'
 import {
   OBJECT_HEIGHT,
   GROUP_PADDING_TOP,
@@ -14,7 +14,13 @@ import {
   TABLE_WIDTH,
   MAPPING_TABLE_WIDTH,
 } from '~/utils/datamapper_utils/const'
-import { deleteMappingNode, getType, isGroup, isNodeGroup } from '~/utils/datamapper_utils/react-node-utils'
+import {
+  deleteMappingNode,
+  getNodesByTypeAndId,
+  getType,
+  isGroup,
+  isNodeGroup,
+} from '~/utils/datamapper_utils/react-node-utils'
 
 interface UseFlowManagementProperties {
   reactFlowInstance: ReactFlowInstance
@@ -331,10 +337,36 @@ export function useFlowManagement({
         style: {
           ...node.style,
           opacity: 1,
+          borderWidth: 0,
+          borderColor: 'none',
         },
       })),
     )
   }
+  function highlightUnset() {
+    const unsetNodes: NodeLabels[] = getNodesByTypeAndId(
+      reactFlowInstance.getNodes(),
+      {
+        typeIncludes: 'target',
+      },
+      reactFlowInstance.getEdges(),
+    )
+    setReactFlowNodes((previousNodes) =>
+      previousNodes.map((node) => ({
+        ...node,
+        style: {
+          ...node.style,
+          borderColor: unsetNodes.some((nodeLabel) => nodeLabel.id == node.id)
+            ? node.data.defaultValue
+              ? 'yellow'
+              : 'red'
+            : 'none',
+          borderWidth: unsetNodes.some((nodeLabel) => nodeLabel.id == node.id) ? 3 : 0,
+        },
+      })),
+    )
+  }
+
   //Imports a json schema into a table
   async function importJsonSchema(schema: JsonSchema, side: 'source' | 'target', parentId: string | null) {
     let isRootObject = true
@@ -700,5 +732,6 @@ export function useFlowManagement({
     calculateTablePositions,
     importSchematic,
     importMultipleSchematics,
+    highlightUnset,
   }
 }

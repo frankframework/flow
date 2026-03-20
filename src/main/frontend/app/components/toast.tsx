@@ -30,7 +30,7 @@ const toastStyles = {
     container: defaultStyle,
     card: `${toastBaseCard} bg-info`,
     icon: 'ℹ️',
-    defaultDuration: 3000,
+    defaultDuration: 5000,
   },
   SUCCESS: {
     container: defaultStyle,
