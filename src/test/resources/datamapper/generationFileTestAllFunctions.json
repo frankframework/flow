@@ -1,0 +1,1779 @@
+{
+  "sourceType": "XML",
+  "targetType": "XML",
+  "targetStructure": [
+    {
+      "type": "object",
+      "internalId": "target-table-group-0",
+      "label": "shiporder",
+      "defaultValue": "",
+      "parent": "target-table",
+      "children": [
+        {
+          "type": "string",
+          "internalId": "target-table-group-0-item-1",
+          "label": "ConcatDestination",
+          "defaultValue": "",
+          "parent": "target-table-group-0",
+          "mapping": {
+            "id": "mapping-qrhhbk1dvna",
+            "sources": [
+              {
+                "type": "string",
+                "internalId": "source-table-group-0-item-1",
+                "label": "orderperson",
+                "defaultValue": "",
+                "parent": "source-table-group-0"
+              },
+              {
+                "type": "string",
+                "internalId": "source-table-group-0-group-2-item-3",
+                "label": "name",
+                "defaultValue": "",
+                "parent": "source-table-group-0-group-2"
+              }
+            ],
+            "target": {
+              "type": "string",
+              "internalId": "target-table-group-0-item-1",
+              "label": "ConcatDestination",
+              "defaultValue": "",
+              "parent": "target-table-group-0"
+            },
+            "mutations": [
+              {
+                "id": "mutation-_r_8_",
+                "name": "Concat",
+                "mutationType": {
+                  "name": "Concat",
+                  "maxInputs": null,
+                  "requiredInputs": 2,
+                  "inputs": [
+                    {
+                      "label": "concatString",
+                      "type": "source",
+                      "allowDefaultValue": true,
+                      "expandable": true,
+                      "inputsAllowed": "string"
+                    }
+                  ],
+                  "outputType": "string"
+                },
+                "inputs": [
+                  {
+                    "type": "source",
+                    "sourceId": "source-table-group-0-item-1",
+                    "value": "orderperson"
+                  },
+                  {
+                    "type": "defaultValue",
+                    "value": "Test1244 ",
+                    "sourceId": "defaultValue"
+                  },
+                  {
+                    "type": "source",
+                    "value": "name",
+                    "sourceId": "source-table-group-0-group-2-item-3"
+                  }
+                ]
+              }
+            ],
+            "conditions": [],
+            "conditional": null,
+            "output": "mutation-_r_8_"
+          }
+        },
+        {
+          "type": "object",
+          "internalId": "target-table-group-0-group-2",
+          "label": "bestemming",
+          "defaultValue": "",
+          "parent": "target-table-group-0",
+          "children": [
+            {
+              "type": "string",
+              "internalId": "target-table-group-0-group-2-item-3",
+              "label": "TranslateDestination",
+              "defaultValue": "",
+              "parent": "target-table-group-0-group-2",
+              "mapping": {
+                "id": "mapping-pybw012quok",
+                "sources": [
+                  {
+                    "type": "string",
+                    "internalId": "source-table-group-0-item-1",
+                    "label": "orderperson",
+                    "defaultValue": "",
+                    "parent": "source-table-group-0"
+                  }
+                ],
+                "target": {
+                  "type": "string",
+                  "internalId": "target-table-group-0-group-2-item-3",
+                  "label": "TranslateDestination",
+                  "defaultValue": "",
+                  "parent": "target-table-group-0-group-2"
+                },
+                "mutations": [
+                  {
+                    "id": "mutation-_r_9_",
+                    "name": "Translate",
+                    "mutationType": {
+                      "name": "Translate",
+                      "maxInputs": 3,
+                      "requiredInputs": 3,
+                      "inputs": [
+                        {
+                          "label": "input",
+                          "type": "source",
+                          "allowDefaultValue": true,
+                          "expandable": false,
+                          "inputsAllowed": "string"
+                        },
+                        {
+                          "label": "charsToBeReplaced",
+                          "type": "attribute",
+                          "allowDefaultValue": true,
+                          "expandable": false,
+                          "inputsAllowed": "string"
+                        },
+                        {
+                          "label": "replacedWithChars",
+                          "type": "attribute",
+                          "allowDefaultValue": true,
+                          "expandable": false,
+                          "inputsAllowed": "string"
+                        }
+                      ],
+                      "outputType": "string"
+                    },
+                    "inputs": [
+                      {
+                        "type": "source",
+                        "sourceId": "source-table-group-0-item-1",
+                        "value": "orderperson"
+                      },
+                      {
+                        "type": "attribute",
+                        "value": "meep"
+                      },
+                      {
+                        "type": "attribute",
+                        "value": "HasBeenReplaced"
+                      }
+                    ]
+                  }
+                ],
+                "conditions": [],
+                "conditional": null,
+                "output": "source-table-group-0-item-1"
+              }
+            },
+            {
+              "type": "string",
+              "internalId": "target-table-group-0-group-2-item-4",
+              "label": "ReplaceDestination",
+              "defaultValue": "",
+              "parent": "target-table-group-0-group-2",
+              "mapping": {
+                "id": "mapping-vbw7ajtqyls",
+                "sources": [
+                  {
+                    "type": "string",
+                    "internalId": "source-table-group-0-item-1",
+                    "label": "orderperson",
+                    "defaultValue": "",
+                    "parent": "source-table-group-0"
+                  }
+                ],
+                "target": {
+                  "type": "string",
+                  "internalId": "target-table-group-0-group-2-item-4",
+                  "label": "ReplaceDestination",
+                  "defaultValue": "",
+                  "parent": "target-table-group-0-group-2"
+                },
+                "mutations": [
+                  {
+                    "id": "mutation-_r_b_",
+                    "name": "Replace",
+                    "mutationType": {
+                      "name": "Replace",
+                      "maxInputs": 3,
+                      "requiredInputs": 3,
+                      "inputs": [
+                        {
+                          "label": "input",
+                          "type": "source",
+                          "allowDefaultValue": true,
+                          "expandable": false,
+                          "inputsAllowed": "string"
+                        },
+                        {
+                          "label": "pattern",
+                          "type": "attribute",
+                          "allowDefaultValue": true,
+                          "expandable": false,
+                          "inputsAllowed": "string"
+                        },
+                        {
+                          "label": "replacedBy",
+                          "type": "attribute",
+                          "allowDefaultValue": true,
+                          "expandable": false,
+                          "inputsAllowed": "string"
+                        }
+                      ],
+                      "outputType": "string"
+                    },
+                    "inputs": [
+                      {
+                        "type": "source",
+                        "sourceId": "source-table-group-0-item-1",
+                        "value": "orderperson"
+                      },
+                      {
+                        "type": "attribute",
+                        "value": "meep"
+                      },
+                      {
+                        "type": "attribute",
+                        "value": "HASBEENREPLACED"
+                      }
+                    ]
+                  }
+                ],
+                "conditions": [],
+                "conditional": null,
+                "output": "mutation-_r_b_"
+              }
+            },
+            {
+              "type": "string",
+              "internalId": "target-table-group-0-group-2-item-5",
+              "label": "SubstringDestination",
+              "defaultValue": "",
+              "parent": "target-table-group-0-group-2",
+              "mapping": {
+                "id": "mapping-68de26givvf",
+                "sources": [
+                  {
+                    "type": "string",
+                    "internalId": "source-table-group-0-item-1",
+                    "label": "orderperson",
+                    "defaultValue": "",
+                    "parent": "source-table-group-0"
+                  }
+                ],
+                "target": {
+                  "type": "string",
+                  "internalId": "target-table-group-0-group-2-item-5",
+                  "label": "SubstringDestination",
+                  "defaultValue": "",
+                  "parent": "target-table-group-0-group-2"
+                },
+                "mutations": [
+                  {
+                    "id": "mutation-_r_c_",
+                    "name": "Substring",
+                    "mutationType": {
+                      "name": "Substring",
+                      "maxInputs": 3,
+                      "requiredInputs": 3,
+                      "inputs": [
+                        {
+                          "label": "input",
+                          "type": "source",
+                          "allowDefaultValue": true,
+                          "expandable": false,
+                          "inputsAllowed": "string"
+                        },
+                        {
+                          "label": "start",
+                          "type": "attribute",
+                          "allowDefaultValue": false,
+                          "expandable": false,
+                          "inputsAllowed": "number"
+                        },
+                        {
+                          "label": "length",
+                          "type": "attribute",
+                          "allowDefaultValue": false,
+                          "expandable": false,
+                          "inputsAllowed": "number"
+                        }
+                      ],
+                      "outputType": "string"
+                    },
+                    "inputs": [
+                      {
+                        "type": "source",
+                        "sourceId": "source-table-group-0-item-1",
+                        "value": "orderperson"
+                      },
+                      {
+                        "type": "attribute",
+                        "value": "5"
+                      },
+                      {
+                        "type": "attribute",
+                        "value": "4"
+                      }
+                    ]
+                  }
+                ],
+                "conditions": [],
+                "conditional": null,
+                "output": "mutation-_r_c_"
+              }
+            },
+            {
+              "type": "string",
+              "internalId": "target-table-group-0-group-2-item-6",
+              "label": "SubstringBeforeDestination",
+              "defaultValue": "",
+              "parent": "target-table-group-0-group-2",
+              "mapping": {
+                "id": "mapping-y1ncm2hxis9",
+                "sources": [
+                  {
+                    "type": "string",
+                    "internalId": "source-table-group-0-item-1",
+                    "label": "orderperson",
+                    "defaultValue": "",
+                    "parent": "source-table-group-0"
+                  }
+                ],
+                "target": {
+                  "type": "string",
+                  "internalId": "target-table-group-0-group-2-item-6",
+                  "label": "SubstringBeforeDestination",
+                  "defaultValue": "",
+                  "parent": "target-table-group-0-group-2"
+                },
+                "mutations": [
+                  {
+                    "id": "mutation-_r_e_",
+                    "name": "SubBefore",
+                    "mutationType": {
+                      "name": "SubstringBefore",
+                      "maxInputs": 2,
+                      "requiredInputs": 2,
+                      "inputs": [
+                        {
+                          "label": "input",
+                          "type": "source",
+                          "allowDefaultValue": true,
+                          "expandable": false,
+                          "inputsAllowed": "string"
+                        },
+                        {
+                          "label": "beforeValue",
+                          "type": "attribute",
+                          "allowDefaultValue": true,
+                          "expandable": false,
+                          "inputsAllowed": "string"
+                        }
+                      ],
+                      "outputType": "string"
+                    },
+                    "inputs": [
+                      {
+                        "type": "source",
+                        "sourceId": "source-table-group-0-item-1",
+                        "value": "orderperson"
+                      },
+                      {
+                        "type": "attribute",
+                        "value": "meep"
+                      }
+                    ]
+                  }
+                ],
+                "conditions": [],
+                "conditional": null,
+                "output": "source-table-group-0-item-1"
+              }
+            },
+            {
+              "type": "integer",
+              "internalId": "target-table-group-0-group-2-item-16",
+              "label": "RoundDestination",
+              "defaultValue": "",
+              "parent": "target-table-group-0-group-2",
+              "mapping": {
+                "id": "mapping-4kkrgatmo35",
+                "sources": [
+                  {
+                    "type": "decimal",
+                    "internalId": "source-table-group-0-group-2-item-5",
+                    "label": "DecimalValue",
+                    "defaultValue": "",
+                    "parent": "source-table-group-0-group-2"
+                  }
+                ],
+                "target": {
+                  "type": "integer",
+                  "internalId": "target-table-group-0-group-2-item-16",
+                  "label": "RoundDestination",
+                  "defaultValue": "",
+                  "parent": "target-table-group-0-group-2"
+                },
+                "mutations": [
+                  {
+                    "id": "mutation-_r_f_",
+                    "name": "Round",
+                    "mutationType": {
+                      "name": "Round",
+                      "maxInputs": 1,
+                      "requiredInputs": 1,
+                      "inputs": [
+                        {
+                          "label": "input",
+                          "type": "source",
+                          "allowDefaultValue": false,
+                          "expandable": false,
+                          "inputsAllowed": "number"
+                        }
+                      ],
+                      "outputType": "number"
+                    },
+                    "inputs": [
+                      {
+                        "type": "source",
+                        "sourceId": "source-table-group-0-group-2-item-5",
+                        "value": "DecimalValue"
+                      }
+                    ]
+                  }
+                ],
+                "conditions": [],
+                "conditional": null,
+                "output": "mutation-_r_f_"
+              }
+            }
+          ]
+        },
+        {
+          "type": "array",
+          "internalId": "target-table-group-0-group-7",
+          "label": "item",
+          "defaultValue": "",
+          "parent": "target-table-group-0",
+          "children": [
+            {
+              "type": "string",
+              "internalId": "target-table-group-0-group-7-item-8",
+              "label": "SubstringAfterDestination",
+              "defaultValue": "",
+              "parent": "target-table-group-0-group-7",
+              "parentArray": "target-table-group-0-group-7",
+              "mapping": {
+                "id": "mapping-kqgxcqn36d8",
+                "sources": [
+                  {
+                    "type": "string",
+                    "internalId": "source-table-group-0-item-1",
+                    "label": "orderperson",
+                    "defaultValue": "",
+                    "parent": "source-table-group-0"
+                  }
+                ],
+                "target": {
+                  "type": "string",
+                  "internalId": "target-table-group-0-group-7-item-8",
+                  "label": "SubstringAfterDestination",
+                  "defaultValue": "",
+                  "parent": "target-table-group-0-group-7",
+                  "parentArray": "target-table-group-0-group-7"
+                },
+                "mutations": [
+                  {
+                    "id": "mutation-_r_d_",
+                    "name": "SubAfter",
+                    "mutationType": {
+                      "name": "SubstringAfter",
+                      "maxInputs": 2,
+                      "requiredInputs": 2,
+                      "inputs": [
+                        {
+                          "label": "input",
+                          "type": "source",
+                          "allowDefaultValue": true,
+                          "expandable": false,
+                          "inputsAllowed": "string"
+                        },
+                        {
+                          "label": "afterValue",
+                          "type": "attribute",
+                          "allowDefaultValue": true,
+                          "expandable": false,
+                          "inputsAllowed": "string"
+                        }
+                      ],
+                      "outputType": "string"
+                    },
+                    "inputs": [
+                      {
+                        "type": "source",
+                        "sourceId": "source-table-group-0-item-1",
+                        "value": "orderperson"
+                      },
+                      {
+                        "type": "attribute",
+                        "value": "meep"
+                      }
+                    ]
+                  }
+                ],
+                "conditions": [],
+                "conditional": null,
+                "output": "mutation-_r_d_"
+              }
+            },
+            {
+              "type": "string",
+              "internalId": "target-table-group-0-group-7-item-9",
+              "label": "ValueOfDestination",
+              "defaultValue": "",
+              "parent": "target-table-group-0-group-7",
+              "parentArray": "target-table-group-0-group-7",
+              "mapping": {
+                "id": "mapping-e7kh1w17dbe",
+                "sources": [
+                  {
+                    "type": "string",
+                    "internalId": "source-table-group-0-item-1",
+                    "label": "orderperson",
+                    "defaultValue": "",
+                    "parent": "source-table-group-0"
+                  }
+                ],
+                "target": {
+                  "type": "string",
+                  "internalId": "target-table-group-0-group-7-item-9",
+                  "label": "ValueOfDestination",
+                  "defaultValue": "",
+                  "parent": "target-table-group-0-group-7",
+                  "parentArray": "target-table-group-0-group-7"
+                },
+                "mutations": [
+                  {
+                    "id": "mutation-_r_g_",
+                    "name": "ValueOf",
+                    "mutationType": {
+                      "name": "ValueOf",
+                      "maxInputs": 1,
+                      "requiredInputs": 1,
+                      "inputs": [
+                        {
+                          "label": "expression",
+                          "type": "attribute",
+                          "allowDefaultValue": false,
+                          "expandable": false,
+                          "inputsAllowed": "string"
+                        }
+                      ],
+                      "outputType": "string"
+                    },
+                    "inputs": [
+                      {
+                        "type": "attribute",
+                        "value": "true()"
+                      }
+                    ]
+                  }
+                ],
+                "conditions": [],
+                "conditional": null,
+                "output": "mutation-_r_g_"
+              }
+            },
+            {
+              "type": "string",
+              "internalId": "target-table-group-0-group-7-item-10",
+              "label": "ChooseDestination",
+              "defaultValue": "",
+              "parent": "target-table-group-0-group-7",
+              "parentArray": "target-table-group-0-group-7",
+              "mapping": {
+                "id": "mapping-vogbhcg1pds",
+                "sources": [
+                  {
+                    "type": "nonPositiveInteger",
+                    "internalId": "source-table-group-0-group-7-item-10",
+                    "label": "quantity",
+                    "defaultValue": "",
+                    "parent": "source-table-group-0-group-7",
+                    "parentArray": "source-table-group-0-group-7"
+                  }
+                ],
+                "target": {
+                  "type": "string",
+                  "internalId": "target-table-group-0-group-7-item-10",
+                  "label": "ChooseDestination",
+                  "defaultValue": "",
+                  "parent": "target-table-group-0-group-7",
+                  "parentArray": "target-table-group-0-group-7"
+                },
+                "mutations": [],
+                "conditions": [],
+                "conditional": null,
+                "output": "source-table-group-0-group-7-item-10"
+              }
+            },
+            {
+              "type": "string",
+              "internalId": "target-table-group-0-group-7-item-11",
+              "label": "GenerateIdDestination",
+              "defaultValue": "",
+              "parent": "target-table-group-0-group-7",
+              "parentArray": "target-table-group-0-group-7",
+              "mapping": {
+                "id": "mapping-jtc74kihp3q",
+                "sources": [
+                  {
+                    "type": "string",
+                    "internalId": "source-table-group-0-group-7-item-8",
+                    "label": "title",
+                    "defaultValue": "",
+                    "parent": "source-table-group-0-group-7",
+                    "parentArray": "source-table-group-0-group-7"
+                  }
+                ],
+                "target": {
+                  "type": "string",
+                  "internalId": "target-table-group-0-group-7-item-11",
+                  "label": "GenerateIdDestination",
+                  "defaultValue": "",
+                  "parent": "target-table-group-0-group-7",
+                  "parentArray": "target-table-group-0-group-7"
+                },
+                "mutations": [
+                  {
+                    "id": "mutation-_r_h_",
+                    "name": "GenerateID",
+                    "mutationType": {
+                      "name": "GenerateId",
+                      "maxInputs": 1,
+                      "requiredInputs": 0,
+                      "inputs": [
+                        {
+                          "label": "nodeset",
+                          "type": "attribute",
+                          "allowDefaultValue": true,
+                          "expandable": false,
+                          "inputsAllowed": "string"
+                        }
+                      ],
+                      "outputType": "string"
+                    },
+                    "inputs": [
+                      {
+                        "type": "attribute",
+                        "value": "item"
+                      }
+                    ]
+                  }
+                ],
+                "conditions": [],
+                "conditional": null,
+                "output": "mutation-_r_h_"
+              }
+            }
+          ],
+          "mapping": {
+            "id": "mapping-qc8cnaejnjo",
+            "sources": [
+              {
+                "type": "array",
+                "internalId": "source-table-group-0-group-7",
+                "label": "item",
+                "defaultValue": "",
+                "parent": "source-table-group-0"
+              }
+            ],
+            "target": {
+              "type": "array",
+              "internalId": "target-table-group-0-group-7",
+              "label": "item",
+              "defaultValue": "",
+              "parent": "target-table-group-0"
+            },
+            "mutations": [],
+            "conditions": [],
+            "conditional": null,
+            "output": "source-table-group-0-group-7"
+          }
+        },
+        {
+          "type": "string",
+          "internalId": "target-table-group-0-item-12",
+          "label": "localNameDestination",
+          "defaultValue": "",
+          "parent": "target-table-group-0",
+          "mapping": {
+            "id": "mapping-w23wbi7z5i",
+            "sources": [
+              {
+                "type": "string",
+                "internalId": "source-table-group-0-item-1",
+                "label": "orderperson",
+                "defaultValue": "",
+                "parent": "source-table-group-0"
+              }
+            ],
+            "target": {
+              "type": "string",
+              "internalId": "target-table-group-0-item-12",
+              "label": "localNameDestination",
+              "defaultValue": "",
+              "parent": "target-table-group-0"
+            },
+            "mutations": [
+              {
+                "id": "mutation-_r_i_",
+                "name": "localName",
+                "mutationType": {
+                  "name": "LocalName",
+                  "maxInputs": 1,
+                  "requiredInputs": 1,
+                  "inputs": [
+                    {
+                      "label": "input",
+                      "type": "source",
+                      "allowDefaultValue": false,
+                      "expandable": false,
+                      "inputsAllowed": "string"
+                    }
+                  ],
+                  "outputType": "string"
+                },
+                "inputs": [
+                  {
+                    "type": "source",
+                    "sourceId": "source-table-group-0-item-1",
+                    "value": "orderperson"
+                  }
+                ]
+              }
+            ],
+            "conditions": [],
+            "conditional": null,
+            "output": "mutation-_r_i_"
+          }
+        },
+        {
+          "type": "string",
+          "internalId": "target-table-group-0-item-14",
+          "label": "NormalizeSpaceDestination",
+          "defaultValue": "",
+          "parent": "target-table-group-0",
+          "mapping": {
+            "id": "mapping-y2chal93qwa",
+            "sources": [
+              {
+                "type": "string",
+                "internalId": "source-table-group-0-item-1",
+                "label": "orderperson",
+                "defaultValue": "",
+                "parent": "source-table-group-0"
+              }
+            ],
+            "target": {
+              "type": "string",
+              "internalId": "target-table-group-0-item-14",
+              "label": "NormalizeSpaceDestination",
+              "defaultValue": "",
+              "parent": "target-table-group-0"
+            },
+            "mutations": [
+              {
+                "id": "mutation-_r_j_",
+                "name": "Normalize",
+                "mutationType": {
+                  "name": "NormalizeSpace",
+                  "maxInputs": 1,
+                  "requiredInputs": 1,
+                  "inputs": [
+                    {
+                      "label": "input",
+                      "type": "source",
+                      "allowDefaultValue": true,
+                      "expandable": false,
+                      "inputsAllowed": "string"
+                    }
+                  ],
+                  "outputType": "string"
+                },
+                "inputs": [
+                  {
+                    "type": "source",
+                    "sourceId": "source-table-group-0-item-1",
+                    "value": "orderperson"
+                  }
+                ]
+              }
+            ],
+            "conditions": [],
+            "conditional": null,
+            "output": "mutation-_r_j_"
+          }
+        },
+        {
+          "type": "string",
+          "internalId": "target-table-group-0-item-17",
+          "label": "ToStringDestination",
+          "defaultValue": "",
+          "parent": "target-table-group-0",
+          "mapping": {
+            "id": "mapping-cq38g9mclmv",
+            "sources": [
+              {
+                "type": "decimal",
+                "internalId": "source-table-group-0-group-2-item-5",
+                "label": "DecimalValue",
+                "defaultValue": "",
+                "parent": "source-table-group-0-group-2"
+              }
+            ],
+            "target": {
+              "type": "string",
+              "internalId": "target-table-group-0-item-17",
+              "label": "ToStringDestination",
+              "defaultValue": "",
+              "parent": "target-table-group-0"
+            },
+            "mutations": [
+              {
+                "id": "mutation-_r_k_",
+                "name": "ToString",
+                "mutationType": {
+                  "name": "CastToString",
+                  "maxInputs": 1,
+                  "requiredInputs": 1,
+                  "inputs": [
+                    {
+                      "label": "input",
+                      "type": "source",
+                      "allowDefaultValue": false,
+                      "expandable": false,
+                      "inputsAllowed": "all"
+                    }
+                  ],
+                  "outputType": "string"
+                },
+                "inputs": [
+                  {
+                    "type": "source",
+                    "sourceId": "source-table-group-0-group-2-item-5",
+                    "value": "DecimalValue"
+                  }
+                ]
+              }
+            ],
+            "conditions": [],
+            "conditional": null,
+            "output": "mutation-_r_k_"
+          }
+        },
+        {
+          "type": "int",
+          "internalId": "target-table-group-0-item-18",
+          "label": "ToNumberDestination",
+          "defaultValue": "",
+          "parent": "target-table-group-0",
+          "mapping": {
+            "id": "mapping-56y72bgn5km",
+            "sources": [
+              {
+                "type": "string",
+                "internalId": "source-table-group-0-group-2-item-6",
+                "label": "numberString",
+                "defaultValue": "",
+                "parent": "source-table-group-0-group-2"
+              }
+            ],
+            "target": {
+              "type": "int",
+              "internalId": "target-table-group-0-item-18",
+              "label": "ToNumberDestination",
+              "defaultValue": "",
+              "parent": "target-table-group-0"
+            },
+            "mutations": [
+              {
+                "id": "mutation-_r_l_",
+                "name": "ToNumber",
+                "mutationType": {
+                  "name": "CastToNumber",
+                  "maxInputs": 1,
+                  "requiredInputs": 1,
+                  "inputs": [
+                    {
+                      "label": "input",
+                      "type": "source",
+                      "allowDefaultValue": false,
+                      "expandable": false,
+                      "inputsAllowed": "all"
+                    }
+                  ],
+                  "outputType": "number"
+                },
+                "inputs": [
+                  {
+                    "type": "source",
+                    "sourceId": "source-table-group-0-group-2-item-6",
+                    "value": "numberString"
+                  }
+                ]
+              }
+            ],
+            "conditions": [],
+            "conditional": null,
+            "output": "mutation-_r_l_"
+          }
+        },
+        {
+          "type": "boolean",
+          "internalId": "target-table-group-0-item-19",
+          "label": "ToBoolDestination",
+          "defaultValue": "",
+          "parent": "target-table-group-0",
+          "mapping": {
+            "id": "mapping-et3yeaaxvj",
+            "sources": [
+              {
+                "type": "string",
+                "internalId": "source-table-group-0-item-1",
+                "label": "orderperson",
+                "defaultValue": "",
+                "parent": "source-table-group-0"
+              }
+            ],
+            "target": {
+              "type": "boolean",
+              "internalId": "target-table-group-0-item-19",
+              "label": "ToBoolDestination",
+              "defaultValue": "",
+              "parent": "target-table-group-0"
+            },
+            "mutations": [],
+            "conditions": [
+              {
+                "id": "condition-_r_n_",
+                "name": "CustomExpression",
+                "type": {
+                  "name": "Custom",
+                  "maxInputs": 1,
+                  "requiredInputs": 1,
+                  "inputs": [
+                    {
+                      "label": "expression",
+                      "type": "attribute",
+                      "allowDefaultValue": false,
+                      "inputsAllowed": "string"
+                    }
+                  ]
+                },
+                "inputs": [
+                  {
+                    "type": "attribute",
+                    "value": "5 > 8"
+                  }
+                ]
+              }
+            ],
+            "conditional": null,
+            "output": "condition-_r_n_"
+          }
+        },
+        {
+          "type": "boolean",
+          "internalId": "target-table-group-0-item-19",
+          "label": "ToBoolDestination",
+          "defaultValue": "",
+          "parent": "target-table-group-0",
+          "mapping": {
+            "id": "mapping-et3yeaaxvj",
+            "sources": [
+              {
+                "type": "string",
+                "internalId": "source-table-group-0-item-1",
+                "label": "orderperson",
+                "defaultValue": "",
+                "parent": "source-table-group-0"
+              }
+            ],
+            "target": {
+              "type": "boolean",
+              "internalId": "target-table-group-0-item-19",
+              "label": "ToBoolDestination",
+              "defaultValue": "",
+              "parent": "target-table-group-0"
+            },
+            "mutations": [],
+            "conditions": [
+              {
+                "id": "condition-_r_n_",
+                "name": "CustomExpression",
+                "type": {
+                  "name": "Custom",
+                  "maxInputs": 1,
+                  "requiredInputs": 1,
+                  "inputs": [
+                    {
+                      "label": "expression",
+                      "type": "attribute",
+                      "allowDefaultValue": false,
+                      "inputsAllowed": "string"
+                    }
+                  ]
+                },
+                "inputs": [
+                  {
+                    "type": "attribute",
+                    "value": "5 >  8"
+                  }
+                ]
+              }
+            ],
+            "conditional": null,
+            "output": "condition-_r_n_"
+          }
+        },
+        {
+          "type": "boolean",
+          "internalId": "target-table-group-0-item-20",
+          "label": "ExistsOutput",
+          "defaultValue": "",
+          "parent": "target-table-group-0",
+          "mapping": {
+            "id": "mapping-etwli1pgxkm",
+            "sources": [
+              {
+                "type": "string",
+                "internalId": "source-table-group-0-item-1",
+                "label": "orderperson",
+                "defaultValue": "",
+                "parent": "source-table-group-0"
+              }
+            ],
+            "target": {
+              "type": "boolean",
+              "internalId": "target-table-group-0-item-20",
+              "label": "ExistsOutput",
+              "defaultValue": "",
+              "parent": "target-table-group-0"
+            },
+            "mutations": [],
+            "conditions": [
+              {
+                "id": "condition-_r_p_",
+                "name": "Exists",
+                "type": {
+                  "name": "Exists",
+                  "maxInputs": 1,
+                  "requiredInputs": 1,
+                  "inputs": [
+                    {
+                      "label": "input",
+                      "type": "source",
+                      "allowDefaultValue": false,
+                      "inputsAllowed": "all"
+                    }
+                  ]
+                },
+                "inputs": [
+                  {
+                    "type": "source",
+                    "sourceId": "source-table-group-0-item-1",
+                    "value": ""
+                  }
+                ]
+              }
+            ],
+            "conditional": null,
+            "output": "condition-_r_p_"
+          }
+        },
+        {
+          "type": "boolean",
+          "internalId": "target-table-group-0-item-21",
+          "label": "EmptyOutput",
+          "defaultValue": "",
+          "parent": "target-table-group-0",
+          "mapping": {
+            "id": "mapping-g0mfqad2cip",
+            "sources": [
+              {
+                "type": "string",
+                "internalId": "source-table-group-0-item-1",
+                "label": "orderperson",
+                "defaultValue": "",
+                "parent": "source-table-group-0"
+              }
+            ],
+            "target": {
+              "type": "boolean",
+              "internalId": "target-table-group-0-item-21",
+              "label": "EmptyOutput",
+              "defaultValue": "",
+              "parent": "target-table-group-0"
+            },
+            "mutations": [],
+            "conditions": [
+              {
+                "id": "condition-_r_r_",
+                "name": "Empty",
+                "type": {
+                  "name": "EmptyCheck",
+                  "maxInputs": 1,
+                  "requiredInputs": 1,
+                  "inputs": [
+                    {
+                      "label": "input",
+                      "type": "source",
+                      "allowDefaultValue": false,
+                      "inputsAllowed": "all"
+                    }
+                  ]
+                },
+                "inputs": [
+                  {
+                    "type": "source",
+                    "sourceId": "source-table-group-0-item-1",
+                    "value": ""
+                  }
+                ]
+              }
+            ],
+            "conditional": null,
+            "output": "condition-_r_r_"
+          }
+        },
+        {
+          "type": "boolean",
+          "internalId": "target-table-group-0-item-22",
+          "label": "NullCheckOutput",
+          "defaultValue": "",
+          "parent": "target-table-group-0",
+          "mapping": {
+            "id": "mapping-18tevwad47q",
+            "sources": [
+              {
+                "type": "string",
+                "internalId": "source-table-group-0-item-1",
+                "label": "orderperson",
+                "defaultValue": "",
+                "parent": "source-table-group-0"
+              }
+            ],
+            "target": {
+              "type": "boolean",
+              "internalId": "target-table-group-0-item-22",
+              "label": "NullCheckOutput",
+              "defaultValue": "",
+              "parent": "target-table-group-0"
+            },
+            "mutations": [],
+            "conditions": [
+              {
+                "id": "condition-_r_t_",
+                "name": "NullCheck",
+                "type": {
+                  "name": "NullCheck",
+                  "maxInputs": 1,
+                  "requiredInputs": 1,
+                  "inputs": [
+                    {
+                      "label": "input",
+                      "type": "source",
+                      "allowDefaultValue": false,
+                      "inputsAllowed": "all"
+                    }
+                  ]
+                },
+                "inputs": [
+                  {
+                    "type": "source",
+                    "sourceId": "source-table-group-0-item-1",
+                    "value": ""
+                  }
+                ]
+              }
+            ],
+            "conditional": null,
+            "output": "condition-_r_t_"
+          }
+        },
+        {
+          "type": "boolean",
+          "internalId": "target-table-group-0-item-23",
+          "label": "CountOutput",
+          "defaultValue": "",
+          "parent": "target-table-group-0"
+        },
+        {
+          "type": "boolean",
+          "internalId": "target-table-group-0-item-24",
+          "label": "ValueEqualsOutput",
+          "defaultValue": "",
+          "parent": "target-table-group-0",
+          "mapping": {
+            "id": "mapping-kmayb4a9wsb",
+            "sources": [
+              {
+                "type": "string",
+                "internalId": "source-table-group-0-group-2-item-3",
+                "label": "name",
+                "defaultValue": "",
+                "parent": "source-table-group-0-group-2"
+              }
+            ],
+            "target": {
+              "type": "boolean",
+              "internalId": "target-table-group-0-item-24",
+              "label": "ValueEqualsOutput",
+              "defaultValue": "",
+              "parent": "target-table-group-0"
+            },
+            "mutations": [],
+            "conditions": [
+              {
+                "id": "condition-_r_10_",
+                "name": "isMeep",
+                "type": {
+                  "name": "ValueEquals",
+                  "maxInputs": 2,
+                  "requiredInputs": 2,
+                  "inputs": [
+                    {
+                      "label": "input",
+                      "type": "source",
+                      "allowDefaultValue": true,
+                      "inputsAllowed": "all"
+                    },
+                    {
+                      "label": "value",
+                      "type": "source",
+                      "allowDefaultValue": true,
+                      "inputsAllowed": "all"
+                    }
+                  ]
+                },
+                "inputs": [
+                  {
+                    "type": "source",
+                    "sourceId": "source-table-group-0-group-2-item-3",
+                    "value": ""
+                  },
+                  {
+                    "type": "defaultValue",
+                    "value": "before meep after"
+                  }
+                ]
+              }
+            ],
+            "conditional": null,
+            "output": "condition-_r_10_"
+          }
+        },
+        {
+          "type": "boolean",
+          "internalId": "target-table-group-0-item-26",
+          "label": "ContainsOutput",
+          "defaultValue": "",
+          "parent": "target-table-group-0",
+          "mapping": {
+            "id": "mapping-qd04ih9f1te",
+            "sources": [
+              {
+                "type": "string",
+                "internalId": "source-table-group-0-item-1",
+                "label": "orderperson",
+                "defaultValue": "",
+                "parent": "source-table-group-0"
+              }
+            ],
+            "target": {
+              "type": "boolean",
+              "internalId": "target-table-group-0-item-26",
+              "label": "ContainsOutput",
+              "defaultValue": "",
+              "parent": "target-table-group-0"
+            },
+            "mutations": [],
+            "conditions": [
+              {
+                "id": "condition-_r_11_",
+                "name": "Contains",
+                "type": {
+                  "name": "Contains",
+                  "maxInputs": 2,
+                  "requiredInputs": 2,
+                  "inputs": [
+                    {
+                      "label": "input",
+                      "type": "source",
+                      "allowDefaultValue": true,
+                      "inputsAllowed": "string"
+                    },
+                    {
+                      "label": "value",
+                      "type": "source",
+                      "allowDefaultValue": true,
+                      "inputsAllowed": "string"
+                    }
+                  ]
+                },
+                "inputs": [
+                  {
+                    "type": "source",
+                    "sourceId": "source-table-group-0-item-1",
+                    "value": ""
+                  },
+                  {
+                    "type": "defaultValue",
+                    "value": "meep"
+                  }
+                ]
+              }
+            ],
+            "conditional": null,
+            "output": "condition-_r_11_"
+          }
+        },
+        {
+          "type": "boolean",
+          "internalId": "target-table-group-0-item-27",
+          "label": "EquationOutput",
+          "defaultValue": "",
+          "parent": "target-table-group-0",
+          "mapping": {
+            "id": "mapping-qb8jumf6uqh",
+            "sources": [
+              {
+                "type": "integer",
+                "internalId": "source-table-group-0-group-2-item-4",
+                "label": "addressNumber",
+                "defaultValue": "",
+                "parent": "source-table-group-0-group-2"
+              }
+            ],
+            "target": {
+              "type": "boolean",
+              "internalId": "target-table-group-0-item-27",
+              "label": "EquationOutput",
+              "defaultValue": "",
+              "parent": "target-table-group-0"
+            },
+            "mutations": [],
+            "conditions": [
+              {
+                "id": "condition-_r_12_",
+                "name": "Equation",
+                "type": {
+                  "name": "Equation",
+                  "maxInputs": 3,
+                  "requiredInputs": 3,
+                  "inputs": [
+                    {
+                      "label": "input",
+                      "type": "source",
+                      "allowDefaultValue": true,
+                      "inputsAllowed": "number"
+                    },
+                    {
+                      "label": "operator",
+                      "type": "numberOperator",
+                      "allowDefaultValue": false,
+                      "inputsAllowed": "numberOperator"
+                    },
+                    {
+                      "label": "value",
+                      "type": "source",
+                      "allowDefaultValue": true,
+                      "inputsAllowed": "number"
+                    }
+                  ]
+                },
+                "inputs": [
+                  {
+                    "type": "source",
+                    "sourceId": "source-table-group-0-group-2-item-4",
+                    "value": ""
+                  },
+                  {
+                    "type": "operator",
+                    "value": ">"
+                  },
+                  {
+                    "type": "defaultValue",
+                    "value": "5"
+                  }
+                ]
+              }
+            ],
+            "conditional": null,
+            "output": "condition-_r_12_"
+          }
+        },
+        {
+          "type": "boolean",
+          "internalId": "target-table-group-0-item-28",
+          "label": "StartsWitdhOutput",
+          "defaultValue": "",
+          "parent": "target-table-group-0",
+          "mapping": {
+            "id": "mapping-wijwqzt7x8e",
+            "sources": [
+              {
+                "type": "string",
+                "internalId": "source-table-group-0-item-1",
+                "label": "orderperson",
+                "defaultValue": "",
+                "parent": "source-table-group-0"
+              }
+            ],
+            "target": {
+              "type": "boolean",
+              "internalId": "target-table-group-0-item-28",
+              "label": "StartsWitdhOutput",
+              "defaultValue": "",
+              "parent": "target-table-group-0"
+            },
+            "mutations": [],
+            "conditions": [
+              {
+                "id": "condition-_r_13_",
+                "name": "StartsWith",
+                "type": {
+                  "name": "StartsWith",
+                  "maxInputs": 2,
+                  "requiredInputs": 2,
+                  "inputs": [
+                    {
+                      "label": "input",
+                      "type": "source",
+                      "allowDefaultValue": true,
+                      "inputsAllowed": "string"
+                    },
+                    {
+                      "label": "value",
+                      "type": "source",
+                      "allowDefaultValue": true,
+                      "inputsAllowed": "string"
+                    }
+                  ]
+                },
+                "inputs": [
+                  {
+                    "type": "source",
+                    "sourceId": "source-table-group-0-item-1",
+                    "value": ""
+                  },
+                  {
+                    "type": "defaultValue",
+                    "value": "before"
+                  }
+                ]
+              }
+            ],
+            "conditional": null,
+            "output": "condition-_r_13_"
+          }
+        },
+        {
+          "type": "boolean",
+          "internalId": "target-table-group-0-item-29",
+          "label": "EndsWithOutput",
+          "defaultValue": "",
+          "parent": "target-table-group-0",
+          "mapping": {
+            "id": "mapping-y0pvuse6kgp",
+            "sources": [
+              {
+                "type": "string",
+                "internalId": "source-table-group-0-item-1",
+                "label": "orderperson",
+                "defaultValue": "",
+                "parent": "source-table-group-0"
+              }
+            ],
+            "target": {
+              "type": "boolean",
+              "internalId": "target-table-group-0-item-29",
+              "label": "EndsWithOutput",
+              "defaultValue": "",
+              "parent": "target-table-group-0"
+            },
+            "mutations": [],
+            "conditions": [
+              {
+                "id": "condition-_r_14_",
+                "name": "Endswith",
+                "type": {
+                  "name": "EndsWith",
+                  "maxInputs": 2,
+                  "requiredInputs": 2,
+                  "inputs": [
+                    {
+                      "label": "input",
+                      "type": "source",
+                      "allowDefaultValue": true,
+                      "inputsAllowed": "string"
+                    },
+                    {
+                      "label": "value",
+                      "type": "source",
+                      "allowDefaultValue": true,
+                      "inputsAllowed": "string"
+                    }
+                  ]
+                },
+                "inputs": [
+                  {
+                    "type": "source",
+                    "sourceId": "source-table-group-0-item-1",
+                    "value": ""
+                  },
+                  {
+                    "type": "defaultValue",
+                    "value": "after"
+                  }
+                ]
+              }
+            ],
+            "conditional": null,
+            "output": "condition-_r_14_"
+          }
+        },
+        {
+          "type": "boolean",
+          "internalId": "target-table-group-0-item-30",
+          "label": "ConditionGroupOutput",
+          "defaultValue": "",
+          "parent": "target-table-group-0",
+          "mapping": {
+            "id": "mapping-5feknfcrrfy",
+            "sources": [
+              {
+                "type": "string",
+                "internalId": "source-table-group-0-item-1",
+                "label": "orderperson",
+                "defaultValue": "",
+                "parent": "source-table-group-0"
+              }
+            ],
+            "target": {
+              "type": "boolean",
+              "internalId": "target-table-group-0-item-30",
+              "label": "ConditionGroupOutput",
+              "defaultValue": "",
+              "parent": "target-table-group-0"
+            },
+            "mutations": [],
+            "conditions": [
+              {
+                "id": "condition-_r_15_",
+                "name": "Contains",
+                "type": {
+                  "name": "Contains",
+                  "maxInputs": 2,
+                  "requiredInputs": 2,
+                  "inputs": [
+                    {
+                      "label": "input",
+                      "type": "source",
+                      "allowDefaultValue": true,
+                      "inputsAllowed": "string"
+                    },
+                    {
+                      "label": "value",
+                      "type": "source",
+                      "allowDefaultValue": true,
+                      "inputsAllowed": "string"
+                    }
+                  ]
+                },
+                "inputs": [
+                  {
+                    "type": "source",
+                    "sourceId": "source-table-group-0-item-1",
+                    "value": ""
+                  },
+                  {
+                    "type": "defaultValue",
+                    "value": "meep"
+                  }
+                ]
+              },
+              {
+                "id": "condition-_r_16_",
+                "name": "StartsWith",
+                "type": {
+                  "name": "StartsWith",
+                  "maxInputs": 2,
+                  "requiredInputs": 2,
+                  "inputs": [
+                    {
+                      "label": "input",
+                      "type": "source",
+                      "allowDefaultValue": true,
+                      "inputsAllowed": "string"
+                    },
+                    {
+                      "label": "value",
+                      "type": "source",
+                      "allowDefaultValue": true,
+                      "inputsAllowed": "string"
+                    }
+                  ]
+                },
+                "inputs": [
+                  {
+                    "type": "source",
+                    "sourceId": "source-table-group-0-item-1",
+                    "value": ""
+                  },
+                  {
+                    "type": "defaultValue",
+                    "value": "before"
+                  }
+                ]
+              },
+              {
+                "id": "condition-_r_17_",
+                "name": "Group",
+                "type": {
+                  "name": "ConditionGroup",
+                  "maxInputs": null,
+                  "requiredInputs": 3,
+                  "inputs": [
+                    {
+                      "label": "condition",
+                      "type": "source",
+                      "allowDefaultValue": false,
+                      "inputsAllowed": "boolean"
+                    },
+                    {
+                      "label": "operator",
+                      "type": "logicOperator",
+                      "allowDefaultValue": false,
+                      "inputsAllowed": "logicOperator"
+                    },
+                    {
+                      "label": "condition",
+                      "type": "source",
+                      "allowDefaultValue": false,
+                      "inputsAllowed": "boolean"
+                    }
+                  ]
+                },
+                "inputs": [
+                  {
+                    "type": "source",
+                    "sourceId": "condition-_r_15_",
+                    "value": ""
+                  },
+                  {
+                    "type": "operator",
+                    "value": "AND"
+                  },
+                  {
+                    "type": "source",
+                    "sourceId": "condition-_r_16_",
+                    "value": ""
+                  }
+                ]
+              }
+            ],
+            "conditional": null,
+            "output": "condition-_r_17_"
+          }
+        }
+      ]
+    }
+  ],
+  "sourceStructure": [
+    {
+      "type": "object",
+      "internalId": "source-table-group-0",
+      "label": "shiporder",
+      "defaultValue": "",
+      "parent": "source-table",
+      "children": [
+        {
+          "type": "string",
+          "internalId": "source-table-group-0-item-1",
+          "label": "orderperson",
+          "defaultValue": "",
+          "parent": "source-table-group-0"
+        },
+        {
+          "type": "object",
+          "internalId": "source-table-group-0-group-2",
+          "label": "shipto",
+          "defaultValue": "",
+          "parent": "source-table-group-0",
+          "children": [
+            {
+              "type": "string",
+              "internalId": "source-table-group-0-group-2-item-3",
+              "label": "name",
+              "defaultValue": "",
+              "parent": "source-table-group-0-group-2"
+            },
+            {
+              "type": "integer",
+              "internalId": "source-table-group-0-group-2-item-4",
+              "label": "addressNumber",
+              "defaultValue": "",
+              "parent": "source-table-group-0-group-2"
+            },
+            {
+              "type": "decimal",
+              "internalId": "source-table-group-0-group-2-item-5",
+              "label": "DecimalValue",
+              "defaultValue": "",
+              "parent": "source-table-group-0-group-2"
+            },
+            {
+              "type": "string",
+              "internalId": "source-table-group-0-group-2-item-6",
+              "label": "numberString",
+              "defaultValue": "",
+              "parent": "source-table-group-0-group-2"
+            }
+          ]
+        },
+        {
+          "type": "array",
+          "internalId": "source-table-group-0-group-7",
+          "label": "item",
+          "defaultValue": "",
+          "parent": "source-table-group-0",
+          "children": [
+            {
+              "type": "string",
+              "internalId": "source-table-group-0-group-7-item-8",
+              "label": "title",
+              "defaultValue": "",
+              "parent": "source-table-group-0-group-7",
+              "parentArray": "source-table-group-0-group-7"
+            },
+            {
+              "type": "nonPositiveInteger",
+              "internalId": "source-table-group-0-group-7-item-10",
+              "label": "quantity",
+              "defaultValue": "",
+              "parent": "source-table-group-0-group-7",
+              "parentArray": "source-table-group-0-group-7"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

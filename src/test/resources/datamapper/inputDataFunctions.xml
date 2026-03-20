@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<data>
+<shiporder>
+    <orderperson>before meep after</orderperson>
+
+    <shipto>
+        <name>before meep after</name>
+        <addressNumber>10</addressNumber>
+        <DecimalValue>12.7</DecimalValue>
+        <numberString>42</numberString>
+    </shipto>
+
+    <item>
+        <title>Item One</title>
+        <quantity>2</quantity>
+    </item>
+
+    <item>
+        <title>Item Two</title>
+        <quantity>5</quantity>
+    </item>
+</shiporder>
+</data>
