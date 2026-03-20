@@ -346,23 +346,43 @@ const useFlowStore = create<FlowState>()(
       })
     },
     updateHandle: (nodeId: string, handleIndex: number, newHandle: { type: string; index: number }) => {
-      get().saveToHistory()
-      set({
-        nodes: get().nodes.map((node) => {
-          if (node.id === nodeId && isFrankNode(node)) {
-            const updatedHandles = node.data.sourceHandles.map((handle) =>
-              handle.index === handleIndex ? newHandle : handle,
-            )
-            return {
-              ...node,
-              data: {
-                ...node.data,
-                sourceHandles: updatedHandles,
-              },
-            }
+      const state = get()
+      state.saveToHistory()
+
+      const updatedNodes = state.nodes.map((node) => {
+        if (node.id === nodeId && isFrankNode(node)) {
+          const updatedHandles = node.data.sourceHandles.map((handle) =>
+            handle.index === handleIndex ? newHandle : handle,
+          )
+
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              sourceHandles: updatedHandles,
+            },
           }
-          return node
-        }),
+        }
+        return node
+      })
+
+      // Update label data of associated edge
+      const updatedEdges = state.edges.map((edge) => {
+        if (edge.source === nodeId && Number(edge.sourceHandle) === handleIndex) {
+          return {
+            ...edge,
+            data: {
+              ...edge.data,
+              label: newHandle.type.toLowerCase(),
+            },
+          }
+        }
+        return edge
+      })
+
+      set({
+        nodes: updatedNodes,
+        edges: updatedEdges,
       })
     },
     updateChild: (rootNodeId: string, updatedChild: ChildNode, { isNewNode = false } = {}) => {
