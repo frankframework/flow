@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<shiporder>
+    <ConcatDestination>before meep afterTest1244 before meep after</ConcatDestination>
+    <bestemming>
+        <TranslateDestination>before meep after</TranslateDestination>
+        <ReplaceDestination>before HASBEENREPLACED after</ReplaceDestination>
+        <SubstringDestination>re m</SubstringDestination>
+        <SubstringBeforeDestination>before meep after</SubstringBeforeDestination>
+        <RoundDestination>13</RoundDestination>
+    </bestemming>
+    <item>
+        <SubstringAfterDestination> after</SubstringAfterDestination>
+        <ValueOfDestination>true</ValueOfDestination>
+        <ChooseDestination>2</ChooseDestination>
+        <GenerateIdDestination>d1e18</GenerateIdDestination>
+    </item>
+    <item>
+        <SubstringAfterDestination> after</SubstringAfterDestination>
+        <ValueOfDestination>true</ValueOfDestination>
+        <ChooseDestination>5</ChooseDestination>
+        <GenerateIdDestination>d1e18</GenerateIdDestination>
+    </item>
+    <localNameDestination>orderperson</localNameDestination>
+    <NormalizeSpaceDestination>before meep after</NormalizeSpaceDestination>
+    <ToStringDestination>12.7</ToStringDestination>
+    <ToNumberDestination>42</ToNumberDestination>
+    <ToBoolDestination>false</ToBoolDestination>
+    <ToBoolDestination>false</ToBoolDestination>
+    <ExistsOutput>true</ExistsOutput>
+    <EmptyOutput>false</EmptyOutput>
+    <NullCheckOutput>true</NullCheckOutput>
+    <CountOutput/>
+    <ValueEqualsOutput>true</ValueEqualsOutput>
+    <ContainsOutput>true</ContainsOutput>
+    <EquationOutput>false</EquationOutput>
+    <StartsWitdhOutput>true</StartsWitdhOutput>
+    <EndsWithOutput>true</EndsWithOutput>
+    <ConditionGroupOutput>true</ConditionGroupOutput>
+</shiporder>

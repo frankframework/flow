@@ -36,9 +36,9 @@
 
         <outputxsl:function name="datamapper:Substring">
             <outputxsl:param name="input"/>
-            <outputxsl:param name="start" as="xs:integer"/>
-            <outputxsl:param name="length" as="xs:integer"/>
-            <outputxsl:sequence select="substring($input, $start, $length)"/>
+            <outputxsl:param name="start" as="xs:string"/>
+            <outputxsl:param name="length" as="xs:string"/>
+            <outputxsl:sequence select="substring($input, xs:integer($start), xs:integer($length))"/>
         </outputxsl:function>
 
         <outputxsl:function name="datamapper:SubstringBefore">
@@ -55,7 +55,7 @@
 
         <outputxsl:function name="datamapper:ValueOf">
             <outputxsl:param name="expression"/>
-            <outputxsl:sequence select="$expression"/>
+            <outputxsl:evaluate xpath="$expression"/>
         </outputxsl:function>
 
         <outputxsl:function name="datamapper:LocalName">
@@ -69,8 +69,13 @@
         </outputxsl:function>
 
         <outputxsl:function name="datamapper:GenerateId">
-            <outputxsl:param name="nodeset" as="node()*"/>
-            <outputxsl:sequence select="generate-id($nodeset)"/>
+            <outputxsl:param name="name" as="xs:string"/>
+
+
+            <outputxsl:variable name="nodes" select="$data//*[name() = $name]"/>
+
+
+            <outputxsl:sequence select="generate-id($nodes[1])"/>
         </outputxsl:function>
         <!-- Type casting -->
         <outputxsl:function name="datamapper:CastToString">
@@ -87,7 +92,10 @@
             <outputxsl:param name="a"/>
             <outputxsl:sequence select="boolean($a)"/>
         </outputxsl:function>
-
+        <outputxsl:function name="datamapper:Custom">
+            <outputxsl:param name="a"/>
+            <outputxsl:evaluate xpath="$a"/>
+        </outputxsl:function>
         <outputxsl:function name="datamapper:Round">
             <outputxsl:param name="input" as="xs:double"/>
             <outputxsl:sequence select="round($input)"/>
