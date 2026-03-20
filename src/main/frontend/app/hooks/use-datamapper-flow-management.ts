@@ -352,18 +352,18 @@ export function useFlowManagement({
       reactFlowInstance.getEdges(),
     )
     setReactFlowNodes((previousNodes) =>
-      previousNodes.map((node) => ({
-        ...node,
-        style: {
-          ...node.style,
-          borderColor: unsetNodes.some((nodeLabel) => nodeLabel.id == node.id)
-            ? node.data.defaultValue
-              ? 'yellow'
-              : 'red'
-            : 'none',
-          borderWidth: unsetNodes.some((nodeLabel) => nodeLabel.id == node.id) ? 3 : 0,
-        },
-      })),
+      previousNodes.map((node) => {
+        const isUnset = unsetNodes.some((nodeLabel) => nodeLabel.id == node.id)
+
+        return {
+          ...node,
+          style: {
+            ...node.style,
+            borderColor: isUnset ? (node.data.defaultValue ? 'yellow' : 'red') : 'none',
+            borderWidth: isUnset ? 3 : 0,
+          },
+        }
+      }),
     )
   }
 
