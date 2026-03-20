@@ -1,7 +1,7 @@
 import { BaseEdge, EdgeLabelRenderer, getBezierPath, type Position } from '@xyflow/react'
 import useFlowStore from '~/stores/flow-store'
 
-interface FrankEdgeProperties {
+export interface FrankEdgeProperties {
   id: string
   source: string
   target: string
