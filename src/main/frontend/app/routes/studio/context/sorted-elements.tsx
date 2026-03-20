@@ -6,7 +6,7 @@ import useNodeContextStore from '~/stores/node-context-store'
 import type { ElementDetails } from '@frankframework/doc-library-core'
 import { getElementTypeFromName } from '../node-translator-module'
 import DangerIcon from '../../../../icons/solar/Danger Triangle.svg?react'
-import { DeprecatedListPopover } from './deprecated-list-popover'
+import { DeprecatedListPopover, type DeprecatedInfo } from './deprecated-list-popover'
 import ElementHoverCard from './element-hover-card'
 
 interface Properties {
@@ -22,6 +22,8 @@ export default function SortedElements({ type, items, onDragStart, searchTerm }:
   const { setDraggedName } = useNodeContextStore((state) => state)
   const [hoveredRect, setHoveredRect] = useState<DOMRect | null>(null)
   const [hoveredElement, setHoveredElement] = useState<ElementDetails | null>(null)
+  const [deprecatedRect, setDeprecatedRect] = useState<DOMRect | null>(null)
+  const [deprecatedHovered, setDeprecatedHovered] = useState<DeprecatedInfo | null>(null)
   const [lockedElement, setLockedElement] = useState<ElementDetails | null>(null)
 
   const toggleExpansion = () => {
@@ -93,9 +95,22 @@ export default function SortedElements({ type, items, onDragStart, searchTerm }:
 
                 {/* Right: deprecated icon */}
                 {value.deprecated && (
-                  <div className="group relative ml-2 flex-shrink-0">
+                  <div
+                    className="ml-2 flex-shrink-0"
+                    onMouseEnter={(event) => {
+                      const rect = event.currentTarget.getBoundingClientRect()
+                      setDeprecatedRect(rect)
+                      setDeprecatedHovered(value.deprecated!)
+                    }}
+                    onMouseLeave={() => {
+                      setDeprecatedRect(null)
+                      setDeprecatedHovered(null)
+                    }}
+                  >
                     <DangerIcon />
-                    <DeprecatedListPopover deprecated={value.deprecated} />
+                    {deprecatedRect && deprecatedHovered && (
+                      <DeprecatedListPopover deprecated={deprecatedHovered} anchorRect={deprecatedRect} />
+                    )}
                   </div>
                 )}
               </li>
