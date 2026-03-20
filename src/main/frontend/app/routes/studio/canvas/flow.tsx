@@ -647,7 +647,7 @@ function FlowCanvas() {
     flowStore.addNode(newNode)
     // If there's a source node, create an edge from it
     if (sourceInfo?.nodeId && sourceInfo.handleType === 'source') {
-      const sourceNode = flowStore.nodes.find((n) => n.id === sourceInfo.nodeId)
+      const sourceNode = flowStore.nodes.find((node) => node.id === sourceInfo.nodeId)
 
       const label = getEdgeLabelFromHandle(sourceNode, sourceInfo.handleId)
 

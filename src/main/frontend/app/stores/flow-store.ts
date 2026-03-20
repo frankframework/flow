@@ -185,7 +185,7 @@ const useFlowStore = create<FlowState>()(
       get().saveToHistory()
 
       const { nodes } = get()
-      const sourceNode = nodes.find((n) => n.id === connection.source)
+      const sourceNode = nodes.find((node) => node.id === connection.source)
 
       const label = getEdgeLabelFromHandle(sourceNode, connection.sourceHandle)
 
@@ -203,7 +203,7 @@ const useFlowStore = create<FlowState>()(
       get().saveToHistory()
 
       const { nodes } = get()
-      const sourceNode = nodes.find((n) => n.id === newConnection.source)
+      const sourceNode = nodes.find((node) => node.id === newConnection.source)
 
       const label = getEdgeLabelFromHandle(sourceNode, newConnection.sourceHandle)
 
