@@ -54,7 +54,7 @@ export default function Studio() {
   return (
     <SidebarLayout name="studio">
       <>
-        <SidebarHeader side={SidebarSide.LEFT} title="Structure" />
+        <SidebarHeader side={SidebarSide.LEFT} title="Adapter" />
         <StudioFileStructure />
       </>
       <>

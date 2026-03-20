@@ -27,6 +27,7 @@ import { refreshOpenDiffs } from '~/services/git-service'
 import { findAdapterIndexAtOffset, findAdaptersInXml, lineToOffset, normalizeFrankElements } from './xml-utils'
 import { useSettingsStore } from '~/stores/settings-store'
 import { toProjectRelativePath } from '~/utils/path-utils'
+import SidebarHeader from '~/components/sidebars-layout/sidebar-header'
 
 type LeftTab = 'files' | 'git'
 type SaveStatus = 'idle' | 'saving' | 'saved'
@@ -472,9 +473,9 @@ export default function CodeEditor() {
   return (
     <SidebarLayout name="editor">
       <>
-        <div className="flex h-12 items-center justify-between px-4">
-          <SidebarClose side={SidebarSide.LEFT} />
-          <div className="border-border flex overflow-hidden rounded border text-sm">
+        <div className="flex h-12 items-center justify-between pr-4">
+          <SidebarHeader side={SidebarSide.LEFT} title="Files" />
+          <div className="border-border ml-auto flex overflow-hidden rounded border text-sm">
             <button
               onClick={() => setLeftTab('files')}
               className={clsx(
