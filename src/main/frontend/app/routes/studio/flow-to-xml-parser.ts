@@ -3,6 +3,8 @@ import type { Edge } from '@xyflow/react'
 import type { ChildNode } from './canvas/nodetypes/child-node'
 import { getAdapter } from '~/services/adapter-service'
 import { FlowConfig } from './canvas/flow.config'
+import type { StickyNote } from './canvas/nodetypes/sticky-note'
+import { isStickyNote } from '~/stores/flow-store'
 
 interface ReactFlowJson {
   nodes: FlowNode[]
@@ -42,6 +44,7 @@ export async function exportFlowToXml(
 
   const { nodes, edges } = json
   const validNodes = nodes.filter((node) => hasDataProperty(node))
+  const stickyNotes: StickyNote[] = nodes.filter((node) => isStickyNote(node))
   const nodeMap = new Map(validNodes.map((n) => [n.id, n]))
 
   const { outgoing, incoming, edgeMap } = buildEdgeMaps(edges)
@@ -81,9 +84,11 @@ export async function exportFlowToXml(
   }
 
   const exitsXml = exitNodes.length > 0 ? `      <Exits>\n${generateExitsXml(exitNodes)}\n      </Exits>` : ''
+  const stickyXml = generateStickyNotesXml(stickyNotes)
 
   return `
   <Adapter ${adapterAttributes}>
+  ${stickyXml}
 ${receivers.join('\n')}
     <Pipeline>
 ${exitsXml}
@@ -236,4 +241,26 @@ function getExitState(data: NodeData): string {
 
   const name = data.name.toLowerCase()
   return name.includes('bad') || name.includes('fail') ? 'error' : 'success'
+}
+
+function generateStickyNotesXml(stickyNotes: StickyNote[]): string {
+  if (stickyNotes.length === 0) return ''
+
+  return `
+  <flow:StickyNotes>
+${stickyNotes
+  .map((stickynote) => {
+    const { x, y } = stickynote.position
+    const text = stickynote.data?.content || ''
+
+    return `    <flow:StickyNote
+      text="${escapeXml(text)}"
+      flow:x="${x}"
+      flow:y="${y}"
+      flow:width="${stickynote.measured?.width || 200}"
+      flow:height="${stickynote.measured?.height || 120}"
+    />`
+  })
+  .join('\n')}
+  </flow:StickyNotes>`
 }

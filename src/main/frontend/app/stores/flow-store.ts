@@ -75,7 +75,7 @@ function isExitNode(node: FlowNode): node is ExitNode {
   return node.type === 'exitNode'
 }
 
-function isStickyNote(node: FlowNode): node is StickyNote {
+export function isStickyNote(node: FlowNode): node is StickyNote {
   return node.type === 'stickyNote'
 }
 
