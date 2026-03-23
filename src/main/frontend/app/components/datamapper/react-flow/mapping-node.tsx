@@ -1,16 +1,16 @@
 import { Handle, Position } from '@xyflow/react'
-import type { MappingConfig } from '~/types/datamapper_types/node-types'
+import type { MappingNodeData } from '~/types/datamapper_types/react-node-types'
 import DeleteButton from '../basic-components/delete-button'
 import EditButton from '../basic-components/edit-button'
 import { MAPPING_WIDTH } from '~/utils/datamapper_utils/const'
 
 export interface MappingNodeProperties {
   id: string
-  data: MappingConfig
+  data: MappingNodeData
 
   onClick?: (id: string) => void
   onDelete?: (id: string) => void
-  onEdit?: (data: MappingConfig) => void
+  onEdit?: (data: MappingNodeData) => void
 }
 
 function MappingNode({ id, data, onClick, onDelete, onEdit }: MappingNodeProperties) {

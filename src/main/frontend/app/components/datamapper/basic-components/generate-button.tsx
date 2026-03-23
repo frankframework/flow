@@ -2,8 +2,8 @@ import Button from '~/components/inputs/button'
 import { showErrorToast, showInfoToast } from '~/components/toast'
 import { generateDatamapperXSLT } from '~/services/datamapper-service'
 import { useProjectStore } from '~/stores/project-store'
-import type { MappingListConfig } from '~/types/datamapper_types/config-types'
-import { convertMappingConfigToMappingFile } from '~/utils/datamapper_utils/convert-node-utils'
+import type { MappingListConfig } from '~/types/datamapper_types/export-types'
+import { convertMappingConfigToMappingFile } from '~/utils/datamapper_utils/conversion-utils'
 
 export default function GenerateButton({
   highlightUnset,

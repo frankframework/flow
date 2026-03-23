@@ -10,7 +10,7 @@ import type {
   ConditionInput,
   ConditionTypeInput,
   ConditionOperatorConfig,
-} from '~/types/datamapper_types/config-types'
+} from '~/types/datamapper_types/export-types'
 import conditionConfigJson from '~/utils/datamapper_utils/config/condition-config.json'
 
 interface AddConditionFormProperties {

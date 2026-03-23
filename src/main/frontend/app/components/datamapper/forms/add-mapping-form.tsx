@@ -2,8 +2,8 @@ import React, { type Dispatch, type SetStateAction, useEffect, useState } from '
 
 import AddMutationForm from './add-mutation-form'
 import AddConditionForm from './add-conditions-form'
-import type { Mutation, Condition, Source } from '~/types/datamapper_types/config-types'
-import type { MappingConfig, NodeLabels } from '~/types/datamapper_types/node-types'
+import type { Mutation, Condition, Source } from '~/types/datamapper_types/export-types'
+import type { MappingNodeData, NodeLabels } from '~/types/datamapper_types/react-node-types'
 import Modal from '~/components/modal'
 import Checkbox from '~/components/inputs/checkbox'
 import Dropdown from '~/components/inputs/dropdown'
@@ -12,10 +12,10 @@ import EditButton from '../basic-components/edit-button'
 import Button from '~/components/inputs/button'
 
 export interface MappingModalProps {
-  onSave: (data: MappingConfig) => void
+  onSave: (data: MappingNodeData) => void
   sources: NodeLabels[]
   targets: NodeLabels[]
-  initialData: MappingConfig | null
+  initialData: MappingNodeData | null
 }
 
 const updateArrayItem = <T,>(setter: Dispatch<SetStateAction<T[]>>, index: number, value: T) => {

@@ -1,5 +1,5 @@
 import { Handle, Position } from '@xyflow/react'
-import type { CustomNodeData } from '~/types/datamapper_types/node-types'
+import type { CustomNodeData } from '~/types/datamapper_types/react-node-types'
 import { GROUP_WIDTH } from '~/utils/datamapper_utils/const'
 import HighlightButton from '../basic-components/highlight-button'
 import DeleteButton from '../basic-components/delete-button'

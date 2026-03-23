@@ -6,7 +6,7 @@ import type {
   MutationsConfig,
   MutationTypeInput,
   Source,
-} from '~/types/datamapper_types/config-types'
+} from '~/types/datamapper_types/export-types'
 import Input from '~/components/inputs/input'
 import Dropdown from '~/components/inputs/dropdown'
 import Button from '~/components/inputs/button'

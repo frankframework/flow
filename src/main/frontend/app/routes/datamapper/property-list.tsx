@@ -18,22 +18,24 @@ import AddMappingForm from '~/components/datamapper/forms/add-mapping-form'
 import Modal from '~/components/modal'
 import { getNodeTypes } from '~/components/datamapper/react-flow/node-types'
 import { showErrorToast, showSuccessToast } from '~/components/toast'
-import { useFlowManagement, DuplicateLabelException } from '~/hooks/use-datamapper-flow-management'
+import { useFlowManagement } from '~/hooks/use-datamapper-flow-management'
 import { type ConfigActions } from '~/stores/datamapper_state/mappingListConfig/reducer'
 import { useFile } from '~/stores/datamapper_state/schemaQueue/schema-queue-context'
-import type { MappingListConfig } from '~/types/datamapper_types/config-types'
-import type { CustomNodeData, MappingConfig, NodeLabels } from '~/types/datamapper_types/node-types'
+
+import type { CustomNodeData, MappingNodeData, NodeLabels } from '~/types/datamapper_types/react-node-types'
 import { TABLE_WIDTH } from '~/utils/datamapper_utils/const'
 import {
-  getNodesByTypeAndId,
   createMappingNode,
   validateMapping,
   getMappingNodes,
   handleArrayMapping,
-} from '~/utils/datamapper_utils/react-node-utils'
+} from '~/utils/datamapper_utils/mapping-node-utils'
 import Button from '~/components/inputs/button'
 
 import GenerateButton from '~/components/datamapper/basic-components/generate-button'
+import { updateCanvasSize } from '~/utils/datamapper_utils/canvas-management-utils'
+import { DuplicateLabelException, getNodesByTypeAndId } from '~/utils/datamapper_utils/property-node-utils'
+import type { MappingListConfig } from '~/types/datamapper_types/config-types'
 
 interface PropertyListProperties {
   config: MappingListConfig
@@ -79,7 +81,7 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
   const [addMappingModal, setAddMappingModal] = useState(false)
 
   const [editingNode, setEditingNode] = useState<CustomNodeData | null>(null)
-  const [editingMapping, setEditingMapping] = useState<MappingConfig | null>(null)
+  const [editingMapping, setEditingMapping] = useState<MappingNodeData | null>(null)
 
   const openModalType = useRef<'source' | 'target'>('source')
 
@@ -88,7 +90,7 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
   const [mappingTargets, setMappingTargets] = useState<NodeLabels[]>([])
   const canvasWidth = useRef<HTMLDivElement>(null)
 
-  const editingMappingRef = useRef<MappingConfig | null>(null)
+  const editingMappingRef = useRef<MappingNodeData | null>(null)
 
   useEffect(() => {
     editingMappingRef.current = editingMapping
@@ -144,7 +146,7 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
 
   //Updates the outer canvas whenever something is added
   useEffect(() => {
-    setCanvasSize((size) => flow.updateCanvasSize(reactFlowNodes, size))
+    setCanvasSize((size) => updateCanvasSize(reactFlowNodes, size))
   }, [reactFlowNodes])
 
   useEffect(() => {
@@ -302,7 +304,7 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
       }
     }
   }
-  async function saveMapping(mappingConfig: MappingConfig) {
+  async function saveMapping(mappingConfig: MappingNodeData) {
     if (!reactFlowInstance) {
       setAddMappingModal(false)
 

@@ -4,7 +4,7 @@ import clsx from 'clsx'
 import type { useFlowManagement } from '~/hooks/use-datamapper-flow-management'
 import type { ConfigActions } from '~/stores/datamapper_state/mappingListConfig/reducer'
 import { useFile } from '~/stores/datamapper_state/schemaQueue/schema-queue-context'
-import type { MappingListConfig } from '~/types/datamapper_types/config-types'
+import type { MappingListConfig } from '~/types/datamapper_types/export-types'
 import { FLOW_KEY } from '~/utils/datamapper_utils/const'
 import { showErrorToast, showSuccessToast } from '../toast'
 
