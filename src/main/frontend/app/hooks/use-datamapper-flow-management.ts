@@ -1,4 +1,4 @@
-import { type Dispatch, type RefObject, type SetStateAction, useEffect, useRef } from 'react'
+import { type Dispatch, type SetStateAction, useEffect, useRef } from 'react'
 import type { Node, Edge, ReactFlowInstance, Viewport } from '@xyflow/react'
 
 import { SAXParser } from 'sax-ts'
