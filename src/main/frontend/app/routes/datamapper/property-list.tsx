@@ -19,7 +19,7 @@ import Modal from '~/components/modal'
 import { getNodeTypes } from '~/components/datamapper/react-flow/node-types'
 import { showErrorToast, showSuccessToast } from '~/components/toast'
 import { useFlowManagement, DuplicateLabelException } from '~/hooks/use-datamapper-flow-management'
-import { type ConfigActions } from '~/stores/datamapper_state/mappingListConfig/reducer'
+import { mappingListConfigReducer, type ConfigActions } from '~/stores/datamapper_state/mappingListConfig/reducer'
 import { useFile } from '~/stores/datamapper_state/schemaQueue/schema-queue-context'
 import type { MappingListConfig } from '~/types/datamapper_types/config-types'
 import type { CustomNodeData, MappingConfig, NodeLabels } from '~/types/datamapper_types/node-types'
@@ -32,6 +32,9 @@ import {
   handleArrayMapping,
 } from '~/utils/datamapper_utils/react-node-utils'
 import Button from '~/components/inputs/button'
+import { generateDatamapperXSLT } from '~/services/datamapper-service'
+import { convertMappingConfigToMappingFile } from '~/utils/datamapper_utils/convert-node-utils'
+import GenerateButton from '~/components/datamapper/basic-components/generate-button'
 
 import GenerateButton from '~/components/datamapper/basic-components/generate-button'
 

@@ -6,10 +6,109 @@
     <xsl:namespace-alias stylesheet-prefix="outputxsl" result-prefix="xsl"/>
 
     <xsl:template name="functions">
+        <!-- STRING MUTATIONS -->
         <outputxsl:function name="datamapper:Concat">
             <outputxsl:param name="items" as="xs:string*"/>
             <outputxsl:sequence select="string-join($items, '')"/>
         </outputxsl:function>
+
+        <outputxsl:function name="datamapper:Replace">
+            <outputxsl:param name="text"/>
+            <outputxsl:param name="search"/>
+            <outputxsl:param name="replace"/>
+            <outputxsl:choose>
+                <outputxsl:when test="contains($text, $search)">
+                    <outputxsl:sequence
+                            select="concat(substring-before($text, $search),$replace,datamapper:Replace(substring-after($text, $search), $search, $replace))"/>
+                </outputxsl:when>
+                <outputxsl:otherwise>
+                    <outputxsl:sequence select="$text"/>
+                </outputxsl:otherwise>
+            </outputxsl:choose>
+        </outputxsl:function>
+
+        <outputxsl:function name="datamapper:Translate">
+            <outputxsl:param name="input"/>
+            <outputxsl:param name="charsToBeReplaced"/>
+            <outputxsl:param name="replacedWithChars"/>
+            <outputxsl:sequence select="translate($input, $charsToBeReplaced, $replacedWithChars)"/>
+        </outputxsl:function>
+
+        <outputxsl:function name="datamapper:Substring">
+            <outputxsl:param name="input"/>
+            <outputxsl:param name="start" as="xs:string"/>
+            <outputxsl:param name="length" as="xs:string"/>
+            <outputxsl:sequence select="substring($input, xs:integer($start), xs:integer($length))"/>
+        </outputxsl:function>
+
+        <outputxsl:function name="datamapper:SubstringBefore">
+            <outputxsl:param name="input"/>
+            <outputxsl:param name="beforeValue"/>
+            <outputxsl:sequence select="substring-before($input, $beforeValue)"/>
+        </outputxsl:function>
+
+        <outputxsl:function name="datamapper:SubstringAfter">
+            <outputxsl:param name="input"/>
+            <outputxsl:param name="afterValue"/>
+            <outputxsl:sequence select="substring-after($input, $afterValue)"/>
+        </outputxsl:function>
+
+        <outputxsl:function name="datamapper:ValueOf">
+            <outputxsl:param name="expression"/>
+            <outputxsl:evaluate xpath="$expression"/>
+        </outputxsl:function>
+
+        <outputxsl:function name="datamapper:LocalName">
+            <outputxsl:param name="input" as="element()?"/>
+            <outputxsl:sequence select="local-name($input)"/>
+        </outputxsl:function>
+
+        <outputxsl:function name="datamapper:NormalizeSpace">
+            <outputxsl:param name="input"/>
+            <outputxsl:sequence select="normalize-space($input)"/>
+        </outputxsl:function>
+
+        <outputxsl:function name="datamapper:GenerateId">
+            <outputxsl:param name="name" as="xs:string"/>
+
+
+            <outputxsl:variable name="nodes" select="$data//*[name() = $name]"/>
+
+
+            <outputxsl:sequence select="generate-id($nodes[1])"/>
+        </outputxsl:function>
+        <!-- Type casting -->
+        <outputxsl:function name="datamapper:CastToString">
+            <outputxsl:param name="a"/>
+            <outputxsl:sequence select="string($a)"/>
+        </outputxsl:function>
+
+        <outputxsl:function name="datamapper:CastToNumber">
+            <outputxsl:param name="a"/>
+            <outputxsl:sequence select="number($a)"/>
+        </outputxsl:function>
+
+        <outputxsl:function name="datamapper:CastToBoolean">
+            <outputxsl:param name="a"/>
+            <outputxsl:sequence select="boolean($a)"/>
+        </outputxsl:function>
+        <outputxsl:function name="datamapper:Custom">
+            <outputxsl:param name="a"/>
+            <outputxsl:evaluate xpath="$a"/>
+        </outputxsl:function>
+        <outputxsl:function name="datamapper:Round">
+            <outputxsl:param name="input" as="xs:double"/>
+            <outputxsl:sequence select="round($input)"/>
+        </outputxsl:function>
+
+        <!-- Logic -->
+        <outputxsl:function name="datamapper:Choose">
+            <outputxsl:param name="statement" as="xs:boolean"/>
+            <outputxsl:param name="sourceIfTrue"/>
+            <outputxsl:param name="sourceIfFalse"/>
+            <outputxsl:sequence select="if ($statement) then $sourceIfTrue else $sourceIfFalse"/>
+        </outputxsl:function>
+
 
         <!-- Equation -->
         <outputxsl:function name="datamapper:Equation">
@@ -18,18 +117,24 @@
             <outputxsl:param name="right"/>
 
             <outputxsl:choose>
-                <outputxsl:when test="$op = '&lt;'">
-                    <outputxsl:sequence select="$left &lt; $right"/>
-                </outputxsl:when>
-
-                <outputxsl:when test="$op = '&gt;'">
-                    <outputxsl:sequence select="$left &gt; $right"/>
-                </outputxsl:when>
-
                 <outputxsl:when test="$op = '='">
                     <outputxsl:sequence select="$left = $right"/>
                 </outputxsl:when>
-
+                <outputxsl:when test="$op = '!='">
+                    <outputxsl:sequence select="$left != $right"/>
+                </outputxsl:when>
+                <outputxsl:when test="$op = '&gt;'">
+                    <outputxsl:sequence select="$left &gt; $right"/>
+                </outputxsl:when>
+                <outputxsl:when test="$op = '&gt;='">
+                    <outputxsl:sequence select="$left &gt;= $right"/>
+                </outputxsl:when>
+                <outputxsl:when test="$op = '&lt;'">
+                    <outputxsl:sequence select="$left &lt; $right"/>
+                </outputxsl:when>
+                <outputxsl:when test="$op = '&lt;='">
+                    <outputxsl:sequence select="$left &lt;= $right"/>
+                </outputxsl:when>
                 <outputxsl:otherwise>
                     <outputxsl:sequence select="false()"/>
                 </outputxsl:otherwise>
@@ -43,11 +148,6 @@
             <outputxsl:sequence select="$a = $b"/>
         </outputxsl:function>
 
-        <!-- CastToString -->
-        <outputxsl:function name="datamapper:CastToString">
-            <outputxsl:param name="a"/>
-            <outputxsl:sequence select="string($a)"/>
-        </outputxsl:function>
 
         <!-- Nullcheck -->
         <outputxsl:function name="datamapper:NullCheck">
@@ -55,20 +155,83 @@
             <outputxsl:sequence select="string-length($a) &gt; 0"/>
         </outputxsl:function>
 
-        <!-- Replace -->
-        <outputxsl:function name="datamapper:Replace">
-            <outputxsl:param name="text"/>
-            <outputxsl:param name="search"/>
-            <outputxsl:param name="replace"/>
+        <outputxsl:function name="datamapper:EmptyCheck">
+            <outputxsl:param name="a"/>
+            <outputxsl:sequence select="string-length($a) = 0"/>
+        </outputxsl:function>
 
+        <outputxsl:function name="datamapper:Exists">
+            <outputxsl:param name="a"/>
+            <outputxsl:sequence select="exists($a)"/>
+        </outputxsl:function>
+
+        <outputxsl:function name="datamapper:Count">
+            <outputxsl:param name="input" as="item()*"/>
+            <outputxsl:param name="operator"/>
+            <outputxsl:param name="value" as="xs:integer"/>
+            <outputxsl:variable name="cnt" select="count($input)"/>
             <outputxsl:choose>
-                <outputxsl:when test="contains($text, $search)">
-                    <outputxsl:sequence
-                            select="concat(substring-before($text, $search),$replace,datamapper:Replace(substring-after($text, $search), $search, $replace))"/>
+                <outputxsl:when test="$operator='='">
+                    <outputxsl:sequence select="$cnt = $value"/>
                 </outputxsl:when>
-
+                <outputxsl:when test="$operator='!='">
+                    <outputxsl:sequence select="$cnt != $value"/>
+                </outputxsl:when>
+                <outputxsl:when test="$operator='&gt;'">
+                    <outputxsl:sequence select="$cnt &gt; $value"/>
+                </outputxsl:when>
+                <outputxsl:when test="$operator='&gt;='">
+                    <outputxsl:sequence select="$cnt &gt;= $value"/>
+                </outputxsl:when>
+                <outputxsl:when test="$operator='&lt;'">
+                    <outputxsl:sequence select="$cnt &lt; $value"/>
+                </outputxsl:when>
+                <outputxsl:when test="$operator='&lt;='">
+                    <outputxsl:sequence select="$cnt &lt;= $value"/>
+                </outputxsl:when>
                 <outputxsl:otherwise>
-                    <outputxsl:sequence select="$text"/>
+                    <outputxsl:sequence select="false()"/>
+                </outputxsl:otherwise>
+            </outputxsl:choose>
+        </outputxsl:function>
+
+        <outputxsl:function name="datamapper:Contains">
+            <outputxsl:param name="input"/>
+            <outputxsl:param name="value"/>
+            <outputxsl:sequence select="contains($input, $value)"/>
+        </outputxsl:function>
+
+        <outputxsl:function name="datamapper:StartsWith">
+            <outputxsl:param name="input"/>
+            <outputxsl:param name="value"/>
+            <outputxsl:sequence select="starts-with($input, $value)"/>
+        </outputxsl:function>
+
+        <outputxsl:function name="datamapper:EndsWith">
+            <outputxsl:param name="input"/>
+            <outputxsl:param name="value"/>
+            <outputxsl:sequence select="ends-with($input, $value)"/>
+        </outputxsl:function>
+
+        <outputxsl:function name="datamapper:ConditionGroup">
+            <outputxsl:param name="cond1" as="xs:boolean"/>
+            <outputxsl:param name="operator"/>
+            <outputxsl:param name="cond2" as="xs:boolean"/>
+            <outputxsl:choose>
+                <outputxsl:when test="$operator='AND'">
+                    <outputxsl:sequence select="$cond1 and $cond2"/>
+                </outputxsl:when>
+                <outputxsl:when test="$operator='OR'">
+                    <outputxsl:sequence select="$cond1 or $cond2"/>
+                </outputxsl:when>
+                <outputxsl:when test="$operator='XOR'">
+                    <outputxsl:sequence select="($cond1 and not($cond2)) or (not($cond1) and $cond2)"/>
+                </outputxsl:when>
+                <outputxsl:when test="$operator='=='">
+                    <outputxsl:sequence select="$cond1 = $cond2"/>
+                </outputxsl:when>
+                <outputxsl:otherwise>
+                    <outputxsl:sequence select="false()"/>
                 </outputxsl:otherwise>
             </outputxsl:choose>
         </outputxsl:function>
