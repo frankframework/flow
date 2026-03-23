@@ -1,16 +1,16 @@
 import { useId, useState } from 'react'
 import mutationConfig from '~/utils/datamapper_utils/config/mutation-config.json'
+import type { Source } from '~/types/datamapper_types/export-types'
+import Input from '~/components/inputs/input'
+import Dropdown from '~/components/inputs/dropdown'
+import Button from '~/components/inputs/button'
+import DeleteButton from '../basic-components/delete-button'
 import type {
   Mutation,
   MutationInput,
   MutationsConfig,
   MutationTypeInput,
-  Source,
-} from '~/types/datamapper_types/export-types'
-import Input from '~/components/inputs/input'
-import Dropdown from '~/components/inputs/dropdown'
-import Button from '~/components/inputs/button'
-import DeleteButton from '../basic-components/delete-button'
+} from '~/types/datamapper_types/function-types'
 
 function AddMutationForm({
   sources,

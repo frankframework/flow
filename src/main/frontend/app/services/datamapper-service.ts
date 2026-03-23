@@ -1,4 +1,4 @@
-import type { MappingListConfig } from '~/types/datamapper_types/export-types'
+import type { MappingListConfig } from '~/types/datamapper_types/config-types'
 import { apiFetch } from '~/utils/api'
 
 export async function fetchDatamapperConfiguration(projectName: string): Promise<MappingListConfig> {

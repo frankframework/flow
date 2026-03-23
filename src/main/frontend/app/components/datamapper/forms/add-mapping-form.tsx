@@ -2,7 +2,7 @@ import React, { type Dispatch, type SetStateAction, useEffect, useState } from '
 
 import AddMutationForm from './add-mutation-form'
 import AddConditionForm from './add-conditions-form'
-import type { Mutation, Condition, Source } from '~/types/datamapper_types/export-types'
+import type { , Source } from '~/types/datamapper_types/export-types'
 import type { MappingNodeData, NodeLabels } from '~/types/datamapper_types/react-node-types'
 import Modal from '~/components/modal'
 import Checkbox from '~/components/inputs/checkbox'
@@ -10,6 +10,7 @@ import Dropdown from '~/components/inputs/dropdown'
 import DeleteButton from '../basic-components/delete-button'
 import EditButton from '../basic-components/edit-button'
 import Button from '~/components/inputs/button'
+import type { Condition, Mutation } from '~/types/datamapper_types/function-types'
 
 export interface MappingModalProps {
   onSave: (data: MappingNodeData) => void

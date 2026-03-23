@@ -1,5 +1,6 @@
 import type { Node, Edge, ReactFlowJsonObject } from '@xyflow/react'
-import type { MappingListConfig } from '~/types/datamapper_types/export-types'
+import type { MappingListConfig } from '~/types/datamapper_types/config-types'
+
 import type { DataTypeSchema } from '~/types/datamapper_types/data-types'
 
 export const DEFAULT_MAPPING_LIST_CONFIG: MappingListConfig = {
