@@ -426,7 +426,7 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
               Add Source
             </Button>
             <Button
-              className="bg-foreground-active text-foreground hover:bg-hover absolute bottom-[2vh] left-1/2 z-10 -translate-x-1/2 rounded-2xl border px-4 py-2"
+              className="bg-foreground-active text-foreground hover:bg-hover absolute bottom-[2vh] left-1/2 z-10 -translate-x-1/2 rounded-2xl border px-4 py-2 text-[var(--color-neutral-900)]"
               onClick={openMapping}
             >
               MAP

@@ -2,7 +2,7 @@ import React, { type Dispatch, type SetStateAction, useEffect, useState } from '
 
 import AddMutationForm from './add-mutation-form'
 import AddConditionForm from './add-conditions-form'
-import type { , Source } from '~/types/datamapper_types/export-types'
+import type { Source } from '~/types/datamapper_types/export-types'
 import type { MappingNodeData, NodeLabels } from '~/types/datamapper_types/react-node-types'
 import Modal from '~/components/modal'
 import Checkbox from '~/components/inputs/checkbox'
