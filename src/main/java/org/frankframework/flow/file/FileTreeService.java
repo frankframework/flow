@@ -1,4 +1,4 @@
-package org.frankframework.flow.filetree;
+package org.frankframework.flow.file;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -11,7 +11,9 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
 import javax.xml.parsers.DocumentBuilder;
+
 import org.frankframework.flow.configuration.ConfigurationService;
 import org.frankframework.flow.exception.ApiException;
 import org.frankframework.flow.filesystem.FileSystemStorage;
@@ -19,6 +21,7 @@ import org.frankframework.flow.project.Project;
 import org.frankframework.flow.project.ProjectNotFoundException;
 import org.frankframework.flow.project.ProjectService;
 import org.frankframework.flow.utility.XmlSecurityUtils;
+
 import org.springframework.stereotype.Service;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -30,17 +33,18 @@ public class FileTreeService {
 
 	private final ProjectService projectService;
 	private final FileSystemStorage fileSystemStorage;
-	private final ConfigurationService configurationService;
+	private final FileService fileService;
 
 	private final Map<String, FileTreeNode> treeCache = new ConcurrentHashMap<>();
 
 	public FileTreeService(
 			ProjectService projectService,
 			FileSystemStorage fileSystemStorage,
-			ConfigurationService configurationService) {
+			FileService fileService
+	) {
 		this.projectService = projectService;
 		this.fileSystemStorage = fileSystemStorage;
-		this.configurationService = configurationService;
+		this.fileService = fileService;
 	}
 
 	public FileTreeNode getProjectTree(String projectName) throws IOException {
@@ -126,82 +130,17 @@ public class FileTreeService {
 		}
 	}
 
-	public FileTreeNode createFile(String projectName, String parentPath, String fileName)
-			throws IOException, ApiException {
-		if (parentPath == null || parentPath.isBlank()) {
-			throw new IllegalArgumentException("Parent path must not be empty");
-		}
-		validateFileName(fileName);
-		String fullPath = parentPath.endsWith("/") ? parentPath + fileName : parentPath + "/" + fileName;
-		validateWithinProject(projectName, fullPath);
-
-		if (fileName.toLowerCase().endsWith(".xml")) {
-			configurationService.addConfigurationToFolder(projectName, fileName, parentPath);
-		} else {
-			fileSystemStorage.createFile(fullPath);
-		}
-
+	public FileTreeNode createFolder(String projectName, String path) throws IOException {
+		fileService.validateWithinProject(projectName, path);
+		fileSystemStorage.createProjectDirectory(path);
 		invalidateTreeCache(projectName);
 
-		FileTreeNode node = new FileTreeNode();
-		node.setName(fileName);
-		node.setPath(fullPath);
-		node.setType(NodeType.FILE);
-		return node;
-	}
-
-	public FileTreeNode createFolder(String projectName, String parentPath, String folderName) throws IOException {
-		if (parentPath == null || parentPath.isBlank()) {
-			throw new IllegalArgumentException("Parent path must not be empty");
-		}
-		validateFileName(folderName);
-		String fullPath = parentPath.endsWith("/") ? parentPath + folderName : parentPath + "/" + folderName;
-		validateWithinProject(projectName, fullPath);
-
-		fileSystemStorage.createProjectDirectory(fullPath);
-		invalidateTreeCache(projectName);
-
+		String folderName = path.substring(path.lastIndexOf("/") + 1);
 		FileTreeNode node = new FileTreeNode();
 		node.setName(folderName);
-		node.setPath(fullPath);
+		node.setPath(path);
 		node.setType(NodeType.DIRECTORY);
 		return node;
-	}
-
-	public FileTreeNode renameFile(String projectName, String oldPath, String newName) throws IOException {
-		validateFileName(newName);
-		validateWithinProject(projectName, oldPath);
-
-		Path oldAbsPath = fileSystemStorage.toAbsolutePath(oldPath);
-		Path newAbsPath = oldAbsPath.getParent().resolve(newName);
-		String newPath = newAbsPath.toString();
-
-		if (!fileSystemStorage.isLocalEnvironment()) {
-			String parentRelative = oldPath.contains("/") ? oldPath.substring(0, oldPath.lastIndexOf('/')) : "";
-			newPath = parentRelative.isEmpty() ? newName : parentRelative + "/" + newName;
-		}
-
-		validateWithinProject(projectName, newPath);
-
-		if (Files.exists(newAbsPath)) {
-			throw new FileAlreadyExistsException("A file or folder with that name already exists: " + newName);
-		}
-
-		fileSystemStorage.rename(oldPath, newPath);
-		invalidateTreeCache(projectName);
-
-		boolean isDir = Files.isDirectory(newAbsPath);
-		FileTreeNode node = new FileTreeNode();
-		node.setName(newName);
-		node.setPath(newPath);
-		node.setType(isDir ? NodeType.DIRECTORY : NodeType.FILE);
-		return node;
-	}
-
-	public void deleteFile(String projectName, String path) throws IOException {
-		validateWithinProject(projectName, path);
-		fileSystemStorage.delete(path);
-		invalidateTreeCache(projectName);
 	}
 
 	public void invalidateTreeCache() {
@@ -210,29 +149,6 @@ public class FileTreeService {
 
 	public void invalidateTreeCache(String projectName) {
 		treeCache.remove(projectName);
-	}
-
-	private void validateWithinProject(String projectName, String path) throws IOException {
-		try {
-			Project project = projectService.getProject(projectName);
-			Path projectPath = fileSystemStorage.toAbsolutePath(project.getRootPath());
-			Path targetPath = fileSystemStorage.toAbsolutePath(path).normalize();
-
-			if (!targetPath.startsWith(projectPath)) {
-				throw new SecurityException("Path is outside project directory");
-			}
-		} catch (ProjectNotFoundException e) {
-			throw new IllegalArgumentException("Project does not exist: " + projectName);
-		}
-	}
-
-	private void validateFileName(String name) {
-		if (name == null || name.isBlank()) {
-			throw new IllegalArgumentException("File name must not be empty");
-		}
-		if (name.contains("/") || name.contains("\\") || name.contains("..")) {
-			throw new IllegalArgumentException("File name contains invalid characters: " + name);
-		}
 	}
 
 	private FileTreeNode buildTree(Path path, Path relativizeRoot, boolean useRelativePaths) throws IOException {

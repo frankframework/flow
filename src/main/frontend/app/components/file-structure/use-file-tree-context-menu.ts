@@ -1,11 +1,7 @@
 import { useCallback, useRef, useState } from 'react'
 import type { TreeItemIndex } from 'react-complex-tree'
-import {
-  createFileInProject,
-  createFolderInProject,
-  renameInProject,
-  deleteInProject,
-} from '~/services/file-tree-service'
+import { createFile, deleteFile, renameFile } from '~/services/file-service';
+import { createFolderInProject } from '~/services/file-tree-service'
 import { clearConfigurationCache } from '~/services/configuration-service'
 import useTabStore from '~/stores/tab-store'
 import useEditorTabStore from '~/stores/editor-tab-store'
@@ -117,9 +113,9 @@ export function useFileTreeContextMenu({
       setNameDialog({
         title: 'New File',
         onSubmit: async (name: string) => {
-          const fileName = ensureXmlExtension(name)
+
           try {
-            await createFileInProject(projectName, parentPath, fileName)
+            await createFile(projectName, `${parentPath}/${ensureXmlExtension(name)}`)
             await dataProvider.reloadDirectory(parentItemId)
           } catch (error) {
             showErrorToastFrom('Failed to create file', error)
@@ -173,7 +169,7 @@ export function useFileTreeContextMenu({
             return
           }
           try {
-            await renameInProject(projectName, oldPath, newName)
+            await renameFile(projectName, oldPath, newName)
             clearConfigurationCache(projectName, oldPath)
             const newPath = buildNewPath(oldPath, newName)
             useTabStore.getState().renameTabsForConfig(oldPath, newPath)
@@ -209,7 +205,7 @@ export function useFileTreeContextMenu({
     if (!deleteTarget || !projectName || !dataProvider) return
 
     try {
-      await deleteInProject(projectName, deleteTarget.path)
+      await deleteFile(projectName, deleteTarget.path)
       clearConfigurationCache(projectName, deleteTarget.path)
       useTabStore.getState().removeTabsForConfig(deleteTarget.path)
       useEditorTabStore.getState().refreshAllTabs()
