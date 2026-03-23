@@ -5,13 +5,17 @@ import java.io.StringReader;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+
 import javax.xml.transform.stream.StreamSource;
+
 import lombok.extern.slf4j.Slf4j;
 import net.sf.saxon.s9api.*;
+
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
 import org.frankframework.flow.exception.ApiException;
 import org.frankframework.flow.filesystem.FileSystemStorage;
-import org.frankframework.flow.filetree.FileTreeService;
+import org.frankframework.flow.file.FileTreeService;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -41,7 +45,8 @@ public class DatamapperGeneratorService {
 		} catch (IOException e) {
 			throw new ApiException(
 					"Failed to resolve configuration file path for project: " + projectName,
-					HttpStatus.INTERNAL_SERVER_ERROR);
+					HttpStatus.INTERNAL_SERVER_ERROR
+			);
 		}
 	}
 
@@ -63,7 +68,8 @@ public class DatamapperGeneratorService {
 		if (Files.isDirectory(configurationPath)) {
 			throw new ApiException(
 					"Cannot update configuration because path is a directory: " + configurationPath,
-					HttpStatus.INTERNAL_SERVER_ERROR);
+					HttpStatus.INTERNAL_SERVER_ERROR
+			);
 		}
 
 		try {
@@ -94,7 +100,8 @@ public class DatamapperGeneratorService {
 		saveGenerationFile(projectName, content);
 		generate(
 				getConfigFilePath(projectName).toString(),
-				getDatamapperDir(projectName).resolve("export.xslt").toString());
+				getDatamapperDir(projectName).resolve("export.xslt").toString()
+		);
 		deleteGenerationFile(projectName);
 	}
 

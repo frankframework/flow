@@ -13,11 +13,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Comparator;
+
 import javax.naming.ConfigurationException;
+
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
 import org.frankframework.flow.filesystem.FileSystemStorage;
-import org.frankframework.flow.filetree.FileTreeNode;
-import org.frankframework.flow.filetree.FileTreeService;
+import org.frankframework.flow.file.FileTreeNode;
+import org.frankframework.flow.file.FileTreeService;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -72,11 +75,11 @@ public class DatamapperConfigServiceTest {
 
 	private void stubWriteFile() throws IOException {
 		doAnswer(invocation -> {
-					String path = invocation.getArgument(0);
-					String content = invocation.getArgument(1);
-					Files.writeString(Paths.get(path), content);
-					return null;
-				})
+			String path = invocation.getArgument(0);
+			String content = invocation.getArgument(1);
+			Files.writeString(Paths.get(path), content);
+			return null;
+		})
 				.when(fileSystemStorage)
 				.writeFile(anyString(), anyString());
 	}

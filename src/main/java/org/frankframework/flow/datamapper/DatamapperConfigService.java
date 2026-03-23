@@ -3,10 +3,13 @@ package org.frankframework.flow.datamapper;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+
 import javax.naming.ConfigurationException;
+
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
 import org.frankframework.flow.filesystem.FileSystemStorage;
-import org.frankframework.flow.filetree.FileTreeService;
+import org.frankframework.flow.file.FileTreeService;
+
 import org.springframework.stereotype.Service;
 
 @Service

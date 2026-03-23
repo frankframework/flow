@@ -1,4 +1,4 @@
-package org.frankframework.flow.filetree;
+package org.frankframework.flow.file;
 
 import static org.junit.Assert.assertSame;
 import static org.junit.jupiter.api.Assertions.*;
@@ -13,6 +13,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Comparator;
 import java.util.List;
+
 import org.frankframework.flow.configuration.ConfigurationService;
 import org.frankframework.flow.exception.ApiException;
 import org.frankframework.flow.filesystem.FileOperations;
@@ -20,6 +21,7 @@ import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.frankframework.flow.project.Project;
 import org.frankframework.flow.project.ProjectNotFoundException;
 import org.frankframework.flow.project.ProjectService;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -172,7 +174,8 @@ public class FileTreeServiceTest {
 
 		IllegalArgumentException ex = assertThrows(
 				IllegalArgumentException.class,
-				() -> fileTreeService.getShallowDirectoryTree(TEST_PROJECT_NAME, "nonexistent"));
+				() -> fileTreeService.getShallowDirectoryTree(TEST_PROJECT_NAME, "nonexistent")
+		);
 
 		assertTrue(ex.getMessage().contains("Directory does not exist"));
 	}
@@ -214,7 +217,8 @@ public class FileTreeServiceTest {
 
 		IllegalArgumentException ex = assertThrows(
 				IllegalArgumentException.class,
-				() -> fileTreeService.getShallowConfigurationsDirectoryTree(TEST_PROJECT_NAME));
+				() -> fileTreeService.getShallowConfigurationsDirectoryTree(TEST_PROJECT_NAME)
+		);
 
 		assertTrue(ex.getMessage().contains("Configurations directory does not exist"));
 	}
@@ -225,7 +229,8 @@ public class FileTreeServiceTest {
 
 		IllegalArgumentException ex = assertThrows(
 				IllegalArgumentException.class,
-				() -> fileTreeService.getShallowConfigurationsDirectoryTree("NonExistentProject"));
+				() -> fileTreeService.getShallowConfigurationsDirectoryTree("NonExistentProject")
+		);
 
 		assertTrue(ex.getMessage().contains("Configurations directory does not exist"));
 	}
@@ -279,7 +284,8 @@ public class FileTreeServiceTest {
 
 		IllegalArgumentException ex = assertThrows(
 				IllegalArgumentException.class,
-				() -> fileTreeService.getConfigurationsDirectoryTree(TEST_PROJECT_NAME));
+				() -> fileTreeService.getConfigurationsDirectoryTree(TEST_PROJECT_NAME)
+		);
 
 		assertTrue(ex.getMessage().contains("Configurations directory does not exist"));
 	}
@@ -290,7 +296,8 @@ public class FileTreeServiceTest {
 
 		IllegalArgumentException ex = assertThrows(
 				IllegalArgumentException.class,
-				() -> fileTreeService.getConfigurationsDirectoryTree("NonExistingProject"));
+				() -> fileTreeService.getConfigurationsDirectoryTree("NonExistingProject")
+		);
 
 		assertTrue(ex.getMessage().contains("Configurations directory does not exist"));
 	}
@@ -300,7 +307,8 @@ public class FileTreeServiceTest {
 	void createFile_NullName_ThrowsIllegalArgument() {
 		assertThrows(
 				IllegalArgumentException.class,
-				() -> fileTreeService.createFile(TEST_PROJECT_NAME, "/some/path", null));
+				() -> fileTreeService.createFile(TEST_PROJECT_NAME, "/some/path", null)
+		);
 	}
 
 	@Test
@@ -308,7 +316,8 @@ public class FileTreeServiceTest {
 	void createFile_BlankName_ThrowsIllegalArgument() {
 		assertThrows(
 				IllegalArgumentException.class,
-				() -> fileTreeService.createFile(TEST_PROJECT_NAME, "/some/path", "   "));
+				() -> fileTreeService.createFile(TEST_PROJECT_NAME, "/some/path", "   ")
+		);
 	}
 
 	@Test
@@ -316,7 +325,8 @@ public class FileTreeServiceTest {
 	void createFile_NameWithForwardSlash_ThrowsIllegalArgument() {
 		assertThrows(
 				IllegalArgumentException.class,
-				() -> fileTreeService.createFile(TEST_PROJECT_NAME, "/some/path", "bad/name.xml"));
+				() -> fileTreeService.createFile(TEST_PROJECT_NAME, "/some/path", "bad/name.xml")
+		);
 	}
 
 	@Test
@@ -324,7 +334,8 @@ public class FileTreeServiceTest {
 	void createFile_NameWithBackslash_ThrowsIllegalArgument() {
 		assertThrows(
 				IllegalArgumentException.class,
-				() -> fileTreeService.createFile(TEST_PROJECT_NAME, "/some/path", "bad\\name.xml"));
+				() -> fileTreeService.createFile(TEST_PROJECT_NAME, "/some/path", "bad\\name.xml")
+		);
 	}
 
 	@Test
@@ -332,7 +343,8 @@ public class FileTreeServiceTest {
 	void createFile_NameWithDoubleDots_ThrowsIllegalArgument() {
 		assertThrows(
 				IllegalArgumentException.class,
-				() -> fileTreeService.createFile(TEST_PROJECT_NAME, "/some/path", ".."));
+				() -> fileTreeService.createFile(TEST_PROJECT_NAME, "/some/path", "..")
+		);
 	}
 
 	@Test
@@ -388,7 +400,8 @@ public class FileTreeServiceTest {
 		String outsidePath = tempProjectRoot.getParent().toAbsolutePath().toString();
 		assertThrows(
 				SecurityException.class,
-				() -> fileTreeService.createFile(TEST_PROJECT_NAME, outsidePath, "escape.json"));
+				() -> fileTreeService.createFile(TEST_PROJECT_NAME, outsidePath, "escape.json")
+		);
 	}
 
 	@Test
@@ -443,7 +456,8 @@ public class FileTreeServiceTest {
 	void createFolder_NullName_ThrowsIllegalArgument() {
 		assertThrows(
 				IllegalArgumentException.class,
-				() -> fileTreeService.createFolder(TEST_PROJECT_NAME, "/some/path", null));
+				() -> fileTreeService.createFolder(TEST_PROJECT_NAME, "/some/path", null)
+		);
 	}
 
 	@Test
@@ -451,7 +465,8 @@ public class FileTreeServiceTest {
 	void createFolder_NameWithBackslash_ThrowsIllegalArgument() {
 		assertThrows(
 				IllegalArgumentException.class,
-				() -> fileTreeService.createFolder(TEST_PROJECT_NAME, "/some/path", "bad\\folder"));
+				() -> fileTreeService.createFolder(TEST_PROJECT_NAME, "/some/path", "bad\\folder")
+		);
 	}
 
 	@Test
@@ -513,7 +528,8 @@ public class FileTreeServiceTest {
 		String oldPath = tempProjectRoot.resolve("old.xml").toAbsolutePath().toString();
 		assertThrows(
 				FileAlreadyExistsException.class,
-				() -> fileTreeService.renameFile(TEST_PROJECT_NAME, oldPath, "existing.xml"));
+				() -> fileTreeService.renameFile(TEST_PROJECT_NAME, oldPath, "existing.xml")
+		);
 	}
 
 	@Test
@@ -521,7 +537,8 @@ public class FileTreeServiceTest {
 	void renameFile_InvalidNewName_ThrowsIllegalArgument() {
 		assertThrows(
 				IllegalArgumentException.class,
-				() -> fileTreeService.renameFile(TEST_PROJECT_NAME, "/some/old.xml", "bad/name.xml"));
+				() -> fileTreeService.renameFile(TEST_PROJECT_NAME, "/some/old.xml", "bad/name.xml")
+		);
 	}
 
 	@Test
@@ -696,7 +713,8 @@ public class FileTreeServiceTest {
 		assertTrue(Paths.get(node.getPath()).isAbsolute(), "Root node path must be absolute");
 		assertTrue(
 				node.getChildren().stream().allMatch(c -> Paths.get(c.getPath()).isAbsolute()),
-				"All child paths must be absolute");
+				"All child paths must be absolute"
+		);
 	}
 
 	private void stubCreateProjectDirectory() throws IOException {
@@ -717,10 +735,10 @@ public class FileTreeServiceTest {
 
 	private void stubDelete() throws IOException {
 		doAnswer(invocation -> {
-					String path = invocation.getArgument(0);
-					FileOperations.deleteRecursively(Paths.get(path));
-					return null;
-				})
+			String path = invocation.getArgument(0);
+			FileOperations.deleteRecursively(Paths.get(path));
+			return null;
+		})
 				.when(fileSystemStorage)
 				.delete(anyString());
 	}

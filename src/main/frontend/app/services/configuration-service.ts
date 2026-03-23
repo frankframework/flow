@@ -26,7 +26,7 @@ export async function fetchConfigurationCached(
 export async function fetchConfiguration(projectName: string, filepath: string, signal?: AbortSignal): Promise<string> {
   const { content } = await apiFetch<{ content: string }>(
     `${getBaseUrl(projectName)}/${encodeURIComponent(filepath)}`,
-    { method: 'GET', signal },
+    { signal },
   )
   return content
 }
