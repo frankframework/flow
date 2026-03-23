@@ -1,6 +1,7 @@
 import { type Node, type NodeProps, NodeResizeControl } from '@xyflow/react'
-import { useState } from 'react'
+import { useState, type ChangeEvent } from 'react'
 import { ResizeIcon } from '~/routes/studio/canvas/nodetypes/frank-node'
+import useFlowStore from '~/stores/flow-store'
 
 export type GroupNode = Node<{
   label: string
@@ -8,16 +9,22 @@ export type GroupNode = Node<{
   height: number
 }>
 
-export default function GroupNodeComponent({ data, selected }: NodeProps<GroupNode>) {
+export default function GroupNodeComponent({ id, data, selected }: NodeProps<GroupNode>) {
   const [dimensions, setDimensions] = useState({
     width: data.width,
     height: data.height,
   })
   const [isEditing, setIsEditing] = useState(false)
   const [label, setLabel] = useState(data.label)
+  const { setGroupnodeLabel } = useFlowStore.getState()
 
   const handleBlur = () => setIsEditing(false)
   const handleClick = () => setIsEditing(true)
+
+  const handleSave = (event: ChangeEvent<HTMLInputElement>) => {
+    setGroupnodeLabel(id, event.target.value)
+    setLabel(event.target.value)
+  }
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
@@ -59,7 +66,7 @@ export default function GroupNodeComponent({ data, selected }: NodeProps<GroupNo
               <input
                 type="text"
                 value={label}
-                onChange={(event) => setLabel(event.target.value)}
+                onChange={handleSave}
                 onKeyDown={handleKeyDown}
                 onBlur={handleBlur}
                 autoFocus

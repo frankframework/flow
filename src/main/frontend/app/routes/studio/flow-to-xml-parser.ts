@@ -4,7 +4,8 @@ import type { ChildNode } from './canvas/nodetypes/child-node'
 import { getAdapter } from '~/services/adapter-service'
 import { FlowConfig } from './canvas/flow.config'
 import type { StickyNote } from './canvas/nodetypes/sticky-note'
-import { isStickyNote } from '~/stores/flow-store'
+import { isGroupNode, isStickyNote } from '~/stores/flow-store'
+import type { GroupNode } from './canvas/nodetypes/group-node'
 
 interface ReactFlowJson {
   nodes: FlowNode[]
@@ -45,6 +46,8 @@ export async function exportFlowToXml(
   const { nodes, edges } = json
   const validNodes = nodes.filter((node) => hasDataProperty(node))
   const stickyNotes: StickyNote[] = nodes.filter((node) => isStickyNote(node))
+  const groupNodes: GroupNode[] = nodes.filter((node) => isGroupNode(node))
+  console.log(nodes)
   const nodeMap = new Map(validNodes.map((n) => [n.id, n]))
 
   const { outgoing, incoming, edgeMap } = buildEdgeMaps(edges)
@@ -84,16 +87,16 @@ export async function exportFlowToXml(
   }
 
   const exitsXml = exitNodes.length > 0 ? `      <Exits>\n${generateExitsXml(exitNodes)}\n      </Exits>` : ''
-  const stickyXml = generateStickyNotesXml(stickyNotes)
+  const flowXml = generateFlowElementsXml(nodes)
 
   return `
   <Adapter ${adapterAttributes}>
-  ${stickyXml}
 ${receivers.join('\n')}
     <Pipeline>
 ${exitsXml}
 ${pipelineParts.join('\n')}
     </Pipeline>
+    ${flowXml}
   </Adapter>`
 }
 
@@ -243,13 +246,23 @@ function getExitState(data: NodeData): string {
   return name.includes('bad') || name.includes('fail') ? 'error' : 'success'
 }
 
-function generateStickyNotesXml(stickyNotes: StickyNote[]): string {
-  if (stickyNotes.length === 0) return ''
+function generateFlowElementsXml(nodes: FlowNode[]): string {
+  const stickyNotes = nodes.filter((node) => isStickyNote(node))
+  const groupNodes = nodes.filter((node) => isGroupNode(node))
 
-  return `
-  <flow:StickyNotes>
-${stickyNotes
-  .map((stickynote) => {
+  const groupChildrenMap = new Map<string, FlowNode[]>()
+
+  for (const node of nodes) {
+    if (!node.parentId) continue
+
+    if (!groupChildrenMap.has(node.parentId)) {
+      groupChildrenMap.set(node.parentId, [])
+    }
+
+    groupChildrenMap.get(node.parentId)!.push(node)
+  }
+
+  const stickyXml = stickyNotes.map((stickynote) => {
     const { x, y } = stickynote.position
     const text = stickynote.data?.content || ''
 
@@ -257,10 +270,47 @@ ${stickyNotes
       text="${escapeXml(text)}"
       flow:x="${x}"
       flow:y="${y}"
-      flow:width="${stickynote.measured?.width || 200}"
-      flow:height="${stickynote.measured?.height || 120}"
+      flow:width="${stickynote.measured?.width || FlowConfig.STICKY_NOTE_DEFAULT_WIDTH}"
+      flow:height="${stickynote.measured?.height || FlowConfig.STICKY_NOTE_DEFAULT_HEIGHT}"
     />`
   })
-  .join('\n')}
-  </flow:StickyNotes>`
+
+  const groupNodesXml = generateGroupNodeXml(groupNodes, groupChildrenMap)
+
+  const allElements = [...stickyXml, ...groupNodesXml]
+
+  if (allElements.length === 0) return ''
+
+  return `
+  <flow:FlowElements>
+${allElements.join('\n')}
+  </flow:FlowElements>`
+}
+
+function generateGroupNodeXml(groupNodes: GroupNode[], groupChildrenMap: Map<string, FlowNode[]>): string[] {
+  const groupNodesXml = groupNodes.map((groupNode) => {
+    const { x, y } = groupNode.position
+    const width = groupNode.measured?.width || FlowConfig.NODE_DEFAULT_WIDTH
+    const height = groupNode.measured?.height || FlowConfig.NODE_DEFAULT_HEIGHT
+
+    const children = groupChildrenMap.get(groupNode.id) || []
+
+    const childNames = children
+      .map((child) => (child.data as NodeData)?.name)
+      .filter((name) => name && name.trim() !== '')
+      .map((name) => escapeXml(name))
+      .join(',')
+
+    const groupName = escapeXml(groupNode.data?.label || '')
+
+    return `    <flow:GroupNode
+      label="${groupName}"
+      children="${childNames}"
+      flow:x="${x}"
+      flow:y="${y}"
+      flow:width="${width}"
+      flow:height="${height}"
+    />`
+  })
+  return groupNodesXml
 }

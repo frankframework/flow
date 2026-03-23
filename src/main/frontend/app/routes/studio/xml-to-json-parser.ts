@@ -7,6 +7,7 @@ import { fetchConfigurationCached } from '~/services/configuration-service'
 import { translateElementFromOldToNewFormat } from '~/utils/flow-utils'
 import { FlowConfig } from './canvas/flow.config'
 import type { StickyNote } from './canvas/nodetypes/sticky-note'
+import type { GroupNode } from './canvas/nodetypes/group-node'
 
 interface IdCounter {
   current: number
@@ -98,6 +99,7 @@ export async function convertAdapterXmlToJson(adapter: Element) {
   const idCounter: IdCounter = { current: 0 }
   const flownodes = convertAdapterToFlowNodes(adapter, idCounter)
   const stickyNotes = extractStickyNotesFromAdapter(adapter, idCounter)
+  const groupnodes = extractGroupNodesFromAdapter(adapter, idCounter)
   const allNodes: FlowNode[] = [...flownodes, ...stickyNotes]
   const adapterJson = { nodes: allNodes, edges: extractEdgesFromAdapter(adapter, flownodes) }
 
@@ -553,13 +555,13 @@ function convertChildren(elements: Element[], idCounter: IdCounter): ChildNode[]
 function extractStickyNotesFromAdapter(adapter: Element, idCounter: IdCounter): StickyNote[] {
   const stickyNotes: StickyNote[] = []
 
-  const stickyContainer = [...adapter.children].find(
-    (element) => element.tagName === 'flow:StickyNotes' || element.tagName.toLowerCase().includes('stickynotes'),
+  const elementContainer = [...adapter.children].find(
+    (element) => element.tagName === 'flow:FlowElements' || element.tagName.toLowerCase().includes('stickynotes'),
   )
 
-  if (!stickyContainer) return stickyNotes
+  if (!elementContainer) return stickyNotes
 
-  const notes = [...stickyContainer.children].filter(
+  const notes = [...elementContainer.children].filter(
     (element) => element.tagName === 'flow:StickyNote' || element.tagName.toLowerCase().includes('stickynote'),
   )
 
@@ -586,6 +588,33 @@ function extractStickyNotesFromAdapter(adapter: Element, idCounter: IdCounter): 
   }
 
   return stickyNotes
+}
+
+function extractGroupNodesFromAdapter(adapter: Element, idCounter: IdCounter): GroupNode[] {
+  const groupNodes: GroupNode[] = []
+
+  const elementContainer = [...adapter.children].find(
+    (element) => element.tagName === 'flow:FlowElements' || element.tagName.toLowerCase().includes('groupnodes'),
+  )
+
+  if (!elementContainer) return groupNodes
+
+  const nodes = [...elementContainer.children].filter(
+    (element) => element.tagName === 'flow:GroupNode' || element.tagName.toLowerCase().includes('groupnode'),
+  )
+
+  for (const node of nodes) {
+    const label = node.getAttribute('label') || ''
+    const children = node.getAttribute('children')?.split(',')
+    const x = Number(node.getAttribute('flow:x')) || 0
+    const y = Number(node.getAttribute('flow:y')) || 0
+    const width = Number(node.getAttribute('flow:width'))
+    const height = Number(node.getAttribute('flow:height'))
+
+    console.log(children)
+  }
+
+  return groupNodes
 }
 
 // ----------------------------------------------------------------------------- HELPERS -----------------------------------------------------------------------------
