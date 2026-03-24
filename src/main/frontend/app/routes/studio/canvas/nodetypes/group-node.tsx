@@ -7,6 +7,7 @@ export type GroupNode = Node<{
   label: string
   width: number
   height: number
+  childrenNames?: string[]
 }>
 
 export default function GroupNodeComponent({ id, data, selected }: NodeProps<GroupNode>) {

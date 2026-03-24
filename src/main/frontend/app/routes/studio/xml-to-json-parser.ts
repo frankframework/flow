@@ -99,8 +99,9 @@ export async function convertAdapterXmlToJson(adapter: Element) {
   const idCounter: IdCounter = { current: 0 }
   const flownodes = convertAdapterToFlowNodes(adapter, idCounter)
   const stickyNotes = extractStickyNotesFromAdapter(adapter, idCounter)
-  const groupnodes = extractGroupNodesFromAdapter(adapter, idCounter)
-  const allNodes: FlowNode[] = [...flownodes, ...stickyNotes]
+  const groupnodes = extractGroupNodesFromAdapter(adapter, flownodes, idCounter)
+  assignParentRelationships(flownodes, groupnodes)
+  const allNodes: FlowNode[] = [...groupnodes, ...flownodes, ...stickyNotes]
   const adapterJson = { nodes: allNodes, edges: extractEdgesFromAdapter(adapter, flownodes) }
 
   return adapterJson
@@ -114,6 +115,19 @@ function buildNodeNameToIdMap(nodes: FlowNode[]): Map<string, string> {
     }
   }
   return nameToId
+}
+
+// Used for mapping childnames to parent ids.
+function buildNameToNodeMap(nodes: FlowNode[]): Map<string, FlowNode> {
+  const map = new Map<string, FlowNode>()
+
+  for (const node of nodes) {
+    if ('name' in node.data && typeof node.data.name === 'string') {
+      map.set(node.data.name, node)
+    }
+  }
+
+  return map
 }
 
 /**
@@ -556,7 +570,7 @@ function extractStickyNotesFromAdapter(adapter: Element, idCounter: IdCounter): 
   const stickyNotes: StickyNote[] = []
 
   const elementContainer = [...adapter.children].find(
-    (element) => element.tagName === 'flow:FlowElements' || element.tagName.toLowerCase().includes('stickynotes'),
+    (element) => element.tagName === 'flow:FlowElements' || element.tagName.toLowerCase().includes('flowelements'),
   )
 
   if (!elementContainer) return stickyNotes
@@ -590,11 +604,11 @@ function extractStickyNotesFromAdapter(adapter: Element, idCounter: IdCounter): 
   return stickyNotes
 }
 
-function extractGroupNodesFromAdapter(adapter: Element, idCounter: IdCounter): GroupNode[] {
+function extractGroupNodesFromAdapter(adapter: Element, flowNodes: FlowNode[], idCounter: IdCounter): GroupNode[] {
   const groupNodes: GroupNode[] = []
 
   const elementContainer = [...adapter.children].find(
-    (element) => element.tagName === 'flow:FlowElements' || element.tagName.toLowerCase().includes('groupnodes'),
+    (element) => element.tagName === 'flow:FlowElements' || element.tagName.toLowerCase().includes('flowelements'),
   )
 
   if (!elementContainer) return groupNodes
@@ -605,16 +619,45 @@ function extractGroupNodesFromAdapter(adapter: Element, idCounter: IdCounter): G
 
   for (const node of nodes) {
     const label = node.getAttribute('label') || ''
-    const children = node.getAttribute('children')?.split(',')
+    const children = node.getAttribute('children')?.split(',') ?? []
     const x = Number(node.getAttribute('flow:x')) || 0
     const y = Number(node.getAttribute('flow:y')) || 0
     const width = Number(node.getAttribute('flow:width'))
     const height = Number(node.getAttribute('flow:height'))
 
-    console.log(children)
+    const groupNode: GroupNode = {
+      id: (idCounter.current++).toString(),
+      type: 'groupNode',
+      position: { x, y },
+      data: {
+        label,
+        width,
+        height,
+        childrenNames: children,
+      },
+    }
+
+    groupNodes.push(groupNode)
   }
 
   return groupNodes
+}
+
+function assignParentRelationships(flowNodes: FlowNode[], groupNodes: GroupNode[]) {
+  const nameToNode = buildNameToNodeMap(flowNodes)
+
+  for (const group of groupNodes) {
+    const childrenNames = group.data.childrenNames ?? []
+
+    for (const childName of childrenNames) {
+      const childNode = nameToNode.get(childName.trim())
+
+      if (!childNode) continue
+
+      childNode.parentId = group.id
+      childNode.extent = 'parent'
+    }
+  }
 }
 
 // ----------------------------------------------------------------------------- HELPERS -----------------------------------------------------------------------------

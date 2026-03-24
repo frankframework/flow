@@ -3,7 +3,6 @@ import type { Edge } from '@xyflow/react'
 import type { ChildNode } from './canvas/nodetypes/child-node'
 import { getAdapter } from '~/services/adapter-service'
 import { FlowConfig } from './canvas/flow.config'
-import type { StickyNote } from './canvas/nodetypes/sticky-note'
 import { isGroupNode, isStickyNote } from '~/stores/flow-store'
 import type { GroupNode } from './canvas/nodetypes/group-node'
 
@@ -45,9 +44,6 @@ export async function exportFlowToXml(
 
   const { nodes, edges } = json
   const validNodes = nodes.filter((node) => hasDataProperty(node))
-  const stickyNotes: StickyNote[] = nodes.filter((node) => isStickyNote(node))
-  const groupNodes: GroupNode[] = nodes.filter((node) => isGroupNode(node))
-  console.log(nodes)
   const nodeMap = new Map(validNodes.map((n) => [n.id, n]))
 
   const { outgoing, incoming, edgeMap } = buildEdgeMaps(edges)
@@ -159,6 +155,8 @@ function generateXmlElement(
 ): string {
   const { subtype, name } = node.data as NodeData
   const { x, y } = node.position
+  const roundedX = Math.round(x)
+  const roundedY = Math.round(y)
   let width = FlowConfig.NODE_DEFAULT_WIDTH
   let height = FlowConfig.NODE_DEFAULT_HEIGHT
   if (node.measured && node.measured.width && node.measured.height) {
@@ -172,7 +170,7 @@ function generateXmlElement(
     .map(([key, value]) => ` ${key}="${escapeXml(value)}"`)
     .join('')}`
 
-  const flowNamespaceString = `flow:y="${y}" flow:x="${x}" flow:width="${width}" flow:height="${height}"`
+  const flowNamespaceString = `flow:y="${roundedY}" flow:x="${roundedX}" flow:width="${width}" flow:height="${height}"`
 
   const childXml = children.map((child: ChildNode) => generateChildXml(child, 4)).join('\n')
 
@@ -223,6 +221,8 @@ function generateExitsXml(exitNodes: FlowNode[]): string {
     .map((node) => {
       const data = node.data as NodeData
       const { x, y } = node.position
+      const roundedX = Math.round(x)
+      const roundedY = Math.round(y)
       let width = FlowConfig.EXIT_DEFAULT_WIDTH
       let height = FlowConfig.EXIT_DEFAULT_HEIGHT
       if (node.measured && node.measured.width && node.measured.height) {
@@ -231,7 +231,7 @@ function generateExitsXml(exitNodes: FlowNode[]): string {
       }
       const name = escapeXml(data.name)
       const state = getExitState(data)
-      const flowNamespaceString = `flow:y="${y}" flow:x="${x}" flow:width="${width}" flow:height="${height}"`
+      const flowNamespaceString = `flow:y="${roundedY}" flow:x="${roundedX}" flow:width="${width}" flow:height="${height}"`
 
       return `      <Exit name="${name}" state="${state}" ${flowNamespaceString} />`
     })
@@ -264,12 +264,14 @@ function generateFlowElementsXml(nodes: FlowNode[]): string {
 
   const stickyXml = stickyNotes.map((stickynote) => {
     const { x, y } = stickynote.position
+    const roundedX = Math.round(x)
+    const roundedY = Math.round(y)
     const text = stickynote.data?.content || ''
 
     return `    <flow:StickyNote
       text="${escapeXml(text)}"
-      flow:x="${x}"
-      flow:y="${y}"
+      flow:x="${roundedX}"
+      flow:y="${roundedY}"
       flow:width="${stickynote.measured?.width || FlowConfig.STICKY_NOTE_DEFAULT_WIDTH}"
       flow:height="${stickynote.measured?.height || FlowConfig.STICKY_NOTE_DEFAULT_HEIGHT}"
     />`
@@ -290,6 +292,8 @@ ${allElements.join('\n')}
 function generateGroupNodeXml(groupNodes: GroupNode[], groupChildrenMap: Map<string, FlowNode[]>): string[] {
   const groupNodesXml = groupNodes.map((groupNode) => {
     const { x, y } = groupNode.position
+    const roundedX = Math.round(x)
+    const roundedY = Math.round(y)
     const width = groupNode.measured?.width || FlowConfig.NODE_DEFAULT_WIDTH
     const height = groupNode.measured?.height || FlowConfig.NODE_DEFAULT_HEIGHT
 
@@ -306,8 +310,8 @@ function generateGroupNodeXml(groupNodes: GroupNode[], groupChildrenMap: Map<str
     return `    <flow:GroupNode
       label="${groupName}"
       children="${childNames}"
-      flow:x="${x}"
-      flow:y="${y}"
+      flow:x="${roundedX}"
+      flow:y="${roundedY}"
       flow:width="${width}"
       flow:height="${height}"
     />`
