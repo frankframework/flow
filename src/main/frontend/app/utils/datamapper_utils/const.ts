@@ -8,3 +8,5 @@ export const MAPPING_TABLE_WIDTH = TABLE_WIDTH / 3
 export const MAPPING_WIDTH = MAPPING_TABLE_WIDTH - 20
 export const PROPERTY_WIDTH = TABLE_WIDTH - 40
 export const GROUP_WIDTH = TABLE_WIDTH - 20
+export const SCROLL_AMOUNT = 10
+export const SCROLL_PANE_HEIGHT = 150

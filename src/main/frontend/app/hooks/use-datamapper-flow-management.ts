@@ -1,5 +1,5 @@
-import { type Dispatch, type SetStateAction, useRef } from 'react'
-import type { Node, Edge, ReactFlowInstance } from '@xyflow/react'
+import { type Dispatch, type SetStateAction, useEffect, useRef } from 'react'
+import type { Node, Edge, ReactFlowInstance, Viewport } from '@xyflow/react'
 
 import { SAXParser } from 'sax-ts'
 import type { MappingListConfig } from '~/types/datamapper_types/config-types'
@@ -13,6 +13,8 @@ import {
   ITEM_GAP,
   TABLE_WIDTH,
   MAPPING_TABLE_WIDTH,
+  SCROLL_PANE_HEIGHT,
+  SCROLL_AMOUNT,
 } from '~/utils/datamapper_utils/const'
 import {
   deleteMappingNode,
@@ -70,6 +72,38 @@ export function useFlowManagement({
   const sourceIdCounter = useRef(0)
   const targetIdCounter = useRef(0)
   const lastUpdate = useRef(0)
+  const lastPosition = useRef<Viewport>(reactFlowInstance.getViewport())
+  const scrollIntervalEnabled = useRef(false)
+
+  useEffect(() => {
+    const updatePosition = (event: MouseEvent) => {
+      if (scrollIntervalEnabled.current) {
+        const bottomThreshold = window.innerHeight - SCROLL_PANE_HEIGHT
+        if (event.clientY < SCROLL_PANE_HEIGHT) {
+          reactFlowInstance.setViewport({
+            x: reactFlowInstance.getViewport().x,
+            y: reactFlowInstance.getViewport().y + SCROLL_AMOUNT,
+            zoom: 1, //Don't set this to 0, it results in NaN for X & Y
+          })
+        }
+
+        if (event.clientY > bottomThreshold) {
+          reactFlowInstance.setViewport({
+            x: reactFlowInstance.getViewport().x,
+            y: reactFlowInstance.getViewport().y - SCROLL_AMOUNT,
+            zoom: 1, //Don't set this to 0, it results in NaN for X & Y
+          })
+        }
+      }
+    }
+
+    // Listen globally
+    document.addEventListener('mousemove', updatePosition)
+
+    return () => {
+      document.removeEventListener('mousemove', updatePosition)
+    }
+  }, [reactFlowInstance])
 
   function generateReactFlowObject(previous: Node[], data: CustomNodeData): Node {
     //Calculate the position the node is to be placed at. This isn't always very accurate and will be corrected later after adding
@@ -221,7 +255,6 @@ export function useFlowManagement({
       requestAnimationFrame(() => {
         setReactFlowNodes((previous) => {
           const newNodes = sequentialReposition(previous, editingNode.parentId!)
-
           return newNodes
         })
 
@@ -240,17 +273,27 @@ export function useFlowManagement({
   }
 
   function forceViewportLocation() {
-    //This function forces the viewport back to its initial position to prevent a panning bug
+    //This function forces the viewport back to its initial position to prevent a panning out of the view
     const now = Date.now()
     if (now - lastUpdate.current > THROTTLE_MS) {
       lastUpdate.current = now
+
       reactFlowInstance.setViewport({
         x: 0,
-        y: 0,
+        y: reactFlowInstance.getViewport().y,
         zoom: 1, //Don't set this to 0, it results in NaN for X & Y
       })
     }
   }
+  function checkForDragScroll() {
+    lastPosition.current = reactFlowInstance.getViewport()
+    scrollIntervalEnabled.current = true
+  }
+  function endCheckForDragScroll() {
+    scrollIntervalEnabled.current = false
+    reactFlowInstance.setViewport(lastPosition.current)
+  }
+
   //Apply highlights to all objects in the set. This is done by setting all ids not in the list to opacity 0.1
   function applyHighlight(highlightedNodes: Set<string>) {
     setEdges((previousEdges) =>
@@ -733,5 +776,7 @@ export function useFlowManagement({
     importSchematic,
     importMultipleSchematics,
     highlightUnset,
+    checkForDragScroll,
+    endCheckForDragScroll,
   }
 }
