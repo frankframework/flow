@@ -47,16 +47,6 @@ const SAVED_DISPLAY_DURATION = 2000
 const ELEMENT_ERROR_RE = /[Ee]lement [\u2018\u2019'"'{]?([\w:.-]+)[\u2018\u2019'"'}]?/
 const ATTRIBUTE_ERROR_RE = /[Aa]ttribute [\u2018\u2019'"'{]?([\w:.-]+)[\u2018\u2019'"'}]?/
 
-const FLOW_ATTR_PATTERN = /(?:xmlns:flow|flow:[\w-]+)/
-const FLOW_TOKENS = [
-  'flow-attribute',
-  'flow-attribute-value',
-  'flow-attribute-value',
-  'flow-attribute-value',
-  'flow-attribute-value',
-] as const
-const ATTR_TOKENS = ['attribute.name', 'delimiter', 'attribute.value', 'attribute.value', 'attribute.value'] as const
-
 const XML_MONARCH_GRAMMAR = {
   defaultToken: '',
   tokenPostfix: '.xml',
@@ -86,11 +76,11 @@ const XML_MONARCH_GRAMMAR = {
     ],
     tag: [
       [/\s+/, ''],
-      [new RegExp(String.raw`(${FLOW_ATTR_PATTERN.source})(\s*=\s*)(")((?:[^"])*)(")`), FLOW_TOKENS],
-      [new RegExp(String.raw`(${FLOW_ATTR_PATTERN.source})(\s*=\s*)(')((?:[^'])*)(')`), FLOW_TOKENS],
-      [FLOW_ATTR_PATTERN, 'flow-attribute'],
-      [/([\w.:_-]+)(\s*=\s*)(")((?:[^"])*)(")/, ATTR_TOKENS],
-      [/([\w.:_-]+)(\s*=\s*)(')((?:[^']*))(')/, ATTR_TOKENS],
+      // flow: namespace attributes — literal regexes, matched before generic rules
+      [/((?:xmlns:flow|flow:[\w-]+))(\s*=\s*(?:"[^"]*"|'[^']*'))/, ['flow-attribute', 'flow-attribute-value']],
+      [/(?:xmlns:flow|flow:[\w-]+)/, 'flow-attribute'],
+      // Regular attributes
+      [/([\w.:_-]+)(\s*=\s*(?:"[^"]*"|'[^']*'))/, ['attribute.name', 'attribute.value']],
       [/[\w.:_-]+/, 'attribute.name'],
       [/=/, 'delimiter'],
       [/\/>/, { token: 'delimiter', next: '@pop' }],
@@ -378,7 +368,8 @@ export default function CodeEditor() {
       XML_MONARCH_GRAMMAR as Parameters<typeof monacoInstance.languages.setMonarchTokensProvider>[1],
     )
 
-    monacoInstance.editor.defineTheme('vs-light', {
+    // Use non-conflicting names — 'vs-dark' is a Monaco built-in and can't safely be overridden
+    monacoInstance.editor.defineTheme('flow-vs-light', {
       base: 'vs',
       inherit: true,
       rules: [
@@ -387,7 +378,7 @@ export default function CodeEditor() {
       ],
       colors: {},
     })
-    monacoInstance.editor.defineTheme('vs-dark', {
+    monacoInstance.editor.defineTheme('flow-vs-dark', {
       base: 'vs-dark',
       inherit: true,
       rules: [
@@ -402,6 +393,8 @@ export default function CodeEditor() {
     editorReference.current = editor
     monacoReference.current = monacoInstance
     setEditorMounted(true)
+
+    setTimeout(() => monacoInstance.editor.setTheme(`flow-vs-${theme}`), 0)
 
     editor.addAction({
       id: 'save-file',
@@ -629,7 +622,7 @@ export default function CodeEditor() {
               <div className="h-full">
                 <Editor
                   language="xml"
-                  theme={`vs-${theme}`}
+                  theme={`flow-${theme}`}
                   value={xmlContent}
                   beforeMount={handleEditorBeforeMount}
                   onMount={handleEditorMount}
