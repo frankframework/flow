@@ -1,6 +1,8 @@
 package org.frankframework.flow.filetree;
 
 import java.io.IOException;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.TransformerException;
 import org.frankframework.flow.exception.ApiException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.xml.sax.SAXException;
 
 @RestController
 @RequestMapping("/projects")
@@ -48,7 +51,7 @@ public class FileTreeController {
 
 	@PostMapping("/{projectName}/files")
 	public ResponseEntity<FileTreeNode> createFile(@PathVariable String projectName, @RequestBody FileCreateDTO dto)
-			throws IOException, ApiException {
+			throws IOException, ApiException, ParserConfigurationException, TransformerException, SAXException {
 		FileTreeNode node = fileTreeService.createFile(projectName, dto.path(), dto.name());
 		return ResponseEntity.status(HttpStatus.CREATED.value()).body(node);
 	}
