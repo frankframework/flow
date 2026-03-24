@@ -1,4 +1,4 @@
-import Editor, { type Monaco, type OnMount } from '@monaco-editor/react'
+import Editor, { type Monaco, type OnMount, type BeforeMount } from '@monaco-editor/react'
 import XsdManager from 'monaco-xsd-code-completion/esm/XsdManager'
 import XsdFeatures from 'monaco-xsd-code-completion/esm/XsdFeatures'
 import 'monaco-xsd-code-completion/src/style.css'
@@ -46,6 +46,64 @@ interface TextModel {
 const SAVED_DISPLAY_DURATION = 2000
 const ELEMENT_ERROR_RE = /[Ee]lement [\u2018\u2019'"'{]?([\w:.-]+)[\u2018\u2019'"'}]?/
 const ATTRIBUTE_ERROR_RE = /[Aa]ttribute [\u2018\u2019'"'{]?([\w:.-]+)[\u2018\u2019'"'}]?/
+
+const FLOW_ATTR_PATTERN = /(?:xmlns:flow|flow:[\w-]+)/
+const FLOW_TOKENS = [
+  'flow-attribute',
+  'flow-attribute-value',
+  'flow-attribute-value',
+  'flow-attribute-value',
+  'flow-attribute-value',
+] as const
+const ATTR_TOKENS = ['attribute.name', 'delimiter', 'attribute.value', 'attribute.value', 'attribute.value'] as const
+
+const XML_MONARCH_GRAMMAR = {
+  defaultToken: '',
+  tokenPostfix: '.xml',
+  tokenizer: {
+    root: [
+      [/[^<&]+/, ''],
+      [/&\w+;/, 'string.escape'],
+      [/<!\[CDATA\[/, { token: 'delimiter.cdata', next: '@cdata' }],
+      [/<!--/, { token: 'comment', next: '@comment' }],
+      [/(<\?)(\w[\w\d.]*)/, [{ token: 'delimiter' }, { token: 'metatag', next: '@xmlDecl' }]],
+      [/(<\/)(\w[\w\d.:_-]*)/, [{ token: 'delimiter' }, { token: 'tag', next: '@tag' }]],
+      [/(<)(\w[\w\d.:_-]*)/, [{ token: 'delimiter' }, { token: 'tag', next: '@tag' }]],
+      [/</, { token: 'delimiter' }],
+    ],
+    cdata: [
+      [/[^\]]+/, ''],
+      [/\]\]>/, { token: 'delimiter.cdata', next: '@pop' }],
+      [/\]/, ''],
+    ],
+    xmlDecl: [
+      [/\s+/, ''],
+      [/[\w:-]+/, 'attribute.name'],
+      [/=/, 'delimiter'],
+      [/"[^"]*"/, 'attribute.value'],
+      [/'[^']*'/, 'attribute.value'],
+      [/\?>/, { token: 'delimiter', next: '@pop' }],
+    ],
+    tag: [
+      [/\s+/, ''],
+      [new RegExp(String.raw`(${FLOW_ATTR_PATTERN.source})(\s*=\s*)(")((?:[^"])*)(")`), FLOW_TOKENS],
+      [new RegExp(String.raw`(${FLOW_ATTR_PATTERN.source})(\s*=\s*)(')((?:[^'])*)(')`), FLOW_TOKENS],
+      [FLOW_ATTR_PATTERN, 'flow-attribute'],
+      [/([\w.:_-]+)(\s*=\s*)(")((?:[^"])*)(")/, ATTR_TOKENS],
+      [/([\w.:_-]+)(\s*=\s*)(')((?:[^']*))(')/, ATTR_TOKENS],
+      [/[\w.:_-]+/, 'attribute.name'],
+      [/=/, 'delimiter'],
+      [/\/>/, { token: 'delimiter', next: '@pop' }],
+      [/>/, { token: 'delimiter', next: '@pop' }],
+    ],
+    comment: [
+      [/-->/, { token: 'comment', next: '@pop' }],
+      [/[^-]+/, 'comment'],
+      [/--/, 'comment'],
+      [/./, 'comment'],
+    ],
+  },
+}
 
 function extractLocalName(name: string): string {
   return name.includes(':') ? name.split(':').pop()! : name
@@ -314,6 +372,32 @@ export default function CodeEditor() {
       .catch(console.error)
   }, [editorMounted])
 
+  const handleEditorBeforeMount: BeforeMount = (monacoInstance) => {
+    monacoInstance.languages.setMonarchTokensProvider(
+      'xml',
+      XML_MONARCH_GRAMMAR as Parameters<typeof monacoInstance.languages.setMonarchTokensProvider>[1],
+    )
+
+    monacoInstance.editor.defineTheme('vs-light', {
+      base: 'vs',
+      inherit: true,
+      rules: [
+        { token: 'flow-attribute.xml', foreground: 'a8a8a8', fontStyle: 'italic' },
+        { token: 'flow-attribute-value.xml', foreground: 'a8a8a8', fontStyle: 'italic' },
+      ],
+      colors: {},
+    })
+    monacoInstance.editor.defineTheme('vs-dark', {
+      base: 'vs-dark',
+      inherit: true,
+      rules: [
+        { token: 'flow-attribute.xml', foreground: '808080', fontStyle: 'italic' },
+        { token: 'flow-attribute-value.xml', foreground: '808080', fontStyle: 'italic' },
+      ],
+      colors: {},
+    })
+  }
+
   const handleEditorMount: OnMount = (editor, monacoInstance) => {
     editorReference.current = editor
     monacoReference.current = monacoInstance
@@ -547,6 +631,7 @@ export default function CodeEditor() {
                   language="xml"
                   theme={`vs-${theme}`}
                   value={xmlContent}
+                  beforeMount={handleEditorBeforeMount}
                   onMount={handleEditorMount}
                   onChange={(value) => {
                     scheduleSave()
