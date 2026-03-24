@@ -56,7 +56,7 @@ public class FileTreeController {
 			FileTreeNode node = fileTreeService.createFile(projectName, dto.path(), dto.name());
 			return ResponseEntity.status(HttpStatus.CREATED.value()).body(node);
 		} catch (TransformerException e) {
-			throw new ApiException("Failed to create file for project '" + projectName + "' at path '" + dto.path() + "'", e);
+			throw new ApiException("Failed to create file for project '" + projectName + "' at path '" + dto.path() + "'", HttpStatus.INTERNAL_SERVER_ERROR, e);
 		}
 	}
 
