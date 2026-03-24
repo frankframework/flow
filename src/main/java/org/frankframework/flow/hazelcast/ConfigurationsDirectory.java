@@ -51,8 +51,9 @@ public class ConfigurationsDirectory implements MessageHandler {
 			return;
 		}
 
+		File directory = resolveConfigurationsDirectory();
 		try {
-			replyChannel.send(buildConfigurationsResponse());
+			replyChannel.send(buildConfigurationsResponse(directory));
 		} catch (Exception e) {
 			log.error("Error building configurations response", e);
 		}
@@ -66,12 +67,11 @@ public class ConfigurationsDirectory implements MessageHandler {
 				&& BusAction.FIND.name().equalsIgnoreCase(action);
 	}
 
-	private Message<String> buildConfigurationsResponse() {
-		File directory = resolveConfigurationsDirectory();
-		File[] folders = directory.listFiles();
+	private Message<String> buildConfigurationsResponse(File directory) {
+		File[] folders = directory.listFiles(File::isDirectory);
 
 		if (folders == null) {
-			log.warn("Failed to list files in configurations directory [{}]", configurationsDirectory);
+			log.warn("Failed to list directories in [{}]", directory.getAbsolutePath());
 			return new JsonMessage(Collections.emptyList());
 		}
 
@@ -83,16 +83,13 @@ public class ConfigurationsDirectory implements MessageHandler {
 	}
 
 	private File resolveConfigurationsDirectory() {
-		File directory = new File(configurationsDirectory);
+		File projectDir = new File(configurationsDirectory);
 
-		if (!directory.exists()) {
-			throw new IllegalStateException("Path [" + configurationsDirectory + "] does not exist");
+		if (!projectDir.exists() || !projectDir.isDirectory()) {
+			throw new IllegalStateException("Path [" + configurationsDirectory + "] does not exist or is not a directory");
 		}
 
-		if (!directory.isDirectory()) {
-			throw new IllegalStateException("Path [" + configurationsDirectory + "] is not a directory");
-		}
-
-		return directory;
+		File configurationsSubfolder = new File(projectDir, "configurations");
+		return configurationsSubfolder.isDirectory() ? configurationsSubfolder : projectDir;
 	}
 }
