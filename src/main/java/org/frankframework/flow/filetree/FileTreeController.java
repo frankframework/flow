@@ -51,9 +51,13 @@ public class FileTreeController {
 
 	@PostMapping("/{projectName}/files")
 	public ResponseEntity<FileTreeNode> createFile(@PathVariable String projectName, @RequestBody FileCreateDTO dto)
-			throws IOException, ApiException, ParserConfigurationException, TransformerException, SAXException {
-		FileTreeNode node = fileTreeService.createFile(projectName, dto.path(), dto.name());
-		return ResponseEntity.status(HttpStatus.CREATED.value()).body(node);
+			throws IOException, ApiException, ParserConfigurationException, SAXException {
+		try {
+			FileTreeNode node = fileTreeService.createFile(projectName, dto.path(), dto.name());
+			return ResponseEntity.status(HttpStatus.CREATED.value()).body(node);
+		} catch (TransformerException e) {
+			throw new ApiException("Failed to create file for project '" + projectName + "' at path '" + dto.path() + "'", e);
+		}
 	}
 
 	@PostMapping("/{projectName}/folders")

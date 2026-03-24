@@ -130,7 +130,7 @@ public class FileTreeService {
 	}
 
 	public FileTreeNode createFile(String projectName, String parentPath, String fileName)
-			throws IOException, ApiException, ParserConfigurationException, TransformerException, SAXException, ParserConfigurationException, TransformerException, SAXException {
+			throws IOException, ApiException, ParserConfigurationException, TransformerException, SAXException {
 		if (parentPath == null || parentPath.isBlank()) {
 			throw new IllegalArgumentException("Parent path must not be empty");
 		}

@@ -41,8 +41,8 @@ public class ConfigurationController {
 	public ResponseEntity<Void> updateConfiguration(
 			@RequestBody ConfigurationDTO configurationDTO)
 			throws ConfigurationNotFoundException, IOException {
-		boolean updated = configurationService.updateConfiguration(configurationDTO.filepath(), configurationDTO.content());
-		return updated ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
+		configurationService.updateConfiguration(configurationDTO.filepath(), configurationDTO.content());
+		return ResponseEntity.ok().build();
 	}
 
 	@PostMapping("/{projectName}/configurations/{configName}")
