@@ -17,22 +17,23 @@ import AddFieldForm from '~/components/datamapper/forms/add-field-form'
 import AddMappingForm from '~/components/datamapper/forms/add-mapping-form'
 import Modal from '~/components/modal'
 import { getNodeTypes } from '~/components/datamapper/react-flow/node-types'
-import { showErrorToast, showInfoToast, showSuccessToast } from '~/components/toast'
+import { showErrorToast, showSuccessToast } from '~/components/toast'
 import { useFlowManagement, DuplicateLabelException } from '~/hooks/use-datamapper-flow-management'
-import type { ConfigActions } from '~/stores/datamapper_state/mappingListConfig/reducer'
+import { type ConfigActions } from '~/stores/datamapper_state/mappingListConfig/reducer'
 import { useFile } from '~/stores/datamapper_state/schemaQueue/schema-queue-context'
 import type { MappingListConfig } from '~/types/datamapper_types/config-types'
-import type { ArrayMappingConfig, CustomNodeData, MappingConfig, NodeLabels } from '~/types/datamapper_types/node-types'
+import type { CustomNodeData, MappingConfig, NodeLabels } from '~/types/datamapper_types/node-types'
 import { TABLE_WIDTH } from '~/utils/datamapper_utils/const'
 import {
   getNodesByTypeAndId,
   createMappingNode,
-  createNewArrayMappingNode,
   validateMapping,
   getMappingNodes,
   handleArrayMapping,
 } from '~/utils/datamapper_utils/react-node-utils'
 import Button from '~/components/inputs/button'
+
+import GenerateButton from '~/components/datamapper/basic-components/generate-button'
 
 interface PropertyListProperties {
   config: MappingListConfig
@@ -230,7 +231,11 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
       const nodes = reactFlowInstance.getNodes()
       const edges = reactFlowInstance.getEdges()
 
-      const { sources, targets, unfilteredSources } = getMappingNodes(nodes, editingMappingRef.current || undefined)
+      const { sources, targets, unfilteredSources } = getMappingNodes(
+        nodes,
+        edges,
+        editingMappingRef.current || undefined,
+      )
 
       if (!editingMappingRef.current) {
         const error = validateMapping(sources, targets, unfilteredSources)
@@ -336,7 +341,9 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
         <div className="absolute right-[65%] flex flex-row items-center justify-between px-45">
           <h1 className="text-l font-semibold">Source: {config.formatTypes.source?.name}</h1>
         </div>
-
+        <div className="absolute right-[45%] left-[45%] flex flex-row items-center justify-between">
+          <GenerateButton highlightUnset={flow.highlightUnset} mappingListConfig={config} />
+        </div>
         <div className="absolute left-[65%] flex flex-row items-center justify-between px-45">
           <h1 className="text-l font-semibold">Target: {config.formatTypes.target?.name}</h1>
         </div>
@@ -361,6 +368,8 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
             onNodesChange={onReactFlowNodeChange}
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
+            onConnectStart={flow.checkForDragScroll}
+            onConnectEnd={flow.endCheckForDragScroll}
             nodesDraggable={false}
             elementsSelectable
             panOnDrag={false}

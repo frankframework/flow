@@ -1,11 +1,5 @@
 import type { Node, Edge } from '@xyflow/react'
-import type {
-  NodeLabels,
-  MappingConfig,
-  ArrayMappingConfig,
-  MappingNode,
-  PropertyNode,
-} from '~/types/datamapper_types/node-types'
+import type { NodeLabels, MappingConfig, ArrayMappingConfig } from '~/types/datamapper_types/node-types'
 
 interface GetNodesOptions {
   typeIncludes?: string | string[]
@@ -56,7 +50,11 @@ export function getType(id: string, parentId: string): string {
   }
 }
 
-export function getNodesByTypeAndId(nodes: Node[] | null | undefined, options: GetNodesOptions = {}): NodeLabels[] {
+export function getNodesByTypeAndId(
+  nodes: Node[] | null | undefined,
+  options: GetNodesOptions = {},
+  edges?: Edge[],
+): NodeLabels[] {
   if (!nodes) return []
 
   let newNodes = nodes
@@ -69,7 +67,13 @@ export function getNodesByTypeAndId(nodes: Node[] | null | undefined, options: G
 
       return node.type?.includes(options.typeIncludes)
     })
+    .filter((node) => {
+      if (!edges) return true
+
+      return !edges.some((edge) => edge.target === node.id)
+    })
     .filter((node) => (options.idIncludes ? node.id.includes(options.idIncludes) : true))
+    .filter((node) => node.data.isConnectable != false)
     .map(
       (node) =>
         ({
@@ -277,16 +281,24 @@ export function deleteMappingNode(nodeId: string, allNodes: Node[], allEdges: Ed
   }
 }
 
-export function getMappingNodes(nodes: Node[], mappingConfig?: MappingConfig) {
-  const unfilteredSources = getNodesByTypeAndId(nodes, {
-    typeIncludes: 'source',
-    includeChecked: true,
-  })
+export function getMappingNodes(nodes: Node[], edges: Edge[], mappingConfig?: MappingConfig) {
+  const unfilteredSources = getNodesByTypeAndId(
+    nodes,
+    {
+      typeIncludes: 'source',
+      includeChecked: true,
+    },
+    edges,
+  )
 
-  const targets = getNodesByTypeAndId(nodes, {
-    typeIncludes: 'target',
-    includeChecked: true,
-  })
+  const targets = getNodesByTypeAndId(
+    nodes,
+    {
+      typeIncludes: 'target',
+      includeChecked: true,
+    },
+    edges,
+  )
 
   const sources = unfilteredSources.filter((s) => s.parentArray == undefined)
 

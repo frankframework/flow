@@ -152,4 +152,108 @@ class AdapterControllerTest {
 
 		verify(adapterService).updateAdapter(Paths.get(configPath), adapterName, adapterXml);
 	}
+
+	@Test
+	void createAdapterReturns200() throws Exception {
+		mockMvc.perform(
+						post("/api/projects/MyProject/adapters")
+								.contentType(MediaType.APPLICATION_JSON)
+								.content(
+										"""
+								{
+								"configurationPath": "config1.xml",
+								"adapterName": "NewAdapter"
+								}
+								"""))
+				.andExpect(status().isOk());
+
+		verify(adapterService).createAdapter("config1.xml", "NewAdapter");
+	}
+
+	@Test
+	void createAdapterConfigNotFoundReturns404() throws Exception {
+		doThrow(new ConfigurationNotFoundException("Configuration file not found: missing.xml"))
+				.when(adapterService)
+				.createAdapter("missing.xml", "NewAdapter");
+
+		mockMvc.perform(
+						post("/api/projects/MyProject/adapters")
+								.contentType(MediaType.APPLICATION_JSON)
+								.content(
+										"""
+								{
+								"configurationPath": "missing.xml",
+								"adapterName": "NewAdapter"
+								}
+								"""))
+				.andExpect(status().isNotFound());
+
+		verify(adapterService).createAdapter("missing.xml", "NewAdapter");
+	}
+
+	@Test
+	void renameAdapterReturns200() throws Exception {
+		mockMvc.perform(
+						patch("/api/projects/MyProject/adapters/rename")
+								.contentType(MediaType.APPLICATION_JSON)
+								.content(
+										"""
+								{
+								"configurationPath": "config1.xml",
+								"oldName": "OldAdapter",
+								"newName": "NewAdapter"
+								}
+								"""))
+				.andExpect(status().isOk());
+
+		verify(adapterService).renameAdapter("config1.xml", "OldAdapter", "NewAdapter");
+	}
+
+	@Test
+	void renameAdapterNotFoundReturns404() throws Exception {
+		doThrow(new AdapterNotFoundException("Adapter not found: Missing"))
+				.when(adapterService)
+				.renameAdapter("config1.xml", "Missing", "NewName");
+
+		mockMvc.perform(
+						patch("/api/projects/MyProject/adapters/rename")
+								.contentType(MediaType.APPLICATION_JSON)
+								.content(
+										"""
+								{
+								"configurationPath": "config1.xml",
+								"oldName": "Missing",
+								"newName": "NewName"
+								}
+								"""))
+				.andExpect(status().isNotFound());
+
+		verify(adapterService).renameAdapter("config1.xml", "Missing", "NewName");
+	}
+
+	@Test
+	void deleteAdapterReturns200() throws Exception {
+		mockMvc.perform(delete("/api/projects/MyProject/adapters")
+						.param("adapterName", "MyAdapter")
+						.param("configurationPath", "config1.xml")
+						.contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk());
+
+		verify(adapterService).deleteAdapter("config1.xml", "MyAdapter");
+	}
+
+	@Test
+	void deleteAdapterNotFoundReturns404() throws Exception {
+		doThrow(new AdapterNotFoundException("Adapter not found: Missing"))
+				.when(adapterService)
+				.deleteAdapter("config1.xml", "Missing");
+
+		mockMvc.perform(delete("/api/projects/MyProject/adapters")
+						.param("adapterName", "Missing")
+						.param("configurationPath", "config1.xml")
+						.contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isNotFound());
+
+		verify(adapterService).deleteAdapter("config1.xml", "Missing");
+	}
 }

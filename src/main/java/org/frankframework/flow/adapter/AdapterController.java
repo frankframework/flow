@@ -8,8 +8,11 @@ import org.frankframework.flow.configuration.ConfigurationNotFoundException;
 import org.frankframework.flow.exception.ApiException;
 import org.frankframework.flow.xml.XmlDTO;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -42,5 +45,27 @@ public class AdapterController {
 		boolean updated =
 				adapterService.updateAdapter(Paths.get(dto.configurationPath()), dto.adapterName(), dto.adapterXml());
 		return updated ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
+	}
+
+	@PostMapping("/{projectName}/adapters")
+	public ResponseEntity<Void> createAdapter(@PathVariable String projectName, @RequestBody AdapterCreateDTO dto)
+			throws ConfigurationNotFoundException, IOException {
+		adapterService.createAdapter(dto.configurationPath(), dto.adapterName());
+		return ResponseEntity.ok().build();
+	}
+
+	@PatchMapping("/{projectName}/adapters/rename")
+	public ResponseEntity<Void> renameAdapter(@PathVariable String projectName, @RequestBody AdapterRenameDTO dto)
+			throws AdapterNotFoundException, ConfigurationNotFoundException, IOException {
+		adapterService.renameAdapter(dto.configurationPath(), dto.oldName(), dto.newName());
+		return ResponseEntity.ok().build();
+	}
+
+	@DeleteMapping("/{projectName}/adapters")
+	public ResponseEntity<Void> deleteAdapter(
+			@PathVariable String projectName, @RequestParam String adapterName, @RequestParam String configurationPath)
+			throws AdapterNotFoundException, ConfigurationNotFoundException, IOException {
+		adapterService.deleteAdapter(configurationPath, adapterName);
+		return ResponseEntity.ok().build();
 	}
 }

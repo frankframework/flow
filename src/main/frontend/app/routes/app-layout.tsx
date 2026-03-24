@@ -7,8 +7,11 @@ import { useProjectStore, getStoredProjectRootPath } from '~/stores/project-stor
 import { openProject } from '~/services/project-service'
 import LoadingSpinner from '~/components/loading-spinner'
 import { apiUrl } from '~/utils/api'
+import { useShortcutListener } from '~/hooks/use-shortcut-listener'
 
 export default function AppLayout() {
+  useShortcutListener()
+
   const [restoring, setRestoring] = useState(!!getStoredProjectRootPath())
 
   useEffect(() => {

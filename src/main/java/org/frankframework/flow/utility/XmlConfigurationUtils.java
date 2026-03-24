@@ -22,9 +22,6 @@ public class XmlConfigurationUtils {
 	/**
 	 * Checks if a configuration document has the flow namespace included.
 	 * If not: it includes it
-	 * @throws ParserConfigurationException
-	 * @throws IOException
-	 * @throws SAXException
 	 */
 	public static Document insertFlowNamespace(String configurationXml)
 			throws ParserConfigurationException, SAXException, IOException {
@@ -51,33 +48,7 @@ public class XmlConfigurationUtils {
 	}
 
 	/**
-	 * Replaces an Adapter element (matched by name attribute) inside the given
-	 * configuration document.
-	 */
-	public static boolean replaceAdapterInDocument(Document configDoc, String adapterName, Node newAdapterNode) {
-		NodeList adapters = configDoc.getElementsByTagName("Adapter");
-
-		// If no uppercase matches found, try lowercase
-		if (adapters.getLength() == 0) {
-			adapters = configDoc.getElementsByTagName("adapter");
-		}
-
-		for (int i = 0; i < adapters.getLength(); i++) {
-			Element adapter = (Element) adapters.item(i);
-
-			if (adapterName.equals(adapter.getAttribute("name"))) {
-				Node importedNode = configDoc.importNode(newAdapterNode, true);
-				adapter.getParentNode().replaceChild(importedNode, adapter);
-				return true;
-			}
-		}
-
-		return false;
-	}
-
-	/**
 	 * Converts a DOM Node to a formatted XML string.
-	 *
 	 * @throws TransformerException
 	 */
 	public static String convertNodeToString(Node node) throws TransformerException {
@@ -98,49 +69,20 @@ public class XmlConfigurationUtils {
 	}
 
 	/**
-	 * Finds and returns an Adapter element (matched by name attribute)
-	 * inside the given configuration document.
-	 *
-	 * @return the Adapter node if found, otherwise null
-	 */
-	public static Node findAdapterInDocument(Document configDoc, String adapterName) {
-		NodeList adapters = configDoc.getElementsByTagName("Adapter");
-
-		// If no uppercase matches found, try lowercase
-		if (adapters.getLength() == 0) {
-			adapters = configDoc.getElementsByTagName("adapter");
-		}
-
-		for (int i = 0; i < adapters.getLength(); i++) {
-			Element adapter = (Element) adapters.item(i);
-
-			if (adapterName.equals(adapter.getAttribute("name"))) {
-				return adapter;
-			}
-		}
-
-		return null;
-	}
-
-	/**
 	 * Normalizes Frank elements:
 	 * - If element name is lowercase and has className attribute:
 	 * follow case specific rules to determine new tag name based on className and
 	 * element type
 	 * - If element name is lowercase without className:
 	 * capitalize first letter
-	 * @throws ParserConfigurationException
-	 * @throws IOException
-	 * @throws SAXException
-	 * @throws TransformerException
 	 */
-	public static String normalizeFrankElements(String xmlContent) throws SAXException, IOException, ParserConfigurationException, TransformerException  {
+	public static String normalizeFrankElements(String xmlContent)
+			throws SAXException, IOException, ParserConfigurationException, TransformerException {
 
 		Document configDoc = XmlSecurityUtils.createSecureDocumentBuilder()
 				.parse(new ByteArrayInputStream(xmlContent.getBytes(StandardCharsets.UTF_8)));
 		NodeList nodeList = configDoc.getElementsByTagName("*");
 
-		// Because NodeList is live, first copy elements into a list
 		int length = nodeList.getLength();
 		Element[] elements = new Element[length];
 
@@ -252,24 +194,20 @@ public class XmlConfigurationUtils {
 		return value.substring(0, 1).toUpperCase() + value.substring(1);
 	}
 
-	/* Helper method to rename an element in a DOM document */
 	private static void renameElement(Document doc, Element element, String newTagName) {
 
 		Element newElement = doc.createElement(newTagName);
 
-		// Copy attributes
 		NamedNodeMap attributes = element.getAttributes();
 		for (int i = 0; i < attributes.getLength(); i++) {
 			Attr attr = (Attr) attributes.item(i);
 			newElement.setAttribute(attr.getName(), attr.getValue());
 		}
 
-		// Move children
 		while (element.getFirstChild() != null) {
 			newElement.appendChild(element.getFirstChild());
 		}
 
-		// Replace in parent
 		Node parent = element.getParentNode();
 		parent.replaceChild(newElement, element);
 	}
