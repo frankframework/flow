@@ -103,7 +103,7 @@ export function useFlowManagement({
     return () => {
       document.removeEventListener('mousemove', updatePosition)
     }
-  }, [])
+  }, [reactFlowInstance])
 
   function generateReactFlowObject(previous: Node[], data: CustomNodeData): Node {
     //Calculate the position the node is to be placed at. This isn't always very accurate and will be corrected later after adding
