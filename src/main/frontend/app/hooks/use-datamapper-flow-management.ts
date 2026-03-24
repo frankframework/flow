@@ -13,6 +13,8 @@ import {
   ITEM_GAP,
   TABLE_WIDTH,
   MAPPING_TABLE_WIDTH,
+  SCROLL_PANE_HEIGHT,
+  SCROLL_AMOUNT,
 } from '~/utils/datamapper_utils/const'
 import {
   deleteMappingNode,
@@ -76,12 +78,11 @@ export function useFlowManagement({
   useEffect(() => {
     const updatePosition = (event: MouseEvent) => {
       if (scrollIntervalEnabled.current) {
-        const topThreshold = 150
-        const bottomThreshold = window.innerHeight - 150
-        if (event.clientY < topThreshold) {
+        const bottomThreshold = window.innerHeight - SCROLL_PANE_HEIGHT
+        if (event.clientY < SCROLL_PANE_HEIGHT) {
           reactFlowInstance.setViewport({
             x: reactFlowInstance.getViewport().x,
-            y: reactFlowInstance.getViewport().y + 10,
+            y: reactFlowInstance.getViewport().y + SCROLL_AMOUNT,
             zoom: 1, //Don't set this to 0, it results in NaN for X & Y
           })
         }
@@ -89,7 +90,7 @@ export function useFlowManagement({
         if (event.clientY > bottomThreshold) {
           reactFlowInstance.setViewport({
             x: reactFlowInstance.getViewport().x,
-            y: reactFlowInstance.getViewport().y - 10,
+            y: reactFlowInstance.getViewport().y - SCROLL_AMOUNT,
             zoom: 1, //Don't set this to 0, it results in NaN for X & Y
           })
         }
