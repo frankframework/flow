@@ -183,7 +183,7 @@ export default function ProjectLanding() {
 
   const handleConnectToInstance = useCallback(
     async (instance: FrankInstance) => {
-      const path = instance.projectPaths[0]
+      const path = instance.projectPath
       if (!path) {
         showErrorToast(`No configuration path available for "${instance.name}"`)
         return
@@ -339,9 +339,7 @@ const ProjectList = ({
           >
             <div className="flex flex-col">
               <div className="font-medium">{instance.name}</div>
-              {instance.projectPaths.length > 0 && (
-                <p className="text-foreground-muted text-xs">{instance.projectPaths[0]}</p>
-              )}
+              {instance.projectPath && <p className="text-foreground-muted text-xs">{instance.projectPath}</p>}
             </div>
             <span className="rounded bg-green-100 px-2 py-0.5 text-xs text-green-700">Live</span>
           </div>

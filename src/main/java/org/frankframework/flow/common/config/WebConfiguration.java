@@ -1,7 +1,6 @@
 package org.frankframework.flow.common.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import org.frankframework.management.gateway.InputStreamHttpMessageConverter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -39,7 +38,7 @@ public class WebConfiguration implements WebMvcConfigurer {
 
 	@Bean
 	public ObjectMapper objectMapper() {
-		return new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
+		return new ObjectMapper();
 	}
 
 	@Bean
