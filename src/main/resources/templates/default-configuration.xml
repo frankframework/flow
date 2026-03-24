@@ -1,10 +1,10 @@
 <Configuration name="DefaultConfig">
-   <Adapter name="SampleAdapter">
-      <Receiver name="SampleReceiver">
-         <ApiListener method="GET" uriPattern="/sample" />
-      </Receiver>
-      <Pipeline>
-         <EchoPipe name="Result" getInputFromFixedValue="Hello World" />
-	  </Pipeline>
-   </Adapter>
+  <Adapter name="SampleAdapter">
+    <Receiver name="SampleReceiver">
+	   <ApiListener method="GET" uriPattern="/sample" />
+	</Receiver>
+    <Pipeline>
+      <EchoPipe name="Result" getInputFromFixedValue="Hello World" />
+    </Pipeline>
+  </Adapter>
 </Configuration>
