@@ -5,9 +5,12 @@ import Search from '~/components/search/search'
 import LoadingSpinner from '~/components/loading-spinner'
 import FolderIcon from '../../../icons/solar/Folder.svg?react'
 import FolderOpenIcon from '../../../icons/solar/Folder Open.svg?react'
+import SettingsIcon from '../../../icons/solar/Settings.svg?react'
 import '/styles/editor-files.css'
 import AltArrowRightIcon from '../../../icons/solar/Alt Arrow Right.svg?react'
 import AltArrowDownIcon from '../../../icons/solar/Alt Arrow Down.svg?react'
+import { useShortcut } from '~/hooks/use-shortcut'
+import type { StudioContextMenuState } from './use-studio-context-menu'
 
 import {
   Tree,
@@ -17,9 +20,14 @@ import {
   type TreeItemIndex,
   UncontrolledTreeEnvironment,
 } from 'react-complex-tree'
-import FilesDataProvider, { type StudioItemData } from '~/components/file-structure/studio-files-data-provider'
+import FilesDataProvider, {
+  type StudioItemData,
+  type StudioFolderData,
+} from '~/components/file-structure/studio-files-data-provider'
 import { useProjectStore } from '~/stores/project-store'
 import { useTreeStore } from '~/stores/tree-store'
+import { useStudioContextMenu, detectItemType, getItemName, resolveItemPaths } from './use-studio-context-menu'
+import StudioFileTreeDialogs from './studio-file-tree-dialogs'
 
 const TREE_ID = 'studio-files-tree'
 
@@ -50,9 +58,55 @@ export default function StudioFileStructure() {
 
   const [dataProvider, setDataProvider] = useState<FilesDataProvider | null>(null)
   const [providerLoading, setProviderLoading] = useState(false)
+  const [selectedItemId, setSelectedItemId] = useState<TreeItemIndex | null>(null)
   const setTabData = useTabStore((state) => state.setTabData)
   const setActiveTab = useTabStore((state) => state.setActiveTab)
   const getTab = useTabStore((state) => state.getTab)
+
+  const expandedItemsRef = useRef(studioExpandedItems)
+  useEffect(() => {
+    expandedItemsRef.current = studioExpandedItems
+  }, [studioExpandedItems])
+
+  const studioContextMenu = useStudioContextMenu({
+    projectName: project?.name,
+    dataProvider,
+  })
+
+  const buildContextForItem = useCallback(
+    async (itemId: TreeItemIndex): Promise<StudioContextMenuState | null> => {
+      if (!dataProvider) return null
+      const item = await dataProvider.getTreeItem(itemId)
+      if (!item) return null
+
+      const itemType = detectItemType(item.data)
+      const name = getItemName(item.data)
+      const { path, folderPath } = resolveItemPaths(item.data, itemType, dataProvider)
+
+      return { position: { x: 0, y: 0 }, itemId, itemType, path, folderPath, name }
+    },
+    [dataProvider],
+  )
+
+  const triggerExplorerAction = useCallback(
+    (action: (menuState: StudioContextMenuState) => void, requireSelection: boolean) => {
+      const itemId = selectedItemId ?? (requireSelection ? null : 'root')
+      if (!itemId || (itemId === 'root' && requireSelection)) return
+      void buildContextForItem(itemId).then((menuState) => {
+        if (menuState) action(menuState)
+      })
+    },
+    [selectedItemId, buildContextForItem],
+  )
+
+  useShortcut({
+    'studio-explorer.new-config': () => triggerExplorerAction(studioContextMenu.handleNewConfiguration, false),
+    'studio-explorer.new-adapter': () => triggerExplorerAction(studioContextMenu.handleNewAdapter, false),
+    'studio-explorer.new-folder': () => triggerExplorerAction(studioContextMenu.handleNewFolder, false),
+    'studio-explorer.rename': () => triggerExplorerAction(studioContextMenu.handleRename, true),
+    'studio-explorer.delete': () => triggerExplorerAction(studioContextMenu.handleDelete, true),
+    'studio-explorer.delete-mac': () => triggerExplorerAction(studioContextMenu.handleDelete, true),
+  })
 
   useEffect(() => {
     if (!project) return
@@ -63,7 +117,7 @@ export default function StudioFileStructure() {
       setProviderLoading(true)
 
       const provider = new FilesDataProvider(project.name)
-      await provider.init(studioExpandedItems)
+      await provider.init(expandedItemsRef.current)
 
       if (isMounted) {
         setDataProvider(provider)
@@ -110,6 +164,7 @@ export default function StudioFileStructure() {
   }, [searchTerm, dataProvider])
 
   const handleItemClick = (items: TreeItemIndex[], _treeId: string): void => {
+    if (items.length > 0) setSelectedItemId(items[0])
     void handleItemClickAsync(items)
   }
 
@@ -153,11 +208,12 @@ export default function StudioFileStructure() {
       const item = await dataProvider.getTreeItem(itemId)
       if (!item) return
 
+      const data = item.data
+
       if (item.isFolder) {
         return
       }
 
-      const data = item.data
       if (typeof data === 'object' && data !== null && 'adapterName' in data && 'configPath' in data) {
         const { adapterName, configPath, adapterPosition } = data as {
           adapterName: string
@@ -230,7 +286,7 @@ export default function StudioFileStructure() {
     return (
       <Icon
         onClick={handleArrowClick}
-        onContextMenu={(mouseEvent: React.MouseEvent) => mouseEvent.stopPropagation()}
+        onContextMenu={(mouseEvent: React.MouseEvent) => studioContextMenu.openContextMenu(mouseEvent, item.index)}
         className="rct-tree-item-arrow-isFolder rct-tree-item-arrow fill-foreground"
       />
     )
@@ -250,8 +306,16 @@ export default function StudioFileStructure() {
         ? (item.data as { listenerName: string | null }).listenerName
         : null
 
+    const isObject = typeof item.data === 'object'
+
+    const pathEndsWithXmlExtension = (item.data as Partial<StudioFolderData>).path?.endsWith('.xml')
+
+    const isConfigFile = item.isFolder && isObject && item.data !== null && pathEndsWithXmlExtension
+
     let Icon
-    if (item.isFolder) {
+    if (isConfigFile) {
+      Icon = SettingsIcon
+    } else if (item.isFolder) {
       Icon = context.isExpanded ? FolderOpenIcon : FolderIcon
     } else {
       Icon = getListenerIcon(listenerType)
@@ -282,7 +346,10 @@ export default function StudioFileStructure() {
     const isHighlighted = highlightedItemId == item.index
 
     return (
-      <div className="flex min-w-0 cursor-pointer items-center">
+      <div
+        className="flex min-w-0 cursor-pointer items-center"
+        onContextMenu={(e) => studioContextMenu.openContextMenu(e, item.index)}
+      >
         <Icon className="fill-foreground w-4 flex-shrink-0" />
         <span
           className={`font-inter ml-1 overflow-hidden text-nowrap text-ellipsis ${
@@ -303,7 +370,12 @@ export default function StudioFileStructure() {
   return (
     <>
       <Search onChange={(event) => setSearchTerm(event.target.value)} />
-      <div className="overflow-auto pr-2">
+      <div
+        className="h-full overflow-auto pr-2"
+        onContextMenu={(e) => {
+          void studioContextMenu.openContextMenu(e, 'root')
+        }}
+      >
         <UncontrolledTreeEnvironment
           viewState={{
             [TREE_ID]: {
@@ -329,6 +401,21 @@ export default function StudioFileStructure() {
           <Tree treeId={TREE_ID} rootItem="root" ref={tree} treeLabel="Files" />
         </UncontrolledTreeEnvironment>
       </div>
+
+      <StudioFileTreeDialogs
+        contextMenu={studioContextMenu.contextMenu}
+        nameDialog={studioContextMenu.nameDialog}
+        deleteTarget={studioContextMenu.deleteTarget}
+        onNewConfiguration={studioContextMenu.handleNewConfiguration}
+        onNewAdapter={studioContextMenu.handleNewAdapter}
+        onNewFolder={studioContextMenu.handleNewFolder}
+        onRename={studioContextMenu.handleRename}
+        onDelete={studioContextMenu.handleDelete}
+        onConfirmDelete={studioContextMenu.confirmDelete}
+        onCloseContextMenu={studioContextMenu.closeContextMenu}
+        onCloseNameDialog={() => studioContextMenu.setNameDialog(null)}
+        onCloseDeleteDialog={() => studioContextMenu.setDeleteTarget(null)}
+      />
     </>
   )
 }

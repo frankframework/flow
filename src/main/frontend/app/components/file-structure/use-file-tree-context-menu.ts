@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import type { TreeItemIndex } from 'react-complex-tree'
 import {
   createFileInProject,
@@ -58,6 +58,11 @@ function ensureXmlExtension(name: string): string {
   return `${name}.xml`
 }
 
+function buildNewPath(oldPath: string, newName: string): string {
+  const lastSep = Math.max(oldPath.lastIndexOf('/'), oldPath.lastIndexOf('\\'))
+  return oldPath.slice(0, Math.max(0, lastSep + 1)) + newName
+}
+
 export function useFileTreeContextMenu({
   projectName,
   dataProvider,
@@ -67,6 +72,7 @@ export function useFileTreeContextMenu({
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null)
   const [nameDialog, setNameDialog] = useState<NameDialogState | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<DeleteTargetState | null>(null)
+  const contextMenuRef = useRef<ContextMenuState | null>(null)
 
   const openContextMenu = useCallback(
     async (e: React.MouseEvent, itemId: TreeItemIndex) => {
@@ -77,102 +83,127 @@ export function useFileTreeContextMenu({
       const item = await dataProvider.getTreeItem(itemId)
       if (!item) return
 
-      setContextMenu({
+      const state: ContextMenuState = {
         position: { x: e.clientX, y: e.clientY },
         itemId,
         isFolder: !!item.isFolder,
         isRoot: !!item.data.projectRoot,
         path: item.data.path,
         name: item.data.name,
-      })
+      }
+      contextMenuRef.current = state
+      setContextMenu(state)
     },
     [dataProvider],
   )
 
-  const handleNewFile = useCallback(() => {
-    if (!contextMenu || !projectName || !dataProvider) return
-    const parentPath = contextMenu.path
-    const parentItemId = contextMenu.itemId
+  const closeContextMenu = useCallback(() => {
+    contextMenuRef.current = null
     setContextMenu(null)
+  }, [])
 
-    setNameDialog({
-      title: 'New File',
-      onSubmit: async (name: string) => {
-        const fileName = ensureXmlExtension(name)
-        try {
-          await createFileInProject(projectName, parentPath, fileName)
-          await dataProvider.reloadDirectory(parentItemId)
-        } catch (error) {
-          showErrorToastFrom('Failed to create file', error)
-        }
-        setNameDialog(null)
-      },
-    })
-  }, [contextMenu, projectName, dataProvider])
+  function resolveMenu(menuState?: ContextMenuState): ContextMenuState | null {
+    return menuState ?? contextMenuRef.current
+  }
 
-  const handleNewFolder = useCallback(() => {
-    if (!contextMenu || !projectName || !dataProvider) return
-    const parentPath = contextMenu.path
-    const parentItemId = contextMenu.itemId
-    setContextMenu(null)
+  const handleNewFile = useCallback(
+    (menuState?: ContextMenuState) => {
+      const menu = resolveMenu(menuState)
+      if (!menu || !projectName || !dataProvider) return
+      const parentPath = menu.path
+      const parentItemId = menu.itemId
+      closeContextMenu()
 
-    setNameDialog({
-      title: 'New Folder',
-      onSubmit: async (name: string) => {
-        try {
-          await createFolderInProject(projectName, parentPath, name)
-          await dataProvider.reloadDirectory(parentItemId)
-        } catch (error) {
-          showErrorToastFrom('Failed to create folder', error)
-        }
-        setNameDialog(null)
-      },
-    })
-  }, [contextMenu, projectName, dataProvider])
-
-  const handleRename = useCallback(() => {
-    if (!contextMenu || !projectName || !dataProvider) return
-    const itemId = contextMenu.itemId
-    const oldName = contextMenu.name
-    const oldPath = contextMenu.path
-    setContextMenu(null)
-
-    setNameDialog({
-      title: 'Rename',
-      initialValue: oldName,
-      onSubmit: async (newName: string) => {
-        if (newName === oldName) {
+      setNameDialog({
+        title: 'New File',
+        onSubmit: async (name: string) => {
+          const fileName = ensureXmlExtension(name)
+          try {
+            await createFileInProject(projectName, parentPath, fileName)
+            await dataProvider.reloadDirectory(parentItemId)
+          } catch (error) {
+            showErrorToastFrom('Failed to create file', error)
+          }
           setNameDialog(null)
-          return
-        }
-        try {
-          await renameInProject(projectName, oldPath, newName)
-          clearConfigurationCache(projectName, oldPath)
-          const lastSep = Math.max(oldPath.lastIndexOf('/'), oldPath.lastIndexOf('\\'))
-          const newPath = oldPath.slice(0, Math.max(0, lastSep + 1)) + newName
-          useTabStore.getState().renameTabsForConfig(oldPath, newPath)
-          useEditorTabStore.getState().refreshAllTabs()
-          const parentId = getParentItemId(itemId)
-          await dataProvider.reloadDirectory(parentId)
-          onAfterRename?.(oldPath, newName)
-        } catch (error) {
-          showErrorToastFrom('Failed to rename', error)
-        }
-        setNameDialog(null)
-      },
-    })
-  }, [contextMenu, projectName, dataProvider, onAfterRename])
+        },
+      })
+    },
+    [projectName, dataProvider, closeContextMenu],
+  )
 
-  const handleDelete = useCallback(() => {
-    if (!contextMenu) return
-    setDeleteTarget({
-      name: contextMenu.name,
-      path: contextMenu.path,
-      isFolder: contextMenu.isFolder,
-      parentItemId: getParentItemId(contextMenu.itemId),
-    })
-    setContextMenu(null)
-  }, [contextMenu])
+  const handleNewFolder = useCallback(
+    (menuState?: ContextMenuState) => {
+      const menu = resolveMenu(menuState)
+      if (!menu || !projectName || !dataProvider) return
+      const parentPath = menu.path
+      const parentItemId = menu.itemId
+      closeContextMenu()
+
+      setNameDialog({
+        title: 'New Folder',
+        onSubmit: async (name: string) => {
+          try {
+            await createFolderInProject(projectName, parentPath, name)
+            await dataProvider.reloadDirectory(parentItemId)
+          } catch (error) {
+            showErrorToastFrom('Failed to create folder', error)
+          }
+          setNameDialog(null)
+        },
+      })
+    },
+    [projectName, dataProvider, closeContextMenu],
+  )
+
+  const handleRename = useCallback(
+    (menuState?: ContextMenuState) => {
+      const menu = resolveMenu(menuState)
+      if (!menu || !projectName || !dataProvider) return
+      const itemId = menu.itemId
+      const oldName = menu.name
+      const oldPath = menu.path
+      closeContextMenu()
+
+      setNameDialog({
+        title: 'Rename',
+        initialValue: oldName,
+        onSubmit: async (newName: string) => {
+          if (newName === oldName) {
+            setNameDialog(null)
+            return
+          }
+          try {
+            await renameInProject(projectName, oldPath, newName)
+            clearConfigurationCache(projectName, oldPath)
+            const newPath = buildNewPath(oldPath, newName)
+            useTabStore.getState().renameTabsForConfig(oldPath, newPath)
+            useEditorTabStore.getState().refreshAllTabs()
+            await dataProvider.reloadDirectory(getParentItemId(itemId))
+            onAfterRename?.(oldPath, newName)
+          } catch (error) {
+            showErrorToastFrom('Failed to rename', error)
+          }
+          setNameDialog(null)
+        },
+      })
+    },
+    [projectName, dataProvider, onAfterRename, closeContextMenu],
+  )
+
+  const handleDelete = useCallback(
+    (menuState?: ContextMenuState) => {
+      const menu = resolveMenu(menuState)
+      if (!menu) return
+      setDeleteTarget({
+        name: menu.name,
+        path: menu.path,
+        isFolder: menu.isFolder,
+        parentItemId: getParentItemId(menu.itemId),
+      })
+      closeContextMenu()
+    },
+    [closeContextMenu],
+  )
 
   const confirmDelete = useCallback(async () => {
     if (!deleteTarget || !projectName || !dataProvider) return
@@ -193,6 +224,7 @@ export function useFileTreeContextMenu({
   return {
     contextMenu,
     setContextMenu,
+    closeContextMenu,
     nameDialog,
     setNameDialog,
     deleteTarget,
