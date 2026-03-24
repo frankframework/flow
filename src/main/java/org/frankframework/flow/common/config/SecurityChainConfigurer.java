@@ -1,18 +1,12 @@
 package org.frankframework.flow.common.config;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
-
 import org.frankframework.lifecycle.DynamicRegistration.Servlet;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
-import org.springframework.context.EnvironmentAware;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
-import org.springframework.core.env.Environment;
 import org.springframework.security.authorization.AuthenticatedAuthorizationManager;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -25,46 +19,34 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.util.matcher.AnyRequestMatcher;
-import org.springframework.security.web.util.matcher.RequestMatcher;
-
-import lombok.Setter;
 
 /**
- * Enable security, although.. it's anonymous on all endpoints, but at least sets the
- * <code>SecurityContextHolder.getContext().getAuthentication();</code> object.
+ * Enable security, although it's anonymous on all endpoints, but at least sets the
+ * <code>SecurityContextHolder.getContext().getAuthentication()</code> object.
  */
 @Configuration
-@EnableWebSecurity //Enables Spring Security (classpath)
-@EnableMethodSecurity(jsr250Enabled = true, prePostEnabled = false) //Enables JSR 250 (JAX-RS) annotations
+@EnableWebSecurity
+@EnableMethodSecurity(jsr250Enabled = true, prePostEnabled = false)
 @Order(Ordered.HIGHEST_PRECEDENCE)
-public class SecurityChainConfigurer implements ApplicationContextAware, EnvironmentAware {
-	private @Setter ApplicationContext applicationContext;
-	private @Setter Environment environment;
+public class SecurityChainConfigurer {
 
 	@Bean
-	public SecurityFilterChain configureChain(HttpSecurity http) throws Exception {
-		//Apply defaults to disable bloated filters, see DefaultSecurityFilterChain.getFilters for the actual list.
-		http.headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin)); //Allow same origin iframe request
+	public SecurityFilterChain configureChain(HttpSecurity http) {
+		http.headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin));
 		http.csrf(CsrfConfigurer::disable);
-		RequestMatcher securityRequestMatcher = AnyRequestMatcher.INSTANCE;
-		http.securityMatcher(securityRequestMatcher); //Triggers the SecurityFilterChain, also for OPTIONS requests!
-		http.formLogin(FormLoginConfigurer::disable); //Disable the form login filter
-		http.logout(LogoutConfigurer::disable); //Disable the logout endpoint on every filter
-
+		http.securityMatcher(AnyRequestMatcher.INSTANCE);
+		http.formLogin(FormLoginConfigurer::disable);
+		http.logout(LogoutConfigurer::disable);
 		http.anonymous(anonymous -> anonymous.authorities(getAuthorities()));
-
-		// Enables security for all servlet endpoints
-		http.authorizeHttpRequests(requests -> requests.requestMatchers(securityRequestMatcher).access(AuthenticatedAuthorizationManager.anonymous()));
+		http.authorizeHttpRequests(requests ->
+				requests.requestMatchers(AnyRequestMatcher.INSTANCE).access(AuthenticatedAuthorizationManager.anonymous()));
 
 		return http.build();
 	}
 
 	private List<GrantedAuthority> getAuthorities() {
-		Set<String> securityRoles = Set.of(Servlet.ALL_IBIS_USER_ROLES);
-		List<GrantedAuthority> grantedAuthorities = new ArrayList<>(securityRoles.size());
-		for (String role : securityRoles) {
-			grantedAuthorities.add(new SimpleGrantedAuthority("ROLE_" + role));
-		}
-		return grantedAuthorities;
+		return Arrays.stream(Servlet.ALL_IBIS_USER_ROLES)
+				.map(role -> (GrantedAuthority) new SimpleGrantedAuthority("ROLE_" + role))
+				.toList();
 	}
 }
