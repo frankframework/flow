@@ -8,6 +8,12 @@ import {
 } from '~/stores/shortcut-store'
 import SwitchToggle from '~/components/inputs/switch-toggle'
 
+const SCOPE_PREFIXES = [
+  { prefix: 'studio-explorer.', scope: 'studio-file-explorer' },
+  { prefix: 'explorer.', scope: 'editor-file-explorer' },
+  { prefix: 'editor.', scope: 'code-editor' },
+] as const
+
 const scopeLabels: Record<string, string> = {
   global: 'Global Keybinds',
   studio: 'Studio Keybinds',
@@ -47,22 +53,8 @@ export function KeybindsTable() {
   for (const shortcut of ALL_SHORTCUTS) {
     if (shortcut.id.endsWith('-alt')) continue
 
-    let displayScope = shortcut.scope as string
-
-    switch (true) {
-      case shortcut.id.startsWith('explorer.'): {
-        displayScope = 'editor-file-explorer'
-        break
-      }
-      case shortcut.id.startsWith('studio-explorer.'): {
-        displayScope = 'studio-file-explorer'
-        break
-      }
-      case shortcut.id.startsWith('editor.'): {
-        displayScope = 'code-editor'
-        break
-      }
-    }
+    const match = SCOPE_PREFIXES.find((prefix) => shortcut.id.startsWith(prefix.prefix))
+    const displayScope = match ? match.scope : (shortcut.scope as string)
 
     if (!grouped.has(displayScope)) grouped.set(displayScope, [])
     grouped.get(displayScope)?.push(shortcut)
