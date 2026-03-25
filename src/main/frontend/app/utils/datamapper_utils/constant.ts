@@ -2,6 +2,7 @@ export const OBJECT_HEIGHT = 80
 export const GROUP_PADDING_TOP = 50
 export const ITEM_GAP = 10
 export const THROTTLE_MS = 10
+export const SAVING_THROTTLE = 300
 export const FLOW_KEY = 'datamapper-flow-key'
 export const TABLE_WIDTH = 400
 export const MAPPING_TABLE_WIDTH = TABLE_WIDTH / 3
