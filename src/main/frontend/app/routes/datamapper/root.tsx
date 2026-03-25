@@ -1,12 +1,10 @@
 import { useEffect, useReducer, useState } from 'react'
-
 import PropertyList from './property-list'
 import { showErrorToast, showSuccessToast } from '~/components/toast'
 import {
   DEFAULT_MAPPING_LIST_CONFIG,
   mappingListConfigReducer,
 } from '~/stores/datamapper_state/mappingListConfig/reducer'
-
 import AdvancedEditor from './advanced-editor'
 import Initialize from './initialize'
 import MappingTable from './mapping-table'
@@ -15,7 +13,7 @@ import { FileProvider } from '~/stores/datamapper_state/schemaQueue/schema-queue
 import Button from '~/components/inputs/button'
 import { saveDatamapperConfiguration, fetchDatamapperConfiguration } from '~/services/datamapper-service'
 import { useProjectStore } from '~/stores/project-store'
-import { SAVING_THROTTLE } from '~/utils/datamapper_utils/const'
+import { SAVING_THROTTLE } from '~/utils/datamapper_utils/constant'
 
 export default function Root() {
   const routes = ['Initialize', 'Properties', 'Mappings', 'Advanced']

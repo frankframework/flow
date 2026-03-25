@@ -1,5 +1,5 @@
 import type { Node } from '@xyflow/react'
-import { MAPPING_TABLE_WIDTH, OBJECT_HEIGHT, TABLE_WIDTH } from './const'
+import { MAPPING_TABLE_WIDTH, OBJECT_HEIGHT, TABLE_WIDTH } from './constant'
 
 export function updateCanvasSize(nodes: Node[], currentSize: { height: number }) {
   const maxY = nodes.reduce((max, node) => {

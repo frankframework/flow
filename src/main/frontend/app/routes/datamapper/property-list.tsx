@@ -11,7 +11,6 @@ import {
   type Connection,
   useReactFlow,
 } from '@xyflow/react'
-
 import '@xyflow/react/dist/style.css'
 import AddFieldForm from '~/components/datamapper/forms/add-field-form'
 import AddMappingForm from '~/components/datamapper/forms/add-mapping-form'
@@ -21,9 +20,8 @@ import { showErrorToast, showSuccessToast } from '~/components/toast'
 import { useFlowManagement } from '~/hooks/use-datamapper-flow-management'
 import { type ConfigActions } from '~/stores/datamapper_state/mappingListConfig/reducer'
 import { useFile } from '~/stores/datamapper_state/schemaQueue/schema-queue-context'
-
 import type { CustomNodeData, MappingNodeData, NodeLabels } from '~/types/datamapper_types/react-node-types'
-import { TABLE_WIDTH } from '~/utils/datamapper_utils/const'
+import { TABLE_WIDTH } from '~/utils/datamapper_utils/constant'
 import {
   createMappingNode,
   validateMapping,
@@ -31,7 +29,6 @@ import {
   handleArrayMapping,
 } from '~/utils/datamapper_utils/mapping-node-utils'
 import Button from '~/components/inputs/button'
-
 import GenerateButton from '~/components/datamapper/basic-components/generate-button'
 import { updateCanvasSize } from '~/utils/datamapper_utils/canvas-management-utils'
 import { DuplicateLabelException, getNodesByTypeAndId } from '~/utils/datamapper_utils/property-node-utils'
@@ -151,7 +148,6 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
   }, [reactFlowInstance])
 
   const nodeTypes: NodeTypes = useMemo(() => {
-    console.log('looping')
     return getNodeTypes({
       flow,
       setReactFlowNodes,
@@ -161,7 +157,7 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
       setEditingMapping,
       openMapping,
     })
-    //Don't add flow as dependancy here, it'll become an infinite loop
+    //Don't add flow as dependancy here, it'll become an infinite loop flow changes every rerender --> updates the memo --> the memo updates the nodetypes --> updating the nodetypes causes react to trigger a rerender resulting in a infinite loop
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openMapping]) //UseMemo is used here to ensure nodetype is not changed throughout rerenders. If the variable is updated reactflow throws a warning in the console;
 
@@ -304,7 +300,7 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
       setAddFieldModal(false)
       showSuccessToast('Added property succesfully!')
     } catch (error) {
-      if (error instanceof DuplicateLabelException) {
+      if (error instanceof Error) {
         showErrorToast(error.message)
       } else {
         throw error
@@ -433,7 +429,7 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
               Add Source
             </Button>
             <Button
-              className="bg-foreground-active text-foreground hover:bg-hover absolute bottom-[2vh] left-1/2 z-10 -translate-x-1/2 rounded-2xl border px-4 py-2 text-[var(--color-neutral-900)]"
+              className="bg-foreground-active text-foreground hover:bg-hover absolute bottom-[2vh] left-1/2 z-10 -translate-x-1/2 rounded-2xl border px-4 py-2 text-neutral-900"
               onClick={openMapping}
             >
               MAP

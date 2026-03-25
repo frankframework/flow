@@ -1,6 +1,5 @@
 import type { MappingFile, Mapping, Property, Target, MappingRow } from '~/types/datamapper_types/export-types'
 import type { FlowNode, PropertyNode, MappingNode, ArrayMappingNode } from '~/types/datamapper_types/react-node-types'
-
 import { isNodeGroup, recurseFindArray } from './property-node-utils'
 import type { Edge, Node } from '@xyflow/react'
 import type { MappingListConfig } from '~/types/datamapper_types/config-types'

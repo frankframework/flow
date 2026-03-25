@@ -3,7 +3,6 @@ import OneEdgeNode, { type OneEdgeNodeProperties } from './one-edge-node'
 import LabeledGroupNode, { type LabeledGroupNodeProperties } from './labeled-group-node'
 import MappingNode, { type MappingNodeProperties } from './mapping-node'
 import type { NodeTypes, Node } from '@xyflow/react'
-
 import ExtraSourceNode, { type ExtraSourceNodeProperties } from './extra-source-node'
 import type { useFlowManagement } from '~/hooks/use-datamapper-flow-management'
 import type { CustomNodeData, MappingNodeData } from '~/types/datamapper_types/react-node-types'
