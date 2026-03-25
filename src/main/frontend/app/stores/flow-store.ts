@@ -21,6 +21,7 @@ import { addChildRecursive, deleteChildRecursive, updateChildRecursive } from '.
 import { FlowConfig } from '~/routes/studio/canvas/flow.config'
 import { subscribeWithSelector } from 'zustand/middleware'
 import { getEdgeLabelFromHandle } from '~/utils/flow-utils'
+import type { GroupNode } from '~/routes/studio/canvas/nodetypes/group-node'
 
 export interface FlowSnapshot {
   nodes: FlowNode[]
@@ -54,6 +55,7 @@ export interface FlowState {
   getAttributes: (nodeId: string) => Record<string, string> | null
   addChild: (nodeId: string, child: ChildNode) => void
   setStickyText: (nodeId: string, text: string) => void
+  setGroupnodeLabel: (nodeId: string, newLabel: string) => void
   setNodeName: (nodeId: string, name: string, options?: { isNewNode?: boolean }) => void
   getNodeName: (nodeId: string) => string | null
   addHandle: (nodeId: string, handle: { type: string; index: number }) => void
@@ -76,8 +78,12 @@ function isExitNode(node: FlowNode): node is ExitNode {
   return node.type === 'exitNode'
 }
 
-function isStickyNote(node: FlowNode): node is StickyNote {
+export function isStickyNote(node: FlowNode): node is StickyNote {
   return node.type === 'stickyNote'
+}
+
+export function isGroupNode(node: FlowNode): node is GroupNode {
+  return node.type === 'groupNode'
 }
 
 function nextFreeNumericId(nodes: FlowNode[]): number {
@@ -298,6 +304,23 @@ const useFlowStore = create<FlowState>()(
               data: {
                 ...node.data,
                 content: text,
+              },
+            }
+          }
+          return node
+        }),
+      })
+    },
+    setGroupnodeLabel: (nodeId, newLabel) => {
+      get().saveToHistory()
+      set({
+        nodes: get().nodes.map((node) => {
+          if (node.id === nodeId && isGroupNode(node)) {
+            return {
+              ...node,
+              data: {
+                ...node.data,
+                label: newLabel,
               },
             }
           }
