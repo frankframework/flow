@@ -48,4 +48,3 @@ export interface MappingRow {
   conditional: Condition | null
   outputLabel: string
 }
-A
