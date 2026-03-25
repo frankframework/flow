@@ -2,15 +2,15 @@ import { useId, useState } from 'react'
 import Button from '~/components/inputs/button'
 import Dropdown from '~/components/inputs/dropdown'
 import Input from '~/components/inputs/input'
+import type { Source } from '~/types/datamapper_types/export-types'
 import type {
-  Source,
   Condition,
-  ConditionTypeConfig,
-  ConditionType,
   ConditionInput,
-  ConditionTypeInput,
   ConditionOperatorConfig,
-} from '~/types/datamapper_types/config-types'
+  ConditionType,
+  ConditionTypeConfig,
+  ConditionTypeInput,
+} from '~/types/datamapper_types/function-types'
 import conditionConfigJson from '~/utils/datamapper_utils/config/condition-config.json'
 
 interface AddConditionFormProperties {

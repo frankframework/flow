@@ -1,11 +1,10 @@
 import { useState } from 'react'
-
 import UploadImportButton from './upload-import-button'
-import type { MappingListConfig } from '~/types/datamapper_types/config-types'
 import { useFile } from '~/stores/datamapper_state/schemaQueue/schema-queue-context'
 import Input from '../inputs/input'
 import Button from '../inputs/button'
 import DeleteButton from './basic-components/delete-button'
+import type { MappingListConfig } from '~/types/datamapper_types/config-types'
 
 interface SourceDefinitionComponentProperties {
   config?: MappingListConfig

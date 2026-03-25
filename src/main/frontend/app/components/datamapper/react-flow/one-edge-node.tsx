@@ -1,8 +1,7 @@
 import { Handle, Position, type Node, useNodeConnections } from '@xyflow/react'
-
 import clsx from 'clsx'
-import type { CustomNodeData } from '~/types/datamapper_types/node-types'
-import { PROPERTY_WIDTH } from '~/utils/datamapper_utils/const'
+import type { CustomNodeData } from '~/types/datamapper_types/react-node-types'
+import { PROPERTY_WIDTH } from '~/utils/datamapper_utils/constant'
 import EditButton from '../basic-components/edit-button'
 import DeleteButton from '../basic-components/delete-button'
 import HighlightButton from '../basic-components/highlight-button'
