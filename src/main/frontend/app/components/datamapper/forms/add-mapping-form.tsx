@@ -163,7 +163,7 @@ function AddMappingForm({ onSave, sources, targets, initialData }: MappingModalP
               {mutations.map((mutation) => (
                 <div key={mutation.id} className="rounded border p-2">
                   <div className="flex items-center justify-between">
-                    <span className="font-semibold">{mutation.name}</span>
+                    <span className="max-w-40 font-semibold break-words">{mutation.name}</span>
                     <div className="flex gap-2">
                       <EditButton
                         onClick={() => {
@@ -301,7 +301,7 @@ function AddMappingForm({ onSave, sources, targets, initialData }: MappingModalP
             setConditions((conditions) =>
               editCondition
                 ? conditions.map((conditionToCompare) =>
-                    conditionToCompare.id === conditionToCompare.id ? conditionToCompare : conditionToEdit,
+                    conditionToCompare.id === conditionToEdit.id ? conditionToEdit : conditionToCompare,
                   )
                 : [...conditions, conditionToEdit],
             )
