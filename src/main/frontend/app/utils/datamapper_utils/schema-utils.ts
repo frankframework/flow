@@ -122,51 +122,8 @@ export async function importXsdSchema(
   parser.write(xmlText).close()
 
   const visitedTypes = new Set<string>()
-
-  async function addElementNode(element: XsdElement, parentNodeId: string | null) {
-    const name = element['@_name']
-    const typeName = element['@_type']
-    if (!name) return
-
-    const isArray = element['@_maxOccurs'] && element['@_maxOccurs'] !== '1'
-    let nodeId: string
-
-    if (typeName && typeMap.has(typeName)) {
-      nodeId = await addNode(side, name, isArray ? 'array' : 'object', undefined, parentNodeId)
-      if (!visitedTypes.has(typeName)) {
-        visitedTypes.add(typeName)
-        await traverseComplexType(typeMap.get(typeName)!, nodeId)
-      }
-    } else if (element['xs:complexType']) {
-      nodeId = await addNode(side, name, isArray ? 'array' : 'object', undefined, parentNodeId)
-      await traverseComplexType(element['xs:complexType'], nodeId)
-    } else {
-      const prop = resolveType(side, format, typeName)
-      nodeId = await addNode(side, name, prop.name, element['@_default'], parentNodeId)
-    }
-
-    return nodeId
-  }
-
-  async function traverseComplexType(type: XsdComplexType, parentNodeId: string) {
-    const sequence = type['xs:sequence']
-    if (sequence?.xs?.element) {
-      const elements: XsdElement[] = Array.isArray(sequence.xs.element) ? sequence.xs.element : [sequence.xs.element]
-      for (const elem of elements) {
-        await addElementNode(elem, parentNodeId)
-      }
-    }
-
-    if (type['xs:attribute']) {
-      for (const attr of type['xs:attribute']) {
-        const prop = resolveType(side, format, attr['@_type'])
-        await addNode(side, attr['@_name'], prop.name, undefined, parentNodeId)
-      }
-    }
-  }
-
   for (const rootElement of rootElements) {
-    await addElementNode(rootElement, parentId)
+    await addElementNode(rootElement, parentId, side, addNode, format, typeMap, visitedTypes)
   }
 }
 
@@ -187,4 +144,62 @@ function resolveType(
   if (!property) throw new Error(`Type "${normalized}" is not configured for format "${format.name}"`)
 
   return { name: property.name, basicType: property.type }
+}
+
+async function addElementNode(
+  element: XsdElement,
+  parentNodeId: string | null,
+  side: 'source' | 'target',
+  addNode: AddNodeFunction,
+  format: FormatDefinition,
+  typeMap: Map<string, XsdComplexType>,
+  visitedTypes: Set<string>,
+) {
+  const name = element['@_name']
+  const typeName = element['@_type']
+  if (!name) return
+
+  const isArray = element['@_maxOccurs'] && element['@_maxOccurs'] !== '1'
+  let nodeId: string
+
+  if (typeName && typeMap.has(typeName)) {
+    nodeId = await addNode(side, name, isArray ? 'array' : 'object', undefined, parentNodeId)
+    if (!visitedTypes.has(typeName)) {
+      visitedTypes.add(typeName)
+      await traverseComplexType(typeMap.get(typeName)!, nodeId, side, addNode, format, typeMap, visitedTypes)
+    }
+  } else if (element['xs:complexType']) {
+    nodeId = await addNode(side, name, isArray ? 'array' : 'object', undefined, parentNodeId)
+    await traverseComplexType(element['xs:complexType'], nodeId, side, addNode, format, typeMap, visitedTypes)
+  } else {
+    const prop = resolveType(side, format, typeName)
+    nodeId = await addNode(side, name, prop.name, element['@_default'], parentNodeId)
+  }
+
+  return nodeId
+}
+
+async function traverseComplexType(
+  type: XsdComplexType,
+  parentNodeId: string,
+  side: 'source' | 'target',
+  addNode: AddNodeFunction,
+  format: FormatDefinition,
+  typeMap: Map<string, XsdComplexType>,
+  visitedTypes: Set<string>,
+) {
+  const sequence = type['xs:sequence']
+  if (sequence?.xs?.element) {
+    const elements: XsdElement[] = Array.isArray(sequence.xs.element) ? sequence.xs.element : [sequence.xs.element]
+    for (const elem of elements) {
+      await addElementNode(elem, parentNodeId, side, addNode, format, typeMap, visitedTypes)
+    }
+  }
+
+  if (type['xs:attribute']) {
+    for (const attr of type['xs:attribute']) {
+      const prop = resolveType(side, format, attr['@_type'])
+      await addNode(side, attr['@_name'], prop.name, undefined, parentNodeId)
+    }
+  }
 }
