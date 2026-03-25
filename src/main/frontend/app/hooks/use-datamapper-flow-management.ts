@@ -367,7 +367,7 @@ export function useFlowManagement({
     const text = await file.text()
     if (config.formatTypes[side]?.schemaFileExtension === '.schema.json') {
       const parsed = JSON.parse(text)
-      await importJsonSchema(parsed, 'source', null, addNodeSequential, config.formatTypes[side])
+      await importJsonSchema(parsed, side, parentId, addNodeSequential, config.formatTypes[side])
     } else if (config.formatTypes[side]?.schemaFileExtension === '.xsd') {
       await importXsdSchema(text, side, parentId, addNodeSequential, config.formatTypes[side]) // pass raw XML text
     }

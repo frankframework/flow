@@ -182,7 +182,8 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
     return () => {
       window.removeEventListener('resize', updateSize)
     }
-  }, [flow, reactFlowInstance])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reactFlowInstance]) //Adding flow as dependancy here breaks the importing.
 
   useEffect(() => {
     if (!reactFlowInstance) return
