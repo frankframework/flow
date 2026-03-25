@@ -15,6 +15,5 @@ public class FileTreeNode {
 	private List<FileTreeNode> children;
 	private List<String> adapterNames;
 
-	public FileTreeNode() {
-	}
+	public FileTreeNode() {}
 }
