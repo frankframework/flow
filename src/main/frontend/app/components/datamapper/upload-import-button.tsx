@@ -7,6 +7,7 @@ import { useFile } from '~/stores/datamapper_state/schemaQueue/schema-queue-cont
 
 import { FLOW_KEY } from '~/utils/datamapper_utils/const'
 import { showErrorToast, showSuccessToast } from '../toast'
+import type { MappingListConfig } from '~/types/datamapper_types/config-types'
 
 interface SchemaUploadButtonProperties {
   label: string

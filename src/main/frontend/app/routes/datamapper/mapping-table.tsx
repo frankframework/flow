@@ -19,16 +19,15 @@ interface PropertyListProperties {
 }
 
 function MappingTable({ config, configDispatch }: PropertyListProperties) {
-  const [refresh, setRefresh] = useState(0)
   const [modalOpen, setModalOpen] = useState(false)
   const [editingMapping, setEditingMapping] = useState<MappingNodeData | null>(null)
 
   const flow: { nodes?: Node[]; edges?: Edge[] } = useMemo(() => {
     return config.propertyData ?? {}
-  }, [config.propertyData, refresh])
+  }, [config.propertyData])
 
-  const nodes: Node[] = flow.nodes || []
-  const edges: Edge[] = flow.edges || []
+  const nodes: Node[] = useMemo(() => flow.nodes || [], [flow.nodes])
+  const edges: Edge[] = useMemo(() => flow.edges || [], [flow.edges])
 
   const sources = getNodesByTypeAndId(nodes, { typeIncludes: 'sourceOnly' })
   const targets = getNodesByTypeAndId(nodes, { typeIncludes: 'targetOnly' })
@@ -46,7 +45,6 @@ function MappingTable({ config, configDispatch }: PropertyListProperties) {
       payload: { nodes: updatedNodes, edges: updatedEdges },
     })
 
-    setRefresh((count) => count + 1)
     setEditingMapping(null)
     setModalOpen(false)
 
@@ -162,8 +160,6 @@ function MappingTable({ config, configDispatch }: PropertyListProperties) {
                           edges: remainingEdges,
                         },
                       })
-
-                      setRefresh((count) => count + 1)
                     }}
                   />
                 </td>

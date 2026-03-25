@@ -15,6 +15,7 @@ import { FileProvider } from '~/stores/datamapper_state/schemaQueue/schema-queue
 import Button from '~/components/inputs/button'
 import { saveDatamapperConfiguration, fetchDatamapperConfiguration } from '~/services/datamapper-service'
 import { useProjectStore } from '~/stores/project-store'
+import { SAVING_THROTTLE } from '~/utils/datamapper_utils/const'
 
 export default function Root() {
   const routes = ['Initialize', 'Properties', 'Mappings', 'Advanced']
@@ -45,7 +46,7 @@ export default function Root() {
     }
 
     loadConfig()
-  }, [])
+  }, [project])
 
   const handleManualConfigExport = () => {
     const dataString = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(mappingListConfig))}`
@@ -74,10 +75,10 @@ export default function Root() {
       } catch (error) {
         showErrorToast(error instanceof Error ? error.message : String(error))
       }
-    }, 300) //Save **AFTER** 300 MS
+    }, SAVING_THROTTLE) //Save **AFTER** 300 MS
 
     return () => clearTimeout(timeout) // If another save occurs within the 300MS, Reset timer and save after 300MS
-  }, [mappingListConfig])
+  }, [mappingListConfig, project])
 
   return (
     <ReactFlowProvider>
@@ -85,7 +86,7 @@ export default function Root() {
         {/* These buttons only exists for testing purposes, ignore the styling on these, they will be removed in later stages */}
         <div className="top fixed right-0 z-60 gap-2">
           <button
-            className="border-border hover:bg-hover active:bg-selected w-48 rounded-md border bg-red-500 px-4 py-2 text-sm"
+            className="border-border hover:bg-hover active:bg-selected hidden w-48 rounded-md border bg-red-500 px-4 py-2 text-sm"
             onClick={() => {
               console.dir(mappingListConfig)
               showSuccessToast('Logging config to console!', 'Debug')
@@ -99,15 +100,6 @@ export default function Root() {
             onClick={handleManualConfigExport}
           >
             Export configuration
-          </button>
-          <button
-            className="border-border hover:bg-hover active:bg-selected hidden w-48 rounded-md border bg-red-500 px-4 py-2 text-sm"
-            onClick={() => {
-              localStorage.clear()
-              globalThis.location.reload()
-            }}
-          >
-            RESET
           </button>
         </div>
 

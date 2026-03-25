@@ -1,4 +1,4 @@
-import React, { type Dispatch, type SetStateAction, useEffect, useState } from 'react'
+import React, { type Dispatch, type SetStateAction, useEffect, useMemo, useState } from 'react'
 
 import AddMutationForm from './add-mutation-form'
 import AddConditionForm from './add-conditions-form'
@@ -49,19 +49,21 @@ function AddMappingForm({ onSave, sources, targets, initialData }: MappingModalP
   const [isConditional, setIsConditional] = useState<boolean>(!!initialData?.conditional)
   const [selectedConditional, setSelectedConditional] = useState<Condition | null>(initialData?.conditional ?? null)
 
-  const unfilteredOutputs: Source[] = [
-    ...sources.filter((source) => sourceIds.includes(source.id)),
-    ...mutations.map((mutation) => ({
-      id: mutation.id,
-      label: mutation.name,
-      type: mutation.mutationType?.outputType,
-    })),
-    ...conditions.map((condition) => ({
-      id: condition.id,
-      label: condition.name,
-      type: 'boolean',
-    })),
-  ] as Source[]
+  const unfilteredOutputs: Source[] = useMemo(() => {
+    return [
+      ...sources.filter((source) => sourceIds.includes(source.id)),
+      ...mutations.map((mutation) => ({
+        id: mutation.id,
+        label: mutation.name,
+        type: mutation.mutationType?.outputType,
+      })),
+      ...conditions.map((condition) => ({
+        id: condition.id,
+        label: condition.name,
+        type: 'boolean',
+      })),
+    ] as Source[]
+  }, [sources, sourceIds, mutations, conditions])
 
   const filteredOutputs = React.useMemo(() => {
     if (!targetId) return []

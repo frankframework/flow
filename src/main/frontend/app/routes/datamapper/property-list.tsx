@@ -104,131 +104,7 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
   })
   const { sourceSchematics, targetSchematic, clearFiles } = useFile()
 
-  const nodeTypes: NodeTypes = useMemo(() => {
-    return getNodeTypes({
-      flow,
-      setReactFlowNodes,
-      setEditingNode,
-      setAddFieldModal,
-      openModelType: openModalType,
-      setEditingMapping,
-      openMapping,
-    })
-  }, []) //UseMemo is used here to ensure nodetype is not changed throughout rerenders. If the variable is update reactflow throws a warning in the console;
-
-  useEffect(() => {
-    if (!reactFlowInstance) return
-
-    const updateSize = () => {
-      requestAnimationFrame(() => {
-        flow.calculateTablePositions(canvasWidth.current?.offsetWidth ?? 0)
-      })
-    }
-
-    window.addEventListener('resize', updateSize)
-
-    // delay initial run
-    requestAnimationFrame(updateSize)
-
-    return () => {
-      window.removeEventListener('resize', updateSize)
-    }
-  }, [reactFlowInstance])
-
-  useEffect(() => {
-    if (!reactFlowInstance) return
-
-    configDispatch({
-      type: 'SET_PROPERTY_DATA',
-      payload: reactFlowInstance.toObject(),
-    })
-  }, [reactFlowNodes, edges])
-
-  //Updates the outer canvas whenever something is added
-  useEffect(() => {
-    setCanvasSize((size) => updateCanvasSize(reactFlowNodes, size))
-  }, [reactFlowNodes])
-
-  useEffect(() => {
-    if (!reactFlowInstance || initHasRun.current) return
-    initHasRun.current = true
-
-    if (config.propertyData.nodes && config.propertyData.nodes.length > 1) {
-      onRestore()
-    }
-    const loadSchematics = async () => {
-      try {
-        if (config.propertyData.nodes && config.propertyData.nodes.length > 1) {
-          onRestore()
-        }
-
-        if (targetSchematic) {
-          await flow.importSchematic(targetSchematic, 'target')
-        }
-
-        if (sourceSchematics.length > 0) {
-          await flow.importMultipleSchematics(sourceSchematics)
-        }
-      } catch (error) {
-        if (error instanceof Error) {
-          showErrorToast(error.message)
-        }
-      } finally {
-        clearFiles()
-      }
-    }
-
-    loadSchematics()
-    clearFiles()
-  }, [reactFlowInstance])
-
-  const onReactFlowNodeChange = useCallback(
-    (changes: NodeChange[]) => setReactFlowNodes((nodes) => applyNodeChanges(changes, nodes) as Node[]),
-    [],
-  )
-
-  const onEdgesChange = useCallback(
-    (changes: EdgeChange[]) =>
-      setEdges((edges) => {
-        return applyEdgeChanges(changes, edges)
-      }),
-    [],
-  )
-
-  const onConnect = useCallback((connection: Connection) => {
-    const connectedIds = new Set<string>()
-
-    if (connection?.source) connectedIds.add(connection.source)
-    if (connection?.target) connectedIds.add(connection.target)
-    setReactFlowNodes((previous) =>
-      previous.map((node) => ({
-        ...node,
-        data: {
-          ...node.data,
-          checked: connectedIds.has(node.id),
-        },
-      })),
-    )
-    openMapping()
-
-    return
-  }, [])
-
-  const onRestore = useCallback(() => {
-    const restoreFlow = async () => {
-      if (config.propertyData) flow.importJsonConfiguration(JSON.stringify(config.propertyData))
-    }
-
-    restoreFlow()
-  }, [setReactFlowNodes])
-
-  function openMappingModal(sources: NodeLabels[], targets: NodeLabels[]) {
-    setMappingSources(sources.filter((s) => s.id?.includes('item')))
-    setMappingTargets(targets.filter((t) => t.id?.includes('item')))
-    setAddMappingModal(true)
-  }
-
-  function openMapping() {
+  const openMapping = useCallback(() => {
     requestAnimationFrame(() => {
       const nodes = reactFlowInstance.getNodes()
       const edges = reactFlowInstance.getEdges()
@@ -272,6 +148,136 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
 
       openMappingModal(sources, targets)
     })
+  }, [reactFlowInstance])
+
+  const nodeTypes: NodeTypes = useMemo(() => {
+    console.log('looping')
+    return getNodeTypes({
+      flow,
+      setReactFlowNodes,
+      setEditingNode,
+      setAddFieldModal,
+      openModelType: openModalType,
+      setEditingMapping,
+      openMapping,
+    })
+    //Don't add flow as dependancy here, it'll become an infinite loop
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openMapping]) //UseMemo is used here to ensure nodetype is not changed throughout rerenders. If the variable is updated reactflow throws a warning in the console;
+
+  useEffect(() => {
+    if (!reactFlowInstance) return
+
+    const updateSize = () => {
+      requestAnimationFrame(() => {
+        flow.calculateTablePositions(canvasWidth.current?.offsetWidth ?? 0)
+      })
+    }
+
+    window.addEventListener('resize', updateSize)
+
+    // delay initial run
+    requestAnimationFrame(updateSize)
+
+    return () => {
+      window.removeEventListener('resize', updateSize)
+    }
+  }, [flow, reactFlowInstance])
+
+  useEffect(() => {
+    if (!reactFlowInstance) return
+
+    configDispatch({
+      type: 'SET_PROPERTY_DATA',
+      payload: reactFlowInstance.toObject(),
+    })
+  }, [reactFlowNodes, edges, reactFlowInstance, configDispatch])
+
+  //Updates the outer canvas whenever something is added
+  useEffect(() => {
+    setCanvasSize((size) => updateCanvasSize(reactFlowNodes, size))
+  }, [reactFlowNodes])
+
+  const onRestore = useCallback(() => {
+    const restoreFlow = async () => {
+      if (config.propertyData) flow.importJsonConfiguration(JSON.stringify(config.propertyData))
+    }
+
+    restoreFlow()
+  }, [config.propertyData, flow])
+
+  useEffect(() => {
+    if (!reactFlowInstance || initHasRun.current) return
+    initHasRun.current = true
+
+    if (config.propertyData.nodes && config.propertyData.nodes.length > 1) {
+      onRestore()
+    }
+    const loadSchematics = async () => {
+      try {
+        if (config.propertyData.nodes && config.propertyData.nodes.length > 1) {
+          onRestore()
+        }
+
+        if (targetSchematic) {
+          await flow.importSchematic(targetSchematic, 'target')
+        }
+
+        if (sourceSchematics.length > 0) {
+          await flow.importMultipleSchematics(sourceSchematics)
+        }
+      } catch (error) {
+        if (error instanceof Error) {
+          showErrorToast(error.message)
+        }
+      } finally {
+        clearFiles()
+      }
+    }
+
+    loadSchematics()
+    clearFiles()
+  }, [clearFiles, config.propertyData.nodes, flow, onRestore, reactFlowInstance, sourceSchematics, targetSchematic])
+
+  const onReactFlowNodeChange = useCallback(
+    (changes: NodeChange[]) => setReactFlowNodes((nodes) => applyNodeChanges(changes, nodes) as Node[]),
+    [],
+  )
+
+  const onEdgesChange = useCallback(
+    (changes: EdgeChange[]) =>
+      setEdges((edges) => {
+        return applyEdgeChanges(changes, edges)
+      }),
+    [],
+  )
+
+  const onConnect = useCallback(
+    (connection: Connection) => {
+      const connectedIds = new Set<string>()
+
+      if (connection?.source) connectedIds.add(connection.source)
+      if (connection?.target) connectedIds.add(connection.target)
+      setReactFlowNodes((previous) =>
+        previous.map((node) => ({
+          ...node,
+          data: {
+            ...node.data,
+            checked: connectedIds.has(node.id),
+          },
+        })),
+      )
+      openMapping()
+
+      return
+    },
+    [openMapping],
+  )
+
+  function openMappingModal(sources: NodeLabels[], targets: NodeLabels[]) {
+    setMappingSources(sources.filter((s) => s.id?.includes('item')))
+    setMappingTargets(targets.filter((t) => t.id?.includes('item')))
+    setAddMappingModal(true)
   }
 
   async function saveField(data: CustomNodeData) {

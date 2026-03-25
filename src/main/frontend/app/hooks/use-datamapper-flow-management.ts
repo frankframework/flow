@@ -5,7 +5,7 @@ import type { MappingListConfig } from '~/types/datamapper_types/config-types'
 
 import type { SourceSchematic } from '~/stores/datamapper_state/schemaQueue/schema-queue-context'
 import type { CustomNodeData } from '~/types/datamapper_types/react-node-types'
-import { GROUP_PADDING_TOP, THROTTLE_MS } from '~/utils/datamapper_utils/const'
+import { GROUP_PADDING_TOP, SCROLL_AMOUNT, SCROLL_PANE_HEIGHT, THROTTLE_MS } from '~/utils/datamapper_utils/const'
 
 import { getTablePositions } from '~/utils/datamapper_utils/canvas-management-utils'
 import {
