@@ -2,16 +2,14 @@ import type { Edge, Node } from '@xyflow/react'
 import type { CustomNodeData, NodeLabels } from '~/types/datamapper_types/react-node-types'
 import { findNodeParent } from './generic-node-utils'
 import type { FormatDefinition } from '~/types/datamapper_types/data-types'
-import { GROUP_PADDING_TOP, ITEM_GAP, OBJECT_HEIGHT } from './const'
+import { GROUP_PADDING_TOP, ITEM_GAP, OBJECT_HEIGHT } from './constant'
 
 export function recurseFindArray(node: Node, nodes: Node[]) {
   const parent = findNodeParent(node, nodes)
-  if (!parent) {
-    return
-  }
-  if (parent.type?.includes('Array')) {
-    return parent.id
-  }
+  if (!parent) return
+
+  if (parent.type?.includes('Array')) return parent.id
+
   return recurseFindArray(parent, nodes)
 }
 export function isGroup(variableType: string): boolean {
@@ -21,14 +19,24 @@ export function isNodeGroup(nodeType: string): boolean {
   return nodeType.includes('labeledGroup') || nodeType.includes('ArrayGroup') || nodeType.includes('extraSourceNode')
 }
 export function getType(id: string, parentId: string): string {
-  if (id.includes('object')) {
-    return 'labeledGroup'
-  } else if (id.includes('array')) {
-    return `${parentId.includes('source-table') ? 'source' : 'target'}ArrayGroup`
-  } else if (id.includes('schematic')) {
-    return 'extraSourceNode'
-  } else {
-    return parentId.includes('source-table') ? 'sourceOnly' : 'targetOnly'
+  const isSource = parentId.includes('source-table')
+
+  switch (true) {
+    case id.includes('object'): {
+      return 'labeledGroup'
+    }
+
+    case id.includes('array'): {
+      return `${isSource ? 'source' : 'target'}ArrayGroup`
+    }
+
+    case id.includes('schematic'): {
+      return 'extraSourceNode'
+    }
+
+    default: {
+      return isSource ? 'sourceOnly' : 'targetOnly'
+    }
   }
 }
 
@@ -50,9 +58,7 @@ export function getNodesByTypeAndId(
     .filter((node) => {
       if (!options.typeIncludes) return true
 
-      if (Array.isArray(options.typeIncludes)) {
-        return options.typeIncludes.some((type) => node.type?.includes(type))
-      }
+      if (Array.isArray(options.typeIncludes)) return options.typeIncludes.some((type) => node.type?.includes(type))
 
       return node.type?.includes(options.typeIncludes)
     })
@@ -83,14 +89,6 @@ export function getUnsetNodeIds(nodes: Node[], edges: Edge[]): Set<string> {
   return new Set(unsetNodes.map((n) => n.id))
 }
 
-export class DuplicateLabelException extends Error {
-  constructor(message: string) {
-    super(message)
-    this.name = 'UserException'
-    Object.setPrototypeOf(this, DuplicateLabelException.prototype)
-  }
-}
-
 export function checkDuplicateLabel(
   nodes: Node[],
   parentId: string,
@@ -105,7 +103,7 @@ export function checkDuplicateLabel(
   )
 
   if (duplicate) {
-    throw new DuplicateLabelException('Duplicate property not allowed! Change property name.')
+    throw new Error('Duplicate property not allowed! Change property name.')
   }
 }
 export function generateNodeId(
@@ -140,13 +138,10 @@ export function deleteNodeById(
 
   let updatedNodes = nodes.filter((node) => node.id !== idToDelete)
 
-  if (nodeToDelete.type && isNodeGroup(nodeToDelete.type)) {
+  if (nodeToDelete.type && isNodeGroup(nodeToDelete.type))
     updatedNodes = updatedNodes.filter((node) => !node.parentId?.startsWith(idToDelete))
-  }
 
-  if (nodeToDelete.parentId) {
-    updatedNodes = sequentialRepositionFn(updatedNodes, nodeToDelete.parentId)
-  }
+  if (nodeToDelete.parentId) updatedNodes = sequentialRepositionFn(updatedNodes, nodeToDelete.parentId)
 
   return { updatedNodes, deletedNode: nodeToDelete }
 }

@@ -1,7 +1,5 @@
 import { useState } from 'react'
-
 import UploadImportButton from './upload-import-button'
-
 import { useFile } from '~/stores/datamapper_state/schemaQueue/schema-queue-context'
 import Input from '../inputs/input'
 import Button from '../inputs/button'

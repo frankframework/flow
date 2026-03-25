@@ -44,7 +44,7 @@ function Initialize({ config, configDispatch, confirmed, setRoute }: InitializeP
         hidden={sourceSchematics.length === 0 || !targetSchematic}
       >
         <Button
-          className="bg-foreground-active disabled:bg-backdrop disabled:text-foreground-muted flex-1 font-medium text-[var(--color-neutral-900)] transition hover:brightness-110"
+          className="bg-foreground-active disabled:bg-backdrop disabled:text-foreground-muted flex-1 font-medium text-neutral-900 transition hover:brightness-110"
           onClick={toProperties}
         >
           To Next Step

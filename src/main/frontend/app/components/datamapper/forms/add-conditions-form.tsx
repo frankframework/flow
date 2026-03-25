@@ -11,7 +11,6 @@ import type {
   ConditionTypeConfig,
   ConditionTypeInput,
 } from '~/types/datamapper_types/function-types'
-
 import conditionConfigJson from '~/utils/datamapper_utils/config/condition-config.json'
 
 interface AddConditionFormProperties {

@@ -1,12 +1,9 @@
 import { type Dispatch, type SetStateAction, useEffect, useRef } from 'react'
 import type { Node, Edge, ReactFlowInstance, Viewport } from '@xyflow/react'
-
 import type { MappingListConfig } from '~/types/datamapper_types/config-types'
-
 import type { SourceSchematic } from '~/stores/datamapper_state/schemaQueue/schema-queue-context'
 import type { CustomNodeData } from '~/types/datamapper_types/react-node-types'
-import { GROUP_PADDING_TOP, SCROLL_AMOUNT, SCROLL_PANE_HEIGHT, THROTTLE_MS } from '~/utils/datamapper_utils/const'
-
+import { GROUP_PADDING_TOP, SCROLL_AMOUNT, SCROLL_PANE_HEIGHT, THROTTLE_MS } from '~/utils/datamapper_utils/constant'
 import { getTablePositions } from '~/utils/datamapper_utils/canvas-management-utils'
 import {
   calculateNodePosition,
@@ -343,10 +340,21 @@ export function useFlowManagement({
 
     reactFlowInstance.setNodes((nodes) =>
       nodes.map((node) => {
-        if (node.id === 'source-table') return { ...node, position: { ...node.position, x: sourceX } }
-        if (node.id === 'mapping-table') return { ...node, position: { ...node.position, x: mappingX } }
-        if (node.id === 'target-table') return { ...node, position: { ...node.position, x: targetX } }
-        return node
+        switch (node.id) {
+          case 'source-table': {
+            return { ...node, position: { ...node.position, x: sourceX } }
+          }
+          case 'mapping-table': {
+            return { ...node, position: { ...node.position, x: mappingX } }
+          }
+          case 'target-table': {
+            return { ...node, position: { ...node.position, x: targetX } }
+          }
+
+          default: {
+            return node
+          }
+        }
       }),
     )
   }
@@ -369,7 +377,7 @@ export function useFlowManagement({
     const text = await file.text()
     if (config.formatTypes[side]?.schemaFileExtension === '.schema.json') {
       const parsed = JSON.parse(text)
-      await importJsonSchema(parsed, 'source', null, addNodeSequential, config.formatTypes[side])
+      await importJsonSchema(parsed, side, parentId, addNodeSequential, config.formatTypes[side])
     } else if (config.formatTypes[side]?.schemaFileExtension === '.xsd') {
       await importXsdSchema(text, side, parentId, addNodeSequential, config.formatTypes[side]) // pass raw XML text
     }

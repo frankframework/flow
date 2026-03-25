@@ -1,7 +1,7 @@
 import { Handle, Position } from '@xyflow/react'
 import type { ArrayNodeData } from '~/types/datamapper_types/react-node-types'
 import DeleteButton from '../basic-components/delete-button'
-import { MAPPING_WIDTH } from '~/utils/datamapper_utils/const'
+import { MAPPING_WIDTH } from '~/utils/datamapper_utils/constant'
 
 export interface ArrayMappingNodeProperties {
   id: string

@@ -1,4 +1,4 @@
-import { FLOW_KEY } from '~/utils/datamapper_utils/const'
+import { FLOW_KEY } from '~/utils/datamapper_utils/constant'
 
 function AdvancedEditor() {
   const data = localStorage.getItem(FLOW_KEY)
