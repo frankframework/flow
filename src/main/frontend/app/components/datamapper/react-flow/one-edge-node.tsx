@@ -50,11 +50,14 @@ function OneEdgeNode({ id, data, variant = 'source', onEdit, onDelete, onHighlig
       style={{ width: `${PROPERTY_WIDTH}px` }}
     >
       {/* Label */}
-      <div className="ml-2 text-left">{data.label}</div>
+      <div className="ml-2 max-w-40 text-left break-words">{data.label}</div>
 
       {/* Footer */}
       <div className="ml-auto flex items-center text-sm opacity-80">
-        <span>({data.variableType})</span>
+        <span>
+          ({data.isAttribute && 'attribute: '}
+          {data.variableType})
+        </span>
 
         <div className="ml-4 flex h-[22px] gap-3">
           <HighlightButton

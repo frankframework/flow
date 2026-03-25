@@ -295,7 +295,7 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
           data.defaultValue ?? null,
           data.parentId,
           null,
-          data.isProperty,
+          data.isAttribute,
         )
       }
       setEditingNode(null)

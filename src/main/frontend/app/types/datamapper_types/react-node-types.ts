@@ -10,7 +10,7 @@ export type CustomNodeData = {
   variableTypeBasic?: string
   defaultValue: string
   parentId: string
-  isProperty?: boolean
+  isAttribute?: boolean
   setNodes?: React.Dispatch<React.SetStateAction<Node[]>>
 } & Record<string, unknown>
 

@@ -29,7 +29,7 @@ function AddFieldForm({ fieldType, onSave, parents, formatDefinition, initialDat
   const [defaultValueRules, setDefaultValueRules] = useState<RuleSet>()
   const [defaultValueInputType, setDefaultValueInputType] = useState<PropertyBasicTypes>()
   const [availableTypes, setAvailableTypes] = useState<PropertyDefinition[]>([])
-  const [isProperty, setIsProperty] = useState<boolean>(initialData?.isProperty || false)
+  const [isAttribute, setIsAttribute] = useState<boolean>(initialData?.isAttribute || false)
 
   useEffect(() => {
     const format: FormatDefinition | null = formatDefinition[fieldType]
@@ -58,7 +58,7 @@ function AddFieldForm({ fieldType, onSave, parents, formatDefinition, initialDat
       defaultValue,
       parentId,
       id: initialData?.id || '',
-      isProperty,
+      isAttribute: isAttribute,
     })
   }
 
@@ -154,9 +154,9 @@ function AddFieldForm({ fieldType, onSave, parents, formatDefinition, initialDat
           />
         )}
       </div>
-      <div hidden={formatDefinition[fieldType]?.name != 'XML'}>
-        <label htmlFor="defaultValue">Is Property?:</label>
-        <Checkbox id="isProperty" checked={isProperty} onChange={setIsProperty} />
+      <div hidden={formatDefinition[fieldType]?.name != 'XML' || defaultValueInputType == 'object'}>
+        <label htmlFor="defaultValue">Is attribute?:</label>
+        <Checkbox id="isAttribute" checked={isAttribute} onChange={setIsAttribute} />
       </div>
       <Button
         onClick={handleSave}

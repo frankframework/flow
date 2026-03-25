@@ -38,6 +38,8 @@ function convertNodesToProperty(
         property.children = convertNodesToProperty(nodes, node.id, basicNode, mappings)
       }
       let targetProperty = property as Target
+      targetProperty.isAttribute = (node.data.isAttribute as boolean) ?? false
+
       if (mappings)
         targetProperty.mapping = mappings.findLast((mapping) => mapping.target.internalId == property.internalId)
       return property
