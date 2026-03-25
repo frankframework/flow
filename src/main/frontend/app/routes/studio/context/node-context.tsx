@@ -1,5 +1,6 @@
 import useNodeContextStore from '~/stores/node-context-store'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useShortcut } from '~/hooks/use-shortcut'
 import useFlowStore, { isFrankNode } from '~/stores/flow-store'
 import Button from '~/components/inputs/button'
 import { useShallow } from 'zustand/react/shallow'
@@ -269,16 +270,11 @@ export default function NodeContext({
   const handleSaveRef = useRef(handleSave)
   handleSaveRef.current = handleSave
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-        e.preventDefault()
-        if (canSaveRef.current) handleSaveRef.current()
-      }
-    }
-    globalThis.addEventListener('keydown', onKey)
-    return () => globalThis.removeEventListener('keydown', onKey)
-  }, [])
+  useShortcut({
+    'studio.save-node': () => {
+      if (canSaveRef.current) handleSaveRef.current()
+    },
+  })
 
   const handleDiscard = () => {
     if (parentId) {

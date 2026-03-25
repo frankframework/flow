@@ -51,12 +51,11 @@ export function useFlowManagement({
   useEffect(() => {
     const updatePosition = (event: MouseEvent) => {
       if (scrollIntervalEnabled.current) {
-        const topThreshold = 150
-        const bottomThreshold = window.innerHeight - 150
-        if (event.clientY < topThreshold) {
+        const bottomThreshold = window.innerHeight - SCROLL_PANE_HEIGHT
+        if (event.clientY < SCROLL_PANE_HEIGHT) {
           reactFlowInstance.setViewport({
             x: reactFlowInstance.getViewport().x,
-            y: reactFlowInstance.getViewport().y + 10,
+            y: reactFlowInstance.getViewport().y + SCROLL_AMOUNT,
             zoom: 1, //Don't set this to 0, it results in NaN for X & Y
           })
         }
@@ -64,7 +63,7 @@ export function useFlowManagement({
         if (event.clientY > bottomThreshold) {
           reactFlowInstance.setViewport({
             x: reactFlowInstance.getViewport().x,
-            y: reactFlowInstance.getViewport().y - 10,
+            y: reactFlowInstance.getViewport().y - SCROLL_AMOUNT,
             zoom: 1, //Don't set this to 0, it results in NaN for X & Y
           })
         }
@@ -77,7 +76,7 @@ export function useFlowManagement({
     return () => {
       document.removeEventListener('mousemove', updatePosition)
     }
-  }, [])
+  }, [reactFlowInstance])
 
   function generateReactFlowObject(previous: Node[], data: CustomNodeData): Node {
     //Calculate the position the node is to be placed at. This isn't always very accurate and will be corrected later after adding

@@ -1,0 +1,8 @@
+<Adapter name="${adapterName}">
+  <Receiver name="Receiver">
+    <ApiListener method="GET" uriPattern="/api" />
+  </Receiver>
+  <Pipeline>
+    <EchoPipe name="Result" getInputFromFixedValue="Hello World" />
+  </Pipeline>
+</Adapter>

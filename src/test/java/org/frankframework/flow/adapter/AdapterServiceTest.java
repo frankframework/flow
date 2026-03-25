@@ -3,6 +3,7 @@ package org.frankframework.flow.adapter;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -273,6 +274,188 @@ class AdapterServiceTest {
 		Configuration config = new Configuration(path);
 		config.setXmlContent(xml);
 		return config;
+	}
+
+	@Test
+	void createAdapter_createsAdapterInValidConfig() throws Exception {
+		String xml = "<Configuration></Configuration>";
+		Path configFile = tempDir.resolve("config.xml");
+		Files.writeString(configFile, xml, StandardCharsets.UTF_8);
+		when(fileSystemStorage.toAbsolutePath("config.xml")).thenReturn(configFile);
+
+		adapterService.createAdapter("config.xml", "NewAdapter");
+
+		String written = Files.readString(configFile, StandardCharsets.UTF_8);
+		assertTrue(written.contains("NewAdapter"));
+		assertTrue(written.contains("Receiver"));
+		assertTrue(written.contains("Pipeline"));
+	}
+
+	@Test
+	void createAdapter_preservesExistingAdapters() throws Exception {
+		String xml = "<Configuration><Adapter name=\"Existing\"><OldPipe/></Adapter></Configuration>";
+		Path configFile = tempDir.resolve("config.xml");
+		Files.writeString(configFile, xml, StandardCharsets.UTF_8);
+		when(fileSystemStorage.toAbsolutePath("config.xml")).thenReturn(configFile);
+
+		adapterService.createAdapter("config.xml", "NewAdapter");
+
+		String written = Files.readString(configFile, StandardCharsets.UTF_8);
+		assertTrue(written.contains("Existing"));
+		assertTrue(written.contains("OldPipe"));
+		assertTrue(written.contains("NewAdapter"));
+	}
+
+	@Test
+	void createAdapter_throwsIllegalArgument_whenConfigPathIsEmpty() {
+		assertThrows(IllegalArgumentException.class, () -> adapterService.createAdapter("", "SomeAdapter"));
+	}
+
+	@Test
+	void createAdapter_throwsIllegalArgument_whenConfigPathIsNull() {
+		assertThrows(IllegalArgumentException.class, () -> adapterService.createAdapter(null, "SomeAdapter"));
+	}
+
+	@Test
+	void createAdapter_throwsIllegalArgument_whenAdapterNameIsEmpty() {
+		assertThrows(IllegalArgumentException.class, () -> adapterService.createAdapter("config.xml", ""));
+	}
+
+	@Test
+	void createAdapter_throwsIllegalArgument_whenAdapterNameIsNull() {
+		assertThrows(IllegalArgumentException.class, () -> adapterService.createAdapter("config.xml", null));
+	}
+
+	@Test
+	void createAdapter_throwsConfigurationNotFound_whenFileDoesNotExist() throws IOException {
+		Path missing = tempDir.resolve("missing.xml");
+		when(fileSystemStorage.toAbsolutePath("missing.xml")).thenReturn(missing);
+
+		assertThrows(
+				ConfigurationNotFoundException.class, () -> adapterService.createAdapter("missing.xml", "Adapter"));
+	}
+
+	@Test
+	void createAdapter_throwsIOException_whenConfigFileIsMalformedXml() throws Exception {
+		Path configFile = tempDir.resolve("corrupt.xml");
+		Files.writeString(configFile, "<<< not xml >>>", StandardCharsets.UTF_8);
+		when(fileSystemStorage.toAbsolutePath("corrupt.xml")).thenReturn(configFile);
+
+		assertThrows(IOException.class, () -> adapterService.createAdapter("corrupt.xml", "Adapter"));
+	}
+
+	@Test
+	void renameAdapter_renamesExistingAdapter() throws Exception {
+		String xml = "<Configuration><Adapter name=\"OldName\"><Pipe/></Adapter></Configuration>";
+		Path configFile = tempDir.resolve("config.xml");
+		Files.writeString(configFile, xml, StandardCharsets.UTF_8);
+		when(fileSystemStorage.toAbsolutePath("config.xml")).thenReturn(configFile);
+
+		adapterService.renameAdapter("config.xml", "OldName", "NewName");
+
+		String written = Files.readString(configFile, StandardCharsets.UTF_8);
+		assertTrue(written.contains("NewName"));
+		assertFalse(written.contains("\"OldName\""));
+	}
+
+	@Test
+	void renameAdapter_preservesOtherAdapters() throws Exception {
+		String xml = "<Configuration>"
+				+ "<Adapter name=\"First\"><PipeA/></Adapter>"
+				+ "<Adapter name=\"Second\"><PipeB/></Adapter>"
+				+ "</Configuration>";
+		Path configFile = tempDir.resolve("config.xml");
+		Files.writeString(configFile, xml, StandardCharsets.UTF_8);
+		when(fileSystemStorage.toAbsolutePath("config.xml")).thenReturn(configFile);
+
+		adapterService.renameAdapter("config.xml", "First", "Renamed");
+
+		String written = Files.readString(configFile, StandardCharsets.UTF_8);
+		assertTrue(written.contains("Renamed"));
+		assertTrue(written.contains("Second"));
+		assertTrue(written.contains("PipeB"));
+	}
+
+	@Test
+	void renameAdapter_throwsIllegalArgument_whenConfigPathIsEmpty() {
+		assertThrows(IllegalArgumentException.class, () -> adapterService.renameAdapter("", "OldName", "NewName"));
+	}
+
+	@Test
+	void renameAdapter_throwsConfigurationNotFound_whenFileDoesNotExist() throws IOException {
+		Path missing = tempDir.resolve("missing.xml");
+		when(fileSystemStorage.toAbsolutePath("missing.xml")).thenReturn(missing);
+
+		assertThrows(
+				ConfigurationNotFoundException.class,
+				() -> adapterService.renameAdapter("missing.xml", "OldName", "NewName"));
+	}
+
+	@Test
+	void renameAdapter_throwsAdapterNotFound_whenAdapterDoesNotExist() throws Exception {
+		String xml = "<Configuration><Adapter name=\"Existing\"/></Configuration>";
+		Path configFile = tempDir.resolve("config.xml");
+		Files.writeString(configFile, xml, StandardCharsets.UTF_8);
+		when(fileSystemStorage.toAbsolutePath("config.xml")).thenReturn(configFile);
+
+		assertThrows(
+				AdapterNotFoundException.class,
+				() -> adapterService.renameAdapter("config.xml", "NonExistent", "NewName"));
+	}
+
+	@Test
+	void deleteAdapter_removesAdapterFromConfig() throws Exception {
+		String xml = "<Configuration><Adapter name=\"ToDelete\"><Pipe/></Adapter></Configuration>";
+		Path configFile = tempDir.resolve("config.xml");
+		Files.writeString(configFile, xml, StandardCharsets.UTF_8);
+		when(fileSystemStorage.toAbsolutePath("config.xml")).thenReturn(configFile);
+
+		adapterService.deleteAdapter("config.xml", "ToDelete");
+
+		String written = Files.readString(configFile, StandardCharsets.UTF_8);
+		assertFalse(written.contains("ToDelete"));
+	}
+
+	@Test
+	void deleteAdapter_preservesOtherAdapters() throws Exception {
+		String xml = "<Configuration>"
+				+ "<Adapter name=\"Keep\"><PipeA/></Adapter>"
+				+ "<Adapter name=\"Remove\"><PipeB/></Adapter>"
+				+ "</Configuration>";
+		Path configFile = tempDir.resolve("config.xml");
+		Files.writeString(configFile, xml, StandardCharsets.UTF_8);
+		when(fileSystemStorage.toAbsolutePath("config.xml")).thenReturn(configFile);
+
+		adapterService.deleteAdapter("config.xml", "Remove");
+
+		String written = Files.readString(configFile, StandardCharsets.UTF_8);
+		assertTrue(written.contains("Keep"));
+		assertTrue(written.contains("PipeA"));
+		assertFalse(written.contains("Remove"));
+	}
+
+	@Test
+	void deleteAdapter_throwsIllegalArgument_whenConfigPathIsEmpty() {
+		assertThrows(IllegalArgumentException.class, () -> adapterService.deleteAdapter("", "SomeAdapter"));
+	}
+
+	@Test
+	void deleteAdapter_throwsConfigurationNotFound_whenFileDoesNotExist() throws IOException {
+		Path missing = tempDir.resolve("missing.xml");
+		when(fileSystemStorage.toAbsolutePath("missing.xml")).thenReturn(missing);
+
+		assertThrows(
+				ConfigurationNotFoundException.class, () -> adapterService.deleteAdapter("missing.xml", "SomeAdapter"));
+	}
+
+	@Test
+	void deleteAdapter_throwsAdapterNotFound_whenAdapterDoesNotExist() throws Exception {
+		String xml = "<Configuration><Adapter name=\"Existing\"/></Configuration>";
+		Path configFile = tempDir.resolve("config.xml");
+		Files.writeString(configFile, xml, StandardCharsets.UTF_8);
+		when(fileSystemStorage.toAbsolutePath("config.xml")).thenReturn(configFile);
+
+		assertThrows(AdapterNotFoundException.class, () -> adapterService.deleteAdapter("config.xml", "NonExistent"));
 	}
 
 	private static Project projectWith(String name, Configuration config) {
