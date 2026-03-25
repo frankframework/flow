@@ -31,7 +31,7 @@ import {
 import Button from '~/components/inputs/button'
 import GenerateButton from '~/components/datamapper/basic-components/generate-button'
 import { updateCanvasSize } from '~/utils/datamapper_utils/canvas-management-utils'
-import { DuplicateLabelException, getNodesByTypeAndId } from '~/utils/datamapper_utils/property-node-utils'
+import { getNodesByTypeAndId } from '~/utils/datamapper_utils/property-node-utils'
 import type { MappingListConfig } from '~/types/datamapper_types/config-types'
 
 interface PropertyListProperties {
