@@ -9,6 +9,7 @@ export type AddNodeFunction = (
   defaultValue?: string | null,
   parentId?: string | null,
   id?: string | null,
+  isAttribute?: boolean,
 ) => Promise<string>
 
 export async function importJsonSchema(
@@ -199,7 +200,7 @@ async function traverseComplexType(
   if (type['xs:attribute']) {
     for (const attr of type['xs:attribute']) {
       const prop = resolveType(side, format, attr['@_type'])
-      await addNode(side, attr['@_name'], prop.name, undefined, parentNodeId)
+      await addNode(side, attr['@_name'], prop.name, undefined, parentNodeId, null, true)
     }
   }
 }

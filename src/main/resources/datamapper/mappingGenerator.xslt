@@ -281,29 +281,58 @@
     <xsl:template name="inner-property">
         <xsl:param name="node"/>
         <xsl:param name="data"/>
+        <xsl:choose>
+            <xsl:when test="$node?isAttribute">
+                <outputxsl:attribute name="{$node?label}">
+                    <xsl:if test="empty($node?children)">
+                        <xsl:choose>
+                            <xsl:when test="exists($node?mapping)">
+                                <outputxsl:value-of select="${$node?mapping?output}"/>
+                            </xsl:when>
+                            <xsl:otherwise>
+                                <xsl:value-of select="$node?defaultValue"/>
+                            </xsl:otherwise>
+                        </xsl:choose>
+                    </xsl:if>
 
-        <xsl:element name="{$node?label}">
-            <xsl:if test="empty($node?children)">
-                <xsl:choose>
-                    <xsl:when test="exists($node?mapping)">
-                        <outputxsl:value-of select="${$node?mapping?output}"/>
-                    </xsl:when>
-                    <xsl:otherwise>
-                        <xsl:value-of select="$node?defaultValue"/>
-                    </xsl:otherwise>
-                </xsl:choose>
-            </xsl:if>
+                    <!-- Recurse if there are children -->
+                    <xsl:if test="exists($node?children) and count($node?children) > 0">
 
-            <!-- Recurse if there are children -->
-            <xsl:if test="exists($node?children) and count($node?children) > 0">
+                        <xsl:for-each select="$node?children?*">
+                            <xsl:call-template name="outer-property">
+                                <xsl:with-param name="node" select="."/>
+                                <xsl:with-param name="data" select="$data"/>
+                            </xsl:call-template>
+                        </xsl:for-each>
+                    </xsl:if>
+                </outputxsl:attribute>
+            </xsl:when>
+            <xsl:otherwise>
+                <xsl:element name="{$node?label}">
+                    <xsl:if test="empty($node?children)">
+                        <xsl:choose>
+                            <xsl:when test="exists($node?mapping)">
+                                <outputxsl:value-of select="${$node?mapping?output}"/>
+                            </xsl:when>
+                            <xsl:otherwise>
+                                <xsl:value-of select="$node?defaultValue"/>
+                            </xsl:otherwise>
+                        </xsl:choose>
+                    </xsl:if>
 
-                <xsl:for-each select="$node?children?*">
-                    <xsl:call-template name="outer-property">
-                        <xsl:with-param name="node" select="."/>
-                        <xsl:with-param name="data" select="$data"/>
-                    </xsl:call-template>
-                </xsl:for-each>
-            </xsl:if>
-        </xsl:element>
+                    <!-- Recurse if there are children -->
+                    <xsl:if test="exists($node?children) and count($node?children) > 0">
+
+                        <xsl:for-each select="$node?children?*">
+                            <xsl:sort select=".?isAttribute = true()" order="descending"/>
+                            <xsl:call-template name="outer-property">
+                                <xsl:with-param name="node" select="."/>
+                                <xsl:with-param name="data" select="$data"/>
+                            </xsl:call-template>
+                        </xsl:for-each>
+                    </xsl:if>
+                </xsl:element>
+            </xsl:otherwise>
+        </xsl:choose>
     </xsl:template>
 </xsl:stylesheet>

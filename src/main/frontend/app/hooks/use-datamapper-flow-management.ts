@@ -105,6 +105,7 @@ export function useFlowManagement({
     defaultValue?: string | null,
     parentId?: string | null,
     id?: string | null,
+    isAttribute?: boolean,
   ): Promise<string> {
     //If parent id == null OR parentId == '', initialize parent id, otherwise set parentId to parentId
     parentId = parentId == null || parentId === '' ? `${side}-table` : parentId
@@ -126,6 +127,7 @@ export function useFlowManagement({
         variableType,
         variableTypeBasic: formatType?.properties.find((a) => a.name == variableType)?.type,
         defaultValue: defaultValue ?? '',
+        isAttribute,
       })
 
       return [...previous, newNode]

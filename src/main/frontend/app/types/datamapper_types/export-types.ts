@@ -28,6 +28,7 @@ export interface Mapping {
 
 export interface Target extends Property {
   mapping?: Mapping
+  isAttribute?: boolean
 }
 
 export interface MappingFile {

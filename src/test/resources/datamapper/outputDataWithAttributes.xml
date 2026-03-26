@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<shiporder orderid="SO12345">
+    <besteller>John Smith</besteller>
+    <bestemming naam="Jane Doe" stad="Rotterdam">
+        <adres>123 Market Street</adres>
+        <land>Netherlands</land>
+    </bestemming>
+    <item kwantiteit="1">
+        <titel>Jane Doe</titel>
+        <prijs>1200.50</prijs>
+    </item>
+    <item kwantiteit="2">
+        <titel>Jane Doe</titel>
+        <prijs>25.99</prijs>
+    </item>
+    <item kwantiteit="1">
+        <titel>Jane Doe</titel>
+        <prijs>89.95</prijs>
+    </item>
+</shiporder>

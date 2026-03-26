@@ -11,6 +11,7 @@ import { showWarningToast } from '~/components/toast'
 import Input from '~/components/inputs/input'
 import Dropdown from '~/components/inputs/dropdown'
 import Button from '~/components/inputs/button'
+import Checkbox from '~/components/inputs/checkbox'
 
 export interface FieldModalProperties {
   fieldType: 'source' | 'target'
@@ -28,6 +29,7 @@ function AddFieldForm({ fieldType, onSave, parents, formatDefinition, initialDat
   const [defaultValueRules, setDefaultValueRules] = useState<RuleSet>()
   const [defaultValueInputType, setDefaultValueInputType] = useState<PropertyBasicTypes>()
   const [availableTypes, setAvailableTypes] = useState<PropertyDefinition[]>([])
+  const [isAttribute, setIsAttribute] = useState<boolean>(initialData?.isAttribute || false)
 
   useEffect(() => {
     const format: FormatDefinition | null = formatDefinition[fieldType]
@@ -56,6 +58,7 @@ function AddFieldForm({ fieldType, onSave, parents, formatDefinition, initialDat
       defaultValue,
       parentId,
       id: initialData?.id || '',
+      isAttribute: isAttribute,
     })
   }
 
@@ -151,7 +154,10 @@ function AddFieldForm({ fieldType, onSave, parents, formatDefinition, initialDat
           />
         )}
       </div>
-
+      <div hidden={formatDefinition[fieldType]?.name != 'XML' || defaultValueInputType == 'object'}>
+        <label htmlFor="defaultValue">Is attribute?:</label>
+        <Checkbox id="isAttribute" checked={isAttribute} onChange={setIsAttribute} />
+      </div>
       <Button
         onClick={handleSave}
         disabled={isFormIncomplete}
