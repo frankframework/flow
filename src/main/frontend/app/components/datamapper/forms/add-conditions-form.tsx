@@ -1,4 +1,4 @@
-import { useId, useState } from 'react'
+import { useId, useMemo, useState } from 'react'
 import Button from '~/components/inputs/button'
 import Dropdown from '~/components/inputs/dropdown'
 import Input from '~/components/inputs/input'
@@ -12,6 +12,7 @@ import type {
   ConditionTypeInput,
 } from '~/types/datamapper_types/function-types'
 import conditionConfigJson from '~/utils/datamapper_utils/config/condition-config.json'
+import { generateConditionName } from '~/utils/datamapper_utils/function-utils'
 
 interface AddConditionFormProperties {
   sources: Source[]
@@ -31,9 +32,11 @@ function AddConditionForm({ sources, onSave, conditionToEdit }: Readonly<AddCond
     inputs: conditionToEdit?.inputs ?? [],
   })
 
-  const isFormIncomplete = !condition.name || !condition.type
+  const isFormIncomplete = !condition.type
+  const placeholder = useMemo(() => generateConditionName(condition), [condition])
 
   function handleSave() {
+    if (!condition.name) condition.name = placeholder
     onSave(condition)
   }
 
@@ -50,7 +53,7 @@ function AddConditionForm({ sources, onSave, conditionToEdit }: Readonly<AddCond
           type="text"
           value={condition.name}
           onChange={(event) => setCondition((condition) => ({ ...condition, name: event.target.value }))}
-          placeholder="Enter a name for this condition"
+          placeholder={placeholder}
         />
       </div>
 
@@ -144,6 +147,15 @@ function ConditionInputField({
 
   if (inputConfig.type === 'source') {
     const selectedIsDefault = value?.type === 'defaultValue'
+    function handleSourceChange(sourceId: string) {
+      if (sourceId === 'defaultValue') {
+        onChange({ type: 'defaultValue', value: '' })
+        return
+      }
+      const source = sources.find((source) => source.id === sourceId)
+      if (!source) return
+      onChange({ type: 'source', sourceId: sourceId, value: source.label })
+    }
 
     return (
       <div className="mb-2 flex flex-col">
@@ -151,11 +163,7 @@ function ConditionInputField({
         <Dropdown
           className="mb-4"
           value={selectedIsDefault ? 'defaultValue' : (value?.sourceId ?? '')}
-          onChange={(id) =>
-            onChange(
-              id === 'defaultValue' ? { type: 'defaultValue', value: '' } : { type: 'source', sourceId: id, value: '' },
-            )
-          }
+          onChange={handleSourceChange}
           options={Object.fromEntries([
             ...(inputConfig.allowDefaultValue ? [['defaultValue', 'Default Value']] : []),
             ...filteredSources.map((source) => [source.id, source.label]),
