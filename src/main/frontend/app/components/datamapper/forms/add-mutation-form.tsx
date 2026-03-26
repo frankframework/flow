@@ -1,4 +1,4 @@
-import { useId, useState } from 'react'
+import { useId, useMemo, useState } from 'react'
 import mutationConfig from '~/utils/datamapper_utils/config/mutation-config.json'
 import type { Source } from '~/types/datamapper_types/export-types'
 import Input from '~/components/inputs/input'
@@ -11,6 +11,7 @@ import type {
   MutationsConfig,
   MutationTypeInput,
 } from '~/types/datamapper_types/function-types'
+import { generateMutationName } from '~/utils/datamapper_utils/function-utils'
 
 function AddMutationForm({
   sources,
@@ -33,9 +34,11 @@ function AddMutationForm({
     inputs: mutationToEdit?.inputs ?? [],
   })
 
-  const isFormIncomplete = !mutation.name || !mutation.mutationType || mutation.inputs.length === 0
+  const isFormIncomplete = !mutation.mutationType || mutation.inputs.length === 0
+  const placeholder = useMemo(() => generateMutationName(mutation), [mutation])
 
   function handleSave() {
+    if (!mutation.name) mutation.name = placeholder
     onSave(mutation)
   }
 
@@ -47,6 +50,7 @@ function AddMutationForm({
       <Input
         value={mutation.name}
         onChange={(event) => setMutation((toSetMutation) => ({ ...toSetMutation, name: event.target.value }))}
+        placeholder={placeholder}
       />
 
       <label>Mutation type:</label>
