@@ -137,7 +137,8 @@ export default function CodeEditor() {
   const theme = useTheme()
   const project = useProjectStore.getState().project
   const [activeTabFilePath, setActiveTabFilePath] = useState<string>(useEditorTabStore.getState().activeTabFilePath)
-  const [xmlContent, setXmlContent] = useState<string>('')
+  const [fileContent, setFileContent] = useState<string>('')
+  const [fileLanguage, setFileLanguage] = useState<string>('xml')
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
   const [leftTab, setLeftTab] = useState<LeftTab>('files')
   const [editorMounted, setEditorMounted] = useState(false)
@@ -181,7 +182,7 @@ export default function CodeEditor() {
       setSaveStatus('saving')
       try {
         const xmlResponse = await saveConfiguration(project.name, configPath, updatedContent)
-        setXmlContent(xmlResponse.xmlContent)
+        setFileContent(xmlResponse.xmlContent)
         contentCacheRef.current.set(activeTabFilePath, updatedContent)
         setSaveStatus('saved')
         if (savedTimerRef.current) clearTimeout(savedTimerRef.current)
@@ -388,7 +389,7 @@ export default function CodeEditor() {
         if (!isForceRefresh) {
           const cached = contentCacheRef.current.get(activeTabFilePath)
           if (cached !== undefined) {
-            setXmlContent(cached)
+            setFileContent(cached)
             return
           }
         }
@@ -396,7 +397,7 @@ export default function CodeEditor() {
         const xmlString = await fetchConfiguration(project.name, configPath, abortController.signal)
         if (!abortController.signal.aborted) {
           contentCacheRef.current.set(activeTabFilePath, xmlString)
-          setXmlContent(xmlString)
+          setFileContent(xmlString)
         }
       } catch (error) {
         if (!abortController.signal.aborted) {
@@ -423,18 +424,18 @@ export default function CodeEditor() {
   }, [activeTabFilePath])
 
   useEffect(() => {
-    if (!xmlContent || !xsdLoaded || isDiffTab) return
-    runSchemaValidation(xmlContent)
-  }, [xmlContent, xsdLoaded, isDiffTab, runSchemaValidation])
+    if (!fileContent || !xsdLoaded || isDiffTab) return
+    runSchemaValidation(fileContent)
+  }, [fileContent, xsdLoaded, isDiffTab, runSchemaValidation])
 
   useEffect(() => {
-    if (!xmlContent || !activeTabFilePath || !editorReference.current || isDiffTab) return
+    if (!fileContent || !activeTabFilePath || !editorReference.current || isDiffTab) return
 
     const editor = editorReference.current
     const model = editor.getModel()
     if (!model) return
 
-    const lines = xmlContent.split('\n')
+    const lines = fileContent.split('\n')
     const matchIndex = lines.findIndex((line) => line.includes('<Adapter') && line.includes(activeTabFilePath))
     if (matchIndex === -1) return
 
@@ -452,13 +453,13 @@ export default function CodeEditor() {
 
     const timeout = setTimeout(() => decorations.clear(), 2000)
     return () => clearTimeout(timeout)
-  }, [xmlContent, activeTabFilePath, isDiffTab])
+  }, [fileContent, activeTabFilePath, isDiffTab])
 
   const handleOpenInStudio = useCallback(() => {
     const editorTab = useEditorTabStore.getState().getTab(activeTabFilePath)
     if (!editorTab) return
 
-    const xml = editorReference.current?.getValue() || xmlContent
+    const xml = editorReference.current?.getValue() || fileContent
     if (!xml) return
 
     const adapters = findAdaptersInXml(xml)
@@ -469,7 +470,7 @@ export default function CodeEditor() {
       adapters.length === 1 || !cursorLine ? 0 : findAdapterIndexAtOffset(adapters, lineToOffset(xml, cursorLine))
 
     openInStudio(adapters[adapterPosition].name, editorTab.configurationPath, adapterPosition)
-  }, [activeTabFilePath, xmlContent])
+  }, [activeTabFilePath, fileContent])
 
   const isGitRepo = !!project?.isGitRepository
 
@@ -547,9 +548,9 @@ export default function CodeEditor() {
               </div>
               <div className="h-full">
                 <Editor
-                  language="xml"
+                  language={fileLanguage}
                   theme={`vs-${theme}`}
-                  value={xmlContent}
+                  value={fileContent}
                   onMount={handleEditorMount}
                   onChange={(value) => {
                     scheduleSave()

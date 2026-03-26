@@ -1,26 +1,27 @@
 import type { FileTreeNode } from '~/types/filesystem.types'
 import { apiFetch } from '~/utils/api'
 
+export interface FileDTO {
+  content: string
+  type: string
+}
+
 export async function createFile(projectName: string, filePath: string): Promise<void> {
   await updateFile(projectName, filePath, '')
 }
 
-export async function fetchFile(projectName: string, filepath: string, signal?: AbortSignal): Promise<string> {
-  const { content } = await apiFetch<{ content: string }>(
-    `${getBaseUrl(projectName)}/${encodeURIComponent(filepath)}`,
-    { signal },
-  )
-  return content
+export function fetchFile(projectName: string, filepath: string, signal?: AbortSignal): Promise<FileDTO> {
+  return apiFetch<FileDTO>(`${getBaseUrl(projectName)}/${encodeURIComponent(filepath)}`, { signal })
 }
 
-export async function updateFile(projectName: string, filePath: string, fileContent: string): Promise<FileTreeNode> {
+export function updateFile(projectName: string, filePath: string, fileContent: string): Promise<FileTreeNode> {
   return apiFetch<FileTreeNode>(`${getBaseUrl(projectName)}/${encodeURIComponent(filePath)}`, {
     method: 'PUT',
     body: fileContent,
   })
 }
 
-export async function renameFile(projectName: string, oldPath: string, newPath: string): Promise<FileTreeNode> {
+export function renameFile(projectName: string, oldPath: string, newPath: string): Promise<FileTreeNode> {
   return apiFetch<FileTreeNode>(`${getBaseUrl(projectName)}/move`, {
     method: 'POST',
     body: JSON.stringify({ oldPath, newPath }),

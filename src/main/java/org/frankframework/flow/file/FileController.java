@@ -3,6 +3,7 @@ package org.frankframework.flow.file;
 import org.frankframework.flow.exception.ApiException;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,9 +26,10 @@ public class FileController {
 	}
 
 	@GetMapping("/{filePath}")
-	public ResponseEntity<String> getFile(@PathVariable String projectName, @PathVariable String filePath) throws IOException {
-		String fileContent = fileService.readFile(projectName, filePath);
-		return ResponseEntity.ok(fileContent);
+	public ResponseEntity<FileDTO> getFile(@PathVariable String projectName, @PathVariable String filePath) throws IOException {
+		FileDTO file = fileService.readFile(projectName, filePath);
+		MediaType fileType = MediaType.valueOf(file.type());
+		return ResponseEntity.ok().contentType(fileType).body(file);
 	}
 
 	@PostMapping("/{filePath}")

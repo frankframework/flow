@@ -19,6 +19,8 @@ public interface FileSystemStorage {
 
 	String readFile(String path) throws IOException;
 
+	String readFileType(String path) throws IOException;
+
 	void writeFile(String path, String content) throws IOException;
 
 	/**

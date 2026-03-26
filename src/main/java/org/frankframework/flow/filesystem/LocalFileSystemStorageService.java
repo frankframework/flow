@@ -10,6 +10,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
+
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -49,6 +50,11 @@ public class LocalFileSystemStorageService implements FileSystemStorage {
 	@Override
 	public String readFile(String path) throws IOException {
 		return Files.readString(sanitizePath(path), StandardCharsets.UTF_8);
+	}
+
+	@Override
+	public String readFileType(String path) throws IOException {
+		return Files.probeContentType(sanitizePath(path));
 	}
 
 	@Override
