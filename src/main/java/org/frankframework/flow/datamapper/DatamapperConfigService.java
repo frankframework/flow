@@ -82,6 +82,7 @@ public class DatamapperConfigService {
 			String filePath = this.getConfigFilePath(projectName).toString();
 			if (!Files.exists(Path.of(filePath))) {
 				fileSystemStorage.createFile(filePath);
+				return "";
 			}
 			return fileSystemStorage.readFile(filePath);
 		} catch (IOException e) {

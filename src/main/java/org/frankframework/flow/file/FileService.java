@@ -25,10 +25,13 @@ public class FileService {
 		this.fileSystemStorage = fileSystemStorage;
 	}
 
-	public String readFile(String projectName, String path) throws IOException {
+	public FileDTO readFile(String projectName, String path) throws IOException {
 		validatePath(path);
 		validateWithinProject(projectName, path);
-		return fileSystemStorage.readFile(path);
+
+		String content = fileSystemStorage.readFile(path);
+		String type = fileSystemStorage.readFileType(path);
+		return new FileDTO(content, type);
 	}
 
 	public FileTreeNode createOrUpdateFile(String projectName, String path, String fileContent) throws IOException, ApiException {
