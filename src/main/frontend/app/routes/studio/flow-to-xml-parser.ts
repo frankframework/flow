@@ -268,7 +268,7 @@ function generateFlowElementsXml(nodes: FlowNode[]): string {
     const roundedY = Math.round(y)
     const text = stickynote.data?.content || ''
 
-    return `    <flow:StickyNote text="${escapeXml(text)}" flow:x="${roundedX}" flow:y="${roundedY}" flow:width="${stickynote.measured?.width || FlowConfig.STICKY_NOTE_DEFAULT_WIDTH}" flow:height="${stickynote.measured?.height || FlowConfig.STICKY_NOTE_DEFAULT_HEIGHT}" />`
+    return `    <flow:StickyNote flow:text="${escapeXml(text)}" flow:x="${roundedX}" flow:y="${roundedY}" flow:width="${stickynote.measured?.width || FlowConfig.STICKY_NOTE_DEFAULT_WIDTH}" flow:height="${stickynote.measured?.height || FlowConfig.STICKY_NOTE_DEFAULT_HEIGHT}" />`
   })
 
   const groupNodesXml = generateGroupNodeXml(groupNodes, groupChildrenMap)
@@ -301,12 +301,12 @@ function generateGroupNodeXml(groupNodes: GroupNode[], groupChildrenMap: Map<str
 
     const groupName = escapeXml(groupNode.data?.label || '')
     const attrs = [
-      `children="${childNames}"`,
+      `flow:children="${childNames}"`,
       `flow:height="${height}"`,
       `flow:width="${width}"`,
       `flow:x="${roundedX}"`,
       `flow:y="${roundedY}"`,
-      `label="${groupName}"`,
+      `flow:label="${groupName}"`,
     ].join(' ')
 
     return `    <flow:GroupNode ${attrs} />`

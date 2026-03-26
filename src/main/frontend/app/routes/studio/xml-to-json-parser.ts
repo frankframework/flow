@@ -580,7 +580,7 @@ function extractStickyNotesFromAdapter(adapter: Element, idCounter: IdCounter): 
   )
 
   for (const note of notes) {
-    const text = note.getAttribute('text') || ''
+    const text = note.getAttribute('flow:text') || ''
 
     const x = Number(note.getAttribute('flow:x')) || 0
     const y = Number(note.getAttribute('flow:y')) || 0
@@ -618,8 +618,8 @@ function extractGroupNodesFromAdapter(adapter: Element, flowNodes: FlowNode[], i
   )
 
   for (const node of nodes) {
-    const label = node.getAttribute('label') || ''
-    const children = node.getAttribute('children')?.split(',') ?? []
+    const label = node.getAttribute('flow:label') || ''
+    const children = node.getAttribute('flow:children')?.split(',') ?? []
     const x = Number(node.getAttribute('flow:x')) || 0
     const y = Number(node.getAttribute('flow:y')) || 0
     const width = Number(node.getAttribute('flow:width'))
