@@ -3,6 +3,8 @@ import type { Edge } from '@xyflow/react'
 import type { ChildNode } from './canvas/nodetypes/child-node'
 import { getAdapter } from '~/services/adapter-service'
 import { FlowConfig } from './canvas/flow.config'
+import { isGroupNode, isStickyNote } from '~/stores/flow-store'
+import type { GroupNode } from './canvas/nodetypes/group-node'
 
 interface ReactFlowJson {
   nodes: FlowNode[]
@@ -81,6 +83,7 @@ export async function exportFlowToXml(
   }
 
   const exitsXml = exitNodes.length > 0 ? `      <Exits>\n${generateExitsXml(exitNodes)}\n      </Exits>` : ''
+  const flowXml = generateFlowElementsXml(nodes)
 
   return `
   <Adapter ${adapterAttributes}>
@@ -89,6 +92,7 @@ ${receivers.join('\n')}
 ${exitsXml}
 ${pipelineParts.join('\n')}
     </Pipeline>
+    ${flowXml}
   </Adapter>`
 }
 
@@ -151,6 +155,8 @@ function generateXmlElement(
 ): string {
   const { subtype, name } = node.data as NodeData
   const { x, y } = node.position
+  const roundedX = Math.round(x)
+  const roundedY = Math.round(y)
   let width = FlowConfig.NODE_DEFAULT_WIDTH
   let height = FlowConfig.NODE_DEFAULT_HEIGHT
   if (node.measured && node.measured.width && node.measured.height) {
@@ -164,7 +170,7 @@ function generateXmlElement(
     .map(([key, value]) => ` ${key}="${escapeXml(value)}"`)
     .join('')}`
 
-  const flowNamespaceString = `flow:y="${y}" flow:x="${x}" flow:width="${width}" flow:height="${height}"`
+  const flowNamespaceString = `flow:y="${roundedY}" flow:x="${roundedX}" flow:width="${width}" flow:height="${height}"`
 
   const childXml = children.map((child: ChildNode) => generateChildXml(child, 4)).join('\n')
 
@@ -215,6 +221,8 @@ function generateExitsXml(exitNodes: FlowNode[]): string {
     .map((node) => {
       const data = node.data as NodeData
       const { x, y } = node.position
+      const roundedX = Math.round(x)
+      const roundedY = Math.round(y)
       let width = FlowConfig.EXIT_DEFAULT_WIDTH
       let height = FlowConfig.EXIT_DEFAULT_HEIGHT
       if (node.measured && node.measured.width && node.measured.height) {
@@ -223,7 +231,7 @@ function generateExitsXml(exitNodes: FlowNode[]): string {
       }
       const name = escapeXml(data.name)
       const state = getExitState(data)
-      const flowNamespaceString = `flow:y="${y}" flow:x="${x}" flow:width="${width}" flow:height="${height}"`
+      const flowNamespaceString = `flow:y="${roundedY}" flow:x="${roundedX}" flow:width="${width}" flow:height="${height}"`
 
       return `      <Exit name="${name}" state="${state}" ${flowNamespaceString} />`
     })
@@ -236,4 +244,72 @@ function getExitState(data: NodeData): string {
 
   const name = data.name.toLowerCase()
   return name.includes('bad') || name.includes('fail') ? 'error' : 'success'
+}
+
+function generateFlowElementsXml(nodes: FlowNode[]): string {
+  const stickyNotes = nodes.filter((node) => isStickyNote(node))
+  const groupNodes = nodes.filter((node) => isGroupNode(node))
+
+  const groupChildrenMap = new Map<string, FlowNode[]>()
+
+  for (const node of nodes) {
+    if (!node.parentId) continue
+
+    if (!groupChildrenMap.has(node.parentId)) {
+      groupChildrenMap.set(node.parentId, [])
+    }
+
+    groupChildrenMap.get(node.parentId)!.push(node)
+  }
+
+  const stickyXml = stickyNotes.map((stickynote) => {
+    const { x, y } = stickynote.position
+    const roundedX = Math.round(x)
+    const roundedY = Math.round(y)
+    const text = stickynote.data?.content || ''
+
+    return `    <flow:StickyNote text="${escapeXml(text)}" flow:x="${roundedX}" flow:y="${roundedY}" flow:width="${stickynote.measured?.width || FlowConfig.STICKY_NOTE_DEFAULT_WIDTH}" flow:height="${stickynote.measured?.height || FlowConfig.STICKY_NOTE_DEFAULT_HEIGHT}" />`
+  })
+
+  const groupNodesXml = generateGroupNodeXml(groupNodes, groupChildrenMap)
+
+  const allElements = [...stickyXml, ...groupNodesXml]
+
+  if (allElements.length === 0) return ''
+
+  return `
+  <flow:FlowElements>
+${allElements.join('\n')}
+  </flow:FlowElements>`
+}
+
+function generateGroupNodeXml(groupNodes: GroupNode[], groupChildrenMap: Map<string, FlowNode[]>): string[] {
+  const groupNodesXml = groupNodes.map((groupNode) => {
+    const { x, y } = groupNode.position
+    const roundedX = Math.round(x)
+    const roundedY = Math.round(y)
+    const width = groupNode.measured?.width || FlowConfig.NODE_DEFAULT_WIDTH
+    const height = groupNode.measured?.height || FlowConfig.NODE_DEFAULT_HEIGHT
+
+    const children = groupChildrenMap.get(groupNode.id) || []
+
+    const childNames = children
+      .map((child) => (child.data as NodeData)?.name)
+      .filter((name) => name && name.trim() !== '')
+      .map((name) => escapeXml(name))
+      .join(',')
+
+    const groupName = escapeXml(groupNode.data?.label || '')
+    const attrs = [
+      `children="${childNames}"`,
+      `flow:height="${height}"`,
+      `flow:width="${width}"`,
+      `flow:x="${roundedX}"`,
+      `flow:y="${roundedY}"`,
+      `label="${groupName}"`,
+    ].join(' ')
+
+    return `    <flow:GroupNode ${attrs} />`
+  })
+  return groupNodesXml
 }
