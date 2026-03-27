@@ -1,16 +1,16 @@
 import clsx from 'clsx'
+import TextCircle from '/icons/solar/Text Circle.svg?react'
 
 export default function EditButton({ onClick, className }: { onClick: () => void; className?: string }) {
   return (
     <button
-      className={clsx('text-lg drop-shadow-[0_0_1px_black] hover:opacity-70', className)}
+      className={clsx('drop-shadow-[0_0_1px_black] hover:opacity-70', className)}
       onClick={(event) => {
         event.stopPropagation()
         onClick()
       }}
     >
-      ✏️
-      {/* <Settings className="fill-border" /> */}
+      <TextCircle className="h-6" />
     </button>
   )
 }
