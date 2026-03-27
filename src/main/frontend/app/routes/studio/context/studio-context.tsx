@@ -1,19 +1,43 @@
 import useNodeContextStore from '~/stores/node-context-store'
-import { useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import SortedElements from '~/routes/studio/context/sorted-elements'
 import Search from '~/components/search/search'
 import { useProjectStore } from '~/stores/project-store'
 import type { ElementDetails } from '@frankframework/doc-library-core'
 import { useFFDoc } from '@frankframework/doc-library-react'
 import LoadingSpinner from '~/components/loading-spinner'
+import { fetchFrankConfigXsd } from '~/services/xsd-service'
+import { parseXsd, getChildrenForType } from '~/utils/xsd-utils'
+import { DEFAULT_ELEMENTS, NON_CANVAS_ELEMENTS } from './palette-config'
 
 export default function StudioContext() {
   const { setDraggedName } = useNodeContextStore((state) => state)
   const [searchTerm, setSearchTerm] = useState('')
   const project = useProjectStore((state) => state.project)
   const { filters, elements, isLoading } = useFFDoc()
+  const [allowed, setAllowed] = useState<string[] | null>(null)
+  const ROOT_TYPES = useMemo(() => ['PipelineType', 'ReceiverType'], [])
 
-  if (isLoading || !elements) {
+  useEffect(() => {
+    const getAllowedElements = (doc: Document): string[] => {
+      const all: string[] = []
+
+      for (const type of ROOT_TYPES) {
+        const children = getChildrenForType(doc, type)
+        all.push(...children)
+      }
+
+      return [...new Set(all)] // dedupe
+    }
+
+    fetchFrankConfigXsd().then((xsd) => {
+      const doc = parseXsd(xsd)
+      const allowed = getAllowedElements(doc)
+      setAllowed(allowed)
+    })
+  }, [ROOT_TYPES])
+
+  if (isLoading || !elements || allowed === null) {
     return (
       <div className="flex h-full items-center justify-center">
         <LoadingSpinner message="Loading palette..." />
@@ -84,7 +108,20 @@ export default function StudioContext() {
   }
 
   const visibleElements = Object.fromEntries(
-    Object.entries(elements).filter(([_, value]) => shouldShowElement((value as ElementDetails).name)),
+    Object.entries(elements).filter(([_, value]) => {
+      const name = (value as ElementDetails).name
+
+      // Always remove non-canvas elements.
+      if (NON_CANVAS_ELEMENTS.includes(name)) {
+        return false
+      }
+      // Always show elements present in the default components list.
+      if (DEFAULT_ELEMENTS.includes(name)) {
+        return true
+      }
+
+      return allowed.includes(name) && shouldShowElement(name)
+    }),
   )
 
   const groupedElements = groupElementsByType(visibleElements as Record<string, ElementDetails>)
