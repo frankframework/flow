@@ -24,6 +24,7 @@ import {
 } from '~/services/project-service'
 import { useRecentProjects } from '~/hooks/use-projects'
 import { showErrorToast } from '~/components/toast'
+import { discoverFrankInstances, type FrankInstance } from '~/services/hazelcast-service'
 
 export default function ProjectLanding() {
   const navigate = useNavigate()
@@ -40,6 +41,8 @@ export default function ProjectLanding() {
   const [isLocalEnvironment, setIsLocalEnvironment] = useState(true)
   const [rootLocationName, setRootLocationName] = useState('Computer')
   const [isOpeningProject, setIsOpeningProject] = useState(false)
+  const [frankInstances, setFrankInstances] = useState<FrankInstance[]>([])
+  const [isDiscovering, setIsDiscovering] = useState(false)
   const importInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -66,6 +69,29 @@ export default function ProjectLanding() {
       showErrorToast(`Could not load in projects: ${apiError.message}`)
     }
   }, [apiError])
+
+  useEffect(() => {
+    if (!isLocalEnvironment) return
+    const controller = new AbortController()
+
+    const discover = () => {
+      discoverFrankInstances(controller.signal)
+        .then(setFrankInstances)
+        .catch(() => {
+          // Discovery failure is non-critical; Hazelcast may not be running
+        })
+        .finally(() => setIsDiscovering(false))
+    }
+
+    setIsDiscovering(true)
+    discover()
+    const interval = setInterval(discover, 3000)
+
+    return () => {
+      controller.abort()
+      clearInterval(interval)
+    }
+  }, [isLocalEnvironment])
 
   const handleOpenProject = useCallback(
     async (rootPath: string) => {
@@ -155,6 +181,27 @@ export default function ProjectLanding() {
     }
   }
 
+  const handleConnectToInstance = useCallback(
+    async (instance: FrankInstance) => {
+      const path = instance.projectPath
+      if (!path) {
+        showErrorToast(`No configuration path available for "${instance.name}"`)
+        return
+      }
+      setIsOpeningProject(true)
+      try {
+        const project = await openProject(path)
+        setProject(project)
+        navigate(`/studio/${encodeURIComponent(project.name)}`)
+      } catch (error) {
+        showErrorToast(error instanceof Error ? error.message : `Failed to open remote instance "${instance.name}"`)
+      } finally {
+        setIsOpeningProject(false)
+      }
+    },
+    [navigate, setProject],
+  )
+
   const projects = recentProjects ?? []
   const filteredProjects = projects.filter((project) => project.name.toLowerCase().includes(searchTerm.toLowerCase()))
 
@@ -183,6 +230,9 @@ export default function ProjectLanding() {
             onProjectClick={handleOpenProject}
             onRemoveProject={onRemoveProject}
             onExportProject={onExportProject}
+            frankInstances={frankInstances}
+            isDiscovering={isDiscovering}
+            onConnectToInstance={handleConnectToInstance}
           />
         </div>
 
@@ -264,27 +314,58 @@ const ProjectList = ({
   onProjectClick,
   onRemoveProject,
   onExportProject,
+  frankInstances,
+  isDiscovering,
+  onConnectToInstance,
 }: {
   projects: RecentProject[]
   isLocal: boolean
   onProjectClick: (rootPath: string) => void
   onRemoveProject: (rootPath: string) => void
   onExportProject: (projectName: string) => void
+  frankInstances: FrankInstance[]
+  isDiscovering: boolean
+  onConnectToInstance: (instance: FrankInstance) => void
 }) => (
   <section className="h-full flex-1 overflow-y-auto p-4">
-    {projects.length === 0 ? (
+    {frankInstances.length > 0 && (
+      <div className="mb-4">
+        <p className="mb-2 text-xs font-semibold tracking-wider text-slate-500 uppercase">Remote</p>
+        {frankInstances.map((instance) => (
+          <div
+            key={instance.id ?? instance.name}
+            className="hover:bg-backdrop mb-2 flex w-full cursor-pointer items-center justify-between rounded px-3 py-2"
+            onClick={() => onConnectToInstance(instance)}
+          >
+            <div className="flex flex-col">
+              <div className="font-medium">{instance.name}</div>
+              {instance.projectPath && <p className="text-foreground-muted text-xs">{instance.projectPath}</p>}
+            </div>
+            <span className="rounded bg-green-100 px-2 py-0.5 text-xs text-green-700">Live</span>
+          </div>
+        ))}
+      </div>
+    )}
+    {isDiscovering && frankInstances.length === 0 && (
+      <p className="mb-2 text-xs text-slate-400 italic">Scanning for remote instances...</p>
+    )}
+    {projects.length === 0 && frankInstances.length === 0 && !isDiscovering && (
       <p className="text-muted-foreground mt-10 text-center text-sm italic">No projects found</p>
-    ) : (
-      projects.map((project) => (
-        <ProjectRow
-          key={project.rootPath}
-          project={project}
-          isLocal={isLocal}
-          onClick={() => onProjectClick(project.rootPath)}
-          onRemove={() => onRemoveProject(project.rootPath)}
-          onExport={() => onExportProject(project.name)}
-        />
-      ))
+    )}
+    {projects.length > 0 && (
+      <>
+        <p className="mb-2 text-xs font-semibold tracking-wider text-slate-400 uppercase">Recent</p>
+        {projects.map((project) => (
+          <ProjectRow
+            key={project.rootPath}
+            project={project}
+            isLocal={isLocal}
+            onClick={() => onProjectClick(project.rootPath)}
+            onRemove={() => onRemoveProject(project.rootPath)}
+            onExport={() => onExportProject(project.name)}
+          />
+        ))}
+      </>
     )}
   </section>
 )

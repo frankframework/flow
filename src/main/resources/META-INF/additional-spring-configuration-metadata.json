@@ -1,0 +1,10 @@
+{
+  "properties": [
+    {
+      "name": "hazelcast.enabled",
+      "type": "java.lang.Boolean",
+      "defaultValue": false,
+      "description": "Enable Hazelcast cluster integration to discover remote Frank instances."
+    }
+  ]
+}

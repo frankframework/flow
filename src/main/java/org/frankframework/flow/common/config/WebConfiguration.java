@@ -1,9 +1,11 @@
 package org.frankframework.flow.common.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.frankframework.management.gateway.InputStreamHttpMessageConverter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.method.HandlerTypePredicate;
@@ -42,5 +44,10 @@ public class WebConfiguration implements WebMvcConfigurer {
 	@Bean
 	public RestTemplate restTemplate() {
 		return new RestTemplate();
+	}
+
+	@Bean
+	public HttpMessageConverter<?> inputStreamHttpMessageConverter() {
+		return new InputStreamHttpMessageConverter();
 	}
 }

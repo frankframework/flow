@@ -3,11 +3,12 @@ package org.frankframework.flow.security;
 import java.io.Serializable;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.RequestScope;
 
 @Component
-@RequestScope
+@RequestScope(proxyMode = ScopedProxyMode.TARGET_CLASS)
 @Getter
 @Setter
 public class UserWorkspaceContext implements Serializable {
