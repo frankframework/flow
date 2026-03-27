@@ -104,7 +104,7 @@ class ConfigurationControllerTest {
 		String xmlContent = "<xml>updated</xml>";
 
 		when(configurationService.updateConfiguration(filepath, xmlContent))
-				.thenReturn(xmlContent);
+				.thenReturn(true);
 
 		mockMvc.perform(
 						put("/api/projects/" + TEST_PROJECT_NAME + "/configuration")
