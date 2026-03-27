@@ -51,7 +51,7 @@ public class FileTreeController {
 		return fileTreeService.getShallowDirectoryTree(projectName, path);
 	}
 
-	@PostMapping("/folders")
+	@PostMapping("/folder")
 	public ResponseEntity<FileTreeNode> createFolder(@PathVariable String projectName, @RequestBody FolderCreateDTO folderCreate) throws IOException {
 		FileTreeNode node = fileTreeService.createFolder(projectName, folderCreate.path());
 		return ResponseEntity.status(HttpStatus.CREATED.value()).body(node);

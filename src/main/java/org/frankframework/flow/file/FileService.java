@@ -31,10 +31,13 @@ public class FileService {
 
 		String content = fileSystemStorage.readFile(path);
 		String type = fileSystemStorage.readFileType(path);
+		if (type == null) {
+			type = "text/plain";
+		}
 		return new FileDTO(content, type);
 	}
 
-	public FileTreeNode createOrUpdateFile(String projectName, String path, String fileContent) throws IOException, ApiException {
+	public FileTreeNode createOrUpdateFile(String projectName, String path, String fileContent) throws IOException {
 		validatePath(path);
 		String fileName = path.substring(path.lastIndexOf("/") + 1);
 		validateFileName(fileName);

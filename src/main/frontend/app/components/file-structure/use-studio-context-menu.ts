@@ -1,13 +1,11 @@
 import { useCallback, useRef, useState } from 'react'
 import type { TreeItemIndex } from 'react-complex-tree'
+import { deleteFile, renameFile } from '~/services/file-service'
 import {
-  createFileInProject,
   createFolderInProject,
-  renameInProject,
-  deleteInProject,
 } from '~/services/file-tree-service'
 import { createAdapter, renameAdapter, deleteAdapter } from '~/services/adapter-service'
-import { clearConfigurationCache } from '~/services/configuration-service'
+import { clearConfigurationCache, createConfiguration } from '~/services/configuration-service'
 import useTabStore from '~/stores/tab-store'
 import { showErrorToastFrom } from '~/components/toast'
 import type { StudioItemData, StudioFolderData, StudioAdapterData } from './studio-files-data-provider'
@@ -156,7 +154,7 @@ export function useStudioContextMenu({ projectName, dataProvider }: UseStudioCon
         onSubmit: async (name: string) => {
           const fileName = ensureXmlExtension(name)
           try {
-            await createFileInProject(projectName, menu.folderPath, fileName)
+            await createConfiguration(projectName, `${menu.folderPath}/${fileName}`)
             await dataProvider.reloadDirectory('root')
           } catch (error) {
             showErrorToastFrom('Failed to create configuration', error)
@@ -232,7 +230,7 @@ export function useStudioContextMenu({ projectName, dataProvider }: UseStudioCon
               await renameAdapter(projectName, oldName, newName, menu.path)
             } else {
               const finalName = menu.itemType === 'configuration' ? ensureXmlExtension(newName) : newName
-              await renameInProject(projectName, menu.path, finalName)
+              await renameFile(projectName, `${menu.path}/${oldName}`, `${menu.path}/${newName}`)
               clearConfigurationCache(projectName, menu.path)
               const newPath = `${getParentDir(menu.path)}/${finalName}`
               useTabStore.getState().renameTabsForConfig(menu.path, newPath)
@@ -270,7 +268,7 @@ export function useStudioContextMenu({ projectName, dataProvider }: UseStudioCon
         await deleteAdapter(projectName, deleteTarget.name, deleteTarget.path)
         removeAdapterTab(deleteTarget.path, deleteTarget.name)
       } else {
-        await deleteInProject(projectName, deleteTarget.path)
+        await deleteFile(projectName, deleteTarget.path)
         clearConfigurationCache(projectName, deleteTarget.path)
         useTabStore.getState().removeTabsForConfig(deleteTarget.path)
       }

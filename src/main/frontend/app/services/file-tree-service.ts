@@ -2,11 +2,11 @@ import { apiFetch } from '~/utils/api'
 import type { FileTreeNode } from '~/types/filesystem.types'
 
 export async function fetchProjectTree(projectName: string, signal?: AbortSignal): Promise<FileTreeNode> {
-  return apiFetch<FileTreeNode>(`${getTreeUrl(projectName)}/configurations`, { signal })
+  return apiFetch<FileTreeNode>(`${getTreeUrl(projectName)}/configuration`, { signal })
 }
 
 export async function fetchShallowConfigurationsTree(projectName: string, signal?: AbortSignal): Promise<FileTreeNode> {
-  return apiFetch<FileTreeNode>(`${getTreeUrl(projectName)}/configurations?shallow=true`, { signal })
+  return apiFetch<FileTreeNode>(`${getTreeUrl(projectName)}/configuration?shallow=true`, { signal })
 }
 
 export async function fetchProjectRootTree(projectName: string, signal?: AbortSignal): Promise<FileTreeNode> {
@@ -24,7 +24,7 @@ export async function fetchDirectoryByPath(
 }
 
 export async function createFolderInProject(projectName: string, path: string, name: string): Promise<FileTreeNode> {
-  return apiFetch<FileTreeNode>(`${getBaseUrl(projectName)}/folders`, {
+  return apiFetch<FileTreeNode>(`${getBaseUrl(projectName)}/folder`, {
     method: 'POST',
     body: JSON.stringify({ path, name }),
   })
