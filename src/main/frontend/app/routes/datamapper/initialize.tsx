@@ -4,6 +4,7 @@ import UploadImportButton from '~/components/datamapper/upload-import-button'
 import Button from '~/components/inputs/button'
 import Dropdown from '~/components/inputs/dropdown'
 import type { ConfigActions } from '~/stores/datamapper_state/mappingListConfig/reducer'
+import { useFile } from '~/stores/datamapper_state/schemaQueue/schema-queue-context'
 import type { MappingListConfig } from '~/types/datamapper_types/config-types'
 import type { DataTypeSchema } from '~/types/datamapper_types/data-types'
 import datatypesJson from '~/utils/datamapper_utils/config/data-types.json'
@@ -12,11 +13,13 @@ interface InitializeProperties {
   config: MappingListConfig
   configDispatch: Dispatch<ConfigActions>
   confirmed: boolean
+  setRoute: Dispatch<string>
 }
 
-function Initialize({ config, configDispatch, confirmed }: InitializeProperties) {
+function Initialize({ config, configDispatch, confirmed, setRoute }: InitializeProperties) {
   const datatypes: DataTypeSchema = datatypesJson as DataTypeSchema
   const [sources, setSources] = useState<number[]>([])
+  const { sourceSchematics, targetSchematic } = useFile()
 
   const findDataType = (name: string) => datatypes.find((dataType) => dataType.name === name) ?? null
 
@@ -27,26 +30,24 @@ function Initialize({ config, configDispatch, confirmed }: InitializeProperties)
   const configTargetDispatch = (value: string) =>
     configDispatch({ type: 'SET_TARGET_FORMAT', payload: findDataType(value) })
 
-  const configConfirmDispatched = () => configDispatch({ type: 'SET_STAGE', payload: 'Mapping' })
-
-  // Manual export
-  const handleManualExport = () => {
-    const dataString = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(config))}`
-    const link = document.createElement('a')
-    link.href = dataString
-    link.download = 'flow_configuration.json'
-    link.click()
+  const configConfirmDispatched = () => configDispatch({ type: 'SET_STAGE', payload: 'Schema_upload' })
+  function toProperties() {
+    setRoute('Properties')
+    configDispatch({ type: 'SET_STAGE', payload: 'Mapping' })
   }
 
   return (
     <div className="space-y-6 p-4">
       {/* Import / Export Buttons */}
-      <div className="flex w-full flex-col gap-3 md:flex-row md:gap-4">
-        <div className="flex-1">
-          <UploadImportButton label="Import Configuration" configDispatch={configDispatch} />
-        </div>
-        <Button className="flex-1" onClick={handleManualExport}>
-          Export Configuration
+      <div
+        className="flex w-full flex-col gap-3 md:flex-row md:gap-4"
+        hidden={sourceSchematics.length === 0 || !targetSchematic}
+      >
+        <Button
+          className="bg-foreground-active disabled:bg-backdrop disabled:text-foreground-muted flex-1 font-medium text-neutral-900 transition hover:brightness-110"
+          onClick={toProperties}
+        >
+          To Next Step
         </Button>
       </div>
 

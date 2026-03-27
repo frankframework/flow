@@ -25,3 +25,37 @@ export async function getAdapter(projectName: string, adapterName: string, confi
     },
   )
 }
+
+export async function createAdapter(
+  projectName: string,
+  adapterName: string,
+  configurationPath: string,
+): Promise<void> {
+  await apiFetch<void>(`/projects/${encodeURIComponent(projectName)}/adapters`, {
+    method: 'POST',
+    body: JSON.stringify({ adapterName, configurationPath }),
+  })
+}
+
+export async function renameAdapter(
+  projectName: string,
+  oldName: string,
+  newName: string,
+  configurationPath: string,
+): Promise<void> {
+  await apiFetch<void>(`/projects/${encodeURIComponent(projectName)}/adapters/rename`, {
+    method: 'PATCH',
+    body: JSON.stringify({ oldName, newName, configurationPath }),
+  })
+}
+
+export async function deleteAdapter(
+  projectName: string,
+  adapterName: string,
+  configurationPath: string,
+): Promise<void> {
+  await apiFetch<void>(
+    `/projects/${encodeURIComponent(projectName)}/adapters?adapterName=${encodeURIComponent(adapterName)}&configurationPath=${encodeURIComponent(configurationPath)}`,
+    { method: 'DELETE' },
+  )
+}

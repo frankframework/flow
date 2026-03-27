@@ -15,9 +15,11 @@ import org.frankframework.flow.exception.ApiException;
 import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.frankframework.flow.project.Project;
 import org.frankframework.flow.project.ProjectService;
+import org.frankframework.flow.utility.XmlAdapterUtils;
 import org.frankframework.flow.utility.XmlConfigurationUtils;
 import org.frankframework.flow.utility.XmlSecurityUtils;
 import org.frankframework.flow.xml.XmlDTO;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
@@ -49,7 +51,7 @@ public class AdapterService {
 		Document configDoc = XmlSecurityUtils.createSecureDocumentBuilder()
 				.parse(new ByteArrayInputStream(config.getXmlContent().getBytes(StandardCharsets.UTF_8)));
 
-		Node adapterNode = XmlConfigurationUtils.findAdapterInDocument(configDoc, adapterName);
+		Node adapterNode = XmlAdapterUtils.findAdapterInDocument(configDoc, adapterName);
 		if (adapterNode == null) {
 			throw new AdapterNotFoundException("Adapter not found: " + adapterName);
 		}
@@ -75,7 +77,7 @@ public class AdapterService {
 
 			Node newAdapterNode = newAdapterDoc.getDocumentElement();
 
-			if (!XmlConfigurationUtils.replaceAdapterInDocument(configDoc, adapterName, newAdapterNode)) {
+			if (!XmlAdapterUtils.replaceAdapterInDocument(configDoc, adapterName, newAdapterNode)) {
 				throw new AdapterNotFoundException("Adapter not found: " + adapterName);
 			}
 
@@ -89,5 +91,99 @@ public class AdapterService {
 			log.error("Error updating adapter in file: {}", e.getMessage(), e);
 			return false;
 		}
+	}
+
+	public void createAdapter(String configurationPath, String adapterName)
+			throws ConfigurationNotFoundException, IOException {
+		if (configurationPath == null || configurationPath.isBlank()) {
+			throw new IllegalArgumentException("Configuration path must not be empty");
+		}
+		if (adapterName == null || adapterName.isBlank()) {
+			throw new IllegalArgumentException("Adapter name must not be empty");
+		}
+		Path absConfigFile = fileSystemStorage.toAbsolutePath(configurationPath);
+
+		if (!Files.exists(absConfigFile)) {
+			throw new ConfigurationNotFoundException("Configuration file not found: " + configurationPath);
+		}
+
+		try {
+			Document configDoc =
+					XmlSecurityUtils.createSecureDocumentBuilder().parse(Files.newInputStream(absConfigFile));
+
+			String template = loadDefaultAdapterXml();
+			String adapterXml = template.replace("${adapterName}", adapterName);
+
+			XmlAdapterUtils.addAdapterToDocument(configDoc, adapterXml);
+
+			String updatedXml = XmlConfigurationUtils.convertNodeToString(configDoc);
+			Files.writeString(absConfigFile, updatedXml, StandardCharsets.UTF_8, StandardOpenOption.TRUNCATE_EXISTING);
+		} catch (Exception e) {
+			throw new IOException("Failed to create adapter: " + e.getMessage(), e);
+		}
+	}
+
+	public void renameAdapter(String configurationPath, String oldName, String newName)
+			throws ConfigurationNotFoundException, AdapterNotFoundException, IOException {
+		if (configurationPath == null || configurationPath.isBlank()) {
+			throw new IllegalArgumentException("Configuration path must not be empty");
+		}
+		Path absConfigFile = fileSystemStorage.toAbsolutePath(configurationPath);
+
+		if (!Files.exists(absConfigFile)) {
+			throw new ConfigurationNotFoundException("Configuration file not found: " + configurationPath);
+		}
+
+		try {
+			Document configDoc =
+					XmlSecurityUtils.createSecureDocumentBuilder().parse(Files.newInputStream(absConfigFile));
+
+			if (!XmlAdapterUtils.renameAdapterInDocument(configDoc, oldName, newName)) {
+				throw new AdapterNotFoundException("Adapter not found: " + oldName);
+			}
+
+			String updatedXml = XmlConfigurationUtils.convertNodeToString(configDoc);
+			Files.writeString(absConfigFile, updatedXml, StandardCharsets.UTF_8, StandardOpenOption.TRUNCATE_EXISTING);
+		} catch (AdapterNotFoundException e) {
+			throw e;
+		} catch (Exception e) {
+			throw new IOException("Failed to rename adapter: " + e.getMessage(), e);
+		}
+	}
+
+	public void deleteAdapter(String configurationPath, String adapterName)
+			throws ConfigurationNotFoundException, AdapterNotFoundException, IOException {
+		if (configurationPath == null || configurationPath.isBlank()) {
+			throw new IllegalArgumentException("Configuration path must not be empty");
+		}
+		Path absConfigFile = fileSystemStorage.toAbsolutePath(configurationPath);
+
+		if (!Files.exists(absConfigFile)) {
+			throw new ConfigurationNotFoundException("Configuration file not found: " + configurationPath);
+		}
+
+		try {
+			Document configDoc =
+					XmlSecurityUtils.createSecureDocumentBuilder().parse(Files.newInputStream(absConfigFile));
+
+			if (!XmlAdapterUtils.removeAdapterFromDocument(configDoc, adapterName)) {
+				throw new AdapterNotFoundException("Adapter not found: " + adapterName);
+			}
+
+			String updatedXml = XmlConfigurationUtils.convertNodeToString(configDoc);
+			Files.writeString(absConfigFile, updatedXml, StandardCharsets.UTF_8, StandardOpenOption.TRUNCATE_EXISTING);
+		} catch (AdapterNotFoundException e) {
+			throw e;
+		} catch (Exception e) {
+			throw new IOException("Failed to delete adapter: " + e.getMessage(), e);
+		}
+	}
+
+	private String loadDefaultAdapterXml() throws IOException {
+		return new String(
+				new ClassPathResource("templates/default-adapter.xml")
+						.getInputStream()
+						.readAllBytes(),
+				StandardCharsets.UTF_8);
 	}
 }

@@ -188,6 +188,33 @@ public class DatamapperGeneratorServiceTest {
 		Assertions.assertEquals(
 				toString(expectedResult).trim(), writer.toString().trim());
 	}
+
+	@Test
+	@DisplayName("Test XML to XML mapping with attributes")
+	public void testXMLtoXMLWithAttributesGeneratedMapping()
+			throws SaxonApiException, IOException, ParserConfigurationException, SAXException, TransformerException,
+			ApiException {
+		stubToAbsolutePath();
+		service.generate(
+				"src/test/resources/datamapper/inputXmlToXmlWithArrayWithAttributes.json",
+				tempProjectRoot.toAbsolutePath() + "/output.xslt");
+
+		XsltExecutable executable =
+				compiler.compile(new StreamSource(new File(tempProjectRoot.toAbsolutePath() + "/output.xslt")));
+		XsltTransformer transformer = executable.load();
+
+		transformer.setSource(new StreamSource(new File("src/test/resources/datamapper/inputDataWithArray.xml")));
+
+		StringWriter writer = new StringWriter();
+		Serializer out = processor.newSerializer(writer);
+		transformer.setDestination(out);
+
+		transformer.transform();
+
+		Document expectedResult = parse("src/test/resources/datamapper/outputDataWithAttributes.xml");
+		Assertions.assertEquals(
+				toString(expectedResult).trim(), writer.toString().trim());
+	}
 	@Test
 	@DisplayName("Test All functions")
 	public void testAllFunctionsGeneratedMapping()

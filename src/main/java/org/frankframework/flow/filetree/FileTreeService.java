@@ -128,6 +128,9 @@ public class FileTreeService {
 
 	public FileTreeNode createFile(String projectName, String parentPath, String fileName)
 			throws IOException, ApiException {
+		if (parentPath == null || parentPath.isBlank()) {
+			throw new IllegalArgumentException("Parent path must not be empty");
+		}
 		validateFileName(fileName);
 		String fullPath = parentPath.endsWith("/") ? parentPath + fileName : parentPath + "/" + fileName;
 		validateWithinProject(projectName, fullPath);
@@ -148,6 +151,9 @@ public class FileTreeService {
 	}
 
 	public FileTreeNode createFolder(String projectName, String parentPath, String folderName) throws IOException {
+		if (parentPath == null || parentPath.isBlank()) {
+			throw new IllegalArgumentException("Parent path must not be empty");
+		}
 		validateFileName(folderName);
 		String fullPath = parentPath.endsWith("/") ? parentPath + folderName : parentPath + "/" + folderName;
 		validateWithinProject(projectName, fullPath);
@@ -239,12 +245,12 @@ public class FileTreeService {
 
 			try (Stream<Path> stream = Files.list(path)) {
 				List<FileTreeNode> children = stream.map(p -> {
-					try {
-						return buildTree(p, relativizeRoot, useRelativePaths);
-					} catch (IOException e) {
-						throw new UncheckedIOException(e);
-					}
-				})
+							try {
+								return buildTree(p, relativizeRoot, useRelativePaths);
+							} catch (IOException e) {
+								throw new UncheckedIOException(e);
+							}
+						})
 						.collect(Collectors.toList());
 
 				node.setChildren(children);
@@ -303,16 +309,16 @@ public class FileTreeService {
 
 		try (Stream<Path> stream = Files.list(path)) {
 			List<FileTreeNode> children = stream.map(p -> {
-				FileTreeNode child = new FileTreeNode();
-				child.setName(p.getFileName().toString());
-				child.setPath(toNodePath(p, relativizeRoot, useRelativePaths));
-				child.setType(Files.isDirectory(p) ? NodeType.DIRECTORY : NodeType.FILE);
-				if (!Files.isDirectory(p)
-						&& p.getFileName().toString().toLowerCase().endsWith(".xml")) {
-					child.setAdapterNames(extractAdapterNames(p));
-				}
-				return child;
-			})
+						FileTreeNode child = new FileTreeNode();
+						child.setName(p.getFileName().toString());
+						child.setPath(toNodePath(p, relativizeRoot, useRelativePaths));
+						child.setType(Files.isDirectory(p) ? NodeType.DIRECTORY : NodeType.FILE);
+						if (!Files.isDirectory(p)
+								&& p.getFileName().toString().toLowerCase().endsWith(".xml")) {
+							child.setAdapterNames(extractAdapterNames(p));
+						}
+						return child;
+					})
 					.toList();
 
 			node.setChildren(children);

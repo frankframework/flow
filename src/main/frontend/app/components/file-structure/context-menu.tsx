@@ -1,5 +1,6 @@
-import { useEffect, useRef } from 'react'
+import { useRef } from 'react'
 import { createPortal } from 'react-dom'
+import { useContextMenuDismiss } from '~/hooks/use-context-menu-dismiss'
 
 interface ContextMenuProps {
   position: { x: number; y: number }
@@ -23,24 +24,7 @@ export default function ContextMenu({
   onClose,
 }: ContextMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    const handleMouseDown = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        onClose()
-      }
-    }
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-    }
-
-    document.addEventListener('mousedown', handleMouseDown)
-    document.addEventListener('keydown', handleKeyDown)
-    return () => {
-      document.removeEventListener('mousedown', handleMouseDown)
-      document.removeEventListener('keydown', handleKeyDown)
-    }
-  }, [onClose])
+  useContextMenuDismiss(menuRef, onClose)
 
   const itemClass = 'px-3 py-1.5 cursor-pointer hover:bg-hover text-sm text-foreground whitespace-nowrap'
 
@@ -52,21 +36,21 @@ export default function ContextMenu({
     >
       {isFolder && (
         <>
-          <div className={itemClass} onClick={onNewFile}>
+          <div className={itemClass} onClick={() => onNewFile()}>
             New File
           </div>
-          <div className={itemClass} onClick={onNewFolder}>
+          <div className={itemClass} onClick={() => onNewFolder()}>
             New Folder
           </div>
         </>
       )}
       {!isRoot && (
-        <div className={itemClass} onClick={onRename}>
+        <div className={itemClass} onClick={() => onRename()}>
           Rename
         </div>
       )}
       {!isRoot && (
-        <div className={`${itemClass} text-red-500`} onClick={onDelete}>
+        <div className={`${itemClass} text-red-500`} onClick={() => onDelete()}>
           Delete
         </div>
       )}
