@@ -1,5 +1,5 @@
 import useNodeContextStore from '~/stores/node-context-store'
-import { useEffect, useState, useRef, useMemo } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import SortedElements from '~/routes/studio/context/sorted-elements'
 import Search from '~/components/search/search'
 import { useProjectStore } from '~/stores/project-store'
@@ -8,7 +8,7 @@ import { useFFDoc } from '@frankframework/doc-library-react'
 import LoadingSpinner from '~/components/loading-spinner'
 import { fetchFrankConfigXsd } from '~/services/xsd-service'
 import { parseXsd, getChildrenForType } from '~/utils/xsd-utils'
-import { DEFAULT_ELEMENTS } from './canvas-elements'
+import { DEFAULT_ELEMENTS, NON_CANVAS_ELEMENTS } from './palette-config'
 
 export default function StudioContext() {
   const { setDraggedName } = useNodeContextStore((state) => state)
@@ -111,6 +111,10 @@ export default function StudioContext() {
     Object.entries(elements).filter(([_, value]) => {
       const name = (value as ElementDetails).name
 
+      // Always remove non-canvas elements.
+      if (NON_CANVAS_ELEMENTS.includes(name)) {
+        return false
+      }
       // Always show elements present in the default components list.
       if (DEFAULT_ELEMENTS.includes(name)) {
         return true

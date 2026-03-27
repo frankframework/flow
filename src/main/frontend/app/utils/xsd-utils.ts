@@ -11,7 +11,12 @@ export function getChildrenForType(doc: Document, typeName: string): string[] {
   return getChildrenFromNode(doc, typeNode)
 }
 
-function getChildrenFromNode(doc: Document, node: Element, visitedGroups = new Set<string>()): string[] {
+function getChildrenFromNode(
+  doc: Document,
+  node: Element,
+  visitedGroups = new Set<string>(),
+  visitedTypes = new Set<string>(), // 👈 NEW
+): string[] {
   const results: string[] = []
 
   for (const child of node.children) {
@@ -22,8 +27,20 @@ function getChildrenFromNode(doc: Document, node: Element, visitedGroups = new S
         const name = child.getAttribute('name') || child.getAttribute('ref')
         if (name) results.push(name)
 
+        const baseType = getBaseTypeFromElement(doc, child)
+
+        if (baseType && !visitedTypes.has(baseType)) {
+          visitedTypes.add(baseType)
+
+          const typeNode = getComplexTypeByName(doc, baseType)
+          if (typeNode) {
+            results.push(...getChildrenFromNode(doc, typeNode, visitedGroups, visitedTypes))
+          }
+        }
+
         break
       }
+
       case 'group': {
         const ref = child.getAttribute('ref')
         if (ref && !visitedGroups.has(ref)) {
@@ -31,17 +48,16 @@ function getChildrenFromNode(doc: Document, node: Element, visitedGroups = new S
 
           const groupDef = getGroupByName(doc, ref)
           if (groupDef) {
-            results.push(...getChildrenFromNode(doc, groupDef, visitedGroups))
+            results.push(...getChildrenFromNode(doc, groupDef, visitedGroups, visitedTypes))
           }
         }
-
         break
       }
+
       case 'sequence':
       case 'choice':
       case 'all': {
-        results.push(...getChildrenFromNode(doc, child, visitedGroups))
-
+        results.push(...getChildrenFromNode(doc, child, visitedGroups, visitedTypes))
         break
       }
     }
@@ -72,4 +88,17 @@ function getGroupByName(doc: Document, name: string): Element | null {
   )
 
   return result.singleNodeValue as Element | null
+}
+
+function getBaseTypeFromElement(doc: Document, element: Element): string | null {
+  const result = doc.evaluate(
+    `.//xs:extension`,
+    element,
+    (prefix) => (prefix === 'xs' ? 'http://www.w3.org/2001/XMLSchema' : null),
+    XPathResult.FIRST_ORDERED_NODE_TYPE,
+    null,
+  )
+
+  const ext = result.singleNodeValue as Element | null
+  return ext?.getAttribute('base') || null
 }
