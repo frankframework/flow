@@ -9,7 +9,8 @@
     line-height: 1.6;
     padding-top: 10px;
     padding-bottom: 10px;
-    background-color: white;
+    background-color: var(--color-background);
+    color: var(--color-foreground);
     padding: 30px;
   }
 
@@ -22,7 +23,7 @@
   }
 
   a {
-    color: #4183C4;
+    color: #4183c4;
   }
 
   a.absent {
@@ -40,7 +41,12 @@
     bottom: 0;
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     margin: 20px 0 10px;
     padding: 0;
     @apply font-medium;
@@ -49,31 +55,42 @@
     position: relative;
   }
 
-  h1:hover a.anchor, h2:hover a.anchor, h3:hover a.anchor, h4:hover a.anchor, h5:hover a.anchor, h6:hover a.anchor {
+  h1:hover a.anchor,
+  h2:hover a.anchor,
+  h3:hover a.anchor,
+  h4:hover a.anchor,
+  h5:hover a.anchor,
+  h6:hover a.anchor {
     text-decoration: none;
   }
 
-  h1 tt, h1 code {
+  h1 tt,
+  h1 code {
     font-size: inherit;
   }
 
-  h2 tt, h2 code {
+  h2 tt,
+  h2 code {
     font-size: inherit;
   }
 
-  h3 tt, h3 code {
+  h3 tt,
+  h3 code {
     font-size: inherit;
   }
 
-  h4 tt, h4 code {
+  h4 tt,
+  h4 code {
     font-size: inherit;
   }
 
-  h5 tt, h5 code {
+  h5 tt,
+  h5 code {
     font-size: inherit;
   }
 
-  h6 tt, h6 code {
+  h6 tt,
+  h6 code {
     font-size: inherit;
   }
 
@@ -105,7 +122,14 @@
     font-size: 14px;
   }
 
-  p, blockquote, ul, ol, dl, li, table, pre {
+  p,
+  blockquote,
+  ul,
+  ol,
+  dl,
+  li,
+  table,
+  pre {
     margin: 15px 0;
   }
 
@@ -131,17 +155,30 @@
     padding-top: 0;
   }
 
-  body > h3:first-child, body > h4:first-child, body > h5:first-child, body > h6:first-child {
+  body > h3:first-child,
+  body > h4:first-child,
+  body > h5:first-child,
+  body > h6:first-child {
     margin-top: 0;
     padding-top: 0;
   }
 
-  a:first-child h1, a:first-child h2, a:first-child h3, a:first-child h4, a:first-child h5, a:first-child h6 {
+  a:first-child h1,
+  a:first-child h2,
+  a:first-child h3,
+  a:first-child h4,
+  a:first-child h5,
+  a:first-child h6 {
     margin-top: 0;
     padding-top: 0;
   }
 
-  h1 p, h2 p, h3 p, h4 p, h5 p, h6 p {
+  h1 p,
+  h2 p,
+  h3 p,
+  h4 p,
+  h5 p,
+  h6 p {
     margin-top: 0;
   }
 
@@ -153,7 +190,8 @@
     margin: 0;
   }
 
-  ul, ol {
+  ul,
+  ol {
     padding-left: 30px;
   }
 
@@ -165,7 +203,8 @@
     list-style: decimal;
   }
 
-  ul :first-child, ol :first-child {
+  ul :first-child,
+  ol :first-child {
     margin-top: 0;
   }
 
@@ -250,11 +289,13 @@
     padding: 6px 13px;
   }
 
-  table tr th :first-child, table tr td :first-child {
+  table tr th :first-child,
+  table tr td :first-child {
     margin-top: 0;
   }
 
-  table tr th :last-child, table tr td :last-child {
+  table tr th :last-child,
+  table tr td :last-child {
     margin-bottom: 0;
   }
 
@@ -350,12 +391,14 @@
     text-align: right;
   }
 
-  code, tt {
+  code,
+  tt {
     margin: 0 2px;
     padding: 0 5px;
     white-space: nowrap;
-    border: 1px solid #eaeaea;
-    background-color: #f8f8f8;
+    background-color: var(--color-backdrop);
+    color: var(--color-foreground);
+    border: 1px solid var(--color-border);
     border-radius: 3px;
   }
 
@@ -387,7 +430,8 @@
     border-radius: 3px;
   }
 
-  pre code, pre tt {
+  pre code,
+  pre tt {
     background-color: transparent;
     border: none;
   }
@@ -409,7 +453,8 @@
     }
   }
   @media print {
-    table, pre {
+    table,
+    pre {
       page-break-inside: avoid;
     }
 
