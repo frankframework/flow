@@ -1,12 +1,11 @@
 import { type ChangeEvent, type Dispatch, useId } from 'react'
-
 import clsx from 'clsx'
 import type { useFlowManagement } from '~/hooks/use-datamapper-flow-management'
 import type { ConfigActions } from '~/stores/datamapper_state/mappingListConfig/reducer'
 import { useFile } from '~/stores/datamapper_state/schemaQueue/schema-queue-context'
-import type { MappingListConfig } from '~/types/datamapper_types/config-types'
-import { FLOW_KEY } from '~/utils/datamapper_utils/const'
+import { FLOW_KEY } from '~/utils/datamapper_utils/constant'
 import { showErrorToast, showSuccessToast } from '../toast'
+import type { MappingListConfig } from '~/types/datamapper_types/config-types'
 
 interface SchemaUploadButtonProperties {
   label: string

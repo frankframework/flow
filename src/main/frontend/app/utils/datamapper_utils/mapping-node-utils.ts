@@ -1,11 +1,7 @@
 import type { Node, Edge } from '@xyflow/react'
-import type { NodeLabels, MappingConfig, ArrayMappingConfig } from '~/types/datamapper_types/node-types'
-
-interface GetNodesOptions {
-  typeIncludes?: string | string[]
-  idIncludes?: string
-  includeChecked?: boolean
-}
+import type { NodeLabels, MappingNodeData, ArrayNodeData } from '~/types/datamapper_types/react-node-types'
+import { findNodeById } from './generic-node-utils'
+import { getNodesByTypeAndId } from './property-node-utils'
 
 export interface DeleteMappingNodeResult {
   remainingNodes: Node[]
@@ -22,80 +18,12 @@ interface MappingEdgeInput {
   target: string
   colour: string
 }
-export function recurseFindArray(node: Node, nodes: Node[]) {
-  const parent = nodes.find((parent) => parent.id == node.parentId)
-  if (!parent) {
-    return
-  }
-  if (parent.type?.includes('Array')) {
-    return parent.id
-  }
-  return recurseFindArray(parent, nodes)
-}
-export function isGroup(variableType: string): boolean {
-  return variableType.includes('object') || variableType.includes('schematic') || variableType.includes('array')
-}
-export function isNodeGroup(nodeType: string): boolean {
-  return nodeType.includes('labeledGroup') || nodeType.includes('ArrayGroup') || nodeType.includes('extraSourceNode')
-}
-export function getType(id: string, parentId: string): string {
-  if (id.includes('object')) {
-    return 'labeledGroup'
-  } else if (id.includes('array')) {
-    return `${parentId.includes('source-table') ? 'source' : 'target'}ArrayGroup`
-  } else if (id.includes('schematic')) {
-    return 'extraSourceNode'
-  } else {
-    return parentId.includes('source-table') ? 'sourceOnly' : 'targetOnly'
-  }
-}
-
-export function getNodesByTypeAndId(
-  nodes: Node[] | null | undefined,
-  options: GetNodesOptions = {},
-  edges?: Edge[],
-): NodeLabels[] {
-  if (!nodes) return []
-
-  let newNodes = nodes
-    .filter((node) => {
-      if (!options.typeIncludes) return true
-
-      if (Array.isArray(options.typeIncludes)) {
-        return options.typeIncludes.some((type) => node.type?.includes(type))
-      }
-
-      return node.type?.includes(options.typeIncludes)
-    })
-    .filter((node) => {
-      if (!edges) return true
-
-      return !edges.some((edge) => edge.target === node.id)
-    })
-    .filter((node) => (options.idIncludes ? node.id.includes(options.idIncludes) : true))
-    .filter((node) => node.data.isConnectable != false)
-    .map(
-      (node) =>
-        ({
-          id: node.id,
-          type: node.data.variableTypeBasic,
-          label: typeof node.data?.label === 'string' ? node.data.label : '',
-          parentArray: recurseFindArray(node, nodes),
-          ...(options.includeChecked ? { checked: node.data?.checked as boolean } : {}),
-        }) as NodeLabels,
-    )
-  return newNodes
-}
-
-function findNodeById(nodeId: string, allNodes: Node[]): Node | undefined {
-  return allNodes.find((node) => node.id === nodeId)
-}
 
 function removeEdgesForNode(nodeId: string, allEdges: Edge[]): Edge[] {
   return allEdges.filter((edge) => edge.source !== nodeId && edge.target !== nodeId)
 }
 
-function getNodeAbsoluteY(node: Node, allNodes: Node[]): number {
+function getMappingHeightPosition(node: Node, allNodes: Node[]): number {
   let y = node.position.y
   let currentNode: Node | undefined = node
 
@@ -109,13 +37,17 @@ function getNodeAbsoluteY(node: Node, allNodes: Node[]): number {
   return y
 }
 
-function calculateMappingCenter(sourceIds: string[], targetId: string, allNodes: Node[]): { x: number; y: number } {
+function calculateCenterPositionFromNodes(
+  sourceIds: string[],
+  targetId: string,
+  allNodes: Node[],
+): { x: number; y: number } {
   const relatedNodes = [...sourceIds.map((id) => findNodeById(id, allNodes)), findNodeById(targetId, allNodes)].filter(
     Boolean,
   ) as Node[]
 
   const averageY =
-    relatedNodes.reduce((sum, node) => sum + getNodeAbsoluteY(node, allNodes), 0) / (relatedNodes.length || 1)
+    relatedNodes.reduce((sum, node) => sum + getMappingHeightPosition(node, allNodes), 0) / (relatedNodes.length || 1)
 
   const sourceTableX = findNodeById('source-table', allNodes)?.position.x ?? 0
   const targetTableX = findNodeById('target-table', allNodes)?.position.x ?? 0
@@ -179,7 +111,7 @@ function buildMappingEdges({ id, sources, target, colour }: MappingEdgeInput): E
 }
 
 export function createMappingNode(
-  mappingConfig: MappingConfig,
+  mappingConfig: MappingNodeData,
   allNodes: Node[] = [],
   allEdges: Edge[],
 ): MappingNodeResult {
@@ -189,7 +121,7 @@ export function createMappingNode(
 }
 
 function updateExistingMappingNode(
-  mappingConfig: MappingConfig,
+  mappingConfig: MappingNodeData,
   allNodes: Node[],
   allEdges: Edge[],
 ): MappingNodeResult {
@@ -208,17 +140,17 @@ function updateExistingMappingNode(
   }
 }
 
-function createNewMappingNode(mappingConfig: MappingConfig, allNodes: Node[], allEdges: Edge[]): MappingNodeResult {
+function createNewMappingNode(mappingConfig: MappingNodeData, allNodes: Node[], allEdges: Edge[]): MappingNodeResult {
   const id = createMappingId()
   const colour = createRandomColour()
 
-  const newMappingConfig: MappingConfig = {
+  const newMappingConfig: MappingNodeData = {
     ...mappingConfig,
     id,
     colour,
   }
 
-  const centerPosition = calculateMappingCenter(newMappingConfig.sources, newMappingConfig.target, allNodes)
+  const centerPosition = calculateCenterPositionFromNodes(newMappingConfig.sources, newMappingConfig.target, allNodes)
 
   const resolvedY = resolveVerticalOverlap(centerPosition.y, allNodes)
 
@@ -242,7 +174,7 @@ function createNewMappingNode(mappingConfig: MappingConfig, allNodes: Node[], al
 }
 
 export function createNewArrayMappingNode(
-  mappingConfig: ArrayMappingConfig,
+  mappingConfig: ArrayNodeData,
   allNodes: Node[],
   allEdges: Edge[],
 ): MappingNodeResult {
@@ -257,7 +189,7 @@ export function createNewArrayMappingNode(
     target: mappingConfig.target,
   }
 
-  const centerPosition = calculateMappingCenter([mappingConfig.source], mappingConfig.target, allNodes)
+  const centerPosition = calculateCenterPositionFromNodes([mappingConfig.source], mappingConfig.target, allNodes)
 
   const resolvedY = resolveVerticalOverlap(centerPosition.y, allNodes)
 
@@ -281,7 +213,7 @@ export function deleteMappingNode(nodeId: string, allNodes: Node[], allEdges: Ed
   }
 }
 
-export function getMappingNodes(nodes: Node[], edges: Edge[], mappingConfig?: MappingConfig) {
+export function getMappingNodes(nodes: Node[], edges: Edge[], mappingConfig?: MappingNodeData) {
   const unfilteredSources = getNodesByTypeAndId(
     nodes,
     {
@@ -296,6 +228,7 @@ export function getMappingNodes(nodes: Node[], edges: Edge[], mappingConfig?: Ma
     {
       typeIncludes: 'target',
       includeChecked: true,
+      targetToIncludeOnEdit: mappingConfig?.target,
     },
     edges,
   )

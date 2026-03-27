@@ -1,6 +1,8 @@
-import type { MappingListConfig, MappingFile, Mapping, Property, Target } from '~/types/datamapper_types/config-types'
-import type { FlowNode, PropertyNode, MappingNode, ArrayMappingNode } from '~/types/datamapper_types/node-types'
-import { isNodeGroup, recurseFindArray } from './react-node-utils'
+import type { MappingFile, Mapping, Property, Target, MappingRow } from '~/types/datamapper_types/export-types'
+import type { FlowNode, PropertyNode, MappingNode, ArrayMappingNode } from '~/types/datamapper_types/react-node-types'
+import { isNodeGroup, recurseFindArray } from './property-node-utils'
+import type { Edge, Node } from '@xyflow/react'
+import type { MappingListConfig } from '~/types/datamapper_types/config-types'
 
 export function convertMappingConfigToMappingFile(mappingConfig: MappingListConfig): MappingFile {
   const mappings = convertNodeToMappings(mappingConfig.propertyData.nodes as FlowNode[])
@@ -36,6 +38,8 @@ function convertNodesToProperty(
         property.children = convertNodesToProperty(nodes, node.id, basicNode, mappings)
       }
       let targetProperty = property as Target
+      targetProperty.isAttribute = (node.data.isAttribute as boolean) ?? false
+
       if (mappings)
         targetProperty.mapping = mappings.findLast((mapping) => mapping.target.internalId == property.internalId)
       return property
@@ -99,4 +103,35 @@ function arrayNodeToMapping(nodes: FlowNode[], node: ArrayMappingNode): Mapping 
   }
 
   return mapping
+}
+
+export function flowToMappingTable(nodes: Node[], edges: Edge[]): MappingRow[] {
+  const nodeMap = new Map<string, Node>(nodes.map((node) => [node.id, node]))
+
+  const getLabel = (nodeId: string): string => {
+    const label = nodeMap.get(nodeId)?.data?.label
+    return typeof label === 'string' ? label : nodeId
+  }
+
+  return nodes
+    .filter((node): node is MappingNode => node.type === 'mappingNode')
+    .map((mappingNode): MappingRow => {
+      const incomingEdges = edges.filter((edge) => edge.target === mappingNode.id)
+      const outgoingEdges = edges.filter((edge) => edge.source === mappingNode.id)
+
+      const mutations = mappingNode.data?.mutations ?? []
+      const conditions = mappingNode.data?.conditions ?? []
+      const conditional = mappingNode.data?.conditional ?? null
+
+      return {
+        id: mappingNode.id,
+        sourcesNames: incomingEdges.map((edge) => getLabel(edge.source)),
+        targetsNames: outgoingEdges.map((edge) => getLabel(edge.target)),
+        type: mappingNode.data?.type ?? 'one-to-one',
+        mutations,
+        conditions,
+        conditional,
+        outputLabel: mappingNode.data.outputLabel ?? '',
+      }
+    })
 }

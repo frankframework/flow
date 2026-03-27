@@ -30,13 +30,13 @@ import SidebarHeader from '~/components/sidebars-layout/sidebar-header'
 
 type LeftTab = 'files' | 'git'
 type SaveStatus = 'idle' | 'saving' | 'saved'
-interface ValidationError {
+export interface ValidationError {
   message: string
   lineNumber: number
   startColumn: number
   endColumn: number
 }
-interface TextModel {
+export interface TextModel {
   getLineContent: (n: number) => string
   getLineCount: () => number
   getLineMaxColumn: (n: number) => number
@@ -272,7 +272,11 @@ export default function CodeEditor() {
           return
         }
 
-        applyValidationDecorations(mapToValidationErrors(result.errors, model))
+        // Filter out errors mentioning the flow namespace
+        // TODO: Properly create an xsd for these elements
+        const filteredErrors = result.errors.filter((error) => !error.message.includes('{urn:frank-flow}'))
+
+        applyValidationDecorations(mapToValidationErrors(filteredErrors, model))
       } catch {
         if (validationId !== validationCounterRef.current) return
         const model = editor.getModel()
