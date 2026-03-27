@@ -6,7 +6,7 @@ function AdvancedEditor() {
   return (
     <div className="flex justify-center overflow-auto">
       <div className="flex w-full flex-col items-center px-4">
-        <code className="bg-backdrop w-full rounded p-4 break-words whitespace-pre-wrap shadow select-text">
+        <code className="bg-backdrop w-full rounded p-4 wrap-break-word whitespace-pre-wrap shadow select-text">
           {data ? JSON.stringify(JSON.parse(data), null, 2) : 'No data found'}
         </code>
       </div>

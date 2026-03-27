@@ -1,7 +1,8 @@
 import { type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { useTheme } from '~/hooks/use-theme'
-import DeleteButton from './datamapper/basic-components/delete-button'
+
+import CloseButton from './datamapper/basic-components/close-button'
 
 interface ModalProperties {
   isOpen: boolean
@@ -27,7 +28,7 @@ function Modal({ isOpen, onClose, title, children }: ModalProperties) {
       >
         {title && <h2 className="mb-4 text-xl font-bold">{title}</h2>}
         <div>{children}</div>
-        <DeleteButton onClick={onClose} className="absolute top-2 right-2 text-3xl hover:opacity-80" />
+        <CloseButton onClick={onClose} className="absolute top-2 right-2 text-3xl hover:opacity-80" />
       </div>
     </div>,
     document.body,

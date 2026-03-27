@@ -44,40 +44,38 @@ function OneEdgeNode({ id, data, variant = 'source', onEdit, onDelete, onHighlig
     <div
       onClick={updateChecked}
       className={clsx(
-        'border-border flex cursor-pointer flex-row gap-1 rounded-md border p-2',
+        'border-border group flex cursor-pointer items-center gap-2 rounded-md p-2',
         checked ? 'bg-foreground-active text-neutral' : 'bg-backdrop',
       )}
       style={{ width: `${PROPERTY_WIDTH}px` }}
     >
-      {/* Label */}
-      <div className="ml-2 max-w-40 text-left break-words">{data.label}</div>
+      {/* Left side */}
+      <span className="shrink-0">
+        ({data.isAttribute && 'attribute: '}
+        {data.variableType})
+      </span>
 
-      {/* Footer */}
-      <div className="ml-auto flex items-center text-sm opacity-80">
-        <span>
-          ({data.isAttribute && 'attribute: '}
-          {data.variableType})
-        </span>
+      <div className="min-w-0 flex-1 truncate text-left">{data.label}</div>
 
-        <div className="ml-4 flex h-[22px] gap-3">
-          <HighlightButton
-            onClick={() => {
-              onHighlight?.(id)
-            }}
-          />
+      {/* Right side */}
+      <div className="ml-auto hidden items-center gap-1 group-hover:flex">
+        <HighlightButton
+          onClick={() => {
+            onHighlight?.(id)
+          }}
+        />
 
-          <EditButton
-            onClick={() => {
-              onEdit?.(data)
-            }}
-          />
+        <EditButton
+          onClick={() => {
+            onEdit?.(data)
+          }}
+        />
 
-          <DeleteButton
-            onClick={() => {
-              onDelete?.(id)
-            }}
-          />
-        </div>
+        <DeleteButton
+          onClick={() => {
+            onDelete?.(id)
+          }}
+        />
       </div>
 
       {/* Active handle */}
@@ -90,7 +88,7 @@ function OneEdgeNode({ id, data, variant = 'source', onEdit, onDelete, onHighlig
           width: 10,
           height: 10,
         }} //Can't set this with tailwind for some reason
-        className={`${variant == 'source' ? '' : 'translate-x-[5px]'} transition-opacity transition-transform ${isConnectable ? 'opacity-100' : 'opacity-0'} `}
+        className={`${variant == 'source' ? '' : 'translate-x-1.25'} transition-opacity ${isConnectable ? 'opacity-100' : 'opacity-0'} `}
       />
 
       {/* Hidden opposite handle */}

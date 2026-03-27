@@ -422,22 +422,22 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
         />
       </Modal>
       {!addMappingModal && !addFieldModal && (
-        <div className="pointer-events-none fixed right-0 bottom-4 left-0 z-5 z-60 min-w-[300px]">
+        <div className="pointer-events-none fixed right-0 bottom-4 left-0 z-60 min-w-75">
           <div className="pointer-events-auto relative flex w-full justify-between px-12">
             <Button
-              className="absolute bottom-[2vh] left-1/4 z-10 rounded rounded-2xl rounded-md border px-4 py-2"
+              className="absolute bottom-[2vh] left-1/4 z-10 rounded-md border px-4 py-2"
               onClick={() => openAddFieldModal('source')}
             >
               Add Source
             </Button>
             <Button
-              className="bg-foreground-active text-foreground hover:bg-hover absolute bottom-[2vh] left-1/2 z-10 -translate-x-1/2 rounded-2xl border px-4 py-2 text-neutral-900"
+              className="bg-foreground-active hover:bg-hover absolute bottom-[2vh] left-1/2 z-10 -translate-x-1/2 rounded-2xl border px-4 py-2 text-neutral-900"
               onClick={openMapping}
             >
               MAP
             </Button>
             <Button
-              className="absolute right-1/4 bottom-[2vh] z-10 rounded rounded-2xl rounded-md border px-4 py-2"
+              className="absolute right-1/4 bottom-[2vh] z-10 rounded-2xl border px-4 py-2"
               onClick={() => openAddFieldModal('target')}
             >
               Add target
