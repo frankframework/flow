@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
+import { createConfiguration } from '~/services/configuration-service'
 import { useProjectStore } from '~/stores/project-store'
 import type { Project } from '~/types/project.types'
 import Button from '~/components/inputs/button'
 import DirectoryPicker from '~/components/directory-picker/directory-picker'
-import { createFileInProject } from '~/services/file-tree-service'
 import { fetchProject } from '~/services/project-service'
 
 interface AddConfigurationModalProperties {
@@ -50,7 +50,7 @@ export default function AddConfigurationModal({
         configname = `${configname}.xml`
       }
 
-      await createFileInProject(currentProject.name, rootLocationName, configname)
+      await createConfiguration(currentProject.name, `${rootLocationName}/${configname}`)
       const updatedProject = await fetchProject(currentProject.name)
       setProject(updatedProject)
       onSuccess?.()
@@ -92,7 +92,7 @@ export default function AddConfigurationModal({
       className="bg-background/50 absolute inset-0 z-50 flex items-center justify-center"
       onClick={handleClickedOutside}
     >
-      <div className="bg-background border-border relative h-[400px] w-1/3 min-w-[800px] rounded-lg border p-6 shadow-lg">
+      <div className="bg-background border-border relative h-100 w-1/3 min-w-200 rounded-lg border p-6 shadow-lg">
         <h2 className="mb-4 text-lg font-semibold">Add Configuration</h2>
         <p className="mb-4">Add a new configuration file.</p>
 

@@ -1,11 +1,12 @@
 import { create } from 'zustand'
 import { subscribeWithSelector } from 'zustand/middleware'
+import type { GitHunk } from '~/types/git.types'
 
 export interface DiffTabData {
   oldContent: string
   newContent: string
   filePath: string
-  hunks: import('~/types/git.types').GitHunk[]
+  hunks: GitHunk[]
 }
 
 export interface EditorTabData {

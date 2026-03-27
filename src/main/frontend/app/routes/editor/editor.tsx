@@ -9,6 +9,7 @@ import SidebarContentClose from '~/components/sidebars-layout/sidebar-content-cl
 import { SidebarSide } from '~/components/sidebars-layout/sidebar-layout-store'
 import { useTheme } from '~/hooks/use-theme'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { fetchFile } from '~/services/file-service'
 import { useProjectStore } from '~/stores/project-store'
 import EditorFileStructure from '~/components/file-structure/editor-file-structure'
 import useEditorTabStore from '~/stores/editor-tab-store'
@@ -45,10 +46,16 @@ export interface ValidationError {
   startColumn: number
   endColumn: number
 }
+
 export interface TextModel {
   getLineContent: (n: number) => string
   getLineCount: () => number
   getLineMaxColumn: (n: number) => number
+}
+
+interface CachedFile {
+  content: string
+  type: string
 }
 
 const SAVED_DISPLAY_DURATION = 2000
@@ -161,7 +168,7 @@ export default function CodeEditor() {
   const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const validationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const validationCounterRef = useRef(0)
-  const contentCacheRef = useRef<Map<string, string>>(new Map())
+  const contentCacheRef = useRef<Map<string, CachedFile>>(new Map())
 
   const activeTab = useEditorTabStore(
     useShallow((state) => {
@@ -180,7 +187,7 @@ export default function CodeEditor() {
   const isDiffTab = activeTab.type === 'diff'
 
   const performSave = useCallback(
-    async (content?: string) => {
+    (content?: string) => {
       if (!project || !activeTabFilePath || isDiffTab) return
 
       const updatedContent = content ?? editorReference.current?.getValue?.()
@@ -190,18 +197,19 @@ export default function CodeEditor() {
       if (!configPath) return
 
       setSaveStatus('saving')
-      try {
-        const xmlResponse = await saveConfiguration(project.name, configPath, updatedContent)
-        setFileContent(xmlResponse.xmlContent)
-        contentCacheRef.current.set(activeTabFilePath, updatedContent)
-        setSaveStatus('saved')
-        if (savedTimerRef.current) clearTimeout(savedTimerRef.current)
-        savedTimerRef.current = setTimeout(() => setSaveStatus('idle'), SAVED_DISPLAY_DURATION)
-        if (project.isGitRepository) refreshOpenDiffs(project.name)
-      } catch (error) {
-        showErrorToastFrom('Error saving', error)
-        setSaveStatus('idle')
-      }
+      saveConfiguration(project.name, configPath, updatedContent)
+        .then(({ xmlContent }) => {
+          setFileContent(xmlContent)
+          contentCacheRef.current.set(activeTabFilePath, { type: 'xml', content: xmlContent })
+          setSaveStatus('saved')
+          if (savedTimerRef.current) clearTimeout(savedTimerRef.current)
+          savedTimerRef.current = setTimeout(() => setSaveStatus('idle'), SAVED_DISPLAY_DURATION)
+          if (project.isGitRepository) refreshOpenDiffs(project.name)
+        })
+        .catch((error) => {
+          showErrorToastFrom('Error saving', error)
+          setSaveStatus('idle')
+        })
     },
     [project, activeTabFilePath, isDiffTab],
   )
@@ -398,9 +406,11 @@ export default function CodeEditor() {
       (newActiveTab, oldActiveTab) => {
         if (oldActiveTab && oldActiveTab !== newActiveTab) flushPendingSave()
         if (oldActiveTab && oldActiveTab !== newActiveTab) {
-          const currentContent = editorReference.current?.getValue()
-          if (currentContent !== undefined) {
-            contentCacheRef.current.set(oldActiveTab, currentContent)
+          const currentEditor = editorReference.current
+          if (currentEditor) {
+            const content = currentEditor.getValue()
+            const type = currentEditor.getModel()?.getLanguageId() || 'xml'
+            contentCacheRef.current.set(oldActiveTab, { type, content })
           }
           flushPendingSave()
         }
@@ -412,37 +422,49 @@ export default function CodeEditor() {
   useEffect(() => {
     if (isDiffTab) return
 
-    const abortController = new AbortController()
-
-    async function fetchXml() {
-      try {
-        const configPath = useEditorTabStore.getState().getTab(activeTabFilePath)?.configurationPath
-        if (!configPath || !project) return
-
-        const isForceRefresh = refreshCounter !== lastRefreshCounterRef.current
-        lastRefreshCounterRef.current = refreshCounter
-
-        if (!isForceRefresh) {
-          const cached = contentCacheRef.current.get(activeTabFilePath)
-          if (cached !== undefined) {
-            setFileContent(cached)
-            return
-          }
-        }
-
-        const xmlString = await fetchConfiguration(project.name, configPath, abortController.signal)
-        if (!abortController.signal.aborted) {
-          contentCacheRef.current.set(activeTabFilePath, xmlString)
-          setFileContent(xmlString)
-        }
-      } catch (error) {
-        if (!abortController.signal.aborted) {
-          console.error('Failed to load XML:', error)
-        }
+    function setMonacoContent(abortSignal: AbortSignal, content: string, type: string) {
+      if (!abortSignal.aborted) {
+        contentCacheRef.current.set(activeTabFilePath, { type, content })
+        setFileContent(content)
+        setFileLanguage(type)
       }
     }
 
-    fetchXml()
+    const abortController = new AbortController()
+    const activeTab = useEditorTabStore.getState().getTab(activeTabFilePath)
+    if (!activeTab || !project) return
+
+    const filePath = activeTab?.configurationPath
+    const fileExtension = activeTab.name.split('.').pop()?.toLowerCase()
+    const isForceRefresh = refreshCounter !== lastRefreshCounterRef.current
+    lastRefreshCounterRef.current = refreshCounter
+
+    if (!isForceRefresh) {
+      const cached = contentCacheRef.current.get(activeTabFilePath)
+      if (cached !== undefined) {
+        setFileContent(cached.content)
+        setFileLanguage(cached.type)
+        return
+      }
+    }
+
+    if (fileExtension === 'xml') {
+      fetchConfiguration(project.name, filePath, abortController.signal)
+        .then((content) => setMonacoContent(abortController.signal, content, 'xml'))
+        .catch((error) => {
+          if (!abortController.signal.aborted) {
+            console.error('Failed to load configuration XML:', error)
+          }
+        })
+    } else {
+      fetchFile(project.name, filePath, abortController.signal)
+        .then(({ content, type }) => setMonacoContent(abortController.signal, content, type))
+        .catch((error) => {
+          if (!abortController.signal.aborted) {
+            console.error('Failed to load file:', error)
+          }
+        })
+    }
     return () => abortController.abort()
   }, [project, activeTabFilePath, isDiffTab, refreshCounter])
 

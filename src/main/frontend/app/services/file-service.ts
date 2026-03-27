@@ -10,14 +10,14 @@ export async function createFile(projectName: string, filePath: string): Promise
   await updateFile(projectName, filePath, '')
 }
 
-export function fetchFile(projectName: string, filepath: string, signal?: AbortSignal): Promise<FileDTO> {
-  return apiFetch<FileDTO>(`${getBaseUrl(projectName)}/${encodeURIComponent(filepath)}`, { signal })
+export function fetchFile(projectName: string, path: string, signal?: AbortSignal): Promise<FileDTO> {
+  return apiFetch<FileDTO>(`${getBaseUrl(projectName)}?path=${encodeURIComponent(path)}`, { signal })
 }
 
-export function updateFile(projectName: string, filePath: string, fileContent: string): Promise<FileTreeNode> {
-  return apiFetch<FileTreeNode>(`${getBaseUrl(projectName)}/${encodeURIComponent(filePath)}`, {
+export function updateFile(projectName: string, path: string, content: string): Promise<FileTreeNode> {
+  return apiFetch<FileTreeNode>(`${getBaseUrl(projectName)}?path=${encodeURIComponent(path)}`, {
     method: 'PUT',
-    body: fileContent,
+    body: content,
   })
 }
 
@@ -29,9 +29,9 @@ export function renameFile(projectName: string, oldPath: string, newPath: string
 }
 
 export async function deleteFile(projectName: string, path: string): Promise<void> {
-  await apiFetch<void>(`${getBaseUrl(projectName)}/${encodeURIComponent(path)}`, { method: 'DELETE' })
+  await apiFetch<void>(`${getBaseUrl(projectName)}?path=${encodeURIComponent(path)}`, { method: 'DELETE' })
 }
 
 function getBaseUrl(projectName: string): string {
-  return `/projects/${encodeURIComponent(projectName)}/files`
+  return `/projects/${encodeURIComponent(projectName)}/file/`
 }
