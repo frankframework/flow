@@ -14,7 +14,7 @@ function ArrayMappingNode({ id, data, onClick, onDelete }: ArrayMappingNodePrope
   return (
     <div
       onClick={() => onClick?.(id)}
-      className={`relative flex max-h-12.5 justify-between overflow-hidden rounded-md p-2`}
+      className={`group relative flex max-h-12.5 justify-between rounded-md p-2`}
       style={{
         backgroundColor: data.colour || 'var(--color-backdrop)',
         width: `${MAPPING_WIDTH}px`,
@@ -27,9 +27,9 @@ function ArrayMappingNode({ id, data, onClick, onDelete }: ArrayMappingNodePrope
       </div>
 
       {/* Right: Buttons (top and bottom) */}
-      <div className="z-5 flex h-6.25 w-1.25 flex-col justify-between">
+      <div className="absolute right-0 bottom-6 z-10 hidden text-xl group-hover:block">
         <DeleteButton
-          className="absolute top-4 right-0 z-4"
+          className="z-10"
           onClick={() => {
             onDelete?.(id)
           }}
