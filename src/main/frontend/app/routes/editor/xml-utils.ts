@@ -67,3 +67,25 @@ export async function normalizeFrankElements(xml: string): Promise<string> {
     return xml
   }
 }
+
+export function extractFlowElements(xml: string): string | null {
+  const match = xml.match(/<flow:FlowElements[\s\S]*?<\/flow:FlowElements>/)
+  return match ? match[0] : null
+}
+
+export function wrapFlowXml(fragment: string): string {
+  const inner = fragment
+    .replace(/^<flow:FlowElements[^>]*>/, '')
+    .replace(/<\/flow:FlowElements>$/, '')
+    .trim()
+
+  return `<flow:FlowElements xmlns:flow="urn:frank-flow">${inner}</flow:FlowElements>`
+}
+
+export function findFlowElementsStartLine(xml: string): number {
+  const lines = xml.split('\n')
+  for (const [i, line] of lines.entries()) {
+    if (line.includes('<flow:FlowElements')) return i + 1 // 1-based line numbers
+  }
+  return 1
+}

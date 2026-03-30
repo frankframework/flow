@@ -30,6 +30,7 @@ import { convertAdapterXmlToJson, getAdapterFromConfiguration } from '~/routes/s
 import { exportFlowToXml } from '~/routes/studio/flow-to-xml-parser'
 import useNodeContextStore from '~/stores/node-context-store'
 import CreateNodeModal from '~/components/flow/create-node-modal'
+import { useFFDoc } from '@frankframework/doc-library-react'
 import { useProjectStore } from '~/stores/project-store'
 import { clearConfigurationCache, fetchConfigurationCached, saveConfiguration } from '~/services/configuration-service'
 import { refreshOpenDiffs } from '~/services/git-service'
@@ -68,6 +69,8 @@ function FlowCanvas() {
     setChildParentId,
     setDraggedName,
     setEditingSubtype,
+    setAttributes,
+    setNodeId,
   } = useNodeContextStore(
     useShallow((s) => ({
       isEditing: s.isEditing,
@@ -78,8 +81,11 @@ function FlowCanvas() {
       setChildParentId: s.setChildParentId,
       setDraggedName: s.setDraggedName,
       setEditingSubtype: s.setEditingSubtype,
+      setAttributes: s.setAttributes,
+      setNodeId: s.setNodeId,
     })),
   )
+  const { elements } = useFFDoc()
   const [showModal, setShowModal] = useState(false)
   const [edgeDropPositions, setEdgeDropPositions] = useState<{ x: number; y: number } | null>(null)
   const clipboardRef = useRef<{
@@ -563,6 +569,14 @@ function FlowCanvas() {
 
     const parsedData = JSON.parse(data)
     const { screenToFlowPosition } = reactFlow
+
+    if (elements) {
+      const elementData = elements[parsedData.name]
+      if (elementData) {
+        setAttributes(elementData.attributes)
+        setNodeId(+useFlowStore.getState().nodeIdCounter)
+      }
+    }
 
     const position = screenToFlowPosition({ x: event.clientX, y: event.clientY })
     addNodeAtPosition(position, parsedData.name)
