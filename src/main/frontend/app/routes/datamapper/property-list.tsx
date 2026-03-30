@@ -344,7 +344,7 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
 
   return (
     <div className="w-full" ref={canvasWidth}>
-      <div className="mt-4 h-[30px] px-4">
+      <div className="mt-4 h-7.5 px-4">
         <div className="absolute right-[65%] flex flex-row items-center justify-between px-45">
           <h1 className="text-l font-semibold">Source: {config.formatTypes.source?.name}</h1>
         </div>

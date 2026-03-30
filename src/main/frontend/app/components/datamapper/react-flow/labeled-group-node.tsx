@@ -4,6 +4,7 @@ import { GROUP_WIDTH } from '~/utils/datamapper_utils/constant'
 import HighlightButton from '../basic-components/highlight-button'
 import EditButton from '../basic-components/edit-button'
 import DeleteButton from '../basic-components/delete-button'
+import VariableTypeIcon from '../basic-components/variable-type-icon'
 
 export interface LabeledGroupNodeProperties {
   id: string
@@ -16,11 +17,36 @@ export interface LabeledGroupNodeProperties {
 function LabeledGroupNode({ id, data, onEdit, onDelete, onHighlight }: LabeledGroupNodeProperties) {
   return (
     <div
-      className="bg-selected group relative flex h-full flex-col gap-1 rounded-md border border-gray-400 p-0"
+      className="bg-selected group relative flex h-full flex-col rounded-md border border-gray-400 p-0"
       style={{ width: `${GROUP_WIDTH}px` }}
     >
       {/* Header */}
-      <div className="bg-backdrop w-full rounded-md px-2 py-2 text-sm font-semibold">{data.label ?? 'Group'}</div>
+      <div className="bg-backdrop flex w-full gap-2 rounded-md px-2 py-2">
+        <span className="shrink-0">
+          <VariableTypeIcon variableType={data.variableType} variableTypeBasic={data.variableTypeBasic ?? ''} />
+        </span>
+
+        <div className="min-w-0 flex-1 truncate rounded-md text-left">{data.label}</div>
+        <div className="hidden gap-3 group-hover:flex">
+          <HighlightButton
+            onClick={() => {
+              onHighlight?.(id)
+            }}
+          />
+
+          <EditButton
+            onClick={() => {
+              onEdit?.(data)
+            }}
+          />
+
+          <DeleteButton
+            onClick={() => {
+              onDelete?.(id)
+            }}
+          />
+        </div>
+      </div>
 
       <div className="bg-backdrop border-border absolute bottom-0 flex w-full items-center justify-between rounded-md border text-sm opacity-80">
         <span className="px-4 py-2">({data.variableType})</span>
