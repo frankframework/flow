@@ -49,7 +49,7 @@ function ArrayGroupNode({ id, data, variant = 'source', onDelete, onHighlight }:
     >
       <div
         className="bg-selected relative flex h-full flex-col gap-1 rounded-md border border-gray-400 p-0"
-        style={{ width: `${GROUP_WIDTH}px` }}
+        style={{ width: `${data.width}px` }}
       >
         {/* Header */}
         <div className="bg-backdrop flex w-full gap-2 rounded-md px-2 py-2">
@@ -75,7 +75,7 @@ function ArrayGroupNode({ id, data, variant = 'source', onDelete, onHighlight }:
 
         <div className="bg-backdrop border-border absolute bottom-0 flex w-full items-center justify-between rounded-md border text-sm opacity-80">
           <span className="px-4 py-2">({data.variableType})</span>
-          <div className="hidden gap-3 group-hover:flex">
+          <div className="mr-3 hidden gap-3 group-hover:flex">
             <HighlightButton
               onClick={() => {
                 onHighlight?.(id)

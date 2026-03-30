@@ -18,7 +18,7 @@ function LabeledGroupNode({ id, data, onEdit, onDelete, onHighlight }: LabeledGr
   return (
     <div
       className="bg-selected group relative flex h-full flex-col rounded-md border border-gray-400 p-0"
-      style={{ width: `${GROUP_WIDTH}px` }}
+      style={{ width: `${data.width}px` }}
     >
       {/* Header */}
       <div className="bg-backdrop flex w-full gap-2 rounded-md px-2 py-2">

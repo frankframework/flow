@@ -45,13 +45,19 @@ function OneEdgeNode({ id, data, variant = 'source', onEdit, onDelete, onHighlig
     <div
       onClick={updateChecked}
       className={clsx(
-        'border-border group flex cursor-pointer items-center gap-2 rounded-md p-2',
+        'border-border group mr-2 flex cursor-pointer items-center gap-2 rounded-md p-2',
         checked ? 'bg-foreground-active text-neutral' : 'bg-backdrop',
       )}
-      style={{ width: `${PROPERTY_WIDTH}px` }}
+      style={{ width: `${data.width}px` }}
     >
       {/* Left side */}
-      <span className="flex shrink-0">
+      <span
+        className="flex shrink-0"
+        style={{
+          //Style needed here because conditional statement won't work with tailwind
+          marginLeft: isConnectable ? '10px' : '',
+        }}
+      >
         {data.isAttribute && 'attribute: '}
         <VariableTypeIcon variableType={data.variableType} variableTypeBasic={data.variableTypeBasic ?? ''} />
       </span>
@@ -89,7 +95,7 @@ function OneEdgeNode({ id, data, variant = 'source', onEdit, onDelete, onHighlig
           width: 10,
           height: 10,
         }} //Can't set this with tailwind for some reason
-        className={`${variant == 'source' ? '' : 'translate-x-1.25'} transition-opacity ${isConnectable ? 'opacity-100' : 'opacity-0'} `}
+        className={`${variant == 'target' ? 'translate-x-1.25' : '-translate-x-2.5'} transition-opacity ${isConnectable ? 'opacity-100' : 'opacity-0'} `}
       />
 
       {/* Hidden opposite handle */}

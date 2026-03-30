@@ -10,6 +10,7 @@ import {
   checkDuplicateLabel,
   deleteNodeById,
   generateNodeId,
+  getGroupWidth,
   getType,
   getUnsetNodeIds,
   isGroup,
@@ -127,6 +128,7 @@ export function useFlowManagement({
         variableType,
         variableTypeBasic: formatType?.properties.find((a) => a.name == variableType)?.type,
         defaultValue: defaultValue ?? '',
+        width: getGroupWidth(parentId, reactFlowInstance.getNode),
         isAttribute,
       })
 

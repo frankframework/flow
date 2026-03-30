@@ -44,7 +44,7 @@ const INITIAL_NODES: Node[] = [
     type: 'group',
     position: { x: 200, y: 0 },
     width: TABLE_WIDTH,
-
+    style: { display: 'none' },
     data: {},
   },
   {
@@ -60,6 +60,7 @@ const INITIAL_NODES: Node[] = [
     type: 'group',
     position: { x: 1000, y: 0 },
     width: TABLE_WIDTH,
+    style: { display: 'none' },
 
     data: {},
   },
