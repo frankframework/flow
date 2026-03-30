@@ -42,7 +42,7 @@ function ArrayGroupNode({ id, data, variant = 'source', onDelete, onHighlight }:
     <div
       onClick={updateChecked}
       className={clsx(
-        'h-full cursor-pointer',
+        'group h-full cursor-pointer',
         checked ? 'border-foreground-active border-rounded rounded-md border-4' : 'border-none',
       )}
     >
@@ -53,9 +53,9 @@ function ArrayGroupNode({ id, data, variant = 'source', onDelete, onHighlight }:
         {/* Header */}
         <div className="bg-backdrop w-full rounded-md px-2 py-2 text-sm font-semibold">{data.label ?? 'Group'}</div>
 
-        <div className="bg-backdrop border-border absolute bottom-0 flex w-full items-center justify-between rounded-md border px-4 py-2 text-sm opacity-80">
-          <span>({data.variableType})</span>
-          <div className="flex gap-3">
+        <div className="bg-backdrop border-border absolute bottom-0 flex w-full items-center justify-between rounded-md border text-sm opacity-80">
+          <span className="px-4 py-2">({data.variableType})</span>
+          <div className="hidden gap-3 group-hover:flex">
             <HighlightButton
               onClick={() => {
                 onHighlight?.(id)
@@ -77,7 +77,7 @@ function ArrayGroupNode({ id, data, variant = 'source', onDelete, onHighlight }:
               width: 10,
               height: 10,
             }} //Can't set this with tailwind for some reason
-            className={`${variant == 'source' ? '' : 'translate-x-[5px]'} transition-opacity transition-transform ${isConnectable ? 'opacity-100' : 'opacity-0'} `}
+            className={`${variant == 'source' ? '' : 'translate-x-1.25'} transition-opacity ${isConnectable ? 'opacity-100' : 'opacity-0'} `}
           />
         </div>
 

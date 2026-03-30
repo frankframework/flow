@@ -17,7 +17,7 @@ function MappingNode({ id, data, onClick, onDelete, onEdit }: MappingNodePropert
   return (
     <div
       onClick={() => onClick?.(id)}
-      className={`relative flex max-h-[50px] justify-between overflow-hidden rounded-md p-2`}
+      className={`group relative flex max-h-12.5 justify-between rounded-md p-2`}
       style={{
         backgroundColor: data.colour || 'var(--color-backdrop)',
         width: `${MAPPING_WIDTH}px`,
@@ -29,16 +29,16 @@ function MappingNode({ id, data, onClick, onDelete, onEdit }: MappingNodePropert
       </div>
 
       {/* Right: Buttons (top and bottom) */}
-      <div className="z-5 flex h-[25px] w-[5px] flex-col justify-between">
+      <div className="absolute right-0 bottom-6 z-5 hidden text-xl group-hover:block">
         <EditButton
-          className="absolute right-0 bottom-5 text-sm"
+          className=""
           onClick={() => {
             onEdit?.(data)
           }}
         />
 
         <DeleteButton
-          className="absolute top-4 right-0 z-4"
+          className=""
           onClick={() => {
             onDelete?.(id)
           }}
@@ -50,13 +50,13 @@ function MappingNode({ id, data, onClick, onDelete, onEdit }: MappingNodePropert
         type="target"
         position={Position.Left}
         isConnectable={false}
-        className="pointer-events-none h-0 w-0 translate-x-[5px] opacity-0"
+        className="pointer-events-none h-0 w-0 translate-x-1.25 opacity-0"
       />
       <Handle
         type="source"
         position={Position.Right}
         isConnectable={false}
-        className="pointer-events-none h-0 w-0 -translate-x-[5px] opacity-0"
+        className="pointer-events-none h-0 w-0 -translate-x-1.25 opacity-0"
       />
     </div>
   )
