@@ -55,7 +55,7 @@ function OneEdgeNode({ id, data, variant = 'source', onEdit, onDelete, onHighlig
         className="flex shrink-0"
         style={{
           //Style needed here because conditional statement won't work with tailwind
-          marginLeft: isConnectable ? '10px' : '',
+          marginLeft: isConnectable && variant === 'target' ? '10px' : '',
         }}
       >
         {data.isAttribute && 'attribute: '}

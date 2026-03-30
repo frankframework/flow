@@ -15,7 +15,7 @@ function ExtraSourceNode({ id, data, onDelete, onHighlight }: ExtraSourceNodePro
   return (
     <div
       className="bg-selected group relative flex h-full flex-col gap-1 rounded-md border border-gray-400 p-0"
-      style={{ width: `${GROUP_WIDTH + 30}px` }}
+      style={{ width: `${data.width}px` }}
     >
       {/* Header */}
       <div className="bg-info w-full rounded-md px-2 py-2 text-sm font-semibold">
