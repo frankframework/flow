@@ -56,7 +56,7 @@ function MappingNode({ id, data, onClick, onDelete, onEdit }: MappingNodePropert
         type="source"
         position={Position.Right}
         isConnectable={false}
-        className="pointer-events-none h-0 w-0 translate-x-1.25 opacity-0"
+        className="pointer-events-none h-0 w-0 -translate-x-1.25 opacity-0"
       />
     </div>
   )
