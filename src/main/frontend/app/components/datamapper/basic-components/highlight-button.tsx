@@ -10,7 +10,7 @@ export default function HighlightButton({ onClick, className }: { onClick: () =>
         onClick()
       }}
     >
-      <LightBulb className="h-6" />
+      <LightBulb className="fill-foreground h-6" />
     </button>
   )
 }

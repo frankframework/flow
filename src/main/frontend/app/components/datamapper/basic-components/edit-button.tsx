@@ -10,7 +10,7 @@ export default function EditButton({ onClick, className }: { onClick: () => void
         onClick()
       }}
     >
-      <TextCircle className="h-6" />
+      <TextCircle className="fill-foreground h-6" />
     </button>
   )
 }

@@ -17,19 +17,19 @@ export default function VariableTypeIcon({
   function getIcon() {
     switch (variableTypeBasic) {
       case 'string': {
-        return <TextSquare className="h-6" />
+        return <TextSquare className="fill-foreground h-6" />
       }
       case 'object': {
-        return <BoxMin className="h-5" />
+        return <BoxMin className="fill-foreground h-5" />
       }
       case 'number': {
-        return <Hashtag className="h-6" />
+        return <Hashtag className="fill-foreground h-6" />
       }
       case 'array': {
-        return <List className="h-6" />
+        return <List className="fill-foreground h-6" />
       }
       case 'boolean': {
-        return <PlusMin className="h-6" />
+        return <PlusMin className="fill-foreground h-6" />
       }
       default: {
         return '?'
