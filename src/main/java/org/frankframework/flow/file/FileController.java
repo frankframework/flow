@@ -27,7 +27,7 @@ public class FileController {
 	}
 
 	@GetMapping()
-	public ResponseEntity<FileDTO> getFile(@PathVariable String projectName, @RequestParam String path) throws IOException {
+	public ResponseEntity<FileDTO> getFile(@PathVariable String projectName, @RequestParam String path) {
 		FileDTO file = fileService.readFile(projectName, path);
 		return ResponseEntity.ok(file);
 	}
@@ -43,13 +43,13 @@ public class FileController {
 	}
 
 	@PostMapping("move")
-	public ResponseEntity<FileTreeNode> renameFile(@PathVariable String projectName, @RequestBody FileRenameDTO dto) throws IOException {
+	public ResponseEntity<FileTreeNode> renameFile(@PathVariable String projectName, @RequestBody FileRenameDTO dto) {
 		FileTreeNode node = fileService.renameFile(projectName, dto.oldPath(), dto.newPath());
 		return ResponseEntity.ok(node);
 	}
 
 	@DeleteMapping()
-	public ResponseEntity<Void> deleteFile(@PathVariable String projectName, @RequestParam String path) throws IOException {
+	public ResponseEntity<Void> deleteFile(@PathVariable String projectName, @RequestParam String path) {
 		fileService.deleteFile(projectName, path);
 		return ResponseEntity.noContent().build();
 	}

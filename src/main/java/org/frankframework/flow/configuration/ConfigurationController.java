@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.xml.sax.SAXException;
 
@@ -31,32 +32,32 @@ public class ConfigurationController {
 		this.configurationService = configurationService;
 	}
 
-	@GetMapping("/{filepath}")
+	@GetMapping()
 	public ResponseEntity<ConfigurationDTO> getConfigurationByPath(
 			@PathVariable String projectName,
-			@PathVariable String filepath
+			@RequestParam String path
 	) throws IOException, ApiException {
-		ConfigurationDTO dto = configurationService.getConfigurationContent(projectName, filepath);
+		ConfigurationDTO dto = configurationService.getConfigurationContent(projectName, path);
 		return ResponseEntity.ok(dto);
 	}
 
-	@PutMapping("/{filepath}")
+	@PutMapping()
 	public ResponseEntity<XmlDTO> updateConfiguration(
 			@PathVariable String projectName,
-			@PathVariable String filepath,
+			@RequestParam String path,
 			@RequestBody String content
 	) throws ApiException, IOException, ParserConfigurationException, SAXException, TransformerException {
-		String updatedContent = configurationService.updateConfiguration(projectName, filepath, content);
+		String updatedContent = configurationService.updateConfiguration(projectName, path, content);
 		XmlDTO xmlDTO = new XmlDTO(updatedContent);
 		return ResponseEntity.ok(xmlDTO);
 	}
 
-	@PostMapping("/{fileName}")
+	@PostMapping()
 	public ResponseEntity<XmlDTO> addConfiguration(
 			@PathVariable String projectName,
-			@PathVariable String fileName
+			@RequestParam String name
 	) throws ApiException, IOException {
-		String content = configurationService.addConfiguration(projectName, fileName);
+		String content = configurationService.addConfiguration(projectName, name);
 		XmlDTO xmlDTO = new XmlDTO(content);
 		return ResponseEntity.ok(xmlDTO);
 	}

@@ -7,6 +7,7 @@ import org.frankframework.flow.project.Project;
 import org.frankframework.flow.project.ProjectNotFoundException;
 import org.frankframework.flow.project.ProjectService;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -25,14 +26,17 @@ public class FileService {
 		this.fileSystemStorage = fileSystemStorage;
 	}
 
-	public FileDTO readFile(String projectName, String path) throws IOException {
+	public FileDTO readFile(String projectName, String path) throws ApiException {
 		validatePath(path);
-		validateWithinProject(projectName, path);
+		String content;
+		String type;
 
-		String content = fileSystemStorage.readFile(path);
-		String type = fileSystemStorage.readFileType(path);
-		if (type == null) {
-			type = "text/plain";
+		try {
+			validateWithinProject(projectName, path);
+			content = fileSystemStorage.readFile(path);
+			type = fileSystemStorage.readFileType(path);
+		} catch (IOException exception) {
+			throw new ApiException("Failed to read file: " + exception.getMessage(), HttpStatus.UNPROCESSABLE_CONTENT);
 		}
 		return new FileDTO(content, type);
 	}

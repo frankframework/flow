@@ -3,7 +3,7 @@ import { apiFetch } from '~/utils/api'
 
 export interface FileDTO {
   content: string
-  type: string
+  type: string | null
 }
 
 export async function createFile(projectName: string, filePath: string): Promise<void> {
@@ -33,5 +33,5 @@ export async function deleteFile(projectName: string, path: string): Promise<voi
 }
 
 function getBaseUrl(projectName: string): string {
-  return `/projects/${encodeURIComponent(projectName)}/file/`
+  return `/projects/${encodeURIComponent(projectName)}/file`
 }

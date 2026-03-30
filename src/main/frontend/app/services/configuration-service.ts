@@ -25,21 +25,21 @@ export async function fetchConfigurationCached(
 
 export async function fetchConfiguration(projectName: string, filepath: string, signal?: AbortSignal): Promise<string> {
   const { content } = await apiFetch<{ content: string }>(
-    `${getBaseUrl(projectName)}/${encodeURIComponent(filepath)}`,
+    `${getBaseUrl(projectName)}?path=${encodeURIComponent(filepath)}`,
     { signal },
   )
   return content
 }
 
 export async function saveConfiguration(projectName: string, filepath: string, content: string): Promise<XmlResponse> {
-  return apiFetch<XmlResponse>(`${getBaseUrl(projectName)}/${encodeURIComponent(filepath)}`, {
+  return apiFetch<XmlResponse>(`${getBaseUrl(projectName)}?path=${encodeURIComponent(filepath)}`, {
     method: 'PUT',
     body: JSON.stringify({ filepath, content }),
   })
 }
 
 export async function createConfiguration(projectName: string, filename: string): Promise<XmlResponse> {
-  return apiFetch<XmlResponse>(`${getBaseUrl(projectName)}/${encodeURIComponent(filename)}`, { method: 'POST' })
+  return apiFetch<XmlResponse>(`${getBaseUrl(projectName)}?path=${encodeURIComponent(filename)}`, { method: 'POST' })
 }
 
 function getBaseUrl(projectName: string): string {

@@ -422,8 +422,8 @@ export default function CodeEditor() {
   useEffect(() => {
     if (isDiffTab) return
 
-    function setMonacoContent(abortSignal: AbortSignal, content: string, type: string) {
-      if (!abortSignal.aborted) {
+    function setMonacoContent(content: string, type: string, abortSignal?: AbortSignal) {
+      if (!abortSignal || !abortSignal.aborted) {
         contentCacheRef.current.set(activeTabFilePath, { type, content })
         setFileContent(content)
         setFileLanguage(type)
@@ -450,7 +450,7 @@ export default function CodeEditor() {
 
     if (fileExtension === 'xml') {
       fetchConfiguration(project.name, filePath, abortController.signal)
-        .then((content) => setMonacoContent(abortController.signal, content, 'xml'))
+        .then((content) => setMonacoContent(content, 'xml', abortController.signal))
         .catch((error) => {
           if (!abortController.signal.aborted) {
             console.error('Failed to load configuration XML:', error)
@@ -458,10 +458,14 @@ export default function CodeEditor() {
         })
     } else {
       fetchFile(project.name, filePath, abortController.signal)
-        .then(({ content, type }) => setMonacoContent(abortController.signal, content, type))
+        .then(({ content, type }) => {
+          const fileType = type ? type.split('/')[1] : ''
+          setMonacoContent(content, fileType, abortController.signal)
+        })
         .catch((error) => {
           if (!abortController.signal.aborted) {
             console.error('Failed to load file:', error)
+            setMonacoContent('', '')
           }
         })
     }
@@ -482,9 +486,9 @@ export default function CodeEditor() {
   }, [activeTabFilePath])
 
   useEffect(() => {
-    if (!fileContent || !xsdLoaded || isDiffTab) return
+    if (!fileContent || !xsdLoaded || isDiffTab || fileLanguage !== 'xml') return
     runSchemaValidation(fileContent)
-  }, [fileContent, xsdLoaded, isDiffTab, runSchemaValidation])
+  }, [fileContent, xsdLoaded, isDiffTab, runSchemaValidation, fileLanguage])
 
   useEffect(() => {
     if (!fileContent || !activeTabFilePath || !editorReference.current || isDiffTab) return
@@ -612,7 +616,7 @@ export default function CodeEditor() {
                   onMount={handleEditorMount}
                   onChange={(value) => {
                     scheduleSave()
-                    if (value) scheduleSchemaValidation(value)
+                    if (value && fileLanguage === 'xml') scheduleSchemaValidation(value)
                   }}
                   options={{ automaticLayout: true, quickSuggestions: false }}
                 />
