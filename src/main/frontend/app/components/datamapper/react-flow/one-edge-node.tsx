@@ -5,6 +5,7 @@ import { PROPERTY_WIDTH } from '~/utils/datamapper_utils/constant'
 import EditButton from '../basic-components/edit-button'
 import DeleteButton from '../basic-components/delete-button'
 import HighlightButton from '../basic-components/highlight-button'
+import VariableTypeIcon from '../basic-components/variable-type-icon'
 
 export interface OneEdgeNodeProperties {
   id: string
@@ -50,9 +51,9 @@ function OneEdgeNode({ id, data, variant = 'source', onEdit, onDelete, onHighlig
       style={{ width: `${PROPERTY_WIDTH}px` }}
     >
       {/* Left side */}
-      <span className="shrink-0">
-        ({data.isAttribute && 'attribute: '}
-        {data.variableType})
+      <span className="flex shrink-0">
+        {data.isAttribute && 'attribute: '}
+        <VariableTypeIcon variableType={data.variableType} variableTypeBasic={data.variableTypeBasic ?? ''} />
       </span>
 
       <div className="min-w-0 flex-1 truncate text-left">{data.label}</div>
