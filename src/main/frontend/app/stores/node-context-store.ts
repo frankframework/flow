@@ -11,6 +11,8 @@ interface NodeContextStore {
   childParentId: string | null
   draggedName: string | null
   editingSubtype: string | null
+  allowedOnCanvas: boolean
+  dropSuccessful: boolean
   saveFlow: (() => Promise<void>) | null
   setNodeId: (nodeId: number) => void
   setAttributes: (attributes?: Record<string, Attribute>) => void
@@ -23,6 +25,8 @@ interface NodeContextStore {
   setDraggedName: (name: string | null) => void
   setEditingSubtype: (subtype: string | null) => void
   registerSaveFlow: (fn: (() => Promise<void>) | null) => void
+  setAllowedOnCanvas: (allowed: boolean) => void
+  setDropSuccessful: (successful: boolean) => void
 }
 
 const useNodeContextStore = create<NodeContextStore>((set) => ({
@@ -35,6 +39,8 @@ const useNodeContextStore = create<NodeContextStore>((set) => ({
   childParentId: null,
   draggedName: null,
   editingSubtype: null,
+  allowedOnCanvas: false,
+  dropSuccessful: false,
   saveFlow: null,
   setNodeId: (nodeId) => set({ nodeId }),
   setAttributes: (attributes) => set({ attributes }),
@@ -47,6 +53,8 @@ const useNodeContextStore = create<NodeContextStore>((set) => ({
   setDraggedName: (draggedName) => set({ draggedName }),
   setEditingSubtype: (editingSubtype) => set({ editingSubtype }),
   registerSaveFlow: (saveFlow) => set({ saveFlow }),
+  setAllowedOnCanvas: (allowedOnCanvas) => set({ allowedOnCanvas }),
+  setDropSuccessful: (dropSuccessful) => set({ dropSuccessful }),
 }))
 
 export default useNodeContextStore

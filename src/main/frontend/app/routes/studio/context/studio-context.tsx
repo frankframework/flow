@@ -11,12 +11,12 @@ import { parseXsd, getChildrenForType, getFirstLevelElementsForType } from '~/ut
 import { DEFAULT_ELEMENTS, NON_CANVAS_ELEMENTS } from './palette-config'
 
 export default function StudioContext() {
-  const { setDraggedName } = useNodeContextStore((state) => state)
+  const { setDraggedName, setAllowedOnCanvas } = useNodeContextStore((state) => state)
   const [searchTerm, setSearchTerm] = useState('')
   const project = useProjectStore((state) => state.project)
   const { filters, elements, isLoading } = useFFDoc()
   const [allowed, setAllowed] = useState<string[] | null>(null)
-  const [allowedOnCanvas, setAllowedOnCanvas] = useState<string[]>([])
+  const [elementsAllowedOnCanvas, setElementsAllowedOnCanvas] = useState<string[]>([])
   const ROOT_TYPES = useMemo(() => ['PipelineType', 'ReceiverType'], [])
 
   useEffect(() => {
@@ -36,7 +36,7 @@ export default function StudioContext() {
       const allowed = getAllowedElements(doc)
       setAllowed(allowed)
       const pipelineChildren = getFirstLevelElementsForType(doc, 'PipelineType')
-      setAllowedOnCanvas([...DEFAULT_ELEMENTS, ...pipelineChildren])
+      setElementsAllowedOnCanvas([...DEFAULT_ELEMENTS, ...pipelineChildren])
     })
   }, [ROOT_TYPES])
 
@@ -70,11 +70,10 @@ export default function StudioContext() {
         effectAllowed: string
       }
     }) => {
-      const isAllowedOnCanvas = allowedOnCanvas.includes(value.name)
-
-      console.log(`${value.name} is ${isAllowedOnCanvas ? '' : 'NOT '}a first child of PipelineType`)
+      const isAllowedOnCanvas = elementsAllowedOnCanvas.includes(value.name)
 
       setDraggedName(value.name)
+      setAllowedOnCanvas(isAllowedOnCanvas)
       event.dataTransfer.setData('application/reactflow', JSON.stringify(value))
       event.dataTransfer.effectAllowed = 'copyMove'
     }

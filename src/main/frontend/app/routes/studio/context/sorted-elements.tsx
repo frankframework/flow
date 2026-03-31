@@ -8,6 +8,7 @@ import { getElementTypeFromName } from '../node-translator-module'
 import DangerIcon from '../../../../icons/solar/Danger Triangle.svg?react'
 import { DeprecatedListPopover, type DeprecatedInfo } from './deprecated-list-popover'
 import ElementHoverCard from './element-hover-card'
+import { showWarningToast } from '~/components/toast'
 
 interface Properties {
   type: string
@@ -19,7 +20,7 @@ interface Properties {
 export default function SortedElements({ type, items, onDragStart, searchTerm }: Readonly<Properties>) {
   const [isExpanded, setIsExpanded] = useState(false)
   const gradientEnabled = useSettingsStore((state) => state.studio.gradient)
-  const { setDraggedName } = useNodeContextStore((state) => state)
+  const { draggedName, setDraggedName, dropSuccessful, setDropSuccessful } = useNodeContextStore((state) => state)
   const [hoveredRect, setHoveredRect] = useState<DOMRect | null>(null)
   const [hoveredElement, setHoveredElement] = useState<ElementDetails | null>(null)
   const [deprecatedRect, setDeprecatedRect] = useState<DOMRect | null>(null)
@@ -31,6 +32,15 @@ export default function SortedElements({ type, items, onDragStart, searchTerm }:
   }
   // Autoexpands groups when a search term is entered
   const shouldExpand = searchTerm !== '' || isExpanded
+
+  const onDragEnd = () => {
+    setDraggedName(null)
+
+    if (!dropSuccessful && draggedName) {
+      showWarningToast(`Element "${draggedName}" is not allowed to be dropped on the canvas`)
+      console.warn(`Element "${draggedName}" could not be dropped on the canvas`)
+    }
+  }
 
   return (
     <div
@@ -66,9 +76,10 @@ export default function SortedElements({ type, items, onDragStart, searchTerm }:
                   setHoveredRect(null)
                   setHoveredElement(null)
                   setLockedElement(null)
+                  setDropSuccessful(false)
                   onDragStart(value)(event)
                 }}
-                onDragEnd={() => setDraggedName(null)}
+                onDragEnd={onDragEnd}
                 onMouseEnter={(event) => {
                   setLockedElement(null) // unlock previous element
                   const rect = event.currentTarget.getBoundingClientRect()
