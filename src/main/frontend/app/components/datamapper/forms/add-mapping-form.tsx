@@ -122,7 +122,7 @@ function AddMappingForm({ onSave, sources, targets, initialData }: MappingModalP
   const scrollable = 'flex-1 min-h-0 overflow-y-auto space-y-2'
 
   return (
-    <div className="text-foreground mx-auto flex max-h-[90vh] min-h-0 w-full max-w-[900px] flex-col">
+    <div className="text-foreground mx-auto flex max-h-[90vh] min-h-0 w-full max-w-225 flex-col">
       <h1 className="mb-4 shrink-0 text-xl font-bold">Add Mapping</h1>
 
       {/* Main grid with lists */}

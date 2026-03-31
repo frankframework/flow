@@ -9,9 +9,12 @@ export function findNodeParent(node: Node, allNodes: Node[]): Node | undefined {
 }
 export function getNodeAndChildren(nodes: Node[], nodeId: string): Set<string> {
   const node = nodes.find((n) => n.id === nodeId)
-
-  if (node && node.type && isNodeGroup(node.type)) {
-    return new Set(nodes.filter((n) => n.parentId === nodeId).map((n) => n.id))
+  if (node && node.type) {
+    return isNodeGroup(node.type)
+      ? new Set(nodes.filter((n) => n.parentId === nodeId).flatMap((n) => [...getNodeAndChildren(nodes, n.id)])).add(
+          nodeId,
+        )
+      : new Set([nodeId, node.parentId ?? ''])
   }
 
   return new Set([nodeId])

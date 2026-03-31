@@ -5,7 +5,7 @@ import {
   DEFAULT_MAPPING_LIST_CONFIG,
   mappingListConfigReducer,
 } from '~/stores/datamapper_state/mappingListConfig/reducer'
-import AdvancedEditor from './advanced-editor'
+
 import Initialize from './initialize'
 import MappingTable from './mapping-table'
 import { ReactFlowProvider } from '@xyflow/react'
@@ -16,7 +16,7 @@ import { useProjectStore } from '~/stores/project-store'
 import { SAVING_THROTTLE } from '~/utils/datamapper_utils/constant'
 
 export default function Root() {
-  const routes = ['Initialize', 'Properties', 'Mappings', 'Advanced']
+  const routes = ['Initialize', 'Properties', 'Mappings']
 
   const project = useProjectStore.getState().project
 
@@ -138,7 +138,6 @@ export default function Root() {
               {route === 'Mappings' && (
                 <MappingTable config={mappingListConfig} configDispatch={dispatchMappingListConfig} />
               )}
-              {route === 'Advanced' && <AdvancedEditor />}
             </div>
           </div>
         </div>

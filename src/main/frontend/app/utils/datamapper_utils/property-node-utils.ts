@@ -2,7 +2,7 @@ import type { Edge, Node } from '@xyflow/react'
 import type { CustomNodeData, NodeLabels } from '~/types/datamapper_types/react-node-types'
 import { findNodeParent } from './generic-node-utils'
 import type { FormatDefinition } from '~/types/datamapper_types/data-types'
-import { GROUP_PADDING_TOP, ITEM_GAP, OBJECT_HEIGHT } from './constant'
+import { GROUP_PADDING_TOP, GROUP_WIDTH, ITEM_GAP, OBJECT_HEIGHT } from './constant'
 
 export function recurseFindArray(node: Node, nodes: Node[]) {
   const parent = findNodeParent(node, nodes)
@@ -18,7 +18,7 @@ export function isGroup(variableType: string): boolean {
 export function isNodeGroup(nodeType: string): boolean {
   return nodeType.includes('labeledGroup') || nodeType.includes('ArrayGroup') || nodeType.includes('extraSourceNode')
 }
-export function getType(id: string, parentId: string): string {
+export function getReactflowType(id: string, parentId: string): string {
   const isSource = parentId.includes('source-table')
 
   switch (true) {
@@ -121,10 +121,10 @@ export function generateNodeId(
 }
 
 export function updateNodeType(data: CustomNodeData, formatType?: FormatDefinition) {
-  const updatedType = getType(data.variableType, data.parentId)
+  const updatedReactflowType = getReactflowType(data.variableType, data.parentId)
   const variableTypeBasic = formatType?.properties.find((p) => p.name === data.variableType)?.type
 
-  return { updatedType, variableTypeBasic }
+  return { updatedReactflowType, variableTypeBasic }
 }
 type SequentialRepositionFn = (nodes: Node[], parentId: string) => Node[]
 
@@ -164,11 +164,10 @@ export function sequentialReposition(nodes: Node[], startParentId: string, getNo
       //Get height of child, or default to standard if it cannot be found
       const height: number = getNodeFunc(child.id)?.measured?.height ?? OBJECT_HEIGHT
       //Set position of child, because the children objects is a ref to nodes it also updates the  values in nodes
-      child.position = { ...child.position, y: yOffset }
+      child.position = { ...child.position, y: yOffset, x: parentNode?.position.x ?? 0 + ITEM_GAP }
       //Add height and padding to next child height
       yOffset += height + ITEM_GAP
     }
-    if (parentNode && parentNode.type && isNodeGroup(parentNode.type)) yOffset += GROUP_PADDING_TOP
 
     //Set height for parent
     nodes = nodes.map((node) => (node.id === parentId ? { ...node, height: yOffset } : node))
@@ -197,4 +196,12 @@ export function calculateNodePosition(previous: Node[], parentId: string, getNod
   }
 
   return newY
+}
+
+export function getGroupWidth(parentId: string, getNode: GetNodeFunc): number {
+  const parentNode = getNode(parentId)
+  if (!parentNode) {
+    return GROUP_WIDTH
+  }
+  return ((parentNode.data.width as number) ?? GROUP_WIDTH) - ITEM_GAP * 2
 }

@@ -1,10 +1,11 @@
 import { Handle, Position, type Node, useNodeConnections } from '@xyflow/react'
 import clsx from 'clsx'
 import type { CustomNodeData } from '~/types/datamapper_types/react-node-types'
-import { PROPERTY_WIDTH } from '~/utils/datamapper_utils/constant'
 import EditButton from '../basic-components/edit-button'
 import DeleteButton from '../basic-components/delete-button'
 import HighlightButton from '../basic-components/highlight-button'
+import VariableTypeIcon from '../basic-components/variable-type-icon'
+import HoverInfo from '../basic-components/hover-info'
 
 export interface OneEdgeNodeProperties {
   id: string
@@ -44,40 +45,48 @@ function OneEdgeNode({ id, data, variant = 'source', onEdit, onDelete, onHighlig
     <div
       onClick={updateChecked}
       className={clsx(
-        'border-border flex cursor-pointer flex-row gap-1 rounded-md border p-2',
+        'border-border group mr-2 flex cursor-pointer items-center gap-2 rounded-md p-2',
         checked ? 'bg-foreground-active text-neutral' : 'bg-backdrop',
+        data.isHidden && 'opacity-20',
       )}
-      style={{ width: `${PROPERTY_WIDTH}px` }}
+      style={{ width: `${data.width}px` }}
     >
-      {/* Label */}
-      <div className="ml-2 max-w-40 text-left break-words">{data.label}</div>
+      {/* Left side */}
+      <span
+        className="flex shrink-0"
+        style={{
+          //Style needed here because conditional statement won't work with tailwind
+          marginLeft: isConnectable && variant === 'target' ? '10px' : '',
+        }}
+      >
+        {data.isAttribute && 'attribute: '}
+        <VariableTypeIcon variableType={data.variableType} variableTypeBasic={data.variableTypeBasic ?? ''} />
+      </span>
 
-      {/* Footer */}
-      <div className="ml-auto flex items-center text-sm opacity-80">
-        <span>
-          ({data.isAttribute && 'attribute: '}
-          {data.variableType})
-        </span>
+      <div className="group/hoverInfoGroup min-w-0 flex-1 truncate text-left">
+        {data.label}
+        <HoverInfo info={data.label} />
+      </div>
 
-        <div className="ml-4 flex h-[22px] gap-3">
-          <HighlightButton
-            onClick={() => {
-              onHighlight?.(id)
-            }}
-          />
+      {/* Right side */}
+      <div className="ml-auto hidden items-center gap-1 group-hover:flex">
+        <HighlightButton
+          onClick={() => {
+            onHighlight?.(id)
+          }}
+        />
 
-          <EditButton
-            onClick={() => {
-              onEdit?.(data)
-            }}
-          />
+        <EditButton
+          onClick={() => {
+            onEdit?.(data)
+          }}
+        />
 
-          <DeleteButton
-            onClick={() => {
-              onDelete?.(id)
-            }}
-          />
-        </div>
+        <DeleteButton
+          onClick={() => {
+            onDelete?.(id)
+          }}
+        />
       </div>
 
       {/* Active handle */}
@@ -90,7 +99,7 @@ function OneEdgeNode({ id, data, variant = 'source', onEdit, onDelete, onHighlig
           width: 10,
           height: 10,
         }} //Can't set this with tailwind for some reason
-        className={`${variant == 'source' ? '' : 'translate-x-[5px]'} transition-opacity transition-transform ${isConnectable ? 'opacity-100' : 'opacity-0'} `}
+        className={`${variant == 'target' ? 'translate-x-1.25' : '-translate-x-2.5'} transition-opacity ${isConnectable ? 'opacity-100' : 'opacity-0'} `}
       />
 
       {/* Hidden opposite handle */}
