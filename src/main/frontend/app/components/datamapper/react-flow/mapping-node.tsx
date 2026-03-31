@@ -3,6 +3,7 @@ import type { MappingNodeData } from '~/types/datamapper_types/react-node-types'
 import DeleteButton from '../basic-components/delete-button'
 import EditButton from '../basic-components/edit-button'
 import { MAPPING_WIDTH } from '~/utils/datamapper_utils/constant'
+import HoverInfo from '../basic-components/hover-info'
 
 export interface MappingNodeProperties {
   id: string
@@ -17,14 +18,16 @@ function MappingNode({ id, data, onClick, onDelete, onEdit }: MappingNodePropert
   return (
     <div
       onClick={() => onClick?.(id)}
-      className={`group relative flex max-h-12.5 justify-between rounded-md p-2`}
+      className={`group flex max-h-12.5 justify-between rounded-md p-2`}
       style={{
         backgroundColor: data.colour || 'var(--color-backdrop)',
         width: `${MAPPING_WIDTH}px`,
       }}
     >
       {/* Left: Label */}
-      <div className="flex flex-1 items-center overflow-hidden">
+      <div className="group/hoverInfoGroup flex flex-1 items-center">
+        <HoverInfo info={data.outputLabel ?? ''} className="-translate-y-10!" />
+
         <div className="truncate text-xs text-white drop-shadow-sm">{data.outputLabel}</div>
       </div>
 

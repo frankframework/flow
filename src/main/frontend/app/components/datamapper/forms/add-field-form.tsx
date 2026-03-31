@@ -25,7 +25,7 @@ function AddFieldForm({ fieldType, onSave, parents, formatDefinition, initialDat
   const [variableType, setVariableType] = useState(initialData?.variableType || '')
   const [label, setLabel] = useState(initialData?.label || '')
   const [defaultValue, setDefaultValue] = useState(initialData?.defaultValue || '')
-  const [parentId, setParent] = useState(initialData?.parentId || `${fieldType}-table`)
+  const [parentId, setParent] = useState(initialData?.parentId)
   const [defaultValueRules, setDefaultValueRules] = useState<RuleSet>()
   const [defaultValueInputType, setDefaultValueInputType] = useState<PropertyBasicTypes>()
   const [availableTypes, setAvailableTypes] = useState<PropertyDefinition[]>([])
@@ -45,7 +45,7 @@ function AddFieldForm({ fieldType, onSave, parents, formatDefinition, initialDat
     setDefaultValueInputType(propertyRules?.type)
   }, [fieldType, formatDefinition, variableType])
 
-  const isFormIncomplete = !variableType || !label
+  const isFormIncomplete = !variableType || !label || !parentId
 
   function handleSave() {
     if (isFormIncomplete) {
@@ -114,7 +114,6 @@ function AddFieldForm({ fieldType, onSave, parents, formatDefinition, initialDat
             onChange={(e) => setParent(e)}
             options={{
               ...Object.fromEntries(parents.map((p) => [p.id, p.label])),
-              [`${fieldType}-table`]: `${fieldType}-table`,
             }}
           />
         </>
