@@ -4,6 +4,7 @@ import BoxMin from '/icons/solar/Box Minimalistic.svg?react'
 import List from '/icons/solar/List.svg?react'
 import PlusMin from '/icons/solar/Plus, Minus.svg?react'
 import Hashtag from '/icons/solar/Hashtag Square.svg?react'
+import HoverInfo from './hover-info'
 
 export default function VariableTypeIcon({
   className,
@@ -37,9 +38,9 @@ export default function VariableTypeIcon({
     }
   }
   return (
-    <div className={clsx('group/variableIcon', className)}>
-      <div className="block group-hover/variableIcon:hidden">{getIcon()}</div>
-      <div className="hidden group-hover/variableIcon:block">({variableType})</div>
+    <div className={clsx('group/hoverInfoGroup', className)}>
+      <div className="block">{getIcon()}</div>
+      <HoverInfo info={variableType} />
     </div>
   )
 }

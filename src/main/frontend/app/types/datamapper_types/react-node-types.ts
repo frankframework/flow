@@ -12,6 +12,7 @@ export type CustomNodeData = {
   parentId: string
   isAttribute?: boolean
   width?: number
+  isHidden?: boolean
   setNodes?: React.Dispatch<React.SetStateAction<Node[]>>
 } & Record<string, unknown>
 

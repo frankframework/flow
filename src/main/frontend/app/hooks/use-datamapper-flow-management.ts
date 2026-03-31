@@ -11,7 +11,7 @@ import {
   deleteNodeById,
   generateNodeId,
   getGroupWidth,
-  getType,
+  getReactflowType,
   getUnsetNodeIds,
   isGroup,
   sequentialReposition,
@@ -87,7 +87,7 @@ export function useFlowManagement({
       position: { x: 10, y: newY },
       parentId: data.parentId,
       extent: 'parent',
-      type: getType(data.variableType, data.parentId),
+      type: getReactflowType(data.variableType, data.parentId),
       data,
     }
 
@@ -158,8 +158,8 @@ export function useFlowManagement({
     }
     //Change type to object if needed.
 
-    const { updatedType, variableTypeBasic } = updateNodeType(data, formatType)
-
+    const { updatedReactflowType, variableTypeBasic } = updateNodeType(data, formatType)
+    data.width = getGroupWidth(data.parentId, reactFlowInstance.getNode)
     data.variableTypeBasic = variableTypeBasic
     //Persist node to reactflow
     setReactFlowNodes((previous) =>
@@ -167,7 +167,7 @@ export function useFlowManagement({
         node.id === data.id
           ? {
               ...node,
-              type: updatedType,
+              type: updatedReactflowType,
 
               data: data,
             }

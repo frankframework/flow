@@ -18,7 +18,7 @@ export function isGroup(variableType: string): boolean {
 export function isNodeGroup(nodeType: string): boolean {
   return nodeType.includes('labeledGroup') || nodeType.includes('ArrayGroup') || nodeType.includes('extraSourceNode')
 }
-export function getType(id: string, parentId: string): string {
+export function getReactflowType(id: string, parentId: string): string {
   const isSource = parentId.includes('source-table')
 
   switch (true) {
@@ -121,10 +121,10 @@ export function generateNodeId(
 }
 
 export function updateNodeType(data: CustomNodeData, formatType?: FormatDefinition) {
-  const updatedType = getType(data.variableType, data.parentId)
+  const updatedReactflowType = getReactflowType(data.variableType, data.parentId)
   const variableTypeBasic = formatType?.properties.find((p) => p.name === data.variableType)?.type
 
-  return { updatedType, variableTypeBasic }
+  return { updatedReactflowType, variableTypeBasic }
 }
 type SequentialRepositionFn = (nodes: Node[], parentId: string) => Node[]
 
@@ -168,7 +168,6 @@ export function sequentialReposition(nodes: Node[], startParentId: string, getNo
       //Add height and padding to next child height
       yOffset += height + ITEM_GAP
     }
-    if (parentNode && parentNode.type && isNodeGroup(parentNode.type)) yOffset += GROUP_PADDING_TOP
 
     //Set height for parent
     nodes = nodes.map((node) => (node.id === parentId ? { ...node, height: yOffset } : node))

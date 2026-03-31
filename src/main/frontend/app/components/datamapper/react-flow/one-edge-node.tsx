@@ -5,6 +5,7 @@ import EditButton from '../basic-components/edit-button'
 import DeleteButton from '../basic-components/delete-button'
 import HighlightButton from '../basic-components/highlight-button'
 import VariableTypeIcon from '../basic-components/variable-type-icon'
+import HoverInfo from '../basic-components/hover-info'
 
 export interface OneEdgeNodeProperties {
   id: string
@@ -46,6 +47,7 @@ function OneEdgeNode({ id, data, variant = 'source', onEdit, onDelete, onHighlig
       className={clsx(
         'border-border group mr-2 flex cursor-pointer items-center gap-2 rounded-md p-2',
         checked ? 'bg-foreground-active text-neutral' : 'bg-backdrop',
+        data.isHidden && 'opacity-20',
       )}
       style={{ width: `${data.width}px` }}
     >
@@ -61,7 +63,10 @@ function OneEdgeNode({ id, data, variant = 'source', onEdit, onDelete, onHighlig
         <VariableTypeIcon variableType={data.variableType} variableTypeBasic={data.variableTypeBasic ?? ''} />
       </span>
 
-      <div className="min-w-0 flex-1 truncate text-left">{data.label}</div>
+      <div className="group/hoverInfoGroup min-w-0 flex-1 truncate text-left">
+        {data.label}
+        <HoverInfo info={data.label} />
+      </div>
 
       {/* Right side */}
       <div className="ml-auto hidden items-center gap-1 group-hover:flex">

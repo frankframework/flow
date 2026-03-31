@@ -12,18 +12,12 @@ export interface ExtraSourceNodeProperties {
 
 function ExtraSourceNode({ id, data, onDelete, onHighlight }: ExtraSourceNodeProperties) {
   return (
-    <div
-      className="bg-selected group relative flex h-full flex-col gap-1 rounded-md border border-gray-400 p-0"
-      style={{ width: `${data.width}px` }}
-    >
+    <div className="group flex h-full" style={{ width: `${data.width}px` }}>
       {/* Header */}
-      <div className="bg-info w-full rounded-md px-2 py-2 text-sm font-semibold">
+      <div className="w-px self-stretch bg-neutral-900"></div>
+      <div className="flex w-full rounded-md px-2 py-2 text-sm font-semibold">
         {data.label ? `extra source: ${data.label}` : 'ExtraSource'}
-      </div>
-
-      <div className="border-border bg-info absolute bottom-0 flex w-full items-center justify-between rounded-md border text-sm opacity-80">
-        <span className="px-4 py-2">(Source )</span>
-        <div className="hidden gap-3 group-hover:flex">
+        <div className="hidden gap-3 group-hover:block">
           <HighlightButton
             onClick={() => {
               onHighlight?.(id)
@@ -36,6 +30,7 @@ function ExtraSourceNode({ id, data, onDelete, onHighlight }: ExtraSourceNodePro
           />
         </div>
       </div>
+
       <Handle type="target" position={Position.Top} style={{ opacity: 0 }} />
       <Handle type="source" position={Position.Bottom} style={{ opacity: 0 }} />
     </div>

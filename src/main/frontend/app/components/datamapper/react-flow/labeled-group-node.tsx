@@ -4,6 +4,7 @@ import HighlightButton from '../basic-components/highlight-button'
 import EditButton from '../basic-components/edit-button'
 import DeleteButton from '../basic-components/delete-button'
 import VariableTypeIcon from '../basic-components/variable-type-icon'
+import clsx from 'clsx'
 
 export interface LabeledGroupNodeProperties {
   id: string
@@ -16,7 +17,10 @@ export interface LabeledGroupNodeProperties {
 function LabeledGroupNode({ id, data, onEdit, onDelete, onHighlight }: LabeledGroupNodeProperties) {
   return (
     <div
-      className="bg-selected group relative flex h-full flex-col rounded-md border border-gray-400 p-0"
+      className={clsx(
+        'bg-selected group relative flex h-full flex-col rounded-md border border-gray-400 p-0',
+        data.isHidden && 'opacity-20',
+      )}
       style={{ width: `${data.width}px` }}
     >
       {/* Header */}
@@ -47,28 +51,6 @@ function LabeledGroupNode({ id, data, onEdit, onDelete, onHighlight }: LabeledGr
         </div>
       </div>
 
-      <div className="bg-backdrop border-border absolute bottom-0 flex w-full items-center justify-between rounded-md border text-sm opacity-80">
-        <span className="px-4 py-2">({data.variableType})</span>
-        <div className="hidden gap-3 group-hover:flex">
-          <HighlightButton
-            onClick={() => {
-              onHighlight?.(id)
-            }}
-          />
-
-          <EditButton
-            onClick={() => {
-              onEdit?.(data)
-            }}
-          />
-
-          <DeleteButton
-            onClick={() => {
-              onDelete?.(id)
-            }}
-          />
-        </div>
-      </div>
       <Handle type="target" position={Position.Top} style={{ opacity: 0 }} />
       <Handle type="source" position={Position.Bottom} style={{ opacity: 0 }} />
     </div>

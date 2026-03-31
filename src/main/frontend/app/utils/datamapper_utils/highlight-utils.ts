@@ -42,10 +42,7 @@ export function applyHighlightToElements(
 
   const updatedNodes = nodes.map((node) => ({
     ...node,
-    style: {
-      ...node.style,
-      opacity: highlightedNodes.has(node.id) ? 1 : 0.2,
-    },
+    data: { ...node.data, isHidden: !highlightedNodes.has(node.id) },
   }))
 
   return { nodes: updatedNodes, edges: updatedEdges }
@@ -59,6 +56,7 @@ export function resetHighlightElements(nodes: Node[], edges: Edge[]): { nodes: N
     })),
     nodes: nodes.map((node) => ({
       ...node,
+      data: { ...node.data, isHidden: false },
       style: {
         ...node.style,
         opacity: 1,
