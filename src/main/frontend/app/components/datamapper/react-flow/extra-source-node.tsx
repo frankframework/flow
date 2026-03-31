@@ -14,7 +14,7 @@ function ExtraSourceNode({ id, data, onDelete, onHighlight }: ExtraSourceNodePro
   return (
     <div className="group flex h-full" style={{ width: `${data.width}px` }}>
       {/* Header */}
-      <div className="w-px self-stretch bg-neutral-900"></div>
+      <div className="bg-foreground w-px self-stretch"></div>
       <div className="flex w-full rounded-md px-2 py-2 text-sm font-semibold">
         {data.label ? `extra source: ${data.label}` : 'ExtraSource'}
         <div className="hidden gap-3 group-hover:block">
