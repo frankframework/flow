@@ -7,7 +7,7 @@ import type { ElementDetails } from '@frankframework/doc-library-core'
 import { useFFDoc } from '@frankframework/doc-library-react'
 import LoadingSpinner from '~/components/loading-spinner'
 import { fetchFrankConfigXsd } from '~/services/xsd-service'
-import { parseXsd, getChildrenForType } from '~/utils/xsd-utils'
+import { parseXsd, getChildrenForType, getFirstLevelElementsForType } from '~/utils/xsd-utils'
 import { DEFAULT_ELEMENTS, NON_CANVAS_ELEMENTS } from './palette-config'
 
 export default function StudioContext() {
@@ -16,6 +16,7 @@ export default function StudioContext() {
   const project = useProjectStore((state) => state.project)
   const { filters, elements, isLoading } = useFFDoc()
   const [allowed, setAllowed] = useState<string[] | null>(null)
+  const [allowedOnCanvas, setAllowedOnCanvas] = useState<string[]>([])
   const ROOT_TYPES = useMemo(() => ['PipelineType', 'ReceiverType'], [])
 
   useEffect(() => {
@@ -34,6 +35,8 @@ export default function StudioContext() {
       const doc = parseXsd(xsd)
       const allowed = getAllowedElements(doc)
       setAllowed(allowed)
+      const pipelineChildren = getFirstLevelElementsForType(doc, 'PipelineType')
+      setAllowedOnCanvas([...DEFAULT_ELEMENTS, ...pipelineChildren])
     })
   }, [ROOT_TYPES])
 
@@ -62,8 +65,15 @@ export default function StudioContext() {
 
   const onDragStart = (value: ElementDetails) => {
     return (event: {
-      dataTransfer: { setData: (argument0: string, argument1: string) => void; effectAllowed: string }
+      dataTransfer: {
+        setData: (argument0: string, argument1: string) => void
+        effectAllowed: string
+      }
     }) => {
+      const isAllowedOnCanvas = allowedOnCanvas.includes(value.name)
+
+      console.log(`${value.name} is ${isAllowedOnCanvas ? '' : 'NOT '}a first child of PipelineType`)
+
       setDraggedName(value.name)
       event.dataTransfer.setData('application/reactflow', JSON.stringify(value))
       event.dataTransfer.effectAllowed = 'copyMove'
