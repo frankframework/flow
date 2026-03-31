@@ -7,6 +7,7 @@ import org.frankframework.flow.project.Project;
 import org.frankframework.flow.project.ProjectNotFoundException;
 import org.frankframework.flow.project.ProjectService;
 
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -41,14 +42,17 @@ public class FileService {
 		return new FileDTO(content, type);
 	}
 
-	public FileTreeNode createOrUpdateFile(String projectName, String path, String fileContent) throws IOException {
+	public FileTreeNode createOrUpdateFile(String projectName, String path, String fileContent) throws ApiException {
 		validatePath(path);
-		String fileName = path.substring(path.lastIndexOf("/") + 1);
-		validateFileName(fileName);
-		validateWithinProject(projectName, path);
+		String fileName = Path.of(path).getFileName().toString();
 
-		fileSystemStorage.createFile(path);
-		fileSystemStorage.writeFile(path, fileContent);
+		try {
+			validateWithinProject(projectName, path);
+			fileSystemStorage.createFile(path);
+			fileSystemStorage.writeFile(path, fileContent);
+		} catch (IOException exception) {
+			throw new ApiException("Failed to write file: " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
 
 //		invalidateTreeCache(projectName);
 
@@ -59,21 +63,25 @@ public class FileService {
 		return node;
 	}
 
-	public FileTreeNode renameFile(String projectName, String oldPath, String newPath) throws IOException {
+	public FileTreeNode renameFile(String projectName, String oldPath, String newPath) throws ApiException {
 		validatePath(newPath);
-		String newFileName = newPath.substring(newPath.lastIndexOf("/") + 1);
-		validateFileName(newFileName);
-		validateWithinProject(projectName, oldPath);
-
+		String newFileName = Path.of(newPath).getFileName().toString();
 		Path absoluteNewPath = fileSystemStorage.toAbsolutePath(newPath);
-		String absoluteNewPathString = absoluteNewPath.toString();
-		validateWithinProject(projectName, absoluteNewPathString);
 
-		if (Files.exists(absoluteNewPath)) {
-			throw new FileAlreadyExistsException("A file or folder with that path already exists: " + absoluteNewPathString);
+		try {
+			validateWithinProject(projectName, oldPath);
+
+			String absoluteNewPathString = absoluteNewPath.toString();
+			validateWithinProject(projectName, absoluteNewPathString);
+
+			if (Files.exists(absoluteNewPath)) {
+				throw new FileAlreadyExistsException("A file or folder with that path already exists: " + absoluteNewPathString);
+			}
+
+			fileSystemStorage.rename(oldPath, absoluteNewPathString);
+		} catch (IOException exception) {
+			throw new ApiException(exception.getMessage(), HttpStatus.NOT_ACCEPTABLE);
 		}
-
-		fileSystemStorage.rename(oldPath, absoluteNewPathString);
 //		invalidateTreeCache(projectName);
 
 		boolean isDir = Files.isDirectory(absoluteNewPath);
@@ -84,9 +92,13 @@ public class FileService {
 		return node;
 	}
 
-	public void deleteFile(String projectName, String path) throws IOException {
-		validateWithinProject(projectName, path);
-		fileSystemStorage.delete(path);
+	public void deleteFile(String projectName, String path) throws ApiException {
+		try {
+			validateWithinProject(projectName, path);
+			fileSystemStorage.delete(path);
+		} catch (IOException exception) {
+			throw new ApiException("Failed to delete file: " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
 //		invalidateTreeCache(projectName);
 	}
 
@@ -104,20 +116,11 @@ public class FileService {
 		}
 	}
 
-	protected void validateFileName(String name) {
-		if (name == null || name.isBlank()) {
-			throw new IllegalArgumentException("File name must not be empty");
-		}
-		if (name.contains("/") || name.contains("\\") || name.contains("..")) {
-			throw new IllegalArgumentException("File name contains invalid characters: " + name);
-		}
-	}
-
-	protected void validatePath(String path) {
+	protected void validatePath(String path) throws IllegalArgumentException {
 		if (path == null || path.isBlank()) {
 			throw new IllegalArgumentException("File path must not be empty");
 		}
-		if (path.contains("\\") || path.contains("..")) {
+		if (path.contains("..")) {
 			throw new IllegalArgumentException("File path contains invalid characters: " + path);
 		}
 	}

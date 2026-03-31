@@ -28,7 +28,7 @@ public interface FileSystemStorage {
 	 */
 	Path createProjectDirectory(String path) throws IOException;
 
-	Path toAbsolutePath(String path) throws IOException;
+	Path toAbsolutePath(String path);
 
 	/**
 	 * Creates an empty file at the given path, including parent directories.

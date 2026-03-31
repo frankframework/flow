@@ -58,44 +58,35 @@ class ConfigurationControllerTest {
 	void getConfigurationByPathReturnsExpectedJson() throws Exception {
 		String filepath = "config1.xml";
 		String xmlContent = "<xml>content</xml>";
+		ConfigurationDTO configDto = new ConfigurationDTO(filepath, xmlContent);
 
-		when(configurationService.getConfigurationContent(filepath)).thenReturn(xmlContent);
+		when(configurationService.getConfigurationContent(TEST_PROJECT_NAME, filepath)).thenReturn(configDto);
 
-		mockMvc.perform(post("/api/projects/MyProject/configuration")
+		mockMvc.perform(get("/api/projects/" + TEST_PROJECT_NAME + "/configuration?path=" + filepath)
 						.contentType(MediaType.APPLICATION_JSON)
-						.accept(MediaType.APPLICATION_JSON)
-						.content("""
-								{
-								"filepath": "config1.xml"
-								}
-								"""))
+						.accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.filepath").value(filepath))
 				.andExpect(jsonPath("$.content").value(xmlContent));
 
-		verify(configurationService).getConfigurationContent(filepath);
+		verify(configurationService).getConfigurationContent(TEST_PROJECT_NAME, filepath);
 	}
 
 	@Test
 	void getConfigurationNotFoundReturns404() throws Exception {
 		String filepath = "unknown.xml";
 
-		when(configurationService.getConfigurationContent(filepath))
+		when(configurationService.getConfigurationContent(TEST_PROJECT_NAME, filepath))
 				.thenThrow(new ConfigurationNotFoundException("Configuration file not found: " + filepath));
 
-		mockMvc.perform(post("/api/projects/MyProject/configuration")
+		mockMvc.perform(get("/api/projects/" + TEST_PROJECT_NAME + "/configuration?path=" + filepath)
 						.contentType(MediaType.APPLICATION_JSON)
-						.accept(MediaType.APPLICATION_JSON)
-						.content("""
-								{
-								"filepath": "unknown.xml"
-								}
-								"""))
+						.accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isNotFound())
 				.andExpect(jsonPath("$.httpStatus").value(404))
 				.andExpect(jsonPath("$.messages[0]").value("Configuration file not found: " + filepath));
 
-		verify(configurationService).getConfigurationContent(filepath);
+		verify(configurationService).getConfigurationContent(TEST_PROJECT_NAME, filepath);
 	}
 
 	@Test
@@ -103,22 +94,16 @@ class ConfigurationControllerTest {
 		String filepath = "config1.xml";
 		String xmlContent = "<xml>updated</xml>";
 
-		when(configurationService.updateConfiguration(filepath, xmlContent))
+		when(configurationService.updateConfiguration(TEST_PROJECT_NAME, filepath, xmlContent))
 				.thenReturn(xmlContent);
 
 		mockMvc.perform(
-						put("/api/projects/" + TEST_PROJECT_NAME + "/configuration")
+						put("/api/projects/" + TEST_PROJECT_NAME + "/configuration?path=" + filepath)
 								.contentType(MediaType.APPLICATION_JSON)
-								.content(
-										"""
-								{
-								"filepath": "config1.xml",
-								"content": "<xml>updated</xml>"
-								}
-								"""))
+								.content("<xml>updated</xml>"))
 				.andExpect(status().isOk());
 
-		verify(configurationService).updateConfiguration(filepath, xmlContent);
+		verify(configurationService).updateConfiguration(TEST_PROJECT_NAME, filepath, xmlContent);
 	}
 
 	@Test
@@ -128,30 +113,24 @@ class ConfigurationControllerTest {
 
 		doThrow(new ConfigurationNotFoundException("Invalid file path: " + filepath))
 				.when(configurationService)
-				.updateConfiguration(filepath, xmlContent);
+				.updateConfiguration(TEST_PROJECT_NAME, filepath, xmlContent);
 
 		mockMvc.perform(
-						put("/api/projects/" + TEST_PROJECT_NAME + "/configuration")
+						put("/api/projects/" + TEST_PROJECT_NAME + "/configuration?path=" + filepath)
 								.contentType(MediaType.APPLICATION_JSON)
-								.content(
-										"""
-								{
-								"filepath": "unknown.xml",
-								"content": "<xml>updated</xml>"
-								}
-								"""))
+								.content("<xml>updated</xml>"))
 				.andExpect(status().isNotFound())
 				.andExpect(jsonPath("$.httpStatus").value(404))
 				.andExpect(jsonPath("$.messages[0]").value("Invalid file path: " + filepath));
 
-		verify(configurationService).updateConfiguration(filepath, xmlContent);
+		verify(configurationService).updateConfiguration(TEST_PROJECT_NAME, filepath, xmlContent);
 	}
 
 	@Test
 	void addConfigurationReturnsProjectDto() throws Exception {
 		Project project = mock(Project.class);
-		when(project.getName()).thenReturn("MyProject");
-		when(project.getRootPath()).thenReturn("/path/to/MyProject");
+		when(project.getName()).thenReturn(TEST_PROJECT_NAME);
+		when(project.getRootPath()).thenReturn("/path/to/" + TEST_PROJECT_NAME);
 
 		Configuration config = mock(Configuration.class);
 		when(config.getFilepath()).thenReturn("config1.xml");
@@ -161,22 +140,22 @@ class ConfigurationControllerTest {
 		when(settings.getFilters()).thenReturn(Map.of(FilterType.ADAPTER, true));
 		when(project.getProjectSettings()).thenReturn(settings);
 
-		when(configurationService.addConfiguration("MyProject", "NewConfig.xml"))
-				.thenReturn(project);
+		when(configurationService.addConfiguration(TEST_PROJECT_NAME, "NewConfig.xml"))
+				.thenReturn("");
 		when(projectService.toDto(project))
 				.thenReturn(new ProjectDTO(
-						"MyProject",
-						"/path/to/MyProject",
+						TEST_PROJECT_NAME,
+						"/path/to/" + TEST_PROJECT_NAME,
 						List.of("config1.xml"),
 						Map.of(FilterType.ADAPTER, true),
 						false,
 						false));
 
-		mockMvc.perform(post("/api/projects/MyProject/configurations/NewConfig.xml")
+		mockMvc.perform(post("/api/projects/" + TEST_PROJECT_NAME + "/configuration?name=NewConfig.xml")
 						.accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.name").value("MyProject"));
+				.andExpect(jsonPath("xmlContent").value(""));
 
-		verify(configurationService).addConfiguration("MyProject", "NewConfig.xml");
+		verify(configurationService).addConfiguration(TEST_PROJECT_NAME, "NewConfig.xml");
 	}
 }

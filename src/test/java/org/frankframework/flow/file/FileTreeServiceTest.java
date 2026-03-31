@@ -42,15 +42,16 @@ public class FileTreeServiceTest {
 	@Mock
 	private ConfigurationService configurationService;
 
+	private FileService fileService;
 	private FileTreeService fileTreeService;
-
 	private Path tempProjectRoot;
 	private static final String TEST_PROJECT_NAME = "FrankFlowTestProject";
 
 	@BeforeEach
 	public void setUp() throws IOException {
 		tempProjectRoot = Files.createTempDirectory("flow_unit_test");
-		fileTreeService = new FileTreeService(projectService, fileSystemStorage, configurationService);
+		fileService = new FileService(projectService, fileSystemStorage);
+		fileTreeService = new FileTreeService(projectService, fileSystemStorage, fileService);
 	}
 
 	@AfterEach
@@ -307,7 +308,7 @@ public class FileTreeServiceTest {
 	void createFile_NullName_ThrowsIllegalArgument() {
 		assertThrows(
 				IllegalArgumentException.class,
-				() -> fileTreeService.createFile(TEST_PROJECT_NAME, "/some/path", null)
+				() -> fileService.createOrUpdateFile(TEST_PROJECT_NAME, null, "")
 		);
 	}
 
@@ -316,25 +317,7 @@ public class FileTreeServiceTest {
 	void createFile_BlankName_ThrowsIllegalArgument() {
 		assertThrows(
 				IllegalArgumentException.class,
-				() -> fileTreeService.createFile(TEST_PROJECT_NAME, "/some/path", "   ")
-		);
-	}
-
-	@Test
-	@DisplayName("Should throw IllegalArgumentException when file name contains a forward slash")
-	void createFile_NameWithForwardSlash_ThrowsIllegalArgument() {
-		assertThrows(
-				IllegalArgumentException.class,
-				() -> fileTreeService.createFile(TEST_PROJECT_NAME, "/some/path", "bad/name.xml")
-		);
-	}
-
-	@Test
-	@DisplayName("Should throw IllegalArgumentException when file name contains a backslash")
-	void createFile_NameWithBackslash_ThrowsIllegalArgument() {
-		assertThrows(
-				IllegalArgumentException.class,
-				() -> fileTreeService.createFile(TEST_PROJECT_NAME, "/some/path", "bad\\name.xml")
+				() -> fileService.createOrUpdateFile(TEST_PROJECT_NAME, "/some/path/   ", "")
 		);
 	}
 
@@ -343,49 +326,27 @@ public class FileTreeServiceTest {
 	void createFile_NameWithDoubleDots_ThrowsIllegalArgument() {
 		assertThrows(
 				IllegalArgumentException.class,
-				() -> fileTreeService.createFile(TEST_PROJECT_NAME, "/some/path", "..")
+				() -> fileService.createOrUpdateFile(TEST_PROJECT_NAME, "/some/path/..", "")
 		);
 	}
 
 	@Test
 	@DisplayName("Should create a file and return a FileTreeNode with FILE type")
-	void createFile_Success() throws IOException, ProjectNotFoundException, ApiException {
+	void createFile_Success() throws IOException, ApiException {
 		stubToAbsolutePath();
 		stubCreateFile();
 
-		Project project =
-				new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+		Path parentPath = tempProjectRoot.toAbsolutePath();
+		Project project = new Project(TEST_PROJECT_NAME, parentPath.toString());
 		when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
 
-		String parentPath = tempProjectRoot.toAbsolutePath().toString();
-		FileTreeNode node = fileTreeService.createFile(TEST_PROJECT_NAME, parentPath, "newFile.json");
+		FileTreeNode node = fileService.createOrUpdateFile(TEST_PROJECT_NAME, parentPath.resolve("newFile.json").toString(), "");
 
 		assertNotNull(node);
 		assertEquals("newFile.json", node.getName());
 		assertEquals(NodeType.FILE, node.getType());
 		assertTrue(node.getPath().endsWith("newFile.json"));
 		assertTrue(Files.exists(tempProjectRoot.resolve("newFile.json")), "File must exist on disk after creation");
-	}
-
-	@Test
-	@DisplayName("Should create a file correctly when parent path already ends with a slash")
-	void createFile_ParentPathWithTrailingSlash_DoesNotDoubleSlash()
-			throws IOException, ProjectNotFoundException, ApiException {
-		stubToAbsolutePath();
-		stubCreateFile();
-
-		Project project =
-				new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
-		when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
-
-		String parentPath = tempProjectRoot.toAbsolutePath() + "/";
-		FileTreeNode node = fileTreeService.createFile(TEST_PROJECT_NAME, parentPath, "trailing.json");
-
-		assertNotNull(node);
-		assertEquals("trailing.json", node.getName());
-		assertEquals(NodeType.FILE, node.getType());
-		assertFalse(node.getPath().contains("//"), "Path must not contain double slashes");
-		assertTrue(Files.exists(tempProjectRoot.resolve("trailing.json")), "File must exist on disk after creation");
 	}
 
 	@Test
@@ -400,7 +361,7 @@ public class FileTreeServiceTest {
 		String outsidePath = tempProjectRoot.getParent().toAbsolutePath().toString();
 		assertThrows(
 				SecurityException.class,
-				() -> fileTreeService.createFile(TEST_PROJECT_NAME, outsidePath, "escape.json")
+				() -> fileService.createOrUpdateFile(TEST_PROJECT_NAME, outsidePath, "escape.json")
 		);
 	}
 
@@ -410,7 +371,7 @@ public class FileTreeServiceTest {
 		when(projectService.getProject("Unknown")).thenThrow(new ProjectNotFoundException("err"));
 
 		assertThrows(
-				IllegalArgumentException.class, () -> fileTreeService.createFile("Unknown", "/some/path", "file.json"));
+				IllegalArgumentException.class, () -> fileService.createOrUpdateFile("Unknown", "/some/path", "file.json"));
 	}
 
 	@Test
@@ -425,7 +386,7 @@ public class FileTreeServiceTest {
 				.thenReturn(project);
 		when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
 
-		FileTreeNode node = fileTreeService.createFile(
+		FileTreeNode node = fileService.createOrUpdateFile(
 				TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString(), "config.xml");
 
 		assertNotNull(node);
@@ -442,8 +403,8 @@ public class FileTreeServiceTest {
 				new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
 		when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
 
-		String parentPath = tempProjectRoot.toAbsolutePath().toString();
-		FileTreeNode node = fileTreeService.createFolder(TEST_PROJECT_NAME, parentPath, "newFolder");
+		Path path = tempProjectRoot.toAbsolutePath().resolve("newFolder");
+		FileTreeNode node = fileTreeService.createFolder(TEST_PROJECT_NAME, path.toString());
 
 		assertNotNull(node);
 		assertEquals("newFolder", node.getName());
@@ -456,25 +417,15 @@ public class FileTreeServiceTest {
 	void createFolder_NullName_ThrowsIllegalArgument() {
 		assertThrows(
 				IllegalArgumentException.class,
-				() -> fileTreeService.createFolder(TEST_PROJECT_NAME, "/some/path", null)
-		);
-	}
-
-	@Test
-	@DisplayName("Should throw IllegalArgumentException when folder name contains a backslash")
-	void createFolder_NameWithBackslash_ThrowsIllegalArgument() {
-		assertThrows(
-				IllegalArgumentException.class,
-				() -> fileTreeService.createFolder(TEST_PROJECT_NAME, "/some/path", "bad\\folder")
+				() -> fileTreeService.createFolder(TEST_PROJECT_NAME, null)
 		);
 	}
 
 	@Test
 	@DisplayName("Should rename a file and return a node with FILE type in local environment")
-	void renameFile_LocalEnvironment_File() throws IOException, ProjectNotFoundException {
+	void renameFile_LocalEnvironment_File() throws IOException, ApiException {
 		stubToAbsolutePath();
 		stubRename();
-		when(fileSystemStorage.isLocalEnvironment()).thenReturn(true);
 
 		Project project =
 				new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
@@ -482,8 +433,9 @@ public class FileTreeServiceTest {
 
 		Path oldFile = Files.writeString(tempProjectRoot.resolve("old.xml"), "content");
 		String oldPath = oldFile.toAbsolutePath().toString();
+		String newPath = tempProjectRoot.resolve("new.xml").toAbsolutePath().toString();
 
-		FileTreeNode node = fileTreeService.renameFile(TEST_PROJECT_NAME, oldPath, "new.xml");
+		FileTreeNode node = fileService.renameFile(TEST_PROJECT_NAME, oldPath, newPath);
 
 		assertEquals("new.xml", node.getName());
 		assertEquals(NodeType.FILE, node.getType());
@@ -493,10 +445,9 @@ public class FileTreeServiceTest {
 
 	@Test
 	@DisplayName("Should rename a directory and return a node with DIRECTORY type")
-	void renameFile_LocalEnvironment_Directory() throws IOException, ProjectNotFoundException {
+	void renameFile_LocalEnvironment_Directory() throws IOException, ApiException {
 		stubToAbsolutePath();
 		stubRename();
-		when(fileSystemStorage.isLocalEnvironment()).thenReturn(true);
 
 		Project project =
 				new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
@@ -504,8 +455,9 @@ public class FileTreeServiceTest {
 
 		Path oldDir = Files.createDirectory(tempProjectRoot.resolve("oldDir"));
 		String oldPath = oldDir.toAbsolutePath().toString();
+		String newPath = tempProjectRoot.resolve("newDir").toAbsolutePath().toString();
 
-		FileTreeNode node = fileTreeService.renameFile(TEST_PROJECT_NAME, oldPath, "newDir");
+		FileTreeNode node = fileService.renameFile(TEST_PROJECT_NAME, oldPath, newPath);
 
 		assertEquals("newDir", node.getName());
 		assertEquals(NodeType.DIRECTORY, node.getType());
@@ -526,9 +478,10 @@ public class FileTreeServiceTest {
 		Files.writeString(tempProjectRoot.resolve("existing.xml"), "already here");
 
 		String oldPath = tempProjectRoot.resolve("old.xml").toAbsolutePath().toString();
+		String newPath = tempProjectRoot.resolve("existing.xml").toAbsolutePath().toString();
 		assertThrows(
-				FileAlreadyExistsException.class,
-				() -> fileTreeService.renameFile(TEST_PROJECT_NAME, oldPath, "existing.xml")
+				ApiException.class,
+				() -> fileService.renameFile(TEST_PROJECT_NAME, oldPath, newPath)
 		);
 	}
 
@@ -537,48 +490,28 @@ public class FileTreeServiceTest {
 	void renameFile_InvalidNewName_ThrowsIllegalArgument() {
 		assertThrows(
 				IllegalArgumentException.class,
-				() -> fileTreeService.renameFile(TEST_PROJECT_NAME, "/some/old.xml", "bad/name.xml")
+				() -> fileService.renameFile(TEST_PROJECT_NAME, "/some/old.xml", "/some/../bad\\name.xml")
 		);
 	}
 
 	@Test
-	@DisplayName("Should use relative parent path when old path contains a slash in non-local environment")
-	void renameFile_NonLocalEnvironment_PathWithSlash() throws IOException, ProjectNotFoundException {
-		stubToAbsolutePath();
-		when(fileSystemStorage.isLocalEnvironment()).thenReturn(false);
-		when(fileSystemStorage.rename(anyString(), anyString())).thenReturn(null);
-
-		Project project =
-				new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
-		when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
-
-		Path subDir = Files.createDirectory(tempProjectRoot.resolve("subdir"));
-		Files.writeString(subDir.resolve("old.xml"), "content");
-
-		FileTreeNode node = fileTreeService.renameFile(TEST_PROJECT_NAME, "subdir/old.xml", "new.xml");
-
-		assertEquals("new.xml", node.getName());
-		assertEquals("subdir/new.xml", node.getPath());
-		assertEquals(NodeType.FILE, node.getType());
-	}
-
-	@Test
 	@DisplayName("Should use just the new name as path when old path has no slash in non-local environment")
-	void renameFile_NonLocalEnvironment_PathWithoutSlash() throws IOException, ProjectNotFoundException {
+	void renameFile_NonLocalEnvironment_PathWithoutSlash() throws IOException, ApiException {
 		stubToAbsolutePath();
-		when(fileSystemStorage.isLocalEnvironment()).thenReturn(false);
 		when(fileSystemStorage.rename(anyString(), anyString())).thenReturn(null);
 
 		Project project =
 				new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
 		when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
 
-		Files.writeString(tempProjectRoot.resolve("old.xml"), "content");
+		Path oldPath = tempProjectRoot.resolve("old.xml");
+		Path newPath = tempProjectRoot.resolve("new.xml");
+		Files.writeString(oldPath, "content");
 
-		FileTreeNode node = fileTreeService.renameFile(TEST_PROJECT_NAME, "old.xml", "new.xml");
+		FileTreeNode node = fileService.renameFile(TEST_PROJECT_NAME, oldPath.toString(), newPath.toString());
 
 		assertEquals("new.xml", node.getName());
-		assertEquals("new.xml", node.getPath());
+		assertEquals(newPath.toString(), node.getPath());
 	}
 
 	@Test
@@ -594,7 +527,7 @@ public class FileTreeServiceTest {
 		Path fileToDelete = Files.writeString(tempProjectRoot.resolve("toDelete.xml"), "content");
 		String path = fileToDelete.toAbsolutePath().toString();
 
-		assertDoesNotThrow(() -> fileTreeService.deleteFile(TEST_PROJECT_NAME, path));
+		assertDoesNotThrow(() -> fileService.deleteFile(TEST_PROJECT_NAME, path));
 		assertFalse(Files.exists(fileToDelete));
 	}
 
@@ -604,7 +537,7 @@ public class FileTreeServiceTest {
 		when(projectService.getProject("Unknown")).thenThrow(new ProjectNotFoundException("err"));
 
 		assertThrows(
-				IllegalArgumentException.class, () -> fileTreeService.deleteFile("Unknown", "/some/path/file.xml"));
+				IllegalArgumentException.class, () -> fileService.deleteFile("Unknown", "/some/path/file.xml"));
 	}
 
 	@Test

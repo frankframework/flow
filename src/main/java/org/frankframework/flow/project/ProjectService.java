@@ -233,12 +233,8 @@ public class ProjectService {
 		List<String> filepaths = getConfigurationFilesDynamically(project.getRootPath());
 
 		boolean isGitRepo = false;
-		try {
-			Path absPath = fileSystemStorage.toAbsolutePath(project.getRootPath());
-			isGitRepo = Files.isDirectory(absPath.resolve(".git"));
-		} catch (IOException e) {
-			log.info("Could not determine if project is a git repository: {}", e.getMessage());
-		}
+		Path absPath = fileSystemStorage.toAbsolutePath(project.getRootPath());
+		isGitRepo = Files.isDirectory(absPath.resolve(".git"));
 
 		boolean hasStoredToken =
 				project.getGitToken() != null && !project.getGitToken().isBlank();

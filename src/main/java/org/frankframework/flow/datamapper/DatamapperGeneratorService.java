@@ -109,12 +109,7 @@ public class DatamapperGeneratorService {
 		if (jsonPath == null || jsonPath.isBlank()) {
 			throw new ApiException("JSON file path must not be empty", HttpStatus.BAD_REQUEST);
 		}
-		Path absolutePath;
-		try {
-			absolutePath = fileSystemStorage.toAbsolutePath(jsonPath);
-		} catch (IOException e) {
-			throw new ApiException("Invalid filepath", HttpStatus.BAD_REQUEST);
-		}
+		Path absolutePath = fileSystemStorage.toAbsolutePath(jsonPath);
 
 		if (!Files.exists(absolutePath)) {
 			throw new ApiException("JSON file not found: " + absolutePath, HttpStatus.INTERNAL_SERVER_ERROR);
