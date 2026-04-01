@@ -18,6 +18,8 @@ import { DeprecatedPopover } from './components/deprecated-popover'
 import { showWarningToast } from '~/components/toast'
 import { useHandleTypes } from '~/hooks/use-handle-types'
 import AddSubcomponentModal from '~/components/flow/add-subcomponent-modal'
+import { fetchFrankConfigXsd } from '~/services/xsd-service'
+import { type Requirement, getElementRequirements, isRequirementFulfilled, parseXsd } from '~/utils/xsd-utils'
 
 export type FrankNodeType = Node<{
   subtype: string
@@ -74,6 +76,8 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
 
     return Object.values(recordElements).filter((element) => canAcceptChildStatic(frankElement, element.name, filters))
   }, [elements, frankElement, filters])
+  const [mandatoryChildren, setMandatoryChildren] = useState<Requirement[]>([])
+  const [mandatoryChildrenFulfilled, setMandatoryChildrenFulfilled] = useState(false)
 
   const updateNodeInternals = useUpdateNodeInternals()
   const [isHandleMenuOpen, setIsHandleMenuOpen] = useState(false)
@@ -109,6 +113,19 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
       setDimensions((previous) => ({ ...previous, height: newHeight }))
     }
   }, [dragOver, properties.id, updateNodeInternals])
+
+  useEffect(() => {
+    fetchFrankConfigXsd().then((xsd) => {
+      const doc = parseXsd(xsd)
+      const mandatory = getElementRequirements(doc, properties.data.subtype)
+      setMandatoryChildren(mandatory)
+    })
+  }, [properties.data.subtype])
+
+  useEffect(() => {
+    const allFulfilled = isRequirementFulfilled(mandatoryChildren, properties.data.children)
+    setMandatoryChildrenFulfilled(allFulfilled)
+  }, [mandatoryChildren, properties.data.children])
 
   useLayoutEffect(() => {
     if (containerReference.current) {
@@ -388,6 +405,11 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
             </>
           )}
         </div>
+        {mandatoryChildrenFulfilled === false && (
+          <div className="border-red-500 bg-red-100 border-l-4 p-2 m-2 rounded">
+            <p className="text-red-700 text-sm">This node is missing mandatory children!</p>
+          </div>
+        )}
         {properties.data.attributes &&
           Object.entries(properties.data.attributes).map(([key, value]) => (
             <div key={key} className="my-1 w-full max-w-full px-1">
