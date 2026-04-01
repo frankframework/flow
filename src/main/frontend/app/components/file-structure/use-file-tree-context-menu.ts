@@ -168,7 +168,7 @@ export function useFileTreeContextMenu({
             return
           }
           try {
-            await renameFile(projectName, oldPath, newName)
+            await renameFile(projectName, `${oldPath}/${oldName}`, `${oldPath}/${newName}`)
             clearConfigurationCache(projectName, oldPath)
             const newPath = buildNewPath(oldPath, newName)
             useTabStore.getState().renameTabsForConfig(oldPath, newPath)

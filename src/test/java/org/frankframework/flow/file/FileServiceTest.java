@@ -110,7 +110,7 @@ class FileServiceTest {
 
 	@Test
 	@DisplayName("Should throw SecurityException when the file path is outside the project directory")
-	void createFile_OutsideProject_ThrowsSecurityException() throws IOException, ProjectNotFoundException {
+	void createFile_OutsideProject_ThrowsSecurityException() throws ProjectNotFoundException {
 		stubToAbsolutePath();
 
 		Project project =
@@ -119,7 +119,7 @@ class FileServiceTest {
 
 		String outsidePath = tempProjectRoot.getParent().toAbsolutePath().toString();
 		assertThrows(
-				SecurityException.class,
+				ApiException.class,
 				() -> fileService.createOrUpdateFile(TEST_PROJECT_NAME, outsidePath, "escape.json")
 		);
 	}

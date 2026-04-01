@@ -40,11 +40,14 @@ public class FileService {
 
 	public FileTreeNode createOrUpdateFile(String projectName, String path, String fileContent) throws ApiException {
 		validatePath(path);
-		String fileName = Path.of(path).getFileName().toString();
+		Path filePath = Path.of(path);
+		String fileName = filePath.getFileName().toString();
 
 		try {
 			validateWithinProject(projectName, path);
-			fileSystemStorage.createFile(path);
+			if (!Files.exists(filePath)) {
+				fileSystemStorage.createFile(path);
+			}
 			fileSystemStorage.writeFile(path, fileContent);
 		} catch (IOException exception) {
 			throw new ApiException("Failed to write file: " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -60,6 +63,7 @@ public class FileService {
 	}
 
 	public FileTreeNode renameFile(String projectName, String oldPath, String newPath) throws ApiException {
+		validatePath(oldPath);
 		validatePath(newPath);
 		String newFileName = Path.of(newPath).getFileName().toString();
 		Path absoluteNewPath = fileSystemStorage.toAbsolutePath(newPath);
@@ -98,14 +102,14 @@ public class FileService {
 //		invalidateTreeCache(projectName);
 	}
 
-	public void validateWithinProject(String projectName, String path) throws IOException {
+	public void validateWithinProject(String projectName, String path) throws IOException, ApiException {
 		try {
 			Project project = projectService.getProject(projectName);
 			Path projectPath = fileSystemStorage.toAbsolutePath(project.getRootPath());
 			Path targetPath = fileSystemStorage.toAbsolutePath(path).normalize();
 
 			if (!targetPath.startsWith(projectPath)) {
-				throw new SecurityException("Path is outside project directory");
+				throw new ApiException("Path is outside project directory", HttpStatus.FORBIDDEN);
 			}
 		} catch (ProjectNotFoundException e) {
 			throw new IllegalArgumentException("Project does not exist: " + projectName);

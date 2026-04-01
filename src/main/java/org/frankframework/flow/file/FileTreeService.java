@@ -11,6 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.xml.parsers.DocumentBuilder;
+import org.frankframework.flow.exception.ApiException;
 import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.frankframework.flow.project.Project;
 import org.frankframework.flow.project.ProjectNotFoundException;
@@ -124,7 +125,7 @@ public class FileTreeService {
 		}
 	}
 
-	public FileTreeNode createFolder(String projectName, String path) throws IOException {
+	public FileTreeNode createFolder(String projectName, String path) throws IOException, ApiException {
 		validatePath(path);
 		fileService.validateWithinProject(projectName, path);
 		fileSystemStorage.createProjectDirectory(path);

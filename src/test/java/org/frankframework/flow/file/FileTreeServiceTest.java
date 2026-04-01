@@ -11,6 +11,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Comparator;
 import java.util.List;
+import org.frankframework.flow.exception.ApiException;
 import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.frankframework.flow.project.Project;
 import org.frankframework.flow.project.ProjectNotFoundException;
@@ -313,7 +314,7 @@ public class FileTreeServiceTest {
 
 	@Test
 	@DisplayName("Should create a folder and return a FileTreeNode with DIRECTORY type")
-	void createFolder_Success() throws IOException, ProjectNotFoundException {
+	void createFolder_Success() throws IOException, ApiException {
 		stubToAbsolutePath();
 		stubCreateProjectDirectory();
 

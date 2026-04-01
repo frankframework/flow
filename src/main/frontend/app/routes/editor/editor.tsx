@@ -20,7 +20,7 @@ import EditorTabs from '~/components/tabs/editor-tabs'
 import { showErrorToastFrom } from '~/components/toast'
 import { useTheme } from '~/hooks/use-theme'
 import { fetchConfiguration, saveConfiguration } from '~/services/configuration-service'
-import { fetchFile } from '~/services/file-service'
+import { fetchFile, updateFile } from '~/services/file-service'
 import { refreshOpenDiffs } from '~/services/git-service'
 import { fetchFrankConfigXsd } from '~/services/xsd-service'
 import useEditorTabStore from '~/stores/editor-tab-store'
@@ -155,6 +155,10 @@ function toMonacoType(type: string | null) {
   return type.split('/').pop() ?? ''
 }
 
+function isConfigurationFile(fileExtension: string) {
+  return fileExtension === 'xml'
+}
+
 export default function CodeEditor() {
   const theme = useTheme()
   const project = useProjectStore.getState().project
@@ -198,23 +202,38 @@ export default function CodeEditor() {
       const updatedContent = content ?? editorReference.current?.getValue?.()
       if (!updatedContent) return
 
-      const configPath = useEditorTabStore.getState().getTab(activeTabFilePath)?.configurationPath
+      const activeTab = useEditorTabStore.getState().getTab(activeTabFilePath)
+      const fileExtension = activeTab?.name.split('.').pop()?.toLowerCase()
+      const configPath = activeTab?.configurationPath
       if (!configPath) return
 
+      function finishSaving() {
+        setSaveStatus('saved')
+        if (savedTimerRef.current) clearTimeout(savedTimerRef.current)
+        savedTimerRef.current = setTimeout(() => setSaveStatus('idle'), SAVED_DISPLAY_DURATION)
+      }
+
       setSaveStatus('saving')
-      saveConfiguration(project.name, configPath, updatedContent)
-        .then(({ xmlContent }) => {
-          setFileContent(xmlContent)
-          contentCacheRef.current.set(activeTabFilePath, { type: 'xml', content: xmlContent })
-          setSaveStatus('saved')
-          if (savedTimerRef.current) clearTimeout(savedTimerRef.current)
-          savedTimerRef.current = setTimeout(() => setSaveStatus('idle'), SAVED_DISPLAY_DURATION)
-          if (project.isGitRepository) refreshOpenDiffs(project.name)
-        })
-        .catch((error) => {
-          showErrorToastFrom('Error saving', error)
-          setSaveStatus('idle')
-        })
+      if (isConfigurationFile(fileExtension ?? '')) {
+        saveConfiguration(project.name, configPath, updatedContent)
+          .then(({ xmlContent }) => {
+            setFileContent(xmlContent)
+            contentCacheRef.current.set(activeTabFilePath, { type: 'xml', content: xmlContent })
+            finishSaving()
+            if (project.isGitRepository) refreshOpenDiffs(project.name)
+          })
+          .catch((error) => {
+            showErrorToastFrom('Error saving', error)
+            setSaveStatus('idle')
+          })
+      } else {
+        updateFile(project.name, configPath, updatedContent)
+          .then(() => finishSaving())
+          .catch((error) => {
+            showErrorToastFrom('Error saving', error)
+            setSaveStatus('idle')
+          })
+      }
     },
     [project, activeTabFilePath, isDiffTab],
   )
@@ -453,7 +472,7 @@ export default function CodeEditor() {
       }
     }
 
-    if (fileExtension === 'xml') {
+    if (isConfigurationFile(fileExtension ?? '')) {
       fetchConfiguration(project.name, filePath, abortController.signal)
         .then((content) => setMonacoContent(content, 'xml', abortController.signal))
         .catch((error) => {
@@ -469,8 +488,8 @@ export default function CodeEditor() {
         })
         .catch((error) => {
           if (!abortController.signal.aborted) {
+            setMonacoContent('', 'plaintext', abortController.signal)
             console.error('Failed to load file:', error)
-            setMonacoContent('', '')
           }
         })
     }
