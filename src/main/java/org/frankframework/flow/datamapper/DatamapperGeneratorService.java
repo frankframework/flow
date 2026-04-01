@@ -5,17 +5,13 @@ import java.io.StringReader;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
-
 import javax.xml.transform.stream.StreamSource;
-
 import lombok.extern.slf4j.Slf4j;
 import net.sf.saxon.s9api.*;
-
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
 import org.frankframework.flow.exception.ApiException;
-import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.frankframework.flow.file.FileTreeService;
-
+import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 

@@ -15,7 +15,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Comparator;
-
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -23,15 +22,12 @@ import javax.xml.transform.*;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
-
 import net.sf.saxon.s9api.*;
-
 import org.frankframework.flow.exception.ApiException;
-import org.frankframework.flow.filesystem.FileOperations;
-import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.frankframework.flow.file.FileTreeNode;
 import org.frankframework.flow.file.FileTreeService;
-
+import org.frankframework.flow.filesystem.FileOperations;
+import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
