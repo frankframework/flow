@@ -2,7 +2,6 @@ package org.frankframework.flow.file;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -14,8 +13,6 @@ import java.util.stream.Stream;
 
 import javax.xml.parsers.DocumentBuilder;
 
-import org.frankframework.flow.configuration.ConfigurationService;
-import org.frankframework.flow.exception.ApiException;
 import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.frankframework.flow.project.Project;
 import org.frankframework.flow.project.ProjectNotFoundException;
