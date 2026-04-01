@@ -33,10 +33,17 @@ export default function SortedElements({ type, items, onDragStart, searchTerm }:
   // Autoexpands groups when a search term is entered
   const shouldExpand = searchTerm !== '' || isExpanded
 
-  const onDragEnd = () => {
+  const onDragEnd = (event: React.DragEvent<HTMLLIElement>) => {
     setDraggedName(null)
+    const x = event.clientX
+    const y = event.clientY
 
-    if (!dropSuccessful && draggedName) {
+    const targetElement = document.elementFromPoint(x, y)
+
+    // Check if element is inside #flow-canvas, aka dropped on the canvas
+    const isInsideCanvas = targetElement?.closest('#flow-canvas')
+
+    if (!dropSuccessful && draggedName && isInsideCanvas) {
       showWarningToast(`Element "${draggedName}" is not allowed to be dropped on the canvas`)
       console.warn(`Element "${draggedName}" could not be dropped on the canvas`)
     }

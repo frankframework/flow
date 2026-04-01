@@ -56,7 +56,7 @@ function handleElement(doc: Document, node: Element, visitedGroups: Set<string>,
   const name = node.getAttribute('name') || node.getAttribute('ref')
   if (name) results.push(name)
 
-  const baseType = getBaseTypeFromElement(doc, node)
+  const baseType = getBaseTypeFromElement(node)
 
   if (baseType && !visitedTypes.has(baseType)) {
     visitedTypes.add(baseType)
@@ -98,40 +98,33 @@ function handleContainer(
 }
 
 function getComplexTypeByName(doc: Document, typeName: string): Element | null {
-  const result = doc.evaluate(
-    `//xs:complexType[@name='${typeName}']`,
-    doc,
-    (prefix) => (prefix === 'xs' ? 'http://www.w3.org/2001/XMLSchema' : null),
-    XPathResult.FIRST_ORDERED_NODE_TYPE,
-    null,
-  )
-
-  return result.singleNodeValue as Element | null
+  return queryOne(doc, `//xs:complexType[@name='${typeName}']`)
 }
 
 function getGroupByName(doc: Document, name: string): Element | null {
-  const result = doc.evaluate(
-    `//xs:group[@name='${name}']`,
-    doc,
-    (prefix) => (prefix === 'xs' ? 'http://www.w3.org/2001/XMLSchema' : null),
-    XPathResult.FIRST_ORDERED_NODE_TYPE,
-    null,
-  )
+  return queryOne(doc, `//xs:group[@name='${name}']`)
+}
 
+function getBaseTypeFromElement(element: Element): string | null {
+  const ext = queryOne(element, `.//xs:extension`)
+  return ext?.getAttribute('base') || null
+}
+
+const nsResolver = (prefix: string | null) => (prefix === 'xs' ? 'http://www.w3.org/2001/XMLSchema' : null)
+
+function queryOne(context: Document | Element, xpath: string): Element | null {
+  const result = evaluateXPath(context, xpath)
   return result.singleNodeValue as Element | null
 }
 
-function getBaseTypeFromElement(doc: Document, element: Element): string | null {
-  const result = doc.evaluate(
-    `.//xs:extension`,
-    element,
-    (prefix) => (prefix === 'xs' ? 'http://www.w3.org/2001/XMLSchema' : null),
-    XPathResult.FIRST_ORDERED_NODE_TYPE,
-    null,
-  )
+function evaluateXPath(
+  context: Document | Element,
+  xpath: string,
+  type: number = XPathResult.FIRST_ORDERED_NODE_TYPE,
+): XPathResult {
+  const doc = context.ownerDocument ?? context
 
-  const ext = result.singleNodeValue as Element | null
-  return ext?.getAttribute('base') || null
+  return doc.evaluate(xpath, context, nsResolver, type, null)
 }
 
 export function getFirstLevelElementsForType(doc: Document, typeName: string): string[] {
