@@ -842,6 +842,7 @@ function FlowCanvas() {
   return (
     <div
       className="relative h-full w-full"
+      id="flow-canvas"
       onDrop={onDrop}
       onDragOver={onDragOver}
       onDragEnd={onDragEnd}
