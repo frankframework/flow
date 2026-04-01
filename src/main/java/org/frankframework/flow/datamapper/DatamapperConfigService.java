@@ -86,8 +86,7 @@ public class DatamapperConfigService {
 			}
 			return fileSystemStorage.readFile(filePath);
 		} catch (IOException e) {
-			throw new ConfigurationNotFoundException(
-					"Failed to resolve configuration file path for project: " + projectName);
+			throw new ConfigurationNotFoundException("Failed to resolve configuration file path for project: " + projectName);
 		}
 	}
 }
