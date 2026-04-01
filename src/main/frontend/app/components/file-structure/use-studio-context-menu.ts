@@ -1,9 +1,7 @@
 import { useCallback, useRef, useState } from 'react'
 import type { TreeItemIndex } from 'react-complex-tree'
 import { deleteFile, renameFile } from '~/services/file-service'
-import {
-  createFolderInProject,
-} from '~/services/file-tree-service'
+import { createFolderInProject } from '~/services/file-tree-service'
 import { createAdapter, renameAdapter, deleteAdapter } from '~/services/adapter-service'
 import { clearConfigurationCache, createConfiguration } from '~/services/configuration-service'
 import useTabStore from '~/stores/tab-store'
@@ -198,7 +196,7 @@ export function useStudioContextMenu({ projectName, dataProvider }: UseStudioCon
         title: 'New Folder',
         onSubmit: async (name: string) => {
           try {
-            await createFolderInProject(projectName, menu.folderPath, name)
+            await createFolderInProject(projectName, `${menu.folderPath}/${name}`)
             await dataProvider.reloadDirectory('root')
           } catch (error) {
             showErrorToastFrom('Failed to create folder', error)

@@ -8,12 +8,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
 import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.frankframework.flow.project.Project;
 import org.frankframework.flow.project.ProjectDTO;
 import org.frankframework.flow.project.ProjectService;
 import org.frankframework.flow.projectsettings.FilterType;
 import org.frankframework.flow.projectsettings.ProjectSettings;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -149,12 +151,13 @@ class ConfigurationControllerTest {
 						List.of("config1.xml"),
 						Map.of(FilterType.ADAPTER, true),
 						false,
-						false));
+						false
+				));
 
 		mockMvc.perform(post("/api/projects/" + TEST_PROJECT_NAME + "/configuration?name=NewConfig.xml")
 						.accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("xmlContent").value(""));
+				.andExpect(jsonPath("$.xmlContent").value(""));
 
 		verify(configurationService).addConfiguration(TEST_PROJECT_NAME, "NewConfig.xml");
 	}

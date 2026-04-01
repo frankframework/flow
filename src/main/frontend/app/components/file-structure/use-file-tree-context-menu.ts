@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from 'react'
 import type { TreeItemIndex } from 'react-complex-tree'
-import { createFile, deleteFile, renameFile } from '~/services/file-service';
+import { createFile, deleteFile, renameFile } from '~/services/file-service'
 import { createFolderInProject } from '~/services/file-tree-service'
 import { clearConfigurationCache } from '~/services/configuration-service'
 import useTabStore from '~/stores/tab-store'
@@ -113,7 +113,6 @@ export function useFileTreeContextMenu({
       setNameDialog({
         title: 'New File',
         onSubmit: async (name: string) => {
-
           try {
             await createFile(projectName, `${parentPath}/${ensureXmlExtension(name)}`)
             await dataProvider.reloadDirectory(parentItemId)
@@ -139,7 +138,7 @@ export function useFileTreeContextMenu({
         title: 'New Folder',
         onSubmit: async (name: string) => {
           try {
-            await createFolderInProject(projectName, parentPath, name)
+            await createFolderInProject(projectName, `${parentPath}/${name}`)
             await dataProvider.reloadDirectory(parentItemId)
           } catch (error) {
             showErrorToastFrom('Failed to create folder', error)

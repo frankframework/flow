@@ -1,6 +1,7 @@
 package org.frankframework.flow.file;
 
 import java.io.IOException;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -47,8 +48,8 @@ public class FileTreeController {
 	}
 
 	@PostMapping("/folder")
-	public ResponseEntity<FileTreeNode> createFolder(@PathVariable String projectName, @RequestBody FolderCreateDTO folderCreate) throws IOException {
-		FileTreeNode node = fileTreeService.createFolder(projectName, folderCreate.path());
+	public ResponseEntity<FileTreeNode> createFolder(@PathVariable String projectName, @RequestBody FolderCreateDTO dto) throws IOException {
+		FileTreeNode node = fileTreeService.createFolder(projectName, dto.path());
 		return ResponseEntity.status(HttpStatus.CREATED.value()).body(node);
 	}
 }

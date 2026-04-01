@@ -34,12 +34,12 @@ export async function fetchConfiguration(projectName: string, filepath: string, 
 export async function saveConfiguration(projectName: string, filepath: string, content: string): Promise<XmlResponse> {
   return apiFetch<XmlResponse>(`${getBaseUrl(projectName)}?path=${encodeURIComponent(filepath)}`, {
     method: 'PUT',
-    body: JSON.stringify({ filepath, content }),
+    body: content,
   })
 }
 
 export async function createConfiguration(projectName: string, filename: string): Promise<XmlResponse> {
-  return apiFetch<XmlResponse>(`${getBaseUrl(projectName)}?path=${encodeURIComponent(filename)}`, { method: 'POST' })
+  return apiFetch<XmlResponse>(`${getBaseUrl(projectName)}?name=${encodeURIComponent(filename)}`, { method: 'POST' })
 }
 
 function getBaseUrl(projectName: string): string {

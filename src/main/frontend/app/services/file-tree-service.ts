@@ -18,15 +18,15 @@ export async function fetchDirectoryByPath(
   path: string,
   signal?: AbortSignal,
 ): Promise<FileTreeNode> {
-  return apiFetch<FileTreeNode>(`${getBaseUrl(projectName)}?path=${encodeURIComponent(path)}`, {
+  return apiFetch<FileTreeNode>(`${getTreeUrl(projectName)}/directory?path=${encodeURIComponent(path)}`, {
     signal,
   })
 }
 
-export async function createFolderInProject(projectName: string, path: string, name: string): Promise<FileTreeNode> {
+export async function createFolderInProject(projectName: string, path: string): Promise<FileTreeNode> {
   return apiFetch<FileTreeNode>(`${getBaseUrl(projectName)}/folder`, {
     method: 'POST',
-    body: JSON.stringify({ path, name }),
+    body: JSON.stringify({ path }),
   })
 }
 

@@ -1,29 +1,33 @@
+import RulerCrossPenIcon from '/icons/solar/Ruler Cross Pen.svg?react'
 import Editor, { type Monaco, type OnMount } from '@monaco-editor/react'
-import XsdManager from 'monaco-xsd-code-completion/esm/XsdManager'
+import clsx from 'clsx'
 import XsdFeatures from 'monaco-xsd-code-completion/esm/XsdFeatures'
 import 'monaco-xsd-code-completion/src/style.css'
+import XsdManager from 'monaco-xsd-code-completion/esm/XsdManager'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { validateXML, type XMLValidationError } from 'xmllint-wasm'
 import { useShallow } from 'zustand/react/shallow'
-import SidebarLayout from '~/components/sidebars-layout/sidebar-layout'
-import SidebarContentClose from '~/components/sidebars-layout/sidebar-content-close'
-import { SidebarSide } from '~/components/sidebars-layout/sidebar-layout-store'
-import { useTheme } from '~/hooks/use-theme'
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { fetchFile } from '~/services/file-service'
-import { useProjectStore } from '~/stores/project-store'
-import EditorFileStructure from '~/components/file-structure/editor-file-structure'
-import useEditorTabStore from '~/stores/editor-tab-store'
-import EditorTabs from '~/components/tabs/editor-tabs'
-import { fetchConfiguration, saveConfiguration } from '~/services/configuration-service'
-import { fetchFrankConfigXsd } from '~/services/xsd-service'
-import RulerCrossPenIcon from '/icons/solar/Ruler Cross Pen.svg?react'
 import { openInStudio } from '~/actions/navigationActions'
-import Button from '~/components/inputs/button'
-import { showErrorToastFrom } from '~/components/toast'
-import GitPanel from '~/components/git/git-panel'
+import EditorFileStructure from '~/components/file-structure/editor-file-structure'
 import DiffTabView from '~/components/git/diff-tab-view'
-import clsx from 'clsx'
+import GitPanel from '~/components/git/git-panel'
+import Button from '~/components/inputs/button'
+import SidebarContentClose from '~/components/sidebars-layout/sidebar-content-close'
+import SidebarHeader from '~/components/sidebars-layout/sidebar-header'
+import SidebarLayout from '~/components/sidebars-layout/sidebar-layout'
+import { SidebarSide } from '~/components/sidebars-layout/sidebar-layout-store'
+import EditorTabs from '~/components/tabs/editor-tabs'
+import { showErrorToastFrom } from '~/components/toast'
+import { useTheme } from '~/hooks/use-theme'
+import { fetchConfiguration, saveConfiguration } from '~/services/configuration-service'
+import { fetchFile } from '~/services/file-service'
 import { refreshOpenDiffs } from '~/services/git-service'
+import { fetchFrankConfigXsd } from '~/services/xsd-service'
+import useEditorTabStore from '~/stores/editor-tab-store'
+import { useProjectStore } from '~/stores/project-store'
+import { useSettingsStore } from '~/stores/settings-store'
+import { toProjectRelativePath } from '~/utils/path-utils'
+import flowXsd from '../../../src/assets/xsd/FlowConfig.xsd?raw'
 import {
   extractFlowElements,
   findAdapterIndexAtOffset,
@@ -31,12 +35,8 @@ import {
   findFlowElementsStartLine,
   lineToOffset,
   normalizeFrankElements,
-  wrapFlowXml,
+  wrapFlowXml
 } from './xml-utils'
-import { useSettingsStore } from '~/stores/settings-store'
-import { toProjectRelativePath } from '~/utils/path-utils'
-import SidebarHeader from '~/components/sidebars-layout/sidebar-header'
-import flowXsd from '../../../src/assets/xsd/FlowConfig.xsd?raw'
 
 type LeftTab = 'files' | 'git'
 type SaveStatus = 'idle' | 'saving' | 'saved'
@@ -148,6 +148,11 @@ function toMarker(e: ValidationError, severity: number) {
     message: e.message,
     severity,
   }
+}
+
+function toMonacoType(type: string | null) {
+  if (!type || type === 'text/plain') return 'plaintext'
+  return type.split('/').pop() ?? ''
 }
 
 export default function CodeEditor() {
@@ -459,7 +464,7 @@ export default function CodeEditor() {
     } else {
       fetchFile(project.name, filePath, abortController.signal)
         .then(({ content, type }) => {
-          const fileType = type ? type.split('/')[1] : ''
+          const fileType = toMonacoType(type)
           setMonacoContent(content, fileType, abortController.signal)
         })
         .catch((error) => {
