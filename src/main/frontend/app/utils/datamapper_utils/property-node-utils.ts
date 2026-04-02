@@ -3,6 +3,7 @@ import type { CustomNodeData, NodeLabels } from '~/types/datamapper_types/react-
 import { findNodeParent } from './generic-node-utils'
 import type { FormatDefinition } from '~/types/datamapper_types/data-types'
 import { GROUP_PADDING_TOP, GROUP_WIDTH, ITEM_GAP, OBJECT_HEIGHT } from './constant'
+import type { GetNodeFunc, SequentialRepositionFn } from '~/hooks/use-datamapper-flow-management'
 
 export function recurseFindArray(node: Node, nodes: Node[]) {
   const parent = findNodeParent(node, nodes)
@@ -126,7 +127,6 @@ export function updateNodeType(data: CustomNodeData, formatType?: FormatDefiniti
 
   return { updatedReactflowType, variableTypeBasic }
 }
-type SequentialRepositionFn = (nodes: Node[], parentId: string) => Node[]
 
 export function deleteNodeById(
   nodes: Node[],
@@ -145,7 +145,6 @@ export function deleteNodeById(
 
   return { updatedNodes, deletedNode: nodeToDelete }
 }
-export type GetNodeFunc = (id: string) => Node | undefined
 
 export function sequentialReposition(nodes: Node[], startParentId: string, getNodeFunc: GetNodeFunc): Node[] {
   let parentId: string | null = startParentId
@@ -196,6 +195,28 @@ export function calculateNodePosition(previous: Node[], parentId: string, getNod
   }
 
   return newY
+}
+export function generateReactFlowObject(previous: Node[], data: CustomNodeData, getNode: GetNodeFunc): Node {
+  //Calculate the position the node is to be placed at. This isn't always very accurate and will be corrected later after adding
+  const newY = calculateNodePosition(previous, data.parentId, getNode)
+  //Set the correct type of the node
+
+  //Create the node Obj
+  const newNode: Node = {
+    id: data.id,
+    position: { x: 10, y: newY },
+    parentId: data.parentId,
+    extent: 'parent',
+    type: getReactflowType(data.variableType, data.parentId),
+    data,
+  }
+
+  //Add empty padding in case the item is an object, purely visual
+  if (isGroup(data.variableType)) {
+    newNode.height = GROUP_PADDING_TOP * 3
+  }
+
+  return newNode
 }
 
 export function getGroupWidth(parentId: string, getNode: GetNodeFunc): number {

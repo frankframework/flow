@@ -9,6 +9,7 @@ import type { CustomNodeData, MappingNodeData } from '~/types/datamapper_types/r
 import ArrayGroupNode, { type ArrayGroupNodeProperties } from './array-group-node'
 import type { ArrayMappingNodeProperties } from './array-mapping-node'
 import ArrayMappingNode from './array-mapping-node'
+import ImportSchematicNode, { type ImportSchematicNodeprops } from './import-schematic-node'
 
 interface GetNodeTypesParameters {
   flow: ReturnType<typeof useFlowManagement>
@@ -120,4 +121,5 @@ export const getNodeTypes = ({
       }}
     />
   ),
+  importSchematicNode: (node: ImportSchematicNodeprops) => <ImportSchematicNode {...node} />,
 })

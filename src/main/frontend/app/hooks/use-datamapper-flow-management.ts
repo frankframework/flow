@@ -1,19 +1,16 @@
 import { type Dispatch, type SetStateAction, useEffect, useRef } from 'react'
 import type { Node, Edge, ReactFlowInstance, Viewport } from '@xyflow/react'
 import type { MappingListConfig } from '~/types/datamapper_types/config-types'
-import type { SourceSchematic } from '~/stores/datamapper_state/schemaQueue/schema-queue-context'
 import type { CustomNodeData } from '~/types/datamapper_types/react-node-types'
-import { GROUP_PADDING_TOP, SCROLL_AMOUNT, SCROLL_PANE_HEIGHT, THROTTLE_MS } from '~/utils/datamapper_utils/constant'
+import { SCROLL_AMOUNT, SCROLL_PANE_HEIGHT, THROTTLE_MS } from '~/utils/datamapper_utils/constant'
 import { getTablePositions } from '~/utils/datamapper_utils/canvas-management-utils'
 import {
-  calculateNodePosition,
   checkDuplicateLabel,
   deleteNodeById,
   generateNodeId,
+  generateReactFlowObject,
   getGroupWidth,
-  getReactflowType,
   getUnsetNodeIds,
-  isGroup,
   sequentialReposition,
   updateNodeType,
 } from '~/utils/datamapper_utils/property-node-utils'
@@ -24,8 +21,9 @@ import {
   getHighlightedFromPropertyNode,
   resetHighlightElements,
 } from '~/utils/datamapper_utils/highlight-utils'
-import { importJsonSchema, importXsdSchema } from '~/utils/datamapper_utils/schema-utils'
+import { generateImportButton, importJsonSchema, importXsdSchema } from '~/utils/datamapper_utils/schema-utils'
 import { deleteMappingNode } from '~/utils/datamapper_utils/mapping-node-utils'
+import { showErrorToast } from '~/components/toast'
 
 interface UseFlowManagementProperties {
   reactFlowInstance: ReactFlowInstance
@@ -33,6 +31,18 @@ interface UseFlowManagementProperties {
   setReactFlowNodes: Dispatch<SetStateAction<Node[]>>
   setEdges: Dispatch<SetStateAction<Edge[]>>
 }
+export type SequentialRepositionFn = (nodes: Node[], parentId: string) => Node[]
+export type GetNodeFunc = (id: string) => Node | undefined
+export type AddNodeFunction = (
+  side: 'source' | 'target',
+  label: string,
+  variableType: string,
+  defaultValue?: string | null,
+  parentId?: string | null,
+  id?: string | null,
+  isAttribute?: boolean,
+) => Promise<string>
+export type ImportSchematicFunc = (file: File, side: 'source' | 'target', name: string) => void
 
 export function useFlowManagement({
   reactFlowInstance,
@@ -75,28 +85,30 @@ export function useFlowManagement({
       document.removeEventListener('mousemove', updatePosition)
     }
   }, [reactFlowInstance])
-
-  function generateReactFlowObject(previous: Node[], data: CustomNodeData): Node {
-    //Calculate the position the node is to be placed at. This isn't always very accurate and will be corrected later after adding
-    const newY = calculateNodePosition(previous, data.parentId, reactFlowInstance.getNode)
-    //Set the correct type of the node
-
-    //Create the node Obj
-    const newNode: Node = {
-      id: data.id,
-      position: { x: 10, y: newY },
-      parentId: data.parentId,
-      extent: 'parent',
-      type: getReactflowType(data.variableType, data.parentId),
-      data,
+  async function addSchematicImportButton(side: 'source' | 'target') {
+    deleteNode(`${side}-import-button`) //Failsafe to make sure there can never be more then 1
+    const fileType = config.formatTypes[side]?.schemaFileExtension
+    if (!fileType) {
+      showErrorToast('Invalid configuration!')
+      return
     }
+    const node = generateImportButton(
+      reactFlowInstance.getNodes(),
+      fileType,
+      side,
+      reactFlowInstance.getNode,
+      importSchematic,
+    )
+      .then((newNode: Node) => {
+        setReactFlowNodes((previous) => [...previous, newNode])
 
-    //Add empty padding in case the item is an object, purely visual
-    if (isGroup(data.variableType)) {
-      newNode.height = GROUP_PADDING_TOP * 3
-    }
-
-    return newNode
+        return waitForMeasuredNode(newNode.id)
+      })
+      .then((measuredNode) => {
+        repositionForceUpdate(measuredNode)
+      })
+    return node
+    // reposition after measurement to ensure proper placement/spacing
   }
 
   async function addNodeSequential(
@@ -121,16 +133,20 @@ export function useFlowManagement({
 
     //Generate reactflow object from the values
     setReactFlowNodes((previous) => {
-      const newNode = generateReactFlowObject(previous, {
-        id: resolvedId,
-        label,
-        parentId,
-        variableType,
-        variableTypeBasic: formatType?.properties.find((a) => a.name == variableType)?.type,
-        defaultValue: defaultValue ?? '',
-        width: getGroupWidth(parentId, reactFlowInstance.getNode),
-        isAttribute,
-      })
+      const newNode = generateReactFlowObject(
+        previous,
+        {
+          id: resolvedId,
+          label,
+          parentId,
+          variableType,
+          variableTypeBasic: formatType?.properties.find((a) => a.name == variableType)?.type,
+          defaultValue: defaultValue ?? '',
+          width: getGroupWidth(parentId, reactFlowInstance.getNode),
+          isAttribute,
+        },
+        reactFlowInstance.getNode,
+      )
 
       return [...previous, newNode]
     })
@@ -369,11 +385,19 @@ export function useFlowManagement({
   }
 
   async function importSchematic(file: File, side: 'source' | 'target', name = '') {
+    deleteNode(`${side}-import-button`)
+
     let parentId = null
     if (side === 'target') {
       await clearTarget()
     }
-    if (name && side == 'source') {
+
+    if (
+      name &&
+      side == 'source' &&
+      reactFlowInstance.getNodes().filter((node) => node.id.includes('source') && !node.id.includes('import'))
+        .length !== 1
+    ) {
       parentId = await addNodeSequential(side, name, 'schematic')
     }
     const text = await file.text()
@@ -383,24 +407,12 @@ export function useFlowManagement({
     } else if (config.formatTypes[side]?.schemaFileExtension === '.xsd') {
       await importXsdSchema(text, side, parentId, addNodeSequential, config.formatTypes[side]) // pass raw XML text
     }
-  }
 
-  async function importMultipleSchematics(sourceSchematics: SourceSchematic[]) {
-    for (const schematic of sourceSchematics.toSorted((schematicA, schematicB) => {
-      // Wierd sorting function, but basically this make sure any without a name are placed first in the list, to ensure the base is at the top of the list
-      const aName = schematicA.name ?? ''
-      const bName = schematicB.name ?? ''
-
-      if (aName === '' && bName !== '') return -1
-      if (aName !== '' && bName === '') return 1
-      if (aName === '' && bName === '') return 0
-
-      // TS now knows both are strings
-      return aName.localeCompare(bName)
-    })) {
-      await importSchematic(schematic.file, 'source', schematic.name)
+    if (side === 'source') {
+      await addSchematicImportButton(side)
     }
   }
+
   return {
     addNodeSequential,
     editNode,
@@ -416,9 +428,9 @@ export function useFlowManagement({
     deleteMapping,
     calculateTablePositions,
     importSchematic,
-    importMultipleSchematics,
     highlightUnset,
     checkForDragScroll,
     endCheckForDragScroll,
+    addSchematicImportButton,
   }
 }

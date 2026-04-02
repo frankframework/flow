@@ -19,7 +19,6 @@ import { getNodeTypes } from '~/components/datamapper/react-flow/node-types'
 import { showErrorToast, showSuccessToast } from '~/components/toast'
 import { useFlowManagement } from '~/hooks/use-datamapper-flow-management'
 import { type ConfigActions } from '~/stores/datamapper_state/mappingListConfig/reducer'
-import { useFile } from '~/stores/datamapper_state/schemaQueue/schema-queue-context'
 import type { CustomNodeData, MappingNodeData, NodeLabels } from '~/types/datamapper_types/react-node-types'
 import { TABLE_WIDTH } from '~/utils/datamapper_utils/constant'
 import {
@@ -100,7 +99,6 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
     setReactFlowNodes,
     setEdges,
   })
-  const { sourceSchematics, targetSchematic, clearFiles } = useFile()
 
   const openMapping = useCallback(() => {
     requestAnimationFrame(() => {
@@ -198,11 +196,19 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
 
   const onRestore = useCallback(() => {
     const restoreFlow = async () => {
-      if (config.propertyData) flow.importJsonConfiguration(JSON.stringify(config.propertyData))
+      if (config.propertyData) await flow.importJsonConfiguration(JSON.stringify(config.propertyData))
     }
 
-    restoreFlow()
-  }, [config.propertyData, flow])
+    restoreFlow().then(() => {
+      flow.deleteNode('target-import-button')
+      requestAnimationFrame(() => {
+        flow.addSchematicImportButton('source')
+        if (reactFlowInstance.getNodes().filter((node) => node.id.includes('target')).length == 1) {
+          flow.addSchematicImportButton('target')
+        }
+      })
+    })
+  }, [config.propertyData, flow, reactFlowInstance])
 
   useEffect(() => {
     if (!reactFlowInstance || initHasRun.current) return
@@ -210,32 +216,11 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
 
     if (config.propertyData.nodes && config.propertyData.nodes.length > 1) {
       onRestore()
+    } else {
+      flow.addSchematicImportButton('source')
+      flow.addSchematicImportButton('target')
     }
-    const loadSchematics = async () => {
-      try {
-        if (config.propertyData.nodes && config.propertyData.nodes.length > 1) {
-          onRestore()
-        }
-
-        if (targetSchematic) {
-          await flow.importSchematic(targetSchematic, 'target')
-        }
-
-        if (sourceSchematics.length > 0) {
-          await flow.importMultipleSchematics(sourceSchematics)
-        }
-      } catch (error) {
-        if (error instanceof Error) {
-          showErrorToast(error.message)
-        }
-      } finally {
-        clearFiles()
-      }
-    }
-
-    loadSchematics()
-    clearFiles()
-  }, [clearFiles, config.propertyData.nodes, flow, onRestore, reactFlowInstance, sourceSchematics, targetSchematic])
+  }, [config.propertyData.nodes, flow, onRestore, reactFlowInstance])
 
   const onReactFlowNodeChange = useCallback(
     (changes: NodeChange[]) => setReactFlowNodes((nodes) => applyNodeChanges(changes, nodes) as Node[]),
