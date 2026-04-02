@@ -24,8 +24,8 @@ function ImportSchematicNode({ data }: ImportSchematicNodeprops) {
   return (
     <div
       className={clsx(
-        'group cap-3 flex h-full flex-col items-center rounded-xl border-3 border-dashed p-3 shadow',
-        isDragging && 'border-foreground-active',
+        'group cap-3 flex h-full flex-col items-center rounded-xl border-dashed border-gray-400 p-3 shadow',
+        isDragging || file ? 'bg-selected border! border-solid' : 'border-2',
       )}
       style={{ width: `${GROUP_WIDTH}px` }}
       onDragOver={(e) => {
@@ -44,7 +44,7 @@ function ImportSchematicNode({ data }: ImportSchematicNodeprops) {
     >
       {/* Header */}
       <div className="flex text-xl">Import schema</div>
-      <CodeFile className={clsx('m-5 flex h-10 w-10', isDragging ? 'fill-foreground-active' : 'fill-foreground')} />
+      <CodeFile className={clsx('fill-foreground m-5 flex h-10 w-10')} />
 
       <ImportButton
         fileType={data.fileType}
