@@ -13,14 +13,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Comparator;
-
 import javax.naming.ConfigurationException;
-
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
 import org.frankframework.flow.file.FileTreeNode;
 import org.frankframework.flow.file.FileTreeService;
 import org.frankframework.flow.filesystem.FileSystemStorage;
-
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
