@@ -5,7 +5,7 @@ export async function fetchDatamapperConfiguration(projectName: string): Promise
   const data = await apiFetch<MappingListConfig>(`/datamapper/${encodeURIComponent(projectName)}/configuration`, {
     method: 'GET',
   })
-  console.dir(data)
+
   return data
 }
 
