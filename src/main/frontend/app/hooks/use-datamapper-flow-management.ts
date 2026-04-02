@@ -1,7 +1,6 @@
 import { type Dispatch, type SetStateAction, useEffect, useRef } from 'react'
 import type { Node, Edge, ReactFlowInstance, Viewport } from '@xyflow/react'
 import type { MappingListConfig } from '~/types/datamapper_types/config-types'
-import type { SourceSchematic } from '~/stores/datamapper_state/schemaQueue/schema-queue-context'
 import type { CustomNodeData } from '~/types/datamapper_types/react-node-types'
 import { SCROLL_AMOUNT, SCROLL_PANE_HEIGHT, THROTTLE_MS } from '~/utils/datamapper_utils/constant'
 import { getTablePositions } from '~/utils/datamapper_utils/canvas-management-utils'
@@ -24,7 +23,7 @@ import {
 } from '~/utils/datamapper_utils/highlight-utils'
 import { generateImportButton, importJsonSchema, importXsdSchema } from '~/utils/datamapper_utils/schema-utils'
 import { deleteMappingNode } from '~/utils/datamapper_utils/mapping-node-utils'
-import { showErrorToast, showInfoToast } from '~/components/toast'
+import { showErrorToast } from '~/components/toast'
 
 interface UseFlowManagementProperties {
   reactFlowInstance: ReactFlowInstance
@@ -414,22 +413,6 @@ export function useFlowManagement({
     }
   }
 
-  async function importMultipleSchematics(sourceSchematics: SourceSchematic[]) {
-    for (const schematic of sourceSchematics.toSorted((schematicA, schematicB) => {
-      // Wierd sorting function, but basically this make sure any without a name are placed first in the list, to ensure the base is at the top of the list
-      const aName = schematicA.name ?? ''
-      const bName = schematicB.name ?? ''
-
-      if (aName === '' && bName !== '') return -1
-      if (aName !== '' && bName === '') return 1
-      if (aName === '' && bName === '') return 0
-
-      // TS now knows both are strings
-      return aName.localeCompare(bName)
-    })) {
-      await importSchematic(schematic.file, 'source', schematic.name)
-    }
-  }
   return {
     addNodeSequential,
     editNode,
@@ -445,7 +428,6 @@ export function useFlowManagement({
     deleteMapping,
     calculateTablePositions,
     importSchematic,
-    importMultipleSchematics,
     highlightUnset,
     checkForDragScroll,
     endCheckForDragScroll,
