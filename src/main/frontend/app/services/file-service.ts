@@ -7,7 +7,7 @@ export interface FileDTO {
 }
 
 export async function createFile(projectName: string, filePath: string): Promise<void> {
-  await updateFile(projectName, filePath, '')
+  await updateFile(projectName, filePath, '\n')
 }
 
 export function fetchFile(projectName: string, path: string, signal?: AbortSignal): Promise<FileDTO> {
@@ -17,6 +17,9 @@ export function fetchFile(projectName: string, path: string, signal?: AbortSigna
 export function updateFile(projectName: string, path: string, content: string): Promise<FileTreeNode> {
   return apiFetch<FileTreeNode>(`${getBaseUrl(projectName)}?path=${encodeURIComponent(path)}`, {
     method: 'PUT',
+    headers: {
+      'Content-Type': 'text/plain', // override default json content type
+    },
     body: content,
   })
 }

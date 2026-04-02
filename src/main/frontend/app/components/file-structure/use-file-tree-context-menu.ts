@@ -49,9 +49,11 @@ export function getParentItemId(itemId: TreeItemIndex): TreeItemIndex {
   return lastSlash > 0 ? str.slice(0, Math.max(0, lastSlash)) : 'root'
 }
 
-function ensureXmlExtension(name: string): string {
-  if (name.includes('.')) return name
-  return `${name}.xml`
+function ensureHasExtension(name: string): string {
+  const dotIndex = name.lastIndexOf('.')
+  if (dotIndex < name.length - 1) return name
+  if (dotIndex === -1) return `${name}.txt`
+  return `${name.slice(0, Math.max(0, dotIndex))}.txt`
 }
 
 function buildNewPath(oldPath: string, newName: string): string {
@@ -114,7 +116,7 @@ export function useFileTreeContextMenu({
         title: 'New File',
         onSubmit: async (name: string) => {
           try {
-            await createFile(projectName, `${parentPath}/${ensureXmlExtension(name)}`)
+            await createFile(projectName, `${parentPath}/${ensureHasExtension(name)}`)
             await dataProvider.reloadDirectory(parentItemId)
           } catch (error) {
             showErrorToastFrom('Failed to create file', error)
