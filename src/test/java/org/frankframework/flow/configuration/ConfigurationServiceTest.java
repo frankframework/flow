@@ -8,11 +8,13 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+
 import org.frankframework.flow.exception.ApiException;
 import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.frankframework.flow.project.Project;
 import org.frankframework.flow.project.ProjectNotFoundException;
 import org.frankframework.flow.project.ProjectService;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -56,13 +58,13 @@ class ConfigurationServiceTest {
 
 	private void stubWriteFile() throws IOException {
 		doAnswer(invocation -> {
-					String path = invocation.getArgument(0);
-					String content = invocation.getArgument(1);
-					Path filePath = Path.of(path);
-					Files.createDirectories(filePath.getParent());
-					Files.writeString(filePath, content, StandardCharsets.UTF_8);
-					return null;
-				})
+			String path = invocation.getArgument(0);
+			String content = invocation.getArgument(1);
+			Path filePath = Path.of(path);
+			Files.createDirectories(filePath.getParent());
+			Files.writeString(filePath, content, StandardCharsets.UTF_8);
+			return null;
+		})
 				.when(fileSystemStorage)
 				.writeFile(anyString(), anyString());
 	}
@@ -81,7 +83,7 @@ class ConfigurationServiceTest {
 	}
 
 	@Test
-	void getConfigurationContent_FileNotFound_ThrowsConfigurationNotFoundException() throws IOException {
+	void getConfigurationContent_FileNotFound_ThrowsConfigurationNotFoundException() {
 		stubToAbsolutePath();
 
 		String path = tempDir.resolve("missing.xml").toString();
@@ -97,7 +99,8 @@ class ConfigurationServiceTest {
 
 		assertThrows(
 				ApiException.class,
-				() -> configurationService.getConfigurationContent("test", dir.toString()));
+				() -> configurationService.getConfigurationContent("test", dir.toString())
+		);
 	}
 
 	@Test
@@ -115,14 +118,15 @@ class ConfigurationServiceTest {
 	}
 
 	@Test
-	void updateConfiguration_FileNotFound_ThrowsConfigurationNotFoundException() throws IOException {
+	void updateConfiguration_FileNotFound_ThrowsConfigurationNotFoundException() {
 		stubToAbsolutePath();
 
 		String path = tempDir.resolve("missing.xml").toString();
 
 		assertThrows(
 				ApiException.class,
-				() -> configurationService.updateConfiguration("test", path, "<new/>"));
+				() -> configurationService.updateConfiguration("test", path, "<new/>")
+		);
 	}
 
 	@Test
@@ -199,7 +203,8 @@ class ConfigurationServiceTest {
 		assertThrows(
 				ConfigurationAlreadyExistsException.class,
 				() -> configurationService.addConfigurationToFolder(
-						"myproject", "existing.xml", projectDir.toString()));
+						"myproject", "existing.xml", projectDir.toString())
+		);
 	}
 
 	@Test
@@ -216,6 +221,7 @@ class ConfigurationServiceTest {
 
 		assertThrows(
 				SecurityException.class,
-				() -> configurationService.addConfigurationToFolder("myproject", "evil.xml", outsidePath));
+				() -> configurationService.addConfigurationToFolder("myproject", "evil.xml", outsidePath)
+		);
 	}
 }

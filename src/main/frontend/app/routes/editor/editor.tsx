@@ -35,7 +35,7 @@ import {
   findFlowElementsStartLine,
   lineToOffset,
   normalizeFrankElements,
-  wrapFlowXml
+  wrapFlowXml,
 } from './xml-utils'
 
 type LeftTab = 'files' | 'git'

@@ -11,11 +11,13 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Comparator;
 import java.util.List;
+
 import org.frankframework.flow.exception.ApiException;
 import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.frankframework.flow.project.Project;
 import org.frankframework.flow.project.ProjectNotFoundException;
 import org.frankframework.flow.project.ProjectService;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -52,6 +54,7 @@ public class FileTreeServiceTest {
 					try {
 						Files.delete(p);
 					} catch (IOException ignored) {
+						// Ignored to ensure cleanup continues even if some files couldn't be removed
 					}
 				});
 			}
@@ -141,7 +144,7 @@ public class FileTreeServiceTest {
 	}
 
 	@Test
-	void getShallowDirectoryTreeThrowsSecurityExceptionForPathTraversal() throws ProjectNotFoundException, IOException {
+	void getShallowDirectoryTreeThrowsSecurityExceptionForPathTraversal() throws ProjectNotFoundException {
 		stubToAbsolutePath();
 
 		Project project =
@@ -155,8 +158,7 @@ public class FileTreeServiceTest {
 	}
 
 	@Test
-	void getShallowDirectoryTreeThrowsIllegalArgumentExceptionIfDirectoryDoesNotExist()
-			throws ProjectNotFoundException, IOException {
+	void getShallowDirectoryTreeThrowsIllegalArgumentExceptionIfDirectoryDoesNotExist() throws ProjectNotFoundException {
 		stubToAbsolutePath();
 
 		Project project =
@@ -172,8 +174,7 @@ public class FileTreeServiceTest {
 	}
 
 	@Test
-	public void getShallowConfigurationsDirectoryTreeReturnsTreeForExistingDirectory()
-			throws IOException, ProjectNotFoundException {
+	public void getShallowConfigurationsDirectoryTreeReturnsTreeForExistingDirectory() throws IOException, ProjectNotFoundException {
 		stubToAbsolutePath();
 
 		Path configsDir = tempProjectRoot.resolve("src/main/configurations");
@@ -198,12 +199,10 @@ public class FileTreeServiceTest {
 	}
 
 	@Test
-	public void getShallowConfigurationsDirectoryTreeThrowsIfDirectoryDoesNotExist()
-			throws ProjectNotFoundException, IOException {
+	public void getShallowConfigurationsDirectoryTreeThrowsIfDirectoryDoesNotExist() throws ProjectNotFoundException {
 		stubToAbsolutePath();
 
-		Project project =
-				new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+		Project project = new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
 		when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
 
 		IllegalArgumentException ex = assertThrows(
@@ -227,8 +226,7 @@ public class FileTreeServiceTest {
 	}
 
 	@Test
-	public void getConfigurationsDirectoryTreeReturnsFullTreeForExistingDirectory()
-			throws IOException, ProjectNotFoundException {
+	public void getConfigurationsDirectoryTreeReturnsFullTreeForExistingDirectory() throws IOException, ProjectNotFoundException {
 		stubToAbsolutePath();
 		when(fileSystemStorage.isLocalEnvironment()).thenReturn(true);
 
@@ -265,8 +263,7 @@ public class FileTreeServiceTest {
 	}
 
 	@Test
-	public void getConfigurationsDirectoryTreeThrowsIfDirectoryDoesNotExist()
-			throws ProjectNotFoundException, IOException {
+	public void getConfigurationsDirectoryTreeThrowsIfDirectoryDoesNotExist() throws ProjectNotFoundException {
 		stubToAbsolutePath();
 
 		Project project =

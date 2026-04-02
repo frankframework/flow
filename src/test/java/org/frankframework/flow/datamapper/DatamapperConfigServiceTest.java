@@ -13,11 +13,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Comparator;
+
 import javax.naming.ConfigurationException;
+
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
 import org.frankframework.flow.file.FileTreeNode;
 import org.frankframework.flow.file.FileTreeService;
 import org.frankframework.flow.filesystem.FileSystemStorage;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -56,7 +59,7 @@ public class DatamapperConfigServiceTest {
 		}
 	}
 
-	private void stubToAbsolutePath() throws IOException {
+	private void stubToAbsolutePath() {
 		when(fileSystemStorage.toAbsolutePath(anyString())).thenAnswer(invocation -> {
 			String path = invocation.getArgument(0);
 			Path p = Paths.get(path);
@@ -110,9 +113,8 @@ public class DatamapperConfigServiceTest {
 		assertEquals(content, result);
 	}
 
-	/* Disabled due to it never throwing NoSuchFileException and creating the file itself when needed  */
 	@Test
-	@Disabled
+	@Disabled("Disabled due to it never throwing NoSuchFileException and creating the file itself when needed")
 	@DisplayName("Should throw NoSuchFileException when file does not exist")
 	public void readFileContent_FileNotFound() throws IOException {
 		stubReadFile();

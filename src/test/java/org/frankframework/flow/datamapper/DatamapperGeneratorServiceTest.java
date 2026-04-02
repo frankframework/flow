@@ -15,6 +15,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Comparator;
+
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -22,12 +23,15 @@ import javax.xml.transform.*;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
+
 import net.sf.saxon.s9api.*;
+
 import org.frankframework.flow.exception.ApiException;
 import org.frankframework.flow.file.FileTreeNode;
 import org.frankframework.flow.file.FileTreeService;
 import org.frankframework.flow.filesystem.FileOperations;
 import org.frankframework.flow.filesystem.FileSystemStorage;
+
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -51,7 +55,7 @@ public class DatamapperGeneratorServiceTest {
 
 	private Path tempProjectRoot;
 
-	private void stubToAbsolutePath() throws IOException {
+	private void stubToAbsolutePath() {
 		when(fileSystemStorage.toAbsolutePath(anyString())).thenAnswer(invocation -> {
 			String path = invocation.getArgument(0);
 			return Paths.get(path);
@@ -202,7 +206,8 @@ public class DatamapperGeneratorServiceTest {
 		stubToAbsolutePath();
 		service.generate(
 				"src/test/resources/datamapper/inputXmlToXmlWithArrayWithAttributes.json",
-				tempProjectRoot.toAbsolutePath() + "/output.xslt");
+				tempProjectRoot.toAbsolutePath() + "/output.xslt"
+		);
 
 		XsltExecutable executable =
 				compiler.compile(new StreamSource(new File(tempProjectRoot.toAbsolutePath() + "/output.xslt")));
@@ -220,6 +225,7 @@ public class DatamapperGeneratorServiceTest {
 		Assertions.assertEquals(
 				toString(expectedResult).trim(), writer.toString().trim());
 	}
+
 	@Test
 	@DisplayName("Test All functions")
 	public void testAllFunctionsGeneratedMapping()
@@ -228,7 +234,8 @@ public class DatamapperGeneratorServiceTest {
 		stubToAbsolutePath();
 		service.generate(
 				"src/test/resources/datamapper/generationFileTestAllFunctions.json",
-				tempProjectRoot.toAbsolutePath() + "/output.xslt");
+				tempProjectRoot.toAbsolutePath() + "/output.xslt"
+		);
 
 		XsltExecutable executable =
 				compiler.compile(new StreamSource(new File(tempProjectRoot.toAbsolutePath() + "/output.xslt")));
@@ -246,6 +253,7 @@ public class DatamapperGeneratorServiceTest {
 		Assertions.assertEquals(
 				toString(expectedResult).trim(), writer.toString().trim());
 	}
+
 	@Test
 	@DisplayName("Test XML to Json mapping")
 	public void testXMLtoJSONGeneratedMapping() throws SaxonApiException, IOException, ApiException {
