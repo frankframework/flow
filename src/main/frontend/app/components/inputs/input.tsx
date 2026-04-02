@@ -28,7 +28,7 @@ export default function Input({
     >
       <input
         className={twMerge(
-          'text-foreground focus:border-b-brand w-full rounded-sm border-b-[2px] border-transparent px-3 py-2 outline-none sm:text-sm',
+          'text-foreground focus:border-b-brand w-full rounded-sm border-b-2 border-transparent px-3 py-2 outline-none sm:text-sm',
           disabled && 'cursor-not-allowed',
           inputClassName,
         )}

@@ -19,7 +19,6 @@ import { getNodeTypes } from '~/components/datamapper/react-flow/node-types'
 import { showErrorToast, showSuccessToast } from '~/components/toast'
 import { useFlowManagement } from '~/hooks/use-datamapper-flow-management'
 import { type ConfigActions } from '~/stores/datamapper_state/mappingListConfig/reducer'
-import { useFile } from '~/stores/datamapper_state/schemaQueue/schema-queue-context'
 import type { CustomNodeData, MappingNodeData, NodeLabels } from '~/types/datamapper_types/react-node-types'
 import { TABLE_WIDTH } from '~/utils/datamapper_utils/constant'
 import {
@@ -100,7 +99,6 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
     setReactFlowNodes,
     setEdges,
   })
-  const { sourceSchematics, targetSchematic, clearFiles } = useFile()
 
   const openMapping = useCallback(() => {
     requestAnimationFrame(() => {
@@ -222,7 +220,7 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
       flow.addSchematicImportButton('source')
       flow.addSchematicImportButton('target')
     }
-  }, [clearFiles, config.propertyData.nodes, flow, onRestore, reactFlowInstance, sourceSchematics, targetSchematic])
+  }, [config.propertyData.nodes, flow, onRestore, reactFlowInstance])
 
   const onReactFlowNodeChange = useCallback(
     (changes: NodeChange[]) => setReactFlowNodes((nodes) => applyNodeChanges(changes, nodes) as Node[]),
