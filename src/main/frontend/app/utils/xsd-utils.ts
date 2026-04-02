@@ -315,29 +315,37 @@ export function getMissingRequirements(requirements: Requirement[], children: Ch
   return missing
 }
 
-function collectMissing(req: Requirement, children: ChildNode[], missing: string[]) {
-  if (req.kind === 'element') {
-    if (!req.required) return
+function collectMissing(requirement: Requirement, children: ChildNode[], missing: string[]) {
+  if (requirement.kind === 'element') {
+    if (!requirement.required) return
 
-    const exists = children.some((child) => child.subtype === req.name)
+    const exists = children.some((child) => child.subtype === requirement.name)
 
     if (!exists) {
-      missing.push(req.name)
+      missing.push(requirement.name)
     }
 
     return
   }
 
-  if (req.kind === 'group') {
-    if (req.mode === 'all') {
-      for (const childReq of req.children) collectMissing(childReq, children, missing)
+  if (requirement.kind === 'group') {
+    if (requirement.mode === 'all') {
+      for (const childRequirement of requirement.children) collectMissing(childRequirement, children, missing)
     }
 
-    if (req.mode === 'one') {
-      const anySatisfied = req.children.some((childReq) => evaluateRequirement(childReq, children))
+    if (requirement.mode === 'one') {
+      const anySatisfied = requirement.children.some((childRequirement) =>
+        evaluateRequirement(childRequirement, children),
+      )
 
       if (!anySatisfied) {
-        const options = req.children.flatMap((element) => getReadableNames(element)).join(', ')
+        const requiredChildren = requirement.children
+          .map((element) => getRequiredOnly(element))
+          .filter(Boolean) as Requirement[]
+
+        if (requiredChildren.length === 0) return
+
+        const options = requiredChildren.flatMap((element) => getReadableNames(element)).join(', ')
 
         missing.push(`One of: ${options}`)
       }
@@ -345,16 +353,37 @@ function collectMissing(req: Requirement, children: ChildNode[], missing: string
   }
 }
 
-function getReadableNames(req: Requirement): string[] {
-  if (req.kind === 'element') {
-    return [req.name]
+function getReadableNames(requirement: Requirement): string[] {
+  if (requirement.kind === 'element') {
+    return [requirement.name]
   }
 
-  if (req.kind === 'group') {
-    return req.children.flatMap((element) => getReadableNames(element))
+  if (requirement.kind === 'group') {
+    return requirement.children.flatMap((element) => getReadableNames(element))
   }
 
   return []
+}
+
+function getRequiredOnly(requirement: Requirement): Requirement | null {
+  if (requirement.kind === 'element') {
+    return requirement.required ? requirement : null
+  }
+
+  if (requirement.kind === 'group') {
+    const filteredChildren = requirement.children
+      .map((element) => getRequiredOnly(element))
+      .filter(Boolean) as Requirement[]
+
+    if (filteredChildren.length === 0) return null
+
+    return {
+      ...requirement,
+      children: filteredChildren,
+    }
+  }
+
+  return null
 }
 
 interface RequirementBase {
