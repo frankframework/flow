@@ -196,7 +196,6 @@ export function getElementRequirements(doc: Document, elementName: string): Requ
     console.warn(`No type found for element "${elementName}" (tried "${typeName}")`)
     return []
   }
-  console.log(typeNode)
 
   return extractRequirements(doc, typeNode)
 }
@@ -238,14 +237,14 @@ function extractRequirements(
         const children = extractRequirements(doc, groupDef, isRequired, visitedGroups)
 
         if (isRequired) {
-          // 🔑 REQUIRED GROUP = "at least one of its children"
+          // REQUIRED GROUP = "at least one of its children"
           results.push({
             kind: 'group',
             mode: 'one',
             children,
           })
         } else {
-          // optional group → children optional
+          // optional group -> children optional
           results.push(...children.map((c) => (c.kind === 'element' ? { ...c, required: false } : c)))
         }
 
@@ -304,6 +303,58 @@ function evaluateRequirement(requirement: Requirement, children: ChildNode[]): b
   }
 
   return true
+}
+
+export function getMissingRequirements(requirements: Requirement[], children: ChildNode[]): string[] {
+  const missing: string[] = []
+
+  for (const req of requirements) {
+    collectMissing(req, children, missing)
+  }
+
+  return missing
+}
+
+function collectMissing(req: Requirement, children: ChildNode[], missing: string[]) {
+  if (req.kind === 'element') {
+    if (!req.required) return
+
+    const exists = children.some((child) => child.subtype === req.name)
+
+    if (!exists) {
+      missing.push(req.name)
+    }
+
+    return
+  }
+
+  if (req.kind === 'group') {
+    if (req.mode === 'all') {
+      for (const childReq of req.children) collectMissing(childReq, children, missing)
+    }
+
+    if (req.mode === 'one') {
+      const anySatisfied = req.children.some((childReq) => evaluateRequirement(childReq, children))
+
+      if (!anySatisfied) {
+        const options = req.children.flatMap((element) => getReadableNames(element)).join(', ')
+
+        missing.push(`One of: ${options}`)
+      }
+    }
+  }
+}
+
+function getReadableNames(req: Requirement): string[] {
+  if (req.kind === 'element') {
+    return [req.name]
+  }
+
+  if (req.kind === 'group') {
+    return req.children.flatMap((element) => getReadableNames(element))
+  }
+
+  return []
 }
 
 interface RequirementBase {

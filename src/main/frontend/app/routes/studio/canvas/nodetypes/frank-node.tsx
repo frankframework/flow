@@ -19,7 +19,14 @@ import { showWarningToast } from '~/components/toast'
 import { useHandleTypes } from '~/hooks/use-handle-types'
 import AddSubcomponentModal from '~/components/flow/add-subcomponent-modal'
 import { fetchFrankConfigXsd } from '~/services/xsd-service'
-import { type Requirement, getElementRequirements, isRequirementFulfilled, parseXsd } from '~/utils/xsd-utils'
+import {
+  type Requirement,
+  getElementRequirements,
+  getMissingRequirements,
+  isRequirementFulfilled,
+  parseXsd,
+} from '~/utils/xsd-utils'
+import MissingRequirements from './components/missing-requirements'
 
 export type FrankNodeType = Node<{
   subtype: string
@@ -78,6 +85,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
   }, [elements, frankElement, filters])
   const [mandatoryChildren, setMandatoryChildren] = useState<Requirement[]>([])
   const [mandatoryChildrenFulfilled, setMandatoryChildrenFulfilled] = useState(false)
+  const [missingChildren, setMissingChildren] = useState<string[]>([])
 
   const updateNodeInternals = useUpdateNodeInternals()
   const [isHandleMenuOpen, setIsHandleMenuOpen] = useState(false)
@@ -123,8 +131,13 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
   }, [properties.data.subtype])
 
   useEffect(() => {
-    const allFulfilled = isRequirementFulfilled(mandatoryChildren, properties.data.children)
+    const children = properties.data.children
+
+    const allFulfilled = isRequirementFulfilled(mandatoryChildren, children)
     setMandatoryChildrenFulfilled(allFulfilled)
+
+    const missing = getMissingRequirements(mandatoryChildren, children)
+    setMissingChildren(missing)
   }, [mandatoryChildren, properties.data.children])
 
   useLayoutEffect(() => {
@@ -405,11 +418,6 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
             </>
           )}
         </div>
-        {mandatoryChildrenFulfilled === false && (
-          <div className="border-red-500 bg-red-100 border-l-4 p-2 m-2 rounded">
-            <p className="text-red-700 text-sm">This node is missing mandatory children!</p>
-          </div>
-        )}
         {properties.data.attributes &&
           Object.entries(properties.data.attributes).map(([key, value]) => (
             <div key={key} className="my-1 w-full max-w-full px-1">
@@ -465,6 +473,9 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
             </div>
           </div>
         )}
+        {/* Show missing mandatory children if the node is missing any */}
+        <MissingRequirements missingChildren={missingChildren} isFulfilled={mandatoryChildrenFulfilled} />
+
         {possibleChildren.length > 0 && (
           <div
             className="hover:text-foreground-active text-foreground/30 flex cursor-pointer gap-1 self-start p-1"
