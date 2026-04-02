@@ -211,30 +211,10 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
     if (config.propertyData.nodes && config.propertyData.nodes.length > 1) {
       onRestore()
     }
-    const loadSchematics = async () => {
-      try {
-        if (config.propertyData.nodes && config.propertyData.nodes.length > 1) {
-          onRestore()
-        }
-
-        if (targetSchematic) {
-          await flow.importSchematic(targetSchematic, 'target')
-        }
-
-        if (sourceSchematics.length > 0) {
-          await flow.importMultipleSchematics(sourceSchematics)
-        }
-      } catch (error) {
-        if (error instanceof Error) {
-          showErrorToast(error.message)
-        }
-      } finally {
-        clearFiles()
-      }
+    flow.addSchematicImportButton('source')
+    if (reactFlowInstance.getNodes().filter((node) => node.id.includes('target')).length == 1) {
+      flow.addSchematicImportButton('target')
     }
-
-    loadSchematics()
-    clearFiles()
   }, [clearFiles, config.propertyData.nodes, flow, onRestore, reactFlowInstance, sourceSchematics, targetSchematic])
 
   const onReactFlowNodeChange = useCallback(
@@ -437,6 +417,7 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
             >
               MAP
             </Button>
+            <Button onClick={() => flow.addSchematicImportButton('source')}>Test Adding</Button>
             <Button
               className="absolute right-1/4 bottom-[2vh] z-10 rounded-2xl border px-4 py-2"
               onClick={() => openAddFieldModal('target')}

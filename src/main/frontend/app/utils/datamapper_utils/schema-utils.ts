@@ -1,16 +1,9 @@
 import { SAXParser } from 'sax-ts'
+import type { AddNodeFunction, GetNodeFunc, ImportSchematicFunc } from '~/hooks/use-datamapper-flow-management'
 import type { FormatDefinition } from '~/types/datamapper_types/data-types'
 import type { JsonSchema, SaxAttributes, XsdComplexType, XsdElement } from '~/types/datamapper_types/schema-types'
-
-export type AddNodeFunction = (
-  side: 'source' | 'target',
-  label: string,
-  variableType: string,
-  defaultValue?: string | null,
-  parentId?: string | null,
-  id?: string | null,
-  isAttribute?: boolean,
-) => Promise<string>
+import { calculateNodePosition } from './property-node-utils'
+import type { Node } from '@xyflow/react'
 
 export async function importJsonSchema(
   schema: JsonSchema,
@@ -203,4 +196,26 @@ async function traverseComplexType(
       await addNode(side, attr['@_name'], prop.name, undefined, parentNodeId, null, true)
     }
   }
+}
+
+export async function generateImportButton(
+  nodes: Node[],
+  fileType: string,
+  side: string,
+  getNode: GetNodeFunc,
+  importFunc: ImportSchematicFunc,
+) {
+  const newY = calculateNodePosition(nodes, `${side}-table`, getNode)
+  return {
+    id: `${side}-import-button`,
+    parentId: `${side}-table`,
+    type: 'importSchematicNode',
+    position: { x: 10, y: newY },
+    extent: 'parent',
+    data: {
+      fileType,
+      side,
+      importFunc,
+    },
+  } as Node
 }
