@@ -46,14 +46,6 @@ export default function Root() {
     loadConfig()
   }, [project])
 
-  const handleManualConfigExport = () => {
-    const dataString = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(mappingListConfig))}`
-    const link = document.createElement('a')
-    link.href = dataString
-    link.download = 'flow_configuration.json'
-    link.click()
-  }
-
   const [confirmed, setConfirmed] = useState<boolean>(mappingListConfig.stage != 'INIT')
 
   useEffect(() => {
@@ -91,13 +83,6 @@ export default function Root() {
             }}
           >
             Test External node log
-          </button>
-
-          <button
-            className="border-border hover:bg-hover active:bg-selected hidden w-48 rounded-md border bg-red-500 px-4 py-2 text-sm"
-            onClick={handleManualConfigExport}
-          >
-            Export configuration
           </button>
         </div>
 

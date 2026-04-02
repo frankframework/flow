@@ -2,8 +2,13 @@ import { Handle, Position } from '@xyflow/react'
 
 import { GROUP_WIDTH } from '~/utils/datamapper_utils/constant'
 
-import NewUploadImportButton from '../new-upload-import-button'
+import ImportButton from '../basic-components/import-button'
 import type { ImportSchematicFunc } from '~/hooks/use-datamapper-flow-management'
+import CodeFile from '/icons/solar/Code File.svg?react'
+import { useState } from 'react'
+import clsx from 'clsx'
+import { showErrorToast } from '~/components/toast'
+
 //DataType needed
 export interface ImportSchematicNodeprops {
   data: {
@@ -14,17 +19,38 @@ export interface ImportSchematicNodeprops {
 }
 
 function ImportSchematicNode({ data }: ImportSchematicNodeprops) {
+  const [isDragging, setIsDragging] = useState(false)
+  const [file, setFile] = useState<File | null>(null)
   return (
     <div
-      className="group cap-3 block h-full rounded-xl border-3 border-dashed p-3 shadow"
+      className={clsx(
+        'group cap-3 flex h-full flex-col items-center rounded-xl border-3 border-dashed p-3 shadow',
+        isDragging && 'border-foreground-active',
+      )}
       style={{ width: `${GROUP_WIDTH}px` }}
+      onDragOver={(e) => {
+        e.preventDefault()
+        setIsDragging(true)
+      }}
+      onDragLeave={() => setIsDragging(false)}
+      onDrop={(e) => {
+        e.preventDefault()
+        setIsDragging(false)
+
+        const file = e.dataTransfer.files?.[0]
+        if (file.name.endsWith(data.fileType)) setFile(file)
+        else showErrorToast(file.name, 'Incorrect filetype!')
+      }}
     >
       {/* Header */}
-      <div className="flex text-3xl">Test</div>
+      <div className="flex text-xl">Import schema</div>
+      <CodeFile className={clsx('m-5 flex h-10 w-10', isDragging ? 'fill-foreground-active' : 'fill-foreground')} />
 
-      <NewUploadImportButton
+      <ImportButton
         fileType={data.fileType}
-        importFunc={(file: File) => data.importFunc(file, data.side, file.name)}
+        file={file}
+        setFile={setFile}
+        importFunc={(file: File) => data.importFunc(file, data.side, file.name.replace(data.fileType, ''))}
       />
 
       <Handle type="target" position={Position.Top} style={{ opacity: 0 }} />

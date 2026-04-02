@@ -87,12 +87,19 @@ export function useFlowManagement({
     }
   }, [reactFlowInstance])
   async function addSchematicImportButton(side: 'source' | 'target') {
+    deleteNode(`${side}-import-button`) //Failsafe to make sure there can never be more then 1
     const fileType = config.formatTypes[side]?.schemaFileExtension
     if (!fileType) {
       showErrorToast('Invalid configuration!')
       return
     }
-    generateImportButton(reactFlowInstance.getNodes(), fileType, side, reactFlowInstance.getNode, importSchematic)
+    const node = generateImportButton(
+      reactFlowInstance.getNodes(),
+      fileType,
+      side,
+      reactFlowInstance.getNode,
+      importSchematic,
+    )
       .then((newNode: Node) => {
         setReactFlowNodes((previous) => [...previous, newNode])
 
@@ -101,7 +108,7 @@ export function useFlowManagement({
       .then((measuredNode) => {
         repositionForceUpdate(measuredNode)
       })
-
+    return node
     // reposition after measurement to ensure proper placement/spacing
   }
 
@@ -403,7 +410,7 @@ export function useFlowManagement({
     }
 
     if (side === 'source') {
-      addSchematicImportButton(side)
+      await addSchematicImportButton(side)
     }
   }
 

@@ -45,7 +45,7 @@ function OneEdgeNode({ id, data, variant = 'source', onEdit, onDelete, onHighlig
     <div
       onClick={updateChecked}
       className={clsx(
-        'border-border group mr-2 flex cursor-pointer items-center gap-2 rounded-md p-2',
+        'border-border group mr-2 flex cursor-pointer items-center gap-2 rounded-md border-2 p-2',
         checked ? 'bg-foreground-active text-neutral' : 'bg-backdrop',
         data.isHidden && 'opacity-20',
       )}

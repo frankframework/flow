@@ -198,11 +198,19 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
 
   const onRestore = useCallback(() => {
     const restoreFlow = async () => {
-      if (config.propertyData) flow.importJsonConfiguration(JSON.stringify(config.propertyData))
+      if (config.propertyData) await flow.importJsonConfiguration(JSON.stringify(config.propertyData))
     }
 
-    restoreFlow()
-  }, [config.propertyData, flow])
+    restoreFlow().then(() => {
+      flow.deleteNode('target-import-button')
+      requestAnimationFrame(() => {
+        flow.addSchematicImportButton('source')
+        if (reactFlowInstance.getNodes().filter((node) => node.id.includes('target')).length == 1) {
+          flow.addSchematicImportButton('target')
+        }
+      })
+    })
+  }, [config.propertyData, flow, reactFlowInstance])
 
   useEffect(() => {
     if (!reactFlowInstance || initHasRun.current) return
@@ -210,9 +218,8 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
 
     if (config.propertyData.nodes && config.propertyData.nodes.length > 1) {
       onRestore()
-    }
-    flow.addSchematicImportButton('source')
-    if (reactFlowInstance.getNodes().filter((node) => node.id.includes('target')).length == 1) {
+    } else {
+      flow.addSchematicImportButton('source')
       flow.addSchematicImportButton('target')
     }
   }, [clearFiles, config.propertyData.nodes, flow, onRestore, reactFlowInstance, sourceSchematics, targetSchematic])
@@ -417,7 +424,6 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
             >
               MAP
             </Button>
-            <Button onClick={() => flow.addSchematicImportButton('source')}>Test Adding</Button>
             <Button
               className="absolute right-1/4 bottom-[2vh] z-10 rounded-2xl border px-4 py-2"
               onClick={() => openAddFieldModal('target')}
