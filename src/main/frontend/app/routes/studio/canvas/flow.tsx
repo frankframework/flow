@@ -71,6 +71,8 @@ function FlowCanvas() {
     setEditingSubtype,
     setAttributes,
     setNodeId,
+    allowedOnCanvas,
+    setDropSuccessful,
   } = useNodeContextStore(
     useShallow((s) => ({
       isEditing: s.isEditing,
@@ -83,6 +85,8 @@ function FlowCanvas() {
       setEditingSubtype: s.setEditingSubtype,
       setAttributes: s.setAttributes,
       setNodeId: s.setNodeId,
+      allowedOnCanvas: s.allowedOnCanvas,
+      setDropSuccessful: s.setDropSuccessful,
     })),
   )
   const { elements } = useFFDoc()
@@ -554,10 +558,13 @@ function FlowCanvas() {
     useFlowStore.getState().setNodes(allNodes)
   }
 
-  const onDragOver = useCallback((event: React.DragEvent) => {
-    event.preventDefault()
-    event.dataTransfer.dropEffect = 'move'
-  }, [])
+  const onDragOver = useCallback(
+    (event: React.DragEvent) => {
+      event.preventDefault()
+      event.dataTransfer.dropEffect = allowedOnCanvas ? 'move' : 'none'
+    },
+    [allowedOnCanvas],
+  )
 
   const onDrop = (event: React.DragEvent) => {
     event.preventDefault()
@@ -566,6 +573,8 @@ function FlowCanvas() {
 
     const data = event.dataTransfer.getData('application/reactflow')
     if (!data) return
+
+    setDropSuccessful(true)
 
     const parsedData = JSON.parse(data)
     const { screenToFlowPosition } = reactFlow
@@ -580,6 +589,11 @@ function FlowCanvas() {
 
     const position = screenToFlowPosition({ x: event.clientX, y: event.clientY })
     addNodeAtPosition(position, parsedData.name)
+  }
+
+  const onDragEnd = (event: React.DragEvent) => {
+    setDraggedName(null)
+    setParentId(null)
   }
 
   function addNodeAtPosition(
@@ -828,8 +842,10 @@ function FlowCanvas() {
   return (
     <div
       className="relative h-full w-full"
+      id="flow-canvas"
       onDrop={onDrop}
       onDragOver={onDragOver}
+      onDragEnd={onDragEnd}
       onContextMenu={handleRightMouseButtonClick}
     >
       {loading && (
