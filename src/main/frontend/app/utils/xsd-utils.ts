@@ -1,3 +1,5 @@
+import { type ChildNode } from '~/routes/studio/canvas/nodetypes/child-node'
+
 export function parseXsd(xsdString: string) {
   const parser = new DOMParser()
   return parser.parseFromString(xsdString, 'text/xml')
@@ -170,4 +172,234 @@ export function getFirstLevelElementsForType(doc: Document, typeName: string): s
   extract(typeNode)
 
   return [...results]
+}
+
+export function getElementRequirements(doc: Document, elementName: string): Requirement[] {
+  const elementNode = doc.evaluate(
+    `//xs:element[@name='${elementName}']`,
+    doc,
+    (prefix) => (prefix === 'xs' ? 'http://www.w3.org/2001/XMLSchema' : null),
+    XPathResult.FIRST_ORDERED_NODE_TYPE,
+    null,
+  ).singleNodeValue as Element | null
+
+  if (!elementNode) return []
+
+  let typeName = elementNode.getAttribute('type')
+
+  if (!typeName) {
+    typeName = `${elementName}Type`
+  }
+
+  const typeNode = getComplexTypeByName(doc, typeName)
+  if (!typeNode) {
+    console.warn(`No type found for element "${elementName}" (tried "${typeName}")`)
+    return []
+  }
+
+  return extractRequirements(doc, typeNode)
+}
+
+function extractRequirements(
+  doc: Document,
+  node: Element,
+  parentRequired = true,
+  visitedGroups = new Set<string>(),
+): Requirement[] {
+  const results: Requirement[] = []
+
+  for (const child of node.children) {
+    const minOccurs = child.getAttribute('minOccurs')
+    const isRequired = parentRequired && (minOccurs === null || minOccurs !== '0')
+
+    switch (child.localName) {
+      case 'element': {
+        const name = child.getAttribute('name') || child.getAttribute('ref')
+        if (name) {
+          results.push({
+            kind: 'element',
+            name,
+            required: isRequired,
+          })
+        }
+        break
+      }
+
+      case 'group': {
+        const ref = child.getAttribute('ref')
+        if (!ref || visitedGroups.has(ref)) break
+
+        visitedGroups.add(ref)
+
+        const groupDef = getGroupByName(doc, ref)
+        if (!groupDef) break
+
+        const children = extractRequirements(doc, groupDef, isRequired, visitedGroups)
+
+        if (isRequired) {
+          // REQUIRED GROUP = "at least one of its children"
+          results.push({
+            kind: 'group',
+            mode: 'one',
+            children,
+          })
+        } else {
+          // optional group -> children optional
+          results.push(...children.map((c) => (c.kind === 'element' ? { ...c, required: false } : c)))
+        }
+
+        break
+      }
+
+      case 'sequence':
+      case 'all': {
+        const children = extractRequirements(doc, child, isRequired, visitedGroups)
+
+        results.push({
+          kind: 'group',
+          mode: 'all',
+          children,
+        })
+
+        break
+      }
+
+      case 'choice': {
+        const children = extractRequirements(doc, child, isRequired, visitedGroups)
+
+        results.push({
+          kind: 'group',
+          mode: 'one',
+          children,
+        })
+
+        break
+      }
+    }
+  }
+
+  return results
+}
+
+export function isRequirementFulfilled(requirements: Requirement[], children: ChildNode[]): boolean {
+  return requirements.every((requirement) => evaluateRequirement(requirement, children))
+}
+
+function evaluateRequirement(requirement: Requirement, children: ChildNode[]): boolean {
+  if (requirement.kind === 'element') {
+    if (!requirement.required) return true
+
+    return children.some((child) => child.subtype === requirement.name)
+  }
+
+  if (requirement.kind === 'group') {
+    if (requirement.mode === 'all') {
+      return requirement.children.every((childReq) => evaluateRequirement(childReq, children))
+    }
+
+    if (requirement.mode === 'one') {
+      return requirement.children.some((childReq) => evaluateRequirement(childReq, children))
+    }
+  }
+
+  return true
+}
+
+export function getMissingRequirements(requirements: Requirement[], children: ChildNode[]): string[] {
+  const missing: string[] = []
+
+  for (const req of requirements) {
+    collectMissing(req, children, missing)
+  }
+
+  return missing
+}
+
+function collectMissing(requirement: Requirement, children: ChildNode[], missing: string[]) {
+  if (requirement.kind === 'element') {
+    if (!requirement.required) return
+
+    const exists = children.some((child) => child.subtype === requirement.name)
+
+    if (!exists) {
+      missing.push(requirement.name)
+    }
+
+    return
+  }
+
+  if (requirement.kind === 'group') {
+    if (requirement.mode === 'all') {
+      for (const childRequirement of requirement.children) collectMissing(childRequirement, children, missing)
+    }
+
+    if (requirement.mode === 'one') {
+      const anySatisfied = requirement.children.some((childRequirement) =>
+        evaluateRequirement(childRequirement, children),
+      )
+
+      if (!anySatisfied) {
+        const requiredChildren = requirement.children
+          .map((element) => getRequiredOnly(element))
+          .filter(Boolean) as Requirement[]
+
+        if (requiredChildren.length === 0) return
+
+        const options = requiredChildren.flatMap((element) => getReadableNames(element)).join(', ')
+
+        missing.push(`One of: ${options}`)
+      }
+    }
+  }
+}
+
+function getReadableNames(requirement: Requirement): string[] {
+  if (requirement.kind === 'element') {
+    return [requirement.name]
+  }
+
+  if (requirement.kind === 'group') {
+    return requirement.children.flatMap((element) => getReadableNames(element))
+  }
+
+  return []
+}
+
+function getRequiredOnly(requirement: Requirement): Requirement | null {
+  if (requirement.kind === 'element') {
+    return requirement.required ? requirement : null
+  }
+
+  if (requirement.kind === 'group') {
+    const filteredChildren = requirement.children
+      .map((element) => getRequiredOnly(element))
+      .filter(Boolean) as Requirement[]
+
+    if (filteredChildren.length === 0) return null
+
+    return {
+      ...requirement,
+      children: filteredChildren,
+    }
+  }
+
+  return null
+}
+
+interface RequirementBase {
+  kind: 'element' | 'group'
+}
+
+interface ElementRequirement extends RequirementBase {
+  kind: 'element'
+  name: string
+  required: boolean
+}
+
+export type Requirement = ElementRequirement | GroupRequirement
+
+interface GroupRequirement extends RequirementBase {
+  kind: 'group'
+  mode: 'all' | 'one'
+  children: Requirement[]
 }
