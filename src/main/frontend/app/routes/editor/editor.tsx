@@ -190,8 +190,7 @@ export default function CodeEditor() {
 
       setSaveStatus('saving')
       try {
-        const xmlResponse = await saveConfiguration(project.name, configPath, updatedContent)
-        setXmlContent(xmlResponse.xmlContent)
+        await saveConfiguration(project.name, configPath, updatedContent)
         contentCacheRef.current.set(activeTabFilePath, updatedContent)
         setSaveStatus('saved')
         if (savedTimerRef.current) clearTimeout(savedTimerRef.current)

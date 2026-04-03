@@ -1,6 +1,8 @@
 package org.frankframework.flow.filetree;
 
 import java.io.IOException;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.TransformerException;
 import org.frankframework.flow.exception.ApiException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.xml.sax.SAXException;
 
 @RestController
 @RequestMapping("/projects")
@@ -48,9 +51,13 @@ public class FileTreeController {
 
 	@PostMapping("/{projectName}/files")
 	public ResponseEntity<FileTreeNode> createFile(@PathVariable String projectName, @RequestBody FileCreateDTO dto)
-			throws IOException, ApiException {
-		FileTreeNode node = fileTreeService.createFile(projectName, dto.path(), dto.name());
-		return ResponseEntity.status(HttpStatus.CREATED.value()).body(node);
+			throws IOException, ApiException, ParserConfigurationException, SAXException {
+		try {
+			FileTreeNode node = fileTreeService.createFile(projectName, dto.path(), dto.name());
+			return ResponseEntity.status(HttpStatus.CREATED.value()).body(node);
+		} catch (TransformerException e) {
+			throw new ApiException("Failed to create file for project '" + projectName + "' at path '" + dto.path() + "'", HttpStatus.INTERNAL_SERVER_ERROR, e);
+		}
 	}
 
 	@PostMapping("/{projectName}/folders")
