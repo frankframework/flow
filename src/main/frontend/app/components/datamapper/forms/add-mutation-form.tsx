@@ -43,7 +43,7 @@ function AddMutationForm({
   }
 
   return (
-    <div className="text-foreground border-black">
+    <div className="text-foreground max-w-55 border-black">
       <h1 className="mb-2 text-xl font-bold">Add Mutation</h1>
 
       <label>Mutation name:</label>
@@ -55,6 +55,7 @@ function AddMutationForm({
 
       <label>Mutation type:</label>
       <Dropdown
+        className="max-w-55"
         value={mutation.mutationType?.name ?? ''}
         onChange={(e) => {
           const mutationType = mutations.mutations.find((mutationToFind) => mutationToFind.name === e) ?? null
@@ -201,15 +202,18 @@ function MutationInputField({
   }
 
   return (
-    <div className="flex items-start gap-2">
-      <div className="flex-1">
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center gap-2">
         {mutationInput.label && <label className="mb-1 block">{mutationInput.label}</label>}
+        {showDelete && onDelete && <DeleteButton onClick={onDelete} />}
+      </div>
 
+      <div>
         {mutationInput.type === 'source' && (
           <Dropdown
             value={value.sourceId ?? ''}
             onChange={handleSourceChange}
-            className="mb-4"
+            className="mb-4 max-w-55"
             options={Object.fromEntries([
               ...(mutationInput.allowDefaultValue ? [['defaultValue', 'defaultValue']] : []),
               ...sources.map((source) => [source.id, source.label]),
@@ -229,8 +233,6 @@ function MutationInputField({
           />
         )}
       </div>
-
-      {showDelete && onDelete && <DeleteButton onClick={onDelete} />}
     </div>
   )
 }

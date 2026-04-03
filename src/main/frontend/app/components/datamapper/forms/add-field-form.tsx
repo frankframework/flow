@@ -100,7 +100,7 @@ function AddFieldForm({ fieldType, onSave, parents, formatDefinition, initialDat
   }
 
   return (
-    <div className="text-foreground">
+    <div className="text-foreground max-w-55">
       <h1 className="mb-2 text-xl font-bold">
         {initialData ? 'Edit' : 'Add'} {fieldType} property
       </h1>
@@ -109,6 +109,7 @@ function AddFieldForm({ fieldType, onSave, parents, formatDefinition, initialDat
         <>
           <label htmlFor="parentId">Parent</label>
           <Dropdown
+            className="max-w-55"
             id="parentId"
             value={parentId}
             onChange={(e) => setParent(e)}
@@ -121,6 +122,7 @@ function AddFieldForm({ fieldType, onSave, parents, formatDefinition, initialDat
 
       <label htmlFor="variableType">Variable Type:</label>
       <Dropdown
+        className="max-w-55"
         id="variableType"
         value={variableType}
         onChange={(value) => setVariableType(value)}
@@ -135,6 +137,7 @@ function AddFieldForm({ fieldType, onSave, parents, formatDefinition, initialDat
         <label htmlFor="defaultValue">Default value:</label>
         {defaultValueInputType === 'boolean' ? (
           <Dropdown
+            className="max-w-55"
             id="defaultValue"
             value={defaultValue}
             onChange={(value: string) => setDefaultValue(value)}
