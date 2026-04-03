@@ -334,7 +334,7 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
         <div className="absolute right-[65%] flex flex-row items-center justify-between px-45">
           <h1 className="text-l font-semibold">Source: {config.formatTypes.source?.name}</h1>
         </div>
-        <div className="absolute right-[45%] left-[45%] flex flex-row items-center justify-between">
+        <div className="absolute right-[45%] left-[45%] z-10 flex flex-row items-center justify-between">
           <GenerateButton highlightUnset={flow.highlightUnset} mappingListConfig={config} />
         </div>
         <div className="absolute left-[65%] flex flex-row items-center justify-between px-45">

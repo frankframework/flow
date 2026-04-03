@@ -119,7 +119,7 @@ function AddMappingForm({ onSave, sources, targets, initialData }: MappingModalP
 
   const isFormIncomplete = sourceIds.some((id) => !id) || !targetId || !output
 
-  const scrollable = 'flex-1 min-h-0 overflow-y-auto space-y-2'
+  const scrollable = 'flex-1 min-h-0 overflow-y-auto space-y-2 max-w-55 truncate'
 
   return (
     <div className="text-foreground mx-auto flex max-h-[90vh] min-h-0 w-full max-w-225 flex-col">
@@ -136,6 +136,7 @@ function AddMappingForm({ onSave, sources, targets, initialData }: MappingModalP
               {sourceIds.map((id, value) => (
                 <div key={value} className="flex items-center gap-2">
                   <Dropdown
+                    className="max-w-45"
                     id={value.toString()}
                     value={id}
                     onChange={(event) => updateArrayItem(setSourceIds, value, event)}
@@ -163,7 +164,7 @@ function AddMappingForm({ onSave, sources, targets, initialData }: MappingModalP
               {mutations.map((mutation) => (
                 <div key={mutation.id} className="rounded border p-2">
                   <div className="flex items-center justify-between">
-                    <span className="max-w-40 font-semibold break-words">{mutation.name}</span>
+                    <span className="max-w-40 truncate font-semibold">{mutation.name}</span>
                     <div className="flex gap-2">
                       <EditButton
                         onClick={() => {
@@ -196,7 +197,7 @@ function AddMappingForm({ onSave, sources, targets, initialData }: MappingModalP
               {conditions.map((condition) => (
                 <div key={condition.id} className="rounded border p-2">
                   <div className="flex items-center justify-between">
-                    <span className="font-semibold">{condition.name}</span>
+                    <span className="truncate font-semibold">{condition.name}</span>
                     <div className="flex gap-2">
                       <EditButton
                         onClick={() => {
@@ -229,6 +230,7 @@ function AddMappingForm({ onSave, sources, targets, initialData }: MappingModalP
         <div className="flex flex-col gap-1">
           <label className="text-muted-foreground text-sm font-semibold">Output</label>
           <Dropdown
+            className="max-w-50"
             value={output}
             onChange={setOutput}
             options={Object.fromEntries(
@@ -243,6 +245,7 @@ function AddMappingForm({ onSave, sources, targets, initialData }: MappingModalP
           <label className="text-muted-foreground text-sm font-semibold">Target</label>
 
           <Dropdown
+            className="max-w-50"
             value={targetId}
             onChange={setTargetId}
             options={Object.fromEntries(targets.map((target) => [target.id, `${target.label} (${target.type})`]))}
@@ -259,6 +262,7 @@ function AddMappingForm({ onSave, sources, targets, initialData }: MappingModalP
 
         {isConditional && (
           <Dropdown
+            className="max-w-115 p-2"
             value={selectedConditional?.id ?? ''}
             onChange={(e) => setSelectedConditional(conditions.find((condition) => condition.id === e) ?? null)}
             options={Object.fromEntries(conditions.map((condition) => [condition.id, condition.name]))}

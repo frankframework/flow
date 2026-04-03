@@ -184,7 +184,7 @@ export default function Dropdown({
             isOpen ? 'bg-selected' : 'hover:bg-hover',
           )}
         >
-          <span className={clsx('text-foreground block truncate sm:text-sm', !selectedValue && 'text-gray-400')}>
+          <span className={clsx('text-foreground flex-1 truncate sm:text-sm', !selectedValue && 'text-gray-400')}>
             {getSelectedLabel()}
           </span>
           <AltArrowDownIcon className={clsx('fill-foreground h-4 w-4', isOpen && 'rotate-180')} />
@@ -193,7 +193,10 @@ export default function Dropdown({
       {isOpen && !disabled && (
         <ul
           ref={listReference}
-          className="border-border text-foreground bg-background absolute z-200 mt-1 max-h-60 overflow-auto rounded-md border py-1 shadow-lg"
+          className={clsx(
+            'border-border text-foreground bg-background absolute z-200 mt-1 max-h-60 overflow-auto rounded-md border py-1 shadow-lg',
+            className,
+          )}
         >
           {optionsArray.length > 0 ? (
             Object.entries(options).map(([value, label], index) => (
