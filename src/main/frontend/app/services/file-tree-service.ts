@@ -2,17 +2,15 @@ import { apiFetch } from '~/utils/api'
 import type { FileTreeNode } from '~/types/filesystem.types'
 
 export async function fetchProjectTree(projectName: string, signal?: AbortSignal): Promise<FileTreeNode> {
-  return apiFetch<FileTreeNode>(`/projects/${encodeURIComponent(projectName)}/tree/configurations`, { signal })
+  return apiFetch<FileTreeNode>(`${getTreeUrl(projectName)}/configuration`, { signal })
 }
 
 export async function fetchShallowConfigurationsTree(projectName: string, signal?: AbortSignal): Promise<FileTreeNode> {
-  return apiFetch<FileTreeNode>(`/projects/${encodeURIComponent(projectName)}/tree/configurations?shallow=true`, {
-    signal,
-  })
+  return apiFetch<FileTreeNode>(`${getTreeUrl(projectName)}/configuration?shallow=true`, { signal })
 }
 
 export async function fetchProjectRootTree(projectName: string, signal?: AbortSignal): Promise<FileTreeNode> {
-  return apiFetch<FileTreeNode>(`/projects/${encodeURIComponent(projectName)}/tree`, { signal })
+  return apiFetch<FileTreeNode>(getTreeUrl(projectName), { signal })
 }
 
 export async function fetchDirectoryByPath(
@@ -20,42 +18,22 @@ export async function fetchDirectoryByPath(
   path: string,
   signal?: AbortSignal,
 ): Promise<FileTreeNode> {
-  return apiFetch<FileTreeNode>(`/projects/${encodeURIComponent(projectName)}?path=${encodeURIComponent(path)}`, {
+  return apiFetch<FileTreeNode>(`${getTreeUrl(projectName)}/directory?path=${encodeURIComponent(path)}`, {
     signal,
   })
 }
 
-export async function createFileInProject(
-  projectName: string,
-  parentPath: string,
-  name: string,
-): Promise<FileTreeNode> {
-  return apiFetch<FileTreeNode>(`/projects/${encodeURIComponent(projectName)}/files`, {
+export async function createFolderInProject(projectName: string, path: string): Promise<FileTreeNode> {
+  return apiFetch<FileTreeNode>(`${getBaseUrl(projectName)}/folder`, {
     method: 'POST',
-    body: JSON.stringify({ path: parentPath, name }),
+    body: JSON.stringify({ path }),
   })
 }
 
-export async function createFolderInProject(
-  projectName: string,
-  parentPath: string,
-  name: string,
-): Promise<FileTreeNode> {
-  return apiFetch<FileTreeNode>(`/projects/${encodeURIComponent(projectName)}/folders`, {
-    method: 'POST',
-    body: JSON.stringify({ path: parentPath, name }),
-  })
+function getBaseUrl(projectName: string): string {
+  return `/projects/${encodeURIComponent(projectName)}`
 }
 
-export async function renameInProject(projectName: string, oldPath: string, newName: string): Promise<FileTreeNode> {
-  return apiFetch<FileTreeNode>(`/projects/${encodeURIComponent(projectName)}/files/rename`, {
-    method: 'PATCH',
-    body: JSON.stringify({ oldPath, newName }),
-  })
-}
-
-export async function deleteInProject(projectName: string, path: string): Promise<void> {
-  await apiFetch<void>(`/projects/${encodeURIComponent(projectName)}/files?path=${encodeURIComponent(path)}`, {
-    method: 'DELETE',
-  })
+function getTreeUrl(projectName: string): string {
+  return `${getBaseUrl(projectName)}/tree`
 }

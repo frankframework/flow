@@ -5,8 +5,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import javax.naming.ConfigurationException;
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
+import org.frankframework.flow.file.FileTreeService;
 import org.frankframework.flow.filesystem.FileSystemStorage;
-import org.frankframework.flow.filetree.FileTreeService;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -79,11 +79,11 @@ public class DatamapperConfigService {
 			String filePath = this.getConfigFilePath(projectName).toString();
 			if (!Files.exists(Path.of(filePath))) {
 				fileSystemStorage.createFile(filePath);
+				return "";
 			}
 			return fileSystemStorage.readFile(filePath);
 		} catch (IOException e) {
-			throw new ConfigurationNotFoundException(
-					"Failed to resolve configuration file path for project: " + projectName);
+			throw new ConfigurationNotFoundException("Failed to resolve configuration file path for project: " + projectName);
 		}
 	}
 }
