@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class FileService {
 
+	public static final String[] ALLOWED_EXTENSIONS = { "", ".xml", ".json", ".yaml", ".yml", ".properties" };
 	private final ProjectService projectService;
 	private final FileSystemStorage fileSystemStorage;
 
@@ -45,7 +46,9 @@ public class FileService {
 
 		try {
 			validateWithinProject(projectName, path);
-			if (!Files.exists(filePath)) {
+			if (!hasAllowedExtension(fileName)) {
+				throw new ApiException("Unsupported extension type for file: " + fileName, HttpStatus.BAD_REQUEST);
+			} else if (!Files.exists(filePath)) {
 				fileSystemStorage.createFile(path);
 			}
 			fileSystemStorage.writeFile(path, fileContent);
@@ -66,7 +69,12 @@ public class FileService {
 		validatePath(oldPath);
 		validatePath(newPath);
 		String newFileName = Path.of(newPath).getFileName().toString();
+		String newFileExtension = getFileExtension(newFileName);
 		Path absoluteNewPath = fileSystemStorage.toAbsolutePath(newPath);
+
+		if (!hasAllowedExtension(newFileExtension)) {
+			throw new ApiException("Unsupported extension type for file: " + newFileName, HttpStatus.BAD_REQUEST);
+		}
 
 		try {
 			validateWithinProject(projectName, oldPath);
@@ -116,13 +124,27 @@ public class FileService {
 		}
 	}
 
-	protected void validatePath(String path) throws IllegalArgumentException {
+	public void validatePath(String path) throws IllegalArgumentException {
 		if (path == null || path.isBlank()) {
 			throw new IllegalArgumentException("File path must not be empty");
 		}
 		if (path.contains("..") || path.contains("\0")) {
 			throw new IllegalArgumentException("File path contains invalid characters: " + path);
 		}
+	}
+
+	public boolean hasAllowedExtension(String fileName) {
+		String fileExtension = getFileExtension(fileName);
+		for (String allowedExtension : ALLOWED_EXTENSIONS) {
+			if (allowedExtension.equalsIgnoreCase(fileExtension)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private String getFileExtension(String fileName) {
+		return fileName.contains(".") ? fileName.substring(fileName.lastIndexOf(".")) : "";
 	}
 
 }

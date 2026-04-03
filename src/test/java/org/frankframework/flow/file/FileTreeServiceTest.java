@@ -289,25 +289,6 @@ public class FileTreeServiceTest {
 	}
 
 	@Test
-	@DisplayName("Should delegate to ConfigurationService when creating an .xml file")
-	void createFile_ShouldDelegateToConfigurationService_WhenXml() throws Exception {
-		stubToAbsolutePath();
-
-		Project project =
-				new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
-
-		when(configurationService.addConfigurationToFolder(eq(TEST_PROJECT_NAME), eq("config.xml"), anyString()))
-				.thenReturn(project);
-		when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
-
-		FileTreeNode node = fileService.createOrUpdateFile(
-				TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString(), "config.xml");
-
-		assertNotNull(node);
-		verify(configurationService).addConfigurationToFolder(eq(TEST_PROJECT_NAME), eq("config.xml"), anyString());
-	}
-
-	@Test
 	@DisplayName("Should create a folder and return a FileTreeNode with DIRECTORY type")
 	void createFolder_Success() throws IOException, ApiException {
 		stubToAbsolutePath();

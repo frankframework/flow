@@ -127,7 +127,7 @@ class ConfigurationControllerTest {
 	}
 
 	@Test
-	void addConfigurationReturnsProjectDto() throws Exception {
+	void addConfigurationReturnsDefaultContent() throws Exception {
 		Project project = mock(Project.class);
 		when(project.getName()).thenReturn(TEST_PROJECT_NAME);
 		when(project.getRootPath()).thenReturn("/path/to/" + TEST_PROJECT_NAME);

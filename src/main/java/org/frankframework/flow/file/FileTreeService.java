@@ -125,7 +125,7 @@ public class FileTreeService {
 	}
 
 	public FileTreeNode createFolder(String projectName, String path) throws IOException, ApiException {
-		validatePath(path);
+		fileService.validatePath(path);
 		fileService.validateWithinProject(projectName, path);
 		fileSystemStorage.createProjectDirectory(path);
 		invalidateTreeCache(projectName);
@@ -169,7 +169,7 @@ public class FileTreeService {
 		} else {
 			node.setType(NodeType.FILE);
 			node.setChildren(null);
-			if (path.getFileName().toString().toLowerCase().endsWith(".xml")) {
+			if (fileService.hasAllowedExtension(path.getFileName().toString())) {
 				node.setAdapterNames(extractAdapterNames(path));
 			}
 		}
@@ -236,14 +236,5 @@ public class FileTreeService {
 		}
 
 		return node;
-	}
-
-	protected void validatePath(String path) throws IllegalArgumentException {
-		if (path == null || path.isBlank()) {
-			throw new IllegalArgumentException("File path must not be empty");
-		}
-		if (path.contains("..")) {
-			throw new IllegalArgumentException("File path contains invalid characters: " + path);
-		}
 	}
 }

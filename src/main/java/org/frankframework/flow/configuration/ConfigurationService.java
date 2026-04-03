@@ -37,7 +37,6 @@ public class ConfigurationService {
 			throw new ApiException("Invalid configuration path: " + filepath, HttpStatus.NOT_FOUND);
 		}
 
-		// TODO check if filepath is part of configuration files
 		String content = fileSystemStorage.readFile(filePath.toString());
 		return new ConfigurationDTO(filepath, content);
 	}
@@ -47,11 +46,9 @@ public class ConfigurationService {
 		Path absolutePath = fileSystemStorage.toAbsolutePath(filepath);
 
 		if (!Files.exists(absolutePath) || Files.isDirectory(absolutePath)) {
-			// TODO should be a custom FileSystem/IO Exception
 			throw new ApiException("Invalid file path: " + filepath, HttpStatus.NOT_FOUND);
 		}
 
-		// TODO check if filepath is part of configuration files
 		Document updatedDocument = XmlConfigurationUtils.insertFlowNamespace(content);
 		String updatedContent = XmlConfigurationUtils.convertNodeToString(updatedDocument);
 
@@ -70,51 +67,12 @@ public class ConfigurationService {
 
 		Path filePath = configDir.resolve(configurationName).normalize();
 		if (!filePath.startsWith(configDir)) {
-			// TODO should be a custom FileSystem/IO Exception
 			throw new ApiException("Invalid configuration name: " + configurationName, HttpStatus.BAD_REQUEST);
 		}
-
-		// TODO check if filepath is part of configuration files
 
 		String defaultXml = loadDefaultConfigurationXml();
 		fileSystemStorage.writeFile(filePath.toString(), defaultXml);
 		return defaultXml;
-	}
-
-
-	/*
-	 * Gets called from FileTreeService, maybe this should be part of that there?
-	 * TODO see if this should be reworked
-	 * */
-	public Project addConfigurationToFolder(String projectName, String configurationName, String folderPath)
-			throws IOException, ApiException {
-		Project project = projectService.getProject(projectName);
-
-		Path absProjectPath = fileSystemStorage.toAbsolutePath(project.getRootPath());
-		Path targetDir = fileSystemStorage.toAbsolutePath(folderPath);
-
-		if (!targetDir.startsWith(absProjectPath)) {
-			// TODO should be a custom FileSystem/IO Exception
-			throw new SecurityException("Configuration location must be within the project directory");
-		}
-
-		if (!Files.exists(targetDir)) {
-			Files.createDirectories(targetDir);
-		}
-
-		Path filePath = targetDir.resolve(configurationName).normalize();
-		if (!filePath.startsWith(targetDir)) {
-			throw new SecurityException("Invalid configuration name: " + configurationName);
-		}
-
-		if (Files.exists(filePath)) {
-			throw new ConfigurationAlreadyExistsException(configurationName + " already exists at: " + filePath);
-		}
-
-		String defaultXml = loadDefaultConfigurationXml();
-		fileSystemStorage.writeFile(filePath.toString(), defaultXml);
-
-		return project;
 	}
 
 	private String loadDefaultConfigurationXml() throws IOException {

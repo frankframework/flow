@@ -1,11 +1,11 @@
-import { useCallback, useRef, useState } from 'react'
+import React, { useCallback, useRef, useState } from 'react'
 import type { TreeItemIndex } from 'react-complex-tree'
 import { createFile, deleteFile, renameFile } from '~/services/file-service'
 import { createFolderInProject } from '~/services/file-tree-service'
 import { clearConfigurationCache } from '~/services/configuration-service'
 import useTabStore from '~/stores/tab-store'
 import useEditorTabStore from '~/stores/editor-tab-store'
-import { showErrorToastFrom } from '~/components/toast'
+import { showErrorToast, showErrorToastFrom } from '~/components/toast'
 
 export interface ContextMenuState {
   position: { x: number; y: number }
@@ -43,17 +43,19 @@ interface UseFileTreeContextMenuOptions {
   onAfterDelete?: (path: string) => void
 }
 
+const ALLOWED_EXTENSIONS = ['.xml', '.json', '.yaml', '.yml', '.properties']
+
 export function getParentItemId(itemId: TreeItemIndex): TreeItemIndex {
   const str = String(itemId)
   const lastSlash = str.lastIndexOf('/')
   return lastSlash > 0 ? str.slice(0, Math.max(0, lastSlash)) : 'root'
 }
 
-function ensureHasExtension(name: string): string {
+function ensureHasCorrectExtension(name: string): boolean {
   const dotIndex = name.lastIndexOf('.')
-  if (dotIndex < name.length - 1) return name
-  if (dotIndex === -1) return `${name}.txt`
-  return `${name.slice(0, Math.max(0, dotIndex))}.txt`
+  if (dotIndex === -1) return false
+  const extension = name.slice(dotIndex)
+  return ALLOWED_EXTENSIONS.includes(extension.toLowerCase())
 }
 
 function buildNewPath(oldPath: string, newName: string): string {
@@ -115,8 +117,13 @@ export function useFileTreeContextMenu({
       setNameDialog({
         title: 'New File',
         onSubmit: async (name: string) => {
+          if (!ensureHasCorrectExtension(name)) {
+            showErrorToast(`Filename must have one of the following extensions: ${ALLOWED_EXTENSIONS.join(', ')}`)
+            return
+          }
+
           try {
-            await createFile(projectName, `${parentPath}/${ensureHasExtension(name)}`)
+            await createFile(projectName, `${parentPath}/${name}`)
             await dataProvider.reloadDirectory(parentItemId)
           } catch (error) {
             showErrorToastFrom('Failed to create file', error)
@@ -168,9 +175,13 @@ export function useFileTreeContextMenu({
           if (newName === oldName) {
             setNameDialog(null)
             return
+          } else if (!ensureHasCorrectExtension(newName)) {
+            showErrorToast(`Filename must have one of the following extensions: ${ALLOWED_EXTENSIONS.join(', ')}`)
+            return
           }
+
           try {
-            await renameFile(projectName, `${oldPath}/${oldName}`, `${oldPath}/${newName}`)
+            await renameFile(projectName, `${oldPath}`, `${oldPath}`.replace(oldName, newName))
             clearConfigurationCache(projectName, oldPath)
             const newPath = buildNewPath(oldPath, newName)
             useTabStore.getState().renameTabsForConfig(oldPath, newPath)

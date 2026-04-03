@@ -28,6 +28,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
 
 @ExtendWith(MockitoExtension.class)
 class FileServiceTest {
@@ -89,6 +90,26 @@ class FileServiceTest {
 				() -> fileService.createOrUpdateFile(TEST_PROJECT_NAME, "/some/path/..", "")
 		);
 	}
+
+	@Test
+	@DisplayName("Should throw ApiException when extension is not allowed")
+	void createOrUpdateFileUnsupportedExtension() throws ProjectNotFoundException {
+		stubToAbsolutePath();
+
+		Project project = new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+		when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
+
+		String path = tempProjectRoot.resolve("notAllowed.txt").toAbsolutePath().toString();
+
+		ApiException exception = assertThrows(
+				ApiException.class,
+				() -> fileService.createOrUpdateFile(TEST_PROJECT_NAME, path, "content")
+		);
+
+		assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusCode());
+		assertEquals("Unsupported extension type for file: notAllowed.txt", exception.getMessage());
+	}
+
 
 	@Test
 	@DisplayName("Should create a file and return a FileTreeNode with FILE type")
@@ -155,6 +176,24 @@ class FileServiceTest {
 		assertEquals(NodeType.FILE, node.getType());
 		assertTrue(Files.exists(tempProjectRoot.resolve("new.xml")));
 		assertFalse(Files.exists(oldFile));
+	}
+
+	@Test
+	@DisplayName("Should throw ApiException when rename file extension is not allowed")
+	void renameFileUnsupportedExtension() throws ProjectNotFoundException, IOException {
+		stubToAbsolutePath();
+
+		Path oldFile = Files.writeString(tempProjectRoot.resolve("old.xml"), "content");
+		String oldPath = oldFile.toAbsolutePath().toString();
+		String newPath = tempProjectRoot.resolve("notAllowed.txt").toAbsolutePath().toString();
+
+		ApiException exception = assertThrows(
+				ApiException.class,
+				() -> fileService.renameFile(TEST_PROJECT_NAME, oldPath, newPath)
+		);
+
+		assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusCode());
+		assertEquals("Unsupported extension type for file: notAllowed.txt", exception.getMessage());
 	}
 
 	@Test
