@@ -44,9 +44,8 @@ public class ConfigurationService {
 		return fileSystemStorage.readFile(filePath.toString());
 	}
 
-	public String updateConfiguration(String filepath, String content)
-			throws IOException, ConfigurationNotFoundException, ParserConfigurationException, SAXException,
-					TransformerException {
+	public boolean updateConfiguration(String filepath, String content)
+			throws IOException, ConfigurationNotFoundException, ParserConfigurationException, SAXException, TransformerException {
 		Path absolutePath = fileSystemStorage.toAbsolutePath(filepath);
 
 		if (!Files.exists(absolutePath)) {
@@ -56,16 +55,16 @@ public class ConfigurationService {
 		if (Files.isDirectory(absolutePath)) {
 			throw new ConfigurationNotFoundException("Invalid file path: " + filepath);
 		}
-		Document updatedDocument = XmlConfigurationUtils.insertFlowNamespace(content);
-		String updatedContent = XmlConfigurationUtils.convertNodeToString(updatedDocument);
 
-		// Just write to the disk. ProjectService reads directly from disk now!
-		fileSystemStorage.writeFile(absolutePath.toString(), updatedContent);
-		return updatedContent;
+		Document document = XmlConfigurationUtils.insertFlowNamespace(content);
+		String formatted = XmlConfigurationUtils.convertNodeToString(document);
+
+		fileSystemStorage.writeFile(absolutePath.toString(), formatted);
+		return true;
 	}
 
 	public Project addConfiguration(String projectName, String configurationName)
-			throws ProjectNotFoundException, IOException {
+			throws ProjectNotFoundException, IOException, TransformerException, ParserConfigurationException, SAXException {
 		Project project = projectService.getProject(projectName);
 
 		Path absProjectPath = fileSystemStorage.toAbsolutePath(project.getRootPath());
@@ -81,14 +80,16 @@ public class ConfigurationService {
 		}
 
 		String defaultXml = loadDefaultConfigurationXml();
-		fileSystemStorage.writeFile(filePath.toString(), defaultXml);
+		Document updatedDocument = XmlConfigurationUtils.insertFlowNamespace(defaultXml);
+		String updatedContent = XmlConfigurationUtils.convertNodeToString(updatedDocument);
+		fileSystemStorage.writeFile(filePath.toString(), updatedContent);
 
 		// Returning the project handles everything, as 'toDto' will pick up the new file
 		return project;
 	}
 
 	public Project addConfigurationToFolder(String projectName, String configurationName, String folderPath)
-			throws IOException, ApiException {
+			throws IOException, ApiException, ParserConfigurationException, SAXException, TransformerException {
 		Project project = projectService.getProject(projectName);
 
 		Path absProjectPath = fileSystemStorage.toAbsolutePath(project.getRootPath());
@@ -112,7 +113,9 @@ public class ConfigurationService {
 		}
 
 		String defaultXml = loadDefaultConfigurationXml();
-		fileSystemStorage.writeFile(filePath.toString(), defaultXml);
+		Document updatedDocument = XmlConfigurationUtils.insertFlowNamespace(defaultXml);
+		String updatedContent = XmlConfigurationUtils.convertNodeToString(updatedDocument);
+		fileSystemStorage.writeFile(filePath.toString(), updatedContent);
 
 		return project;
 	}

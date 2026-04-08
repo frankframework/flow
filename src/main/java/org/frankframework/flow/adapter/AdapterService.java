@@ -84,7 +84,6 @@ public class AdapterService {
 			String updatedXml = XmlConfigurationUtils.convertNodeToString(configDoc);
 			Files.writeString(absConfigFile, updatedXml, StandardCharsets.UTF_8, StandardOpenOption.TRUNCATE_EXISTING);
 			return true;
-
 		} catch (AdapterNotFoundException e) {
 			throw e;
 		} catch (Exception e) {

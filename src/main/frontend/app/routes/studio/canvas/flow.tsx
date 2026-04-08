@@ -173,7 +173,7 @@ function FlowCanvas() {
       await saveConfiguration(currentProject.name, configurationPath, updatedConfigXml)
       clearConfigurationCache(currentProject.name, configurationPath)
       useEditorTabStore.getState().refreshAllTabs()
-      if (currentProject.isGitRepository) refreshOpenDiffs(currentProject.name)
+      if (currentProject.isGitRepository) await refreshOpenDiffs(currentProject.name)
 
       setSaveStatus('saved')
       if (savedTimerRef.current) clearTimeout(savedTimerRef.current)

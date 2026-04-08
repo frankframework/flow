@@ -12,6 +12,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.TransformerException;
 import org.frankframework.flow.configuration.ConfigurationService;
 import org.frankframework.flow.exception.ApiException;
 import org.frankframework.flow.filesystem.FileSystemStorage;
@@ -23,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
 @Service
@@ -127,10 +130,11 @@ public class FileTreeService {
 	}
 
 	public FileTreeNode createFile(String projectName, String parentPath, String fileName)
-			throws IOException, ApiException {
+			throws IOException, ApiException, ParserConfigurationException, TransformerException, SAXException {
 		if (parentPath == null || parentPath.isBlank()) {
 			throw new IllegalArgumentException("Parent path must not be empty");
 		}
+
 		validateFileName(fileName);
 		String fullPath = parentPath.endsWith("/") ? parentPath + fileName : parentPath + "/" + fileName;
 		validateWithinProject(projectName, fullPath);

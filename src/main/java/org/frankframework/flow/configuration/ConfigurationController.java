@@ -8,7 +8,6 @@ import org.frankframework.flow.project.Project;
 import org.frankframework.flow.project.ProjectDTO;
 import org.frankframework.flow.project.ProjectNotFoundException;
 import org.frankframework.flow.project.ProjectService;
-import org.frankframework.flow.xml.XmlDTO;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -39,20 +38,17 @@ public class ConfigurationController {
 	}
 
 	@PutMapping("/{projectName}/configuration")
-	public ResponseEntity<XmlDTO> updateConfiguration(
+	public ResponseEntity<Void> updateConfiguration(
 			@RequestBody ConfigurationDTO configurationDTO)
-			throws ConfigurationNotFoundException, IOException, ParserConfigurationException,
-					SAXException, TransformerException {
-		String updatedContent = configurationService.updateConfiguration(
-				configurationDTO.filepath(), configurationDTO.content());
-		XmlDTO xmlDTO = new XmlDTO(updatedContent);
-		return ResponseEntity.ok(xmlDTO);
+			throws ConfigurationNotFoundException, IOException, ParserConfigurationException, SAXException, TransformerException {
+		configurationService.updateConfiguration(configurationDTO.filepath(), configurationDTO.content());
+		return ResponseEntity.ok().build();
 	}
 
 	@PostMapping("/{projectName}/configurations/{configName}")
 	public ResponseEntity<ProjectDTO> addConfiguration(
 			@PathVariable String projectName, @PathVariable String configName)
-			throws ProjectNotFoundException, IOException {
+			throws ProjectNotFoundException, IOException, ParserConfigurationException, TransformerException, SAXException {
 		Project project = configurationService.addConfiguration(projectName, configName);
 		return ResponseEntity.ok(projectService.toDto(project));
 	}

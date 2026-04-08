@@ -1,4 +1,6 @@
 import Editor, { type Monaco, type OnMount } from '@monaco-editor/react'
+import prettier from 'prettier'
+import parserHTML from 'prettier/plugins/html'
 import XsdManager from 'monaco-xsd-code-completion/esm/XsdManager'
 import XsdFeatures from 'monaco-xsd-code-completion/esm/XsdFeatures'
 import 'monaco-xsd-code-completion/src/style.css'
@@ -143,6 +145,14 @@ function toMarker(e: ValidationError, severity: number) {
   }
 }
 
+function prettierFormat(xml: string): Promise<string> {
+  return prettier.format(xml, {
+    parser: 'html',
+    plugins: [parserHTML],
+    tabWidth: 3,
+  })
+}
+
 export default function CodeEditor() {
   const theme = useTheme()
   const project = useProjectStore.getState().project
@@ -190,8 +200,7 @@ export default function CodeEditor() {
 
       setSaveStatus('saving')
       try {
-        const xmlResponse = await saveConfiguration(project.name, configPath, updatedContent)
-        setXmlContent(xmlResponse.xmlContent)
+        await saveConfiguration(project.name, configPath, updatedContent)
         contentCacheRef.current.set(activeTabFilePath, updatedContent)
         setSaveStatus('saved')
         if (savedTimerRef.current) clearTimeout(savedTimerRef.current)
@@ -256,6 +265,18 @@ export default function CodeEditor() {
       errors.map((e) => toMarker(e, monaco.MarkerSeverity.Error)),
     )
   }, [])
+
+  const runPrettierReformat = async () => {
+    const editor = editorReference.current
+    if (!editor) return
+    const model = editor.getModel()
+    if (!model) return
+    try {
+      if (model) model.setValue(await prettierFormat(model.getValue()))
+    } catch (error) {
+      console.error('Failed to reformat XML:', error)
+    }
+  }
 
   const runSchemaValidation = useCallback(
     async (content: string) => {
@@ -341,7 +362,6 @@ export default function CodeEditor() {
 
     xsdFeatures.addCompletion()
     xsdFeatures.addGenerateAction()
-    xsdFeatures.addReformatAction()
 
     fetchFrankConfigXsd()
       .then((xsdContent) => {
@@ -388,6 +408,19 @@ export default function CodeEditor() {
           editor.pushUndoStop()
         }
       },
+    })
+
+    editor.addAction({
+      id: 'reformat-xml-prettier',
+      label: 'Reformat',
+      contextMenuGroupId: 'navigation',
+      contextMenuOrder: 3,
+      keybindings: [
+        monacoReference.current.KeyMod.CtrlCmd |
+          monacoReference.current.KeyMod.Shift |
+          monacoReference.current.KeyCode.KeyR,
+      ],
+      run: runPrettierReformat,
     })
   }
 
@@ -591,7 +624,7 @@ export default function CodeEditor() {
                     scheduleSave()
                     if (value) scheduleSchemaValidation(value)
                   }}
-                  options={{ automaticLayout: true, quickSuggestions: false }}
+                  options={{ automaticLayout: true, quickSuggestions: false, tabSize: 3 }}
                 />
               </div>
             </>
