@@ -1,21 +1,22 @@
-import React, { type Dispatch, type SetStateAction, useEffect, useState } from 'react'
+import React, { type Dispatch, type SetStateAction, useEffect, useMemo, useState } from 'react'
 
 import AddMutationForm from './add-mutation-form'
 import AddConditionForm from './add-conditions-form'
-import type { Mutation, Condition, Source } from '~/types/datamapper_types/config-types'
-import type { MappingConfig, NodeLabels } from '~/types/datamapper_types/node-types'
+import type { Source } from '~/types/datamapper_types/export-types'
+import type { MappingNodeData, NodeLabels } from '~/types/datamapper_types/react-node-types'
 import Modal from '~/components/modal'
 import Checkbox from '~/components/inputs/checkbox'
 import Dropdown from '~/components/inputs/dropdown'
 import DeleteButton from '../basic-components/delete-button'
 import EditButton from '../basic-components/edit-button'
 import Button from '~/components/inputs/button'
+import type { Condition, Mutation } from '~/types/datamapper_types/function-types'
 
 export interface MappingModalProps {
-  onSave: (data: MappingConfig) => void
+  onSave: (data: MappingNodeData) => void
   sources: NodeLabels[]
   targets: NodeLabels[]
-  initialData: MappingConfig | null
+  initialData: MappingNodeData | null
 }
 
 const updateArrayItem = <T,>(setter: Dispatch<SetStateAction<T[]>>, index: number, value: T) => {
@@ -48,19 +49,21 @@ function AddMappingForm({ onSave, sources, targets, initialData }: MappingModalP
   const [isConditional, setIsConditional] = useState<boolean>(!!initialData?.conditional)
   const [selectedConditional, setSelectedConditional] = useState<Condition | null>(initialData?.conditional ?? null)
 
-  const unfilteredOutputs: Source[] = [
-    ...sources.filter((source) => sourceIds.includes(source.id)),
-    ...mutations.map((mutation) => ({
-      id: mutation.id,
-      label: mutation.name,
-      type: mutation.mutationType?.outputType,
-    })),
-    ...conditions.map((condition) => ({
-      id: condition.id,
-      label: condition.name,
-      type: 'boolean',
-    })),
-  ] as Source[]
+  const unfilteredOutputs: Source[] = useMemo(() => {
+    return [
+      ...sources.filter((source) => sourceIds.includes(source.id)),
+      ...mutations.map((mutation) => ({
+        id: mutation.id,
+        label: mutation.name,
+        type: mutation.mutationType?.outputType,
+      })),
+      ...conditions.map((condition) => ({
+        id: condition.id,
+        label: condition.name,
+        type: 'boolean',
+      })),
+    ] as Source[]
+  }, [sources, sourceIds, mutations, conditions])
 
   const filteredOutputs = React.useMemo(() => {
     if (!targetId) return []
@@ -116,10 +119,10 @@ function AddMappingForm({ onSave, sources, targets, initialData }: MappingModalP
 
   const isFormIncomplete = sourceIds.some((id) => !id) || !targetId || !output
 
-  const scrollable = 'flex-1 min-h-0 overflow-y-auto space-y-2'
+  const scrollable = 'flex-1 min-h-0 overflow-y-auto space-y-2 max-w-55 truncate'
 
   return (
-    <div className="text-foreground mx-auto flex max-h-[90vh] min-h-0 w-full max-w-[900px] flex-col">
+    <div className="text-foreground mx-auto flex max-h-[90vh] min-h-0 w-full max-w-225 flex-col">
       <h1 className="mb-4 shrink-0 text-xl font-bold">Add Mapping</h1>
 
       {/* Main grid with lists */}
@@ -133,6 +136,7 @@ function AddMappingForm({ onSave, sources, targets, initialData }: MappingModalP
               {sourceIds.map((id, value) => (
                 <div key={value} className="flex items-center gap-2">
                   <Dropdown
+                    className="max-w-45"
                     id={value.toString()}
                     value={id}
                     onChange={(event) => updateArrayItem(setSourceIds, value, event)}
@@ -160,7 +164,7 @@ function AddMappingForm({ onSave, sources, targets, initialData }: MappingModalP
               {mutations.map((mutation) => (
                 <div key={mutation.id} className="rounded border p-2">
                   <div className="flex items-center justify-between">
-                    <span className="font-semibold">{mutation.name}</span>
+                    <span className="max-w-40 truncate font-semibold">{mutation.name}</span>
                     <div className="flex gap-2">
                       <EditButton
                         onClick={() => {
@@ -193,7 +197,7 @@ function AddMappingForm({ onSave, sources, targets, initialData }: MappingModalP
               {conditions.map((condition) => (
                 <div key={condition.id} className="rounded border p-2">
                   <div className="flex items-center justify-between">
-                    <span className="font-semibold">{condition.name}</span>
+                    <span className="truncate font-semibold">{condition.name}</span>
                     <div className="flex gap-2">
                       <EditButton
                         onClick={() => {
@@ -226,6 +230,7 @@ function AddMappingForm({ onSave, sources, targets, initialData }: MappingModalP
         <div className="flex flex-col gap-1">
           <label className="text-muted-foreground text-sm font-semibold">Output</label>
           <Dropdown
+            className="max-w-50"
             value={output}
             onChange={setOutput}
             options={Object.fromEntries(
@@ -240,6 +245,7 @@ function AddMappingForm({ onSave, sources, targets, initialData }: MappingModalP
           <label className="text-muted-foreground text-sm font-semibold">Target</label>
 
           <Dropdown
+            className="max-w-50"
             value={targetId}
             onChange={setTargetId}
             options={Object.fromEntries(targets.map((target) => [target.id, `${target.label} (${target.type})`]))}
@@ -256,6 +262,7 @@ function AddMappingForm({ onSave, sources, targets, initialData }: MappingModalP
 
         {isConditional && (
           <Dropdown
+            className="max-w-115 p-2"
             value={selectedConditional?.id ?? ''}
             onChange={(e) => setSelectedConditional(conditions.find((condition) => condition.id === e) ?? null)}
             options={Object.fromEntries(conditions.map((condition) => [condition.id, condition.name]))}
@@ -298,7 +305,7 @@ function AddMappingForm({ onSave, sources, targets, initialData }: MappingModalP
             setConditions((conditions) =>
               editCondition
                 ? conditions.map((conditionToCompare) =>
-                    conditionToCompare.id === conditionToCompare.id ? conditionToCompare : conditionToEdit,
+                    conditionToCompare.id === conditionToEdit.id ? conditionToEdit : conditionToCompare,
                   )
                 : [...conditions, conditionToEdit],
             )

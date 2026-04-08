@@ -1,9 +1,10 @@
 import { Handle, Position } from '@xyflow/react'
-import type { CustomNodeData } from '~/types/datamapper_types/node-types'
-import { GROUP_WIDTH } from '~/utils/datamapper_utils/const'
+import type { CustomNodeData } from '~/types/datamapper_types/react-node-types'
 import HighlightButton from '../basic-components/highlight-button'
 import EditButton from '../basic-components/edit-button'
 import DeleteButton from '../basic-components/delete-button'
+import VariableTypeIcon from '../basic-components/variable-type-icon'
+import clsx from 'clsx'
 
 export interface LabeledGroupNodeProperties {
   id: string
@@ -16,15 +17,20 @@ export interface LabeledGroupNodeProperties {
 function LabeledGroupNode({ id, data, onEdit, onDelete, onHighlight }: LabeledGroupNodeProperties) {
   return (
     <div
-      className="bg-selected relative flex h-full flex-col gap-1 rounded-md border border-gray-400 p-0"
-      style={{ width: `${GROUP_WIDTH}px` }}
+      className={clsx(
+        'bg-selected group relative flex h-full flex-col rounded-md border border-gray-400 p-0',
+        data.isHidden && 'opacity-20',
+      )}
+      style={{ width: `${data.width}px` }}
     >
       {/* Header */}
-      <div className="bg-backdrop w-full rounded-md px-2 py-2 text-sm font-semibold">{data.label ?? 'Group'}</div>
+      <div className="bg-backdrop flex w-full gap-2 rounded-md px-2 py-2">
+        <span className="shrink-0">
+          <VariableTypeIcon variableType={data.variableType} variableTypeBasic={data.variableTypeBasic ?? ''} />
+        </span>
 
-      <div className="bg-backdrop border-border absolute bottom-0 flex w-full items-center justify-between rounded-md border px-4 py-2 text-sm opacity-80">
-        <span>({data.variableType})</span>
-        <div className="flex gap-3">
+        <div className="min-w-0 flex-1 truncate rounded-md text-left">{data.label}</div>
+        <div className="hidden gap-3 group-hover:flex">
           <HighlightButton
             onClick={() => {
               onHighlight?.(id)
@@ -44,6 +50,7 @@ function LabeledGroupNode({ id, data, onEdit, onDelete, onHighlight }: LabeledGr
           />
         </div>
       </div>
+
       <Handle type="target" position={Position.Top} style={{ opacity: 0 }} />
       <Handle type="source" position={Position.Bottom} style={{ opacity: 0 }} />
     </div>

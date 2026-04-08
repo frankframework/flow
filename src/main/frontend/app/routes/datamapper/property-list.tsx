@@ -11,31 +11,27 @@ import {
   type Connection,
   useReactFlow,
 } from '@xyflow/react'
-
 import '@xyflow/react/dist/style.css'
 import AddFieldForm from '~/components/datamapper/forms/add-field-form'
 import AddMappingForm from '~/components/datamapper/forms/add-mapping-form'
 import Modal from '~/components/modal'
 import { getNodeTypes } from '~/components/datamapper/react-flow/node-types'
-import { showErrorToast, showInfoToast, showSuccessToast } from '~/components/toast'
-import { useFlowManagement, DuplicateLabelException } from '~/hooks/use-datamapper-flow-management'
-import { mappingListConfigReducer, type ConfigActions } from '~/stores/datamapper_state/mappingListConfig/reducer'
-import { useFile } from '~/stores/datamapper_state/schemaQueue/schema-queue-context'
-import type { MappingListConfig } from '~/types/datamapper_types/config-types'
-import type { ArrayMappingConfig, CustomNodeData, MappingConfig, NodeLabels } from '~/types/datamapper_types/node-types'
-import { TABLE_WIDTH } from '~/utils/datamapper_utils/const'
+import { showErrorToast, showSuccessToast } from '~/components/toast'
+import { useFlowManagement } from '~/hooks/use-datamapper-flow-management'
+import { type ConfigActions } from '~/stores/datamapper_state/mappingListConfig/reducer'
+import type { CustomNodeData, MappingNodeData, NodeLabels } from '~/types/datamapper_types/react-node-types'
+import { TABLE_WIDTH } from '~/utils/datamapper_utils/constant'
 import {
-  getNodesByTypeAndId,
   createMappingNode,
-  createNewArrayMappingNode,
   validateMapping,
   getMappingNodes,
   handleArrayMapping,
-} from '~/utils/datamapper_utils/react-node-utils'
+} from '~/utils/datamapper_utils/mapping-node-utils'
 import Button from '~/components/inputs/button'
-import { generateDatamapperXSLT } from '~/services/datamapper-service'
-import { convertMappingConfigToMappingFile } from '~/utils/datamapper_utils/convert-node-utils'
 import GenerateButton from '~/components/datamapper/basic-components/generate-button'
+import { updateCanvasSize } from '~/utils/datamapper_utils/canvas-management-utils'
+import { getNodesByTypeAndId } from '~/utils/datamapper_utils/property-node-utils'
+import type { MappingListConfig } from '~/types/datamapper_types/config-types'
 
 interface PropertyListProperties {
   config: MappingListConfig
@@ -47,7 +43,7 @@ const INITIAL_NODES: Node[] = [
     type: 'group',
     position: { x: 200, y: 0 },
     width: TABLE_WIDTH,
-
+    style: { display: 'none' },
     data: {},
   },
   {
@@ -63,6 +59,7 @@ const INITIAL_NODES: Node[] = [
     type: 'group',
     position: { x: 1000, y: 0 },
     width: TABLE_WIDTH,
+    style: { display: 'none' },
 
     data: {},
   },
@@ -81,7 +78,7 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
   const [addMappingModal, setAddMappingModal] = useState(false)
 
   const [editingNode, setEditingNode] = useState<CustomNodeData | null>(null)
-  const [editingMapping, setEditingMapping] = useState<MappingConfig | null>(null)
+  const [editingMapping, setEditingMapping] = useState<MappingNodeData | null>(null)
 
   const openModalType = useRef<'source' | 'target'>('source')
 
@@ -90,7 +87,7 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
   const [mappingTargets, setMappingTargets] = useState<NodeLabels[]>([])
   const canvasWidth = useRef<HTMLDivElement>(null)
 
-  const editingMappingRef = useRef<MappingConfig | null>(null)
+  const editingMappingRef = useRef<MappingNodeData | null>(null)
 
   useEffect(() => {
     editingMappingRef.current = editingMapping
@@ -102,133 +99,8 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
     setReactFlowNodes,
     setEdges,
   })
-  const { sourceSchematics, targetSchematic, clearFiles } = useFile()
 
-  const nodeTypes: NodeTypes = useMemo(() => {
-    return getNodeTypes({
-      flow,
-      setReactFlowNodes,
-      setEditingNode,
-      setAddFieldModal,
-      openModelType: openModalType,
-      setEditingMapping,
-      openMapping,
-    })
-  }, []) //UseMemo is used here to ensure nodetype is not changed throughout rerenders. If the variable is update reactflow throws a warning in the console;
-
-  useEffect(() => {
-    if (!reactFlowInstance) return
-
-    const updateSize = () => {
-      requestAnimationFrame(() => {
-        flow.calculateTablePositions(canvasWidth.current?.offsetWidth ?? 0)
-      })
-    }
-
-    window.addEventListener('resize', updateSize)
-
-    // delay initial run
-    requestAnimationFrame(updateSize)
-
-    return () => {
-      window.removeEventListener('resize', updateSize)
-    }
-  }, [reactFlowInstance])
-
-  useEffect(() => {
-    if (!reactFlowInstance) return
-
-    configDispatch({
-      type: 'SET_PROPERTY_DATA',
-      payload: reactFlowInstance.toObject(),
-    })
-  }, [reactFlowNodes, edges])
-
-  //Updates the outer canvas whenever something is added
-  useEffect(() => {
-    setCanvasSize((size) => flow.updateCanvasSize(reactFlowNodes, size))
-  }, [reactFlowNodes])
-
-  useEffect(() => {
-    if (!reactFlowInstance || initHasRun.current) return
-    initHasRun.current = true
-
-    if (config.propertyData.nodes && config.propertyData.nodes.length > 1) {
-      onRestore()
-    }
-    const loadSchematics = async () => {
-      try {
-        if (config.propertyData.nodes && config.propertyData.nodes.length > 1) {
-          onRestore()
-        }
-
-        if (targetSchematic) {
-          await flow.importSchematic(targetSchematic, 'target')
-        }
-
-        if (sourceSchematics.length > 0) {
-          await flow.importMultipleSchematics(sourceSchematics)
-        }
-      } catch (error) {
-        if (error instanceof Error) {
-          showErrorToast(error.message)
-        }
-      } finally {
-        clearFiles()
-      }
-    }
-
-    loadSchematics()
-    clearFiles()
-  }, [reactFlowInstance])
-
-  const onReactFlowNodeChange = useCallback(
-    (changes: NodeChange[]) => setReactFlowNodes((nodes) => applyNodeChanges(changes, nodes) as Node[]),
-    [],
-  )
-
-  const onEdgesChange = useCallback(
-    (changes: EdgeChange[]) =>
-      setEdges((edges) => {
-        return applyEdgeChanges(changes, edges)
-      }),
-    [],
-  )
-
-  const onConnect = useCallback((connection: Connection) => {
-    const connectedIds = new Set<string>()
-
-    if (connection?.source) connectedIds.add(connection.source)
-    if (connection?.target) connectedIds.add(connection.target)
-    setReactFlowNodes((previous) =>
-      previous.map((node) => ({
-        ...node,
-        data: {
-          ...node.data,
-          checked: connectedIds.has(node.id),
-        },
-      })),
-    )
-    openMapping()
-
-    return
-  }, [])
-
-  const onRestore = useCallback(() => {
-    const restoreFlow = async () => {
-      if (config.propertyData) flow.importJsonConfiguration(JSON.stringify(config.propertyData))
-    }
-
-    restoreFlow()
-  }, [setReactFlowNodes])
-
-  function openMappingModal(sources: NodeLabels[], targets: NodeLabels[]) {
-    setMappingSources(sources.filter((s) => s.id?.includes('item')))
-    setMappingTargets(targets.filter((t) => t.id?.includes('item')))
-    setAddMappingModal(true)
-  }
-
-  function openMapping() {
+  const openMapping = useCallback(() => {
     requestAnimationFrame(() => {
       const nodes = reactFlowInstance.getNodes()
       const edges = reactFlowInstance.getEdges()
@@ -272,6 +144,123 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
 
       openMappingModal(sources, targets)
     })
+  }, [reactFlowInstance])
+
+  const nodeTypes: NodeTypes = useMemo(() => {
+    return getNodeTypes({
+      flow,
+      setReactFlowNodes,
+      setEditingNode,
+      setAddFieldModal,
+      openModelType: openModalType,
+      setEditingMapping,
+      openMapping,
+    })
+    //Don't add flow as dependancy here, it'll become an infinite loop flow changes every rerender --> updates the memo --> the memo updates the nodetypes --> updating the nodetypes causes react to trigger a rerender resulting in a infinite loop
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openMapping]) //UseMemo is used here to ensure nodetype is not changed throughout rerenders. If the variable is updated reactflow throws a warning in the console;
+
+  useEffect(() => {
+    if (!reactFlowInstance) return
+
+    const updateSize = () => {
+      requestAnimationFrame(() => {
+        flow.calculateTablePositions(canvasWidth.current?.offsetWidth ?? 0)
+      })
+    }
+
+    window.addEventListener('resize', updateSize)
+
+    // delay initial run
+    requestAnimationFrame(updateSize)
+
+    return () => {
+      window.removeEventListener('resize', updateSize)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reactFlowInstance]) //Adding flow as dependancy here breaks the importing.
+
+  useEffect(() => {
+    if (!reactFlowInstance) return
+
+    configDispatch({
+      type: 'SET_PROPERTY_DATA',
+      payload: reactFlowInstance.toObject(),
+    })
+  }, [reactFlowNodes, edges, reactFlowInstance, configDispatch])
+
+  //Updates the outer canvas whenever something is added
+  useEffect(() => {
+    setCanvasSize((size) => updateCanvasSize(reactFlowNodes, size))
+  }, [reactFlowNodes])
+
+  const onRestore = useCallback(() => {
+    const restoreFlow = async () => {
+      if (config.propertyData) await flow.importJsonConfiguration(JSON.stringify(config.propertyData))
+    }
+
+    restoreFlow().then(() => {
+      flow.deleteNode('target-import-button')
+      requestAnimationFrame(() => {
+        flow.addSchematicImportButton('source')
+        if (reactFlowInstance.getNodes().filter((node) => node.id.includes('target')).length == 1) {
+          flow.addSchematicImportButton('target')
+        }
+      })
+    })
+  }, [config.propertyData, flow, reactFlowInstance])
+
+  useEffect(() => {
+    if (!reactFlowInstance || initHasRun.current) return
+    initHasRun.current = true
+
+    if (config.propertyData.nodes && config.propertyData.nodes.length > 1) {
+      onRestore()
+    } else {
+      flow.addSchematicImportButton('source')
+      flow.addSchematicImportButton('target')
+    }
+  }, [config.propertyData.nodes, flow, onRestore, reactFlowInstance])
+
+  const onReactFlowNodeChange = useCallback(
+    (changes: NodeChange[]) => setReactFlowNodes((nodes) => applyNodeChanges(changes, nodes) as Node[]),
+    [],
+  )
+
+  const onEdgesChange = useCallback(
+    (changes: EdgeChange[]) =>
+      setEdges((edges) => {
+        return applyEdgeChanges(changes, edges)
+      }),
+    [],
+  )
+
+  const onConnect = useCallback(
+    (connection: Connection) => {
+      const connectedIds = new Set<string>()
+
+      if (connection?.source) connectedIds.add(connection.source)
+      if (connection?.target) connectedIds.add(connection.target)
+      setReactFlowNodes((previous) =>
+        previous.map((node) => ({
+          ...node,
+          data: {
+            ...node.data,
+            checked: connectedIds.has(node.id),
+          },
+        })),
+      )
+      openMapping()
+
+      return
+    },
+    [openMapping],
+  )
+
+  function openMappingModal(sources: NodeLabels[], targets: NodeLabels[]) {
+    setMappingSources(sources.filter((s) => s.id?.includes('item')))
+    setMappingTargets(targets.filter((t) => t.id?.includes('item')))
+    setAddMappingModal(true)
   }
 
   async function saveField(data: CustomNodeData) {
@@ -291,20 +280,22 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
           data.variableType,
           data.defaultValue ?? null,
           data.parentId,
+          null,
+          data.isAttribute,
         )
       }
       setEditingNode(null)
       setAddFieldModal(false)
       showSuccessToast('Added property succesfully!')
     } catch (error) {
-      if (error instanceof DuplicateLabelException) {
+      if (error instanceof Error) {
         showErrorToast(error.message)
       } else {
         throw error
       }
     }
   }
-  async function saveMapping(mappingConfig: MappingConfig) {
+  async function saveMapping(mappingConfig: MappingNodeData) {
     if (!reactFlowInstance) {
       setAddMappingModal(false)
 
@@ -339,11 +330,11 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
 
   return (
     <div className="w-full" ref={canvasWidth}>
-      <div className="mt-4 h-[30px] px-4">
+      <div className="mt-4 h-7.5 px-4">
         <div className="absolute right-[65%] flex flex-row items-center justify-between px-45">
           <h1 className="text-l font-semibold">Source: {config.formatTypes.source?.name}</h1>
         </div>
-        <div className="absolute right-[45%] left-[45%] flex flex-row items-center justify-between">
+        <div className="absolute right-[45%] left-[45%] z-10 flex flex-row items-center justify-between">
           <GenerateButton highlightUnset={flow.highlightUnset} mappingListConfig={config} />
         </div>
         <div className="absolute left-[65%] flex flex-row items-center justify-between px-45">
@@ -370,6 +361,8 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
             onNodesChange={onReactFlowNodeChange}
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
+            onConnectStart={flow.checkForDragScroll}
+            onConnectEnd={flow.endCheckForDragScroll}
             nodesDraggable={false}
             elementsSelectable
             panOnDrag={false}
@@ -415,22 +408,22 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
         />
       </Modal>
       {!addMappingModal && !addFieldModal && (
-        <div className="pointer-events-none fixed right-0 bottom-4 left-0 z-5 z-60 min-w-[300px]">
+        <div className="pointer-events-none fixed right-0 bottom-4 left-0 z-60 min-w-75">
           <div className="pointer-events-auto relative flex w-full justify-between px-12">
             <Button
-              className="absolute bottom-[2vh] left-1/4 z-10 rounded rounded-2xl rounded-md border px-4 py-2"
+              className="absolute bottom-[2vh] left-1/4 z-10 rounded-md border px-4 py-2"
               onClick={() => openAddFieldModal('source')}
             >
               Add Source
             </Button>
             <Button
-              className="bg-foreground-active text-foreground hover:bg-hover absolute bottom-[2vh] left-1/2 z-10 -translate-x-1/2 rounded-2xl border px-4 py-2"
+              className="bg-foreground-active hover:bg-hover absolute bottom-[2vh] left-1/2 z-10 -translate-x-1/2 rounded-2xl border px-4 py-2 text-neutral-900"
               onClick={openMapping}
             >
               MAP
             </Button>
             <Button
-              className="absolute right-1/4 bottom-[2vh] z-10 rounded rounded-2xl rounded-md border px-4 py-2"
+              className="absolute right-1/4 bottom-[2vh] z-10 rounded-2xl border px-4 py-2"
               onClick={() => openAddFieldModal('target')}
             >
               Add target

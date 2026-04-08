@@ -1,16 +1,17 @@
-import { useId, useState } from 'react'
+import { useId, useMemo, useState } from 'react'
 import mutationConfig from '~/utils/datamapper_utils/config/mutation-config.json'
+import type { Source } from '~/types/datamapper_types/export-types'
+import Input from '~/components/inputs/input'
+import Dropdown from '~/components/inputs/dropdown'
+import Button from '~/components/inputs/button'
+import DeleteButton from '../basic-components/delete-button'
 import type {
   Mutation,
   MutationInput,
   MutationsConfig,
   MutationTypeInput,
-  Source,
-} from '~/types/datamapper_types/config-types'
-import Input from '~/components/inputs/input'
-import Dropdown from '~/components/inputs/dropdown'
-import Button from '~/components/inputs/button'
-import DeleteButton from '../basic-components/delete-button'
+} from '~/types/datamapper_types/function-types'
+import { generateMutationName } from '~/utils/datamapper_utils/function-utils'
 
 function AddMutationForm({
   sources,
@@ -33,24 +34,28 @@ function AddMutationForm({
     inputs: mutationToEdit?.inputs ?? [],
   })
 
-  const isFormIncomplete = !mutation.name || !mutation.mutationType || mutation.inputs.length === 0
+  const isFormIncomplete = !mutation.mutationType || mutation.inputs.length === 0
+  const placeholder = useMemo(() => generateMutationName(mutation), [mutation])
 
   function handleSave() {
+    if (!mutation.name) mutation.name = placeholder
     onSave(mutation)
   }
 
   return (
-    <div className="text-foreground border-black">
+    <div className="text-foreground max-w-55 border-black">
       <h1 className="mb-2 text-xl font-bold">Add Mutation</h1>
 
       <label>Mutation name:</label>
       <Input
         value={mutation.name}
         onChange={(event) => setMutation((toSetMutation) => ({ ...toSetMutation, name: event.target.value }))}
+        placeholder={placeholder}
       />
 
       <label>Mutation type:</label>
       <Dropdown
+        className="max-w-55"
         value={mutation.mutationType?.name ?? ''}
         onChange={(e) => {
           const mutationType = mutations.mutations.find((mutationToFind) => mutationToFind.name === e) ?? null
@@ -197,15 +202,18 @@ function MutationInputField({
   }
 
   return (
-    <div className="flex items-start gap-2">
-      <div className="flex-1">
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center gap-2">
         {mutationInput.label && <label className="mb-1 block">{mutationInput.label}</label>}
+        {showDelete && onDelete && <DeleteButton onClick={onDelete} />}
+      </div>
 
+      <div>
         {mutationInput.type === 'source' && (
           <Dropdown
             value={value.sourceId ?? ''}
             onChange={handleSourceChange}
-            className="mb-4"
+            className="mb-4 max-w-55"
             options={Object.fromEntries([
               ...(mutationInput.allowDefaultValue ? [['defaultValue', 'defaultValue']] : []),
               ...sources.map((source) => [source.id, source.label]),
@@ -225,8 +233,6 @@ function MutationInputField({
           />
         )}
       </div>
-
-      {showDelete && onDelete && <DeleteButton onClick={onDelete} />}
     </div>
   )
 }

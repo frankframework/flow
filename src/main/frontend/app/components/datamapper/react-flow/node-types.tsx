@@ -3,13 +3,13 @@ import OneEdgeNode, { type OneEdgeNodeProperties } from './one-edge-node'
 import LabeledGroupNode, { type LabeledGroupNodeProperties } from './labeled-group-node'
 import MappingNode, { type MappingNodeProperties } from './mapping-node'
 import type { NodeTypes, Node } from '@xyflow/react'
-
 import ExtraSourceNode, { type ExtraSourceNodeProperties } from './extra-source-node'
 import type { useFlowManagement } from '~/hooks/use-datamapper-flow-management'
-import type { CustomNodeData, MappingConfig } from '~/types/datamapper_types/node-types'
+import type { CustomNodeData, MappingNodeData } from '~/types/datamapper_types/react-node-types'
 import ArrayGroupNode, { type ArrayGroupNodeProperties } from './array-group-node'
 import type { ArrayMappingNodeProperties } from './array-mapping-node'
 import ArrayMappingNode from './array-mapping-node'
+import ImportSchematicNode, { type ImportSchematicNodeprops } from './import-schematic-node'
 
 interface GetNodeTypesParameters {
   flow: ReturnType<typeof useFlowManagement>
@@ -17,7 +17,7 @@ interface GetNodeTypesParameters {
   setEditingNode: Dispatch<SetStateAction<CustomNodeData | null>>
   setAddFieldModal: Dispatch<SetStateAction<boolean>>
   openModelType: RefObject<'source' | 'target'>
-  setEditingMapping: Dispatch<SetStateAction<MappingConfig | null>>
+  setEditingMapping: Dispatch<SetStateAction<MappingNodeData | null>>
   openMapping: () => void
 }
 
@@ -121,4 +121,5 @@ export const getNodeTypes = ({
       }}
     />
   ),
+  importSchematicNode: (node: ImportSchematicNodeprops) => <ImportSchematicNode {...node} />,
 })

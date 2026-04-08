@@ -23,20 +23,29 @@ import GitPanel from '~/components/git/git-panel'
 import DiffTabView from '~/components/git/diff-tab-view'
 import clsx from 'clsx'
 import { refreshOpenDiffs } from '~/services/git-service'
-import { findAdapterIndexAtOffset, findAdaptersInXml, lineToOffset, normalizeFrankElements } from './xml-utils'
+import {
+  extractFlowElements,
+  findAdapterIndexAtOffset,
+  findAdaptersInXml,
+  findFlowElementsStartLine,
+  lineToOffset,
+  normalizeFrankElements,
+  wrapFlowXml,
+} from './xml-utils'
 import { useSettingsStore } from '~/stores/settings-store'
 import { toProjectRelativePath } from '~/utils/path-utils'
 import SidebarHeader from '~/components/sidebars-layout/sidebar-header'
+import flowXsd from '../../../src/assets/xsd/FlowConfig.xsd?raw'
 
 type LeftTab = 'files' | 'git'
 type SaveStatus = 'idle' | 'saving' | 'saved'
-interface ValidationError {
+export interface ValidationError {
   message: string
   lineNumber: number
   startColumn: number
   endColumn: number
 }
-interface TextModel {
+export interface TextModel {
   getLineContent: (n: number) => string
   getLineCount: () => number
   getLineMaxColumn: (n: number) => number
@@ -95,6 +104,7 @@ function mapToValidationErrors(rawErrors: readonly XMLValidationError[], model: 
 
   return rawErrors
     .map((e) => {
+      // Use the reported line number, capped to the model
       const lineNumber = Math.max(1, Math.min(e.loc?.lineNumber ?? 1, totalLines))
       const { startColumn, endColumn } = findErrorRange(model.getLineContent(lineNumber), e.message)
       return { message: e.message, lineNumber, startColumn, endColumn }
@@ -256,6 +266,29 @@ export default function CodeEditor() {
       const validationId = ++validationCounterRef.current
 
       try {
+        const model = editor.getModel()
+        if (!model) return
+
+        const flowFragment = extractFlowElements(content)
+        let flowErrors: ValidationError[] = []
+
+        if (flowFragment) {
+          const wrapped = wrapFlowXml(flowFragment)
+          const startLine = findFlowElementsStartLine(content)
+
+          const flowResult = await validateXML({
+            xml: [{ fileName: 'flow.xml', contents: wrapped }],
+            schema: [{ fileName: 'flowconfig.xsd', contents: flowXsd }],
+          })
+
+          // Map errors and offset the line numbers
+          flowErrors = mapToValidationErrors(flowResult.errors, model).map((errorInformation) => ({
+            ...errorInformation,
+            lineNumber: errorInformation.lineNumber + startLine, // shift relative to full file
+            startColumn: 1,
+            endColumn: model.getLineLength(errorInformation.lineNumber + startLine),
+          }))
+        }
         const result = await validateXML({
           xml: [{ fileName: 'config.xml', contents: content }],
           schema: [{ fileName: 'FrankConfig.xsd', contents: xsdContent }],
@@ -263,15 +296,21 @@ export default function CodeEditor() {
 
         if (validationId !== validationCounterRef.current) return
 
-        const model = editor.getModel()
-        if (!model) return
-
         if (!result.valid && result.errors.length === 0) {
           applyValidationDecorations([notWellFormedError(model)])
           return
         }
 
-        applyValidationDecorations(mapToValidationErrors(result.errors, model))
+        // Filter out errors mentioning the flow namespace
+        const filteredErrors = result.errors.filter(
+          (error) =>
+            !error.message.includes('{urn:frank-flow}') &&
+            !error.message.includes('Skipping attribute use prohibition'), // This gets prompted by flowelements being present in the xml, harmless so we filter it out
+        )
+        const frankErrors = mapToValidationErrors(filteredErrors, model)
+
+        // Then merge the FlowErrors and the FrankErrors
+        applyValidationDecorations([...frankErrors, ...flowErrors])
       } catch {
         if (validationId !== validationCounterRef.current) return
         const model = editor.getModel()
@@ -307,6 +346,7 @@ export default function CodeEditor() {
       .then((xsdContent) => {
         xsdContentRef.current = xsdContent
         xsdManager.set({ path: 'FrankConfig.xsd', value: xsdContent, namespace: 'xs', alwaysInclude: true })
+        xsdManager.set({ path: 'FlowConfig.xsd', value: flowXsd, namespace: 'xs', alwaysInclude: true })
         setXsdLoaded(true)
       })
       .catch(console.error)

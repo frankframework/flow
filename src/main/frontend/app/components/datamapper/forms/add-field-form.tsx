@@ -6,11 +6,12 @@ import type {
   RuleSet,
   PropertyDefinition,
 } from '~/types/datamapper_types/data-types'
-import type { CustomNodeData, NodeLabels } from '~/types/datamapper_types/node-types'
+import type { CustomNodeData, NodeLabels } from '~/types/datamapper_types/react-node-types'
 import { showWarningToast } from '~/components/toast'
 import Input from '~/components/inputs/input'
 import Dropdown from '~/components/inputs/dropdown'
 import Button from '~/components/inputs/button'
+import Checkbox from '~/components/inputs/checkbox'
 
 export interface FieldModalProperties {
   fieldType: 'source' | 'target'
@@ -24,10 +25,11 @@ function AddFieldForm({ fieldType, onSave, parents, formatDefinition, initialDat
   const [variableType, setVariableType] = useState(initialData?.variableType || '')
   const [label, setLabel] = useState(initialData?.label || '')
   const [defaultValue, setDefaultValue] = useState(initialData?.defaultValue || '')
-  const [parentId, setParent] = useState(initialData?.parentId || `${fieldType}-table`)
+  const [parentId, setParent] = useState(initialData?.parentId)
   const [defaultValueRules, setDefaultValueRules] = useState<RuleSet>()
   const [defaultValueInputType, setDefaultValueInputType] = useState<PropertyBasicTypes>()
   const [availableTypes, setAvailableTypes] = useState<PropertyDefinition[]>([])
+  const [isAttribute, setIsAttribute] = useState<boolean>(initialData?.isAttribute || false)
 
   useEffect(() => {
     const format: FormatDefinition | null = formatDefinition[fieldType]
@@ -43,7 +45,7 @@ function AddFieldForm({ fieldType, onSave, parents, formatDefinition, initialDat
     setDefaultValueInputType(propertyRules?.type)
   }, [fieldType, formatDefinition, variableType])
 
-  const isFormIncomplete = !variableType || !label
+  const isFormIncomplete = !variableType || !label || !parentId
 
   function handleSave() {
     if (isFormIncomplete) {
@@ -56,6 +58,7 @@ function AddFieldForm({ fieldType, onSave, parents, formatDefinition, initialDat
       defaultValue,
       parentId,
       id: initialData?.id || '',
+      isAttribute: isAttribute,
     })
   }
 
@@ -97,7 +100,7 @@ function AddFieldForm({ fieldType, onSave, parents, formatDefinition, initialDat
   }
 
   return (
-    <div className="text-foreground">
+    <div className="text-foreground max-w-55">
       <h1 className="mb-2 text-xl font-bold">
         {initialData ? 'Edit' : 'Add'} {fieldType} property
       </h1>
@@ -106,12 +109,12 @@ function AddFieldForm({ fieldType, onSave, parents, formatDefinition, initialDat
         <>
           <label htmlFor="parentId">Parent</label>
           <Dropdown
+            className="max-w-55"
             id="parentId"
             value={parentId}
             onChange={(e) => setParent(e)}
             options={{
               ...Object.fromEntries(parents.map((p) => [p.id, p.label])),
-              [`${fieldType}-table`]: `${fieldType}-table`,
             }}
           />
         </>
@@ -119,6 +122,7 @@ function AddFieldForm({ fieldType, onSave, parents, formatDefinition, initialDat
 
       <label htmlFor="variableType">Variable Type:</label>
       <Dropdown
+        className="max-w-55"
         id="variableType"
         value={variableType}
         onChange={(value) => setVariableType(value)}
@@ -133,6 +137,7 @@ function AddFieldForm({ fieldType, onSave, parents, formatDefinition, initialDat
         <label htmlFor="defaultValue">Default value:</label>
         {defaultValueInputType === 'boolean' ? (
           <Dropdown
+            className="max-w-55"
             id="defaultValue"
             value={defaultValue}
             onChange={(value: string) => setDefaultValue(value)}
@@ -151,7 +156,10 @@ function AddFieldForm({ fieldType, onSave, parents, formatDefinition, initialDat
           />
         )}
       </div>
-
+      <div hidden={formatDefinition[fieldType]?.name != 'XML' || defaultValueInputType == 'object'}>
+        <label htmlFor="defaultValue">Is attribute?:</label>
+        <Checkbox id="isAttribute" checked={isAttribute} onChange={setIsAttribute} />
+      </div>
       <Button
         onClick={handleSave}
         disabled={isFormIncomplete}

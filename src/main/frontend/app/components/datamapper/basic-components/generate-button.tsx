@@ -3,7 +3,7 @@ import { showErrorToast, showInfoToast } from '~/components/toast'
 import { generateDatamapperXSLT } from '~/services/datamapper-service'
 import { useProjectStore } from '~/stores/project-store'
 import type { MappingListConfig } from '~/types/datamapper_types/config-types'
-import { convertMappingConfigToMappingFile } from '~/utils/datamapper_utils/convert-node-utils'
+import { convertMappingConfigToMappingFile } from '~/utils/datamapper_utils/conversion-utils'
 
 export default function GenerateButton({
   highlightUnset,
@@ -16,7 +16,7 @@ export default function GenerateButton({
 
   return (
     <Button
-      className="bg-foreground-active disabled:bg-backdrop disabled:text-foreground-muted font-medium text-[var(--color-neutral-900)] transition hover:brightness-110"
+      className="bg-foreground-active disabled:bg-backdrop disabled:text-foreground-muted font-medium text-neutral-900 transition hover:brightness-110"
       onClick={async () => {
         highlightUnset()
         if (!project) {

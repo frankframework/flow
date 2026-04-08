@@ -4,54 +4,14 @@ import AddMappingForm from '~/components/datamapper/forms/add-mapping-form'
 import Modal from '~/components/modal'
 import { showSuccessToast } from '~/components/toast'
 import type { ConfigActions } from '~/stores/datamapper_state/mappingListConfig/reducer'
-import type { Mutation, Condition, MappingListConfig } from '~/types/datamapper_types/config-types'
-import type { MappingNode, MappingConfig } from '~/types/datamapper_types/node-types'
-import { getNodesByTypeAndId, createMappingNode, deleteMappingNode } from '~/utils/datamapper_utils/react-node-utils'
+import type { MappingListConfig } from '~/types/datamapper_types/config-types'
+import type { MappingNodeData } from '~/types/datamapper_types/react-node-types'
+import { createMappingNode, deleteMappingNode } from '~/utils/datamapper_utils/mapping-node-utils'
 import Button from '~/components/inputs/button'
 import EditButton from '~/components/datamapper/basic-components/edit-button'
 import DeleteButton from '~/components/datamapper/basic-components/delete-button'
-
-interface MappingRow {
-  id: string
-  sourcesNames: string[]
-  targetsNames: string[]
-  type: string
-  mutations: Mutation[]
-  conditions: Condition[]
-  conditional: Condition | null
-  outputLabel: string
-}
-
-function flowToMappingTable(nodes: Node[], edges: Edge[]): MappingRow[] {
-  const nodeMap = new Map<string, Node>(nodes.map((node) => [node.id, node]))
-
-  const getLabel = (nodeId: string): string => {
-    const label = nodeMap.get(nodeId)?.data?.label
-    return typeof label === 'string' ? label : nodeId
-  }
-
-  return nodes
-    .filter((node): node is MappingNode => node.type === 'mappingNode')
-    .map((mappingNode): MappingRow => {
-      const incomingEdges = edges.filter((edge) => edge.target === mappingNode.id)
-      const outgoingEdges = edges.filter((edge) => edge.source === mappingNode.id)
-
-      const mutations = mappingNode.data?.mutations ?? []
-      const conditions = mappingNode.data?.conditions ?? []
-      const conditional = mappingNode.data?.conditional ?? null
-
-      return {
-        id: mappingNode.id,
-        sourcesNames: incomingEdges.map((edge) => getLabel(edge.source)),
-        targetsNames: outgoingEdges.map((edge) => getLabel(edge.target)),
-        type: mappingNode.data?.type ?? 'one-to-one',
-        mutations,
-        conditions,
-        conditional,
-        outputLabel: mappingNode.data.outputLabel ?? '',
-      }
-    })
-}
+import { getNodesByTypeAndId } from '~/utils/datamapper_utils/property-node-utils'
+import { flowToMappingTable } from '~/utils/datamapper_utils/conversion-utils'
 
 interface PropertyListProperties {
   config: MappingListConfig
@@ -59,16 +19,15 @@ interface PropertyListProperties {
 }
 
 function MappingTable({ config, configDispatch }: PropertyListProperties) {
-  const [refresh, setRefresh] = useState(0)
   const [modalOpen, setModalOpen] = useState(false)
-  const [editingMapping, setEditingMapping] = useState<MappingConfig | null>(null)
+  const [editingMapping, setEditingMapping] = useState<MappingNodeData | null>(null)
 
   const flow: { nodes?: Node[]; edges?: Edge[] } = useMemo(() => {
     return config.propertyData ?? {}
-  }, [config.propertyData, refresh])
+  }, [config.propertyData])
 
-  const nodes: Node[] = flow.nodes || []
-  const edges: Edge[] = flow.edges || []
+  const nodes: Node[] = useMemo(() => flow.nodes || [], [flow.nodes])
+  const edges: Edge[] = useMemo(() => flow.edges || [], [flow.edges])
 
   const sources = getNodesByTypeAndId(nodes, { typeIncludes: 'sourceOnly' })
   const targets = getNodesByTypeAndId(nodes, { typeIncludes: 'targetOnly' })
@@ -78,7 +37,7 @@ function MappingTable({ config, configDispatch }: PropertyListProperties) {
     return flowToMappingTable(nodes, edges)
   }, [nodes, edges])
 
-  function saveMapping(mappingConfig: MappingConfig) {
+  function saveMapping(mappingConfig: MappingNodeData) {
     const { updatedNodes, updatedEdges } = createMappingNode(mappingConfig, nodes, edges)
 
     configDispatch({
@@ -86,7 +45,6 @@ function MappingTable({ config, configDispatch }: PropertyListProperties) {
       payload: { nodes: updatedNodes, edges: updatedEdges },
     })
 
-    setRefresh((count) => count + 1)
     setEditingMapping(null)
     setModalOpen(false)
 
@@ -186,7 +144,7 @@ function MappingTable({ config, configDispatch }: PropertyListProperties) {
                   <EditButton
                     onClick={() => {
                       const mappingNode = nodes.find((node) => node.id === row.id)
-                      setEditingMapping((mappingNode?.data as MappingConfig) ?? null)
+                      setEditingMapping((mappingNode?.data as MappingNodeData) ?? null)
                       setModalOpen(true)
                     }}
                   />
@@ -202,8 +160,6 @@ function MappingTable({ config, configDispatch }: PropertyListProperties) {
                           edges: remainingEdges,
                         },
                       })
-
-                      setRefresh((count) => count + 1)
                     }}
                   />
                 </td>

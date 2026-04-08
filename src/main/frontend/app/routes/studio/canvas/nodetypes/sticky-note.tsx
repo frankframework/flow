@@ -6,7 +6,10 @@ import useFlowStore from '~/stores/flow-store'
 
 export type StickyNote = Node<{
   content: string
-}>
+}> & {
+  width?: number
+  height?: number
+}
 
 export default function StickyNoteComponent(properties: NodeProps<StickyNote>) {
   const minHeight = FlowConfig.STICKY_NOTE_DEFAULT_HEIGHT
@@ -14,8 +17,8 @@ export default function StickyNoteComponent(properties: NodeProps<StickyNote>) {
 
   const [localContent, setLocalContent] = useState(properties.data.content)
   const [dimensions, setDimensions] = useState({
-    width: minWidth, // Initial width
-    height: minHeight, // Initial height
+    width: properties.width, // Initial width
+    height: properties.height, // Initial height
   })
 
   const textareaReference = useRef<HTMLTextAreaElement>(null)

@@ -1,5 +1,5 @@
 import type { Node } from '@xyflow/react'
-import type { Condition, Mutation } from './config-types'
+import type { Condition, Mutation } from './function-types'
 
 export type CustomNodeData = {
   id: string
@@ -10,6 +10,9 @@ export type CustomNodeData = {
   variableTypeBasic?: string
   defaultValue: string
   parentId: string
+  isAttribute?: boolean
+  width?: number
+  isHidden?: boolean
   setNodes?: React.Dispatch<React.SetStateAction<Node[]>>
 } & Record<string, unknown>
 
@@ -31,7 +34,7 @@ export interface NodeLabels {
   parentArray?: string
 }
 
-export type MappingConfig = {
+export type MappingNodeData = {
   id?: string
   label?: string
   outputLabel?: string
@@ -45,7 +48,7 @@ export type MappingConfig = {
   conditional: Condition | null
 } & Record<string, unknown>
 
-export type ArrayMappingConfig = {
+export type ArrayNodeData = {
   id?: string
   label?: string
   colour?: string
@@ -57,10 +60,10 @@ export type PropertyNode = Node<CustomNodeData> & {
   type: 'targetArrayGroup' | 'sourceArrayGroup' | 'targetOnly' | 'sourceOnly' | 'labeledGroup' | 'extraSourceNode'
 }
 
-export type MappingNode = Node<MappingConfig> & {
+export type MappingNode = Node<MappingNodeData> & {
   type: 'mappingNode'
 }
-export type ArrayMappingNode = Node<ArrayMappingConfig> & {
+export type ArrayMappingNode = Node<ArrayNodeData> & {
   type: 'arrayMappingNode'
 }
 

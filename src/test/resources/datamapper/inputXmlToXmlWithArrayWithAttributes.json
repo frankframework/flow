@@ -1,0 +1,443 @@
+{
+  "sourceType": "XML",
+  "targetType": "XML",
+  "targetStructure": [
+    {
+      "type": "object",
+      "internalId": "target-table-group-8",
+      "label": "shiporder",
+      "defaultValue": "",
+      "parent": "target-table",
+      "children": [
+        {
+          "type": "string",
+          "internalId": "target-table-group-8-item-9",
+          "label": "besteller",
+          "defaultValue": "",
+          "parent": "target-table-group-8",
+          "mapping": {
+            "id": "mapping-0qqr375z6aw",
+            "sources": [
+              {
+                "type": "string",
+                "internalId": "source-table-group-1-item-2",
+                "label": "orderperson",
+                "defaultValue": "",
+                "parent": "source-table-group-1"
+              }
+            ],
+            "target": {
+              "type": "string",
+              "internalId": "target-table-group-8-item-9",
+              "label": "besteller",
+              "defaultValue": "",
+              "parent": "target-table-group-8"
+            },
+            "mutations": [],
+            "conditions": [],
+            "conditional": null,
+            "output": "source-table-group-1-item-2"
+          }
+        },
+        {
+          "type": "object",
+          "internalId": "target-table-group-8-group-10",
+          "label": "bestemming",
+          "defaultValue": "",
+          "parent": "target-table-group-8",
+          "children": [
+            {
+              "type": "string",
+              "internalId": "target-table-group-8-group-10-item-11",
+              "label": "naam",
+              "isAttribute": true,
+              "defaultValue": "",
+              "parent": "target-table-group-8-group-10",
+              "mapping": {
+                "id": "mapping-rxdray323e",
+                "sources": [
+                  {
+                    "type": "string",
+                    "internalId": "source-table-group-1-group-3-item-4",
+                    "label": "name",
+                    "defaultValue": "",
+                    "parent": "source-table-group-1-group-3"
+                  }
+                ],
+                "target": {
+                  "type": "string",
+                  "internalId": "target-table-group-8-group-10-item-11",
+                  "label": "naam",
+                  "defaultValue": "",
+                  "parent": "target-table-group-8-group-10"
+                },
+                "mutations": [],
+                "conditions": [],
+                "conditional": null,
+                "output": "source-table-group-1-group-3-item-4"
+              }
+            },
+            {
+              "type": "string",
+              "internalId": "target-table-group-8-group-10-item-12",
+              "label": "adres",
+              "defaultValue": "",
+              "parent": "target-table-group-8-group-10",
+              "mapping": {
+                "id": "mapping-obs3emv5s0o",
+                "sources": [
+                  {
+                    "type": "string",
+                    "internalId": "source-table-group-1-group-3-item-5",
+                    "label": "address",
+                    "defaultValue": "",
+                    "parent": "source-table-group-1-group-3"
+                  }
+                ],
+                "target": {
+                  "type": "string",
+                  "internalId": "target-table-group-8-group-10-item-12",
+                  "label": "adres",
+                  "defaultValue": "",
+                  "parent": "target-table-group-8-group-10"
+                },
+                "mutations": [],
+                "conditions": [],
+                "conditional": null,
+                "output": "source-table-group-1-group-3-item-5"
+              }
+            },
+            {
+              "type": "string",
+              "internalId": "target-table-group-8-group-10-item-13",
+              "label": "stad",
+              "isAttribute": true,
+
+              "defaultValue": "",
+              "parent": "target-table-group-8-group-10",
+              "mapping": {
+                "id": "mapping-pooitq68epi",
+                "sources": [
+                  {
+                    "type": "string",
+                    "internalId": "source-table-group-1-group-3-item-6",
+                    "label": "city",
+                    "defaultValue": "",
+                    "parent": "source-table-group-1-group-3"
+                  }
+                ],
+                "target": {
+                  "type": "string",
+                  "internalId": "target-table-group-8-group-10-item-13",
+                  "label": "stad",
+                  "defaultValue": "",
+                  "parent": "target-table-group-8-group-10"
+                },
+                "mutations": [],
+                "conditions": [],
+                "conditional": null,
+                "output": "source-table-group-1-group-3-item-6"
+              }
+            },
+            {
+              "type": "string",
+              "internalId": "target-table-group-8-group-10-item-14",
+              "label": "land",
+              "defaultValue": "",
+              "parent": "target-table-group-8-group-10",
+              "mapping": {
+                "id": "mapping-ippdt168zjs",
+                "sources": [
+                  {
+                    "type": "string",
+                    "internalId": "source-table-group-1-group-3-item-7",
+                    "label": "country",
+                    "defaultValue": "",
+                    "parent": "source-table-group-1-group-3"
+                  }
+                ],
+                "target": {
+                  "type": "string",
+                  "internalId": "target-table-group-8-group-10-item-14",
+                  "label": "land",
+                  "defaultValue": "",
+                  "parent": "target-table-group-8-group-10"
+                },
+                "mutations": [],
+                "conditions": [],
+                "conditional": null,
+                "output": "source-table-group-1-group-3-item-7"
+              }
+            }
+          ]
+        },
+        {
+          "type": "array",
+          "internalId": "target-table-group-8-group-15",
+          "label": "item",
+          "defaultValue": "",
+          "parent": "target-table-group-8",
+          "children": [
+            {
+              "type": "string",
+              "internalId": "target-table-group-8-group-15-item-16",
+              "label": "titel",
+              "defaultValue": "",
+              "parent": "target-table-group-8-group-15",
+              "parentArray": "target-table-group-8-group-15",
+              "mapping": {
+                "id": "mapping-m980lmyp11f",
+                "sources": [
+                  {
+                    "type": "string",
+                    "internalId": "source-table-group-1-group-3-item-4",
+                    "label": "name",
+                    "defaultValue": "",
+                    "parent": "source-table-group-1-group-3"
+                  }
+                ],
+                "target": {
+                  "type": "string",
+                  "internalId": "target-table-group-8-group-15-item-16",
+                  "label": "titel",
+                  "defaultValue": "",
+                  "parent": "target-table-group-8-group-15",
+                  "parentArray": "target-table-group-8-group-15"
+                },
+                "mutations": [],
+                "conditions": [],
+                "conditional": null,
+                "output": "source-table-group-1-group-3-item-4"
+              }
+            },
+            {
+              "type": "positiveInteger",
+              "internalId": "target-table-group-8-group-15-item-18",
+              "label": "kwantiteit",
+              "isAttribute": true,
+
+              "defaultValue": "",
+              "parent": "target-table-group-8-group-15",
+              "parentArray": "target-table-group-8-group-15",
+              "mapping": {
+                "id": "mapping-lpf8nbjba",
+                "sources": [
+                  {
+                    "type": "positiveInteger",
+                    "internalId": "source-table-group-1-group-8-item-11",
+                    "label": "quantity",
+                    "defaultValue": "",
+                    "parent": "source-table-group-1-group-8",
+                    "parentArray": "source-table-group-1-group-8"
+                  }
+                ],
+                "target": {
+                  "type": "positiveInteger",
+                  "internalId": "target-table-group-8-group-15-item-18",
+                  "label": "kwantiteit",
+                  "defaultValue": "",
+                  "parent": "target-table-group-8-group-15",
+                  "parentArray": "target-table-group-8-group-15"
+                },
+                "mutations": [],
+                "conditions": [],
+                "conditional": null,
+                "output": "source-table-group-1-group-8-item-11"
+              }
+            },
+            {
+              "type": "decimal",
+              "internalId": "target-table-group-8-group-15-item-19",
+              "label": "prijs",
+              "defaultValue": "",
+              "parent": "target-table-group-8-group-15",
+              "parentArray": "target-table-group-8-group-15",
+              "mapping": {
+                "id": "mapping-gbilrze6dfh",
+                "sources": [
+                  {
+                    "type": "decimal",
+                    "internalId": "source-table-group-1-group-8-item-12",
+                    "label": "price",
+                    "defaultValue": "",
+                    "parent": "source-table-group-1-group-8",
+                    "parentArray": "source-table-group-1-group-8"
+                  }
+                ],
+                "target": {
+                  "type": "decimal",
+                  "internalId": "target-table-group-8-group-15-item-19",
+                  "label": "prijs",
+                  "defaultValue": "",
+                  "parent": "target-table-group-8-group-15",
+                  "parentArray": "target-table-group-8-group-15"
+                },
+                "mutations": [],
+                "conditions": [],
+                "conditional": null,
+                "output": "source-table-group-1-group-8-item-12"
+              }
+            }
+          ],
+          "mapping": {
+            "id": "mapping-7hg34zfyp67",
+            "sources": [
+              {
+                "type": "array",
+                "internalId": "source-table-group-1-group-8",
+                "label": "item",
+                "defaultValue": "",
+                "parent": "source-table-group-1"
+              }
+            ],
+            "target": {
+              "type": "array",
+              "internalId": "target-table-group-8-group-15",
+              "label": "item",
+              "defaultValue": "",
+              "parent": "target-table-group-8"
+            },
+            "mutations": [],
+            "conditions": [],
+            "conditional": null,
+            "output": "source-table-group-1-group-8"
+          }
+        },
+        {
+          "type": "string",
+          "internalId": "target-table-group-8-item-20",
+          "label": "orderid",
+          "defaultValue": "",
+          "parent": "target-table-group-8",
+          "isAttribute": true,
+          "mapping": {
+            "id": "mapping-nwwsvs88ayi",
+            "sources": [
+              {
+                "type": "string",
+                "internalId": "source-table-group-1-item-13",
+                "label": "orderid",
+                "defaultValue": "",
+                "parent": "source-table-group-1"
+              }
+            ],
+            "target": {
+              "type": "string",
+              "internalId": "target-table-group-8-item-20",
+              "label": "orderid",
+              "defaultValue": "",
+              "parent": "target-table-group-8"
+            },
+            "mutations": [],
+            "conditions": [],
+            "conditional": null,
+            "output": "source-table-group-1-item-13"
+          }
+        }
+      ]
+    }
+  ],
+  "sourceStructure": [
+    {
+      "type": "object",
+      "internalId": "source-table-group-1",
+      "label": "shiporder",
+      "defaultValue": "",
+      "parent": "source-table",
+      "children": [
+        {
+          "type": "string",
+          "internalId": "source-table-group-1-item-2",
+          "label": "orderperson",
+          "defaultValue": "",
+          "parent": "source-table-group-1"
+        },
+        {
+          "type": "object",
+          "internalId": "source-table-group-1-group-3",
+          "label": "shipto",
+          "defaultValue": "",
+          "parent": "source-table-group-1",
+          "children": [
+            {
+              "type": "string",
+              "internalId": "source-table-group-1-group-3-item-4",
+              "label": "name",
+              "defaultValue": "",
+              "parent": "source-table-group-1-group-3"
+            },
+            {
+              "type": "string",
+              "internalId": "source-table-group-1-group-3-item-5",
+              "label": "address",
+              "defaultValue": "",
+              "parent": "source-table-group-1-group-3"
+            },
+            {
+              "type": "string",
+              "internalId": "source-table-group-1-group-3-item-6",
+              "label": "city",
+              "defaultValue": "",
+              "parent": "source-table-group-1-group-3"
+            },
+            {
+              "type": "string",
+              "internalId": "source-table-group-1-group-3-item-7",
+              "label": "country",
+              "defaultValue": "",
+              "parent": "source-table-group-1-group-3"
+            }
+          ]
+        },
+        {
+          "type": "array",
+          "internalId": "source-table-group-1-group-8",
+          "label": "item",
+          "defaultValue": "",
+          "parent": "source-table-group-1",
+          "children": [
+            {
+              "type": "string",
+              "internalId": "source-table-group-1-group-8-item-9",
+              "label": "title",
+              "defaultValue": "",
+              "parent": "source-table-group-1-group-8",
+              "parentArray": "source-table-group-1-group-8"
+            },
+            {
+              "type": "string",
+              "internalId": "source-table-group-1-group-8-item-10",
+              "label": "note",
+              "defaultValue": "",
+              "parent": "source-table-group-1-group-8",
+              "parentArray": "source-table-group-1-group-8"
+            },
+            {
+              "type": "positiveInteger",
+              "internalId": "source-table-group-1-group-8-item-11",
+              "label": "quantity",
+              "defaultValue": "",
+              "parent": "source-table-group-1-group-8",
+              "parentArray": "source-table-group-1-group-8"
+            },
+            {
+              "type": "decimal",
+              "internalId": "source-table-group-1-group-8-item-12",
+              "label": "price",
+              "defaultValue": "",
+              "parent": "source-table-group-1-group-8",
+              "parentArray": "source-table-group-1-group-8"
+            }
+          ]
+        },
+        {
+          "type": "string",
+          "internalId": "source-table-group-1-item-13",
+          "label": "orderid",
+          "defaultValue": "",
+          "parent": "source-table-group-1"
+        }
+      ]
+    }
+  ]
+}

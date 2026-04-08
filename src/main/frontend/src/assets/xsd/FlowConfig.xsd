@@ -1,0 +1,39 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           targetNamespace="urn:frank-flow"
+           xmlns="urn:frank-flow"
+           elementFormDefault="qualified"
+           attributeFormDefault="qualified">
+
+  <xs:element name="FlowElements">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="StickyNote" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element ref="GroupNode" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  
+  <!-- StickyNote -->
+  <xs:element name="StickyNote">
+    <xs:complexType>
+      <xs:attribute name="x" type="xs:int" use="required"/>
+      <xs:attribute name="y" type="xs:int" use="required"/>
+      <xs:attribute name="width" type="xs:int" use="required"/>
+      <xs:attribute name="height" type="xs:int" use="required"/>
+      <xs:attribute name="text" type="xs:string" use="required"/>
+    </xs:complexType>
+  </xs:element>
+
+  <!-- GroupNode -->
+  <xs:element name="GroupNode">
+    <xs:complexType>
+      <xs:attribute name="x" type="xs:int" use="required"/>
+      <xs:attribute name="y" type="xs:int" use="required"/>
+      <xs:attribute name="width" type="xs:int" use="required"/>
+      <xs:attribute name="height" type="xs:int" use="required"/>
+      <xs:attribute name="children" type="xs:string" use="required"/>
+      <xs:attribute name="label" type="xs:string" use="required"/>
+    </xs:complexType>
+  </xs:element>
+
+</xs:schema>
