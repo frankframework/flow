@@ -1,4 +1,6 @@
 import Editor, { type Monaco, type OnMount } from '@monaco-editor/react'
+import prettier from 'prettier'
+import parserHTML from 'prettier/plugins/html'
 import XsdManager from 'monaco-xsd-code-completion/esm/XsdManager'
 import XsdFeatures from 'monaco-xsd-code-completion/esm/XsdFeatures'
 import 'monaco-xsd-code-completion/src/style.css'
@@ -256,6 +258,25 @@ export default function CodeEditor() {
     )
   }, [])
 
+  const runPrettierReformat = async () => {
+    const editor = editorReference.current
+    if (!editor) return
+    const model = editor.getModel()
+    if (!model) return
+    try {
+      if (model) model.setValue(await prettierFormat(model.getValue()))
+    } catch (error) {
+      console.error('Failed to reformat XML:', error)
+    }
+  }
+
+  const prettierFormat = (xml: string): Promise<string> =>
+    prettier.format(xml, {
+      parser: 'html',
+      plugins: [parserHTML],
+      tabWidth: 3,
+    })
+
   const runSchemaValidation = useCallback(
     async (content: string) => {
       const monaco = monacoReference.current
@@ -340,7 +361,6 @@ export default function CodeEditor() {
 
     xsdFeatures.addCompletion()
     xsdFeatures.addGenerateAction()
-    xsdFeatures.addReformatAction()
 
     fetchFrankConfigXsd()
       .then((xsdContent) => {
@@ -387,6 +407,19 @@ export default function CodeEditor() {
           editor.pushUndoStop()
         }
       },
+    })
+
+    editor.addAction({
+      id: 'reformat-xml-prettier',
+      label: 'Reformat',
+      contextMenuGroupId: 'navigation',
+      contextMenuOrder: 3,
+      keybindings: [
+        monacoReference.current.KeyMod.CtrlCmd |
+          monacoReference.current.KeyMod.Shift |
+          monacoReference.current.KeyCode.KeyR,
+      ],
+      run: runPrettierReformat,
     })
   }
 
@@ -590,7 +623,7 @@ export default function CodeEditor() {
                     scheduleSave()
                     if (value) scheduleSchemaValidation(value)
                   }}
-                  options={{ automaticLayout: true, quickSuggestions: false }}
+                  options={{ automaticLayout: true, quickSuggestions: false, tabSize: 3 }}
                 />
               </div>
             </>

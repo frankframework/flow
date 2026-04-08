@@ -40,7 +40,7 @@ public class ConfigurationController {
 	@PutMapping("/{projectName}/configuration")
 	public ResponseEntity<Void> updateConfiguration(
 			@RequestBody ConfigurationDTO configurationDTO)
-			throws ConfigurationNotFoundException, IOException {
+			throws ConfigurationNotFoundException, IOException, ParserConfigurationException, SAXException, TransformerException {
 		configurationService.updateConfiguration(configurationDTO.filepath(), configurationDTO.content());
 		return ResponseEntity.ok().build();
 	}

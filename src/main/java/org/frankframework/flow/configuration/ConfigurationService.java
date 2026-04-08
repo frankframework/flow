@@ -45,7 +45,7 @@ public class ConfigurationService {
 	}
 
 	public boolean updateConfiguration(String filepath, String content)
-			throws IOException, ConfigurationNotFoundException {
+			throws IOException, ConfigurationNotFoundException, ParserConfigurationException, SAXException, TransformerException {
 		Path absolutePath = fileSystemStorage.toAbsolutePath(filepath);
 
 		if (!Files.exists(absolutePath)) {
@@ -56,7 +56,10 @@ public class ConfigurationService {
 			throw new ConfigurationNotFoundException("Invalid file path: " + filepath);
 		}
 
-		fileSystemStorage.writeFile(absolutePath.toString(), content);
+		Document document = XmlConfigurationUtils.insertFlowNamespace(content);
+		String formatted = XmlConfigurationUtils.convertNodeToString(document);
+
+		fileSystemStorage.writeFile(absolutePath.toString(), formatted);
 		return true;
 	}
 
