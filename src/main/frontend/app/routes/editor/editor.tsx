@@ -145,6 +145,14 @@ function toMarker(e: ValidationError, severity: number) {
   }
 }
 
+function prettierFormat(xml: string): Promise<string> {
+  return prettier.format(xml, {
+    parser: 'html',
+    plugins: [parserHTML],
+    tabWidth: 3,
+  })
+}
+
 export default function CodeEditor() {
   const theme = useTheme()
   const project = useProjectStore.getState().project
@@ -269,13 +277,6 @@ export default function CodeEditor() {
       console.error('Failed to reformat XML:', error)
     }
   }
-
-  const prettierFormat = (xml: string): Promise<string> =>
-    prettier.format(xml, {
-      parser: 'html',
-      plugins: [parserHTML],
-      tabWidth: 3,
-    })
 
   const runSchemaValidation = useCallback(
     async (content: string) => {
