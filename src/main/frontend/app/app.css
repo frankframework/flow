@@ -17,6 +17,7 @@
   --color-foreground-muted: inherit;
   --color-foreground-active: inherit;
   --color-error: inherit;
+  --color-error-background: inherit;
   --color-info: inherit;
   --color-success: inherit;
   --color-warning: inherit;
@@ -33,6 +34,7 @@
     --color-foreground-muted: var(--color-neutral-600);
     --color-foreground-active: var(--color-brand);
     --color-error: #ff2424;
+    --color-error-background: #ffcbcb;
     --color-info: #1389ff;
     --color-warning: var(--color-brand);
     --color-success: #247d12;
@@ -87,7 +89,8 @@
     --color-foreground: var(--color-neutral-100);
     --color-foreground-muted: var(--color-neutral-400);
     --color-foreground-active: var(--color-brand);
-    --color-error: #ff2424;
+    --color-error: #ffcbcb;
+    --color-error-background: #ff2424;
     --color-info: #1389ff;
     --color-warning: var(--color-brand);
     --color-success: #247d12;
