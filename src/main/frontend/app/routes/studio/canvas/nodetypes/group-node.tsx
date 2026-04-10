@@ -8,9 +8,10 @@ export type GroupNode = Node<{
   width: number
   height: number
   childrenNames?: string[]
+  onUngroup: () => void
 }>
 
-export default function GroupNodeComponent({ id, data, selected }: NodeProps<GroupNode>) {
+export default function GroupNodeComponent({ id, data, selected, onUngroup }: NodeProps<GroupNode>) {
   const [dimensions, setDimensions] = useState({
     width: data.width,
     height: data.height,
@@ -53,6 +54,15 @@ export default function GroupNodeComponent({ id, data, selected }: NodeProps<Gro
           height: dimensions.height,
         }}
       >
+        {selected && onUngroup && (
+          <button
+            onClick={() => onUngroup(id)}
+            className="absolute top-1 right-1 z-10 flex h-5 w-5 items-center justify-center rounded bg-red-500 text-xs font-bold text-white hover:bg-red-600"
+            title="Ungroup"
+          >
+            ×
+          </button>
+        )}
         <div
           className="drag-handle relative max-h-1/2 cursor-move bg-pink-300 p-1"
           style={{
@@ -62,6 +72,7 @@ export default function GroupNodeComponent({ id, data, selected }: NodeProps<Gro
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
             <HamburgerMenu />
           </div>
+
           <div className="flex max-w-1/2 gap-1 px-2 py-1 text-sm font-bold">
             {isEditing ? (
               <input
