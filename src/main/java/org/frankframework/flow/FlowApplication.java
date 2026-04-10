@@ -18,16 +18,11 @@ import org.springframework.web.servlet.function.ServerResponse;
 
 @SpringBootApplication
 @EnableScheduling
-@ConfigurationPropertiesScan
-public class FlowApplication extends SpringBootServletInitializer {
+public class FlowApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(FlowApplication.class, args);
-	}
-
-	@Override
-	protected SpringApplicationBuilder configure(SpringApplicationBuilder builder) {
-		return builder.sources(FlowApplication.class);
+		SpringApplication app = configureApplication();
+		app.run(args);
 	}
 
 	public static SpringApplication configureApplication() {

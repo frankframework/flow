@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>4.0.2</version>
+		<version>4.0.5</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 
@@ -60,8 +60,9 @@
 
 	<properties>
 		<revision>3.0.0-SNAPSHOT</revision>
-		<java.version>21</java.version>
+		<java.version>25</java.version>
 		<spring-framework.version>7.0.6</spring-framework.version>
+		<frankframework.version>10.1.0-SNAPSHOT</frankframework.version>
 		<jackson.version>2.20.1</jackson.version>
 		<lombok.version>1.18.42</lombok.version>
 		<spotless.version>3.0.0</spotless.version>
@@ -80,8 +81,8 @@
 		<junit.includedTags/>
 
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<maven.compiler.source>25</maven.compiler.source>
-		<maven.compiler.target>25</maven.compiler.target>
+		<maven.compiler.source>${java.version}</maven.compiler.source>
+		<maven.compiler.target>${java.version}</maven.compiler.target>
 	</properties>
 
 	<dependencyManagement>
@@ -97,11 +98,6 @@
 	</dependencyManagement>
 
 	<dependencies>
-		<dependency>
-			<groupId>org.springframework</groupId>
-			<artifactId>spring-beans</artifactId>
-			<version>${spring-framework.version}</version>
-		</dependency>
 		<!-- Spring Boot starters -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -186,7 +182,13 @@
 		<dependency>
 			<groupId>org.frankframework</groupId>
 			<artifactId>frankframework-management-gateway</artifactId>
-			<version>10.0.0</version>
+			<version>${frankframework.version}</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.frankframework</groupId>
+			<artifactId>frankframework-security</artifactId>
+			<version>${frankframework.version}</version>
 			<scope>compile</scope>
 		</dependency>
 	</dependencies>
