@@ -78,7 +78,7 @@ export default function ValidatedInput({
               return (
                 <div key={check} className="flex items-center gap-1">
                   <Icon className={clsx('h-4 w-4', satisfied ? 'fill-green-500' : 'fill-red-500')} />
-                  <span>{check}</span>
+                  <span className="whitespace-pre">{check}</span>
                 </div>
               )
             })}
