@@ -13,6 +13,7 @@ import org.frankframework.lifecycle.DynamicRegistration.Servlet;
 import org.frankframework.lifecycle.servlets.AuthenticatorUtils;
 import org.frankframework.lifecycle.servlets.IAuthenticator;
 
+import org.frankframework.lifecycle.servlets.SecuritySettings;
 import org.frankframework.security.config.ServletRegistration;
 import org.frankframework.util.ClassUtils;
 
@@ -36,37 +37,33 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.util.matcher.AnyRequestMatcher;
 
-/**
- * Enable security, although it's anonymous on all endpoints, but at least sets the
- * SecurityContextHolder.getContext().getAuthentication() object.
- */
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity(jsr250Enabled = true, prePostEnabled = false)
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class SecurityChainConfigurer implements ApplicationContextAware {
 
-	private @Setter ApplicationContext applicationContext;
+	private ApplicationContext applicationContext;
+
+	@Override
+	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+		this.applicationContext = applicationContext;
+		SecuritySettings.setupDefaultSecuritySettings(applicationContext.getEnvironment());
+	}
 
 	@Bean
-	public SecurityFilterChain configureChain(IAuthenticator authenticator, HttpSecurity http) throws Exception {
+	public SecurityFilterChain configureChain(/*IAuthenticator authenticator,*/ HttpSecurity http) throws Exception {
 		http.headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin));
 		http.csrf(CsrfConfigurer::disable);
 		http.securityMatcher(AnyRequestMatcher.INSTANCE);
 		http.formLogin(FormLoginConfigurer::disable);
 		http.logout(LogoutConfigurer::disable);
-//		http.anonymous(anonymous -> anonymous.authorities(getAuthorities()));
-//		http.authorizeHttpRequests(requests -> requests.requestMatchers(AnyRequestMatcher.INSTANCE).permitAll());
 		http.sessionManagement(management -> management.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED));
 
-		return authenticator.configureHttpSecurity(http);
+		// Doesn't work because it requires endpoints to be defined, WebConfiguration sets up te endpoints and I don't know how to get those here yet.
+		// return authenticator.configureHttpSecurity(http);
+		return http.build();
 	}
-
-	/*private List<GrantedAuthority> getAuthorities() {
-		return Arrays.stream(Servlet.ALL_IBIS_USER_ROLES)
-				.map(role -> (GrantedAuthority) new SimpleGrantedAuthority("ROLE_" + role))
-				.toList();
-	}*/
 
 	@Bean
 	public IAuthenticator flowAuthenticator() {

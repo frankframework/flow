@@ -9,7 +9,7 @@ import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.RequestScope;
 
-//@Component
+@Component // TODO replace this for Spring Session/Integration so it can be used with the framework and standalone properly
 @RequestScope(proxyMode = ScopedProxyMode.TARGET_CLASS)
 @Getter
 @Setter

@@ -7,12 +7,15 @@ import org.frankframework.management.bus.OutboundGatewayFactory;
 import org.frankframework.management.gateway.InputStreamHttpMessageConverter;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.EnvironmentAware;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.HttpMessageConverters;
+import org.springframework.integration.channel.PublishSubscribeChannel;
+import org.springframework.messaging.SubscribableChannel;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.method.HandlerTypePredicate;
@@ -53,6 +56,11 @@ public class WebConfiguration implements WebMvcConfigurer, EnvironmentAware {
 	@Override
 	public void setEnvironment(Environment environment) {
 		gatewayClassName = environment.getProperty("management.gateway.outbound.class", String.class, LocalGateway.class.getCanonicalName());
+	}
+
+	@Bean("frank-management-bus")
+	public SubscribableChannel frankManagementBus() {
+		return new PublishSubscribeChannel();
 	}
 
 	@Bean

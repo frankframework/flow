@@ -7,8 +7,6 @@ import static org.springframework.web.servlet.function.RouterFunctions.route;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
-import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
-import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -22,6 +20,7 @@ public class FlowApplication {
 
 	public static void main(String[] args) {
 		SpringApplication app = configureApplication();
+
 		app.run(args);
 	}
 
