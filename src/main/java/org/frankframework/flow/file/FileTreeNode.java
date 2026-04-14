@@ -1,4 +1,4 @@
-package org.frankframework.flow.filetree;
+package org.frankframework.flow.file;
 
 import java.util.List;
 import lombok.Getter;
@@ -13,6 +13,4 @@ public class FileTreeNode {
 	private boolean projectRoot;
 	private List<FileTreeNode> children;
 	private List<String> adapterNames;
-
-	public FileTreeNode() {}
 }

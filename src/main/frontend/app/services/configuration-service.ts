@@ -1,5 +1,5 @@
 import { apiFetch } from '~/utils/api'
-import type { Project } from '~/types/project.types'
+import type { XmlResponse } from '~/types/project.types'
 
 const configCache = new Map<string, string>()
 
@@ -24,24 +24,24 @@ export async function fetchConfigurationCached(
 }
 
 export async function fetchConfiguration(projectName: string, filepath: string, signal?: AbortSignal): Promise<string> {
-  const data = await apiFetch<{ content: string }>(`/projects/${encodeURIComponent(projectName)}/configuration`, {
-    method: 'POST',
-    body: JSON.stringify({ filepath }),
-    signal,
-  })
-  return data.content
-}
-
-export async function saveConfiguration(projectName: string, filepath: string, content: string): Promise<void> {
-  return apiFetch<void>(`/projects/${encodeURIComponent(projectName)}/configuration`, {
-    method: 'PUT',
-    body: JSON.stringify({ filepath, content }),
-  })
-}
-
-export async function createConfiguration(projectName: string, filename: string): Promise<Project> {
-  return apiFetch<Project>(
-    `/projects/${encodeURIComponent(projectName)}/configurations/${encodeURIComponent(filename)}`,
-    { method: 'POST' },
+  const { content } = await apiFetch<{ content: string }>(
+    `${getBaseUrl(projectName)}?path=${encodeURIComponent(filepath)}`,
+    { signal },
   )
+  return content
+}
+
+export async function saveConfiguration(projectName: string, filepath: string, content: string): Promise<XmlResponse> {
+  return apiFetch<XmlResponse>(`${getBaseUrl(projectName)}?path=${encodeURIComponent(filepath)}`, {
+    method: 'PUT',
+    body: content,
+  })
+}
+
+export async function createConfiguration(projectName: string, filename: string): Promise<XmlResponse> {
+  return apiFetch<XmlResponse>(`${getBaseUrl(projectName)}?name=${encodeURIComponent(filename)}`, { method: 'POST' })
+}
+
+function getBaseUrl(projectName: string): string {
+  return `/projects/${encodeURIComponent(projectName)}/configuration`
 }

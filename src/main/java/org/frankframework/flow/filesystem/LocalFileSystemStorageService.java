@@ -52,6 +52,11 @@ public class LocalFileSystemStorageService implements FileSystemStorage {
 	}
 
 	@Override
+	public String readFileType(String path) throws IOException {
+		return Files.probeContentType(sanitizePath(path));
+	}
+
+	@Override
 	public void writeFile(String path, String content) throws IOException {
 		Files.writeString(sanitizePath(path), content, StandardCharsets.UTF_8);
 	}

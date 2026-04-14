@@ -19,6 +19,8 @@ public interface FileSystemStorage {
 
 	String readFile(String path) throws IOException;
 
+	String readFileType(String path) throws IOException;
+
 	void writeFile(String path, String content) throws IOException;
 
 	/**
@@ -26,7 +28,7 @@ public interface FileSystemStorage {
 	 */
 	Path createProjectDirectory(String path) throws IOException;
 
-	Path toAbsolutePath(String path) throws IOException;
+	Path toAbsolutePath(String path);
 
 	/**
 	 * Creates an empty file at the given path, including parent directories.

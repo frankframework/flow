@@ -37,17 +37,16 @@ public class CloudFileSystemStorageService implements FileSystemStorage {
 		return Paths.get(baseWorkspacePath, workspaceId).toAbsolutePath().normalize();
 	}
 
-	private Path getOrCreateUserRoot() throws IOException {
+	private Path getOrCreateUserRoot() {
 		Path userRoot = getUserRootPath();
 
-		if (!Files.exists(userRoot)) {
-			Files.createDirectories(userRoot);
-		}
-
 		try {
+			if (!Files.exists(userRoot)) {
+				Files.createDirectories(userRoot);
+			}
 			Files.setLastModifiedTime(userRoot, FileTime.from(Instant.now()));
 		} catch (IOException e) {
-			log.debug("Could not touch workspace dir", e);
+			log.warn("Could not touch workspace dir", e);
 		}
 
 		return userRoot;
@@ -91,6 +90,11 @@ public class CloudFileSystemStorageService implements FileSystemStorage {
 	}
 
 	@Override
+	public String readFileType(String path) throws IOException {
+		return Files.probeContentType(resolveSecurely(path));
+	}
+
+	@Override
 	public void writeFile(String path, String content) throws IOException {
 		Files.writeString(resolveSecurely(path), content, StandardCharsets.UTF_8);
 	}
@@ -103,7 +107,7 @@ public class CloudFileSystemStorageService implements FileSystemStorage {
 	}
 
 	@Override
-	public Path toAbsolutePath(String path) throws IOException {
+	public Path toAbsolutePath(String path) {
 		return resolveSecurely(path);
 	}
 
@@ -138,7 +142,7 @@ public class CloudFileSystemStorageService implements FileSystemStorage {
 		return FileOperations.rename(resolveSecurely(oldPath), resolveSecurely(newPath));
 	}
 
-	private Path resolveSecurely(String path) throws IOException {
+	private Path resolveSecurely(String path) {
 		Path root = getOrCreateUserRoot();
 
 		if (path == null || path.isBlank() || path.equals("/") || path.equals("\\")) {
