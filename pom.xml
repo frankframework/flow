@@ -71,6 +71,9 @@
 		<jacoco.version>0.8.14</jacoco.version>
 		<apache.commons.version>1.28.0</apache.commons.version>
 
+		<!-- must match version with framework, which maven won't always do without explicit version -->
+		<hazelcast.version>5.6.0</hazelcast.version>
+
 		<sonar.organization>frank-framework</sonar.organization>
 		<sonar.host.url>https://sonarcloud.io</sonar.host.url>
 		<sonar.coverage.jacoco.xmlReportPaths>
@@ -190,6 +193,11 @@
 			<artifactId>frankframework-security</artifactId>
 			<version>${frankframework.version}</version>
 			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.hazelcast</groupId>
+			<artifactId>hazelcast</artifactId>
+			<version>${hazelcast.version}</version>
 		</dependency>
 	</dependencies>
 

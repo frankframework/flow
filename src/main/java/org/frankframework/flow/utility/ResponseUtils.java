@@ -33,7 +33,8 @@ public class ResponseUtils {
 		StreamingResponseBody response = outputStream -> {
 			InputStream inputStream = message.getPayload();
 			int numberOfBytesToWrite;
-			byte[] data = new byte[1024];
+			final int STUPID_CHECKSTYLE_DOESNT_WANT_MAGIC_NUMBERS_SO_BUFFER_SIZE_IS_NOW_A_DUMB_CONST_WITH_A_LONG_NAME = 1024;
+			byte[] data = new byte[STUPID_CHECKSTYLE_DOESNT_WANT_MAGIC_NUMBERS_SO_BUFFER_SIZE_IS_NOW_A_DUMB_CONST_WITH_A_LONG_NAME];
 			while ((numberOfBytesToWrite = inputStream.read(data, 0, data.length)) != -1) {
 				outputStream.write(data, 0, numberOfBytesToWrite);
 			}
@@ -43,7 +44,7 @@ public class ResponseUtils {
 	}
 
 	public static ResponseEntity<?> convertToSpringResponse(Message<?> message, StreamingResponseBody response) {
-		int status = BusMessageUtils.getIntHeader(message, MessageBase.STATUS_KEY, 200);
+		int status = BusMessageUtils.getIntHeader(message, MessageBase.STATUS_KEY, HttpStatus.OK.value());
 		String mimeType = BusMessageUtils.getHeader(message, MessageBase.MIMETYPE_KEY, null);
 		ResponseEntity.BodyBuilder responseEntity = ResponseEntity.status(status);
 		HttpHeaders httpHeaders = new HttpHeaders();
@@ -74,12 +75,12 @@ public class ResponseUtils {
 	 * See {@link EmptyMessage} for more info.
 	 */
 	private static boolean hasPayload(int status) {
-		return (status == 200 || status > 204);
+		return (status == HttpStatus.OK.value() || status > HttpStatus.NO_CONTENT.value());
 	}
 
 	@Nullable
 	public static String parseAsString(Message<?> message) throws ApiException {
-		int status = BusMessageUtils.getIntHeader(message, MessageBase.STATUS_KEY, 200);
+		int status = BusMessageUtils.getIntHeader(message, MessageBase.STATUS_KEY, HttpStatus.OK.value());
 		if (!hasPayload(status)) {
 			return null;
 		}

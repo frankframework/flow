@@ -1,4 +1,4 @@
-FROM eclipse-temurin:21-jre-jammy AS runner
+FROM eclipse-temurin:25-jre-jammy AS runner
 ARG GID=2000
 ARG UID=2000
 WORKDIR /app

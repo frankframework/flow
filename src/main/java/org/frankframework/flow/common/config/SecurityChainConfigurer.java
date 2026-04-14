@@ -1,21 +1,9 @@
 package org.frankframework.flow.common.config;
 
-import java.util.Arrays;
-import java.util.List;
-
-import lombok.Setter;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import org.frankframework.lifecycle.DynamicRegistration.Servlet;
-
 import org.frankframework.lifecycle.servlets.AuthenticatorUtils;
 import org.frankframework.lifecycle.servlets.IAuthenticator;
 
 import org.frankframework.lifecycle.servlets.SecuritySettings;
-import org.frankframework.security.config.ServletRegistration;
-import org.frankframework.util.ClassUtils;
 
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
@@ -32,8 +20,6 @@ import org.springframework.security.config.annotation.web.configurers.FormLoginC
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.annotation.web.configurers.LogoutConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.util.matcher.AnyRequestMatcher;
 
