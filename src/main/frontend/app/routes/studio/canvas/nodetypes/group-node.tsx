@@ -62,6 +62,7 @@ export default function GroupNodeComponent({ id, data, selected }: NodeProps<Gro
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
             <HamburgerMenu />
           </div>
+
           <div className="flex max-w-1/2 gap-1 px-2 py-1 text-sm font-bold">
             {isEditing ? (
               <input
