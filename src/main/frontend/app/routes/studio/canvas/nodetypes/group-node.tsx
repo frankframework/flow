@@ -8,10 +8,9 @@ export type GroupNode = Node<{
   width: number
   height: number
   childrenNames?: string[]
-  onUngroup: () => void
 }>
 
-export default function GroupNodeComponent({ id, data, selected, onUngroup }: NodeProps<GroupNode>) {
+export default function GroupNodeComponent({ id, data, selected }: NodeProps<GroupNode>) {
   const [dimensions, setDimensions] = useState({
     width: data.width,
     height: data.height,
@@ -54,15 +53,6 @@ export default function GroupNodeComponent({ id, data, selected, onUngroup }: No
           height: dimensions.height,
         }}
       >
-        {selected && onUngroup && (
-          <button
-            onClick={() => onUngroup(id)}
-            className="absolute top-1 right-1 z-10 flex h-5 w-5 items-center justify-center rounded bg-red-500 text-xs font-bold text-white hover:bg-red-600"
-            title="Ungroup"
-          >
-            ×
-          </button>
-        )}
         <div
           className="drag-handle relative max-h-1/2 cursor-move bg-pink-300 p-1"
           style={{
