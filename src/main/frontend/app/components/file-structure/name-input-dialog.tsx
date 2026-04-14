@@ -8,6 +8,7 @@ const namePatterns: Record<string, RegExp> = {
   'Cannot contain /': /^[^/]*$/,
   'Cannot contain \\': /^[^\\]*$/,
   'Cannot contain ..': /^(?!.*\.\.).*$/,
+  'Must end with:\n.xml, .json, .yaml, .yml, or .properties': /^(.*\.(xml|json|yaml|yml|properties))?$/i,
 }
 
 interface NameInputDialogProps {

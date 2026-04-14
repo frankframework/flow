@@ -26,7 +26,7 @@ function MappingNode({ id, data, onClick, onDelete, onEdit }: MappingNodePropert
     >
       {/* Left: Label */}
       <div className="group/hoverInfoGroup flex flex-1 items-center overflow-hidden">
-        <HoverInfo info={data.outputLabel ?? ''} className="-translate-y-10!" />
+        <HoverInfo info={data.outputLabel ?? ''} className="-translate-x-15! -translate-y-8!" />
 
         <div className="truncate text-xs text-white drop-shadow-sm">{data.outputLabel}</div>
       </div>

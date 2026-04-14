@@ -61,6 +61,7 @@ function AddConditionForm({ sources, onSave, conditionToEdit }: Readonly<AddCond
       <div className="mb-4 flex flex-col">
         <label className="mb-1">Condition type:</label>
         <Dropdown
+          className="max-w-55"
           value={condition.type?.name ?? ''}
           onChange={(event) => {
             const conditionType = conditionsConfig.conditions.find((condition) => condition.name === event) ?? null
@@ -161,7 +162,7 @@ function ConditionInputField({
       <div className="mb-2 flex flex-col">
         <label className="mb-1">{inputConfig.label}</label>
         <Dropdown
-          className="mb-4"
+          className="mb-4 max-w-55"
           value={selectedIsDefault ? 'defaultValue' : (value?.sourceId ?? '')}
           onChange={handleSourceChange}
           options={Object.fromEntries([
@@ -208,6 +209,7 @@ function ConditionInputField({
       <div className="mb-2 flex flex-col">
         <label className="mb-1">{operatorConfig.label}</label>
         <Dropdown
+          className="max-w-55"
           value={value?.value ?? ''}
           onChange={(val) => onChange({ type: 'operator', value: val })}
           options={Object.fromEntries(operatorConfig.allowedValues.map((option) => [option, option]))}

@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import org.frankframework.flow.exception.ApiException;
 import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.frankframework.flow.project.Project;
 import org.frankframework.flow.project.ProjectNotFoundException;
@@ -38,7 +39,7 @@ class ConfigurationServiceTest {
 		configurationService = new ConfigurationService(fileSystemStorage, projectService);
 	}
 
-	private void stubToAbsolutePath() throws IOException {
+	private void stubToAbsolutePath() {
 		when(fileSystemStorage.toAbsolutePath(anyString())).thenAnswer(invocation -> {
 			String path = invocation.getArgument(0);
 			Path p = Path.of(path);
@@ -55,13 +56,13 @@ class ConfigurationServiceTest {
 
 	private void stubWriteFile() throws IOException {
 		doAnswer(invocation -> {
-					String path = invocation.getArgument(0);
-					String content = invocation.getArgument(1);
-					Path filePath = Path.of(path);
-					Files.createDirectories(filePath.getParent());
-					Files.writeString(filePath, content, StandardCharsets.UTF_8);
-					return null;
-				})
+			String path = invocation.getArgument(0);
+			String content = invocation.getArgument(1);
+			Path filePath = Path.of(path);
+			Files.createDirectories(filePath.getParent());
+			Files.writeString(filePath, content, StandardCharsets.UTF_8);
+			return null;
+		})
 				.when(fileSystemStorage)
 				.writeFile(anyString(), anyString());
 	}
@@ -74,18 +75,18 @@ class ConfigurationServiceTest {
 		Path file = tempDir.resolve("config.xml");
 		Files.writeString(file, "<config/>", StandardCharsets.UTF_8);
 
-		String result = configurationService.getConfigurationContent(file.toString());
+		ConfigurationDTO result = configurationService.getConfigurationContent("test", file.toString());
 
-		assertEquals("<config/>", result);
+		assertEquals("<config/>", result.content());
 	}
 
 	@Test
-	void getConfigurationContent_FileNotFound_ThrowsConfigurationNotFoundException() throws IOException {
+	void getConfigurationContent_FileNotFound_ThrowsConfigurationNotFoundException() {
 		stubToAbsolutePath();
 
 		String path = tempDir.resolve("missing.xml").toString();
 
-		assertThrows(ConfigurationNotFoundException.class, () -> configurationService.getConfigurationContent(path));
+		assertThrows(ApiException.class, () -> configurationService.getConfigurationContent("test", path));
 	}
 
 	@Test
@@ -95,8 +96,9 @@ class ConfigurationServiceTest {
 		Path dir = Files.createDirectory(tempDir.resolve("subdir"));
 
 		assertThrows(
-				ConfigurationNotFoundException.class,
-				() -> configurationService.getConfigurationContent(dir.toString()));
+				ApiException.class,
+				() -> configurationService.getConfigurationContent("test", dir.toString())
+		);
 	}
 
 	@Test
@@ -107,21 +109,22 @@ class ConfigurationServiceTest {
 		Path file = tempDir.resolve("config.xml");
 		Files.writeString(file, "<old/>", StandardCharsets.UTF_8);
 
-		configurationService.updateConfiguration(file.toString(), "<new/>");
+		configurationService.updateConfiguration("test", file.toString(), "<new/>");
 
 		assertEquals("<new/>\n", Files.readString(file, StandardCharsets.UTF_8));
 		verify(fileSystemStorage).writeFile(file.toString(), "<new/>\n");
 	}
 
 	@Test
-	void updateConfiguration_FileNotFound_ThrowsConfigurationNotFoundException() throws IOException {
+	void updateConfiguration_FileNotFound_ThrowsConfigurationNotFoundException() {
 		stubToAbsolutePath();
 
 		String path = tempDir.resolve("missing.xml").toString();
 
 		assertThrows(
-				ConfigurationNotFoundException.class,
-				() -> configurationService.updateConfiguration(path, "<new/>"));
+				ApiException.class,
+				() -> configurationService.updateConfiguration("test", path, "<new/>")
+		);
 	}
 
 	@Test
@@ -135,7 +138,7 @@ class ConfigurationServiceTest {
 
 		when(projectService.getProject("myproject")).thenReturn(project);
 
-		Project result = configurationService.addConfiguration("myproject", "NewConfig.xml");
+		String result = configurationService.addConfiguration("myproject", "NewConfig.xml");
 
 		assertNotNull(result);
 
@@ -161,60 +164,6 @@ class ConfigurationServiceTest {
 		when(projectService.getProject("myproject")).thenReturn(project);
 
 		assertThrows(
-				SecurityException.class, () -> configurationService.addConfiguration("myproject", "../../../evil.xml"));
-	}
-
-	@Test
-	void addConfigurationToFolder_Success() throws Exception {
-		stubToAbsolutePath();
-		stubWriteFile();
-
-		Path projectDir = tempDir.resolve("myproject");
-		Files.createDirectories(projectDir);
-		Project project = new Project("myproject", projectDir.toString());
-
-		when(projectService.getProject("myproject")).thenReturn(project);
-
-		Project result =
-				configurationService.addConfigurationToFolder("myproject", "Nested.xml", projectDir.toString());
-
-		assertNotNull(result);
-
-		assertTrue(Files.exists(projectDir.resolve("Nested.xml")), "Nested.xml should be created on disk");
-	}
-
-	@Test
-	void addConfigurationToFolder_AlreadyExists_ThrowsException() throws Exception {
-		stubToAbsolutePath();
-
-		Path projectDir = tempDir.resolve("myproject");
-		Files.createDirectories(projectDir);
-		Path existingFile = projectDir.resolve("existing.xml");
-		Files.writeString(existingFile, "<existing/>");
-		Project project = new Project("myproject", projectDir.toString());
-
-		when(projectService.getProject("myproject")).thenReturn(project);
-
-		assertThrows(
-				ConfigurationAlreadyExistsException.class,
-				() -> configurationService.addConfigurationToFolder(
-						"myproject", "existing.xml", projectDir.toString()));
-	}
-
-	@Test
-	void addConfigurationToFolder_OutsideProject_ThrowsSecurityException() throws Exception {
-		stubToAbsolutePath();
-
-		Path projectDir = tempDir.resolve("myproject");
-		Files.createDirectories(projectDir);
-		Project project = new Project("myproject", projectDir.toString());
-
-		when(projectService.getProject("myproject")).thenReturn(project);
-
-		String outsidePath = tempDir.getParent().toString();
-
-		assertThrows(
-				SecurityException.class,
-				() -> configurationService.addConfigurationToFolder("myproject", "evil.xml", outsidePath));
+				ApiException.class, () -> configurationService.addConfiguration("myproject", "../../../evil.xml"));
 	}
 }

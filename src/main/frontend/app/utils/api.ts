@@ -27,10 +27,10 @@ interface BackendErrorResponse {
 export class ApiError extends Error {
   constructor(
     public status: number,
-    public messages: string[],
+    public messages?: string[],
     public errorCode?: string,
   ) {
-    super(messages.join(', '))
+    super(messages ? messages.join(', ') : status.toString())
     this.name = 'ApiError'
   }
 }

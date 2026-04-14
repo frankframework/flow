@@ -18,6 +18,15 @@ import { DeprecatedPopover } from './components/deprecated-popover'
 import { showWarningToast } from '~/components/toast'
 import { useHandleTypes } from '~/hooks/use-handle-types'
 import AddSubcomponentModal from '~/components/flow/add-subcomponent-modal'
+import { fetchFrankConfigXsd } from '~/services/xsd-service'
+import {
+  type Requirement,
+  getElementRequirements,
+  getMissingRequirements,
+  isRequirementFulfilled,
+  parseXsd,
+} from '~/utils/xsd-utils'
+import MissingRequirements from './components/missing-requirements'
 
 export type FrankNodeType = Node<{
   subtype: string
@@ -74,6 +83,9 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
 
     return Object.values(recordElements).filter((element) => canAcceptChildStatic(frankElement, element.name, filters))
   }, [elements, frankElement, filters])
+  const [mandatoryChildren, setMandatoryChildren] = useState<Requirement[]>([])
+  const [mandatoryChildrenFulfilled, setMandatoryChildrenFulfilled] = useState(false)
+  const [missingChildren, setMissingChildren] = useState<string[]>([])
 
   const updateNodeInternals = useUpdateNodeInternals()
   const [isHandleMenuOpen, setIsHandleMenuOpen] = useState(false)
@@ -109,6 +121,24 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
       setDimensions((previous) => ({ ...previous, height: newHeight }))
     }
   }, [dragOver, properties.id, updateNodeInternals])
+
+  useEffect(() => {
+    fetchFrankConfigXsd().then((xsd) => {
+      const doc = parseXsd(xsd)
+      const mandatory = getElementRequirements(doc, properties.data.subtype)
+      setMandatoryChildren(mandatory)
+    })
+  }, [properties.data.subtype])
+
+  useEffect(() => {
+    const children = properties.data.children
+
+    const allFulfilled = isRequirementFulfilled(mandatoryChildren, children)
+    setMandatoryChildrenFulfilled(allFulfilled)
+
+    const missing = getMissingRequirements(mandatoryChildren, children)
+    setMissingChildren(missing)
+  }, [mandatoryChildren, properties.data.children])
 
   useLayoutEffect(() => {
     if (containerReference.current) {
@@ -443,6 +473,9 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
             </div>
           </div>
         )}
+        {/* Show missing mandatory children if the node is missing any */}
+        <MissingRequirements missingChildren={missingChildren} isFulfilled={mandatoryChildrenFulfilled} />
+
         {possibleChildren.length > 0 && (
           <div
             className="hover:text-foreground-active text-foreground/30 flex cursor-pointer gap-1 self-start p-1"
