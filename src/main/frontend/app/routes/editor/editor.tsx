@@ -1,28 +1,33 @@
+import RulerCrossPenIcon from '/icons/solar/Ruler Cross Pen.svg?react'
 import Editor, { type Monaco, type OnMount } from '@monaco-editor/react'
-import XsdManager from 'monaco-xsd-code-completion/esm/XsdManager'
+import clsx from 'clsx'
 import XsdFeatures from 'monaco-xsd-code-completion/esm/XsdFeatures'
 import 'monaco-xsd-code-completion/src/style.css'
+import XsdManager from 'monaco-xsd-code-completion/esm/XsdManager'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { validateXML, type XMLValidationError } from 'xmllint-wasm'
 import { useShallow } from 'zustand/react/shallow'
-import SidebarLayout from '~/components/sidebars-layout/sidebar-layout'
-import SidebarContentClose from '~/components/sidebars-layout/sidebar-content-close'
-import { SidebarSide } from '~/components/sidebars-layout/sidebar-layout-store'
-import { useTheme } from '~/hooks/use-theme'
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { useProjectStore } from '~/stores/project-store'
-import EditorFileStructure from '~/components/file-structure/editor-file-structure'
-import useEditorTabStore from '~/stores/editor-tab-store'
-import EditorTabs from '~/components/tabs/editor-tabs'
-import { fetchConfiguration, saveConfiguration } from '~/services/configuration-service'
-import { fetchFrankConfigXsd } from '~/services/xsd-service'
-import RulerCrossPenIcon from '/icons/solar/Ruler Cross Pen.svg?react'
 import { openInStudio } from '~/actions/navigationActions'
-import Button from '~/components/inputs/button'
-import { showErrorToastFrom } from '~/components/toast'
-import GitPanel from '~/components/git/git-panel'
+import EditorFileStructure from '~/components/file-structure/editor-file-structure'
 import DiffTabView from '~/components/git/diff-tab-view'
-import clsx from 'clsx'
+import GitPanel from '~/components/git/git-panel'
+import Button from '~/components/inputs/button'
+import SidebarContentClose from '~/components/sidebars-layout/sidebar-content-close'
+import SidebarHeader from '~/components/sidebars-layout/sidebar-header'
+import SidebarLayout from '~/components/sidebars-layout/sidebar-layout'
+import { SidebarSide } from '~/components/sidebars-layout/sidebar-layout-store'
+import EditorTabs from '~/components/tabs/editor-tabs'
+import { showErrorToastFrom } from '~/components/toast'
+import { useTheme } from '~/hooks/use-theme'
+import { fetchConfiguration, saveConfiguration } from '~/services/configuration-service'
+import { fetchFile, updateFile } from '~/services/file-service'
 import { refreshOpenDiffs } from '~/services/git-service'
+import { fetchFrankConfigXsd } from '~/services/xsd-service'
+import useEditorTabStore from '~/stores/editor-tab-store'
+import { useProjectStore } from '~/stores/project-store'
+import { useSettingsStore } from '~/stores/settings-store'
+import { toProjectRelativePath } from '~/utils/path-utils'
+import flowXsd from '../../../src/assets/xsd/FlowConfig.xsd?raw'
 import {
   extractFlowElements,
   findAdapterIndexAtOffset,
@@ -32,10 +37,6 @@ import {
   normalizeFrankElements,
   wrapFlowXml,
 } from './xml-utils'
-import { useSettingsStore } from '~/stores/settings-store'
-import { toProjectRelativePath } from '~/utils/path-utils'
-import SidebarHeader from '~/components/sidebars-layout/sidebar-header'
-import flowXsd from '../../../src/assets/xsd/FlowConfig.xsd?raw'
 
 type LeftTab = 'files' | 'git'
 type SaveStatus = 'idle' | 'saving' | 'saved'
@@ -45,10 +46,16 @@ export interface ValidationError {
   startColumn: number
   endColumn: number
 }
+
 export interface TextModel {
   getLineContent: (n: number) => string
   getLineCount: () => number
   getLineMaxColumn: (n: number) => number
+}
+
+interface CachedFile {
+  content: string
+  type: string
 }
 
 const SAVED_DISPLAY_DURATION = 2000
@@ -143,11 +150,21 @@ function toMarker(e: ValidationError, severity: number) {
   }
 }
 
+function toMonacoType(type: string | null) {
+  if (!type || type === 'text/plain') return 'plaintext'
+  return type.split('/').pop() ?? ''
+}
+
+function isConfigurationFile(fileExtension: string) {
+  return fileExtension === 'xml'
+}
+
 export default function CodeEditor() {
   const theme = useTheme()
   const project = useProjectStore.getState().project
   const [activeTabFilePath, setActiveTabFilePath] = useState<string>(useEditorTabStore.getState().activeTabFilePath)
-  const [xmlContent, setXmlContent] = useState<string>('')
+  const [fileContent, setFileContent] = useState<string>('')
+  const [fileLanguage, setFileLanguage] = useState<string>('xml')
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
   const [leftTab, setLeftTab] = useState<LeftTab>('files')
   const [editorMounted, setEditorMounted] = useState(false)
@@ -160,7 +177,7 @@ export default function CodeEditor() {
   const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const validationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const validationCounterRef = useRef(0)
-  const contentCacheRef = useRef<Map<string, string>>(new Map())
+  const contentCacheRef = useRef<Map<string, CachedFile>>(new Map())
 
   const activeTab = useEditorTabStore(
     useShallow((state) => {
@@ -179,27 +196,43 @@ export default function CodeEditor() {
   const isDiffTab = activeTab.type === 'diff'
 
   const performSave = useCallback(
-    async (content?: string) => {
+    (content?: string) => {
       if (!project || !activeTabFilePath || isDiffTab) return
 
       const updatedContent = content ?? editorReference.current?.getValue?.()
       if (!updatedContent) return
 
-      const configPath = useEditorTabStore.getState().getTab(activeTabFilePath)?.configurationPath
+      const activeTab = useEditorTabStore.getState().getTab(activeTabFilePath)
+      const fileExtension = activeTab?.name.split('.').pop()?.toLowerCase()
+      const configPath = activeTab?.configurationPath
       if (!configPath) return
 
-      setSaveStatus('saving')
-      try {
-        const xmlResponse = await saveConfiguration(project.name, configPath, updatedContent)
-        setXmlContent(xmlResponse.xmlContent)
-        contentCacheRef.current.set(activeTabFilePath, updatedContent)
+      function finishSaving() {
         setSaveStatus('saved')
         if (savedTimerRef.current) clearTimeout(savedTimerRef.current)
         savedTimerRef.current = setTimeout(() => setSaveStatus('idle'), SAVED_DISPLAY_DURATION)
-        if (project.isGitRepository) refreshOpenDiffs(project.name)
-      } catch (error) {
-        showErrorToastFrom('Error saving', error)
-        setSaveStatus('idle')
+      }
+
+      setSaveStatus('saving')
+      if (isConfigurationFile(fileExtension ?? '')) {
+        saveConfiguration(project.name, configPath, updatedContent)
+          .then(({ xmlContent }) => {
+            setFileContent(xmlContent)
+            contentCacheRef.current.set(activeTabFilePath, { type: 'xml', content: xmlContent })
+            finishSaving()
+            if (project.isGitRepository) refreshOpenDiffs(project.name)
+          })
+          .catch((error) => {
+            showErrorToastFrom('Error saving', error)
+            setSaveStatus('idle')
+          })
+      } else {
+        updateFile(project.name, configPath, updatedContent)
+          .then(() => finishSaving())
+          .catch((error) => {
+            showErrorToastFrom('Error saving', error)
+            setSaveStatus('idle')
+          })
       }
     },
     [project, activeTabFilePath, isDiffTab],
@@ -397,9 +430,11 @@ export default function CodeEditor() {
       (newActiveTab, oldActiveTab) => {
         if (oldActiveTab && oldActiveTab !== newActiveTab) flushPendingSave()
         if (oldActiveTab && oldActiveTab !== newActiveTab) {
-          const currentContent = editorReference.current?.getValue()
-          if (currentContent !== undefined) {
-            contentCacheRef.current.set(oldActiveTab, currentContent)
+          const currentEditor = editorReference.current
+          if (currentEditor) {
+            const content = currentEditor.getValue()
+            const type = currentEditor.getModel()?.getLanguageId() || 'xml'
+            contentCacheRef.current.set(oldActiveTab, { type, content })
           }
           flushPendingSave()
         }
@@ -411,37 +446,53 @@ export default function CodeEditor() {
   useEffect(() => {
     if (isDiffTab) return
 
-    const abortController = new AbortController()
-
-    async function fetchXml() {
-      try {
-        const configPath = useEditorTabStore.getState().getTab(activeTabFilePath)?.configurationPath
-        if (!configPath || !project) return
-
-        const isForceRefresh = refreshCounter !== lastRefreshCounterRef.current
-        lastRefreshCounterRef.current = refreshCounter
-
-        if (!isForceRefresh) {
-          const cached = contentCacheRef.current.get(activeTabFilePath)
-          if (cached !== undefined) {
-            setXmlContent(cached)
-            return
-          }
-        }
-
-        const xmlString = await fetchConfiguration(project.name, configPath, abortController.signal)
-        if (!abortController.signal.aborted) {
-          contentCacheRef.current.set(activeTabFilePath, xmlString)
-          setXmlContent(xmlString)
-        }
-      } catch (error) {
-        if (!abortController.signal.aborted) {
-          console.error('Failed to load XML:', error)
-        }
+    function setMonacoContent(content: string, type: string, abortSignal?: AbortSignal) {
+      if (!abortSignal || !abortSignal.aborted) {
+        contentCacheRef.current.set(activeTabFilePath, { type, content })
+        setFileContent(content)
+        setFileLanguage(type)
       }
     }
 
-    fetchXml()
+    const abortController = new AbortController()
+    const activeTab = useEditorTabStore.getState().getTab(activeTabFilePath)
+    if (!activeTab || !project) return
+
+    const filePath = activeTab?.configurationPath
+    const fileExtension = activeTab.name.split('.').pop()?.toLowerCase()
+    const isForceRefresh = refreshCounter !== lastRefreshCounterRef.current
+    lastRefreshCounterRef.current = refreshCounter
+
+    if (!isForceRefresh) {
+      const cached = contentCacheRef.current.get(activeTabFilePath)
+      if (cached !== undefined) {
+        setFileContent(cached.content)
+        setFileLanguage(cached.type)
+        return
+      }
+    }
+
+    if (isConfigurationFile(fileExtension ?? '')) {
+      fetchConfiguration(project.name, filePath, abortController.signal)
+        .then((content) => setMonacoContent(content, 'xml', abortController.signal))
+        .catch((error) => {
+          if (!abortController.signal.aborted) {
+            console.error('Failed to load configuration XML:', error)
+          }
+        })
+    } else {
+      fetchFile(project.name, filePath, abortController.signal)
+        .then(({ content, type }) => {
+          const fileType = toMonacoType(type)
+          setMonacoContent(content, fileType, abortController.signal)
+        })
+        .catch((error) => {
+          if (!abortController.signal.aborted) {
+            setMonacoContent('', 'plaintext', abortController.signal)
+            console.error('Failed to load file:', error)
+          }
+        })
+    }
     return () => abortController.abort()
   }, [project, activeTabFilePath, isDiffTab, refreshCounter])
 
@@ -459,18 +510,18 @@ export default function CodeEditor() {
   }, [activeTabFilePath])
 
   useEffect(() => {
-    if (!xmlContent || !xsdLoaded || isDiffTab) return
-    runSchemaValidation(xmlContent)
-  }, [xmlContent, xsdLoaded, isDiffTab, runSchemaValidation])
+    if (!fileContent || !xsdLoaded || isDiffTab || fileLanguage !== 'xml') return
+    runSchemaValidation(fileContent)
+  }, [fileContent, xsdLoaded, isDiffTab, runSchemaValidation, fileLanguage])
 
   useEffect(() => {
-    if (!xmlContent || !activeTabFilePath || !editorReference.current || isDiffTab) return
+    if (!fileContent || !activeTabFilePath || !editorReference.current || isDiffTab) return
 
     const editor = editorReference.current
     const model = editor.getModel()
     if (!model) return
 
-    const lines = xmlContent.split('\n')
+    const lines = fileContent.split('\n')
     const matchIndex = lines.findIndex((line) => line.includes('<Adapter') && line.includes(activeTabFilePath))
     if (matchIndex === -1) return
 
@@ -488,13 +539,13 @@ export default function CodeEditor() {
 
     const timeout = setTimeout(() => decorations.clear(), 2000)
     return () => clearTimeout(timeout)
-  }, [xmlContent, activeTabFilePath, isDiffTab])
+  }, [fileContent, activeTabFilePath, isDiffTab])
 
   const handleOpenInStudio = useCallback(() => {
     const editorTab = useEditorTabStore.getState().getTab(activeTabFilePath)
     if (!editorTab) return
 
-    const xml = editorReference.current?.getValue() || xmlContent
+    const xml = editorReference.current?.getValue() || fileContent
     if (!xml) return
 
     const adapters = findAdaptersInXml(xml)
@@ -505,7 +556,7 @@ export default function CodeEditor() {
       adapters.length === 1 || !cursorLine ? 0 : findAdapterIndexAtOffset(adapters, lineToOffset(xml, cursorLine))
 
     openInStudio(adapters[adapterPosition].name, editorTab.configurationPath, adapterPosition)
-  }, [activeTabFilePath, xmlContent])
+  }, [activeTabFilePath, fileContent])
 
   const isGitRepo = !!project?.isGitRepository
 
@@ -583,13 +634,13 @@ export default function CodeEditor() {
               </div>
               <div className="h-full">
                 <Editor
-                  language="xml"
+                  language={fileLanguage}
                   theme={`vs-${theme}`}
-                  value={xmlContent}
+                  value={fileContent}
                   onMount={handleEditorMount}
                   onChange={(value) => {
                     scheduleSave()
-                    if (value) scheduleSchemaValidation(value)
+                    if (value && fileLanguage === 'xml') scheduleSchemaValidation(value)
                   }}
                   options={{ automaticLayout: true, quickSuggestions: false }}
                 />

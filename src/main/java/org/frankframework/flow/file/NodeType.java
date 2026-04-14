@@ -1,4 +1,4 @@
-package org.frankframework.flow.filetree;
+package org.frankframework.flow.file;
 
 public enum NodeType {
 	FILE,
