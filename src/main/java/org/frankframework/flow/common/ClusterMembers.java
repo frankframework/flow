@@ -32,8 +32,7 @@ public class ClusterMembers implements ApplicationListener<ClusterMemberEvent> {
 		this.outboundGateway = outboundGateway;
 	}
 
-//	@RolesAllowed({"IbisObserver", "IbisDataAdmin", "IbisAdmin", "IbisTester"})
-//	@Relation("cluster")
+	@AllowAllFrankUserRoles
 	@GetMapping(value = "/cluster/members", produces = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<?> getClusterMembers() {
 		List<OutboundGateway.ClusterMember> members = outboundGateway.getMembers();
