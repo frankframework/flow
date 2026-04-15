@@ -192,6 +192,21 @@ body {
   background: rgba(34, 197, 94, 0.08) !important;
 }
 
+.monaco-flow-attribute {
+  color: #a8a8a8 !important;
+  font-style: italic !important;
+}
+
+.monaco-flow-attribute-value {
+  color: #a8a8a8 !important;
+  font-style: italic !important;
+}
+
+.dark .monaco-flow-attribute,
+.dark .monaco-flow-attribute-value {
+  color: #808080 !important;
+}
+
 :root {
   /* Allotment Styling */
   --focus-border: var(--color-brand);

@@ -591,7 +591,7 @@ function FlowCanvas() {
     addNodeAtPosition(position, parsedData.name)
   }
 
-  const onDragEnd = (event: React.DragEvent) => {
+  const onDragEnd = () => {
     setDraggedName(null)
     setParentId(null)
   }
