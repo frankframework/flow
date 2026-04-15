@@ -689,11 +689,29 @@ function FlowCanvas() {
   }, [copySelection])
 
   const handleUngroup = useCallback(() => {
-    const selectedNodes = nodes.filter((n) => n.selected)
+    const flowStore = useFlowStore.getState()
+    const selectedNodes = flowStore.nodes.filter((n) => n.selected)
+
     if (selectedNodes.length === 0) return
+    const selectedGroupNodes = selectedNodes.filter((n) => n.type === 'groupNode')
+
+    if (selectedGroupNodes.length > 0) {
+      let updatedNodes = [...flowStore.nodes]
+      for (const groupNode of selectedGroupNodes) {
+        const groupId = groupNode.id
+
+        const children = updatedNodes.filter((n) => n.parentId === groupId)
+
+        updatedNodes = degroupNodes(children, groupId, updatedNodes)
+      }
+      flowStore.setNodes(updatedNodes)
+      return
+    }
+
     if (!allSelectedInSameGroup(selectedNodes)) return
+
     handleDegroupSingleGroup(selectedNodes)
-  }, [nodes, allSelectedInSameGroup, handleDegroupSingleGroup])
+  }, [allSelectedInSameGroup, handleDegroupSingleGroup, degroupNodes])
 
   const handleRightMouseButtonClick = useCallback(
     (event: React.MouseEvent) => {
