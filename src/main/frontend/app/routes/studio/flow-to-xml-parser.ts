@@ -174,18 +174,24 @@ function generateXmlElement(
 
   const childXml = children.map((child: ChildNode) => generateChildXml(child, 4)).join('\n')
 
-  const forwards = (edgeMap.get(node.id) || [])
-    .map(({ label, targetId }) => {
-      const forwardTarget = nodeMap.get(targetId)
-      const targetName = (forwardTarget?.data as NodeData)?.name || ''
-      if (targetName === '') {
-        console.warn(`Target node with ID ${targetId} does not have a name attribute.`)
-        return ''
-      }
-      // If saving from flow to xml, all edges will be considered explicit Forwards.
-      return `    <Forward name="${escapeXml(label)}" path="${escapeXml(targetName)}" />`
-    })
-    .join('\n')
+  const type = (node.data as NodeData).type?.toLowerCase()
+
+  const forwards =
+    type === 'receiver'
+      ? '' // Receivers should never have a <Forward> element
+      : (edgeMap.get(node.id) || [])
+          .map(({ label, targetId }) => {
+            const forwardTarget = nodeMap.get(targetId)
+            const targetName = (forwardTarget?.data as NodeData)?.name || ''
+
+            if (targetName === '') {
+              console.warn(`Target node with ID ${targetId} does not have a name attribute.`)
+              return ''
+            }
+
+            return `    <Forward name="${escapeXml(label)}" path="${escapeXml(targetName)}" />`
+          })
+          .join('\n')
 
   const content = [childXml, forwards].filter(Boolean).join('\n')
   return content
@@ -219,6 +225,7 @@ ${spaces}</${child.subtype}>`
 function generateExitsXml(exitNodes: FlowNode[]): string {
   return exitNodes
     .map((node) => {
+      const { name } = node.data as NodeData
       const data = node.data as NodeData
       const { x, y } = node.position
       const roundedX = Math.round(x)
@@ -229,21 +236,15 @@ function generateExitsXml(exitNodes: FlowNode[]): string {
         width = node.measured.width
         height = node.measured.height
       }
-      const name = escapeXml(data.name)
-      const state = getExitState(data)
+      const attributes = data.attributes || {}
       const flowNamespaceString = `flow:y="${roundedY}" flow:x="${roundedX}" flow:width="${width}" flow:height="${height}"`
+      const attributeString = ` name="${escapeXml(name)}"${Object.entries(attributes)
+        .map(([key, value]) => ` ${key}="${escapeXml(value)}"`)
+        .join('')}`
 
-      return `      <Exit name="${name}" state="${state}" ${flowNamespaceString} />`
+      return `      <Exit ${attributeString} ${flowNamespaceString} />`
     })
     .join('\n')
-}
-
-function getExitState(data: NodeData): string {
-  const storedState = data.attributes?.state
-  if (storedState) return storedState
-
-  const name = data.name.toLowerCase()
-  return name.includes('bad') || name.includes('fail') ? 'error' : 'success'
 }
 
 function generateFlowElementsXml(nodes: FlowNode[]): string {
