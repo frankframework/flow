@@ -47,9 +47,6 @@ importers:
       isbot:
         specifier: ^5.1.36
         version: 5.1.36
-      monaco-editor:
-        specifier: ^0.55.1
-        version: 0.55.1
       monaco-xsd-code-completion:
         specifier: ^1.0.0
         version: 1.0.0

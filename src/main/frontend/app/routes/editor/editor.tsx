@@ -1,10 +1,13 @@
 import RulerCrossPenIcon from '/icons/solar/Ruler Cross Pen.svg?react'
 import Editor, { type Monaco, type OnMount } from '@monaco-editor/react'
+type ITextModel = Monaco['editor']['ITextModel']
+type FindMatch = Monaco['editor']['FindMatch']
+type IModelDeltaDecoration = Monaco['editor']['IModelDeltaDecoration']
+type IEditorDecorationsCollection = Monaco['editor']['IEditorDecorationsCollection']
 import clsx from 'clsx'
 import XsdFeatures from 'monaco-xsd-code-completion/esm/XsdFeatures'
 import 'monaco-xsd-code-completion/src/style.css'
 import XsdManager from 'monaco-xsd-code-completion/esm/XsdManager'
-import * as monaco from 'monaco-editor'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { validateXML, type XMLValidationError } from 'xmllint-wasm'
 import { useShallow } from 'zustand/react/shallow'
@@ -159,7 +162,7 @@ function isConfigurationFile(fileExtension: string) {
   return fileExtension === 'xml'
 }
 
-async function validateFlow(content: string, model: monaco.editor.ITextModel): Promise<ValidationError[]> {
+async function validateFlow(content: string, model: ITextModel): Promise<ValidationError[]> {
   const flowFragment = extractFlowElements(content)
   if (!flowFragment) return []
 
@@ -179,11 +182,7 @@ async function validateFlow(content: string, model: monaco.editor.ITextModel): P
   }))
 }
 
-async function validateFrank(
-  content: string,
-  xsd: string,
-  model: monaco.editor.ITextModel,
-): Promise<ValidationError[]> {
+async function validateConfiguration(content: string, xsd: string, model: ITextModel): Promise<ValidationError[]> {
   const result = await validateXML({
     xml: [{ fileName: 'config.xml', contents: content }],
     schema: [{ fileName: 'FrankConfig.xsd', contents: xsd }],
@@ -203,7 +202,7 @@ async function validateFrank(
 /**
  * Maps a single Monaco regex match to decoration objects.
  */
-function mapMatchToDecorations(match: monaco.editor.FindMatch): monaco.editor.IModelDeltaDecoration[] {
+function mapMatchToDecorations(match: FindMatch): IModelDeltaDecoration[] {
   const keyText = match.matches![1]
   const valueText = match.matches![3]
 
@@ -243,7 +242,7 @@ export default function CodeEditor() {
   const monacoReference = useRef<Monaco | null>(null)
   const xsdContentRef = useRef<string | null>(null)
   const errorDecorationsRef = useRef<{ clear: () => void } | null>(null)
-  const flowDecorationsRef = useRef<monaco.editor.IEditorDecorationsCollection | null>(null)
+  const flowDecorationsRef = useRef<IEditorDecorationsCollection | null>(null)
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const validationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -392,13 +391,13 @@ export default function CodeEditor() {
       if (!editor || !xsdContent) return
 
       const validationId = ++validationCounterRef.current
-      const model = editor.getModel() as monaco.editor.ITextModel
+      const model = editor.getModel() as ITextModel
       if (!model) return
 
       try {
         const [flowErrors, frankErrors] = await Promise.all([
           validateFlow(content, model),
-          validateFrank(content, xsdContent, model),
+          validateConfiguration(content, xsdContent, model),
         ])
 
         if (validationId !== validationCounterRef.current) return
