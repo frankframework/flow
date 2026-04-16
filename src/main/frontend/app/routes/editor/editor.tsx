@@ -1,7 +1,7 @@
 import RulerCrossPenIcon from '/icons/solar/Ruler Cross Pen.svg?react'
 import Editor, { type Monaco, type OnMount } from '@monaco-editor/react'
-import prettier from 'prettier'
-import parserHTML from 'prettier/plugins/html'
+import prettier from 'prettier/standalone'
+import prettierPluginXml from '@prettier/plugin-xml'
 import clsx from 'clsx'
 import XsdFeatures from 'monaco-xsd-code-completion/esm/XsdFeatures'
 import 'monaco-xsd-code-completion/src/style.css'
@@ -163,9 +163,9 @@ function isConfigurationFile(fileExtension: string) {
 
 function prettierFormat(xml: string): Promise<string> {
   return prettier.format(xml, {
-    parser: 'html',
-    plugins: [parserHTML],
-    tabWidth: 3,
+    parser: 'xml',
+    plugins: [prettierPluginXml],
+    tabWidth: 2,
   })
 }
 
@@ -305,7 +305,17 @@ export default function CodeEditor() {
     const model = editor.getModel()
     if (!model) return
     try {
-      if (model) model.setValue(await prettierFormat(model.getValue()))
+      const formattedValue = await prettierFormat(model.getValue())
+      if (formattedValue === model.getValue()) return
+
+      const selection = editor.getSelection()
+      editor.pushUndoStop()
+      editor.executeEdits(
+        'prettier-reformat',
+        [{ range: model.getFullModelRange(), text: formattedValue, forceMoveMarkers: true }],
+        selection ? [selection] : undefined,
+      )
+      editor.pushUndoStop()
     } catch (error) {
       console.error('Failed to reformat XML:', error)
     }
@@ -449,9 +459,9 @@ export default function CodeEditor() {
       contextMenuGroupId: 'navigation',
       contextMenuOrder: 3,
       keybindings: [
-        monacoReference.current.KeyMod.CtrlCmd |
+        monacoReference.current.KeyMod.Alt |
           monacoReference.current.KeyMod.Shift |
-          monacoReference.current.KeyCode.KeyR,
+          monacoReference.current.KeyCode.KeyF,
       ],
       run: runPrettierReformat,
     })

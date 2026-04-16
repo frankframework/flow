@@ -51,9 +51,11 @@ public class ConfigurationService {
 
 
 		Document document = XmlConfigurationUtils.insertFlowNamespace(content);
-		String formatted = XmlConfigurationUtils.convertNodeToString(document);
+		if (document == null) {
+			throw new ApiException("Configuration content must not be blank", HttpStatus.BAD_REQUEST);
+		}
 
-		// Just write to the disk. ProjectService reads directly from disk now!
+		String formatted = XmlConfigurationUtils.convertNodeToString(document);
 		fileSystemStorage.writeFile(absolutePath.toString(), formatted);
 		return formatted;
 	}
