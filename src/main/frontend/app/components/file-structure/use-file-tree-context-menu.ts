@@ -6,7 +6,7 @@ import { clearConfigurationCache } from '~/services/configuration-service'
 import useTabStore from '~/stores/tab-store'
 import useEditorTabStore from '~/stores/editor-tab-store'
 import { showErrorToast, showErrorToastFrom } from '~/components/toast'
-import { FILE_NAME_PATTERNS, FOLDER_NAME_PATTERNS } from '~/components/file-structure/name-input-dialog'
+import { FILE_NAME_PATTERNS, FOLDER_OR_ADAPTER_NAME_PATTERNS } from '~/components/file-structure/name-input-dialog'
 
 export interface ContextMenuState {
   position: { x: number; y: number }
@@ -157,7 +157,7 @@ export function useFileTreeContextMenu({
           }
           setNameDialog(null)
         },
-        patterns: FOLDER_NAME_PATTERNS,
+        patterns: FOLDER_OR_ADAPTER_NAME_PATTERNS,
       })
     },
     [projectName, dataProvider, closeContextMenu],
@@ -197,7 +197,7 @@ export function useFileTreeContextMenu({
           }
           setNameDialog(null)
         },
-        patterns: menu.isFolder ? FOLDER_NAME_PATTERNS : FILE_NAME_PATTERNS,
+        patterns: menu.isFolder ? FOLDER_OR_ADAPTER_NAME_PATTERNS : FILE_NAME_PATTERNS,
       })
     },
     [projectName, dataProvider, onAfterRename, closeContextMenu],
