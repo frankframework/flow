@@ -1,6 +1,7 @@
 package org.frankframework.flow.filesystem;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -8,26 +9,30 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.List;
-import org.frankframework.flow.security.UserWorkspaceContext;
+
+import org.frankframework.flow.common.config.ClientSession;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.springframework.test.util.ReflectionTestUtils;
 
 class CloudFileSystemStorageServiceTest {
 
 	private CloudFileSystemStorageService service;
-	private UserWorkspaceContext userContext;
 	private Path tempWorkspaceRoot;
+
+	@Mock
+	private ClientSession session;
 
 	@BeforeEach
 	void setUp() throws IOException {
 		tempWorkspaceRoot = Files.createTempDirectory("cloud_test_workspace");
-		userContext = new UserWorkspaceContext();
-		userContext.initialize("test-user");
-
-		service = new CloudFileSystemStorageService(userContext);
-		ReflectionTestUtils.setField(service, "baseWorkspacePath", tempWorkspaceRoot.toString());
+		mockSessionWithWorkspaceId("test-user");
+		service = new CloudFileSystemStorageService(session);
+		setServiceBasePathToTemp(service, tempWorkspaceRoot.toString());
 	}
 
 	@AfterEach
@@ -121,8 +126,8 @@ class CloudFileSystemStorageServiceTest {
 
 	@Test
 	void listRootsReturnsEmptyListOnError() {
-		ReflectionTestUtils.setField(service, "baseWorkspacePath", "/nonexistent/path/that/doesnt/exist");
-		userContext.initialize("no-such-user-xyz");
+		setServiceBasePathToTemp(service, "/nonexistent/path/that/doesnt/exist");
+		mockSessionWithWorkspaceId("no-such-user-xyz");
 
 		List<FilesystemEntry> entries = service.listRoots();
 		assertNotNull(entries);
@@ -145,7 +150,6 @@ class CloudFileSystemStorageServiceTest {
 
 		String relative = service.toRelativePath(absolutePath);
 
-		assertTrue(relative.startsWith(""));
 		assertTrue(relative.contains("project"));
 		assertTrue(relative.contains("file.xml"));
 	}
@@ -167,9 +171,10 @@ class CloudFileSystemStorageServiceTest {
 
 	@Test
 	void anonymousUserWhenWorkspaceIdIsNull() throws IOException {
-		UserWorkspaceContext anonCtx = new UserWorkspaceContext();
-		CloudFileSystemStorageService anonService = new CloudFileSystemStorageService(anonCtx);
-		ReflectionTestUtils.setField(anonService, "baseWorkspacePath", tempWorkspaceRoot.toString());
+		ClientSession anonymousSession = Mockito.mock(ClientSession.class);
+		when(session.getWorkspaceId()).thenReturn(null);
+		CloudFileSystemStorageService anonService = new CloudFileSystemStorageService(anonymousSession);
+		setServiceBasePathToTemp(anonService, tempWorkspaceRoot.toString());
 
 		Path result = anonService.toAbsolutePath("test");
 		assertTrue(result.toString().contains("anonymous"));
@@ -187,5 +192,13 @@ class CloudFileSystemStorageServiceTest {
 		Path userRoot = tempWorkspaceRoot.resolve("test-user").toAbsolutePath().normalize();
 		String onDisk = Files.readString(userRoot.resolve("data.txt"), StandardCharsets.UTF_8);
 		assertEquals("content", onDisk);
+	}
+
+	private void mockSessionWithWorkspaceId(String workspaceId) {
+		when(session.getWorkspaceId()).thenReturn(workspaceId);
+	}
+
+	private void setServiceBasePathToTemp(CloudFileSystemStorageService service, String tempPath) {
+		ReflectionTestUtils.setField(service, "baseWorkspacePath", tempPath);
 	}
 }

@@ -17,8 +17,22 @@ services:
     ports:
       - "8081:8080"
       - "5710-5720:5700-5710"
+    configs:
+      - source: resources.yml
+        target: /opt/frank/resources/resources.yml
     environment:
-      jdbc.required: false
-      larva.adapter.active: false
-      management.gateway.inbound.class: org.frankframework.management.gateway.HazelcastInboundGateway
-      management.gateway.outbound.class: org.frankframework.management.gateway.HazelcastOutboundGateway
+      - instance.name=Flow-FF-Network
+      - dtap.stage=LOC
+      - jdbc.required=false
+      - larva.enabled=false
+      - testtool.enabled=false
+      - management.gateway.inbound.class=org.frankframework.management.gateway.HazelcastInboundGateway
+      - management.gateway.outbound.class=org.frankframework.management.gateway.HazelcastOutboundGateway
+
+configs:
+  resources.yml:
+    content: |
+      jdbc:
+        - name: "ff-quick-start"
+          type: "org.h2.jdbcx.JdbcDataSource"
+          url: "jdbc:h2:mem:test;NON_KEYWORDS=VALUE;DB_CLOSE_ON_EXIT=FALSE;DB_CLOSE_DELAY=-1;TRACE_LEVEL_FILE=0;"

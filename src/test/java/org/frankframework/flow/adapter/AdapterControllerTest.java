@@ -7,6 +7,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import java.nio.file.Paths;
+
+import org.frankframework.flow.common.config.ClientSession;
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
 import org.frankframework.flow.xml.XmlDTO;
 import org.junit.jupiter.api.Test;
@@ -26,12 +28,6 @@ class AdapterControllerTest {
 
 	@MockitoBean
 	private AdapterService adapterService;
-
-	@MockitoBean
-	private org.frankframework.flow.security.UserContextFilter userContextFilter;
-
-	@MockitoBean
-	private org.frankframework.flow.security.UserWorkspaceContext userWorkspaceContext;
 
 	@Test
 	void getAdapterReturns200() throws Exception {

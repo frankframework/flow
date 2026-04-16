@@ -121,7 +121,7 @@ public class ProjectController {
 
 	@GetMapping("/configurations")
 	public ResponseEntity<?> getFrameworkConfigurations() throws ApiException {
-		RequestMessageBuilder builder = RequestMessageBuilder.create(BusTopic.CONFIGURATION, BusAction.GET);
+		RequestMessageBuilder builder = RequestMessageBuilder.create(BusTopic.CONFIGURATION, BusAction.FIND);
 		return frankFrameworkService.callSyncGateway(builder);
 	}
 }
