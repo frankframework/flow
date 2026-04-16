@@ -12,7 +12,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
-import org.frankframework.flow.security.UserWorkspaceContext;
+
+import org.frankframework.flow.common.config.ClientSession;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -24,14 +25,14 @@ public class CloudFileSystemStorageService implements FileSystemStorage {
 	@Value("${frankflow.workspace.root:/tmp/frankflow/workspace}")
 	private String baseWorkspacePath;
 
-	private final UserWorkspaceContext userContext;
+	private final ClientSession session;
 
-	public CloudFileSystemStorageService(UserWorkspaceContext userContext) {
-		this.userContext = userContext;
+	public CloudFileSystemStorageService(ClientSession session) {
+		this.session = session;
 	}
 
 	private Path getUserRootPath() {
-		String workspaceId = userContext.getWorkspaceId();
+		String workspaceId = session.getWorkspaceId();
 		if (workspaceId == null) workspaceId = "anonymous";
 
 		return Paths.get(baseWorkspacePath, workspaceId).toAbsolutePath().normalize();
