@@ -26,6 +26,7 @@ import FilesDataProvider, {
 } from '~/components/file-structure/studio-files-data-provider'
 import { useProjectStore } from '~/stores/project-store'
 import { useTreeStore } from '~/stores/tree-store'
+import useFlowStore from '~/stores/flow-store'
 import { useStudioContextMenu, detectItemType, getItemName, resolveItemPaths } from './use-studio-context-menu'
 import StudioFileTreeDialogs from './studio-file-tree-dialogs'
 
@@ -90,8 +91,12 @@ export default function StudioFileStructure() {
 
   const triggerExplorerAction = useCallback(
     (action: (menuState: StudioContextMenuState) => void, requireSelection: boolean) => {
+      const { nodes, edges } = useFlowStore.getState()
+      if (nodes.some((n) => n.selected) || edges.some((e) => e.selected)) return
+
       const itemId = selectedItemId ?? (requireSelection ? null : 'root')
       if (!itemId || (itemId === 'root' && requireSelection)) return
+
       void buildContextForItem(itemId).then((menuState) => {
         if (menuState) action(menuState)
       })

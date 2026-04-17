@@ -157,12 +157,13 @@ function generateXmlElement(
   const { x, y } = node.position
   const roundedX = Math.round(x)
   const roundedY = Math.round(y)
+
   let width = FlowConfig.NODE_DEFAULT_WIDTH
-  let height = FlowConfig.NODE_DEFAULT_HEIGHT
-  if (node.measured && node.measured.width && node.measured.height) {
+  if (node.measured?.width) {
     width = node.measured.width
-    height = node.measured.height
   }
+
+  const height: number | undefined = node.height ?? undefined
   const attributes = (node.data as NodeData).attributes || {}
   const children = (node.data as NodeData).children || []
 
@@ -170,7 +171,7 @@ function generateXmlElement(
     .map(([key, value]) => ` ${key}="${escapeXml(value)}"`)
     .join('')}`
 
-  const flowNamespaceString = `flow:y="${roundedY}" flow:x="${roundedX}" flow:width="${width}" flow:height="${height}"`
+  const flowNamespaceString = `flow:y="${roundedY}" flow:x="${roundedX}" flow:width="${width}"${height === undefined ? '' : ` flow:height="${height}"`}`
 
   const childXml = children.map((child: ChildNode) => generateChildXml(child, 4)).join('\n')
 
@@ -285,12 +286,12 @@ ${allElements.join('\n')}
 }
 
 function generateGroupNodeXml(groupNodes: GroupNode[], groupChildrenMap: Map<string, FlowNode[]>): string[] {
-  const groupNodesXml = groupNodes.map((groupNode) => {
+  return groupNodes.map((groupNode) => {
     const { x, y } = groupNode.position
     const roundedX = Math.round(x)
     const roundedY = Math.round(y)
     const width = groupNode.measured?.width || FlowConfig.NODE_DEFAULT_WIDTH
-    const height = groupNode.measured?.height || FlowConfig.NODE_DEFAULT_HEIGHT
+    const height = groupNode.measured?.height || FlowConfig.NODE_MIN_HEIGHT
 
     const children = groupChildrenMap.get(groupNode.id) || []
 
@@ -301,6 +302,7 @@ function generateGroupNodeXml(groupNodes: GroupNode[], groupChildrenMap: Map<str
       .join(',')
 
     const groupName = escapeXml(groupNode.data?.label || '')
+
     const attrs = [
       `flow:children="${childNames}"`,
       `flow:height="${height}"`,
@@ -312,5 +314,4 @@ function generateGroupNodeXml(groupNodes: GroupNode[], groupChildrenMap: Map<str
 
     return `    <flow:GroupNode ${attrs} />`
   })
-  return groupNodesXml
 }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useCallback, useRef, useState } from 'react'
 import ArrowDownIcon from 'icons/solar/Alt Arrow Down.svg?react'
 import ArrowRightIcon from 'icons/solar/Alt Arrow Right.svg?react'
 import { useSettingsStore } from '~/stores/settings-store'
@@ -9,6 +9,7 @@ import DangerIcon from '../../../../icons/solar/Danger Triangle.svg?react'
 import { DeprecatedListPopover, type DeprecatedInfo } from './deprecated-list-popover'
 import ElementHoverCard from './element-hover-card'
 import { showWarningToast } from '~/components/toast'
+import Button from '~/components/inputs/button'
 
 interface Properties {
   type: string
@@ -17,9 +18,11 @@ interface Properties {
   searchTerm: string
 }
 
+const CLOSE_DELAY = 200
+
 export default function SortedElements({ type, items, onDragStart, searchTerm }: Readonly<Properties>) {
-  const [isExpanded, setIsExpanded] = useState(false)
-  const gradientEnabled = useSettingsStore((state) => state.studio.gradient)
+  const paletteExpandedByDefault = useSettingsStore((state) => state.studio.paletteExpandedByDefault)
+  const [isExpanded, setIsExpanded] = useState(paletteExpandedByDefault)
   const { draggedName, setDraggedName, dropSuccessful, setDropSuccessful } = useNodeContextStore((state) => state)
   const [hoveredRect, setHoveredRect] = useState<DOMRect | null>(null)
   const [hoveredElement, setHoveredElement] = useState<ElementDetails | null>(null)
@@ -27,10 +30,31 @@ export default function SortedElements({ type, items, onDragStart, searchTerm }:
   const [deprecatedHovered, setDeprecatedHovered] = useState<DeprecatedInfo | null>(null)
   const [lockedElement, setLockedElement] = useState<ElementDetails | null>(null)
 
+  const lockedElementRef = useRef<ElementDetails | null>(null)
+  lockedElementRef.current = lockedElement
+  const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const cancelClose = useCallback(() => {
+    if (closeTimeoutRef.current !== null) {
+      clearTimeout(closeTimeoutRef.current)
+      closeTimeoutRef.current = null
+    }
+  }, [])
+
+  const scheduleClose = useCallback(() => {
+    cancelClose()
+    closeTimeoutRef.current = setTimeout(() => {
+      if (lockedElementRef.current) return
+
+      setHoveredElement(null)
+      setHoveredRect(null)
+    }, CLOSE_DELAY)
+  }, [cancelClose])
+
   const toggleExpansion = () => {
     setIsExpanded(!isExpanded)
   }
-  // Autoexpands groups when a search term is entered
+
   const shouldExpand = searchTerm !== '' || isExpanded
 
   const onDragEnd = (event: React.DragEvent<HTMLLIElement>) => {
@@ -39,8 +63,6 @@ export default function SortedElements({ type, items, onDragStart, searchTerm }:
     const y = event.clientY
 
     const targetElement = document.elementFromPoint(x, y)
-
-    // Check if element is inside #flow-canvas, aka dropped on the canvas
     const isInsideCanvas = targetElement?.closest('#flow-canvas')
 
     if (!dropSuccessful && draggedName && isInsideCanvas) {
@@ -50,36 +72,34 @@ export default function SortedElements({ type, items, onDragStart, searchTerm }:
   }
 
   return (
-    <div
-      key={type}
-      className="mb-4 border-t-2 p-2 shadow-md"
-      style={{
-        borderColor: `var(--palette-${type.toLowerCase()})`,
-      }}
-    >
-      <button
+    <div key={type} className="mb-2">
+      <Button
         onClick={toggleExpansion}
-        className="text-foreground-muted hover:text-foreground-active flex w-full cursor-pointer items-center gap-1 text-left text-sm font-semibold capitalize"
+        className="text-foreground-muted hover:text-foreground-active hover:bg-hover flex w-full cursor-pointer items-center gap-2 rounded-sm border-0 bg-transparent px-3 py-3 text-left text-sm font-semibold capitalize transition-colors"
+        style={{ borderLeft: `3px solid var(--palette-${type.toLowerCase()})` }}
       >
         {shouldExpand ? (
-          <ArrowDownIcon className="h-4 w-4 fill-current" />
+          <ArrowDownIcon className="h-4 w-4 shrink-0 fill-current" />
         ) : (
-          <ArrowRightIcon className="h-4 w-4 fill-current" />
+          <ArrowRightIcon className="h-4 w-4 shrink-0 fill-current" />
         )}
-        <span className="min-w-0 truncate">{type}</span>
-      </button>
+        <span className="min-w-0 flex-1 truncate">{type}</span>
+        <span className="text-foreground-muted shrink-0 text-xs tabular-nums">{items.length}</span>
+      </Button>
 
       {shouldExpand && (
-        <div className="mt-2 space-y-2">
+        <div className="mt-1 space-y-0.5 pl-3">
           {items.map((value) => {
             const elementType = getElementTypeFromName(value.name)
 
             return (
               <li
                 key={value.name}
-                className="border-border m-2 flex cursor-move items-center justify-between rounded border p-4"
+                className="text-foreground hover:bg-hover group mb-1 flex cursor-move items-center justify-between rounded-sm py-3 pr-3 pl-3 text-sm transition-colors"
+                style={{ borderLeft: `3px solid var(--type-${elementType})` }}
                 draggable
                 onDragStart={(event) => {
+                  cancelClose()
                   setHoveredRect(null)
                   setHoveredElement(null)
                   setLockedElement(null)
@@ -88,33 +108,23 @@ export default function SortedElements({ type, items, onDragStart, searchTerm }:
                 }}
                 onDragEnd={onDragEnd}
                 onMouseEnter={(event) => {
-                  setLockedElement(null) // unlock previous element
+                  cancelClose()
+                  if (lockedElement?.name !== value.name) {
+                    setLockedElement(null)
+                  }
                   const rect = event.currentTarget.getBoundingClientRect()
                   setHoveredRect(rect)
                   setHoveredElement(value)
                 }}
                 onMouseLeave={() => {
-                  if (lockedElement?.name === value.name) return
-                  setHoveredElement(null)
-                  setHoveredRect(null)
-                }}
-                style={{
-                  background: gradientEnabled
-                    ? `radial-gradient(
-          ellipse farthest-corner at 20% 20%,
-          var(--type-${elementType}) 0%,
-          var(--color-background) 100%
-        )`
-                    : `var(--type-${elementType})`,
+                  scheduleClose()
                 }}
               >
-                {/* Left: name */}
-                <span className="overflow-hidden text-ellipsis whitespace-nowrap">{value.name}</span>
+                <span className="min-w-0 truncate">{value.name}</span>
 
-                {/* Right: deprecated icon */}
                 {value.deprecated && (
                   <div
-                    className="ml-2 flex-shrink-0"
+                    className="ml-2 shrink-0 opacity-60 transition-opacity group-hover:opacity-100"
                     onMouseEnter={(event) => {
                       const rect = event.currentTarget.getBoundingClientRect()
                       setDeprecatedRect(rect)
@@ -136,6 +146,7 @@ export default function SortedElements({ type, items, onDragStart, searchTerm }:
           })}
         </div>
       )}
+
       {(hoveredRect && hoveredElement) || lockedElement ? (
         <ElementHoverCard
           key={(lockedElement ?? hoveredElement)!.name}
@@ -147,6 +158,14 @@ export default function SortedElements({ type, items, onDragStart, searchTerm }:
             setLockedElement(null)
             setHoveredElement(null)
             setHoveredRect(null)
+          }}
+          onEnter={() => {
+            cancelClose()
+            setLockedElement((prev) => prev ?? hoveredElement)
+          }}
+          onLeave={() => {
+            setLockedElement(null)
+            scheduleClose()
           }}
         />
       ) : null}

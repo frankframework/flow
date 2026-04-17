@@ -2,6 +2,7 @@ import {
   addEdge,
   Background,
   BackgroundVariant,
+  ControlButton,
   Controls,
   type Edge,
   type Node,
@@ -276,12 +277,9 @@ function FlowCanvas() {
       dagreGraph.setEdge(edge.source, edge.target)
     }
 
-    // Run Dagre layout
     Dagre.layout(dagreGraph)
 
-    // Map nodes back
     return nodes.map((node) => {
-      // Skip nodes that already have a restored position
       if (node.position.x !== 0 || node.position.y !== 0) return node
 
       const nodeWithPosition = dagreGraph.node(node.id)
@@ -293,11 +291,19 @@ function FlowCanvas() {
           x: nodeWithPosition.x,
           y: nodeWithPosition.y,
         },
-        // keep the same measured width/height
+
         measured: node.measured,
       }
     })
   }, [])
+
+  const handleAutoLayout = useCallback(() => {
+    const flowStore = useFlowStore.getState()
+    const resetNodes = flowStore.nodes.map((node) => ({ ...node, position: { x: 0, y: 0 } }))
+    const laidOut = layoutGraph(resetNodes, flowStore.edges, 'LR')
+    flowStore.setNodes(laidOut)
+    setTimeout(() => reactFlowRef.current.fitView({ padding: 0.1 }), 50)
+  }, [layoutGraph])
 
   const getFullySelectedGroupIds = useCallback(
     (parentIds: (string | undefined)[], selectedNodes: FlowNode[]) => {
@@ -436,31 +442,24 @@ function FlowCanvas() {
     if (selectedNodes.length === 0) return
 
     const selectedNodeIds = new Set(selectedNodes.map((n) => n.id))
-
     const selectedEdges = edges.filter((e) => selectedNodeIds.has(e.source) && selectedNodeIds.has(e.target))
 
-    clipboardRef.current = {
-      nodes: selectedNodes,
-      edges: selectedEdges,
-    }
+    const data = { nodes: selectedNodes, edges: selectedEdges }
+    clipboardRef.current = data
+
+    navigator.clipboard.writeText(JSON.stringify(data)).catch(() => {
+      // clipboard write failed, ignore
+    })
   }, [nodes, edges])
 
-  const pasteSelection = useCallback(() => {
-    const clipboard = clipboardRef.current
-    if (!clipboard) return
-
+  const applyClipboardData = useCallback((clipboard: { nodes: FlowNode[]; edges: Edge[] }) => {
     const flowStore = useFlowStore.getState()
-
     const idMap = new Map<string, string>()
     const generateId = () => flowStore.getNextNodeId().toString()
 
-    // Remap the IDs of cloned nodes
     const newNodes: FlowNode[] = clipboard.nodes.map((node) => {
       const cloned = cloneWithRemappedIds(node, idMap, generateId)
-
-      // Remap parentId using the original node's parentId
       const remappedParentId = node.parentId ? idMap.get(node.parentId) : undefined
-
       return {
         ...cloned,
         position: {
@@ -473,22 +472,35 @@ function FlowCanvas() {
       }
     })
 
-    // Clone edges using the SAME idMap
     const newEdges: Edge[] = clipboard.edges.map((edge) => cloneWithRemappedIds(edge, idMap, generateId))
 
-    // Deselect existing nodes and edges
-    const deselectedNodes = flowStore.nodes.map((n) => ({
-      ...n,
-      selected: false,
-    }))
-    const deselectedEdges = flowStore.edges.map((e) => ({
-      ...e,
-      selected: false,
-    }))
+    const deselectedNodes = flowStore.nodes.map((n) => ({ ...n, selected: false }))
+    const deselectedEdges = flowStore.edges.map((e) => ({ ...e, selected: false }))
 
     flowStore.setNodes([...deselectedNodes, ...newNodes])
     flowStore.setEdges([...deselectedEdges, ...newEdges])
   }, [])
+
+  const pasteSelection = useCallback(() => {
+    navigator.clipboard
+      .readText()
+      .then((text) => {
+        try {
+          const parsed = JSON.parse(text)
+          if (parsed?.nodes && Array.isArray(parsed.nodes)) {
+            applyClipboardData(parsed as { nodes: FlowNode[]; edges: Edge[] })
+            return
+          }
+        } catch {
+          // text is not valid JSON, fall through to clipboard ref
+        }
+
+        if (clipboardRef.current) applyClipboardData(clipboardRef.current)
+      })
+      .catch(() => {
+        if (clipboardRef.current) applyClipboardData(clipboardRef.current)
+      })
+  }, [applyClipboardData])
 
   function closeEditNodeContextOnEscape(): void {
     const { isNewNode, nodeId, parentId } = useNodeContextStore.getState()
@@ -508,6 +520,16 @@ function FlowCanvas() {
     setChildParentId(null)
   }
 
+  const deleteSelection = useCallback(() => {
+    if (isEditing) return
+    const { nodes, edges, setNodes, setEdges } = useFlowStore.getState()
+    const selectedNodeIds = new Set(nodes.filter((n) => n.selected).map((n) => n.id))
+    const hasSelection = selectedNodeIds.size > 0 || edges.some((e) => e.selected)
+    if (!hasSelection) return
+    setNodes(nodes.filter((n) => !n.selected))
+    setEdges(edges.filter((e) => !e.selected && !selectedNodeIds.has(e.source) && !selectedNodeIds.has(e.target)))
+  }, [isEditing])
+
   useShortcut({
     'studio.copy': () => copySelection(),
     'studio.paste': () => pasteSelection(),
@@ -519,6 +541,7 @@ function FlowCanvas() {
     'studio.ungroup': () => handleUngroup(),
     'studio.save': () => saveFlow(),
     'studio.close-context': () => closeEditNodeContextOnEscape(),
+    'studio.delete': () => deleteSelection(),
   })
 
   const groupNodes = (nodesToGroup: FlowNode[], currentNodes: FlowNode[]) => {
@@ -615,16 +638,15 @@ function FlowCanvas() {
     const nodeType = elementType === 'exit' ? 'exitNode' : 'frankNode'
 
     const width = nodeType === 'exitNode' ? FlowConfig.EXIT_DEFAULT_WIDTH : FlowConfig.NODE_DEFAULT_WIDTH
-    const height = nodeType === 'exitNode' ? FlowConfig.EXIT_DEFAULT_HEIGHT : FlowConfig.NODE_DEFAULT_HEIGHT
+    const height = nodeType === 'exitNode' ? FlowConfig.EXIT_DEFAULT_HEIGHT : FlowConfig.NODE_MIN_HEIGHT
 
     const newNode: FrankNodeType = {
       id: newId.toString(),
       position: {
-        x: position.x - width / 2, // Center on cursor
+        x: position.x - width / 2,
         y: position.y - height / 2,
       },
       width: FlowConfig.NODE_DEFAULT_WIDTH,
-      height: FlowConfig.NODE_DEFAULT_HEIGHT,
       data: {
         subtype: elementName,
         type: elementType,
@@ -636,7 +658,7 @@ function FlowCanvas() {
     }
 
     flowStore.addNode(newNode)
-    // If there's a source node, create an edge from it
+
     if (sourceInfo?.nodeId && sourceInfo.handleType === 'source') {
       const sourceNode = flowStore.nodes.find((node) => node.id === sourceInfo.nodeId)
 
@@ -873,18 +895,8 @@ function FlowCanvas() {
       )}
 
       {isEditing && (
-        <div
-          className={clsx('absolute inset-0 z-10', isDirty ? 'cursor-not-allowed bg-black/10' : 'cursor-default')}
-          onClick={() => {
-            if (!isDirty) {
-              showNodeContextMenu(false)
-              setIsEditing(false)
-              setParentId(null)
-              setChildParentId(null)
-            }
-          }}
-        >
-          <div className="pointer-events-none absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-3 rounded bg-black/30 px-3 py-2 text-xs text-white backdrop-blur-sm">
+        <div className="pointer-events-none absolute inset-0 z-10">
+          <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-3 rounded bg-black/30 px-3 py-2 text-xs text-white backdrop-blur-sm">
             <span>
               <kbd className="rounded border border-white/40 bg-white/15 px-1.5 py-0.5 font-mono text-xs text-white">
                 Esc
@@ -918,11 +930,38 @@ function FlowCanvas() {
         onConnectEnd={handleConnectEnd}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
-        onPaneClick={() => setContextMenu(null)}
-        deleteKeyCode={isEditing ? null : ['Delete', 'Backspace']}
+        onPaneClick={() => {
+          setContextMenu(null)
+          if (isEditing && !isDirty) {
+            showNodeContextMenu(false)
+            setIsEditing(false)
+            setParentId(null)
+            setChildParentId(null)
+          }
+        }}
+        deleteKeyCode={null}
         minZoom={0.2}
       >
-        <Controls position="top-left" style={{ color: '#000' }}></Controls>
+        <Controls position="top-left" style={{ color: '#000' }}>
+          <ControlButton onClick={handleAutoLayout} title="Auto layout">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <rect x="3" y="3" width="5" height="5" rx="1" />
+              <rect x="10" y="3" width="5" height="5" rx="1" />
+              <rect x="3" y="16" width="5" height="5" rx="1" />
+              <rect x="10" y="16" width="5" height="5" rx="1" />
+              <line x1="17" y1="5.5" x2="21" y2="5.5" />
+              <line x1="17" y1="18.5" x2="21" y2="18.5" />
+              <line x1="21" y1="5.5" x2="21" y2="18.5" />
+            </svg>
+          </ControlButton>
+        </Controls>
         <Background variant={BackgroundVariant.Dots} size={3} gap={100}></Background>
       </ReactFlow>
 

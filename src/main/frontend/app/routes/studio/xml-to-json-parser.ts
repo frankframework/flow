@@ -518,7 +518,7 @@ function convertElementToNode(element: Element, idCounter: IdCounter, sourceHand
   const { attributes, name, x, y, width, height } = parseElementAttributes(
     element.attributes,
     FlowConfig.NODE_DEFAULT_WIDTH,
-    FlowConfig.NODE_DEFAULT_HEIGHT,
+    FlowConfig.NODE_MIN_HEIGHT,
     usedClassName,
   )
 
@@ -710,7 +710,7 @@ function parseElementAttributes(
   let x = 0
   let y = 0
   let width = defaultWidth
-  let height = defaultHeight
+  let height: number | undefined = undefined
 
   for (const attr of attrs) {
     const attrName = attr.name
@@ -767,5 +767,5 @@ interface ParsedAttributes {
   x: number
   y: number
   width: number
-  height: number
+  height: number | undefined
 }
