@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react'
+import React, { useCallback, useRef, useState } from 'react'
 import type { TreeItemIndex } from 'react-complex-tree'
 import { deleteFile, renameFile } from '~/services/file-service'
 import { createFolderInProject } from '~/services/file-tree-service'
@@ -7,6 +7,10 @@ import { clearConfigurationCache, createConfiguration } from '~/services/configu
 import useTabStore from '~/stores/tab-store'
 import { showErrorToastFrom } from '~/components/toast'
 import type { StudioItemData, StudioFolderData, StudioAdapterData } from './studio-files-data-provider'
+import {
+  CONFIGURATION_NAME_PATTERNS,
+  FOLDER_OR_ADAPTER_NAME_PATTERNS,
+} from '~/components/file-structure/name-input-dialog'
 
 export type StudioItemType = 'root' | 'folder' | 'configuration' | 'adapter'
 
@@ -23,6 +27,7 @@ export interface NameDialogState {
   title: string
   initialValue?: string
   onSubmit: (name: string) => void
+  patterns?: Record<string, RegExp>
 }
 
 export interface DeleteTargetState {
@@ -159,6 +164,7 @@ export function useStudioContextMenu({ projectName, dataProvider }: UseStudioCon
           }
           setNameDialog(null)
         },
+        patterns: CONFIGURATION_NAME_PATTERNS,
       })
     },
     [projectName, dataProvider, closeContextMenu],
@@ -181,6 +187,7 @@ export function useStudioContextMenu({ projectName, dataProvider }: UseStudioCon
           }
           setNameDialog(null)
         },
+        patterns: FOLDER_OR_ADAPTER_NAME_PATTERNS,
       })
     },
     [projectName, dataProvider, closeContextMenu],
@@ -203,6 +210,7 @@ export function useStudioContextMenu({ projectName, dataProvider }: UseStudioCon
           }
           setNameDialog(null)
         },
+        patterns: FOLDER_OR_ADAPTER_NAME_PATTERNS,
       })
     },
     [projectName, dataProvider, closeContextMenu],
@@ -239,6 +247,10 @@ export function useStudioContextMenu({ projectName, dataProvider }: UseStudioCon
           }
           setNameDialog(null)
         },
+        patterns:
+          menu.itemType === 'folder' || menu.itemType === 'adapter'
+            ? FOLDER_OR_ADAPTER_NAME_PATTERNS
+            : CONFIGURATION_NAME_PATTERNS,
       })
     },
     [projectName, dataProvider, closeContextMenu],

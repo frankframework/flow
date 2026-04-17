@@ -1,5 +1,5 @@
 import ContextMenu from './context-menu'
-import NameInputDialog from './name-input-dialog'
+import NameInputDialog, { FILE_NAME_PATTERNS, FOLDER_OR_ADAPTER_NAME_PATTERNS } from './name-input-dialog'
 import ConfirmDeleteDialog from './confirm-delete-dialog'
 import type { ContextMenuState, NameDialogState, DeleteTargetState } from './use-file-tree-context-menu'
 
@@ -51,6 +51,9 @@ export default function FileTreeDialogs({
           initialValue={nameDialog.initialValue}
           onSubmit={nameDialog.onSubmit}
           onCancel={onCloseNameDialog}
+          patterns={
+            nameDialog.title.toLowerCase().includes('folder') ? FOLDER_OR_ADAPTER_NAME_PATTERNS : FILE_NAME_PATTERNS
+          }
         />
       )}
 
