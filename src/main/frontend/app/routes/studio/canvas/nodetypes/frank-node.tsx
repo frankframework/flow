@@ -102,10 +102,11 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
   const updateNodeInternals = useUpdateNodeInternals()
   const [isHandleMenuOpen, setIsHandleMenuOpen] = useState(false)
   const [handleMenuPosition, setHandleMenuPosition] = useState({ x: 0, y: 0 })
+  const [isManuallyResized, setIsManuallyResized] = useState(false)
 
   const [dimensions, setDimensions] = useState({
-    width: properties.width!, // Initial width, safe to assume it exists because it gets set manually in xml-to-json-parser
-    height: properties.height!, // Initial height, ''
+    width: properties.width ?? minNodeWidth,
+    height: properties.height ?? minNodeHeight,
   })
 
   const firstHandlePosition = useMemo(() => {
@@ -441,6 +442,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
         minWidth={minNodeWidth}
         minHeight={minNodeHeight}
         onResize={(event, data) => {
+          setIsManuallyResized(true)
           setDimensions({ width: data.width, height: data.height })
         }}
         style={{
@@ -453,7 +455,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
         <ResizeIcon />
       </NodeResizeControl>
       <div
-        className={`bg-background border-border relative flex w-full flex-col items-center overflow-x-visible rounded-md border ${properties.height ? 'h-full overflow-y-hidden' : 'overflow-y-visible'}`}
+        className={`bg-background border-border relative flex w-full flex-col items-center overflow-x-visible rounded-md border ${isManuallyResized ? 'h-full overflow-y-hidden' : 'overflow-y-visible'}`}
         style={{
           minWidth: `${minNodeWidth}px`,
           minHeight: `${minNodeHeight}px`,

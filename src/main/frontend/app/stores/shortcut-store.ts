@@ -84,7 +84,7 @@ export const ALL_SHORTCUTS: Omit<ShortcutDefinition, 'handler'>[] = [
     key: 'escape',
     allowInInput: true,
   },
-  { id: 'studio.delete', label: 'Delete Selection', scope: 'studio', key: 'delete', displayOnly: true },
+  { id: 'studio.delete', label: 'Delete Selection', scope: 'studio', key: { pc: 'delete', mac: 'backspace' } },
   {
     id: 'studio.save-node',
     label: 'Save Node',

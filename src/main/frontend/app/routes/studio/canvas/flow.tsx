@@ -520,6 +520,16 @@ function FlowCanvas() {
     setChildParentId(null)
   }
 
+  const deleteSelection = useCallback(() => {
+    if (isEditing) return
+    const { nodes, edges, setNodes, setEdges } = useFlowStore.getState()
+    const selectedNodeIds = new Set(nodes.filter((n) => n.selected).map((n) => n.id))
+    const hasSelection = selectedNodeIds.size > 0 || edges.some((e) => e.selected)
+    if (!hasSelection) return
+    setNodes(nodes.filter((n) => !n.selected))
+    setEdges(edges.filter((e) => !e.selected && !selectedNodeIds.has(e.source) && !selectedNodeIds.has(e.target)))
+  }, [isEditing])
+
   useShortcut({
     'studio.copy': () => copySelection(),
     'studio.paste': () => pasteSelection(),
@@ -531,6 +541,7 @@ function FlowCanvas() {
     'studio.ungroup': () => handleUngroup(),
     'studio.save': () => saveFlow(),
     'studio.close-context': () => closeEditNodeContextOnEscape(),
+    'studio.delete': () => deleteSelection(),
   })
 
   const groupNodes = (nodesToGroup: FlowNode[], currentNodes: FlowNode[]) => {
@@ -928,7 +939,7 @@ function FlowCanvas() {
             setChildParentId(null)
           }
         }}
-        deleteKeyCode={isEditing ? null : ['Delete', 'Backspace']}
+        deleteKeyCode={null}
         minZoom={0.2}
       >
         <Controls position="top-left" style={{ color: '#000' }}>
