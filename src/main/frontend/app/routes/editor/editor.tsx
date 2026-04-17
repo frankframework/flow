@@ -751,7 +751,7 @@ export default function CodeEditor() {
                       applyFlowHighlighter() // Real-time highlight updates
                     }
                   }}
-                  options={{ automaticLayout: true, quickSuggestions: false, tabSize: 3 }}
+                  options={{ automaticLayout: true, quickSuggestions: false, tabSize: 2, insertSpaces: true, detectIndentation: false }}
                 />
               </div>
             </>
