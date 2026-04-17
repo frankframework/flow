@@ -61,8 +61,8 @@ export function KeybindsTable() {
   }
 
   return (
-    <div className="border-border border p-4">
-      <div className="flex flex-col items-center">
+    <div className="p-4">
+      <div className="mb-5 flex flex-col items-center">
         <span className="mb-1 text-sm font-medium">Platform</span>
         <SwitchToggle
           options={['PC', 'Mac']}
@@ -71,28 +71,25 @@ export function KeybindsTable() {
         />
       </div>
 
-      <div className="grid gap-8 md:grid-cols-2">
+      <div className="grid items-start gap-6 md:grid-cols-2">
         {[...grouped.entries()].map(([scope, defs]) => (
-          <div key={scope} className="mb-8">
-            <h2 className="mb-2 text-center text-lg font-semibold">
+          <div key={scope} className="border-border overflow-hidden rounded-md border">
+            <h3 className="text-center">
               {scopeLabels[scope] ?? `${capitalize(scope)} Keybinds`}
-            </h2>
-            <table className="w-full border-collapse">
-              <thead>
-                <tr>
-                  <th>Action</th>
-                  <th>Keybinds</th>
-                </tr>
-              </thead>
-              <tbody>
-                {defs.map((shortcut) => (
-                  <tr key={shortcut.id}>
-                    <td>{shortcut.label}</td>
-                    <td>{formatKeybind(shortcut, platform)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            </h3>
+            <div className="border-b-border bg-backdrop flex border-b font-bold">
+              <div className="border-r-border flex-1 border-r px-[13px] py-[6px] text-sm">Action</div>
+              <div className="flex-1 px-[13px] py-[6px] text-sm">Keybinds</div>
+            </div>
+            {defs.map((shortcut, i) => (
+              <div
+                key={shortcut.id}
+                className={`border-b-border flex border-b last:border-b-0 ${i % 2 === 1 ? 'bg-backdrop' : 'bg-background'}`}
+              >
+                <div className="border-r-border flex-1 border-r px-[13px] py-[6px] text-sm">{shortcut.label}</div>
+                <div className="flex-1 px-[13px] py-[6px] text-sm">{formatKeybind(shortcut, platform)}</div>
+              </div>
+            ))}
           </div>
         ))}
       </div>

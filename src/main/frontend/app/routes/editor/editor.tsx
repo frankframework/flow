@@ -2,6 +2,10 @@ import RulerCrossPenIcon from '/icons/solar/Ruler Cross Pen.svg?react'
 import Editor, { type Monaco, type OnMount } from '@monaco-editor/react'
 import prettier from 'prettier/standalone'
 import prettierPluginXml from '@prettier/plugin-xml'
+type ITextModel = Monaco['editor']['ITextModel']
+type FindMatch = Monaco['editor']['FindMatch']
+type IModelDeltaDecoration = Monaco['editor']['IModelDeltaDecoration']
+type IEditorDecorationsCollection = Monaco['editor']['IEditorDecorationsCollection']
 import clsx from 'clsx'
 import XsdFeatures from 'monaco-xsd-code-completion/esm/XsdFeatures'
 import 'monaco-xsd-code-completion/src/style.css'
@@ -113,7 +117,6 @@ function mapToValidationErrors(rawErrors: readonly XMLValidationError[], model: 
 
   return rawErrors
     .map((e) => {
-      // Use the reported line number, capped to the model
       const lineNumber = Math.max(1, Math.min(e.loc?.lineNumber ?? 1, totalLines))
       const { startColumn, endColumn } = findErrorRange(model.getLineContent(lineNumber), e.message)
       return { message: e.message, lineNumber, startColumn, endColumn }
@@ -168,6 +171,72 @@ function prettierFormat(xml: string): Promise<string> {
     tabWidth: 2,
   })
 }
+  
+async function validateFlow(content: string, model: ITextModel): Promise<ValidationError[]> {
+  const flowFragment = extractFlowElements(content)
+  if (!flowFragment) return []
+
+  const wrapped = wrapFlowXml(flowFragment)
+  const startLine = findFlowElementsStartLine(content)
+
+  const flowResult = await validateXML({
+    xml: [{ fileName: 'flow.xml', contents: wrapped }],
+    schema: [{ fileName: 'flowconfig.xsd', contents: flowXsd }],
+  })
+
+  return mapToValidationErrors(flowResult.errors, model).map((err) => ({
+    ...err,
+    lineNumber: err.lineNumber + startLine,
+    startColumn: 1,
+    endColumn: model.getLineLength(err.lineNumber + startLine),
+  }))
+}
+
+async function validateConfiguration(content: string, xsd: string, model: ITextModel): Promise<ValidationError[]> {
+  const result = await validateXML({
+    xml: [{ fileName: 'config.xml', contents: content }],
+    schema: [{ fileName: 'FrankConfig.xsd', contents: xsd }],
+  })
+
+  if (!result.valid && result.errors.length === 0) {
+    return [notWellFormedError(model)]
+  }
+
+  const filtered = result.errors.filter(
+    (e) => !e.message.includes('{urn:frank-flow}') && !e.message.includes('Skipping attribute use prohibition'),
+  )
+
+  return mapToValidationErrors(filtered, model)
+}
+
+/**
+ * Maps a single Monaco regex match to decoration objects.
+ */
+function mapMatchToDecorations(match: FindMatch): IModelDeltaDecoration[] {
+  const keyText = match.matches![1]
+  const valueText = match.matches![3]
+
+  return [
+    {
+      range: {
+        startLineNumber: match.range.startLineNumber,
+        startColumn: match.range.startColumn,
+        endLineNumber: match.range.startLineNumber,
+        endColumn: match.range.startColumn + keyText.length,
+      },
+      options: { inlineClassName: 'monaco-flow-attribute' },
+    },
+    {
+      range: {
+        startLineNumber: match.range.startLineNumber,
+        startColumn: match.range.endColumn - valueText.length,
+        endLineNumber: match.range.startLineNumber,
+        endColumn: match.range.endColumn,
+      },
+      options: { inlineClassName: 'monaco-flow-attribute-value' },
+    },
+  ]
+}
 
 export default function CodeEditor() {
   const theme = useTheme()
@@ -183,6 +252,7 @@ export default function CodeEditor() {
   const monacoReference = useRef<Monaco | null>(null)
   const xsdContentRef = useRef<string | null>(null)
   const errorDecorationsRef = useRef<{ clear: () => void } | null>(null)
+  const flowDecorationsRef = useRef<IEditorDecorationsCollection | null>(null)
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const validationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -204,6 +274,30 @@ export default function CodeEditor() {
   const lastRefreshCounterRef = useRef(refreshCounter)
 
   const isDiffTab = activeTab.type === 'diff'
+
+  const applyFlowHighlighter = useCallback(() => {
+    const editor = editorReference.current
+    const model = editor?.getModel()
+
+    if (!editor || !model || fileLanguage !== 'xml') return
+
+    const matches = model.findMatches(
+      String.raw`\b(xmlns:flow|flow:[\w-]+)(\s*=\s*)("[^"]*"|'[^']*')`,
+      false,
+      true,
+      false,
+      null,
+      true,
+    )
+
+    const decorations = matches.flatMap((match) => mapMatchToDecorations(match))
+
+    if (flowDecorationsRef.current) {
+      flowDecorationsRef.current.set(decorations)
+    } else {
+      flowDecorationsRef.current = editor.createDecorationsCollection(decorations)
+    }
+  }, [fileLanguage])
 
   const performSave = useCallback(
     (content?: string) => {
@@ -323,64 +417,27 @@ export default function CodeEditor() {
 
   const runSchemaValidation = useCallback(
     async (content: string) => {
-      const monaco = monacoReference.current
       const editor = editorReference.current
       const xsdContent = xsdContentRef.current
-      if (!monaco || !editor || !xsdContent) return
+      if (!editor || !xsdContent) return
 
       const validationId = ++validationCounterRef.current
+      const model = editor.getModel() as ITextModel
+      if (!model) return
 
       try {
-        const model = editor.getModel()
-        if (!model) return
-
-        const flowFragment = extractFlowElements(content)
-        let flowErrors: ValidationError[] = []
-
-        if (flowFragment) {
-          const wrapped = wrapFlowXml(flowFragment)
-          const startLine = findFlowElementsStartLine(content)
-
-          const flowResult = await validateXML({
-            xml: [{ fileName: 'flow.xml', contents: wrapped }],
-            schema: [{ fileName: 'flowconfig.xsd', contents: flowXsd }],
-          })
-
-          // Map errors and offset the line numbers
-          flowErrors = mapToValidationErrors(flowResult.errors, model).map((errorInformation) => ({
-            ...errorInformation,
-            lineNumber: errorInformation.lineNumber + startLine, // shift relative to full file
-            startColumn: 1,
-            endColumn: model.getLineLength(errorInformation.lineNumber + startLine),
-          }))
-        }
-        const result = await validateXML({
-          xml: [{ fileName: 'config.xml', contents: content }],
-          schema: [{ fileName: 'FrankConfig.xsd', contents: xsdContent }],
-        })
+        const [flowErrors, frankErrors] = await Promise.all([
+          validateFlow(content, model),
+          validateConfiguration(content, xsdContent, model),
+        ])
 
         if (validationId !== validationCounterRef.current) return
 
-        if (!result.valid && result.errors.length === 0) {
-          applyValidationDecorations([notWellFormedError(model)])
-          return
-        }
-
-        // Filter out errors mentioning the flow namespace
-        const filteredErrors = result.errors.filter(
-          (error) =>
-            !error.message.includes('{urn:frank-flow}') &&
-            !error.message.includes('Skipping attribute use prohibition'), // This gets prompted by flowelements being present in the xml, harmless so we filter it out
-        )
-        const frankErrors = mapToValidationErrors(filteredErrors, model)
-
-        // Then merge the FlowErrors and the FrankErrors
         applyValidationDecorations([...frankErrors, ...flowErrors])
       } catch {
-        if (validationId !== validationCounterRef.current) return
-        const model = editor.getModel()
-        if (!model) return
-        applyValidationDecorations([notWellFormedError(model)])
+        if (validationId === validationCounterRef.current) {
+          applyValidationDecorations([notWellFormedError(model)])
+        }
       }
     },
     [applyValidationDecorations],
@@ -420,6 +477,8 @@ export default function CodeEditor() {
     editorReference.current = editor
     monacoReference.current = monacoInstance
     setEditorMounted(true)
+
+    applyFlowHighlighter()
 
     editor.addAction({
       id: 'save-file',
@@ -471,7 +530,6 @@ export default function CodeEditor() {
     return useEditorTabStore.subscribe(
       (state) => state.activeTabFilePath,
       (newActiveTab, oldActiveTab) => {
-        if (oldActiveTab && oldActiveTab !== newActiveTab) flushPendingSave()
         if (oldActiveTab && oldActiveTab !== newActiveTab) {
           const currentEditor = editorReference.current
           if (currentEditor) {
@@ -544,6 +602,10 @@ export default function CodeEditor() {
       errorDecorationsRef.current.clear()
       errorDecorationsRef.current = null
     }
+    // Also clear flow decorations when switching files
+    if (flowDecorationsRef.current) {
+      flowDecorationsRef.current.set([])
+    }
     const monaco = monacoReference.current
     const editor = editorReference.current
     if (monaco && editor) {
@@ -555,7 +617,8 @@ export default function CodeEditor() {
   useEffect(() => {
     if (!fileContent || !xsdLoaded || isDiffTab || fileLanguage !== 'xml') return
     runSchemaValidation(fileContent)
-  }, [fileContent, xsdLoaded, isDiffTab, runSchemaValidation, fileLanguage])
+    applyFlowHighlighter() // Refresh highlighter when schema is loaded or content changes
+  }, [fileContent, xsdLoaded, isDiffTab, runSchemaValidation, fileLanguage, applyFlowHighlighter])
 
   useEffect(() => {
     if (!fileContent || !activeTabFilePath || !editorReference.current || isDiffTab) return
@@ -678,12 +741,15 @@ export default function CodeEditor() {
               <div className="h-full">
                 <Editor
                   language={fileLanguage}
-                  theme={`vs-${theme}`}
+                  theme={theme === 'dark' ? 'vs-dark' : 'vs'}
                   value={fileContent}
                   onMount={handleEditorMount}
                   onChange={(value) => {
                     scheduleSave()
-                    if (value && fileLanguage === 'xml') scheduleSchemaValidation(value)
+                    if (value && fileLanguage === 'xml') {
+                      scheduleSchemaValidation(value)
+                      applyFlowHighlighter() // Real-time highlight updates
+                    }
                   }}
                   options={{ automaticLayout: true, quickSuggestions: false, tabSize: 3 }}
                 />

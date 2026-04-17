@@ -6,6 +6,7 @@ import { clearConfigurationCache } from '~/services/configuration-service'
 import useTabStore from '~/stores/tab-store'
 import useEditorTabStore from '~/stores/editor-tab-store'
 import { showErrorToast, showErrorToastFrom } from '~/components/toast'
+import { FILE_NAME_PATTERNS, FOLDER_OR_ADAPTER_NAME_PATTERNS } from '~/components/file-structure/name-input-dialog'
 
 export interface ContextMenuState {
   position: { x: number; y: number }
@@ -20,6 +21,7 @@ export interface NameDialogState {
   title: string
   initialValue?: string
   onSubmit: (name: string) => void
+  patterns?: Record<string, RegExp>
 }
 
 export interface DeleteTargetState {
@@ -130,6 +132,7 @@ export function useFileTreeContextMenu({
           }
           setNameDialog(null)
         },
+        patterns: FILE_NAME_PATTERNS,
       })
     },
     [projectName, dataProvider, closeContextMenu],
@@ -154,6 +157,7 @@ export function useFileTreeContextMenu({
           }
           setNameDialog(null)
         },
+        patterns: FOLDER_OR_ADAPTER_NAME_PATTERNS,
       })
     },
     [projectName, dataProvider, closeContextMenu],
@@ -193,6 +197,7 @@ export function useFileTreeContextMenu({
           }
           setNameDialog(null)
         },
+        patterns: menu.isFolder ? FOLDER_OR_ADAPTER_NAME_PATTERNS : FILE_NAME_PATTERNS,
       })
     },
     [projectName, dataProvider, onAfterRename, closeContextMenu],

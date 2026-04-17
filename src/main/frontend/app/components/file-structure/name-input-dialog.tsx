@@ -1,24 +1,42 @@
-import { useRef, useState } from 'react'
+import React, { useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import Button from '~/components/inputs/button'
 import ValidatedInput from '~/components/inputs/validatedInput'
 
-const namePatterns: Record<string, RegExp> = {
+const BASE_NAME_PATTERNS: Record<string, RegExp> = {
   'Cannot be empty': /^(?!\s*$).+/,
   'Cannot contain /': /^[^/]*$/,
   'Cannot contain \\': /^[^\\]*$/,
   'Cannot contain ..': /^(?!.*\.\.).*$/,
+}
+
+export const FILE_NAME_PATTERNS: Record<string, RegExp> = {
+  ...BASE_NAME_PATTERNS,
   'Must end with:\n.xml, .json, .yaml, .yml, or .properties': /^(.*\.(xml|json|yaml|yml|properties))?$/i,
 }
+
+export const CONFIGURATION_NAME_PATTERNS: Record<string, RegExp> = {
+  ...BASE_NAME_PATTERNS,
+  'Must end with:\n.xml': /^(.*\.(xml))?$/i,
+}
+
+export const FOLDER_OR_ADAPTER_NAME_PATTERNS: Record<string, RegExp> = BASE_NAME_PATTERNS
 
 interface NameInputDialogProps {
   title: string
   initialValue?: string
   onSubmit: (name: string) => void
   onCancel: () => void
+  patterns?: Record<string, RegExp>
 }
 
-export default function NameInputDialog({ title, initialValue = '', onSubmit, onCancel }: NameInputDialogProps) {
+export default function NameInputDialog({
+  title,
+  initialValue = '',
+  onSubmit,
+  onCancel,
+  patterns = FOLDER_OR_ADAPTER_NAME_PATTERNS,
+}: NameInputDialogProps) {
   const [value, setValue] = useState(initialValue)
   const [isValid, setIsValid] = useState(false)
   const overlayRef = useRef<HTMLDivElement>(null)
@@ -54,7 +72,7 @@ export default function NameInputDialog({ title, initialValue = '', onSubmit, on
           autoFocus
           onFocus={(e) => e.target.select()}
           value={value}
-          patterns={namePatterns}
+          patterns={patterns}
           onValidChange={setIsValid}
           onChange={(e) => setValue(e.target.value)}
           onKeyDown={handleKeyDown}
