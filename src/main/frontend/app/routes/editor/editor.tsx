@@ -171,7 +171,7 @@ function prettierFormat(xml: string): Promise<string> {
     tabWidth: 2,
   })
 }
-  
+
 async function validateFlow(content: string, model: ITextModel): Promise<ValidationError[]> {
   const flowFragment = extractFlowElements(content)
   if (!flowFragment) return []
@@ -751,17 +751,21 @@ export default function CodeEditor() {
                       applyFlowHighlighter() // Real-time highlight updates
                     }
                   }}
-                  options={{ automaticLayout: true, quickSuggestions: false, tabSize: 2, insertSpaces: true, detectIndentation: false }}
+                  options={{
+                    automaticLayout: true,
+                    quickSuggestions: false,
+                    tabSize: 2,
+                    insertSpaces: true,
+                    detectIndentation: false,
+                  }}
                 />
               </div>
             </>
           )
         ) : (
-          <div className="text-muted-foreground flex h-full flex-col items-center justify-center p-8 text-center">
-            <div className="border-border bg-background/40 max-w-md rounded-2xl border border-dashed p-10 shadow-inner backdrop-blur-sm">
-              <h2 className="mb-2 text-xl font-semibold">No file selected</h2>
-              <p className="text-sm">Select an adapter from the file structure on the left to start editing.</p>
-            </div>
+          <div className="text-foreground-muted flex h-full flex-col items-center justify-center p-8 text-center">
+            <h2 className="mb-2 text-xl font-semibold">No file selected</h2>
+            <p className="text-sm">Select a file from the file structure on the left to start editing.</p>
           </div>
         )}
       </>
