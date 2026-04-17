@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router'
 import FfIcon from '/icons/custom/ff!-icon.svg?react'
 import ArchiveIcon from '/icons/solar/Archive.svg?react'
+import { fetchInstanceConfigurations, type FFConfiguration } from '~/services/frank-framework-service'
 import { useProjectStore } from '~/stores/project-store'
 
 import ProjectRow from './project-row'
@@ -40,6 +41,9 @@ export default function ProjectLanding() {
   const [isLocalEnvironment, setIsLocalEnvironment] = useState(true)
   const [rootLocationName, setRootLocationName] = useState('Computer')
   const [isOpeningProject, setIsOpeningProject] = useState(false)
+  const [isDiscovering, setIsDiscovering] = useState(false)
+  const [ffConfiguration, setFFConfiguration] = useState<FFConfiguration[]>([])
+  const [ffInstanceName, setFFInstanceName] = useState('')
   const importInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -66,6 +70,27 @@ export default function ProjectLanding() {
       showErrorToast(`Could not load in projects: ${apiError.message}`)
     }
   }, [apiError])
+
+  useEffect(() => {
+    if (!isLocalEnvironment) return
+
+    const discover = () => {
+      setIsDiscovering(true)
+      fetchInstanceConfigurations()
+        .then((ffInstance) => {
+          setFFInstanceName(ffInstance.name)
+          setFFConfiguration(ffInstance.configurations)
+        })
+        .finally(() => setIsDiscovering(false))
+    }
+
+    discover()
+    const interval = setInterval(discover, 60_000)
+
+    return () => {
+      clearInterval(interval)
+    }
+  }, [isLocalEnvironment])
 
   const handleOpenProject = useCallback(
     async (rootPath: string) => {
@@ -166,7 +191,7 @@ export default function ProjectLanding() {
     <div className="bg-backdrop flex min-h-screen w-full flex-col items-center pt-20">
       <Header />
 
-      <main className="border-border bg-background flex min-h-[400px] w-2/5 flex-col rounded border shadow">
+      <main className="border-border bg-background flex min-h-100 w-2/5 flex-col rounded border shadow">
         <Toolbar onSearchChange={setSearchTerm} />
 
         <div className="flex flex-1 overflow-hidden">
@@ -183,6 +208,9 @@ export default function ProjectLanding() {
             onProjectClick={handleOpenProject}
             onRemoveProject={onRemoveProject}
             onExportProject={onExportProject}
+            frameworkInstanceName={ffInstanceName}
+            frameworkConfigurations={ffConfiguration}
+            isDiscovering={isDiscovering}
           />
         </div>
 
@@ -250,7 +278,7 @@ const Sidebar = ({
   onCloneClick: () => void
   onImportClick: () => void
 }) => (
-  <nav className="border-border flex w-1/4 min-w-[200px] flex-col gap-3 border-r p-4">
+  <nav className="border-border flex w-1/4 min-w-50 flex-col gap-3 border-r p-4">
     <ActionButton label={isLocal ? 'Open Local Folder' : 'Open Workspace Project'} onClick={onOpenClick} />
     <ActionButton label="Clone Repository" onClick={onCloneClick} />
     <ActionButton label="New Project" onClick={onNewClick} />
@@ -264,34 +292,64 @@ const ProjectList = ({
   onProjectClick,
   onRemoveProject,
   onExportProject,
+  frameworkInstanceName,
+  frameworkConfigurations,
+  isDiscovering,
 }: {
   projects: RecentProject[]
   isLocal: boolean
   onProjectClick: (rootPath: string) => void
   onRemoveProject: (rootPath: string) => void
   onExportProject: (projectName: string) => void
+  frameworkInstanceName: string
+  frameworkConfigurations: FFConfiguration[]
+  isDiscovering: boolean
 }) => (
   <section className="h-full flex-1 overflow-y-auto p-4">
-    {projects.length === 0 ? (
+    {frameworkConfigurations.length > 0 && (
+      <div className="mb-4">
+        <p className="mb-2 text-xs font-semibold tracking-wider text-slate-500 uppercase">Remote</p>
+        {frameworkConfigurations.map((configuration) => (
+          <div
+            key={configuration.name}
+            className="hover:bg-backdrop mb-2 flex w-full cursor-pointer items-center justify-between rounded px-3 py-2"
+          >
+            <div className="flex flex-col">
+              <div className="font-medium">{configuration.name}</div>
+              {configuration.filename && <p className="text-foreground-muted text-xs">{configuration.filename}</p>}
+            </div>
+            <span className="rounded bg-green-100 px-2 py-0.5 text-xs text-green-700">{frameworkInstanceName}</span>
+          </div>
+        ))}
+      </div>
+    )}
+    {isDiscovering && frameworkConfigurations.length === 0 && (
+      <p className="mb-2 text-xs text-slate-400 italic">Scanning for remote instances...</p>
+    )}
+    {projects.length === 0 && frameworkConfigurations.length === 0 && !isDiscovering && (
       <p className="text-muted-foreground mt-10 text-center text-sm italic">No projects found</p>
-    ) : (
-      projects.map((project) => (
-        <ProjectRow
-          key={project.rootPath}
-          project={project}
-          isLocal={isLocal}
-          onClick={() => onProjectClick(project.rootPath)}
-          onRemove={() => onRemoveProject(project.rootPath)}
-          onExport={() => onExportProject(project.name)}
-        />
-      ))
+    )}
+    {projects.length > 0 && (
+      <>
+        <p className="mb-2 text-xs font-semibold tracking-wider text-slate-400 uppercase">Recent</p>
+        {projects.map((project) => (
+          <ProjectRow
+            key={project.rootPath}
+            project={project}
+            isLocal={isLocal}
+            onClick={() => onProjectClick(project.rootPath)}
+            onRemove={() => onRemoveProject(project.rootPath)}
+            onExport={() => onExportProject(project.name)}
+          />
+        ))}
+      </>
     )}
   </section>
 )
 
 const Toolbar = ({ onSearchChange }: { onSearchChange: (val: string) => void }) => (
   <div className="border-border flex h-12 border-b">
-    <div className="border-border flex w-1/4 min-w-[200px] items-center border-r px-4 text-xs font-bold tracking-wider text-slate-500 uppercase">
+    <div className="border-border flex w-1/4 min-w-50 items-center border-r px-4 text-xs font-bold tracking-wider text-slate-500 uppercase">
       <ArchiveIcon className="mr-2 h-4 w-4" /> Recent
     </div>
     <div className="flex flex-1 items-center px-4">

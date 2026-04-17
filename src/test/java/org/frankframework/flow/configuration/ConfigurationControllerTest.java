@@ -40,12 +40,6 @@ class ConfigurationControllerTest {
 	@MockitoBean
 	private FileSystemStorage fileSystemStorage;
 
-	@MockitoBean
-	private org.frankframework.flow.security.UserContextFilter userContextFilter;
-
-	@MockitoBean
-	private org.frankframework.flow.security.UserWorkspaceContext userWorkspaceContext;
-
 	private static final String TEST_PROJECT_NAME = "FrankFlowTestProject";
 
 	@BeforeEach

@@ -3,10 +3,19 @@ package org.frankframework.flow.project;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
+import org.frankframework.flow.common.AllowAllFrankUserRoles;
+import org.frankframework.flow.common.FrankFrameworkService;
+import org.frankframework.flow.common.config.ClientSession;
+import org.frankframework.flow.exception.ApiException;
 import org.frankframework.flow.projectsettings.InvalidFilterTypeException;
 import org.frankframework.flow.recentproject.RecentProjectsService;
+import org.frankframework.management.bus.BusAction;
+import org.frankframework.management.bus.BusTopic;
+import org.frankframework.management.bus.message.RequestMessageBuilder;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,10 +35,12 @@ public class ProjectController {
 
 	private final ProjectService projectService;
 	private final RecentProjectsService recentProjectsService;
+	private final FrankFrameworkService frankFrameworkService;
 
-	public ProjectController(ProjectService projectService, RecentProjectsService recentProjectsService) {
+	public ProjectController(ProjectService projectService, RecentProjectsService recentProjectsService, FrankFrameworkService frankFrameworkService) {
 		this.projectService = projectService;
 		this.recentProjectsService = recentProjectsService;
+		this.frankFrameworkService = frankFrameworkService;
 	}
 
 	@GetMapping
@@ -106,5 +117,17 @@ public class ProjectController {
 		Project project = projectService.importProjectFromFiles(projectName, files, paths);
 		recentProjectsService.addRecentProject(project.getName(), project.getRootPath());
 		return ResponseEntity.ok(projectService.toDto(project));
+	}
+
+	@AllowAllFrankUserRoles
+	@GetMapping("/configurations")
+	public Map<String, Object> getFrameworkConfigurations(ClientSession session) throws ApiException {
+		RequestMessageBuilder builder = RequestMessageBuilder.create(BusTopic.CONFIGURATION, BusAction.FIND);
+		ResponseEntity<?> configurations = frankFrameworkService.callSyncGateway(builder);
+
+		Map<String, Object> response = new HashMap<>();
+		response.put("configurations", configurations.getBody());
+		response.put("name", session.getMemberTarget());
+		return response;
 	}
 }

@@ -27,12 +27,6 @@ class AdapterControllerTest {
 	@MockitoBean
 	private AdapterService adapterService;
 
-	@MockitoBean
-	private org.frankframework.flow.security.UserContextFilter userContextFilter;
-
-	@MockitoBean
-	private org.frankframework.flow.security.UserWorkspaceContext userWorkspaceContext;
-
 	@Test
 	void getAdapterReturns200() throws Exception {
 		String projectName = "MyProject";

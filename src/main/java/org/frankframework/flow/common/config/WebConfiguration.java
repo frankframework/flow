@@ -1,9 +1,11 @@
 package org.frankframework.flow.common.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.frankframework.management.gateway.InputStreamHttpMessageConverter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.converter.HttpMessageConverters;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.method.HandlerTypePredicate;
@@ -33,6 +35,12 @@ public class WebConfiguration implements WebMvcConfigurer {
 	public void configurePathMatch(PathMatchConfigurer configurer) {
 		configurer.addPathPrefix("/api", HandlerTypePredicate.forAnnotation(RestController.class));
 	}
+
+	@Override
+	public void configureMessageConverters(HttpMessageConverters.ServerBuilder builder) {
+		builder.addCustomConverter(new InputStreamHttpMessageConverter());
+	}
+
 
 	@Bean
 	public ObjectMapper objectMapper() {
