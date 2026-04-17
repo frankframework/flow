@@ -90,8 +90,11 @@ export default function StudioFileStructure() {
 
   const triggerExplorerAction = useCallback(
     (action: (menuState: StudioContextMenuState) => void, requireSelection: boolean) => {
+      if (document.activeElement?.closest?.('#flow-canvas')) return
+
       const itemId = selectedItemId ?? (requireSelection ? null : 'root')
       if (!itemId || (itemId === 'root' && requireSelection)) return
+
       void buildContextForItem(itemId).then((menuState) => {
         if (menuState) action(menuState)
       })

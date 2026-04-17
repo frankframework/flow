@@ -68,25 +68,27 @@ export default function Studio() {
 
         {activeTab ? (
           <>
-            <div className="border-b-border bg-background flex h-12 items-center justify-between border-b p-4">
-              <span>
-                Path: {activeTabPath && project ? toProjectRelativePath(activeTabPath, project) : activeTabPath}
+            <div className="border-b-border bg-background flex items-center justify-between border-b px-4 py-2">
+              <span className="text-foreground-muted truncate text-sm">
+                {activeTabPath && project ? toProjectRelativePath(activeTabPath, project) : activeTabPath}
               </span>
-              <Button onClick={handleOpenInEditor} className="flex items-center gap-1.5" title="Open in Editor">
+              <Button
+                onClick={handleOpenInEditor}
+                className="flex shrink-0 items-center gap-2 px-5 py-2 text-sm"
+                title="Open in Editor"
+              >
                 <CodeIcon className="h-4 w-4 fill-current" />
-                Open in Editor
+                <span className="whitespace-nowrap">Open in Editor</span>
               </Button>
             </div>
             <Flow showNodeContextMenu={handleShowNodeContext} />
           </>
         ) : (
-          <div className="text-muted-foreground flex h-full flex-col items-center justify-center p-8 text-center">
-            <div className="border-border bg-background/40 max-w-md rounded-2xl border border-dashed p-10 shadow-inner backdrop-blur-sm">
-              <h2 className="mb-2 text-xl font-semibold">No file selected</h2>
-              <p className="text-sm">
-                Select an adapter from the file structure on the left to start building your flow.
-              </p>
-            </div>
+          <div className="text-foreground-muted flex h-full flex-col items-center justify-center p-8 text-center">
+            <h2 className="mb-2 text-xl font-semibold">No file selected</h2>
+            <p className="text-sm">
+              Select an adapter from the file structure on the left to start building your flow.
+            </p>
           </div>
         )}
       </>

@@ -12,6 +12,7 @@ export interface StudioSettings {
   previewOnSave: boolean
   autoRefresh: boolean
   gradient: boolean
+  paletteExpandedByDefault: boolean
 }
 
 export interface ProjectSettings {
@@ -64,6 +65,7 @@ const defaultStudioSettings: StudioSettings = {
   previewOnSave: true,
   autoRefresh: true,
   gradient: false,
+  paletteExpandedByDefault: true,
 }
 
 const defaultProjectSettings: ProjectSettings = {

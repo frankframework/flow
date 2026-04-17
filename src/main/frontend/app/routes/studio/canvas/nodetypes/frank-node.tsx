@@ -1,4 +1,12 @@
-import { Handle, type Node, type NodeProps, NodeResizeControl, Position, useUpdateNodeInternals } from '@xyflow/react'
+import {
+  Handle,
+  type Node,
+  type NodeProps,
+  NodeResizeControl,
+  Position,
+  useStore,
+  useUpdateNodeInternals,
+} from '@xyflow/react'
 import DangerIcon from '../../../../../icons/solar/Danger Triangle.svg?react'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import useFlowStore from '~/stores/flow-store'
@@ -42,7 +50,7 @@ export type FrankNodeType = Node<{
 
 export default function FrankNode(properties: NodeProps<FrankNodeType>) {
   const minNodeWidth = FlowConfig.NODE_DEFAULT_WIDTH
-  const minNodeHeight = FlowConfig.NODE_DEFAULT_HEIGHT
+  const minNodeHeight = FlowConfig.NODE_MIN_HEIGHT
   const type = properties.data.type.toLowerCase()
   const colorVariable = `--type-${type}`
   const handleSpacing = 20
@@ -63,13 +71,17 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
     setEditingSubtype,
   } = useNodeContextStore()
   const gradientEnabled = useSettingsStore((state) => state.studio.gradient)
-  // Store the associated Frank element
+  const zoom = useStore((state) => state.transform[2])
+  const isCompact = zoom < 0.4
+  const [isOverflowing, setIsOverflowing] = useState(false)
+
   const frankElement = useMemo(() => {
     if (!elements) return null
     const recordElements = elements as Record<string, ElementDetails>
 
     return Object.values(recordElements).find((element) => element.name === properties.data.subtype) ?? null
   }, [elements, properties.data.subtype])
+
   const isDeprecated = frankElement?.deprecated
   const [showDeprecated, setShowDeprecated] = useState(false)
   const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null)
@@ -99,6 +111,10 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
   const firstHandlePosition = useMemo(() => {
     return (dimensions.height - (properties.data.sourceHandles.length - 1) * handleSpacing) / 2
   }, [dimensions.height, properties.data.sourceHandles.length])
+
+  const compactFirstHandlePosition = useMemo(() => {
+    return (minNodeHeight - (properties.data.sourceHandles.length - 1) * handleSpacing) / 2
+  }, [minNodeHeight, properties.data.sourceHandles.length])
 
   const allForwardTypesUsed = useMemo(() => {
     if (availableHandleTypes.length === 0) return true
@@ -143,6 +159,8 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
   useLayoutEffect(() => {
     if (containerReference.current) {
       const measuredHeight = containerReference.current.offsetHeight
+      const scrollHeight = containerReference.current.scrollHeight
+      setIsOverflowing(scrollHeight > measuredHeight + 4)
       setDimensions((previous) => {
         if (Math.abs(previous.height - measuredHeight) > 2) {
           return { ...previous, height: measuredHeight }
@@ -355,6 +373,68 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
     }
   }, [draggedName, canAcceptChild, frankElement])
 
+  if (isCompact) {
+    const abbr =
+      properties.data.subtype.replaceAll(/[a-z]/g, '').slice(0, 4) || properties.data.subtype.slice(0, 2).toUpperCase()
+
+    return (
+      <>
+        <div
+          className="bg-background border-border flex h-full w-full flex-col items-center justify-center gap-2 overflow-hidden rounded-md border"
+          style={{
+            minWidth: `${minNodeWidth}px`,
+            minHeight: `${minNodeHeight}px`,
+            ...(properties.selected && { borderColor: `var(${colorVariable})` }),
+          }}
+          onDoubleClick={editNode}
+        >
+          <div
+            className="flex h-32 w-32 shrink-0 items-center justify-center rounded-3xl shadow-md"
+            style={{
+              backgroundColor: `color-mix(in srgb, var(${colorVariable}) 25%, transparent)`,
+              border: `3px solid var(${colorVariable})`,
+            }}
+          >
+            <span className="text-4xl font-black tracking-tight" style={{ color: `var(${colorVariable})` }}>
+              {abbr}
+            </span>
+          </div>
+
+          <span className="mt-5 line-clamp-2 w-full px-2 text-center text-2xl leading-snug font-semibold">
+            {properties.data.subtype}
+          </span>
+
+          {properties.data.name && (
+            <span className="text-foreground-muted line-clamp-1 w-full px-1 text-center text-2xl">
+              {properties.data.name}
+            </span>
+          )}
+        </div>
+
+        {frankElement?.name && frankElement.name !== 'Receiver' && (
+          <Handle
+            type="target"
+            position={Position.Left}
+            style={{ opacity: 0, left: '-15px', width: '15px', height: '15px' }}
+          />
+        )}
+
+        {properties.data.sourceHandles.map((handle) => (
+          <CustomHandle
+            key={handle.type + handle.index}
+            type={handle.type}
+            index={handle.index}
+            firstHandlePosition={compactFirstHandlePosition}
+            handleSpacing={handleSpacing}
+            onChangeType={(newType) => changeHandleType(handle.index, newType)}
+            absolutePosition={{ x: properties.positionAbsoluteX, y: properties.positionAbsoluteY }}
+            typesAllowed={frankElement?.forwards}
+          />
+        ))}
+      </>
+    )
+  }
+
   return (
     <>
       <NodeResizeControl
@@ -373,10 +453,11 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
         <ResizeIcon />
       </NodeResizeControl>
       <div
-        className={`bg-background flex h-full w-full flex-col items-center overflow-x-visible overflow-y-hidden rounded-md border ${properties.selected ? 'border-blue-500' : 'border-border'}`}
+        className={`bg-background border-border relative flex w-full flex-col items-center overflow-x-visible rounded-md border ${properties.height ? 'h-full overflow-y-hidden' : 'overflow-y-visible'}`}
         style={{
           minWidth: `${minNodeWidth}px`,
           minHeight: `${minNodeHeight}px`,
+          ...(properties.selected && { borderColor: `var(${colorVariable})` }),
         }}
         ref={containerReference}
         onDragOver={handleDragOver}
@@ -487,7 +568,20 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
             <p className="text-xs">Add a subcomponent</p>
           </div>
         )}
+
+        {isOverflowing && (
+          <div
+            className="pointer-events-none absolute right-0 bottom-0 left-0 flex items-end justify-center pb-1"
+            style={{
+              height: '28px',
+              background: 'linear-gradient(to bottom, transparent, var(--color-background))',
+            }}
+          >
+            <span className="text-foreground-muted text-[9px] leading-none">▼ more</span>
+          </div>
+        )}
       </div>
+
       {/* Receivers can only have outgoing connections, so we hide the input handle for them */}
       {frankElement?.name && frankElement.name !== 'Receiver' && (
         <Handle
