@@ -1,23 +1,19 @@
 package org.frankframework.flow.common.config;
 
 import jakarta.servlet.http.HttpServletRequest;
-
-import lombok.Getter;
-
-import org.frankframework.management.bus.OutboundGateway;
-
-import org.jspecify.annotations.Nullable;
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.stereotype.Component;
-import org.springframework.web.context.annotation.SessionScope;
-
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.UUID;
+import lombok.Getter;
+import org.frankframework.management.bus.OutboundGateway;
+import org.jspecify.annotations.Nullable;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
+import org.springframework.web.context.annotation.SessionScope;
 
 @Component
 @SessionScope

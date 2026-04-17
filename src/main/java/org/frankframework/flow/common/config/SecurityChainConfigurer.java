@@ -2,9 +2,8 @@ package org.frankframework.flow.common.config;
 
 import org.frankframework.lifecycle.servlets.AuthenticatorUtils;
 import org.frankframework.lifecycle.servlets.IAuthenticator;
-
 import org.frankframework.lifecycle.servlets.SecuritySettings;
-
+import org.frankframework.lifecycle.servlets.ServletConfiguration;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -38,22 +37,26 @@ public class SecurityChainConfigurer implements ApplicationContextAware {
 	}
 
 	@Bean
-	public SecurityFilterChain configureChain(/*IAuthenticator authenticator,*/ HttpSecurity http) throws Exception {
+	public SecurityFilterChain configureChain(IAuthenticator authenticator, HttpSecurity http) throws Exception {
+		configureAuthenticator(authenticator);
 		http.headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin));
 		http.csrf(CsrfConfigurer::disable);
 		http.securityMatcher(AnyRequestMatcher.INSTANCE);
 		http.formLogin(FormLoginConfigurer::disable);
 		http.logout(LogoutConfigurer::disable);
 		http.sessionManagement(management -> management.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED));
-
-		// Doesn't work because it requires endpoints to be defined, WebConfiguration sets up te endpoints and I don't know how to get those here yet.
-		// return authenticator.configureHttpSecurity(http);
-		return http.build();
+		return authenticator.configureHttpSecurity(http);
 	}
 
 	@Bean
 	public IAuthenticator flowAuthenticator() {
 		String propertyPrefix = "application.security.flow.authentication.";
 		return AuthenticatorUtils.createAuthenticator(applicationContext, propertyPrefix);
+	}
+
+	private void configureAuthenticator(IAuthenticator authenticator) {
+		ServletConfiguration servletConfig = new ServletConfiguration();
+		servletConfig.setUrlMapping("/*");
+		authenticator.registerServlet(servletConfig);
 	}
 }

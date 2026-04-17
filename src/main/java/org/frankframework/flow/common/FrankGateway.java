@@ -2,9 +2,7 @@ package org.frankframework.flow.common;
 
 import org.frankframework.management.bus.LocalGateway;
 import org.frankframework.management.bus.OutboundGatewayFactory;
-
 import org.frankframework.management.security.JwtKeyGenerator;
-
 import org.springframework.context.EnvironmentAware;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.env.Environment;

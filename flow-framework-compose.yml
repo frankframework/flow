@@ -7,7 +7,6 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: cloud
       management.gateway.outbound.class: org.frankframework.management.gateway.HazelcastOutboundGateway
-      logger.com.hazelcast: debug
     ports:
       - "8080:8080"
       - "5700-5709:5700-5709"
@@ -17,22 +16,9 @@ services:
     ports:
       - "8081:8080"
       - "5710-5720:5700-5710"
-    configs:
-      - source: resources.yml
-        target: /opt/frank/resources/resources.yml
+    volumes:
+      - ./docker/resources:/opt/frank/resources
     environment:
-      - instance.name=Flow-FF-Network
+      - instance.name=Frank2FlowInstance
       - dtap.stage=LOC
-      - jdbc.required=false
-      - larva.enabled=false
-      - testtool.enabled=false
-      - management.gateway.inbound.class=org.frankframework.management.gateway.HazelcastInboundGateway
-      - management.gateway.outbound.class=org.frankframework.management.gateway.HazelcastOutboundGateway
-
-configs:
-  resources.yml:
-    content: |
-      jdbc:
-        - name: "ff-quick-start"
-          type: "org.h2.jdbcx.JdbcDataSource"
-          url: "jdbc:h2:mem:test;NON_KEYWORDS=VALUE;DB_CLOSE_ON_EXIT=FALSE;DB_CLOSE_DELAY=-1;TRACE_LEVEL_FILE=0;"
+      - management.gateway.inbound.class=org.frankframework.management.gateway.HazelcastInboundGateway,org.frankframework.management.bus.LocalGateway

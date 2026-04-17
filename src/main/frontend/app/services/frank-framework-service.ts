@@ -1,5 +1,10 @@
 import { apiFetch } from '~/utils/api'
 
+interface FFInstance {
+  name: string
+  configurations: FFConfiguration[]
+}
+
 export interface FFConfiguration {
   name: string
   stubbed: boolean
@@ -8,6 +13,6 @@ export interface FFConfiguration {
   filename?: string
 }
 
-export async function fetchInstanceConfigurations(signal?: AbortSignal): Promise<FFConfiguration[]> {
-  return apiFetch<FFConfiguration[]>('/projects/configurations', { signal })
+export async function fetchInstanceConfigurations(signal?: AbortSignal): Promise<FFInstance> {
+  return apiFetch<FFInstance>('/projects/configurations', { signal })
 }

@@ -1,13 +1,13 @@
 package org.frankframework.flow.utility;
 
+import java.io.IOException;
+import java.io.InputStream;
 import lombok.NoArgsConstructor;
-
 import org.frankframework.flow.exception.ApiException;
 import org.frankframework.management.bus.BusMessageUtils;
 import org.frankframework.management.bus.message.EmptyMessage;
 import org.frankframework.management.bus.message.MessageBase;
 import org.frankframework.util.StreamUtil;
-
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.springframework.http.ContentDisposition;
@@ -17,9 +17,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.Message;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
-
-import java.io.IOException;
-import java.io.InputStream;
 
 @NoArgsConstructor(access = lombok.AccessLevel.PRIVATE)
 public class ResponseUtils {

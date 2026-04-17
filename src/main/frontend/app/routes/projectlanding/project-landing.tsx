@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router'
 import FfIcon from '/icons/custom/ff!-icon.svg?react'
 import ArchiveIcon from '/icons/solar/Archive.svg?react'
-import {fetchInstanceConfigurations, type FFConfiguration} from "~/services/frank-framework-service";
+import { fetchInstanceConfigurations, type FFConfiguration } from '~/services/frank-framework-service'
 import { useProjectStore } from '~/stores/project-store'
 
 import ProjectRow from './project-row'
@@ -42,6 +42,8 @@ export default function ProjectLanding() {
   const [rootLocationName, setRootLocationName] = useState('Computer')
   const [isOpeningProject, setIsOpeningProject] = useState(false)
   const [isDiscovering, setIsDiscovering] = useState(false)
+  const [ffConfiguration, setFFConfiguration] = useState<FFConfiguration[]>([])
+  const [ffInstanceName, setFFInstanceName] = useState('')
   const importInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -71,20 +73,21 @@ export default function ProjectLanding() {
 
   useEffect(() => {
     if (!isLocalEnvironment) return
-    const controller = new AbortController()
 
     const discover = () => {
-      fetchInstanceConfigurations(controller.signal)
-        .then((ffConfigurations) => console.log('Found FF configurations:', ffConfigurations))
+      setIsDiscovering(true)
+      fetchInstanceConfigurations()
+        .then((ffInstance) => {
+          setFFInstanceName(ffInstance.name)
+          setFFConfiguration(ffInstance.configurations)
+        })
         .finally(() => setIsDiscovering(false))
     }
 
-    setIsDiscovering(true)
     discover()
-    const interval = setInterval(discover, 3000)
+    const interval = setInterval(discover, 60_000)
 
     return () => {
-      controller.abort()
       clearInterval(interval)
     }
   }, [isLocalEnvironment])
@@ -205,7 +208,8 @@ export default function ProjectLanding() {
             onProjectClick={handleOpenProject}
             onRemoveProject={onRemoveProject}
             onExportProject={onExportProject}
-            frameworkConfigurations={[]}
+            frameworkInstanceName={ffInstanceName}
+            frameworkConfigurations={ffConfiguration}
             isDiscovering={isDiscovering}
           />
         </div>
@@ -288,6 +292,7 @@ const ProjectList = ({
   onProjectClick,
   onRemoveProject,
   onExportProject,
+  frameworkInstanceName,
   frameworkConfigurations,
   isDiscovering,
 }: {
@@ -296,6 +301,7 @@ const ProjectList = ({
   onProjectClick: (rootPath: string) => void
   onRemoveProject: (rootPath: string) => void
   onExportProject: (projectName: string) => void
+  frameworkInstanceName: string
   frameworkConfigurations: FFConfiguration[]
   isDiscovering: boolean
 }) => (
@@ -312,7 +318,7 @@ const ProjectList = ({
               <div className="font-medium">{configuration.name}</div>
               {configuration.filename && <p className="text-foreground-muted text-xs">{configuration.filename}</p>}
             </div>
-            <span className="rounded bg-green-100 px-2 py-0.5 text-xs text-green-700">Live</span>
+            <span className="rounded bg-green-100 px-2 py-0.5 text-xs text-green-700">{frameworkInstanceName}</span>
           </div>
         ))}
       </div>

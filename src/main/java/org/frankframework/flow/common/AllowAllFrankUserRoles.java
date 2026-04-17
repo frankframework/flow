@@ -1,15 +1,13 @@
 package org.frankframework.flow.common;
 
+import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
+
 import jakarta.annotation.security.RolesAllowed;
-
-import org.frankframework.lifecycle.DynamicRegistration;
-
 import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
-
-import static java.lang.annotation.ElementType.METHOD;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
+import org.frankframework.lifecycle.DynamicRegistration;
 
 /**
  * To avoid repeating this list of user roles, use a default annotation
