@@ -111,6 +111,14 @@ export const ALL_SHORTCUTS: Omit<ShortcutDefinition, 'handler'>[] = [
     modifiers: { cmdOrCtrl: true, shift: true },
     displayOnly: true,
   },
+  {
+    id: 'editor.reformat',
+    label: 'Reformat XML',
+    scope: 'editor',
+    key: 'f',
+    modifiers: { alt: true, shift: true },
+    displayOnly: true,
+  },
   { id: 'editor.search', label: 'Find', scope: 'editor', key: 'f', modifiers: { cmdOrCtrl: true }, displayOnly: true },
   {
     id: 'editor.replace',

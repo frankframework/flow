@@ -52,7 +52,7 @@ public class ConfigurationController {
 	public ResponseEntity<XmlDTO> addConfiguration(
 			@PathVariable String projectName,
 			@RequestParam String name
-	) throws ApiException, IOException {
+	) throws ApiException, IOException, TransformerException, ParserConfigurationException, SAXException {
 		String content = configurationService.addConfiguration(projectName, name);
 		XmlDTO xmlDTO = new XmlDTO(content);
 		return ResponseEntity.ok(xmlDTO);

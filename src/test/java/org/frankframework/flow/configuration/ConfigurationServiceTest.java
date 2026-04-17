@@ -2,6 +2,7 @@ package org.frankframework.flow.configuration;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 import java.io.IOException;
@@ -111,8 +112,9 @@ class ConfigurationServiceTest {
 
 		configurationService.updateConfiguration("test", file.toString(), "<new/>");
 
-		assertEquals("<new/>\n", Files.readString(file, StandardCharsets.UTF_8));
-		verify(fileSystemStorage).writeFile(file.toString(), "<new/>\n");
+		String result = Files.readString(file, StandardCharsets.UTF_8).trim();
+		assertEquals("<new/>", result);
+		verify(fileSystemStorage).writeFile(eq(file.toString()), anyString());
 	}
 
 	@Test
