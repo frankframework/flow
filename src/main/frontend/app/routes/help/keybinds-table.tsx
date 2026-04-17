@@ -74,9 +74,7 @@ export function KeybindsTable() {
       <div className="grid items-start gap-6 md:grid-cols-2">
         {[...grouped.entries()].map(([scope, defs]) => (
           <div key={scope} className="border-border overflow-hidden rounded-md border">
-            <h3 className="text-center">
-              {scopeLabels[scope] ?? `${capitalize(scope)} Keybinds`}
-            </h3>
+            <h3 className="text-center">{scopeLabels[scope] ?? `${capitalize(scope)} Keybinds`}</h3>
             <div className="border-b-border bg-backdrop flex border-b font-bold">
               <div className="border-r-border flex-1 border-r px-[13px] py-[6px] text-sm">Action</div>
               <div className="flex-1 px-[13px] py-[6px] text-sm">Keybinds</div>
