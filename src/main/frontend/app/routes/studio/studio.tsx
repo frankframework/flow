@@ -85,7 +85,7 @@ export default function Studio() {
           </>
         ) : (
           <div className="text-foreground-muted flex h-full flex-col items-center justify-center p-8 text-center">
-            <h2 className="mb-2 text-xl font-semibold">No file selected</h2>
+            <h2 className="mb-2 text-xl font-semibold">No adapter selected</h2>
             <p className="text-sm">
               Select an adapter from the file structure on the left to start building your flow.
             </p>
