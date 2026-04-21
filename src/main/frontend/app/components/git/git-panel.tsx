@@ -84,13 +84,14 @@ export default function GitPanel({ projectName, hasStoredToken }: GitPanelProps)
   )
 
   const handleToggleFile = useCallback(
-    (filePath: string) => {
+    async (filePath: string) => {
       const hunkState = useGitStore.getState().fileHunkStates[filePath]
       if (!hunkState || hunkState.totalHunks === 0) {
-        handleSelectFile(filePath)
-        return
+        await handleSelectFile(filePath)
       }
-      if (hunkState.selectedHunks.size === hunkState.totalHunks) {
+
+      const updatedState = useGitStore.getState().fileHunkStates[filePath]
+      if (updatedState.selectedHunks.size === updatedState.totalHunks) {
         clearFileHunks(filePath)
       } else {
         selectAllFileHunks(filePath)
