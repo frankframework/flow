@@ -58,7 +58,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
   const [dragOver, setDragOver] = useState(false)
   const [canDropDraggedElement, setCanDropDraggedElement] = useState(false)
   const showNodeContextMenu = useNodeContextMenu()
-  const { elements, filters } = useFFDoc()
+  const { elements, filters, ffDoc } = useFFDoc()
   const {
     setNodeId,
     setIsNewNode,
@@ -93,8 +93,10 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
 
     const recordElements = elements as Record<string, ElementDetails>
 
-    return Object.values(recordElements).filter((element) => canAcceptChildStatic(frankElement, element.name, filters))
-  }, [elements, frankElement, filters])
+    return Object.values(recordElements).filter((element) =>
+      canAcceptChildStatic(frankElement, element.name, filters, ffDoc?.elements),
+    )
+  }, [elements, frankElement, filters, ffDoc])
   const [mandatoryChildren, setMandatoryChildren] = useState<Requirement[]>([])
   const [mandatoryChildrenFulfilled, setMandatoryChildrenFulfilled] = useState(false)
   const [missingChildren, setMissingChildren] = useState<string[]>([])
@@ -264,9 +266,9 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
 
   const canAcceptChild = useCallback(
     (droppedName: string) => {
-      return canAcceptChildStatic(frankElement, droppedName, filters)
+      return canAcceptChildStatic(frankElement, droppedName, filters, ffDoc?.elements)
     },
-    [frankElement, filters],
+    [frankElement, filters, ffDoc],
   )
 
   const handleDragOver = (event: React.DragEvent) => {
