@@ -115,6 +115,12 @@ interface UseStudioContextMenuOptions {
   dataProvider: StudioDataProviderLike | null
 }
 
+function getRenamePatterns(itemType: StudioItemType): Record<string, RegExp> {
+  if (itemType === 'folder' || itemType === 'adapter') return FOLDER_OR_ADAPTER_NAME_PATTERNS
+  if (itemType === 'file') return FILE_NAME_PATTERNS
+  return CONFIGURATION_NAME_PATTERNS
+}
+
 export function useStudioContextMenu({ projectName, dataProvider }: UseStudioContextMenuOptions) {
   const [contextMenu, setContextMenu] = useState<StudioContextMenuState | null>(null)
   const [nameDialog, setNameDialog] = useState<NameDialogState | null>(null)
@@ -173,7 +179,7 @@ export function useStudioContextMenu({ projectName, dataProvider }: UseStudioCon
             const relativePath =
               folderPath === rootPath
                 ? fileName
-                : `${folderPath.slice(rootPath.length + 1).replace(/\\/g, '/')}/${fileName}`
+                : `${folderPath.slice(rootPath.length + 1).replaceAll('\\', '/')}/${fileName}`
             await createConfiguration(projectName, relativePath)
             await dataProvider.reloadDirectory('root')
           } catch (error) {
@@ -266,12 +272,7 @@ export function useStudioContextMenu({ projectName, dataProvider }: UseStudioCon
           }
           setNameDialog(null)
         },
-        patterns:
-          menu.itemType === 'folder' || menu.itemType === 'adapter'
-            ? FOLDER_OR_ADAPTER_NAME_PATTERNS
-            : menu.itemType === 'file'
-              ? FILE_NAME_PATTERNS
-              : CONFIGURATION_NAME_PATTERNS,
+        patterns: getRenamePatterns(menu.itemType),
       })
     },
     [projectName, dataProvider, closeContextMenu],
