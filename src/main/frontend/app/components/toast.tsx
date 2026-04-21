@@ -16,7 +16,7 @@ const defaultStyle = 'items-end justify-end pointer-events-none'
 const toastStyles = {
   ERROR: {
     container: defaultStyle,
-    card: `${toastBaseCard} bg-error-background`,
+    card: `${toastBaseCard} bg-error`,
     icon: '',
     defaultDuration: 2000,
   },
@@ -99,7 +99,7 @@ export function Toast() {
   return createPortal(
     <div className={clsx('fixed inset-0 z-50 flex px-4', styles.container)} onClick={hideToast} data-theme={theme}>
       <div
-        className={clsx('pointer-events-auto', toast.type !== 'ERROR' && 'mr-4 mb-4')}
+        className="pointer-events-auto mr-4 mb-4"
         onClick={(e) => e.stopPropagation()}
       >
         <div className={clsx(styles.card)}>
