@@ -19,7 +19,7 @@ export interface ShortcutDefinition {
   modifiers?: PlatformValue<KeyModifiers>
   allowInInput?: boolean
   displayOnly?: boolean
-  handler?: () => void
+  handler?: () => boolean | void
 }
 
 function capitalize(s: string): string {

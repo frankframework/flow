@@ -37,10 +37,8 @@ export default class EditorFilesDataProvider extends BaseFilesDataProvider<FileN
     }
   }
 
-  public override async reloadDirectory(_itemId: TreeItemIndex): Promise<void> {
-    this.data = {}
-    this.loadedDirectories.clear()
-    await this.fetchAndBuildTree()
+  public override async reloadDirectory(itemId: TreeItemIndex): Promise<void> {
+    await super.reloadDirectory(itemId)
     await this.preloadExpandedItems()
     this.notifyListeners(Object.keys(this.data))
   }

@@ -31,7 +31,7 @@ export default function StudioContextMenu({
 
   const showNewConfigurationAndNewFolder = itemType === 'root' || itemType === 'folder'
   const showNewAdapter = itemType === 'configuration'
-  const showRenameAndDelete = itemType === 'configuration' || itemType === 'adapter' || itemType === 'folder'
+  const showRenameAndDelete = itemType === 'configuration' || itemType === 'adapter' || itemType === 'folder' || itemType === 'file'
 
   return createPortal(
     <div

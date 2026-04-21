@@ -10,6 +10,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import org.frankframework.flow.exception.ApiException;
+import org.frankframework.flow.file.FileTreeService;
 import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.frankframework.flow.project.Project;
 import org.frankframework.flow.project.ProjectNotFoundException;
@@ -30,6 +31,9 @@ class ConfigurationServiceTest {
 	@Mock
 	private ProjectService projectService;
 
+	@Mock
+	private FileTreeService fileTreeService;
+
 	private ConfigurationService configurationService;
 
 	@TempDir
@@ -37,7 +41,7 @@ class ConfigurationServiceTest {
 
 	@BeforeEach
 	void setUp() {
-		configurationService = new ConfigurationService(fileSystemStorage, projectService);
+		configurationService = new ConfigurationService(fileSystemStorage, projectService, fileTreeService);
 	}
 
 	private void stubToAbsolutePath() {
