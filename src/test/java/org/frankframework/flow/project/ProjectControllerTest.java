@@ -13,6 +13,8 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import org.frankframework.flow.common.FrankFrameworkService;
+import org.frankframework.flow.common.config.ClientSession;
 import org.frankframework.flow.configuration.Configuration;
 import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.frankframework.flow.projectsettings.FilterType;
@@ -46,6 +48,12 @@ class ProjectControllerTest {
 	@MockitoBean
 	private FileSystemStorage fileSystemStorage;
 
+	@MockitoBean
+	private FrankFrameworkService frankFrameworkService;
+
+	@MockitoBean
+	private ClientSession session;
+
 	@BeforeEach
 	void setUp() throws IOException {
 		Mockito.reset(projectService);
@@ -75,7 +83,8 @@ class ProjectControllerTest {
 		when(settings.getFilters())
 				.thenReturn(Map.of(
 						FilterType.ADAPTER, true,
-						FilterType.AMQP, false));
+						FilterType.AMQP, false
+				));
 
 		when(project.getProjectSettings()).thenReturn(settings);
 
@@ -152,7 +161,8 @@ class ProjectControllerTest {
 
 		Map<FilterType, Boolean> updatedFilters = Map.of(
 				FilterType.ADAPTER, true,
-				FilterType.AMQP, true);
+				FilterType.AMQP, true
+		);
 
 		Project updatedProject = mock(Project.class);
 		when(updatedProject.getName()).thenReturn("MyProject");
@@ -211,7 +221,8 @@ class ProjectControllerTest {
 
 		Map<FilterType, Boolean> updatedFilters = Map.of(
 				FilterType.ADAPTER, false,
-				FilterType.AMQP, false);
+				FilterType.AMQP, false
+		);
 
 		Project updatedProject = mock(Project.class);
 		when(updatedProject.getName()).thenReturn("MyProject");
@@ -267,10 +278,10 @@ class ProjectControllerTest {
 	@Test
 	void exportProjectReturnsZipFile() throws Exception {
 		doAnswer(invocation -> {
-					OutputStream os = invocation.getArgument(1);
-					os.write("fake-zip-content".getBytes());
-					return null;
-				})
+			OutputStream os = invocation.getArgument(1);
+			os.write("fake-zip-content".getBytes());
+			return null;
+		})
 				.when(projectService)
 				.exportProjectAsZip(eq("MyProject"), any(OutputStream.class));
 
