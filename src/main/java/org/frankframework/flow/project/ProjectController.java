@@ -2,11 +2,14 @@ package org.frankframework.flow.project;
 
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletResponse;
+
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.frankframework.flow.common.AllowAllFrankUserRoles;
 import org.frankframework.flow.common.FrankFrameworkService;
 import org.frankframework.flow.common.config.ClientSession;
@@ -16,6 +19,9 @@ import org.frankframework.flow.recentproject.RecentProjectsService;
 import org.frankframework.management.bus.BusAction;
 import org.frankframework.management.bus.BusTopic;
 import org.frankframework.management.bus.message.RequestMessageBuilder;
+
+import org.frankframework.util.JacksonUtils;
+
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -36,11 +42,13 @@ public class ProjectController {
 	private final ProjectService projectService;
 	private final RecentProjectsService recentProjectsService;
 	private final FrankFrameworkService frankFrameworkService;
+	private final ClientSession session;
 
-	public ProjectController(ProjectService projectService, RecentProjectsService recentProjectsService, FrankFrameworkService frankFrameworkService) {
+	public ProjectController(ProjectService projectService, RecentProjectsService recentProjectsService, FrankFrameworkService frankFrameworkService, ClientSession session) {
 		this.projectService = projectService;
 		this.recentProjectsService = recentProjectsService;
 		this.frankFrameworkService = frankFrameworkService;
+		this.session = session;
 	}
 
 	@GetMapping
@@ -121,13 +129,23 @@ public class ProjectController {
 
 	@AllowAllFrankUserRoles
 	@GetMapping("/configurations")
-	public Map<String, Object> getFrameworkConfigurations(ClientSession session) throws ApiException {
+	public Map<String, Object> getFrameworkConfigurations() throws ApiException {
 		RequestMessageBuilder builder = RequestMessageBuilder.create(BusTopic.CONFIGURATION, BusAction.FIND);
 		ResponseEntity<?> configurations = frankFrameworkService.callSyncGateway(builder);
 
 		Map<String, Object> response = new HashMap<>();
-		response.put("configurations", configurations.getBody());
+		response.put("configurations", JacksonUtils.convertToDTO(configurations.getBody(), FFConfigurationDTO[].class));
 		response.put("name", session.getMemberTarget());
 		return response;
+	}
+
+	private record FFConfigurationDTO(
+			String name,
+			String version,
+			Boolean stubbed,
+			String directory,
+			String filename,
+			String parent
+	) {
 	}
 }
