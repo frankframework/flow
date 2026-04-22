@@ -15,7 +15,7 @@ env:
   REGISTRY: ghcr.io
   # github.repository as <account>/<repo>
   IMAGE_NAME: ${{ github.repository }}
-  JAVA_VERSION: 21
+  JAVA_VERSION: 25
   NODE_VERSION: 23
   PNPM_VERSION: 10.4.0
 
