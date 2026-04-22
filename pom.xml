@@ -62,7 +62,7 @@
 		<revision>3.0.0-SNAPSHOT</revision>
 		<java.version>25</java.version>
 		<spring-framework.version>7.0.6</spring-framework.version>
-		<frankframework.version>10.1.0-SNAPSHOT</frankframework.version>
+		<frankframework.version>10.1.0-20260402.042330</frankframework.version>
 		<jackson.version>2.20.1</jackson.version>
 		<lombok.version>1.18.42</lombok.version>
 		<spotless.version>3.0.0</spotless.version>
@@ -466,4 +466,18 @@
 			</build>
 		</profile>
 	</profiles>
+	<repositories>
+		<repository>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+			<id>central</id>
+			<name>Central Repository</name>
+			<url>https://repo.maven.apache.org/maven2/</url>
+		</repository>
+		<repository>
+			<id>frankframework</id>
+			<url>https://nexus.frankframework.org/content/groups/public</url>
+		</repository>
+	</repositories>
 </project>
