@@ -112,12 +112,14 @@ function FileSection({
                 )}
                 onClick={() => onSelectFile(file)}
               >
-                <IndeterminateCheckbox
-                  checked={checkboxChecked}
-                  indeterminate={checkboxIndeterminate}
-                  onChange={() => onToggleFile(file)}
-                  title={checkboxChecked ? 'Deselect all chunks' : 'Select all chunks'}
-                />
+                <div onClick={(e) => e.stopPropagation()}>
+                  <IndeterminateCheckbox
+                    checked={checkboxChecked}
+                    indeterminate={checkboxIndeterminate}
+                    onChange={() => onToggleFile(file)}
+                    title={checkboxChecked ? 'Deselect all chunks' : 'Select all chunks'}
+                  />
+                </div>
                 <span
                   className={clsx(
                     'flex h-4 w-4 flex-shrink-0 items-center justify-center rounded text-[10px] font-bold',
