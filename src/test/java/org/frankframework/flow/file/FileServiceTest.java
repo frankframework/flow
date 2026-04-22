@@ -39,6 +39,9 @@ class FileServiceTest {
 	@Mock
 	private FileSystemStorage fileSystemStorage;
 
+	@Mock
+	private FileTreeService fileTreeService;
+
 	private FileService fileService;
 	private Path tempProjectRoot;
 	private static final String TEST_PROJECT_NAME = "FrankFlowTestProject";
@@ -46,7 +49,7 @@ class FileServiceTest {
 	@BeforeEach
 	public void setUp() throws IOException {
 		tempProjectRoot = Files.createTempDirectory("flow_unit_test");
-		fileService = new FileService(projectService, fileSystemStorage);
+		fileService = new FileService(projectService, fileSystemStorage, fileTreeService);
 	}
 
 	@AfterEach

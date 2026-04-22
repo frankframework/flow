@@ -23,7 +23,7 @@ import useFlowStore, { type FlowState } from '~/stores/flow-store'
 import { useShallow } from 'zustand/react/shallow'
 import { FlowConfig } from '~/routes/studio/canvas/flow.config'
 import { getElementTypeFromName } from '~/routes/studio/node-translator-module'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { NodeContextMenuContext, useNodeContextMenu } from './node-context-menu-context'
 import StickyNoteComponent, { type StickyNote } from '~/routes/studio/canvas/nodetypes/sticky-note'
 import useTabStore, { type TabData } from '~/stores/tab-store'
@@ -520,14 +520,15 @@ function FlowCanvas() {
     setChildParentId(null)
   }
 
-  const deleteSelection = useCallback(() => {
-    if (isEditing) return
+  const deleteSelection = useCallback((): boolean => {
+    if (isEditing) return false
     const { nodes, edges, setNodes, setEdges } = useFlowStore.getState()
     const selectedNodeIds = new Set(nodes.filter((n) => n.selected).map((n) => n.id))
     const hasSelection = selectedNodeIds.size > 0 || edges.some((e) => e.selected)
-    if (!hasSelection) return
+    if (!hasSelection) return false
     setNodes(nodes.filter((n) => !n.selected))
     setEdges(edges.filter((e) => !e.selected && !selectedNodeIds.has(e.source) && !selectedNodeIds.has(e.target)))
+    return true
   }, [isEditing])
 
   useShortcut({
@@ -539,7 +540,7 @@ function FlowCanvas() {
     'studio.redo-alt': () => useFlowStore.getState().redo(),
     'studio.group': () => handleGrouping(),
     'studio.ungroup': () => handleUngroup(),
-    'studio.save': () => saveFlow(),
+    'studio.save': () => void saveFlow(),
     'studio.close-context': () => closeEditNodeContextOnEscape(),
     'studio.delete': () => deleteSelection(),
   })

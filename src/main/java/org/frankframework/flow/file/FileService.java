@@ -9,6 +9,7 @@ import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.frankframework.flow.project.Project;
 import org.frankframework.flow.project.ProjectNotFoundException;
 import org.frankframework.flow.project.ProjectService;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -18,10 +19,12 @@ public class FileService {
 	public static final String[] ALLOWED_EXTENSIONS = { "", ".xml", ".json", ".yaml", ".yml", ".properties" };
 	private final ProjectService projectService;
 	private final FileSystemStorage fileSystemStorage;
+	private final FileTreeService fileTreeService;
 
-	public FileService(ProjectService projectService, FileSystemStorage fileSystemStorage) {
+	public FileService(ProjectService projectService, FileSystemStorage fileSystemStorage, @Lazy FileTreeService fileTreeService) {
 		this.projectService = projectService;
 		this.fileSystemStorage = fileSystemStorage;
+		this.fileTreeService = fileTreeService;
 	}
 
 	public FileDTO readFile(String projectName, String path) throws ApiException {
@@ -56,7 +59,7 @@ public class FileService {
 			throw new ApiException("Failed to write file: " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 
-//		invalidateTreeCache(projectName);
+		fileTreeService.invalidateTreeCache(projectName);
 
 		FileTreeNode node = new FileTreeNode();
 		node.setName(fileName);
@@ -90,7 +93,8 @@ public class FileService {
 		} catch (IOException exception) {
 			throw new ApiException(exception.getMessage(), HttpStatus.NOT_ACCEPTABLE);
 		}
-//		invalidateTreeCache(projectName);
+
+		fileTreeService.invalidateTreeCache(projectName);
 
 		boolean isDir = Files.isDirectory(absoluteNewPath);
 		FileTreeNode node = new FileTreeNode();
@@ -107,7 +111,7 @@ public class FileService {
 		} catch (IOException exception) {
 			throw new ApiException("Failed to delete file: " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
-//		invalidateTreeCache(projectName);
+		fileTreeService.invalidateTreeCache(projectName);
 	}
 
 	public void validateWithinProject(String projectName, String path) throws ApiException {

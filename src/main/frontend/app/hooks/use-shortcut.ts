@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { useShortcutStore } from '~/stores/shortcut-store'
 
-type ShortcutHandlers = Record<string, () => void>
+type ShortcutHandlers = Record<string, () => boolean | void>
 
 export function useShortcut(handlers: ShortcutHandlers) {
   const handlersRef = useRef(handlers)

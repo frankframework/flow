@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 import org.frankframework.flow.exception.ApiException;
+import org.frankframework.flow.file.FileTreeService;
 import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.frankframework.flow.project.Project;
 import org.frankframework.flow.project.ProjectService;
@@ -24,10 +25,12 @@ public class ConfigurationService {
 
 	private final FileSystemStorage fileSystemStorage;
 	private final ProjectService projectService;
+	private final FileTreeService fileTreeService;
 
-	public ConfigurationService(FileSystemStorage fileSystemStorage, ProjectService projectService) {
+	public ConfigurationService(FileSystemStorage fileSystemStorage, ProjectService projectService, FileTreeService fileTreeService) {
 		this.fileSystemStorage = fileSystemStorage;
 		this.projectService = projectService;
+		this.fileTreeService = fileTreeService;
 	}
 
 	public ConfigurationDTO getConfigurationContent(String projectName, String filepath) throws IOException, ApiException {
@@ -74,11 +77,13 @@ public class ConfigurationService {
 			throw new ApiException("Invalid configuration name: " + configurationName, HttpStatus.BAD_REQUEST);
 		}
 
+		Files.createDirectories(filePath.getParent());
+
 		String defaultXml = loadDefaultConfigurationXml();
 		Document updatedDocument = XmlConfigurationUtils.insertFlowNamespace(defaultXml);
 		String updatedContent = XmlConfigurationUtils.convertNodeToString(updatedDocument);
 		fileSystemStorage.writeFile(filePath.toString(), updatedContent);
-
+		fileTreeService.invalidateTreeCache(projectName);
 		return updatedContent;
 	}
 

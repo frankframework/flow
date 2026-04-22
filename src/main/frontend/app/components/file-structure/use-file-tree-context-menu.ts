@@ -112,8 +112,8 @@ export function useFileTreeContextMenu({
     (menuState?: ContextMenuState) => {
       const menu = resolveMenu(menuState)
       if (!menu || !projectName || !dataProvider) return
-      const parentPath = menu.path
-      const parentItemId = menu.itemId
+      const parentPath = menu.isFolder ? menu.path : buildNewPath(menu.path, '').slice(0, -1)
+      const parentItemId = menu.isFolder ? menu.itemId : getParentItemId(menu.itemId)
       closeContextMenu()
 
       setNameDialog({
@@ -142,8 +142,8 @@ export function useFileTreeContextMenu({
     (menuState?: ContextMenuState) => {
       const menu = resolveMenu(menuState)
       if (!menu || !projectName || !dataProvider) return
-      const parentPath = menu.path
-      const parentItemId = menu.itemId
+      const parentPath = menu.isFolder ? menu.path : buildNewPath(menu.path, '').slice(0, -1)
+      const parentItemId = menu.isFolder ? menu.itemId : getParentItemId(menu.itemId)
       closeContextMenu()
 
       setNameDialog({
@@ -179,13 +179,13 @@ export function useFileTreeContextMenu({
           if (newName === oldName) {
             setNameDialog(null)
             return
-          } else if (!ensureHasCorrectExtension(newName)) {
+          } else if (!menu.isFolder && !ensureHasCorrectExtension(newName)) {
             showErrorToast(`Filename must have one of the following extensions: ${ALLOWED_EXTENSIONS.join(', ')}`)
             return
           }
 
           try {
-            await renameFile(projectName, `${oldPath}`, `${oldPath}`.replace(oldName, newName))
+            await renameFile(projectName, oldPath, buildNewPath(oldPath, newName))
             clearConfigurationCache(projectName, oldPath)
             const newPath = buildNewPath(oldPath, newName)
             useTabStore.getState().renameTabsForConfig(oldPath, newPath)
@@ -227,10 +227,11 @@ export function useFileTreeContextMenu({
       useTabStore.getState().removeTabsForConfig(deleteTarget.path)
       useEditorTabStore.getState().refreshAllTabs()
       onAfterDelete?.(deleteTarget.path)
-      await dataProvider.reloadDirectory(deleteTarget.parentItemId)
     } catch (error) {
       showErrorToastFrom('Failed to delete', error)
     }
+
+    await dataProvider.reloadDirectory(deleteTarget.parentItemId)
     setDeleteTarget(null)
   }, [deleteTarget, projectName, dataProvider, onAfterDelete])
 
