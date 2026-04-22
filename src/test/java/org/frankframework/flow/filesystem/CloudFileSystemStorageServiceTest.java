@@ -9,14 +9,19 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.List;
+
 import org.frankframework.flow.common.config.ClientSession;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
+@ExtendWith(MockitoExtension.class)
 class CloudFileSystemStorageServiceTest {
 
 	private CloudFileSystemStorageService service;
@@ -49,6 +54,7 @@ class CloudFileSystemStorageServiceTest {
 
 	@Test
 	void isLocalEnvironmentReturnsFalse() {
+		assertEquals("test-user", session.getWorkspaceId()); // fix unnecessary mock warning
 		assertFalse(service.isLocalEnvironment());
 	}
 
@@ -169,8 +175,10 @@ class CloudFileSystemStorageServiceTest {
 
 	@Test
 	void anonymousUserWhenWorkspaceIdIsNull() throws IOException {
+		assertEquals("test-user", session.getWorkspaceId());
+
 		ClientSession anonymousSession = Mockito.mock(ClientSession.class);
-		when(session.getWorkspaceId()).thenReturn(null);
+		when(anonymousSession.getWorkspaceId()).thenReturn(null);
 		CloudFileSystemStorageService anonService = new CloudFileSystemStorageService(anonymousSession);
 		setServiceBasePathToTemp(anonService, tempWorkspaceRoot.toString());
 

@@ -2,12 +2,16 @@ package org.frankframework.flow.utility;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+
 import lombok.NoArgsConstructor;
+
 import org.frankframework.flow.exception.ApiException;
 import org.frankframework.management.bus.BusMessageUtils;
 import org.frankframework.management.bus.message.EmptyMessage;
 import org.frankframework.management.bus.message.MessageBase;
 import org.frankframework.util.StreamUtil;
+
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.springframework.http.ContentDisposition;
@@ -97,7 +101,7 @@ public class ResponseUtils {
 		if (payload instanceof String string) {
 			return string;
 		} else if (payload instanceof byte[] bytes) {
-			return new String(bytes);
+			return new String(bytes, StandardCharsets.UTF_8);
 		} else if (payload instanceof InputStream stream) {
 			try {
 				// Convert line endings to \n to show them in the browser as real line feeds
