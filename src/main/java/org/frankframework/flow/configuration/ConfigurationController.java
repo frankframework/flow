@@ -42,7 +42,7 @@ public class ConfigurationController {
 			@PathVariable String projectName,
 			@RequestParam String path,
 			@RequestBody String content
-	) throws ApiException, IOException, ParserConfigurationException, SAXException, TransformerException {
+	) throws ApiException {
 		String updatedContent = configurationService.updateConfiguration(projectName, path, content);
 		XmlDTO xmlDTO = new XmlDTO(updatedContent);
 		return ResponseEntity.ok(xmlDTO);

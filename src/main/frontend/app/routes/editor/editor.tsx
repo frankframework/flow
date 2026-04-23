@@ -169,6 +169,7 @@ function prettierFormat(xml: string): Promise<string> {
     parser: 'xml',
     plugins: [prettierPluginXml],
     tabWidth: 2,
+    xmlSortAttributesByKey: false,
   })
 }
 

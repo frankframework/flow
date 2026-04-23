@@ -45,22 +45,25 @@ public class ConfigurationService {
 	}
 
 	public String updateConfiguration(String projectName, String filepath, String content)
-			throws IOException, ApiException, ParserConfigurationException, SAXException, TransformerException {
+			throws ApiException {
 		Path absolutePath = fileSystemStorage.toAbsolutePath(filepath);
 
 		if (!Files.exists(absolutePath) || Files.isDirectory(absolutePath)) {
 			throw new ApiException("Invalid file path: " + filepath, HttpStatus.NOT_FOUND);
 		}
 
-
-		Document document = XmlConfigurationUtils.insertFlowNamespace(content);
-		if (document == null) {
+		if (content == null || content.isBlank()) {
 			throw new ApiException("Configuration content must not be blank", HttpStatus.BAD_REQUEST);
 		}
 
-		String formatted = XmlConfigurationUtils.convertNodeToString(document);
-		fileSystemStorage.writeFile(absolutePath.toString(), formatted);
-		return formatted;
+		try {
+			String withNamespace = ensureFlowNamespace(content);
+			String formatted = XmlConfigurationUtils.formatPreservingAttributeOrder(withNamespace);
+			fileSystemStorage.writeFile(absolutePath.toString(), formatted);
+			return formatted;
+		} catch (Exception e) {
+			throw new ApiException("Failed to format configuration: " + e.getMessage(), HttpStatus.BAD_REQUEST);
+		}
 	}
 
 	public String addConfiguration(String projectName, String configurationName) throws IOException, ApiException, TransformerException, ParserConfigurationException, SAXException {
@@ -85,6 +88,14 @@ public class ConfigurationService {
 		fileSystemStorage.writeFile(filePath.toString(), updatedContent);
 		fileTreeService.invalidateTreeCache(projectName);
 		return updatedContent;
+	}
+
+	private String ensureFlowNamespace(String xml) {
+		if (xml.contains("xmlns:flow")) {
+			return xml;
+		}
+
+		return xml.replaceFirst("(<Configuration)\\b", "$1 xmlns:flow=\"urn:frank-flow\"");
 	}
 
 	private String loadDefaultConfigurationXml() throws IOException {

@@ -5,6 +5,9 @@ import { getAdapter } from '~/services/adapter-service'
 import { FlowConfig } from './canvas/flow.config'
 import { isGroupNode, isStickyNote } from '~/stores/flow-store'
 import type { GroupNode } from './canvas/nodetypes/group-node'
+import { fetchFrankConfigXsd } from '~/services/xsd-service'
+import { getMandatoryAttributeNames, parseXsd } from '~/utils/xsd-utils'
+import { sortAttributes } from '~/utils/xml-attribute-sort'
 
 interface ReactFlowJson {
   nodes: FlowNode[]
@@ -42,6 +45,14 @@ export async function exportFlowToXml(
       : existingAdapterXml
   const adapterAttributes = getAdapterAttributes(adapterXml)
 
+  let xsdDoc: Document | null = null
+
+  try {
+    xsdDoc = parseXsd(await fetchFrankConfigXsd())
+  } catch {
+    console.warn('Could not fetch FrankConfig XSD; attribute order may not be optimal.')
+  }
+
   const { nodes, edges } = json
   const validNodes = nodes.filter((node) => hasDataProperty(node))
   const nodeMap = new Map(validNodes.map((n) => [n.id, n]))
@@ -76,13 +87,13 @@ export async function exportFlowToXml(
 
     const type = node.data.type?.toLowerCase()
     if (type === 'receiver') {
-      receivers.push(generateXmlElement(node, edgeMap, exitNodeIds, nodeMap))
+      receivers.push(generateXmlElement(node, edgeMap, exitNodeIds, nodeMap, xsdDoc))
     } else if (type === 'pipe') {
-      pipelineParts.push(generateXmlElement(node, edgeMap, exitNodeIds, nodeMap))
+      pipelineParts.push(generateXmlElement(node, edgeMap, exitNodeIds, nodeMap, xsdDoc))
     }
   }
 
-  const exitsXml = exitNodes.length > 0 ? `      <Exits>\n${generateExitsXml(exitNodes)}\n      </Exits>` : ''
+  const exitsXml = exitNodes.length > 0 ? `      <Exits>\n${generateExitsXml(exitNodes, xsdDoc)}\n      </Exits>` : ''
   const flowXml = generateFlowElementsXml(nodes)
 
   return `
@@ -94,6 +105,21 @@ ${pipelineParts.join('\n')}
     </Pipeline>
     ${flowXml}
   </Adapter>`
+}
+
+export function replaceAdapterInXml(configXml: string, adapterIndex: number, newAdapterXml: string): string {
+  const starts = [...configXml.matchAll(/<[Aa]dapter\b/g)].map((m) => m.index)
+
+  if (adapterIndex >= starts.length) return configXml
+
+  const start = starts[adapterIndex]
+  const closeRegex = /<\/[Aa]dapter>/g
+  closeRegex.lastIndex = start
+
+  const closeMatch = closeRegex.exec(configXml)
+  if (!closeMatch) return configXml
+
+  return configXml.slice(0, start) + newAdapterXml + configXml.slice(closeMatch.index + closeMatch[0].length)
 }
 
 function buildEdgeMaps(edges: Edge[]) {
@@ -152,6 +178,7 @@ function generateXmlElement(
   edgeMap: Map<string, { targetId: string; label: string }[]>,
   exitNodeIds: Set<string>,
   nodeMap: Map<string, FlowNode>,
+  xsdDoc: Document | null,
 ): string {
   const { subtype, name } = node.data as NodeData
   const { x, y } = node.position
@@ -167,13 +194,20 @@ function generateXmlElement(
   const attributes = (node.data as NodeData).attributes || {}
   const children = (node.data as NodeData).children || []
 
-  const attributeString = ` name="${escapeXml(name)}"${Object.entries(attributes)
-    .map(([key, value]) => ` ${key}="${escapeXml(value)}"`)
-    .join('')}`
+  const allAttrs: Record<string, string> = {
+    ...attributes,
+    name,
+    'flow:x': String(roundedX),
+    'flow:y': String(roundedY),
+    'flow:width': String(width),
+    ...(height === undefined ? {} : { 'flow:height': String(height) }),
+  }
+  const mandatory = xsdDoc ? getMandatoryAttributeNames(xsdDoc, subtype) : new Set<string>()
+  const attrStr = sortAttributes(allAttrs, mandatory)
+    .map(([k, v]) => `${k}="${escapeXml(v)}"`)
+    .join(' ')
 
-  const flowNamespaceString = `flow:y="${roundedY}" flow:x="${roundedX}" flow:width="${width}"${height === undefined ? '' : ` flow:height="${height}"`}`
-
-  const childXml = children.map((child: ChildNode) => generateChildXml(child, 4)).join('\n')
+  const childXml = children.map((child: ChildNode) => generateChildXml(child, 4, xsdDoc)).join('\n')
 
   const type = (node.data as NodeData).type?.toLowerCase()
 
@@ -195,35 +229,39 @@ function generateXmlElement(
           .join('\n')
 
   const content = [childXml, forwards].filter(Boolean).join('\n')
-  return content
-    ? `  <${subtype}${attributeString} ${flowNamespaceString} >\n${content}\n  </${subtype}>`
-    : `  <${subtype}${attributeString} ${flowNamespaceString} />`
+  return content ? `  <${subtype} ${attrStr} >\n${content}\n  </${subtype}>` : `  <${subtype} ${attrStr} />`
 }
 
-function generateChildXml(child: ChildNode, indent: number): string {
+function generateChildXml(child: ChildNode, indent: number, xsdDoc: Document | null): string {
   const spaces = ' '.repeat(indent)
 
-  const attributes =
-    (child.name ? ` name="${escapeXml(child.name)}"` : '') +
-    Object.entries(child.attributes || {})
-      .map(([key, value]) => ` ${key}="${escapeXml(value)}"`)
-      .join('')
+  const childAttrs: Record<string, string> = {
+    ...(child.name ? { name: child.name } : {}),
+    ...child.attributes,
+  }
 
+  const mandatory = xsdDoc ? getMandatoryAttributeNames(xsdDoc, child.subtype) : new Set<string>()
+  const attrStr = sortAttributes(childAttrs, mandatory)
+    .map(([k, v]) => `${k}="${escapeXml(v)}"`)
+    .join(' ')
+
+  const attrs = attrStr ? ` ${attrStr}` : ''
   const hasChildren = child.children && child.children.length > 0
 
   if (!hasChildren) {
-    return `${spaces}<${child.subtype}${attributes}/>`
+    return `${spaces}<${child.subtype}${attrs}/>`
   }
 
-  // Recursive case
-  const childXmlStrings = child.children!.map((nested) => generateChildXml(nested, indent + 2))
+  const childXmlStrings = child.children!.map((nested) => generateChildXml(nested, indent + 2, xsdDoc))
 
-  return `${spaces}<${child.subtype}${attributes}>
+  return `${spaces}<${child.subtype}${attrs}>
 ${childXmlStrings.join('\n')}
 ${spaces}</${child.subtype}>`
 }
 
-function generateExitsXml(exitNodes: FlowNode[]): string {
+function generateExitsXml(exitNodes: FlowNode[], xsdDoc: Document | null): string {
+  const mandatory = xsdDoc ? getMandatoryAttributeNames(xsdDoc, 'Exit') : new Set<string>()
+
   return exitNodes
     .map((node) => {
       const { name } = node.data as NodeData
@@ -237,13 +275,20 @@ function generateExitsXml(exitNodes: FlowNode[]): string {
         width = node.measured.width
         height = node.measured.height
       }
-      const attributes = data.attributes || {}
-      const flowNamespaceString = `flow:y="${roundedY}" flow:x="${roundedX}" flow:width="${width}" flow:height="${height}"`
-      const attributeString = ` name="${escapeXml(name)}"${Object.entries(attributes)
-        .map(([key, value]) => ` ${key}="${escapeXml(value)}"`)
-        .join('')}`
 
-      return `      <Exit ${attributeString} ${flowNamespaceString} />`
+      const allAttrs: Record<string, string> = {
+        ...data.attributes,
+        name,
+        'flow:x': String(roundedX),
+        'flow:y': String(roundedY),
+        'flow:width': String(width),
+        'flow:height': String(height),
+      }
+      const attrStr = sortAttributes(allAttrs, mandatory)
+        .map(([k, v]) => `${k}="${escapeXml(v)}"`)
+        .join(' ')
+
+      return `      <Exit ${attrStr} />`
     })
     .join('\n')
 }
