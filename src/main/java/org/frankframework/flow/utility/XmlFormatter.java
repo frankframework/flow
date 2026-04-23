@@ -53,7 +53,7 @@ public class XmlFormatter extends DefaultHandler implements LexicalHandler {
 					.append("=\"").append(escapeAttr(attrs.getValue(0))).append('"');
 
 			if (attrs.getLength() > 1) {
-				String continuationPad = " ".repeat(elementIndent + qName.length() + 2);
+				String continuationPad = " ".repeat(elementIndent + qName.length() + INDENT_SIZE);
 				for (int i = 1; i < attrs.getLength(); i++) {
 					sb.append('\n').append(continuationPad)
 							.append(attrs.getQName(i))
