@@ -26,17 +26,8 @@ public class XmlFormatter extends DefaultHandler implements LexicalHandler {
 	public static String format(String xml)
 			throws ParserConfigurationException, SAXException, IOException {
 		XmlFormatter handler = new XmlFormatter();
-
-		SAXParserFactory spf = SAXParserFactory.newInstance();
-		spf.setNamespaceAware(false);
-		spf.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
-
-		XMLReader reader = spf.newSAXParser().getXMLReader();
-		reader.setContentHandler(handler);
-		reader.setProperty("http://xml.org/sax/properties/lexical-handler", handler);
-
+		XMLReader reader = createSecureXmlReader(handler);
 		reader.parse(new InputSource(new StringReader(xml)));
-
 		return handler.toString();
 	}
 
@@ -129,5 +120,22 @@ public class XmlFormatter extends DefaultHandler implements LexicalHandler {
 
 	private static String escapeText(String val) {
 		return val.replace("&", "&amp;").replace("<", "&lt;");
+	}
+
+	private static XMLReader createSecureXmlReader(XmlFormatter handler)
+			throws ParserConfigurationException, SAXException {
+		SAXParserFactory spf = SAXParserFactory.newInstance();
+		spf.setNamespaceAware(false);
+		spf.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+		spf.setFeature("http://xml.org/sax/features/external-general-entities", false);
+		spf.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+		spf.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+
+		XMLReader reader = spf.newSAXParser().getXMLReader();
+		reader.setFeature("http://xml.org/sax/features/external-general-entities", false);
+		reader.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+		reader.setContentHandler(handler);
+		reader.setProperty("http://xml.org/sax/properties/lexical-handler", handler);
+		return reader;
 	}
 }
