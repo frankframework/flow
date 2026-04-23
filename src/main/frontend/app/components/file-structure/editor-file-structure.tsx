@@ -339,7 +339,7 @@ export default function EditorFileStructure() {
           {highlightedTitle}
         </span>
         <div className="ml-1 hidden items-center gap-0.5 group-hover/row:flex">
-          {item.isFolder && project?.isGitRepository && (
+          {item.isFolder && (
             <button
               className={actionBtnClass}
               title="New File"
