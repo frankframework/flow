@@ -108,15 +108,24 @@ export async function convertAdapterXmlToJson(adapter: Element) {
 
 function buildNodeNameToIdMap(nodes: FlowNode[]): Map<string, string> {
   const nameToId = new Map<string, string>()
+
   for (const node of nodes) {
+    if (node.type === 'exitNode') continue
     if ('name' in node.data && typeof node.data.name === 'string') {
       nameToId.set(node.data.name, node.id)
     }
   }
+
+  for (const node of nodes) {
+    if (node.type !== 'exitNode') continue
+    if ('name' in node.data && typeof node.data.name === 'string' && !nameToId.has(node.data.name)) {
+      nameToId.set(node.data.name, node.id)
+    }
+  }
+
   return nameToId
 }
 
-// Used for mapping childnames to parent ids.
 function buildNameToNodeMap(nodes: FlowNode[]): Map<string, FlowNode> {
   const map = new Map<string, FlowNode>()
 
@@ -168,6 +177,7 @@ function extractEdgesFromAdapter(adapter: Element, nodes: FlowNode[], elementToI
   const forwardIndexBySourceId = new Map<string, number>()
   const explicitTargetsBySourceId = new Map<string, Set<string>>()
   const sourcesWithSuccessExitForward = new Set<string>()
+  const sourcesWithSuccessPipeForward = new Set<string>()
 
   addExplicitForwardEdges(
     pipelineElement,
@@ -178,6 +188,7 @@ function extractEdgesFromAdapter(adapter: Element, nodes: FlowNode[], elementToI
     forwardIndexBySourceId,
     explicitTargetsBySourceId,
     sourcesWithSuccessExitForward,
+    sourcesWithSuccessPipeForward,
   )
 
   addReceiverToFirstPipeEdges(nodes, edges, forwardIndexBySourceId)
@@ -188,6 +199,7 @@ function extractEdgesFromAdapter(adapter: Element, nodes: FlowNode[], elementToI
     forwardIndexBySourceId,
     explicitTargetsBySourceId,
     sourcesWithSuccessExitForward,
+    sourcesWithSuccessPipeForward,
   )
 
   addImplicitSuccessExitEdge(nodes, edges, forwardIndexBySourceId)
@@ -204,6 +216,7 @@ function addExplicitForwardEdges(
   forwardIndexBySourceId: Map<string, number>,
   explicitTargetsBySourceId: Map<string, Set<string>>,
   sourcesWithSuccessExitForward: Set<string>,
+  sourcesWithSuccessPipeForward: Set<string>,
 ) {
   const pipelineChildren = [...pipelineElement.children]
 
@@ -222,6 +235,7 @@ function addExplicitForwardEdges(
       forwardIndexBySourceId,
       explicitTargetsBySourceId,
       sourcesWithSuccessExitForward,
+      sourcesWithSuccessPipeForward,
     )
   }
 }
@@ -238,14 +252,20 @@ function addForwardEdges(
   forwardIndexBySourceId: Map<string, number>,
   explicitTargetsBySourceId: Map<string, Set<string>>,
   sourcesWithSuccessExitForward: Set<string>,
+  sourcesWithSuccessPipeForward: Set<string>,
 ) {
   for (const forward of forwards) {
     const targetName = forward.getAttribute('path')
-    if (!targetName) continue
+    if (targetName === null) continue
 
     const targetId = nameToId.get(targetName)
-    const targetNode = targetId ? nodes.find((n) => n.id === targetId) : undefined
+    let targetNode = targetId ? nodes.find((n) => n.id === targetId) : undefined
     if (!targetNode) continue
+    if (targetNode.id === sourceId) {
+      const exitFallback = nodes.find((n) => n.type === 'exitNode' && 'name' in n.data && n.data.name === targetName)
+      if (!exitFallback) continue
+      targetNode = exitFallback
+    }
 
     const handleIndex = forwardIndexBySourceId.get(sourceId) ?? 1
     forwardIndexBySourceId.set(sourceId, handleIndex + 1)
@@ -268,6 +288,8 @@ function addForwardEdges(
 
     if (targetNode.type === 'exitNode' && isSuccessExit(targetNode)) {
       sourcesWithSuccessExitForward.add(sourceId)
+    } else if (targetNode.type === 'frankNode' && label.toLowerCase() === 'success') {
+      sourcesWithSuccessPipeForward.add(sourceId)
     }
   }
 }
@@ -309,6 +331,7 @@ function addSequentialFallbackEdges(
   forwardIndexBySourceId: Map<string, number>,
   explicitTargetsBySourceId: Map<string, Set<string>>,
   sourcesWithSuccessExitForward: Set<string>,
+  sourcesWithSuccessPipeForward: Set<string>,
 ) {
   for (let i = 0; i < nodes.length - 1; i++) {
     const current = nodes[i]
@@ -321,8 +344,7 @@ function addSequentialFallbackEdges(
     const next = nodes.slice(i + 1).find((n) => n.type !== 'exitNode')
     if (!next) continue
 
-    // Block fallback if pipe explicitly forwards to another pipe
-    if (hasExplicitPipeForward(current.id, explicitTargetsBySourceId, nodes)) continue
+    if (sourcesWithSuccessPipeForward.has(current.id)) continue
 
     // Block fallback if pipe explicitly forwards to SUCCESS exit
     if (sourcesWithSuccessExitForward.has(current.id)) continue
@@ -684,17 +706,6 @@ function isSuccessExit(node: FlowNode): boolean {
 
 function findSuccessExit(nodes: FlowNode[]): FlowNode | undefined {
   return nodes.find((node) => isSuccessExit(node))
-}
-
-function hasExplicitPipeForward(
-  sourceId: string,
-  explicitTargetsBySourceId: Map<string, Set<string>>,
-  nodes: FlowNode[],
-): boolean {
-  const targets = explicitTargetsBySourceId.get(sourceId)
-  if (!targets) return false
-
-  return [...targets].some((targetId) => nodes.some((n) => n.id === targetId && n.type === 'frankNode'))
 }
 
 function isNodeTargeted(nodeId: string, edges: FrankEdge[]): boolean {
