@@ -97,14 +97,13 @@ export async function getAdapterListenerType(
 
 export async function convertAdapterXmlToJson(adapter: Element) {
   const idCounter: IdCounter = { current: 0 }
-  const flownodes = convertAdapterToFlowNodes(adapter, idCounter)
+  const { nodes: flownodes, elementToId } = convertAdapterToFlowNodes(adapter, idCounter)
   const stickyNotes = extractStickyNotesFromAdapter(adapter, idCounter)
   const groupnodes = extractGroupNodesFromAdapter(adapter, flownodes, idCounter)
   assignParentRelationships(flownodes, groupnodes)
   const allNodes: FlowNode[] = [...groupnodes, ...flownodes, ...stickyNotes]
-  const adapterJson = { nodes: allNodes, edges: extractEdgesFromAdapter(adapter, flownodes) }
 
-  return adapterJson
+  return { nodes: allNodes, edges: extractEdgesFromAdapter(adapter, flownodes, elementToId) }
 }
 
 function buildNodeNameToIdMap(nodes: FlowNode[]): Map<string, string> {
@@ -156,9 +155,10 @@ function buildNameToNodeMap(nodes: FlowNode[]): Map<string, FlowNode> {
  *
  * @param adapter The XML Element representing the adapter
  * @param nodes The FlowNode array representing all nodes in the adapter
+ * @param elementToId A mapping of XML Elements to their corresponding node IDs, used for edge creation
  * @returns An array of FrankEdge objects representing all generated edges
  */
-function extractEdgesFromAdapter(adapter: Element, nodes: FlowNode[]): FrankEdge[] {
+function extractEdgesFromAdapter(adapter: Element, nodes: FlowNode[], elementToId: Map<Element, string>): FrankEdge[] {
   const pipelineElement = [...adapter.children].find((el) => el.tagName.toLowerCase() === 'pipeline') || null
 
   if (!pipelineElement) return []
@@ -172,6 +172,7 @@ function extractEdgesFromAdapter(adapter: Element, nodes: FlowNode[]): FrankEdge
   addExplicitForwardEdges(
     pipelineElement,
     nameToId,
+    elementToId,
     nodes,
     edges,
     forwardIndexBySourceId,
@@ -197,6 +198,7 @@ function extractEdgesFromAdapter(adapter: Element, nodes: FlowNode[]): FrankEdge
 function addExplicitForwardEdges(
   pipelineElement: Element,
   nameToId: Map<string, string>,
+  elementToId: Map<Element, string>,
   nodes: FlowNode[],
   edges: FrankEdge[],
   forwardIndexBySourceId: Map<string, number>,
@@ -206,10 +208,7 @@ function addExplicitForwardEdges(
   const pipelineChildren = [...pipelineElement.children]
 
   for (const element of pipelineChildren) {
-    const sourceName = element.getAttribute('name')
-    if (!sourceName) continue
-
-    const sourceId = nameToId.get(sourceName)
+    const sourceId = elementToId.get(element)
     if (!sourceId) continue
 
     const forwards = [...element.querySelectorAll('Forward'), ...element.querySelectorAll('forward')]
@@ -217,6 +216,7 @@ function addExplicitForwardEdges(
     addForwardEdges(
       forwards,
       sourceId,
+      nameToId,
       nodes,
       edges,
       forwardIndexBySourceId,
@@ -232,6 +232,7 @@ function addExplicitForwardEdges(
 function addForwardEdges(
   forwards: Element[],
   sourceId: string,
+  nameToId: Map<string, string>,
   nodes: FlowNode[],
   edges: FrankEdge[],
   forwardIndexBySourceId: Map<string, number>,
@@ -242,7 +243,8 @@ function addForwardEdges(
     const targetName = forward.getAttribute('path')
     if (!targetName) continue
 
-    const targetNode = nodes.find((n) => n.data && 'name' in n.data && n.data.name === targetName)
+    const targetId = nameToId.get(targetName)
+    const targetNode = targetId ? nodes.find((n) => n.id === targetId) : undefined
     if (!targetNode) continue
 
     const handleIndex = forwardIndexBySourceId.get(sourceId) ?? 1
@@ -463,10 +465,14 @@ function processExitElements(element: Element, exitNodes: ExitNode[]) {
   }
 }
 
-function convertAdapterToFlowNodes(adapter: Element, idCounter: IdCounter): FlowNode[] {
+function convertAdapterToFlowNodes(
+  adapter: Element,
+  idCounter: IdCounter,
+): { nodes: FlowNode[]; elementToId: Map<Element, string> } {
   const nodes: FlowNode[] = []
   const exitNodes: ExitNode[] = []
   const elements = collectPipelineElements(adapter)
+  const elementToId = new Map<Element, string>()
 
   for (const element of elements) {
     if (element.tagName.toLowerCase() === 'exits') {
@@ -499,6 +505,7 @@ function convertAdapterToFlowNodes(adapter: Element, idCounter: IdCounter): Flow
 
     const sourceHandles = extractSourceHandles(element)
     const frankNode: FrankNodeType = convertElementToNode(element, idCounter, sourceHandles)
+    elementToId.set(element, frankNode.id)
     nodes.push(frankNode)
   }
 
@@ -508,7 +515,7 @@ function convertAdapterToFlowNodes(adapter: Element, idCounter: IdCounter): Flow
     idCounter.current++
   }
 
-  return nodes
+  return { nodes, elementToId }
 }
 
 function convertElementToNode(element: Element, idCounter: IdCounter, sourceHandles: SourceHandle[]): FrankNodeType {
