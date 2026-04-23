@@ -12,6 +12,11 @@ class XmlFormatterTest {
 	}
 
 	@Test
+	void singleElementWithText() throws Exception {
+		assertEquals("<root>hello\n</root>", XmlFormatter.format("<root>hello</root>"));
+	}
+
+	@Test
 	void singleAttribute() throws Exception {
 		assertEquals("<root name=\"value\"/>", XmlFormatter.format("<root name=\"value\"/>"));
 	}
@@ -19,39 +24,25 @@ class XmlFormatterTest {
 	@Test
 	void multipleAttributesAlignedUnderFirst() throws Exception {
 		String result = XmlFormatter.format("<root a=\"1\" b=\"2\" c=\"3\"/>");
-		String expected = """
-				<root a="1"
-					b="2"
-					c="3"/>""";
+		String expected = "<root a=\"1\"\n      b=\"2\"\n      c=\"3\"/>";
 		assertEquals(expected, result);
 	}
 
 	@Test
 	void nestedElements() throws Exception {
-		String input = "<root><child/></root>";
-		String expected = """
-				<root>
-				<child/>
-				</root>""";
-		assertEquals(expected, XmlFormatter.format(input));
+		String expected = "<root>\n  <child/>\n</root>";
+		assertEquals(expected, XmlFormatter.format("<root><child/></root>"));
 	}
 
 	@Test
 	void deeplyNestedElements() throws Exception {
-		String input = "<a><b><c/></b></a>";
-		String expected = """
-				<a>
-				<b>
-					<c/>
-				</b>
-				</a>""";
-		assertEquals(expected, XmlFormatter.format(input));
+		String expected = "<a>\n  <b>\n    <c/>\n  </b>\n</a>";
+		assertEquals(expected, XmlFormatter.format("<a><b><c/></b></a>"));
 	}
 
 	@Test
 	void siblingsProduceNoBlankLines() throws Exception {
-		String input = "<root><a/><b/><c/></root>";
-		String result = XmlFormatter.format(input);
+		String result = XmlFormatter.format("<root><a/><b/><c/></root>");
 		assertFalse(result.contains("\n\n"), "Blank lines should not appear between siblings");
 		assertTrue(result.contains("  <a/>"));
 		assertTrue(result.contains("  <b/>"));
@@ -60,15 +51,13 @@ class XmlFormatterTest {
 
 	@Test
 	void commentIsPreserved() throws Exception {
-		String input = "<root><!-- my comment --><child/></root>";
-		String result = XmlFormatter.format(input);
+		String result = XmlFormatter.format("<root><!-- my comment --><child/></root>");
 		assertTrue(result.contains("<!-- my comment -->"));
 	}
 
 	@Test
 	void commentIndentMatchesDepth() throws Exception {
-		String input = "<root><!-- comment --></root>";
-		String result = XmlFormatter.format(input);
+		String result = XmlFormatter.format("<root><!-- comment --></root>");
 		assertTrue(result.contains("  <!-- comment -->"));
 	}
 
@@ -86,23 +75,27 @@ class XmlFormatterTest {
 
 	@Test
 	void whitespaceOnlyTextIsIgnored() throws Exception {
-		String result = XmlFormatter.format("<root>   </root>");
-		assertEquals("<root/>", result);
+		assertEquals("<root/>", XmlFormatter.format("<root>   </root>"));
 	}
 
 	@Test
 	void alreadyFormattedInputIsIdempotent() throws Exception {
-		String input = """
-				<root>
-				<child name="x"/>
-				</root>""";
+		String input = "<root>\n  <child name=\"x\"/>\n</root>";
 		assertEquals(input, XmlFormatter.format(input));
 	}
 
 	@Test
 	void multipleTopLevelSiblingChildrenNoBlankLines() throws Exception {
-		String input = "<config><a x=\"1\"/><b y=\"2\"/></config>";
-		String result = XmlFormatter.format(input);
+		String result = XmlFormatter.format("<config><a x=\"1\"/><b y=\"2\"/></config>");
 		assertFalse(result.contains("\n\n"));
+	}
+
+	@Test
+	void xxeExternalEntityIsNotExpanded() throws Exception {
+		String xxe = "<?xml version=\"1.0\"?>"
+				+ "<!DOCTYPE root [<!ENTITY xxe SYSTEM \"file:///etc/passwd\">]>"
+				+ "<root>&xxe;</root>";
+		String result = XmlFormatter.format(xxe);
+		assertFalse(result.contains("root:"), "External entity content should not be expanded");
 	}
 }
