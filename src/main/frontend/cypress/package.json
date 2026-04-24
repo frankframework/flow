@@ -8,7 +8,7 @@
     "test:open": "cypress open"
   },
   "devDependencies": {
-    "cypress": "^15.11.0",
+    "cypress": "^15.14.1",
     "cypress-multi-reporters": "^2.0.5",
     "mocha": "^11.7.5",
     "mochawesome": "^7.1.4"
