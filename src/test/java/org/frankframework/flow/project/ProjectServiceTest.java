@@ -185,7 +185,7 @@ public class ProjectServiceTest {
 
 		Project project = projectService.enableFilter("proj", "ADAPTER");
 
-		assertTrue(project.getProjectSettings().getFilters().get(FilterType.ADAPTER));
+		assertTrue(project.getConfigurationSettings().getFilters().get(FilterType.ADAPTER));
 	}
 
 	@Test
@@ -197,12 +197,12 @@ public class ProjectServiceTest {
 		projectService.enableFilter("proj", "ADAPTER");
 		assertTrue(projectService
 				.getProject("proj")
-				.getProjectSettings()
+				.getConfigurationSettings()
 				.getFilters()
 				.get(FilterType.ADAPTER));
 
 		Project updated = projectService.disableFilter("proj", "ADAPTER");
-		assertFalse(updated.getProjectSettings().getFilters().get(FilterType.ADAPTER));
+		assertFalse(updated.getConfigurationSettings().getFilters().get(FilterType.ADAPTER));
 	}
 
 	@Test

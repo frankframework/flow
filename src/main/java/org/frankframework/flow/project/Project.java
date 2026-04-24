@@ -12,7 +12,7 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import lombok.Getter;
 import lombok.Setter;
-import org.frankframework.flow.configuration.Configuration;
+import org.frankframework.flow.configuration.ConfigurationFile;
 import org.frankframework.flow.projectsettings.FilterType;
 import org.frankframework.flow.projectsettings.ProjectSettings;
 import org.frankframework.flow.utility.XmlSecurityUtils;
@@ -24,45 +24,33 @@ public class Project {
 	private String name;
 	private String rootPath;
 	private String gitToken;
-	private final ArrayList<Configuration> configurations;
-	private final ProjectSettings projectSettings;
+	private final ArrayList<ConfigurationFile> configurationFiles;
+	private final ProjectSettings configurationSettings;
 
 	public Project(String name, String rootPath) {
 		this.name = name;
 		this.rootPath = rootPath;
-		this.configurations = new ArrayList<>();
-		this.projectSettings = new ProjectSettings();
+		this.configurationFiles = new ArrayList<>();
+		this.configurationSettings = new ProjectSettings();
 	}
 
-	public void addConfiguration(Configuration configuration) {
-		this.configurations.add(configuration);
-	}
-
-	public void setConfigurationXml(String filepath, String xmlContent) {
-		for (Configuration c : this.configurations) {
-			if (c.getFilepath().equals(filepath)) {
-				c.setXmlContent(xmlContent);
-				return;
-			}
-		}
+	public void addConfiguration(ConfigurationFile configuration) {
+		this.configurationFiles.add(configuration);
 	}
 
 	public boolean isFilterEnabled(FilterType type) {
-		return projectSettings.isEnabled(type);
+		return configurationSettings.isEnabled(type);
 	}
 
 	public void enableFilter(FilterType type) {
-		projectSettings.setEnabled(type, true);
+		configurationSettings.setEnabled(type, true);
 	}
 
 	public void disableFilter(FilterType type) {
-		projectSettings.setEnabled(type, false);
+		configurationSettings.setEnabled(type, false);
 	}
 
-	public void clearConfigurations() {
-		configurations.clear();
-	}
-
+	// TODO figure out where this is used and if there isn't a better way to do this
 	/* A project is equal to another project if it has the same name and rootpath */
 	@Override
 	public boolean equals(Object o) {
@@ -77,13 +65,13 @@ public class Project {
 		return Objects.hash(name, rootPath);
 	}
 
-	public boolean updateAdapter(String configurationName, String adapterName, String newAdapterXml) {
-		for (Configuration config : configurations) {
-			if (!config.getFilepath().equals(configurationName)) continue;
+	/*public boolean updateAdapter(String configurationName, String adapterName, String newAdapterXml) {
+		for (ConfigurationFile adapter : configurationFiles) {
+			if (!adapter.getFilepath().equals(configurationName)) continue;
 
 			try {
 				// Parse the existing config XML and the new adapter XML
-				Document configDoc = parseXml(config.getXmlContent());
+				Document configDoc = parseXml(adapter.getXmlContent());
 				Node newAdapterNode = parseNewAdapter(configDoc, newAdapterXml);
 
 				// Find and replace the existing adapter
@@ -92,11 +80,11 @@ public class Project {
 				if (replaced) {
 					// Convert back to string and update configuration
 					String updatedXml = convertDocumentToString(configDoc);
-					config.setXmlContent(updatedXml);
+					adapter.setXmlContent(updatedXml);
 					return true;
 				}
-			} catch (Exception e) {
-				e.printStackTrace();
+			} catch (Exception exception) {
+				exception.printStackTrace();
 				return false;
 			}
 		}
@@ -141,5 +129,5 @@ public class Project {
 		StringWriter writer = new StringWriter();
 		transformer.transform(new DOMSource(doc), new StreamResult(writer));
 		return writer.toString();
-	}
+	}*/
 }

@@ -69,7 +69,7 @@ public class ProjectController {
 
 	@PostMapping("/clone")
 	public ResponseEntity<ProjectDTO> cloneProject(
-			@RequestBody ProjectCloneDTO projectCloneDTO, ServletResponse servletResponse) throws IOException {
+			@RequestBody ProjectCloneDTO projectCloneDTO) throws IOException {
 		Project project = projectService.cloneAndOpenProject(
 				projectCloneDTO.repoUrl(), projectCloneDTO.localPath(), projectCloneDTO.token());
 		recentProjectsService.addRecentProject(project.getName(), project.getRootPath());

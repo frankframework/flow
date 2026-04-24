@@ -243,7 +243,7 @@ public class ProjectService {
 				project.getName(),
 				cleanPath,
 				filepaths,
-				project.getProjectSettings().getFilters(),
+				project.getConfigurationSettings().getFilters(),
 				isGitRepo,
 				hasStoredToken);
 	}

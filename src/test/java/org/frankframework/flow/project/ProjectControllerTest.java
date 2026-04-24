@@ -65,7 +65,7 @@ class ProjectControllerTest {
 					.map(Configuration::getFilepath)
 					.toList();
 			return new ProjectDTO(
-					p.getName(), p.getRootPath(), fps, p.getProjectSettings().getFilters(), false, false);
+					p.getName(), p.getRootPath(), fps, p.getConfigurationSettings().getFilters(), false, false);
 		});
 	}
 
@@ -86,7 +86,7 @@ class ProjectControllerTest {
 						FilterType.AMQP, false
 				));
 
-		when(project.getProjectSettings()).thenReturn(settings);
+		when(project.getConfigurationSettings()).thenReturn(settings);
 
 		return project;
 	}
@@ -172,7 +172,7 @@ class ProjectControllerTest {
 
 		ProjectSettings settings = mock(ProjectSettings.class);
 		when(settings.getFilters()).thenReturn(updatedFilters);
-		when(updatedProject.getProjectSettings()).thenReturn(settings);
+		when(updatedProject.getConfigurationSettings()).thenReturn(settings);
 
 		when(projectService.enableFilter("MyProject", "AMQP")).thenReturn(updatedProject);
 
@@ -232,7 +232,7 @@ class ProjectControllerTest {
 
 		ProjectSettings settings = mock(ProjectSettings.class);
 		when(settings.getFilters()).thenReturn(updatedFilters);
-		when(updatedProject.getProjectSettings()).thenReturn(settings);
+		when(updatedProject.getConfigurationSettings()).thenReturn(settings);
 
 		when(projectService.disableFilter("MyProject", "ADAPTER")).thenReturn(updatedProject);
 

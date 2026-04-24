@@ -132,7 +132,7 @@ class ConfigurationControllerTest {
 
 		ProjectSettings settings = mock(ProjectSettings.class);
 		when(settings.getFilters()).thenReturn(Map.of(FilterType.ADAPTER, true));
-		when(project.getProjectSettings()).thenReturn(settings);
+		when(project.getConfigurationSettings()).thenReturn(settings);
 
 		when(configurationService.addConfiguration(TEST_PROJECT_NAME, "NewConfig.xml"))
 				.thenReturn("");
