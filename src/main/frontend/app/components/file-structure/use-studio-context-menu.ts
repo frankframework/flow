@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react'
+import React, { useCallback, useRef, useState } from 'react'
 import type { TreeItemIndex } from 'react-complex-tree'
 import { deleteFile, renameFile } from '~/services/file-service'
 import { createFolderInProject } from '~/services/file-tree-service'
@@ -7,8 +7,13 @@ import { clearConfigurationCache, createConfiguration } from '~/services/configu
 import useTabStore from '~/stores/tab-store'
 import { showErrorToastFrom } from '~/components/toast'
 import type { StudioItemData, StudioFolderData, StudioAdapterData } from './studio-files-data-provider'
+import {
+  CONFIGURATION_NAME_PATTERNS,
+  FILE_NAME_PATTERNS,
+  FOLDER_OR_ADAPTER_NAME_PATTERNS,
+} from '~/components/file-structure/name-input-dialog'
 
-export type StudioItemType = 'root' | 'folder' | 'configuration' | 'adapter'
+export type StudioItemType = 'root' | 'folder' | 'configuration' | 'adapter' | 'file'
 
 export interface StudioContextMenuState {
   position: { x: number; y: number }
@@ -23,6 +28,7 @@ export interface NameDialogState {
   title: string
   initialValue?: string
   onSubmit: (name: string) => void
+  patterns?: Record<string, RegExp>
 }
 
 export interface DeleteTargetState {
@@ -37,10 +43,20 @@ export interface StudioDataProviderLike {
   getRootPath(): string
 }
 
-export function detectItemType(data: StudioItemData): StudioItemType {
+export function detectItemType(data: StudioItemData, isFolder?: boolean): StudioItemType {
   if (typeof data === 'string') return 'root'
+
   if ('adapterName' in data) return 'adapter'
-  if ('path' in data && (data as StudioFolderData).path.endsWith('.xml')) return 'configuration'
+
+  if (!('path' in data)) return 'folder'
+
+  const path = (data as StudioFolderData).path
+  if (path.endsWith('.xml')) return 'configuration'
+
+  if (isFolder) return 'folder'
+
+  const lastSegment = path.split(/[/\\]/).at(-1) ?? path
+  if (lastSegment.includes('.')) return 'file'
   return 'folder'
 }
 
@@ -57,7 +73,7 @@ function getParentDir(filePath: string): string {
 }
 
 function ensureXmlExtension(name: string): string {
-  if (name.includes('.')) return name
+  if (name.endsWith('.xml')) return name
   return `${name}.xml`
 }
 
@@ -77,7 +93,7 @@ export function resolveItemPaths(
   }
 
   const folderData = data as StudioFolderData
-  if (itemType === 'configuration') {
+  if (itemType === 'configuration' || itemType === 'file') {
     return { path: folderData.path, folderPath: getParentDir(folderData.path) }
   }
 
@@ -99,6 +115,12 @@ interface UseStudioContextMenuOptions {
   dataProvider: StudioDataProviderLike | null
 }
 
+function getRenamePatterns(itemType: StudioItemType): Record<string, RegExp> {
+  if (itemType === 'folder' || itemType === 'adapter') return FOLDER_OR_ADAPTER_NAME_PATTERNS
+  if (itemType === 'file') return FILE_NAME_PATTERNS
+  return CONFIGURATION_NAME_PATTERNS
+}
+
 export function useStudioContextMenu({ projectName, dataProvider }: UseStudioContextMenuOptions) {
   const [contextMenu, setContextMenu] = useState<StudioContextMenuState | null>(null)
   const [nameDialog, setNameDialog] = useState<NameDialogState | null>(null)
@@ -114,7 +136,7 @@ export function useStudioContextMenu({ projectName, dataProvider }: UseStudioCon
       const item = await dataProvider.getTreeItem(itemId)
       if (!item) return
 
-      const itemType = detectItemType(item.data)
+      const itemType = detectItemType(item.data, item.isFolder)
       const name = getItemName(item.data)
       const { path, folderPath } = resolveItemPaths(item.data, itemType, dataProvider)
 
@@ -152,13 +174,20 @@ export function useStudioContextMenu({ projectName, dataProvider }: UseStudioCon
         onSubmit: async (name: string) => {
           const fileName = ensureXmlExtension(name)
           try {
-            await createConfiguration(projectName, `${menu.folderPath}/${fileName}`)
+            const rootPath = dataProvider.getRootPath().replace(/[/\\]$/, '')
+            const folderPath = menu.folderPath.replace(/[/\\]$/, '')
+            const relativePath =
+              folderPath === rootPath
+                ? fileName
+                : `${folderPath.slice(rootPath.length + 1).replaceAll('\\', '/')}/${fileName}`
+            await createConfiguration(projectName, relativePath)
             await dataProvider.reloadDirectory('root')
           } catch (error) {
             showErrorToastFrom('Failed to create configuration', error)
           }
           setNameDialog(null)
         },
+        patterns: CONFIGURATION_NAME_PATTERNS,
       })
     },
     [projectName, dataProvider, closeContextMenu],
@@ -181,6 +210,7 @@ export function useStudioContextMenu({ projectName, dataProvider }: UseStudioCon
           }
           setNameDialog(null)
         },
+        patterns: FOLDER_OR_ADAPTER_NAME_PATTERNS,
       })
     },
     [projectName, dataProvider, closeContextMenu],
@@ -203,6 +233,7 @@ export function useStudioContextMenu({ projectName, dataProvider }: UseStudioCon
           }
           setNameDialog(null)
         },
+        patterns: FOLDER_OR_ADAPTER_NAME_PATTERNS,
       })
     },
     [projectName, dataProvider, closeContextMenu],
@@ -226,12 +257,14 @@ export function useStudioContextMenu({ projectName, dataProvider }: UseStudioCon
           try {
             if (menu.itemType === 'adapter') {
               await renameAdapter(projectName, oldName, newName, menu.path)
-            } else {
+            } else if (menu.itemType === 'configuration' || menu.itemType === 'file') {
               const finalName = menu.itemType === 'configuration' ? ensureXmlExtension(newName) : newName
-              await renameFile(projectName, `${menu.path}/${oldName}`, `${menu.path}/${newName}`)
+              const newPath = `${menu.folderPath}/${finalName}`
+              await renameFile(projectName, menu.path, newPath)
               clearConfigurationCache(projectName, menu.path)
-              const newPath = `${getParentDir(menu.path)}/${finalName}`
               useTabStore.getState().renameTabsForConfig(menu.path, newPath)
+            } else {
+              await renameFile(projectName, menu.path, `${getParentDir(menu.path)}/${newName}`)
             }
             await dataProvider.reloadDirectory('root')
           } catch (error) {
@@ -239,6 +272,7 @@ export function useStudioContextMenu({ projectName, dataProvider }: UseStudioCon
           }
           setNameDialog(null)
         },
+        patterns: getRenamePatterns(menu.itemType),
       })
     },
     [projectName, dataProvider, closeContextMenu],
@@ -270,10 +304,10 @@ export function useStudioContextMenu({ projectName, dataProvider }: UseStudioCon
         clearConfigurationCache(projectName, deleteTarget.path)
         useTabStore.getState().removeTabsForConfig(deleteTarget.path)
       }
-      await dataProvider.reloadDirectory('root')
     } catch (error) {
       showErrorToastFrom('Failed to delete', error)
     }
+    await dataProvider.reloadDirectory('root')
     setDeleteTarget(null)
   }, [deleteTarget, projectName, dataProvider])
 

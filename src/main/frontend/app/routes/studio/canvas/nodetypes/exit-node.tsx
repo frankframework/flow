@@ -5,6 +5,7 @@ import useNodeContextStore from '~/stores/node-context-store'
 import { useNodeContextMenu } from '~/routes/studio/canvas/node-context-menu-context'
 import { useSettingsStore } from '~/stores/settings-store'
 import { useFFDoc } from '@frankframework/doc-library-react'
+
 import type { Attribute } from '@frankframework/doc-library-core'
 
 export type ExitNode = Node<{
@@ -18,10 +19,10 @@ export default function ExitNodeComponent(properties: NodeProps<ExitNode>) {
   const minNodeWidth = FlowConfig.EXIT_DEFAULT_WIDTH
   const minNodeHeight = FlowConfig.EXIT_DEFAULT_HEIGHT
   const showNodeContextMenu = useNodeContextMenu()
+  const gradientEnabled = useSettingsStore((state) => state.studio.gradient)
   const { elements } = useFFDoc()
   const { setNodeId, setAttributes, setIsEditing, setEditingSubtype, setParentId, setChildParentId } =
     useNodeContextStore()
-  const gradientEnabled = useSettingsStore((state) => state.studio.gradient)
 
   const editNode = () => {
     interface ElementWithAttributes {

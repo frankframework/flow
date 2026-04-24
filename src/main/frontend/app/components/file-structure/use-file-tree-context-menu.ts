@@ -6,6 +6,7 @@ import { clearConfigurationCache } from '~/services/configuration-service'
 import useTabStore from '~/stores/tab-store'
 import useEditorTabStore from '~/stores/editor-tab-store'
 import { showErrorToast, showErrorToastFrom } from '~/components/toast'
+import { FILE_NAME_PATTERNS, FOLDER_OR_ADAPTER_NAME_PATTERNS } from '~/components/file-structure/name-input-dialog'
 
 export interface ContextMenuState {
   position: { x: number; y: number }
@@ -20,6 +21,7 @@ export interface NameDialogState {
   title: string
   initialValue?: string
   onSubmit: (name: string) => void
+  patterns?: Record<string, RegExp>
 }
 
 export interface DeleteTargetState {
@@ -110,8 +112,8 @@ export function useFileTreeContextMenu({
     (menuState?: ContextMenuState) => {
       const menu = resolveMenu(menuState)
       if (!menu || !projectName || !dataProvider) return
-      const parentPath = menu.path
-      const parentItemId = menu.itemId
+      const parentPath = menu.isFolder ? menu.path : buildNewPath(menu.path, '').slice(0, -1)
+      const parentItemId = menu.isFolder ? menu.itemId : getParentItemId(menu.itemId)
       closeContextMenu()
 
       setNameDialog({
@@ -130,6 +132,7 @@ export function useFileTreeContextMenu({
           }
           setNameDialog(null)
         },
+        patterns: FILE_NAME_PATTERNS,
       })
     },
     [projectName, dataProvider, closeContextMenu],
@@ -139,8 +142,8 @@ export function useFileTreeContextMenu({
     (menuState?: ContextMenuState) => {
       const menu = resolveMenu(menuState)
       if (!menu || !projectName || !dataProvider) return
-      const parentPath = menu.path
-      const parentItemId = menu.itemId
+      const parentPath = menu.isFolder ? menu.path : buildNewPath(menu.path, '').slice(0, -1)
+      const parentItemId = menu.isFolder ? menu.itemId : getParentItemId(menu.itemId)
       closeContextMenu()
 
       setNameDialog({
@@ -154,6 +157,7 @@ export function useFileTreeContextMenu({
           }
           setNameDialog(null)
         },
+        patterns: FOLDER_OR_ADAPTER_NAME_PATTERNS,
       })
     },
     [projectName, dataProvider, closeContextMenu],
@@ -175,13 +179,13 @@ export function useFileTreeContextMenu({
           if (newName === oldName) {
             setNameDialog(null)
             return
-          } else if (!ensureHasCorrectExtension(newName)) {
+          } else if (!menu.isFolder && !ensureHasCorrectExtension(newName)) {
             showErrorToast(`Filename must have one of the following extensions: ${ALLOWED_EXTENSIONS.join(', ')}`)
             return
           }
 
           try {
-            await renameFile(projectName, `${oldPath}`, `${oldPath}`.replace(oldName, newName))
+            await renameFile(projectName, oldPath, buildNewPath(oldPath, newName))
             clearConfigurationCache(projectName, oldPath)
             const newPath = buildNewPath(oldPath, newName)
             useTabStore.getState().renameTabsForConfig(oldPath, newPath)
@@ -193,6 +197,7 @@ export function useFileTreeContextMenu({
           }
           setNameDialog(null)
         },
+        patterns: menu.isFolder ? FOLDER_OR_ADAPTER_NAME_PATTERNS : FILE_NAME_PATTERNS,
       })
     },
     [projectName, dataProvider, onAfterRename, closeContextMenu],
@@ -222,10 +227,11 @@ export function useFileTreeContextMenu({
       useTabStore.getState().removeTabsForConfig(deleteTarget.path)
       useEditorTabStore.getState().refreshAllTabs()
       onAfterDelete?.(deleteTarget.path)
-      await dataProvider.reloadDirectory(deleteTarget.parentItemId)
     } catch (error) {
       showErrorToastFrom('Failed to delete', error)
     }
+
+    await dataProvider.reloadDirectory(deleteTarget.parentItemId)
     setDeleteTarget(null)
   }, [deleteTarget, projectName, dataProvider, onAfterDelete])
 

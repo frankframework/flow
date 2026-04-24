@@ -38,8 +38,8 @@ export function ChildNodeComponent({
   const [dragOver, setDragOver] = useState(false)
   const [canDropDraggedElement, setCanDropDraggedElement] = useState(false)
   const [dragForbidden, setDragForbidden] = useState(false)
-  const { elements, filters } = useFFDoc()
-  // Store the associated Frank element
+  const { elements, filters, ffDoc } = useFFDoc()
+
   const frankElement = useMemo(() => {
     if (!elements) return null
     const recordElements = elements as Record<string, { name: string; [key: string]: unknown }>
@@ -82,9 +82,9 @@ export function ChildNodeComponent({
 
   const canAcceptChild = useCallback(
     (droppedName: string) => {
-      return canAcceptChildStatic(frankElement as FrankElement | null, droppedName, filters)
+      return canAcceptChildStatic(frankElement as FrankElement | null, droppedName, filters, ffDoc?.elements)
     },
-    [frankElement, filters],
+    [frankElement, filters, ffDoc],
   )
 
   const handleDrop = useCallback(

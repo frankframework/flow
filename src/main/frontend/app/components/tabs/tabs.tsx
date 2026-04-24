@@ -29,8 +29,13 @@ export function TabsView<T extends string>({ tabs, activeTab, onSelectTab, onClo
 
       const scrollWidth = tabsListReference.current.scrollWidth - tabsElementReference.current.offsetWidth
       const scrollLeft = tabsListReference.current.scrollLeft
-      const currentScroll = scrollWidth > 0 ? scrollLeft / scrollWidth : 0
 
+      if (scrollWidth <= 0) {
+        setShadows(0, 0)
+        return
+      }
+
+      const currentScroll = scrollLeft / scrollWidth
       setShadows(currentScroll, 1 - currentScroll)
     })
   }, [])
@@ -69,7 +74,10 @@ export function TabsView<T extends string>({ tabs, activeTab, onSelectTab, onClo
         className="absolute top-0 right-0 bottom-0 z-10 w-2 bg-gradient-to-l from-black/15 to-transparent opacity-0"
       />
 
-      <ul ref={tabsListReference} className="m-0 flex rotate-x-180 flex-nowrap overflow-x-auto p-0 whitespace-nowrap">
+      <ul
+        ref={tabsListReference}
+        className="m-0 flex rotate-x-180 flex-nowrap overflow-x-auto p-0 whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
         {entries.map(([key, tab]) => (
           <Tab
             key={key}

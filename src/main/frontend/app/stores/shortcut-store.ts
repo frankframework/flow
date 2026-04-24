@@ -19,7 +19,7 @@ export interface ShortcutDefinition {
   modifiers?: PlatformValue<KeyModifiers>
   allowInInput?: boolean
   displayOnly?: boolean
-  handler?: () => void
+  handler?: () => boolean | void
 }
 
 function capitalize(s: string): string {
@@ -84,7 +84,7 @@ export const ALL_SHORTCUTS: Omit<ShortcutDefinition, 'handler'>[] = [
     key: 'escape',
     allowInInput: true,
   },
-  { id: 'studio.delete', label: 'Delete Selection', scope: 'studio', key: 'delete', displayOnly: true },
+  { id: 'studio.delete', label: 'Delete Selection', scope: 'studio', key: { pc: 'delete', mac: 'backspace' } },
   {
     id: 'studio.save-node',
     label: 'Save Node',
@@ -109,6 +109,14 @@ export const ALL_SHORTCUTS: Omit<ShortcutDefinition, 'handler'>[] = [
     scope: 'editor',
     key: 'f',
     modifiers: { cmdOrCtrl: true, shift: true },
+    displayOnly: true,
+  },
+  {
+    id: 'editor.reformat',
+    label: 'Reformat XML',
+    scope: 'editor',
+    key: 'f',
+    modifiers: { alt: true, shift: true },
     displayOnly: true,
   },
   { id: 'editor.search', label: 'Find', scope: 'editor', key: 'f', modifiers: { cmdOrCtrl: true }, displayOnly: true },
@@ -158,18 +166,6 @@ export const ALL_SHORTCUTS: Omit<ShortcutDefinition, 'handler'>[] = [
     displayOnly: true,
   },
 
-  // Editor File Explorer
-  { id: 'explorer.new-file', label: 'New File', scope: 'editor', key: 'n' },
-  { id: 'explorer.new-folder', label: 'New Folder', scope: 'editor', key: 'n', modifiers: { shift: true } },
-  { id: 'explorer.rename', label: 'Rename Item', scope: 'editor', key: 'r' },
-  {
-    id: 'explorer.delete',
-    label: 'Delete Item',
-    scope: 'editor',
-    key: { pc: 'delete', mac: 'backspace' },
-    modifiers: { mac: { cmdOrCtrl: true } },
-  },
-
   // Studio File Explorer
   { id: 'studio-explorer.new-config', label: 'New Configuration', scope: 'studio', key: 'c' },
   { id: 'studio-explorer.new-adapter', label: 'New Adapter', scope: 'studio', key: 'a' },
@@ -179,6 +175,18 @@ export const ALL_SHORTCUTS: Omit<ShortcutDefinition, 'handler'>[] = [
     id: 'studio-explorer.delete',
     label: 'Delete Item',
     scope: 'studio',
+    key: { pc: 'delete', mac: 'backspace' },
+    modifiers: { mac: { cmdOrCtrl: true } },
+  },
+
+  // Editor File Explorer
+  { id: 'explorer.new-file', label: 'New File', scope: 'editor', key: 'n' },
+  { id: 'explorer.new-folder', label: 'New Folder', scope: 'editor', key: 'n', modifiers: { shift: true } },
+  { id: 'explorer.rename', label: 'Rename Item', scope: 'editor', key: 'r' },
+  {
+    id: 'explorer.delete',
+    label: 'Delete Item',
+    scope: 'editor',
     key: { pc: 'delete', mac: 'backspace' },
     modifiers: { mac: { cmdOrCtrl: true } },
   },

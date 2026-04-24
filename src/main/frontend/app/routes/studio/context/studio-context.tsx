@@ -155,7 +155,7 @@ export default function StudioContext() {
         value={searchTerm}
         onChange={(event) => setSearchTerm(event.target.value)}
       />
-      <ul className="flex-1 overflow-y-auto p-4">
+      <ul className="flex-1 overflow-y-auto px-3 py-2">
         {Object.keys(elementsToRender).length === 0 && (
           <li className="text-foreground-muted italic">No results found.</li>
         )}

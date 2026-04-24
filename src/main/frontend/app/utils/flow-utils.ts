@@ -2,7 +2,6 @@ import type { FlowNode } from '~/routes/studio/canvas/flow'
 
 const REFERENCE_KEYS = new Set(['source', 'target', 'parentId'])
 
-// Helper function for copying nodes and edges with new IDs while maintaining relationships
 export function cloneWithRemappedIds<T>(value: T, idMap: Map<string, string>, generateId: () => string): T {
   if (Array.isArray(value)) {
     return value.map((v) => cloneWithRemappedIds(v, idMap, generateId)) as T
@@ -126,4 +125,24 @@ function transformValidator(tagName: string, baseName: string): string {
 function capitalize(value: string): string {
   if (!value) return value
   return value.charAt(0).toUpperCase() + value.slice(1)
+}
+
+export function frankdocChipStyle(name: string): { borderColor: string; backgroundColor: string } {
+  let sum = 0
+  for (const char of name) sum += char.codePointAt(0) ?? 0
+  const h = sum % 360
+  const s = 0.9
+  const l = 0.78
+  const a = s * Math.min(l, 1 - l)
+  const f = (n: number) => {
+    const k = (n + h / 30) % 12
+    return l - a * Math.max(-1, Math.min(k - 3, Math.min(9 - k, 1)))
+  }
+  const r = Math.round(f(0) * 255)
+  const g = Math.round(f(8) * 255)
+  const b = Math.round(f(4) * 255)
+  return {
+    borderColor: `rgb(${r} ${g} ${b})`,
+    backgroundColor: `rgb(${r} ${g} ${b} / 0.2)`,
+  }
 }

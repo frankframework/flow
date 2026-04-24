@@ -79,7 +79,7 @@ export default function StudioFileStructure() {
       const item = await dataProvider.getTreeItem(itemId)
       if (!item) return null
 
-      const itemType = detectItemType(item.data)
+      const itemType = detectItemType(item.data, item.isFolder)
       const name = getItemName(item.data)
       const { path, folderPath } = resolveItemPaths(item.data, itemType, dataProvider)
 
@@ -92,6 +92,7 @@ export default function StudioFileStructure() {
     (action: (menuState: StudioContextMenuState) => void, requireSelection: boolean) => {
       const itemId = selectedItemId ?? (requireSelection ? null : 'root')
       if (!itemId || (itemId === 'root' && requireSelection)) return
+
       void buildContextForItem(itemId).then((menuState) => {
         if (menuState) action(menuState)
       })
@@ -105,7 +106,6 @@ export default function StudioFileStructure() {
     'studio-explorer.new-folder': () => triggerExplorerAction(studioContextMenu.handleNewFolder, false),
     'studio-explorer.rename': () => triggerExplorerAction(studioContextMenu.handleRename, true),
     'studio-explorer.delete': () => triggerExplorerAction(studioContextMenu.handleDelete, true),
-    'studio-explorer.delete-mac': () => triggerExplorerAction(studioContextMenu.handleDelete, true),
   })
 
   useEffect(() => {
@@ -347,7 +347,7 @@ export default function StudioFileStructure() {
 
     return (
       <div
-        className="flex min-w-0 cursor-pointer items-center"
+        className="flex w-full min-w-0 cursor-pointer items-center"
         onContextMenu={(e) => studioContextMenu.openContextMenu(e, item.index)}
       >
         <Icon className="fill-foreground w-4 flex-shrink-0" />

@@ -11,13 +11,21 @@ export type TabProperties = {
   onClose: (event: React.MouseEvent) => void
 } & TabData
 
-export default function Tab({ name, icon, isSelected, onSelect, onClose }: Readonly<TabProperties>) {
+export default function Tab({ name, configurationPath, icon, isSelected, onSelect, onClose }: Readonly<TabProperties>) {
   const Icon = icon ?? CodeIcon
 
   const handleClose = (event: React.MouseEvent<Element, MouseEvent>) => {
     event.stopPropagation()
     onClose(event)
   }
+
+  const fileBasename = configurationPath
+    ? (configurationPath
+        .split(/[/\\]/)
+        .pop()
+        ?.replace(/\.[^/.]+$/, '') ?? name)
+    : name
+  const displayText = fileBasename === name ? name : `${fileBasename} / ${name}`
 
   return (
     <li
@@ -28,9 +36,10 @@ export default function Tab({ name, icon, isSelected, onSelect, onClose }: Reado
           : 'bg-hover hover:bg-selected text-foreground-muted border-b-border border-t-3 border-t-transparent hover:cursor-pointer',
       )}
       onClick={onSelect}
+      title={configurationPath}
     >
       <Icon className={'fill-foreground-muted h-4 w-auto'} />
-      {name}
+      {displayText}
       <CloseIcon
         className={clsx(
           'hover:fill-foreground h-8 w-auto hover:cursor-pointer',

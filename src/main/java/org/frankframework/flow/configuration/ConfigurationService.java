@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 import org.frankframework.flow.exception.ApiException;
+import org.frankframework.flow.file.FileTreeService;
 import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.frankframework.flow.project.Project;
 import org.frankframework.flow.project.ProjectService;
@@ -24,10 +25,12 @@ public class ConfigurationService {
 
 	private final FileSystemStorage fileSystemStorage;
 	private final ProjectService projectService;
+	private final FileTreeService fileTreeService;
 
-	public ConfigurationService(FileSystemStorage fileSystemStorage, ProjectService projectService) {
+	public ConfigurationService(FileSystemStorage fileSystemStorage, ProjectService projectService, FileTreeService fileTreeService) {
 		this.fileSystemStorage = fileSystemStorage;
 		this.projectService = projectService;
+		this.fileTreeService = fileTreeService;
 	}
 
 	public ConfigurationDTO getConfigurationContent(String projectName, String filepath) throws IOException, ApiException {
@@ -49,14 +52,18 @@ public class ConfigurationService {
 			throw new ApiException("Invalid file path: " + filepath, HttpStatus.NOT_FOUND);
 		}
 
-		Document updatedDocument = XmlConfigurationUtils.insertFlowNamespace(content);
-		String updatedContent = XmlConfigurationUtils.convertNodeToString(updatedDocument);
 
-		fileSystemStorage.writeFile(absolutePath.toString(), updatedContent);
-		return updatedContent;
+		Document document = XmlConfigurationUtils.insertFlowNamespace(content);
+		if (document == null) {
+			throw new ApiException("Configuration content must not be blank", HttpStatus.BAD_REQUEST);
+		}
+
+		String formatted = XmlConfigurationUtils.convertNodeToString(document);
+		fileSystemStorage.writeFile(absolutePath.toString(), formatted);
+		return formatted;
 	}
 
-	public String addConfiguration(String projectName, String configurationName) throws IOException, ApiException {
+	public String addConfiguration(String projectName, String configurationName) throws IOException, ApiException, TransformerException, ParserConfigurationException, SAXException {
 		Project project =  projectService.getProject(projectName);
 		Path absProjectPath = fileSystemStorage.toAbsolutePath(project.getRootPath());
 		Path configDir = absProjectPath.resolve(CONFIGURATIONS_DIR).normalize();
@@ -70,9 +77,14 @@ public class ConfigurationService {
 			throw new ApiException("Invalid configuration name: " + configurationName, HttpStatus.BAD_REQUEST);
 		}
 
+		Files.createDirectories(filePath.getParent());
+
 		String defaultXml = loadDefaultConfigurationXml();
-		fileSystemStorage.writeFile(filePath.toString(), defaultXml);
-		return defaultXml;
+		Document updatedDocument = XmlConfigurationUtils.insertFlowNamespace(defaultXml);
+		String updatedContent = XmlConfigurationUtils.convertNodeToString(updatedDocument);
+		fileSystemStorage.writeFile(filePath.toString(), updatedContent);
+		fileTreeService.invalidateTreeCache(projectName);
+		return updatedContent;
 	}
 
 	private String loadDefaultConfigurationXml() throws IOException {

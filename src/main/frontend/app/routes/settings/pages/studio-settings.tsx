@@ -9,14 +9,16 @@ export default function StudioSettings() {
     <div className="space-y-3 p-6">
       <div className="border-border bg-background space-y-6 rounded-md border p-6">
         <InputWithLabel
+          inputSide="right"
+          grow
           htmlFor="gradient-toggle"
           label="Display Gradient"
           description="Toggle gradient backgrounds in the app"
         >
           <Toggle
             id="gradient-toggle"
-            checked={studio.gradient} // bind to the store value
-            onChange={(value: boolean) => setStudioSettings({ gradient: value })} // update store on toggle
+            checked={studio.gradient}
+            onChange={(value: boolean) => setStudioSettings({ gradient: value })}
           />
         </InputWithLabel>
       </div>

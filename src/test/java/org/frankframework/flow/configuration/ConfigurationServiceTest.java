@@ -2,6 +2,7 @@ package org.frankframework.flow.configuration;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 import java.io.IOException;
@@ -9,6 +10,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import org.frankframework.flow.exception.ApiException;
+import org.frankframework.flow.file.FileTreeService;
 import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.frankframework.flow.project.Project;
 import org.frankframework.flow.project.ProjectNotFoundException;
@@ -29,6 +31,9 @@ class ConfigurationServiceTest {
 	@Mock
 	private ProjectService projectService;
 
+	@Mock
+	private FileTreeService fileTreeService;
+
 	private ConfigurationService configurationService;
 
 	@TempDir
@@ -36,7 +41,7 @@ class ConfigurationServiceTest {
 
 	@BeforeEach
 	void setUp() {
-		configurationService = new ConfigurationService(fileSystemStorage, projectService);
+		configurationService = new ConfigurationService(fileSystemStorage, projectService, fileTreeService);
 	}
 
 	private void stubToAbsolutePath() {
@@ -111,8 +116,9 @@ class ConfigurationServiceTest {
 
 		configurationService.updateConfiguration("test", file.toString(), "<new/>");
 
-		assertEquals("<new/>\n", Files.readString(file, StandardCharsets.UTF_8));
-		verify(fileSystemStorage).writeFile(file.toString(), "<new/>\n");
+		String result = Files.readString(file, StandardCharsets.UTF_8).trim();
+		assertEquals("<new/>", result);
+		verify(fileSystemStorage).writeFile(eq(file.toString()), anyString());
 	}
 
 	@Test

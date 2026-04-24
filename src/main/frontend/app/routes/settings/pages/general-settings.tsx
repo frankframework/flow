@@ -1,6 +1,7 @@
-import Toggle from '~/components/inputs/toggle'
 import { type GeneralSettings as GeneralSettingsType, useSettingsStore } from '../../../stores/settings-store'
+import InputWithLabel from '~/components/inputs/input-with-label'
 import RadioList from '~/components/inputs/radio-list'
+import Toggle from '~/components/inputs/toggle'
 import ValidatedInput from '~/components/inputs/validatedInput'
 
 export default function GeneralSettings() {
@@ -11,8 +12,8 @@ export default function GeneralSettings() {
       <div className="border-border bg-background space-y-6 rounded-md border p-6">
         <p>Customize the application to your liking</p>
 
-        <div className="border-border rounded-md border p-4">
-          <p>Select Theme</p>
+        <div className="border-border space-y-2 rounded-md border p-4">
+          <p className="font-medium">Theme</p>
           <RadioList
             options={{
               light: { Light: 'Light themed' },
@@ -23,23 +24,29 @@ export default function GeneralSettings() {
             onChange={(theme) => setGeneralSettings({ theme: theme as GeneralSettingsType['theme'] })}
           />
         </div>
-        <div className="border-border rounded-md border p-4">
-          <p>Autosave Settings</p>
-          <div className="mt-2 flex items-center gap-4">
-            <label className="mb-2 block" htmlFor="enable-autosave">
-              Enable Autosave
-            </label>
+
+        <div className="border-border space-y-4 rounded-md border p-4">
+          <p className="font-medium">Autosave</p>
+          <InputWithLabel
+            inputSide="right"
+            grow
+            htmlFor="enable-autosave"
+            label="Enable Autosave"
+            description="Automatically save changes after a period of inactivity"
+          >
             <Toggle
               id="enable-autosave"
               checked={general.autoSave.enabled}
               onChange={(checked) => setGeneralSettings({ autoSave: { ...general.autoSave, enabled: checked } })}
             />
-          </div>
-          <div className="mt-2 flex items-center gap-4">
-            <label className="mb-2 block" htmlFor="autosave-delay">
-              Autosave Delay (ms) <p className="text-muted-foreground text-sm">(Saves after X ms of inactivity)</p>
-            </label>
-
+          </InputWithLabel>
+          <InputWithLabel
+            inputSide="right"
+            grow
+            htmlFor="autosave-delay"
+            label="Autosave Delay"
+            description="Saves after this many milliseconds of inactivity"
+          >
             <ValidatedInput
               id="autosave-delay"
               value={general.autoSave.delayMs.toString()}
@@ -49,8 +56,6 @@ export default function GeneralSettings() {
               }}
               onChange={(event) => {
                 const value = event.target.value
-
-                // Only update store if valid number
                 if (/^[1-9]\d*$/.test(value)) {
                   setGeneralSettings({
                     autoSave: {
@@ -61,7 +66,7 @@ export default function GeneralSettings() {
                 }
               }}
             />
-          </div>
+          </InputWithLabel>
         </div>
       </div>
     </div>

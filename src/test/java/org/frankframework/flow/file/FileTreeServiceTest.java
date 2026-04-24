@@ -33,13 +33,15 @@ public class FileTreeServiceTest {
 	@Mock
 	private FileSystemStorage fileSystemStorage;
 
+	@Mock
 	private FileTreeService fileTreeService;
+
 	private Path tempProjectRoot;
 	private static final String TEST_PROJECT_NAME = "FrankFlowTestProject";
 
 	@BeforeEach
 	public void setUp() throws IOException {
-		FileService fileService = new FileService(projectService, fileSystemStorage);
+		FileService fileService = new FileService(projectService, fileSystemStorage, fileTreeService);
 		tempProjectRoot = Files.createTempDirectory("flow_unit_test");
 		fileTreeService = new FileTreeService(projectService, fileSystemStorage, fileService);
 	}

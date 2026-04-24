@@ -51,6 +51,7 @@ export default function FileTreeDialogs({
           initialValue={nameDialog.initialValue}
           onSubmit={nameDialog.onSubmit}
           onCancel={onCloseNameDialog}
+          patterns={nameDialog.patterns}
         />
       )}
 

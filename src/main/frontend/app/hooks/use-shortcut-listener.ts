@@ -60,9 +60,11 @@ export function useShortcutListener() {
           continue
         }
 
-        event.preventDefault()
-        shortcut.handler()
-        return
+        const result = shortcut.handler()
+        if (result !== false) {
+          event.preventDefault()
+          return
+        }
       }
     }
 
