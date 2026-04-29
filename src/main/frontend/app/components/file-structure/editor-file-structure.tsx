@@ -9,7 +9,7 @@ import AltArrowDownIcon from '../../../icons/solar/Alt Arrow Down.svg?react'
 import CodeIcon from '../../../icons/solar/Code.svg?react'
 import CodeFileIcon from '../../../icons/solar/Code File.svg?react'
 import TrashBinIcon from '../../../icons/solar/Trash Bin.svg?react'
-import RulerCrossPenIcon from '../../../icons/solar/Ruler Cross Pen.svg?react'
+import Pen from '../../../icons/solar/Pen.svg?react'
 import { useShortcut } from '~/hooks/use-shortcut'
 import type { ContextMenuState } from './use-file-tree-context-menu'
 
@@ -343,8 +343,8 @@ export default function EditorFileStructure() {
             <button
               className={actionBtnClass}
               title="New File"
-              onClick={(e) => {
-                e.stopPropagation()
+              onClick={(mouseEvent) => {
+                mouseEvent.stopPropagation()
                 triggerItemAction(item.index, editorContextMenu.handleNewFile)
               }}
             >
@@ -355,8 +355,8 @@ export default function EditorFileStructure() {
             <button
               className={actionBtnClass}
               title="New Folder"
-              onClick={(e) => {
-                e.stopPropagation()
+              onClick={(mouseEvent) => {
+                mouseEvent.stopPropagation()
                 triggerItemAction(item.index, editorContextMenu.handleNewFolder)
               }}
             >
@@ -367,20 +367,20 @@ export default function EditorFileStructure() {
             <button
               className={actionBtnClass}
               title="Rename"
-              onClick={(e) => {
-                e.stopPropagation()
+              onClick={(mouseEvent) => {
+                mouseEvent.stopPropagation()
                 triggerItemAction(item.index, editorContextMenu.handleRename)
               }}
             >
-              <RulerCrossPenIcon className="fill-foreground h-3.5 w-3.5" />
+              <Pen className="stroke-foreground h-3.5 w-3.5" />
             </button>
           )}
           {!isRoot && (
             <button
               className={actionBtnClass}
               title="Delete"
-              onClick={(e) => {
-                e.stopPropagation()
+              onClick={(mouseEvent) => {
+                mouseEvent.stopPropagation()
                 triggerItemAction(item.index, editorContextMenu.handleDelete)
               }}
             >
@@ -418,7 +418,7 @@ export default function EditorFileStructure() {
         </div>
       </div>
       <div className="mt-2">
-        <Search onChange={(e) => setSearchTerm(e.target.value)} />
+        <Search onChange={(changeEvent) => setSearchTerm(changeEvent.target.value)} />
       </div>
       <div
         className="h-full overflow-auto pr-2"
