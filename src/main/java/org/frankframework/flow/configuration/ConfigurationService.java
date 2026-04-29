@@ -1,5 +1,6 @@
 package org.frankframework.flow.configuration;
 
+import jakarta.annotation.PostConstruct;
 import java.io.IOException;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
@@ -36,9 +37,7 @@ public class ConfigurationService {
 	private final ProjectService projectService;
 	private final FileTreeService fileTreeService;
 	private final FrankConfigXsdService frankConfigXsdService;
-
-	private volatile XsdAttributeOrdererUtils xsdOrderer;
-	private volatile boolean xsdLoadAttempted = false;
+	private XsdAttributeOrdererUtils xsdOrderer;
 
 	public ConfigurationService(
 			FileSystemStorage fileSystemStorage,
@@ -49,6 +48,11 @@ public class ConfigurationService {
 		this.projectService = projectService;
 		this.frankConfigXsdService = frankConfigXsdService;
 		this.fileTreeService = fileTreeService;
+	}
+
+	@PostConstruct
+	public void init() {
+		this.xsdOrderer = loadXsdOrderer();
 	}
 
 	public ConfigurationDTO getConfigurationContent(String projectName, String filepath) throws IOException, ApiException {
@@ -132,14 +136,6 @@ public class ConfigurationService {
 	}
 
 	private XsdAttributeOrdererUtils getXsdOrderer() {
-		if (!xsdLoadAttempted) {
-			synchronized (this) {
-				if (!xsdLoadAttempted) {
-					xsdLoadAttempted = true;
-					xsdOrderer = loadXsdOrderer();
-				}
-			}
-		}
 		return xsdOrderer;
 	}
 
