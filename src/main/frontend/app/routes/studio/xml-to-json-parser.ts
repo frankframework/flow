@@ -259,7 +259,7 @@ function addForwardEdges(
     if (targetName === null) continue
 
     const targetId = nameToId.get(targetName)
-    let targetNode = targetId ? nodes.find((n) => n.id === targetId) : undefined
+    let targetNode = targetId ? nodes.find((n) => n.id === targetId) : null
     if (!targetNode) continue
     if (targetNode.id === sourceId) {
       const exitFallback = nodes.find((n) => n.type === 'exitNode' && 'name' in n.data && n.data.name === targetName)
