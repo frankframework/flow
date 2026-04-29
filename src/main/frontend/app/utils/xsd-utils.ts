@@ -386,57 +386,6 @@ function getRequiredOnly(requirement: Requirement): Requirement | null {
   return null
 }
 
-/**
- * Returns the set of attribute names that are required (`use="required"`) for the
- * given element name in the XSD. Walks the type hierarchy via `xs:extension` so
- * attributes inherited from base types are included.
- */
-export function getMandatoryAttributeNames(doc: Document, elementName: string): Set<string> {
-  const typeNode = getComplexTypeByName(doc, `${elementName}Type`)
-  if (!typeNode) return new Set()
-  return collectRequiredAttributes(doc, typeNode, new Set())
-}
-
-/**
- * Recursively walks a complex-type node (and any base types it extends) to collect
- * all mandatory attribute names`.
- */
-function collectRequiredAttributes(doc: Document, node: Element, visited: Set<string>): Set<string> {
-  const result = new Set<string>()
-
-  for (const child of node.children) {
-    switch (child.localName) {
-      case 'attribute': {
-        const name = child.getAttribute('name')
-        if (name && child.getAttribute('use') === 'required') result.add(name)
-        break
-      }
-      case 'extension': {
-        const base = child.getAttribute('base')
-        if (base && !visited.has(base)) {
-          visited.add(base)
-          const baseType = getComplexTypeByName(doc, base)
-          if (baseType) {
-            for (const a of collectRequiredAttributes(doc, baseType, visited)) result.add(a)
-          }
-        }
-        for (const a of collectRequiredAttributes(doc, child, visited)) result.add(a)
-        break
-      }
-      case 'complexContent':
-      case 'simpleContent':
-      case 'sequence':
-      case 'all':
-      case 'choice': {
-        for (const a of collectRequiredAttributes(doc, child, visited)) result.add(a)
-        break
-      }
-    }
-  }
-
-  return result
-}
-
 interface RequirementBase {
   kind: 'element' | 'group'
 }

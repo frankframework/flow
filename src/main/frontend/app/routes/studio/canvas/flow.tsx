@@ -165,7 +165,7 @@ function FlowCanvas() {
 
       const updatedConfigXml = replaceAdapterInXml(fullConfigXml, adapterIndex, newAdapterXml.trim())
 
-      await saveConfiguration(currentProject.name, configurationPath, updatedConfigXml)
+      await saveConfiguration(currentProject.name, configurationPath, updatedConfigXml, true)
       clearConfigurationCache(currentProject.name, configurationPath)
       useEditorTabStore.getState().refreshAllTabs()
       if (currentProject.isGitRepository) await refreshOpenDiffs(currentProject.name)

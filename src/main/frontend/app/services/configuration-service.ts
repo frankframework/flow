@@ -31,8 +31,14 @@ export async function fetchConfiguration(projectName: string, filepath: string, 
   return content
 }
 
-export async function saveConfiguration(projectName: string, filepath: string, content: string): Promise<XmlResponse> {
-  return apiFetch<XmlResponse>(`${getBaseUrl(projectName)}?path=${encodeURIComponent(filepath)}`, {
+export async function saveConfiguration(
+  projectName: string,
+  filepath: string,
+  content: string,
+  format = false,
+): Promise<XmlResponse> {
+  const formatParam = format ? '&format=true' : ''
+  return apiFetch<XmlResponse>(`${getBaseUrl(projectName)}?path=${encodeURIComponent(filepath)}${formatParam}`, {
     method: 'PUT',
     body: content,
   })

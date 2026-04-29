@@ -1,23 +1,32 @@
 package org.frankframework.flow.configuration;
 
 import java.io.IOException;
+import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
+import lombok.extern.slf4j.Slf4j;
 import org.frankframework.flow.exception.ApiException;
 import org.frankframework.flow.file.FileTreeService;
 import org.frankframework.flow.filesystem.FileSystemStorage;
+import org.frankframework.flow.frankconfig.FrankConfigXsdNotFoundException;
+import org.frankframework.flow.frankconfig.FrankConfigXsdService;
 import org.frankframework.flow.project.Project;
 import org.frankframework.flow.project.ProjectService;
 import org.frankframework.flow.utility.XmlConfigurationUtils;
+import org.frankframework.flow.utility.XmlFormatterUtils;
+import org.frankframework.flow.utility.XmlSecurityUtils;
+import org.frankframework.flow.utility.XsdAttributeOrdererUtils;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.w3c.dom.Document;
+import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
+@Slf4j
 @Service
 public class ConfigurationService {
 
@@ -26,10 +35,19 @@ public class ConfigurationService {
 	private final FileSystemStorage fileSystemStorage;
 	private final ProjectService projectService;
 	private final FileTreeService fileTreeService;
+	private final FrankConfigXsdService frankConfigXsdService;
 
-	public ConfigurationService(FileSystemStorage fileSystemStorage, ProjectService projectService, FileTreeService fileTreeService) {
+	private volatile XsdAttributeOrdererUtils xsdOrderer;
+	private volatile boolean xsdLoadAttempted = false;
+
+	public ConfigurationService(
+			FileSystemStorage fileSystemStorage,
+			ProjectService projectService,
+			FrankConfigXsdService frankConfigXsdService,
+			FileTreeService fileTreeService) {
 		this.fileSystemStorage = fileSystemStorage;
 		this.projectService = projectService;
+		this.frankConfigXsdService = frankConfigXsdService;
 		this.fileTreeService = fileTreeService;
 	}
 
@@ -44,7 +62,7 @@ public class ConfigurationService {
 		return new ConfigurationDTO(filepath, content);
 	}
 
-	public String updateConfiguration(String projectName, String filepath, String content)
+	public String updateConfiguration(String projectName, String filepath, String content, boolean format)
 			throws ApiException {
 		Path absolutePath = fileSystemStorage.toAbsolutePath(filepath);
 
@@ -58,11 +76,17 @@ public class ConfigurationService {
 
 		try {
 			String withNamespace = ensureFlowNamespace(content);
-			String formatted = XmlConfigurationUtils.formatPreservingAttributeOrder(withNamespace);
+
+			if (!format) {
+				fileSystemStorage.writeFile(absolutePath.toString(), withNamespace);
+				return withNamespace;
+			}
+
+			String formatted = XmlFormatterUtils.format(withNamespace, getXsdOrderer());
 			fileSystemStorage.writeFile(absolutePath.toString(), formatted);
 			return formatted;
 		} catch (Exception e) {
-			throw new ApiException("Failed to format configuration: " + e.getMessage(), HttpStatus.BAD_REQUEST);
+			throw new ApiException("Failed to save configuration: " + e.getMessage(), HttpStatus.BAD_REQUEST);
 		}
 	}
 
@@ -105,5 +129,31 @@ public class ConfigurationService {
 						.readAllBytes(),
 				StandardCharsets.UTF_8
 		);
+	}
+
+	private XsdAttributeOrdererUtils getXsdOrderer() {
+		if (!xsdLoadAttempted) {
+			synchronized (this) {
+				if (!xsdLoadAttempted) {
+					xsdLoadAttempted = true;
+					xsdOrderer = loadXsdOrderer();
+				}
+			}
+		}
+		return xsdOrderer;
+	}
+
+	private XsdAttributeOrdererUtils loadXsdOrderer() {
+		try {
+			String xsdContent = frankConfigXsdService.getFrankConfigXsd();
+			Document doc = XmlSecurityUtils.createSecureDocumentBuilder()
+					.parse(new InputSource(new StringReader(xsdContent)));
+			return new XsdAttributeOrdererUtils(doc);
+		} catch (FrankConfigXsdNotFoundException e) {
+			log.warn("FrankConfig XSD unavailable; attribute ordering will be skipped: {}", e.getMessage());
+		} catch (Exception e) {
+			log.warn("Failed to parse FrankConfig XSD; attribute ordering will be skipped: {}", e.getMessage());
+		}
+		return null;
 	}
 }

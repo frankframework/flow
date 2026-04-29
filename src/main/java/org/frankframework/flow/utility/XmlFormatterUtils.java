@@ -2,6 +2,8 @@ package org.frankframework.flow.utility;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.List;
 import javax.xml.XMLConstants;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParserFactory;
@@ -9,23 +11,32 @@ import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
-import org.xml.sax.ext.LexicalHandler;
-import org.xml.sax.helpers.DefaultHandler;
+import org.xml.sax.ext.DefaultHandler2;
 
-public class XmlFormatter extends DefaultHandler implements LexicalHandler {
+public class XmlFormatterUtils extends DefaultHandler2 {
 	private static final int INDENT_SIZE = 2;
 
 	private final StringBuilder sb = new StringBuilder();
 	private int depth = 0;
 	private boolean startTagOpen = false;
+	private final XsdAttributeOrdererUtils orderer;
+
+	private XmlFormatterUtils(XsdAttributeOrdererUtils orderer) {
+		this.orderer = orderer;
+	}
 
 	/**
-	 * Formats {@code xml} with {@value INDENT_SIZE} spaces per indent level.
-	 * Attribute order in the input is preserved exactly.
+	 * Formats {@code xml} with {@value INDENT_SIZE} spaces per indent level,
+	 * preserving attribute declaration order from the input.
 	 */
 	public static String format(String xml)
 			throws ParserConfigurationException, SAXException, IOException {
-		XmlFormatter handler = new XmlFormatter();
+		return format(xml, null);
+	}
+
+	public static String format(String xml, XsdAttributeOrdererUtils orderer)
+			throws ParserConfigurationException, SAXException, IOException {
+		XmlFormatterUtils handler = new XmlFormatterUtils(orderer);
 		XMLReader reader = createSecureXmlReader(handler);
 		reader.parse(new InputSource(new StringReader(xml)));
 		return handler.toString();
@@ -40,15 +51,14 @@ public class XmlFormatter extends DefaultHandler implements LexicalHandler {
 		sb.append(" ".repeat(elementIndent)).append('<').append(qName);
 
 		if (attrs.getLength() > 0) {
-			sb.append(' ').append(attrs.getQName(0))
-					.append("=\"").append(escapeAttr(attrs.getValue(0))).append('"');
-
-			if (attrs.getLength() > 1) {
+			List<String[]> ordered = orderer != null ? orderer.reorder(qName, attrs) : toList(attrs);
+			sb.append(' ');
+			appendAttribute(ordered.getFirst());
+			if (ordered.size() > 1) {
 				String continuationPad = " ".repeat(elementIndent + qName.length() + INDENT_SIZE);
-				for (int i = 1; i < attrs.getLength(); i++) {
-					sb.append('\n').append(continuationPad)
-							.append(attrs.getQName(i))
-							.append("=\"").append(escapeAttr(attrs.getValue(i))).append('"');
+				for (int i = 1; i < ordered.size(); i++) {
+					sb.append('\n').append(continuationPad);
+					appendAttribute(ordered.get(i));
 				}
 			}
 		}
@@ -89,16 +99,21 @@ public class XmlFormatter extends DefaultHandler implements LexicalHandler {
 		sb.append("<!--").append(new String(ch, start, length)).append("-->");
 	}
 
-	@Override public void startDTD(String name, String publicId, String systemId) {}
-	@Override public void endDTD() {}
-	@Override public void startEntity(String name) {}
-	@Override public void endEntity(String name) {}
-	@Override public void startCDATA() {}
-	@Override public void endCDATA() {}
-
 	@Override
 	public String toString() {
 		return sb.toString();
+	}
+
+	private void appendAttribute(String[] nameValue) {
+		sb.append(nameValue[0]).append("=\"").append(escapeAttr(nameValue[1])).append('"');
+	}
+
+	private static List<String[]> toList(Attributes attrs) {
+		List<String[]> list = new ArrayList<>(attrs.getLength());
+		for (int i = 0; i < attrs.getLength(); i++) {
+			list.add(new String[]{attrs.getQName(i), attrs.getValue(i)});
+		}
+		return list;
 	}
 
 	private void appendNewlineIfNeeded() {
@@ -122,7 +137,7 @@ public class XmlFormatter extends DefaultHandler implements LexicalHandler {
 		return val.replace("&", "&amp;").replace("<", "&lt;");
 	}
 
-	private static XMLReader createSecureXmlReader(XmlFormatter handler)
+	private static XMLReader createSecureXmlReader(XmlFormatterUtils handler)
 			throws ParserConfigurationException, SAXException {
 		SAXParserFactory spf = SAXParserFactory.newInstance();
 		spf.setNamespaceAware(false);

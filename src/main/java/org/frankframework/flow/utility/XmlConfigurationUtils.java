@@ -208,12 +208,4 @@ public class XmlConfigurationUtils {
 		parent.replaceChild(newElement, element);
 	}
 
-	/**
-	 * Formats an XML string with 2-space indentation while preserving attribute
-	 * declaration order.
-	 */
-	public static String formatPreservingAttributeOrder(String xml)
-			throws ParserConfigurationException, SAXException, IOException {
-		return XmlFormatter.format(xml);
-	}
 }
