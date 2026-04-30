@@ -665,19 +665,19 @@ export default function CodeEditor() {
       <>
         <div className="flex h-12 items-center justify-between pr-4">
           <SidebarHeader side={SidebarSide.LEFT} title="Files" />
-          <div className="border-border ml-auto flex overflow-hidden rounded border text-sm">
-            <button
-              onClick={() => setLeftTab('files')}
-              className={clsx(
-                'cursor-pointer px-3 py-1 transition-colors',
-                leftTab === 'files'
-                  ? 'bg-selected text-foreground font-medium'
-                  : 'hover:bg-foreground-active text-muted-foreground',
-              )}
-            >
-              Files
-            </button>
-            {isGitRepo && (
+          {isGitRepo && (
+            <div className="border-border ml-auto flex overflow-hidden rounded border text-sm">
+              <button
+                onClick={() => setLeftTab('files')}
+                className={clsx(
+                  'cursor-pointer px-3 py-1 transition-colors',
+                  leftTab === 'files'
+                    ? 'bg-selected text-foreground font-medium'
+                    : 'hover:bg-foreground-active text-muted-foreground',
+                )}
+              >
+                Files
+              </button>
               <button
                 onClick={() => setLeftTab('git')}
                 className={clsx(
@@ -689,8 +689,8 @@ export default function CodeEditor() {
               >
                 Git
               </button>
-            )}
-          </div>
+            </div>
+          )}
         </div>
         {leftTab === 'files' && <EditorFileStructure />}
         {leftTab !== 'files' && isGitRepo && (
