@@ -152,8 +152,6 @@ export default function SortedElements({ type, items, onDragStart, searchTerm }:
           key={(lockedElement ?? hoveredElement)!.name}
           anchorRect={hoveredRect!}
           element={lockedElement ?? hoveredElement!}
-          isLocked={!!lockedElement}
-          onComplete={() => setLockedElement(hoveredElement)}
           onUnlock={() => {
             setLockedElement(null)
             setHoveredElement(null)

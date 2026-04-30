@@ -2,30 +2,21 @@ import type { ElementDetails } from '@frankframework/doc-library-core'
 import { useFFDoc, useJavadocTransform } from '@frankframework/doc-library-react'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { useShortcut } from '~/hooks/use-shortcut'
 import { frankdocChipStyle, getFirstLabelGroup } from '~/utils/flow-utils'
 import ExternalLinkIcon from '../../../../icons/solar/External Link.svg?react'
 
 interface ElementHoverCardProps {
   anchorRect: DOMRect
   element: ElementDetails
-  isLocked: boolean
-  onComplete?: () => void
   onUnlock?: () => void
   onEnter?: () => void
   onLeave?: () => void
 }
 
-export default function ElementHoverCard({
-  anchorRect,
-  element,
-  onComplete,
-  onUnlock,
-  onEnter,
-  onLeave,
-}: ElementHoverCardProps) {
+export default function ElementHoverCard({ anchorRect, element, onUnlock, onEnter, onLeave }: ElementHoverCardProps) {
   const ref = useRef<HTMLDivElement>(null)
   const [position, setPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 })
-  const [fillWidth, setFillWidth] = useState(0)
   const offset = 10 // distance between anchor and tooltip
   const [labelGroup, label] = getFirstLabelGroup(element.labels)
   const route = element.labels ? [labelGroup, label, element.name].join('/') : element.className
@@ -53,13 +44,6 @@ export default function ElementHoverCard({
   }, [anchorRect])
 
   useEffect(() => {
-    const timeout = setTimeout(() => {
-      setFillWidth(100)
-    }, 50)
-    return () => clearTimeout(timeout)
-  }, [onComplete])
-
-  useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (!ref.current) return
       if (!ref.current.contains(event.target as Node)) {
@@ -70,6 +54,10 @@ export default function ElementHoverCard({
     document.addEventListener('pointerdown', handleClickOutside, true)
     return () => document.removeEventListener('pointerdown', handleClickOutside, true)
   }, [onUnlock])
+
+  useShortcut({
+    'studio.close-palette-card': () => onUnlock?.(),
+  })
 
   return createPortal(
     <div
@@ -86,18 +74,6 @@ export default function ElementHoverCard({
       onMouseEnter={onEnter}
       onMouseLeave={onLeave}
     >
-      <div className="bg-backdrop h-1 w-full shrink-0 overflow-hidden rounded-t-md">
-        <div
-          className="bg-foreground-active h-full transition-all duration-1000 ease-linear"
-          style={{ width: `${fillWidth}%` }}
-          onTransitionEnd={() => {
-            if (fillWidth === 100) {
-              onComplete?.()
-            }
-          }}
-        />
-      </div>
-
       <div className="flex-1 overflow-x-auto overflow-y-auto px-4 pt-3 pb-4">
         {/* Header: left = breadcrumb + name; right = FrankDoc link fills the full height */}
         <div className="mb-3 flex items-stretch justify-between gap-3">
