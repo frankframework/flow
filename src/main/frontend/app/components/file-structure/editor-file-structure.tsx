@@ -7,6 +7,9 @@ import '/styles/editor-files.css'
 import AltArrowRightIcon from '../../../icons/solar/Alt Arrow Right.svg?react'
 import AltArrowDownIcon from '../../../icons/solar/Alt Arrow Down.svg?react'
 import CodeIcon from '../../../icons/solar/Code.svg?react'
+import CodeFileIcon from '../../../icons/solar/Code File.svg?react'
+import TrashBinIcon from '../../../icons/solar/Trash Bin.svg?react'
+import Pen from '../../../icons/solar/Pen.svg?react'
 import { useShortcut } from '~/hooks/use-shortcut'
 import type { ContextMenuState } from './use-file-tree-context-menu'
 
@@ -112,6 +115,15 @@ export default function EditorFileStructure() {
       })
     },
     [selectedItemId, buildContextForItem],
+  )
+
+  const triggerItemAction = useCallback(
+    (itemId: TreeItemIndex, action: (menuState: ContextMenuState) => void) => {
+      void buildContextForItem(itemId).then((menuState) => {
+        if (menuState) action(menuState)
+      })
+    },
+    [buildContextForItem],
   )
 
   useShortcut({
@@ -285,6 +297,7 @@ export default function EditorFileStructure() {
     context: TreeItemRenderContext
   }) => {
     const Icon = item.isFolder ? (context.isExpanded ? FolderOpenIcon : FolderIcon) : CodeIcon
+    const isRoot = (item.data as { projectRoot?: boolean }).projectRoot ?? false
 
     const searchLower = searchTerm.toLowerCase()
     const titleLower = title.toLowerCase()
@@ -310,28 +323,103 @@ export default function EditorFileStructure() {
 
     const isHighlighted = highlightedItemId === item.index
 
+    const actionBtnClass = 'cursor-pointer rounded p-0.5 hover:bg-hover flex-shrink-0'
+
     return (
       <div
-        className="flex h-full w-full cursor-pointer items-center"
+        className="group/row flex h-full w-full items-center"
         onContextMenu={(e) => editorContextMenu.openContextMenu(e, item.index)}
       >
         {Icon && <Icon className="fill-foreground w-4 flex-shrink-0" />}
         <span
-          className={`ml-1 overflow-hidden text-nowrap text-ellipsis ${
+          className={`ml-1 min-w-0 flex-1 overflow-hidden text-nowrap text-ellipsis ${
             isHighlighted ? 'outline-foreground-active rounded-sm px-1 outline-2' : ''
           }`}
         >
           {highlightedTitle}
         </span>
+        <div className="ml-1 hidden items-center gap-0.5 group-hover/row:flex">
+          {item.isFolder && (
+            <button
+              className={actionBtnClass}
+              title="New File"
+              onClick={(mouseEvent) => {
+                mouseEvent.stopPropagation()
+                triggerItemAction(item.index, editorContextMenu.handleNewFile)
+              }}
+            >
+              <CodeFileIcon className="fill-foreground h-3.5 w-3.5" />
+            </button>
+          )}
+          {item.isFolder && (
+            <button
+              className={actionBtnClass}
+              title="New Folder"
+              onClick={(mouseEvent) => {
+                mouseEvent.stopPropagation()
+                triggerItemAction(item.index, editorContextMenu.handleNewFolder)
+              }}
+            >
+              <FolderIcon className="fill-foreground h-3.5 w-3.5" />
+            </button>
+          )}
+          {!isRoot && (
+            <button
+              className={actionBtnClass}
+              title="Rename"
+              onClick={(mouseEvent) => {
+                mouseEvent.stopPropagation()
+                triggerItemAction(item.index, editorContextMenu.handleRename)
+              }}
+            >
+              <Pen className="stroke-foreground h-3.5 w-3.5" />
+            </button>
+          )}
+          {!isRoot && (
+            <button
+              className={actionBtnClass}
+              title="Delete"
+              onClick={(mouseEvent) => {
+                mouseEvent.stopPropagation()
+                triggerItemAction(item.index, editorContextMenu.handleDelete)
+              }}
+            >
+              <TrashBinIcon className="fill-foreground h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
       </div>
     )
   }
 
   if (!dataProvider) return <LoadingSpinner message="Loading files..." className="p-8" />
 
+  const toolbarBtnClass = 'cursor-pointer rounded p-1 hover:bg-hover text-foreground'
+
   return (
     <>
-      <Search onChange={(e) => setSearchTerm(e.target.value)} />
+      <div className="border-border flex items-center justify-between border-b px-2 py-1">
+        <span className="text-foreground/50 text-xs font-semibold tracking-wider uppercase">Explorer</span>
+        <div className="flex items-center gap-0.5">
+          <button
+            className={toolbarBtnClass}
+            title="New File"
+            onClick={() => triggerExplorerAction(editorContextMenu.handleNewFile, false)}
+          >
+            <CodeFileIcon className="fill-foreground h-4 w-4" />
+          </button>
+          <button
+            className={toolbarBtnClass}
+            title="New Folder"
+            onClick={() => triggerExplorerAction(editorContextMenu.handleNewFolder, false)}
+          >
+            <FolderIcon className="fill-foreground h-4 w-4" />
+          </button>
+        </div>
+      </div>
+      <div className="mt-2">
+        <Search onChange={(changeEvent) => setSearchTerm(changeEvent.target.value)} />
+      </div>
       <div
         className="h-full overflow-auto pr-2"
         onContextMenu={(e) => {
