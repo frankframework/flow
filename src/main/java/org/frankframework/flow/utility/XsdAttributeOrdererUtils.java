@@ -23,7 +23,9 @@ public class XsdAttributeOrdererUtils {
 	private static final String XSD_EXTENSION = "extension";
 
 	private final Map<String, Map<String, Element>> index;
-	private final Map<String, List<String>> cache = new HashMap<>();
+	private final Map<String, OrderInfo> cache = new HashMap<>();
+
+	private record OrderInfo(List<String> xsdOrder, Set<String> required) {}
 
 	public XsdAttributeOrdererUtils(Document xsdDoc) {
 		this.index = buildIndex(xsdDoc);
@@ -43,13 +45,14 @@ public class XsdAttributeOrdererUtils {
 	}
 
 	List<String[]> reorder(String elementName, Attributes attrs) {
-		List<String> xsdOrder = cache.computeIfAbsent(elementName, this::computeOrder);
+		OrderInfo info = cache.computeIfAbsent(elementName, this::computeOrderInfo);
 		Map<String, String> attrMap = buildAttrMap(attrs);
-		Set<String> xsdSet = new HashSet<>(xsdOrder);
+		Set<String> xsdSet = new HashSet<>(info.xsdOrder());
 
 		List<String[]> result = new ArrayList<>();
 		result.addAll(namespacedAttrs(attrMap));
-		result.addAll(inXsdOrder(xsdOrder, attrMap));
+		result.addAll(inXsdOrderFiltered(info.xsdOrder(), info.required(), attrMap, true));
+		result.addAll(inXsdOrderFiltered(info.xsdOrder(), info.required(), attrMap, false));
 		result.addAll(unknownAttrs(attrMap, xsdSet));
 		return result;
 	}
@@ -62,9 +65,11 @@ public class XsdAttributeOrdererUtils {
 		return map;
 	}
 
-	private static List<String[]> inXsdOrder(List<String> xsdOrder, Map<String, String> attrMap) {
+	private static List<String[]> inXsdOrderFiltered(List<String> xsdOrder, Set<String> required,
+			Map<String, String> attrMap, boolean requiredOnly) {
 		List<String[]> result = new ArrayList<>();
 		for (String name : xsdOrder) {
+			if (required.contains(name) != requiredOnly) continue;
 			String value = attrMap.get(name);
 			if (value != null) result.add(pair(name, value));
 		}
@@ -91,13 +96,15 @@ public class XsdAttributeOrdererUtils {
 		return new String[]{name, value};
 	}
 
-	private List<String> computeOrder(String elementName) {
+	private OrderInfo computeOrderInfo(String elementName) {
 		Element typeNode = findComplexType(elementName + "Type");
-		if (typeNode == null) return Collections.emptyList();
-		return new ArrayList<>(new LinkedHashSet<>(collect(typeNode, new HashSet<>())));
+		if (typeNode == null) return new OrderInfo(Collections.emptyList(), Collections.emptySet());
+		Set<String> requiredSet = new HashSet<>();
+		List<String> ordered = new ArrayList<>(new LinkedHashSet<>(collect(typeNode, new HashSet<>(), requiredSet)));
+		return new OrderInfo(ordered, requiredSet);
 	}
 
-	private List<String> collect(Element node, Set<String> visited) {
+	private List<String> collect(Element node, Set<String> visited, Set<String> requiredSet) {
 		List<String> baseAttrs = Collections.emptyList();
 		List<String> ownAttrs = new ArrayList<>();
 
@@ -109,12 +116,12 @@ public class XsdAttributeOrdererUtils {
 			String local = elem.getLocalName();
 
 			if (XSD_ATTRIBUTE.equals(local)) {
-				collectAttribute(elem, ownAttrs);
+				collectAttribute(elem, ownAttrs, requiredSet);
 			} else if (XSD_EXTENSION.equals(local)) {
-				baseAttrs = resolveBaseAttributes(elem, visited);
-				ownAttrs.addAll(collect(elem, visited));
+				baseAttrs = resolveBaseAttributes(elem, visited, requiredSet);
+				ownAttrs.addAll(collect(elem, visited, requiredSet));
 			} else {
-				ownAttrs.addAll(collectGeneric(elem, visited));
+				ownAttrs.addAll(collectGeneric(elem, visited, requiredSet));
 			}
 		}
 
@@ -124,21 +131,26 @@ public class XsdAttributeOrdererUtils {
 		return result;
 	}
 
-	private static void collectAttribute(Element attributeElem, List<String> target) {
+	private static void collectAttribute(Element attributeElem, List<String> target, Set<String> requiredSet) {
 		String name = attributeElem.getAttribute("name");
-		if (!name.isEmpty()) target.add(name);
+		if (!name.isEmpty()) {
+			target.add(name);
+			if ("required".equals(attributeElem.getAttribute("use"))) {
+				requiredSet.add(name);
+			}
+		}
 	}
 
-	private List<String> collectGeneric(Element elem, Set<String> visited) {
+	private List<String> collectGeneric(Element elem, Set<String> visited, Set<String> requiredSet) {
 		String ref = elem.getAttribute("ref");
 		if (ref.isEmpty()) {
-			return collect(elem, visited);
+			return collect(elem, visited, requiredSet);
 		}
 		if (!visited.add(ref)) {
 			return Collections.emptyList();
 		}
 		Element refDef = findDefinition(ref, elem.getLocalName());
-		return refDef != null ? collect(refDef, visited) : Collections.emptyList();
+		return refDef != null ? collect(refDef, visited, requiredSet) : Collections.emptyList();
 	}
 
 	private Element findDefinition(String ref, String localName) {
@@ -146,11 +158,11 @@ public class XsdAttributeOrdererUtils {
 		return defs != null ? defs.get(ref) : null;
 	}
 
-	private List<String> resolveBaseAttributes(Element extensionElem, Set<String> visited) {
+	private List<String> resolveBaseAttributes(Element extensionElem, Set<String> visited, Set<String> requiredSet) {
 		String base = extensionElem.getAttribute("base");
 		if (base.isEmpty() || !visited.add(base)) return Collections.emptyList();
 		Element baseType = findComplexType(base);
-		return baseType != null ? collect(baseType, visited) : Collections.emptyList();
+		return baseType != null ? collect(baseType, visited, requiredSet) : Collections.emptyList();
 	}
 
 	private Element findComplexType(String name) {

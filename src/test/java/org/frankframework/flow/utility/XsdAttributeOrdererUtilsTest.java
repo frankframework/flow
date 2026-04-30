@@ -95,9 +95,11 @@ public class XsdAttributeOrdererUtilsTest {
 	}
 
 	@Test
-	void testReorder_RequiredVsOptionalOrdering() {
-		addComplexType("requiredAttr", "optionalAttr");
-
+	void testReorder_RequiredBeforeOptional_RegardlessOfInputOrder() {
+		// XSD defines optional first, then required - required must still come first in output
+		Element ct = addComplexTypeElement("my");
+		addAttrElement(ct, "optionalAttr", false);
+		addAttrElement(ct, "requiredAttr", true);
 		orderer = new XsdAttributeOrdererUtils(doc);
 
 		AttributesImpl attrs = new AttributesImpl();
@@ -106,9 +108,72 @@ public class XsdAttributeOrdererUtilsTest {
 
 		List<String[]> result = orderer.reorder("my", attrs);
 
-		assertEquals(2, result.size(), "Resultaat moet 2 attributen bevatten");
-		assertEquals("requiredAttr", result.get(0)[0], "Eerste attribuut moet 'requiredAttr' zijn volgens XSD volgorde");
-		assertEquals("optionalAttr", result.get(1)[0], "Tweede attribuut moet 'optionalAttr' zijn volgens XSD volgorde");
+		assertEquals(2, result.size());
+		assertEquals("requiredAttr", result.get(0)[0], "Required attr must come before optional");
+		assertEquals("optionalAttr", result.get(1)[0], "Optional attr comes after required");
+	}
+
+	@Test
+	void testReorder_RequiredAttrsInXsdOrder_NotAlphabetical() {
+		// XSD order: z_required, a_required - both required, must keep XSD order (z before a)
+		Element ct = addComplexTypeElement("my");
+		addAttrElement(ct, "z_required", true);
+		addAttrElement(ct, "a_required", true);
+		orderer = new XsdAttributeOrdererUtils(doc);
+
+		AttributesImpl attrs = new AttributesImpl();
+		attrs.addAttribute("", "", "a_required", "", "val");
+		attrs.addAttribute("", "", "z_required", "", "val");
+
+		List<String[]> result = orderer.reorder("my", attrs);
+
+		assertEquals(2, result.size());
+		assertEquals("z_required", result.get(0)[0], "First required in XSD order (z comes before a in XSD)");
+		assertEquals("a_required", result.get(1)[0], "Second required in XSD order");
+	}
+
+	@Test
+	void testReorder_OptionalAttrsInXsdOrder_NotAlphabetical() {
+		// XSD order: z_opt, a_opt - both optional, must keep XSD order (z before a)
+		Element ct = addComplexTypeElement("my");
+		addAttrElement(ct, "z_opt", false);
+		addAttrElement(ct, "a_opt", false);
+		orderer = new XsdAttributeOrdererUtils(doc);
+
+		AttributesImpl attrs = new AttributesImpl();
+		attrs.addAttribute("", "", "a_opt", "", "val");
+		attrs.addAttribute("", "", "z_opt", "", "val");
+
+		List<String[]> result = orderer.reorder("my", attrs);
+
+		assertEquals(2, result.size());
+		assertEquals("z_opt", result.get(0)[0], "First optional in XSD order (z comes before a in XSD)");
+		assertEquals("a_opt", result.get(1)[0], "Second optional in XSD order");
+	}
+
+	@Test
+	void testReorder_MixedRequiredOptional_XsdOrderWithinGroups() {
+		// XSD order: opt1, req1, opt2, req2 - required group: req1, req2; optional group: opt1, opt2
+		Element ct = addComplexTypeElement("my");
+		addAttrElement(ct, "opt1", false);
+		addAttrElement(ct, "req1", true);
+		addAttrElement(ct, "opt2", false);
+		addAttrElement(ct, "req2", true);
+		orderer = new XsdAttributeOrdererUtils(doc);
+
+		AttributesImpl attrs = new AttributesImpl();
+		attrs.addAttribute("", "", "opt2", "", "v");
+		attrs.addAttribute("", "", "req2", "", "v");
+		attrs.addAttribute("", "", "opt1", "", "v");
+		attrs.addAttribute("", "", "req1", "", "v");
+
+		List<String[]> result = orderer.reorder("my", attrs);
+
+		assertEquals(4, result.size());
+		assertEquals("req1", result.get(0)[0], "First required in XSD order");
+		assertEquals("req2", result.get(1)[0], "Second required in XSD order");
+		assertEquals("opt1", result.get(2)[0], "First optional in XSD order");
+		assertEquals("opt2", result.get(3)[0], "Second optional in XSD order");
 	}
 
 	@Test
@@ -123,19 +188,23 @@ public class XsdAttributeOrdererUtilsTest {
 	}
 
 	private void addComplexType(String... attributes) {
-		Element ct = doc.createElementNS("http://www.w3.org/2001/XMLSchema", "complexType");
-		ct.setAttribute("name", "myType");
-		doc.getDocumentElement().appendChild(ct);
+		Element ct = addComplexTypeElement("my");
 		for (String attr : attributes) {
-			Element a = doc.createElementNS("http://www.w3.org/2001/XMLSchema", "attribute");
-			a.setAttribute("name", attr);
-			ct.appendChild(a);
+			addAttrElement(ct, attr, false);
 		}
 	}
 
-	private void addAttr(Element parent, String name) {
+	private Element addComplexTypeElement(String elementName) {
+		Element ct = doc.createElementNS("http://www.w3.org/2001/XMLSchema", "complexType");
+		ct.setAttribute("name", elementName + "Type");
+		doc.getDocumentElement().appendChild(ct);
+		return ct;
+	}
+
+	private void addAttrElement(Element parent, String name, boolean required) {
 		Element a = doc.createElementNS("http://www.w3.org/2001/XMLSchema", "attribute");
 		a.setAttribute("name", name);
+		if (required) a.setAttribute("use", "required");
 		parent.appendChild(a);
 	}
 }
