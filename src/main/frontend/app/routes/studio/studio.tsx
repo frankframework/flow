@@ -16,13 +16,72 @@ import { toProjectRelativePath } from '~/utils/path-utils'
 import CodeIcon from '/icons/solar/Code.svg?react'
 import { openInEditor } from '~/actions/navigationActions'
 import Button from '~/components/inputs/button'
+import { ALL_SHORTCUTS, formatShortcutParts, useShortcutStore } from '~/stores/shortcut-store'
+import useFlowStore from '~/stores/flow-store'
+
+interface RightPanelProps {
+  isMultiSelect: boolean
+  showNodeContext: boolean
+  nodeId: number
+  editingSubtype: string | null
+  groupLabel: string
+  groupKeyHint: string
+  groupActionId: string
+  onShowNodeContext: (visible: boolean) => void
+}
+
+function getRightPanelTitle(
+  isMultiSelect: boolean,
+  groupLabel: string,
+  showNodeContext: boolean,
+  editingSubtype: string | null,
+): string {
+  if (isMultiSelect) return groupLabel
+  if (showNodeContext) return `Edit ${editingSubtype ?? 'node'}`
+  return 'Palette'
+}
+
+function RightPanelContent({
+  isMultiSelect,
+  showNodeContext,
+  nodeId,
+  groupLabel,
+  groupKeyHint,
+  groupActionId,
+  onShowNodeContext,
+}: RightPanelProps) {
+  if (isMultiSelect) {
+    return (
+      <div className="flex flex-col gap-3 p-4">
+        <p className="text-foreground-muted text-sm">Multiple nodes selected.</p>
+        <Button
+          className="flex w-full items-center justify-between px-4 py-2 text-sm"
+          onClick={() => useShortcutStore.getState().shortcuts.get(groupActionId)?.handler?.()}
+        >
+          <span>{groupLabel}</span>
+          {groupKeyHint && (
+            <kbd className="text-foreground-muted rounded border border-current px-1 py-0.5 font-mono text-xs">
+              {groupKeyHint}
+            </kbd>
+          )}
+        </Button>
+      </div>
+    )
+  }
+
+  if (showNodeContext) {
+    return <NodeContext nodeId={nodeId} setShowNodeContext={onShowNodeContext} />
+  }
+
+  return <StudioContext />
+}
 
 export default function Studio() {
   const project = useProjectStore((state) => state.project)
   const setVisibility = useSidebarStore((state) => state.setVisibility)
   const [showNodeContext, setShowNodeContext] = useState(false)
-  const { nodeId, editingSubtype } = useNodeContextStore(
-    useShallow((s) => ({ nodeId: s.nodeId, editingSubtype: s.editingSubtype })),
+  const { nodeId, editingSubtype, isMultiSelect } = useNodeContextStore(
+    useShallow((s) => ({ nodeId: s.nodeId, editingSubtype: s.editingSubtype, isMultiSelect: s.isMultiSelect })),
   )
 
   const { activeTab, activeTabPath } = useTabStore(
@@ -31,6 +90,20 @@ export default function Studio() {
       activeTabPath: state.activeTab ? state.tabs[state.activeTab]?.configurationPath : undefined,
     })),
   )
+
+  const platform = useShortcutStore((s) => s.platform)
+
+  const allInSameGroup = useFlowStore((s) => {
+    const selected = s.nodes.filter((n) => n.selected)
+    if (selected.length <= 1) return false
+    const firstParentId = selected[0].parentId
+    return !!firstParentId && selected.every((n) => n.parentId === firstParentId)
+  })
+
+  const groupActionId = allInSameGroup ? 'studio.ungroup' : 'studio.group'
+  const groupLabel = allInSameGroup ? 'Ungroup' : 'Group Selection'
+  const groupShortcutDef = ALL_SHORTCUTS.find((s) => s.id === groupActionId)
+  const groupKeyHint = groupShortcutDef ? formatShortcutParts(groupShortcutDef, platform).join('+') : ''
 
   const handleShowNodeContext = useCallback(
     (visible: boolean) => {
@@ -50,6 +123,8 @@ export default function Studio() {
 
     openInEditor(fileName, activeTabPath)
   }, [activeTabPath])
+
+  const rightPanelTitle = getRightPanelTitle(isMultiSelect, groupLabel, showNodeContext, editingSubtype)
 
   return (
     <SidebarLayout name="studio">
@@ -93,15 +168,17 @@ export default function Studio() {
         )}
       </>
       <>
-        <SidebarHeader
-          side={SidebarSide.RIGHT}
-          title={showNodeContext ? `Edit ${editingSubtype ?? 'node'}` : 'Palette'}
+        <SidebarHeader side={SidebarSide.RIGHT} title={rightPanelTitle} />
+        <RightPanelContent
+          isMultiSelect={isMultiSelect}
+          showNodeContext={showNodeContext}
+          nodeId={nodeId}
+          editingSubtype={editingSubtype}
+          groupLabel={groupLabel}
+          groupKeyHint={groupKeyHint}
+          groupActionId={groupActionId}
+          onShowNodeContext={handleShowNodeContext}
         />
-        {showNodeContext ? (
-          <NodeContext nodeId={nodeId} setShowNodeContext={handleShowNodeContext} />
-        ) : (
-          <StudioContext />
-        )}
       </>
     </SidebarLayout>
   )
