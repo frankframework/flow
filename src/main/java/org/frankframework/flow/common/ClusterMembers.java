@@ -13,9 +13,11 @@ import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+@RequestMapping("/cluster/members")
 @Scope(proxyMode = ScopedProxyMode.TARGET_CLASS)
 @Log4j2
 public class ClusterMembers implements ApplicationListener<ClusterMemberEvent> {
@@ -30,7 +32,7 @@ public class ClusterMembers implements ApplicationListener<ClusterMemberEvent> {
 	}
 
 	@AllowAllFrankUserRoles
-	@GetMapping(value = "/cluster/members", produces = MediaType.APPLICATION_JSON_VALUE)
+	@GetMapping(, produces = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<?> getClusterMembers() {
 		List<OutboundGateway.ClusterMember> members = outboundGateway.getMembers();
 		JsonMessage response = new JsonMessage(members);
