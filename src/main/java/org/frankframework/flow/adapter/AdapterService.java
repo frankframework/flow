@@ -6,10 +6,13 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
+
 import lombok.extern.slf4j.Slf4j;
-import org.frankframework.flow.configuration.Configuration;
+
+import org.frankframework.flow.configuration.ConfigurationFile;
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
 import org.frankframework.flow.configuration.ConfigurationXmlDTO;
 import org.frankframework.flow.exception.ApiException;
@@ -19,6 +22,7 @@ import org.frankframework.flow.project.ProjectService;
 import org.frankframework.flow.utility.XmlAdapterUtils;
 import org.frankframework.flow.utility.XmlConfigurationUtils;
 import org.frankframework.flow.utility.XmlSecurityUtils;
+
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 import org.w3c.dom.Document;
@@ -42,7 +46,7 @@ public class AdapterService {
 
 		Project project = projectService.getProject(projectName);
 
-		Configuration config = project.getConfigurations().stream()
+		ConfigurationFile config = project.getConfigurationFiles().stream()
 				.filter(c -> c.getFilepath().equals(configurationPath))
 				.findFirst()
 				.orElseThrow(() -> new ConfigurationNotFoundException(
@@ -183,6 +187,7 @@ public class AdapterService {
 				new ClassPathResource("templates/default-adapter.xml")
 						.getInputStream()
 						.readAllBytes(),
-				StandardCharsets.UTF_8);
+				StandardCharsets.UTF_8
+		);
 	}
 }

@@ -1,7 +1,7 @@
 package org.frankframework.flow.project;
 
-import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletResponse;
+
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
@@ -62,7 +62,7 @@ public class ProjectController {
 
 	@PostMapping
 	public ResponseEntity<ProjectDTO> createProject(@RequestBody ProjectCreateDTO projectCreateDTO) throws IOException {
-		Project project = projectService.createProjectOnDisk(projectCreateDTO.rootPath());
+		Project project = projectService.createProjectOnDisk(projectCreateDTO);
 		recentProjectsService.addRecentProject(project.getName(), project.getRootPath());
 		return ResponseEntity.ok(projectService.toDto(project));
 	}

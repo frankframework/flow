@@ -2,6 +2,7 @@ package org.frankframework.flow.recentproject;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -11,8 +12,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.frankframework.flow.filesystem.FileSystemStorage;
+
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -38,12 +42,18 @@ public class RecentProjectsService {
 		try {
 			if (fileSystemStorage.isLocalEnvironment()) {
 				if (!Files.exists(LOCAL_USER_FILE)) return new ArrayList<>();
-				return objectMapper.readValue(Files.readString(LOCAL_USER_FILE), new TypeReference<>() {});
+				return objectMapper.readValue(
+						Files.readString(LOCAL_USER_FILE), new TypeReference<>() {
+						}
+				);
 			}
 
 			try {
 				String json = fileSystemStorage.readFile(RECENT_FILENAME);
-				return objectMapper.readValue(json, new TypeReference<>() {});
+				return objectMapper.readValue(
+						json, new TypeReference<>() {
+						}
+				);
 			} catch (Exception e) {
 				return new ArrayList<>();
 			}
@@ -69,8 +79,7 @@ public class RecentProjectsService {
 				return pPath.equals(normalizedPath);
 			});
 
-			projects.addFirst(
-					new RecentProject(name, normalizedPath, Instant.now().toString()));
+			projects.addFirst(new RecentProject(name, normalizedPath, Instant.now().toString()));
 
 			if (projects.size() > MAX_RECENT_PROJECTS) {
 				projects = new ArrayList<>(projects.subList(0, MAX_RECENT_PROJECTS));

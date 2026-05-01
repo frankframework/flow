@@ -7,7 +7,7 @@ interface NewProjectModalProperties {
   isOpen: boolean
   isLocal: boolean
   onClose: () => void
-  onCreate: (pathOrName: string) => void
+  onCreate: (name: string, rootPath: string) => void
   initialPath?: string
 }
 
@@ -40,19 +40,9 @@ export default function NewProjectModal({
   if (!isOpen) return null
 
   const handleCreate = () => {
-    if (!name.trim()) return
-    if (isLocal && !location) return
-
-    if (isLocal) {
-      const separator = location.includes('/') ? '/' : '\\'
-      const absolutePath = `${location}${separator}${name.trim()}`
-      onCreate(absolutePath)
-    } else {
-      const trimmedName = name.trim()
-      const path = location ? `${location}/${trimmedName}` : trimmedName
-      onCreate(path)
-    }
-
+    if (!name.trim() || (isLocal && !location)) return
+    const trimmedName = name.trim()
+    onCreate(trimmedName, location ?? '')
     handleClose()
   }
 
@@ -66,7 +56,7 @@ export default function NewProjectModal({
   return (
     <>
       <div className="bg-background/50 absolute inset-0 z-50 flex items-center justify-center">
-        <div className="bg-background border-border relative h-[400px] w-[600px] rounded-lg border p-6 shadow-lg">
+        <div className="bg-background border-border relative h-100 w-150 rounded-lg border p-6 shadow-lg">
           <h2 className="mb-4 text-lg font-semibold">New Project</h2>
           <p className="text-foreground-muted mb-4 text-sm">
             {isLocal ? 'Create a new Frank! project on disk' : 'Create a new project in the workspace'}

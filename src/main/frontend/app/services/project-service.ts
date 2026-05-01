@@ -19,10 +19,10 @@ export async function cloneProject(repoUrl: string, localPath: string, token?: s
   })
 }
 
-export async function createProject(rootPath: string): Promise<Project> {
+export async function createProject(name: string, rootPath: string): Promise<Project> {
   return apiFetch<Project>('/projects', {
     method: 'POST',
-    body: JSON.stringify({ rootPath }),
+    body: JSON.stringify({ name, rootPath }),
   })
 }
 

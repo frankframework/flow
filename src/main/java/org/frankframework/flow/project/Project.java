@@ -1,21 +1,15 @@
 package org.frankframework.flow.project;
 
-import java.io.ByteArrayInputStream;
-import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Objects;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
+
 import lombok.Getter;
 import lombok.Setter;
+
 import org.frankframework.flow.configuration.ConfigurationFile;
 import org.frankframework.flow.projectsettings.FilterType;
 import org.frankframework.flow.projectsettings.ProjectSettings;
-import org.frankframework.flow.utility.XmlSecurityUtils;
+
 import org.w3c.dom.*;
 
 @Getter

@@ -113,10 +113,10 @@ export default function ProjectLanding() {
     await handleOpenProject(selectedPath)
   }
 
-  const onCreateProject = async (absolutePath: string) => {
+  const onCreateProject = async (name: string, rootPath: string) => {
     setIsOpeningProject(true)
     try {
-      const project = await createProject(absolutePath)
+      const project = await createProject(name, rootPath)
       setProject(project)
       setIsModalOpen(false)
       navigate(`/studio/${encodeURIComponent(project.name)}`)

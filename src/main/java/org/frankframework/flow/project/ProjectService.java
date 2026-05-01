@@ -12,11 +12,14 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.transport.CredentialsProvider;
+
 import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.frankframework.flow.filesystem.FilesystemEntry;
 import org.frankframework.flow.git.GitCredentialHelper;
@@ -25,6 +28,7 @@ import org.frankframework.flow.projectsettings.FilterType;
 import org.frankframework.flow.projectsettings.InvalidFilterTypeException;
 import org.frankframework.flow.recentproject.RecentProject;
 import org.frankframework.flow.recentproject.RecentProjectsService;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
@@ -96,9 +100,9 @@ public class ProjectService {
 				.orElseThrow(() -> new ProjectNotFoundException("Project not found: " + name));
 	}
 
-	public Project createProjectOnDisk(String path) throws IOException {
-		Path projectPath = fileSystemStorage.createProjectDirectory(path);
-		Files.createDirectories(projectPath.resolve(CONFIGURATIONS_DIR));
+	public Project createProjectOnDisk(ProjectCreateDTO projectCreate) throws IOException {
+		Path projectCreationPath = Path.of(projectCreate.rootPath()).resolve("/" + CONFIGURATIONS_DIR + "/" + projectCreate.name());
+		Path projectPath = fileSystemStorage.createProjectDirectory(projectCreationPath.toString());
 
 		ClassPathResource resource = new ClassPathResource("templates/default-configuration.xml");
 		String defaultXml = Files.readString(Path.of(resource.getURI()), StandardCharsets.UTF_8);
@@ -107,7 +111,8 @@ public class ProjectService {
 						.resolve(CONFIGURATIONS_DIR)
 						.resolve("Configuration.xml")
 						.toString(),
-				defaultXml);
+				defaultXml
+		);
 
 		return loadProjectAndCache(projectPath.toString());
 	}
@@ -188,7 +193,7 @@ public class ProjectService {
 		}
 
 		try (ZipOutputStream zos = new ZipOutputStream(outputStream);
-				Stream<Path> paths = Files.walk(projectPath)) {
+		     Stream<Path> paths = Files.walk(projectPath)) {
 			paths.filter(Files::isRegularFile).forEach(filePath -> {
 				try {
 					String entryName =
@@ -245,7 +250,8 @@ public class ProjectService {
 				filepaths,
 				project.getConfigurationSettings().getFilters(),
 				isGitRepo,
-				hasStoredToken);
+				hasStoredToken
+		);
 	}
 
 	private List<String> getConfigurationFilesDynamically(String projectRoot) {
