@@ -242,7 +242,9 @@ function addForwardEdges(
     const targetName = forward.getAttribute('path')
     if (!targetName) continue
 
-    const targetNode = nodes.find((n) => n.data && 'name' in n.data && n.data.name === targetName)
+    const targetNode =
+      nodes.find((n) => n.type === 'exitNode' && 'name' in n.data && n.data.name === targetName) ??
+      nodes.find((n) => n.data && 'name' in n.data && n.data.name === targetName)
     if (!targetNode) continue
 
     const handleIndex = forwardIndexBySourceId.get(sourceId) ?? 1
