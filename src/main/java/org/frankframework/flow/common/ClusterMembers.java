@@ -32,7 +32,7 @@ public class ClusterMembers implements ApplicationListener<ClusterMemberEvent> {
 	}
 
 	@AllowAllFrankUserRoles
-	@GetMapping(, produces = MediaType.APPLICATION_JSON_VALUE)
+	@GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<?> getClusterMembers() {
 		List<OutboundGateway.ClusterMember> members = outboundGateway.getMembers();
 		JsonMessage response = new JsonMessage(members);
