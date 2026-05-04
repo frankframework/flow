@@ -98,13 +98,13 @@ export async function getAdapterListenerType(
 
 export async function convertAdapterXmlToJson(adapter: Element) {
   const idCounter: IdCounter = { current: 0 }
-  const { nodes: flownodes, elementToId } = convertAdapterToFlowNodes(adapter, idCounter)
-  const stickyNotes = extractStickyNotesFromAdapter(adapter, idCounter, flownodes)
-  const groupnodes = extractGroupNodesFromAdapter(adapter, flownodes, idCounter)
-  assignParentRelationships(flownodes, groupnodes)
-  const allNodes: FlowNode[] = [...groupnodes, ...flownodes, ...stickyNotes]
+  const { nodes: flowNodes, elementToId } = convertAdapterToFlowNodes(adapter, idCounter)
+  const stickyNotes = extractStickyNotesFromAdapter(adapter, idCounter, flowNodes)
+  const groupNodes = extractGroupNodesFromAdapter(adapter, flowNodes, idCounter)
+  assignParentRelationships(flowNodes, groupNodes)
+  const allNodes: FlowNode[] = [...groupNodes, ...flowNodes, ...stickyNotes]
 
-  return { nodes: allNodes, edges: extractEdgesFromAdapter(adapter, flownodes, elementToId) }
+  return { nodes: allNodes, edges: extractEdgesFromAdapter(adapter, flowNodes, elementToId) }
 }
 
 function buildNodeNameToIdMap(nodes: FlowNode[]): Map<string, string> {
@@ -257,7 +257,7 @@ function addForwardEdges(
 ) {
   for (const forward of forwards) {
     const targetName = forward.getAttribute('path')
-    if (!targetName) continue // Veiliger: vangt null en lege strings af
+    if (!targetName) continue
 
     const targetId = nameToId.get(targetName)
     let targetNode = targetId ? nodes.find((node) => node.id === targetId) : undefined
@@ -650,7 +650,9 @@ function extractStickyNotesFromAdapter(adapter: Element, idCounter: IdCounter, f
       position: { x, y },
       width: collapsed ? FlowConfig.STICKY_NOTE_BALLOON_WIDTH : width,
       height: collapsed ? FlowConfig.STICKY_NOTE_BALLOON_HEIGHT : height,
-      ...(collapsed ? { style: { width: FlowConfig.STICKY_NOTE_BALLOON_WIDTH, height: FlowConfig.STICKY_NOTE_BALLOON_HEIGHT } } : {}),
+      ...(collapsed
+        ? { style: { width: FlowConfig.STICKY_NOTE_BALLOON_WIDTH, height: FlowConfig.STICKY_NOTE_BALLOON_HEIGHT } }
+        : {}),
       data,
     }
 

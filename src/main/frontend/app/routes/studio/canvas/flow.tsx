@@ -561,12 +561,11 @@ function FlowCanvas() {
     'studio.delete': () => deleteSelection(),
   })
 
-  const isFrankNode = (node: FlowNode): node is FrankNodeType =>
-    node.type === 'frankNode' || node.type === 'exitNode'
+  const isFrankNode = (node: FlowNode): node is FrankNodeType => node.type === 'frankNode' || node.type === 'exitNode'
 
   const lookupFrankElement = useCallback(
     (subtype: string) => {
-      if (!elements) return undefined
+      if (!elements) return
       return (Object.values(elements as Record<string, ElementDetails>) as ElementDetails[]).find(
         (element) => element.name === subtype,
       )
@@ -601,27 +600,27 @@ function FlowCanvas() {
   }, [showNodeContextMenu])
 
   const handleNodeClick = useCallback(
-          (event: React.MouseEvent, node: FlowNode) => {
-            if (event.shiftKey || event.ctrlKey || event.metaKey || isDirty) return;
+    (event: React.MouseEvent, node: FlowNode) => {
+      if (event.shiftKey || event.ctrlKey || event.metaKey || isDirty) return
 
-            if (node.type === 'stickyNote') {
-              setSelectedStickyId(node.id);
-              showNodeContextMenu(true);
-              return;
-            }
+      if (node.type === 'stickyNote') {
+        setSelectedStickyId(node.id)
+        showNodeContextMenu(true)
+        return
+      }
 
-            if (isFrankNode(node)) {
-              const frankElement = lookupFrankElement(node.data.subtype);
-              if (frankElement) {
-                deselectOtherNodes(node.id);
-                setSelectedStickyId(null);
-                applyNodeContext(node, frankElement);
-                showNodeContextMenu(true);
-              }
-            }
-          },
-          [isDirty, lookupFrankElement, deselectOtherNodes, applyNodeContext, showNodeContextMenu, setSelectedStickyId]
-  );
+      if (isFrankNode(node)) {
+        const frankElement = lookupFrankElement(node.data.subtype)
+        if (frankElement) {
+          deselectOtherNodes(node.id)
+          setSelectedStickyId(null)
+          applyNodeContext(node, frankElement)
+          showNodeContextMenu(true)
+        }
+      }
+    },
+    [isDirty, lookupFrankElement, deselectOtherNodes, applyNodeContext, showNodeContextMenu, setSelectedStickyId],
+  )
 
   const handleNodeDoubleClick = useCallback(
     (_event: React.MouseEvent, node: FlowNode) => {
@@ -643,7 +642,15 @@ function FlowCanvas() {
       setIsMultiSelect(false)
       showNodeContextMenu(true)
     },
-    [isDirty, lookupFrankElement, applyNodeContext, setIsEditing, setIsMultiSelect, setSelectedStickyId, showNodeContextMenu],
+    [
+      isDirty,
+      lookupFrankElement,
+      applyNodeContext,
+      setIsEditing,
+      setIsMultiSelect,
+      setSelectedStickyId,
+      showNodeContextMenu,
+    ],
   )
 
   const handleEdgeClick = useCallback(() => {
@@ -825,29 +832,29 @@ function FlowCanvas() {
   }
 
   const addStickyNote = useCallback(
-          (flowPos: { x: number; y: number }) => {
-            const flowStore = useFlowStore.getState();
-            const newId = flowStore.getNextNodeId();
+    (flowPos: { x: number; y: number }) => {
+      const flowStore = useFlowStore.getState()
+      const newId = flowStore.getNextNodeId()
 
-            const deselectedNodes = flowStore.nodes.map((node) => ({
-              ...node,
-              selected: false,
-            }));
+      const deselectedNodes = flowStore.nodes.map((node) => ({
+        ...node,
+        selected: false,
+      }))
 
-            const stickyNote: StickyNote = {
-              id: newId,
-              position: { x: flowPos.x, y: flowPos.y },
-            data: { content: '' },
-            type: 'stickyNote',
-            selected: true,
-          };
+      const stickyNote: StickyNote = {
+        id: newId,
+        position: { x: flowPos.x, y: flowPos.y },
+        data: { content: '' },
+        type: 'stickyNote',
+        selected: true,
+      }
 
-            flowStore.setNodes([...deselectedNodes, stickyNote]);
-            setSelectedStickyId(newId);
-            showNodeContextMenu(true);
-          },
-          [setSelectedStickyId, showNodeContextMenu]
-  );
+      flowStore.setNodes([...deselectedNodes, stickyNote])
+      setSelectedStickyId(newId)
+      showNodeContextMenu(true)
+    },
+    [setSelectedStickyId, showNodeContextMenu],
+  )
 
   const cutSelection = useCallback(() => {
     copySelection()
@@ -1010,19 +1017,19 @@ function FlowCanvas() {
 
   useEffect(() => {
     const unsub = useFlowStore.subscribe(
-            (state) => state.nodes,
-            (nodes) => {
-              const { selectedStickyId, setSelectedStickyId, setIsEditing } = useNodeContextStore.getState();
+      (state) => state.nodes,
+      (nodes) => {
+        const { selectedStickyId, setSelectedStickyId, setIsEditing } = useNodeContextStore.getState()
 
-              if (selectedStickyId && !nodes.some((node) => node.id === selectedStickyId)) {
-                setSelectedStickyId(null);
-                showNodeContextMenu(false);
-                setIsEditing(false);
-              }
-            },
-    );
-    return () => unsub();
-  }, [showNodeContextMenu]);
+        if (selectedStickyId && !nodes.some((node) => node.id === selectedStickyId)) {
+          setSelectedStickyId(null)
+          showNodeContextMenu(false)
+          setIsEditing(false)
+        }
+      },
+    )
+    return () => unsub()
+  }, [showNodeContextMenu])
 
   useEffect(() => {
     const unsub = useFlowStore.subscribe(

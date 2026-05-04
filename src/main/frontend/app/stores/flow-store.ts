@@ -184,7 +184,11 @@ const useFlowStore = create<FlowState>()(
       if (resizeStart) nextIsResizing = true
       if (resizeEnd) nextIsResizing = false
 
-      const movedNodeIds = new Set(changes.filter((nodeChange) => nodeChange.type === 'position').map((nodeChangePosition) => nodeChangePosition.id))
+      const movedNodeIds = new Set(
+        changes
+          .filter((nodeChange) => nodeChange.type === 'position')
+          .map((nodeChangePosition) => nodeChangePosition.id),
+      )
 
       set((state) => {
         const updatedNodes = applyNodeChanges(changes, state.nodes)
@@ -193,10 +197,17 @@ const useFlowStore = create<FlowState>()(
           movedNodeIds.size === 0
             ? updatedNodes
             : updatedNodes.map((node) => {
-                if (!isStickyNote(node) || !node.data.attachedToNodeId || !movedNodeIds.has(node.data.attachedToNodeId)) return node
+                if (!isStickyNote(node) || !node.data.attachedToNodeId || !movedNodeIds.has(node.data.attachedToNodeId))
+                  return node
                 const parent = updatedNodes.find((updatedNode) => updatedNode.id === node.data.attachedToNodeId)
                 if (!parent) return node
-                return { ...node, position: { x: parent.position.x + (node.data.offsetX ?? 0), y: parent.position.y + (node.data.offsetY ?? 0) } }
+                return {
+                  ...node,
+                  position: {
+                    x: parent.position.x + (node.data.offsetX ?? 0),
+                    y: parent.position.y + (node.data.offsetY ?? 0),
+                  },
+                }
               })
 
         return { nodes, isDragging: nextIsDragging, isResizing: nextIsResizing }
@@ -348,7 +359,11 @@ const useFlowStore = create<FlowState>()(
             const height = node.measured?.height ?? node.height ?? FlowConfig.STICKY_NOTE_DEFAULT_HEIGHT
             return {
               ...node,
-              style: { ...node.style, width: FlowConfig.STICKY_NOTE_BALLOON_WIDTH, height: FlowConfig.STICKY_NOTE_BALLOON_HEIGHT },
+              style: {
+                ...node.style,
+                width: FlowConfig.STICKY_NOTE_BALLOON_WIDTH,
+                height: FlowConfig.STICKY_NOTE_BALLOON_HEIGHT,
+              },
               data: {
                 ...node.data,
                 collapsed: true,

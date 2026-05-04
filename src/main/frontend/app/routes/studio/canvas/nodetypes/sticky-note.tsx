@@ -146,7 +146,7 @@ export default function StickyNoteComponent(properties: NodeProps<StickyNote>) {
         />
         {isOverflowing && (
           <div
-            className="pointer-events-none absolute right-0 bottom-0 left-0 flex justify-end pb-1 pr-3 text-xs opacity-60"
+            className="pointer-events-none absolute right-0 bottom-0 left-0 flex justify-end pr-3 pb-1 text-xs opacity-60"
             style={{ background: `linear-gradient(transparent, ${color})` }}
           >
             ···
@@ -163,10 +163,7 @@ export default function StickyNoteComponent(properties: NodeProps<StickyNote>) {
           >
             −
           </div>
-          <div
-            className="px-2 hover:cursor-pointer hover:text-red-600 hover:opacity-50"
-            onClick={handleDelete}
-          >
+          <div className="px-2 hover:cursor-pointer hover:text-red-600 hover:opacity-50" onClick={handleDelete}>
             <svg width="20" height="20" viewBox="0 0 20 20" stroke="currentColor" strokeLinecap="round">
               <line x1="5" y1="5" x2="15" y2="15" />
               <line x1="5" y1="15" x2="15" y2="5" />

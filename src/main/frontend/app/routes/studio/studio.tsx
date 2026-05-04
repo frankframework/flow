@@ -75,10 +75,7 @@ function MultiSelectPanel() {
         <span>{actionLabel}</span>
         <span className="flex gap-1">
           {actionParts.map((part) => (
-            <kbd
-              key={part}
-              className="rounded border border-current/40 bg-current/10 px-1.5 py-0.5 font-mono text-xs"
-            >
+            <kbd key={part} className="rounded border border-current/40 bg-current/10 px-1.5 py-0.5 font-mono text-xs">
               {part}
             </kbd>
           ))}
@@ -89,15 +86,19 @@ function MultiSelectPanel() {
 }
 
 function AttachedNotesPanel({ nodeId }: { nodeId: number }) {
-  const attachedNotes = useFlowStore(useShallow((state) =>
-          state.nodes.filter((node) => isStickyNote(node) && (node as StickyNote).data.attachedToNodeId === nodeId.toString()),
-  )) as StickyNote[]
+  const attachedNotes = useFlowStore(
+    useShallow((state) =>
+      state.nodes.filter(
+        (node) => isStickyNote(node) && (node as StickyNote).data.attachedToNodeId === nodeId.toString(),
+      ),
+    ),
+  ) as StickyNote[]
 
   if (attachedNotes.length === 0) return null
 
   return (
     <div className="border-t-border mt-2 border-t pt-2">
-      <div className="px-4 pb-1 text-xs font-semibold uppercase tracking-wide text-foreground-muted">Notes</div>
+      <div className="text-foreground-muted px-4 pb-1 text-xs font-semibold tracking-wide uppercase">Notes</div>
       <div className="flex flex-col gap-2 px-4 pb-4">
         {attachedNotes.map((note) => (
           <div
@@ -143,8 +144,8 @@ export default function Studio() {
     })),
   )
 
-  const stickyNodeExists = useFlowStore((state) =>
-    selectedStickyId != null && state.nodes.some((node) => node.id === selectedStickyId),
+  const stickyNodeExists = useFlowStore(
+    (state) => selectedStickyId != null && state.nodes.some((node) => node.id === selectedStickyId),
   )
 
   const activeStickyId = stickyNodeExists ? selectedStickyId : null
