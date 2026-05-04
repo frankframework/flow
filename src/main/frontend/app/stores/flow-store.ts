@@ -109,6 +109,19 @@ const createSnapshot = (state: FlowState): FlowSnapshot => ({
   edges: structuredClone(state.edges),
 })
 
+
+function wouldCreateDuplicateForward(edges: Edge[], source: string, target: string, label: string): boolean {
+  return edges.some(
+    (edge) =>
+      edge.source === source &&
+      edge.target === target &&
+      typeof edge.data === 'object' &&
+      edge.data !== null &&
+      'label' in edge.data &&
+      edge.data.label === label,
+  )
+}
+
 const useFlowStore = create<FlowState>()(
   subscribeWithSelector((set, get) => ({
     nodes: initialNodes,
@@ -188,40 +201,28 @@ const useFlowStore = create<FlowState>()(
       }))
     },
     onConnect: (connection) => {
-      get().saveToHistory()
-
-      const { nodes } = get()
+      const { nodes, edges } = get()
       const sourceNode = nodes.find((node) => node.id === connection.source)
-
       const label = getEdgeLabelFromHandle(sourceNode, connection.sourceHandle)
 
-      const newEdge = {
-        ...connection,
-        type: 'frankEdge',
-        data: { label },
-      }
+      if (wouldCreateDuplicateForward(edges, connection.source, connection.target, label)) return
 
-      set({
-        edges: addEdge(newEdge, get().edges),
-      })
+      get().saveToHistory()
+      set({ edges: addEdge({ ...connection, type: 'frankEdge', data: { label } }, get().edges) })
     },
     onReconnect: (oldEdge, newConnection) => {
-      get().saveToHistory()
-
-      const { nodes } = get()
+      const { nodes, edges } = get()
       const sourceNode = nodes.find((node) => node.id === newConnection.source)
-
       const label = getEdgeLabelFromHandle(sourceNode, newConnection.sourceHandle)
 
+      const edgesWithoutOld = edges.filter((edge) => edge.id !== oldEdge.id)
+      if (wouldCreateDuplicateForward(edgesWithoutOld, newConnection.source, newConnection.target, label)) return
+
+      get().saveToHistory()
       set({
         edges: [
           ...get().edges.filter((edge) => edge.id !== oldEdge.id),
-          {
-            ...newConnection,
-            id: oldEdge.id,
-            type: 'frankEdge',
-            data: { label },
-          },
+          { ...newConnection, id: oldEdge.id, type: 'frankEdge', data: { label } },
         ],
       })
     },
@@ -330,20 +331,24 @@ const useFlowStore = create<FlowState>()(
     },
     setNodeName: (nodeId, name, { isNewNode = false } = {}) => {
       if (!isNewNode) get().saveToHistory()
-      set({
-        nodes: get().nodes.map((node) => {
-          if (node.id === nodeId && (isFrankNode(node) || isExitNode(node))) {
-            return {
-              ...node,
-              data: {
-                ...node.data,
-                name: name,
-              },
-            }
-          }
-          return node
+
+      const taken = new Set<string>(
+        get()
+          .nodes.filter((n) => n.id !== nodeId && (isFrankNode(n) || isExitNode(n)))
+          .map((n) => (n as FrankNodeType | ExitNode).data.name),
+      )
+
+      let uniqueName = name
+      for (let counter = 2; taken.has(uniqueName); counter++) {
+        uniqueName = `${name}_${counter}`
+      }
+
+      set((state) => ({
+        nodes: state.nodes.map((n) => {
+          if (n.id !== nodeId || (!isFrankNode(n) && !isExitNode(n))) return n
+          return { ...n, data: { ...n.data, name: uniqueName } }
         }),
-      })
+      }))
     },
     getNodeName: (nodeId: string) => {
       const node = get().nodes.find((n) => n.id === nodeId)
