@@ -51,7 +51,8 @@ public class ConfigurationService {
 	}
 
 	@PostConstruct
-	public void init() {
+	// XsdOrderer cannot be injected directly because FrankConfigXsdService fetches the XSD lazily after startup.
+	public void initXsdOrderer() {
 		this.xsdOrderer = loadXsdOrderer();
 	}
 
