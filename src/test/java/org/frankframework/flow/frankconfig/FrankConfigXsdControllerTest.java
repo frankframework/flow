@@ -4,8 +4,6 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import org.frankframework.flow.security.UserContextFilter;
-import org.frankframework.flow.security.UserWorkspaceContext;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -23,12 +21,6 @@ class FrankConfigXsdControllerTest {
 
 	@MockitoBean
 	private FrankConfigXsdService frankConfigXsdService;
-
-	@MockitoBean
-	private UserContextFilter userContextFilter;
-
-	@MockitoBean
-	private UserWorkspaceContext userWorkspaceContext;
 
 	@Test
 	void getFrankConfigXsdReturnsXmlContent() throws Exception {

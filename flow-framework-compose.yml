@@ -1,0 +1,24 @@
+services:
+  flow:
+    image: ghcr.io/frankframework/flow:latest
+    build:
+      dockerfile: ./docker/Dockerfile
+      context: .
+    environment:
+      SPRING_PROFILES_ACTIVE: cloud
+      management.gateway.outbound.class: org.frankframework.management.gateway.HazelcastOutboundGateway
+    ports:
+      - "8080:8080"
+      - "5700-5709:5700-5709"
+
+  ff-test:
+    image: frankframework/frankframework:latest
+    ports:
+      - "8081:8080"
+      - "5710-5720:5700-5710"
+    volumes:
+      - ./docker/resources:/opt/frank/resources
+    environment:
+      - instance.name=Frank2FlowInstance
+      - dtap.stage=LOC
+      - management.gateway.inbound.class=org.frankframework.management.gateway.HazelcastInboundGateway,org.frankframework.management.bus.LocalGateway

@@ -1,0 +1,32 @@
+<Configuration>
+	<adapter name="HelloWorld">
+		<receiver name="HelloWorld">
+			<!-- This listener is used when the API is called as specified in OpenAPI 3.0 at the Webservices page -->
+			<listener
+				name="HelloWorld"
+				className="org.frankframework.http.rest.ApiListener"
+				uriPattern="hello-world"
+				allowAllParams="false"
+			/>
+		</receiver>
+		<receiver name="HelloWorld">
+			<!-- This listener is used by the scheduler and IbisLocalSender in adapter HelloWorlds  -->
+			<listener
+				name="HelloWorld"
+				className="org.frankframework.receivers.JavaListener"
+			/>
+		</receiver>
+		<pipeline firstPipe="HelloWorld">
+			<exits>
+				<exit name="EXIT" state="success"/>
+			</exits>
+			<pipe
+				name="HelloWorld"
+				className="org.frankframework.pipes.EchoPipe"
+				getInputFromFixedValue="Hello World"
+			>
+				<forward name="success" path="EXIT"/>
+			</pipe>
+		</pipeline>
+	</adapter>
+</Configuration>

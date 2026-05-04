@@ -24,12 +24,6 @@ public class GitControllerTest {
 	@MockitoBean
 	private GitService gitService;
 
-	@MockitoBean
-	private org.frankframework.flow.security.UserContextFilter userContextFilter;
-
-	@MockitoBean
-	private org.frankframework.flow.security.UserWorkspaceContext userWorkspaceContext;
-
 	@Test
 	public void getStatusReturnsGitStatus() throws Exception {
 		GitStatusDTO status = new GitStatusDTO(

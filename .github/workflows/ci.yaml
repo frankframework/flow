@@ -8,7 +8,7 @@ on:
     branches: [ master ]
 
 env:
-  JAVA_VERSION: 21
+  JAVA_VERSION: 25
   NODE_VERSION: 23
   PNPM_VERSION: 10.4.0
 

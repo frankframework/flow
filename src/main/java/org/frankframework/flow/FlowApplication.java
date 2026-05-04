@@ -20,6 +20,7 @@ public class FlowApplication {
 
 	public static void main(String[] args) {
 		SpringApplication app = configureApplication();
+
 		app.run(args);
 	}
 
