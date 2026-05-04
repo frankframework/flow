@@ -178,6 +178,16 @@ function FlowCanvas() {
       useEditorTabStore.getState().refreshAllTabs()
       if (currentProject.isGitRepository) await refreshOpenDiffs(currentProject.name)
 
+      const tabData = useTabStore.getState().getTab(activeTabKey)
+
+      if (tabData) {
+        const { nodes: savedNodes, edges: savedEdges, viewport: savedViewport } = useFlowStore.getState()
+        useTabStore.getState().setTabData(activeTabKey, {
+          ...tabData,
+          flowJson: { nodes: savedNodes, edges: savedEdges, viewport: savedViewport },
+        })
+      }
+
       setSaveStatus('saved')
       if (savedTimerRef.current) clearTimeout(savedTimerRef.current)
       savedTimerRef.current = setTimeout(() => setSaveStatus('idle'), SAVED_DISPLAY_DURATION)
@@ -951,17 +961,15 @@ function FlowCanvas() {
       const tabStore = useTabStore.getState()
       const flowStore = useFlowStore.getState()
 
-      const flowData = reactFlowRef.current.toObject()
-      const viewport = flowStore.viewport
       const tabData = tabStore.getTab(tabId)
-
       if (!tabData) return
 
       tabStore.setTabData(tabId, {
         ...tabData,
         flowJson: {
-          ...flowData,
-          viewport,
+          nodes: flowStore.nodes,
+          edges: flowStore.edges,
+          viewport: flowStore.viewport,
         },
         history: flowStore.history,
         future: flowStore.future,
