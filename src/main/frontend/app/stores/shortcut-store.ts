@@ -78,6 +78,12 @@ export const ALL_SHORTCUTS: Omit<ShortcutDefinition, 'handler'>[] = [
   { id: 'studio.ungroup', label: 'Ungroup Selection', scope: 'studio', key: 'g', modifiers: { shift: true } },
   { id: 'studio.save', label: 'Save Changes', scope: 'studio', key: 's', modifiers: { cmdOrCtrl: true } },
   {
+    id: 'studio.close-palette-card',
+    label: 'Close Palette Description',
+    scope: 'studio',
+    key: 'escape',
+  },
+  {
     id: 'studio.close-context',
     label: 'Discard / Close Edit Panel',
     scope: 'studio',
