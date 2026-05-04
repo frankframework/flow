@@ -55,6 +55,10 @@ export interface FlowState {
   getAttributes: (nodeId: string) => Record<string, string> | null
   addChild: (nodeId: string, child: ChildNode) => void
   setStickyText: (nodeId: string, text: string) => void
+  setStickyColor: (nodeId: string, color: string) => void
+  setStickyCollapsed: (nodeId: string, collapsed: boolean) => void
+  setStickyAttachment: (nodeId: string, attachedToNodeId: string | null) => void
+  setNodesWithoutHistory: (nodes: FlowNode[]) => void
   setGroupnodeLabel: (nodeId: string, newLabel: string) => void
   setNodeName: (nodeId: string, name: string, options?: { isNewNode?: boolean }) => void
   getNodeName: (nodeId: string) => string | null
@@ -180,11 +184,23 @@ const useFlowStore = create<FlowState>()(
       if (resizeStart) nextIsResizing = true
       if (resizeEnd) nextIsResizing = false
 
-      set((state) => ({
-        nodes: applyNodeChanges(changes, state.nodes),
-        isDragging: nextIsDragging,
-        isResizing: nextIsResizing,
-      }))
+      const movedNodeIds = new Set(changes.filter((nodeChange) => nodeChange.type === 'position').map((nodeChangePosition) => nodeChangePosition.id))
+
+      set((state) => {
+        const updatedNodes = applyNodeChanges(changes, state.nodes)
+
+        const nodes =
+          movedNodeIds.size === 0
+            ? updatedNodes
+            : updatedNodes.map((node) => {
+                if (!isStickyNote(node) || !node.data.attachedToNodeId || !movedNodeIds.has(node.data.attachedToNodeId)) return node
+                const parent = updatedNodes.find((updatedNode) => updatedNode.id === node.data.attachedToNodeId)
+                if (!parent) return node
+                return { ...node, position: { x: parent.position.x + (node.data.offsetX ?? 0), y: parent.position.y + (node.data.offsetY ?? 0) } }
+              })
+
+        return { nodes, isDragging: nextIsDragging, isResizing: nextIsResizing }
+      })
     },
     onEdgesChange: (changes) => {
       const state = get()
@@ -311,6 +327,83 @@ const useFlowStore = create<FlowState>()(
         }),
       })
     },
+    setStickyColor: (nodeId, color) => {
+      get().saveToHistory()
+      set({
+        nodes: get().nodes.map((node) => {
+          if (node.id === nodeId && isStickyNote(node)) {
+            return { ...node, data: { ...node.data, color } }
+          }
+          return node
+        }),
+      })
+    },
+    setStickyCollapsed: (nodeId, collapsed) => {
+      get().saveToHistory()
+      set({
+        nodes: get().nodes.map((node) => {
+          if (node.id !== nodeId || !isStickyNote(node)) return node
+          if (collapsed) {
+            const width = node.measured?.width ?? node.width ?? FlowConfig.STICKY_NOTE_DEFAULT_WIDTH
+            const height = node.measured?.height ?? node.height ?? FlowConfig.STICKY_NOTE_DEFAULT_HEIGHT
+            return {
+              ...node,
+              style: { ...node.style, width: FlowConfig.STICKY_NOTE_BALLOON_WIDTH, height: FlowConfig.STICKY_NOTE_BALLOON_HEIGHT },
+              data: {
+                ...node.data,
+                collapsed: true,
+                preCollapseWidth: width,
+                preCollapseHeight: height,
+              },
+            }
+          } else {
+            return {
+              ...node,
+              style: {
+                ...node.style,
+                width: node.data.preCollapseWidth ?? FlowConfig.STICKY_NOTE_DEFAULT_WIDTH,
+                height: node.data.preCollapseHeight ?? FlowConfig.STICKY_NOTE_DEFAULT_HEIGHT,
+              },
+              data: {
+                ...node.data,
+                collapsed: false,
+                preCollapseWidth: null,
+                preCollapseHeight: null,
+              },
+            }
+          }
+        }),
+      })
+    },
+    setStickyAttachment: (nodeId, attachedToNodeId) => {
+      get().saveToHistory()
+      const nodes = get().nodes
+      const sticky = nodes.find((node) => node.id === nodeId)
+      if (!sticky || !isStickyNote(sticky)) return
+
+      if (attachedToNodeId) {
+        const parent = nodes.find((node) => node.id === attachedToNodeId)
+        if (!parent) return
+        const offsetX = sticky.position.x - parent.position.x
+        const offsetY = sticky.position.y - parent.position.y
+        set({
+          nodes: nodes.map((node) =>
+            node.id === nodeId && isStickyNote(node)
+              ? { ...node, data: { ...node.data, attachedToNodeId, offsetX, offsetY } }
+              : node,
+          ),
+        })
+      } else {
+        set({
+          nodes: nodes.map((node) =>
+            node.id === nodeId && isStickyNote(node)
+              ? { ...node, data: { ...node.data, attachedToNodeId: null, offsetX: null, offsetY: null } }
+              : node,
+          ),
+        })
+      }
+    },
+    setNodesWithoutHistory: (nodes) => set({ nodes }),
     setGroupnodeLabel: (nodeId, newLabel) => {
       get().saveToHistory()
       set({

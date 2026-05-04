@@ -3,7 +3,7 @@ import type { Edge } from '@xyflow/react'
 import type { ChildNode } from './canvas/nodetypes/child-node'
 import { getAdapter } from '~/services/adapter-service'
 import { FlowConfig } from './canvas/flow.config'
-import { isGroupNode, isStickyNote } from '~/stores/flow-store'
+import { isGroupNode, isFrankNode, isStickyNote } from '~/stores/flow-store'
 import type { GroupNode } from './canvas/nodetypes/group-node'
 
 interface ReactFlowJson {
@@ -302,8 +302,31 @@ function generateFlowElementsXml(nodes: FlowNode[]): string {
     const roundedX = Math.round(x)
     const roundedY = Math.round(y)
     const text = stickynote.data?.content || ''
+    const color = stickynote.data?.color
+    const colorAttr = color ? ` flow:color="${escapeXml(color)}"` : ''
 
-    return `    <flow:StickyNote flow:text="${escapeXml(text)}" flow:x="${roundedX}" flow:y="${roundedY}" flow:width="${stickynote.measured?.width || FlowConfig.STICKY_NOTE_DEFAULT_WIDTH}" flow:height="${stickynote.measured?.height || FlowConfig.STICKY_NOTE_DEFAULT_HEIGHT}" />`
+    let width: number
+    let height: number
+
+    if (stickynote.data?.collapsed) {
+      width = stickynote.data.preCollapseWidth ?? FlowConfig.STICKY_NOTE_DEFAULT_WIDTH
+      height = stickynote.data.preCollapseHeight ?? FlowConfig.STICKY_NOTE_DEFAULT_HEIGHT
+    } else {
+      width = stickynote.measured?.width ?? FlowConfig.STICKY_NOTE_DEFAULT_WIDTH
+      height = stickynote.measured?.height ?? FlowConfig.STICKY_NOTE_DEFAULT_HEIGHT
+    }
+
+    const collapsedAttr = stickynote.data?.collapsed === true ? ` flow:collapsed="true"` : ''
+
+    let attachedToAttr = ''
+    if (stickynote.data?.attachedToNodeId) {
+      const frankNode = nodes.find((node) => isFrankNode(node) && node.id === stickynote.data.attachedToNodeId)
+      if (frankNode && isFrankNode(frankNode)) {
+        attachedToAttr = ` flow:attachedTo="${escapeXml(frankNode.data.name)}"`
+      }
+    }
+
+    return `    <flow:StickyNote flow:text="${escapeXml(text)}"${colorAttr} flow:x="${roundedX}" flow:y="${roundedY}" flow:width="${width}" flow:height="${height}"${collapsedAttr}${attachedToAttr} />`
   })
 
   const groupNodesXml = generateGroupNodeXml(groupNodes, groupChildrenMap)

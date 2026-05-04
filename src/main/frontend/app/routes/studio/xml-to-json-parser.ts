@@ -8,6 +8,7 @@ import { translateElementFromOldToNewFormat } from '~/utils/flow-utils'
 import { FlowConfig } from './canvas/flow.config'
 import type { StickyNote } from './canvas/nodetypes/sticky-note'
 import type { GroupNode } from './canvas/nodetypes/group-node'
+import { isFrankNode } from '~/stores/flow-store'
 
 interface IdCounter {
   current: number
@@ -98,7 +99,7 @@ export async function getAdapterListenerType(
 export async function convertAdapterXmlToJson(adapter: Element) {
   const idCounter: IdCounter = { current: 0 }
   const { nodes: flownodes, elementToId } = convertAdapterToFlowNodes(adapter, idCounter)
-  const stickyNotes = extractStickyNotesFromAdapter(adapter, idCounter)
+  const stickyNotes = extractStickyNotesFromAdapter(adapter, idCounter, flownodes)
   const groupnodes = extractGroupNodesFromAdapter(adapter, flownodes, idCounter)
   assignParentRelationships(flownodes, groupnodes)
   const allNodes: FlowNode[] = [...groupnodes, ...flownodes, ...stickyNotes]
@@ -603,7 +604,7 @@ function convertChildren(elements: Element[], idCounter: IdCounter): ChildNode[]
     })
 }
 
-function extractStickyNotesFromAdapter(adapter: Element, idCounter: IdCounter): StickyNote[] {
+function extractStickyNotesFromAdapter(adapter: Element, idCounter: IdCounter, flowNodes: FlowNode[]): StickyNote[] {
   const stickyNotes: StickyNote[] = []
 
   const elementContainer = [...adapter.children].find(
@@ -618,21 +619,39 @@ function extractStickyNotesFromAdapter(adapter: Element, idCounter: IdCounter): 
 
   for (const note of notes) {
     const text = note.getAttribute('flow:text') || ''
+    const color = note.getAttribute('flow:color') ?? undefined
 
     const x = Number(note.getAttribute('flow:x')) || 0
     const y = Number(note.getAttribute('flow:y')) || 0
     const width = Number(note.getAttribute('flow:width')) || FlowConfig.STICKY_NOTE_DEFAULT_WIDTH
     const height = Number(note.getAttribute('flow:height')) || FlowConfig.STICKY_NOTE_DEFAULT_HEIGHT
 
+    const collapsed = note.getAttribute('flow:collapsed') === 'true'
+    const attachedToName = note.getAttribute('flow:attachedTo') || null
+
+    let data: StickyNote['data'] = { content: text, color }
+
+    if (collapsed) {
+      data = { ...data, collapsed: true, preCollapseWidth: width, preCollapseHeight: height }
+    }
+
+    if (attachedToName) {
+      const frankNode = flowNodes.find((node) => isFrankNode(node) && node.data.name === attachedToName)
+      if (frankNode) {
+        const offsetX = x - frankNode.position.x
+        const offsetY = y - frankNode.position.y
+        data = { ...data, attachedToNodeId: frankNode.id, offsetX, offsetY }
+      }
+    }
+
     const sticky: StickyNote = {
       id: (idCounter.current++).toString(),
       type: 'stickyNote',
       position: { x, y },
-      width,
-      height,
-      data: {
-        content: text,
-      },
+      width: collapsed ? FlowConfig.STICKY_NOTE_BALLOON_WIDTH : width,
+      height: collapsed ? FlowConfig.STICKY_NOTE_BALLOON_HEIGHT : height,
+      ...(collapsed ? { style: { width: FlowConfig.STICKY_NOTE_BALLOON_WIDTH, height: FlowConfig.STICKY_NOTE_BALLOON_HEIGHT } } : {}),
+      data,
     }
 
     stickyNotes.push(sticky)
@@ -718,10 +737,6 @@ function findSuccessExit(nodes: FlowNode[]): FlowNode | undefined {
 
 function isNodeTargeted(nodeId: string, edges: FrankEdge[]): boolean {
   return edges.some((edge) => edge.target === nodeId)
-}
-
-function isFrankNode(node: FlowNode): node is FrankNodeType {
-  return node.type === 'frankNode' && node.data !== undefined && 'type' in node.data
 }
 
 function parseElementAttributes(
