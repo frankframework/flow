@@ -197,6 +197,7 @@ function generateXmlElement(
 
   const type = (node.data as NodeData).type?.toLowerCase()
 
+  const seenForwards = new Set<string>()
   const forwards =
     type === 'receiver'
       ? '' // Receivers should never have a <Forward> element
@@ -209,6 +210,10 @@ function generateXmlElement(
               console.warn(`Target node with ID ${targetId} does not have a name attribute.`)
               return ''
             }
+
+            const key = `${label}:${targetName}`
+            if (seenForwards.has(key)) return ''
+            seenForwards.add(key)
 
             return `    <Forward name="${escapeXml(label)}" path="${escapeXml(targetName)}" />`
           })

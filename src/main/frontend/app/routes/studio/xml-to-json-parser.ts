@@ -252,19 +252,27 @@ function addForwardEdges(
   forwardIndexBySourceId: Map<string, number>,
   explicitTargetsBySourceId: Map<string, Set<string>>,
   sourcesWithSuccessExitForward: Set<string>,
-  sourcesWithSuccessPipeForward: Set<string>,
+  sourcesWithSuccessPipeForward: Set<string>
 ) {
   for (const forward of forwards) {
     const targetName = forward.getAttribute('path')
-    if (targetName === null) continue
+    if (!targetName) continue // Veiliger: vangt null en lege strings af
 
     const targetId = nameToId.get(targetName)
-    let targetNode = targetId ? nodes.find((n) => n.id === targetId) : null
-    if (!targetNode) continue
-    if (targetNode.id === sourceId) {
-      const exitFallback = nodes.find((n) => n.type === 'exitNode' && 'name' in n.data && n.data.name === targetName)
-      if (!exitFallback) continue
-      targetNode = exitFallback
+    let targetNode = targetId ? nodes.find((n) => n.id === targetId) : undefined
+
+    if (!targetNode || targetNode.id === sourceId) {
+      const exitFallback = nodes.find(
+        (n) => n.type === 'exitNode' && n.data && 'name' in n.data && n.data.name === targetName
+      )
+
+      if (exitFallback) {
+        targetNode = exitFallback
+      } else if (!targetNode) {
+        targetNode = nodes.find((n) => n.data && 'name' in n.data && n.data.name === targetName)
+      }
+
+      if (!targetNode || targetNode.id === sourceId) continue
     }
 
     const handleIndex = forwardIndexBySourceId.get(sourceId) ?? 1
