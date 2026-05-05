@@ -28,7 +28,7 @@ import { NodeContextMenuContext, useNodeContextMenu } from './node-context-menu-
 import StickyNoteComponent, { type StickyNote } from '~/routes/studio/canvas/nodetypes/sticky-note'
 import useTabStore, { type TabData } from '~/stores/tab-store'
 import { convertAdapterXmlToJson, getAdapterFromConfiguration } from '~/routes/studio/xml-to-json-parser'
-import { exportFlowToXml } from '~/routes/studio/flow-to-xml-parser'
+import { exportFlowToXml, replaceAdapterInXml } from '~/routes/studio/flow-to-xml-parser'
 import useNodeContextStore from '~/stores/node-context-store'
 import CreateNodeModal from '~/components/flow/create-node-modal'
 import { useFFDoc } from '@frankframework/doc-library-react'
@@ -160,18 +160,12 @@ function FlowCanvas() {
         existingAdapterXml,
       )
 
-      const newAdapterDoc = new DOMParser().parseFromString(
-        `<root xmlns:flow="urn:frank-flow">${newAdapterXml}</root>`,
-        'text/xml',
-      )
-      const newAdapterEl = newAdapterDoc.querySelector('Adapter, adapter')
-      if (!newAdapterEl) throw new Error('Failed to parse generated adapter XML')
+      const adapterIndex = allAdapters.indexOf(existingAdapter)
+      if (adapterIndex === -1) showErrorToast('Could not determine adapter position for replacement')
 
-      existingAdapter.parentNode!.replaceChild(configDoc.importNode(newAdapterEl, true), existingAdapter)
+      const updatedConfigXml = replaceAdapterInXml(fullConfigXml, adapterIndex, newAdapterXml.trim())
 
-      const updatedConfigXml = new XMLSerializer().serializeToString(configDoc).replace(/^<\?xml[^?]*\?>\s*/, '')
-
-      await saveConfiguration(currentProject.name, configurationPath, updatedConfigXml)
+      await saveConfiguration(currentProject.name, configurationPath, updatedConfigXml, true)
       clearConfigurationCache(currentProject.name, configurationPath)
       useEditorTabStore.getState().refreshAllTabs()
       if (currentProject.isGitRepository) await refreshOpenDiffs(currentProject.name)

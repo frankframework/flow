@@ -88,7 +88,7 @@ class ConfigurationControllerTest {
 		String filepath = "config1.xml";
 		String xmlContent = "<xml>updated</xml>";
 
-		when(configurationService.updateConfiguration(TEST_PROJECT_NAME, filepath, xmlContent))
+		when(configurationService.updateConfiguration(TEST_PROJECT_NAME, filepath, xmlContent, false))
 				.thenReturn(xmlContent);
 
 		mockMvc.perform(
@@ -97,7 +97,7 @@ class ConfigurationControllerTest {
 								.content("<xml>updated</xml>"))
 				.andExpect(status().isOk());
 
-		verify(configurationService).updateConfiguration(TEST_PROJECT_NAME, filepath, xmlContent);
+		verify(configurationService).updateConfiguration(TEST_PROJECT_NAME, filepath, xmlContent, false);
 	}
 
 	@Test
@@ -107,7 +107,7 @@ class ConfigurationControllerTest {
 
 		doThrow(new ConfigurationNotFoundException("Invalid file path: " + filepath))
 				.when(configurationService)
-				.updateConfiguration(TEST_PROJECT_NAME, filepath, xmlContent);
+				.updateConfiguration(TEST_PROJECT_NAME, filepath, xmlContent, false);
 
 		mockMvc.perform(
 						put("/api/projects/" + TEST_PROJECT_NAME + "/configuration?path=" + filepath)
@@ -117,7 +117,7 @@ class ConfigurationControllerTest {
 				.andExpect(jsonPath("$.httpStatus").value(404))
 				.andExpect(jsonPath("$.messages[0]").value("Invalid file path: " + filepath));
 
-		verify(configurationService).updateConfiguration(TEST_PROJECT_NAME, filepath, xmlContent);
+		verify(configurationService).updateConfiguration(TEST_PROJECT_NAME, filepath, xmlContent, false);
 	}
 
 	@Test

@@ -195,20 +195,17 @@ public class XmlConfigurationUtils {
 	}
 
 	private static void renameElement(Document doc, Element element, String newTagName) {
-
 		Element newElement = doc.createElement(newTagName);
-
 		NamedNodeMap attributes = element.getAttributes();
 		for (int i = 0; i < attributes.getLength(); i++) {
 			Attr attr = (Attr) attributes.item(i);
 			newElement.setAttribute(attr.getName(), attr.getValue());
 		}
-
 		while (element.getFirstChild() != null) {
 			newElement.appendChild(element.getFirstChild());
 		}
-
 		Node parent = element.getParentNode();
 		parent.replaceChild(newElement, element);
 	}
+
 }

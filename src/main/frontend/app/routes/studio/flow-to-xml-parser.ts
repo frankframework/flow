@@ -96,6 +96,20 @@ ${pipelineParts.join('\n')}
   </Adapter>`
 }
 
+export function replaceAdapterInXml(configXml: string, adapterIndex: number, newAdapterXml: string): string {
+  const matches = [...configXml.matchAll(/<(Adapter|adapter)\b/g)]
+
+  if (adapterIndex >= matches.length) return configXml
+
+  const match = matches[adapterIndex]
+  const start = match.index
+  const closingTag = `</${match[1]}>`
+  const closeIndex = configXml.indexOf(closingTag, start)
+  if (closeIndex === -1) return configXml
+
+  return configXml.slice(0, start) + newAdapterXml + configXml.slice(closeIndex + closingTag.length)
+}
+
 function buildEdgeMaps(edges: Edge[]) {
   const outgoing: Record<string, string[]> = {}
   const incoming: Record<string, string[]> = {}
@@ -163,15 +177,21 @@ function generateXmlElement(
     width = node.measured.width
   }
 
-  const height: number | undefined = node.height ?? undefined
+  const height: number | null = node.height ?? null
   const attributes = (node.data as NodeData).attributes || {}
   const children = (node.data as NodeData).children || []
 
-  const attributeString = ` name="${escapeXml(name)}"${Object.entries(attributes)
-    .map(([key, value]) => ` ${key}="${escapeXml(value)}"`)
-    .join('')}`
-
-  const flowNamespaceString = `flow:y="${roundedY}" flow:x="${roundedX}" flow:width="${width}"${height === undefined ? '' : ` flow:height="${height}"`}`
+  const allAttrs: Record<string, string> = {
+    ...attributes,
+    name,
+    'flow:x': String(roundedX),
+    'flow:y': String(roundedY),
+    'flow:width': String(width),
+    ...(height === null ? {} : { 'flow:height': String(height) }),
+  }
+  const attrStr = Object.entries(allAttrs)
+    .map(([k, v]) => `${k}="${escapeXml(v)}"`)
+    .join(' ')
 
   const childXml = children.map((child: ChildNode) => generateChildXml(child, 4)).join('\n')
 
@@ -195,30 +215,31 @@ function generateXmlElement(
           .join('\n')
 
   const content = [childXml, forwards].filter(Boolean).join('\n')
-  return content
-    ? `  <${subtype}${attributeString} ${flowNamespaceString} >\n${content}\n  </${subtype}>`
-    : `  <${subtype}${attributeString} ${flowNamespaceString} />`
+  return content ? `  <${subtype} ${attrStr} >\n${content}\n  </${subtype}>` : `  <${subtype} ${attrStr} />`
 }
 
 function generateChildXml(child: ChildNode, indent: number): string {
   const spaces = ' '.repeat(indent)
 
-  const attributes =
-    (child.name ? ` name="${escapeXml(child.name)}"` : '') +
-    Object.entries(child.attributes || {})
-      .map(([key, value]) => ` ${key}="${escapeXml(value)}"`)
-      .join('')
+  const childAttrs: Record<string, string> = {
+    ...(child.name ? { name: child.name } : {}),
+    ...child.attributes,
+  }
 
+  const attrStr = Object.entries(childAttrs)
+    .map(([k, v]) => `${k}="${escapeXml(v)}"`)
+    .join(' ')
+
+  const attrs = attrStr ? ` ${attrStr}` : ''
   const hasChildren = child.children && child.children.length > 0
 
   if (!hasChildren) {
-    return `${spaces}<${child.subtype}${attributes}/>`
+    return `${spaces}<${child.subtype}${attrs}/>`
   }
 
-  // Recursive case
   const childXmlStrings = child.children!.map((nested) => generateChildXml(nested, indent + 2))
 
-  return `${spaces}<${child.subtype}${attributes}>
+  return `${spaces}<${child.subtype}${attrs}>
 ${childXmlStrings.join('\n')}
 ${spaces}</${child.subtype}>`
 }
@@ -237,13 +258,20 @@ function generateExitsXml(exitNodes: FlowNode[]): string {
         width = node.measured.width
         height = node.measured.height
       }
-      const attributes = data.attributes || {}
-      const flowNamespaceString = `flow:y="${roundedY}" flow:x="${roundedX}" flow:width="${width}" flow:height="${height}"`
-      const attributeString = ` name="${escapeXml(name)}"${Object.entries(attributes)
-        .map(([key, value]) => ` ${key}="${escapeXml(value)}"`)
-        .join('')}`
 
-      return `      <Exit ${attributeString} ${flowNamespaceString} />`
+      const allAttrs: Record<string, string> = {
+        ...data.attributes,
+        name,
+        'flow:x': String(roundedX),
+        'flow:y': String(roundedY),
+        'flow:width': String(width),
+        'flow:height': String(height),
+      }
+      const attrStr = Object.entries(allAttrs)
+        .map(([k, v]) => `${k}="${escapeXml(v)}"`)
+        .join(' ')
+
+      return `      <Exit ${attrStr} />`
     })
     .join('\n')
 }

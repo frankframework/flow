@@ -1,7 +1,5 @@
 import RulerCrossPenIcon from '/icons/solar/Ruler Cross Pen.svg?react'
 import Editor, { type Monaco, type OnMount } from '@monaco-editor/react'
-import prettier from 'prettier/standalone'
-import prettierPluginXml from '@prettier/plugin-xml'
 type ITextModel = Monaco['editor']['ITextModel']
 type FindMatch = Monaco['editor']['FindMatch']
 type IModelDeltaDecoration = Monaco['editor']['IModelDeltaDecoration']
@@ -162,14 +160,6 @@ function toMonacoType(type: string | null) {
 
 function isConfigurationFile(fileExtension: string) {
   return fileExtension === 'xml'
-}
-
-function prettierFormat(xml: string): Promise<string> {
-  return prettier.format(xml, {
-    parser: 'xml',
-    plugins: [prettierPluginXml],
-    tabWidth: 2,
-  })
 }
 
 async function validateFlow(content: string, model: ITextModel): Promise<ValidationError[]> {
@@ -393,27 +383,31 @@ export default function CodeEditor() {
     )
   }, [])
 
-  const runPrettierReformat = async () => {
+  const runReformat = useCallback(async () => {
     const editor = editorReference.current
-    if (!editor) return
-    const model = editor.getModel()
-    if (!model) return
+    if (!editor || !project || !activeTabFilePath) return
+
+    const activeTab = useEditorTabStore.getState().getTab(activeTabFilePath)
+    const configPath = activeTab?.configurationPath
+    if (!configPath) return
+
     try {
-      const formattedValue = await prettierFormat(model.getValue())
-      if (formattedValue === model.getValue()) return
+      const current = editor.getValue()
+      const { xmlContent } = await saveConfiguration(project.name, configPath, current, true)
+      contentCacheRef.current.set(activeTabFilePath, { type: 'xml', content: xmlContent })
 
       const selection = editor.getSelection()
       editor.pushUndoStop()
       editor.executeEdits(
-        'prettier-reformat',
-        [{ range: model.getFullModelRange(), text: formattedValue, forceMoveMarkers: true }],
+        'reformat',
+        [{ range: editor.getModel()!.getFullModelRange(), text: xmlContent, forceMoveMarkers: true }],
         selection ? [selection] : undefined,
       )
       editor.pushUndoStop()
     } catch (error) {
       console.error('Failed to reformat XML:', error)
     }
-  }
+  }, [project, activeTabFilePath])
 
   const runSchemaValidation = useCallback(
     async (content: string) => {
@@ -513,7 +507,7 @@ export default function CodeEditor() {
     })
 
     editor.addAction({
-      id: 'reformat-xml-prettier',
+      id: 'reformat-xml',
       label: 'Reformat',
       contextMenuGroupId: 'navigation',
       contextMenuOrder: 3,
@@ -522,7 +516,7 @@ export default function CodeEditor() {
           monacoReference.current.KeyMod.Shift |
           monacoReference.current.KeyCode.KeyF,
       ],
-      run: runPrettierReformat,
+      run: runReformat,
     })
   }
 
