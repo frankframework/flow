@@ -97,7 +97,7 @@ export default function Studio() {
     const selected = s.nodes.filter((n) => n.selected)
     if (selected.length <= 1) return false
     const firstParentId = selected[0].parentId
-    return !!firstParentId && selected.every((n) => n.parentId === firstParentId)
+    return !!firstParentId && selected.every((node) => node.parentId === firstParentId)
   })
 
   const groupActionId = allInSameGroup ? 'studio.ungroup' : 'studio.group'

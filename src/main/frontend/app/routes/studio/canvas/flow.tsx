@@ -561,8 +561,8 @@ function FlowCanvas() {
   const deselectOtherNodes = useCallback(
     (nodeId: string) => {
       const flowNodes = reactFlow.getNodes()
-      if (flowNodes.filter((n) => n.selected).length > 1) {
-        reactFlow.setNodes(flowNodes.map((n) => ({ ...n, selected: n.id === nodeId })))
+      if (flowNodes.filter((node) => node.selected).length > 1) {
+        reactFlow.setNodes(flowNodes.map((node) => ({ ...node, selected: node.id === nodeId })))
       }
     },
     [reactFlow],
@@ -620,7 +620,7 @@ function FlowCanvas() {
 
   const handleSelectionChange = useCallback(
     ({ nodes: selectedNodes }: { nodes: FlowNode[] }) => {
-      const frankNodes = selectedNodes.filter((n) => isFrankNode(n))
+      const frankNodes = selectedNodes.filter((node) => isFrankNode(node))
 
       if (frankNodes.length > 1) {
         setIsMultiSelect(true)
