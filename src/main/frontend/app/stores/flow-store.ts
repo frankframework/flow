@@ -197,17 +197,34 @@ const useFlowStore = create<FlowState>()(
           movedNodeIds.size === 0
             ? updatedNodes
             : updatedNodes.map((node) => {
-                if (!isStickyNote(node) || !node.data.attachedToNodeId || !movedNodeIds.has(node.data.attachedToNodeId))
-                  return node
-                const parent = updatedNodes.find((updatedNode) => updatedNode.id === node.data.attachedToNodeId)
-                if (!parent) return node
-                return {
-                  ...node,
-                  position: {
-                    x: parent.position.x + (node.data.offsetX ?? 0),
-                    y: parent.position.y + (node.data.offsetY ?? 0),
-                  },
+                if (!isStickyNote(node) || !node.data.attachedToNodeId) return node
+
+                if (movedNodeIds.has(node.data.attachedToNodeId)) {
+                  const parent = updatedNodes.find((updatedNode) => updatedNode.id === node.data.attachedToNodeId)
+                  if (!parent) return node
+                  return {
+                    ...node,
+                    position: {
+                      x: parent.position.x + (node.data.offsetX ?? 0),
+                      y: parent.position.y + (node.data.offsetY ?? 0),
+                    },
+                  }
                 }
+
+                if (dragEnd && movedNodeIds.has(node.id)) {
+                  const parent = updatedNodes.find((updatedNode) => updatedNode.id === node.data.attachedToNodeId)
+                  if (!parent) return node
+                  return {
+                    ...node,
+                    data: {
+                      ...node.data,
+                      offsetX: node.position.x - parent.position.x,
+                      offsetY: node.position.y - parent.position.y,
+                    },
+                  }
+                }
+
+                return node
               })
 
         return { nodes, isDragging: nextIsDragging, isResizing: nextIsResizing }

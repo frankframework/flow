@@ -74,7 +74,7 @@ export default function StickyNoteComponent(properties: NodeProps<StickyNote>) {
   if (properties.data.collapsed) {
     return (
       <div
-        className={`${properties.selected ? 'ring-2 ring-black' : ''}`}
+        className={`${properties.selected ? 'ring-1 ring-black/40' : ''}`}
         style={{ width: `${FlowConfig.STICKY_NOTE_BALLOON_WIDTH}px` }}
       >
         <div
@@ -128,7 +128,7 @@ export default function StickyNoteComponent(properties: NodeProps<StickyNote>) {
       </NodeResizeControl>
       <div
         ref={containerReference}
-        className={`relative h-full w-full overflow-hidden p-3 text-xs ${properties.selected ? 'border-2 border-black' : ''}`}
+        className={`relative h-full w-full overflow-hidden p-3 text-xs ${properties.selected ? 'ring-1 ring-black/40' : ''}`}
         style={{
           minHeight: `${minHeight}px`,
           minWidth: `${minWidth}px`,

@@ -97,9 +97,11 @@ function AttachedNotesPanel({ nodeId }: { nodeId: number }) {
   if (attachedNotes.length === 0) return null
 
   return (
-    <div className="border-t-border mt-2 border-t pt-2">
-      <div className="text-foreground-muted px-4 pb-1 text-xs font-semibold tracking-wide uppercase">Notes</div>
-      <div className="flex flex-col gap-2 px-4 pb-4">
+    <div className="border-b-border border-b px-4 pt-4 pb-3">
+      <div className="text-foreground-muted mb-2 text-xs font-semibold tracking-wide uppercase">
+        {attachedNotes.length === 1 ? 'Note' : 'Notes'}
+      </div>
+      <div className="flex flex-col gap-2">
         {attachedNotes.map((note) => (
           <div
             key={note.id}
@@ -122,13 +124,14 @@ function RightPanelContent({
                            }: RightPanelProps) {
   if (isMultiSelect) return <MultiSelectPanel />
   if (selectedStickyId) return <StickyNoteContext nodeId={selectedStickyId} />
-
-  if (showNodeContext) return (
-          <div className="flex flex-col overflow-y-auto">
-            <NodeContext nodeId={nodeId} setShowNodeContext={handleShowNodeContext} />
-            <AttachedNotesPanel nodeId={nodeId} />
-          </div>
-  )
+  if (showNodeContext)
+    return (
+      <div className="flex flex-col overflow-y-auto">
+        <AttachedNotesPanel nodeId={nodeId} />
+        <NodeContext nodeId={nodeId} setShowNodeContext={handleShowNodeContext} />
+      </div>
+    )
+  return <StudioContext />
 }
 
 export default function Studio() {

@@ -59,6 +59,38 @@ const selector = (state: FlowState) => ({
 
 type SaveStatus = 'idle' | 'saving' | 'saved'
 const SAVED_DISPLAY_DURATION = 2000
+const STICKY_SNAP_DISTANCE = 60
+
+const getStickyCenter = (sticky: StickyNote) => ({
+  x: sticky.position.x + (sticky.measured?.width ?? FlowConfig.STICKY_NOTE_DEFAULT_WIDTH) / 2,
+  y: sticky.position.y + (sticky.measured?.height ?? FlowConfig.STICKY_NOTE_DEFAULT_HEIGHT) / 2,
+})
+
+const isWithinSnapDistance = (sticky: StickyNote, frankNode: FlowNode) => {
+  const center = getStickyCenter(sticky)
+  return (
+    center.x >= frankNode.position.x - STICKY_SNAP_DISTANCE &&
+    center.x <=
+      frankNode.position.x + (frankNode.measured?.width ?? FlowConfig.NODE_DEFAULT_WIDTH) + STICKY_SNAP_DISTANCE &&
+    center.y >= frankNode.position.y - STICKY_SNAP_DISTANCE &&
+    center.y <= frankNode.position.y + (frankNode.measured?.height ?? FlowConfig.NODE_MIN_HEIGHT) + STICKY_SNAP_DISTANCE
+  )
+}
+
+const distanceToFrankNode = (sticky: StickyNote, frankNode: FlowNode) => {
+  const center = getStickyCenter(sticky)
+  const dx = center.x - (frankNode.position.x + (frankNode.measured?.width ?? FlowConfig.NODE_DEFAULT_WIDTH) / 2)
+  const dy = center.y - (frankNode.position.y + (frankNode.measured?.height ?? FlowConfig.NODE_MIN_HEIGHT) / 2)
+  return Math.hypot(dx, dy)
+}
+
+const findNearestFrankNode = (sticky: StickyNote, candidates: FlowNode[]) =>
+  candidates
+    .filter((n) => (n.type === 'frankNode' || n.type === 'exitNode') && isWithinSnapDistance(sticky, n))
+    .reduce<FlowNode | null>((best, n) => {
+      if (best === null) return n
+      return distanceToFrankNode(sticky, n) < distanceToFrankNode(sticky, best) ? n : best
+    }, null)
 
 const nodeTypes = {
   frankNode: FrankNodeComponent,
@@ -562,6 +594,17 @@ function FlowCanvas() {
   })
 
   const isFrankNode = (node: FlowNode): node is FrankNodeType => node.type === 'frankNode' || node.type === 'exitNode'
+
+  const handleNodeDragStop = useCallback((_event: React.MouseEvent, node: FlowNode) => {
+    if (!isStickyNote(node)) return
+
+    const flowStore = useFlowStore.getState()
+    const nearest = findNearestFrankNode(node as StickyNote, flowStore.nodes)
+    if (!nearest) return
+
+    flowStore.setStickyAttachment(node.id, nearest.id)
+    void useNodeContextStore.getState().saveFlow?.()
+  }, [])
 
   const lookupFrankElement = useCallback(
     (subtype: string) => {
@@ -1101,6 +1144,7 @@ function FlowCanvas() {
         onReconnect={onReconnect}
         onNodeClick={handleNodeClick}
         onNodeDoubleClick={handleNodeDoubleClick}
+        onNodeDragStop={handleNodeDragStop}
         onEdgeClick={handleEdgeClick}
         onSelectionChange={handleSelectionChange}
         onConnectStart={handleConnectStart}
