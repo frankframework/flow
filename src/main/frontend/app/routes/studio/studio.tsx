@@ -126,7 +126,7 @@ function RightPanelContent({
   if (selectedStickyId) return <StickyNoteContext nodeId={selectedStickyId} />
   if (showNodeContext)
     return (
-      <div className="flex flex-col overflow-y-auto">
+      <div className="flex min-h-0 flex-1 flex-col">
         <AttachedNotesPanel nodeId={nodeId} />
         <NodeContext nodeId={nodeId} setShowNodeContext={handleShowNodeContext} />
       </div>
