@@ -1,8 +1,7 @@
 package org.frankframework.flow.git;
 
 import java.io.IOException;
-import lombok.extern.slf4j.Slf4j;
-import org.frankframework.flow.project.ProjectNotFoundException;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -11,6 +10,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import lombok.extern.slf4j.Slf4j;
+
+import org.frankframework.flow.exception.ApiException;
 
 @Slf4j
 @RestController
@@ -25,8 +28,7 @@ public class GitController {
 	}
 
 	@GetMapping("/status")
-	public ResponseEntity<GitStatusDTO> getStatus(@PathVariable String projectName)
-			throws ProjectNotFoundException, IOException, NotAGitRepositoryException, GitOperationException {
+	public ResponseEntity<GitStatusDTO> getStatus(@PathVariable String projectName) throws ApiException, IOException {
 		log.info("Getting git status for project '{}'", projectName);
 		GitStatusDTO status = gitService.getStatus(projectName);
 		log.info(
@@ -38,14 +40,16 @@ public class GitController {
 				status.untracked().size(),
 				status.conflicting().size(),
 				status.ahead(),
-				status.behind());
+				status.behind()
+		);
 		return ResponseEntity.ok(status);
 	}
 
 	@GetMapping("/diff")
 	public ResponseEntity<GitFileDiffDTO> getFileDiff(
-			@PathVariable String projectName, @RequestParam("file") String filePath)
-			throws ProjectNotFoundException, IOException, NotAGitRepositoryException {
+			@PathVariable String projectName,
+			@RequestParam("file") String filePath
+	) throws ApiException, IOException {
 		log.info("Getting diff for file '{}' in project '{}'", filePath, projectName);
 		GitFileDiffDTO diff = gitService.getFileDiff(projectName, filePath);
 		log.info("Diff for '{}': {} hunks found", filePath, diff.hunks().size());
@@ -53,29 +57,29 @@ public class GitController {
 	}
 
 	@PostMapping("/stage")
-	public ResponseEntity<Void> stageFile(@PathVariable String projectName, @RequestBody GitFilePathDTO dto)
-			throws ProjectNotFoundException, IOException, NotAGitRepositoryException, GitOperationException {
+	public ResponseEntity<Void> stageFile(@PathVariable String projectName, @RequestBody GitFilePathDTO dto) throws ApiException, IOException {
 		log.info("Staging file '{}' in project '{}'", dto.filePath(), projectName);
 		gitService.stageFile(projectName, dto.filePath());
 		return ResponseEntity.ok().build();
 	}
 
 	@PostMapping("/stage-hunks")
-	public ResponseEntity<Void> stageHunks(@PathVariable String projectName, @RequestBody GitStageHunksDTO dto)
-			throws ProjectNotFoundException, IOException, NotAGitRepositoryException, GitOperationException {
+	public ResponseEntity<Void> stageHunks(@PathVariable String projectName, @RequestBody GitStageHunksDTO dto) throws ApiException, IOException {
 		log.info(
 				"Staging {} hunks for file '{}' in project '{}'",
 				dto.hunkIndices().size(),
 				dto.filePath(),
-				projectName);
+				projectName
+		);
 		gitService.stageHunks(projectName, dto.filePath(), dto.hunkIndices());
 		return ResponseEntity.ok().build();
 	}
 
 	@PostMapping("/commit")
 	public ResponseEntity<GitCommitResultDTO> commit(
-			@PathVariable String projectName, @RequestBody GitCommitRequestDTO dto)
-			throws ProjectNotFoundException, IOException, NotAGitRepositoryException, GitOperationException {
+			@PathVariable String projectName,
+			@RequestBody GitCommitRequestDTO dto
+	) throws ApiException, IOException {
 		log.info("Creating commit in project '{}' with message: '{}'", projectName, dto.message());
 		GitCommitResultDTO result = gitService.commit(projectName, dto.message());
 		log.info("Commit created in '{}': {}", projectName, result.commitId().substring(0, SHORT_ID_LENGTH));
@@ -85,8 +89,9 @@ public class GitController {
 
 	@PostMapping("/push")
 	public ResponseEntity<GitPushResultDTO> push(
-			@PathVariable String projectName, @RequestBody(required = false) GitTokenDTO dto)
-			throws ProjectNotFoundException, IOException, NotAGitRepositoryException, GitOperationException {
+			@PathVariable String projectName,
+			@RequestBody(required = false) GitTokenDTO dto
+	) throws ApiException, IOException {
 		String token = dto != null ? dto.token() : null;
 		log.info("Pushing changes for project '{}' (token provided: {})", projectName, token != null);
 		GitPushResultDTO result = gitService.push(projectName, token);
@@ -96,8 +101,9 @@ public class GitController {
 
 	@PostMapping("/pull")
 	public ResponseEntity<GitPullResultDTO> pull(
-			@PathVariable String projectName, @RequestBody(required = false) GitTokenDTO dto)
-			throws ProjectNotFoundException, IOException, NotAGitRepositoryException, GitOperationException {
+			@PathVariable String projectName,
+			@RequestBody(required = false) GitTokenDTO dto
+	) throws ApiException, IOException {
 		String token = dto != null ? dto.token() : null;
 		log.info("Pulling changes for project '{}' (token provided: {})", projectName, token != null);
 		GitPullResultDTO result = gitService.pull(projectName, token);

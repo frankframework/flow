@@ -7,7 +7,6 @@ import java.nio.file.Path;
 import org.frankframework.flow.exception.ApiException;
 import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.frankframework.flow.project.Project;
-import org.frankframework.flow.project.ProjectNotFoundException;
 import org.frankframework.flow.project.ProjectService;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
@@ -114,7 +113,7 @@ public class FileService {
 		fileTreeService.invalidateTreeCache(projectName);
 	}
 
-	public void validateWithinProject(String projectName, String path) throws ApiException {
+	public void validateWithinProject(String projectName, String path) {
 		try {
 			Project project = projectService.getProject(projectName);
 			Path projectPath = fileSystemStorage.toAbsolutePath(project.getRootPath());
@@ -123,7 +122,7 @@ public class FileService {
 			if (!targetPath.startsWith(projectPath)) {
 				throw new ApiException("Path is outside project directory", HttpStatus.FORBIDDEN);
 			}
-		} catch (ProjectNotFoundException e) {
+		} catch (ApiException exception) {
 			throw new IllegalArgumentException("Project does not exist: " + projectName);
 		}
 	}

@@ -10,6 +10,12 @@ import java.nio.file.StandardOpenOption;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.stereotype.Service;
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.xml.sax.SAXException;
+
 import lombok.extern.slf4j.Slf4j;
 
 import org.frankframework.flow.configuration.ConfigurationFile;
@@ -22,12 +28,6 @@ import org.frankframework.flow.project.ProjectService;
 import org.frankframework.flow.utility.XmlAdapterUtils;
 import org.frankframework.flow.utility.XmlConfigurationUtils;
 import org.frankframework.flow.utility.XmlSecurityUtils;
-
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.stereotype.Service;
-import org.w3c.dom.Document;
-import org.w3c.dom.Node;
-import org.xml.sax.SAXException;
 
 @Slf4j
 @Service
@@ -45,12 +45,10 @@ public class AdapterService {
 			throws IOException, ApiException, SAXException, ParserConfigurationException, TransformerException {
 
 		Project project = projectService.getProject(projectName);
-
 		ConfigurationFile config = project.getConfigurationFiles().stream()
-				.filter(c -> c.getFilepath().equals(configurationPath))
+				.filter(configurationFile -> configurationFile.getFilepath().equals(configurationPath))
 				.findFirst()
-				.orElseThrow(() -> new ConfigurationNotFoundException(
-						String.format("Configuration with filepath: %s not found", configurationPath)));
+				.orElseThrow(() -> new ConfigurationNotFoundException(String.format("Configuration File with path: %s not found", configurationPath)));
 
 		Document configDoc = XmlSecurityUtils.createSecureDocumentBuilder()
 				.parse(new ByteArrayInputStream(config.getXmlContent().getBytes(StandardCharsets.UTF_8)));
@@ -154,8 +152,7 @@ public class AdapterService {
 		}
 	}
 
-	public void deleteAdapter(String configurationPath, String adapterName)
-			throws ConfigurationNotFoundException, AdapterNotFoundException, IOException {
+	public void deleteAdapter(String configurationPath, String adapterName) throws ConfigurationNotFoundException, AdapterNotFoundException, IOException {
 		if (configurationPath == null || configurationPath.isBlank()) {
 			throw new IllegalArgumentException("Configuration path must not be empty");
 		}
@@ -175,10 +172,10 @@ public class AdapterService {
 
 			String updatedXml = XmlConfigurationUtils.convertNodeToString(configDoc);
 			Files.writeString(absConfigFile, updatedXml, StandardCharsets.UTF_8, StandardOpenOption.TRUNCATE_EXISTING);
-		} catch (AdapterNotFoundException e) {
-			throw e;
-		} catch (Exception e) {
-			throw new IOException("Failed to delete adapter: " + e.getMessage(), e);
+		} catch (AdapterNotFoundException exception) {
+			throw exception;
+		} catch (Exception exception) {
+			throw new IOException("Failed to delete adapter: " + exception.getMessage(), exception);
 		}
 	}
 
