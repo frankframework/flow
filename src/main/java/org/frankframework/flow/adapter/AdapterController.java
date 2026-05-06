@@ -5,8 +5,8 @@ import java.nio.file.Paths;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
+import org.frankframework.flow.configuration.ConfigurationXmlDTO;
 import org.frankframework.flow.exception.ApiException;
-import org.frankframework.flow.xml.XmlDTO;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -33,7 +33,7 @@ public class AdapterController {
 	@GetMapping(
 			value = "/{projectName}/adapters/{adapterName}",
 			params = {"configurationPath"})
-	public XmlDTO getAdapter(
+	public ConfigurationXmlDTO getAdapter(
 			@PathVariable String projectName, @PathVariable String adapterName, @RequestParam String configurationPath)
 			throws IOException, ApiException, SAXException, ParserConfigurationException, TransformerException {
 		return adapterService.getAdapter(projectName, configurationPath, adapterName);

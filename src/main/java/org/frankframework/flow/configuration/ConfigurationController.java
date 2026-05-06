@@ -5,7 +5,6 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 import lombok.extern.slf4j.Slf4j;
 import org.frankframework.flow.exception.ApiException;
-import org.frankframework.flow.xml.XmlDTO;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -38,24 +37,24 @@ public class ConfigurationController {
 	}
 
 	@PutMapping()
-	public ResponseEntity<XmlDTO> updateConfiguration(
+	public ResponseEntity<ConfigurationXmlDTO> updateConfiguration(
 			@PathVariable String projectName,
 			@RequestParam String path,
 			@RequestParam(defaultValue = "false") boolean format,
 			@RequestBody String content
 	) throws ApiException {
 		String updatedContent = configurationService.updateConfiguration(projectName, path, content, format);
-		XmlDTO xmlDTO = new XmlDTO(updatedContent);
-		return ResponseEntity.ok(xmlDTO);
+		ConfigurationXmlDTO configurationXmlDTO = new ConfigurationXmlDTO(updatedContent);
+		return ResponseEntity.ok(configurationXmlDTO);
 	}
 
 	@PostMapping()
-	public ResponseEntity<XmlDTO> addConfiguration(
+	public ResponseEntity<ConfigurationXmlDTO> addConfiguration(
 			@PathVariable String projectName,
 			@RequestParam String name
 	) throws ApiException, IOException, TransformerException, ParserConfigurationException, SAXException {
 		String content = configurationService.addConfiguration(projectName, name);
-		XmlDTO xmlDTO = new XmlDTO(content);
-		return ResponseEntity.ok(xmlDTO);
+		ConfigurationXmlDTO configurationXmlDTO = new ConfigurationXmlDTO(content);
+		return ResponseEntity.ok(configurationXmlDTO);
 	}
 }

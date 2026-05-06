@@ -11,6 +11,7 @@ import javax.xml.transform.TransformerException;
 import lombok.extern.slf4j.Slf4j;
 import org.frankframework.flow.configuration.Configuration;
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
+import org.frankframework.flow.configuration.ConfigurationXmlDTO;
 import org.frankframework.flow.exception.ApiException;
 import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.frankframework.flow.project.Project;
@@ -18,7 +19,6 @@ import org.frankframework.flow.project.ProjectService;
 import org.frankframework.flow.utility.XmlAdapterUtils;
 import org.frankframework.flow.utility.XmlConfigurationUtils;
 import org.frankframework.flow.utility.XmlSecurityUtils;
-import org.frankframework.flow.xml.XmlDTO;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 import org.w3c.dom.Document;
@@ -37,7 +37,7 @@ public class AdapterService {
 		this.fileSystemStorage = fileSystemStorage;
 	}
 
-	public XmlDTO getAdapter(String projectName, String configurationPath, String adapterName)
+	public ConfigurationXmlDTO getAdapter(String projectName, String configurationPath, String adapterName)
 			throws IOException, ApiException, SAXException, ParserConfigurationException, TransformerException {
 
 		Project project = projectService.getProject(projectName);
@@ -56,7 +56,7 @@ public class AdapterService {
 			throw new AdapterNotFoundException("Adapter not found: " + adapterName);
 		}
 
-		return new XmlDTO(XmlConfigurationUtils.convertNodeToString(adapterNode));
+		return new ConfigurationXmlDTO(XmlConfigurationUtils.convertNodeToString(adapterNode));
 	}
 
 	public boolean updateAdapter(Path configurationFile, String adapterName, String newAdapterXml)
