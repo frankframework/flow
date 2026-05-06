@@ -13,34 +13,38 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
 import org.frankframework.flow.common.FrankFrameworkService;
 import org.frankframework.flow.common.config.ClientSession;
-import org.frankframework.flow.configuration.Configuration;
+import org.frankframework.flow.configuration.ConfigurationFile;
+import org.frankframework.flow.exception.ApiException;
 import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.frankframework.flow.projectsettings.FilterType;
 import org.frankframework.flow.projectsettings.InvalidFilterTypeException;
 import org.frankframework.flow.projectsettings.ProjectSettings;
 import org.frankframework.flow.recentproject.RecentProjectsService;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-@WebMvcTest(ProjectController.class)
+@WebMvcTest(ConfigurationProjectController.class)
 @AutoConfigureMockMvc(addFilters = false)
-class ProjectControllerTest {
+class ConfigurationConfigurationProjectControllerTest {
 
 	@Autowired
 	private MockMvc mockMvc;
 
 	@MockitoBean
-	private ProjectService projectService;
+	private ConfigurationProjectService configurationProjectService;
 
 	@MockitoBean
 	private RecentProjectsService recentProjectsService;
@@ -56,28 +60,28 @@ class ProjectControllerTest {
 
 	@BeforeEach
 	void setUp() throws IOException {
-		Mockito.reset(projectService);
+		Mockito.reset(configurationProjectService);
 		when(fileSystemStorage.toRelativePath(anyString())).thenAnswer(inv -> inv.getArgument(0));
 		when(fileSystemStorage.toAbsolutePath(anyString())).thenAnswer(inv -> Paths.get(inv.<String>getArgument(0)));
-		when(projectService.toDto(any(Project.class))).thenAnswer(inv -> {
-			Project p = inv.getArgument(0);
-			List<String> fps = p.getConfigurations().stream()
-					.map(Configuration::getFilepath)
+		when(configurationProjectService.toDto(any(ConfigurationProject.class))).thenAnswer(inv -> {
+			ConfigurationProject project = inv.getArgument(0);
+			List<String> fps = project.getConfigurationFiles().stream()
+					.map(ConfigurationFile::getFilepath)
 					.toList();
-			return new ProjectDTO(
-					p.getName(), p.getRootPath(), fps, p.getConfigurationSettings().getFilters(), false, false);
+			return new ConfigurationProjectDTO(
+					project.getName(), project.getRootPath(), fps, project.getConfigurationSettings().getFilters(), false, false);
 		});
 	}
 
-	private Project mockProject() {
-		Project project = mock(Project.class);
-		when(project.getName()).thenReturn("MyProject");
-		when(project.getRootPath()).thenReturn("/path/to/MyProject");
+	private ConfigurationProject mockProject() {
+		ConfigurationProject configurationProject = mock(ConfigurationProject.class);
+		when(configurationProject.getName()).thenReturn("MyProject");
+		when(configurationProject.getRootPath()).thenReturn("/path/to/MyProject");
 
-		Configuration config = mock(Configuration.class);
+		ConfigurationFile config = mock(ConfigurationFile.class);
 		when(config.getFilepath()).thenReturn("config1.xml");
 
-		when(project.getConfigurations()).thenReturn(new ArrayList<>(List.of(config)));
+		when(configurationProject.getConfigurationFiles()).thenReturn(new ArrayList<>(List.of(config)));
 
 		ProjectSettings settings = mock(ProjectSettings.class);
 		when(settings.getFilters())
@@ -86,15 +90,15 @@ class ProjectControllerTest {
 						FilterType.AMQP, false
 				));
 
-		when(project.getConfigurationSettings()).thenReturn(settings);
+		when(configurationProject.getConfigurationSettings()).thenReturn(settings);
 
-		return project;
+		return configurationProject;
 	}
 
 	@Test
 	void getAllProjectsReturnsExpectedJson() throws Exception {
-		Project project = mockProject();
-		when(projectService.getProjects()).thenReturn(new ArrayList<>(List.of(project)));
+		ConfigurationProject configurationProject = mockProject();
+		when(configurationProjectService.getProjects()).thenReturn(new ArrayList<>(List.of(configurationProject)));
 
 		mockMvc.perform(get("/api/projects").accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk())
@@ -104,13 +108,13 @@ class ProjectControllerTest {
 				.andExpect(jsonPath("$[0].filters.ADAPTER").value(true))
 				.andExpect(jsonPath("$[0].filters.AMQP").value(false));
 
-		verify(projectService).getProjects();
+		verify(configurationProjectService).getProjects();
 	}
 
 	@Test
 	void getProjectReturnsExpectedJson() throws Exception {
-		Project project = mockProject();
-		when(projectService.getProject("MyProject")).thenReturn(project);
+		ConfigurationProject configurationProject = mockProject();
+		when(configurationProjectService.getProject("MyProject")).thenReturn(configurationProject);
 
 		mockMvc.perform(get("/api/projects/MyProject").accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk())
@@ -120,12 +124,12 @@ class ProjectControllerTest {
 				.andExpect(jsonPath("$.filters.ADAPTER").value(true))
 				.andExpect(jsonPath("$.filters.AMQP").value(false));
 
-		verify(projectService).getProject("MyProject");
+		verify(configurationProjectService).getProject("MyProject");
 	}
 
 	@Test
 	void getProjectThrowsNotFoundReturns404() throws Exception {
-		when(projectService.getProject("Unknown")).thenThrow(new ProjectNotFoundException("Not found"));
+		when(configurationProjectService.getProject("Unknown")).thenThrow(new ApiException("Not found", HttpStatus.NOT_FOUND));
 
 		mockMvc.perform(get("/api/projects/Unknown")).andExpect(status().isNotFound());
 	}
@@ -133,11 +137,12 @@ class ProjectControllerTest {
 	@Test
 	void createProjectReturnsProjectDto() throws Exception {
 		String rootPath = "/path/to/new/project";
-		Project project = mockProject();
-		when(project.getRootPath()).thenReturn(rootPath);
-		when(project.getConfigurations()).thenReturn(new ArrayList<>());
+		ConfigurationProjectCreateDTO createDTO = new ConfigurationProjectCreateDTO("MyProject", rootPath);
+		ConfigurationProject configurationProject = mockProject();
+		when(configurationProject.getRootPath()).thenReturn(rootPath);
+		when(configurationProject.getConfigurationFiles()).thenReturn(new ArrayList<>());
 
-		when(projectService.createProjectOnDisk(rootPath)).thenReturn(project);
+		when(configurationProjectService.createProjectOnDisk(createDTO)).thenReturn(configurationProject);
 
 		mockMvc.perform(post("/api/projects")
 						.contentType(MediaType.APPLICATION_JSON)
@@ -151,30 +156,30 @@ class ProjectControllerTest {
 				.andExpect(jsonPath("$.name").value("MyProject"))
 				.andExpect(jsonPath("$.rootPath").value(rootPath));
 
-		verify(projectService).createProjectOnDisk(rootPath);
+		verify(configurationProjectService).createProjectOnDisk(createDTO);
 		verify(recentProjectsService).addRecentProject("MyProject", rootPath);
 	}
 
 	@Test
 	void enableFilterTogglesFilterToTrue() throws Exception {
-		Project project = mockProject();
+		ConfigurationProject configurationProject = mockProject();
 
 		Map<FilterType, Boolean> updatedFilters = Map.of(
 				FilterType.ADAPTER, true,
 				FilterType.AMQP, true
 		);
 
-		Project updatedProject = mock(Project.class);
-		when(updatedProject.getName()).thenReturn("MyProject");
-		when(updatedProject.getRootPath()).thenReturn("/path/to/MyProject");
-		ArrayList<Configuration> configs = new ArrayList<>(project.getConfigurations());
-		when(updatedProject.getConfigurations()).thenReturn(configs);
+		ConfigurationProject updatedConfigurationProject = mock(ConfigurationProject.class);
+		when(updatedConfigurationProject.getName()).thenReturn("MyProject");
+		when(updatedConfigurationProject.getRootPath()).thenReturn("/path/to/MyProject");
+		ArrayList<ConfigurationFile> configs = new ArrayList<>(configurationProject.getConfigurationFiles());
+		when(updatedConfigurationProject.getConfigurationFiles()).thenReturn(configs);
 
 		ProjectSettings settings = mock(ProjectSettings.class);
 		when(settings.getFilters()).thenReturn(updatedFilters);
-		when(updatedProject.getConfigurationSettings()).thenReturn(settings);
+		when(updatedConfigurationProject.getConfigurationSettings()).thenReturn(settings);
 
-		when(projectService.enableFilter("MyProject", "AMQP")).thenReturn(updatedProject);
+		when(configurationProjectService.enableFilter("MyProject", "AMQP")).thenReturn(updatedConfigurationProject);
 
 		mockMvc.perform(patch("/api/projects/MyProject/filters/AMQP/enable").accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk())
@@ -182,13 +187,13 @@ class ProjectControllerTest {
 				.andExpect(jsonPath("$.filters.ADAPTER").value(true))
 				.andExpect(jsonPath("$.filters.AMQP").value(true));
 
-		verify(projectService).enableFilter("MyProject", "AMQP");
+		verify(configurationProjectService).enableFilter("MyProject", "AMQP");
 	}
 
 	@Test
 	void enableFilterProjectNotFoundReturns404() throws Exception {
-		doThrow(new ProjectNotFoundException("Project not found"))
-				.when(projectService)
+		doThrow(new ApiException("Project not found", HttpStatus.NOT_FOUND))
+				.when(configurationProjectService)
 				.enableFilter("UnknownProject", "ADAPTER");
 
 		mockMvc.perform(patch("/api/projects/UnknownProject/filters/ADAPTER/enable")
@@ -197,14 +202,14 @@ class ProjectControllerTest {
 				.andExpect(jsonPath("$.httpStatus").value(404))
 				.andExpect(jsonPath("$.messages[0]").value("Project not found"));
 
-		verify(projectService).enableFilter("UnknownProject", "ADAPTER");
+		verify(configurationProjectService).enableFilter("UnknownProject", "ADAPTER");
 	}
 
 	@Test
 	void enableFilterInvalidFilterTypeReturns400() throws Exception {
 		String filterType = "INVALID";
 		doThrow(new InvalidFilterTypeException("Invalid filter type: " + filterType))
-				.when(projectService)
+				.when(configurationProjectService)
 				.enableFilter("MyProject", filterType);
 
 		mockMvc.perform(patch("/api/projects/MyProject/filters/INVALID/enable").accept(MediaType.APPLICATION_JSON))
@@ -212,29 +217,29 @@ class ProjectControllerTest {
 				.andExpect(jsonPath("$.httpStatus").value(400))
 				.andExpect(jsonPath("$.messages[0]").value("Invalid filter type: " + filterType));
 
-		verify(projectService).enableFilter("MyProject", filterType);
+		verify(configurationProjectService).enableFilter("MyProject", filterType);
 	}
 
 	@Test
 	void disableFilterTogglesFilterToFalse() throws Exception {
-		Project project = mockProject();
+		ConfigurationProject configurationProject = mockProject();
 
 		Map<FilterType, Boolean> updatedFilters = Map.of(
 				FilterType.ADAPTER, false,
 				FilterType.AMQP, false
 		);
 
-		Project updatedProject = mock(Project.class);
-		when(updatedProject.getName()).thenReturn("MyProject");
-		when(updatedProject.getRootPath()).thenReturn("/path/to/MyProject");
-		ArrayList<Configuration> configs = new ArrayList<>(project.getConfigurations());
-		when(updatedProject.getConfigurations()).thenReturn(configs);
+		ConfigurationProject updatedConfigurationProject = mock(ConfigurationProject.class);
+		when(updatedConfigurationProject.getName()).thenReturn("MyProject");
+		when(updatedConfigurationProject.getRootPath()).thenReturn("/path/to/MyProject");
+		ArrayList<ConfigurationFile> configs = new ArrayList<>(configurationProject.getConfigurationFiles());
+		when(updatedConfigurationProject.getConfigurationFiles()).thenReturn(configs);
 
 		ProjectSettings settings = mock(ProjectSettings.class);
 		when(settings.getFilters()).thenReturn(updatedFilters);
-		when(updatedProject.getConfigurationSettings()).thenReturn(settings);
+		when(updatedConfigurationProject.getConfigurationSettings()).thenReturn(settings);
 
-		when(projectService.disableFilter("MyProject", "ADAPTER")).thenReturn(updatedProject);
+		when(configurationProjectService.disableFilter("MyProject", "ADAPTER")).thenReturn(updatedConfigurationProject);
 
 		mockMvc.perform(patch("/api/projects/MyProject/filters/ADAPTER/disable").accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk())
@@ -242,13 +247,13 @@ class ProjectControllerTest {
 				.andExpect(jsonPath("$.filters.ADAPTER").value(false))
 				.andExpect(jsonPath("$.filters.AMQP").value(false));
 
-		verify(projectService).disableFilter("MyProject", "ADAPTER");
+		verify(configurationProjectService).disableFilter("MyProject", "ADAPTER");
 	}
 
 	@Test
 	void disableFilterProjectNotFoundReturns404() throws Exception {
-		doThrow(new ProjectNotFoundException("Project not found"))
-				.when(projectService)
+		doThrow(new ApiException("Project not found", HttpStatus.NOT_FOUND))
+				.when(configurationProjectService)
 				.disableFilter("UnknownProject", "ADAPTER");
 
 		mockMvc.perform(patch("/api/projects/UnknownProject/filters/ADAPTER/disable")
@@ -257,14 +262,14 @@ class ProjectControllerTest {
 				.andExpect(jsonPath("$.httpStatus").value(404))
 				.andExpect(jsonPath("$.messages[0]").value("Project not found"));
 
-		verify(projectService).disableFilter("UnknownProject", "ADAPTER");
+		verify(configurationProjectService).disableFilter("UnknownProject", "ADAPTER");
 	}
 
 	@Test
 	void disableFilterInvalidFilterTypeReturns400() throws Exception {
 		String filterType = "INVALID";
 		doThrow(new InvalidFilterTypeException("Invalid filter type: " + filterType))
-				.when(projectService)
+				.when(configurationProjectService)
 				.disableFilter("MyProject", filterType);
 
 		mockMvc.perform(patch("/api/projects/MyProject/filters/INVALID/disable").accept(MediaType.APPLICATION_JSON))
@@ -272,7 +277,7 @@ class ProjectControllerTest {
 				.andExpect(jsonPath("$.httpStatus").value(400))
 				.andExpect(jsonPath("$.messages[0]").value("Invalid filter type: " + filterType));
 
-		verify(projectService).disableFilter("MyProject", filterType);
+		verify(configurationProjectService).disableFilter("MyProject", filterType);
 	}
 
 	@Test
@@ -282,7 +287,7 @@ class ProjectControllerTest {
 			os.write("fake-zip-content".getBytes());
 			return null;
 		})
-				.when(projectService)
+				.when(configurationProjectService)
 				.exportProjectAsZip(eq("MyProject"), any(OutputStream.class));
 
 		mockMvc.perform(get("/api/projects/MyProject/export"))
@@ -290,52 +295,52 @@ class ProjectControllerTest {
 				.andExpect(header().string("Content-Disposition", "attachment; filename=\"MyProject.zip\""))
 				.andExpect(content().contentType("application/zip"));
 
-		verify(projectService).exportProjectAsZip(eq("MyProject"), any(OutputStream.class));
+		verify(configurationProjectService).exportProjectAsZip(eq("MyProject"), any(OutputStream.class));
 	}
 
 	@Test
 	void exportProjectNotFoundReturns404() throws Exception {
-		doThrow(new ProjectNotFoundException("Project not found"))
-				.when(projectService)
+		doThrow(new ApiException("Project not found", HttpStatus.NOT_FOUND))
+				.when(configurationProjectService)
 				.exportProjectAsZip(eq("Unknown"), any(OutputStream.class));
 
 		mockMvc.perform(get("/api/projects/Unknown/export")).andExpect(status().isNotFound());
 
-		verify(projectService).exportProjectAsZip(eq("Unknown"), any(OutputStream.class));
+		verify(configurationProjectService).exportProjectAsZip(eq("Unknown"), any(OutputStream.class));
 	}
 
 	@Test
 	void importProjectReturnsProjectDto() throws Exception {
-		Project project = mockProject();
-		when(project.getName()).thenReturn("ImportedProject");
-		when(project.getRootPath()).thenReturn("/path/to/ImportedProject");
-		when(project.getConfigurations()).thenReturn(new ArrayList<>());
+		ConfigurationProject configurationProject = mockProject();
+		when(configurationProject.getName()).thenReturn("ImportedProject");
+		when(configurationProject.getRootPath()).thenReturn("/path/to/ImportedProject");
+		when(configurationProject.getConfigurationFiles()).thenReturn(new ArrayList<>());
 
-		when(projectService.importProjectFromFiles(eq("ImportedProject"), anyList(), anyList()))
-				.thenReturn(project);
+		when(configurationProjectService.importProjectFromFiles(eq("ImportedProject"), anyList(), anyList()))
+				.thenReturn(configurationProject);
 
 		MockMultipartFile file1 = new MockMultipartFile(
-				"files", "Configuration.xml", MediaType.APPLICATION_XML_VALUE, "<config>test</config>".getBytes());
+				"files", "ConfigurationFile.xml", MediaType.APPLICATION_XML_VALUE, "<config>test</config>".getBytes());
 		MockMultipartFile file2 =
 				new MockMultipartFile("files", "pom.xml", MediaType.APPLICATION_XML_VALUE, "<project/>".getBytes());
 
 		mockMvc.perform(multipart("/api/projects/import")
 						.file(file1)
 						.file(file2)
-						.param("paths", "src/main/configurations/Configuration.xml", "pom.xml")
+						.param("paths", "src/main/configurations/ConfigurationFile.xml", "pom.xml")
 						.param("projectName", "ImportedProject"))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.name").value("ImportedProject"))
 				.andExpect(jsonPath("$.rootPath").value("/path/to/ImportedProject"));
 
-		verify(projectService).importProjectFromFiles(eq("ImportedProject"), anyList(), anyList());
+		verify(configurationProjectService).importProjectFromFiles(eq("ImportedProject"), anyList(), anyList());
 		verify(recentProjectsService).addRecentProject("ImportedProject", "/path/to/ImportedProject");
 	}
 
 	@Test
 	void importProjectWithMismatchedFilesAndPathsReturnsBadRequest() throws Exception {
 		MockMultipartFile file1 = new MockMultipartFile(
-				"files", "Configuration.xml", MediaType.APPLICATION_XML_VALUE, "<config>test</config>".getBytes());
+				"files", "ConfigurationFile.xml", MediaType.APPLICATION_XML_VALUE, "<config>test</config>".getBytes());
 
 		mockMvc.perform(multipart("/api/projects/import")
 						.file(file1)
@@ -343,6 +348,6 @@ class ProjectControllerTest {
 						.param("projectName", "TestProject"))
 				.andExpect(status().isBadRequest());
 
-		verify(projectService, never()).importProjectFromFiles(anyString(), anyList(), anyList());
+		verify(configurationProjectService, never()).importProjectFromFiles(anyString(), anyList(), anyList());
 	}
 }

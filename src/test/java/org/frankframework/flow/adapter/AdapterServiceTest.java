@@ -7,19 +7,21 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import org.frankframework.flow.configuration.Configuration;
+
+import org.frankframework.flow.configuration.ConfigurationFile;
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
 import org.frankframework.flow.configuration.ConfigurationXmlDTO;
+import org.frankframework.flow.exception.ApiException;
 import org.frankframework.flow.filesystem.FileSystemStorage;
-import org.frankframework.flow.project.Project;
-import org.frankframework.flow.project.ProjectNotFoundException;
-import org.frankframework.flow.project.ProjectService;
+import org.frankframework.flow.project.ConfigurationProject;
+import org.frankframework.flow.project.ConfigurationProjectService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
 
 @ExtendWith(MockitoExtension.class)
 class AdapterServiceTest {
@@ -27,7 +29,7 @@ class AdapterServiceTest {
 	private AdapterService adapterService;
 
 	@Mock
-	private ProjectService projectService;
+	private ConfigurationProjectService configurationProjectService;
 
 	@Mock
 	private FileSystemStorage fileSystemStorage;
@@ -37,16 +39,16 @@ class AdapterServiceTest {
 
 	@BeforeEach
 	void setUp() {
-		adapterService = new AdapterService(projectService, fileSystemStorage);
+		adapterService = new AdapterService(configurationProjectService, fileSystemStorage);
 	}
 
 	@Test
 	void getAdapter_returnsXmlDtoContainingAdapterContent() throws Exception {
-		String xml = "<Configuration><Adapter name=\"MyAdapter\"><SomePipe/></Adapter></Configuration>";
-		Configuration config = configWith("config.xml", xml);
-		Project project = projectWith("proj", config);
+		String xml = "<ConfigurationFile><Adapter name=\"MyAdapter\"><SomePipe/></Adapter></ConfigurationFile>";
+		ConfigurationFile config = configWith("config.xml", xml);
+		ConfigurationProject configurationProject = projectWith("proj", config);
 
-		when(projectService.getProject("proj")).thenReturn(project);
+		when(configurationProjectService.getProject("proj")).thenReturn(configurationProject);
 
 		ConfigurationXmlDTO result = adapterService.getAdapter("proj", "config.xml", "MyAdapter");
 
@@ -57,41 +59,43 @@ class AdapterServiceTest {
 
 	@Test
 	void getAdapter_throwsProjectNotFound_whenProjectDoesNotExist() throws Exception {
-		when(projectService.getProject("missing"))
-				.thenThrow(new ProjectNotFoundException("Project not found: missing"));
+		when(configurationProjectService.getProject("missing"))
+				.thenThrow(new ApiException("Project not found: missing", HttpStatus.NOT_FOUND));
 
 		assertThrows(
-				ProjectNotFoundException.class,
-				() -> adapterService.getAdapter("missing", "config.xml", "SomeAdapter"));
+				ApiException.class,
+				() -> adapterService.getAdapter("missing", "config.xml", "SomeAdapter")
+		);
 	}
 
 	@Test
 	void getAdapter_throwsConfigurationNotFound_whenNoMatchingConfigPath() throws Exception {
-		Project project = new Project("proj", "/path");
-		when(projectService.getProject("proj")).thenReturn(project);
+		ConfigurationProject configurationProject = new ConfigurationProject("proj", "/path");
+		when(configurationProjectService.getProject("proj")).thenReturn(configurationProject);
 
 		assertThrows(
 				ConfigurationNotFoundException.class,
-				() -> adapterService.getAdapter("proj", "nonexistent.xml", "SomeAdapter"));
+				() -> adapterService.getAdapter("proj", "nonexistent.xml", "SomeAdapter")
+		);
 	}
 
 	@Test
 	void getAdapter_throwsConfigurationNotFound_whenConfigPathMismatch_evenIfOtherConfigsPresent() throws Exception {
-		Configuration config = configWith("config1.xml", "<Configuration><Adapter name=\"A\"/></Configuration>");
-		Project project = projectWith("proj", config);
+		ConfigurationFile config = configWith("config1.xml", "<ConfigurationFile><Adapter name=\"A\"/></ConfigurationFile>");
+		ConfigurationProject configurationProject = projectWith("proj", config);
 
-		when(projectService.getProject("proj")).thenReturn(project);
+		when(configurationProjectService.getProject("proj")).thenReturn(configurationProject);
 
 		assertThrows(ConfigurationNotFoundException.class, () -> adapterService.getAdapter("proj", "config2.xml", "A"));
 	}
 
 	@Test
 	void getAdapter_throwsAdapterNotFound_whenAdapterNameDoesNotExist() throws Exception {
-		String xml = "<Configuration><Adapter name=\"ExistingAdapter\"/></Configuration>";
-		Configuration config = configWith("config.xml", xml);
-		Project project = projectWith("proj", config);
+		String xml = "<ConfigurationFile><Adapter name=\"ExistingAdapter\"/></ConfigurationFile>";
+		ConfigurationFile config = configWith("config.xml", xml);
+		ConfigurationProject configurationProject = projectWith("proj", config);
 
-		when(projectService.getProject("proj")).thenReturn(project);
+		when(configurationProjectService.getProject("proj")).thenReturn(configurationProject);
 
 		assertThrows(
 				AdapterNotFoundException.class, () -> adapterService.getAdapter("proj", "config.xml", "NonExistent"));
@@ -99,10 +103,10 @@ class AdapterServiceTest {
 
 	@Test
 	void getAdapter_throwsAdapterNotFound_whenConfigXmlHasNoAdapters() throws Exception {
-		Configuration config = configWith("config.xml", "<Configuration/>");
-		Project project = projectWith("proj", config);
+		ConfigurationFile config = configWith("config.xml", "<ConfigurationFile/>");
+		ConfigurationProject configurationProject = projectWith("proj", config);
 
-		when(projectService.getProject("proj")).thenReturn(project);
+		when(configurationProjectService.getProject("proj")).thenReturn(configurationProject);
 
 		assertThrows(
 				AdapterNotFoundException.class, () -> adapterService.getAdapter("proj", "config.xml", "AnyAdapter"));
@@ -110,14 +114,14 @@ class AdapterServiceTest {
 
 	@Test
 	void getAdapter_returnsOnlyRequestedAdapter_whenMultipleAdaptersPresent() throws Exception {
-		String xml = "<Configuration>"
+		String xml = "<ConfigurationFile>"
 				+ "<Adapter name=\"First\"><PipeA/></Adapter>"
 				+ "<Adapter name=\"Second\"><PipeB/></Adapter>"
-				+ "</Configuration>";
-		Configuration config = configWith("config.xml", xml);
-		Project project = projectWith("proj", config);
+				+ "</ConfigurationFile>";
+		ConfigurationFile config = configWith("config.xml", xml);
+		ConfigurationProject configurationProject = projectWith("proj", config);
 
-		when(projectService.getProject("proj")).thenReturn(project);
+		when(configurationProjectService.getProject("proj")).thenReturn(configurationProject);
 
 		ConfigurationXmlDTO result = adapterService.getAdapter("proj", "config.xml", "Second");
 
@@ -129,16 +133,16 @@ class AdapterServiceTest {
 
 	@Test
 	void getAdapter_selectsCorrectConfiguration_whenProjectHasMultipleConfigs() throws Exception {
-		Configuration config1 =
-				configWith("config1.xml", "<Configuration><Adapter name=\"AdapterA\"/></Configuration>");
-		Configuration config2 =
-				configWith("config2.xml", "<Configuration><Adapter name=\"AdapterB\"/></Configuration>");
+		ConfigurationFile config1 =
+				configWith("config1.xml", "<ConfigurationFile><Adapter name=\"AdapterA\"/></ConfigurationFile>");
+		ConfigurationFile config2 =
+				configWith("config2.xml", "<ConfigurationFile><Adapter name=\"AdapterB\"/></ConfigurationFile>");
 
-		Project project = new Project("proj", "/path");
-		project.addConfiguration(config1);
-		project.addConfiguration(config2);
+		ConfigurationProject configurationProject = new ConfigurationProject("proj", "/path");
+		configurationProject.addConfiguration(config1);
+		configurationProject.addConfiguration(config2);
 
-		when(projectService.getProject("proj")).thenReturn(project);
+		when(configurationProjectService.getProject("proj")).thenReturn(configurationProject);
 
 		ConfigurationXmlDTO result = adapterService.getAdapter("proj", "config2.xml", "AdapterB");
 
@@ -148,7 +152,7 @@ class AdapterServiceTest {
 
 	@Test
 	void updateAdapter_returnsTrueAndWritesUpdatedXmlToDisk() throws Exception {
-		String original = "<Configuration><Adapter name=\"MyAdapter\"><OldPipe/></Adapter></Configuration>";
+		String original = "<ConfigurationFile><Adapter name=\"MyAdapter\"><OldPipe/></Adapter></ConfigurationFile>";
 		String replacement = "<Adapter name=\"MyAdapter\"><NewPipe/></Adapter>";
 
 		Path configFile = tempDir.resolve("config.xml");
@@ -170,24 +174,26 @@ class AdapterServiceTest {
 
 		assertThrows(
 				ConfigurationNotFoundException.class,
-				() -> adapterService.updateAdapter(missing, "SomeAdapter", "<Adapter name=\"SomeAdapter\"/>"));
+				() -> adapterService.updateAdapter(missing, "SomeAdapter", "<Adapter name=\"SomeAdapter\"/>")
+		);
 	}
 
 	@Test
 	void updateAdapter_throwsAdapterNotFound_whenAdapterNotPresentInFile() throws Exception {
-		String xml = "<Configuration><Adapter name=\"ExistingAdapter\"/></Configuration>";
+		String xml = "<ConfigurationFile><Adapter name=\"ExistingAdapter\"/></ConfigurationFile>";
 		Path configFile = tempDir.resolve("config.xml");
 		Files.writeString(configFile, xml, StandardCharsets.UTF_8);
 		when(fileSystemStorage.toAbsolutePath(configFile.toString())).thenReturn(configFile);
 
 		assertThrows(
 				AdapterNotFoundException.class,
-				() -> adapterService.updateAdapter(configFile, "NonExistent", "<Adapter name=\"NonExistent\"/>"));
+				() -> adapterService.updateAdapter(configFile, "NonExistent", "<Adapter name=\"NonExistent\"/>")
+		);
 	}
 
 	@Test
 	void updateAdapter_returnsFalse_whenReplacementXmlIsMalformed() throws Exception {
-		String xml = "<Configuration><Adapter name=\"MyAdapter\"/></Configuration>";
+		String xml = "<ConfigurationFile><Adapter name=\"MyAdapter\"/></ConfigurationFile>";
 		Path configFile = tempDir.resolve("config.xml");
 		Files.writeString(configFile, xml, StandardCharsets.UTF_8);
 		when(fileSystemStorage.toAbsolutePath(configFile.toString())).thenReturn(configFile);
@@ -210,10 +216,10 @@ class AdapterServiceTest {
 
 	@Test
 	void updateAdapter_preservesOtherAdapters_whenReplacingOneAdapter() throws Exception {
-		String original = "<Configuration>"
+		String original = "<ConfigurationFile>"
 				+ "<Adapter name=\"First\"><OldContent/></Adapter>"
 				+ "<Adapter name=\"Second\"><KeepThis/></Adapter>"
-				+ "</Configuration>";
+				+ "</ConfigurationFile>";
 		String replacement = "<Adapter name=\"First\"><NewContent/></Adapter>";
 
 		Path configFile = tempDir.resolve("config.xml");
@@ -232,7 +238,7 @@ class AdapterServiceTest {
 
 	@Test
 	void updateAdapter_matchesLowercaseAdapterTag() throws Exception {
-		String xml = "<configuration><adapter name=\"myAdapter\"><oldPipe/></adapter></configuration>";
+		String xml = "<ConfigurationFile><adapter name=\"myAdapter\"><oldPipe/></adapter></ConfigurationFile>";
 		String replacement = "<adapter name=\"myAdapter\"><newPipe/></adapter>";
 
 		Path configFile = tempDir.resolve("config.xml");
@@ -249,12 +255,12 @@ class AdapterServiceTest {
 
 	@Test
 	void updateAdapter_handlesAdapterWithNestedChildren() throws Exception {
-		String original = "<Configuration>"
+		String original = "<ConfigurationFile>"
 				+ "<Adapter name=\"Complex\">"
 				+ "<FirstPipe name=\"p1\"/>"
 				+ "<SecondPipe name=\"p2\"><SubElement/></SecondPipe>"
 				+ "</Adapter>"
-				+ "</Configuration>";
+				+ "</ConfigurationFile>";
 		String replacement = "<Adapter name=\"Complex\"><SinglePipe/></Adapter>";
 
 		Path configFile = tempDir.resolve("config.xml");
@@ -270,15 +276,15 @@ class AdapterServiceTest {
 		assertFalse(written.contains("SecondPipe"));
 	}
 
-	private static Configuration configWith(String path, String xml) {
-		Configuration config = new Configuration(path);
+	private static ConfigurationFile configWith(String path, String xml) {
+		ConfigurationFile config = new ConfigurationFile(path, "");
 		config.setXmlContent(xml);
 		return config;
 	}
 
 	@Test
 	void createAdapter_createsAdapterInValidConfig() throws Exception {
-		String xml = "<Configuration></Configuration>";
+		String xml = "<ConfigurationFile></ConfigurationFile>";
 		Path configFile = tempDir.resolve("config.xml");
 		Files.writeString(configFile, xml, StandardCharsets.UTF_8);
 		when(fileSystemStorage.toAbsolutePath("config.xml")).thenReturn(configFile);
@@ -293,7 +299,7 @@ class AdapterServiceTest {
 
 	@Test
 	void createAdapter_preservesExistingAdapters() throws Exception {
-		String xml = "<Configuration><Adapter name=\"Existing\"><OldPipe/></Adapter></Configuration>";
+		String xml = "<ConfigurationFile><Adapter name=\"Existing\"><OldPipe/></Adapter></ConfigurationFile>";
 		Path configFile = tempDir.resolve("config.xml");
 		Files.writeString(configFile, xml, StandardCharsets.UTF_8);
 		when(fileSystemStorage.toAbsolutePath("config.xml")).thenReturn(configFile);
@@ -346,7 +352,7 @@ class AdapterServiceTest {
 
 	@Test
 	void renameAdapter_renamesExistingAdapter() throws Exception {
-		String xml = "<Configuration><Adapter name=\"OldName\"><Pipe/></Adapter></Configuration>";
+		String xml = "<ConfigurationFile><Adapter name=\"OldName\"><Pipe/></Adapter></ConfigurationFile>";
 		Path configFile = tempDir.resolve("config.xml");
 		Files.writeString(configFile, xml, StandardCharsets.UTF_8);
 		when(fileSystemStorage.toAbsolutePath("config.xml")).thenReturn(configFile);
@@ -360,10 +366,10 @@ class AdapterServiceTest {
 
 	@Test
 	void renameAdapter_preservesOtherAdapters() throws Exception {
-		String xml = "<Configuration>"
+		String xml = "<ConfigurationFile>"
 				+ "<Adapter name=\"First\"><PipeA/></Adapter>"
 				+ "<Adapter name=\"Second\"><PipeB/></Adapter>"
-				+ "</Configuration>";
+				+ "</ConfigurationFile>";
 		Path configFile = tempDir.resolve("config.xml");
 		Files.writeString(configFile, xml, StandardCharsets.UTF_8);
 		when(fileSystemStorage.toAbsolutePath("config.xml")).thenReturn(configFile);
@@ -388,24 +394,26 @@ class AdapterServiceTest {
 
 		assertThrows(
 				ConfigurationNotFoundException.class,
-				() -> adapterService.renameAdapter("missing.xml", "OldName", "NewName"));
+				() -> adapterService.renameAdapter("missing.xml", "OldName", "NewName")
+		);
 	}
 
 	@Test
 	void renameAdapter_throwsAdapterNotFound_whenAdapterDoesNotExist() throws Exception {
-		String xml = "<Configuration><Adapter name=\"Existing\"/></Configuration>";
+		String xml = "<ConfigurationFile><Adapter name=\"Existing\"/></ConfigurationFile>";
 		Path configFile = tempDir.resolve("config.xml");
 		Files.writeString(configFile, xml, StandardCharsets.UTF_8);
 		when(fileSystemStorage.toAbsolutePath("config.xml")).thenReturn(configFile);
 
 		assertThrows(
 				AdapterNotFoundException.class,
-				() -> adapterService.renameAdapter("config.xml", "NonExistent", "NewName"));
+				() -> adapterService.renameAdapter("config.xml", "NonExistent", "NewName")
+		);
 	}
 
 	@Test
 	void deleteAdapter_removesAdapterFromConfig() throws Exception {
-		String xml = "<Configuration><Adapter name=\"ToDelete\"><Pipe/></Adapter></Configuration>";
+		String xml = "<ConfigurationFile><Adapter name=\"ToDelete\"><Pipe/></Adapter></ConfigurationFile>";
 		Path configFile = tempDir.resolve("config.xml");
 		Files.writeString(configFile, xml, StandardCharsets.UTF_8);
 		when(fileSystemStorage.toAbsolutePath("config.xml")).thenReturn(configFile);
@@ -418,10 +426,10 @@ class AdapterServiceTest {
 
 	@Test
 	void deleteAdapter_preservesOtherAdapters() throws Exception {
-		String xml = "<Configuration>"
+		String xml = "<ConfigurationFile>"
 				+ "<Adapter name=\"Keep\"><PipeA/></Adapter>"
 				+ "<Adapter name=\"Remove\"><PipeB/></Adapter>"
-				+ "</Configuration>";
+				+ "</ConfigurationFile>";
 		Path configFile = tempDir.resolve("config.xml");
 		Files.writeString(configFile, xml, StandardCharsets.UTF_8);
 		when(fileSystemStorage.toAbsolutePath("config.xml")).thenReturn(configFile);
@@ -450,7 +458,7 @@ class AdapterServiceTest {
 
 	@Test
 	void deleteAdapter_throwsAdapterNotFound_whenAdapterDoesNotExist() throws Exception {
-		String xml = "<Configuration><Adapter name=\"Existing\"/></Configuration>";
+		String xml = "<ConfigurationFile><Adapter name=\"Existing\"/></ConfigurationFile>";
 		Path configFile = tempDir.resolve("config.xml");
 		Files.writeString(configFile, xml, StandardCharsets.UTF_8);
 		when(fileSystemStorage.toAbsolutePath("config.xml")).thenReturn(configFile);
@@ -458,9 +466,9 @@ class AdapterServiceTest {
 		assertThrows(AdapterNotFoundException.class, () -> adapterService.deleteAdapter("config.xml", "NonExistent"));
 	}
 
-	private static Project projectWith(String name, Configuration config) {
-		Project project = new Project(name, "/path/to/" + name);
-		project.addConfiguration(config);
-		return project;
+	private static ConfigurationProject projectWith(String name, ConfigurationFile config) {
+		ConfigurationProject configurationProject = new ConfigurationProject(name, "/path/to/" + name);
+		configurationProject.addConfiguration(config);
+		return configurationProject;
 	}
 }

@@ -14,8 +14,8 @@ import javax.xml.parsers.DocumentBuilder;
 
 import org.frankframework.flow.exception.ApiException;
 import org.frankframework.flow.filesystem.FileSystemStorage;
-import org.frankframework.flow.project.Project;
-import org.frankframework.flow.project.ProjectService;
+import org.frankframework.flow.project.ConfigurationProject;
+import org.frankframework.flow.project.ConfigurationProjectService;
 import org.frankframework.flow.utility.XmlSecurityUtils;
 
 import org.springframework.stereotype.Service;
@@ -27,18 +27,18 @@ import org.xml.sax.helpers.DefaultHandler;
 @Service
 public class FileTreeService {
 
-	private final ProjectService projectService;
+	private final ConfigurationProjectService configurationProjectService;
 	private final FileSystemStorage fileSystemStorage;
 	private final FileService fileService;
 
 	private final Map<String, FileTreeNode> treeCache = new ConcurrentHashMap<>();
 
 	public FileTreeService(
-			ProjectService projectService,
+			ConfigurationProjectService configurationProjectService,
 			FileSystemStorage fileSystemStorage,
 			FileService fileService
 	) {
-		this.projectService = projectService;
+		this.configurationProjectService = configurationProjectService;
 		this.fileSystemStorage = fileSystemStorage;
 		this.fileService = fileService;
 	}
@@ -50,8 +50,8 @@ public class FileTreeService {
 		}
 
 		try {
-			Project project = projectService.getProject(projectName);
-			Path projectPath = fileSystemStorage.toAbsolutePath(project.getRootPath());
+			ConfigurationProject configurationProject = configurationProjectService.getProject(projectName);
+			Path projectPath = fileSystemStorage.toAbsolutePath(configurationProject.getRootPath());
 
 			if (!Files.exists(projectPath) || !Files.isDirectory(projectPath)) {
 				throw new IllegalArgumentException("Project directory does not exist: " + projectName);
@@ -70,8 +70,8 @@ public class FileTreeService {
 
 	public FileTreeNode getShallowDirectoryTree(String projectName, String directoryPath) throws IOException {
 		try {
-			Project project = projectService.getProject(projectName);
-			Path projectPath = fileSystemStorage.toAbsolutePath(project.getRootPath());
+			ConfigurationProject configurationProject = configurationProjectService.getProject(projectName);
+			Path projectPath = fileSystemStorage.toAbsolutePath(configurationProject.getRootPath());
 			Path dirPath = fileSystemStorage.toAbsolutePath(directoryPath).normalize();
 
 			if (!dirPath.startsWith(projectPath)) {
@@ -162,8 +162,8 @@ public class FileTreeService {
 	}
 
 	private ConfigurationDirectory getConfigurationsDirectory(String projectName) throws ApiException {
-		Project project = projectService.getProject(projectName);
-		Path projectPath = fileSystemStorage.toAbsolutePath(project.getRootPath());
+		ConfigurationProject configurationProject = configurationProjectService.getProject(projectName);
+		Path projectPath = fileSystemStorage.toAbsolutePath(configurationProject.getRootPath());
 
 		if (!Files.exists(projectPath) || !Files.isDirectory(projectPath)) {
 			throw new IllegalArgumentException("Configurations directory does not exist: " + projectPath);

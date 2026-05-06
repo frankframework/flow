@@ -23,8 +23,8 @@ import org.frankframework.flow.configuration.ConfigurationNotFoundException;
 import org.frankframework.flow.configuration.ConfigurationXmlDTO;
 import org.frankframework.flow.exception.ApiException;
 import org.frankframework.flow.filesystem.FileSystemStorage;
-import org.frankframework.flow.project.Project;
-import org.frankframework.flow.project.ProjectService;
+import org.frankframework.flow.project.ConfigurationProject;
+import org.frankframework.flow.project.ConfigurationProjectService;
 import org.frankframework.flow.utility.XmlAdapterUtils;
 import org.frankframework.flow.utility.XmlConfigurationUtils;
 import org.frankframework.flow.utility.XmlSecurityUtils;
@@ -33,19 +33,19 @@ import org.frankframework.flow.utility.XmlSecurityUtils;
 @Service
 public class AdapterService {
 
-	private final ProjectService projectService;
+	private final ConfigurationProjectService configurationProjectService;
 	private final FileSystemStorage fileSystemStorage;
 
-	public AdapterService(ProjectService projectService, FileSystemStorage fileSystemStorage) {
-		this.projectService = projectService;
+	public AdapterService(ConfigurationProjectService configurationProjectService, FileSystemStorage fileSystemStorage) {
+		this.configurationProjectService = configurationProjectService;
 		this.fileSystemStorage = fileSystemStorage;
 	}
 
 	public ConfigurationXmlDTO getAdapter(String projectName, String configurationPath, String adapterName)
 			throws IOException, ApiException, SAXException, ParserConfigurationException, TransformerException {
 
-		Project project = projectService.getProject(projectName);
-		ConfigurationFile config = project.getConfigurationFiles().stream()
+		ConfigurationProject configurationProject = configurationProjectService.getProject(projectName);
+		ConfigurationFile config = configurationProject.getConfigurationFiles().stream()
 				.filter(configurationFile -> configurationFile.getFilepath().equals(configurationPath))
 				.findFirst()
 				.orElseThrow(() -> new ConfigurationNotFoundException(String.format("Configuration File with path: %s not found", configurationPath)));

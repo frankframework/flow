@@ -1,25 +1,30 @@
 package org.frankframework.flow.configuration;
 
 import jakarta.annotation.PostConstruct;
+
 import java.io.IOException;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.frankframework.flow.exception.ApiException;
 import org.frankframework.flow.file.FileTreeService;
 import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.frankframework.flow.frankconfig.FrankConfigXsdNotFoundException;
 import org.frankframework.flow.frankconfig.FrankConfigXsdService;
-import org.frankframework.flow.project.Project;
-import org.frankframework.flow.project.ProjectService;
+import org.frankframework.flow.project.ConfigurationProject;
+import org.frankframework.flow.project.ConfigurationProjectService;
 import org.frankframework.flow.utility.XmlConfigurationUtils;
 import org.frankframework.flow.utility.XmlFormatterUtils;
 import org.frankframework.flow.utility.XmlSecurityUtils;
 import org.frankframework.flow.utility.XsdAttributeOrdererUtils;
+
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -34,18 +39,18 @@ public class ConfigurationService {
 	private static final String CONFIGURATIONS_DIR = "src/main/configurations";
 
 	private final FileSystemStorage fileSystemStorage;
-	private final ProjectService projectService;
+	private final ConfigurationProjectService configurationProjectService;
 	private final FileTreeService fileTreeService;
 	private final FrankConfigXsdService frankConfigXsdService;
 	private XsdAttributeOrdererUtils xsdOrderer;
 
 	public ConfigurationService(
 			FileSystemStorage fileSystemStorage,
-			ProjectService projectService,
+			ConfigurationProjectService configurationProjectService,
 			FrankConfigXsdService frankConfigXsdService,
 			FileTreeService fileTreeService) {
 		this.fileSystemStorage = fileSystemStorage;
-		this.projectService = projectService;
+		this.configurationProjectService = configurationProjectService;
 		this.frankConfigXsdService = frankConfigXsdService;
 		this.fileTreeService = fileTreeService;
 	}
@@ -96,8 +101,8 @@ public class ConfigurationService {
 	}
 
 	public String addConfiguration(String projectName, String configurationName) throws IOException, ApiException, TransformerException, ParserConfigurationException, SAXException {
-		Project project =  projectService.getProject(projectName);
-		Path absProjectPath = fileSystemStorage.toAbsolutePath(project.getRootPath());
+		ConfigurationProject configurationProject = configurationProjectService.getProject(projectName);
+		Path absProjectPath = fileSystemStorage.toAbsolutePath(configurationProject.getRootPath());
 		Path configDir = absProjectPath.resolve(CONFIGURATIONS_DIR).normalize();
 
 		if (!Files.exists(configDir)) {

@@ -52,7 +52,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import org.frankframework.flow.exception.ApiException;
 import org.frankframework.flow.filesystem.FileSystemStorage;
-import org.frankframework.flow.project.ProjectService;
+import org.frankframework.flow.project.ConfigurationProjectService;
 
 @Slf4j
 @Service
@@ -60,11 +60,11 @@ public class GitService {
 
 	private static final int SHORT_ID_LENGTH = 7;
 
-	private final ProjectService projectService;
+	private final ConfigurationProjectService configurationProjectService;
 	private final FileSystemStorage fileSystemStorage;
 
-	public GitService(ProjectService projectService, FileSystemStorage fileSystemStorage) {
-		this.projectService = projectService;
+	public GitService(ConfigurationProjectService configurationProjectService, FileSystemStorage fileSystemStorage) {
+		this.configurationProjectService = configurationProjectService;
 		this.fileSystemStorage = fileSystemStorage;
 	}
 
@@ -347,7 +347,7 @@ public class GitService {
 			return explicitToken;
 		}
 		try {
-			return projectService.getProject(projectName).getGitToken();
+			return configurationProjectService.getProject(projectName).getGitToken();
 		} catch (ApiException exception) {
 			return null;
 		}
@@ -655,7 +655,7 @@ public class GitService {
 	 * @throws ApiException if the project with the given name does not exist
 	 */
 	private Path getProjectPath(String projectName) throws ApiException {
-		String rootPath = projectService.getProject(projectName).getRootPath();
+		String rootPath = configurationProjectService.getProject(projectName).getRootPath();
 		return fileSystemStorage.toAbsolutePath(rootPath);
 	}
 

@@ -1,6 +1,7 @@
-package org.frankframework.flow.project;
+package org.frankframework.flow.xml;
 
 import org.frankframework.flow.exception.ApiException;
+
 import org.springframework.http.HttpStatus;
 
 public class InvalidXmlContentException extends ApiException {

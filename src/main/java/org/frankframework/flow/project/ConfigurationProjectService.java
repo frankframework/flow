@@ -37,16 +37,16 @@ import org.frankframework.flow.recentproject.RecentProjectsService;
 
 @Slf4j
 @Service
-public class ProjectService {
+public class ConfigurationProjectService {
 	private static final String CONFIGURATIONS_DIR = "src/main/configurations";
 
 	private final FileSystemStorage fileSystemStorage;
 	private final RecentProjectsService recentProjectsService;
 
 	// Cache is now ONLY for lightweight Project state (Tokens, Filters), NOT files.
-	private final Map<String, Project> projectCache = new ConcurrentHashMap<>();
+	private final Map<String, ConfigurationProject> projectCache = new ConcurrentHashMap<>();
 
-	public ProjectService(FileSystemStorage fileSystemStorage, @Lazy RecentProjectsService recentProjectsService) {
+	public ConfigurationProjectService(FileSystemStorage fileSystemStorage, @Lazy RecentProjectsService recentProjectsService) {
 		this.fileSystemStorage = fileSystemStorage;
 		this.recentProjectsService = recentProjectsService;
 	}
@@ -58,21 +58,21 @@ public class ProjectService {
 		}
 	}
 
-	public List<Project> getProjects() {
+	public List<ConfigurationProject> getProjects() {
 		if (fileSystemStorage.isLocalEnvironment()) {
 			return getProjectsFromRecentList();
 		}
 		return getProjectsFromWorkspaceScan();
 	}
 
-	private List<Project> getProjectsFromRecentList() {
-		List<Project> foundProjects = new ArrayList<>();
+	private List<ConfigurationProject> getProjectsFromRecentList() {
+		List<ConfigurationProject> foundProjects = new ArrayList<>();
 		List<RecentProject> recentProjects = recentProjectsService.getRecentProjects();
 
 		for (RecentProject recent : recentProjects) {
 			try {
-				Project project = loadProjectCached(recent.rootPath());
-				foundProjects.add(project);
+				ConfigurationProject configurationProject = loadProjectCached(recent.rootPath());
+				foundProjects.add(configurationProject);
 			} catch (Exception _) {
 				log.debug("Recent project no longer valid: {}", recent.rootPath());
 			}
@@ -80,14 +80,14 @@ public class ProjectService {
 		return foundProjects;
 	}
 
-	private List<Project> getProjectsFromWorkspaceScan() {
-		List<Project> foundProjects = new ArrayList<>();
+	private List<ConfigurationProject> getProjectsFromWorkspaceScan() {
+		List<ConfigurationProject> foundProjects = new ArrayList<>();
 		List<FilesystemEntry> entries = fileSystemStorage.listRoots();
 
 		for (FilesystemEntry entry : entries) {
 			try {
-				Project project = loadProjectCached(entry.path());
-				foundProjects.add(project);
+				ConfigurationProject configurationProject = loadProjectCached(entry.path());
+				foundProjects.add(configurationProject);
 			} catch (Exception _) {
 				// Not a valid project, skip
 			}
@@ -95,8 +95,8 @@ public class ProjectService {
 		return foundProjects;
 	}
 
-	public Project getProject(String name) throws ApiException {
-		for (Project cached : projectCache.values()) {
+	public ConfigurationProject getProject(String name) throws ApiException {
+		for (ConfigurationProject cached : projectCache.values()) {
 			if (cached.getName().equals(name)) {
 				return cached;
 			}
@@ -108,7 +108,7 @@ public class ProjectService {
 				.orElseThrow(() -> new ApiException("Project not found: " + name, HttpStatus.NOT_FOUND));
 	}
 
-	public Project createProjectOnDisk(ProjectCreateDTO projectCreate) throws IOException {
+	public ConfigurationProject createProjectOnDisk(ConfigurationProjectCreateDTO projectCreate) throws IOException {
 		Path projectCreationPath = Path.of(projectCreate.rootPath()).resolve(CONFIGURATIONS_DIR + "/" + projectCreate.name());
 		Path projectPath = fileSystemStorage.createProjectDirectory(projectCreationPath.toString());
 
@@ -124,7 +124,7 @@ public class ProjectService {
 		return loadProjectAndCache(projectPath.toString());
 	}
 
-	public Project openProjectFromDisk(String path) throws IOException, ApiException {
+	public ConfigurationProject openProjectFromDisk(String path) throws IOException, ApiException {
 		Path absolutePath = fileSystemStorage.toAbsolutePath(path);
 		if (!Files.exists(absolutePath) || !Files.isDirectory(absolutePath)) {
 			throw new ApiException("Project not found at: " + path, HttpStatus.NOT_FOUND);
@@ -132,7 +132,7 @@ public class ProjectService {
 		return loadProjectAndCache(path);
 	}
 
-	public Project cloneAndOpenProject(String repoUrl, String localPath, String token) throws IOException {
+	public ConfigurationProject cloneAndOpenProject(String repoUrl, String localPath, String token) throws IOException {
 		Path targetDir = fileSystemStorage.toAbsolutePath(localPath);
 
 		if (Files.exists(targetDir)) {
@@ -159,11 +159,11 @@ public class ProjectService {
 			throw new IllegalArgumentException("Clone failed: " + exception.getMessage(), exception);
 		}
 
-		Project project = loadProjectAndCache(targetDir.toString());
+		ConfigurationProject configurationProject = loadProjectAndCache(targetDir.toString());
 		if (token != null && !token.isBlank()) {
-			project.setGitToken(token);
+			configurationProject.setGitToken(token);
 		}
-		return project;
+		return configurationProject;
 	}
 
 	public void invalidateCache() {
@@ -174,22 +174,22 @@ public class ProjectService {
 		projectCache.entrySet().removeIf(entry -> entry.getValue().getName().equals(projectName));
 	}
 
-	public Project enableFilter(String projectName, String type)
+	public ConfigurationProject enableFilter(String projectName, String type)
 			throws ApiException {
-		Project project = getProject(projectName);
-		project.enableFilter(parseFilterType(type));
-		return project;
+		ConfigurationProject configurationProject = getProject(projectName);
+		configurationProject.enableFilter(parseFilterType(type));
+		return configurationProject;
 	}
 
-	public Project disableFilter(String projectName, String type) throws ApiException {
-		Project project = getProject(projectName);
-		project.disableFilter(parseFilterType(type));
-		return project;
+	public ConfigurationProject disableFilter(String projectName, String type) throws ApiException {
+		ConfigurationProject configurationProject = getProject(projectName);
+		configurationProject.disableFilter(parseFilterType(type));
+		return configurationProject;
 	}
 
 	public void exportProjectAsZip(String projectName, OutputStream outputStream) throws IOException, ApiException {
-		Project project = getProject(projectName);
-		Path projectPath = fileSystemStorage.toAbsolutePath(project.getRootPath());
+		ConfigurationProject configurationProject = getProject(projectName);
+		Path projectPath = fileSystemStorage.toAbsolutePath(configurationProject.getRootPath());
 
 		if (!Files.exists(projectPath) || !Files.isDirectory(projectPath)) {
 			throw new ApiException("Project directory not found: " + projectName, HttpStatus.NOT_FOUND);
@@ -210,7 +210,7 @@ public class ProjectService {
 		}
 	}
 
-	public Project importProjectFromFiles(String projectName, List<MultipartFile> files, List<String> paths) throws IOException {
+	public ConfigurationProject importProjectFromFiles(String projectName, List<MultipartFile> files, List<String> paths) throws IOException {
 		Path projectDir = fileSystemStorage.createProjectDirectory(projectName);
 
 		for (int i = 0; i < files.size(); i++) {
@@ -232,24 +232,23 @@ public class ProjectService {
 		return loadProjectAndCache(projectDir.toString());
 	}
 
-	public ProjectDTO toDto(Project project) {
-		String cleanPath = fileSystemStorage.toRelativePath(project.getRootPath());
+	public ConfigurationProjectDTO toDto(ConfigurationProject configurationProject) {
+		String cleanPath = fileSystemStorage.toRelativePath(configurationProject.getRootPath());
 
 		// Dynamically fetch configurations from disk as the single source of truth
-		List<String> filepaths = getConfigurationFilesDynamically(project.getRootPath());
+		List<String> filepaths = getConfigurationFilesDynamically(configurationProject.getRootPath());
 
-		boolean isGitRepo = false;
-		Path absolutePath = fileSystemStorage.toAbsolutePath(project.getRootPath());
-		isGitRepo = Files.isDirectory(absolutePath.resolve(".git"));
+		Path absolutePath = fileSystemStorage.toAbsolutePath(configurationProject.getRootPath());
+		boolean isGitRepo = Files.isDirectory(absolutePath.resolve(".git"));
 
 		boolean hasStoredToken =
-				project.getGitToken() != null && !project.getGitToken().isBlank();
+				configurationProject.getGitToken() != null && !configurationProject.getGitToken().isBlank();
 
-		return new ProjectDTO(
-				project.getName(),
+		return new ConfigurationProjectDTO(
+				configurationProject.getName(),
 				cleanPath,
 				filepaths,
-				project.getConfigurationSettings().getFilters(),
+				configurationProject.getConfigurationSettings().getFilters(),
 				isGitRepo,
 				hasStoredToken
 		);
@@ -284,23 +283,23 @@ public class ProjectService {
 		}
 	}
 
-	private Project loadProjectCached(String path) throws IOException {
+	private ConfigurationProject loadProjectCached(String path) throws IOException {
 		String cacheKey = fileSystemStorage.toAbsolutePath(path).toString();
-		Project cached = projectCache.get(cacheKey);
+		ConfigurationProject cached = projectCache.get(cacheKey);
 		if (cached != null) {
 			return cached;
 		}
 		return loadProjectAndCache(path);
 	}
 
-	private Project loadProjectAndCache(String path) throws IOException {
-		Project project = loadProjectFromStorage(path);
+	private ConfigurationProject loadProjectAndCache(String path) throws IOException {
+		ConfigurationProject configurationProject = loadProjectFromStorage(path);
 		String cacheKey = fileSystemStorage.toAbsolutePath(path).toString();
-		projectCache.put(cacheKey, project);
-		return project;
+		projectCache.put(cacheKey, configurationProject);
+		return configurationProject;
 	}
 
-	private Project loadProjectFromStorage(String path) throws IOException {
+	private ConfigurationProject loadProjectFromStorage(String path) throws IOException {
 		Path absolutePath = fileSystemStorage.toAbsolutePath(path);
 
 		validatePathSafety(absolutePath);
@@ -309,6 +308,6 @@ public class ProjectService {
 			throw new IOException("Invalid project path: " + absolutePath);
 		}
 
-		return new Project(absolutePath.getFileName().toString(), absolutePath.toString());
+		return new ConfigurationProject(absolutePath.getFileName().toString(), absolutePath.toString());
 	}
 }

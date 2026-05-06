@@ -35,83 +35,82 @@ import org.frankframework.util.JacksonUtils;
 @Slf4j
 @RestController
 @RequestMapping("/projects")
-public class ProjectController {
+public class ConfigurationProjectController {
 
-	private final ProjectService projectService;
+	private final ConfigurationProjectService configurationProjectService;
 	private final RecentProjectsService recentProjectsService;
 	private final FrankFrameworkService frankFrameworkService;
 	private final ClientSession session;
 
-	public ProjectController(
-			ProjectService projectService,
+	public ConfigurationProjectController(
+			ConfigurationProjectService configurationProjectService,
 			RecentProjectsService recentProjectsService,
 			FrankFrameworkService frankFrameworkService,
 			ClientSession session
 	) {
-		this.projectService = projectService;
+		this.configurationProjectService = configurationProjectService;
 		this.recentProjectsService = recentProjectsService;
 		this.frankFrameworkService = frankFrameworkService;
 		this.session = session;
 	}
 
 	@GetMapping
-	public ResponseEntity<List<ProjectDTO>> getAllProjects() {
-		List<Project> projects = projectService.getProjects();
-		List<ProjectDTO> dtos =
-				projects.stream().map(this.projectService::toDto).toList();
+	public ResponseEntity<List<ConfigurationProjectDTO>> getAllProjects() {
+		List<ConfigurationProject> configurationProjects = configurationProjectService.getProjects();
+		List<ConfigurationProjectDTO> dtos =
+				configurationProjects.stream().map(this.configurationProjectService::toDto).toList();
 		return ResponseEntity.ok(dtos);
 	}
 
 	@GetMapping("/{projectName}")
-	public ResponseEntity<ProjectDTO> getProject(@PathVariable String projectName) throws ApiException {
-		Project project = projectService.getProject(projectName);
-		return ResponseEntity.ok(projectService.toDto(project));
+	public ResponseEntity<ConfigurationProjectDTO> getProject(@PathVariable String projectName) throws ApiException {
+		ConfigurationProject configurationProject = configurationProjectService.getProject(projectName);
+		return ResponseEntity.ok(configurationProjectService.toDto(configurationProject));
 	}
 
 	@PostMapping
-	public ResponseEntity<ProjectDTO> createProject(@RequestBody ProjectCreateDTO projectCreateDTO) throws IOException {
-		Project project = projectService.createProjectOnDisk(projectCreateDTO);
-		recentProjectsService.addRecentProject(project.getName(), project.getRootPath());
-		return ResponseEntity.ok(projectService.toDto(project));
+	public ResponseEntity<ConfigurationProjectDTO> createProject(@RequestBody ConfigurationProjectCreateDTO configurationProjectCreateDTO) throws IOException {
+		ConfigurationProject configurationProject = configurationProjectService.createProjectOnDisk(configurationProjectCreateDTO);
+		recentProjectsService.addRecentProject(configurationProject.getName(), configurationProject.getRootPath());
+		return ResponseEntity.ok(configurationProjectService.toDto(configurationProject));
 	}
 
 	@PostMapping("/clone")
-	public ResponseEntity<ProjectDTO> cloneProject(
-			@RequestBody ProjectCloneDTO projectCloneDTO) throws IOException {
-		Project project = projectService.cloneAndOpenProject(
-				projectCloneDTO.repoUrl(), projectCloneDTO.localPath(), projectCloneDTO.token());
-		recentProjectsService.addRecentProject(project.getName(), project.getRootPath());
-		return ResponseEntity.ok(projectService.toDto(project));
+	public ResponseEntity<ConfigurationProjectDTO> cloneProject(@RequestBody ConfigurationProjectCloneDTO configurationProjectCloneDTO) throws IOException {
+		ConfigurationProject configurationProject = configurationProjectService.cloneAndOpenProject(
+				configurationProjectCloneDTO.repoUrl(), configurationProjectCloneDTO.localPath(), configurationProjectCloneDTO.token());
+		recentProjectsService.addRecentProject(configurationProject.getName(), configurationProject.getRootPath());
+		return ResponseEntity.ok(configurationProjectService.toDto(configurationProject));
 	}
 
 	@PostMapping("/open")
-	public ResponseEntity<ProjectDTO> openProject(@RequestBody ProjectCreateDTO projectCreateDTO) throws IOException, ApiException {
-		Project project = projectService.openProjectFromDisk(projectCreateDTO.rootPath());
-		recentProjectsService.addRecentProject(project.getName(), project.getRootPath());
-		return ResponseEntity.ok(projectService.toDto(project));
+	public ResponseEntity<ConfigurationProjectDTO> openProject(@RequestBody ConfigurationProjectCreateDTO configurationProjectCreateDTO) throws IOException, ApiException {
+		ConfigurationProject configurationProject = configurationProjectService.openProjectFromDisk(configurationProjectCreateDTO.rootPath());
+		recentProjectsService.addRecentProject(configurationProject.getName(), configurationProject.getRootPath());
+		return ResponseEntity.ok(configurationProjectService.toDto(configurationProject));
 	}
 
 	@PatchMapping("/{projectname}/filters/{type}/enable")
-	public ResponseEntity<ProjectDTO> enableFilter(@PathVariable String projectname, @PathVariable String type) throws ApiException {
-		Project project = projectService.enableFilter(projectname, type);
-		return ResponseEntity.ok(projectService.toDto(project));
+	public ResponseEntity<ConfigurationProjectDTO> enableFilter(@PathVariable String projectname, @PathVariable String type) throws ApiException {
+		ConfigurationProject configurationProject = configurationProjectService.enableFilter(projectname, type);
+		return ResponseEntity.ok(configurationProjectService.toDto(configurationProject));
 	}
 
 	@PatchMapping("/{projectname}/filters/{type}/disable")
-	public ResponseEntity<ProjectDTO> disableFilter(@PathVariable String projectname, @PathVariable String type) throws ApiException {
-		Project project = projectService.disableFilter(projectname, type);
-		return ResponseEntity.ok(projectService.toDto(project));
+	public ResponseEntity<ConfigurationProjectDTO> disableFilter(@PathVariable String projectname, @PathVariable String type) throws ApiException {
+		ConfigurationProject configurationProject = configurationProjectService.disableFilter(projectname, type);
+		return ResponseEntity.ok(configurationProjectService.toDto(configurationProject));
 	}
 
 	@GetMapping("/{projectName}/export")
 	public void exportProject(@PathVariable String projectName, HttpServletResponse response) throws IOException, ApiException {
 		response.setContentType("application/zip");
 		response.setHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + projectName + ".zip\"");
-		projectService.exportProjectAsZip(projectName, response.getOutputStream());
+		configurationProjectService.exportProjectAsZip(projectName, response.getOutputStream());
 	}
 
 	@PostMapping("/import")
-	public ResponseEntity<ProjectDTO> importProject(
+	public ResponseEntity<ConfigurationProjectDTO> importProject(
 			@RequestParam("files") List<MultipartFile> files,
 			@RequestParam("paths") List<String> paths,
 			@RequestParam("projectName") String projectName
@@ -120,9 +119,9 @@ public class ProjectController {
 			return ResponseEntity.badRequest().build();
 		}
 
-		Project project = projectService.importProjectFromFiles(projectName, files, paths);
-		recentProjectsService.addRecentProject(project.getName(), project.getRootPath());
-		return ResponseEntity.ok(projectService.toDto(project));
+		ConfigurationProject configurationProject = configurationProjectService.importProjectFromFiles(projectName, files, paths);
+		recentProjectsService.addRecentProject(configurationProject.getName(), configurationProject.getRootPath());
+		return ResponseEntity.ok(configurationProjectService.toDto(configurationProject));
 	}
 
 	@AllowAllFrankUserRoles

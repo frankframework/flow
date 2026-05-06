@@ -7,18 +7,22 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.StoredConfig;
+
+import org.frankframework.flow.exception.ApiException;
 import org.frankframework.flow.filesystem.FileSystemStorage;
-import org.frankframework.flow.project.Project;
-import org.frankframework.flow.project.ProjectNotFoundException;
-import org.frankframework.flow.project.ProjectService;
+import org.frankframework.flow.project.ConfigurationProject;
+import org.frankframework.flow.project.ConfigurationProjectService;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
 
 @ExtendWith(MockitoExtension.class)
 public class GitServiceTest {
@@ -26,7 +30,7 @@ public class GitServiceTest {
 	private GitService gitService;
 
 	@Mock
-	private ProjectService projectService;
+	private ConfigurationProjectService configurationProjectService;
 
 	@Mock
 	private FileSystemStorage fileSystemStorage;
@@ -36,11 +40,11 @@ public class GitServiceTest {
 
 	private Git git;
 
-	private Project mockProject;
+	private ConfigurationProject mockConfigurationProject;
 
 	@BeforeEach
 	public void setUp() throws Exception {
-		gitService = new GitService(projectService, fileSystemStorage);
+		gitService = new GitService(configurationProjectService, fileSystemStorage);
 
 		git = Git.init().setDirectory(tempDir.toFile()).call();
 
@@ -52,12 +56,12 @@ public class GitServiceTest {
 		git.add().addFilepattern("README.md").call();
 		git.commit().setMessage("Initial commit").call();
 
-		mockProject = mock(Project.class);
+		mockConfigurationProject = mock(ConfigurationProject.class);
 	}
 
 	private void stubProject() throws Exception {
-		when(mockProject.getRootPath()).thenReturn(tempDir.toString());
-		when(projectService.getProject("test-project")).thenReturn(mockProject);
+		when(mockConfigurationProject.getRootPath()).thenReturn(tempDir.toString());
+		when(configurationProjectService.getProject("test-project")).thenReturn(mockConfigurationProject);
 		when(fileSystemStorage.toAbsolutePath(tempDir.toString())).thenReturn(tempDir);
 	}
 
@@ -72,9 +76,9 @@ public class GitServiceTest {
 		Path nonGitDir = tempDir.resolve("not-git");
 		Files.createDirectories(nonGitDir);
 
-		Project project = mock(Project.class);
-		when(project.getRootPath()).thenReturn(nonGitDir.toString());
-		when(projectService.getProject("not-git")).thenReturn(project);
+		ConfigurationProject configurationProject = mock(ConfigurationProject.class);
+		when(configurationProject.getRootPath()).thenReturn(nonGitDir.toString());
+		when(configurationProjectService.getProject("not-git")).thenReturn(configurationProject);
 		when(fileSystemStorage.toAbsolutePath(nonGitDir.toString())).thenReturn(nonGitDir);
 
 		assertFalse(gitService.isGitRepository("not-git"));
@@ -459,9 +463,9 @@ public class GitServiceTest {
 		Path nonGitDir = tempDir.resolve("not-git");
 		Files.createDirectories(nonGitDir);
 
-		Project project = mock(Project.class);
-		when(project.getRootPath()).thenReturn(nonGitDir.toString());
-		when(projectService.getProject("not-git")).thenReturn(project);
+		ConfigurationProject configurationProject = mock(ConfigurationProject.class);
+		when(configurationProject.getRootPath()).thenReturn(nonGitDir.toString());
+		when(configurationProjectService.getProject("not-git")).thenReturn(configurationProject);
 		when(fileSystemStorage.toAbsolutePath(nonGitDir.toString())).thenReturn(nonGitDir);
 
 		assertThrows(NotAGitRepositoryException.class, () -> gitService.getStatus("not-git"));
@@ -472,9 +476,9 @@ public class GitServiceTest {
 		Path nonGitDir = tempDir.resolve("not-git2");
 		Files.createDirectories(nonGitDir);
 
-		Project project = mock(Project.class);
-		when(project.getRootPath()).thenReturn(nonGitDir.toString());
-		when(projectService.getProject("not-git2")).thenReturn(project);
+		ConfigurationProject configurationProject = mock(ConfigurationProject.class);
+		when(configurationProject.getRootPath()).thenReturn(nonGitDir.toString());
+		when(configurationProjectService.getProject("not-git2")).thenReturn(configurationProject);
 		when(fileSystemStorage.toAbsolutePath(nonGitDir.toString())).thenReturn(nonGitDir);
 
 		assertThrows(NotAGitRepositoryException.class, () -> gitService.commit("not-git2", "test"));
@@ -485,9 +489,9 @@ public class GitServiceTest {
 		Path nonGitDir = tempDir.resolve("not-git3");
 		Files.createDirectories(nonGitDir);
 
-		Project project = mock(Project.class);
-		when(project.getRootPath()).thenReturn(nonGitDir.toString());
-		when(projectService.getProject("not-git3")).thenReturn(project);
+		ConfigurationProject configurationProject = mock(ConfigurationProject.class);
+		when(configurationProject.getRootPath()).thenReturn(nonGitDir.toString());
+		when(configurationProjectService.getProject("not-git3")).thenReturn(configurationProject);
 		when(fileSystemStorage.toAbsolutePath(nonGitDir.toString())).thenReturn(nonGitDir);
 
 		assertThrows(NotAGitRepositoryException.class, () -> gitService.stageFile("not-git3", "file.txt"));
@@ -495,16 +499,16 @@ public class GitServiceTest {
 
 	@Test
 	public void projectNotFoundThrowsForStatus() throws Exception {
-		when(projectService.getProject("nonexistent")).thenThrow(new ProjectNotFoundException("nonexistent"));
+		when(configurationProjectService.getProject("nonexistent")).thenThrow(new ApiException("nonexistent", HttpStatus.NOT_FOUND));
 
-		assertThrows(ProjectNotFoundException.class, () -> gitService.getStatus("nonexistent"));
+		assertThrows(ApiException.class, () -> gitService.getStatus("nonexistent"));
 	}
 
 	@Test
 	public void projectNotFoundThrowsForIsGitRepository() throws Exception {
-		when(projectService.getProject("nonexistent")).thenThrow(new ProjectNotFoundException("nonexistent"));
+		when(configurationProjectService.getProject("nonexistent")).thenThrow(new ApiException("nonexistent", HttpStatus.NOT_FOUND));
 
-		assertThrows(ProjectNotFoundException.class, () -> gitService.isGitRepository("nonexistent"));
+		assertThrows(ApiException.class, () -> gitService.isGitRepository("nonexistent"));
 	}
 
 	@Test

@@ -15,12 +15,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Comparator;
+
 import org.frankframework.flow.exception.ApiException;
 import org.frankframework.flow.filesystem.FileOperations;
 import org.frankframework.flow.filesystem.FileSystemStorage;
-import org.frankframework.flow.project.Project;
-import org.frankframework.flow.project.ProjectNotFoundException;
-import org.frankframework.flow.project.ProjectService;
+import org.frankframework.flow.project.ConfigurationProject;
+import org.frankframework.flow.project.ConfigurationProjectService;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -34,7 +35,7 @@ import org.springframework.http.HttpStatus;
 class FileServiceTest {
 
 	@Mock
-	private ProjectService projectService;
+	private ConfigurationProjectService configurationProjectService;
 
 	@Mock
 	private FileSystemStorage fileSystemStorage;
@@ -49,7 +50,7 @@ class FileServiceTest {
 	@BeforeEach
 	public void setUp() throws IOException {
 		tempProjectRoot = Files.createTempDirectory("flow_unit_test");
-		fileService = new FileService(projectService, fileSystemStorage, fileTreeService);
+		fileService = new FileService(configurationProjectService, fileSystemStorage, fileTreeService);
 	}
 
 	@AfterEach
@@ -96,11 +97,11 @@ class FileServiceTest {
 
 	@Test
 	@DisplayName("Should throw ApiException when extension is not allowed")
-	void createOrUpdateFileUnsupportedExtension() throws ProjectNotFoundException {
+	void createOrUpdateFileUnsupportedExtension() throws ApiException {
 		stubToAbsolutePath();
 
-		Project project = new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
-		when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
+		ConfigurationProject configurationProject = new ConfigurationProject(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+		when(configurationProjectService.getProject(TEST_PROJECT_NAME)).thenReturn(configurationProject);
 
 		String path = tempProjectRoot.resolve("notAllowed.txt").toAbsolutePath().toString();
 
@@ -121,8 +122,8 @@ class FileServiceTest {
 		stubCreateFile();
 
 		Path parentPath = tempProjectRoot.toAbsolutePath();
-		Project project = new Project(TEST_PROJECT_NAME, parentPath.toString());
-		when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
+		ConfigurationProject configurationProject = new ConfigurationProject(TEST_PROJECT_NAME, parentPath.toString());
+		when(configurationProjectService.getProject(TEST_PROJECT_NAME)).thenReturn(configurationProject);
 
 		FileTreeNode node = fileService.createOrUpdateFile(TEST_PROJECT_NAME, parentPath.resolve("newFile.json").toString(), "");
 
@@ -135,12 +136,12 @@ class FileServiceTest {
 
 	@Test
 	@DisplayName("Should throw SecurityException when the file path is outside the project directory")
-	void createFile_OutsideProject_ThrowsSecurityException() throws ProjectNotFoundException {
+	void createFile_OutsideProject_ThrowsSecurityException() throws ApiException {
 		stubToAbsolutePath();
 
-		Project project =
-				new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
-		when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
+		ConfigurationProject configurationProject =
+				new ConfigurationProject(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+		when(configurationProjectService.getProject(TEST_PROJECT_NAME)).thenReturn(configurationProject);
 
 		String outsidePath = tempProjectRoot.getParent().toAbsolutePath().toString();
 		assertThrows(
@@ -151,8 +152,8 @@ class FileServiceTest {
 
 	@Test
 	@DisplayName("Should throw IllegalArgumentException when project is not found during createFile")
-	void createFile_ProjectNotFound_ThrowsIllegalArgument() throws ProjectNotFoundException {
-		when(projectService.getProject("Unknown")).thenThrow(new ProjectNotFoundException("err"));
+	void createFile_ProjectNotFound_ThrowsIllegalArgument() throws ApiException {
+		when(configurationProjectService.getProject("Unknown")).thenThrow(new ApiException("err", HttpStatus.NOT_FOUND));
 
 		assertThrows(
 				IllegalArgumentException.class, () -> fileService.createOrUpdateFile("Unknown", "/some/path", "file.json"));
@@ -165,9 +166,9 @@ class FileServiceTest {
 		stubToAbsolutePath();
 		stubRename();
 
-		Project project =
-				new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
-		when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
+		ConfigurationProject configurationProject =
+				new ConfigurationProject(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+		when(configurationProjectService.getProject(TEST_PROJECT_NAME)).thenReturn(configurationProject);
 
 		Path oldFile = Files.writeString(tempProjectRoot.resolve("old.xml"), "content");
 		String oldPath = oldFile.toAbsolutePath().toString();
@@ -183,7 +184,7 @@ class FileServiceTest {
 
 	@Test
 	@DisplayName("Should throw ApiException when rename file extension is not allowed")
-	void renameFileUnsupportedExtension() throws ProjectNotFoundException, IOException {
+	void renameFileUnsupportedExtension() throws ApiException, IOException {
 		stubToAbsolutePath();
 
 		Path oldFile = Files.writeString(tempProjectRoot.resolve("old.xml"), "content");
@@ -205,9 +206,9 @@ class FileServiceTest {
 		stubToAbsolutePath();
 		stubRename();
 
-		Project project =
-				new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
-		when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
+		ConfigurationProject configurationProject =
+				new ConfigurationProject(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+		when(configurationProjectService.getProject(TEST_PROJECT_NAME)).thenReturn(configurationProject);
 
 		Path oldDir = Files.createDirectory(tempProjectRoot.resolve("oldDir"));
 		String oldPath = oldDir.toAbsolutePath().toString();
@@ -223,12 +224,12 @@ class FileServiceTest {
 	@Test
 	@DisplayName("Should throw FileAlreadyExistsException when the target name already exists")
 	void renameFile_TargetAlreadyExists_ThrowsFileAlreadyExistsException()
-			throws IOException, ProjectNotFoundException {
+			throws IOException, ApiException {
 		stubToAbsolutePath();
 
-		Project project =
-				new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
-		when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
+		ConfigurationProject configurationProject =
+				new ConfigurationProject(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+		when(configurationProjectService.getProject(TEST_PROJECT_NAME)).thenReturn(configurationProject);
 
 		Files.writeString(tempProjectRoot.resolve("old.xml"), "content");
 		Files.writeString(tempProjectRoot.resolve("existing.xml"), "already here");
@@ -256,9 +257,9 @@ class FileServiceTest {
 		stubToAbsolutePath();
 		when(fileSystemStorage.rename(anyString(), anyString())).thenReturn(null);
 
-		Project project =
-				new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
-		when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
+		ConfigurationProject configurationProject =
+				new ConfigurationProject(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+		when(configurationProjectService.getProject(TEST_PROJECT_NAME)).thenReturn(configurationProject);
 
 		Path oldPath = tempProjectRoot.resolve("old.xml");
 		Path newPath = tempProjectRoot.resolve("new.xml");
@@ -272,13 +273,13 @@ class FileServiceTest {
 
 	@Test
 	@DisplayName("Should delete a file without throwing and invalidate the tree cache")
-	void deleteFile_Success() throws IOException, ProjectNotFoundException {
+	void deleteFile_Success() throws IOException, ApiException {
 		stubToAbsolutePath();
 		stubDelete();
 
-		Project project =
-				new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
-		when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
+		ConfigurationProject configurationProject =
+				new ConfigurationProject(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+		when(configurationProjectService.getProject(TEST_PROJECT_NAME)).thenReturn(configurationProject);
 
 		Path fileToDelete = Files.writeString(tempProjectRoot.resolve("toDelete.xml"), "content");
 		String path = fileToDelete.toAbsolutePath().toString();
@@ -289,8 +290,8 @@ class FileServiceTest {
 
 	@Test
 	@DisplayName("Should throw IllegalArgumentException when project is not found during deleteFile")
-	void deleteFile_ProjectNotFound_ThrowsIllegalArgument() throws ProjectNotFoundException {
-		when(projectService.getProject("Unknown")).thenThrow(new ProjectNotFoundException("err"));
+	void deleteFile_ProjectNotFound_ThrowsIllegalArgument() throws ApiException {
+		when(configurationProjectService.getProject("Unknown")).thenThrow(new ApiException("err", HttpStatus.NOT_FOUND));
 
 		assertThrows(
 				IllegalArgumentException.class, () -> fileService.deleteFile("Unknown", "/some/path/file.xml"));

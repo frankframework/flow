@@ -8,12 +8,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.EnumMap;
 import java.util.Map;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
-class ProjectSettingsTest {
+class ConfigurationProjectSettingsTest {
 	private ProjectSettings projectSettings;
 
 	@BeforeEach
@@ -29,7 +30,8 @@ class ProjectSettingsTest {
 		assertEquals(
 				FilterType.values().length,
 				filters.size(),
-				"getFilters() should contain an entry for every FilterType");
+				"getFilters() should contain an entry for every FilterType"
+		);
 		for (FilterType type : FilterType.values()) {
 			assertFalse(filters.get(type), "Default value should be false for: " + type);
 		}
@@ -41,7 +43,8 @@ class ProjectSettingsTest {
 		for (FilterType type : FilterType.values()) {
 			assertFalse(
 					projectSettings.getFilters().get(type),
-					"Filter should be false in a new ProjectSettings object: " + type);
+					"Filter should be false in a new ProjectSettings object: " + type
+			);
 		}
 
 		EnumMap<FilterType, Boolean> newFilters = new EnumMap<>(FilterType.class);
