@@ -204,22 +204,35 @@ async function validateConfiguration(content: string, xsd: string, model: ITextM
  */
 function mapMatchToDecorations(match: FindMatch): IModelDeltaDecoration[] {
   const keyText = match.matches![1]
+  const equalsText = match.matches![2]
   const valueText = match.matches![3]
+  const keyStart = match.range.startColumn
+  const equalsStart = keyStart + keyText.length
+  const valueStart = match.range.endColumn - valueText.length
 
   return [
     {
       range: {
         startLineNumber: match.range.startLineNumber,
-        startColumn: match.range.startColumn,
+        startColumn: keyStart,
         endLineNumber: match.range.startLineNumber,
-        endColumn: match.range.startColumn + keyText.length,
+        endColumn: equalsStart,
       },
       options: { inlineClassName: 'monaco-flow-attribute' },
     },
     {
       range: {
         startLineNumber: match.range.startLineNumber,
-        startColumn: match.range.endColumn - valueText.length,
+        startColumn: equalsStart,
+        endLineNumber: match.range.startLineNumber,
+        endColumn: equalsStart + equalsText.length,
+      },
+      options: { inlineClassName: 'monaco-flow-attribute' },
+    },
+    {
+      range: {
+        startLineNumber: match.range.startLineNumber,
+        startColumn: valueStart,
         endLineNumber: match.range.startLineNumber,
         endColumn: match.range.endColumn,
       },
