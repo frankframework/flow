@@ -618,13 +618,13 @@ function extractStickyNotesFromAdapter(adapter: Element, idCounter: IdCounter, f
   )
 
   for (const note of notes) {
-const text = note.getAttribute('flow:text') ?? ''
-    const color = note.getAttribute('flow:color') ?? null
+    const text = note.getAttribute('flow:text') ?? ''
+    const color = note.getAttribute('flow:color') || undefined
 
-const x = Number(note.getAttribute('flow:x')) ?? 0
-const y = Number(note.getAttribute('flow:y')) ?? 0
-const width = Number(note.getAttribute('flow:width')) ?? FlowConfig.STICKY_NOTE_DEFAULT_WIDTH
-const height = Number(note.getAttribute('flow:height')) ?? FlowConfig.STICKY_NOTE_DEFAULT_HEIGHT
+    const x = Number(note.getAttribute('flow:x')) || 0
+    const y = Number(note.getAttribute('flow:y')) || 0
+    const width = Number(note.getAttribute('flow:width')) || FlowConfig.STICKY_NOTE_DEFAULT_WIDTH
+    const height = Number(note.getAttribute('flow:height')) || FlowConfig.STICKY_NOTE_DEFAULT_HEIGHT
 
     const collapsed = note.getAttribute('flow:collapsed') === 'true'
     const attachedToName = note.getAttribute('flow:attachedTo') || null
