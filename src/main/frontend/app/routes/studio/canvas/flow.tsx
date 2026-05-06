@@ -121,8 +121,6 @@ function FlowCanvas() {
   const { nodes, edges, viewport, onNodesChange, onEdgesChange, onConnect, onReconnect } = useFlowStore(
     useShallow(selector),
   )
-  const project = useProjectStore.getState().project
-
   const saveFlow = useCallback(async () => {
     const { nodes: flowNodes, edges: flowEdges, viewport: flowViewport } = useFlowStore.getState()
     const flowData = { nodes: flowNodes, edges: flowEdges, viewport: flowViewport }
@@ -178,7 +176,7 @@ function FlowCanvas() {
       showErrorToast(`Failed to save XML: ${error instanceof Error ? error.message : error}`)
       setSaveStatus('idle')
     }
-  }, [project])
+  }, [])
 
   const autosaveEnabled = useSettingsStore((s) => s.general.autoSave.enabled)
   const autosaveDelay = useSettingsStore((s) => s.general.autoSave.delayMs)

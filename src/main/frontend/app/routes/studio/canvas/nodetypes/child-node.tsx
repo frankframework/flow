@@ -137,6 +137,8 @@ export function ChildNodeComponent({
       addChildToChild,
       child.id,
       child.subtype,
+      setAttributes,
+      setNodeId,
     ],
   )
 

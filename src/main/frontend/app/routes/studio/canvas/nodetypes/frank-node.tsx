@@ -333,6 +333,8 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
       setIsEditing,
       setParentId,
       setChildParentId,
+      setAttributes,
+      setNodeId,
     ],
   )
 
