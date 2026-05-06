@@ -36,10 +36,13 @@ import {
   extractFlowElements,
   findAdapterIndexAtOffset,
   findAdaptersInXml,
+  findElementRangeInXml,
+  findFrankElementsForGlyphs,
   findFlowElementsStartLine,
   lineToOffset,
   wrapFlowXml,
 } from './xml-utils'
+import { openInStudioAtNode } from '~/actions/navigationActions'
 
 type LeftTab = 'files' | 'git'
 type SaveStatus = 'idle' | 'saving' | 'saved'
@@ -255,11 +258,17 @@ export default function CodeEditor() {
   const xsdContentRef = useRef<string | null>(null)
   const errorDecorationsRef = useRef<{ clear: () => void } | null>(null)
   const flowDecorationsRef = useRef<IEditorDecorationsCollection | null>(null)
+  const highlightDecorationsRef = useRef<IEditorDecorationsCollection | null>(null)
+  const frankGlyphsDecorationsRef = useRef<IEditorDecorationsCollection | null>(null)
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const validationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const validationCounterRef = useRef(0)
   const contentCacheRef = useRef<Map<string, CachedFile>>(new Map())
+
+  const [pendingHighlight, setPendingHighlightLocal] = useState<{ subtype: string; name?: string } | null>(
+    () => useEditorTabStore.getState().pendingHighlight,
+  )
 
   const activeTab = useEditorTabStore(
     useShallow((state) => {
@@ -300,6 +309,30 @@ export default function CodeEditor() {
       flowDecorationsRef.current = editor.createDecorationsCollection(decorations)
     }
   }, [fileLanguage])
+
+  const applyFrankGlyphs = useCallback(
+    (content: string) => {
+      const editor = editorReference.current
+      if (!editor || fileLanguage !== 'xml') return
+
+      const elements = findFrankElementsForGlyphs(content)
+
+      const decorations = elements.map((element) => ({
+        range: { startLineNumber: element.startLine, startColumn: 1, endLineNumber: element.startLine, endColumn: 1 },
+        options: {
+          glyphMarginClassName: 'frank-node-glyph',
+          glyphMarginHoverMessage: { value: `Open **${element.name}** in Studio` },
+        },
+      }))
+
+      if (frankGlyphsDecorationsRef.current) {
+        frankGlyphsDecorationsRef.current.set(decorations)
+      } else if (decorations.length > 0) {
+        frankGlyphsDecorationsRef.current = editor.createDecorationsCollection(decorations)
+      }
+    },
+    [fileLanguage],
+  )
 
   const performSave = useCallback(
     (content?: string) => {
@@ -484,6 +517,8 @@ export default function CodeEditor() {
     monacoReference.current = monacoInstance
     setEditorMounted(true)
 
+    editor.updateOptions({ glyphMargin: true })
+
     applyFlowHighlighter()
 
     editor.addAction({
@@ -512,6 +547,34 @@ export default function CodeEditor() {
           monacoReference.current.KeyCode.KeyF,
       ],
       run: runReformat,
+    })
+
+    editor.onMouseDown((event) => {
+      if (highlightDecorationsRef.current) {
+        highlightDecorationsRef.current.clear()
+        highlightDecorationsRef.current = null
+      }
+
+      if (event.target.type === monacoInstance.editor.MouseTargetType.GUTTER_GLYPH_MARGIN) {
+        const lineNumber = event.target.position?.lineNumber
+        if (!lineNumber) return
+
+        const content = editor.getValue()
+        const editorTab = useEditorTabStore.getState().getTab(useEditorTabStore.getState().activeTabFilePath)
+        if (!editorTab) return
+
+        const elements = findFrankElementsForGlyphs(content)
+        const element = elements.find((element) => element.startLine === lineNumber)
+        if (!element) return
+
+        openInStudioAtNode(
+          element.adapterName,
+          editorTab.configurationPath,
+          element.adapterPosition,
+          element.subtype,
+          element.name,
+        )
+      }
     })
   }
 
@@ -591,9 +654,12 @@ export default function CodeEditor() {
       errorDecorationsRef.current.clear()
       errorDecorationsRef.current = null
     }
-    // Also clear flow decorations when switching files
     if (flowDecorationsRef.current) {
       flowDecorationsRef.current.set([])
+    }
+    if (frankGlyphsDecorationsRef.current) {
+      frankGlyphsDecorationsRef.current.clear()
+      frankGlyphsDecorationsRef.current = null
     }
     const monaco = monacoReference.current
     const editor = editorReference.current
@@ -606,8 +672,13 @@ export default function CodeEditor() {
   useEffect(() => {
     if (!fileContent || !xsdLoaded || isDiffTab || fileLanguage !== 'xml') return
     runSchemaValidation(fileContent)
-    applyFlowHighlighter() // Refresh highlighter when schema is loaded or content changes
+    applyFlowHighlighter()
   }, [fileContent, xsdLoaded, isDiffTab, runSchemaValidation, fileLanguage, applyFlowHighlighter])
+
+  useEffect(() => {
+    if (!fileContent || !editorMounted || isDiffTab || fileLanguage !== 'xml') return
+    applyFrankGlyphs(fileContent)
+  }, [fileContent, editorMounted, isDiffTab, fileLanguage, applyFrankGlyphs])
 
   useEffect(() => {
     if (!fileContent || !activeTabFilePath || !editorReference.current || isDiffTab) return
@@ -635,6 +706,37 @@ export default function CodeEditor() {
     const timeout = setTimeout(() => decorations.clear(), 2000)
     return () => clearTimeout(timeout)
   }, [fileContent, activeTabFilePath, isDiffTab])
+
+  useEffect(() => {
+    return useEditorTabStore.subscribe(
+      (state) => state.pendingHighlight,
+      (highlight) => setPendingHighlightLocal(highlight),
+    )
+  }, [])
+
+  useEffect(() => {
+    if (!pendingHighlight || !fileContent || !editorReference.current || isDiffTab) return
+
+    const editor = editorReference.current
+    const range = findElementRangeInXml(fileContent, pendingHighlight.subtype, pendingHighlight.name)
+
+    useEditorTabStore.getState().setPendingHighlight(null)
+
+    if (!range) return
+
+    editor.revealLineNearTop(range.startLine)
+    editor.setPosition({ lineNumber: range.startLine, column: 1 })
+    editor.focus()
+
+    highlightDecorationsRef.current?.clear()
+
+    highlightDecorationsRef.current = editor.createDecorationsCollection([
+      {
+        range: { startLineNumber: range.startLine, startColumn: 1, endLineNumber: range.endLine, endColumn: 1 },
+        options: { isWholeLine: true, className: 'highlight-line' },
+      },
+    ])
+  }, [pendingHighlight, fileContent, isDiffTab])
 
   const handleOpenInStudio = useCallback(() => {
     const editorTab = useEditorTabStore.getState().getTab(activeTabFilePath)
@@ -737,7 +839,8 @@ export default function CodeEditor() {
                     scheduleSave()
                     if (value && fileLanguage === 'xml') {
                       scheduleSchemaValidation(value)
-                      applyFlowHighlighter() // Real-time highlight updates
+                      applyFlowHighlighter()
+                      applyFrankGlyphs(value)
                     }
                   }}
                   options={{
@@ -746,6 +849,7 @@ export default function CodeEditor() {
                     tabSize: 2,
                     insertSpaces: true,
                     detectIndentation: false,
+                    glyphMargin: true,
                   }}
                 />
               </div>

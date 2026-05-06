@@ -12,9 +12,11 @@ interface CanvasContextMenuProps {
   onCut: () => void
   onCopy: () => void
   onPaste: () => void
+  onShowInEditor: () => void
   hasSelection: boolean
   hasGroupedSelection: boolean
   hasClipboard: boolean
+  hasSingleNodeSelection: boolean
 }
 
 function formatShortcut(shortcutId: string): string | null {
@@ -33,9 +35,11 @@ export default function CanvasContextMenu({
   onCut,
   onCopy,
   onPaste,
+  onShowInEditor,
   hasSelection,
   hasGroupedSelection,
   hasClipboard,
+  hasSingleNodeSelection,
 }: CanvasContextMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null)
   useContextMenuDismiss(menuRef, onClose)
@@ -70,6 +74,8 @@ export default function CanvasContextMenu({
       style={{ left: position.x, top: position.y }}
     >
       {menuItem('Add Note', onAddNote, true)}
+      <div className="bg-border my-1 h-px" />
+      {menuItem('Show in Editor', onShowInEditor, hasSingleNodeSelection, 'studio.show-in-editor')}
       <div className="bg-border my-1 h-px" />
       {menuItem('Group', onGroup, hasSelection, 'studio.group')}
       {menuItem('Ungroup', onUngroup, hasGroupedSelection, 'studio.ungroup')}

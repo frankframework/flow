@@ -99,6 +99,13 @@ export const ALL_SHORTCUTS: Omit<ShortcutDefinition, 'handler'>[] = [
     modifiers: { cmdOrCtrl: true },
     allowInInput: true,
   },
+  {
+    id: 'studio.show-in-editor',
+    label: 'Show in Editor',
+    scope: 'studio',
+    key: 'e',
+    modifiers: { cmdOrCtrl: true, shift: true },
+  },
 
   // Editor
   {
