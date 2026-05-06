@@ -259,17 +259,17 @@ function addForwardEdges(
     if (!targetName) continue // Veiliger: vangt null en lege strings af
 
     const targetId = nameToId.get(targetName)
-    let targetNode = targetId ? nodes.find((n) => n.id === targetId) : undefined
+    let targetNode = targetId ? nodes.find((node) => node.id === targetId) : undefined
 
     if (!targetNode || targetNode.id === sourceId) {
       const exitFallback = nodes.find(
-        (n) => n.type === 'exitNode' && n.data && 'name' in n.data && n.data.name === targetName,
+        (node) => node.type === 'exitNode' && node.data && 'name' in node.data && node.data.name === targetName,
       )
 
       if (exitFallback) {
         targetNode = exitFallback
       } else if (!targetNode) {
-        targetNode = nodes.find((n) => n.data && 'name' in n.data && n.data.name === targetName)
+        targetNode = nodes.find((node) => node.data && 'name' in node.data && node.data.name === targetName)
       }
 
       if (!targetNode || targetNode.id === sourceId) continue
