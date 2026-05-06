@@ -91,10 +91,10 @@ export default function Studio() {
     })),
   )
 
-  const platform = useShortcutStore((s) => s.platform)
+  const platform = useShortcutStore((shortcut) => shortcut.platform)
 
-  const allInSameGroup = useFlowStore((s) => {
-    const selected = s.nodes.filter((n) => n.selected)
+  const allInSameGroup = useFlowStore((flowStore) => {
+    const selected = flowStore.nodes.filter((node) => node.selected)
     if (selected.length <= 1) return false
     const firstParentId = selected[0].parentId
     return !!firstParentId && selected.every((node) => node.parentId === firstParentId)
