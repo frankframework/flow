@@ -2,6 +2,7 @@ export type EntryType = 'DIRECTORY' | 'FILE'
 
 export interface BrowseResult {
   resolvedPath: string
+  parentPath: string
   entries: FilesystemEntry[]
 }
 

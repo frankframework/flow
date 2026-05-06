@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import FolderIcon from '/icons/solar/Folder.svg?react'
-import { filesystemService, getParentPath } from '~/services/filesystem-service'
+import { filesystemService } from '~/services/filesystem-service'
 import type { FilesystemEntry } from '~/types/filesystem.types'
 import { ApiError } from '~/utils/api'
 import Button from '../inputs/button'
@@ -21,6 +21,7 @@ export default function DirectoryPicker({
   initialPath,
 }: Readonly<DirectoryPickerProperties>) {
   const [currentPath, setCurrentPath] = useState('')
+  const [parentPath, setParentPath] = useState('')
   const [entries, setEntries] = useState<FilesystemEntry[]>([])
   const [selectedEntry, setSelectedEntry] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -34,6 +35,7 @@ export default function DirectoryPicker({
       const result = await filesystemService.browse(path)
       setEntries(result.entries)
       setCurrentPath(result.resolvedPath)
+      setParentPath(result.parentPath)
     } catch (error_) {
       if (error_ instanceof ApiError && error_.status === 403) {
         setError('Access denied')
@@ -46,7 +48,7 @@ export default function DirectoryPicker({
   }, [])
 
   const handleNavigateUp = () => {
-    loadEntries(getParentPath(currentPath))
+    loadEntries(parentPath)
   }
 
   useEffect(() => {
@@ -58,7 +60,7 @@ export default function DirectoryPicker({
 
   if (!isOpen) return null
 
-  const canGoUp = currentPath !== ''
+  const canGoUp = parentPath !== ''
 
   const handleClick = (entry: FilesystemEntry) => {
     setSelectedEntry(entry.path)

@@ -24,7 +24,7 @@ public interface FileSystemStorage {
 	 */
 	default BrowseResult browse(String path) throws IOException {
 		if (path == null || path.isBlank()) {
-			return new BrowseResult("", listRoots());
+			return new BrowseResult("", "", listRoots());
 		}
 		return browseNearestAccessible(path);
 	}
@@ -69,10 +69,10 @@ public interface FileSystemStorage {
 
 	private BrowseResult browseNearestAccessible(String path) throws IOException {
 		try {
-			return new BrowseResult(path, listDirectory(path));
+			return new BrowseResult(path, parentPath(path), listDirectory(path));
 		} catch (NoSuchFileException e) {
 			String parent = parentPath(path);
-			return parent.isEmpty() ? new BrowseResult("", listRoots()) : browseNearestAccessible(parent);
+			return parent.isEmpty() ? new BrowseResult("", "", listRoots()) : browseNearestAccessible(parent);
 		}
 	}
 
