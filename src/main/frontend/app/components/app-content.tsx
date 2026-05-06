@@ -2,7 +2,7 @@ import { type AppRoute, useNavigationStore } from '~/stores/navigation-store'
 import { lazy, Suspense, type ComponentType } from 'react'
 import LoadingSpinner from '~/components/loading-spinner'
 
-const ConfigurationManager = lazy(() => import('~/routes/configurations/configuration-manager'))
+const ConfigurationOverview = lazy(() => import('~/routes/configurations/configuration-overview'))
 const Studio = lazy(() => import('~/routes/studio/studio'))
 const CodeEditor = lazy(() => import('~/routes/editor/editor'))
 const Help = lazy(() => import('~/routes/help/help'))
@@ -10,7 +10,7 @@ const Datamapper = lazy(() => import('~/routes/datamapper/root'))
 const Settings = lazy(() => import('~/routes/settings/settings'))
 
 const routeComponents: Record<AppRoute, React.LazyExoticComponent<ComponentType>> = {
-  configurations: ConfigurationManager,
+  configurations: ConfigurationOverview,
   studio: Studio,
   editor: CodeEditor,
   datamapper: Datamapper,

@@ -9,12 +9,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
+
 import javax.xml.parsers.DocumentBuilder;
+
 import org.frankframework.flow.exception.ApiException;
 import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.frankframework.flow.project.Project;
 import org.frankframework.flow.project.ProjectService;
 import org.frankframework.flow.utility.XmlSecurityUtils;
+
 import org.springframework.stereotype.Service;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -89,17 +92,8 @@ public class FileTreeService {
 
 	public FileTreeNode getShallowConfigurationsDirectoryTree(String projectName) throws IOException {
 		try {
-			Project project = projectService.getProject(projectName);
-			Path projectPath = fileSystemStorage.toAbsolutePath(project.getRootPath());
-			Path configDirPath = projectPath.resolve("src/main/configurations").normalize();
-
-			if (!Files.exists(configDirPath) || !Files.isDirectory(configDirPath)) {
-				throw new IllegalArgumentException("Configurations directory does not exist: " + configDirPath);
-			}
-
-			boolean useRelativePaths = !fileSystemStorage.isLocalEnvironment();
-			Path relativizeRoot = useRelativePaths ? fileSystemStorage.toAbsolutePath("") : projectPath;
-			return buildShallowTree(configDirPath, relativizeRoot, useRelativePaths);
+			ConfigurationDirectory configurationDirectory = getConfigurationsDirectory(projectName);
+			return buildShallowTree(configurationDirectory.directoryPath, configurationDirectory.relativizeRoot, configurationDirectory.useRelativePaths);
 		} catch (ApiException exception) {
 			throw new IllegalArgumentException("Configurations directory does not exist: " + projectName);
 		}
@@ -107,17 +101,8 @@ public class FileTreeService {
 
 	public FileTreeNode getConfigurationsDirectoryTree(String projectName) throws IOException {
 		try {
-			Project project = projectService.getProject(projectName);
-			Path projectPath = fileSystemStorage.toAbsolutePath(project.getRootPath());
-			Path configDirPath = projectPath.resolve("src/main/configurations").normalize();
-
-			if (!Files.exists(configDirPath) || !Files.isDirectory(configDirPath)) {
-				throw new IllegalArgumentException("Configurations directory does not exist: " + configDirPath);
-			}
-
-			boolean useRelativePaths = !fileSystemStorage.isLocalEnvironment();
-			Path relativizeRoot = useRelativePaths ? fileSystemStorage.toAbsolutePath("") : projectPath;
-			return buildTree(configDirPath, relativizeRoot, useRelativePaths);
+			ConfigurationDirectory configurationDirectory = getConfigurationsDirectory(projectName);
+			return buildTree(configurationDirectory.directoryPath, configurationDirectory.relativizeRoot, configurationDirectory.useRelativePaths);
 		} catch (ApiException exception) {
 			throw new IllegalArgumentException("Configurations directory does not exist: " + projectName);
 		}
@@ -174,6 +159,19 @@ public class FileTreeService {
 		}
 
 		return node;
+	}
+
+	private ConfigurationDirectory getConfigurationsDirectory(String projectName) throws ApiException {
+		Project project = projectService.getProject(projectName);
+		Path projectPath = fileSystemStorage.toAbsolutePath(project.getRootPath());
+
+		if (!Files.exists(projectPath) || !Files.isDirectory(projectPath)) {
+			throw new IllegalArgumentException("Configurations directory does not exist: " + projectPath);
+		}
+
+		boolean useRelativePaths = !fileSystemStorage.isLocalEnvironment();
+		Path relativizeRoot = useRelativePaths ? fileSystemStorage.toAbsolutePath("") : projectPath;
+		return new ConfigurationDirectory(projectPath, relativizeRoot, useRelativePaths);
 	}
 
 	private List<String> extractAdapterNames(Path xmlFile) {
@@ -234,5 +232,12 @@ public class FileTreeService {
 		}
 
 		return node;
+	}
+
+	private record ConfigurationDirectory(
+			Path directoryPath,
+			Path relativizeRoot,
+			boolean useRelativePaths
+	) {
 	}
 }

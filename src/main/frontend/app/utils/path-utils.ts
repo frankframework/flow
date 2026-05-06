@@ -1,4 +1,4 @@
-import type { Project } from '~/types/project.types'
+import type { ConfigurationProject } from '~/types/project.types'
 
 /**
  * Extracts the portion of a path after the first occurrence of a marker segment.
@@ -14,7 +14,7 @@ export function toRelativePath(absolutePath: string, marker: string): string | n
  * Converts a file path to a project-relative path for display.
  * Handles both local and cloud environments
  */
-export function toProjectRelativePath(absolutePath: string, project: Project): string {
+export function toProjectRelativePath(absolutePath: string, project: ConfigurationProject): string {
   const path = absolutePath.replaceAll('\\', '/')
   const root = project.rootPath.replaceAll('\\', '/').replace(/^\/+/, '').replace(/\/+$/, '')
   const normalizedPath = path.replace(/^\/+/, '')

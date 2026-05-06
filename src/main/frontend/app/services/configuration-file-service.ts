@@ -3,7 +3,7 @@ import type { XmlResponse } from '~/types/project.types'
 
 const configCache = new Map<string, string>()
 
-export function clearConfigurationCache(projectName?: string, filepath?: string) {
+export function clearConfigurationFileCache(projectName?: string, filepath?: string) {
   if (projectName && filepath) {
     configCache.delete(`${projectName}:${filepath}`)
   } else {
@@ -11,19 +11,23 @@ export function clearConfigurationCache(projectName?: string, filepath?: string)
   }
 }
 
-export async function fetchConfigurationCached(
+export async function fetchConfigurationFileCached(
   projectName: string,
   filepath: string,
   signal?: AbortSignal,
 ): Promise<string> {
   const key = `${projectName}:${filepath}`
   if (configCache.has(key)) return configCache.get(key)!
-  const xml = await fetchConfiguration(projectName, filepath, signal)
+  const xml = await fetchConfigurationFile(projectName, filepath, signal)
   configCache.set(key, xml)
   return xml
 }
 
-export async function fetchConfiguration(projectName: string, filepath: string, signal?: AbortSignal): Promise<string> {
+export async function fetchConfigurationFile(
+  projectName: string,
+  filepath: string,
+  signal?: AbortSignal,
+): Promise<string> {
   const { content } = await apiFetch<{ content: string }>(
     `${getBaseUrl(projectName)}?path=${encodeURIComponent(filepath)}`,
     { signal },
@@ -31,7 +35,7 @@ export async function fetchConfiguration(projectName: string, filepath: string, 
   return content
 }
 
-export async function saveConfiguration(
+export async function saveConfigurationFile(
   projectName: string,
   filepath: string,
   content: string,
@@ -44,7 +48,7 @@ export async function saveConfiguration(
   })
 }
 
-export async function createConfiguration(projectName: string, filename: string): Promise<XmlResponse> {
+export async function createConfigurationFile(projectName: string, filename: string): Promise<XmlResponse> {
   return apiFetch<XmlResponse>(`${getBaseUrl(projectName)}?name=${encodeURIComponent(filename)}`, { method: 'POST' })
 }
 

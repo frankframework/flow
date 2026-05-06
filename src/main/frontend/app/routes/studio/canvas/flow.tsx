@@ -34,7 +34,11 @@ import CreateNodeModal from '~/components/flow/create-node-modal'
 import { useFFDoc } from '@frankframework/doc-library-react'
 import type { ElementDetails } from '@frankframework/doc-library-core'
 import { useProjectStore } from '~/stores/project-store'
-import { clearConfigurationCache, fetchConfigurationCached, saveConfiguration } from '~/services/configuration-service'
+import {
+  clearConfigurationFileCache,
+  fetchConfigurationFileCached,
+  saveConfigurationFile,
+} from '~/services/configuration-file-service'
 import { refreshOpenDiffs } from '~/services/git-service'
 import useEditorTabStore from '~/stores/editor-tab-store'
 import { cloneWithRemappedIds, getEdgeLabelFromHandle } from '~/utils/flow-utils'
@@ -141,7 +145,7 @@ function FlowCanvas() {
 
     setSaveStatus('saving')
     try {
-      const fullConfigXml = await fetchConfigurationCached(currentProject.name, configurationPath)
+      const fullConfigXml = await fetchConfigurationFileCached(currentProject.name, configurationPath)
       const configDoc = new DOMParser().parseFromString(fullConfigXml, 'text/xml')
       const allAdapters = [...configDoc.querySelectorAll('Adapter, adapter')]
 
@@ -169,8 +173,8 @@ function FlowCanvas() {
 
       const updatedConfigXml = replaceAdapterInXml(fullConfigXml, adapterIndex, newAdapterXml.trim())
 
-      await saveConfiguration(currentProject.name, configurationPath, updatedConfigXml, true)
-      clearConfigurationCache(currentProject.name, configurationPath)
+      await saveConfigurationFile(currentProject.name, configurationPath, updatedConfigXml, true)
+      clearConfigurationFileCache(currentProject.name, configurationPath)
       useEditorTabStore.getState().refreshAllTabs()
       if (currentProject.isGitRepository) await refreshOpenDiffs(currentProject.name)
 

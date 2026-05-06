@@ -1,26 +1,26 @@
 import { apiFetch, apiUrl } from '~/utils/api'
-import type { Project } from '~/types/project.types'
+import type { ConfigurationProject } from '~/types/project.types'
 
-export async function fetchProject(name: string): Promise<Project> {
-  return apiFetch<Project>(`/projects/${encodeURIComponent(name)}`)
+export async function fetchProject(name: string): Promise<ConfigurationProject> {
+  return apiFetch<ConfigurationProject>(`/projects/${encodeURIComponent(name)}`)
 }
 
-export async function openProject(rootPath: string): Promise<Project> {
-  return apiFetch<Project>('/projects/open', {
+export async function openProject(rootPath: string): Promise<ConfigurationProject> {
+  return apiFetch<ConfigurationProject>('/projects/open', {
     method: 'POST',
     body: JSON.stringify({ rootPath }),
   })
 }
 
-export async function cloneProject(repoUrl: string, localPath: string, token?: string): Promise<Project> {
-  return apiFetch<Project>('/projects/clone', {
+export async function cloneProject(repoUrl: string, localPath: string, token?: string): Promise<ConfigurationProject> {
+  return apiFetch<ConfigurationProject>('/projects/clone', {
     method: 'POST',
     body: JSON.stringify({ repoUrl, localPath, token: token || null }),
   })
 }
 
-export async function createProject(name: string, rootPath: string): Promise<Project> {
-  return apiFetch<Project>('/projects', {
+export async function createProject(name: string, rootPath: string): Promise<ConfigurationProject> {
+  return apiFetch<ConfigurationProject>('/projects', {
     method: 'POST',
     body: JSON.stringify({ name, rootPath }),
   })
@@ -52,7 +52,7 @@ export async function exportProject(projectName: string): Promise<void> {
   URL.revokeObjectURL(a.href)
 }
 
-export async function importProjectFolder(files: FileList): Promise<Project> {
+export async function importProjectFolder(files: FileList): Promise<ConfigurationProject> {
   const formData = new FormData()
 
   const firstPath = files[0].webkitRelativePath
@@ -65,7 +65,7 @@ export async function importProjectFolder(files: FileList): Promise<Project> {
     formData.append('paths', relativePath)
   }
 
-  return apiFetch<Project>('/projects/import', {
+  return apiFetch<ConfigurationProject>('/projects/import', {
     method: 'POST',
     body: formData,
   })

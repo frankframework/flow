@@ -5,13 +5,13 @@ import ArchiveIcon from '/icons/solar/Archive.svg?react'
 import { fetchInstanceConfigurations, type FFConfiguration } from '~/services/frank-framework-service'
 import { useProjectStore } from '~/stores/project-store'
 
-import ProjectRow from './project-row'
+import ConfigurationRow from './configuration-row'
 import Search from '~/components/search/search'
 import ActionButton from './action-button'
-import NewProjectModal from './new-project-modal'
-import CloneProjectModal from './clone-project-modal'
+import NewConfigurationModal from './new-configuration-modal'
+import CloneConfigurationModal from './clone-configuration-modal'
 import DirectoryPicker from '~/components/directory-picker/directory-picker'
-import type { RecentProject } from '~/types/project.types'
+import type { RecentConfigurationProject } from '~/types/project.types'
 import { fetchAppInfo } from '~/services/app-info-service'
 import { removeRecentProject } from '~/services/recent-project-service'
 import useTabStore from '~/stores/tab-store'
@@ -222,14 +222,14 @@ export default function ProjectLanding() {
         )}
       </main>
 
-      <NewProjectModal
+      <NewConfigurationModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onCreate={onCreateProject}
         isLocal={isLocalEnvironment}
         initialPath={lastRecentRootPath}
       />
-      <CloneProjectModal
+      <CloneConfigurationModal
         isOpen={isCloneModalOpen}
         isLocal={isLocalEnvironment}
         onClose={() => setIsCloneModalOpen(false)}
@@ -279,10 +279,10 @@ const Sidebar = ({
   onImportClick: () => void
 }) => (
   <nav className="border-border flex w-1/4 min-w-50 flex-col gap-3 border-r p-4">
-    <ActionButton label={isLocal ? 'Open Local Folder' : 'Open Workspace Project'} onClick={onOpenClick} />
+    <ActionButton label={isLocal ? 'Open Local Folder' : 'Open Workspace Configuration'} onClick={onOpenClick} />
     <ActionButton label="Clone Repository" onClick={onCloneClick} />
-    <ActionButton label="New Project" onClick={onNewClick} />
-    {!isLocal && <ActionButton label="Import Project Folder" onClick={onImportClick} />}
+    <ActionButton label="New Configuration" onClick={onNewClick} />
+    {!isLocal && <ActionButton label="Import Configuration Folder" onClick={onImportClick} />}
   </nav>
 )
 
@@ -296,7 +296,7 @@ const ProjectList = ({
   frameworkConfigurations,
   isDiscovering,
 }: {
-  projects: RecentProject[]
+  projects: RecentConfigurationProject[]
   isLocal: boolean
   onProjectClick: (rootPath: string) => void
   onRemoveProject: (rootPath: string) => void
@@ -327,13 +327,13 @@ const ProjectList = ({
       <p className="mb-2 text-xs text-slate-400 italic">Scanning for remote instances...</p>
     )}
     {projects.length === 0 && frameworkConfigurations.length === 0 && !isDiscovering && (
-      <p className="text-muted-foreground mt-10 text-center text-sm italic">No projects found</p>
+      <p className="text-muted-foreground mt-10 text-center text-sm italic">No configurations found</p>
     )}
     {projects.length > 0 && (
       <>
         <p className="mb-2 text-xs font-semibold tracking-wider text-slate-400 uppercase">Recent</p>
         {projects.map((project) => (
-          <ProjectRow
+          <ConfigurationRow
             key={project.rootPath}
             project={project}
             isLocal={isLocal}

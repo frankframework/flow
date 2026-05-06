@@ -11,7 +11,7 @@ interface NewProjectModalProperties {
   initialPath?: string
 }
 
-export default function NewProjectModal({
+export default function NewConfigurationModal({
   isOpen,
   isLocal,
   onClose,
@@ -59,7 +59,7 @@ export default function NewProjectModal({
         <div className="bg-background border-border relative h-100 w-150 rounded-lg border p-6 shadow-lg">
           <h2 className="mb-4 text-lg font-semibold">New Project</h2>
           <p className="text-foreground-muted mb-4 text-sm">
-            {isLocal ? 'Create a new Frank! project on disk' : 'Create a new project in the workspace'}
+            {isLocal ? 'Create a new FF! configuration on disk' : 'Create a new FF! configuration in the workspace'}
           </p>
 
           <div className="mb-4">
@@ -85,7 +85,7 @@ export default function NewProjectModal({
               value={name}
               onChange={(event) => setName(event.target.value)}
               className="border-border bg-background focus:border-foreground-active focus:ring-foreground-active w-full rounded border px-2 py-1 text-sm transition focus:ring-2 focus:outline-none"
-              placeholder="Enter project name"
+              placeholder="Enter configuration name"
             />
           </div>
 
@@ -104,7 +104,7 @@ export default function NewProjectModal({
               disabled={!name.trim() || (isLocal && !location)}
               className="disabled:text-foreground-muted disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Create Project
+              Create Configuration
             </Button>
 
             <Button onClick={handleClose} className="absolute top-3 right-3">
