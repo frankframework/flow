@@ -1,6 +1,7 @@
 package org.frankframework.flow.filesystem;
 
 import java.io.IOException;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -16,6 +17,17 @@ public interface FileSystemStorage {
 	 * Returns what directory entails
 	 */
 	List<FilesystemEntry> listDirectory(String path) throws IOException;
+
+	/**
+	 * Returns entries for the given path. If the path does not exist, walks up to
+	 * the nearest accessible ancestor. Falls back to roots if none found.
+	 */
+	default BrowseResult browse(String path) throws IOException {
+		if (path == null || path.isBlank()) {
+			return new BrowseResult("", listRoots());
+		}
+		return browseNearestAccessible(path);
+	}
 
 	String readFile(String path) throws IOException;
 
@@ -52,5 +64,25 @@ public interface FileSystemStorage {
 	 */
 	default String toRelativePath(String absolutePath) {
 		return absolutePath;
+	}
+
+
+	private BrowseResult browseNearestAccessible(String path) throws IOException {
+		try {
+			return new BrowseResult(path, listDirectory(path));
+		} catch (NoSuchFileException e) {
+			String parent = parentPath(path);
+			return parent.isEmpty() ? new BrowseResult("", listRoots()) : browseNearestAccessible(parent);
+		}
+	}
+
+	private static String parentPath(String path) {
+		String normalized = path.replace('/', '\\');
+		if (normalized.matches("[a-zA-Z]:[/\\\\]?")) return "";
+		int lastSep = normalized.lastIndexOf('\\');
+		if (lastSep < 0) return "";
+		String parent = normalized.substring(0, lastSep);
+		if (parent.matches("[a-zA-Z]:")) return parent + "\\";
+		return parent;
 	}
 }

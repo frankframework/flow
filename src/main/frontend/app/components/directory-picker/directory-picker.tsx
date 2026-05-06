@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import FolderIcon from '/icons/solar/Folder.svg?react'
-import { filesystemService } from '~/services/filesystem-service'
+import { filesystemService, getParentPath } from '~/services/filesystem-service'
 import type { FilesystemEntry } from '~/types/filesystem.types'
 import { ApiError } from '~/utils/api'
 import Button from '../inputs/button'
@@ -32,11 +32,10 @@ export default function DirectoryPicker({
     setSelectedEntry(null)
     try {
       const result = await filesystemService.browse(path)
-      setEntries(result)
-      setCurrentPath(path)
+      setEntries(result.entries)
+      setCurrentPath(result.resolvedPath)
     } catch (error_) {
-      const status = error_ instanceof ApiError ? error_.status : 0
-      if (status === 403) {
+      if (error_ instanceof ApiError && error_.status === 403) {
         setError('Access denied')
       } else {
         setError(error_ instanceof Error ? error_.message : 'Failed to load directories')
@@ -45,6 +44,10 @@ export default function DirectoryPicker({
       setLoading(false)
     }
   }, [])
+
+  const handleNavigateUp = () => {
+    loadEntries(getParentPath(currentPath))
+  }
 
   useEffect(() => {
     if (isOpen) {
@@ -55,23 +58,7 @@ export default function DirectoryPicker({
 
   if (!isOpen) return null
 
-  const isRoot = !currentPath
-  const canGoUp = !isRoot
-
-  const handleNavigateUp = () => {
-    if (/^[a-zA-Z]:[/\\]?$/.test(currentPath) || currentPath === '/') {
-      loadEntries('')
-      return
-    }
-    const parentPath = currentPath.replace(/[\\/][^\\/]*$/, '')
-    if (!parentPath || parentPath === currentPath) {
-      loadEntries('')
-    } else if (/^[a-zA-Z]:$/.test(parentPath)) {
-      loadEntries(`${parentPath}\\`)
-    } else {
-      loadEntries(parentPath)
-    }
-  }
+  const canGoUp = !!currentPath
 
   const handleClick = (entry: FilesystemEntry) => {
     setSelectedEntry(entry.path)
