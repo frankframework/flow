@@ -340,52 +340,64 @@ export default function EditorFileStructure() {
         </span>
         <div className="ml-1 hidden items-center gap-0.5 group-hover/row:flex">
           {item.isFolder && (
-            <button
+            <div
+              role="button"
+              tabIndex={0}
               className={actionBtnClass}
               title="New File"
               onClick={(mouseEvent) => {
                 mouseEvent.stopPropagation()
                 triggerItemAction(item.index, editorContextMenu.handleNewFile)
               }}
+              onKeyDown={(e) => e.key === 'Enter' && triggerItemAction(item.index, editorContextMenu.handleNewFile)}
             >
               <CodeFileIcon className="fill-foreground h-3.5 w-3.5" />
-            </button>
+            </div>
           )}
           {item.isFolder && (
-            <button
+            <div
+              role="button"
+              tabIndex={0}
               className={actionBtnClass}
               title="New Folder"
               onClick={(mouseEvent) => {
                 mouseEvent.stopPropagation()
                 triggerItemAction(item.index, editorContextMenu.handleNewFolder)
               }}
+              onKeyDown={(e) => e.key === 'Enter' && triggerItemAction(item.index, editorContextMenu.handleNewFolder)}
             >
               <FolderIcon className="fill-foreground h-3.5 w-3.5" />
-            </button>
+            </div>
           )}
           {!isRoot && (
-            <button
+            <div
+              role="button"
+              tabIndex={0}
               className={actionBtnClass}
               title="Rename"
               onClick={(mouseEvent) => {
                 mouseEvent.stopPropagation()
                 triggerItemAction(item.index, editorContextMenu.handleRename)
               }}
+              onKeyDown={(e) => e.key === 'Enter' && triggerItemAction(item.index, editorContextMenu.handleRename)}
             >
               <Pen className="stroke-foreground h-3.5 w-3.5" />
-            </button>
+            </div>
           )}
           {!isRoot && (
-            <button
+            <div
+              role="button"
+              tabIndex={0}
               className={actionBtnClass}
               title="Delete"
               onClick={(mouseEvent) => {
                 mouseEvent.stopPropagation()
                 triggerItemAction(item.index, editorContextMenu.handleDelete)
               }}
+              onKeyDown={(e) => e.key === 'Enter' && triggerItemAction(item.index, editorContextMenu.handleDelete)}
             >
               <TrashBinIcon className="fill-foreground h-3.5 w-3.5" />
-            </button>
+            </div>
           )}
         </div>
       </div>
