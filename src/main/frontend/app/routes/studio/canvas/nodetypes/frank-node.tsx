@@ -216,18 +216,6 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
     setIsHandleMenuOpen((prev) => !prev)
   }
 
-  const editNode = () => {
-    if (!frankElement) return
-    const attributes = frankElement.attributes
-    setParentId(null)
-    setChildParentId(null)
-    setNodeId(+properties.id)
-    setAttributes(attributes)
-    setEditingSubtype(properties.data.subtype)
-    showNodeContextMenu(true)
-    setIsEditing(true)
-  }
-
   const editChild = (childId: string) => {
     const child = findChildRecursive(properties.data.children, childId)
     if (!child) return
@@ -389,7 +377,6 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
             minHeight: `${minNodeHeight}px`,
             ...(properties.selected && { borderColor: `var(${colorVariable})` }),
           }}
-          onDoubleClick={editNode}
         >
           <div
             className="flex h-32 w-32 shrink-0 items-center justify-center rounded-3xl shadow-md"
@@ -467,7 +454,6 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDropOnNode}
-        onDoubleClick={editNode}
       >
         <div
           className={`border-b-border relative box-border w-full rounded-t-md border-b p-1`}

@@ -13,6 +13,7 @@ interface NodeContextStore {
   editingSubtype: string | null
   allowedOnCanvas: boolean
   dropSuccessful: boolean
+  isMultiSelect: boolean
   saveFlow: (() => Promise<void>) | null
   setNodeId: (nodeId: number) => void
   setAttributes: (attributes?: Record<string, Attribute>) => void
@@ -27,6 +28,7 @@ interface NodeContextStore {
   registerSaveFlow: (fn: (() => Promise<void>) | null) => void
   setAllowedOnCanvas: (allowed: boolean) => void
   setDropSuccessful: (successful: boolean) => void
+  setIsMultiSelect: (value: boolean) => void
 }
 
 const useNodeContextStore = create<NodeContextStore>((set) => ({
@@ -41,6 +43,7 @@ const useNodeContextStore = create<NodeContextStore>((set) => ({
   editingSubtype: null,
   allowedOnCanvas: false,
   dropSuccessful: false,
+  isMultiSelect: false,
   saveFlow: null,
   setNodeId: (nodeId) => set({ nodeId }),
   setAttributes: (attributes) => set({ attributes }),
@@ -55,6 +58,7 @@ const useNodeContextStore = create<NodeContextStore>((set) => ({
   registerSaveFlow: (saveFlow) => set({ saveFlow }),
   setAllowedOnCanvas: (allowedOnCanvas) => set({ allowedOnCanvas }),
   setDropSuccessful: (dropSuccessful) => set({ dropSuccessful }),
+  setIsMultiSelect: (isMultiSelect) => set({ isMultiSelect }),
 }))
 
 export default useNodeContextStore

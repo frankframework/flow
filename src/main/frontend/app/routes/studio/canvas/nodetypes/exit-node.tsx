@@ -1,12 +1,7 @@
 import { Handle, type Node, type NodeProps, NodeResizeControl, Position } from '@xyflow/react'
 import { ResizeIcon } from '~/routes/studio/canvas/nodetypes/frank-node'
 import { FlowConfig } from '~/routes/studio/canvas/flow.config'
-import useNodeContextStore from '~/stores/node-context-store'
-import { useNodeContextMenu } from '~/routes/studio/canvas/node-context-menu-context'
 import { useSettingsStore } from '~/stores/settings-store'
-import { useFFDoc } from '@frankframework/doc-library-react'
-
-import type { Attribute } from '@frankframework/doc-library-core'
 
 export type ExitNode = Node<{
   subtype: string
@@ -18,29 +13,7 @@ export type ExitNode = Node<{
 export default function ExitNodeComponent(properties: NodeProps<ExitNode>) {
   const minNodeWidth = FlowConfig.EXIT_DEFAULT_WIDTH
   const minNodeHeight = FlowConfig.EXIT_DEFAULT_HEIGHT
-  const showNodeContextMenu = useNodeContextMenu()
   const gradientEnabled = useSettingsStore((state) => state.studio.gradient)
-  const { elements } = useFFDoc()
-  const { setNodeId, setAttributes, setIsEditing, setEditingSubtype, setParentId, setChildParentId } =
-    useNodeContextStore()
-
-  const editNode = () => {
-    interface ElementWithAttributes {
-      name: string
-      attributes?: Record<string, Attribute>
-    }
-    const recordElements = elements as Record<string, ElementWithAttributes>
-    const attributes = Object.values(recordElements).find(
-      (element) => element.name === properties.data.subtype,
-    )?.attributes
-    setParentId(null)
-    setChildParentId(null)
-    setNodeId(+properties.id)
-    setAttributes(attributes)
-    setEditingSubtype(properties.data.subtype)
-    showNodeContextMenu(true)
-    setIsEditing(true)
-  }
 
   return (
     <>
@@ -64,7 +37,6 @@ export default function ExitNodeComponent(properties: NodeProps<ExitNode>) {
           minHeight: `${minNodeHeight}px`,
           minWidth: `${minNodeWidth}px`,
         }}
-        onDoubleClick={editNode}
       >
         <div
           className="border-b-border box-border w-full rounded-t-md border-b p-1"

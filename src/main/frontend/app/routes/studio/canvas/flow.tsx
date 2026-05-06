@@ -32,6 +32,7 @@ import { exportFlowToXml, replaceAdapterInXml } from '~/routes/studio/flow-to-xm
 import useNodeContextStore from '~/stores/node-context-store'
 import CreateNodeModal from '~/components/flow/create-node-modal'
 import { useFFDoc } from '@frankframework/doc-library-react'
+import type { ElementDetails } from '@frankframework/doc-library-core'
 import { useProjectStore } from '~/stores/project-store'
 import { clearConfigurationCache, fetchConfigurationCached, saveConfiguration } from '~/services/configuration-service'
 import { refreshOpenDiffs } from '~/services/git-service'
@@ -42,6 +43,7 @@ import clsx from 'clsx'
 import { useSettingsStore } from '~/stores/settings-store'
 import { useShortcut } from '~/hooks/use-shortcut'
 import CanvasContextMenu from '~/components/flow/canvas-context-menu'
+import { useSidebarStore, SidebarSide } from '~/components/sidebars-layout/sidebar-layout-store'
 
 export type FlowNode = FrankNodeType | ExitNode | StickyNote | GroupNode | Node
 
@@ -74,6 +76,7 @@ function FlowCanvas() {
     setNodeId,
     allowedOnCanvas,
     setDropSuccessful,
+    setIsMultiSelect,
   } = useNodeContextStore(
     useShallow((s) => ({
       isEditing: s.isEditing,
@@ -88,6 +91,7 @@ function FlowCanvas() {
       setNodeId: s.setNodeId,
       allowedOnCanvas: s.allowedOnCanvas,
       setDropSuccessful: s.setDropSuccessful,
+      setIsMultiSelect: s.setIsMultiSelect,
     })),
   )
   const { elements } = useFFDoc()
@@ -410,10 +414,7 @@ function FlowCanvas() {
       return
     }
 
-    if (allSelectedInSameGroup(selectedNodes)) {
-      handleDegroupSingleGroup(selectedNodes)
-      return
-    }
+    if (allSelectedInSameGroup(selectedNodes)) return
 
     if (shouldMergeUngroupedIntoGroup(selectedNodes)) {
       handleMergeUngroupedIntoGroup(selectedNodes)
@@ -425,7 +426,6 @@ function FlowCanvas() {
     nodes,
     allSelectedInSameGroup,
     getFullySelectedGroupIds,
-    handleDegroupSingleGroup,
     handleMergeUngroupedIntoGroup,
     handleMultiGroupMerge,
     shouldMergeUngroupedIntoGroup,
@@ -510,6 +510,7 @@ function FlowCanvas() {
 
     showNodeContextMenu(false)
     setIsEditing(false)
+    setIsMultiSelect(false)
     setParentId(null)
     setChildParentId(null)
   }
@@ -538,6 +539,112 @@ function FlowCanvas() {
     'studio.close-context': () => closeEditNodeContextOnEscape(),
     'studio.delete': () => deleteSelection(),
   })
+
+  const lookupFrankElement = useCallback(
+    (subtype: string) => {
+      if (!elements) return
+      return (Object.values(elements as Record<string, ElementDetails>) as ElementDetails[]).find(
+        (element) => element.name === subtype,
+      )
+    },
+    [elements],
+  )
+
+  const isFrankNode = (node: FlowNode): node is FrankNodeType => node.type === 'frankNode' || node.type === 'exitNode'
+
+  const deselectOtherNodes = useCallback(
+    (nodeId: string) => {
+      const flowNodes = reactFlow.getNodes()
+      if (flowNodes.filter((node) => node.selected).length > 1) {
+        reactFlow.setNodes(flowNodes.map((node) => ({ ...node, selected: node.id === nodeId })))
+      }
+    },
+    [reactFlow],
+  )
+
+  const applyNodeContext = useCallback(
+    (node: FrankNodeType, frankElement: ElementDetails) => {
+      setParentId(null)
+      setChildParentId(null)
+      setNodeId(+node.id)
+      setAttributes(frankElement.attributes)
+      setEditingSubtype(node.data.subtype)
+    },
+    [setParentId, setChildParentId, setNodeId, setAttributes, setEditingSubtype],
+  )
+
+  const showContextIfSidebarOpen = useCallback(() => {
+    const sidebarVisible = useSidebarStore.getState().getVisibility('studio')[SidebarSide.RIGHT]
+    if (sidebarVisible) showNodeContextMenu(true)
+  }, [showNodeContextMenu])
+
+  const handleNodeClick = useCallback(
+    (event: React.MouseEvent, node: FlowNode) => {
+      if (event.shiftKey || event.ctrlKey || event.metaKey) return
+      if (isDirty || !isFrankNode(node)) return
+      const frankElement = lookupFrankElement(node.data.subtype)
+      if (!frankElement) return
+
+      deselectOtherNodes(node.id)
+      applyNodeContext(node, frankElement)
+      showContextIfSidebarOpen()
+    },
+    [isDirty, lookupFrankElement, deselectOtherNodes, applyNodeContext, showContextIfSidebarOpen],
+  )
+
+  const handleNodeDoubleClick = useCallback(
+    (_event: React.MouseEvent, node: FlowNode) => {
+      if (isDirty || !isFrankNode(node)) return
+      const frankElement = lookupFrankElement(node.data.subtype)
+      if (!frankElement) return
+
+      applyNodeContext(node, frankElement)
+      setIsEditing(true)
+      setIsMultiSelect(false)
+      showNodeContextMenu(true)
+    },
+    [isDirty, lookupFrankElement, applyNodeContext, setIsEditing, setIsMultiSelect, showNodeContextMenu],
+  )
+
+  const handleEdgeClick = useCallback(() => {
+    setIsMultiSelect(false)
+    showNodeContextMenu(false)
+    setIsEditing(false)
+  }, [setIsMultiSelect, showNodeContextMenu, setIsEditing])
+
+  const handleSelectionChange = useCallback(
+    ({ nodes: selectedNodes }: { nodes: FlowNode[] }) => {
+      const frankNodes = selectedNodes.filter((node) => isFrankNode(node))
+
+      if (frankNodes.length > 1) {
+        setIsMultiSelect(true)
+        showNodeContextMenu(false)
+        setIsEditing(false)
+        setParentId(null)
+        setChildParentId(null)
+        return
+      }
+
+      setIsMultiSelect(false)
+
+      if (frankNodes.length === 1) {
+        const frankElement = lookupFrankElement(frankNodes[0].data.subtype)
+        if (!frankElement) return
+        applyNodeContext(frankNodes[0], frankElement)
+        showContextIfSidebarOpen()
+      }
+    },
+    [
+      showNodeContextMenu,
+      setIsEditing,
+      setIsMultiSelect,
+      setParentId,
+      setChildParentId,
+      lookupFrankElement,
+      applyNodeContext,
+      showContextIfSidebarOpen,
+    ],
+  )
 
   const groupNodes = (nodesToGroup: FlowNode[], currentNodes: FlowNode[]) => {
     const minX = Math.min(...nodesToGroup.map((node) => node.position.x))
@@ -568,7 +675,7 @@ function FlowCanvas() {
       },
       parentId: newGroupId,
       extent: 'parent',
-      selected: false,
+      selected: true,
     }))
 
     const allNodes = [...currentNodes.filter((node) => !node.selected), groupNode, ...updatedSelectedNodes]
@@ -923,11 +1030,15 @@ function FlowCanvas() {
         onReconnect={onReconnect}
         onConnectStart={handleConnectStart}
         onConnectEnd={handleConnectEnd}
+        onNodeClick={handleNodeClick}
+        onNodeDoubleClick={handleNodeDoubleClick}
+        onEdgeClick={handleEdgeClick}
+        onSelectionChange={handleSelectionChange}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         onPaneClick={() => {
           setContextMenu(null)
-          if (isEditing && !isDirty) {
+          if (!isDirty) {
             showNodeContextMenu(false)
             setIsEditing(false)
             setParentId(null)
