@@ -252,7 +252,7 @@ function addForwardEdges(
   forwardIndexBySourceId: Map<string, number>,
   explicitTargetsBySourceId: Map<string, Set<string>>,
   sourcesWithSuccessExitForward: Set<string>,
-  sourcesWithSuccessPipeForward: Set<string>
+  sourcesWithSuccessPipeForward: Set<string>,
 ) {
   for (const forward of forwards) {
     const targetName = forward.getAttribute('path')
@@ -263,7 +263,7 @@ function addForwardEdges(
 
     if (!targetNode || targetNode.id === sourceId) {
       const exitFallback = nodes.find(
-        (n) => n.type === 'exitNode' && n.data && 'name' in n.data && n.data.name === targetName
+        (n) => n.type === 'exitNode' && n.data && 'name' in n.data && n.data.name === targetName,
       )
 
       if (exitFallback) {

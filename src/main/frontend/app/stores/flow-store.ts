@@ -109,7 +109,6 @@ const createSnapshot = (state: FlowState): FlowSnapshot => ({
   edges: structuredClone(state.edges),
 })
 
-
 function wouldCreateDuplicateForward(edges: Edge[], source: string, target: string, label: string): boolean {
   return edges.some(
     (edge) =>
