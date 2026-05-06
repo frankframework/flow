@@ -102,7 +102,7 @@ export default function Studio() {
 
   const groupActionId = allInSameGroup ? 'studio.ungroup' : 'studio.group'
   const groupLabel = allInSameGroup ? 'Ungroup' : 'Group Selection'
-  const groupShortcutDef = ALL_SHORTCUTS.find((s) => s.id === groupActionId)
+  const groupShortcutDef = ALL_SHORTCUTS.find((shortcut) => shortcut.id === groupActionId)
   const groupKeyHint = groupShortcutDef ? formatShortcutParts(groupShortcutDef, platform).join('+') : ''
 
   const handleShowNodeContext = useCallback(
