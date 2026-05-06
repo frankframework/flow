@@ -58,7 +58,7 @@ export default function DirectoryPicker({
 
   if (!isOpen) return null
 
-  const canGoUp = !!currentPath
+  const canGoUp = currentPath !== ''
 
   const handleClick = (entry: FilesystemEntry) => {
     setSelectedEntry(entry.path)
