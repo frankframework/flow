@@ -3,6 +3,7 @@ package org.frankframework.flow.utility;
 import static org.junit.Assert.assertNull;
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.io.ByteArrayInputStream;
 import javax.xml.parsers.DocumentBuilderFactory;
 import org.junit.jupiter.api.Test;
 import org.w3c.dom.Document;
@@ -15,7 +16,7 @@ class XmlAdapterUtilsTest {
 	private Document parseXml(String xml) throws Exception {
 		return DocumentBuilderFactory.newInstance()
 				.newDocumentBuilder()
-				.parse(new java.io.ByteArrayInputStream(xml.getBytes()));
+				.parse(new ByteArrayInputStream(xml.getBytes()));
 	}
 
 	@Test

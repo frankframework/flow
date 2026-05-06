@@ -8,7 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.nio.file.Paths;
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
-import org.frankframework.flow.xml.XmlDTO;
+import org.frankframework.flow.configuration.ConfigurationXmlDTO;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -35,7 +35,7 @@ class AdapterControllerTest {
 		String adapterXml = "<Adapter name=\"MyAdapter\"/>";
 
 		when(adapterService.getAdapter(eq(projectName), eq(configPath), eq(adapterName)))
-				.thenReturn(new XmlDTO(adapterXml));
+				.thenReturn(new ConfigurationXmlDTO(adapterXml));
 
 		mockMvc.perform(get("/api/projects/" + projectName + "/adapters/" + adapterName)
 						.param("configurationPath", configPath)

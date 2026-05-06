@@ -9,11 +9,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import org.frankframework.flow.configuration.Configuration;
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
+import org.frankframework.flow.configuration.ConfigurationXmlDTO;
 import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.frankframework.flow.project.Project;
 import org.frankframework.flow.project.ProjectNotFoundException;
 import org.frankframework.flow.project.ProjectService;
-import org.frankframework.flow.xml.XmlDTO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -48,7 +48,7 @@ class AdapterServiceTest {
 
 		when(projectService.getProject("proj")).thenReturn(project);
 
-		XmlDTO result = adapterService.getAdapter("proj", "config.xml", "MyAdapter");
+		ConfigurationXmlDTO result = adapterService.getAdapter("proj", "config.xml", "MyAdapter");
 
 		assertNotNull(result);
 		assertTrue(result.xmlContent().contains("MyAdapter"));
@@ -119,7 +119,7 @@ class AdapterServiceTest {
 
 		when(projectService.getProject("proj")).thenReturn(project);
 
-		XmlDTO result = adapterService.getAdapter("proj", "config.xml", "Second");
+		ConfigurationXmlDTO result = adapterService.getAdapter("proj", "config.xml", "Second");
 
 		assertTrue(result.xmlContent().contains("Second"));
 		assertTrue(result.xmlContent().contains("PipeB"));
@@ -140,7 +140,7 @@ class AdapterServiceTest {
 
 		when(projectService.getProject("proj")).thenReturn(project);
 
-		XmlDTO result = adapterService.getAdapter("proj", "config2.xml", "AdapterB");
+		ConfigurationXmlDTO result = adapterService.getAdapter("proj", "config2.xml", "AdapterB");
 
 		assertTrue(result.xmlContent().contains("AdapterB"));
 		assertFalse(result.xmlContent().contains("AdapterA"), "Should return content from config2 only");

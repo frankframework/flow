@@ -18,13 +18,13 @@ class XmlFormatterUtilsTest {
 
 	@Test
 	void singleAttribute() throws Exception {
-		assertEquals("<root name=\"value\"/>", XmlFormatterUtils.format("<root name=\"value\"/>"));
+		assertEquals("<root\n  name=\"value\"/>", XmlFormatterUtils.format("<root name=\"value\"/>"));
 	}
 
 	@Test
-	void multipleAttributesAlignedUnderFirst() throws Exception {
+	void multipleAttributesIndentedRelativeToTag() throws Exception {
 		String result = XmlFormatterUtils.format("<root a=\"1\" b=\"2\" c=\"3\"/>");
-		String expected = "<root a=\"1\"\n      b=\"2\"\n      c=\"3\"/>";
+		String expected = "<root\n  a=\"1\"\n  b=\"2\"\n  c=\"3\"/>";
 		assertEquals(expected, result);
 	}
 
@@ -80,7 +80,7 @@ class XmlFormatterUtilsTest {
 
 	@Test
 	void alreadyFormattedInputIsIdempotent() throws Exception {
-		String input = "<root>\n  <child name=\"x\"/>\n</root>";
+		String input = "<root>\n  <child\n    name=\"x\"/>\n</root>";
 		assertEquals(input, XmlFormatterUtils.format(input));
 	}
 

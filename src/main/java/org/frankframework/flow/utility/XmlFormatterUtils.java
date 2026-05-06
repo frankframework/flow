@@ -52,14 +52,10 @@ public class XmlFormatterUtils extends DefaultHandler2 {
 
 		if (attrs.getLength() > 0) {
 			List<String[]> ordered = orderer != null ? orderer.reorder(qName, attrs) : toList(attrs);
-			sb.append(' ');
-			appendAttribute(ordered.getFirst());
-			if (ordered.size() > 1) {
-				String continuationPad = " ".repeat(elementIndent + qName.length() + INDENT_SIZE);
-				for (int i = 1; i < ordered.size(); i++) {
-					sb.append('\n').append(continuationPad);
-					appendAttribute(ordered.get(i));
-				}
+			String attrPad = " ".repeat(elementIndent + INDENT_SIZE);
+			for (String[] attr : ordered) {
+				sb.append('\n').append(attrPad);
+				appendAttribute(attr);
 			}
 		}
 

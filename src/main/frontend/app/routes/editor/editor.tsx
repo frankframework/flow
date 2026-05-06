@@ -38,7 +38,6 @@ import {
   findAdaptersInXml,
   findFlowElementsStartLine,
   lineToOffset,
-  normalizeFrankElements,
   wrapFlowXml,
 } from './xml-utils'
 
@@ -486,23 +485,6 @@ export default function CodeEditor() {
           debounceTimerRef.current = null
         }
         performSave()
-      },
-    })
-
-    editor.addAction({
-      id: 'normalize-frank-elements',
-      label: 'Normalize Frank Elements',
-      contextMenuGroupId: 'navigation',
-      contextMenuOrder: 2,
-      keybindings: [monacoInstance.KeyMod.CtrlCmd | monacoInstance.KeyMod.Shift | monacoInstance.KeyCode.KeyF],
-      run: async () => {
-        if (activeTabFilePath.endsWith('.xml')) {
-          const current = editor.getValue()
-          const updated = await normalizeFrankElements(current)
-          editor.pushUndoStop()
-          editor.executeEdits('normalize-frank', [{ range: editor.getModel()!.getFullModelRange(), text: updated }])
-          editor.pushUndoStop()
-        }
       },
     })
 
