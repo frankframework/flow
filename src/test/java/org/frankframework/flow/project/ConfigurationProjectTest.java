@@ -3,10 +3,8 @@ package org.frankframework.flow.project;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.List;
-
 import org.frankframework.flow.configuration.ConfigurationFile;
 import org.frankframework.flow.projectsettings.FilterType;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

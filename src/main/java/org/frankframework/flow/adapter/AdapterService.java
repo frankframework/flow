@@ -6,18 +6,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
-
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.stereotype.Service;
-import org.w3c.dom.Document;
-import org.w3c.dom.Node;
-import org.xml.sax.SAXException;
-
 import lombok.extern.slf4j.Slf4j;
-
 import org.frankframework.flow.configuration.ConfigurationFile;
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
 import org.frankframework.flow.configuration.ConfigurationXmlDTO;
@@ -28,6 +19,11 @@ import org.frankframework.flow.project.ConfigurationProjectService;
 import org.frankframework.flow.utility.XmlAdapterUtils;
 import org.frankframework.flow.utility.XmlConfigurationUtils;
 import org.frankframework.flow.utility.XmlSecurityUtils;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.stereotype.Service;
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.xml.sax.SAXException;
 
 @Slf4j
 @Service

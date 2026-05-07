@@ -2,10 +2,8 @@ package org.frankframework.flow.project;
 
 import java.util.ArrayList;
 import java.util.Objects;
-
 import lombok.Getter;
 import lombok.Setter;
-
 import org.frankframework.flow.configuration.ConfigurationFile;
 import org.frankframework.flow.projectsettings.FilterType;
 import org.frankframework.flow.projectsettings.ProjectSettings;

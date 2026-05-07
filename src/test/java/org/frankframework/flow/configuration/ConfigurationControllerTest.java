@@ -8,14 +8,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
 import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.frankframework.flow.project.ConfigurationProject;
 import org.frankframework.flow.project.ConfigurationProjectDTO;
 import org.frankframework.flow.project.ConfigurationProjectService;
 import org.frankframework.flow.projectsettings.FilterType;
 import org.frankframework.flow.projectsettings.ProjectSettings;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;

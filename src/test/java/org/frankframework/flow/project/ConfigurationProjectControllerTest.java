@@ -13,7 +13,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
 import org.frankframework.flow.common.FrankFrameworkService;
 import org.frankframework.flow.common.config.ClientSession;
 import org.frankframework.flow.configuration.ConfigurationFile;
@@ -23,7 +22,6 @@ import org.frankframework.flow.projectsettings.FilterType;
 import org.frankframework.flow.projectsettings.InvalidFilterTypeException;
 import org.frankframework.flow.projectsettings.ProjectSettings;
 import org.frankframework.flow.recentproject.RecentProjectsService;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;

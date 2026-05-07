@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-
 import org.frankframework.flow.configuration.ConfigurationFile;
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
 import org.frankframework.flow.configuration.ConfigurationXmlDTO;

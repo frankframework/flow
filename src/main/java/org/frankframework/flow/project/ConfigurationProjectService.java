@@ -12,19 +12,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
-
+import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.transport.CredentialsProvider;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
-
-import lombok.extern.slf4j.Slf4j;
-
 import org.frankframework.flow.exception.ApiException;
 import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.frankframework.flow.filesystem.FilesystemEntry;
@@ -34,6 +26,11 @@ import org.frankframework.flow.projectsettings.FilterType;
 import org.frankframework.flow.projectsettings.InvalidFilterTypeException;
 import org.frankframework.flow.recentproject.RecentProject;
 import org.frankframework.flow.recentproject.RecentProjectsService;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 @Slf4j
 @Service
@@ -196,7 +193,7 @@ public class ConfigurationProjectService {
 		}
 
 		try (ZipOutputStream zos = new ZipOutputStream(outputStream);
-		     Stream<Path> paths = Files.walk(projectPath)) {
+			Stream<Path> paths = Files.walk(projectPath)) {
 			paths.filter(Files::isRegularFile).forEach(filePath -> {
 				try {
 					String entryName = projectPath.relativize(filePath).toString().replace("\\", "/");
