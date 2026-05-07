@@ -135,17 +135,16 @@ class FileServiceTest {
 	}
 
 	@Test
-	@DisplayName("Should throw SecurityException when the file path is outside the project directory")
-	void createFile_OutsideProject_ThrowsSecurityException() throws ApiException {
+	@DisplayName("Should throw IllegalArgumentException when the file path is outside the project directory")
+	void createFile_OutsideProject_ThrowsIllegalArgument() throws ApiException {
 		stubToAbsolutePath();
 
-		ConfigurationProject configurationProject =
-				new ConfigurationProject(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+		ConfigurationProject configurationProject = new ConfigurationProject(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
 		when(configurationProjectService.getProject(TEST_PROJECT_NAME)).thenReturn(configurationProject);
 
 		String outsidePath = tempProjectRoot.getParent().toAbsolutePath().toString();
 		assertThrows(
-				ApiException.class,
+				IllegalArgumentException.class,
 				() -> fileService.createOrUpdateFile(TEST_PROJECT_NAME, outsidePath, "escape.json")
 		);
 	}

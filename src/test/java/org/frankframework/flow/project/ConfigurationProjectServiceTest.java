@@ -39,7 +39,7 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 
 @ExtendWith(MockitoExtension.class)
-public class ConfigurationConfigurationProjectServiceTest {
+public class ConfigurationProjectServiceTest {
 
 	private ConfigurationProjectService configurationProjectService;
 
@@ -65,7 +65,7 @@ public class ConfigurationConfigurationProjectServiceTest {
 			String dirName = invocation.getArgument(0);
 			Path dirPath = Path.of(dirName);
 			String projectName = dirPath.getFileName().toString();
-			Path projectDir = tempDir.resolve(projectName);
+			Path projectDir = tempDir.resolve("src/main/configurations/"+projectName);
 			Files.createDirectories(projectDir);
 			return projectDir;
 		});
@@ -115,13 +115,13 @@ public class ConfigurationConfigurationProjectServiceTest {
 		stubFileSystemForProjectCreation();
 
 		String projectName = "test_proj";
-		ConfigurationProjectCreateDTO createDTO = new ConfigurationProjectCreateDTO(projectName, "/");
+		ConfigurationProjectCreateDTO createDTO = new ConfigurationProjectCreateDTO(projectName, tempDir.toString());
 		ConfigurationProject configurationProject = configurationProjectService.createProjectOnDisk(createDTO);
 
 		assertNotNull(configurationProject);
 		assertEquals(projectName, configurationProject.getName());
 
-		Path configDir = tempDir.resolve(projectName).resolve("src/main/configurations");
+		Path configDir = tempDir.resolve("src/main/configurations/"+projectName);
 		assertTrue(Files.exists(configDir), "configurations directory should exist");
 
 		Path configFile = configDir.resolve("Configuration.xml");
@@ -172,7 +172,7 @@ public class ConfigurationConfigurationProjectServiceTest {
 		ConfigurationProjectCreateDTO createDTO = new ConfigurationProjectCreateDTO("my_project", "/");
 		configurationProjectService.createProjectOnDisk(createDTO);
 
-		Path projectDir = tempDir.resolve("my_project");
+		Path projectDir = tempDir.resolve("src/main/configurations/my_project");
 		recentProjects.add(new RecentProject("my_project", projectDir.toString(), "2026-01-01T00:00:00Z"));
 
 		configurationProjectService.invalidateCache();
@@ -537,8 +537,8 @@ public class ConfigurationConfigurationProjectServiceTest {
 
 		ConfigurationProjectCreateDTO createDTO = new ConfigurationProjectCreateDTO("valid_proj", "/");
 		configurationProjectService.createProjectOnDisk(createDTO);
-		Path validPath = tempDir.resolve("valid_proj");
-		Path invalidPath = tempDir.resolve("nonexistent_proj");
+		Path validPath = tempDir.resolve("src/main/configurations/valid_proj");
+		Path invalidPath = tempDir.resolve("src/main/configurations/nonexistent_proj");
 
 		recentProjects.add(new RecentProject("valid_proj", validPath.toString(), "2026-01-01T00:00:00Z"));
 		recentProjects.add(new RecentProject("nonexistent_proj", invalidPath.toString(), "2026-01-01T00:00:00Z"));
@@ -593,10 +593,10 @@ public class ConfigurationConfigurationProjectServiceTest {
 	void testExportProjectAsZipThrowsWhenDirectoryDeletedAfterCaching() throws Exception {
 		stubFileSystemForProjectCreation();
 
-		ConfigurationProjectCreateDTO createDTO = new ConfigurationProjectCreateDTO("deleteme_proj", "/");
+		ConfigurationProjectCreateDTO createDTO = new ConfigurationProjectCreateDTO("deleteme_proj", tempDir.toString());
 		configurationProjectService.createProjectOnDisk(createDTO);
 
-		Path projDir = tempDir.resolve("deleteme_proj");
+		Path projDir = tempDir.resolve("src/main/configurations/deleteme_proj");
 		try (Stream<Path> paths = Files.walk(projDir)) {
 			paths.sorted(Comparator.reverseOrder()).forEach(p -> {
 				try {

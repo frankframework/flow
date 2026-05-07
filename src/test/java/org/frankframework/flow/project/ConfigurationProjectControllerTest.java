@@ -38,7 +38,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(ConfigurationProjectController.class)
 @AutoConfigureMockMvc(addFilters = false)
-class ConfigurationConfigurationProjectControllerTest {
+class ConfigurationProjectControllerTest {
 
 	@Autowired
 	private MockMvc mockMvc;
@@ -149,6 +149,7 @@ class ConfigurationConfigurationProjectControllerTest {
 						.accept(MediaType.APPLICATION_JSON)
 						.content("""
 								{
+								"name": "MyProject",
 								"rootPath": "/path/to/new/project"
 								}
 								"""))

@@ -163,15 +163,16 @@ public class FileTreeService {
 
 	private ConfigurationDirectory getConfigurationsDirectory(String projectName) throws ApiException {
 		ConfigurationProject configurationProject = configurationProjectService.getProject(projectName);
-		Path projectPath = fileSystemStorage.toAbsolutePath(configurationProject.getRootPath());
+		Path absoluteRootPath = fileSystemStorage.toAbsolutePath(configurationProject.getRootPath());
+		Path configurationPath = absoluteRootPath.resolve("src/main/configurations/"+ projectName).normalize();
 
-		if (!Files.exists(projectPath) || !Files.isDirectory(projectPath)) {
-			throw new IllegalArgumentException("Configurations directory does not exist: " + projectPath);
+		if (!Files.exists(configurationPath) || !Files.isDirectory(configurationPath)) {
+			throw new IllegalArgumentException("Configurations directory does not exist: " + configurationPath);
 		}
 
 		boolean useRelativePaths = !fileSystemStorage.isLocalEnvironment();
-		Path relativizeRoot = useRelativePaths ? fileSystemStorage.toAbsolutePath("") : projectPath;
-		return new ConfigurationDirectory(projectPath, relativizeRoot, useRelativePaths);
+		Path relativizeRoot = useRelativePaths ? fileSystemStorage.toAbsolutePath("") : configurationPath;
+		return new ConfigurationDirectory(configurationPath, relativizeRoot, useRelativePaths);
 	}
 
 	private List<String> extractAdapterNames(Path xmlFile) {

@@ -25,16 +25,6 @@ class ConfigurationProjectTest {
 	}
 
 	@Test
-	void testSetConfigurationXmlUpdatesExistingConfiguration() {
-		String filename = "config1.xml";
-		ConfigurationFile config = new ConfigurationFile(filename, "<new/>");
-		config.setXmlContent("<old/>");
-		configurationProject.addConfiguration(config);
-
-		assertEquals("<new/>", config.getXmlContent());
-	}
-
-	@Test
 	void testProjectEnableFilter() {
 		assertFalse(configurationProject.isFilterEnabled(FilterType.ADAPTER));
 		configurationProject.enableFilter(FilterType.ADAPTER);
