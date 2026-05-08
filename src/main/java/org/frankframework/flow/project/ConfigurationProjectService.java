@@ -106,7 +106,9 @@ public class ConfigurationProjectService {
 	}
 
 	public ConfigurationProject createProjectOnDisk(ConfigurationProjectCreateDTO projectCreate) throws IOException {
-		Path projectCreationPath = Path.of(projectCreate.rootPath()).resolve(CONFIGURATIONS_DIR + "/" + projectCreate.name());
+		Path rootPath = Path.of(projectCreate.rootPath());
+		String resolvedRootPath = rootPath.endsWith(CONFIGURATIONS_DIR) ? projectCreate.name() : CONFIGURATIONS_DIR + "/" + projectCreate.name();
+		Path projectCreationPath = rootPath.resolve(resolvedRootPath);
 		Path projectPath = fileSystemStorage.createProjectDirectory(projectCreationPath.toString());
 
 		ClassPathResource resource = new ClassPathResource("templates/default-configuration.xml");

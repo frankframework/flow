@@ -182,7 +182,7 @@ public class FileTreeServiceTest {
 		Files.writeString(tempConfigurationRoot.resolve("readme.txt"), "hello");
 
 		ConfigurationProject configurationProject =
-				new ConfigurationProject(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+				new ConfigurationProject(TEST_PROJECT_NAME, tempConfigurationRoot.toAbsolutePath().toString());
 		when(configurationProjectService.getProject(TEST_PROJECT_NAME)).thenReturn(configurationProject);
 
 		FileTreeNode node = fileTreeService.getShallowConfigurationsDirectoryTree(TEST_PROJECT_NAME);
@@ -201,7 +201,7 @@ public class FileTreeServiceTest {
 	public void getShallowConfigurationsDirectoryTreeThrowsIfDirectoryDoesNotExist() throws ApiException {
 		stubToAbsolutePath();
 
-		ConfigurationProject configurationProject = new ConfigurationProject(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+		ConfigurationProject configurationProject = new ConfigurationProject(TEST_PROJECT_NAME, tempConfigurationRoot.toAbsolutePath().toString());
 		when(configurationProjectService.getProject(TEST_PROJECT_NAME)).thenReturn(configurationProject);
 
 		IllegalArgumentException ex = assertThrows(
@@ -236,7 +236,7 @@ public class FileTreeServiceTest {
 		Files.createDirectory(subDir);
 		Files.writeString(subDir.resolve("nested.xml"), "<nested></nested>");
 
-		ConfigurationProject configurationProject = new ConfigurationProject(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+		ConfigurationProject configurationProject = new ConfigurationProject(TEST_PROJECT_NAME, tempConfigurationRoot.toAbsolutePath().toString());
 		when(configurationProjectService.getProject(TEST_PROJECT_NAME)).thenReturn(configurationProject);
 
 		FileTreeNode node = fileTreeService.getConfigurationsDirectoryTree(TEST_PROJECT_NAME);
@@ -264,7 +264,7 @@ public class FileTreeServiceTest {
 		stubToAbsolutePath();
 
 		ConfigurationProject configurationProject =
-				new ConfigurationProject(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+				new ConfigurationProject(TEST_PROJECT_NAME, tempConfigurationRoot.toAbsolutePath().toString());
 		when(configurationProjectService.getProject(TEST_PROJECT_NAME)).thenReturn(configurationProject);
 
 		IllegalArgumentException ex = assertThrows(

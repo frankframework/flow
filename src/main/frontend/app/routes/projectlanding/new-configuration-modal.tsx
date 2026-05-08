@@ -11,6 +11,8 @@ interface NewProjectModalProperties {
   initialPath?: string
 }
 
+const CONFIG_DIR = 'src/main/configurations'
+
 export default function NewConfigurationModal({
   isOpen,
   isLocal,
@@ -57,7 +59,7 @@ export default function NewConfigurationModal({
     <>
       <div className="bg-background/50 absolute inset-0 z-50 flex items-center justify-center">
         <div className="bg-background border-border relative h-100 w-150 rounded-lg border p-6 shadow-lg">
-          <h2 className="mb-4 text-lg font-semibold">New Project</h2>
+          <h2 className="mb-4 text-lg font-semibold">New Configuration Project</h2>
           <p className="text-foreground-muted mb-4 text-sm">
             {isLocal ? 'Create a new FF! configuration on disk' : 'Create a new FF! configuration in the workspace'}
           </p>
@@ -80,7 +82,7 @@ export default function NewConfigurationModal({
           </div>
 
           <div className="mb-4">
-            <label className="mb-1 block text-sm font-medium">Project Name</label>
+            <label className="mb-1 block text-sm font-medium">Configuration Name</label>
             <input
               value={name}
               onChange={(event) => setName(event.target.value)}
@@ -90,11 +92,9 @@ export default function NewConfigurationModal({
           </div>
 
           {name.trim() && (
-            <p className="text-foreground-muted mb-4 text-xs">
-              Project will be created at:{' '}
-              {isLocal
-                ? `${location}${location.includes('/') ? '/' : '\\'}${name.trim()}`
-                : `${location ? `${location}/` : ''}${name.trim()}`}
+            <p className="text-foreground-muted mb-4 text-xs break-all">
+              Project will be created at:<br></br>
+              {getConfigurationPath(location, name, isLocal)}
             </p>
           )}
 
@@ -125,4 +125,12 @@ export default function NewConfigurationModal({
       />
     </>
   )
+}
+
+function getConfigurationPath(location: string, name: string, isLocal: boolean) {
+  let configPath = isLocal ? location.replace('\\', '/') : location
+  if (!configPath.endsWith(CONFIG_DIR)) {
+    configPath = `${configPath}/${CONFIG_DIR}`
+  }
+  return `${configPath}/${name.trim()}`
 }

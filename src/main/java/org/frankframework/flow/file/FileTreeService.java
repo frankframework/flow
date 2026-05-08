@@ -160,8 +160,7 @@ public class FileTreeService {
 
 	private ConfigurationDirectory getConfigurationsDirectory(String projectName) throws ApiException {
 		ConfigurationProject configurationProject = configurationProjectService.getProject(projectName);
-		Path absoluteRootPath = fileSystemStorage.toAbsolutePath(configurationProject.getRootPath());
-		Path configurationPath = absoluteRootPath.resolve("src/main/configurations/"+ projectName).normalize();
+		Path configurationPath = fileSystemStorage.toAbsolutePath(configurationProject.getRootPath()).normalize();
 
 		if (!Files.exists(configurationPath) || !Files.isDirectory(configurationPath)) {
 			throw new IllegalArgumentException("Configurations directory does not exist: " + configurationPath);
