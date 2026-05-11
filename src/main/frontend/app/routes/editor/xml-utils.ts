@@ -21,7 +21,6 @@ const REGEX_CLOSE_TAG = /<\/([A-Za-z0-9_:-]+)>/g
 const REGEX_NAME_ATTR = /\bname=["']([^"']*)["']/
 const REGEX_FLOW_ELEMENTS = /<flow:FlowElements[\s\S]*?<\/flow:FlowElements>/
 
-
 function getLocalName(tag: string): string {
   const colonIndex = tag.indexOf(':')
   return colonIndex === -1 ? tag : tag.slice(colonIndex + 1)
@@ -141,17 +140,17 @@ export function extractFlowElements(xml: string): string | null {
 
 export function wrapFlowXml(fragment: string): string {
   const innerContent = fragment
-          .replace(/^<flow:FlowElements[^>]*>/, '')
-          .replace(/<\/flow:FlowElements>$/, '')
-          .trim()
+    .replace(/^<flow:FlowElements[^>]*>/, '')
+    .replace(/<\/flow:FlowElements>$/, '')
+    .trim()
 
   return `<flow:FlowElements xmlns:flow="urn:frank-flow">${innerContent}</flow:FlowElements>`
 }
 
 export function findFlowElementsStartLine(xml: string): number {
   const lines = xml.split('\n')
-  const index = lines.findIndex(line => line.includes('<flow:FlowElements'))
-  return index !== -1 ? index + 1 : 1
+  const index = lines.findIndex((line) => line.includes('<flow:FlowElements'))
+  return index === -1 ? 1 : index + 1
 }
 
 export function findElementInXml(xml: string, subtype: string, name?: string): number | null {
@@ -172,9 +171,9 @@ export function findElementInXml(xml: string, subtype: string, name?: string): n
 }
 
 export function findElementRangeInXml(
-        xml: string,
-        subtype: string,
-        name?: string,
+  xml: string,
+  subtype: string,
+  name?: string,
 ): { startLine: number; endLine: number } | null {
   const startLine = findElementInXml(xml, subtype, name)
   if (!startLine) return null
@@ -199,11 +198,11 @@ function processClosingTags(line: string, stack: string[]) {
 }
 
 function createGlyphEntry(
-        tag: string,
-        lineIndex: number,
-        lines: string[],
-        xml: string,
-        adapters: AdapterLocation[],
+  tag: string,
+  lineIndex: number,
+  lines: string[],
+  xml: string,
+  adapters: AdapterLocation[],
 ): FrankElementLocation | null {
   const name = extractNameAttribute(lines, lineIndex)
   if (!name) return null
@@ -219,7 +218,7 @@ function createGlyphEntry(
     name,
     startLine: lineIndex + 1,
     adapterName: adapter.name,
-    adapterPosition: adapterIndex
+    adapterPosition: adapterIndex,
   }
 }
 
