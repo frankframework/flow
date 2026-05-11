@@ -746,7 +746,7 @@ function FlowCanvas() {
 
   const handleSelectionChange = useCallback(
     ({ nodes: selectedNodes }: { nodes: FlowNode[] }) => {
-      const frankNodes = selectedNodes.filter((n) => isFrankNode(n))
+      const frankNodes = selectedNodes.filter((node) => isFrankNode(node))
 
       if (frankNodes.length > 1) {
         setIsMultiSelect(true)
