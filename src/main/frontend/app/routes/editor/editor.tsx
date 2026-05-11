@@ -260,6 +260,7 @@ export default function CodeEditor() {
   const flowDecorationsRef = useRef<IEditorDecorationsCollection | null>(null)
   const highlightDecorationsRef = useRef<IEditorDecorationsCollection | null>(null)
   const frankGlyphsDecorationsRef = useRef<IEditorDecorationsCollection | null>(null)
+  const frankElementsRef = useRef<ReturnType<typeof findFrankElementsForGlyphs>>([])
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const validationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -316,6 +317,7 @@ export default function CodeEditor() {
       if (!editor || fileLanguage !== 'xml') return
 
       const elements = findFrankElementsForGlyphs(content)
+      frankElementsRef.current = elements
 
       const decorations = elements.map((element) => ({
         range: { startLineNumber: element.startLine, startColumn: 1, endLineNumber: element.startLine, endColumn: 1 },
@@ -559,12 +561,10 @@ export default function CodeEditor() {
         const lineNumber = event.target.position?.lineNumber
         if (!lineNumber) return
 
-        const content = editor.getValue()
         const editorTab = useEditorTabStore.getState().getTab(useEditorTabStore.getState().activeTabFilePath)
         if (!editorTab) return
 
-        const elements = findFrankElementsForGlyphs(content)
-        const element = elements.find((element) => element.startLine === lineNumber)
+        const element = frankElementsRef.current.find((element) => element.startLine === lineNumber)
         if (!element) return
 
         openInStudioAtNode(
