@@ -619,7 +619,7 @@ function FlowCanvas() {
   const deselectOtherNodes = useCallback(
     (nodeId: string) => {
       const flowNodes = reactFlow.getNodes()
-      if (flowNodes.filter((n) => n.selected).length > 1) {
+      if (flowNodes.filter((flowNode) => flowNode.selected).length > 1) {
         reactFlow.setNodes(flowNodes.map((node) => ({ ...node, selected: node.id === nodeId })))
       }
     },

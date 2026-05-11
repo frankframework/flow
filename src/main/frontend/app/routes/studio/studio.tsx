@@ -54,7 +54,7 @@ function MultiSelectPanel() {
     return Boolean(firstParent) && selected.every((node) => node.parentId === firstParent)
   })
 
-  const platform = useShortcutStore((s) => s.platform)
+  const platform = useShortcutStore((shortcut) => shortcut.platform)
 
   const groupDef = ALL_SHORTCUTS.find((shortCut) => shortCut.id === 'studio.group')!
   const ungroupDef = ALL_SHORTCUTS.find((shortCut) => shortCut.id === 'studio.ungroup')!

@@ -648,12 +648,18 @@ function extractStickyNotesFromAdapter(adapter: Element, idCounter: IdCounter, f
       id: (idCounter.current++).toString(),
       type: 'stickyNote',
       position: { x, y },
-      width: collapsed ? FlowConfig.STICKY_NOTE_BALLOON_WIDTH : width,
-      height: collapsed ? FlowConfig.STICKY_NOTE_BALLOON_HEIGHT : height,
-      ...(collapsed
-        ? { style: { width: FlowConfig.STICKY_NOTE_BALLOON_WIDTH, height: FlowConfig.STICKY_NOTE_BALLOON_HEIGHT } }
-        : {}),
+      width,
+      height,
       data,
+    }
+
+    if (collapsed) {
+      sticky.width = FlowConfig.STICKY_NOTE_BALLOON_WIDTH
+      sticky.height = FlowConfig.STICKY_NOTE_BALLOON_HEIGHT
+      sticky.style = {
+        width: FlowConfig.STICKY_NOTE_BALLOON_WIDTH,
+        height: FlowConfig.STICKY_NOTE_BALLOON_HEIGHT,
+      }
     }
 
     stickyNotes.push(sticky)

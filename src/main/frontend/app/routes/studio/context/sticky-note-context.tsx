@@ -3,7 +3,7 @@ import { STICKY_NOTE_COLORS } from '~/routes/studio/canvas/nodetypes/sticky-note
 import { useShallow } from 'zustand/react/shallow'
 
 export default function StickyNoteContext({ nodeId }: Readonly<{ nodeId: string }>) {
-  const node = useFlowStore((flowState) => flowState.nodes.find((n) => n.id === nodeId))
+  const node = useFlowStore((flowState) => flowState.nodes.find((node) => node.id === nodeId))
   const frankNodes = useFlowStore(useShallow((flowState) => flowState.nodes.filter((node) => isFrankNode(node))))
 
   if (!node || !isStickyNote(node)) return null
