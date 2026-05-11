@@ -54,9 +54,9 @@ export default function StickyNoteContext({ nodeId }: Readonly<{ nodeId: string 
           className="border-border bg-background text-foreground focus:ring-ring w-full rounded border px-3 py-2 text-sm focus:ring-1 focus:outline-none"
         >
           <option value="">None</option>
-          {frankNodes.map((n) => (
+          {frankNodes.map((node) => (
             <option key={node.id} value={node.id}>
-              {n.data.name}
+              {node.data.name}
             </option>
           ))}
         </select>

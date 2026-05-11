@@ -34,11 +34,11 @@ interface RightPanelProps {
 }
 
 function getRightPanelTitle(
-        isMultiSelect: boolean,
-        selectedStickyId: string | null,
-        groupLabel: string,
-        showNodeContext: boolean,
-        editingSubtype: string | null,
+  isMultiSelect: boolean,
+  selectedStickyId: string | null,
+  groupLabel: string,
+  showNodeContext: boolean,
+  editingSubtype: string | null,
 ): string {
   if (isMultiSelect) return groupLabel
   if (selectedStickyId) return 'Sticky Note'
@@ -117,18 +117,19 @@ function AttachedNotesPanel({ nodeId }: { nodeId: number }) {
 }
 
 function RightPanelContent({
-                             isMultiSelect,
-                             selectedStickyId,
-                             showNodeContext,
-                             nodeId
-                           }: RightPanelProps) {
+  isMultiSelect,
+  selectedStickyId,
+  showNodeContext,
+  nodeId,
+  onShowNodeContext,
+}: RightPanelProps) {
   if (isMultiSelect) return <MultiSelectPanel />
   if (selectedStickyId) return <StickyNoteContext nodeId={selectedStickyId} />
   if (showNodeContext)
     return (
       <div className="flex min-h-0 flex-1 flex-col">
         <AttachedNotesPanel nodeId={nodeId} />
-        <NodeContext nodeId={nodeId} setShowNodeContext={handleShowNodeContext} />
+        <NodeContext nodeId={nodeId} setShowNodeContext={onShowNodeContext} />
       </div>
     )
   return <StudioContext />
