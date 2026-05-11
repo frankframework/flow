@@ -7,12 +7,12 @@ import { useNodeContextMenu } from '~/routes/studio/canvas/node-context-menu-con
 import useNodeContextStore from '~/stores/node-context-store'
 
 export const STICKY_NOTE_COLORS = [
-  { label: 'Yellow', value: '#fef08a' },
-  { label: 'Blue', value: '#bfdbfe' },
-  { label: 'Green', value: '#bbf7d0' },
-  { label: 'Red', value: '#fecaca' },
-  { label: 'Purple', value: '#e9d5ff' },
-  { label: 'Orange', value: '#fed7aa' },
+  { label: 'Yellow', value: 'var(--sticky-color-yellow)' },
+  { label: 'Blue', value: 'var(--sticky-color-blue)' },
+  { label: 'Green', value: 'var(--sticky-color-green)' },
+  { label: 'Red', value: 'var(--sticky-color-red)' },
+  { label: 'Purple', value: 'var(--sticky-color-purple)' },
+  { label: 'Orange', value: 'var(--sticky-color-orange)' },
 ]
 
 export type StickyNote = Node<{
@@ -40,7 +40,7 @@ export default function StickyNoteComponent(properties: NodeProps<StickyNote>) {
   const textareaReference = useRef<HTMLTextAreaElement>(null)
   const containerReference = useRef<HTMLDivElement>(null)
 
-  const color = properties.data.color ?? '#fef08a'
+  const color = properties.data.color ?? 'var(--sticky-color-yellow)'
 
   useEffect(() => {
     setLocalContent(properties.data.content)

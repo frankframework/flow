@@ -8,7 +8,7 @@ export default function StickyNoteContext({ nodeId }: Readonly<{ nodeId: string 
 
   if (!node || !isStickyNote(node)) return null
 
-  const { content, color = '#fef08a', attachedToNodeId } = node.data
+  const { content, color = 'var(--sticky-color-yellow)', attachedToNodeId } = node.data
 
   return (
     <div className="flex flex-col gap-4 p-4">
