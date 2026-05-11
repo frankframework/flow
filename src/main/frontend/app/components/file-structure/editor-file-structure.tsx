@@ -349,7 +349,9 @@ export default function EditorFileStructure() {
                 mouseEvent.stopPropagation()
                 triggerItemAction(item.index, editorContextMenu.handleNewFile)
               }}
-              onKeyDown={(keyboardEvent) => keyboardEvent.key === 'Enter' && triggerItemAction(item.index, editorContextMenu.handleNewFile)}
+              onKeyDown={(keyboardEvent) =>
+                keyboardEvent.key === 'Enter' && triggerItemAction(item.index, editorContextMenu.handleNewFile)
+              }
             >
               <CodeFileIcon className="fill-foreground h-3.5 w-3.5" />
             </div>
@@ -364,7 +366,9 @@ export default function EditorFileStructure() {
                 mouseEvent.stopPropagation()
                 triggerItemAction(item.index, editorContextMenu.handleNewFolder)
               }}
-              onKeyDown={(keyboardEvent) => keyboardEvent.key === 'Enter' && triggerItemAction(item.index, editorContextMenu.handleNewFolder)}
+              onKeyDown={(keyboardEvent) =>
+                keyboardEvent.key === 'Enter' && triggerItemAction(item.index, editorContextMenu.handleNewFolder)
+              }
             >
               <FolderIcon className="fill-foreground h-3.5 w-3.5" />
             </div>
@@ -379,7 +383,9 @@ export default function EditorFileStructure() {
                 mouseEvent.stopPropagation()
                 triggerItemAction(item.index, editorContextMenu.handleRename)
               }}
-              onKeyDown={(keyboardEvent) => keyboardEvent.key === 'Enter' && triggerItemAction(item.index, editorContextMenu.handleRename)}
+              onKeyDown={(keyboardEvent) =>
+                keyboardEvent.key === 'Enter' && triggerItemAction(item.index, editorContextMenu.handleRename)
+              }
             >
               <Pen className="stroke-foreground h-3.5 w-3.5" />
             </div>
@@ -394,7 +400,9 @@ export default function EditorFileStructure() {
                 mouseEvent.stopPropagation()
                 triggerItemAction(item.index, editorContextMenu.handleDelete)
               }}
-              onKeyDown={(keyboardEvent) => keyboardEvent.key === 'Enter' && triggerItemAction(item.index, editorContextMenu.handleDelete)}
+              onKeyDown={(keyboardEvent) =>
+                keyboardEvent.key === 'Enter' && triggerItemAction(item.index, editorContextMenu.handleDelete)
+              }
             >
               <TrashBinIcon className="fill-foreground h-3.5 w-3.5" />
             </div>

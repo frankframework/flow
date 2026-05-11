@@ -81,7 +81,11 @@ export default function Studio() {
   const setVisibility = useSidebarStore((state) => state.setVisibility)
   const [showNodeContext, setShowNodeContext] = useState(false)
   const { nodeId, editingSubtype, isMultiSelect } = useNodeContextStore(
-    useShallow((nodeContext) => ({ nodeId: nodeContext.nodeId, editingSubtype: nodeContext.editingSubtype, isMultiSelect: nodeContext.isMultiSelect })),
+    useShallow((nodeContext) => ({
+      nodeId: nodeContext.nodeId,
+      editingSubtype: nodeContext.editingSubtype,
+      isMultiSelect: nodeContext.isMultiSelect,
+    })),
   )
 
   const { activeTab, activeTabPath } = useTabStore(
