@@ -517,6 +517,7 @@ export default function CodeEditor() {
   const handleEditorMount: OnMount = (editor, monacoInstance) => {
     editorReference.current = editor
     monacoReference.current = monacoInstance
+    frankGlyphsDecorationsRef.current = null
     setEditorMounted(true)
 
     editor.updateOptions({ glyphMargin: true })
