@@ -7,11 +7,13 @@ interface NewProjectModalProperties {
   isOpen: boolean
   isLocal: boolean
   onClose: () => void
-  onCreate: (pathOrName: string) => void
+  onCreate: (name: string, rootPath: string) => void
   initialPath?: string
 }
 
-export default function NewProjectModal({
+const CONFIG_DIR = 'src/main/configurations'
+
+export default function NewConfigurationModal({
   isOpen,
   isLocal,
   onClose,
@@ -40,19 +42,9 @@ export default function NewProjectModal({
   if (!isOpen) return null
 
   const handleCreate = () => {
-    if (!name.trim()) return
-    if (isLocal && !location) return
-
-    if (isLocal) {
-      const separator = location.includes('/') ? '/' : '\\'
-      const absolutePath = `${location}${separator}${name.trim()}`
-      onCreate(absolutePath)
-    } else {
-      const trimmedName = name.trim()
-      const path = location ? `${location}/${trimmedName}` : trimmedName
-      onCreate(path)
-    }
-
+    if (!name.trim() || (isLocal && !location)) return
+    const trimmedName = name.trim()
+    onCreate(trimmedName, location ?? '')
     handleClose()
   }
 
@@ -66,10 +58,10 @@ export default function NewProjectModal({
   return (
     <>
       <div className="bg-background/50 absolute inset-0 z-50 flex items-center justify-center">
-        <div className="bg-background border-border relative h-[400px] w-[600px] rounded-lg border p-6 shadow-lg">
-          <h2 className="mb-4 text-lg font-semibold">New Project</h2>
+        <div className="bg-background border-border relative h-100 w-150 rounded-lg border p-6 shadow-lg">
+          <h2 className="mb-4 text-lg font-semibold">New Configuration Project</h2>
           <p className="text-foreground-muted mb-4 text-sm">
-            {isLocal ? 'Create a new Frank! project on disk' : 'Create a new project in the workspace'}
+            {isLocal ? 'Create a new FF! configuration on disk' : 'Create a new FF! configuration in the workspace'}
           </p>
 
           <div className="mb-4">
@@ -90,21 +82,19 @@ export default function NewProjectModal({
           </div>
 
           <div className="mb-4">
-            <label className="mb-1 block text-sm font-medium">Project Name</label>
+            <label className="mb-1 block text-sm font-medium">Configuration Name</label>
             <input
               value={name}
               onChange={(event) => setName(event.target.value)}
               className="border-border bg-background focus:border-foreground-active focus:ring-foreground-active w-full rounded border px-2 py-1 text-sm transition focus:ring-2 focus:outline-none"
-              placeholder="Enter project name"
+              placeholder="Enter configuration name"
             />
           </div>
 
           {name.trim() && (
-            <p className="text-foreground-muted mb-4 text-xs">
-              Project will be created at:{' '}
-              {isLocal
-                ? `${location}${location.includes('/') ? '/' : '\\'}${name.trim()}`
-                : `${location ? `${location}/` : ''}${name.trim()}`}
+            <p className="text-foreground-muted mb-4 text-xs break-all">
+              Project will be created at:<br></br>
+              {getConfigurationPath(location, name, isLocal)}
             </p>
           )}
 
@@ -114,7 +104,7 @@ export default function NewProjectModal({
               disabled={!name.trim() || (isLocal && !location)}
               className="disabled:text-foreground-muted disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Create Project
+              Create Configuration
             </Button>
 
             <Button onClick={handleClose} className="absolute top-3 right-3">
@@ -135,4 +125,12 @@ export default function NewProjectModal({
       />
     </>
   )
+}
+
+function getConfigurationPath(location: string, name: string, isLocal: boolean) {
+  let configPath = isLocal ? location.replace('\\', '/') : location
+  if (!configPath.endsWith(CONFIG_DIR)) {
+    configPath = `${configPath}/${CONFIG_DIR}`
+  }
+  return `${configPath}/${name.trim()}`
 }

@@ -46,18 +46,18 @@ export default function NameInputDialog({
     onSubmit(value.trim())
   }
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      e.preventDefault()
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === 'Enter') {
+      event.preventDefault()
       handleSubmit()
-    } else if (e.key === 'Escape') {
-      e.preventDefault()
+    } else if (event.key === 'Escape') {
+      event.preventDefault()
       onCancel()
     }
   }
 
-  const handleOverlayClick = (e: React.MouseEvent) => {
-    if (e.target === overlayRef.current) onCancel()
+  const handleOverlayClick = (event: React.MouseEvent) => {
+    if (event.target === overlayRef.current) onCancel()
   }
 
   return createPortal(
@@ -70,11 +70,11 @@ export default function NameInputDialog({
         <p className="text-foreground mb-2 text-sm font-medium">{title}</p>
         <ValidatedInput
           autoFocus
-          onFocus={(e) => e.target.select()}
+          onFocus={(event) => event.target.select()}
           value={value}
           patterns={patterns}
           onValidChange={setIsValid}
-          onChange={(e) => setValue(e.target.value)}
+          onChange={(event) => setValue(event.target.value)}
           onKeyDown={handleKeyDown}
         />
         <div className="mt-3 flex justify-end gap-2">

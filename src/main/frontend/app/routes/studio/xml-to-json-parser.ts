@@ -1,14 +1,14 @@
 import type { FlowNode } from '~/routes/studio/canvas/flow'
-import { getElementTypeFromName } from '~/routes/studio/node-translator-module'
+import type { ChildNode } from '~/routes/studio/canvas/nodetypes/child-node'
 import type { ExitNode } from '~/routes/studio/canvas/nodetypes/exit-node'
 import type { FrankNodeType } from '~/routes/studio/canvas/nodetypes/frank-node'
-import type { ChildNode } from '~/routes/studio/canvas/nodetypes/child-node'
-import { fetchConfigurationCached } from '~/services/configuration-service'
+import { getElementTypeFromName } from '~/routes/studio/node-translator-module'
+import { fetchConfigurationFileCached } from '~/services/configuration-file-service'
 import { translateElementFromOldToNewFormat } from '~/utils/flow-utils'
 import { FlowConfig } from './canvas/flow.config'
-import type { StickyNote } from './canvas/nodetypes/sticky-note'
 import type { GroupNode } from './canvas/nodetypes/group-node'
 import { isFrankNode } from '~/stores/flow-store'
+import type { StickyNote } from './canvas/nodetypes/sticky-note'
 
 interface IdCounter {
   current: number
@@ -25,7 +25,7 @@ export interface AdapterInfo {
 }
 
 export async function getAdaptersFromConfiguration(projectName: string, filepath: string): Promise<AdapterInfo[]> {
-  const xmlString = await fetchConfigurationCached(projectName, filepath)
+  const xmlString = await fetchConfigurationFileCached(projectName, filepath)
   const parser = new DOMParser()
   const xmlDoc = parser.parseFromString(xmlString, 'text/xml')
 
@@ -62,7 +62,7 @@ export async function getAdapterFromConfiguration(
   adapterName: string,
   adapterPosition?: number,
 ): Promise<Element | null> {
-  const xmlString = await fetchConfigurationCached(projectname, filename)
+  const xmlString = await fetchConfigurationFileCached(projectname, filename)
   const parser = new DOMParser()
   const xmlDoc = parser.parseFromString(xmlString, 'text/xml')
 
@@ -560,10 +560,10 @@ function convertElementToNode(element: Element, idCounter: IdCounter, sourceHand
     usedClassName,
   )
 
-  const frankNode: FrankNodeType = {
+  return {
     id: thisId,
     type: 'frankNode',
-    position: { x, y },
+    position: {x, y},
     width,
     height,
     data: {
@@ -575,8 +575,6 @@ function convertElementToNode(element: Element, idCounter: IdCounter, sourceHand
       attributes: Object.keys(attributes).length > 0 ? attributes : undefined,
     },
   }
-
-  return frankNode
 }
 
 function convertChildren(elements: Element[], idCounter: IdCounter): ChildNode[] {

@@ -468,7 +468,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
           }}
         >
           <h1 className="font-bold">{properties.data.subtype}</h1>
-          <p className="overflow-hidden text-sm overflow-ellipsis whitespace-nowrap">{properties.data.name}</p>
+          <p className="overflow-hidden text-sm text-ellipsis whitespace-nowrap">{properties.data.name}</p>
           {isDeprecated && frankElement?.deprecated && (
             <>
               <div
@@ -492,10 +492,10 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
         {properties.data.attributes &&
           Object.entries(properties.data.attributes).map(([key, value]) => (
             <div key={key} className="my-1 w-full max-w-full px-1">
-              <p className="text-gray-1000 overflow-hidden text-sm font-bold overflow-ellipsis whitespace-nowrap">
+              <p className="text-gray-1000 overflow-hidden text-sm font-bold text-ellipsis whitespace-nowrap">
                 {key}
               </p>
-              <p className="overflow-hidden text-sm overflow-ellipsis whitespace-nowrap">{value}</p>
+              <p className="overflow-hidden text-sm text-ellipsis whitespace-nowrap">{value}</p>
             </div>
           ))}
         {(properties.data.children.length > 0 || dragOver || canDropDraggedElement) && (
@@ -604,7 +604,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
           onClick={(event) => {
             toggleHandleMenu(event)
           }}
-          className="nodrag absolute right-[-23px] h-[15px] w-[15px] cursor-pointer justify-center rounded-full border bg-gray-400 text-center text-[8px] font-bold text-white"
+          className="nodrag absolute -right-5.75 h-3.75 w-3.75 cursor-pointer justify-center rounded-full border bg-gray-400 text-center text-[8px] font-bold text-white"
           style={{
             top: `${firstHandlePosition + properties.data.sourceHandles.length * handleSpacing + handleSpacing}px`,
           }}
@@ -643,7 +643,7 @@ export function ResizeIcon({ color = '#999999' }: Readonly<{ color?: string }>) 
       strokeWidth="1"
       stroke={color}
       strokeLinecap="round"
-      className={'absolute right-[5px] bottom-[5px]'}
+      className={'absolute right-1.25 bottom-1.25'}
     >
       <line x1="19" y1="20" x2="20" y2="19" />
       <line x1="14" y1="20" x2="20" y2="14" />

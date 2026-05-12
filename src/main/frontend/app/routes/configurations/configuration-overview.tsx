@@ -1,6 +1,6 @@
 import { deleteFile } from '~/services/file-service'
 import { useProjectStore } from '~/stores/project-store'
-import ConfigurationTile from './configuration-tile'
+import ConfigurationFileTile from './configuration-file-tile'
 import ArrowLeftIcon from '/icons/solar/Alt Arrow Left.svg?react'
 import { useNavigate } from 'react-router'
 import AddConfigurationTile from './add-configuration-tile'
@@ -24,7 +24,7 @@ function findConfigurationsDir(node: FileTreeNode | undefined | null): FileTreeN
 
   const normalizedPath = node.path.replaceAll('\\', '/')
 
-  if (node.type === 'DIRECTORY' && normalizedPath.endsWith('/src/main/configurations')) {
+  if (node.type === 'DIRECTORY' && normalizedPath.endsWith(`/src/main/configurations/${node.name}`)) {
     return node
   }
 
@@ -55,8 +55,8 @@ function collectXmlFiles(node: FileTreeNode | undefined | null): FileTreeNode[] 
   return result
 }
 
-export default function ConfigurationManager() {
-  const currentProject = useProjectStore((state) => state.project)
+export default function ConfigurationOverview() {
+  const currentConfigurationProject = useProjectStore((state) => state.project)
   const navigate = useNavigate()
   const [showModal, setShowModal] = useState(false)
   const [tree, setTree] = useState<FileTreeNode | null>(null)
@@ -67,9 +67,9 @@ export default function ConfigurationManager() {
 
   const loadTree = useCallback(
     (signal?: AbortSignal) => {
-      if (!currentProject?.name) return
+      if (!currentConfigurationProject?.name) return
       setIsLoading(true)
-      fetchProjectTree(currentProject.name, signal)
+      fetchProjectTree(currentConfigurationProject.name, signal)
         .then((data) => {
           if (!signal?.aborted) {
             setTree(data)
@@ -82,7 +82,7 @@ export default function ConfigurationManager() {
           }
         })
     },
-    [currentProject?.name],
+    [currentConfigurationProject?.name],
   )
 
   useEffect(() => {
@@ -104,13 +104,13 @@ export default function ConfigurationManager() {
   }, [loadTree])
 
   const handleDelete = async (filepath: string) => {
-    if (!currentProject?.name) return
-    await deleteFile(currentProject.name, filepath)
+    if (!currentConfigurationProject?.name) return
+    await deleteFile(currentConfigurationProject.name, filepath)
     loadTree()
   }
 
   const configFiles = useMemo(() => {
-    if (!tree || !currentProject) return []
+    if (!tree || !currentConfigurationProject) return []
 
     const configurationDirectory = findConfigurationsDir(tree)
     if (!configurationDirectory) return []
@@ -120,7 +120,7 @@ export default function ConfigurationManager() {
       const relativePath = toRelativePath(file.path, 'src/main/configurations/') ?? file.name
       return { ...file, relativePath, path: file.path }
     })
-  }, [tree, currentProject])
+  }, [tree, currentConfigurationProject])
 
   const handleSearch = (event: ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(event.target.value)
@@ -144,7 +144,7 @@ export default function ConfigurationManager() {
       }))
   }, [configFiles])
 
-  const filteredConfigurations = useMemo(() => {
+  const filteredConfigurationFiles = useMemo(() => {
     if (!debouncedQuery.trim()) return filesWithAdapters
 
     const query = debouncedQuery.toLowerCase()
@@ -156,12 +156,12 @@ export default function ConfigurationManager() {
     })
   }, [filesWithAdapters, debouncedQuery])
 
-  if (!currentProject) {
+  if (!currentConfigurationProject) {
     return (
       <div className="bg-backdrop flex h-full w-full flex-col items-center justify-center p-6">
         <div className="text-muted-foreground mb-4">No project selected.</div>
         <Button onClick={() => navigate('/')} className="bg-background">
-          Return to Projects
+          Select configuration
         </Button>
       </div>
     )
@@ -179,20 +179,21 @@ export default function ConfigurationManager() {
     <div className="bg-background flex h-full w-full flex-col p-6">
       <div className="hover:text-foreground-active flex w-fit hover:cursor-pointer" onClick={() => navigate('/')}>
         <ArrowLeftIcon className="mb-4 h-6 w-auto fill-current hover:cursor-pointer" />
-        <p>Return To Projects</p>
+        <p>Switch configuration</p>
       </div>
 
-      <h1 className="ml-2 text-2xl font-bold">Configuration Manager</h1>
+      <h1 className="ml-2 text-2xl font-bold">Configuration Overview</h1>
       <div className="mb-4 flex items-center justify-between">
         <p className="ml-2">
-          Configurations within <span className="font-bold">{currentProject.name}</span>/src/main/configurations:
+          Configuration files within src/main/configurations/
+          <span className="font-bold">{currentConfigurationProject.name}</span>:
         </p>
         <Search value={searchQuery} onChange={handleSearch} />
       </div>
 
-      <div className="border-border bg-backdrop flex flex-wrap gap-4 self-start rounded border p-4">
-        {filteredConfigurations.map((file) => (
-          <ConfigurationTile
+      <div className="border-border bg-background flex flex-wrap gap-4 self-start rounded border p-4">
+        {filteredConfigurationFiles.map((file) => (
+          <ConfigurationFileTile
             key={file.path}
             filepath={file.path}
             relativePath={file.relativePath}
@@ -207,7 +208,7 @@ export default function ConfigurationManager() {
         isOpen={showModal}
         onClose={() => setShowModal(false)}
         onSuccess={handleConfigAdded}
-        currentProject={currentProject}
+        currentConfiguration={currentConfigurationProject}
         configurationsDirPath={configurationsDir?.path ?? ''}
       />
     </div>

@@ -9,13 +9,13 @@ import java.nio.file.StandardOpenOption;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 import lombok.extern.slf4j.Slf4j;
-import org.frankframework.flow.configuration.Configuration;
+import org.frankframework.flow.configuration.ConfigurationFile;
 import org.frankframework.flow.configuration.ConfigurationNotFoundException;
 import org.frankframework.flow.configuration.ConfigurationXmlDTO;
 import org.frankframework.flow.exception.ApiException;
 import org.frankframework.flow.filesystem.FileSystemStorage;
-import org.frankframework.flow.project.Project;
-import org.frankframework.flow.project.ProjectService;
+import org.frankframework.flow.project.ConfigurationProject;
+import org.frankframework.flow.project.ConfigurationProjectService;
 import org.frankframework.flow.utility.XmlAdapterUtils;
 import org.frankframework.flow.utility.XmlConfigurationUtils;
 import org.frankframework.flow.utility.XmlSecurityUtils;
@@ -29,24 +29,22 @@ import org.xml.sax.SAXException;
 @Service
 public class AdapterService {
 
-	private final ProjectService projectService;
+	private final ConfigurationProjectService configurationProjectService;
 	private final FileSystemStorage fileSystemStorage;
 
-	public AdapterService(ProjectService projectService, FileSystemStorage fileSystemStorage) {
-		this.projectService = projectService;
+	public AdapterService(ConfigurationProjectService configurationProjectService, FileSystemStorage fileSystemStorage) {
+		this.configurationProjectService = configurationProjectService;
 		this.fileSystemStorage = fileSystemStorage;
 	}
 
 	public ConfigurationXmlDTO getAdapter(String projectName, String configurationPath, String adapterName)
 			throws IOException, ApiException, SAXException, ParserConfigurationException, TransformerException {
 
-		Project project = projectService.getProject(projectName);
-
-		Configuration config = project.getConfigurations().stream()
-				.filter(c -> c.getFilepath().equals(configurationPath))
+		ConfigurationProject configurationProject = configurationProjectService.getProject(projectName);
+		ConfigurationFile config = configurationProject.getConfigurationFiles().stream()
+				.filter(configurationFile -> configurationFile.getFilepath().equals(configurationPath))
 				.findFirst()
-				.orElseThrow(() -> new ConfigurationNotFoundException(
-						String.format("Configuration with filepath: %s not found", configurationPath)));
+				.orElseThrow(() -> new ConfigurationNotFoundException(String.format("Configuration File with path: %s not found", configurationPath)));
 
 		Document configDoc = XmlSecurityUtils.createSecureDocumentBuilder()
 				.parse(new ByteArrayInputStream(config.getXmlContent().getBytes(StandardCharsets.UTF_8)));
@@ -150,8 +148,7 @@ public class AdapterService {
 		}
 	}
 
-	public void deleteAdapter(String configurationPath, String adapterName)
-			throws ConfigurationNotFoundException, AdapterNotFoundException, IOException {
+	public void deleteAdapter(String configurationPath, String adapterName) throws ConfigurationNotFoundException, AdapterNotFoundException, IOException {
 		if (configurationPath == null || configurationPath.isBlank()) {
 			throw new IllegalArgumentException("Configuration path must not be empty");
 		}
@@ -171,10 +168,10 @@ public class AdapterService {
 
 			String updatedXml = XmlConfigurationUtils.convertNodeToString(configDoc);
 			Files.writeString(absConfigFile, updatedXml, StandardCharsets.UTF_8, StandardOpenOption.TRUNCATE_EXISTING);
-		} catch (AdapterNotFoundException e) {
-			throw e;
-		} catch (Exception e) {
-			throw new IOException("Failed to delete adapter: " + e.getMessage(), e);
+		} catch (AdapterNotFoundException exception) {
+			throw exception;
+		} catch (Exception exception) {
+			throw new IOException("Failed to delete adapter: " + exception.getMessage(), exception);
 		}
 	}
 
@@ -183,6 +180,7 @@ public class AdapterService {
 				new ClassPathResource("templates/default-adapter.xml")
 						.getInputStream()
 						.readAllBytes(),
-				StandardCharsets.UTF_8);
+				StandardCharsets.UTF_8
+		);
 	}
 }

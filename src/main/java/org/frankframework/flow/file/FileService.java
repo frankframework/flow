@@ -6,9 +6,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import org.frankframework.flow.exception.ApiException;
 import org.frankframework.flow.filesystem.FileSystemStorage;
-import org.frankframework.flow.project.Project;
-import org.frankframework.flow.project.ProjectNotFoundException;
-import org.frankframework.flow.project.ProjectService;
+import org.frankframework.flow.project.ConfigurationProject;
+import org.frankframework.flow.project.ConfigurationProjectService;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -17,12 +16,12 @@ import org.springframework.stereotype.Service;
 public class FileService {
 
 	public static final String[] ALLOWED_EXTENSIONS = { "", ".xml", ".json", ".yaml", ".yml", ".properties" };
-	private final ProjectService projectService;
+	private final ConfigurationProjectService configurationProjectService;
 	private final FileSystemStorage fileSystemStorage;
 	private final FileTreeService fileTreeService;
 
-	public FileService(ProjectService projectService, FileSystemStorage fileSystemStorage, @Lazy FileTreeService fileTreeService) {
-		this.projectService = projectService;
+	public FileService(ConfigurationProjectService configurationProjectService, FileSystemStorage fileSystemStorage, @Lazy FileTreeService fileTreeService) {
+		this.configurationProjectService = configurationProjectService;
 		this.fileSystemStorage = fileSystemStorage;
 		this.fileTreeService = fileTreeService;
 	}
@@ -114,16 +113,16 @@ public class FileService {
 		fileTreeService.invalidateTreeCache(projectName);
 	}
 
-	public void validateWithinProject(String projectName, String path) throws ApiException {
+	public void validateWithinProject(String projectName, String path) {
 		try {
-			Project project = projectService.getProject(projectName);
-			Path projectPath = fileSystemStorage.toAbsolutePath(project.getRootPath());
+			ConfigurationProject configurationProject = configurationProjectService.getProject(projectName);
+			Path projectPath = fileSystemStorage.toAbsolutePath(configurationProject.getRootPath());
 			Path targetPath = fileSystemStorage.toAbsolutePath(path).normalize();
 
 			if (!targetPath.startsWith(projectPath)) {
 				throw new ApiException("Path is outside project directory", HttpStatus.FORBIDDEN);
 			}
-		} catch (ProjectNotFoundException e) {
+		} catch (ApiException _) {
 			throw new IllegalArgumentException("Project does not exist: " + projectName);
 		}
 	}

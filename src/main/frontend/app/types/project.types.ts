@@ -1,4 +1,4 @@
-﻿export interface Project {
+﻿export interface ConfigurationProject {
   name: string
   rootPath: string
   filepaths: string[]
@@ -7,7 +7,7 @@
   hasStoredToken: boolean
 }
 
-export interface RecentProject {
+export interface RecentConfigurationProject {
   name: string
   rootPath: string
   lastOpened: string

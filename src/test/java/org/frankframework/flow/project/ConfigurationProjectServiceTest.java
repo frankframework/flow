@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+import org.frankframework.flow.exception.ApiException;
 import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.frankframework.flow.filesystem.FilesystemEntry;
 import org.frankframework.flow.projectsettings.FilterType;
@@ -36,9 +37,9 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 
 @ExtendWith(MockitoExtension.class)
-public class ProjectServiceTest {
+public class ConfigurationProjectServiceTest {
 
-	private ProjectService projectService;
+	private ConfigurationProjectService configurationProjectService;
 
 	@Mock
 	private FileSystemStorage fileSystemStorage;
@@ -54,7 +55,7 @@ public class ProjectServiceTest {
 	@BeforeEach
 	void init() {
 		recentProjects.clear();
-		projectService = new ProjectService(fileSystemStorage, recentProjectsService);
+		configurationProjectService = new ConfigurationProjectService(fileSystemStorage, recentProjectsService);
 	}
 
 	private void stubFileSystemForProjectCreation() throws IOException {
@@ -62,7 +63,7 @@ public class ProjectServiceTest {
 			String dirName = invocation.getArgument(0);
 			Path dirPath = Path.of(dirName);
 			String projectName = dirPath.getFileName().toString();
-			Path projectDir = tempDir.resolve(projectName);
+			Path projectDir = tempDir.resolve("src/main/configurations/"+projectName);
 			Files.createDirectories(projectDir);
 			return projectDir;
 		});
@@ -77,33 +78,34 @@ public class ProjectServiceTest {
 		});
 
 		doAnswer(invocation -> {
-					String path = invocation.getArgument(0);
-					String content = invocation.getArgument(1);
-					Path filePath = Path.of(path);
-					if (filePath.getParent() != null) {
-						Files.createDirectories(filePath.getParent());
-					}
-					Files.writeString(filePath, content, StandardCharsets.UTF_8);
-					return null;
-				})
+			String path = invocation.getArgument(0);
+			String content = invocation.getArgument(1);
+			Path filePath = Path.of(path);
+			if (filePath.getParent() != null) {
+				Files.createDirectories(filePath.getParent());
+			}
+			Files.writeString(filePath, content, StandardCharsets.UTF_8);
+			return null;
+		})
 				.when(fileSystemStorage)
 				.writeFile(anyString(), anyString());
 	}
 
 	@Test
-	public void testAddingProjectToProjectService() throws ProjectNotFoundException, IOException {
+	public void testAddingProjectToProjectService() throws IOException, ApiException {
 		when(fileSystemStorage.isLocalEnvironment()).thenReturn(true);
 		when(recentProjectsService.getRecentProjects()).thenReturn(recentProjects);
 		stubFileSystemForProjectCreation();
 
 		String projectName = "new_project";
 
-		assertEquals(0, projectService.getProjects().size());
-		assertThrows(ProjectNotFoundException.class, () -> projectService.getProject(projectName));
+		assertEquals(0, configurationProjectService.getProjects().size());
+		assertThrows(ApiException.class, () -> configurationProjectService.getProject(projectName));
 
-		projectService.createProjectOnDisk(projectName);
+		ConfigurationProjectCreateDTO createDTO = new ConfigurationProjectCreateDTO(projectName, "/");
+		configurationProjectService.createProjectOnDisk(createDTO);
 
-		assertNotNull(projectService.getProject(projectName));
+		assertNotNull(configurationProjectService.getProject(projectName));
 	}
 
 	@Test
@@ -111,13 +113,13 @@ public class ProjectServiceTest {
 		stubFileSystemForProjectCreation();
 
 		String projectName = "test_proj";
+		ConfigurationProjectCreateDTO createDTO = new ConfigurationProjectCreateDTO(projectName, tempDir.toString());
+		ConfigurationProject configurationProject = configurationProjectService.createProjectOnDisk(createDTO);
 
-		Project project = projectService.createProjectOnDisk(projectName);
+		assertNotNull(configurationProject);
+		assertEquals(projectName, configurationProject.getName());
 
-		assertNotNull(project);
-		assertEquals(projectName, project.getName());
-
-		Path configDir = tempDir.resolve(projectName).resolve("src/main/configurations");
+		Path configDir = tempDir.resolve("src/main/configurations/"+projectName);
 		assertTrue(Files.exists(configDir), "configurations directory should exist");
 
 		Path configFile = configDir.resolve("Configuration.xml");
@@ -127,18 +129,18 @@ public class ProjectServiceTest {
 	}
 
 	@Test
-	public void testCreateProjectOnDiskHasConfigurationsInDto() throws IOException, ProjectNotFoundException {
+	public void testCreateProjectOnDiskHasConfigurationsInDto() throws IOException, ApiException {
 		stubFileSystemForProjectCreation();
 		when(fileSystemStorage.toRelativePath(anyString())).thenAnswer(inv -> inv.getArgument(0));
 
 		String projectName = "loaded_proj";
+		ConfigurationProjectCreateDTO createDTO = new ConfigurationProjectCreateDTO(projectName, "/");
+		configurationProjectService.createProjectOnDisk(createDTO);
 
-		projectService.createProjectOnDisk(projectName);
+		ConfigurationProject configurationProject = configurationProjectService.getProject(projectName);
+		assertNotNull(configurationProject);
 
-		Project project = projectService.getProject(projectName);
-		assertNotNull(project);
-
-		ProjectDTO dto = projectService.toDto(project);
+		ConfigurationProjectDTO dto = configurationProjectService.toDto(configurationProject);
 		assertFalse(dto.filepaths().isEmpty(), "Project DTO should dynamically load configurations from disk");
 	}
 
@@ -147,7 +149,7 @@ public class ProjectServiceTest {
 		when(fileSystemStorage.isLocalEnvironment()).thenReturn(true);
 		when(recentProjectsService.getRecentProjects()).thenReturn(recentProjects);
 
-		assertThrows(ProjectNotFoundException.class, () -> projectService.getProject("missingProject"));
+		assertThrows(ApiException.class, () -> configurationProjectService.getProject("missingProject"));
 	}
 
 	@Test
@@ -155,8 +157,8 @@ public class ProjectServiceTest {
 		when(fileSystemStorage.isLocalEnvironment()).thenReturn(true);
 		when(recentProjectsService.getRecentProjects()).thenReturn(recentProjects);
 
-		List<Project> projects = projectService.getProjects();
-		assertEquals(0, projects.size());
+		List<ConfigurationProject> configurationProjects = configurationProjectService.getProjects();
+		assertEquals(0, configurationProjects.size());
 	}
 
 	@Test
@@ -165,54 +167,58 @@ public class ProjectServiceTest {
 		when(recentProjectsService.getRecentProjects()).thenReturn(recentProjects);
 		stubFileSystemForProjectCreation();
 
-		projectService.createProjectOnDisk("my_project");
+		ConfigurationProjectCreateDTO createDTO = new ConfigurationProjectCreateDTO("my_project", "/");
+		configurationProjectService.createProjectOnDisk(createDTO);
 
-		Path projectDir = tempDir.resolve("my_project");
+		Path projectDir = tempDir.resolve("src/main/configurations/my_project");
 		recentProjects.add(new RecentProject("my_project", projectDir.toString(), "2026-01-01T00:00:00Z"));
 
-		projectService.invalidateCache();
+		configurationProjectService.invalidateCache();
 
-		List<Project> projects = projectService.getProjects();
-		assertEquals(1, projects.size());
-		assertEquals("my_project", projects.getFirst().getName());
+		List<ConfigurationProject> configurationProjects = configurationProjectService.getProjects();
+		assertEquals(1, configurationProjects.size());
+		assertEquals("my_project", configurationProjects.getFirst().getName());
 	}
 
 	@Test
 	public void testEnableFilterValid() throws Exception {
 		stubFileSystemForProjectCreation();
 
-		projectService.createProjectOnDisk("proj");
+		ConfigurationProjectCreateDTO createDTO = new ConfigurationProjectCreateDTO("proj", "/");
+		configurationProjectService.createProjectOnDisk(createDTO);
 
-		Project project = projectService.enableFilter("proj", "ADAPTER");
+		ConfigurationProject configurationProject = configurationProjectService.enableFilter("proj", "ADAPTER");
 
-		assertTrue(project.getProjectSettings().getFilters().get(FilterType.ADAPTER));
+		assertTrue(configurationProject.getConfigurationSettings().getFilters().get(FilterType.ADAPTER));
 	}
 
 	@Test
 	public void testDisableFilterValid() throws Exception {
 		stubFileSystemForProjectCreation();
 
-		projectService.createProjectOnDisk("proj");
+		ConfigurationProjectCreateDTO createDTO = new ConfigurationProjectCreateDTO("proj", "/");
+		configurationProjectService.createProjectOnDisk(createDTO);
 
-		projectService.enableFilter("proj", "ADAPTER");
-		assertTrue(projectService
+		configurationProjectService.enableFilter("proj", "ADAPTER");
+		assertTrue(configurationProjectService
 				.getProject("proj")
-				.getProjectSettings()
+				.getConfigurationSettings()
 				.getFilters()
 				.get(FilterType.ADAPTER));
 
-		Project updated = projectService.disableFilter("proj", "ADAPTER");
-		assertFalse(updated.getProjectSettings().getFilters().get(FilterType.ADAPTER));
+		ConfigurationProject updated = configurationProjectService.disableFilter("proj", "ADAPTER");
+		assertFalse(updated.getConfigurationSettings().getFilters().get(FilterType.ADAPTER));
 	}
 
 	@Test
 	public void testEnableFilterInvalidFilterType() throws IOException {
 		stubFileSystemForProjectCreation();
 
-		projectService.createProjectOnDisk("proj");
+		ConfigurationProjectCreateDTO createDTO = new ConfigurationProjectCreateDTO("proj", "/");
+		configurationProjectService.createProjectOnDisk(createDTO);
 
 		InvalidFilterTypeException ex = assertThrows(
-				InvalidFilterTypeException.class, () -> projectService.enableFilter("proj", "INVALID_TYPE"));
+				InvalidFilterTypeException.class, () -> configurationProjectService.enableFilter("proj", "INVALID_TYPE"));
 
 		assertEquals("Invalid filter type: INVALID_TYPE", ex.getMessage());
 	}
@@ -221,10 +227,11 @@ public class ProjectServiceTest {
 	public void testDisableFilterInvalidFilterType() throws IOException {
 		stubFileSystemForProjectCreation();
 
-		projectService.createProjectOnDisk("proj");
+		ConfigurationProjectCreateDTO createDTO = new ConfigurationProjectCreateDTO("proj", "/");
+		configurationProjectService.createProjectOnDisk(createDTO);
 
 		InvalidFilterTypeException ex = assertThrows(
-				InvalidFilterTypeException.class, () -> projectService.disableFilter("proj", "INVALID_TYPE"));
+				InvalidFilterTypeException.class, () -> configurationProjectService.disableFilter("proj", "INVALID_TYPE"));
 
 		assertEquals("Invalid filter type: INVALID_TYPE", ex.getMessage());
 	}
@@ -234,8 +241,8 @@ public class ProjectServiceTest {
 		when(fileSystemStorage.isLocalEnvironment()).thenReturn(true);
 		when(recentProjectsService.getRecentProjects()).thenReturn(recentProjects);
 
-		ProjectNotFoundException ex = assertThrows(
-				ProjectNotFoundException.class, () -> projectService.enableFilter("unknownProject", "ADAPTER"));
+		ApiException ex = assertThrows(
+				ApiException.class, () -> configurationProjectService.enableFilter("unknownProject", "ADAPTER"));
 
 		assertTrue(ex.getMessage().contains("unknownProject"));
 	}
@@ -245,8 +252,8 @@ public class ProjectServiceTest {
 		when(fileSystemStorage.isLocalEnvironment()).thenReturn(true);
 		when(recentProjectsService.getRecentProjects()).thenReturn(recentProjects);
 
-		ProjectNotFoundException ex = assertThrows(
-				ProjectNotFoundException.class, () -> projectService.disableFilter("unknownProject", "ADAPTER"));
+		ApiException ex = assertThrows(
+				ApiException.class, () -> configurationProjectService.disableFilter("unknownProject", "ADAPTER"));
 
 		assertTrue(ex.getMessage().contains("unknownProject"));
 	}
@@ -277,7 +284,8 @@ public class ProjectServiceTest {
 				"files",
 				"Configuration.xml",
 				"application/xml",
-				"<Configuration><Adapter name='TestAdapter'/></Configuration>".getBytes(StandardCharsets.UTF_8));
+				"<Configuration><Adapter name='TestAdapter'/></Configuration>".getBytes(StandardCharsets.UTF_8)
+		);
 
 		MockMultipartFile propsFile = new MockMultipartFile(
 				"files", "application.properties", "text/plain", "key=value".getBytes(StandardCharsets.UTF_8));
@@ -286,10 +294,10 @@ public class ProjectServiceTest {
 		List<String> paths =
 				List.of("src/main/configurations/Configuration.xml", "src/main/resources/application.properties");
 
-		Project project = projectService.importProjectFromFiles(projectName, files, paths);
+		ConfigurationProject configurationProject = configurationProjectService.importProjectFromFiles(projectName, files, paths);
 
-		assertNotNull(project);
-		assertEquals(projectName, project.getName());
+		assertNotNull(configurationProject);
+		assertEquals(projectName, configurationProject.getName());
 
 		Path projectDir = tempDir.resolve(projectName);
 		Path writtenConfig = projectDir.resolve("src/main/configurations/Configuration.xml");
@@ -320,7 +328,7 @@ public class ProjectServiceTest {
 		List<String> paths = List.of("../../../etc/evil.xml");
 
 		SecurityException ex = assertThrows(
-				SecurityException.class, () -> projectService.importProjectFromFiles(projectName, files, paths));
+				SecurityException.class, () -> configurationProjectService.importProjectFromFiles(projectName, files, paths));
 
 		assertTrue(ex.getMessage().contains("Invalid file path"));
 	}
@@ -343,7 +351,7 @@ public class ProjectServiceTest {
 		List<String> paths = List.of("/etc/passwd");
 
 		SecurityException ex = assertThrows(
-				SecurityException.class, () -> projectService.importProjectFromFiles(projectName, files, paths));
+				SecurityException.class, () -> configurationProjectService.importProjectFromFiles(projectName, files, paths));
 
 		assertTrue(ex.getMessage().contains("Invalid file path"));
 	}
@@ -354,16 +362,18 @@ public class ProjectServiceTest {
 		when(fileSystemStorage.isLocalEnvironment()).thenReturn(true);
 		when(recentProjectsService.getRecentProjects()).thenReturn(recentProjects);
 
-		projectService.createProjectOnDisk("proj1");
-		projectService.createProjectOnDisk("proj2");
+		ConfigurationProjectCreateDTO createDTO1 = new ConfigurationProjectCreateDTO("proj1", "/");
+		configurationProjectService.createProjectOnDisk(createDTO1);
+		ConfigurationProjectCreateDTO createDTO2 = new ConfigurationProjectCreateDTO("proj2", "/");
+		configurationProjectService.createProjectOnDisk(createDTO2);
 
-		assertNotNull(projectService.getProject("proj1"));
-		assertNotNull(projectService.getProject("proj2"));
+		assertNotNull(configurationProjectService.getProject("proj1"));
+		assertNotNull(configurationProjectService.getProject("proj2"));
 
-		projectService.invalidateCache();
+		configurationProjectService.invalidateCache();
 
-		assertThrows(ProjectNotFoundException.class, () -> projectService.getProject("proj1"));
-		assertThrows(ProjectNotFoundException.class, () -> projectService.getProject("proj2"));
+		assertThrows(ApiException.class, () -> configurationProjectService.getProject("proj1"));
+		assertThrows(ApiException.class, () -> configurationProjectService.getProject("proj2"));
 	}
 
 	@Test
@@ -372,13 +382,15 @@ public class ProjectServiceTest {
 		when(fileSystemStorage.isLocalEnvironment()).thenReturn(true);
 		when(recentProjectsService.getRecentProjects()).thenReturn(recentProjects);
 
-		projectService.createProjectOnDisk("proj1");
-		projectService.createProjectOnDisk("proj2");
+		ConfigurationProjectCreateDTO createDTO1 = new ConfigurationProjectCreateDTO("proj1", "/");
+		configurationProjectService.createProjectOnDisk(createDTO1);
+		ConfigurationProjectCreateDTO createDTO2 = new ConfigurationProjectCreateDTO("proj2", "/");
+		configurationProjectService.createProjectOnDisk(createDTO2);
 
-		projectService.invalidateProject("proj1");
+		configurationProjectService.invalidateProject("proj1");
 
-		assertThrows(ProjectNotFoundException.class, () -> projectService.getProject("proj1"));
-		assertNotNull(projectService.getProject("proj2"));
+		assertThrows(ApiException.class, () -> configurationProjectService.getProject("proj1"));
+		assertNotNull(configurationProjectService.getProject("proj2"));
 	}
 
 	@Test
@@ -400,14 +412,15 @@ public class ProjectServiceTest {
 		Files.writeString(
 				projectDir.resolve("src/main/configurations/TestConfig.xml"),
 				"<Configuration name='TestConfig'/>",
-				StandardCharsets.UTF_8);
+				StandardCharsets.UTF_8
+		);
 
-		Project project = projectService.openProjectFromDisk(projectDir.toString());
+		ConfigurationProject configurationProject = configurationProjectService.openProjectFromDisk(projectDir.toString());
 
-		assertNotNull(project);
-		assertEquals(projectName, project.getName());
+		assertNotNull(configurationProject);
+		assertEquals(projectName, configurationProject.getName());
 
-		ProjectDTO dto = projectService.toDto(project);
+		ConfigurationProjectDTO dto = configurationProjectService.toDto(configurationProject);
 		assertFalse(dto.filepaths().isEmpty());
 	}
 
@@ -419,7 +432,7 @@ public class ProjectServiceTest {
 			return p.isAbsolute() ? p : tempDir.resolve(path);
 		});
 
-		assertThrows(ProjectNotFoundException.class, () -> projectService.openProjectFromDisk("nonexistent_project"));
+		assertThrows(ApiException.class, () -> configurationProjectService.openProjectFromDisk("nonexistent_project"));
 	}
 
 	@Test
@@ -433,7 +446,7 @@ public class ProjectServiceTest {
 		Path file = tempDir.resolve("not_a_directory.xml");
 		Files.writeString(file, "<config/>", StandardCharsets.UTF_8);
 
-		assertThrows(ProjectNotFoundException.class, () -> projectService.openProjectFromDisk(file.toString()));
+		assertThrows(ApiException.class, () -> configurationProjectService.openProjectFromDisk(file.toString()));
 	}
 
 	@Test
@@ -447,12 +460,12 @@ public class ProjectServiceTest {
 		Path projDir = tempDir.resolve("empty_proj");
 		Files.createDirectory(projDir);
 
-		Project project = projectService.openProjectFromDisk(projDir.toString());
+		ConfigurationProject configurationProject = configurationProjectService.openProjectFromDisk(projDir.toString());
 
-		assertNotNull(project);
-		assertEquals("empty_proj", project.getName());
+		assertNotNull(configurationProject);
+		assertEquals("empty_proj", configurationProject.getName());
 
-		ProjectDTO dto = projectService.toDto(project);
+		ConfigurationProjectDTO dto = configurationProjectService.toDto(configurationProject);
 		assertTrue(dto.filepaths().isEmpty(), "No configurations dir means empty config list");
 	}
 
@@ -465,7 +478,8 @@ public class ProjectServiceTest {
 		Files.writeString(
 				projDir.resolve("src/main/configurations/Config.xml"),
 				"<Configuration><Adapter name='A'/></Configuration>",
-				StandardCharsets.UTF_8);
+				StandardCharsets.UTF_8
+		);
 
 		when(fileSystemStorage.listRoots())
 				.thenReturn(List.of(new FilesystemEntry("scanned_proj", projDir.toString(), "directory", true)));
@@ -478,12 +492,12 @@ public class ProjectServiceTest {
 
 		when(fileSystemStorage.toRelativePath(anyString())).thenAnswer(inv -> inv.getArgument(0));
 
-		List<Project> projects = projectService.getProjects();
+		List<ConfigurationProject> configurationProjects = configurationProjectService.getProjects();
 
-		assertEquals(1, projects.size());
-		assertEquals("scanned_proj", projects.getFirst().getName());
+		assertEquals(1, configurationProjects.size());
+		assertEquals("scanned_proj", configurationProjects.getFirst().getName());
 
-		ProjectDTO dto = projectService.toDto(projects.getFirst());
+		ConfigurationProjectDTO dto = configurationProjectService.toDto(configurationProjects.getFirst());
 		assertFalse(dto.filepaths().isEmpty());
 	}
 
@@ -499,7 +513,8 @@ public class ProjectServiceTest {
 		when(fileSystemStorage.listRoots())
 				.thenReturn(List.of(
 						new FilesystemEntry("valid_proj", validDir.toString(), "directory", true),
-						new FilesystemEntry("nonexistent_proj", invalidDir.toString(), "directory", true)));
+						new FilesystemEntry("nonexistent_proj", invalidDir.toString(), "directory", true)
+				));
 
 		when(fileSystemStorage.toAbsolutePath(anyString())).thenAnswer(invocation -> {
 			String path = invocation.getArgument(0);
@@ -507,10 +522,10 @@ public class ProjectServiceTest {
 			return p.isAbsolute() ? p : tempDir.resolve(path);
 		});
 
-		List<Project> projects = projectService.getProjects();
+		List<ConfigurationProject> configurationProjects = configurationProjectService.getProjects();
 
-		assertEquals(1, projects.size(), "Invalid workspace entry should be silently skipped");
-		assertEquals("valid_proj", projects.getFirst().getName());
+		assertEquals(1, configurationProjects.size(), "Invalid workspace entry should be silently skipped");
+		assertEquals("valid_proj", configurationProjects.getFirst().getName());
 	}
 
 	@Test
@@ -518,31 +533,33 @@ public class ProjectServiceTest {
 		when(fileSystemStorage.isLocalEnvironment()).thenReturn(true);
 		stubFileSystemForProjectCreation();
 
-		projectService.createProjectOnDisk("valid_proj");
-		Path validPath = tempDir.resolve("valid_proj");
-		Path invalidPath = tempDir.resolve("nonexistent_proj");
+		ConfigurationProjectCreateDTO createDTO = new ConfigurationProjectCreateDTO("valid_proj", "/");
+		configurationProjectService.createProjectOnDisk(createDTO);
+		Path validPath = tempDir.resolve("src/main/configurations/valid_proj");
+		Path invalidPath = tempDir.resolve("src/main/configurations/nonexistent_proj");
 
 		recentProjects.add(new RecentProject("valid_proj", validPath.toString(), "2026-01-01T00:00:00Z"));
 		recentProjects.add(new RecentProject("nonexistent_proj", invalidPath.toString(), "2026-01-01T00:00:00Z"));
 
 		when(recentProjectsService.getRecentProjects()).thenReturn(recentProjects);
 
-		projectService.invalidateCache();
+		configurationProjectService.invalidateCache();
 
-		List<Project> projects = projectService.getProjects();
+		List<ConfigurationProject> configurationProjects = configurationProjectService.getProjects();
 
-		assertEquals(1, projects.size(), "Stale recent project should be silently skipped");
-		assertEquals("valid_proj", projects.getFirst().getName());
+		assertEquals(1, configurationProjects.size(), "Stale recent project should be silently skipped");
+		assertEquals("valid_proj", configurationProjects.getFirst().getName());
 	}
 
 	@Test
 	void testExportProjectAsZipContainsProjectFiles() throws Exception {
 		stubFileSystemForProjectCreation();
 
-		projectService.createProjectOnDisk("export_proj");
+		ConfigurationProjectCreateDTO createDTO = new ConfigurationProjectCreateDTO("export_proj", "/");
+		configurationProjectService.createProjectOnDisk(createDTO);
 
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		projectService.exportProjectAsZip("export_proj", baos);
+		configurationProjectService.exportProjectAsZip("export_proj", baos);
 
 		byte[] zipBytes = baos.toByteArray();
 		assertTrue(zipBytes.length > 0, "Zip output should not be empty");
@@ -567,16 +584,17 @@ public class ProjectServiceTest {
 
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
-		assertThrows(ProjectNotFoundException.class, () -> projectService.exportProjectAsZip("nonexistent", baos));
+		assertThrows(ApiException.class, () -> configurationProjectService.exportProjectAsZip("nonexistent", baos));
 	}
 
 	@Test
 	void testExportProjectAsZipThrowsWhenDirectoryDeletedAfterCaching() throws Exception {
 		stubFileSystemForProjectCreation();
 
-		projectService.createProjectOnDisk("deleteme_proj");
+		ConfigurationProjectCreateDTO createDTO = new ConfigurationProjectCreateDTO("deleteme_proj", tempDir.toString());
+		configurationProjectService.createProjectOnDisk(createDTO);
 
-		Path projDir = tempDir.resolve("deleteme_proj");
+		Path projDir = tempDir.resolve("src/main/configurations/deleteme_proj");
 		try (Stream<Path> paths = Files.walk(projDir)) {
 			paths.sorted(Comparator.reverseOrder()).forEach(p -> {
 				try {
@@ -589,7 +607,7 @@ public class ProjectServiceTest {
 
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
-		assertThrows(ProjectNotFoundException.class, () -> projectService.exportProjectAsZip("deleteme_proj", baos));
+		assertThrows(ApiException.class, () -> configurationProjectService.exportProjectAsZip("deleteme_proj", baos));
 	}
 
 	@Test
@@ -597,10 +615,11 @@ public class ProjectServiceTest {
 		stubFileSystemForProjectCreation();
 		when(fileSystemStorage.toRelativePath(anyString())).thenAnswer(inv -> inv.getArgument(0));
 
-		projectService.createProjectOnDisk("dto_proj");
-		Project project = projectService.getProject("dto_proj");
+		ConfigurationProjectCreateDTO createDTO = new ConfigurationProjectCreateDTO("dto_proj", "/");
+		configurationProjectService.createProjectOnDisk(createDTO);
+		ConfigurationProject configurationProject = configurationProjectService.getProject("dto_proj");
 
-		ProjectDTO dto = projectService.toDto(project);
+		ConfigurationProjectDTO dto = configurationProjectService.toDto(configurationProject);
 
 		assertNotNull(dto);
 		assertEquals("dto_proj", dto.name());
@@ -615,13 +634,14 @@ public class ProjectServiceTest {
 		stubFileSystemForProjectCreation();
 		when(fileSystemStorage.toRelativePath(anyString())).thenAnswer(inv -> inv.getArgument(0));
 
-		projectService.createProjectOnDisk("git_proj");
-		Project project = projectService.getProject("git_proj");
+		ConfigurationProjectCreateDTO createDTO = new ConfigurationProjectCreateDTO("git_proj", "/");
+		configurationProjectService.createProjectOnDisk(createDTO);
+		ConfigurationProject configurationProject = configurationProjectService.getProject("git_proj");
 
-		Path projAbsPath = fileSystemStorage.toAbsolutePath(project.getRootPath());
+		Path projAbsPath = fileSystemStorage.toAbsolutePath(configurationProject.getRootPath());
 		Files.createDirectory(projAbsPath.resolve(".git"));
 
-		ProjectDTO dto = projectService.toDto(project);
+		ConfigurationProjectDTO dto = configurationProjectService.toDto(configurationProject);
 
 		assertTrue(dto.isGitRepository(), "Project with .git dir should be detected as git repository");
 	}
@@ -631,11 +651,12 @@ public class ProjectServiceTest {
 		stubFileSystemForProjectCreation();
 		when(fileSystemStorage.toRelativePath(anyString())).thenAnswer(inv -> inv.getArgument(0));
 
-		projectService.createProjectOnDisk("token_proj");
-		Project project = projectService.getProject("token_proj");
-		project.setGitToken("ghp_secrettoken123");
+		ConfigurationProjectCreateDTO createDTO = new ConfigurationProjectCreateDTO("token_proj", "/");
+		configurationProjectService.createProjectOnDisk(createDTO);
+		ConfigurationProject configurationProject = configurationProjectService.getProject("token_proj");
+		configurationProject.setGitToken("ghp_secrettoken123");
 
-		ProjectDTO dto = projectService.toDto(project);
+		ConfigurationProjectDTO dto = configurationProjectService.toDto(configurationProject);
 
 		assertTrue(dto.hasStoredToken());
 	}
@@ -645,11 +666,12 @@ public class ProjectServiceTest {
 		stubFileSystemForProjectCreation();
 		when(fileSystemStorage.toRelativePath(anyString())).thenAnswer(inv -> inv.getArgument(0));
 
-		projectService.createProjectOnDisk("blank_token_proj");
-		Project project = projectService.getProject("blank_token_proj");
-		project.setGitToken("   ");
+		ConfigurationProjectCreateDTO createDTO = new ConfigurationProjectCreateDTO("blank_token_proj", "/");
+		configurationProjectService.createProjectOnDisk(createDTO);
+		ConfigurationProject configurationProject = configurationProjectService.getProject("blank_token_proj");
+		configurationProject.setGitToken("   ");
 
-		ProjectDTO dto = projectService.toDto(project);
+		ConfigurationProjectDTO dto = configurationProjectService.toDto(configurationProject);
 
 		assertFalse(dto.hasStoredToken(), "A blank/whitespace token should not count as stored");
 	}
@@ -659,10 +681,11 @@ public class ProjectServiceTest {
 		stubFileSystemForProjectCreation();
 		when(fileSystemStorage.toRelativePath(anyString())).thenAnswer(inv -> inv.getArgument(0));
 
-		projectService.createProjectOnDisk("filepath_proj");
-		Project project = projectService.getProject("filepath_proj");
+		ConfigurationProjectCreateDTO createDTO = new ConfigurationProjectCreateDTO("filepath_proj", "/");
+		configurationProjectService.createProjectOnDisk(createDTO);
+		ConfigurationProject configurationProject = configurationProjectService.getProject("filepath_proj");
 
-		ProjectDTO dto = projectService.toDto(project);
+		ConfigurationProjectDTO dto = configurationProjectService.toDto(configurationProject);
 
 		assertEquals(1, dto.filepaths().size(), "DTO filepaths should map dynamically from disk");
 	}
@@ -676,7 +699,8 @@ public class ProjectServiceTest {
 
 		IllegalArgumentException ex = assertThrows(
 				IllegalArgumentException.class,
-				() -> projectService.cloneAndOpenProject("https://example.com/repo.git", "already_exists", null));
+				() -> configurationProjectService.cloneAndOpenProject("https://example.com/repo.git", "already_exists", null)
+		);
 
 		assertTrue(ex.getMessage().contains("already_exists"));
 	}

@@ -13,9 +13,8 @@ import org.frankframework.flow.exception.ApiException;
 import org.frankframework.flow.file.FileTreeService;
 import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.frankframework.flow.frankconfig.FrankConfigXsdService;
-import org.frankframework.flow.project.Project;
-import org.frankframework.flow.project.ProjectNotFoundException;
-import org.frankframework.flow.project.ProjectService;
+import org.frankframework.flow.project.ConfigurationProject;
+import org.frankframework.flow.project.ConfigurationProjectService;
 import org.frankframework.flow.utility.XmlFormatterUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,6 +23,7 @@ import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
 
 @ExtendWith(MockitoExtension.class)
 class ConfigurationServiceTest {
@@ -32,7 +32,7 @@ class ConfigurationServiceTest {
 	private FileSystemStorage fileSystemStorage;
 
 	@Mock
-	private ProjectService projectService;
+	private ConfigurationProjectService configurationProjectService;
 
 	@Mock
 	private FrankConfigXsdService frankConfigXsdService;
@@ -47,7 +47,7 @@ class ConfigurationServiceTest {
 
 	@BeforeEach
 	void setUp() {
-		configurationService = new ConfigurationService(fileSystemStorage, projectService, frankConfigXsdService, fileTreeService);
+		configurationService = new ConfigurationService(fileSystemStorage, configurationProjectService, frankConfigXsdService, fileTreeService);
 	}
 
 	private void stubToAbsolutePath() {
@@ -146,9 +146,9 @@ class ConfigurationServiceTest {
 
 		Path projectDir = tempDir.resolve("myproject");
 		Files.createDirectories(projectDir);
-		Project project = new Project("myproject", projectDir.toString());
+		ConfigurationProject configurationProject = new ConfigurationProject("myproject", projectDir.toString());
 
-		when(projectService.getProject("myproject")).thenReturn(project);
+		when(configurationProjectService.getProject("myproject")).thenReturn(configurationProject);
 
 		String result = configurationService.addConfiguration("myproject", "NewConfig.xml");
 
@@ -159,11 +159,10 @@ class ConfigurationServiceTest {
 	}
 
 	@Test
-	void addConfiguration_ProjectNotFound_ThrowsException() throws ProjectNotFoundException {
-		when(projectService.getProject("unknown")).thenThrow(new ProjectNotFoundException("not found"));
+	void addConfiguration_ProjectNotFound_ThrowsException() throws ApiException {
+		when(configurationProjectService.getProject("unknown")).thenThrow(new ApiException("not found", HttpStatus.NOT_FOUND));
 
-		assertThrows(
-				ProjectNotFoundException.class, () -> configurationService.addConfiguration("unknown", "Config.xml"));
+		assertThrows(ApiException.class, () -> configurationService.addConfiguration("unknown", "Config.xml"));
 	}
 
 	@Test
@@ -172,8 +171,8 @@ class ConfigurationServiceTest {
 
 		Path projectDir = tempDir.resolve("myproject");
 		Files.createDirectories(projectDir);
-		Project project = new Project("myproject", projectDir.toString());
-		when(projectService.getProject("myproject")).thenReturn(project);
+		ConfigurationProject configurationProject = new ConfigurationProject("myproject", projectDir.toString());
+		when(configurationProjectService.getProject("myproject")).thenReturn(configurationProject);
 
 		assertThrows(
 				ApiException.class, () -> configurationService.addConfiguration("myproject", "../../../evil.xml"));

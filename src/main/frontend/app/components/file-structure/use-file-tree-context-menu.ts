@@ -2,7 +2,7 @@ import React, { useCallback, useRef, useState } from 'react'
 import type { TreeItemIndex } from 'react-complex-tree'
 import { createFile, deleteFile, renameFile } from '~/services/file-service'
 import { createFolderInProject } from '~/services/file-tree-service'
-import { clearConfigurationCache } from '~/services/configuration-service'
+import { clearConfigurationFileCache } from '~/services/configuration-file-service'
 import useTabStore from '~/stores/tab-store'
 import useEditorTabStore from '~/stores/editor-tab-store'
 import { showErrorToast, showErrorToastFrom } from '~/components/toast'
@@ -186,7 +186,7 @@ export function useFileTreeContextMenu({
 
           try {
             await renameFile(projectName, oldPath, buildNewPath(oldPath, newName))
-            clearConfigurationCache(projectName, oldPath)
+            clearConfigurationFileCache(projectName, oldPath)
             const newPath = buildNewPath(oldPath, newName)
             useTabStore.getState().renameTabsForConfig(oldPath, newPath)
             useEditorTabStore.getState().refreshAllTabs()
@@ -223,7 +223,7 @@ export function useFileTreeContextMenu({
 
     try {
       await deleteFile(projectName, deleteTarget.path)
-      clearConfigurationCache(projectName, deleteTarget.path)
+      clearConfigurationFileCache(projectName, deleteTarget.path)
       useTabStore.getState().removeTabsForConfig(deleteTarget.path)
       useEditorTabStore.getState().refreshAllTabs()
       onAfterDelete?.(deleteTarget.path)
