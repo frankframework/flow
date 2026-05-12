@@ -62,8 +62,8 @@ interface CachedFile {
 }
 
 const SAVED_DISPLAY_DURATION = 2000
-const ELEMENT_ERROR_RE = /[Ee]lement [\u2018\u2019'"'{]?([\w:.-]+)[\u2018\u2019'"'}]?/
-const ATTRIBUTE_ERROR_RE = /[Aa]ttribute [\u2018\u2019'"'{]?([\w:.-]+)[\u2018\u2019'"'}]?/
+const ELEMENT_ERROR_RE = /[Ee]lement [\u2018\u2019'"{]?([\w:.-]+)[\u2018\u2019'"}]?/
+const ATTRIBUTE_ERROR_RE = /[Aa]ttribute [\u2018\u2019'"{]?([\w:.-]+)[\u2018\u2019'"}]?/
 
 function extractLocalName(name: string): string {
   return name.includes(':') ? name.split(':').pop()! : name

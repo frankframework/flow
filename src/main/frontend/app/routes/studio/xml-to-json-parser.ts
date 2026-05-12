@@ -1,13 +1,13 @@
 import type { FlowNode } from '~/routes/studio/canvas/flow'
-import { getElementTypeFromName } from '~/routes/studio/node-translator-module'
+import type { ChildNode } from '~/routes/studio/canvas/nodetypes/child-node'
 import type { ExitNode } from '~/routes/studio/canvas/nodetypes/exit-node'
 import type { FrankNodeType } from '~/routes/studio/canvas/nodetypes/frank-node'
-import type { ChildNode } from '~/routes/studio/canvas/nodetypes/child-node'
+import { getElementTypeFromName } from '~/routes/studio/node-translator-module'
 import { fetchConfigurationFileCached } from '~/services/configuration-file-service'
 import { translateElementFromOldToNewFormat } from '~/utils/flow-utils'
 import { FlowConfig } from './canvas/flow.config'
-import type { StickyNote } from './canvas/nodetypes/sticky-note'
 import type { GroupNode } from './canvas/nodetypes/group-node'
+import type { StickyNote } from './canvas/nodetypes/sticky-note'
 
 interface IdCounter {
   current: number
@@ -559,10 +559,10 @@ function convertElementToNode(element: Element, idCounter: IdCounter, sourceHand
     usedClassName,
   )
 
-  const frankNode: FrankNodeType = {
+  return {
     id: thisId,
     type: 'frankNode',
-    position: { x, y },
+    position: {x, y},
     width,
     height,
     data: {
@@ -574,8 +574,6 @@ function convertElementToNode(element: Element, idCounter: IdCounter, sourceHand
       attributes: Object.keys(attributes).length > 0 ? attributes : undefined,
     },
   }
-
-  return frankNode
 }
 
 function convertChildren(elements: Element[], idCounter: IdCounter): ChildNode[] {

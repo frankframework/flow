@@ -122,7 +122,7 @@ public class FileService {
 			if (!targetPath.startsWith(projectPath)) {
 				throw new ApiException("Path is outside project directory", HttpStatus.FORBIDDEN);
 			}
-		} catch (ApiException exception) {
+		} catch (ApiException _) {
 			throw new IllegalArgumentException("Project does not exist: " + projectName);
 		}
 	}

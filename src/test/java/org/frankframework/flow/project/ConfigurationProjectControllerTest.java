@@ -7,7 +7,6 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -57,7 +56,7 @@ class ConfigurationProjectControllerTest {
 	private ClientSession session;
 
 	@BeforeEach
-	void setUp() throws IOException {
+	void setUp() {
 		Mockito.reset(configurationProjectService);
 		when(fileSystemStorage.toRelativePath(anyString())).thenAnswer(inv -> inv.getArgument(0));
 		when(fileSystemStorage.toAbsolutePath(anyString())).thenAnswer(inv -> Paths.get(inv.<String>getArgument(0)));

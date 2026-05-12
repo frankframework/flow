@@ -181,7 +181,7 @@ class FileServiceTest {
 
 	@Test
 	@DisplayName("Should throw ApiException when rename file extension is not allowed")
-	void renameFileUnsupportedExtension() throws ApiException, IOException {
+	void renameFileUnsupportedExtension() throws IOException {
 		stubToAbsolutePath();
 
 		Path oldFile = Files.writeString(tempProjectRoot.resolve("old.xml"), "content");

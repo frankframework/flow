@@ -60,7 +60,7 @@ public class FileTreeService {
 			tree.setProjectRoot(true);
 			treeCache.put(projectName, tree);
 			return tree;
-		} catch (ApiException exception) {
+		} catch (ApiException _) {
 			throw new IllegalArgumentException("Project does not exist: " + projectName);
 		}
 	}
@@ -82,7 +82,7 @@ public class FileTreeService {
 			boolean useRelativePaths = !fileSystemStorage.isLocalEnvironment();
 			Path relativizeRoot = useRelativePaths ? fileSystemStorage.toAbsolutePath("") : projectPath;
 			return buildShallowTree(dirPath, relativizeRoot, useRelativePaths);
-		} catch (ApiException exception) {
+		} catch (ApiException _) {
 			throw new IllegalArgumentException("Project does not exist: " + projectName);
 		}
 	}
@@ -91,7 +91,7 @@ public class FileTreeService {
 		try {
 			ConfigurationDirectory configurationDirectory = getConfigurationsDirectory(projectName);
 			return buildShallowTree(configurationDirectory.directoryPath, configurationDirectory.relativizeRoot, configurationDirectory.useRelativePaths);
-		} catch (ApiException exception) {
+		} catch (ApiException _) {
 			throw new IllegalArgumentException("Configurations directory does not exist: " + projectName);
 		}
 	}
@@ -100,12 +100,12 @@ public class FileTreeService {
 		try {
 			ConfigurationDirectory configurationDirectory = getConfigurationsDirectory(projectName);
 			return buildTree(configurationDirectory.directoryPath, configurationDirectory.relativizeRoot, configurationDirectory.useRelativePaths);
-		} catch (ApiException exception) {
+		} catch (ApiException _) {
 			throw new IllegalArgumentException("Configurations directory does not exist: " + projectName);
 		}
 	}
 
-	public FileTreeNode createFolder(String projectName, String path) throws IOException, ApiException {
+	public FileTreeNode createFolder(String projectName, String path) throws IOException {
 		fileService.validatePath(path);
 		fileService.validateWithinProject(projectName, path);
 		fileSystemStorage.createProjectDirectory(path);
@@ -188,7 +188,7 @@ public class FileTreeService {
 				}
 			}
 			return names;
-		} catch (Exception exception) {
+		} catch (Exception _) {
 			return List.of();
 		}
 	}

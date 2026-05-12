@@ -185,7 +185,8 @@ export default function ConfigurationOverview() {
       <h1 className="ml-2 text-2xl font-bold">Configuration Overview</h1>
       <div className="mb-4 flex items-center justify-between">
         <p className="ml-2">
-          Configuration files within src/main/configurations/<span className="font-bold">{currentConfigurationProject.name}</span>:
+          Configuration files within src/main/configurations/
+          <span className="font-bold">{currentConfigurationProject.name}</span>:
         </p>
         <Search value={searchQuery} onChange={handleSearch} />
       </div>

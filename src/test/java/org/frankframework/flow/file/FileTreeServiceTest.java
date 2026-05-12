@@ -387,8 +387,7 @@ public class FileTreeServiceTest {
 
 	@Test
 	@DisplayName("Should throw IllegalArgumentException when the project directory does not exist on disk")
-	void getProjectTree_ProjectDirectoryDoesNotExist_ThrowsIllegalArgument()
-			throws IOException, ApiException {
+	void getProjectTree_ProjectDirectoryDoesNotExist_ThrowsIllegalArgument() throws ApiException {
 		stubToAbsolutePath();
 
 		Path nonExistentDir = tempProjectRoot.resolve("nonexistent");

@@ -123,7 +123,7 @@ public class GitService {
 	 * @throws IOException           if an I/O error occurs while accessing the project's repository
 	 * @throws GitOperationException if an error occurs while performing git operations to retrieve the status information
 	 */
-	public GitStatusDTO getStatus(String projectName) throws ApiException, IOException, GitOperationException {
+	public GitStatusDTO getStatus(String projectName) throws ApiException, IOException {
 		log.debug("Fetching git status for project '{}'", projectName);
 		try (Git git = openGit(projectName)) {
 			Repository repo = git.getRepository();
@@ -345,7 +345,7 @@ public class GitService {
 		}
 		try {
 			return configurationProjectService.getProject(projectName).getGitToken();
-		} catch (ApiException exception) {
+		} catch (ApiException _) {
 			return null;
 		}
 	}
