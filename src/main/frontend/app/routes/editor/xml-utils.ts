@@ -11,7 +11,20 @@ export interface FrankElementLocation {
   adapterPosition: number
 }
 
-const STRUCTURAL_TAGS = new Set(['Adapter', 'Configuration', 'Module', 'Pipeline', 'Exits'])
+const STRUCTURAL_TAGS = new Set([
+  'Adapter',
+  'Configuration',
+  'Module',
+  'Pipeline',
+  'Exits',
+  'Forwards',
+  'Global-forwards',
+  'GlobalForwards',
+  'PipelinePart',
+  'Root',
+  'Scheduler',
+])
+
 const MAX_LOOKAHEAD_LINES = 15
 const MAX_TAG_LINES = 50
 
@@ -20,6 +33,7 @@ const REGEX_OPEN_TAG = /^\s*<([A-Za-z0-9_:-]+)/
 const REGEX_CLOSE_TAG = /<\/([A-Za-z0-9_:-]+)>/g
 const REGEX_NAME_ATTR = /\bname=["']([^"']*)["']/
 const REGEX_FLOW_ELEMENTS = /<flow:FlowElements[\s\S]*?<\/flow:FlowElements>/
+const REGEX_NEW_TAG_START = /^\s*<[A-Za-z]/
 
 function getLocalName(tag: string): string {
   const colonIndex = tag.indexOf(':')
@@ -97,7 +111,7 @@ function hasNameAttributeWithinTag(lines: string[], startLine: number, targetNam
       return true
     }
 
-    if (i > startLine && /^\s*<[A-Za-z]/.test(lines[i])) {
+    if (i > startLine && REGEX_NEW_TAG_START.test(lines[i])) {
       return false
     }
   }
