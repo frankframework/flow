@@ -42,7 +42,7 @@ export default function StudioContextMenu({
     >
       {showNewConfigurationAndNewFolder && (
         <div className={itemClass} onClick={() => onNewConfiguration()}>
-          New Configuration
+          New Configuration File
         </div>
       )}
       {showNewConfigurationAndNewFolder && (

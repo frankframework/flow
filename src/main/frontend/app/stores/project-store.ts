@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { Project } from '~/types/project.types'
+import type { ConfigurationProject } from '~/types/project.types'
 import { useTreeStore } from '~/stores/tree-store'
 import useTabStore from '~/stores/tab-store'
 import useEditorTabStore from '~/stores/editor-tab-store'
@@ -7,14 +7,14 @@ import useEditorTabStore from '~/stores/editor-tab-store'
 const STORAGE_ROOT_PATH_KEY = 'active-project-root-path'
 
 interface ProjectStoreState {
-  project?: Project
-  setProject: (project: Project) => void
+  project?: ConfigurationProject
+  setProject: (project: ConfigurationProject) => void
   clearProject: () => void
 }
 
 export const useProjectStore = create<ProjectStoreState>((set) => ({
   project: undefined,
-  setProject: (project: Project) => {
+  setProject: (project: ConfigurationProject) => {
     set((state) => {
       if (state.project?.name !== project.name) {
         useTreeStore.getState().clearExpandedItems()

@@ -37,10 +37,9 @@ public class LocalFileSystemStorageService implements FileSystemStorage {
 		List<FilesystemEntry> entries = new ArrayList<>();
 
 		try (Stream<Path> stream = Files.list(dir)) {
-			stream.filter(Files::isDirectory).sorted().forEach(p -> {
-				boolean isProjectRoot = Files.isDirectory(p.resolve("src/main/configurations"));
-				entries.add(new FilesystemEntry(
-						p.getFileName().toString(), p.toAbsolutePath().toString(), "DIRECTORY", isProjectRoot));
+			stream.filter(Files::isDirectory).sorted().forEach(filePath -> {
+				boolean isProjectRoot = Files.isDirectory(filePath.resolve("src/main/configurations"));
+				entries.add(new FilesystemEntry(filePath.getFileName().toString(), filePath.toAbsolutePath().toString(), "DIRECTORY", isProjectRoot));
 			});
 		}
 		return entries;
@@ -109,8 +108,8 @@ public class LocalFileSystemStorageService implements FileSystemStorage {
 			}
 
 			throw new SecurityException("Access denied: " + path);
-		} catch (InvalidPathException e) {
-			throw new SecurityException("Invalid path: " + path, e);
+		} catch (InvalidPathException exception) {
+			throw new SecurityException("Invalid path: " + path, exception);
 		}
 	}
 }

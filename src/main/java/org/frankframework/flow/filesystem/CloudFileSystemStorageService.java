@@ -45,8 +45,8 @@ public class CloudFileSystemStorageService implements FileSystemStorage {
 				Files.createDirectories(userRoot);
 			}
 			Files.setLastModifiedTime(userRoot, FileTime.from(Instant.now()));
-		} catch (IOException e) {
-			log.warn("Could not touch workspace dir", e);
+		} catch (IOException exception) {
+			log.warn("Could not touch workspace dir", exception);
 		}
 
 		return userRoot;
@@ -61,8 +61,8 @@ public class CloudFileSystemStorageService implements FileSystemStorage {
 	public List<FilesystemEntry> listRoots() {
 		try {
 			return listDirectory("");
-		} catch (IOException e) {
-			log.warn("Error listing workspace root", e);
+		} catch (IOException exception) {
+			log.warn("Error listing workspace root", exception);
 			return Collections.emptyList();
 		}
 	}
@@ -74,11 +74,11 @@ public class CloudFileSystemStorageService implements FileSystemStorage {
 		List<FilesystemEntry> entries = new ArrayList<>();
 
 		try (Stream<Path> stream = Files.list(dir)) {
-			stream.filter(Files::isDirectory).sorted().forEach(p -> {
-				String relativePath = toRelativePath(p.toAbsolutePath().toString());
-				boolean isProjectRoot = Files.isDirectory(p.resolve("src/main/configurations"));
+			stream.filter(Files::isDirectory).sorted().forEach(filePath -> {
+				String relativePath = toRelativePath(filePath.toAbsolutePath().toString());
+				boolean isProjectRoot = Files.isDirectory(filePath.resolve("src/main/configurations"));
 
-				entries.add(new FilesystemEntry(p.getFileName().toString(), relativePath, "DIRECTORY", isProjectRoot));
+				entries.add(new FilesystemEntry(filePath.getFileName().toString(), relativePath, "DIRECTORY", isProjectRoot));
 			});
 		}
 		return entries;

@@ -3,14 +3,14 @@ package org.frankframework.flow.configuration;
 import lombok.Getter;
 import lombok.Setter;
 
-@Setter
 @Getter
-public class Configuration {
+@Setter
+public class ConfigurationFile {
 	private String filepath;
 	private String xmlContent;
 
-	public Configuration(String filepath) {
+	public ConfigurationFile(String filepath, String xmlContent) {
 		this.filepath = filepath;
-		this.xmlContent = "<Configuration><Adapter name='new adapter'></Adapter></Configuration>";
+		this.xmlContent = xmlContent;
 	}
 }

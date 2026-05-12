@@ -185,7 +185,7 @@ export function ChildNodeComponent({
       </div>
 
       {/* Body */}
-      <div className="child-node-body relative min-h-[100px] px-1 py-1">
+      <div className="child-node-body relative min-h-25 px-1 py-1">
         {child.attributes &&
           Object.entries(child.attributes).map(([key, value]) => (
             <div key={key} className="my-1">

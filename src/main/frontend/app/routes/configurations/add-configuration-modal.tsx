@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
-import { createConfiguration } from '~/services/configuration-service'
+import { createConfigurationFile } from '~/services/configuration-file-service'
 import { useProjectStore } from '~/stores/project-store'
-import type { Project } from '~/types/project.types'
+import type { ConfigurationProject } from '~/types/project.types'
 import Button from '~/components/inputs/button'
 import DirectoryPicker from '~/components/directory-picker/directory-picker'
 import { fetchProject } from '~/services/project-service'
@@ -10,7 +10,7 @@ interface AddConfigurationModalProperties {
   isOpen: boolean
   onClose: () => void
   onSuccess?: () => void
-  currentProject?: Project
+  currentConfiguration?: ConfigurationProject
   configurationsDirPath?: string
 }
 
@@ -18,7 +18,7 @@ export default function AddConfigurationModal({
   isOpen,
   onClose,
   onSuccess,
-  currentProject,
+  currentConfiguration,
   configurationsDirPath,
 }: Readonly<AddConfigurationModalProperties>) {
   const [loading, setLoading] = useState(false)
@@ -32,7 +32,7 @@ export default function AddConfigurationModal({
     setRootLocationName(configurationsDirPath ?? '')
   }, [configurationsDirPath])
 
-  if (!isOpen || !currentProject) return null
+  if (!isOpen || !currentConfiguration) return null
 
   const handleAdd = async () => {
     setLoading(true)
@@ -50,8 +50,8 @@ export default function AddConfigurationModal({
         configname = `${configname}.xml`
       }
 
-      await createConfiguration(currentProject.name, `${rootLocationName}/${configname}`)
-      const updatedProject = await fetchProject(currentProject.name)
+      await createConfigurationFile(currentConfiguration.name, `${rootLocationName}/${configname}`)
+      const updatedProject = await fetchProject(currentConfiguration.name)
       setProject(updatedProject)
       onSuccess?.()
       setRootLocationName('')
@@ -132,7 +132,7 @@ export default function AddConfigurationModal({
 
         <div className="flex gap-2">
           <Button onClick={handleAdd} disabled={loading} className="disabled:opacity-50">
-            {loading ? 'Adding...' : `Add ${displayFilename || 'configuration'} to ${currentProject.name}`}
+            {loading ? 'Adding...' : `Add ${displayFilename || 'configuration file'} to ${currentConfiguration.name}`}
           </Button>
 
           <Button onClick={handleClose} className="absolute top-3 right-3">
@@ -146,7 +146,7 @@ export default function AddConfigurationModal({
         isOpen={isOpenPickerOpen}
         onSelect={handleDirectorySelect}
         onCancel={() => setIsOpenPickerOpen(false)}
-        rootLabel={currentProject.rootPath}
+        rootLabel={currentConfiguration.rootPath}
         initialPath={rootLocationName === '' ? configurationsDirPath : rootLocationName}
       />
     </div>

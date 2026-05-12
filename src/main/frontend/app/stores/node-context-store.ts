@@ -14,6 +14,7 @@ interface NodeContextStore {
   allowedOnCanvas: boolean
   dropSuccessful: boolean
   isMultiSelect: boolean
+  selectedStickyId: string | null
   saveFlow: (() => Promise<void>) | null
   setNodeId: (nodeId: number) => void
   setAttributes: (attributes?: Record<string, Attribute>) => void
@@ -29,6 +30,7 @@ interface NodeContextStore {
   setAllowedOnCanvas: (allowed: boolean) => void
   setDropSuccessful: (successful: boolean) => void
   setIsMultiSelect: (value: boolean) => void
+  setSelectedStickyId: (id: string | null) => void
 }
 
 const useNodeContextStore = create<NodeContextStore>((set) => ({
@@ -44,6 +46,7 @@ const useNodeContextStore = create<NodeContextStore>((set) => ({
   allowedOnCanvas: false,
   dropSuccessful: false,
   isMultiSelect: false,
+  selectedStickyId: null,
   saveFlow: null,
   setNodeId: (nodeId) => set({ nodeId }),
   setAttributes: (attributes) => set({ attributes }),
@@ -59,6 +62,7 @@ const useNodeContextStore = create<NodeContextStore>((set) => ({
   setAllowedOnCanvas: (allowedOnCanvas) => set({ allowedOnCanvas }),
   setDropSuccessful: (dropSuccessful) => set({ dropSuccessful }),
   setIsMultiSelect: (isMultiSelect) => set({ isMultiSelect }),
+  setSelectedStickyId: (selectedStickyId) => set({ selectedStickyId }),
 }))
 
 export default useNodeContextStore

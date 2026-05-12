@@ -23,7 +23,7 @@ import { SidebarSide } from '~/components/sidebars-layout/sidebar-layout-store'
 import EditorTabs from '~/components/tabs/editor-tabs'
 import { showErrorToastFrom } from '~/components/toast'
 import { useTheme } from '~/hooks/use-theme'
-import { fetchConfiguration, saveConfiguration } from '~/services/configuration-service'
+import { fetchConfigurationFile, saveConfigurationFile } from '~/services/configuration-file-service'
 import { fetchFile, updateFile } from '~/services/file-service'
 import { refreshOpenDiffs } from '~/services/git-service'
 import { fetchFrankConfigXsd } from '~/services/xsd-service'
@@ -62,8 +62,8 @@ interface CachedFile {
 }
 
 const SAVED_DISPLAY_DURATION = 2000
-const ELEMENT_ERROR_RE = /[Ee]lement [\u2018\u2019'"'{]?([\w:.-]+)[\u2018\u2019'"'}]?/
-const ATTRIBUTE_ERROR_RE = /[Aa]ttribute [\u2018\u2019'"'{]?([\w:.-]+)[\u2018\u2019'"'}]?/
+const ELEMENT_ERROR_RE = /[Ee]lement [\u2018\u2019'"{]?([\w:.-]+)[\u2018\u2019'"}]?/
+const ATTRIBUTE_ERROR_RE = /[Aa]ttribute [\u2018\u2019'"{]?([\w:.-]+)[\u2018\u2019'"}]?/
 
 function extractLocalName(name: string): string {
   return name.includes(':') ? name.split(':').pop()! : name
@@ -321,7 +321,7 @@ export default function CodeEditor() {
 
       setSaveStatus('saving')
       if (isConfigurationFile(fileExtension ?? '')) {
-        saveConfiguration(project.name, configPath, updatedContent)
+        saveConfigurationFile(project.name, configPath, updatedContent)
           .then(({ xmlContent }) => {
             contentCacheRef.current.set(activeTabFilePath, { type: 'xml', content: xmlContent })
             finishSaving()
@@ -405,7 +405,7 @@ export default function CodeEditor() {
 
     try {
       const current = editor.getValue()
-      const { xmlContent } = await saveConfiguration(project.name, configPath, current, true)
+      const { xmlContent } = await saveConfigurationFile(project.name, configPath, current, true)
       contentCacheRef.current.set(activeTabFilePath, { type: 'xml', content: xmlContent })
 
       const selection = editor.getSelection()
@@ -563,7 +563,7 @@ export default function CodeEditor() {
     }
 
     if (isConfigurationFile(fileExtension ?? '')) {
-      fetchConfiguration(project.name, filePath, abortController.signal)
+      fetchConfigurationFile(project.name, filePath, abortController.signal)
         .then((content) => setMonacoContent(content, 'xml', abortController.signal))
         .catch((error) => {
           if (!abortController.signal.aborted) {

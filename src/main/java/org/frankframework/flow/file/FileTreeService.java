@@ -12,9 +12,8 @@ import java.util.stream.Stream;
 import javax.xml.parsers.DocumentBuilder;
 import org.frankframework.flow.exception.ApiException;
 import org.frankframework.flow.filesystem.FileSystemStorage;
-import org.frankframework.flow.project.Project;
-import org.frankframework.flow.project.ProjectNotFoundException;
-import org.frankframework.flow.project.ProjectService;
+import org.frankframework.flow.project.ConfigurationProject;
+import org.frankframework.flow.project.ConfigurationProjectService;
 import org.frankframework.flow.utility.XmlSecurityUtils;
 import org.springframework.stereotype.Service;
 import org.w3c.dom.Document;
@@ -25,18 +24,18 @@ import org.xml.sax.helpers.DefaultHandler;
 @Service
 public class FileTreeService {
 
-	private final ProjectService projectService;
+	private final ConfigurationProjectService configurationProjectService;
 	private final FileSystemStorage fileSystemStorage;
 	private final FileService fileService;
 
 	private final Map<String, FileTreeNode> treeCache = new ConcurrentHashMap<>();
 
 	public FileTreeService(
-			ProjectService projectService,
+			ConfigurationProjectService configurationProjectService,
 			FileSystemStorage fileSystemStorage,
 			FileService fileService
 	) {
-		this.projectService = projectService;
+		this.configurationProjectService = configurationProjectService;
 		this.fileSystemStorage = fileSystemStorage;
 		this.fileService = fileService;
 	}
@@ -48,8 +47,8 @@ public class FileTreeService {
 		}
 
 		try {
-			Project project = projectService.getProject(projectName);
-			Path projectPath = fileSystemStorage.toAbsolutePath(project.getRootPath());
+			ConfigurationProject configurationProject = configurationProjectService.getProject(projectName);
+			Path projectPath = fileSystemStorage.toAbsolutePath(configurationProject.getRootPath());
 
 			if (!Files.exists(projectPath) || !Files.isDirectory(projectPath)) {
 				throw new IllegalArgumentException("Project directory does not exist: " + projectName);
@@ -61,15 +60,15 @@ public class FileTreeService {
 			tree.setProjectRoot(true);
 			treeCache.put(projectName, tree);
 			return tree;
-		} catch (ProjectNotFoundException e) {
+		} catch (ApiException _) {
 			throw new IllegalArgumentException("Project does not exist: " + projectName);
 		}
 	}
 
 	public FileTreeNode getShallowDirectoryTree(String projectName, String directoryPath) throws IOException {
 		try {
-			Project project = projectService.getProject(projectName);
-			Path projectPath = fileSystemStorage.toAbsolutePath(project.getRootPath());
+			ConfigurationProject configurationProject = configurationProjectService.getProject(projectName);
+			Path projectPath = fileSystemStorage.toAbsolutePath(configurationProject.getRootPath());
 			Path dirPath = fileSystemStorage.toAbsolutePath(directoryPath).normalize();
 
 			if (!dirPath.startsWith(projectPath)) {
@@ -83,48 +82,30 @@ public class FileTreeService {
 			boolean useRelativePaths = !fileSystemStorage.isLocalEnvironment();
 			Path relativizeRoot = useRelativePaths ? fileSystemStorage.toAbsolutePath("") : projectPath;
 			return buildShallowTree(dirPath, relativizeRoot, useRelativePaths);
-		} catch (ProjectNotFoundException e) {
+		} catch (ApiException _) {
 			throw new IllegalArgumentException("Project does not exist: " + projectName);
 		}
 	}
 
 	public FileTreeNode getShallowConfigurationsDirectoryTree(String projectName) throws IOException {
 		try {
-			Project project = projectService.getProject(projectName);
-			Path projectPath = fileSystemStorage.toAbsolutePath(project.getRootPath());
-			Path configDirPath = projectPath.resolve("src/main/configurations").normalize();
-
-			if (!Files.exists(configDirPath) || !Files.isDirectory(configDirPath)) {
-				throw new IllegalArgumentException("Configurations directory does not exist: " + configDirPath);
-			}
-
-			boolean useRelativePaths = !fileSystemStorage.isLocalEnvironment();
-			Path relativizeRoot = useRelativePaths ? fileSystemStorage.toAbsolutePath("") : projectPath;
-			return buildShallowTree(configDirPath, relativizeRoot, useRelativePaths);
-		} catch (ProjectNotFoundException e) {
+			ConfigurationDirectory configurationDirectory = getConfigurationsDirectory(projectName);
+			return buildShallowTree(configurationDirectory.directoryPath, configurationDirectory.relativizeRoot, configurationDirectory.useRelativePaths);
+		} catch (ApiException _) {
 			throw new IllegalArgumentException("Configurations directory does not exist: " + projectName);
 		}
 	}
 
 	public FileTreeNode getConfigurationsDirectoryTree(String projectName) throws IOException {
 		try {
-			Project project = projectService.getProject(projectName);
-			Path projectPath = fileSystemStorage.toAbsolutePath(project.getRootPath());
-			Path configDirPath = projectPath.resolve("src/main/configurations").normalize();
-
-			if (!Files.exists(configDirPath) || !Files.isDirectory(configDirPath)) {
-				throw new IllegalArgumentException("Configurations directory does not exist: " + configDirPath);
-			}
-
-			boolean useRelativePaths = !fileSystemStorage.isLocalEnvironment();
-			Path relativizeRoot = useRelativePaths ? fileSystemStorage.toAbsolutePath("") : projectPath;
-			return buildTree(configDirPath, relativizeRoot, useRelativePaths);
-		} catch (ProjectNotFoundException e) {
+			ConfigurationDirectory configurationDirectory = getConfigurationsDirectory(projectName);
+			return buildTree(configurationDirectory.directoryPath, configurationDirectory.relativizeRoot, configurationDirectory.useRelativePaths);
+		} catch (ApiException _) {
 			throw new IllegalArgumentException("Configurations directory does not exist: " + projectName);
 		}
 	}
 
-	public FileTreeNode createFolder(String projectName, String path) throws IOException, ApiException {
+	public FileTreeNode createFolder(String projectName, String path) throws IOException {
 		fileService.validatePath(path);
 		fileService.validateWithinProject(projectName, path);
 		fileSystemStorage.createProjectDirectory(path);
@@ -155,11 +136,11 @@ public class FileTreeService {
 			node.setType(NodeType.DIRECTORY);
 
 			try (Stream<Path> stream = Files.list(path)) {
-				List<FileTreeNode> children = stream.map(p -> {
+				List<FileTreeNode> children = stream.map(childPath -> {
 							try {
-								return buildTree(p, relativizeRoot, useRelativePaths);
-							} catch (IOException e) {
-								throw new UncheckedIOException(e);
+								return buildTree(childPath, relativizeRoot, useRelativePaths);
+							} catch (IOException exception) {
+								throw new UncheckedIOException(exception);
 							}
 						})
 						.toList();
@@ -175,6 +156,19 @@ public class FileTreeService {
 		}
 
 		return node;
+	}
+
+	private ConfigurationDirectory getConfigurationsDirectory(String projectName) throws ApiException {
+		ConfigurationProject configurationProject = configurationProjectService.getProject(projectName);
+		Path configurationPath = fileSystemStorage.toAbsolutePath(configurationProject.getRootPath()).normalize();
+
+		if (!Files.exists(configurationPath) || !Files.isDirectory(configurationPath)) {
+			throw new IllegalArgumentException("Configurations directory does not exist: " + configurationPath);
+		}
+
+		boolean useRelativePaths = !fileSystemStorage.isLocalEnvironment();
+		Path relativizeRoot = useRelativePaths ? fileSystemStorage.toAbsolutePath("") : configurationPath;
+		return new ConfigurationDirectory(configurationPath, relativizeRoot, useRelativePaths);
 	}
 
 	private List<String> extractAdapterNames(Path xmlFile) {
@@ -194,7 +188,7 @@ public class FileTreeService {
 				}
 			}
 			return names;
-		} catch (Exception e) {
+		} catch (Exception _) {
 			return List.of();
 		}
 	}
@@ -219,14 +213,13 @@ public class FileTreeService {
 		node.setType(NodeType.DIRECTORY);
 
 		try (Stream<Path> stream = Files.list(path)) {
-			List<FileTreeNode> children = stream.map(p -> {
+			List<FileTreeNode> children = stream.map(childPath -> {
 						FileTreeNode child = new FileTreeNode();
-						child.setName(p.getFileName().toString());
-						child.setPath(toNodePath(p, relativizeRoot, useRelativePaths));
-						child.setType(Files.isDirectory(p) ? NodeType.DIRECTORY : NodeType.FILE);
-						if (!Files.isDirectory(p)
-								&& p.getFileName().toString().toLowerCase().endsWith(".xml")) {
-							child.setAdapterNames(extractAdapterNames(p));
+						child.setName(childPath.getFileName().toString());
+						child.setPath(toNodePath(childPath, relativizeRoot, useRelativePaths));
+						child.setType(Files.isDirectory(childPath) ? NodeType.DIRECTORY : NodeType.FILE);
+						if (!Files.isDirectory(childPath) && childPath.getFileName().toString().toLowerCase().endsWith(".xml")) {
+							child.setAdapterNames(extractAdapterNames(childPath));
 						}
 						return child;
 					})
@@ -236,5 +229,12 @@ public class FileTreeService {
 		}
 
 		return node;
+	}
+
+	private record ConfigurationDirectory(
+			Path directoryPath,
+			Path relativizeRoot,
+			boolean useRelativePaths
+	) {
 	}
 }

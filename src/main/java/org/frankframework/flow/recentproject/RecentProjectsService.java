@@ -38,12 +38,18 @@ public class RecentProjectsService {
 		try {
 			if (fileSystemStorage.isLocalEnvironment()) {
 				if (!Files.exists(LOCAL_USER_FILE)) return new ArrayList<>();
-				return objectMapper.readValue(Files.readString(LOCAL_USER_FILE), new TypeReference<>() {});
+				return objectMapper.readValue(
+						Files.readString(LOCAL_USER_FILE), new TypeReference<>() {
+						}
+				);
 			}
 
 			try {
 				String json = fileSystemStorage.readFile(RECENT_FILENAME);
-				return objectMapper.readValue(json, new TypeReference<>() {});
+				return objectMapper.readValue(
+						json, new TypeReference<>() {
+						}
+				);
 			} catch (Exception e) {
 				return new ArrayList<>();
 			}
@@ -69,8 +75,7 @@ public class RecentProjectsService {
 				return pPath.equals(normalizedPath);
 			});
 
-			projects.addFirst(
-					new RecentProject(name, normalizedPath, Instant.now().toString()));
+			projects.addFirst(new RecentProject(name, normalizedPath, Instant.now().toString()));
 
 			if (projects.size() > MAX_RECENT_PROJECTS) {
 				projects = new ArrayList<>(projects.subList(0, MAX_RECENT_PROJECTS));

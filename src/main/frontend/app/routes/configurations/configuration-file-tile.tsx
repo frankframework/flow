@@ -6,19 +6,19 @@ import Button from '~/components/inputs/button'
 import ConfirmDeleteDialog from '~/components/file-structure/confirm-delete-dialog'
 import { useState } from 'react'
 
-interface ConfigurationTileProperties {
+interface ConfigurationFileTileProperties {
   filepath: string
   relativePath: string
   adapterNames: string[]
   onDelete: () => Promise<void>
 }
 
-export default function ConfigurationTile({
+export default function ConfigurationFileTile({
   filepath,
   relativePath,
   adapterNames,
   onDelete,
-}: Readonly<ConfigurationTileProperties>) {
+}: Readonly<ConfigurationFileTileProperties>) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
 
   const handleOpenInStudio = (adapterName: string, adapterPosition: number) => {

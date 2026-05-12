@@ -13,9 +13,8 @@ import java.util.Comparator;
 import java.util.List;
 import org.frankframework.flow.exception.ApiException;
 import org.frankframework.flow.filesystem.FileSystemStorage;
-import org.frankframework.flow.project.Project;
-import org.frankframework.flow.project.ProjectNotFoundException;
-import org.frankframework.flow.project.ProjectService;
+import org.frankframework.flow.project.ConfigurationProject;
+import org.frankframework.flow.project.ConfigurationProjectService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -23,12 +22,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
 
 @ExtendWith(MockitoExtension.class)
 public class FileTreeServiceTest {
 
 	@Mock
-	private ProjectService projectService;
+	private ConfigurationProjectService configurationProjectService;
 
 	@Mock
 	private FileSystemStorage fileSystemStorage;
@@ -37,23 +37,25 @@ public class FileTreeServiceTest {
 	private FileTreeService fileTreeService;
 
 	private Path tempProjectRoot;
+	private Path tempConfigurationRoot;
 	private static final String TEST_PROJECT_NAME = "FrankFlowTestProject";
 
 	@BeforeEach
 	public void setUp() throws IOException {
-		FileService fileService = new FileService(projectService, fileSystemStorage, fileTreeService);
+		FileService fileService = new FileService(configurationProjectService, fileSystemStorage, fileTreeService);
 		tempProjectRoot = Files.createTempDirectory("flow_unit_test");
-		fileTreeService = new FileTreeService(projectService, fileSystemStorage, fileService);
+		tempConfigurationRoot = tempProjectRoot.resolve("src/main/configurations/"+TEST_PROJECT_NAME);
+		fileTreeService = new FileTreeService(configurationProjectService, fileSystemStorage, fileService);
 	}
 
 	@AfterEach
 	public void tearDown() throws IOException {
 		if (tempProjectRoot != null && Files.exists(tempProjectRoot)) {
 			try (var stream = Files.walk(tempProjectRoot)) {
-				stream.sorted(Comparator.reverseOrder()).forEach(p -> {
+				stream.sorted(Comparator.reverseOrder()).forEach(path -> {
 					try {
-						Files.delete(p);
-					} catch (IOException ignored) {
+						Files.delete(path);
+					} catch (IOException _) {
 						// Ignored to ensure cleanup continues even if some files couldn't be removed
 					}
 				});
@@ -63,15 +65,15 @@ public class FileTreeServiceTest {
 
 	private void stubToAbsolutePath() {
 		when(fileSystemStorage.toAbsolutePath(anyString())).thenAnswer(invocation -> {
-			String path = invocation.getArgument(0);
-			Path p = Paths.get(path);
-			return p.isAbsolute() ? p : tempProjectRoot.resolve(p).normalize();
+			String pathStr = invocation.getArgument(0);
+			Path path = Paths.get(pathStr);
+			return path.isAbsolute() ? path : tempProjectRoot.resolve(path).normalize();
 		});
 	}
 
 	@Test
 	@DisplayName("Should build a recursive tree structure for deep directories")
-	public void getProjectTree_DeepStructure() throws IOException, ProjectNotFoundException {
+	public void getProjectTree_DeepStructure() throws IOException, ApiException {
 		stubToAbsolutePath();
 		when(fileSystemStorage.isLocalEnvironment()).thenReturn(true);
 
@@ -81,9 +83,8 @@ public class FileTreeServiceTest {
 		Path dir2 = Files.createDirectory(dir1.resolve("dir2"));
 		Files.writeString(dir2.resolve("fileC.xml"), "C");
 
-		Project project =
-				new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
-		when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
+		ConfigurationProject configurationProject = new ConfigurationProject(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+		when(configurationProjectService.getProject(TEST_PROJECT_NAME)).thenReturn(configurationProject);
 
 		FileTreeNode tree = fileTreeService.getProjectTree(TEST_PROJECT_NAME);
 
@@ -108,29 +109,29 @@ public class FileTreeServiceTest {
 
 	@Test
 	@DisplayName("Should fail if the project is not registered in ProjectService")
-	public void getProjectTree_ProjectMissing() throws ProjectNotFoundException {
-		when(projectService.getProject("Unknown")).thenThrow(new ProjectNotFoundException("err"));
+	public void getProjectTree_ProjectMissing() throws ApiException {
+		when(configurationProjectService.getProject("Unknown")).thenThrow(new ApiException("err", HttpStatus.NOT_FOUND));
 		assertThrows(IllegalArgumentException.class, () -> fileTreeService.getProjectTree("Unknown"));
 	}
 
 	@Test
-	void getProjectTreeThrowsIfProjectDoesNotExist() throws ProjectNotFoundException {
-		when(projectService.getProject("NonExistentProject")).thenThrow(new ProjectNotFoundException("err"));
+	void getProjectTreeThrowsIfProjectDoesNotExist() throws ApiException {
+		when(configurationProjectService.getProject("NonExistentProject")).thenThrow(new ApiException("err", HttpStatus.NOT_FOUND));
 		IllegalArgumentException exception = assertThrows(
 				IllegalArgumentException.class, () -> fileTreeService.getProjectTree("NonExistentProject"));
 		assertTrue(exception.getMessage().contains("Project does not exist: NonExistentProject"));
 	}
 
 	@Test
-	public void getShallowDirectoryTreeReturnsTreeForValidDirectory() throws IOException, ProjectNotFoundException {
+	public void getShallowDirectoryTreeReturnsTreeForValidDirectory() throws IOException, ApiException {
 		stubToAbsolutePath();
 
 		Files.writeString(tempProjectRoot.resolve("config1.xml"), "<config/>");
 		Files.writeString(tempProjectRoot.resolve("readme.txt"), "hello");
 
-		Project project =
-				new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
-		when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
+		ConfigurationProject configurationProject =
+				new ConfigurationProject(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+		when(configurationProjectService.getProject(TEST_PROJECT_NAME)).thenReturn(configurationProject);
 
 		FileTreeNode node = fileTreeService.getShallowDirectoryTree(TEST_PROJECT_NAME, ".");
 
@@ -139,17 +140,17 @@ public class FileTreeServiceTest {
 		assertNotNull(node.getChildren());
 		assertEquals(2, node.getChildren().size());
 
-		assertTrue(node.getChildren().stream().anyMatch(c -> c.getName().equals("config1.xml")));
-		assertTrue(node.getChildren().stream().anyMatch(c -> c.getName().equals("readme.txt")));
+		assertTrue(node.getChildren().stream().anyMatch(childNode -> childNode.getName().equals("config1.xml")));
+		assertTrue(node.getChildren().stream().anyMatch(childNode -> childNode.getName().equals("readme.txt")));
 	}
 
 	@Test
-	void getShallowDirectoryTreeThrowsSecurityExceptionForPathTraversal() throws ProjectNotFoundException {
+	void getShallowDirectoryTreeThrowsSecurityExceptionForPathTraversal() throws ApiException {
 		stubToAbsolutePath();
 
-		Project project =
-				new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
-		when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
+		ConfigurationProject configurationProject =
+				new ConfigurationProject(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+		when(configurationProjectService.getProject(TEST_PROJECT_NAME)).thenReturn(configurationProject);
 
 		SecurityException ex = assertThrows(
 				SecurityException.class, () -> fileTreeService.getShallowDirectoryTree(TEST_PROJECT_NAME, "../other"));
@@ -158,12 +159,11 @@ public class FileTreeServiceTest {
 	}
 
 	@Test
-	void getShallowDirectoryTreeThrowsIllegalArgumentExceptionIfDirectoryDoesNotExist() throws ProjectNotFoundException {
+	void getShallowDirectoryTreeThrowsIllegalArgumentExceptionIfDirectoryDoesNotExist() throws ApiException {
 		stubToAbsolutePath();
 
-		Project project =
-				new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
-		when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
+		ConfigurationProject configurationProject = new ConfigurationProject(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+		when(configurationProjectService.getProject(TEST_PROJECT_NAME)).thenReturn(configurationProject);
 
 		IllegalArgumentException ex = assertThrows(
 				IllegalArgumentException.class,
@@ -174,36 +174,35 @@ public class FileTreeServiceTest {
 	}
 
 	@Test
-	public void getShallowConfigurationsDirectoryTreeReturnsTreeForExistingDirectory() throws IOException, ProjectNotFoundException {
+	public void getShallowConfigurationsDirectoryTreeReturnsTreeForExistingDirectory() throws IOException, ApiException {
 		stubToAbsolutePath();
 
-		Path configsDir = tempProjectRoot.resolve("src/main/configurations");
-		Files.createDirectories(configsDir);
-		Files.writeString(configsDir.resolve("config1.xml"), "<config/>");
-		Files.writeString(configsDir.resolve("readme.txt"), "hello");
+		Files.createDirectories(tempConfigurationRoot);
+		Files.writeString(tempConfigurationRoot.resolve("config1.xml"), "<config/>");
+		Files.writeString(tempConfigurationRoot.resolve("readme.txt"), "hello");
 
-		Project project =
-				new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
-		when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
+		ConfigurationProject configurationProject =
+				new ConfigurationProject(TEST_PROJECT_NAME, tempConfigurationRoot.toAbsolutePath().toString());
+		when(configurationProjectService.getProject(TEST_PROJECT_NAME)).thenReturn(configurationProject);
 
 		FileTreeNode node = fileTreeService.getShallowConfigurationsDirectoryTree(TEST_PROJECT_NAME);
 
 		assertNotNull(node);
-		assertEquals("configurations", node.getName().toLowerCase());
+		assertEquals(TEST_PROJECT_NAME, node.getName());
 		assertEquals(NodeType.DIRECTORY, node.getType());
 		assertNotNull(node.getChildren());
 		assertEquals(2, node.getChildren().size());
 
-		assertTrue(node.getChildren().stream().anyMatch(c -> c.getName().equals("config1.xml")));
-		assertTrue(node.getChildren().stream().anyMatch(c -> c.getName().equals("readme.txt")));
+		assertTrue(node.getChildren().stream().anyMatch(childNode -> childNode.getName().equals("config1.xml")));
+		assertTrue(node.getChildren().stream().anyMatch(childNode -> childNode.getName().equals("readme.txt")));
 	}
 
 	@Test
-	public void getShallowConfigurationsDirectoryTreeThrowsIfDirectoryDoesNotExist() throws ProjectNotFoundException {
+	public void getShallowConfigurationsDirectoryTreeThrowsIfDirectoryDoesNotExist() throws ApiException {
 		stubToAbsolutePath();
 
-		Project project = new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
-		when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
+		ConfigurationProject configurationProject = new ConfigurationProject(TEST_PROJECT_NAME, tempConfigurationRoot.toAbsolutePath().toString());
+		when(configurationProjectService.getProject(TEST_PROJECT_NAME)).thenReturn(configurationProject);
 
 		IllegalArgumentException ex = assertThrows(
 				IllegalArgumentException.class,
@@ -214,8 +213,8 @@ public class FileTreeServiceTest {
 	}
 
 	@Test
-	public void getShallowConfigurationsDirectoryTreeThrowsIfProjectDoesNotExist() throws ProjectNotFoundException {
-		when(projectService.getProject("NonExistentProject")).thenThrow(new ProjectNotFoundException("err"));
+	public void getShallowConfigurationsDirectoryTreeThrowsIfProjectDoesNotExist() throws ApiException {
+		when(configurationProjectService.getProject("NonExistentProject")).thenThrow(new ApiException("err", HttpStatus.NOT_FOUND));
 
 		IllegalArgumentException ex = assertThrows(
 				IllegalArgumentException.class,
@@ -226,32 +225,30 @@ public class FileTreeServiceTest {
 	}
 
 	@Test
-	public void getConfigurationsDirectoryTreeReturnsFullTreeForExistingDirectory() throws IOException, ProjectNotFoundException {
+	public void getConfigurationsDirectoryTreeReturnsFullTreeForExistingDirectory() throws IOException, ApiException {
 		stubToAbsolutePath();
 		when(fileSystemStorage.isLocalEnvironment()).thenReturn(true);
 
-		Path configsDir = tempProjectRoot.resolve("src/main/configurations");
-		Files.createDirectories(configsDir);
-		Files.writeString(configsDir.resolve("config1.xml"), "<config/>");
-		Files.writeString(configsDir.resolve("readme.txt"), "hello");
-		Path subDir = configsDir.resolve("subconfigs");
+		Files.createDirectories(tempConfigurationRoot);
+		Files.writeString(tempConfigurationRoot.resolve("config1.xml"), "<config/>");
+		Files.writeString(tempConfigurationRoot.resolve("readme.txt"), "hello");
+		Path subDir = tempConfigurationRoot.resolve("subconfigs");
 		Files.createDirectory(subDir);
 		Files.writeString(subDir.resolve("nested.xml"), "<nested></nested>");
 
-		Project project =
-				new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
-		when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
+		ConfigurationProject configurationProject = new ConfigurationProject(TEST_PROJECT_NAME, tempConfigurationRoot.toAbsolutePath().toString());
+		when(configurationProjectService.getProject(TEST_PROJECT_NAME)).thenReturn(configurationProject);
 
 		FileTreeNode node = fileTreeService.getConfigurationsDirectoryTree(TEST_PROJECT_NAME);
 
 		assertNotNull(node);
-		assertEquals("configurations", node.getName().toLowerCase());
+		assertEquals(TEST_PROJECT_NAME, node.getName());
 		assertEquals(NodeType.DIRECTORY, node.getType());
 		assertNotNull(node.getChildren());
 		assertEquals(3, node.getChildren().size());
 
-		assertTrue(node.getChildren().stream().anyMatch(c -> c.getName().equals("config1.xml")));
-		assertTrue(node.getChildren().stream().anyMatch(c -> c.getName().equals("readme.txt")));
+		assertTrue(node.getChildren().stream().anyMatch(childNode -> childNode.getName().equals("config1.xml")));
+		assertTrue(node.getChildren().stream().anyMatch(childNode -> childNode.getName().equals("readme.txt")));
 
 		FileTreeNode subConfigNode = node.getChildren().stream()
 				.filter(c -> c.getName().equals("subconfigs"))
@@ -263,12 +260,12 @@ public class FileTreeServiceTest {
 	}
 
 	@Test
-	public void getConfigurationsDirectoryTreeThrowsIfDirectoryDoesNotExist() throws ProjectNotFoundException {
+	public void getConfigurationsDirectoryTreeThrowsIfDirectoryDoesNotExist() throws ApiException {
 		stubToAbsolutePath();
 
-		Project project =
-				new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
-		when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
+		ConfigurationProject configurationProject =
+				new ConfigurationProject(TEST_PROJECT_NAME, tempConfigurationRoot.toAbsolutePath().toString());
+		when(configurationProjectService.getProject(TEST_PROJECT_NAME)).thenReturn(configurationProject);
 
 		IllegalArgumentException ex = assertThrows(
 				IllegalArgumentException.class,
@@ -279,8 +276,8 @@ public class FileTreeServiceTest {
 	}
 
 	@Test
-	public void getConfigurationsDirectoryTreeThrowsIfProjectDoesNotExist() throws ProjectNotFoundException {
-		when(projectService.getProject("NonExistingProject")).thenThrow(new ProjectNotFoundException("err"));
+	public void getConfigurationsDirectoryTreeThrowsIfProjectDoesNotExist() throws ApiException {
+		when(configurationProjectService.getProject("NonExistingProject")).thenThrow(new ApiException("err", HttpStatus.NOT_FOUND));
 
 		IllegalArgumentException ex = assertThrows(
 				IllegalArgumentException.class,
@@ -296,9 +293,9 @@ public class FileTreeServiceTest {
 		stubToAbsolutePath();
 		stubCreateProjectDirectory();
 
-		Project project =
-				new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
-		when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
+		ConfigurationProject configurationProject =
+				new ConfigurationProject(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+		when(configurationProjectService.getProject(TEST_PROJECT_NAME)).thenReturn(configurationProject);
 
 		Path path = tempProjectRoot.toAbsolutePath().resolve("newFolder");
 		FileTreeNode node = fileTreeService.createFolder(TEST_PROJECT_NAME, path.toString());
@@ -320,66 +317,66 @@ public class FileTreeServiceTest {
 
 	@Test
 	@DisplayName("Should clear all cache entries so the tree is fully rebuilt on the next call")
-	void invalidateTreeCache_AllEntries_ForcesRebuild() throws IOException, ProjectNotFoundException {
+	void invalidateTreeCache_AllEntries_ForcesRebuild() throws IOException, ApiException {
 		stubToAbsolutePath();
 		when(fileSystemStorage.isLocalEnvironment()).thenReturn(true);
 
-		Project project =
-				new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
-		when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
+		ConfigurationProject configurationProject =
+				new ConfigurationProject(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+		when(configurationProjectService.getProject(TEST_PROJECT_NAME)).thenReturn(configurationProject);
 
 		fileTreeService.getProjectTree(TEST_PROJECT_NAME);
 		fileTreeService.invalidateTreeCache();
 		fileTreeService.getProjectTree(TEST_PROJECT_NAME);
 
-		verify(projectService, times(2)).getProject(TEST_PROJECT_NAME);
+		verify(configurationProjectService, times(2)).getProject(TEST_PROJECT_NAME);
 	}
 
 	@Test
 	@DisplayName("Should clear only the named project's cache entry so a rebuild is triggered")
-	void invalidateTreeCache_SpecificProject_ForcesRebuild() throws IOException, ProjectNotFoundException {
+	void invalidateTreeCache_SpecificProject_ForcesRebuild() throws IOException, ApiException {
 		stubToAbsolutePath();
 		when(fileSystemStorage.isLocalEnvironment()).thenReturn(true);
 
-		Project project =
-				new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
-		when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
+		ConfigurationProject configurationProject =
+				new ConfigurationProject(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+		when(configurationProjectService.getProject(TEST_PROJECT_NAME)).thenReturn(configurationProject);
 
 		fileTreeService.getProjectTree(TEST_PROJECT_NAME);
 		fileTreeService.invalidateTreeCache(TEST_PROJECT_NAME);
 		fileTreeService.getProjectTree(TEST_PROJECT_NAME);
 
-		verify(projectService, times(2)).getProject(TEST_PROJECT_NAME);
+		verify(configurationProjectService, times(2)).getProject(TEST_PROJECT_NAME);
 	}
 
 	@Test
 	@DisplayName("Should return the same cached instance on subsequent calls without rebuilding")
-	void getProjectTree_ReturnsCachedResult() throws IOException, ProjectNotFoundException {
+	void getProjectTree_ReturnsCachedResult() throws IOException, ApiException {
 		stubToAbsolutePath();
 		when(fileSystemStorage.isLocalEnvironment()).thenReturn(true);
 
-		Project project =
-				new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
-		when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
+		ConfigurationProject configurationProject =
+				new ConfigurationProject(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+		when(configurationProjectService.getProject(TEST_PROJECT_NAME)).thenReturn(configurationProject);
 
 		FileTreeNode first = fileTreeService.getProjectTree(TEST_PROJECT_NAME);
 		FileTreeNode second = fileTreeService.getProjectTree(TEST_PROJECT_NAME);
 
 		assertSame(first, second);
-		verify(projectService, times(1)).getProject(TEST_PROJECT_NAME);
+		verify(configurationProjectService, times(1)).getProject(TEST_PROJECT_NAME);
 	}
 
 	@Test
 	@DisplayName("Should use relative paths for tree nodes when not in local environment")
-	void getProjectTree_NonLocalEnvironment_UsesRelativePaths() throws IOException, ProjectNotFoundException {
+	void getProjectTree_NonLocalEnvironment_UsesRelativePaths() throws IOException, ApiException {
 		stubToAbsolutePath();
 		when(fileSystemStorage.isLocalEnvironment()).thenReturn(false);
 
 		Files.writeString(tempProjectRoot.resolve("test.xml"), "content");
 
-		Project project =
-				new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
-		when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
+		ConfigurationProject configurationProject =
+				new ConfigurationProject(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+		when(configurationProjectService.getProject(TEST_PROJECT_NAME)).thenReturn(configurationProject);
 
 		FileTreeNode tree = fileTreeService.getProjectTree(TEST_PROJECT_NAME);
 
@@ -390,14 +387,13 @@ public class FileTreeServiceTest {
 
 	@Test
 	@DisplayName("Should throw IllegalArgumentException when the project directory does not exist on disk")
-	void getProjectTree_ProjectDirectoryDoesNotExist_ThrowsIllegalArgument()
-			throws IOException, ProjectNotFoundException {
+	void getProjectTree_ProjectDirectoryDoesNotExist_ThrowsIllegalArgument() throws ApiException {
 		stubToAbsolutePath();
 
 		Path nonExistentDir = tempProjectRoot.resolve("nonexistent");
-		Project project =
-				new Project(TEST_PROJECT_NAME, nonExistentDir.toAbsolutePath().toString());
-		when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
+		ConfigurationProject configurationProject =
+				new ConfigurationProject(TEST_PROJECT_NAME, nonExistentDir.toAbsolutePath().toString());
+		when(configurationProjectService.getProject(TEST_PROJECT_NAME)).thenReturn(configurationProject);
 
 		IllegalArgumentException ex =
 				assertThrows(IllegalArgumentException.class, () -> fileTreeService.getProjectTree(TEST_PROJECT_NAME));
@@ -406,15 +402,15 @@ public class FileTreeServiceTest {
 
 	@Test
 	@DisplayName("Should return absolute paths for all nodes in local environment")
-	void getShallowDirectoryTree_LocalEnvironment_UsesAbsolutePaths() throws IOException, ProjectNotFoundException {
+	void getShallowDirectoryTree_LocalEnvironment_UsesAbsolutePaths() throws IOException, ApiException {
 		stubToAbsolutePath();
 		when(fileSystemStorage.isLocalEnvironment()).thenReturn(true);
 
 		Files.writeString(tempProjectRoot.resolve("file.xml"), "<config/>");
 
-		Project project =
-				new Project(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
-		when(projectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
+		ConfigurationProject configurationProject =
+				new ConfigurationProject(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+		when(configurationProjectService.getProject(TEST_PROJECT_NAME)).thenReturn(configurationProject);
 
 		FileTreeNode node = fileTreeService.getShallowDirectoryTree(
 				TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());

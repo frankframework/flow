@@ -3,7 +3,7 @@ import type { TreeItemIndex } from 'react-complex-tree'
 import { deleteFile, renameFile } from '~/services/file-service'
 import { createFolderInProject } from '~/services/file-tree-service'
 import { createAdapter, renameAdapter, deleteAdapter } from '~/services/adapter-service'
-import { clearConfigurationCache, createConfiguration } from '~/services/configuration-service'
+import { clearConfigurationFileCache, createConfigurationFile } from '~/services/configuration-file-service'
 import useTabStore from '~/stores/tab-store'
 import { showErrorToastFrom } from '~/components/toast'
 import type { StudioItemData, StudioFolderData, StudioAdapterData } from './studio-files-data-provider'
@@ -163,14 +163,14 @@ export function useStudioContextMenu({ projectName, dataProvider }: UseStudioCon
     return menuState ?? contextMenuRef.current
   }
 
-  const handleNewConfiguration = useCallback(
+  const handleNewConfigurationFile = useCallback(
     (menuState?: StudioContextMenuState) => {
       const menu = resolveMenu(menuState)
       if (!menu || !projectName || !dataProvider) return
       closeContextMenu()
 
       setNameDialog({
-        title: 'New Configuration',
+        title: 'New Configuration File',
         onSubmit: async (name: string) => {
           const fileName = ensureXmlExtension(name)
           try {
@@ -180,7 +180,7 @@ export function useStudioContextMenu({ projectName, dataProvider }: UseStudioCon
               folderPath === rootPath
                 ? fileName
                 : `${folderPath.slice(rootPath.length + 1).replaceAll('\\', '/')}/${fileName}`
-            await createConfiguration(projectName, relativePath)
+            await createConfigurationFile(projectName, relativePath)
             await dataProvider.reloadDirectory('root')
           } catch (error) {
             showErrorToastFrom('Failed to create configuration', error)
@@ -261,7 +261,7 @@ export function useStudioContextMenu({ projectName, dataProvider }: UseStudioCon
               const finalName = menu.itemType === 'configuration' ? ensureXmlExtension(newName) : newName
               const newPath = `${menu.folderPath}/${finalName}`
               await renameFile(projectName, menu.path, newPath)
-              clearConfigurationCache(projectName, menu.path)
+              clearConfigurationFileCache(projectName, menu.path)
               useTabStore.getState().renameTabsForConfig(menu.path, newPath)
             } else {
               await renameFile(projectName, menu.path, `${getParentDir(menu.path)}/${newName}`)
@@ -301,7 +301,7 @@ export function useStudioContextMenu({ projectName, dataProvider }: UseStudioCon
         removeAdapterTab(deleteTarget.path, deleteTarget.name)
       } else {
         await deleteFile(projectName, deleteTarget.path)
-        clearConfigurationCache(projectName, deleteTarget.path)
+        clearConfigurationFileCache(projectName, deleteTarget.path)
         useTabStore.getState().removeTabsForConfig(deleteTarget.path)
       }
     } catch (error) {
@@ -320,7 +320,7 @@ export function useStudioContextMenu({ projectName, dataProvider }: UseStudioCon
     deleteTarget,
     setDeleteTarget,
     openContextMenu,
-    handleNewConfiguration,
+    handleNewConfiguration: handleNewConfigurationFile,
     handleNewAdapter,
     handleNewFolder,
     handleRename,

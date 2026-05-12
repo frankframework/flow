@@ -9,9 +9,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.frankframework.flow.filesystem.FileSystemStorage;
-import org.frankframework.flow.project.Project;
-import org.frankframework.flow.project.ProjectDTO;
-import org.frankframework.flow.project.ProjectService;
+import org.frankframework.flow.project.ConfigurationProject;
+import org.frankframework.flow.project.ConfigurationProjectDTO;
+import org.frankframework.flow.project.ConfigurationProjectService;
 import org.frankframework.flow.projectsettings.FilterType;
 import org.frankframework.flow.projectsettings.ProjectSettings;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,7 +35,7 @@ class ConfigurationControllerTest {
 	private ConfigurationService configurationService;
 
 	@MockitoBean
-	private ProjectService projectService;
+	private ConfigurationProjectService configurationProjectService;
 
 	@MockitoBean
 	private FileSystemStorage fileSystemStorage;
@@ -71,14 +71,14 @@ class ConfigurationControllerTest {
 		String filepath = "unknown.xml";
 
 		when(configurationService.getConfigurationContent(TEST_PROJECT_NAME, filepath))
-				.thenThrow(new ConfigurationNotFoundException("Configuration file not found: " + filepath));
+				.thenThrow(new ConfigurationNotFoundException("ConfigurationFile file not found: " + filepath));
 
 		mockMvc.perform(get("/api/projects/" + TEST_PROJECT_NAME + "/configuration?path=" + filepath)
 						.contentType(MediaType.APPLICATION_JSON)
 						.accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isNotFound())
 				.andExpect(jsonPath("$.httpStatus").value(404))
-				.andExpect(jsonPath("$.messages[0]").value("Configuration file not found: " + filepath));
+				.andExpect(jsonPath("$.messages[0]").value("ConfigurationFile file not found: " + filepath));
 
 		verify(configurationService).getConfigurationContent(TEST_PROJECT_NAME, filepath);
 	}
@@ -122,22 +122,22 @@ class ConfigurationControllerTest {
 
 	@Test
 	void addConfigurationReturnsDefaultContent() throws Exception {
-		Project project = mock(Project.class);
-		when(project.getName()).thenReturn(TEST_PROJECT_NAME);
-		when(project.getRootPath()).thenReturn("/path/to/" + TEST_PROJECT_NAME);
+		ConfigurationProject configurationProject = mock(ConfigurationProject.class);
+		when(configurationProject.getName()).thenReturn(TEST_PROJECT_NAME);
+		when(configurationProject.getRootPath()).thenReturn("/path/to/" + TEST_PROJECT_NAME);
 
-		Configuration config = mock(Configuration.class);
+		ConfigurationFile config = mock(ConfigurationFile.class);
 		when(config.getFilepath()).thenReturn("config1.xml");
-		when(project.getConfigurations()).thenReturn(new ArrayList<>(List.of(config)));
+		when(configurationProject.getConfigurationFiles()).thenReturn(new ArrayList<>(List.of(config)));
 
 		ProjectSettings settings = mock(ProjectSettings.class);
 		when(settings.getFilters()).thenReturn(Map.of(FilterType.ADAPTER, true));
-		when(project.getProjectSettings()).thenReturn(settings);
+		when(configurationProject.getConfigurationSettings()).thenReturn(settings);
 
 		when(configurationService.addConfiguration(TEST_PROJECT_NAME, "NewConfig.xml"))
 				.thenReturn("");
-		when(projectService.toDto(project))
-				.thenReturn(new ProjectDTO(
+		when(configurationProjectService.toDto(configurationProject))
+				.thenReturn(new ConfigurationProjectDTO(
 						TEST_PROJECT_NAME,
 						"/path/to/" + TEST_PROJECT_NAME,
 						List.of("config1.xml"),

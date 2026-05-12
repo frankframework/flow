@@ -11,7 +11,7 @@ interface CloneProjectModalProperties {
   initialPath?: string
 }
 
-export default function CloneProjectModal({
+export default function CloneConfigurationModal({
   isOpen,
   isLocal,
   onClose,
