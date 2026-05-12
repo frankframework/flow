@@ -1,44 +1,38 @@
 import useNodeContextStore from '~/stores/node-context-store'
-import { useEffect, useState, useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import SortedElements from '~/routes/studio/context/sorted-elements'
 import Search from '~/components/search/search'
 import { useProjectStore } from '~/stores/project-store'
 import type { ElementDetails } from '@frankframework/doc-library-core'
 import { useFFDoc } from '@frankframework/doc-library-react'
 import LoadingSpinner from '~/components/loading-spinner'
-import { fetchFrankConfigXsd } from '~/services/xsd-service'
+import { useFrankConfigXsd } from '~/providers/frankconfig-xsd-provider'
 import { parseXsd, getChildrenForType, getFirstLevelElementsForType } from '~/utils/xsd-utils'
 import { DEFAULT_ELEMENTS, NON_CANVAS_ELEMENTS } from './palette-config'
+
+const ROOT_TYPES = ['PipelineType', 'ReceiverType']
 
 export default function StudioContext() {
   const { setDraggedName, setAllowedOnCanvas } = useNodeContextStore((state) => state)
   const [searchTerm, setSearchTerm] = useState('')
   const project = useProjectStore((state) => state.project)
   const { filters, elements, isLoading } = useFFDoc()
-  const [allowed, setAllowed] = useState<string[] | null>(null)
-  const [elementsAllowedOnCanvas, setElementsAllowedOnCanvas] = useState<string[]>([])
-  const ROOT_TYPES = useMemo(() => ['PipelineType', 'ReceiverType'], [])
+  const { xsdContent } = useFrankConfigXsd()
 
-  useEffect(() => {
-    const getAllowedElements = (doc: Document): string[] => {
-      const all: string[] = []
+  const { allowed, elementsAllowedOnCanvas } = useMemo(() => {
+    if (!xsdContent) return { allowed: null, elementsAllowedOnCanvas: [] }
 
-      for (const type of ROOT_TYPES) {
-        const children = getChildrenForType(doc, type)
-        all.push(...children)
-      }
-
-      return [...new Set(all)] // dedupe
+    const doc = parseXsd(xsdContent)
+    const all: string[] = []
+    for (const type of ROOT_TYPES) {
+      all.push(...getChildrenForType(doc, type))
     }
 
-    fetchFrankConfigXsd().then((xsd) => {
-      const doc = parseXsd(xsd)
-      const allowed = getAllowedElements(doc)
-      setAllowed(allowed)
-      const pipelineChildren = getFirstLevelElementsForType(doc, 'PipelineType')
-      setElementsAllowedOnCanvas([...DEFAULT_ELEMENTS, ...pipelineChildren])
-    })
-  }, [ROOT_TYPES])
+    return {
+      allowed: [...new Set(all)],
+      elementsAllowedOnCanvas: [...DEFAULT_ELEMENTS, ...getFirstLevelElementsForType(doc, 'PipelineType')],
+    }
+  }, [xsdContent])
 
   if (isLoading || !elements || allowed === null) {
     return (
