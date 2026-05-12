@@ -19,7 +19,7 @@ import FrankNodeComponent, { type FrankNodeType } from '~/routes/studio/canvas/n
 import FrankEdgeComponent from '~/routes/studio/canvas/edgetypes/frank-edge'
 import ExitNodeComponent, { type ExitNode } from '~/routes/studio/canvas/nodetypes/exit-node'
 import GroupNodeComponent, { type GroupNode } from '~/routes/studio/canvas/nodetypes/group-node'
-import useFlowStore, { type FlowState } from '~/stores/flow-store'
+import useFlowStore, { isStickyNote, type FlowState } from '~/stores/flow-store'
 import { useShallow } from 'zustand/react/shallow'
 import { FlowConfig } from '~/routes/studio/canvas/flow.config'
 import { getElementTypeFromName } from '~/routes/studio/node-translator-module'
@@ -59,6 +59,46 @@ const selector = (state: FlowState) => ({
 
 type SaveStatus = 'idle' | 'saving' | 'saved'
 const SAVED_DISPLAY_DURATION = 2000
+const STICKY_SNAP_DISTANCE = 60
+
+const getStickyCenter = (sticky: StickyNote) => ({
+  x: sticky.position.x + (sticky.measured?.width ?? FlowConfig.STICKY_NOTE_DEFAULT_WIDTH) / 2,
+  y: sticky.position.y + (sticky.measured?.height ?? FlowConfig.STICKY_NOTE_DEFAULT_HEIGHT) / 2,
+})
+
+const isWithinSnapDistance = (sticky: StickyNote, frankNode: FlowNode) => {
+  const center = getStickyCenter(sticky)
+  return (
+    center.x >= frankNode.position.x - STICKY_SNAP_DISTANCE &&
+    center.x <=
+      frankNode.position.x + (frankNode.measured?.width ?? FlowConfig.NODE_DEFAULT_WIDTH) + STICKY_SNAP_DISTANCE &&
+    center.y >= frankNode.position.y - STICKY_SNAP_DISTANCE &&
+    center.y <= frankNode.position.y + (frankNode.measured?.height ?? FlowConfig.NODE_MIN_HEIGHT) + STICKY_SNAP_DISTANCE
+  )
+}
+
+const distanceToFrankNode = (sticky: StickyNote, frankNode: FlowNode) => {
+  const center = getStickyCenter(sticky)
+  const dx = center.x - (frankNode.position.x + (frankNode.measured?.width ?? FlowConfig.NODE_DEFAULT_WIDTH) / 2)
+  const dy = center.y - (frankNode.position.y + (frankNode.measured?.height ?? FlowConfig.NODE_MIN_HEIGHT) / 2)
+  return Math.hypot(dx, dy)
+}
+
+const findNearestFrankNode = (sticky: StickyNote, candidates: FlowNode[]) =>
+  candidates
+    .filter((n) => (n.type === 'frankNode' || n.type === 'exitNode') && isWithinSnapDistance(sticky, n))
+    .reduce<FlowNode | null>((best, n) => {
+      if (best === null) return n
+      return distanceToFrankNode(sticky, n) < distanceToFrankNode(sticky, best) ? n : best
+    }, null)
+
+const nodeTypes = {
+  frankNode: FrankNodeComponent,
+  exitNode: ExitNodeComponent,
+  stickyNote: StickyNoteComponent,
+  groupNode: GroupNodeComponent,
+}
+const edgeTypes = { frankEdge: FrankEdgeComponent }
 
 function FlowCanvas() {
   const showNodeContextMenu = useNodeContextMenu()
@@ -77,6 +117,7 @@ function FlowCanvas() {
     allowedOnCanvas,
     setDropSuccessful,
     setIsMultiSelect,
+    setSelectedStickyId,
   } = useNodeContextStore(
     useShallow((s) => ({
       isEditing: s.isEditing,
@@ -92,6 +133,8 @@ function FlowCanvas() {
       allowedOnCanvas: s.allowedOnCanvas,
       setDropSuccessful: s.setDropSuccessful,
       setIsMultiSelect: s.setIsMultiSelect,
+      setSelectedStickyId: s.setSelectedStickyId,
+      selectedStickyId: s.selectedStickyId,
     })),
   )
   const { elements } = useFFDoc()
@@ -110,13 +153,6 @@ function FlowCanvas() {
   const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isLoadingTabRef = useRef(false)
 
-  const nodeTypes = {
-    frankNode: FrankNodeComponent,
-    exitNode: ExitNodeComponent,
-    stickyNote: StickyNoteComponent,
-    groupNode: GroupNodeComponent,
-  }
-  const edgeTypes = { frankEdge: FrankEdgeComponent }
   const updateNodeInternals = useUpdateNodeInternals()
   const reactFlow = useReactFlow()
   const reactFlowRef = useRef(reactFlow)
@@ -173,6 +209,16 @@ function FlowCanvas() {
       clearConfigurationCache(currentProject.name, configurationPath)
       useEditorTabStore.getState().refreshAllTabs()
       if (currentProject.isGitRepository) await refreshOpenDiffs(currentProject.name)
+
+      const tabData = useTabStore.getState().getTab(activeTabKey)
+
+      if (tabData) {
+        const { nodes: savedNodes, edges: savedEdges, viewport: savedViewport } = useFlowStore.getState()
+        useTabStore.getState().setTabData(activeTabKey, {
+          ...tabData,
+          flowJson: { nodes: savedNodes, edges: savedEdges, viewport: savedViewport },
+        })
+      }
 
       setSaveStatus('saved')
       if (savedTimerRef.current) clearTimeout(savedTimerRef.current)
@@ -521,10 +567,17 @@ function FlowCanvas() {
     const selectedNodeIds = new Set(nodes.filter((n) => n.selected).map((n) => n.id))
     const hasSelection = selectedNodeIds.size > 0 || edges.some((e) => e.selected)
     if (!hasSelection) return false
+
+    const { selectedStickyId } = useNodeContextStore.getState()
+    if (selectedStickyId && selectedNodeIds.has(selectedStickyId)) {
+      useNodeContextStore.getState().setSelectedStickyId(null)
+      showNodeContextMenu(false)
+    }
+
     setNodes(nodes.filter((n) => !n.selected))
     setEdges(edges.filter((e) => !e.selected && !selectedNodeIds.has(e.source) && !selectedNodeIds.has(e.target)))
     return true
-  }, [isEditing])
+  }, [isEditing, showNodeContextMenu])
 
   useShortcut({
     'studio.copy': () => copySelection(),
@@ -540,6 +593,19 @@ function FlowCanvas() {
     'studio.delete': () => deleteSelection(),
   })
 
+  const isFrankNode = (node: FlowNode): node is FrankNodeType => node.type === 'frankNode' || node.type === 'exitNode'
+
+  const handleNodeDragStop = useCallback((_event: React.MouseEvent, node: FlowNode) => {
+    if (!isStickyNote(node)) return
+
+    const flowStore = useFlowStore.getState()
+    const nearest = findNearestFrankNode(node as StickyNote, flowStore.nodes)
+    if (!nearest) return
+
+    flowStore.setStickyAttachment(node.id, nearest.id)
+    void useNodeContextStore.getState().saveFlow?.()
+  }, [])
+
   const lookupFrankElement = useCallback(
     (subtype: string) => {
       if (!elements) return
@@ -550,12 +616,10 @@ function FlowCanvas() {
     [elements],
   )
 
-  const isFrankNode = (node: FlowNode): node is FrankNodeType => node.type === 'frankNode' || node.type === 'exitNode'
-
   const deselectOtherNodes = useCallback(
     (nodeId: string) => {
       const flowNodes = reactFlow.getNodes()
-      if (flowNodes.filter((node) => node.selected).length > 1) {
+      if (flowNodes.filter((flowNode) => flowNode.selected).length > 1) {
         reactFlow.setNodes(flowNodes.map((node) => ({ ...node, selected: node.id === nodeId })))
       }
     },
@@ -574,50 +638,78 @@ function FlowCanvas() {
   )
 
   const showContextIfSidebarOpen = useCallback(() => {
-    const sidebarVisible = useSidebarStore.getState().getVisibility('studio')[SidebarSide.RIGHT]
-    if (sidebarVisible) showNodeContextMenu(true)
+    const visible = useSidebarStore.getState().getVisibility('studio')[SidebarSide.RIGHT]
+    if (visible) showNodeContextMenu(true)
   }, [showNodeContextMenu])
 
   const handleNodeClick = useCallback(
     (event: React.MouseEvent, node: FlowNode) => {
-      if (event.shiftKey || event.ctrlKey || event.metaKey) return
-      if (isDirty || !isFrankNode(node)) return
-      const frankElement = lookupFrankElement(node.data.subtype)
-      if (!frankElement) return
+      if (event.shiftKey || event.ctrlKey || event.metaKey || isDirty) return
 
-      deselectOtherNodes(node.id)
-      applyNodeContext(node, frankElement)
-      showContextIfSidebarOpen()
+      if (node.type === 'stickyNote') {
+        setSelectedStickyId(node.id)
+        showNodeContextMenu(true)
+        return
+      }
+
+      if (isFrankNode(node)) {
+        const frankElement = lookupFrankElement(node.data.subtype)
+        if (frankElement) {
+          deselectOtherNodes(node.id)
+          setSelectedStickyId(null)
+          applyNodeContext(node, frankElement)
+          showNodeContextMenu(true)
+        }
+      }
     },
-    [isDirty, lookupFrankElement, deselectOtherNodes, applyNodeContext, showContextIfSidebarOpen],
+    [isDirty, lookupFrankElement, deselectOtherNodes, applyNodeContext, showNodeContextMenu, setSelectedStickyId],
   )
 
   const handleNodeDoubleClick = useCallback(
     (_event: React.MouseEvent, node: FlowNode) => {
-      if (isDirty || !isFrankNode(node)) return
+      if (isDirty) return
+
+      if (node.type === 'stickyNote') {
+        setSelectedStickyId(node.id)
+        showNodeContextMenu(true)
+        return
+      }
+
+      if (!isFrankNode(node)) return
       const frankElement = lookupFrankElement(node.data.subtype)
       if (!frankElement) return
 
+      setSelectedStickyId(null)
       applyNodeContext(node, frankElement)
       setIsEditing(true)
       setIsMultiSelect(false)
       showNodeContextMenu(true)
     },
-    [isDirty, lookupFrankElement, applyNodeContext, setIsEditing, setIsMultiSelect, showNodeContextMenu],
+    [
+      isDirty,
+      lookupFrankElement,
+      applyNodeContext,
+      setIsEditing,
+      setIsMultiSelect,
+      setSelectedStickyId,
+      showNodeContextMenu,
+    ],
   )
 
   const handleEdgeClick = useCallback(() => {
     setIsMultiSelect(false)
+    setSelectedStickyId(null)
     showNodeContextMenu(false)
     setIsEditing(false)
-  }, [setIsMultiSelect, showNodeContextMenu, setIsEditing])
+  }, [setIsMultiSelect, setSelectedStickyId, showNodeContextMenu, setIsEditing])
 
   const handleSelectionChange = useCallback(
     ({ nodes: selectedNodes }: { nodes: FlowNode[] }) => {
-      const frankNodes = selectedNodes.filter((node) => isFrankNode(node))
+      const frankNodes = selectedNodes.filter((n) => isFrankNode(n))
 
       if (frankNodes.length > 1) {
         setIsMultiSelect(true)
+        setSelectedStickyId(null)
         showNodeContextMenu(false)
         setIsEditing(false)
         setParentId(null)
@@ -628,9 +720,10 @@ function FlowCanvas() {
       setIsMultiSelect(false)
 
       if (frankNodes.length === 1) {
-        const frankElement = lookupFrankElement(frankNodes[0].data.subtype)
+        const frankElement = lookupFrankElement((frankNodes[0] as FrankNodeType).data.subtype)
         if (!frankElement) return
-        applyNodeContext(frankNodes[0], frankElement)
+        setSelectedStickyId(null)
+        applyNodeContext(frankNodes[0] as FrankNodeType, frankElement)
         showContextIfSidebarOpen()
       }
     },
@@ -638,6 +731,7 @@ function FlowCanvas() {
       showNodeContextMenu,
       setIsEditing,
       setIsMultiSelect,
+      setSelectedStickyId,
       setParentId,
       setChildParentId,
       lookupFrankElement,
@@ -780,22 +874,30 @@ function FlowCanvas() {
     }
   }
 
-  const addStickyNote = useCallback((flowPos: { x: number; y: number }) => {
-    const newId = useFlowStore.getState().getNextNodeId()
+  const addStickyNote = useCallback(
+    (flowPos: { x: number; y: number }) => {
+      const flowStore = useFlowStore.getState()
+      const newId = flowStore.getNextNodeId()
 
-    const stickyNote: StickyNote = {
-      id: newId,
-      position: {
-        x: flowPos.x,
-        y: flowPos.y,
-      },
-      data: {
-        content: 'New Sticky Note',
-      },
-      type: 'stickyNote',
-    }
-    useFlowStore.getState().addNode(stickyNote)
-  }, [])
+      const deselectedNodes = flowStore.nodes.map((node) => ({
+        ...node,
+        selected: false,
+      }))
+
+      const stickyNote: StickyNote = {
+        id: newId,
+        position: { x: flowPos.x, y: flowPos.y },
+        data: { content: '' },
+        type: 'stickyNote',
+        selected: true,
+      }
+
+      flowStore.setNodes([...deselectedNodes, stickyNote])
+      setSelectedStickyId(newId)
+      showNodeContextMenu(true)
+    },
+    [setSelectedStickyId, showNodeContextMenu],
+  )
 
   const cutSelection = useCallback(() => {
     copySelection()
@@ -909,17 +1011,15 @@ function FlowCanvas() {
       const tabStore = useTabStore.getState()
       const flowStore = useFlowStore.getState()
 
-      const flowData = reactFlowRef.current.toObject()
-      const viewport = flowStore.viewport
       const tabData = tabStore.getTab(tabId)
-
       if (!tabData) return
 
       tabStore.setTabData(tabId, {
         ...tabData,
         flowJson: {
-          ...flowData,
-          viewport,
+          nodes: flowStore.nodes,
+          edges: flowStore.edges,
+          viewport: flowStore.viewport,
         },
         history: flowStore.history,
         future: flowStore.future,
@@ -958,8 +1058,22 @@ function FlowCanvas() {
     return () => unsubscribe()
   }, [layoutGraph])
 
-  // Listen for node data changes to trigger internals update for connected edges and handles
-  // Added for undo/redo and direct data changes to ensure handles stay positioned properly
+  useEffect(() => {
+    const unsub = useFlowStore.subscribe(
+      (state) => state.nodes,
+      (nodes) => {
+        const { selectedStickyId, setSelectedStickyId, setIsEditing } = useNodeContextStore.getState()
+
+        if (selectedStickyId && !nodes.some((node) => node.id === selectedStickyId)) {
+          setSelectedStickyId(null)
+          showNodeContextMenu(false)
+          setIsEditing(false)
+        }
+      },
+    )
+    return () => unsub()
+  }, [showNodeContextMenu])
+
   useEffect(() => {
     const unsub = useFlowStore.subscribe(
       (state) => state.nodes, // selector: subscribe only to nodes
@@ -971,7 +1085,7 @@ function FlowCanvas() {
           const oldNode = oldNodes.find((oldNode) => oldNode.id === newNode.id)
           if (!oldNode) continue
 
-          if (oldNode.data !== newNode.data) {
+          if (!isStickyNote(newNode) && oldNode.data !== newNode.data) {
             updateNodeInternals(newNode.id)
           }
         }
@@ -1028,16 +1142,18 @@ function FlowCanvas() {
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         onReconnect={onReconnect}
-        onConnectStart={handleConnectStart}
-        onConnectEnd={handleConnectEnd}
         onNodeClick={handleNodeClick}
         onNodeDoubleClick={handleNodeDoubleClick}
+        onNodeDragStop={handleNodeDragStop}
         onEdgeClick={handleEdgeClick}
         onSelectionChange={handleSelectionChange}
+        onConnectStart={handleConnectStart}
+        onConnectEnd={handleConnectEnd}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         onPaneClick={() => {
           setContextMenu(null)
+          setSelectedStickyId(null)
           if (!isDirty) {
             showNodeContextMenu(false)
             setIsEditing(false)

@@ -53,6 +53,13 @@
     --type-other: #fdc300;
     --type-sticky-note: #facc15;
 
+    --sticky-color-yellow: #fef08a;
+    --sticky-color-blue: #bfdbfe;
+    --sticky-color-green: #bbf7d0;
+    --sticky-color-red: #fecaca;
+    --sticky-color-purple: #e9d5ff;
+    --sticky-color-orange: #fed7aa;
+
     /* Palette Styling */
     --palette-pipes: #68d250;
     --palette-listeners: #d250bf;
@@ -95,6 +102,13 @@
     --type-param: #0d4a87;
     --type-other: #9c7800;
     --type-sticky-note: #986804;
+
+    --sticky-color-yellow: #854d0e;
+    --sticky-color-blue: #1e3a8a;
+    --sticky-color-green: #14532d;
+    --sticky-color-red: #7f1d1d;
+    --sticky-color-purple: #581c87;
+    --sticky-color-orange: #9a3412;
 
     --palette-pipes: #136502;
     --palette-listeners: #853279;
@@ -199,4 +213,3 @@ body {
   line-height: 1.4;
   white-space: nowrap;
 }
-
