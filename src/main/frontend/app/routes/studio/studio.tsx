@@ -123,16 +123,23 @@ function RightPanelContent({
   nodeId,
   onShowNodeContext,
 }: RightPanelProps) {
-  if (isMultiSelect) return <MultiSelectPanel />
-  if (selectedStickyId) return <StickyNoteContext nodeId={selectedStickyId} />
-  if (showNodeContext)
-    return (
-      <div className="flex min-h-0 flex-1 flex-col">
-        <AttachedNotesPanel nodeId={nodeId} />
-        <NodeContext nodeId={nodeId} setShowNodeContext={onShowNodeContext} />
+  const showPalette = !isMultiSelect && !selectedStickyId && !showNodeContext
+
+  return (
+    <>
+      {isMultiSelect && <MultiSelectPanel />}
+      {!isMultiSelect && selectedStickyId && <StickyNoteContext nodeId={selectedStickyId} />}
+      {!isMultiSelect && !selectedStickyId && showNodeContext && (
+        <div className="flex min-h-0 flex-1 flex-col">
+          <AttachedNotesPanel nodeId={nodeId} />
+          <NodeContext nodeId={nodeId} setShowNodeContext={onShowNodeContext} />
+        </div>
+      )}
+      <div className={showPalette ? 'contents' : 'hidden'}>
+        <StudioContext />
       </div>
-    )
-  return <StudioContext />
+    </>
+  )
 }
 
 export default function Studio() {
