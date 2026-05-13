@@ -104,6 +104,47 @@ class FileSystemStorageBrowseTest {
 	}
 
 	@Test
+	void browseLinuxAbsolutePathReturnsEntriesAndParent() throws IOException {
+		when(storage.delegate.listDirectory("/home/user")).thenReturn(List.of(CHILD_ENTRY));
+
+		BrowseResult result = storage.browse("/home/user");
+
+		assertEquals("/home/user", result.resolvedPath());
+		assertEquals("/home", result.parentPath());
+	}
+
+	@Test
+	void browseLinuxFirstLevelDirectoryHasRootAsParent() throws IOException {
+		when(storage.delegate.listDirectory("/home")).thenReturn(List.of(CHILD_ENTRY));
+
+		BrowseResult result = storage.browse("/home");
+
+		assertEquals("/home", result.resolvedPath());
+		assertEquals("/", result.parentPath());
+	}
+
+	@Test
+	void browseLinuxRootHasEmptyParent() throws IOException {
+		when(storage.delegate.listDirectory("/")).thenReturn(List.of(CHILD_ENTRY));
+
+		BrowseResult result = storage.browse("/");
+
+		assertEquals("/", result.resolvedPath());
+		assertEquals("", result.parentPath());
+	}
+
+	@Test
+	void browseLinuxMissingPathWalksUpCorrectly() throws IOException {
+		when(storage.delegate.listDirectory("/home/user/missing")).thenThrow(new NoSuchFileException("/home/user/missing"));
+		when(storage.delegate.listDirectory("/home/user")).thenReturn(List.of(CHILD_ENTRY));
+
+		BrowseResult result = storage.browse("/home/user/missing");
+
+		assertEquals("/home/user", result.resolvedPath());
+		assertEquals("/home", result.parentPath());
+	}
+
+	@Test
 	void browseRelativePathReturnsEntriesAndParent() throws IOException {
 		when(storage.delegate.listDirectory("projects/myproject")).thenReturn(List.of(CHILD_ENTRY));
 

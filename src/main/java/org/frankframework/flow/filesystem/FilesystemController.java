@@ -2,7 +2,6 @@ package org.frankframework.flow.filesystem;
 
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
-import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -28,11 +27,5 @@ public class FilesystemController {
 		} catch (AccessDeniedException e) {
 			return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
 		}
-	}
-
-	@GetMapping("/default-path")
-	public ResponseEntity<Map<String, String>> defaultPath() {
-		String home = System.getProperty("user.home");
-		return ResponseEntity.ok(Map.of("path", home));
 	}
 }

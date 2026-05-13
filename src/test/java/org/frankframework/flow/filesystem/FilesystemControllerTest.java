@@ -64,11 +64,4 @@ class FilesystemControllerTest {
 
 		verify(fileSystemStorage).browse(path);
 	}
-
-	@Test
-	void defaultPathReturnsUserHomeDirectory() throws Exception {
-		mockMvc.perform(get("/api/filesystem/default-path"))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.path").value(System.getProperty("user.home")));
-	}
 }

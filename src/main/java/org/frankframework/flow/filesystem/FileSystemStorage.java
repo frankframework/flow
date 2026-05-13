@@ -69,20 +69,64 @@ public interface FileSystemStorage {
 
 	private BrowseResult browseNearestAccessible(String path) throws IOException {
 		try {
-			return new BrowseResult(path, parentPath(path), listDirectory(path));
+			return new BrowseResult(path, getParentPath(path), listDirectory(path));
 		} catch (NoSuchFileException e) {
-			String parent = parentPath(path);
+			String parent = getParentPath(path);
 			return parent.isEmpty() ? new BrowseResult("", "", listRoots()) : browseNearestAccessible(parent);
 		}
 	}
 
-	private static String parentPath(String path) {
+	private static String getParentPath(String path) {
+		if (path == null || path.isEmpty()) {
+			return "";
+		}
+
+		if (path.startsWith("/")) {
+			return getUnixParent(path);
+		}
+
+		if (path.matches("^[a-zA-Z]:.*")) {
+			return getWindowsParent(path);
+		}
+
+		if (isWindows()) {
+			return getWindowsParent(path);
+		} else {
+			return getUnixParent(path);
+		}
+	}
+
+	private static String getUnixParent(String path) {
+		if (path.length() > 1 && path.endsWith("/")) {
+			path = path.substring(0, path.length() - 1);
+		}
+
+		if (path.equals("/")) return "";
+
+		int lastSep = path.lastIndexOf('/');
+		if (lastSep < 0) return "";
+		if (lastSep == 0) return "/";
+
+		return path.substring(0, lastSep);
+	}
+
+	private static String getWindowsParent(String path) {
 		String normalized = path.replace('/', '\\');
-		if (normalized.matches("[a-zA-Z]:[/\\\\]?")) return "";
+
+		if (normalized.matches("^[a-zA-Z]:\\\\?$")) return "";
+
 		int lastSep = normalized.lastIndexOf('\\');
 		if (lastSep < 0) return "";
+
 		String parent = normalized.substring(0, lastSep);
-		if (parent.matches("[a-zA-Z]:")) return parent + "\\";
+
+		if (parent.matches("^[a-zA-Z]:$")) return parent + "\\";
+
 		return parent;
+	}
+
+	private static boolean isWindows() {
+		String os = System.getProperty("os.name").toLowerCase();
+		return os.contains("win");
 	}
 }
