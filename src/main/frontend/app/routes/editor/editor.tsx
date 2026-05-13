@@ -841,7 +841,6 @@ export default function CodeEditor() {
                     if (value && fileLanguage === 'xml') {
                       scheduleSchemaValidation(value)
                       applyFlowHighlighter()
-                      applyFrankGlyphs(value)
                     }
                   }}
                   options={{
