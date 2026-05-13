@@ -1,6 +1,5 @@
 package org.frankframework.flow.filesystem;
 
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -28,43 +27,42 @@ class FilesystemControllerTest {
 
 	@Test
 	void browseWithoutPathReturnsRoots() throws Exception {
-		when(fileSystemStorage.listRoots())
-				.thenReturn(List.of(new FilesystemEntry("C:", "C:", "directory", true)));
+		when(fileSystemStorage.browse(""))
+				.thenReturn(new BrowseResult("", "", List.of(new FilesystemEntry("C:", "C:", "directory", true))));
 
 		mockMvc.perform(get("/api/filesystem/browse"))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$[0].name").value("C:"))
-				.andExpect(jsonPath("$[0].path").value("C:"))
-				.andExpect(jsonPath("$[0].type").value("directory"))
-				.andExpect(jsonPath("$[0].projectRoot").value(true));
+				.andExpect(jsonPath("$.entries[0].name").value("C:"))
+				.andExpect(jsonPath("$.entries[0].path").value("C:"))
+				.andExpect(jsonPath("$.entries[0].type").value("directory"))
+				.andExpect(jsonPath("$.entries[0].projectRoot").value(true));
 
-		verify(fileSystemStorage).listRoots();
-		verify(fileSystemStorage, never()).listDirectory(org.mockito.ArgumentMatchers.anyString());
+		verify(fileSystemStorage).browse("");
 	}
 
 	@Test
 	void browseWithPathReturnsDirectoryEntries() throws Exception {
 		String path = "workspace/project";
-		when(fileSystemStorage.listDirectory(path))
-				.thenReturn(List.of(new FilesystemEntry("configurations", path + "/configurations", "directory", false)));
+		when(fileSystemStorage.browse(path))
+				.thenReturn(new BrowseResult(path, "workspace", List.of(new FilesystemEntry("configurations", path + "/configurations", "directory", false))));
 
 		mockMvc.perform(get("/api/filesystem/browse").param("path", path))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$[0].name").value("configurations"))
-				.andExpect(jsonPath("$[0].path").value(path + "/configurations"));
+				.andExpect(jsonPath("$.entries[0].name").value("configurations"))
+				.andExpect(jsonPath("$.entries[0].path").value(path + "/configurations"));
 
-		verify(fileSystemStorage).listDirectory(path);
+		verify(fileSystemStorage).browse(path);
 	}
 
 	@Test
 	void browseWithInaccessiblePathReturnsForbidden() throws Exception {
 		String path = "protected";
-		when(fileSystemStorage.listDirectory(path)).thenThrow(new AccessDeniedException(path));
+		when(fileSystemStorage.browse(path)).thenThrow(new AccessDeniedException(path));
 
 		mockMvc.perform(get("/api/filesystem/browse").param("path", path))
 				.andExpect(status().isForbidden());
 
-		verify(fileSystemStorage).listDirectory(path);
+		verify(fileSystemStorage).browse(path);
 	}
 
 	@Test
