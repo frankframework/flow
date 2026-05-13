@@ -119,48 +119,31 @@ function AttachedNotesPanel({ nodeId }: { nodeId: number }) {
 }
 
 function RightPanelContent({
-                             isMultiSelect,
-                             selectedStickyId,
-                             selectedGroupId, // Added prop
-                             showNodeContext,
-                             nodeId,
-                             onShowNodeContext,
-                           }: RightPanelProps) {
-  // The palette (StudioContext) only shows if absolutely nothing else is active
-  const showPalette =
-          !isMultiSelect &&
-          !selectedStickyId &&
-          !selectedGroupId &&
-          !showNodeContext
+  isMultiSelect,
+  selectedStickyId,
+  selectedGroupId,
+  showNodeContext,
+  nodeId,
+  onShowNodeContext,
+}: RightPanelProps) {
+  const showPalette = !isMultiSelect && !selectedStickyId && !selectedGroupId && !showNodeContext
 
   return (
-          <>
-            {/* 1. Multi-Select Priority */}
-            {isMultiSelect && <MultiSelectPanel />}
+    <>
+      {isMultiSelect && <MultiSelectPanel />}
+      {!isMultiSelect && selectedStickyId && <StickyNoteContext nodeId={selectedStickyId} />}
+      {!isMultiSelect && !selectedStickyId && selectedGroupId && <GroupContext nodeId={selectedGroupId} />}
+      {!isMultiSelect && !selectedStickyId && !selectedGroupId && showNodeContext && (
+        <div className="flex min-h-0 flex-1 flex-col">
+          <AttachedNotesPanel nodeId={nodeId} />
+          <NodeContext nodeId={nodeId} setShowNodeContext={onShowNodeContext} />
+        </div>
+      )}
 
-            {/* 2. Sticky Note Priority */}
-            {!isMultiSelect && selectedStickyId && (
-                    <StickyNoteContext nodeId={selectedStickyId} />
-            )}
-
-            {/* 3. Group Context Priority */}
-            {!isMultiSelect && !selectedStickyId && selectedGroupId && (
-                    <GroupContext nodeId={selectedGroupId} />
-            )}
-
-            {/* 4. Node Context (Attached Notes) */}
-            {!isMultiSelect && !selectedStickyId && !selectedGroupId && showNodeContext && (
-                    <div className="flex min-h-0 flex-1 flex-col">
-                      <AttachedNotesPanel nodeId={nodeId} />
-                      <NodeContext nodeId={nodeId} setShowNodeContext={onShowNodeContext} />
-                    </div>
-            )}
-
-            {/* 5. Default Studio Context (Palette) */}
-            <div className={showPalette ? 'contents' : 'hidden'}>
-              <StudioContext />
-            </div>
-          </>
+      <div className={showPalette ? 'contents' : 'hidden'}>
+        <StudioContext />
+      </div>
+    </>
   )
 }
 
