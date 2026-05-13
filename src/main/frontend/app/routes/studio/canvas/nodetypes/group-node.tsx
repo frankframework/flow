@@ -3,8 +3,21 @@ import { useState, type ChangeEvent } from 'react'
 import { ResizeIcon } from '~/routes/studio/canvas/nodetypes/frank-node'
 import useFlowStore from '~/stores/flow-store'
 
+export const GROUP_COLORS = [
+  { label: 'Blue', value: 'var(--group-color-blue)' },
+  { label: 'Violet', value: 'var(--group-color-violet)' },
+  { label: 'Rose', value: 'var(--group-color-rose)' },
+  { label: 'Green', value: 'var(--group-color-green)' },
+  { label: 'Amber', value: 'var(--group-color-amber)' },
+  { label: 'Cyan', value: 'var(--group-color-cyan)' },
+]
+
+export const GROUP_DEFAULT_COLOR = 'var(--group-color-blue)'
+
 export type GroupNode = Node<{
   label: string
+  description?: string
+  color?: string
   width: number
   height: number
   childrenNames?: string[]
@@ -16,15 +29,20 @@ export default function GroupNodeComponent({ id, data, selected }: NodeProps<Gro
     height: data.height,
   })
   const [isEditing, setIsEditing] = useState(false)
-  const [label, setLabel] = useState(data.label)
-  const { setGroupnodeLabel } = useFlowStore.getState()
+  const [editValue, setEditValue] = useState('')
+
+  const color = data.color || GROUP_DEFAULT_COLOR
+
+  const handleStartEdit = () => {
+    setEditValue(data.label)
+    setIsEditing(true)
+  }
 
   const handleBlur = () => setIsEditing(false)
-  const handleClick = () => setIsEditing(true)
 
   const handleSave = (event: ChangeEvent<HTMLInputElement>) => {
-    setGroupnodeLabel(id, event.target.value)
-    setLabel(event.target.value)
+    setEditValue(event.target.value)
+    useFlowStore.getState().setGroupnodeLabel(id, event.target.value)
   }
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -36,7 +54,7 @@ export default function GroupNodeComponent({ id, data, selected }: NodeProps<Gro
   return (
     <>
       <NodeResizeControl
-        onResize={(event, resizeData) => {
+        onResize={(_event, resizeData) => {
           setDimensions({
             width: resizeData.width,
             height: resizeData.height,
@@ -47,16 +65,18 @@ export default function GroupNodeComponent({ id, data, selected }: NodeProps<Gro
         <ResizeIcon color="black" />
       </NodeResizeControl>
       <div
-        className={`cursor-default rounded border bg-pink-300/25 ${selected ? 'border-blue-500' : 'border-border'}`}
+        className={`cursor-default rounded border ${selected ? 'border-blue-500' : 'border-border'}`}
         style={{
           width: dimensions.width,
           height: dimensions.height,
+          backgroundColor: `color-mix(in srgb, ${color} 25%, transparent)`,
         }}
       >
         <div
-          className="drag-handle relative max-h-1/2 cursor-move bg-pink-300 p-1"
+          className="drag-handle relative max-h-1/2 cursor-move p-1"
           style={{
             pointerEvents: 'all',
+            backgroundColor: color,
           }}
         >
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
@@ -67,7 +87,7 @@ export default function GroupNodeComponent({ id, data, selected }: NodeProps<Gro
             {isEditing ? (
               <input
                 type="text"
-                value={label}
+                value={editValue}
                 onChange={handleSave}
                 onKeyDown={handleKeyDown}
                 onBlur={handleBlur}
@@ -76,10 +96,10 @@ export default function GroupNodeComponent({ id, data, selected }: NodeProps<Gro
               />
             ) : (
               <>
-                <div className="cursor-pointer" onClick={handleClick}>
-                  {label}
+                <div className="cursor-pointer" onClick={handleStartEdit}>
+                  {data.label}
                 </div>
-                <div onClick={handleClick} className="flex-shrink-0 cursor-pointer self-start">
+                <div onClick={handleStartEdit} className="flex-shrink-0 cursor-pointer self-start">
                   <PenIcon />
                 </div>
               </>

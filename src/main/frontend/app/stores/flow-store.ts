@@ -60,6 +60,8 @@ export interface FlowState {
   setStickyAttachment: (nodeId: string, attachedToNodeId: string | null) => void
   setNodesWithoutHistory: (nodes: FlowNode[]) => void
   setGroupnodeLabel: (nodeId: string, newLabel: string) => void
+  setGroupnodeDescription: (nodeId: string, description: string) => void
+  setGroupnodeColor: (nodeId: string, color: string) => void
   setNodeName: (nodeId: string, name: string, options?: { isNewNode?: boolean }) => void
   getNodeName: (nodeId: string) => string | null
   addHandle: (nodeId: string, handle: { type: string; index: number }) => void
@@ -441,13 +443,29 @@ const useFlowStore = create<FlowState>()(
       set({
         nodes: get().nodes.map((node) => {
           if (node.id === nodeId && isGroupNode(node)) {
-            return {
-              ...node,
-              data: {
-                ...node.data,
-                label: newLabel,
-              },
-            }
+            return { ...node, data: { ...node.data, label: newLabel } }
+          }
+          return node
+        }),
+      })
+    },
+    setGroupnodeDescription: (nodeId, description) => {
+      get().saveToHistory()
+      set({
+        nodes: get().nodes.map((node) => {
+          if (node.id === nodeId && isGroupNode(node)) {
+            return { ...node, data: { ...node.data, description } }
+          }
+          return node
+        }),
+      })
+    },
+    setGroupnodeColor: (nodeId, color) => {
+      get().saveToHistory()
+      set({
+        nodes: get().nodes.map((node) => {
+          if (node.id === nodeId && isGroupNode(node)) {
+            return { ...node, data: { ...node.data, color } }
           }
           return node
         }),

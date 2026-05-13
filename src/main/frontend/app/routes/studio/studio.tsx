@@ -20,61 +20,63 @@ import Button from '~/components/inputs/button'
 import useFlowStore, { isStickyNote } from '~/stores/flow-store'
 import type { StickyNote } from '~/routes/studio/canvas/nodetypes/sticky-note'
 import { ALL_SHORTCUTS, formatShortcutParts, useShortcutStore } from '~/stores/shortcut-store'
+import GroupContext from '~/routes/studio/context/group-context'
 
 interface RightPanelProps {
   isMultiSelect: boolean
   selectedStickyId: string | null
+  selectedGroupId: string | null
   showNodeContext: boolean
   nodeId: number
   editingSubtype: string | null
-  groupLabel: string
-  groupKeyHint: string
-  groupActionId: string
   onShowNodeContext: (visible: boolean) => void
 }
 
 function getRightPanelTitle(
   isMultiSelect: boolean,
+  allInSameGroup: boolean,
   selectedStickyId: string | null,
-  groupLabel: string,
+  selectedGroupId: string | null,
   showNodeContext: boolean,
   editingSubtype: string | null,
 ): string {
-  if (isMultiSelect) return groupLabel
+  if (isMultiSelect) return allInSameGroup ? 'Group' : 'Group Selection'
   if (selectedStickyId) return 'Sticky Note'
+  if (selectedGroupId) return 'Group'
   if (showNodeContext) return `Edit ${editingSubtype ?? 'node'}`
   return 'Palette'
 }
 
 function MultiSelectPanel() {
-  const allInSameGroup = useFlowStore((state) => {
-    const selected = state.nodes.filter((node) => node.selected)
-    if (selected.length < 2) return false
-    const firstParent = selected[0].parentId
-    return Boolean(firstParent) && selected.every((node) => node.parentId === firstParent)
-  })
+  const { allInSameGroup, groupId } = useFlowStore(
+    useShallow((state) => {
+      const selected = state.nodes.filter((node) => node.selected)
+      if (selected.length < 2) return { allInSameGroup: false, groupId: null }
+
+      const content = selected.filter((node) => node.type === 'frankNode' || node.type === 'exitNode')
+      if (content.length < 2) return { allInSameGroup: false, groupId: null }
+
+      const firstParent = content[0].parentId
+      const allSame = Boolean(firstParent) && content.every((node) => node.parentId === firstParent)
+      return { allInSameGroup: allSame, groupId: allSame ? (firstParent ?? null) : null }
+    }),
+  )
 
   const platform = useShortcutStore((shortcut) => shortcut.platform)
-
   const groupDef = ALL_SHORTCUTS.find((shortCut) => shortCut.id === 'studio.group')!
-  const ungroupDef = ALL_SHORTCUTS.find((shortCut) => shortCut.id === 'studio.ungroup')!
-
   const groupParts = formatShortcutParts(groupDef, platform)
-  const ungroupParts = formatShortcutParts(ungroupDef, platform)
-
   const triggerGroup = () => useShortcutStore.getState().shortcuts.get('studio.group')?.handler?.()
-  const triggerUngroup = () => useShortcutStore.getState().shortcuts.get('studio.ungroup')?.handler?.()
 
-  const actionLabel = allInSameGroup ? 'Ungroup' : 'Group'
-  const actionParts = allInSameGroup ? ungroupParts : groupParts
-  const triggerAction = allInSameGroup ? triggerUngroup : triggerGroup
+  if (allInSameGroup && groupId) {
+    return <GroupContext nodeId={groupId} />
+  }
 
   return (
-    <div className="flex flex-col gap-2 p-4">
-      <Button onClick={triggerAction} className="flex items-center justify-between gap-2 px-4 py-2 text-sm">
-        <span>{actionLabel}</span>
+    <div className="p-4">
+      <Button onClick={triggerGroup} className="flex w-full items-center justify-between gap-2 px-4 py-2 text-sm">
+        <span>Group</span>
         <span className="flex gap-1">
-          {actionParts.map((part) => (
+          {groupParts.map((part) => (
             <kbd key={part} className="rounded border border-current/40 bg-current/10 px-1.5 py-0.5 font-mono text-xs">
               {part}
             </kbd>
@@ -117,28 +119,48 @@ function AttachedNotesPanel({ nodeId }: { nodeId: number }) {
 }
 
 function RightPanelContent({
-  isMultiSelect,
-  selectedStickyId,
-  showNodeContext,
-  nodeId,
-  onShowNodeContext,
-}: RightPanelProps) {
-  const showPalette = !isMultiSelect && !selectedStickyId && !showNodeContext
+                             isMultiSelect,
+                             selectedStickyId,
+                             selectedGroupId, // Added prop
+                             showNodeContext,
+                             nodeId,
+                             onShowNodeContext,
+                           }: RightPanelProps) {
+  // The palette (StudioContext) only shows if absolutely nothing else is active
+  const showPalette =
+          !isMultiSelect &&
+          !selectedStickyId &&
+          !selectedGroupId &&
+          !showNodeContext
 
   return (
-    <>
-      {isMultiSelect && <MultiSelectPanel />}
-      {!isMultiSelect && selectedStickyId && <StickyNoteContext nodeId={selectedStickyId} />}
-      {!isMultiSelect && !selectedStickyId && showNodeContext && (
-        <div className="flex min-h-0 flex-1 flex-col">
-          <AttachedNotesPanel nodeId={nodeId} />
-          <NodeContext nodeId={nodeId} setShowNodeContext={onShowNodeContext} />
-        </div>
-      )}
-      <div className={showPalette ? 'contents' : 'hidden'}>
-        <StudioContext />
-      </div>
-    </>
+          <>
+            {/* 1. Multi-Select Priority */}
+            {isMultiSelect && <MultiSelectPanel />}
+
+            {/* 2. Sticky Note Priority */}
+            {!isMultiSelect && selectedStickyId && (
+                    <StickyNoteContext nodeId={selectedStickyId} />
+            )}
+
+            {/* 3. Group Context Priority */}
+            {!isMultiSelect && !selectedStickyId && selectedGroupId && (
+                    <GroupContext nodeId={selectedGroupId} />
+            )}
+
+            {/* 4. Node Context (Attached Notes) */}
+            {!isMultiSelect && !selectedStickyId && !selectedGroupId && showNodeContext && (
+                    <div className="flex min-h-0 flex-1 flex-col">
+                      <AttachedNotesPanel nodeId={nodeId} />
+                      <NodeContext nodeId={nodeId} setShowNodeContext={onShowNodeContext} />
+                    </div>
+            )}
+
+            {/* 5. Default Studio Context (Palette) */}
+            <div className={showPalette ? 'contents' : 'hidden'}>
+              <StudioContext />
+            </div>
+          </>
   )
 }
 
@@ -146,12 +168,13 @@ export default function Studio() {
   const project = useProjectStore((state) => state.project)
   const setVisibility = useSidebarStore((state) => state.setVisibility)
   const [showNodeContext, setShowNodeContext] = useState(false)
-  const { nodeId, editingSubtype, isMultiSelect, selectedStickyId } = useNodeContextStore(
+  const { nodeId, editingSubtype, isMultiSelect, selectedStickyId, selectedGroupId } = useNodeContextStore(
     useShallow((state) => ({
       nodeId: state.nodeId,
       editingSubtype: state.editingSubtype,
       isMultiSelect: state.isMultiSelect,
       selectedStickyId: state.selectedStickyId,
+      selectedGroupId: state.selectedGroupId,
     })),
   )
 
@@ -168,19 +191,14 @@ export default function Studio() {
     })),
   )
 
-  const platform = useShortcutStore((shortcut) => shortcut.platform)
-
   const allInSameGroup = useFlowStore((flowStore) => {
     const selected = flowStore.nodes.filter((node) => node.selected)
     if (selected.length <= 1) return false
-    const firstParentId = selected[0].parentId
-    return !!firstParentId && selected.every((node) => node.parentId === firstParentId)
+    const content = selected.filter((node) => node.type === 'frankNode' || node.type === 'exitNode')
+    if (content.length <= 1) return false
+    const firstParentId = content[0].parentId
+    return !!firstParentId && content.every((node) => node.parentId === firstParentId)
   })
-
-  const groupActionId = allInSameGroup ? 'studio.ungroup' : 'studio.group'
-  const groupLabel = allInSameGroup ? 'Ungroup' : 'Group Selection'
-  const groupShortcutDef = ALL_SHORTCUTS.find((shortcut) => shortcut.id === groupActionId)
-  const groupKeyHint = groupShortcutDef ? formatShortcutParts(groupShortcutDef, platform).join('+') : ''
 
   const handleShowNodeContext = useCallback(
     (visible: boolean) => {
@@ -208,7 +226,14 @@ export default function Studio() {
     openInEditor(fileName, activeTabPath)
   }, [activeTabPath])
 
-  const rightPanelTitle = getRightPanelTitle(isMultiSelect, activeStickyId, groupLabel, showNodeContext, editingSubtype)
+  const rightPanelTitle = getRightPanelTitle(
+    isMultiSelect,
+    allInSameGroup,
+    activeStickyId,
+    selectedGroupId,
+    showNodeContext,
+    editingSubtype,
+  )
 
   return (
     <SidebarLayout name="studio">
@@ -256,12 +281,10 @@ export default function Studio() {
         <RightPanelContent
           isMultiSelect={isMultiSelect}
           selectedStickyId={activeStickyId}
+          selectedGroupId={selectedGroupId}
           showNodeContext={showNodeContext}
           nodeId={nodeId}
           editingSubtype={editingSubtype}
-          groupLabel={groupLabel}
-          groupKeyHint={groupKeyHint}
-          groupActionId={groupActionId}
           onShowNodeContext={handleShowNodeContext}
         />
       </>

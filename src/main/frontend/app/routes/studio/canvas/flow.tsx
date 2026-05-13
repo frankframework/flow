@@ -122,6 +122,7 @@ function FlowCanvas() {
     setDropSuccessful,
     setIsMultiSelect,
     setSelectedStickyId,
+    setSelectedGroupId,
   } = useNodeContextStore(
     useShallow((s) => ({
       isEditing: s.isEditing,
@@ -139,6 +140,7 @@ function FlowCanvas() {
       setIsMultiSelect: s.setIsMultiSelect,
       setSelectedStickyId: s.setSelectedStickyId,
       selectedStickyId: s.selectedStickyId,
+      setSelectedGroupId: s.setSelectedGroupId,
     })),
   )
   const { elements } = useFFDoc()
@@ -461,6 +463,7 @@ function FlowCanvas() {
 
     if (fullySelectedGroupIds.length > 1) {
       handleMultiGroupMerge(fullySelectedGroupIds, selectedNodes)
+      showNodeContextMenu(true)
       return
     }
 
@@ -468,10 +471,12 @@ function FlowCanvas() {
 
     if (shouldMergeUngroupedIntoGroup(selectedNodes)) {
       handleMergeUngroupedIntoGroup(selectedNodes)
+      showNodeContextMenu(true)
       return
     }
 
     groupNodes(selectedNodes, nodes)
+    showNodeContextMenu(true)
   }, [
     nodes,
     allSelectedInSameGroup,
@@ -479,6 +484,7 @@ function FlowCanvas() {
     handleMergeUngroupedIntoGroup,
     handleMultiGroupMerge,
     shouldMergeUngroupedIntoGroup,
+    showNodeContextMenu,
   ])
 
   const copySelection = useCallback(() => {
@@ -652,6 +658,14 @@ function FlowCanvas() {
 
       if (node.type === 'stickyNote') {
         setSelectedStickyId(node.id)
+        setSelectedGroupId(null)
+        showNodeContextMenu(true)
+        return
+      }
+
+      if (node.type === 'groupNode') {
+        setSelectedGroupId(node.id)
+        setSelectedStickyId(null)
         showNodeContextMenu(true)
         return
       }
@@ -661,12 +675,21 @@ function FlowCanvas() {
         if (frankElement) {
           deselectOtherNodes(node.id)
           setSelectedStickyId(null)
+          setSelectedGroupId(null)
           applyNodeContext(node, frankElement)
           showNodeContextMenu(true)
         }
       }
     },
-    [isDirty, lookupFrankElement, deselectOtherNodes, applyNodeContext, showNodeContextMenu, setSelectedStickyId],
+    [
+      isDirty,
+      lookupFrankElement,
+      deselectOtherNodes,
+      applyNodeContext,
+      showNodeContextMenu,
+      setSelectedStickyId,
+      setSelectedGroupId,
+    ],
   )
 
   const handleNodeDoubleClick = useCallback(
@@ -703,21 +726,31 @@ function FlowCanvas() {
   const handleEdgeClick = useCallback(() => {
     setIsMultiSelect(false)
     setSelectedStickyId(null)
+    setSelectedGroupId(null)
     showNodeContextMenu(false)
     setIsEditing(false)
-  }, [setIsMultiSelect, setSelectedStickyId, showNodeContextMenu, setIsEditing])
+  }, [setIsMultiSelect, setSelectedStickyId, setSelectedGroupId, showNodeContextMenu, setIsEditing])
 
   const handleSelectionChange = useCallback(
     ({ nodes: selectedNodes }: { nodes: FlowNode[] }) => {
       const frankNodes = selectedNodes.filter((n) => isFrankNode(n))
 
       if (frankNodes.length > 1) {
+        const firstParent = frankNodes[0]?.parentId
+        const allInSameGroup = Boolean(firstParent) && frankNodes.every((n) => n.parentId === firstParent)
+
         setIsMultiSelect(true)
         setSelectedStickyId(null)
-        showNodeContextMenu(false)
+        setSelectedGroupId(null)
         setIsEditing(false)
         setParentId(null)
         setChildParentId(null)
+
+        if (allInSameGroup) {
+          showNodeContextMenu(true)
+        } else {
+          showNodeContextMenu(false)
+        }
         return
       }
 
@@ -727,6 +760,7 @@ function FlowCanvas() {
         const frankElement = lookupFrankElement((frankNodes[0] as FrankNodeType).data.subtype)
         if (!frankElement) return
         setSelectedStickyId(null)
+        setSelectedGroupId(null)
         applyNodeContext(frankNodes[0] as FrankNodeType, frankElement)
         showContextIfSidebarOpen()
       }
@@ -736,6 +770,7 @@ function FlowCanvas() {
       setIsEditing,
       setIsMultiSelect,
       setSelectedStickyId,
+      setSelectedGroupId,
       setParentId,
       setChildParentId,
       lookupFrankElement,
@@ -1066,12 +1101,18 @@ function FlowCanvas() {
     const unsub = useFlowStore.subscribe(
       (state) => state.nodes,
       (nodes) => {
-        const { selectedStickyId, setSelectedStickyId, setIsEditing } = useNodeContextStore.getState()
+        const { selectedStickyId, setSelectedStickyId, selectedGroupId, setSelectedGroupId, setIsEditing } =
+          useNodeContextStore.getState()
 
         if (selectedStickyId && !nodes.some((node) => node.id === selectedStickyId)) {
           setSelectedStickyId(null)
           showNodeContextMenu(false)
           setIsEditing(false)
+        }
+
+        if (selectedGroupId && !nodes.some((node) => node.id === selectedGroupId)) {
+          setSelectedGroupId(null)
+          showNodeContextMenu(false)
         }
       },
     )
@@ -1158,6 +1199,7 @@ function FlowCanvas() {
         onPaneClick={() => {
           setContextMenu(null)
           setSelectedStickyId(null)
+          setSelectedGroupId(null)
           if (!isDirty) {
             showNodeContextMenu(false)
             setIsEditing(false)

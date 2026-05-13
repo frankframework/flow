@@ -15,6 +15,7 @@ interface NodeContextStore {
   dropSuccessful: boolean
   isMultiSelect: boolean
   selectedStickyId: string | null
+  selectedGroupId: string | null
   saveFlow: (() => Promise<void>) | null
   setNodeId: (nodeId: number) => void
   setAttributes: (attributes?: Record<string, Attribute>) => void
@@ -31,6 +32,7 @@ interface NodeContextStore {
   setDropSuccessful: (successful: boolean) => void
   setIsMultiSelect: (value: boolean) => void
   setSelectedStickyId: (id: string | null) => void
+  setSelectedGroupId: (id: string | null) => void
 }
 
 const useNodeContextStore = create<NodeContextStore>((set) => ({
@@ -47,6 +49,7 @@ const useNodeContextStore = create<NodeContextStore>((set) => ({
   dropSuccessful: false,
   isMultiSelect: false,
   selectedStickyId: null,
+  selectedGroupId: null,
   saveFlow: null,
   setNodeId: (nodeId) => set({ nodeId }),
   setAttributes: (attributes) => set({ attributes }),
@@ -63,6 +66,7 @@ const useNodeContextStore = create<NodeContextStore>((set) => ({
   setDropSuccessful: (dropSuccessful) => set({ dropSuccessful }),
   setIsMultiSelect: (isMultiSelect) => set({ isMultiSelect }),
   setSelectedStickyId: (selectedStickyId) => set({ selectedStickyId }),
+  setSelectedGroupId: (selectedGroupId) => set({ selectedGroupId }),
 }))
 
 export default useNodeContextStore

@@ -12,7 +12,7 @@
       </xs:sequence>
     </xs:complexType>
   </xs:element>
-  
+
   <!-- StickyNote -->
   <xs:element name="StickyNote">
     <xs:complexType>
@@ -34,8 +34,10 @@
       <xs:attribute name="y" type="xs:int" use="required"/>
       <xs:attribute name="width" type="xs:int" use="required"/>
       <xs:attribute name="height" type="xs:int" use="required"/>
-      <xs:attribute name="children" type="xs:string" use="required"/>
       <xs:attribute name="label" type="xs:string" use="required"/>
+      <xs:attribute name="description" type="xs:string" use="required"/>
+      <xs:attribute name="color" type="xs:string" use="required"/>
+      <xs:attribute name="children" type="xs:string" use="required"/>
     </xs:complexType>
   </xs:element>
 

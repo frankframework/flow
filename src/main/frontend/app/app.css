@@ -60,6 +60,13 @@
     --sticky-color-purple: #e9d5ff;
     --sticky-color-orange: #fed7aa;
 
+    --group-color-blue: #93c5fd;
+    --group-color-violet: #c4b5fd;
+    --group-color-rose: #fda4af;
+    --group-color-green: #86efac;
+    --group-color-amber: #fcd34d;
+    --group-color-cyan: #67e8f9;
+
     /* Palette Styling */
     --palette-pipes: #68d250;
     --palette-listeners: #d250bf;
@@ -109,6 +116,13 @@
     --sticky-color-red: #7f1d1d;
     --sticky-color-purple: #581c87;
     --sticky-color-orange: #9a3412;
+
+    --group-color-blue: #1d4ed8;
+    --group-color-violet: #6d28d9;
+    --group-color-rose: #be123c;
+    --group-color-green: #15803d;
+    --group-color-amber: #b45309;
+    --group-color-cyan: #0e7490;
 
     --palette-pipes: #136502;
     --palette-listeners: #853279;
