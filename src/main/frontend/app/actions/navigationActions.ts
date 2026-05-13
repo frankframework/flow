@@ -35,18 +35,21 @@ export function openInEditor(relativePath: string, filepath: string) {
 }
 
 export function openInEditorAtElement(subtype: string, name: string | undefined, filepath: string) {
-  const { setTabData, setActiveTab, getTab, setPendingHighlight } = useEditorTabStore.getState()
+  const { setTabData, setActiveTab, getTab } = useEditorTabStore.getState()
 
   const fileName = filepath.split(/[/\\]/).pop() ?? filepath
+  const existing = getTab(filepath)
 
-  if (!getTab(filepath)) {
+  if (existing) {
+    setTabData(filepath, { ...existing, pendingHighlight: { subtype, name } })
+  } else {
     setTabData(filepath, {
       name: fileName,
       configurationPath: filepath,
+      pendingHighlight: { subtype, name },
     })
   }
 
-  setPendingHighlight({ subtype, name })
   setActiveTab(filepath)
   useNavigationStore.getState().navigate('editor')
 }
