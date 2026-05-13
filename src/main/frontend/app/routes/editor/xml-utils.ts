@@ -243,28 +243,36 @@ export function findFrankElementsForGlyphs(xml: string): FrankElementLocation[] 
   const lines = xml.split('\n')
   const results: FrankElementLocation[] = []
   const tagStack: string[] = []
+  const tagTokenRegex = /<\/?([A-Za-z_][\w:.-]*)(?:\s[^<>]*?)?\s*\/?>/g
 
   for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
     const line = lines[lineIndex]
+    const tokens = line.matchAll(tagTokenRegex)
 
-    processClosingTags(line, tagStack)
+    for (const token of tokens) {
+      const fullTag = token[0]
+      const rawTag = token[1]
+      const baseTagName = getLocalName(rawTag)
 
-    const openMatch = line.match(REGEX_OPEN_TAG)
-    if (!openMatch) continue
+      if (fullTag.startsWith('</')) {
+        if (tagStack.at(-1) === baseTagName) {
+          tagStack.pop()
+        }
+        continue
+      }
 
-    const rawTag = openMatch[1]
-    const baseTagName = getLocalName(rawTag)
-    const pascalTag = toPascalCase(baseTagName)
-    const parentTag = (tagStack.at(-1) ?? '').toLowerCase()
+      const pascalTag = toPascalCase(baseTagName)
+      const parentTag = (tagStack.at(-1) ?? '').toLowerCase()
 
-    if (isGlyphNode(pascalTag, parentTag)) {
-      const entry = createGlyphEntry(pascalTag, lineIndex, lines, xml, adapters)
-      if (entry) results.push(entry)
-    }
+      if (isGlyphNode(pascalTag, parentTag)) {
+        const entry = createGlyphEntry(pascalTag, lineIndex, lines, xml, adapters)
+        if (entry) results.push(entry)
+      }
 
-    const { isSelfClosing } = analyzeTagStructure(lines, lineIndex)
-    if (!isSelfClosing) {
-      tagStack.push(baseTagName)
+      const isSelfClosing = fullTag.endsWith('/>')
+      if (!isSelfClosing) {
+        tagStack.push(baseTagName)
+      }
     }
   }
 
