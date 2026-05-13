@@ -122,6 +122,8 @@ export function findAdaptersInXml(xml: string): AdapterLocation[] {
   const adapters: AdapterLocation[] = []
   let match: RegExpExecArray | null
 
+  REGEX_ADAPTER.lastIndex = 0
+
   while ((match = REGEX_ADAPTER.exec(xml)) !== null) {
     adapters.push({ name: match[2], offset: match.index })
   }
@@ -155,7 +157,7 @@ export function extractFlowElements(xml: string): string | null {
 export function wrapFlowXml(fragment: string): string {
   const innerContent = fragment
     .replace(/^<flow:FlowElements[^>]*>/, '')
-    .replace(/<\/flow:FlowElements>$/, '')
+    .replace('</flow:FlowElements>', '')
     .trim()
 
   return `<flow:FlowElements xmlns:flow="urn:frank-flow">${innerContent}</flow:FlowElements>`
@@ -243,24 +245,14 @@ export function findFrankElementsForGlyphs(xml: string): FrankElementLocation[] 
   const lines = xml.split('\n')
   const results: FrankElementLocation[] = []
   const tagStack: string[] = []
-  const tagTokenRegex = /<\/?([A-Za-z_][\w:.-]*)(?:\s[^<>]*?)?\s*\/?>/g
 
   for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
     const line = lines[lineIndex]
-    const tokens = line.matchAll(tagTokenRegex)
 
-    for (const token of tokens) {
-      const fullTag = token[0]
-      const rawTag = token[1]
+    const openMatch = line.match(REGEX_OPEN_TAG)
+    if (openMatch) {
+      const rawTag = openMatch[1]
       const baseTagName = getLocalName(rawTag)
-
-      if (fullTag.startsWith('</')) {
-        if (tagStack.at(-1) === baseTagName) {
-          tagStack.pop()
-        }
-        continue
-      }
-
       const pascalTag = toPascalCase(baseTagName)
       const parentTag = (tagStack.at(-1) ?? '').toLowerCase()
 
@@ -269,11 +261,13 @@ export function findFrankElementsForGlyphs(xml: string): FrankElementLocation[] 
         if (entry) results.push(entry)
       }
 
-      const isSelfClosing = fullTag.endsWith('/>')
+      const { isSelfClosing } = analyzeTagStructure(lines, lineIndex)
       if (!isSelfClosing) {
         tagStack.push(baseTagName)
       }
     }
+
+    processClosingTags(line, tagStack)
   }
 
   return results

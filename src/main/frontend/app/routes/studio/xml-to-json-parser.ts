@@ -563,7 +563,7 @@ function convertElementToNode(element: Element, idCounter: IdCounter, sourceHand
   return {
     id: thisId,
     type: 'frankNode',
-    position: {x, y},
+    position: { x, y },
     width,
     height,
     data: {

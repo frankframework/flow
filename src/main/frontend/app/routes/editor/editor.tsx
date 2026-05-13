@@ -737,7 +737,7 @@ export default function CodeEditor() {
         options: { isWholeLine: true, className: 'highlight-line' },
       },
     ])
-  }, [pendingHighlight, fileContent, isDiffTab])
+  }, [pendingHighlight, fileContent, isDiffTab, editorMounted])
 
   const handleOpenInStudio = useCallback(() => {
     const editorTab = useEditorTabStore.getState().getTab(activeTabFilePath)
