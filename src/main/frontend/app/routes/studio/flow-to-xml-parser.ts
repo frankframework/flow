@@ -359,15 +359,23 @@ function generateGroupNodeXml(groupNodes: GroupNode[], groupChildrenMap: Map<str
 
     const groupName = escapeXml(groupNode.data?.label || '')
 
-    const attrs = [
+    const attrParts = [
       `flow:children="${childNames}"`,
       `flow:height="${height}"`,
       `flow:width="${width}"`,
       `flow:x="${roundedX}"`,
       `flow:y="${roundedY}"`,
       `flow:label="${groupName}"`,
-    ].join(' ')
+    ]
 
-    return `    <flow:GroupNode ${attrs} />`
+    if (groupNode.data?.description) {
+      attrParts.push(`flow:description="${escapeXml(groupNode.data.description)}"`)
+    }
+
+    if (groupNode.data?.color) {
+      attrParts.push(`flow:color="${escapeXml(groupNode.data.color)}"`)
+    }
+
+    return `    <flow:GroupNode ${attrParts.join(' ')} />`
   })
 }

@@ -563,7 +563,7 @@ function convertElementToNode(element: Element, idCounter: IdCounter, sourceHand
   return {
     id: thisId,
     type: 'frankNode',
-    position: {x, y},
+    position: { x, y },
     width,
     height,
     data: {
@@ -686,6 +686,8 @@ function extractGroupNodesFromAdapter(adapter: Element, flowNodes: FlowNode[], i
     const y = parseNumericAttribute(node.getAttribute('flow:y'), 0)
     const width = parseNumericAttribute(node.getAttribute('flow:width'), 0)
     const height = parseNumericAttribute(node.getAttribute('flow:height'), 0)
+    const description = node.getAttribute('flow:description') || undefined
+    const color = node.getAttribute('flow:color') || undefined
 
     const groupNode: GroupNode = {
       id: (idCounter.current++).toString(),
@@ -693,6 +695,8 @@ function extractGroupNodesFromAdapter(adapter: Element, flowNodes: FlowNode[], i
       position: { x, y },
       data: {
         label,
+        description,
+        color,
         width,
         height,
         childrenNames: children,
