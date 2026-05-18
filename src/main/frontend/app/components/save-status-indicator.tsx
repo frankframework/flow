@@ -9,8 +9,8 @@ function getTimeAgo(date: Date): string {
 }
 
 export function SaveStatusIndicator() {
-  const saveStatus = useSaveStatusStore((s) => s.saveStatus)
-  const savedAt = useSaveStatusStore((s) => s.savedAt)
+  const saveStatus = useSaveStatusStore((state) => state.saveStatus)
+  const savedAt = useSaveStatusStore((state) => state.savedAt)
   const [, setTick] = useState(0)
 
   useEffect(() => {

@@ -378,16 +378,16 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
   }
 
   const computeFitViewport = useCallback((nodes: Node[]): { x: number; y: number; zoom: number } => {
-    const relevantNodes = nodes.filter((n) => n.type === 'frankNode' || n.type === 'exitNode')
+    const relevantNodes = nodes.filter((node) => node.type === 'frankNode' || node.type === 'exitNode')
     if (relevantNodes.length === 0) return { x: 0, y: 0, zoom: 1 }
 
-    const minX = Math.min(...relevantNodes.map((n) => n.position.x))
-    const minY = Math.min(...relevantNodes.map((n) => n.position.y))
+    const minX = Math.min(...relevantNodes.map((node) => node.position.x))
+    const minY = Math.min(...relevantNodes.map((node) => node.position.y))
     const maxX = Math.max(
-      ...relevantNodes.map((n) => n.position.x + (n.measured?.width ?? FlowConfig.NODE_DEFAULT_WIDTH)),
+      ...relevantNodes.map((node) => node.position.x + (node.measured?.width ?? FlowConfig.NODE_DEFAULT_WIDTH)),
     )
     const maxY = Math.max(
-      ...relevantNodes.map((n) => n.position.y + (n.measured?.height ?? FlowConfig.NODE_MIN_HEIGHT)),
+      ...relevantNodes.map((node) => node.position.y + (node.measured?.height ?? FlowConfig.NODE_MIN_HEIGHT)),
     )
 
     const deltaX = maxX - minX
@@ -426,9 +426,9 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
     const layoutableIds = new Set<string>()
     for (const node of nodes) {
       if ((node.type === 'frankNode' || node.type === 'exitNode') && node.position.x === 0 && node.position.y === 0) {
-        const w = node.measured?.width ?? FlowConfig.NODE_DEFAULT_WIDTH
-        const h = node.measured?.height ?? FlowConfig.NODE_MIN_HEIGHT
-        dagreGraph.setNode(node.id, { width: w, height: h })
+        const width = node.measured?.width ?? FlowConfig.NODE_DEFAULT_WIDTH
+        const height = node.measured?.height ?? FlowConfig.NODE_MIN_HEIGHT
+        dagreGraph.setNode(node.id, { width: width, height: height })
         layoutableIds.add(node.id)
       }
     }
@@ -447,14 +447,14 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
       const nodeWithPosition = dagreGraph.node(node.id)
       if (!nodeWithPosition) return node
 
-      const w = node.measured?.width ?? FlowConfig.NODE_DEFAULT_WIDTH
-      const h = node.measured?.height ?? FlowConfig.NODE_MIN_HEIGHT
+      const width = node.measured?.width ?? FlowConfig.NODE_DEFAULT_WIDTH
+      const height = node.measured?.height ?? FlowConfig.NODE_MIN_HEIGHT
 
       return {
         ...node,
         position: {
-          x: nodeWithPosition.x - w / 2,
-          y: nodeWithPosition.y - h / 2,
+          x: nodeWithPosition.x - width / 2,
+          y: nodeWithPosition.y - height / 2,
         },
       }
     })
@@ -467,7 +467,9 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
     )
     const laidOut = layoutGraph(resetNodes, flowStore.edges, 'LR')
 
-    const nodeIds = laidOut.filter((n) => n.type === 'frankNode' || n.type === 'exitNode').map((n) => ({ id: n.id }))
+    const nodeIds = laidOut
+      .filter((node) => node.type === 'frankNode' || node.type === 'exitNode')
+      .map((node) => ({ id: node.id }))
 
     if (nodeIds.length === 0) return
 
@@ -1408,8 +1410,8 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
           onCopy={copySelection}
           onPaste={pasteSelection}
           onShowInEditor={showSelectedNodeInEditor}
-          hasSelection={nodes.some((n) => n.selected)}
-          hasGroupedSelection={nodes.some((n) => n.selected) && allSelectedInSameGroup(nodes.filter((n) => n.selected))}
+          hasSelection={nodes.some((node) => node.selected)}
+          hasGroupedSelection={nodes.some((node) => node.selected) && allSelectedInSameGroup(nodes.filter((node) => node.selected))}
           hasClipboard={clipboardRef.current !== null}
           hasSingleNodeSelection={nodes.filter((node) => node.selected && node.type === 'frankNode').length === 1}
         />
