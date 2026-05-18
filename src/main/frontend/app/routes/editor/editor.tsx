@@ -32,7 +32,6 @@ import { fetchFrankConfigXsd } from '~/services/xsd-service'
 import useEditorTabStore from '~/stores/editor-tab-store'
 import { useProjectStore } from '~/stores/project-store'
 import { useSettingsStore } from '~/stores/settings-store'
-import { toProjectRelativePath } from '~/utils/path-utils'
 import flowXsd from '../../../src/assets/xsd/FlowConfig.xsd?raw'
 import {
   extractFlowElements,
@@ -253,6 +252,7 @@ export default function CodeEditor() {
   const [leftTab, setLeftTab] = useState<LeftTab>('files')
   const [editorMounted, setEditorMounted] = useState(false)
   const [xsdLoaded, setXsdLoaded] = useState(false)
+  const [buttonRightOffset, setButtonRightOffset] = useState(14)
   const editorReference = useRef<Parameters<OnMount>[0] | null>(null)
   const monacoReference = useRef<Monaco | null>(null)
   const xsdContentRef = useRef<string | null>(null)
@@ -519,6 +519,13 @@ export default function CodeEditor() {
     editor.updateOptions({ glyphMargin: true })
 
     applyFlowHighlighter()
+
+    const updateButtonOffset = () => {
+      const layout = editor.getLayoutInfo()
+      setButtonRightOffset(layout.minimap.minimapWidth + layout.verticalScrollbarWidth + 8)
+    }
+    updateButtonOffset()
+    editor.onDidLayoutChange(updateButtonOffset)
 
     editor.addAction({
       id: 'save-file',
@@ -803,18 +810,17 @@ export default function CodeEditor() {
             <DiffTabView diffData={activeTab.diffData} />
           ) : (
             <div className="flex h-full flex-col">
-              <div className="border-b-border bg-background flex h-10 shrink-0 items-center justify-between border-b px-4">
-                <span className="text-foreground-muted truncate text-sm">
-                  {activeTab.configurationPath && project
-                    ? toProjectRelativePath(activeTab.configurationPath, project)
-                    : activeTab.configurationPath}
-                </span>
-                <Button onClick={handleOpenInStudio} className="flex shrink-0 items-center gap-1.5 text-sm" title="Open in Studio">
-                  <RulerCrossPenIcon className="h-4 w-4 fill-current" />
-                  Open in Studio
-                </Button>
-              </div>
-              <div className="min-h-0 flex-1">
+              <div className="relative min-h-0 flex-1">
+                <div className="absolute top-2 z-10" style={{ right: buttonRightOffset }}>
+                  <Button
+                    onClick={handleOpenInStudio}
+                    className="flex items-center gap-1.5 text-xs shadow-sm"
+                    title="Open in Studio"
+                  >
+                    <RulerCrossPenIcon className="h-3.5 w-3.5 fill-current" />
+                    Open in Studio
+                  </Button>
+                </div>
                 <Editor
                   language={fileLanguage}
                   theme={theme === 'dark' ? 'vs-dark' : 'vs'}

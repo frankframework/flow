@@ -377,48 +377,42 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
     setShowModal(true)
   }
 
-  const computeFitViewport = useCallback(
-    (nodes: Node[]): { x: number; y: number; zoom: number } => {
-      const relevantNodes = nodes.filter((n) => n.type === 'frankNode' || n.type === 'exitNode')
-      if (relevantNodes.length === 0) return { x: 0, y: 0, zoom: 1 }
+  const computeFitViewport = useCallback((nodes: Node[]): { x: number; y: number; zoom: number } => {
+    const relevantNodes = nodes.filter((n) => n.type === 'frankNode' || n.type === 'exitNode')
+    if (relevantNodes.length === 0) return { x: 0, y: 0, zoom: 1 }
 
-      const minX = Math.min(...relevantNodes.map((n) => n.position.x))
-      const minY = Math.min(...relevantNodes.map((n) => n.position.y))
-      const maxX = Math.max(
-        ...relevantNodes.map((n) => n.position.x + (n.measured?.width ?? FlowConfig.NODE_DEFAULT_WIDTH)),
-      )
-      const maxY = Math.max(
-        ...relevantNodes.map((n) => n.position.y + (n.measured?.height ?? FlowConfig.NODE_MIN_HEIGHT)),
-      )
+    const minX = Math.min(...relevantNodes.map((n) => n.position.x))
+    const minY = Math.min(...relevantNodes.map((n) => n.position.y))
+    const maxX = Math.max(
+      ...relevantNodes.map((n) => n.position.x + (n.measured?.width ?? FlowConfig.NODE_DEFAULT_WIDTH)),
+    )
+    const maxY = Math.max(
+      ...relevantNodes.map((n) => n.position.y + (n.measured?.height ?? FlowConfig.NODE_MIN_HEIGHT)),
+    )
 
-      const deltaX = maxX - minX
-      const deltaY = maxY - minY
-      const centerX = minX + deltaX / 2
-      const centerY = minY + deltaY / 2
+    const deltaX = maxX - minX
+    const deltaY = maxY - minY
+    const centerX = minX + deltaX / 2
+    const centerY = minY + deltaY / 2
 
-      const canvasWidth = canvasRef.current?.clientWidth ?? 800
-      const canvasHeight = canvasRef.current?.clientHeight ?? 600
+    const canvasWidth = canvasRef.current?.clientWidth ?? 800
+    const canvasHeight = canvasRef.current?.clientHeight ?? 600
 
-      const padding = 0.85
-      const zoom = Math.max(
-        0.2,
-        Math.min(
-          1.5,
-          Math.min(
-            (canvasWidth * padding) / Math.max(deltaX, 1),
-            (canvasHeight * padding) / Math.max(deltaY, 1),
-          ),
-        ),
-      )
+    const padding = 0.85
+    const zoom = Math.max(
+      0.2,
+      Math.min(
+        1.5,
+        Math.min((canvasWidth * padding) / Math.max(deltaX, 1), (canvasHeight * padding) / Math.max(deltaY, 1)),
+      ),
+    )
 
-      return {
-        x: canvasWidth / 2 - centerX * zoom,
-        y: canvasHeight / 2 - centerY * zoom - 40,
-        zoom,
-      }
-    },
-    [],
-  )
+    return {
+      x: canvasWidth / 2 - centerX * zoom,
+      y: canvasHeight / 2 - centerY * zoom - 40,
+      zoom,
+    }
+  }, [])
 
   const layoutGraph = useCallback((nodes: Node[], edges: Edge[], direction: 'TB' | 'LR' = 'LR'): Node[] => {
     const dagreGraph = new Dagre.graphlib.Graph()
@@ -473,9 +467,7 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
     )
     const laidOut = layoutGraph(resetNodes, flowStore.edges, 'LR')
 
-    const nodeIds = laidOut
-      .filter((n) => n.type === 'frankNode' || n.type === 'exitNode')
-      .map((n) => ({ id: n.id }))
+    const nodeIds = laidOut.filter((n) => n.type === 'frankNode' || n.type === 'exitNode').map((n) => ({ id: n.id }))
 
     if (nodeIds.length === 0) return
 
@@ -1303,103 +1295,107 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
       onContextMenu={handleRightMouseButtonClick}
     >
       <div ref={canvasRef} className="relative flex-1 overflow-hidden">
-      <div className="absolute top-2 right-2 z-10">
-        <Button onClick={onOpenInEditor} className="flex items-center gap-1.5 text-xs shadow-sm" title="Open in Editor">
-          <CodeIcon className="h-3.5 w-3.5 fill-current" />
-          Open in Editor
-        </Button>
-      </div>
-
-      {loading && (
-        <div className="bg-opacity-80 bg-background absolute inset-0 z-50 flex items-center justify-center">
-          <div className="border-border h-10 w-10 animate-spin rounded-full border-t-2 border-b-2"></div>
+        <div className="absolute top-2 right-2 z-10">
+          <Button
+            onClick={onOpenInEditor}
+            className="flex items-center gap-1.5 text-xs shadow-sm"
+            title="Open in Editor"
+          >
+            <CodeIcon className="h-3.5 w-3.5 fill-current" />
+            Open in Editor
+          </Button>
         </div>
-      )}
 
-      {isEditing && (
-        <div className="pointer-events-none absolute inset-0 z-10">
-          <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-3 rounded bg-black/30 px-3 py-2 text-xs text-white backdrop-blur-sm">
-            <span>
-              <kbd className="rounded border border-white/40 bg-white/15 px-1.5 py-0.5 font-mono text-xs text-white">
-                Esc
-              </kbd>{' '}
-              Discard
-            </span>
-            <span className="opacity-40">|</span>
-            <span>
-              <kbd className="rounded border border-white/40 bg-white/15 px-1.5 py-0.5 font-mono text-xs text-white">
-                Ctrl+Enter
-              </kbd>{' '}
-              Save
-            </span>
+        {loading && (
+          <div className="bg-opacity-80 bg-background absolute inset-0 z-50 flex items-center justify-center">
+            <div className="border-border h-10 w-10 animate-spin rounded-full border-t-2 border-b-2"></div>
           </div>
-        </div>
-      )}
+        )}
 
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        viewport={viewport}
-        onMove={(event, viewport) => {
-          useFlowStore.getState().setViewport(viewport)
-        }}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
-        onReconnect={onReconnect}
-        onNodeClick={handleNodeClick}
-        onNodeDoubleClick={handleNodeDoubleClick}
-        onNodeDragStop={handleNodeDragStop}
-        onEdgeClick={handleEdgeClick}
-        onSelectionChange={handleSelectionChange}
-        onConnectStart={handleConnectStart}
-        onConnectEnd={handleConnectEnd}
-        nodeTypes={nodeTypes}
-        edgeTypes={edgeTypes}
-        onPaneClick={() => {
-          setContextMenu(null)
-          setSelectedStickyId(null)
-          setSelectedGroupId(null)
-          if (!isDirty) {
-            showNodeContextMenu(false)
-            setIsEditing(false)
-            setParentId(null)
-            setChildParentId(null)
-          }
-        }}
-        deleteKeyCode={null}
-        minZoom={0.2}
-      >
-        <Controls position="top-left" style={{ color: '#000' }}>
-          <ControlButton onClick={handleAutoLayout} title="Auto layout">
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <rect x="3" y="3" width="5" height="5" rx="1" />
-              <rect x="10" y="3" width="5" height="5" rx="1" />
-              <rect x="3" y="16" width="5" height="5" rx="1" />
-              <rect x="10" y="16" width="5" height="5" rx="1" />
-              <line x1="17" y1="5.5" x2="21" y2="5.5" />
-              <line x1="17" y1="18.5" x2="21" y2="18.5" />
-              <line x1="21" y1="5.5" x2="21" y2="18.5" />
-            </svg>
-          </ControlButton>
-        </Controls>
-        <Background variant={BackgroundVariant.Dots} size={3} gap={100}></Background>
-      </ReactFlow>
+        {isEditing && (
+          <div className="pointer-events-none absolute inset-0 z-10">
+            <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-3 rounded bg-black/30 px-3 py-2 text-xs text-white backdrop-blur-sm">
+              <span>
+                <kbd className="rounded border border-white/40 bg-white/15 px-1.5 py-0.5 font-mono text-xs text-white">
+                  Esc
+                </kbd>{' '}
+                Discard
+              </span>
+              <span className="opacity-40">|</span>
+              <span>
+                <kbd className="rounded border border-white/40 bg-white/15 px-1.5 py-0.5 font-mono text-xs text-white">
+                  Ctrl+Enter
+                </kbd>{' '}
+                Save
+              </span>
+            </div>
+          </div>
+        )}
 
-      <CreateNodeModal
-        isOpen={showModal}
-        onClose={() => setShowModal(false)}
-        addNodeAtPosition={addNodeAtPosition}
-        positions={edgeDropPositions}
-        sourceInfo={sourceInfoReference.current}
-      />
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          viewport={viewport}
+          onMove={(event, viewport) => {
+            useFlowStore.getState().setViewport(viewport)
+          }}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
+          onReconnect={onReconnect}
+          onNodeClick={handleNodeClick}
+          onNodeDoubleClick={handleNodeDoubleClick}
+          onNodeDragStop={handleNodeDragStop}
+          onEdgeClick={handleEdgeClick}
+          onSelectionChange={handleSelectionChange}
+          onConnectStart={handleConnectStart}
+          onConnectEnd={handleConnectEnd}
+          nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
+          onPaneClick={() => {
+            setContextMenu(null)
+            setSelectedStickyId(null)
+            setSelectedGroupId(null)
+            if (!isDirty) {
+              showNodeContextMenu(false)
+              setIsEditing(false)
+              setParentId(null)
+              setChildParentId(null)
+            }
+          }}
+          deleteKeyCode={null}
+          minZoom={0.2}
+        >
+          <Controls position="top-left" style={{ color: '#000' }}>
+            <ControlButton onClick={handleAutoLayout} title="Auto layout">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <rect x="3" y="3" width="5" height="5" rx="1" />
+                <rect x="10" y="3" width="5" height="5" rx="1" />
+                <rect x="3" y="16" width="5" height="5" rx="1" />
+                <rect x="10" y="16" width="5" height="5" rx="1" />
+                <line x1="17" y1="5.5" x2="21" y2="5.5" />
+                <line x1="17" y1="18.5" x2="21" y2="18.5" />
+                <line x1="21" y1="5.5" x2="21" y2="18.5" />
+              </svg>
+            </ControlButton>
+          </Controls>
+          <Background variant={BackgroundVariant.Dots} size={3} gap={100}></Background>
+        </ReactFlow>
+
+        <CreateNodeModal
+          isOpen={showModal}
+          onClose={() => setShowModal(false)}
+          addNodeAtPosition={addNodeAtPosition}
+          positions={edgeDropPositions}
+          sourceInfo={sourceInfoReference.current}
+        />
 
       {contextMenu && (
         <CanvasContextMenu
