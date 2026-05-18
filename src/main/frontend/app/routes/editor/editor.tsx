@@ -21,6 +21,8 @@ import SidebarHeader from '~/components/sidebars-layout/sidebar-header'
 import SidebarLayout from '~/components/sidebars-layout/sidebar-layout'
 import { SidebarSide } from '~/components/sidebars-layout/sidebar-layout-store'
 import EditorTabs from '~/components/tabs/editor-tabs'
+import { SaveStatusIndicator } from '~/components/save-status-indicator'
+import { useSaveStatusStore } from '~/stores/save-status-store'
 import { showErrorToastFrom } from '~/components/toast'
 import { useTheme } from '~/hooks/use-theme'
 import { fetchConfigurationFile, saveConfigurationFile } from '~/services/configuration-file-service'
@@ -45,7 +47,6 @@ import {
 import { openInStudioAtNode } from '~/actions/navigationActions'
 
 type LeftTab = 'files' | 'git'
-type SaveStatus = 'idle' | 'saving' | 'saved'
 export interface ValidationError {
   message: string
   lineNumber: number
@@ -64,7 +65,6 @@ interface CachedFile {
   type: string
 }
 
-const SAVED_DISPLAY_DURATION = 2000
 const ELEMENT_ERROR_RE = /[Ee]lement [\u2018\u2019'"{]?([\w:.-]+)[\u2018\u2019'"}]?/
 const ATTRIBUTE_ERROR_RE = /[Aa]ttribute [\u2018\u2019'"{]?([\w:.-]+)[\u2018\u2019'"}]?/
 
@@ -249,7 +249,7 @@ export default function CodeEditor() {
   const [activeTabFilePath, setActiveTabFilePath] = useState<string>(useEditorTabStore.getState().activeTabFilePath)
   const [fileContent, setFileContent] = useState<string>('')
   const [fileLanguage, setFileLanguage] = useState<string>('xml')
-  const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
+  const { setSaving, setSaved, setIdle } = useSaveStatusStore()
   const [leftTab, setLeftTab] = useState<LeftTab>('files')
   const [editorMounted, setEditorMounted] = useState(false)
   const [xsdLoaded, setXsdLoaded] = useState(false)
@@ -262,7 +262,6 @@ export default function CodeEditor() {
   const frankGlyphsDecorationsRef = useRef<IEditorDecorationsCollection | null>(null)
   const frankElementsRef = useRef<ReturnType<typeof findFrankElementsForGlyphs>>([])
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const validationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const validationCounterRef = useRef(0)
   const contentCacheRef = useRef<Map<string, CachedFile>>(new Map())
@@ -349,12 +348,10 @@ export default function CodeEditor() {
       if (!configPath) return
 
       function finishSaving() {
-        setSaveStatus('saved')
-        if (savedTimerRef.current) clearTimeout(savedTimerRef.current)
-        savedTimerRef.current = setTimeout(() => setSaveStatus('idle'), SAVED_DISPLAY_DURATION)
+        setSaved()
       }
 
-      setSaveStatus('saving')
+      setSaving()
       if (isConfigurationFile(fileExtension ?? '')) {
         saveConfigurationFile(project.name, configPath, updatedContent)
           .then(({ xmlContent }) => {
@@ -364,14 +361,14 @@ export default function CodeEditor() {
           })
           .catch((error) => {
             showErrorToastFrom('Error saving', error)
-            setSaveStatus('idle')
+            setIdle()
           })
       } else {
         updateFile(project.name, configPath, updatedContent)
           .then(() => finishSaving())
           .catch((error) => {
             showErrorToastFrom('Error saving', error)
-            setSaveStatus('idle')
+            setIdle()
           })
       }
     },
@@ -401,7 +398,6 @@ export default function CodeEditor() {
   useEffect(() => {
     return () => {
       if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current)
-      if (savedTimerRef.current) clearTimeout(savedTimerRef.current)
       if (validationTimerRef.current) clearTimeout(validationTimerRef.current)
     }
   }, [])
@@ -806,31 +802,19 @@ export default function CodeEditor() {
           isDiffTab && activeTab.diffData ? (
             <DiffTabView diffData={activeTab.diffData} />
           ) : (
-            <>
-              <div className="border-b-border bg-background flex h-12 items-center justify-between border-b p-4">
-                <span>
-                  Path:{' '}
+            <div className="flex h-full flex-col">
+              <div className="border-b-border bg-background flex h-10 shrink-0 items-center justify-between border-b px-4">
+                <span className="text-foreground-muted truncate text-sm">
                   {activeTab.configurationPath && project
                     ? toProjectRelativePath(activeTab.configurationPath, project)
                     : activeTab.configurationPath}
                 </span>
-                <div className="flex items-center gap-2">
-                  <span
-                    className={clsx(
-                      'text-muted-foreground text-xs transition-opacity duration-300',
-                      saveStatus === 'idle' ? 'opacity-0' : 'opacity-100',
-                    )}
-                  >
-                    {saveStatus === 'saving' && 'Saving...'}
-                    {saveStatus === 'saved' && 'Saved'}
-                  </span>
-                  <Button onClick={handleOpenInStudio} className="flex items-center gap-1.5" title="Open in Studio">
-                    <RulerCrossPenIcon className="h-4 w-4 fill-current" />
-                    Open in Studio
-                  </Button>
-                </div>
+                <Button onClick={handleOpenInStudio} className="flex shrink-0 items-center gap-1.5 text-sm" title="Open in Studio">
+                  <RulerCrossPenIcon className="h-4 w-4 fill-current" />
+                  Open in Studio
+                </Button>
               </div>
-              <div className="h-full">
+              <div className="min-h-0 flex-1">
                 <Editor
                   language={fileLanguage}
                   theme={theme === 'dark' ? 'vs-dark' : 'vs'}
@@ -853,7 +837,10 @@ export default function CodeEditor() {
                   }}
                 />
               </div>
-            </>
+              <div className="border-t-border bg-background flex h-7 shrink-0 items-center justify-end border-t px-3">
+                <SaveStatusIndicator />
+              </div>
+            </div>
           )
         ) : (
           <div className="text-foreground-muted flex h-full flex-col items-center justify-center p-8 text-center">

@@ -173,6 +173,16 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
     }
   }, [properties.data.children, properties.data.sourceHandles.length, dragOver])
 
+  useEffect(() => {
+    const container = containerReference.current
+    if (!container) return
+    const observer = new ResizeObserver(() => {
+      setIsOverflowing(container.scrollHeight > container.offsetHeight + 4)
+    })
+    observer.observe(container)
+    return () => observer.disconnect()
+  }, [])
+
   const addHandle = useFlowStore.getState().addHandle
   const addChild = useFlowStore((state) => state.addChild)
 
@@ -447,7 +457,6 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
         className={`bg-background border-border relative flex w-full flex-col items-center overflow-x-visible rounded-md border ${isManuallyResized ? 'h-full overflow-y-hidden' : 'overflow-y-visible'}`}
         style={{
           minWidth: `${minNodeWidth}px`,
-          minHeight: `${minNodeHeight}px`,
           ...(properties.selected && { borderColor: `var(${colorVariable})` }),
         }}
         ref={containerReference}
@@ -559,14 +568,12 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
 
         {isOverflowing && (
           <div
-            className="pointer-events-none absolute right-0 bottom-0 left-0 flex items-end justify-center pb-1"
+            className="pointer-events-none absolute right-0 bottom-0 left-0 z-10"
             style={{
-              height: '28px',
+              height: '40px',
               background: 'linear-gradient(to bottom, transparent, var(--color-background))',
             }}
-          >
-            <span className="text-foreground-muted text-[9px] leading-none">▼ more</span>
-          </div>
+          />
         )}
       </div>
 

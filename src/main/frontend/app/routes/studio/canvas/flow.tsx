@@ -14,6 +14,10 @@ import {
   useUpdateNodeInternals,
 } from '@xyflow/react'
 import Dagre from '@dagrejs/dagre'
+import { SaveStatusIndicator } from '~/components/save-status-indicator'
+import { useSaveStatusStore } from '~/stores/save-status-store'
+import Button from '~/components/inputs/button'
+import CodeIcon from '/icons/solar/Code.svg?react'
 import '@xyflow/react/dist/style.css'
 import FrankNodeComponent, { type FrankNodeType } from '~/routes/studio/canvas/nodetypes/frank-node'
 import FrankEdgeComponent from '~/routes/studio/canvas/edgetypes/frank-edge'
@@ -43,7 +47,6 @@ import { refreshOpenDiffs } from '~/services/git-service'
 import useEditorTabStore from '~/stores/editor-tab-store'
 import { cloneWithRemappedIds, getEdgeLabelFromHandle } from '~/utils/flow-utils'
 import { showErrorToast } from '~/components/toast'
-import clsx from 'clsx'
 import { useSettingsStore } from '~/stores/settings-store'
 import { useShortcut } from '~/hooks/use-shortcut'
 import CanvasContextMenu from '~/components/flow/canvas-context-menu'
@@ -62,8 +65,6 @@ const selector = (state: FlowState) => ({
   onReconnect: state.onReconnect,
 })
 
-type SaveStatus = 'idle' | 'saving' | 'saved'
-const SAVED_DISPLAY_DURATION = 2000
 const STICKY_SNAP_DISTANCE = 60
 
 const getStickyCenter = (sticky: StickyNote) => ({
@@ -107,7 +108,7 @@ const nodeTypes = {
 }
 const edgeTypes = { frankEdge: FrankEdgeComponent }
 
-function FlowCanvas() {
+function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
   const showNodeContextMenu = useNodeContextMenu()
   const [loading, setLoading] = useState(false)
   const {
@@ -165,12 +166,11 @@ function FlowCanvas() {
     edges: Edge[]
   } | null>(null)
 
-  const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
+  const { setSaving, setSaved, setIdle } = useSaveStatusStore()
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; flowPos: { x: number; y: number } } | null>(
     null,
   )
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isLoadingTabRef = useRef(false)
   const pendingSelectionRef = useRef<{ subtype: string; name: string } | null>(null)
 
@@ -178,6 +178,8 @@ function FlowCanvas() {
   const reactFlow = useReactFlow()
   const reactFlowRef = useRef(reactFlow)
   reactFlowRef.current = reactFlow
+  const canvasRef = useRef<HTMLDivElement>(null)
+  const fitAfterLayoutRef = useRef<{ id: string }[] | null>(null)
 
   const applySelectionToNodes = useCallback((pendingSelection: { subtype: string; name: string }) => {
     const currentNodes = useFlowStore.getState().nodes
@@ -230,7 +232,7 @@ function FlowCanvas() {
 
     if (!configurationPath || !adapterName || !currentProject) return
 
-    setSaveStatus('saving')
+    setSaving()
     try {
       const fullConfigXml = await fetchConfigurationFileCached(currentProject.name, configurationPath)
       const configDoc = new DOMParser().parseFromString(fullConfigXml, 'text/xml')
@@ -275,13 +277,11 @@ function FlowCanvas() {
         })
       }
 
-      setSaveStatus('saved')
-      if (savedTimerRef.current) clearTimeout(savedTimerRef.current)
-      savedTimerRef.current = setTimeout(() => setSaveStatus('idle'), SAVED_DISPLAY_DURATION)
+      setSaved()
     } catch (error) {
       console.error('Failed to save XML:', error)
       showErrorToast(`Failed to save XML: ${error instanceof Error ? error.message : error}`)
-      setSaveStatus('idle')
+      setIdle()
     }
   }, [project])
 
@@ -300,7 +300,6 @@ function FlowCanvas() {
   useEffect(() => {
     return () => {
       if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current)
-      if (savedTimerRef.current) clearTimeout(savedTimerRef.current)
     }
   }, [])
 
@@ -309,6 +308,15 @@ function FlowCanvas() {
       scheduleAutoSave()
     }
   }, [nodes, edges, scheduleAutoSave])
+
+  useEffect(() => {
+    if (!fitAfterLayoutRef.current) return
+    const nodeIds = fitAfterLayoutRef.current
+    fitAfterLayoutRef.current = null
+    requestAnimationFrame(() => {
+      reactFlowRef.current?.fitView({ nodes: nodeIds, padding: 0.15, duration: 300 })
+    })
+  }, [nodes])
 
   useEffect(() => {
     const pending = pendingSelectionRef.current
@@ -369,6 +377,49 @@ function FlowCanvas() {
     setShowModal(true)
   }
 
+  const computeFitViewport = useCallback(
+    (nodes: Node[]): { x: number; y: number; zoom: number } => {
+      const relevantNodes = nodes.filter((n) => n.type === 'frankNode' || n.type === 'exitNode')
+      if (relevantNodes.length === 0) return { x: 0, y: 0, zoom: 1 }
+
+      const minX = Math.min(...relevantNodes.map((n) => n.position.x))
+      const minY = Math.min(...relevantNodes.map((n) => n.position.y))
+      const maxX = Math.max(
+        ...relevantNodes.map((n) => n.position.x + (n.measured?.width ?? FlowConfig.NODE_DEFAULT_WIDTH)),
+      )
+      const maxY = Math.max(
+        ...relevantNodes.map((n) => n.position.y + (n.measured?.height ?? FlowConfig.NODE_MIN_HEIGHT)),
+      )
+
+      const deltaX = maxX - minX
+      const deltaY = maxY - minY
+      const centerX = minX + deltaX / 2
+      const centerY = minY + deltaY / 2
+
+      const canvasWidth = canvasRef.current?.clientWidth ?? 800
+      const canvasHeight = canvasRef.current?.clientHeight ?? 600
+
+      const padding = 0.85
+      const zoom = Math.max(
+        0.2,
+        Math.min(
+          1.5,
+          Math.min(
+            (canvasWidth * padding) / Math.max(deltaX, 1),
+            (canvasHeight * padding) / Math.max(deltaY, 1),
+          ),
+        ),
+      )
+
+      return {
+        x: canvasWidth / 2 - centerX * zoom,
+        y: canvasHeight / 2 - centerY * zoom - 40,
+        zoom,
+      }
+    },
+    [],
+  )
+
   const layoutGraph = useCallback((nodes: Node[], edges: Edge[], direction: 'TB' | 'LR' = 'LR'): Node[] => {
     const dagreGraph = new Dagre.graphlib.Graph()
     dagreGraph.setDefaultEdgeLabel(() => ({}))
@@ -378,47 +429,58 @@ function FlowCanvas() {
       nodesep: FlowConfig.LAYOUT_VERTICAL_OFFSET,
     })
 
-    // Only add nodes to Dagre that need layout (position x=0 and y=0)
+    const layoutableIds = new Set<string>()
     for (const node of nodes) {
-      if (node.position.x === 0 && node.position.y === 0) {
-        dagreGraph.setNode(node.id, {
-          width: node.width,
-          height: node.height,
-        })
+      if ((node.type === 'frankNode' || node.type === 'exitNode') && node.position.x === 0 && node.position.y === 0) {
+        const w = node.measured?.width ?? FlowConfig.NODE_DEFAULT_WIDTH
+        const h = node.measured?.height ?? FlowConfig.NODE_MIN_HEIGHT
+        dagreGraph.setNode(node.id, { width: w, height: h })
+        layoutableIds.add(node.id)
       }
     }
 
-    // Add all edges
     for (const edge of edges) {
-      dagreGraph.setEdge(edge.source, edge.target)
+      if (layoutableIds.has(edge.source) && layoutableIds.has(edge.target)) {
+        dagreGraph.setEdge(edge.source, edge.target)
+      }
     }
 
     Dagre.layout(dagreGraph)
 
     return nodes.map((node) => {
-      if (node.position.x !== 0 || node.position.y !== 0) return node
+      if (!layoutableIds.has(node.id)) return node
 
       const nodeWithPosition = dagreGraph.node(node.id)
       if (!nodeWithPosition) return node
 
+      const w = node.measured?.width ?? FlowConfig.NODE_DEFAULT_WIDTH
+      const h = node.measured?.height ?? FlowConfig.NODE_MIN_HEIGHT
+
       return {
         ...node,
         position: {
-          x: nodeWithPosition.x,
-          y: nodeWithPosition.y,
+          x: nodeWithPosition.x - w / 2,
+          y: nodeWithPosition.y - h / 2,
         },
-
-        measured: node.measured,
       }
     })
   }, [])
 
   const handleAutoLayout = useCallback(() => {
     const flowStore = useFlowStore.getState()
-    const resetNodes = flowStore.nodes.map((node) => ({ ...node, position: { x: 0, y: 0 } }))
+    const resetNodes = flowStore.nodes.map((node) =>
+      node.type === 'frankNode' || node.type === 'exitNode' ? { ...node, position: { x: 0, y: 0 } } : node,
+    )
     const laidOut = layoutGraph(resetNodes, flowStore.edges, 'LR')
+
+    const nodeIds = laidOut
+      .filter((n) => n.type === 'frankNode' || n.type === 'exitNode')
+      .map((n) => ({ id: n.id }))
+
+    if (nodeIds.length === 0) return
+
+    fitAfterLayoutRef.current = nodeIds
     flowStore.setNodes(laidOut)
-    setTimeout(() => reactFlowRef.current.fitView({ padding: 0.1 }), 50)
   }, [layoutGraph])
 
   const getFullySelectedGroupIds = useCallback(
@@ -1113,10 +1175,12 @@ function FlowCanvas() {
           const adapterJson = await convertAdapterXmlToJson(adapter)
 
           flowStore.setEdges(adapterJson.edges)
-          flowStore.setViewport({ x: 0, y: 0, zoom: 1 })
-
           const laidOutNodes = layoutGraph(adapterJson.nodes, adapterJson.edges, 'LR')
+
           flowStore.setNodes(laidOutNodes)
+          flowStore.setViewport(computeFitViewport(laidOutNodes))
+          flowStore.setHistory([])
+          flowStore.setFuture([])
         }
 
         if (pendingSelection) {
@@ -1184,7 +1248,7 @@ function FlowCanvas() {
     )
 
     return () => unsubscribe()
-  }, [layoutGraph])
+  }, [layoutGraph, computeFitViewport])
 
   useEffect(() => {
     const unsub = useFlowStore.subscribe(
@@ -1231,13 +1295,21 @@ function FlowCanvas() {
 
   return (
     <div
-      className="relative h-full w-full"
+      className="flex h-full w-full flex-col"
       id="flow-canvas"
       onDrop={onDrop}
       onDragOver={onDragOver}
       onDragEnd={onDragEnd}
       onContextMenu={handleRightMouseButtonClick}
     >
+      <div ref={canvasRef} className="relative flex-1 overflow-hidden">
+      <div className="absolute top-2 right-2 z-10">
+        <Button onClick={onOpenInEditor} className="flex items-center gap-1.5 text-xs shadow-sm" title="Open in Editor">
+          <CodeIcon className="h-3.5 w-3.5 fill-current" />
+          Open in Editor
+        </Button>
+      </div>
+
       {loading && (
         <div className="bg-opacity-80 bg-background absolute inset-0 z-50 flex items-center justify-center">
           <div className="border-border h-10 w-10 animate-spin rounded-full border-t-2 border-b-2"></div>
@@ -1265,7 +1337,6 @@ function FlowCanvas() {
       )}
 
       <ReactFlow
-        fitView
         nodes={nodes}
         edges={edges}
         viewport={viewport}
@@ -1322,18 +1393,6 @@ function FlowCanvas() {
         <Background variant={BackgroundVariant.Dots} size={3} gap={100}></Background>
       </ReactFlow>
 
-      <div className="absolute top-2 left-1/2 -translate-x-1/2">
-        <span
-          className={clsx(
-            'text-muted-foreground rounded bg-black/30 px-2 py-1 text-xs backdrop-blur-sm transition-opacity duration-300',
-            saveStatus === 'idle' ? 'opacity-0' : 'opacity-100',
-          )}
-        >
-          {saveStatus === 'saving' && 'Saving...'}
-          {saveStatus === 'saved' && 'Saved'}
-        </span>
-      </div>
-
       <CreateNodeModal
         isOpen={showModal}
         onClose={() => setShowModal(false)}
@@ -1359,15 +1418,23 @@ function FlowCanvas() {
           hasSingleNodeSelection={nodes.filter((node) => node.selected && node.type === 'frankNode').length === 1}
         />
       )}
+      </div>
+
+      <div className="border-t-border bg-background flex h-7 shrink-0 items-center justify-end border-t px-3">
+        <SaveStatusIndicator />
+      </div>
     </div>
   )
 }
 
-export default function Flow({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b: boolean) => void }>) {
+export default function Flow({
+  showNodeContextMenu,
+  onOpenInEditor,
+}: Readonly<{ showNodeContextMenu: (b: boolean) => void; onOpenInEditor: () => void }>) {
   return (
     <NodeContextMenuContext.Provider value={showNodeContextMenu}>
       <ReactFlowProvider>
-        <FlowCanvas />
+        <FlowCanvas onOpenInEditor={onOpenInEditor} />
       </ReactFlowProvider>
     </NodeContextMenuContext.Provider>
   )
