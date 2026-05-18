@@ -70,7 +70,7 @@ public interface FileSystemStorage {
 	private BrowseResult browseNearestAccessible(String path) throws IOException {
 		try {
 			return new BrowseResult(path, getParentPath(path), listDirectory(path));
-		} catch (NoSuchFileException e) {
+		} catch (NoSuchFileException _) {
 			String parent = getParentPath(path);
 			return parent.isEmpty() ? new BrowseResult("", "", listRoots()) : browseNearestAccessible(parent);
 		}

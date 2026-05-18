@@ -24,7 +24,7 @@ public class FilesystemController {
 			throws IOException {
 		try {
 			return ResponseEntity.ok(fileSystemStorage.browse(path));
-		} catch (AccessDeniedException e) {
+		} catch (AccessDeniedException _) {
 			return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
 		}
 	}
