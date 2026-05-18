@@ -25,18 +25,15 @@ export default function NewConfigurationModal({
   const [showPicker, setShowPicker] = useState(false)
 
   useEffect(() => {
-    if (isOpen && isLocal) {
-      if (initialPath) {
-        setLocation(initialPath)
-      } else {
-        filesystemService
-          .getDefaultPath()
-          .then(setLocation)
-          .catch(() => setLocation(''))
-      }
-    } else if (isOpen) {
-      setLocation(initialPath ?? '')
+    if (!isOpen || !isLocal) {
+      if (isOpen) setLocation(initialPath ?? '')
+      return
     }
+
+    filesystemService
+      .resolveNearestAccessiblePath(initialPath ?? '')
+      .then(setLocation)
+      .catch(() => setLocation(''))
   }, [isOpen, isLocal, initialPath])
 
   if (!isOpen) return null

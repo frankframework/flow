@@ -1,6 +1,7 @@
 package org.frankframework.flow.filesystem;
 
 import java.io.IOException;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -16,6 +17,17 @@ public interface FileSystemStorage {
 	 * Returns what directory entails
 	 */
 	List<FilesystemEntry> listDirectory(String path) throws IOException;
+
+	/**
+	 * Returns entries for the given path. If the path does not exist, walks up to
+	 * the nearest accessible ancestor. Falls back to roots if none found.
+	 */
+	default BrowseResult browse(String path) throws IOException {
+		if (path == null || path.isBlank()) {
+			return new BrowseResult("", "", listRoots());
+		}
+		return browseNearestAccessible(path);
+	}
 
 	String readFile(String path) throws IOException;
 
@@ -52,5 +64,69 @@ public interface FileSystemStorage {
 	 */
 	default String toRelativePath(String absolutePath) {
 		return absolutePath;
+	}
+
+
+	private BrowseResult browseNearestAccessible(String path) throws IOException {
+		try {
+			return new BrowseResult(path, getParentPath(path), listDirectory(path));
+		} catch (NoSuchFileException _) {
+			String parent = getParentPath(path);
+			return parent.isEmpty() ? new BrowseResult("", "", listRoots()) : browseNearestAccessible(parent);
+		}
+	}
+
+	private static String getParentPath(String path) {
+		if (path == null || path.isEmpty()) {
+			return "";
+		}
+
+		if (path.startsWith("/")) {
+			return getUnixParent(path);
+		}
+
+		if (path.matches("^[a-zA-Z]:.*")) {
+			return getWindowsParent(path);
+		}
+
+		if (isWindows()) {
+			return getWindowsParent(path);
+		} else {
+			return getUnixParent(path);
+		}
+	}
+
+	private static String getUnixParent(String path) {
+		if (path.length() > 1 && path.endsWith("/")) {
+			path = path.substring(0, path.length() - 1);
+		}
+
+		if (path.equals("/")) return "";
+
+		int lastSep = path.lastIndexOf('/');
+		if (lastSep < 0) return "";
+		if (lastSep == 0) return "/";
+
+		return path.substring(0, lastSep);
+	}
+
+	private static String getWindowsParent(String path) {
+		String normalized = path.replace('/', '\\');
+
+		if (normalized.matches("^[a-zA-Z]:\\\\?$")) return "";
+
+		int lastSep = normalized.lastIndexOf('\\');
+		if (lastSep < 0) return "";
+
+		String parent = normalized.substring(0, lastSep);
+
+		if (parent.matches("^[a-zA-Z]:$")) return parent + "\\";
+
+		return parent;
+	}
+
+	private static boolean isWindows() {
+		String os = System.getProperty("os.name").toLowerCase();
+		return os.contains("win");
 	}
 }

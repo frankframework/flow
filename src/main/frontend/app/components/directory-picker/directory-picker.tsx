@@ -21,6 +21,7 @@ export default function DirectoryPicker({
   initialPath,
 }: Readonly<DirectoryPickerProperties>) {
   const [currentPath, setCurrentPath] = useState('')
+  const [parentPath, setParentPath] = useState('')
   const [entries, setEntries] = useState<FilesystemEntry[]>([])
   const [selectedEntry, setSelectedEntry] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -32,11 +33,11 @@ export default function DirectoryPicker({
     setSelectedEntry(null)
     try {
       const result = await filesystemService.browse(path)
-      setEntries(result)
-      setCurrentPath(path)
+      setEntries(result.entries)
+      setCurrentPath(result.resolvedPath)
+      setParentPath(result.parentPath)
     } catch (error_) {
-      const status = error_ instanceof ApiError ? error_.status : 0
-      if (status === 403) {
+      if (error_ instanceof ApiError && error_.status === 403) {
         setError('Access denied')
       } else {
         setError(error_ instanceof Error ? error_.message : 'Failed to load directories')
@@ -45,6 +46,10 @@ export default function DirectoryPicker({
       setLoading(false)
     }
   }, [])
+
+  const handleNavigateUp = () => {
+    loadEntries(parentPath)
+  }
 
   useEffect(() => {
     if (isOpen) {
@@ -55,23 +60,7 @@ export default function DirectoryPicker({
 
   if (!isOpen) return null
 
-  const isRoot = !currentPath
-  const canGoUp = !isRoot
-
-  const handleNavigateUp = () => {
-    if (/^[a-zA-Z]:[/\\]?$/.test(currentPath) || currentPath === '/') {
-      loadEntries('')
-      return
-    }
-    const parentPath = currentPath.replace(/[\\/][^\\/]*$/, '')
-    if (!parentPath || parentPath === currentPath) {
-      loadEntries('')
-    } else if (/^[a-zA-Z]:$/.test(parentPath)) {
-      loadEntries(`${parentPath}\\`)
-    } else {
-      loadEntries(parentPath)
-    }
-  }
+  const canGoUp = parentPath !== ''
 
   const handleClick = (entry: FilesystemEntry) => {
     setSelectedEntry(entry.path)
