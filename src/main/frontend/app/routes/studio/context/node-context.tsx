@@ -386,7 +386,7 @@ export default function NodeContext({
 
           <div className="flex items-center gap-2">
             <Button className="flex w-auto items-center gap-1.5" title="Show in Editor" onClick={handleShowInEditor}>
-              <CodeIcon className="h-6 w-6 fill-current" />
+              <CodeIcon className="my-1 h-4 w-4 fill-current" />
             </Button>
 
             <Button className="w-auto" onClick={handleDiscard}>

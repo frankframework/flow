@@ -170,6 +170,7 @@ function FlowCanvas() {
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isLoadingTabRef = useRef(false)
+  const pendingSelectionRef = useRef<{ subtype: string; name: string } | null>(null)
 
   const updateNodeInternals = useUpdateNodeInternals()
   const reactFlow = useReactFlow()
@@ -306,6 +307,23 @@ function FlowCanvas() {
       scheduleAutoSave()
     }
   }, [nodes, edges, scheduleAutoSave])
+
+  useEffect(() => {
+    const pending = pendingSelectionRef.current
+
+    if (!pending) return
+
+    const targetNode = nodes.find(
+      (node): node is FrankNodeType =>
+        isFrankNode(node) && node.data.subtype === pending.subtype && node.data.name === pending.name,
+    )
+
+    if (!targetNode) return
+
+    pendingSelectionRef.current = null
+    applySelectionToNodes(pending)
+    setLoading(false)
+  }, [nodes, applySelectionToNodes])
 
   useEffect(() => {
     useNodeContextStore.getState().registerSaveFlow(async () => {
@@ -1070,12 +1088,7 @@ function FlowCanvas() {
           const tabStore = useTabStore.getState()
           tabStore.setTabData(tabStore.activeTab, { ...tab, pendingNodeSelection: null })
 
-          requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-              applySelectionToNodes(pendingSelection)
-              setLoading(false)
-            })
-          })
+          pendingSelectionRef.current = pendingSelection
         } else {
           setLoading(false)
         }
