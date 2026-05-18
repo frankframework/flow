@@ -1,31 +1,20 @@
 package org.frankframework.flow.exception;
 
-import jakarta.servlet.http.HttpServletRequest;
+import static org.frankframework.flow.exception.ExceptionHandlerUtilities.formatMessage;
 
+import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
-import java.util.List;
-
-import javax.xml.parsers.ParserConfigurationException;
-
-import lombok.extern.slf4j.Slf4j;
-
+import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.xml.sax.SAXException;
 
-@Slf4j
+@Log4j2
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-
-	@ExceptionHandler(ApiException.class)
-	public ResponseEntity<ErrorResponse> handleApiException(ApiException exception) {
-		log.error("Exception occurred: {} - {}", exception.getClass().getSimpleName(), exception.getMessage(), exception);
-		ErrorResponse response = new ErrorResponse(exception.getStatus().getReasonPhrase(), formatMessage(exception.getMessage()));
-		return ResponseEntity.status(exception.getStatus()).body(response);
-	}
 
 	@ExceptionHandler(IllegalArgumentException.class)
 	public ResponseEntity<ErrorResponse> handleIllegalArgumentException(IllegalArgumentException exception, HttpServletRequest request) {
@@ -59,19 +48,5 @@ public class GlobalExceptionHandler {
 				"Invalid XML content: " + formatMessage(exception.getMessage())
 		);
 		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-	}
-
-	@ExceptionHandler(ParserConfigurationException.class)
-	public ResponseEntity<ErrorResponse> handleParserConfigurationException(ParserConfigurationException exception, HttpServletRequest request) {
-		log.error("XML parser configuration error: {} - Method: {} URL: {}", exception.getMessage(), request.getMethod(), request.getRequestURI(), exception);
-		ErrorResponse response = new ErrorResponse(
-				HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
-				"XML parser configuration error: " + formatMessage(exception.getMessage())
-		);
-		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-	}
-
-	private String formatMessage(String message) {
-		return message != null ? message.replace(System.lineSeparator(), " ") : null;
 	}
 }

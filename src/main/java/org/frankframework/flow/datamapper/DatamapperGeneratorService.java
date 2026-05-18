@@ -8,7 +8,6 @@ import java.nio.file.Path;
 import javax.xml.transform.stream.StreamSource;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.saxon.s9api.*;
-import org.frankframework.flow.configuration.ConfigurationNotFoundException;
 import org.frankframework.flow.exception.ApiException;
 import org.frankframework.flow.file.FileTreeService;
 import org.frankframework.flow.filesystem.FileSystemStorage;
@@ -56,9 +55,8 @@ public class DatamapperGeneratorService {
 			if (!Files.isDirectory(datamapperDir)) {
 				Files.createDirectory(datamapperDir);
 			}
-		} catch (IOException | ConfigurationNotFoundException e) {
-			throw new ApiException(
-					"Failed to resolve configuration file path for project: " + projectName, HttpStatus.NOT_FOUND);
+		} catch (IOException e) {
+			throw new ApiException("Failed to resolve configuration file path for project: " + projectName, HttpStatus.NOT_FOUND);
 		}
 
 		if (Files.isDirectory(configurationPath)) {
@@ -87,8 +85,7 @@ public class DatamapperGeneratorService {
 			fileSystemStorage.delete(getConfigFilePath(projectName).toString());
 
 		} catch (IOException e) {
-			throw new ApiException(
-					"Failed to find configuration for project: " + projectName, HttpStatus.INTERNAL_SERVER_ERROR);
+			throw new ApiException("Failed to find configuration for project: " + projectName, HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
 
@@ -137,9 +134,9 @@ public class DatamapperGeneratorService {
 			out.setOutputProperty(Serializer.Property.INDENT, "yes");
 			transformer.transform(paramsSource, out);
 		} catch (SaxonApiException e) {
-			throw new ApiException("Error generating new XSLT!", HttpStatus.INTERNAL_SERVER_ERROR);
+			throw new ApiException("Error generating new XSLT!");
 		} catch (IOException e) {
-			throw new ApiException("Invalid destination path for XSLT", HttpStatus.INTERNAL_SERVER_ERROR);
+			throw new ApiException("Invalid destination path for XSLT");
 		}
 	}
 }

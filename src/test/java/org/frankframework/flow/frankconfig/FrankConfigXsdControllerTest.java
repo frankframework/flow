@@ -4,6 +4,7 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import org.frankframework.flow.exception.ApiException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -37,9 +38,7 @@ class FrankConfigXsdControllerTest {
 
 	@Test
 	void getFrankConfigXsdServiceFailsReturns404() throws Exception {
-		when(frankConfigXsdService.getFrankConfigXsd())
-				.thenThrow(
-						new FrankConfigXsdNotFoundException("Failed to fetch FrankConfig XSD", new RuntimeException()));
+		when(frankConfigXsdService.getFrankConfigXsd()).thenThrow(new ApiException("Failed to fetch FrankConfig XSD", new RuntimeException()));
 
 		mockMvc.perform(get("/api/xsd/frankconfig")).andExpect(status().isNotFound());
 

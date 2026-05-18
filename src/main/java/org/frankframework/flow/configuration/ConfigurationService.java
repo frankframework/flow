@@ -12,7 +12,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.frankframework.flow.exception.ApiException;
 import org.frankframework.flow.file.FileTreeService;
 import org.frankframework.flow.filesystem.FileSystemStorage;
-import org.frankframework.flow.frankconfig.FrankConfigXsdNotFoundException;
 import org.frankframework.flow.frankconfig.FrankConfigXsdService;
 import org.frankframework.flow.project.ConfigurationProject;
 import org.frankframework.flow.project.ConfigurationProjectService;
@@ -143,13 +142,12 @@ public class ConfigurationService {
 	private XsdAttributeOrdererUtils loadXsdOrderer() {
 		try {
 			String xsdContent = frankConfigXsdService.getFrankConfigXsd();
-			Document doc = XmlSecurityUtils.createSecureDocumentBuilder()
-					.parse(new InputSource(new StringReader(xsdContent)));
+			Document doc = XmlSecurityUtils.createSecureDocumentBuilder().parse(new InputSource(new StringReader(xsdContent)));
 			return new XsdAttributeOrdererUtils(doc);
-		} catch (FrankConfigXsdNotFoundException e) {
-			log.warn("FrankConfig XSD unavailable; attribute ordering will be skipped: {}", e.getMessage());
-		} catch (Exception e) {
-			log.warn("Failed to parse FrankConfig XSD; attribute ordering will be skipped: {}", e.getMessage());
+		} catch (ApiException exception) {
+			log.warn("FrankConfig XSD unavailable; attribute ordering will be skipped: {}", exception.getMessage());
+		} catch (Exception exception) {
+			log.warn("Failed to parse FrankConfig XSD; attribute ordering will be skipped: {}", exception.getMessage());
 		}
 		return null;
 	}

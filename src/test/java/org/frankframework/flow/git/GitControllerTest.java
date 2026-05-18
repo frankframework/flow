@@ -6,10 +6,12 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import java.util.List;
+import org.frankframework.flow.exception.ApiException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -35,7 +37,8 @@ public class GitControllerTest {
 				1,
 				0,
 				true,
-				false);
+				false
+		);
 
 		when(gitService.getStatus("MyProject")).thenReturn(status);
 
@@ -55,7 +58,8 @@ public class GitControllerTest {
 				"test.txt",
 				"old content",
 				"new content",
-				List.of(new GitHunkDTO(0, "@@ -1,1 +1,1 @@", "-old\n+new", 1, 1, 1, 1)));
+				List.of(new GitHunkDTO(0, "@@ -1,1 +1,1 @@", "-old\n+new", 1, 1, 1, 1))
+		);
 
 		when(gitService.getFileDiff("MyProject", "test.txt")).thenReturn(diff);
 
@@ -131,14 +135,14 @@ public class GitControllerTest {
 
 	@Test
 	public void notAGitRepositoryReturns400() throws Exception {
-		when(gitService.getStatus("NotGit")).thenThrow(new NotAGitRepositoryException("NotGit"));
+		when(gitService.getStatus("NotGit")).thenThrow(new ApiException("NotGit", HttpStatus.BAD_REQUEST));
 
 		mockMvc.perform(get("/api/projects/NotGit/git/status")).andExpect(status().isBadRequest());
 	}
 
 	@Test
 	public void gitOperationExceptionReturns500() throws Exception {
-		when(gitService.getStatus("MyProject")).thenThrow(new GitOperationException("Something failed"));
+		when(gitService.getStatus("MyProject")).thenThrow(new ApiException("Something failed"));
 
 		mockMvc.perform(get("/api/projects/MyProject/git/status")).andExpect(status().isInternalServerError());
 	}

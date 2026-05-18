@@ -19,7 +19,7 @@ public class FrankDocController {
 	}
 
 	@GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-	public ResponseEntity<String> getFrankDocJson() throws FrankDocJsonNotFoundException {
+	public ResponseEntity<String> getFrankDocJson() {
 		String frankDocJson = frankDocService.getFrankDocJson();
 		log.info("Fetched FrankDoc JSON");
 		return ResponseEntity.ok(frankDocJson);

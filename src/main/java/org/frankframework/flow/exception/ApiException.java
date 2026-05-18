@@ -1,21 +1,10 @@
 package org.frankframework.flow.exception;
 
-import lombok.Getter;
-
-import lombok.extern.log4j.Log4j2;
-
-import org.frankframework.core.IbisException;
-
-import org.jspecify.annotations.Nullable;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-
 import java.io.Serializable;
-import java.util.HashMap;
-import java.util.Map;
+import lombok.Getter;
+import lombok.extern.log4j.Log4j2;
+import org.frankframework.core.IbisException;
+import org.springframework.http.HttpStatus;
 
 @Log4j2
 public class ApiException extends RuntimeException implements Serializable {

@@ -19,7 +19,7 @@ public class FrankConfigXsdController {
 	}
 
 	@GetMapping(produces = MediaType.TEXT_XML_VALUE)
-	public ResponseEntity<String> getFrankConfigXsd() throws FrankConfigXsdNotFoundException {
+	public ResponseEntity<String> getFrankConfigXsd() {
 		String xsd = frankConfigXsdService.getFrankConfigXsd();
 		log.info("Fetched FrankConfig XSD");
 		return ResponseEntity.ok(xsd);

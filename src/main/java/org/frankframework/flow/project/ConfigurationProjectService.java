@@ -23,7 +23,6 @@ import org.frankframework.flow.filesystem.FilesystemEntry;
 import org.frankframework.flow.git.GitCredentialHelper;
 import org.frankframework.flow.git.GitService;
 import org.frankframework.flow.projectsettings.FilterType;
-import org.frankframework.flow.projectsettings.InvalidFilterTypeException;
 import org.frankframework.flow.recentproject.RecentProject;
 import org.frankframework.flow.recentproject.RecentProjectsService;
 import org.springframework.context.annotation.Lazy;
@@ -256,7 +255,6 @@ public class ConfigurationProjectService {
 	private List<String> getConfigurationFilesDynamically(String projectRoot) {
 		try {
 			Path absolutePath = fileSystemStorage.toAbsolutePath(projectRoot);
-//			Path configDir = absolutePath.resolve(CONFIGURATIONS_DIR).normalize();
 
 			if (!Files.exists(absolutePath) || !Files.isDirectory(absolutePath)) {
 				return List.of();
@@ -274,11 +272,11 @@ public class ConfigurationProjectService {
 		}
 	}
 
-	private FilterType parseFilterType(String type) throws InvalidFilterTypeException {
+	private FilterType parseFilterType(String type) {
 		try {
 			return FilterType.valueOf(type.toUpperCase());
 		} catch (IllegalArgumentException exception) {
-			throw new InvalidFilterTypeException("Invalid filter type: " + type);
+			throw new ApiException("Invalid filter type: " + type, exception);
 		}
 	}
 
