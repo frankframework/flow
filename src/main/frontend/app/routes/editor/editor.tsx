@@ -175,6 +175,8 @@ async function validateFlow(content: string, model: ITextModel): Promise<Validat
     schema: [{ fileName: 'flowconfig.xsd', contents: flowXsd }],
   })
 
+  if (model.isDisposed()) return []
+
   return mapToValidationErrors(flowResult.errors, model).map((err) => ({
     ...err,
     lineNumber: err.lineNumber + startLine,
@@ -188,6 +190,8 @@ async function validateConfiguration(content: string, xsd: string, model: ITextM
     xml: [{ fileName: 'config.xml', contents: content }],
     schema: [{ fileName: 'FrankConfig.xsd', contents: xsd }],
   })
+
+  if (model.isDisposed()) return []
 
   if (!result.valid && result.errors.length === 0) {
     return [notWellFormedError(model)]
@@ -471,7 +475,7 @@ export default function CodeEditor() {
 
         applyValidationDecorations([...frankErrors, ...flowErrors])
       } catch {
-        if (validationId === validationCounterRef.current) {
+        if (validationId === validationCounterRef.current && !model.isDisposed()) {
           applyValidationDecorations([notWellFormedError(model)])
         }
       }
