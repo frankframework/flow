@@ -1298,7 +1298,7 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
     >
       <div className="border-b-border bg-background flex h-10 shrink-0 items-center justify-between border-b px-3">
         <SaveStatusIndicator />
-        <Button onClick={onOpenInEditor} className="flex items-center gap-1.5 text-xs shadow-sm" title="Open in Editor">
+        <Button onClick={onOpenInEditor} className="flex items-center gap-1.5 text-xs" title="Open in Editor">
           <CodeIcon className="h-3.5 w-3.5 fill-current" />
           Open in Editor
         </Button>

@@ -806,7 +806,7 @@ export default function CodeEditor() {
                 <SaveStatusIndicator />
                 <Button
                   onClick={handleOpenInStudio}
-                  className="flex items-center gap-1.5 text-xs shadow-sm"
+                  className="flex items-center gap-1.5 text-xs"
                   title="Open in Studio"
                 >
                   <RulerCrossPenIcon className="h-3.5 w-3.5 fill-current" />

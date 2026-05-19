@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useSaveStatusStore } from '~/stores/save-status-store'
+import CloudIcon from '/icons/solar/Cloud.svg?react'
 
 function getTimeAgo(date: Date): string {
   const seconds = Math.floor((Date.now() - date.getTime()) / 1000)
@@ -19,8 +20,23 @@ export function SaveStatusIndicator() {
     return () => clearInterval(id)
   }, [savedAt, saveStatus])
 
-  if (saveStatus === 'saving') return <span className="text-foreground-muted text-xs">☁️ Saving...</span>
-  if (saveStatus === 'saved' && savedAt)
-    return <span className="text-foreground-muted text-xs">☁️ Saved {getTimeAgo(savedAt)}</span>
+  if (saveStatus === 'saving') {
+    return (
+      <span className="text-foreground-muted inline-flex items-center gap-1.5 text-xs">
+        <CloudIcon className="animate-pulse" />
+        Saving...
+      </span>
+    )
+  }
+
+  if (saveStatus === 'saved' && savedAt) {
+    return (
+      <span className="text-foreground-muted inline-flex items-center gap-1.5 text-xs">
+        <CloudIcon />
+        Saved {getTimeAgo(savedAt)}
+      </span>
+    )
+  }
+
   return null
 }
