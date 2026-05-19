@@ -1,7 +1,9 @@
 package org.frankframework.flow.configuration;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
@@ -97,7 +99,9 @@ class ConfigurationServiceTest {
 
 		String path = tempDir.resolve("missing.xml").toString();
 
-		assertThrows(ApiException.class, () -> configurationService.getConfigurationContent("test", path));
+		ApiException exception = assertThrows(ApiException.class, () -> configurationService.getConfigurationContent("test", path));
+		assertEquals(HttpStatus.NOT_FOUND, exception.getStatus());
+		assertTrue(exception.getMessage().contains("Invalid configuration path"));
 	}
 
 	@Test
@@ -133,49 +137,54 @@ class ConfigurationServiceTest {
 
 		String path = tempDir.resolve("missing.xml").toString();
 
-		assertThrows(
+		ApiException exception = assertThrows(
 				ApiException.class,
 				() -> configurationService.updateConfiguration("test", path, "<new/>", false)
 		);
+		assertEquals(HttpStatus.NOT_FOUND, exception.getStatus());
 	}
 
 	@Test
-	void addConfiguration_Success() throws Exception {
+	void updateConfiguration_BlankContent_ThrowsBadRequest() throws Exception {
+		stubToAbsolutePath();
+
+		Path file = tempDir.resolve("config.xml");
+		Files.writeString(file, "<old/>", StandardCharsets.UTF_8);
+
+		ApiException exception = assertThrows(ApiException.class,
+				() -> configurationService.updateConfiguration("test", file.toString(), "   ", false));
+
+		assertEquals(HttpStatus.BAD_REQUEST, exception.getStatus());
+		assertTrue(exception.getMessage().contains("must not be blank"));
+	}
+
+	@Test
+	void updateConfiguration_FormatFalse_AddsFlowNamespace() throws Exception {
 		stubToAbsolutePath();
 		stubWriteFile();
 
-		Path projectDir = tempDir.resolve("myproject");
-		Files.createDirectories(projectDir);
-		ConfigurationProject configurationProject = new ConfigurationProject("myproject", projectDir.toString());
+		Path file = tempDir.resolve("config.xml");
+		Files.writeString(file, "<Configuration/>", StandardCharsets.UTF_8);
 
-		when(configurationProjectService.getProject("myproject")).thenReturn(configurationProject);
+		String result = configurationService.updateConfiguration("test", file.toString(), "<Configuration/>", false);
 
-		String result = configurationService.addConfiguration("myproject", "NewConfig.xml");
-
-		assertNotNull(result);
-
-		Path expectedFile = projectDir.resolve("src/main/configurations/NewConfig.xml");
-		assertTrue(Files.exists(expectedFile), "NewConfig.xml should be created on disk");
+		assertTrue(result.contains("xmlns:flow=\"urn:frank-flow\""));
+		assertTrue(Files.readString(file, StandardCharsets.UTF_8).contains("xmlns:flow=\"urn:frank-flow\""));
 	}
 
 	@Test
-	void addConfiguration_ProjectNotFound_ThrowsException() throws ApiException {
-		when(configurationProjectService.getProject("unknown")).thenThrow(new ApiException("not found", HttpStatus.NOT_FOUND));
-
-		assertThrows(ApiException.class, () -> configurationService.addConfiguration("unknown", "Config.xml"));
-	}
-
-	@Test
-	void addConfiguration_PathTraversal_ThrowsSecurityException() throws Exception {
+	void updateConfiguration_FormatFalse_DoesNotDuplicateNamespace() throws Exception {
 		stubToAbsolutePath();
+		stubWriteFile();
 
-		Path projectDir = tempDir.resolve("myproject");
-		Files.createDirectories(projectDir);
-		ConfigurationProject configurationProject = new ConfigurationProject("myproject", projectDir.toString());
-		when(configurationProjectService.getProject("myproject")).thenReturn(configurationProject);
+		Path file = tempDir.resolve("config.xml");
+		Files.writeString(file, "<Configuration/>", StandardCharsets.UTF_8);
 
-		assertThrows(
-				ApiException.class, () -> configurationService.addConfiguration("myproject", "../../../evil.xml"));
+		String content = "<Configuration xmlns:flow=\"urn:frank-flow\"/>";
+		String result = configurationService.updateConfiguration("test", file.toString(), content, false);
+
+		assertEquals(content, result);
+		verify(fileSystemStorage).writeFile(eq(file.toString()), eq(content));
 	}
 
 	@Test
@@ -214,6 +223,101 @@ class ConfigurationServiceTest {
 
 			assertTrue(result.contains("xmlns:flow"));
 			mockedFormatter.verify(() -> XmlFormatterUtils.format(contains("xmlns:flow"), any()));
+		}
+	}
+
+	@Test
+	void updateConfiguration_FormatTrue_WhenFormatterFails_WrapsInApiException() throws Exception {
+		stubToAbsolutePath();
+
+		Path file = tempDir.resolve("config.xml");
+		Files.writeString(file, "<Configuration/>", StandardCharsets.UTF_8);
+
+		try (MockedStatic<XmlFormatterUtils> mockedFormatter = mockStatic(XmlFormatterUtils.class)) {
+			mockedFormatter.when(() -> XmlFormatterUtils.format(anyString(), any()))
+					.thenThrow(new RuntimeException("format failed"));
+
+			ApiException exception = assertThrows(ApiException.class,
+					() -> configurationService.updateConfiguration("test", file.toString(), "<Configuration/>", true));
+
+			assertEquals(HttpStatus.BAD_REQUEST, exception.getStatus());
+			assertTrue(exception.getMessage().contains("Failed to save configuration"));
+		}
+	}
+
+	@Test
+	void addConfiguration_Success() throws Exception {
+		stubToAbsolutePath();
+		stubWriteFile();
+
+		Path projectDir = tempDir.resolve("myproject");
+		Files.createDirectories(projectDir);
+		ConfigurationProject configurationProject = new ConfigurationProject("myproject", projectDir.toString());
+
+		when(configurationProjectService.getProject("myproject")).thenReturn(configurationProject);
+
+		String result = configurationService.addConfiguration("myproject", "NewConfig.xml");
+
+		assertNotNull(result);
+
+		Path expectedFile = projectDir.resolve("src/main/configurations/NewConfig.xml");
+		assertTrue(Files.exists(expectedFile), "NewConfig.xml should be created on disk");
+		verify(fileTreeService).invalidateTreeCache("myproject");
+	}
+
+	@Test
+	void addConfiguration_CreatesNestedDirectories() throws Exception {
+		stubToAbsolutePath();
+		stubWriteFile();
+
+		Path projectDir = tempDir.resolve("myproject");
+		Files.createDirectories(projectDir);
+		ConfigurationProject configurationProject = new ConfigurationProject("myproject", projectDir.toString());
+		when(configurationProjectService.getProject("myproject")).thenReturn(configurationProject);
+
+		configurationService.addConfiguration("myproject", "subfolder/NestedConfig.xml");
+
+		Path expectedFile = projectDir.resolve("src/main/configurations/subfolder/NestedConfig.xml");
+		assertTrue(Files.exists(expectedFile));
+	}
+
+	@Test
+	void addConfiguration_ProjectNotFound_ThrowsException() throws ApiException {
+		when(configurationProjectService.getProject("unknown")).thenThrow(new ApiException("not found", HttpStatus.NOT_FOUND));
+
+		assertThrows(ApiException.class, () -> configurationService.addConfiguration("unknown", "Config.xml"));
+	}
+
+	@Test
+	void addConfiguration_PathTraversal_ThrowsSecurityException() throws Exception {
+		stubToAbsolutePath();
+
+		Path projectDir = tempDir.resolve("myproject");
+		Files.createDirectories(projectDir);
+		ConfigurationProject configurationProject = new ConfigurationProject("myproject", projectDir.toString());
+		when(configurationProjectService.getProject("myproject")).thenReturn(configurationProject);
+
+		ApiException exception = assertThrows(
+				ApiException.class, () -> configurationService.addConfiguration("myproject", "../../../evil.xml"));
+		assertEquals(HttpStatus.BAD_REQUEST, exception.getStatus());
+	}
+
+	@Test
+	void initXsdOrderer_WhenXsdUnavailable_FormatterStillCalledWithNullOrderer() throws Exception {
+		stubToAbsolutePath();
+		stubWriteFile();
+
+		Path file = tempDir.resolve("config.xml");
+		Files.writeString(file, "<Configuration/>", StandardCharsets.UTF_8);
+		when(frankConfigXsdService.getFrankConfigXsd()).thenThrow(new ApiException("xsd unavailable", HttpStatus.NOT_FOUND));
+		configurationService.initXsdOrderer();
+
+		try (MockedStatic<XmlFormatterUtils> mockedFormatter = mockStatic(XmlFormatterUtils.class)) {
+			mockedFormatter.when(() -> XmlFormatterUtils.format(anyString(), any()))
+					.thenReturn("<Configuration formatted=\"true\"/>");
+
+			configurationService.updateConfiguration("test", file.toString(), "<Configuration/>", true);
+			mockedFormatter.verify(() -> XmlFormatterUtils.format(anyString(), isNull()));
 		}
 	}
 }
