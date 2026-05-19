@@ -4,6 +4,7 @@ import FfIcon from '/icons/custom/ff!-icon.svg?react'
 import ArchiveIcon from '/icons/solar/Archive.svg?react'
 import { fetchInstanceConfigurations, type FFConfiguration } from '~/services/frank-framework-service'
 import { useProjectStore } from '~/stores/project-store'
+import { ApiError } from '~/utils/api'
 
 import ConfigurationRow from './configuration-row'
 import Search from '~/components/search/search'
@@ -80,6 +81,10 @@ export default function ProjectLanding() {
         .then((ffInstance) => {
           setFFInstanceName(ffInstance.name)
           setFFConfiguration(ffInstance.configurations)
+        })
+        .catch((error) => {
+          if (error instanceof ApiError && error.httpCode === 404) return
+          showErrorToast(error.message)
         })
         .finally(() => setIsDiscovering(false))
     }

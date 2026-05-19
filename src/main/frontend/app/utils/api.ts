@@ -19,18 +19,17 @@ const getAuthToken = () => {
 }
 
 interface BackendErrorResponse {
-  httpStatus: number
-  messages: string[]
-  errorCode: string
+  status: string
+  error: string
 }
 
 export class ApiError extends Error {
   constructor(
-    public status: number,
-    public messages?: string[],
-    public errorCode?: string,
+    public status: string,
+    public error: string,
+    public httpCode: number,
   ) {
-    super(messages ? messages.join(', ') : status.toString())
+    super(error)
     this.name = 'ApiError'
   }
 }
@@ -38,14 +37,11 @@ export class ApiError extends Error {
 export async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   const isFormData = options?.body instanceof FormData
 
-  const defaultHeaders: Record<string, string> =
-    options?.body && !isFormData ? { 'Content-Type': 'application/json' } : {}
-
   const headers: Record<string, string> = {
-    ...defaultHeaders,
-    'X-Session-ID': getAnonymousSessionId(),
     ...(options?.headers as Record<string, string>),
+    'X-Session-ID': getAnonymousSessionId(),
   }
+  if (options?.body && !isFormData) headers['Content-Type'] = 'application/json'
 
   const token = getAuthToken()
   if (token) {
@@ -61,15 +57,11 @@ export async function apiFetch<T>(path: string, options?: RequestInit): Promise<
     const contentType = response.headers.get('content-type')
     if (contentType?.includes('application/json')) {
       const error: BackendErrorResponse = await response.json()
-      throw new ApiError(error.httpStatus, error.messages, error.errorCode)
+      throw new ApiError(error.status, error.error, response.status)
     }
-    throw new ApiError(response.status, [response.statusText])
+    throw new ApiError('Server Error', `HTTP ${response.status} - ${response.statusText}`, response.status)
   }
 
-  const contentType = response.headers.get('content-type')
-  if (contentType?.includes('application/json')) {
-    return response.json()
-  }
-
-  return undefined as T
+  // assume the response is in json as our API should always do, errors can be caught with <promise>.catch()
+  return response.json()
 }

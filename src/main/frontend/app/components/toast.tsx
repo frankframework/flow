@@ -18,13 +18,13 @@ const toastStyles = {
     container: defaultStyle,
     card: `${toastBaseCard} bg-error`,
     icon: '',
-    defaultDuration: 2000,
+    defaultDuration: 5000,
   },
   WARNING: {
     container: defaultStyle,
     card: `${toastBaseCard} bg-warning`,
     icon: '⚠️',
-    defaultDuration: 3000,
+    defaultDuration: 5000,
   },
   INFO: {
     container: defaultStyle,
@@ -36,7 +36,7 @@ const toastStyles = {
     container: defaultStyle,
     card: `${toastBaseCard} bg-success`,
     icon: '✅',
-    defaultDuration: 3000,
+    defaultDuration: 2000,
   },
 } as const
 
