@@ -381,7 +381,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
     return (
       <>
         <div
-          className="bg-background border-border flex h-full w-full flex-col items-center justify-center gap-2 overflow-hidden rounded-md border"
+          className="bg-background border-border flex h-full w-full flex-col items-center justify-center gap-2 overflow-hidden rounded-md border py-8"
           style={{
             minWidth: `${minNodeWidth}px`,
             minHeight: `${minNodeHeight}px`,
