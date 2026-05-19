@@ -33,3 +33,47 @@ export function openInEditor(relativePath: string, filepath: string) {
   setActiveTab(filepath)
   useNavigationStore.getState().navigate('editor')
 }
+
+export function openInEditorAtElement(subtype: string, name: string | undefined, filepath: string) {
+  const editorStore = useEditorTabStore.getState()
+  const fileName = filepath.split(/[/\\]/).pop() ?? filepath
+
+  if (!editorStore.getTab(filepath)) {
+    editorStore.setTabData(filepath, {
+      name: fileName,
+      configurationPath: filepath,
+    })
+  }
+
+  editorStore.setPendingHighlight({ subtype, name })
+  editorStore.setActiveTab(filepath)
+  useNavigationStore.getState().navigate('editor')
+}
+
+export function openInStudioAtNode(
+  adapterName: string,
+  filepath: string,
+  adapterPosition: number,
+  subtype: string,
+  name: string,
+) {
+  const { setTabData, setActiveTab, getTab } = useTabStore.getState()
+
+  const tabId = `${filepath}::${adapterName}::${adapterPosition}`
+
+  const existing = getTab(tabId)
+  if (existing) {
+    setTabData(tabId, { ...existing, pendingNodeSelection: { subtype, name } })
+  } else {
+    setTabData(tabId, {
+      name: adapterName,
+      configurationPath: filepath,
+      adapterPosition,
+      flowJson: {},
+      pendingNodeSelection: { subtype, name },
+    })
+  }
+
+  setActiveTab(tabId)
+  useNavigationStore.getState().navigate('studio')
+}

@@ -8,6 +8,9 @@ import ContextInput from './context-input'
 import { findChildRecursive } from '~/stores/child-utilities'
 import { useFFDoc } from '@frankframework/doc-library-react'
 import type { Attribute } from '@frankframework/doc-library-core'
+import useTabStore from '~/stores/tab-store'
+import { openInEditorAtElement } from '~/actions/navigationActions'
+import CodeIcon from '/icons/solar/Code.svg?react'
 
 export default function NodeContext({
   nodeId,
@@ -36,6 +39,7 @@ export default function NodeContext({
     setChildParentId,
     childParentId,
     setIsDirty,
+    editingSubtype,
   } = useNodeContextStore(
     useShallow((s) => ({
       attributes: s.attributes,
@@ -47,6 +51,7 @@ export default function NodeContext({
       setChildParentId: s.setChildParentId,
       childParentId: s.childParentId,
       setIsDirty: s.setIsDirty,
+      editingSubtype: s.editingSubtype,
     })),
   )
 
@@ -291,6 +296,13 @@ export default function NodeContext({
     setShowNodeContext(false)
   }
 
+  const handleShowInEditor = useCallback(() => {
+    const tabData = useTabStore.getState().getTab(useTabStore.getState().activeTab)
+    if (!tabData?.configurationPath || !editingSubtype) return
+    const nodeName = inputValues['name']
+    openInEditorAtElement(editingSubtype, nodeName || undefined, tabData.configurationPath)
+  }, [editingSubtype, inputValues])
+
   // Build sorted attribute list: mandatory first, then initially-filled, then rest
   const entriesWithIndex: [string, Attribute, number][] = attributes
     ? Object.entries(attributes).map(([k, v], index) => [k, v as Attribute, index])
@@ -372,9 +384,15 @@ export default function NodeContext({
             Save & Close
           </Button>
 
-          <Button className="w-auto" onClick={handleDiscard}>
-            Delete
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button className="flex w-auto items-center gap-1.5" title="Show in Editor" onClick={handleShowInEditor}>
+              <CodeIcon className="my-1 h-4 w-4 fill-current" />
+            </Button>
+
+            <Button className="w-auto" onClick={handleDiscard}>
+              Delete
+            </Button>
+          </div>
         </div>
 
         {!canSave && errorMessage && <p className="mt-2 text-sm text-red-600">{errorMessage}</p>}

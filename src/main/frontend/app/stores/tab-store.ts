@@ -10,6 +10,7 @@ export interface TabData {
   adapterPosition?: number
   history?: FlowSnapshot[]
   future?: FlowSnapshot[]
+  pendingNodeSelection?: { subtype: string; name: string } | null
 }
 
 interface TabStoreState {

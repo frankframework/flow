@@ -48,6 +48,7 @@ import { useSettingsStore } from '~/stores/settings-store'
 import { useShortcut } from '~/hooks/use-shortcut'
 import CanvasContextMenu from '~/components/flow/canvas-context-menu'
 import { useSidebarStore, SidebarSide } from '~/components/sidebars-layout/sidebar-layout-store'
+import { openInEditorAtElement } from '~/actions/navigationActions'
 
 export type FlowNode = FrankNodeType | ExitNode | StickyNote | GroupNode | Node
 
@@ -87,6 +88,8 @@ const distanceToFrankNode = (sticky: StickyNote, frankNode: FlowNode) => {
   const dy = center.y - (frankNode.position.y + (frankNode.measured?.height ?? FlowConfig.NODE_MIN_HEIGHT) / 2)
   return Math.hypot(dx, dy)
 }
+
+const isFrankNode = (node: FlowNode): node is FrankNodeType => node.type === 'frankNode' || node.type === 'exitNode'
 
 const findNearestFrankNode = (sticky: StickyNote, candidates: FlowNode[]) =>
   candidates
@@ -144,6 +147,17 @@ function FlowCanvas() {
     })),
   )
   const { elements } = useFFDoc()
+  const elementsRef = useRef(elements)
+  const showNodeContextMenuRef = useRef(showNodeContextMenu)
+
+  useEffect(() => {
+    elementsRef.current = elements
+  }, [elements])
+
+  useEffect(() => {
+    showNodeContextMenuRef.current = showNodeContextMenu
+  }, [showNodeContextMenu])
+
   const [showModal, setShowModal] = useState(false)
   const [edgeDropPositions, setEdgeDropPositions] = useState<{ x: number; y: number } | null>(null)
   const clipboardRef = useRef<{
@@ -158,11 +172,46 @@ function FlowCanvas() {
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isLoadingTabRef = useRef(false)
+  const pendingSelectionRef = useRef<{ subtype: string; name: string } | null>(null)
 
   const updateNodeInternals = useUpdateNodeInternals()
   const reactFlow = useReactFlow()
   const reactFlowRef = useRef(reactFlow)
   reactFlowRef.current = reactFlow
+
+  const applySelectionToNodes = useCallback((pendingSelection: { subtype: string; name: string }) => {
+    const currentNodes = useFlowStore.getState().nodes
+    const nodeToSelect = currentNodes.find(
+      (node): node is FrankNodeType =>
+        isFrankNode(node) && node.data.subtype === pendingSelection.subtype && node.data.name === pendingSelection.name,
+    )
+
+    if (!nodeToSelect) return
+
+    useFlowStore.getState().setNodes(
+      currentNodes.map((node) => ({
+        ...node,
+        selected: node.id === nodeToSelect.id,
+      })),
+    )
+
+    setTimeout(() => {
+      reactFlowRef.current?.fitView({
+        nodes: [{ id: nodeToSelect.id }],
+        padding: 0.5,
+        duration: 400,
+      })
+    }, 50)
+
+    const nodeContextStore = useNodeContextStore.getState()
+    nodeContextStore.setParentId(null)
+    nodeContextStore.setChildParentId(null)
+    nodeContextStore.setNodeId(+nodeToSelect.id)
+    nodeContextStore.setAttributes(elementsRef.current?.[nodeToSelect.data.subtype]?.attributes)
+    nodeContextStore.setEditingSubtype(nodeToSelect.data.subtype)
+    nodeContextStore.setIsEditing(true)
+    showNodeContextMenuRef.current(true)
+  }, [])
 
   const { nodes, edges, viewport, onNodesChange, onEdgesChange, onConnect, onReconnect } = useFlowStore(
     useShallow(selector),
@@ -260,6 +309,23 @@ function FlowCanvas() {
       scheduleAutoSave()
     }
   }, [nodes, edges, scheduleAutoSave])
+
+  useEffect(() => {
+    const pending = pendingSelectionRef.current
+
+    if (!pending) return
+
+    const targetNode = nodes.find(
+      (node): node is FrankNodeType =>
+        isFrankNode(node) && node.data.subtype === pending.subtype && node.data.name === pending.name,
+    )
+
+    if (!targetNode) return
+
+    pendingSelectionRef.current = null
+    applySelectionToNodes(pending)
+    setLoading(false)
+  }, [nodes, applySelectionToNodes])
 
   useEffect(() => {
     useNodeContextStore.getState().registerSaveFlow(async () => {
@@ -601,9 +667,8 @@ function FlowCanvas() {
     'studio.save': () => void saveFlow(),
     'studio.close-context': () => closeEditNodeContextOnEscape(),
     'studio.delete': () => deleteSelection(),
+    'studio.show-in-editor': () => showSelectedNodeInEditor(),
   })
-
-  const isFrankNode = (node: FlowNode): node is FrankNodeType => node.type === 'frankNode' || node.type === 'exitNode'
 
   const handleNodeDragStop = useCallback((_event: React.MouseEvent, node: FlowNode) => {
     if (!isStickyNote(node)) return
@@ -733,7 +798,7 @@ function FlowCanvas() {
 
   const handleSelectionChange = useCallback(
     ({ nodes: selectedNodes }: { nodes: FlowNode[] }) => {
-      const frankNodes = selectedNodes.filter((n) => isFrankNode(n))
+      const frankNodes = selectedNodes.filter((node) => isFrankNode(node))
 
       if (frankNodes.length > 1) {
         const firstParent = frankNodes[0]?.parentId
@@ -978,6 +1043,20 @@ function FlowCanvas() {
     handleDegroupSingleGroup(selectedNodes)
   }, [allSelectedInSameGroup, handleDegroupSingleGroup, degroupNodes])
 
+  const showSelectedNodeInEditor = useCallback(() => {
+    const flowStore = useFlowStore.getState()
+    const selectedFrankNodes = flowStore.nodes.filter(
+      (node) => node.selected && node.type === 'frankNode',
+    ) as FrankNodeType[]
+    if (selectedFrankNodes.length !== 1) return
+
+    const node = selectedFrankNodes[0]
+    const tabData = useTabStore.getState().getTab(useTabStore.getState().activeTab)
+    if (!tabData?.configurationPath) return
+
+    openInEditorAtElement(node.data.subtype, node.data.name || undefined, tabData.configurationPath)
+  }, [])
+
   const handleRightMouseButtonClick = useCallback(
     (event: React.MouseEvent) => {
       event.preventDefault()
@@ -1016,6 +1095,9 @@ function FlowCanvas() {
       const currentProject = useProjectStore.getState().project
       isLoadingTabRef.current = true
       setLoading(true)
+
+      const pendingSelection = tab.pendingNodeSelection ?? null
+
       try {
         if (tab.flowJson && Object.keys(tab.flowJson).length > 0) {
           restoreFlowFromTab(tab)
@@ -1029,20 +1111,27 @@ function FlowCanvas() {
           )
           if (!adapter) return
           const adapterJson = await convertAdapterXmlToJson(adapter)
+
           flowStore.setEdges(adapterJson.edges)
           flowStore.setViewport({ x: 0, y: 0, zoom: 1 })
+
           const laidOutNodes = layoutGraph(adapterJson.nodes, adapterJson.edges, 'LR')
           flowStore.setNodes(laidOutNodes)
-          flowStore.setHistory([])
-          flowStore.setFuture([])
+        }
+
+        if (pendingSelection) {
+          const tabStore = useTabStore.getState()
+          tabStore.setTabData(tabStore.activeTab, { ...tab, pendingNodeSelection: null })
+
+          pendingSelectionRef.current = pendingSelection
+        } else {
+          setLoading(false)
         }
       } catch (error) {
         console.error('Error loading tab flow:', error)
-      } finally {
         setLoading(false)
-        setTimeout(() => {
-          isLoadingTabRef.current = false
-        }, 0)
+      } finally {
+        isLoadingTabRef.current = false
       }
     }
 
@@ -1263,9 +1352,11 @@ function FlowCanvas() {
           onCut={cutSelection}
           onCopy={copySelection}
           onPaste={pasteSelection}
+          onShowInEditor={showSelectedNodeInEditor}
           hasSelection={nodes.some((n) => n.selected)}
           hasGroupedSelection={nodes.some((n) => n.selected) && allSelectedInSameGroup(nodes.filter((n) => n.selected))}
           hasClipboard={clipboardRef.current !== null}
+          hasSingleNodeSelection={nodes.filter((node) => node.selected && node.type === 'frankNode').length === 1}
         />
       )}
     </div>
