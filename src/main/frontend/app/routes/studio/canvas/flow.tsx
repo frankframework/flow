@@ -414,7 +414,7 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
       if (!reactFlowInstance) return
 
       const allNodes = useFlowStore.getState().nodes
-      const node = allNodes.find((n) => n.id === nodeId)
+      const node = allNodes.find((node) => node.id === nodeId)
       if (!node?.measured?.width || !node?.measured?.height) return
 
       const { absoluteX, absoluteY } = computeAbsoluteNodePosition(node, allNodes)
