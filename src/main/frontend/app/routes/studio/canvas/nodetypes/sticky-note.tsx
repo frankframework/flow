@@ -1,7 +1,7 @@
 import { type Node, type NodeProps, NodeResizeControl, useUpdateNodeInternals } from '@xyflow/react'
 import { FlowConfig } from '~/routes/studio/canvas/flow.config'
 import { ResizeIcon } from '~/routes/studio/canvas/nodetypes/frank-node'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import useFlowStore from '~/stores/flow-store'
 import { useNodeContextMenu } from '~/routes/studio/canvas/node-context-menu-context'
 import useNodeContextStore from '~/stores/node-context-store'
@@ -35,10 +35,25 @@ export default function StickyNoteComponent(properties: NodeProps<StickyNote>) {
   const showNodeContextMenu = useNodeContextMenu()
   const updateNodeInternals = useUpdateNodeInternals()
   const containerRef = useRef<HTMLDivElement>(null)
+  const contentRef = useRef<HTMLDivElement>(null)
   const [isOverflowing, setIsOverflowing] = useState(false)
 
   const color = properties.data.color ?? 'var(--sticky-color-yellow)'
   const content = properties.data.content
+
+  const CONTENT_PADDING_Y = 24
+
+  useLayoutEffect(() => {
+    if (properties.data.collapsed || !contentRef.current) return
+
+    const naturalHeight = contentRef.current.scrollHeight + CONTENT_PADDING_Y
+    const clamped = Math.min(
+      FlowConfig.STICKY_NOTE_MAX_HEIGHT,
+      Math.max(FlowConfig.STICKY_NOTE_DEFAULT_HEIGHT, naturalHeight),
+    )
+
+    useFlowStore.getState().setStickyHeight(properties.id, clamped)
+  }, [content, properties.data.collapsed, properties.id])
 
   useEffect(() => {
     updateNodeInternals(properties.id)
@@ -130,7 +145,9 @@ export default function StickyNoteComponent(properties: NodeProps<StickyNote>) {
           `,
         }}
       >
-        <div className="w-full text-xs leading-snug break-words whitespace-pre-wrap">{content}</div>
+        <div ref={contentRef} className="w-full text-xs leading-snug break-words whitespace-pre-wrap">
+          {content}
+        </div>
         {isOverflowing && (
           <div
             className="pointer-events-none absolute right-0 bottom-0 left-0 h-8"

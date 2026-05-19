@@ -616,7 +616,8 @@ function extractStickyNotesFromAdapter(adapter: Element, idCounter: IdCounter, f
   )
 
   for (const note of notes) {
-    const text = note.getAttribute('flow:text') ?? ''
+    const attrText = note.getAttribute('flow:text')
+    const text = attrText === null ? (note.textContent ?? '') : attrText
     const color = note.getAttribute('flow:color') ?? undefined
 
     const x = parseNumericAttribute(note.getAttribute('flow:x'), 0)

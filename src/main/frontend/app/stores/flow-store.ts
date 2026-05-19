@@ -55,6 +55,7 @@ export interface FlowState {
   getAttributes: (nodeId: string) => Record<string, string> | null
   addChild: (nodeId: string, child: ChildNode) => void
   setStickyText: (nodeId: string, text: string) => void
+  setStickyHeight: (nodeId: string, height: number) => void
   setStickyColor: (nodeId: string, color: string) => void
   setStickyCollapsed: (nodeId: string, collapsed: boolean) => void
   setStickyAttachment: (nodeId: string, attachedToNodeId: string | null) => void
@@ -108,23 +109,6 @@ function nextFreeNumericId(nodes: FlowNode[]): number {
 
   scan(nodes)
   return max + 1
-}
-
-function calculateStickyNoteHeight(text: string, nodeWidth: number): number {
-  const LINE_HEIGHT = 17
-  const VERTICAL_PADDING = 26
-  const HORIZONTAL_PADDING = 24
-  const AVG_CHAR_WIDTH = 6.5
-
-  const usableWidth = Math.max(1, nodeWidth - HORIZONTAL_PADDING)
-  const charsPerLine = Math.max(1, Math.floor(usableWidth / AVG_CHAR_WIDTH))
-
-  const totalLines = text.split('\n').reduce((count, line) => {
-    return count + Math.max(1, Math.ceil((line.length || 0.1) / charsPerLine))
-  }, 0)
-
-  const calculated = totalLines * LINE_HEIGHT + VERTICAL_PADDING
-  return Math.min(FlowConfig.STICKY_NOTE_MAX_HEIGHT, Math.max(FlowConfig.STICKY_NOTE_DEFAULT_HEIGHT, calculated))
 }
 
 const createSnapshot = (state: FlowState): FlowSnapshot => ({
@@ -362,12 +346,21 @@ const useFlowStore = create<FlowState>()(
       set({
         nodes: get().nodes.map((node) => {
           if (node.id === nodeId && isStickyNote(node)) {
-            const nodeWidth = (node.style?.width as number) ?? node.width ?? FlowConfig.STICKY_NOTE_DEFAULT_WIDTH
-            const newHeight = calculateStickyNoteHeight(text, nodeWidth)
+            return { ...node, data: { ...node.data, content: text } }
+          }
+          return node
+        }),
+      })
+    },
+    setStickyHeight: (nodeId, height) => {
+      set({
+        nodes: get().nodes.map((node) => {
+          if (node.id === nodeId && isStickyNote(node)) {
             return {
               ...node,
-              style: { ...node.style, width: nodeWidth, height: newHeight },
-              data: { ...node.data, content: text },
+              height,
+              measured: { ...node.measured, height },
+              style: { ...node.style, height },
             }
           }
           return node

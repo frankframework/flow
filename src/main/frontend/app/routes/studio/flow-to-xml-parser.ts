@@ -326,7 +326,7 @@ function generateFlowElementsXml(nodes: FlowNode[]): string {
       }
     }
 
-    return `    <flow:StickyNote flow:text="${escapeXml(text)}"${colorAttr} flow:x="${roundedX}" flow:y="${roundedY}" flow:width="${width}" flow:height="${height}"${collapsedAttr}${attachedToAttr} />`
+    return `    <flow:StickyNote${colorAttr} flow:x="${roundedX}" flow:y="${roundedY}" flow:width="${width}" flow:height="${height}"${collapsedAttr}${attachedToAttr}><![CDATA[${text.replaceAll(']]>', ']]]]><![CDATA[>')}]]></flow:StickyNote>`
   })
 
   const groupNodesXml = generateGroupNodeXml(groupNodes, groupChildrenMap)
