@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+
 import org.frankframework.flow.exception.ApiException;
 import org.frankframework.flow.file.FileTreeService;
 import org.frankframework.flow.filesystem.FileSystemStorage;
@@ -18,6 +19,7 @@ import org.frankframework.flow.frankconfig.FrankConfigXsdService;
 import org.frankframework.flow.project.ConfigurationProject;
 import org.frankframework.flow.project.ConfigurationProjectService;
 import org.frankframework.flow.utility.XmlFormatterUtils;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -151,8 +153,10 @@ class ConfigurationServiceTest {
 		Path file = tempDir.resolve("config.xml");
 		Files.writeString(file, "<old/>", StandardCharsets.UTF_8);
 
-		ApiException exception = assertThrows(ApiException.class,
-				() -> configurationService.updateConfiguration("test", file.toString(), "   ", false));
+		ApiException exception = assertThrows(
+				ApiException.class,
+				() -> configurationService.updateConfiguration("test", file.toString(), "   ", false)
+		);
 
 		assertEquals(HttpStatus.BAD_REQUEST, exception.getStatus());
 		assertTrue(exception.getMessage().contains("must not be blank"));
@@ -196,8 +200,7 @@ class ConfigurationServiceTest {
 		Files.writeString(file, "<Configuration/>", StandardCharsets.UTF_8);
 
 		try (MockedStatic<XmlFormatterUtils> mockedFormatter = mockStatic(XmlFormatterUtils.class)) {
-			mockedFormatter.when(() -> XmlFormatterUtils.format(anyString(), any()))
-					.thenReturn("<Configuration formatted=\"true\"/>");
+			mockedFormatter.when(() -> XmlFormatterUtils.format(anyString(), any())).thenReturn("<Configuration formatted=\"true\"/>");
 
 			String result = configurationService.updateConfiguration("test", file.toString(), "<Configuration/>", true);
 
@@ -237,8 +240,10 @@ class ConfigurationServiceTest {
 			mockedFormatter.when(() -> XmlFormatterUtils.format(anyString(), any()))
 					.thenThrow(new RuntimeException("format failed"));
 
-			ApiException exception = assertThrows(ApiException.class,
-					() -> configurationService.updateConfiguration("test", file.toString(), "<Configuration/>", true));
+			ApiException exception = assertThrows(
+					ApiException.class,
+					() -> configurationService.updateConfiguration("test", file.toString(), "<Configuration/>", true)
+			);
 
 			assertEquals(HttpStatus.BAD_REQUEST, exception.getStatus());
 			assertTrue(exception.getMessage().contains("Failed to save configuration"));
@@ -284,7 +289,6 @@ class ConfigurationServiceTest {
 	@Test
 	void addConfiguration_ProjectNotFound_ThrowsException() throws ApiException {
 		when(configurationProjectService.getProject("unknown")).thenThrow(new ApiException("not found", HttpStatus.NOT_FOUND));
-
 		assertThrows(ApiException.class, () -> configurationService.addConfiguration("unknown", "Config.xml"));
 	}
 
@@ -313,9 +317,7 @@ class ConfigurationServiceTest {
 		configurationService.initXsdOrderer();
 
 		try (MockedStatic<XmlFormatterUtils> mockedFormatter = mockStatic(XmlFormatterUtils.class)) {
-			mockedFormatter.when(() -> XmlFormatterUtils.format(anyString(), any()))
-					.thenReturn("<Configuration formatted=\"true\"/>");
-
+			mockedFormatter.when(() -> XmlFormatterUtils.format(anyString(), any())).thenReturn("<Configuration formatted=\"true\"/>");
 			configurationService.updateConfiguration("test", file.toString(), "<Configuration/>", true);
 			mockedFormatter.verify(() -> XmlFormatterUtils.format(anyString(), isNull()));
 		}

@@ -2,8 +2,12 @@ package org.frankframework.flow.datamapper;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.File;
@@ -26,6 +30,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
 
 @ExtendWith(MockitoExtension.class)
 public class DatamapperConfigServiceTest {
@@ -80,6 +85,18 @@ public class DatamapperConfigServiceTest {
 		})
 				.when(fileSystemStorage)
 				.writeFile(anyString(), anyString());
+	}
+
+	private void stubCreateFile() throws IOException {
+		doAnswer(invocation -> {
+			String path = invocation.getArgument(0);
+			Path file = Paths.get(path);
+			Files.createDirectories(file.getParent());
+			Files.createFile(file);
+			return null;
+		})
+				.when(fileSystemStorage)
+				.createFile(anyString());
 	}
 
 	private void stubGetConfigurationsDirectoryTree() throws IOException {
@@ -160,5 +177,92 @@ public class DatamapperConfigServiceTest {
 		datamapperConfigService.updateFileContent(TEST_PROJECT_NAME, newContent);
 
 		assertEquals(newContent, Files.readString(file));
+	}
+
+	@Test
+	@DisplayName("Should throw when configuration path points to a directory")
+	void updateFileContent_WhenConfigPathIsDirectory_ThrowsConfigurationException() throws Exception {
+		stubToAbsolutePath();
+		stubGetConfigurationsDirectoryTree();
+
+		Path datamapperDir = tempProjectRoot.resolve("datamapper");
+		Files.createDirectories(datamapperDir.resolve("configuration.json"));
+
+		ConfigurationException exception = assertThrows(ConfigurationException.class,
+				() -> datamapperConfigService.updateFileContent(TEST_PROJECT_NAME, "content"));
+
+		assertTrue(exception.getMessage().contains("path is a directory"));
+		verify(fileSystemStorage, never()).writeFile(anyString(), anyString());
+	}
+
+	@Test
+	@DisplayName("Should throw ApiException when resolving datamapper directory fails")
+	void updateFileContent_WhenResolvePathFails_ThrowsApiException() throws Exception {
+		when(fileTreeService.getConfigurationsDirectoryTree(anyString())).thenThrow(new IOException("boom"));
+
+		ApiException exception = assertThrows(ApiException.class,
+				() -> datamapperConfigService.updateFileContent(TEST_PROJECT_NAME, "content"));
+
+		assertEquals(HttpStatus.NOT_FOUND, exception.getStatus());
+	}
+
+	@Test
+	@DisplayName("Should throw when writeFile fails")
+	void updateFileContent_WhenWriteFails_ThrowsConfigurationException() throws Exception {
+		stubToAbsolutePath();
+		stubGetConfigurationsDirectoryTree();
+
+		Path datamapperDir = tempProjectRoot.resolve("datamapper");
+		Files.createDirectories(datamapperDir);
+		doThrow(new IOException("disk error")).when(fileSystemStorage).writeFile(anyString(), anyString());
+
+		ConfigurationException exception = assertThrows(ConfigurationException.class,
+				() -> datamapperConfigService.updateFileContent(TEST_PROJECT_NAME, "content"));
+
+		assertTrue(exception.getMessage().contains("Failed to update configuration file"));
+	}
+
+	@Test
+	@DisplayName("Should create file and return empty content when config does not exist")
+	void getConfig_WhenFileMissing_CreatesFileAndReturnsEmptyString() throws Exception {
+		stubToAbsolutePath();
+		stubGetConfigurationsDirectoryTree();
+		stubCreateFile();
+
+		Path datamapperDir = tempProjectRoot.resolve("datamapper");
+		Files.createDirectories(datamapperDir);
+
+		String result = datamapperConfigService.getConfig(TEST_PROJECT_NAME);
+
+		assertEquals("", result);
+		verify(fileSystemStorage).createFile(datamapperDir.resolve("configuration.json").toString());
+	}
+
+	@Test
+	@DisplayName("Should wrap read failure in ApiException")
+	void getConfig_WhenReadFails_ThrowsApiException() throws Exception {
+		stubToAbsolutePath();
+		stubGetConfigurationsDirectoryTree();
+
+		Path datamapperDir = tempProjectRoot.resolve("datamapper");
+		Files.createDirectories(datamapperDir);
+		Path file = datamapperDir.resolve("configuration.json");
+		Files.writeString(file, "content", StandardCharsets.UTF_8);
+		when(fileSystemStorage.readFile(anyString())).thenThrow(new IOException("cannot read"));
+
+		ApiException exception = assertThrows(ApiException.class, () -> datamapperConfigService.getConfig(TEST_PROJECT_NAME));
+
+		assertEquals(HttpStatus.NOT_FOUND, exception.getStatus());
+		assertTrue(exception.getMessage().contains("Failed to resolve configuration file path"));
+	}
+
+	@Test
+	@DisplayName("Should wrap path resolution failure in ApiException")
+	void getConfig_WhenResolvePathFails_ThrowsApiException() throws Exception {
+		when(fileTreeService.getConfigurationsDirectoryTree(anyString())).thenThrow(new IOException("boom"));
+
+		ApiException exception = assertThrows(ApiException.class, () -> datamapperConfigService.getConfig(TEST_PROJECT_NAME));
+
+		assertEquals(HttpStatus.NOT_FOUND, exception.getStatus());
 	}
 }

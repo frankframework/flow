@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.util.List;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.StoredConfig;
+import org.eclipse.jgit.transport.URIish;
 import org.frankframework.flow.exception.ApiException;
 import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.frankframework.flow.project.ConfigurationProject;
@@ -149,6 +150,26 @@ public class GitServiceTest {
 		GitStatusDTO status = gitService.getStatus("test-project");
 
 		assertFalse(status.hasRemote());
+	}
+
+	@Test
+	public void getStatusReturnsHasRemoteTrueWhenRemoteConfigured() throws Exception {
+		stubProject();
+		git.remoteAdd().setName("origin").setUri(new URIish("https://example.com/repo.git")).call();
+
+		GitStatusDTO status = gitService.getStatus("test-project");
+
+		assertTrue(status.hasRemote());
+	}
+
+	@Test
+	public void getStatusIncludesLocalEnvironmentFlag() throws Exception {
+		stubProject();
+		when(fileSystemStorage.isLocalEnvironment()).thenReturn(true);
+
+		GitStatusDTO status = gitService.getStatus("test-project");
+
+		assertTrue(status.isLocal());
 	}
 
 	@Test
@@ -416,6 +437,12 @@ public class GitServiceTest {
 	}
 
 	@Test
+	public void getFileDiffRejectsAbsolutePath() throws Exception {
+		stubProject();
+		assertThrows(SecurityException.class, () -> gitService.getFileDiff("test-project", "/etc/passwd"));
+	}
+
+	@Test
 	public void stageHunksPartiallyStagesFile() throws Exception {
 		stubProject();
 		String original = "line1\nline2\nline3\nline4\nline5\n";
@@ -453,6 +480,22 @@ public class GitServiceTest {
 
 		GitStatusDTO status = gitService.getStatus("test-project");
 		assertTrue(status.staged().contains("full.txt"));
+	}
+
+	@Test
+	public void stageHunksWithNoSelectionKeepsFileUnstaged() throws Exception {
+		stubProject();
+		String original = "line1\nline2\nline3\n";
+		Files.writeString(tempDir.resolve("partial.txt"), original, StandardCharsets.UTF_8);
+		git.add().addFilepattern("partial.txt").call();
+		git.commit().setMessage("Add partial.txt").call();
+
+		Files.writeString(tempDir.resolve("partial.txt"), "line1 changed\nline2\nline3\n", StandardCharsets.UTF_8);
+		gitService.stageHunks("test-project", "partial.txt", List.of());
+
+		GitStatusDTO status = gitService.getStatus("test-project");
+		assertFalse(status.staged().contains("partial.txt"));
+		assertTrue(status.modified().contains("partial.txt"));
 	}
 
 	@Test
@@ -580,6 +623,30 @@ public class GitServiceTest {
 		ApiException exception = assertThrows(ApiException.class, () -> gitService.pull("test-project", null));
 
 		assertTrue(exception.getMessage().contains("PAT"));
+	}
+
+	@Test
+	public void pullErrorMessageIsGenericOnLocal() throws Exception {
+		stubProject();
+		when(fileSystemStorage.isLocalEnvironment()).thenReturn(true);
+
+		ApiException exception = assertThrows(ApiException.class, () -> gitService.pull("test-project", null));
+
+		assertFalse(exception.getMessage().contains("PAT"));
+		assertTrue(exception.getMessage().contains("Failed to pull"));
+	}
+
+	@Test
+	public void notAGitRepositoryThrowsForGetLog() throws Exception {
+		Path nonGitDir = tempDir.resolve("not-git-log");
+		Files.createDirectories(nonGitDir);
+
+		ConfigurationProject configurationProject = mock(ConfigurationProject.class);
+		when(configurationProject.getRootPath()).thenReturn(nonGitDir.toString());
+		when(configurationProjectService.getProject("not-git-log")).thenReturn(configurationProject);
+		when(fileSystemStorage.toAbsolutePath(nonGitDir.toString())).thenReturn(nonGitDir);
+
+		assertThrows(ApiException.class, () -> gitService.getLog("not-git-log", 5));
 	}
 
 	@Test
