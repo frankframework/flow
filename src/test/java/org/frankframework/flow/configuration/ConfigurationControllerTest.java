@@ -8,6 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import org.frankframework.flow.exception.ApiException;
 import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.frankframework.flow.project.ConfigurationProject;
 import org.frankframework.flow.project.ConfigurationProjectDTO;
@@ -20,6 +21,7 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -71,14 +73,14 @@ class ConfigurationControllerTest {
 		String filepath = "unknown.xml";
 
 		when(configurationService.getConfigurationContent(TEST_PROJECT_NAME, filepath))
-				.thenThrow(new ConfigurationNotFoundException("ConfigurationFile file not found: " + filepath));
+				.thenThrow(new ApiException("ConfigurationFile file not found: " + filepath, HttpStatus.NOT_FOUND));
 
 		mockMvc.perform(get("/api/projects/" + TEST_PROJECT_NAME + "/configuration?path=" + filepath)
 						.contentType(MediaType.APPLICATION_JSON)
 						.accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isNotFound())
-				.andExpect(jsonPath("$.httpStatus").value(404))
-				.andExpect(jsonPath("$.messages[0]").value("ConfigurationFile file not found: " + filepath));
+				.andExpect(jsonPath("$.status").value("Not Found"))
+				.andExpect(jsonPath("$.error").value("ConfigurationFile file not found: " + filepath));
 
 		verify(configurationService).getConfigurationContent(TEST_PROJECT_NAME, filepath);
 	}
@@ -105,7 +107,7 @@ class ConfigurationControllerTest {
 		String filepath = "unknown.xml";
 		String xmlContent = "<xml>updated</xml>";
 
-		doThrow(new ConfigurationNotFoundException("Invalid file path: " + filepath))
+		doThrow(new ApiException("Invalid file path: " + filepath, HttpStatus.NOT_FOUND))
 				.when(configurationService)
 				.updateConfiguration(TEST_PROJECT_NAME, filepath, xmlContent, false);
 
@@ -114,8 +116,8 @@ class ConfigurationControllerTest {
 								.contentType(MediaType.APPLICATION_JSON)
 								.content("<xml>updated</xml>"))
 				.andExpect(status().isNotFound())
-				.andExpect(jsonPath("$.httpStatus").value(404))
-				.andExpect(jsonPath("$.messages[0]").value("Invalid file path: " + filepath));
+				.andExpect(jsonPath("$.status").value("Not Found"))
+				.andExpect(jsonPath("$.error").value("Invalid file path: " + filepath));
 
 		verify(configurationService).updateConfiguration(TEST_PROJECT_NAME, filepath, xmlContent, false);
 	}

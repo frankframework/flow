@@ -465,7 +465,7 @@ public class GitServiceTest {
 		when(configurationProjectService.getProject("not-git")).thenReturn(configurationProject);
 		when(fileSystemStorage.toAbsolutePath(nonGitDir.toString())).thenReturn(nonGitDir);
 
-		assertThrows(NotAGitRepositoryException.class, () -> gitService.getStatus("not-git"));
+		assertThrows(ApiException.class, () -> gitService.getStatus("not-git"));
 	}
 
 	@Test
@@ -478,7 +478,7 @@ public class GitServiceTest {
 		when(configurationProjectService.getProject("not-git2")).thenReturn(configurationProject);
 		when(fileSystemStorage.toAbsolutePath(nonGitDir.toString())).thenReturn(nonGitDir);
 
-		assertThrows(NotAGitRepositoryException.class, () -> gitService.commit("not-git2", "test"));
+		assertThrows(ApiException.class, () -> gitService.commit("not-git2", "test"));
 	}
 
 	@Test
@@ -491,7 +491,7 @@ public class GitServiceTest {
 		when(configurationProjectService.getProject("not-git3")).thenReturn(configurationProject);
 		when(fileSystemStorage.toAbsolutePath(nonGitDir.toString())).thenReturn(nonGitDir);
 
-		assertThrows(NotAGitRepositoryException.class, () -> gitService.stageFile("not-git3", "file.txt"));
+		assertThrows(ApiException.class, () -> gitService.stageFile("not-git3", "file.txt"));
 	}
 
 	@Test
@@ -553,13 +553,13 @@ public class GitServiceTest {
 	@Test
 	public void pushThrowsGitOperationExceptionForNoRemote() throws Exception {
 		stubProject();
-		assertThrows(GitOperationException.class, () -> gitService.push("test-project", null));
+		assertThrows(ApiException.class, () -> gitService.push("test-project", null));
 	}
 
 	@Test
 	public void pullThrowsGitOperationExceptionForNoRemote() throws Exception {
 		stubProject();
-		assertThrows(GitOperationException.class, () -> gitService.pull("test-project", null));
+		assertThrows(ApiException.class, () -> gitService.pull("test-project", null));
 	}
 
 	@Test
@@ -567,10 +567,9 @@ public class GitServiceTest {
 		stubProject();
 		when(fileSystemStorage.isLocalEnvironment()).thenReturn(false);
 
-		GitOperationException ex =
-				assertThrows(GitOperationException.class, () -> gitService.push("test-project", null));
+		ApiException exception = assertThrows(ApiException.class, () -> gitService.push("test-project", null));
 
-		assertTrue(ex.getMessage().contains("PAT"));
+		assertTrue(exception.getMessage().contains("PAT"));
 	}
 
 	@Test
@@ -578,10 +577,9 @@ public class GitServiceTest {
 		stubProject();
 		when(fileSystemStorage.isLocalEnvironment()).thenReturn(false);
 
-		GitOperationException ex =
-				assertThrows(GitOperationException.class, () -> gitService.pull("test-project", null));
+		ApiException exception = assertThrows(ApiException.class, () -> gitService.pull("test-project", null));
 
-		assertTrue(ex.getMessage().contains("PAT"));
+		assertTrue(exception.getMessage().contains("PAT"));
 	}
 
 	@Test
@@ -589,17 +587,15 @@ public class GitServiceTest {
 		stubProject();
 		when(fileSystemStorage.isLocalEnvironment()).thenReturn(true);
 
-		GitOperationException ex =
-				assertThrows(GitOperationException.class, () -> gitService.push("test-project", null));
+		ApiException exception = assertThrows(ApiException.class, () -> gitService.push("test-project", null));
 
-		assertFalse(ex.getMessage().contains("PAT"));
-		assertTrue(ex.getMessage().contains("Failed to push"));
+		assertFalse(exception.getMessage().contains("PAT"));
+		assertTrue(exception.getMessage().contains("Failed to push"));
 	}
 
 	@Test
 	public void hardenSetsHooksPathToDevNull() throws Exception {
 		GitService.hardenRepository(git.getRepository());
-
 		assertEquals("/dev/null", git.getRepository().getConfig().getString("core", null, "hooksPath"));
 	}
 
@@ -632,7 +628,6 @@ public class GitServiceTest {
 	@Test
 	public void hardenDisablesSymlinks() throws Exception {
 		GitService.hardenRepository(git.getRepository());
-
 		assertFalse(git.getRepository().getConfig().getBoolean("core", null, "symlinks", true));
 	}
 

@@ -108,7 +108,7 @@ class FileServiceTest {
 				() -> fileService.createOrUpdateFile(TEST_PROJECT_NAME, path, "content")
 		);
 
-		assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusCode());
+		assertEquals(HttpStatus.BAD_REQUEST, exception.getStatus());
 		assertEquals("Unsupported extension type for file: notAllowed.txt", exception.getMessage());
 	}
 
@@ -193,7 +193,7 @@ class FileServiceTest {
 				() -> fileService.renameFile(TEST_PROJECT_NAME, oldPath, newPath)
 		);
 
-		assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusCode());
+		assertEquals(HttpStatus.BAD_REQUEST, exception.getStatus());
 		assertEquals("Unsupported extension type for file: notAllowed.txt", exception.getMessage());
 	}
 

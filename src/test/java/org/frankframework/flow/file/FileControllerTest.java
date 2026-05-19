@@ -50,7 +50,7 @@ class FileControllerTest {
 
 		mockMvc.perform(get("/api/projects/MyProject/file").param("path", "missing.xml"))
 				.andExpect(status().isNotFound())
-				.andExpect(jsonPath("$.messages[0]").value("Missing file"));
+				.andExpect(jsonPath("$.error").value("Missing file"));
 	}
 
 	@Test

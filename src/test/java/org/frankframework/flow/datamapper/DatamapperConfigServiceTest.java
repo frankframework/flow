@@ -14,7 +14,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Comparator;
 import javax.naming.ConfigurationException;
-import org.frankframework.flow.configuration.ConfigurationNotFoundException;
+import org.frankframework.flow.exception.ApiException;
 import org.frankframework.flow.file.FileTreeNode;
 import org.frankframework.flow.file.FileTreeService;
 import org.frankframework.flow.filesystem.FileSystemStorage;
@@ -58,9 +58,9 @@ public class DatamapperConfigServiceTest {
 
 	private void stubToAbsolutePath() {
 		when(fileSystemStorage.toAbsolutePath(anyString())).thenAnswer(invocation -> {
-			String path = invocation.getArgument(0);
-			Path p = Paths.get(path);
-			return p.isAbsolute() ? p : tempProjectRoot.resolve(p).normalize();
+			String pathStr = invocation.getArgument(0);
+			Path path = Paths.get(pathStr);
+			return path.isAbsolute() ? path : tempProjectRoot.resolve(path).normalize();
 		});
 	}
 
@@ -92,7 +92,7 @@ public class DatamapperConfigServiceTest {
 
 	@Test
 	@DisplayName("Should correctly read content from an existing file")
-	public void readFileContent_Success() throws IOException, ConfigurationNotFoundException {
+	public void readFileContent_Success() throws IOException {
 		stubReadFile();
 		stubGetConfigurationsDirectoryTree();
 		stubToAbsolutePath();
@@ -118,13 +118,12 @@ public class DatamapperConfigServiceTest {
 		stubGetConfigurationsDirectoryTree();
 		stubToAbsolutePath();
 
-		assertThrows(ConfigurationNotFoundException.class, () -> datamapperConfigService.getConfig(TEST_PROJECT_NAME));
+		assertThrows(ApiException.class, () -> datamapperConfigService.getConfig(TEST_PROJECT_NAME));
 	}
 
 	@Test
 	@DisplayName("Should successfully overwrite a file with new content")
-	public void updateConfigContent_Success()
-			throws IOException, ConfigurationNotFoundException, ConfigurationException {
+	public void updateConfigContent_Success() throws IOException, ApiException, ConfigurationException {
 		stubToAbsolutePath();
 		stubWriteFile();
 		stubGetConfigurationsDirectoryTree();
@@ -146,8 +145,7 @@ public class DatamapperConfigServiceTest {
 
 	@Test
 	@DisplayName("Should successfully create  a new fille ")
-	public void updateFileNewConfigContent_Success()
-			throws IOException, ConfigurationNotFoundException, ConfigurationException {
+	public void updateFileNewConfigContent_Success() throws IOException, ApiException, ConfigurationException {
 		stubToAbsolutePath();
 		stubWriteFile();
 		stubGetConfigurationsDirectoryTree();

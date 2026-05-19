@@ -3,6 +3,7 @@ package org.frankframework.flow.frankdoc;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import org.frankframework.flow.exception.ApiException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,7 +28,7 @@ class FrankDocServiceTest {
 	}
 
 	@Test
-	void getFrankDocJsonReturnsJsonContent() throws FrankDocJsonNotFoundException {
+	void getFrankDocJsonReturnsJsonContent() {
 		String expectedJson = "{\"version\":\"1.0\",\"types\":{}}";
 		when(restTemplate.getForObject(FRANKDOC_URL, String.class)).thenReturn(expectedJson);
 
@@ -39,10 +40,9 @@ class FrankDocServiceTest {
 
 	@Test
 	void getFrankDocJsonThrowsWhenRestTemplateFails() {
-		when(restTemplate.getForObject(FRANKDOC_URL, String.class))
-				.thenThrow(new RestClientException("Connection refused"));
+		when(restTemplate.getForObject(FRANKDOC_URL, String.class)).thenThrow(new RestClientException("Connection refused"));
 
-		assertThrows(FrankDocJsonNotFoundException.class, () -> frankDocService.getFrankDocJson());
+		assertThrows(ApiException.class, () -> frankDocService.getFrankDocJson());
 
 		verify(restTemplate).getForObject(FRANKDOC_URL, String.class);
 	}
