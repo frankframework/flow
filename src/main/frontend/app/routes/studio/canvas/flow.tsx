@@ -1296,18 +1296,15 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
       onDragEnd={onDragEnd}
       onContextMenu={handleRightMouseButtonClick}
     >
-      <div ref={canvasRef} className="relative flex-1 overflow-hidden">
-        <div className="absolute top-2 right-2 z-10">
-          <Button
-            onClick={onOpenInEditor}
-            className="flex items-center gap-1.5 text-xs shadow-sm"
-            title="Open in Editor"
-          >
-            <CodeIcon className="h-3.5 w-3.5 fill-current" />
-            Open in Editor
-          </Button>
-        </div>
+      <div className="border-b-border bg-background flex h-10 shrink-0 items-center justify-between border-b px-3">
+        <SaveStatusIndicator />
+        <Button onClick={onOpenInEditor} className="flex items-center gap-1.5 text-xs shadow-sm" title="Open in Editor">
+          <CodeIcon className="h-3.5 w-3.5 fill-current" />
+          Open in Editor
+        </Button>
+      </div>
 
+      <div ref={canvasRef} className="relative flex-1 overflow-hidden">
         {loading && (
           <div className="bg-opacity-80 bg-background absolute inset-0 z-50 flex items-center justify-center">
             <div className="border-border h-10 w-10 animate-spin rounded-full border-t-2 border-b-2"></div>
@@ -1416,10 +1413,6 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
           hasSingleNodeSelection={nodes.filter((node) => node.selected && node.type === 'frankNode').length === 1}
         />
       )}
-      </div>
-
-      <div className="border-t-border bg-background flex h-7 shrink-0 items-center justify-end border-t px-3">
-        <SaveStatusIndicator />
       </div>
     </div>
   )

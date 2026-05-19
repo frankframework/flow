@@ -252,7 +252,6 @@ export default function CodeEditor() {
   const [leftTab, setLeftTab] = useState<LeftTab>('files')
   const [editorMounted, setEditorMounted] = useState(false)
   const [xsdLoaded, setXsdLoaded] = useState(false)
-  const [buttonRightOffset, setButtonRightOffset] = useState(14)
   const editorReference = useRef<Parameters<OnMount>[0] | null>(null)
   const monacoReference = useRef<Monaco | null>(null)
   const xsdContentRef = useRef<string | null>(null)
@@ -519,13 +518,6 @@ export default function CodeEditor() {
     editor.updateOptions({ glyphMargin: true })
 
     applyFlowHighlighter()
-
-    const updateButtonOffset = () => {
-      const layout = editor.getLayoutInfo()
-      setButtonRightOffset(layout.minimap.minimapWidth + layout.verticalScrollbarWidth + 8)
-    }
-    updateButtonOffset()
-    editor.onDidLayoutChange(updateButtonOffset)
 
     editor.addAction({
       id: 'save-file',
@@ -810,17 +802,18 @@ export default function CodeEditor() {
             <DiffTabView diffData={activeTab.diffData} />
           ) : (
             <div className="flex h-full flex-col">
+              <div className="border-b-border bg-background flex h-10 shrink-0 items-center justify-between border-b px-3">
+                <SaveStatusIndicator />
+                <Button
+                  onClick={handleOpenInStudio}
+                  className="flex items-center gap-1.5 text-xs shadow-sm"
+                  title="Open in Studio"
+                >
+                  <RulerCrossPenIcon className="h-3.5 w-3.5 fill-current" />
+                  Open in Studio
+                </Button>
+              </div>
               <div className="relative min-h-0 flex-1">
-                <div className="absolute top-2 z-10" style={{ right: buttonRightOffset }}>
-                  <Button
-                    onClick={handleOpenInStudio}
-                    className="flex items-center gap-1.5 text-xs shadow-sm"
-                    title="Open in Studio"
-                  >
-                    <RulerCrossPenIcon className="h-3.5 w-3.5 fill-current" />
-                    Open in Studio
-                  </Button>
-                </div>
                 <Editor
                   language={fileLanguage}
                   theme={theme === 'dark' ? 'vs-dark' : 'vs'}
@@ -842,9 +835,6 @@ export default function CodeEditor() {
                     glyphMargin: true,
                   }}
                 />
-              </div>
-              <div className="border-t-border bg-background flex h-7 shrink-0 items-center justify-end border-t px-3">
-                <SaveStatusIndicator />
               </div>
             </div>
           )
