@@ -110,6 +110,23 @@ function nextFreeNumericId(nodes: FlowNode[]): number {
   return max + 1
 }
 
+function calculateStickyNoteHeight(text: string, nodeWidth: number): number {
+  const LINE_HEIGHT = 17
+  const VERTICAL_PADDING = 26
+  const HORIZONTAL_PADDING = 24
+  const AVG_CHAR_WIDTH = 6.5
+
+  const usableWidth = Math.max(1, nodeWidth - HORIZONTAL_PADDING)
+  const charsPerLine = Math.max(1, Math.floor(usableWidth / AVG_CHAR_WIDTH))
+
+  const totalLines = text.split('\n').reduce((count, line) => {
+    return count + Math.max(1, Math.ceil((line.length || 0.1) / charsPerLine))
+  }, 0)
+
+  const calculated = totalLines * LINE_HEIGHT + VERTICAL_PADDING
+  return Math.min(FlowConfig.STICKY_NOTE_MAX_HEIGHT, Math.max(FlowConfig.STICKY_NOTE_DEFAULT_HEIGHT, calculated))
+}
+
 const createSnapshot = (state: FlowState): FlowSnapshot => ({
   nodes: structuredClone(state.nodes),
   edges: structuredClone(state.edges),
@@ -345,12 +362,12 @@ const useFlowStore = create<FlowState>()(
       set({
         nodes: get().nodes.map((node) => {
           if (node.id === nodeId && isStickyNote(node)) {
+            const nodeWidth = (node.style?.width as number) ?? node.width ?? FlowConfig.STICKY_NOTE_DEFAULT_WIDTH
+            const newHeight = calculateStickyNoteHeight(text, nodeWidth)
             return {
               ...node,
-              data: {
-                ...node.data,
-                content: text,
-              },
+              style: { ...node.style, width: nodeWidth, height: newHeight },
+              data: { ...node.data, content: text },
             }
           }
           return node
@@ -378,6 +395,9 @@ const useFlowStore = create<FlowState>()(
             const height = node.measured?.height ?? node.height ?? FlowConfig.STICKY_NOTE_DEFAULT_HEIGHT
             return {
               ...node,
+              width: FlowConfig.STICKY_NOTE_BALLOON_WIDTH,
+              height: FlowConfig.STICKY_NOTE_BALLOON_HEIGHT,
+              measured: { width: FlowConfig.STICKY_NOTE_BALLOON_WIDTH, height: FlowConfig.STICKY_NOTE_BALLOON_HEIGHT },
               style: {
                 ...node.style,
                 width: FlowConfig.STICKY_NOTE_BALLOON_WIDTH,
@@ -391,12 +411,17 @@ const useFlowStore = create<FlowState>()(
               },
             }
           } else {
+            const expandWidth = node.data.preCollapseWidth ?? FlowConfig.STICKY_NOTE_DEFAULT_WIDTH
+            const expandHeight = node.data.preCollapseHeight ?? FlowConfig.STICKY_NOTE_DEFAULT_HEIGHT
             return {
               ...node,
+              width: expandWidth,
+              height: expandHeight,
+              measured: { width: expandWidth, height: expandHeight },
               style: {
                 ...node.style,
-                width: node.data.preCollapseWidth ?? FlowConfig.STICKY_NOTE_DEFAULT_WIDTH,
-                height: node.data.preCollapseHeight ?? FlowConfig.STICKY_NOTE_DEFAULT_HEIGHT,
+                width: expandWidth,
+                height: expandHeight,
               },
               data: {
                 ...node.data,
