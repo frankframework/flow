@@ -219,7 +219,7 @@ public class ConfigurationProjectServiceTest {
 		ApiException exception = assertThrows(ApiException.class, () -> configurationProjectService.enableFilter("proj", "INVALID_TYPE"));
 
 		assertEquals(
-				"Invalid filter type: INVALID_TYPE: (IllegalArgumentException) No enum constant org.frankframework.flow.projectsettings.FilterType.INVALID_TYPE",
+				"Invalid filter type: INVALID_TYPE",
 				exception.getMessage()
 		);
 	}
@@ -234,7 +234,7 @@ public class ConfigurationProjectServiceTest {
 		ApiException exception = assertThrows(ApiException.class, () -> configurationProjectService.disableFilter("proj", "INVALID_TYPE"));
 
 		assertEquals(
-				"Invalid filter type: INVALID_TYPE: (IllegalArgumentException) No enum constant org.frankframework.flow.projectsettings.FilterType.INVALID_TYPE",
+				"Invalid filter type: INVALID_TYPE",
 				exception.getMessage()
 		);
 	}
