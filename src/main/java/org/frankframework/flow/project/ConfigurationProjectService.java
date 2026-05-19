@@ -276,7 +276,7 @@ public class ConfigurationProjectService {
 		try {
 			return FilterType.valueOf(type.toUpperCase());
 		} catch (IllegalArgumentException exception) {
-			throw new ApiException("Invalid filter type: " + type, exception);
+			throw new ApiException("Invalid filter type: " + type, HttpStatus.BAD_REQUEST);
 		}
 	}
 

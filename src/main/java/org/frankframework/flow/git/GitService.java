@@ -667,7 +667,7 @@ public class GitService {
 	private Git openGit(String projectName) throws IOException {
 		Path projectPath = getProjectPath(projectName);
 		if (!Files.isDirectory(projectPath.resolve(".git"))) {
-			throw new ApiException(projectName, HttpStatus.BAD_REQUEST);
+			throw new ApiException("Project '" + projectName + "' is not a git repository", HttpStatus.BAD_REQUEST);
 		}
 
 		Git git = Git.open(projectPath.toFile());

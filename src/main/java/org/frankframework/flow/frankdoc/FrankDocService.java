@@ -2,6 +2,7 @@ package org.frankframework.flow.frankdoc;
 
 import lombok.extern.slf4j.Slf4j;
 import org.frankframework.flow.exception.ApiException;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
@@ -27,7 +28,7 @@ public class FrankDocService {
 			log.info("Fetching FrankDoc JSON from {}", FRANKDOC_JSON_URL);
 			return restTemplate.getForObject(FRANKDOC_JSON_URL, String.class);
 		} catch (RestClientException exception) {
-			throw new ApiException("Failed to fetch FrankDoc JSON", exception);
+			throw new ApiException("Failed to fetch FrankDoc JSON", HttpStatus.NOT_FOUND);
 		}
 	}
 }

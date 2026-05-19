@@ -55,7 +55,7 @@ public class DatamapperGeneratorService {
 			if (!Files.isDirectory(datamapperDir)) {
 				Files.createDirectory(datamapperDir);
 			}
-		} catch (IOException e) {
+		} catch (IOException _) {
 			throw new ApiException("Failed to resolve configuration file path for project: " + projectName, HttpStatus.NOT_FOUND);
 		}
 

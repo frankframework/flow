@@ -81,7 +81,7 @@ class AdapterControllerTest {
 		String adapterName = "MyAdapter";
 		String adapterXml = "<adapter>updated</adapter>";
 
-		when(adapterService.updateAdapter(eq(configPath), eq(adapterName), eq(adapterXml)))
+		when(adapterService.updateAdapter(configPath, adapterName, adapterXml))
 				.thenReturn(true);
 
 		mockMvc.perform(
@@ -107,7 +107,7 @@ class AdapterControllerTest {
 		String adapterName = "UnknownAdapter";
 		String adapterXml = "<adapter>something</adapter>";
 
-		when(adapterService.updateAdapter(eq(configPath), eq(adapterName), eq(adapterXml)))
+		when(adapterService.updateAdapter(configPath, adapterName, adapterXml))
 				.thenReturn(false);
 
 		mockMvc.perform(
@@ -133,7 +133,7 @@ class AdapterControllerTest {
 		String adapterName = "MyAdapter";
 		String adapterXml = "<adapter>something</adapter>";
 
-		when(adapterService.updateAdapter(eq(configPath), eq(adapterName), eq(adapterXml)))
+		when(adapterService.updateAdapter(configPath, adapterName, adapterXml))
 				.thenThrow(new ApiException("Configuration file not found: " + configPath, HttpStatus.NOT_FOUND));
 
 		mockMvc.perform(

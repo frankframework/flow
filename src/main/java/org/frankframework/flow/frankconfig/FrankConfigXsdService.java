@@ -2,6 +2,7 @@ package org.frankframework.flow.frankconfig;
 
 import lombok.extern.slf4j.Slf4j;
 import org.frankframework.flow.exception.ApiException;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
@@ -23,7 +24,7 @@ public class FrankConfigXsdService {
 			return restTemplate.getForObject(FRANKCONFIG_XSD_URL, String.class);
 		} catch (RestClientException exception) {
 			log.error("Failed to fetch FrankConfig XSD from {}", FRANKCONFIG_XSD_URL, exception);
-			throw new ApiException("Failed to fetch FrankConfig XSD", exception);
+			throw new ApiException("Failed to fetch FrankConfig XSD", HttpStatus.NOT_FOUND);
 		}
 	}
 }
