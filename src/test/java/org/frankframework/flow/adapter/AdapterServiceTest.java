@@ -8,7 +8,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import org.frankframework.flow.configuration.ConfigurationFile;
-import org.frankframework.flow.configuration.ConfigurationNotFoundException;
 import org.frankframework.flow.configuration.ConfigurationXmlDTO;
 import org.frankframework.flow.exception.ApiException;
 import org.frankframework.flow.filesystem.FileSystemStorage;
@@ -73,7 +72,7 @@ class AdapterServiceTest {
 		when(configurationProjectService.getProject("proj")).thenReturn(configurationProject);
 
 		assertThrows(
-				ConfigurationNotFoundException.class,
+				ApiException.class,
 				() -> adapterService.getAdapter("proj", "nonexistent.xml", "SomeAdapter")
 		);
 	}
@@ -85,7 +84,7 @@ class AdapterServiceTest {
 
 		when(configurationProjectService.getProject("proj")).thenReturn(configurationProject);
 
-		assertThrows(ConfigurationNotFoundException.class, () -> adapterService.getAdapter("proj", "config2.xml", "A"));
+		assertThrows(ApiException.class, () -> adapterService.getAdapter("proj", "config2.xml", "A"));
 	}
 
 	@Test
@@ -96,8 +95,7 @@ class AdapterServiceTest {
 
 		when(configurationProjectService.getProject("proj")).thenReturn(configurationProject);
 
-		assertThrows(
-				AdapterNotFoundException.class, () -> adapterService.getAdapter("proj", "config.xml", "NonExistent"));
+		assertThrows(ApiException.class, () -> adapterService.getAdapter("proj", "config.xml", "NonExistent"));
 	}
 
 	@Test
@@ -107,8 +105,7 @@ class AdapterServiceTest {
 
 		when(configurationProjectService.getProject("proj")).thenReturn(configurationProject);
 
-		assertThrows(
-				AdapterNotFoundException.class, () -> adapterService.getAdapter("proj", "config.xml", "AnyAdapter"));
+		assertThrows(ApiException.class, () -> adapterService.getAdapter("proj", "config.xml", "AnyAdapter"));
 	}
 
 	@Test
@@ -132,10 +129,8 @@ class AdapterServiceTest {
 
 	@Test
 	void getAdapter_selectsCorrectConfiguration_whenProjectHasMultipleConfigs() throws Exception {
-		ConfigurationFile config1 =
-				configWith("config1.xml", "<ConfigurationFile><Adapter name=\"AdapterA\"/></ConfigurationFile>");
-		ConfigurationFile config2 =
-				configWith("config2.xml", "<ConfigurationFile><Adapter name=\"AdapterB\"/></ConfigurationFile>");
+		ConfigurationFile config1 = configWith("config1.xml", "<ConfigurationFile><Adapter name=\"AdapterA\"/></ConfigurationFile>");
+		ConfigurationFile config2 = configWith("config2.xml", "<ConfigurationFile><Adapter name=\"AdapterB\"/></ConfigurationFile>");
 
 		ConfigurationProject configurationProject = new ConfigurationProject("proj", "/path");
 		configurationProject.addConfiguration(config1);
@@ -172,7 +167,7 @@ class AdapterServiceTest {
 		when(fileSystemStorage.toAbsolutePath(missing.toString())).thenReturn(missing);
 
 		assertThrows(
-				ConfigurationNotFoundException.class,
+				ApiException.class,
 				() -> adapterService.updateAdapter(missing, "SomeAdapter", "<Adapter name=\"SomeAdapter\"/>")
 		);
 	}
@@ -185,7 +180,7 @@ class AdapterServiceTest {
 		when(fileSystemStorage.toAbsolutePath(configFile.toString())).thenReturn(configFile);
 
 		assertThrows(
-				AdapterNotFoundException.class,
+				ApiException.class,
 				() -> adapterService.updateAdapter(configFile, "NonExistent", "<Adapter name=\"NonExistent\"/>")
 		);
 	}
@@ -336,8 +331,7 @@ class AdapterServiceTest {
 		Path missing = tempDir.resolve("missing.xml");
 		when(fileSystemStorage.toAbsolutePath("missing.xml")).thenReturn(missing);
 
-		assertThrows(
-				ConfigurationNotFoundException.class, () -> adapterService.createAdapter("missing.xml", "Adapter"));
+		assertThrows(ApiException.class, () -> adapterService.createAdapter("missing.xml", "Adapter"));
 	}
 
 	@Test
@@ -392,7 +386,7 @@ class AdapterServiceTest {
 		when(fileSystemStorage.toAbsolutePath("missing.xml")).thenReturn(missing);
 
 		assertThrows(
-				ConfigurationNotFoundException.class,
+				ApiException.class,
 				() -> adapterService.renameAdapter("missing.xml", "OldName", "NewName")
 		);
 	}
@@ -405,7 +399,7 @@ class AdapterServiceTest {
 		when(fileSystemStorage.toAbsolutePath("config.xml")).thenReturn(configFile);
 
 		assertThrows(
-				AdapterNotFoundException.class,
+				ApiException.class,
 				() -> adapterService.renameAdapter("config.xml", "NonExistent", "NewName")
 		);
 	}
@@ -451,8 +445,7 @@ class AdapterServiceTest {
 		Path missing = tempDir.resolve("missing.xml");
 		when(fileSystemStorage.toAbsolutePath("missing.xml")).thenReturn(missing);
 
-		assertThrows(
-				ConfigurationNotFoundException.class, () -> adapterService.deleteAdapter("missing.xml", "SomeAdapter"));
+		assertThrows(ApiException.class, () -> adapterService.deleteAdapter("missing.xml", "SomeAdapter"));
 	}
 
 	@Test
@@ -462,7 +455,7 @@ class AdapterServiceTest {
 		Files.writeString(configFile, xml, StandardCharsets.UTF_8);
 		when(fileSystemStorage.toAbsolutePath("config.xml")).thenReturn(configFile);
 
-		assertThrows(AdapterNotFoundException.class, () -> adapterService.deleteAdapter("config.xml", "NonExistent"));
+		assertThrows(ApiException.class, () -> adapterService.deleteAdapter("config.xml", "NonExistent"));
 	}
 
 	private static ConfigurationProject projectWith(String name, ConfigurationFile config) {

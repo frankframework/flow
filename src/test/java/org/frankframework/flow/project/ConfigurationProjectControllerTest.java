@@ -18,7 +18,6 @@ import org.frankframework.flow.configuration.ConfigurationFile;
 import org.frankframework.flow.exception.ApiException;
 import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.frankframework.flow.projectsettings.FilterType;
-import org.frankframework.flow.projectsettings.InvalidFilterTypeException;
 import org.frankframework.flow.projectsettings.ProjectSettings;
 import org.frankframework.flow.recentproject.RecentProjectsService;
 import org.junit.jupiter.api.BeforeEach;
@@ -197,8 +196,8 @@ class ConfigurationProjectControllerTest {
 		mockMvc.perform(patch("/api/projects/UnknownProject/filters/ADAPTER/enable")
 						.accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isNotFound())
-				.andExpect(jsonPath("$.httpStatus").value(404))
-				.andExpect(jsonPath("$.messages[0]").value("Project not found"));
+				.andExpect(jsonPath("$.status").value("Not Found"))
+				.andExpect(jsonPath("$.error").value("Project not found"));
 
 		verify(configurationProjectService).enableFilter("UnknownProject", "ADAPTER");
 	}
@@ -206,14 +205,14 @@ class ConfigurationProjectControllerTest {
 	@Test
 	void enableFilterInvalidFilterTypeReturns400() throws Exception {
 		String filterType = "INVALID";
-		doThrow(new InvalidFilterTypeException("Invalid filter type: " + filterType))
+		doThrow(new ApiException("Invalid filter type: " + filterType, HttpStatus.BAD_REQUEST))
 				.when(configurationProjectService)
 				.enableFilter("MyProject", filterType);
 
 		mockMvc.perform(patch("/api/projects/MyProject/filters/INVALID/enable").accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isBadRequest())
-				.andExpect(jsonPath("$.httpStatus").value(400))
-				.andExpect(jsonPath("$.messages[0]").value("Invalid filter type: " + filterType));
+				.andExpect(jsonPath("$.status").value("Bad Request"))
+				.andExpect(jsonPath("$.error").value("Invalid filter type: " + filterType));
 
 		verify(configurationProjectService).enableFilter("MyProject", filterType);
 	}
@@ -257,8 +256,8 @@ class ConfigurationProjectControllerTest {
 		mockMvc.perform(patch("/api/projects/UnknownProject/filters/ADAPTER/disable")
 						.accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isNotFound())
-				.andExpect(jsonPath("$.httpStatus").value(404))
-				.andExpect(jsonPath("$.messages[0]").value("Project not found"));
+				.andExpect(jsonPath("$.status").value("Not Found"))
+				.andExpect(jsonPath("$.error").value("Project not found"));
 
 		verify(configurationProjectService).disableFilter("UnknownProject", "ADAPTER");
 	}
@@ -266,14 +265,14 @@ class ConfigurationProjectControllerTest {
 	@Test
 	void disableFilterInvalidFilterTypeReturns400() throws Exception {
 		String filterType = "INVALID";
-		doThrow(new InvalidFilterTypeException("Invalid filter type: " + filterType))
+		doThrow(new ApiException("Invalid filter type: " + filterType, HttpStatus.BAD_REQUEST))
 				.when(configurationProjectService)
 				.disableFilter("MyProject", filterType);
 
 		mockMvc.perform(patch("/api/projects/MyProject/filters/INVALID/disable").accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isBadRequest())
-				.andExpect(jsonPath("$.httpStatus").value(400))
-				.andExpect(jsonPath("$.messages[0]").value("Invalid filter type: " + filterType));
+				.andExpect(jsonPath("$.status").value("Bad Request"))
+				.andExpect(jsonPath("$.error").value("Invalid filter type: " + filterType));
 
 		verify(configurationProjectService).disableFilter("MyProject", filterType);
 	}

@@ -49,6 +49,7 @@ import org.eclipse.jgit.treewalk.filter.PathFilter;
 import org.frankframework.flow.exception.ApiException;
 import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.frankframework.flow.project.ConfigurationProjectService;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -119,9 +120,8 @@ public class GitService {
 	 *
 	 * @param projectName the name of the project for which to retrieve the git status
 	 * @return a GitStatusDTO containing the lists of staged, modified, untracked, and conflicting files, as well as branch information and ahead/behind counts
-	 * @throws ApiException          if the specified project does not exist in the system
-	 * @throws IOException           if an I/O error occurs while accessing the project's repository
-	 * @throws GitOperationException if an error occurs while performing git operations to retrieve the status information
+	 * @throws ApiException if the specified project does not exist in the system or an error occurs while performing git operations to retrieve the status information
+	 * @throws IOException  if an I/O error occurs while accessing the project's repository
 	 */
 	public GitStatusDTO getStatus(String projectName) throws ApiException, IOException {
 		log.debug("Fetching git status for project '{}'", projectName);
@@ -164,9 +164,9 @@ public class GitService {
 					hasRemote,
 					fileSystemStorage.isLocalEnvironment()
 			);
-		} catch (GitAPIException e) {
-			log.error("Failed to get git status for project '{}'", projectName, e);
-			throw new GitOperationException("Failed to get git status", e);
+		} catch (GitAPIException exception) {
+			log.error("Failed to get git status for project '{}'", projectName, exception);
+			throw new ApiException("Failed to get git status", exception);
 		}
 	}
 
@@ -191,7 +191,7 @@ public class GitService {
 	/**
 	 * Stages a file by adding it to the git index if it exists in the working tree, or removing it from the index if it has been deleted. This method uses JGit to perform the add or remove operation based on the presence of the file in the working directory, allowing for both new files and deleted files to be staged appropriately. It handles exceptions related to repository access and git operations, and logs relevant information for debugging purposes.
 	 */
-	public void stageFile(String projectName, String filePath) throws ApiException, IOException {
+	public void stageFile(String projectName, String filePath) throws IOException {
 		log.debug("Staging file '{}' in project '{}'", filePath, projectName);
 		try (Git git = openGit(projectName)) {
 			Path workingFile = safeResolvePath(git.getRepository(), filePath);
@@ -200,22 +200,22 @@ public class GitService {
 			} else {
 				git.rm().addFilepattern(filePath).call();
 			}
-		} catch (GitAPIException e) {
-			log.error("Failed to stage file '{}' in project '{}'", filePath, projectName, e);
-			throw new GitOperationException("Failed to stage file: " + filePath, e);
+		} catch (GitAPIException exception) {
+			log.error("Failed to stage file '{}' in project '{}'", filePath, projectName, exception);
+			throw new ApiException("Failed to stage file: " + filePath, exception);
 		}
 	}
 
 	/**
 	 * Unstages a file by performing a mixed reset on the specified file path, which effectively removes the file from the staging area while keeping the changes in the working directory. This allows users to unstage a file without losing their modifications. The method uses JGit to execute the reset command and handles exceptions related to repository access and git operations, logging relevant information for debugging purposes.
 	 */
-	public void unstageFile(String projectName, String filePath) throws ApiException, IOException {
+	public void unstageFile(String projectName, String filePath) throws IOException {
 		log.debug("Unstaging file '{}' in project '{}'", filePath, projectName);
 		try (Git git = openGit(projectName)) {
 			git.reset().addPath(filePath).call();
-		} catch (GitAPIException e) {
-			log.error("Failed to unstage file '{}' in project '{}'", filePath, projectName, e);
-			throw new GitOperationException("Failed to unstage file: " + filePath, e);
+		} catch (GitAPIException exception) {
+			log.error("Failed to unstage file '{}' in project '{}'", filePath, projectName, exception);
+			throw new ApiException("Failed to unstage file: " + filePath, exception);
 		}
 	}
 
@@ -241,7 +241,7 @@ public class GitService {
 	/**
 	 * Creates a new git commit for the specified project with the given commit message. It uses JGit to perform the commit operation, and then constructs a GitCommitResultDTO containing the commit ID, full message, author name, and timestamp of the commit. The method handles exceptions related to repository access and git operations, and logs relevant information for debugging purposes.
 	 */
-	public GitCommitResultDTO commit(String projectName, String message) throws ApiException, IOException {
+	public GitCommitResultDTO commit(String projectName, String message) throws IOException {
 		log.debug("Creating commit in project '{}' with message: '{}'", projectName, message);
 		try (Git git = openGit(projectName)) {
 			RevCommit commit = git.commit()
@@ -258,16 +258,16 @@ public class GitService {
 					author.getName(),
 					author.getWhenAsInstant().toEpochMilli()
 			);
-		} catch (GitAPIException e) {
-			log.error("Failed to commit in project '{}': {}", projectName, e.getMessage(), e);
-			throw new GitOperationException("Failed to commit", e);
+		} catch (GitAPIException exception) {
+			log.error("Failed to commit in project '{}': {}", projectName, exception.getMessage(), exception);
+			throw new ApiException("Failed to commit", exception);
 		}
 	}
 
 	/**
 	 * Performs a git push operation for the specified project, using JGit to push changes to the remote repository. It applies credentials if a token is provided, and then analyzes the PushResult to determine if the push was successful and constructs a user-friendly message summarizing the outcome of the push for each ref update. The method returns a GitPushResultDTO indicating whether the push was successful overall and includes a descriptive message for the user.
 	 */
-	public GitPushResultDTO push(String projectName, String token) throws ApiException, IOException {
+	public GitPushResultDTO push(String projectName, String token) throws IOException {
 		log.debug("Pushing changes for project '{}'", projectName);
 		String effectiveToken = resolveToken(projectName, token);
 		try (Git git = openGit(projectName)) {
@@ -276,19 +276,19 @@ public class GitService {
 
 			Iterable<PushResult> results = pushCommand.call();
 			return buildPushResult(projectName, results);
-		} catch (GitAPIException e) {
-			log.error("Failed to push for project '{}': {}", projectName, e.getMessage(), e);
+		} catch (GitAPIException exception) {
+			log.error("Failed to push for project '{}': {}", projectName, exception.getMessage(), exception);
 			String message = !fileSystemStorage.isLocalEnvironment()
 					? "Push failed — check your Personal Access Token (PAT) input"
 					: "Failed to push";
-			throw new GitOperationException(message, e);
+			throw new ApiException(message, exception);
 		}
 	}
 
 	/**
 	 * Performs a git pull operation for the specified project, using JGit to fetch and merge changes from the remote repository. It applies credentials if a token is provided, and then analyzes the PullResult to determine if the pull was successful, if there were merge conflicts, and how many refs were updated. The method returns a GitPullResultDTO containing this information in a user-friendly format.
 	 */
-	public GitPullResultDTO pull(String projectName, String token) throws ApiException, IOException {
+	public GitPullResultDTO pull(String projectName, String token) throws IOException {
 		log.debug("Pulling changes for project '{}'", projectName);
 		String effectiveToken = resolveToken(projectName, token);
 		try (Git git = openGit(projectName)) {
@@ -297,19 +297,19 @@ public class GitService {
 
 			PullResult result = pullCommand.call();
 			return buildPullResult(projectName, result);
-		} catch (GitAPIException e) {
-			log.error("Failed to pull for project '{}': {}", projectName, e.getMessage(), e);
+		} catch (GitAPIException exception) {
+			log.error("Failed to pull for project '{}': {}", projectName, exception.getMessage(), exception);
 			String message = !fileSystemStorage.isLocalEnvironment()
 					? "Pull failed — check your Personal Access Token (PAT) input"
 					: "Failed to pull";
-			throw new GitOperationException(message, e);
+			throw new ApiException(message, exception);
 		}
 	}
 
 	/**
 	 * Retrieves the git log for the specified project, returning a list of GitLogEntryDTO objects representing the most recent commits. It uses JGit to access the repository and fetch the commit history, mapping each RevCommit to a GitLogEntryDTO that includes the full commit ID, abbreviated short ID, commit message, author name, and commit timestamp. The method handles exceptions related to repository access and logs relevant information for debugging purposes.
 	 */
-	public List<GitLogEntryDTO> getLog(String projectName, int count) throws ApiException, IOException {
+	public List<GitLogEntryDTO> getLog(String projectName, int count) throws IOException {
 		log.debug("Getting git log for project '{}' (count: {})", projectName, count);
 		try (Git git = openGit(projectName)) {
 			Iterable<RevCommit> commits = git.log().setMaxCount(count).call();
@@ -331,7 +331,7 @@ public class GitService {
 			return entries;
 		} catch (GitAPIException e) {
 			log.error("Failed to get log for project '{}': {}", projectName, e.getMessage(), e);
-			throw new GitOperationException("Failed to get log", e);
+			throw new ApiException("Failed to get log", e);
 		}
 	}
 
@@ -664,10 +664,10 @@ public class GitService {
 	 * @throws ApiException if the project does not exist
 	 * @throws IOException  if an I/O error occurs while accessing the project directory
 	 */
-	private Git openGit(String projectName) throws ApiException, IOException {
+	private Git openGit(String projectName) throws IOException {
 		Path projectPath = getProjectPath(projectName);
 		if (!Files.isDirectory(projectPath.resolve(".git"))) {
-			throw new NotAGitRepositoryException(projectName);
+			throw new ApiException("Project '" + projectName + "' is not a git repository", HttpStatus.BAD_REQUEST);
 		}
 
 		Git git = Git.open(projectPath.toFile());

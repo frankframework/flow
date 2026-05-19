@@ -6,13 +6,15 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import java.nio.file.Path;
 import java.nio.file.Paths;
-import org.frankframework.flow.configuration.ConfigurationNotFoundException;
 import org.frankframework.flow.configuration.ConfigurationXmlDTO;
+import org.frankframework.flow.exception.ApiException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -53,13 +55,13 @@ class AdapterControllerTest {
 		String adapterName = "MissingAdapter";
 
 		when(adapterService.getAdapter(eq(projectName), eq(configPath), eq(adapterName)))
-				.thenThrow(new AdapterNotFoundException("Adapter not found"));
+				.thenThrow(new ApiException("Adapter not found", HttpStatus.NOT_FOUND));
 
 		mockMvc.perform(get("/api/projects/" + projectName + "/adapters/" + adapterName)
 						.param("configurationPath", configPath)
 						.contentType(MediaType.APPLICATION_JSON))
 				.andExpect(status().isNotFound())
-				.andExpect(jsonPath("$.messages[0]").value("Adapter not found"));
+				.andExpect(jsonPath("$.error").value("Adapter not found"));
 
 		verify(adapterService).getAdapter(projectName, configPath, adapterName);
 	}
@@ -74,11 +76,12 @@ class AdapterControllerTest {
 
 	@Test
 	void updateAdapterSuccessReturns200() throws Exception {
-		String configPath = "config1.xml";
+		String configPathStr = "config1.xml";
+		Path configPath = Paths.get(configPathStr);
 		String adapterName = "MyAdapter";
 		String adapterXml = "<adapter>updated</adapter>";
 
-		when(adapterService.updateAdapter(eq(Paths.get(configPath)), eq(adapterName), eq(adapterXml)))
+		when(adapterService.updateAdapter(configPath, adapterName, adapterXml))
 				.thenReturn(true);
 
 		mockMvc.perform(
@@ -86,24 +89,25 @@ class AdapterControllerTest {
 								.contentType(MediaType.APPLICATION_JSON)
 								.content(
 										"""
-								{
-								"configurationPath": "config1.xml",
-								"adapterName": "MyAdapter",
-								"adapterXml": "<adapter>updated</adapter>"
-								}
-								"""))
+												{
+												"configurationPath": "config1.xml",
+												"adapterName": "MyAdapter",
+												"adapterXml": "<adapter>updated</adapter>"
+												}
+												"""))
 				.andExpect(status().isOk());
 
-		verify(adapterService).updateAdapter(Paths.get(configPath), adapterName, adapterXml);
+		verify(adapterService).updateAdapter(configPath, adapterName, adapterXml);
 	}
 
 	@Test
 	void updateAdapterNotFoundReturns404() throws Exception {
-		String configPath = "config1.xml";
+		String configPathStr = "config1.xml";
+		Path configPath = Paths.get(configPathStr);
 		String adapterName = "UnknownAdapter";
 		String adapterXml = "<adapter>something</adapter>";
 
-		when(adapterService.updateAdapter(eq(Paths.get(configPath)), eq(adapterName), eq(adapterXml)))
+		when(adapterService.updateAdapter(configPath, adapterName, adapterXml))
 				.thenReturn(false);
 
 		mockMvc.perform(
@@ -111,40 +115,41 @@ class AdapterControllerTest {
 								.contentType(MediaType.APPLICATION_JSON)
 								.content(
 										"""
-								{
-								"configurationPath": "config1.xml",
-								"adapterName": "UnknownAdapter",
-								"adapterXml": "<adapter>something</adapter>"
-								}
-								"""))
+												{
+												"configurationPath": "config1.xml",
+												"adapterName": "UnknownAdapter",
+												"adapterXml": "<adapter>something</adapter>"
+												}
+												"""))
 				.andExpect(status().isNotFound());
 
-		verify(adapterService).updateAdapter(Paths.get(configPath), adapterName, adapterXml);
+		verify(adapterService).updateAdapter(configPath, adapterName, adapterXml);
 	}
 
 	@Test
 	void updateAdapterConfigurationNotFoundReturns404() throws Exception {
-		String configPath = "missing.xml";
+		String configPathStr = "missing.xml";
+		Path configPath = Paths.get(configPathStr);
 		String adapterName = "MyAdapter";
 		String adapterXml = "<adapter>something</adapter>";
 
-		when(adapterService.updateAdapter(eq(Paths.get(configPath)), eq(adapterName), eq(adapterXml)))
-				.thenThrow(new ConfigurationNotFoundException("Configuration file not found: " + configPath));
+		when(adapterService.updateAdapter(configPath, adapterName, adapterXml))
+				.thenThrow(new ApiException("Configuration file not found: " + configPath, HttpStatus.NOT_FOUND));
 
 		mockMvc.perform(
 						put("/api/projects/MyProject/adapters")
 								.contentType(MediaType.APPLICATION_JSON)
 								.content(
 										"""
-								{
-								"configurationPath": "missing.xml",
-								"adapterName": "MyAdapter",
-								"adapterXml": "<adapter>something</adapter>"
-								}
-								"""))
+												{
+												"configurationPath": "missing.xml",
+												"adapterName": "MyAdapter",
+												"adapterXml": "<adapter>something</adapter>"
+												}
+												"""))
 				.andExpect(status().isNotFound());
 
-		verify(adapterService).updateAdapter(Paths.get(configPath), adapterName, adapterXml);
+		verify(adapterService).updateAdapter(configPath, adapterName, adapterXml);
 	}
 
 	@Test
@@ -154,11 +159,11 @@ class AdapterControllerTest {
 								.contentType(MediaType.APPLICATION_JSON)
 								.content(
 										"""
-								{
-								"configurationPath": "config1.xml",
-								"adapterName": "NewAdapter"
-								}
-								"""))
+												{
+												"configurationPath": "config1.xml",
+												"adapterName": "NewAdapter"
+												}
+												"""))
 				.andExpect(status().isOk());
 
 		verify(adapterService).createAdapter("config1.xml", "NewAdapter");
@@ -166,7 +171,7 @@ class AdapterControllerTest {
 
 	@Test
 	void createAdapterConfigNotFoundReturns404() throws Exception {
-		doThrow(new ConfigurationNotFoundException("Configuration file not found: missing.xml"))
+		doThrow(new ApiException("Configuration file not found: missing.xml", HttpStatus.NOT_FOUND))
 				.when(adapterService)
 				.createAdapter("missing.xml", "NewAdapter");
 
@@ -175,11 +180,11 @@ class AdapterControllerTest {
 								.contentType(MediaType.APPLICATION_JSON)
 								.content(
 										"""
-								{
-								"configurationPath": "missing.xml",
-								"adapterName": "NewAdapter"
-								}
-								"""))
+												{
+												"configurationPath": "missing.xml",
+												"adapterName": "NewAdapter"
+												}
+												"""))
 				.andExpect(status().isNotFound());
 
 		verify(adapterService).createAdapter("missing.xml", "NewAdapter");
@@ -192,12 +197,12 @@ class AdapterControllerTest {
 								.contentType(MediaType.APPLICATION_JSON)
 								.content(
 										"""
-								{
-								"configurationPath": "config1.xml",
-								"oldName": "OldAdapter",
-								"newName": "NewAdapter"
-								}
-								"""))
+												{
+												"configurationPath": "config1.xml",
+												"oldName": "OldAdapter",
+												"newName": "NewAdapter"
+												}
+												"""))
 				.andExpect(status().isOk());
 
 		verify(adapterService).renameAdapter("config1.xml", "OldAdapter", "NewAdapter");
@@ -205,7 +210,7 @@ class AdapterControllerTest {
 
 	@Test
 	void renameAdapterNotFoundReturns404() throws Exception {
-		doThrow(new AdapterNotFoundException("Adapter not found: Missing"))
+		doThrow(new ApiException("Adapter not found: Missing", HttpStatus.NOT_FOUND))
 				.when(adapterService)
 				.renameAdapter("config1.xml", "Missing", "NewName");
 
@@ -214,12 +219,12 @@ class AdapterControllerTest {
 								.contentType(MediaType.APPLICATION_JSON)
 								.content(
 										"""
-								{
-								"configurationPath": "config1.xml",
-								"oldName": "Missing",
-								"newName": "NewName"
-								}
-								"""))
+												{
+												"configurationPath": "config1.xml",
+												"oldName": "Missing",
+												"newName": "NewName"
+												}
+												"""))
 				.andExpect(status().isNotFound());
 
 		verify(adapterService).renameAdapter("config1.xml", "Missing", "NewName");
@@ -238,7 +243,7 @@ class AdapterControllerTest {
 
 	@Test
 	void deleteAdapterNotFoundReturns404() throws Exception {
-		doThrow(new AdapterNotFoundException("Adapter not found: Missing"))
+		doThrow(new ApiException("Adapter not found: Missing", HttpStatus.NOT_FOUND))
 				.when(adapterService)
 				.deleteAdapter("config1.xml", "Missing");
 

@@ -4,9 +4,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import javax.naming.ConfigurationException;
-import org.frankframework.flow.configuration.ConfigurationNotFoundException;
+import org.frankframework.flow.exception.ApiException;
 import org.frankframework.flow.file.FileTreeService;
 import org.frankframework.flow.filesystem.FileSystemStorage;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -19,25 +20,23 @@ public class DatamapperConfigService {
 		this.fileTreeService = fileTreeService;
 	}
 
-	private Path getConfigFilePath(String projectName) throws ConfigurationNotFoundException {
+	private Path getConfigFilePath(String projectName) {
 		return getDatamapperDir(projectName).resolve("configuration.json");
 	}
 
-	private Path getDatamapperDir(String projectName) throws ConfigurationNotFoundException {
+	private Path getDatamapperDir(String projectName) {
 		try {
 			return fileSystemStorage
 					.toAbsolutePath(fileTreeService
 							.getConfigurationsDirectoryTree(projectName)
 							.getPath())
 					.resolve("datamapper");
-		} catch (IOException e) {
-			throw new ConfigurationNotFoundException(
-					"Failed to resolve configuration file path for project: " + projectName);
+		} catch (IOException _) {
+			throw new ApiException("Failed to resolve configuration file path for project: " + projectName, HttpStatus.NOT_FOUND);
 		}
 	}
 
-	public void updateFileContent(String projectName, String newContent)
-			throws ConfigurationNotFoundException, ConfigurationException {
+	public void updateFileContent(String projectName, String newContent) throws ConfigurationException {
 		Path absoluteFilePath;
 
 		Path dataMapperDir = null;
@@ -74,7 +73,7 @@ public class DatamapperConfigService {
 		}
 	}
 
-	public String getConfig(String projectName) throws ConfigurationNotFoundException {
+	public String getConfig(String projectName) {
 		try {
 			String filePath = this.getConfigFilePath(projectName).toString();
 			if (!Files.exists(Path.of(filePath))) {
@@ -82,8 +81,8 @@ public class DatamapperConfigService {
 				return "";
 			}
 			return fileSystemStorage.readFile(filePath);
-		} catch (IOException e) {
-			throw new ConfigurationNotFoundException("Failed to resolve configuration file path for project: " + projectName);
+		} catch (IOException _) {
+			throw new ApiException("Failed to resolve configuration file path for project: " + projectName, HttpStatus.NOT_FOUND);
 		}
 	}
 }

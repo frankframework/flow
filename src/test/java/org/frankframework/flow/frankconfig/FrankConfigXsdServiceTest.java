@@ -3,6 +3,7 @@ package org.frankframework.flow.frankconfig;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import org.frankframework.flow.exception.ApiException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,7 +28,7 @@ class FrankConfigXsdServiceTest {
 	}
 
 	@Test
-	void getFrankConfigXsdReturnsXsdContent() throws FrankConfigXsdNotFoundException {
+	void getFrankConfigXsdReturnsXsdContent() {
 		String expectedXsd = "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\"></xs:schema>";
 		when(restTemplate.getForObject(FRANKCONFIG_XSD_URL, String.class)).thenReturn(expectedXsd);
 
@@ -42,7 +43,7 @@ class FrankConfigXsdServiceTest {
 		when(restTemplate.getForObject(FRANKCONFIG_XSD_URL, String.class))
 				.thenThrow(new RestClientException("Connection refused"));
 
-		assertThrows(FrankConfigXsdNotFoundException.class, () -> frankConfigXsdService.getFrankConfigXsd());
+		assertThrows(ApiException.class, () -> frankConfigXsdService.getFrankConfigXsd());
 
 		verify(restTemplate).getForObject(FRANKCONFIG_XSD_URL, String.class);
 	}

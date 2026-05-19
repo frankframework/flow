@@ -24,7 +24,6 @@ import org.frankframework.flow.exception.ApiException;
 import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.frankframework.flow.filesystem.FilesystemEntry;
 import org.frankframework.flow.projectsettings.FilterType;
-import org.frankframework.flow.projectsettings.InvalidFilterTypeException;
 import org.frankframework.flow.recentproject.RecentProject;
 import org.frankframework.flow.recentproject.RecentProjectsService;
 import org.junit.jupiter.api.BeforeEach;
@@ -63,7 +62,7 @@ public class ConfigurationProjectServiceTest {
 			String dirName = invocation.getArgument(0);
 			Path dirPath = Path.of(dirName);
 			String projectName = dirPath.getFileName().toString();
-			Path projectDir = tempDir.resolve("src/main/configurations/"+projectName);
+			Path projectDir = tempDir.resolve("src/main/configurations/" + projectName);
 			Files.createDirectories(projectDir);
 			return projectDir;
 		});
@@ -119,7 +118,7 @@ public class ConfigurationProjectServiceTest {
 		assertNotNull(configurationProject);
 		assertEquals(projectName, configurationProject.getName());
 
-		Path configDir = tempDir.resolve("src/main/configurations/"+projectName);
+		Path configDir = tempDir.resolve("src/main/configurations/" + projectName);
 		assertTrue(Files.exists(configDir), "configurations directory should exist");
 
 		Path configFile = configDir.resolve("Configuration.xml");
@@ -217,10 +216,12 @@ public class ConfigurationProjectServiceTest {
 		ConfigurationProjectCreateDTO createDTO = new ConfigurationProjectCreateDTO("proj", "/");
 		configurationProjectService.createProjectOnDisk(createDTO);
 
-		InvalidFilterTypeException ex = assertThrows(
-				InvalidFilterTypeException.class, () -> configurationProjectService.enableFilter("proj", "INVALID_TYPE"));
+		ApiException exception = assertThrows(ApiException.class, () -> configurationProjectService.enableFilter("proj", "INVALID_TYPE"));
 
-		assertEquals("Invalid filter type: INVALID_TYPE", ex.getMessage());
+		assertEquals(
+				"Invalid filter type: INVALID_TYPE",
+				exception.getMessage()
+		);
 	}
 
 	@Test
@@ -230,10 +231,12 @@ public class ConfigurationProjectServiceTest {
 		ConfigurationProjectCreateDTO createDTO = new ConfigurationProjectCreateDTO("proj", "/");
 		configurationProjectService.createProjectOnDisk(createDTO);
 
-		InvalidFilterTypeException ex = assertThrows(
-				InvalidFilterTypeException.class, () -> configurationProjectService.disableFilter("proj", "INVALID_TYPE"));
+		ApiException exception = assertThrows(ApiException.class, () -> configurationProjectService.disableFilter("proj", "INVALID_TYPE"));
 
-		assertEquals("Invalid filter type: INVALID_TYPE", ex.getMessage());
+		assertEquals(
+				"Invalid filter type: INVALID_TYPE",
+				exception.getMessage()
+		);
 	}
 
 	@Test
@@ -241,10 +244,9 @@ public class ConfigurationProjectServiceTest {
 		when(fileSystemStorage.isLocalEnvironment()).thenReturn(true);
 		when(recentProjectsService.getRecentProjects()).thenReturn(recentProjects);
 
-		ApiException ex = assertThrows(
-				ApiException.class, () -> configurationProjectService.enableFilter("unknownProject", "ADAPTER"));
+		ApiException exception = assertThrows(ApiException.class, () -> configurationProjectService.enableFilter("unknownProject", "ADAPTER"));
 
-		assertTrue(ex.getMessage().contains("unknownProject"));
+		assertTrue(exception.getMessage().contains("unknownProject"));
 	}
 
 	@Test
@@ -252,10 +254,10 @@ public class ConfigurationProjectServiceTest {
 		when(fileSystemStorage.isLocalEnvironment()).thenReturn(true);
 		when(recentProjectsService.getRecentProjects()).thenReturn(recentProjects);
 
-		ApiException ex = assertThrows(
+		ApiException exception = assertThrows(
 				ApiException.class, () -> configurationProjectService.disableFilter("unknownProject", "ADAPTER"));
 
-		assertTrue(ex.getMessage().contains("unknownProject"));
+		assertTrue(exception.getMessage().contains("unknownProject"));
 	}
 
 	@Test
@@ -270,12 +272,12 @@ public class ConfigurationProjectServiceTest {
 		});
 
 		when(fileSystemStorage.toAbsolutePath(anyString())).thenAnswer(invocation -> {
-			String path = invocation.getArgument(0);
-			Path p = Path.of(path);
-			if (p.isAbsolute()) {
-				return p;
+			String pathStr = invocation.getArgument(0);
+			Path path = Path.of(pathStr);
+			if (path.isAbsolute()) {
+				return path;
 			}
-			return tempDir.resolve(path);
+			return tempDir.resolve(pathStr);
 		});
 
 		String projectName = "imported_project";
@@ -327,8 +329,7 @@ public class ConfigurationProjectServiceTest {
 		List<MultipartFile> files = List.of(maliciousFile);
 		List<String> paths = List.of("../../../etc/evil.xml");
 
-		SecurityException ex = assertThrows(
-				SecurityException.class, () -> configurationProjectService.importProjectFromFiles(projectName, files, paths));
+		SecurityException ex = assertThrows(SecurityException.class, () -> configurationProjectService.importProjectFromFiles(projectName, files, paths));
 
 		assertTrue(ex.getMessage().contains("Invalid file path"));
 	}
@@ -350,8 +351,7 @@ public class ConfigurationProjectServiceTest {
 		List<MultipartFile> files = List.of(maliciousFile);
 		List<String> paths = List.of("/etc/passwd");
 
-		SecurityException ex = assertThrows(
-				SecurityException.class, () -> configurationProjectService.importProjectFromFiles(projectName, files, paths));
+		SecurityException ex = assertThrows(SecurityException.class, () -> configurationProjectService.importProjectFromFiles(projectName, files, paths));
 
 		assertTrue(ex.getMessage().contains("Invalid file path"));
 	}
@@ -396,12 +396,12 @@ public class ConfigurationProjectServiceTest {
 	@Test
 	void testOpenProjectFromDisk() throws Exception {
 		when(fileSystemStorage.toAbsolutePath(anyString())).thenAnswer(invocation -> {
-			String path = invocation.getArgument(0);
-			Path p = Path.of(path);
-			if (p.isAbsolute()) {
-				return p;
+			String pathStr = invocation.getArgument(0);
+			Path path = Path.of(pathStr);
+			if (path.isAbsolute()) {
+				return path;
 			}
-			return tempDir.resolve(path);
+			return tempDir.resolve(pathStr);
 		});
 
 		when(fileSystemStorage.toRelativePath(anyString())).thenAnswer(inv -> inv.getArgument(0));
@@ -427,9 +427,9 @@ public class ConfigurationProjectServiceTest {
 	@Test
 	void testOpenProjectFromDiskThrowsWhenPathDoesNotExist() throws Exception {
 		when(fileSystemStorage.toAbsolutePath(anyString())).thenAnswer(invocation -> {
-			String path = invocation.getArgument(0);
-			Path p = Path.of(path);
-			return p.isAbsolute() ? p : tempDir.resolve(path);
+			String pathStr = invocation.getArgument(0);
+			Path path = Path.of(pathStr);
+			return path.isAbsolute() ? path : tempDir.resolve(pathStr);
 		});
 
 		assertThrows(ApiException.class, () -> configurationProjectService.openProjectFromDisk("nonexistent_project"));
@@ -438,9 +438,9 @@ public class ConfigurationProjectServiceTest {
 	@Test
 	void testOpenProjectFromDiskThrowsWhenPathIsAFile() throws Exception {
 		when(fileSystemStorage.toAbsolutePath(anyString())).thenAnswer(invocation -> {
-			String path = invocation.getArgument(0);
-			Path p = Path.of(path);
-			return p.isAbsolute() ? p : tempDir.resolve(path);
+			String pathStr = invocation.getArgument(0);
+			Path path = Path.of(pathStr);
+			return path.isAbsolute() ? path : tempDir.resolve(pathStr);
 		});
 
 		Path file = tempDir.resolve("not_a_directory.xml");
@@ -452,9 +452,9 @@ public class ConfigurationProjectServiceTest {
 	@Test
 	void testOpenProjectFromDiskLoadsEmptyProject_whenNoConfigurationsDir() throws Exception {
 		when(fileSystemStorage.toAbsolutePath(anyString())).thenAnswer(invocation -> {
-			String path = invocation.getArgument(0);
-			Path p = Path.of(path);
-			return p.isAbsolute() ? p : tempDir.resolve(path);
+			String pathStr = invocation.getArgument(0);
+			Path path = Path.of(pathStr);
+			return path.isAbsolute() ? path : tempDir.resolve(pathStr);
 		});
 
 		Path projDir = tempDir.resolve("empty_proj");
@@ -485,9 +485,9 @@ public class ConfigurationProjectServiceTest {
 				.thenReturn(List.of(new FilesystemEntry("scanned_proj", projDir.toString(), "directory", true)));
 
 		when(fileSystemStorage.toAbsolutePath(anyString())).thenAnswer(invocation -> {
-			String path = invocation.getArgument(0);
-			Path p = Path.of(path);
-			return p.isAbsolute() ? p : tempDir.resolve(path);
+			String pathStr = invocation.getArgument(0);
+			Path path = Path.of(pathStr);
+			return path.isAbsolute() ? path : tempDir.resolve(pathStr);
 		});
 
 		when(fileSystemStorage.toRelativePath(anyString())).thenAnswer(inv -> inv.getArgument(0));
@@ -517,9 +517,9 @@ public class ConfigurationProjectServiceTest {
 				));
 
 		when(fileSystemStorage.toAbsolutePath(anyString())).thenAnswer(invocation -> {
-			String path = invocation.getArgument(0);
-			Path p = Path.of(path);
-			return p.isAbsolute() ? p : tempDir.resolve(path);
+			String pathStr = invocation.getArgument(0);
+			Path path = Path.of(pathStr);
+			return path.isAbsolute() ? path : tempDir.resolve(pathStr);
 		});
 
 		List<ConfigurationProject> configurationProjects = configurationProjectService.getProjects();
@@ -596,9 +596,9 @@ public class ConfigurationProjectServiceTest {
 
 		Path projDir = tempDir.resolve("src/main/configurations/deleteme_proj");
 		try (Stream<Path> paths = Files.walk(projDir)) {
-			paths.sorted(Comparator.reverseOrder()).forEach(p -> {
+			paths.sorted(Comparator.reverseOrder()).forEach(path -> {
 				try {
-					Files.delete(p);
+					Files.delete(path);
 				} catch (IOException e) {
 					// ignore
 				}
