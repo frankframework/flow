@@ -27,7 +27,7 @@ public class FrankDocService {
 		try {
 			log.info("Fetching FrankDoc JSON from {}", FRANKDOC_JSON_URL);
 			return restTemplate.getForObject(FRANKDOC_JSON_URL, String.class);
-		} catch (RestClientException exception) {
+		} catch (RestClientException _) {
 			throw new ApiException("Failed to fetch FrankDoc JSON", HttpStatus.NOT_FOUND);
 		}
 	}
