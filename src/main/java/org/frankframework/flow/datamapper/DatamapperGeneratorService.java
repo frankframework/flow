@@ -85,7 +85,7 @@ public class DatamapperGeneratorService {
 			fileSystemStorage.delete(getConfigFilePath(projectName).toString());
 
 		} catch (IOException e) {
-			throw new ApiException("Failed to find configuration for project: " + projectName, HttpStatus.INTERNAL_SERVER_ERROR);
+			throw new ApiException("Failed to find configuration for project: " + projectName);
 		}
 	}
 
