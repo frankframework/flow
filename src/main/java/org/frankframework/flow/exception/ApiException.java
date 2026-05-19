@@ -20,7 +20,7 @@ public class ApiException extends RuntimeException implements Serializable {
 	}
 
 	public ApiException(String msg, Throwable throwable) {
-		this(msg, throwable, null);
+		this(message, throwable, null);
 	}
 
 	public ApiException(String message, int status) {
