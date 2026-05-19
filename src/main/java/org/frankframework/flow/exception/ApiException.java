@@ -19,7 +19,7 @@ public class ApiException extends RuntimeException implements Serializable {
 		this(null, throwable, HttpStatus.INTERNAL_SERVER_ERROR);
 	}
 
-	public ApiException(String msg, Throwable throwable) {
+	public ApiException(String message, Throwable throwable) {
 		this(message, throwable, null);
 	}
 
