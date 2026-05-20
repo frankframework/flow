@@ -10,49 +10,34 @@ interface TabsViewProps<T extends string = string> {
 }
 
 export function TabsView<T extends string>({ tabs, activeTab, onSelectTab, onCloseTab }: TabsViewProps<T>) {
-  const tabsElementReference = useRef<HTMLDivElement>(null)
   const tabsListReference = useRef<HTMLUListElement>(null)
   const shadowLeftReference = useRef<HTMLDivElement>(null)
   const shadowRightReference = useRef<HTMLDivElement>(null)
   const entries = Object.entries(tabs) as [T, TabData][]
 
   const calculateScrollShadows = useCallback(() => {
-    setTimeout(() => {
-      if (
-        !tabsElementReference.current ||
-        !tabsListReference.current ||
-        !shadowLeftReference.current ||
-        !shadowRightReference.current
-      ) {
-        return
-      }
+    if (!tabsListReference.current || !shadowLeftReference.current || !shadowRightReference.current) return
 
-      const scrollWidth = tabsListReference.current.scrollWidth - tabsElementReference.current.offsetWidth
-      const scrollLeft = tabsListReference.current.scrollLeft
+    const { scrollWidth, clientWidth, scrollLeft } = tabsListReference.current
 
-      if (scrollWidth <= 0) {
-        setShadows(0, 0)
-        return
-      }
+    if (scrollWidth <= clientWidth) {
+      setShadows(0, 0)
+      return
+    }
 
-      const currentScroll = scrollLeft / scrollWidth
-      setShadows(currentScroll, 1 - currentScroll)
-    })
+    const maxScroll = scrollWidth - clientWidth
+    const currentScroll = scrollLeft / maxScroll
+    setShadows(currentScroll, 1 - currentScroll)
   }, [])
 
   useEffect(() => {
     calculateScrollShadows()
-    window.addEventListener('resize', calculateScrollShadows)
-    return () => window.removeEventListener('resize', calculateScrollShadows)
-  }, [calculateScrollShadows, tabs])
 
-  useEffect(() => {
-    calculateScrollShadows()
-    window.addEventListener('resize', calculateScrollShadows)
-    return () => {
-      window.removeEventListener('resize', calculateScrollShadows)
-    }
-  }, [tabs, calculateScrollShadows])
+    const resizeObserver = new ResizeObserver(calculateScrollShadows)
+    if (tabsListReference.current) resizeObserver.observe(tabsListReference.current)
+
+    return () => resizeObserver.disconnect()
+  }, [calculateScrollShadows, tabs])
 
   const setShadows = (left: number, right: number) => {
     if (shadowLeftReference.current) {
@@ -64,7 +49,7 @@ export function TabsView<T extends string>({ tabs, activeTab, onSelectTab, onClo
   }
 
   return (
-    <div ref={tabsElementReference} className="relative flex h-12">
+    <div className="relative flex h-12">
       <div
         ref={shadowLeftReference}
         className="absolute top-0 bottom-0 left-0 z-10 w-2 bg-gradient-to-r from-black/15 to-transparent opacity-0"

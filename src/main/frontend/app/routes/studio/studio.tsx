@@ -12,9 +12,6 @@ import { SidebarSide, useSidebarStore } from '~/components/sidebars-layout/sideb
 import SidebarLayout from '~/components/sidebars-layout/sidebar-layout'
 import useTabStore from '~/stores/tab-store'
 import { useShallow } from 'zustand/react/shallow'
-import { useProjectStore } from '~/stores/project-store'
-import { toProjectRelativePath } from '~/utils/path-utils'
-import CodeIcon from '/icons/solar/Code.svg?react'
 import { openInEditor } from '~/actions/navigationActions'
 import Button from '~/components/inputs/button'
 import useFlowStore, { isStickyNote } from '~/stores/flow-store'
@@ -148,7 +145,6 @@ function RightPanelContent({
 }
 
 export default function Studio() {
-  const project = useProjectStore((state) => state.project)
   const setVisibility = useSidebarStore((state) => state.setVisibility)
   const [showNodeContext, setShowNodeContext] = useState(false)
   const { nodeId, editingSubtype, isMultiSelect, selectedStickyId, selectedGroupId } = useNodeContextStore(
@@ -235,20 +231,7 @@ export default function Studio() {
 
         {activeTab ? (
           <>
-            <div className="border-b-border bg-background flex items-center justify-between border-b px-4 py-2">
-              <span className="text-foreground-muted truncate text-sm">
-                {activeTabPath && project ? toProjectRelativePath(activeTabPath, project) : activeTabPath}
-              </span>
-              <Button
-                onClick={handleOpenInEditor}
-                className="flex shrink-0 items-center gap-2 px-5 py-2 text-sm"
-                title="Open in Editor"
-              >
-                <CodeIcon className="h-4 w-4 fill-current" />
-                <span className="whitespace-nowrap">Open in Editor</span>
-              </Button>
-            </div>
-            <Flow showNodeContextMenu={handleShowNodeContext} />
+            <Flow showNodeContextMenu={handleShowNodeContext} onOpenInEditor={handleOpenInEditor} />
           </>
         ) : (
           <div className="text-foreground-muted flex h-full flex-col items-center justify-center p-8 text-center">

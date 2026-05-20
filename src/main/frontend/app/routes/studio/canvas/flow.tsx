@@ -14,6 +14,10 @@ import {
   useUpdateNodeInternals,
 } from '@xyflow/react'
 import Dagre from '@dagrejs/dagre'
+import { SaveStatusIndicator } from '~/components/save-status-indicator'
+import { useSaveStatusStore } from '~/stores/save-status-store'
+import Button from '~/components/inputs/button'
+import CodeIcon from '/icons/solar/Code.svg?react'
 import '@xyflow/react/dist/style.css'
 import FrankNodeComponent, { type FrankNodeType } from '~/routes/studio/canvas/nodetypes/frank-node'
 import FrankEdgeComponent from '~/routes/studio/canvas/edgetypes/frank-edge'
@@ -43,7 +47,6 @@ import { refreshOpenDiffs } from '~/services/git-service'
 import useEditorTabStore from '~/stores/editor-tab-store'
 import { cloneWithRemappedIds, getEdgeLabelFromHandle } from '~/utils/flow-utils'
 import { showErrorToast } from '~/components/toast'
-import clsx from 'clsx'
 import { useSettingsStore } from '~/stores/settings-store'
 import { useShortcut } from '~/hooks/use-shortcut'
 import CanvasContextMenu from '~/components/flow/canvas-context-menu'
@@ -55,15 +58,12 @@ export type FlowNode = FrankNodeType | ExitNode | StickyNote | GroupNode | Node
 const selector = (state: FlowState) => ({
   nodes: state.nodes,
   edges: state.edges,
-  viewport: state.viewport,
   onNodesChange: state.onNodesChange,
   onEdgesChange: state.onEdgesChange,
   onConnect: state.onConnect,
   onReconnect: state.onReconnect,
 })
 
-type SaveStatus = 'idle' | 'saving' | 'saved'
-const SAVED_DISPLAY_DURATION = 2000
 const STICKY_SNAP_DISTANCE = 60
 
 const getStickyCenter = (sticky: StickyNote) => ({
@@ -107,7 +107,51 @@ const nodeTypes = {
 }
 const edgeTypes = { frankEdge: FrankEdgeComponent }
 
-function FlowCanvas() {
+function computeAbsoluteNodePosition(
+  targetNode: FlowNode,
+  allNodes: FlowNode[],
+): { absoluteX: number; absoluteY: number } {
+  let absoluteX = targetNode.position.x
+  let absoluteY = targetNode.position.y
+  let currentNode: FlowNode | undefined = targetNode
+
+  while (currentNode?.parentId) {
+    const parentNode = allNodes.find((node) => node.id === currentNode!.parentId)
+    if (!parentNode) break
+    absoluteX += parentNode.position.x
+    absoluteY += parentNode.position.y
+    currentNode = parentNode
+  }
+
+  return { absoluteX, absoluteY }
+}
+
+function computeNodeCenteredViewport(
+  nodeAbsoluteX: number,
+  nodeAbsoluteY: number,
+  nodeWidth: number,
+  nodeHeight: number,
+  canvasWidth: number,
+  canvasHeight: number,
+): { x: number; y: number; zoom: number } {
+  const nodeCenterX = nodeAbsoluteX + nodeWidth / 2
+  const nodeCenterY = nodeAbsoluteY + nodeHeight / 2
+  const viewportPadding = 0.7
+  const minZoom = 0.5
+  const maxZoom = 1.5
+
+  const zoomToFitWidth = (canvasWidth * viewportPadding) / nodeWidth
+  const zoomToFitHeight = (canvasHeight * viewportPadding) / nodeHeight
+  const zoom = Math.max(minZoom, Math.min(maxZoom, Math.min(zoomToFitWidth, zoomToFitHeight)))
+
+  return {
+    x: canvasWidth / 2 - nodeCenterX * zoom,
+    y: canvasHeight / 2 - nodeCenterY * zoom,
+    zoom,
+  }
+}
+
+function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
   const showNodeContextMenu = useNodeContextMenu()
   const [loading, setLoading] = useState(false)
   const {
@@ -165,19 +209,20 @@ function FlowCanvas() {
     edges: Edge[]
   } | null>(null)
 
-  const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
+  const { setSaving, setSaved, setIdle } = useSaveStatusStore()
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; flowPos: { x: number; y: number } } | null>(
     null,
   )
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isLoadingTabRef = useRef(false)
-  const pendingSelectionRef = useRef<{ subtype: string; name: string } | null>(null)
+  const pendingFitViewRef = useRef<string | null>(null)
 
   const updateNodeInternals = useUpdateNodeInternals()
   const reactFlow = useReactFlow()
   const reactFlowRef = useRef(reactFlow)
   reactFlowRef.current = reactFlow
+  const canvasRef = useRef<HTMLDivElement>(null)
+  const fitAfterLayoutRef = useRef<{ id: string }[] | null>(null)
 
   const applySelectionToNodes = useCallback((pendingSelection: { subtype: string; name: string }) => {
     const currentNodes = useFlowStore.getState().nodes
@@ -195,13 +240,7 @@ function FlowCanvas() {
       })),
     )
 
-    setTimeout(() => {
-      reactFlowRef.current?.fitView({
-        nodes: [{ id: nodeToSelect.id }],
-        padding: 0.5,
-        duration: 400,
-      })
-    }, 50)
+    pendingFitViewRef.current = nodeToSelect.id
 
     const nodeContextStore = useNodeContextStore.getState()
     nodeContextStore.setParentId(null)
@@ -213,9 +252,7 @@ function FlowCanvas() {
     showNodeContextMenuRef.current(true)
   }, [])
 
-  const { nodes, edges, viewport, onNodesChange, onEdgesChange, onConnect, onReconnect } = useFlowStore(
-    useShallow(selector),
-  )
+  const { nodes, edges, onNodesChange, onEdgesChange, onConnect, onReconnect } = useFlowStore(useShallow(selector))
   const project = useProjectStore.getState().project
 
   const saveFlow = useCallback(async () => {
@@ -230,7 +267,7 @@ function FlowCanvas() {
 
     if (!configurationPath || !adapterName || !currentProject) return
 
-    setSaveStatus('saving')
+    setSaving()
     try {
       const fullConfigXml = await fetchConfigurationFileCached(currentProject.name, configurationPath)
       const configDoc = new DOMParser().parseFromString(fullConfigXml, 'text/xml')
@@ -275,13 +312,11 @@ function FlowCanvas() {
         })
       }
 
-      setSaveStatus('saved')
-      if (savedTimerRef.current) clearTimeout(savedTimerRef.current)
-      savedTimerRef.current = setTimeout(() => setSaveStatus('idle'), SAVED_DISPLAY_DURATION)
+      setSaved()
     } catch (error) {
       console.error('Failed to save XML:', error)
       showErrorToast(`Failed to save XML: ${error instanceof Error ? error.message : error}`)
-      setSaveStatus('idle')
+      setIdle()
     }
   }, [project])
 
@@ -300,7 +335,6 @@ function FlowCanvas() {
   useEffect(() => {
     return () => {
       if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current)
-      if (savedTimerRef.current) clearTimeout(savedTimerRef.current)
     }
   }, [])
 
@@ -311,21 +345,92 @@ function FlowCanvas() {
   }, [nodes, edges, scheduleAutoSave])
 
   useEffect(() => {
-    const pending = pendingSelectionRef.current
+    if (!fitAfterLayoutRef.current) return
+    const nodeIds = fitAfterLayoutRef.current
+    fitAfterLayoutRef.current = null
+    requestAnimationFrame(() => {
+      reactFlowRef.current?.fitView({ nodes: nodeIds, padding: 0.15, duration: 300 })
+    })
+  }, [nodes])
 
-    if (!pending) return
+  const waitForStableCanvasDimensions = useCallback((onStable: (canvasWidth: number, canvasHeight: number) => void) => {
+    let previousWidth = -1
+    let previousHeight = -1
+    let consecutiveStableFrames = 0
+    let totalFramesElapsed = 0
+    const MAX_FRAMES_BEFORE_TIMEOUT = 60
+    const REQUIRED_STABLE_FRAMES = 3
+    const MINIMUM_TOTAL_FRAMES = 5
 
-    const targetNode = nodes.find(
-      (node): node is FrankNodeType =>
-        isFrankNode(node) && node.data.subtype === pending.subtype && node.data.name === pending.name,
-    )
+    const checkDimensions = () => {
+      const currentWidth = canvasRef.current?.clientWidth ?? 0
+      const currentHeight = canvasRef.current?.clientHeight ?? 0
 
-    if (!targetNode) return
+      const hasValidDimensions = currentWidth > 0 && currentHeight > 0
+      const dimensionsUnchanged = currentWidth === previousWidth && currentHeight === previousHeight
 
-    pendingSelectionRef.current = null
-    applySelectionToNodes(pending)
-    setLoading(false)
-  }, [nodes, applySelectionToNodes])
+      if (hasValidDimensions && dimensionsUnchanged) {
+        consecutiveStableFrames++
+        const isStableEnough = consecutiveStableFrames >= REQUIRED_STABLE_FRAMES
+        const hasWaitedLongEnough = totalFramesElapsed >= MINIMUM_TOTAL_FRAMES
+
+        if (isStableEnough && hasWaitedLongEnough) {
+          onStable(currentWidth, currentHeight)
+          return
+        }
+      } else {
+        consecutiveStableFrames = 0
+      }
+
+      previousWidth = currentWidth
+      previousHeight = currentHeight
+      totalFramesElapsed++
+
+      if (totalFramesElapsed >= MAX_FRAMES_BEFORE_TIMEOUT) {
+        if (currentWidth > 0 && currentHeight > 0) {
+          onStable(currentWidth, currentHeight)
+        }
+        return
+      }
+
+      requestAnimationFrame(checkDimensions)
+    }
+
+    requestAnimationFrame(checkDimensions)
+  }, [])
+
+  useEffect(() => {
+    const nodeId = pendingFitViewRef.current
+    if (!nodeId) return
+
+    const targetNode = nodes.find((node) => node.id === nodeId)
+    if (!targetNode?.measured?.width || !targetNode?.measured?.height) return
+    if (!targetNode.selected) return
+
+    pendingFitViewRef.current = null
+
+    waitForStableCanvasDimensions((canvasWidth, canvasHeight) => {
+      const reactFlowInstance = reactFlowRef.current
+      if (!reactFlowInstance) return
+
+      const allNodes = useFlowStore.getState().nodes
+      const node = allNodes.find((node) => node.id === nodeId)
+      if (!node?.measured?.width || !node?.measured?.height) return
+
+      const { absoluteX, absoluteY } = computeAbsoluteNodePosition(node, allNodes)
+
+      const viewport = computeNodeCenteredViewport(
+        absoluteX,
+        absoluteY,
+        node.measured.width,
+        node.measured.height,
+        canvasWidth,
+        canvasHeight,
+      )
+
+      reactFlowInstance.setViewport(viewport, { duration: 400 })
+    })
+  }, [nodes, waitForStableCanvasDimensions])
 
   useEffect(() => {
     useNodeContextStore.getState().registerSaveFlow(async () => {
@@ -369,6 +474,43 @@ function FlowCanvas() {
     setShowModal(true)
   }
 
+  const computeAdapterCenteredViewport = useCallback(
+    (nodes: Node[], canvasWidth: number, canvasHeight: number): { x: number; y: number; zoom: number } => {
+      const layoutNodes = nodes.filter((node) => node.type === 'frankNode' || node.type === 'exitNode')
+      if (layoutNodes.length === 0) return { x: 0, y: 0, zoom: 1 }
+
+      const boundsLeft = Math.min(...layoutNodes.map((node) => node.position.x))
+      const boundsTop = Math.min(...layoutNodes.map((node) => node.position.y))
+      const boundsRight = Math.max(
+        ...layoutNodes.map((node) => node.position.x + (node.measured?.width ?? FlowConfig.NODE_DEFAULT_WIDTH)),
+      )
+      const boundsBottom = Math.max(
+        ...layoutNodes.map((node) => node.position.y + (node.measured?.height ?? FlowConfig.NODE_MIN_HEIGHT)),
+      )
+
+      const boundsWidth = boundsRight - boundsLeft
+      const boundsHeight = boundsBottom - boundsTop
+      const boundsCenterX = boundsLeft + boundsWidth / 2
+      const boundsCenterY = boundsTop + boundsHeight / 2
+
+      const viewportPadding = 0.85
+      const minZoom = 0.2
+      const maxZoom = 1.5
+      const verticalOffset = 40
+
+      const zoomToFitWidth = (canvasWidth * viewportPadding) / Math.max(boundsWidth, 1)
+      const zoomToFitHeight = (canvasHeight * viewportPadding) / Math.max(boundsHeight, 1)
+      const zoom = Math.max(minZoom, Math.min(maxZoom, Math.min(zoomToFitWidth, zoomToFitHeight)))
+
+      return {
+        x: canvasWidth / 2 - boundsCenterX * zoom,
+        y: canvasHeight / 2 - boundsCenterY * zoom - verticalOffset,
+        zoom,
+      }
+    },
+    [],
+  )
+
   const layoutGraph = useCallback((nodes: Node[], edges: Edge[], direction: 'TB' | 'LR' = 'LR'): Node[] => {
     const dagreGraph = new Dagre.graphlib.Graph()
     dagreGraph.setDefaultEdgeLabel(() => ({}))
@@ -378,47 +520,58 @@ function FlowCanvas() {
       nodesep: FlowConfig.LAYOUT_VERTICAL_OFFSET,
     })
 
-    // Only add nodes to Dagre that need layout (position x=0 and y=0)
+    const layoutableIds = new Set<string>()
     for (const node of nodes) {
-      if (node.position.x === 0 && node.position.y === 0) {
-        dagreGraph.setNode(node.id, {
-          width: node.width,
-          height: node.height,
-        })
+      if ((node.type === 'frankNode' || node.type === 'exitNode') && node.position.x === 0 && node.position.y === 0) {
+        const width = node.measured?.width ?? FlowConfig.NODE_DEFAULT_WIDTH
+        const height = node.measured?.height ?? FlowConfig.NODE_MIN_HEIGHT
+        dagreGraph.setNode(node.id, { width: width, height: height })
+        layoutableIds.add(node.id)
       }
     }
 
-    // Add all edges
     for (const edge of edges) {
-      dagreGraph.setEdge(edge.source, edge.target)
+      if (layoutableIds.has(edge.source) && layoutableIds.has(edge.target)) {
+        dagreGraph.setEdge(edge.source, edge.target)
+      }
     }
 
     Dagre.layout(dagreGraph)
 
     return nodes.map((node) => {
-      if (node.position.x !== 0 || node.position.y !== 0) return node
+      if (!layoutableIds.has(node.id)) return node
 
       const nodeWithPosition = dagreGraph.node(node.id)
       if (!nodeWithPosition) return node
 
+      const width = node.measured?.width ?? FlowConfig.NODE_DEFAULT_WIDTH
+      const height = node.measured?.height ?? FlowConfig.NODE_MIN_HEIGHT
+
       return {
         ...node,
         position: {
-          x: nodeWithPosition.x,
-          y: nodeWithPosition.y,
+          x: nodeWithPosition.x - width / 2,
+          y: nodeWithPosition.y - height / 2,
         },
-
-        measured: node.measured,
       }
     })
   }, [])
 
   const handleAutoLayout = useCallback(() => {
     const flowStore = useFlowStore.getState()
-    const resetNodes = flowStore.nodes.map((node) => ({ ...node, position: { x: 0, y: 0 } }))
+    const resetNodes = flowStore.nodes.map((node) =>
+      node.type === 'frankNode' || node.type === 'exitNode' ? { ...node, position: { x: 0, y: 0 } } : node,
+    )
     const laidOut = layoutGraph(resetNodes, flowStore.edges, 'LR')
+
+    const nodeIds = laidOut
+      .filter((node) => node.type === 'frankNode' || node.type === 'exitNode')
+      .map((node) => ({ id: node.id }))
+
+    if (nodeIds.length === 0) return
+
+    fitAfterLayoutRef.current = nodeIds
     flowStore.setNodes(laidOut)
-    setTimeout(() => reactFlowRef.current.fitView({ padding: 0.1 }), 50)
   }, [layoutGraph])
 
   const getFullySelectedGroupIds = useCallback(
@@ -1068,15 +1221,32 @@ function FlowCanvas() {
   )
 
   useEffect(() => {
-    function restoreFlowFromTab(tab: TabData) {
+    function stripMeasuredDimensions(nodes: FlowNode[]): FlowNode[] {
+      return nodes.map((node) => {
+        if (!('measured' in node)) return node
+        const { measured: _measured, ...nodeWithoutMeasured } = node as FlowNode & { measured?: unknown }
+        return nodeWithoutMeasured as FlowNode
+      })
+    }
+
+    function restoreFlowFromTab(tab: TabData, options: { skipViewport: boolean; forceRemeasure: boolean }) {
       const flowStore = useFlowStore.getState()
       const flowJson = tab.flowJson
 
       if (flowJson) {
-        flowStore.setNodes(Array.isArray(flowJson.nodes) ? flowJson.nodes : [])
+        let nodes = Array.isArray(flowJson.nodes) ? flowJson.nodes : []
+        if (options.forceRemeasure) {
+          nodes = stripMeasuredDimensions(nodes)
+        }
+        flowStore.setNodes(nodes)
         flowStore.setEdges(Array.isArray(flowJson.edges) ? flowJson.edges : [])
-        const viewport = flowJson.viewport as { x: number; y: number; zoom: number } | undefined
-        flowStore.setViewport(viewport && true ? viewport : { x: 0, y: 0, zoom: 1 })
+
+        if (!options.skipViewport) {
+          const savedViewport = flowJson.viewport as { x: number; y: number; zoom: number } | undefined
+          const targetViewport = savedViewport ?? { x: 0, y: 0, zoom: 1 }
+          flowStore.setViewport(targetViewport)
+          requestAnimationFrame(() => reactFlowRef.current?.setViewport(targetViewport))
+        }
 
         flowStore.setHistory(tab.history ?? [])
         flowStore.setFuture(tab.future ?? [])
@@ -1090,48 +1260,65 @@ function FlowCanvas() {
       flowStore.resetStore()
     }
 
-    async function loadFlowFromTab(tab: TabData) {
+    function loadFromCache(tab: TabData, pendingSelection: { subtype: string; name: string } | null) {
+      const hasPendingSelection = !!pendingSelection
+      restoreFlowFromTab(tab, { skipViewport: hasPendingSelection, forceRemeasure: hasPendingSelection })
+      if (pendingSelection) applySelectionToNodes(pendingSelection)
+    }
+
+    async function loadFromApi(tab: TabData, pendingSelection: { subtype: string; name: string } | null) {
       const flowStore = useFlowStore.getState()
       const currentProject = useProjectStore.getState().project
+      if (!currentProject) return
+
+      const adapter = await getAdapterFromConfiguration(
+        currentProject.name,
+        tab.configurationPath,
+        tab.name!,
+        tab.adapterPosition,
+      )
+      if (!adapter) return
+      const adapterJson = await convertAdapterXmlToJson(adapter)
+
+      flowStore.setEdges(adapterJson.edges)
+      const laidOutNodes = layoutGraph(adapterJson.nodes, adapterJson.edges, 'LR')
+      flowStore.setNodes(laidOutNodes)
+      flowStore.setHistory([])
+      flowStore.setFuture([])
+
+      if (pendingSelection) {
+        applySelectionToNodes(pendingSelection)
+      } else {
+        waitForStableCanvasDimensions((canvasWidth, canvasHeight) => {
+          const freshViewport = computeAdapterCenteredViewport(laidOutNodes, canvasWidth, canvasHeight)
+          useFlowStore.getState().setViewport(freshViewport)
+          reactFlowRef.current?.setViewport(freshViewport)
+        })
+      }
+    }
+
+    async function loadFlowFromTab(tab: TabData) {
       isLoadingTabRef.current = true
       setLoading(true)
 
       const pendingSelection = tab.pendingNodeSelection ?? null
+      if (pendingSelection) {
+        useTabStore.getState().setTabData(useTabStore.getState().activeTab, { ...tab, pendingNodeSelection: null })
+      }
 
       try {
-        if (tab.flowJson && Object.keys(tab.flowJson).length > 0) {
-          restoreFlowFromTab(tab)
+        const hasCachedFlow = tab.flowJson && Object.keys(tab.flowJson).length > 0
+        if (hasCachedFlow) {
+          loadFromCache(tab, pendingSelection)
         } else if (tab.configurationPath && tab.name) {
-          if (!currentProject) return
-          const adapter = await getAdapterFromConfiguration(
-            currentProject.name,
-            tab.configurationPath,
-            tab.name,
-            tab.adapterPosition,
-          )
-          if (!adapter) return
-          const adapterJson = await convertAdapterXmlToJson(adapter)
-
-          flowStore.setEdges(adapterJson.edges)
-          flowStore.setViewport({ x: 0, y: 0, zoom: 1 })
-
-          const laidOutNodes = layoutGraph(adapterJson.nodes, adapterJson.edges, 'LR')
-          flowStore.setNodes(laidOutNodes)
-        }
-
-        if (pendingSelection) {
-          const tabStore = useTabStore.getState()
-          tabStore.setTabData(tabStore.activeTab, { ...tab, pendingNodeSelection: null })
-
-          pendingSelectionRef.current = pendingSelection
-        } else {
-          setLoading(false)
+          await loadFromApi(tab, pendingSelection)
         }
       } catch (error) {
         console.error('Error loading tab flow:', error)
-        setLoading(false)
+        showErrorToast(`Failed to load flow: ${error instanceof Error ? error.message : error}`)
       } finally {
         isLoadingTabRef.current = false
+        setLoading(false)
       }
     }
 
@@ -1157,7 +1344,6 @@ function FlowCanvas() {
     const tabStore = useTabStore.getState()
     const currentActiveTabKey = tabStore.activeTab
 
-    // Handle the case where the tab was already set before mount
     if (currentActiveTabKey) {
       const activeTab = tabStore.getTab(currentActiveTabKey)
       if (activeTab) {
@@ -1165,7 +1351,6 @@ function FlowCanvas() {
       }
     }
 
-    // Subscribe to future tab changes
     const unsubscribe = useTabStore.subscribe(
       (state) => state.activeTab,
       async (newTab, oldTab) => {
@@ -1184,7 +1369,7 @@ function FlowCanvas() {
     )
 
     return () => unsubscribe()
-  }, [layoutGraph])
+  }, [layoutGraph, computeAdapterCenteredViewport, applySelectionToNodes, waitForStableCanvasDimensions])
 
   useEffect(() => {
     const unsub = useFlowStore.subscribe(
@@ -1231,143 +1416,144 @@ function FlowCanvas() {
 
   return (
     <div
-      className="relative h-full w-full"
+      className="flex h-full w-full flex-col"
       id="flow-canvas"
       onDrop={onDrop}
       onDragOver={onDragOver}
       onDragEnd={onDragEnd}
       onContextMenu={handleRightMouseButtonClick}
     >
-      {loading && (
-        <div className="bg-opacity-80 bg-background absolute inset-0 z-50 flex items-center justify-center">
-          <div className="border-border h-10 w-10 animate-spin rounded-full border-t-2 border-b-2"></div>
-        </div>
-      )}
-
-      {isEditing && (
-        <div className="pointer-events-none absolute inset-0 z-10">
-          <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-3 rounded bg-black/30 px-3 py-2 text-xs text-white backdrop-blur-sm">
-            <span>
-              <kbd className="rounded border border-white/40 bg-white/15 px-1.5 py-0.5 font-mono text-xs text-white">
-                Esc
-              </kbd>{' '}
-              Discard
-            </span>
-            <span className="opacity-40">|</span>
-            <span>
-              <kbd className="rounded border border-white/40 bg-white/15 px-1.5 py-0.5 font-mono text-xs text-white">
-                Ctrl+Enter
-              </kbd>{' '}
-              Save
-            </span>
-          </div>
-        </div>
-      )}
-
-      <ReactFlow
-        fitView
-        nodes={nodes}
-        edges={edges}
-        viewport={viewport}
-        onMove={(event, viewport) => {
-          useFlowStore.getState().setViewport(viewport)
-        }}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
-        onReconnect={onReconnect}
-        onNodeClick={handleNodeClick}
-        onNodeDoubleClick={handleNodeDoubleClick}
-        onNodeDragStop={handleNodeDragStop}
-        onEdgeClick={handleEdgeClick}
-        onSelectionChange={handleSelectionChange}
-        onConnectStart={handleConnectStart}
-        onConnectEnd={handleConnectEnd}
-        nodeTypes={nodeTypes}
-        edgeTypes={edgeTypes}
-        onPaneClick={() => {
-          setContextMenu(null)
-          setSelectedStickyId(null)
-          setSelectedGroupId(null)
-          if (!isDirty) {
-            showNodeContextMenu(false)
-            setIsEditing(false)
-            setParentId(null)
-            setChildParentId(null)
-          }
-        }}
-        deleteKeyCode={null}
-        minZoom={0.2}
-      >
-        <Controls position="top-left" style={{ color: '#000' }}>
-          <ControlButton onClick={handleAutoLayout} title="Auto layout">
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <rect x="3" y="3" width="5" height="5" rx="1" />
-              <rect x="10" y="3" width="5" height="5" rx="1" />
-              <rect x="3" y="16" width="5" height="5" rx="1" />
-              <rect x="10" y="16" width="5" height="5" rx="1" />
-              <line x1="17" y1="5.5" x2="21" y2="5.5" />
-              <line x1="17" y1="18.5" x2="21" y2="18.5" />
-              <line x1="21" y1="5.5" x2="21" y2="18.5" />
-            </svg>
-          </ControlButton>
-        </Controls>
-        <Background variant={BackgroundVariant.Dots} size={3} gap={100}></Background>
-      </ReactFlow>
-
-      <div className="absolute top-2 left-1/2 -translate-x-1/2">
-        <span
-          className={clsx(
-            'text-muted-foreground rounded bg-black/30 px-2 py-1 text-xs backdrop-blur-sm transition-opacity duration-300',
-            saveStatus === 'idle' ? 'opacity-0' : 'opacity-100',
-          )}
-        >
-          {saveStatus === 'saving' && 'Saving...'}
-          {saveStatus === 'saved' && 'Saved'}
-        </span>
+      <div className="border-b-border bg-background flex h-10 shrink-0 items-center justify-between border-b px-3">
+        <SaveStatusIndicator />
+        <Button onClick={onOpenInEditor} className="flex items-center gap-1.5 text-xs" title="Open in Editor">
+          <CodeIcon className="h-3.5 w-3.5 fill-current" />
+          Open in Editor
+        </Button>
       </div>
 
-      <CreateNodeModal
-        isOpen={showModal}
-        onClose={() => setShowModal(false)}
-        addNodeAtPosition={addNodeAtPosition}
-        positions={edgeDropPositions}
-        sourceInfo={sourceInfoReference.current}
-      />
+      <div ref={canvasRef} className="relative flex-1 overflow-hidden">
+        {loading && (
+          <div className="bg-opacity-80 bg-background absolute inset-0 z-50 flex items-center justify-center">
+            <div className="border-border h-10 w-10 animate-spin rounded-full border-t-2 border-b-2"></div>
+          </div>
+        )}
 
-      {contextMenu && (
-        <CanvasContextMenu
-          position={{ x: contextMenu.x, y: contextMenu.y }}
-          onClose={() => setContextMenu(null)}
-          onAddNote={() => addStickyNote(contextMenu.flowPos)}
-          onGroup={handleGrouping}
-          onUngroup={handleUngroup}
-          onCut={cutSelection}
-          onCopy={copySelection}
-          onPaste={pasteSelection}
-          onShowInEditor={showSelectedNodeInEditor}
-          hasSelection={nodes.some((n) => n.selected)}
-          hasGroupedSelection={nodes.some((n) => n.selected) && allSelectedInSameGroup(nodes.filter((n) => n.selected))}
-          hasClipboard={clipboardRef.current !== null}
-          hasSingleNodeSelection={nodes.filter((node) => node.selected && node.type === 'frankNode').length === 1}
+        {isEditing && (
+          <div className="pointer-events-none absolute inset-0 z-10">
+            <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-3 rounded bg-black/30 px-3 py-2 text-xs text-white backdrop-blur-sm">
+              <span>
+                <kbd className="rounded border border-white/40 bg-white/15 px-1.5 py-0.5 font-mono text-xs text-white">
+                  Esc
+                </kbd>{' '}
+                Discard
+              </span>
+              <span className="opacity-40">|</span>
+              <span>
+                <kbd className="rounded border border-white/40 bg-white/15 px-1.5 py-0.5 font-mono text-xs text-white">
+                  Ctrl+Enter
+                </kbd>{' '}
+                Save
+              </span>
+            </div>
+          </div>
+        )}
+
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          onViewportChange={(viewPort) => {
+            useFlowStore.getState().setViewport(viewPort)
+          }}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
+          onReconnect={onReconnect}
+          onNodeClick={handleNodeClick}
+          onNodeDoubleClick={handleNodeDoubleClick}
+          onNodeDragStop={handleNodeDragStop}
+          onEdgeClick={handleEdgeClick}
+          onSelectionChange={handleSelectionChange}
+          onConnectStart={handleConnectStart}
+          onConnectEnd={handleConnectEnd}
+          nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
+          onPaneClick={() => {
+            setContextMenu(null)
+            setSelectedStickyId(null)
+            setSelectedGroupId(null)
+            if (!isDirty) {
+              showNodeContextMenu(false)
+              setIsEditing(false)
+              setParentId(null)
+              setChildParentId(null)
+            }
+          }}
+          deleteKeyCode={null}
+          minZoom={0.2}
+        >
+          <Controls position="top-left" style={{ color: '#000' }}>
+            <ControlButton onClick={handleAutoLayout} title="Auto layout">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <rect x="3" y="3" width="5" height="5" rx="1" />
+                <rect x="10" y="3" width="5" height="5" rx="1" />
+                <rect x="3" y="16" width="5" height="5" rx="1" />
+                <rect x="10" y="16" width="5" height="5" rx="1" />
+                <line x1="17" y1="5.5" x2="21" y2="5.5" />
+                <line x1="17" y1="18.5" x2="21" y2="18.5" />
+                <line x1="21" y1="5.5" x2="21" y2="18.5" />
+              </svg>
+            </ControlButton>
+          </Controls>
+          <Background variant={BackgroundVariant.Dots} size={3} gap={100}></Background>
+        </ReactFlow>
+
+        <CreateNodeModal
+          isOpen={showModal}
+          onClose={() => setShowModal(false)}
+          addNodeAtPosition={addNodeAtPosition}
+          positions={edgeDropPositions}
+          sourceInfo={sourceInfoReference.current}
         />
-      )}
+
+        {contextMenu && (
+          <CanvasContextMenu
+            position={{ x: contextMenu.x, y: contextMenu.y }}
+            onClose={() => setContextMenu(null)}
+            onAddNote={() => addStickyNote(contextMenu.flowPos)}
+            onGroup={handleGrouping}
+            onUngroup={handleUngroup}
+            onCut={cutSelection}
+            onCopy={copySelection}
+            onPaste={pasteSelection}
+            onShowInEditor={showSelectedNodeInEditor}
+            hasSelection={nodes.some((node) => node.selected)}
+            hasGroupedSelection={
+              nodes.some((node) => node.selected) && allSelectedInSameGroup(nodes.filter((node) => node.selected))
+            }
+            hasClipboard={clipboardRef.current !== null}
+            hasSingleNodeSelection={nodes.filter((node) => node.selected && node.type === 'frankNode').length === 1}
+          />
+        )}
+      </div>
     </div>
   )
 }
 
-export default function Flow({ showNodeContextMenu }: Readonly<{ showNodeContextMenu: (b: boolean) => void }>) {
+export default function Flow({
+  showNodeContextMenu,
+  onOpenInEditor,
+}: Readonly<{ showNodeContextMenu: (b: boolean) => void; onOpenInEditor: () => void }>) {
   return (
     <NodeContextMenuContext.Provider value={showNodeContextMenu}>
       <ReactFlowProvider>
-        <FlowCanvas />
+        <FlowCanvas onOpenInEditor={onOpenInEditor} />
       </ReactFlowProvider>
     </NodeContextMenuContext.Provider>
   )

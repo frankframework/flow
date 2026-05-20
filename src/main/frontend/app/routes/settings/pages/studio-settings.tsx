@@ -21,6 +21,20 @@ export default function StudioSettings() {
             onChange={(value: boolean) => setStudioSettings({ gradient: value })}
           />
         </InputWithLabel>
+
+        <InputWithLabel
+          inputSide="right"
+          grow
+          htmlFor="palette-expanded-toggle"
+          label="Expand Palette Categories"
+          description="Show all palette categories expanded by default"
+        >
+          <Toggle
+            id="palette-expanded-toggle"
+            checked={studio.paletteExpandedByDefault}
+            onChange={(value: boolean) => setStudioSettings({ paletteExpandedByDefault: value })}
+          />
+        </InputWithLabel>
       </div>
     </div>
   )

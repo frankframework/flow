@@ -19,18 +19,10 @@ export default function Tab({ name, configurationPath, icon, isSelected, onSelec
     onClose(event)
   }
 
-  const fileBasename = configurationPath
-    ? (configurationPath
-        .split(/[/\\]/)
-        .pop()
-        ?.replace(/\.[^/.]+$/, '') ?? name)
-    : name
-  const displayText = fileBasename === name ? name : `${fileBasename} / ${name}`
-
   return (
     <li
       className={clsx(
-        'group border-r-border text-text relative flex h-full rotate-x-180 list-none items-center justify-between gap-1 border-r border-b px-4',
+        'group border-r-border text-text relative flex h-full rotate-x-180 list-none items-center justify-between gap-1 border-r border-b px-3',
         isSelected
           ? 'border-t-brand border-b-background bg-background text-foreground hover:bg-background border-t-3 font-medium'
           : 'bg-hover hover:bg-selected text-foreground-muted border-b-border border-t-3 border-t-transparent hover:cursor-pointer',
@@ -39,10 +31,10 @@ export default function Tab({ name, configurationPath, icon, isSelected, onSelec
       title={configurationPath}
     >
       <Icon className={'fill-foreground-muted h-4 w-auto'} />
-      {displayText}
+      {name}
       <CloseIcon
         className={clsx(
-          'hover:fill-foreground h-8 w-auto hover:cursor-pointer',
+          'hover:fill-foreground h-5 w-auto hover:cursor-pointer',
           isSelected ? 'fill-foreground-muted' : 'group-hover:fill-foreground-muted',
         )}
         onClick={handleClose}

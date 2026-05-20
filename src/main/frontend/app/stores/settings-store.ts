@@ -65,7 +65,7 @@ const defaultStudioSettings: StudioSettings = {
   previewOnSave: true,
   autoRefresh: true,
   gradient: false,
-  paletteExpandedByDefault: true,
+  paletteExpandedByDefault: false,
 }
 
 const defaultProjectSettings: ProjectSettings = {
