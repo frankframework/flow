@@ -7,7 +7,7 @@ import FolderIcon from '../../../icons/solar/Folder.svg?react'
 import FolderOpenIcon from '../../../icons/solar/Folder Open.svg?react'
 import SettingsIcon from '../../../icons/solar/Settings.svg?react'
 import ListDown from '../../../icons/solar/List Down.svg?react'
-import PlusMinusIcon from '../../../icons/solar/Plus, Minus.svg?react'
+import CodeIcon from '../../../icons/solar/Code.svg?react'
 import TrashBinIcon from '../../../icons/solar/Trash Bin.svg?react'
 import Pen from '../../../icons/solar/Pen.svg?react'
 import '/styles/editor-files.css'
@@ -473,7 +473,7 @@ export default function StudioFileStructure() {
                 keyboardEvent.key === 'Enter' && triggerItemAction(item.index, studioContextMenu.handleNewAdapter)
               }
             >
-              <PlusMinusIcon className="fill-foreground h-3.5 w-3.5" />
+              <CodeIcon className="fill-foreground h-4 w-4" />
             </div>
           )}
           {!isRoot && (
