@@ -1517,7 +1517,7 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
           deleteKeyCode={null}
           minZoom={0.2}
         >
-          <Controls position="top-left" style={{ color: '#000' }}>
+          <Controls position="top-left">
             <ControlButton onClick={handleAutoLayout} title="Auto layout">
               <svg
                 viewBox="0 0 24 24"

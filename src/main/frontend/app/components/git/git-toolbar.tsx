@@ -2,6 +2,7 @@ import { useState } from 'react'
 import clsx from 'clsx'
 import type { GitStatus } from '~/types/git.types'
 import Button from '~/components/inputs/button'
+import Input from '~/components/inputs/input'
 
 interface GitToolbarProps {
   status: GitStatus | null
@@ -97,14 +98,13 @@ export default function GitToolbar({
       )}
       {showToken && !status?.isLocal && (
         <div className="border-t-border border-t px-2 py-1.5">
-          <input
+          <Input
             type="password"
             value={token}
             onChange={(e) => onTokenChange(e.target.value)}
             placeholder={
               hasStoredToken ? 'Using saved token (override here)' : 'Personal access token (for private repos)'
             }
-            className="border-border bg-background text-foreground placeholder:text-muted-foreground w-full rounded border px-2 py-1 text-xs focus:outline-none"
           />
         </div>
       )}

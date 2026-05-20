@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import DirectoryPicker from '~/components/directory-picker/directory-picker'
 import Button from '~/components/inputs/button'
+import Input from '~/components/inputs/input'
 import { filesystemService } from '~/services/filesystem-service'
 
 interface CloneProjectModalProperties {
@@ -80,15 +81,14 @@ export default function CloneConfigurationModal({
           <div className="mb-4">
             <label className="mb-1 block text-sm font-medium">Clone into</label>
             <div className="flex items-center gap-2">
-              <input
+              <Input
                 value={location || (isLocal ? '' : 'Workspace root')}
                 readOnly
-                className="border-border bg-background focus:border-foreground-active focus:ring-foreground-active w-full rounded border px-2 py-1 text-sm transition focus:ring-2 focus:outline-none"
                 placeholder={isLocal ? 'Select a parent directory...' : 'Workspace root (or browse for subfolder)'}
                 onDoubleClick={() => setShowPicker(true)}
               />
 
-              <Button onClick={() => setShowPicker(true)} className="h-8 text-sm">
+              <Button onClick={() => setShowPicker(true)} className="text-sm">
                 Browse...
               </Button>
             </div>
@@ -96,10 +96,9 @@ export default function CloneConfigurationModal({
 
           <div className="mb-4">
             <label className="mb-1 block text-sm font-medium">Repository URL</label>
-            <input
+            <Input
               value={repoUrl}
               onChange={(event) => setRepoUrl(event.target.value)}
-              className="border-border bg-background focus:border-foreground-active focus:ring-foreground-active w-full rounded border px-2 py-1 text-sm transition focus:ring-2 focus:outline-none"
               placeholder="https://github.com/user/repo.git"
               aria-label="repository url"
             />
@@ -108,11 +107,10 @@ export default function CloneConfigurationModal({
           {!isLocal && (
             <div className="mb-4">
               <label className="mb-1 block text-sm font-medium">Access Token</label>
-              <input
+              <Input
                 type="password"
                 value={token}
                 onChange={(event) => setToken(event.target.value)}
-                className="border-border bg-background focus:border-foreground-active focus:ring-foreground-active w-full rounded border px-2 py-1 text-sm transition focus:ring-2 focus:outline-none"
                 placeholder="Personal access token for private repos"
                 aria-label="access token"
               />

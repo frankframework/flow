@@ -233,6 +233,34 @@ body {
   color: #808080 !important;
 }
 
+.react-flow__panel.react-flow__controls {
+  background-color: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  box-shadow: none;
+  overflow: hidden;
+}
+
+.react-flow__panel.react-flow__controls .react-flow__controls-button {
+  background-color: var(--color-background);
+  border-bottom: 1px solid var(--color-border);
+  fill: var(--color-foreground);
+}
+
+.react-flow__panel.react-flow__controls .react-flow__controls-button:last-child {
+  border-bottom: none;
+}
+
+.react-flow__panel.react-flow__controls .react-flow__controls-button:hover {
+  background-color: var(--color-hover);
+}
+
+.react-flow__panel.react-flow__controls .react-flow__controls-button svg {
+  fill: var(--color-foreground);
+  max-width: 12px;
+  max-height: 12px;
+}
+
 :root {
   /* Allotment Styling */
   --focus-border: var(--color-brand);
@@ -250,4 +278,28 @@ body {
   font-family: var(--font-inter);
   line-height: 1.4;
   white-space: nowrap;
+}
+
+/* Scrollbar styling */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-foreground-muted);
 }

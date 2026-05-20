@@ -87,7 +87,7 @@ export default function ElementHoverCard({ anchorRect, element, onUnlock, onEnte
             href={frankdocUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="border-border bg-backdrop hover:border-foreground-active hover:text-foreground-active flex shrink-0 flex-col items-center justify-center gap-1 self-stretch rounded border px-3 text-xs transition-colors"
+            className="border-border bg-backdrop hover:border-border hover:text-foreground flex shrink-0 flex-col items-center justify-center gap-1 self-stretch rounded border px-3 text-xs transition-colors"
           >
             <ExternalLinkIcon className="mt-1 h-3.5 w-3.5" />
             <span>FrankDoc</span>

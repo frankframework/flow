@@ -3,6 +3,7 @@ import useFlowStore from '~/stores/flow-store'
 import useNodeContextStore from '~/stores/node-context-store'
 import { useFFDoc } from '@frankframework/doc-library-react'
 import Button from '../inputs/button'
+import Search from '~/components/search/search'
 import type { Elements, FFDocJson } from '@frankframework/doc-library-core'
 
 interface CreateNodeModalProperties {
@@ -120,13 +121,7 @@ function CreateNodeModal({
       <div className="bg-background border-border relative h-[400px] w-[600px] rounded-lg border p-6 shadow-lg">
         <h2 className="mb-4 text-lg font-semibold">Add Node</h2>
         <p className="mb-4">Select the element to be added from the list below.</p>
-        <input
-          type="text"
-          placeholder="Search elements..."
-          value={search}
-          onChange={(event) => handleOnChange(event)}
-          className="border-border focus:ring-foreground-active mb-3 w-full rounded border px-3 py-2 focus:ring focus:outline-none"
-        />
+        <Search placeholder="Search elements..." value={search} onChange={(event) => handleOnChange(event)} />
         <div className="border-border bg-background mb-2 w-full rounded border">
           <ul className="max-h-[150px] overflow-y-auto">
             {filteredElements.length > 0 ? (
@@ -139,7 +134,7 @@ function CreateNodeModal({
                     onClick={() => setSelectedElement(element.name)}
                     onDoubleClick={handleCreateNode}
                     className={`cursor-pointer px-3 py-2 ${
-                      isSelected ? 'bg-foreground-active text-background' : 'hover:bg-foreground-active/10'
+                      isSelected ? 'bg-foreground-active text-background' : 'hover:bg-hover'
                     }`}
                   >
                     {element.name}
@@ -147,7 +142,7 @@ function CreateNodeModal({
                 )
               })
             ) : (
-              <li className="text-muted-foreground px-3 py-2">No results found</li>
+              <li className="text-foreground-muted px-3 py-2">No results found</li>
             )}
           </ul>
         </div>

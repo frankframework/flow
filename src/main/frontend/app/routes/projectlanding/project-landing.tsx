@@ -220,7 +220,7 @@ export default function ProjectLanding() {
         </div>
 
         {!isLocalEnvironment && (
-          <div className="border-border border-t bg-amber-50 px-4 py-2 text-xs text-amber-600">
+          <div className="border-border bg-warning/10 text-warning border-t px-4 py-2 text-xs">
             Cloud workspace projects are automatically removed after 24 hours of inactivity. After you are done please
             use the Export functionality in the landing page to download a backup of your project.
           </div>
@@ -266,7 +266,7 @@ export default function ProjectLanding() {
 const Header = () => (
   <header className="mb-6 flex w-2/5 items-center gap-3">
     <FfIcon className="h-12 w-auto" />
-    <h1 className="text-lg font-semibold text-slate-800">Flow</h1>
+    <h1 className="text-foreground text-lg font-semibold">Flow</h1>
   </header>
 )
 
@@ -313,7 +313,7 @@ const ProjectList = ({
   <section className="h-full flex-1 overflow-y-auto p-4">
     {frameworkConfigurations.length > 0 && (
       <div className="mb-4">
-        <p className="mb-2 text-xs font-semibold tracking-wider text-slate-500 uppercase">Remote</p>
+        <p className="text-foreground-muted mb-2 text-xs font-semibold tracking-wider uppercase">Remote</p>
         {frameworkConfigurations.map((configuration) => (
           <div
             key={configuration.name}
@@ -329,14 +329,14 @@ const ProjectList = ({
       </div>
     )}
     {isDiscovering && frameworkConfigurations.length === 0 && (
-      <p className="mb-2 text-xs text-slate-400 italic">Scanning for remote instances...</p>
+      <p className="text-foreground-muted mb-2 text-xs italic">Scanning for remote instances...</p>
     )}
     {projects.length === 0 && frameworkConfigurations.length === 0 && !isDiscovering && (
-      <p className="text-muted-foreground mt-10 text-center text-sm italic">No configurations found</p>
+      <p className="text-foreground-muted mt-10 text-center text-sm italic">No configurations found</p>
     )}
     {projects.length > 0 && (
       <>
-        <p className="mb-2 text-xs font-semibold tracking-wider text-slate-400 uppercase">Recent</p>
+        <p className="text-foreground-muted mb-2 text-xs font-semibold tracking-wider uppercase">Recent</p>
         {projects.map((project) => (
           <ConfigurationRow
             key={project.rootPath}
@@ -354,8 +354,8 @@ const ProjectList = ({
 
 const Toolbar = ({ onSearchChange }: { onSearchChange: (value: string) => void }) => (
   <div className="border-border flex h-12 border-b">
-    <div className="border-border flex w-1/4 min-w-50 items-center border-r px-4 text-xs font-bold tracking-wider text-slate-500 uppercase">
-      <ArchiveIcon className="mr-2 h-4 w-4" /> Recent
+    <div className="border-border text-foreground-muted flex w-1/4 min-w-50 items-center border-r px-4 text-xs font-bold tracking-wider uppercase">
+      <ArchiveIcon className="fill-foreground-muted mr-2 h-4 w-4" /> Recent
     </div>
     <div className="flex flex-1 items-center px-4">
       <Search onChange={(event) => onSearchChange(event.target.value)} />
@@ -364,7 +364,7 @@ const Toolbar = ({ onSearchChange }: { onSearchChange: (value: string) => void }
 )
 
 const LoadingState = () => (
-  <div className="flex h-screen w-full animate-pulse items-center justify-center text-slate-400">
+  <div className="text-foreground-muted flex h-screen w-full animate-pulse items-center justify-center">
     Initializing workspace...
   </div>
 )

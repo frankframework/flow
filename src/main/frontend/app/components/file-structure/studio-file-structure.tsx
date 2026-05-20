@@ -521,10 +521,10 @@ export default function StudioFileStructure() {
     )
   }
 
-  if (!project) return <p className="text-muted-foreground p-4 text-sm">No Project Selected</p>
+  if (!project) return <p className="text-foreground-muted p-4 text-sm">No Project Selected</p>
   if (providerLoading) return <LoadingSpinner message="Loading configurations..." className="p-8" />
   if (!dataProvider)
-    return <p className="text-muted-foreground p-4 text-sm">No configurations found in src/main/configurations</p>
+    return <p className="text-foreground-muted p-4 text-sm">No configurations found in src/main/configurations</p>
 
   const toolbarBtnClass = 'cursor-pointer rounded p-1 hover:bg-hover text-foreground'
 

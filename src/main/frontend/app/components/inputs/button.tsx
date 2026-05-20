@@ -10,7 +10,7 @@ export default function Button({
     <button
       className={clsx(
         'border-border text-foreground bg-backdrop rounded-md border px-4 py-2',
-        !properties.disabled && 'hover:bg-hover hover:text-foreground-active active:bg-selected hover:cursor-pointer',
+        !properties.disabled && 'hover:bg-hover active:bg-selected hover:cursor-pointer',
         properties.disabled && 'text-foreground-muted',
 
         className,

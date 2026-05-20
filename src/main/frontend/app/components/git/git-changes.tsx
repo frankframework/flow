@@ -80,7 +80,7 @@ function FileSection({
       >
         <span className="w-3 text-[10px]">{collapsed ? '▸' : '▾'}</span>
         <span className="flex-1">{title}</span>
-        <span className="bg-foreground-active text-muted-foreground rounded-full px-1.5 py-0.5 text-[10px] leading-none font-medium">
+        <span className="bg-foreground-active text-foreground-muted rounded-full px-1.5 py-0.5 text-[10px] leading-none font-medium">
           {files.length}
         </span>
       </button>
@@ -130,7 +130,7 @@ function FileSection({
                 </span>
                 <span className="text-foreground min-w-0 flex-1 truncate" title={file}>
                   {fileName}
-                  {dirPath && <span className="text-muted-foreground ml-1.5 text-[10px]">{dirPath}</span>}
+                  {dirPath && <span className="text-foreground-muted ml-1.5 text-[10px]">{dirPath}</span>}
                 </span>
               </div>
             )

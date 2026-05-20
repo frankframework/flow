@@ -34,7 +34,7 @@ export default function ConfigurationRow({
               event.stopPropagation()
               onExport()
             }}
-            className="text-foreground-muted cursor-pointer rounded p-2 transition-colors hover:text-blue-500"
+            className="text-foreground-muted hover:text-foreground cursor-pointer rounded p-2 transition-colors"
             aria-label="Export configuration as zip"
             title="Export as .zip"
           >
@@ -47,7 +47,7 @@ export default function ConfigurationRow({
             event.stopPropagation()
             onRemove()
           }}
-          className="text-foreground-muted cursor-pointer rounded p-2 transition-colors hover:text-red-500"
+          className="text-foreground-muted hover:text-foreground cursor-pointer rounded p-2 transition-colors"
           aria-label="Remove from recent configurations"
         >
           <CloseSquareIcon className="h-4 w-4" />

@@ -159,7 +159,7 @@ export default function ConfigurationOverview() {
   if (!currentConfigurationProject) {
     return (
       <div className="bg-backdrop flex h-full w-full flex-col items-center justify-center p-6">
-        <div className="text-muted-foreground mb-4">No project selected.</div>
+        <div className="text-foreground-muted mb-4">No project selected.</div>
         <Button onClick={() => navigate('/')} className="bg-background">
           Select configuration
         </Button>
@@ -177,7 +177,7 @@ export default function ConfigurationOverview() {
 
   return (
     <div className="bg-background flex h-full w-full flex-col p-6">
-      <div className="hover:text-foreground-active flex w-fit hover:cursor-pointer" onClick={() => navigate('/')}>
+      <div className="hover:text-foreground flex w-fit hover:cursor-pointer" onClick={() => navigate('/')}>
         <ArrowLeftIcon className="mb-4 h-6 w-auto fill-current hover:cursor-pointer" />
         <p>Switch configuration</p>
       </div>

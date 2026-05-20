@@ -37,7 +37,7 @@ export default function ContextInput({
     <div className="group font-small text-foreground relative block text-sm">
       <div className="flex items-center gap-2">
         {required && <span className="text-red-500">*</span>}
-        <label htmlFor={id} className={`${deprecated ? 'text-muted-foreground line-through' : 'text-foreground'}`}>
+        <label htmlFor={id} className={`${deprecated ? 'text-foreground-muted line-through' : 'text-foreground'}`}>
           {label}
         </label>
         {deprecated && <DeprecatedIcon deprecated={deprecated} />}

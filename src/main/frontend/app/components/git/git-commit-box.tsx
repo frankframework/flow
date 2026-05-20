@@ -21,7 +21,7 @@ export default function GitCommitBox({
         value={commitMessage}
         onChange={(e) => onMessageChange(e.target.value)}
         placeholder="Commit message..."
-        className="border-border bg-background text-foreground placeholder:text-muted-foreground w-full resize-none rounded border p-2.5 text-xs focus:outline-none"
+        className="border-border bg-background text-foreground placeholder:text-foreground-muted w-full resize-none rounded border p-2.5 text-xs focus:outline-none"
         rows={4}
         onKeyDown={(e) => {
           if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {

@@ -32,7 +32,7 @@ export function DeprecatedListPopover({ deprecated, anchorRect }: { deprecated: 
         )}
 
         {deprecated.description && (
-          <li className="text-muted-foreground border-border rounded-md border p-2">{deprecated.description}</li>
+          <li className="text-foreground-muted border-border rounded-md border p-2">{deprecated.description}</li>
         )}
       </ul>
     </div>,

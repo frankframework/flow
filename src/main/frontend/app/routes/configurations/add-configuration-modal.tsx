@@ -3,6 +3,7 @@ import { createConfigurationFile } from '~/services/configuration-file-service'
 import { useProjectStore } from '~/stores/project-store'
 import type { ConfigurationProject } from '~/types/project.types'
 import Button from '~/components/inputs/button'
+import Input from '~/components/inputs/input'
 import DirectoryPicker from '~/components/directory-picker/directory-picker'
 import { fetchProject } from '~/services/project-service'
 
@@ -119,11 +120,10 @@ export default function AddConfigurationModal({
             Filename
           </label>
           <div className="ml-2 flex w-full items-center">
-            <input
+            <Input
               id="configuration-filename-input"
               value={filename}
               onChange={(event) => setFilename(event.target.value)}
-              className="border-border bg-background focus:border-foreground-active focus:ring-foreground-active w-full rounded border px-2 py-1 text-sm transition focus:ring-2 focus:outline-none"
               placeholder="Choose a filename"
               aria-label="configuration filename"
             />

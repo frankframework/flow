@@ -16,7 +16,7 @@ export default function LoadingSpinner({ size = 'md', message, className }: Read
   return (
     <div className={clsx('flex flex-col items-center justify-center gap-3', className)}>
       <div className={clsx('border-border border-t-brand animate-spin rounded-full', sizeClasses[size])} />
-      {message && <p className="text-muted-foreground text-sm">{message}</p>}
+      {message && <p className="text-foreground-muted text-sm">{message}</p>}
     </div>
   )
 }

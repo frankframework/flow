@@ -435,7 +435,7 @@ export default function EditorFileStructure() {
                 keyboardEvent.key === 'Enter' && triggerItemAction(item.index, editorContextMenu.handleRename)
               }
             >
-              <Pen className="stroke-foreground h-3.5 w-3.5" />
+              <Pen className="fill-foreground h-3.5 w-3.5" />
             </div>
           )}
           {!isRoot && (

@@ -770,7 +770,7 @@ export default function CodeEditor() {
                   'cursor-pointer px-3 py-1 transition-colors',
                   leftTab === 'files'
                     ? 'bg-selected text-foreground font-medium'
-                    : 'hover:bg-foreground-active text-muted-foreground',
+                    : 'hover:bg-hover text-foreground-muted',
                 )}
               >
                 Files
@@ -781,7 +781,7 @@ export default function CodeEditor() {
                   'border-border cursor-pointer border-l px-3 py-1 transition-colors',
                   leftTab === 'git'
                     ? 'bg-selected text-foreground font-medium'
-                    : 'hover:bg-foreground-active text-muted-foreground',
+                    : 'hover:bg-hover text-foreground-muted',
                 )}
               >
                 Git

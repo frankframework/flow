@@ -1,4 +1,5 @@
 import type { TreeItemIndex } from 'react-complex-tree'
+import Input from '~/components/inputs/input'
 
 interface InlineRenameInputProps {
   icon: React.ComponentType<{ className?: string }>
@@ -20,9 +21,10 @@ export default function InlineRenameInput({
   return (
     <div className="flex items-center" onContextMenu={(e) => e.preventDefault()}>
       <Icon className="fill-foreground w-4 flex-shrink-0" />
-      <input
+      <Input
         autoFocus
-        className="bg-background border-border text-foreground ml-1 rounded-sm border px-1 text-sm focus:outline-none"
+        wrapperClassName="ml-1"
+        inputClassName="py-0.5 text-sm"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={(e) => {

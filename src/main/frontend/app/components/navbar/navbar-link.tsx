@@ -27,11 +27,16 @@ export default function NavbarLink({ route, label, Icon }: Readonly<NavbarLinkPr
           className={clsx('absolute top-1/2 left-1 h-10/12 w-[2px] -translate-y-1/2 rounded', isActive && 'bg-brand')}
         />
         {Icon && (
-          <Icon className={clsx('group-hover:fill-brand h-8 w-auto', isActive ? 'fill-brand' : 'fill-foreground')} />
+          <Icon
+            className={clsx(
+              'group-hover:fill-foreground h-8 w-auto',
+              isActive ? 'fill-brand' : 'fill-foreground-muted',
+            )}
+          />
         )}
         <span
           className={clsx(
-            'absolute top-1/2 left-full z-10 ml-2 hidden -translate-y-1/2 rounded bg-neutral-950 px-2 py-1 text-sm whitespace-nowrap text-white shadow-md group-hover:block',
+            'bg-backdrop text-foreground border-border absolute top-1/2 left-full z-10 ml-2 hidden -translate-y-1/2 rounded border px-2 py-1 text-sm whitespace-nowrap shadow-md group-hover:block',
           )}
         >
           {label}
