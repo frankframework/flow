@@ -55,6 +55,7 @@ export interface FlowState {
   getAttributes: (nodeId: string) => Record<string, string> | null
   addChild: (nodeId: string, child: ChildNode) => void
   setStickyText: (nodeId: string, text: string) => void
+  setStickyHeight: (nodeId: string, height: number) => void
   setStickyColor: (nodeId: string, color: string) => void
   setStickyCollapsed: (nodeId: string, collapsed: boolean) => void
   setStickyAttachment: (nodeId: string, attachedToNodeId: string | null) => void
@@ -345,12 +346,21 @@ const useFlowStore = create<FlowState>()(
       set({
         nodes: get().nodes.map((node) => {
           if (node.id === nodeId && isStickyNote(node)) {
+            return { ...node, data: { ...node.data, content: text } }
+          }
+          return node
+        }),
+      })
+    },
+    setStickyHeight: (nodeId, height) => {
+      set({
+        nodes: get().nodes.map((node) => {
+          if (node.id === nodeId && isStickyNote(node)) {
             return {
               ...node,
-              data: {
-                ...node.data,
-                content: text,
-              },
+              height,
+              measured: { ...node.measured, height },
+              style: { ...node.style, height },
             }
           }
           return node
@@ -378,6 +388,9 @@ const useFlowStore = create<FlowState>()(
             const height = node.measured?.height ?? node.height ?? FlowConfig.STICKY_NOTE_DEFAULT_HEIGHT
             return {
               ...node,
+              width: FlowConfig.STICKY_NOTE_BALLOON_WIDTH,
+              height: FlowConfig.STICKY_NOTE_BALLOON_HEIGHT,
+              measured: { width: FlowConfig.STICKY_NOTE_BALLOON_WIDTH, height: FlowConfig.STICKY_NOTE_BALLOON_HEIGHT },
               style: {
                 ...node.style,
                 width: FlowConfig.STICKY_NOTE_BALLOON_WIDTH,
@@ -391,12 +404,17 @@ const useFlowStore = create<FlowState>()(
               },
             }
           } else {
+            const expandWidth = node.data.preCollapseWidth ?? FlowConfig.STICKY_NOTE_DEFAULT_WIDTH
+            const expandHeight = node.data.preCollapseHeight ?? FlowConfig.STICKY_NOTE_DEFAULT_HEIGHT
             return {
               ...node,
+              width: expandWidth,
+              height: expandHeight,
+              measured: { width: expandWidth, height: expandHeight },
               style: {
                 ...node.style,
-                width: node.data.preCollapseWidth ?? FlowConfig.STICKY_NOTE_DEFAULT_WIDTH,
-                height: node.data.preCollapseHeight ?? FlowConfig.STICKY_NOTE_DEFAULT_HEIGHT,
+                width: expandWidth,
+                height: expandHeight,
               },
               data: {
                 ...node.data,

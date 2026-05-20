@@ -104,7 +104,7 @@ function AttachedNotesPanel({ nodeId }: { nodeId: number }) {
         {attachedNotes.map((note) => (
           <div
             key={note.id}
-            className="rounded-lg p-2 text-xs leading-snug"
+            className="rounded-lg p-2 text-xs leading-snug break-words whitespace-pre-wrap"
             style={{ background: note.data.color ?? '#fef08a' }}
           >
             {note.data.content || <span className="opacity-40">Empty note</span>}

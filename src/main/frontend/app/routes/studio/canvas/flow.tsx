@@ -1147,6 +1147,10 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
         data: { content: '' },
         type: 'stickyNote',
         selected: true,
+        style: {
+          width: FlowConfig.STICKY_NOTE_DEFAULT_WIDTH,
+          height: FlowConfig.STICKY_NOTE_DEFAULT_HEIGHT,
+        },
       }
 
       flowStore.setNodes([...deselectedNodes, stickyNote])
