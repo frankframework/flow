@@ -280,7 +280,6 @@ body {
   white-space: nowrap;
 }
 
-/* Scrollbar styling */
 * {
   scrollbar-width: thin;
   scrollbar-color: var(--color-border) transparent;

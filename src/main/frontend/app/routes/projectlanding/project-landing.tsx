@@ -266,7 +266,7 @@ export default function ProjectLanding() {
 const Header = () => (
   <header className="mb-6 flex w-2/5 items-center gap-3">
     <FfIcon className="h-12 w-auto" />
-    <h1 className="text-foreground text-lg font-semibold">Flow</h1>
+    <h1 className="dark:text-foreground text-lg font-semibold text-black">Flow</h1>
   </header>
 )
 
@@ -313,7 +313,7 @@ const ProjectList = ({
   <section className="h-full flex-1 overflow-y-auto p-4">
     {frameworkConfigurations.length > 0 && (
       <div className="mb-4">
-        <p className="text-foreground-muted mb-2 text-xs font-semibold tracking-wider uppercase">Remote</p>
+        <p className="text-foreground mb-2 text-xs font-semibold tracking-wider uppercase">Remote</p>
         {frameworkConfigurations.map((configuration) => (
           <div
             key={configuration.name}
@@ -336,7 +336,7 @@ const ProjectList = ({
     )}
     {projects.length > 0 && (
       <>
-        <p className="text-foreground-muted mb-2 text-xs font-semibold tracking-wider uppercase">Recent</p>
+        <p className="text-foreground mb-2 text-xs font-semibold tracking-wider uppercase">Recent</p>
         {projects.map((project) => (
           <ConfigurationRow
             key={project.rootPath}
@@ -354,8 +354,8 @@ const ProjectList = ({
 
 const Toolbar = ({ onSearchChange }: { onSearchChange: (value: string) => void }) => (
   <div className="border-border flex h-12 border-b">
-    <div className="border-border text-foreground-muted flex w-1/4 min-w-50 items-center border-r px-4 text-xs font-bold tracking-wider uppercase">
-      <ArchiveIcon className="fill-foreground-muted mr-2 h-4 w-4" /> Recent
+    <div className="border-border text-foreground flex w-1/4 min-w-50 items-center border-r px-4 text-xs font-bold tracking-wider uppercase">
+      <ArchiveIcon className="fill-foreground mr-2 h-4 w-4" /> Recent
     </div>
     <div className="flex flex-1 items-center px-4">
       <Search onChange={(event) => onSearchChange(event.target.value)} />

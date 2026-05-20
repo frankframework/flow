@@ -476,8 +476,10 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
               : `var(${colorVariable})`,
           }}
         >
-          <h1 className="font-bold">{properties.data.subtype}</h1>
-          <p className="overflow-hidden text-sm text-ellipsis whitespace-nowrap">{properties.data.name}</p>
+          <h1 className="text-foreground font-bold">{properties.data.subtype}</h1>
+          <p className="text-foreground overflow-hidden text-sm text-ellipsis whitespace-nowrap">
+            {properties.data.name}
+          </p>
           {isDeprecated && frankElement?.deprecated && (
             <>
               <div
@@ -502,7 +504,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
           Object.entries(properties.data.attributes).map(([key, value]) => (
             <div key={key} className="my-1 w-full max-w-full px-1">
               <p className="text-foreground overflow-hidden text-sm font-bold text-ellipsis whitespace-nowrap">{key}</p>
-              <p className="overflow-hidden text-sm text-ellipsis whitespace-nowrap">{value}</p>
+              <p className="text-foreground overflow-hidden text-sm text-ellipsis whitespace-nowrap">{value}</p>
             </div>
           ))}
         {(properties.data.children.length > 0 || dragOver || canDropDraggedElement) && (

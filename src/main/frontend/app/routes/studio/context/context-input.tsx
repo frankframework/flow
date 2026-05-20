@@ -1,4 +1,5 @@
 import React, { useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import HelpIcon from '/icons/solar/Help.svg?react'
 import DangerTriangle from '/icons/solar/Danger Triangle.svg?react'
 import { useJavadocTransform } from '@frankframework/doc-library-react'
@@ -57,28 +58,43 @@ export default function ContextInput({
 }
 
 function DescriptionHelpIcon({ description, elements }: Readonly<{ description: string; elements: Elements | null }>) {
+  const ref = useRef<HTMLDivElement | null>(null)
+  const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null)
   const [show, setShow] = useState(false)
   const transformed = useJavadocTransform(description, elements)
 
-  return (
-    <div className="relative inline-block px-2">
-      <button
-        type="button"
-        tabIndex={-1}
-        onClick={() => setShow((previous) => !previous)}
-        className="text-blue-500 hover:text-blue-700 focus:outline-none"
-        title="Show help"
-      >
-        <HelpIcon className="h-auto w-[12px] fill-current" />
-      </button>
+  const handleMouseEnter = () => {
+    if (ref.current) {
+      setAnchorRect(ref.current.getBoundingClientRect())
+      setShow(true)
+    }
+  }
 
-      {show && (
-        <div
-          className="bg-background border-border absolute top-0 left-6 z-20 mt-0 w-84 rounded-md border px-3 py-2 text-sm shadow-lg"
-          dangerouslySetInnerHTML={transformed}
-        />
-      )}
-    </div>
+  const handleMouseLeave = () => {
+    setShow(false)
+  }
+
+  return (
+    <>
+      <div
+        ref={ref}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        className="inline-flex cursor-pointer"
+      >
+        <HelpIcon className="h-auto w-4 fill-current text-blue-500" />
+      </div>
+      {show &&
+        anchorRect &&
+        createPortal(
+          <div
+            className="bg-background text-foreground border-border fixed z-[9999] w-84 rounded-md border px-3 py-2 text-sm shadow-lg"
+            style={{ top: anchorRect.top, left: anchorRect.right + 4 }}
+            dangerouslySetInnerHTML={transformed}
+          />,
+          document.body,
+        )}
+    </>
   )
 }
 

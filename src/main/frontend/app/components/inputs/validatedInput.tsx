@@ -54,7 +54,7 @@ export default function ValidatedInput({
     setInputValue(newValue)
     validateInput(newValue)
 
-    onChange(event)
+    onChange?.(event)
   }
 
   return (
