@@ -1,66 +1,89 @@
 {
-    "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-    "extends": [
-        "config:recommended"
-    ],
-    "labels": [
-        "Dependencies"
-    ],
-    "ignoreDeps": [
-        "pnpm"
-    ],
-    "postUpgradeTasks": {
-        "commands": [
-            "pnpm install --lockfile-only"
-        ],
-        "fileFilters": [
-            "pnpm-lock.yaml",
-            "**/package.json"
-        ],
-        "executionMode": "branch"
-    },
-    "packageRules": [
-        {
-            "matchManagers": [
-                "maven"
-            ],
-            "addLabels": [
-                "Java"
-            ],
-            "schedule": [
-                "* 7 * * 1"
-            ]
-        },
-        {
-            "matchManagers": [
-                "npm"
-            ],
-            "matchDepTypes": [
-                "peerDependencies"
-            ],
-            "enabled": false
-        },
-        {
-            "matchManagers": [
-                "npm"
-            ],
-            "rangeStrategy": "bump",
-            "addLabels": [
-                "JavaScript"
-            ],
-            "schedule": [
-                "* 7 1-7 * 1"
-            ]
-        },
-        {
-            "matchManagers": [
-                "npm"
-            ],
-            "matchPackagePatterns": [
-                "^@angular",
-                "^typescript$"
-            ],
-            "groupName": "Angular"
-        }
-    ]
+	"$schema": "https://docs.renovatebot.com/renovate-schema.json",
+	"extends": [
+		"config:recommended"
+	],
+	"labels": [
+		"Dependencies"
+	],
+	"ignoreDeps": [
+		"pnpm"
+	],
+	"dependencyDashboard": true,
+	"lockFileMaintenance": {
+		"enabled": true,
+		"schedule": [
+			"before 5am on monday"
+		]
+	},
+	"packageRules": [
+		{
+			"matchManagers": [
+				"github-actions"
+			],
+			"groupName": "CI Dependencies",
+			"addLabels": [
+				"CI"
+			],
+			"schedule": [
+				"before 9am on monday"
+			]
+		},
+		{
+			"matchManagers": [
+				"dockerfile"
+			],
+			"addLabels": [
+				"Docker"
+			],
+			"schedule": [
+				"before 9am on monday"
+			]
+		},
+		{
+			"matchManagers": [
+				"maven"
+			],
+			"addLabels": [
+				"Java"
+			],
+			"schedule": [
+				"before 9am on monday"
+			]
+		},
+		{
+			"matchManagers": [
+				"npm"
+			],
+			"matchDepTypes": [
+				"peerDependencies"
+			],
+			"enabled": false
+		},
+		{
+			"matchManagers": [
+				"npm"
+			],
+			"rangeStrategy": "bump",
+			"addLabels": [
+				"JavaScript"
+			],
+			"schedule": [
+				"before 9am on monday"
+			]
+		},
+		{
+			"matchManagers": [
+				"npm"
+			],
+			"matchPackagePatterns": [
+				"^@angular",
+				"^typescript$"
+			],
+			"groupName": "Angular",
+			"addLabels": [
+				"Angular"
+			]
+		}
+	]
 }
