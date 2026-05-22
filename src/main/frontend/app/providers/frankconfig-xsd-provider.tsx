@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 import { fetchFrankConfigXsd } from '~/services/xsd-service'
+import {logApiWarning} from "~/utils/logger";
 
 interface FrankConfigXsdContextValue {
   xsdContent: string | null
@@ -13,7 +14,7 @@ export function FrankConfigXsdProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     fetchFrankConfigXsd()
       .then(setXsdContent)
-      .catch((error) => console.error('Failed to load FrankConfig XSD:', error))
+      .catch((error) => logApiWarning('Failed to load FrankConfig XSD:', error as Error))
   }, [])
 
   return <FrankConfigXsdContext.Provider value={{ xsdContent }}>{children}</FrankConfigXsdContext.Provider>

@@ -5,6 +5,7 @@ import ArchiveIcon from '/icons/solar/Archive.svg?react'
 import { fetchInstanceConfigurations, type FFConfiguration } from '~/services/frank-framework-service'
 import { useProjectStore } from '~/stores/project-store'
 import { ApiError } from '~/utils/api'
+import { logApiError } from '~/utils/logger'
 
 import ConfigurationRow from './configuration-row'
 import Search from '~/components/search/search'
@@ -54,16 +55,14 @@ export default function ProjectLanding() {
   }, [clearEditorTabsState, clearProjectState, clearTabsState])
 
   useEffect(() => {
-    const loadAppInfo = async () => {
-      try {
-        const info = await fetchAppInfo()
+    fetchAppInfo()
+      .then((info) => {
         setIsLocalEnvironment(info.isLocal)
         setRootLocationName(info.isLocal ? 'Computer' : 'Cloud Workspace')
-      } catch {
-        showErrorToast('Failed to fetch app info, defaulting to local mode.')
-      }
-    }
-    loadAppInfo()
+      })
+      .catch((_) => {
+        showErrorToast('Failed to fetch environment info, defaulting to local mode.')
+      })
   }, [])
 
   useEffect(() => {
@@ -84,7 +83,7 @@ export default function ProjectLanding() {
         })
         .catch((error) => {
           if (error instanceof ApiError && error.httpCode === 404) return
-          showErrorToast(error.message)
+          logApiError(error.message, error)
         })
         .finally(() => setIsDiscovering(false))
     }

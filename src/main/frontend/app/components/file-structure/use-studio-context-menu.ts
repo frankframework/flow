@@ -5,7 +5,7 @@ import { createFolderInProject } from '~/services/file-tree-service'
 import { createAdapter, renameAdapter, deleteAdapter } from '~/services/adapter-service'
 import { clearConfigurationFileCache, createConfigurationFile } from '~/services/configuration-file-service'
 import useTabStore from '~/stores/tab-store'
-import { showErrorToastFrom } from '~/components/toast'
+import { logApiError } from '~/utils/logger';
 import type { StudioItemData, StudioFolderData, StudioAdapterData } from './studio-files-data-provider'
 import {
   CONFIGURATION_NAME_PATTERNS,
@@ -183,7 +183,7 @@ export function useStudioContextMenu({ projectName, dataProvider }: UseStudioCon
             await createConfigurationFile(projectName, relativePath)
             await dataProvider.reloadDirectory('root')
           } catch (error) {
-            showErrorToastFrom('Failed to create configuration', error)
+            logApiError('Failed to create configuration', error as Error)
           }
           setNameDialog(null)
         },
@@ -206,7 +206,7 @@ export function useStudioContextMenu({ projectName, dataProvider }: UseStudioCon
             await createAdapter(projectName, name, menu.path)
             await dataProvider.reloadDirectory('root')
           } catch (error) {
-            showErrorToastFrom('Failed to create adapter', error)
+            logApiError('Failed to create adapter', error as Error)
           }
           setNameDialog(null)
         },
@@ -229,7 +229,7 @@ export function useStudioContextMenu({ projectName, dataProvider }: UseStudioCon
             await createFolderInProject(projectName, `${menu.folderPath}/${name}`)
             await dataProvider.reloadDirectory('root')
           } catch (error) {
-            showErrorToastFrom('Failed to create folder', error)
+            logApiError('Failed to create folder', error as Error)
           }
           setNameDialog(null)
         },
@@ -268,7 +268,7 @@ export function useStudioContextMenu({ projectName, dataProvider }: UseStudioCon
             }
             await dataProvider.reloadDirectory('root')
           } catch (error) {
-            showErrorToastFrom('Failed to rename', error)
+            logApiError('Failed to rename', error as Error)
           }
           setNameDialog(null)
         },
@@ -305,7 +305,7 @@ export function useStudioContextMenu({ projectName, dataProvider }: UseStudioCon
         useTabStore.getState().removeTabsForConfig(deleteTarget.path)
       }
     } catch (error) {
-      showErrorToastFrom('Failed to delete', error)
+      logApiError('Failed to delete', error as Error)
     }
     await dataProvider.reloadDirectory('root')
     setDeleteTarget(null)

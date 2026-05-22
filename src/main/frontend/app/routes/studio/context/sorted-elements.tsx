@@ -66,8 +66,9 @@ export default function SortedElements({ type, items, onDragStart, searchTerm }:
     const isInsideCanvas = targetElement?.closest('#flow-canvas')
 
     if (!dropSuccessful && draggedName && isInsideCanvas) {
-      showWarningToast(`Element "${draggedName}" is not allowed to be dropped on the canvas`)
-      console.warn(`Element "${draggedName}" could not be dropped on the canvas`)
+      const errorMessage = `Element "${draggedName}" could not be dropped on the canvas`
+      showWarningToast(errorMessage)
+      console.warn(errorMessage)
     }
   }
 
