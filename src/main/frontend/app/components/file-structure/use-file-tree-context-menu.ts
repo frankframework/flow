@@ -7,7 +7,7 @@ import useTabStore from '~/stores/tab-store'
 import useEditorTabStore from '~/stores/editor-tab-store'
 import { showErrorToast } from '~/components/toast'
 import { FILE_NAME_PATTERNS, FOLDER_OR_ADAPTER_NAME_PATTERNS } from '~/components/file-structure/name-input-dialog'
-import { logApiError } from '~/utils/logger';
+import { logApiError } from '~/utils/logger'
 
 export interface ContextMenuState {
   position: { x: number; y: number }

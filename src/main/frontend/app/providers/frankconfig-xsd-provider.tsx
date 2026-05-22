@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 import { fetchFrankConfigXsd } from '~/services/xsd-service'
-import {logApiWarning} from "~/utils/logger";
+import { logApiWarning } from '~/utils/logger'
 
 interface FrankConfigXsdContextValue {
   xsdContent: string | null

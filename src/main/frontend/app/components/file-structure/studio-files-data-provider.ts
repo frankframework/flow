@@ -1,5 +1,5 @@
 import type { TreeItemIndex } from 'react-complex-tree'
-import { logApiError } from '~/utils/logger';
+import { logApiError } from '~/utils/logger'
 import { sortChildren } from './tree-utilities'
 import { fetchProjectTree, fetchDirectoryByPath } from '~/services/file-tree-service'
 import type { FileTreeNode } from '~/types/filesystem.types'

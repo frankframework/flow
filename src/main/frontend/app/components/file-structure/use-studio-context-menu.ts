@@ -5,7 +5,7 @@ import { createFolderInProject } from '~/services/file-tree-service'
 import { createAdapter, renameAdapter, deleteAdapter } from '~/services/adapter-service'
 import { clearConfigurationFileCache, createConfigurationFile } from '~/services/configuration-file-service'
 import useTabStore from '~/stores/tab-store'
-import { logApiError } from '~/utils/logger';
+import { logApiError } from '~/utils/logger'
 import type { StudioItemData, StudioFolderData, StudioAdapterData } from './studio-files-data-provider'
 import {
   CONFIGURATION_NAME_PATTERNS,
