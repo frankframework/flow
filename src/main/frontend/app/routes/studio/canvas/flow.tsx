@@ -28,7 +28,7 @@ import { useShallow } from 'zustand/react/shallow'
 import { FlowConfig } from '~/routes/studio/canvas/flow.config'
 import { getElementTypeFromName } from '~/routes/studio/node-translator-module'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
-import {logApiError} from "~/utils/logger";
+import { logApiError } from '~/utils/logger'
 import { NodeContextMenuContext, useNodeContextMenu } from './node-context-menu-context'
 import StickyNoteComponent, { type StickyNote } from '~/routes/studio/canvas/nodetypes/sticky-note'
 import useTabStore, { type TabData } from '~/stores/tab-store'
@@ -1319,7 +1319,6 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
         }
       } catch (error) {
         logApiError('Error loading tab flow:', error as Error)
-        showErrorToast(`Failed to load flow: ${error instanceof Error ? error.message : error}`)
       } finally {
         isLoadingTabRef.current = false
         setLoading(false)
