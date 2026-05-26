@@ -1,6 +1,7 @@
 import useFlowStore, { isFrankNode, isStickyNote } from '~/stores/flow-store'
 import { STICKY_NOTE_COLORS } from '~/routes/studio/canvas/nodetypes/sticky-note'
 import { useShallow } from 'zustand/react/shallow'
+import Dropdown from '~/components/inputs/dropdown'
 
 export default function StickyNoteContext({ nodeId }: Readonly<{ nodeId: string }>) {
   const node = useFlowStore((flowState) => flowState.nodes.find((node) => node.id === nodeId))
@@ -46,20 +47,14 @@ export default function StickyNoteContext({ nodeId }: Readonly<{ nodeId: string 
 
       <div className="flex flex-col gap-1">
         <label className="text-foreground-muted text-xs font-semibold tracking-wide uppercase">Attach to node</label>
-        <select
+        <Dropdown
           value={attachedToNodeId ?? ''}
-          onChange={(changeEvent) =>
-            useFlowStore.getState().setStickyAttachment(nodeId, changeEvent.target.value || null)
-          }
-          className="border-border bg-background text-foreground focus:ring-ring w-full rounded border px-3 py-2 text-sm focus:ring-1 focus:outline-none"
-        >
-          <option value="">None</option>
-          {frankNodes.map((node) => (
-            <option key={node.id} value={node.id}>
-              {node.data.name}
-            </option>
-          ))}
-        </select>
+          onChange={(value) => useFlowStore.getState().setStickyAttachment(nodeId, value || null)}
+          options={{
+            '': 'None',
+            ...Object.fromEntries(frankNodes.map((node) => [node.id, node.data.name])),
+          }}
+        />
       </div>
     </div>
   )

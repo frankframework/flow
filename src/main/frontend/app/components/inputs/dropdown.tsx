@@ -39,7 +39,8 @@ export default function Dropdown({
   }, [optionsArray, selectedValue])
 
   const getSelectedLabel = () => {
-    return selectedValue ? options[selectedValue] : placeholder
+    if (selectedValue !== undefined && selectedValue in options) return options[selectedValue]
+    return placeholder
   }
 
   const toggleDropdown = useCallback(() => {
@@ -179,7 +180,7 @@ export default function Dropdown({
         <div
           onClick={toggleDropdown}
           className={clsx(
-            'border-border bg-backdrop flex items-center justify-between rounded-md border px-3 py-2',
+            'border-border bg-backdrop flex items-center justify-between rounded-md border px-3 py-2 transition-colors',
             disabled ? 'cursor-not-allowed' : 'cursor-pointer',
             isOpen ? 'bg-selected' : 'hover:bg-hover',
           )}

@@ -14,10 +14,8 @@ export default function SegmentedButton({
   return (
     <button
       className={clsx(
-        'text-foreground cursor-pointer px-3 py-1 text-sm',
-        isActive
-          ? 'bg-selected font-medium'
-          : 'text-foreground-muted hover:bg-hover active:bg-selected',
+        'text-foreground cursor-pointer px-3 py-1 text-sm transition-colors',
+        isActive ? 'bg-selected font-medium' : 'text-foreground-muted hover:bg-hover active:bg-selected',
         className,
       )}
       {...properties}

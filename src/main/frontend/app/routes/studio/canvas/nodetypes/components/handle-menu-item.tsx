@@ -13,7 +13,7 @@ export default function HandleMenuItem({
 }: Readonly<HandleMenuItemProperties>) {
   return (
     <li
-      className={`hover:bg-border border-border flex h-10 cursor-pointer items-center justify-between p-2 ${
+      className={`hover:bg-hover border-border flex h-10 cursor-pointer items-center justify-between p-2 transition-colors ${
         isLast ? '' : 'border-b'
       }`}
       onClick={onClick}

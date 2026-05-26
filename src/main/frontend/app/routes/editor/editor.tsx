@@ -4,7 +4,6 @@ type ITextModel = Monaco['editor']['ITextModel']
 type FindMatch = Monaco['editor']['FindMatch']
 type IModelDeltaDecoration = Monaco['editor']['IModelDeltaDecoration']
 type IEditorDecorationsCollection = Monaco['editor']['IEditorDecorationsCollection']
-import clsx from 'clsx'
 import XsdFeatures from 'monaco-xsd-code-completion/esm/XsdFeatures'
 import 'monaco-xsd-code-completion/src/style.css'
 import XsdManager from 'monaco-xsd-code-completion/esm/XsdManager'

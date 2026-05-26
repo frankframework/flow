@@ -1,5 +1,5 @@
-// ContextInputField.tsx
 import React from 'react'
+import Dropdown from '~/components/inputs/dropdown'
 import Toggle from '~/components/inputs/toggle'
 import ValidatedInput from '~/components/inputs/validatedInput'
 import Input from '~/components/inputs/input'
@@ -24,20 +24,14 @@ export default function ContextInputField({
   // Render enum dropdown
   if (enumOptions) {
     return (
-      <select
+      <Dropdown
         id={id}
         value={value}
-        onChange={(event) => onChange(event.currentTarget.value)}
-        onKeyDown={onKeyDown}
-        className="border-border bg-background focus:border-border focus:ring-border mt-1 w-full rounded-md border px-3 py-2 shadow-sm sm:text-sm"
-      >
-        <option value="">Select option…</option>
-        {Object.keys(enumOptions).map((optKey) => (
-          <option key={optKey} value={optKey}>
-            {optKey}
-          </option>
-        ))}
-      </select>
+        onChange={onChange}
+        options={Object.fromEntries(Object.keys(enumOptions).map((key) => [key, key]))}
+        placeholder="Select option…"
+        className="mt-1"
+      />
     )
   }
 
