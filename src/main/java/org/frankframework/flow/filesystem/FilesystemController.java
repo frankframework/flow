@@ -37,8 +37,8 @@ public class FilesystemController {
 	@GetMapping("/watch")
 	public SseEmitter watch(@RequestParam String path) throws IOException {
 		return fileWatcherService.subscribeToPath(fileSystemStorage.toAbsolutePath(path));
-  }
-  
+}
+
 	@PostMapping("/mkdir")
 	public ResponseEntity<Void> mkdir(@RequestParam String path) throws IOException {
 		try {
