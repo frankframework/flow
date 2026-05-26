@@ -69,7 +69,7 @@ export default function EditorFileStructure() {
   useFileWatcher(project?.name ?? null, () => {
     if (dataProvider) void dataProvider.reloadDirectory('root')
   })
-  
+
   useEffect(() => {
     if (!dataProvider) {
       setRootPath(null)

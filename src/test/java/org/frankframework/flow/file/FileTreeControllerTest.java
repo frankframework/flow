@@ -103,8 +103,8 @@ class FileTreeControllerTest {
 				.andExpect(header().string("Content-Type", containsString("text/event-stream")));
 
 		verify(fileWatcherService).subscribeToProject("MyProject");
-  }
-  
+}
+
 	void getAncestorPathReturnsSparseTreeNode() throws Exception {
 		FileTreeNode spineChild = new FileTreeNode();
 		spineChild.setName("MyConfig");
