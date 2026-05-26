@@ -63,7 +63,7 @@ export default function NameInputDialog({
   return createPortal(
     <div
       ref={overlayRef}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30"
+      className="fixed inset-0 z-[70] flex items-center justify-center bg-black/30"
       onClick={handleOverlayClick}
     >
       <div className="bg-background border-border w-80 rounded-md border p-4 shadow-lg">

@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
 import FolderIcon from '/icons/solar/Folder.svg?react'
+import NameInputDialog from '~/components/file-structure/name-input-dialog'
 import { filesystemService } from '~/services/filesystem-service'
 import type { FilesystemEntry } from '~/types/filesystem.types'
 import { ApiError } from '~/utils/api'
 import Button from '../inputs/button'
-import CreateFolderRow from './create-folder-row'
 
 interface DirectoryPickerProperties {
   isOpen: boolean
@@ -68,11 +68,17 @@ export default function DirectoryPicker({
   }
 
   const handleCreateFolder = async (folderName: string) => {
-    const separator = currentPath.includes('\\') ? '\\' : '/'
-    const newPath = `${currentPath}${separator}${folderName}`
-    await filesystemService.createDirectory(newPath)
-    await loadEntries(currentPath)
-    setSelectedEntry(newPath)
+    const basePath = selectedEntry ?? currentPath
+    const separator = basePath.includes('\\') ? '\\' : '/'
+    const newPath = `${basePath}${separator}${folderName}`
+    setIsCreatingFolder(false)
+    try {
+      await filesystemService.createDirectory(newPath)
+      await loadEntries(basePath)
+      setSelectedEntry(newPath)
+    } catch {
+      setError('Failed to create folder')
+    }
   }
 
   const canGoUp = parentPath !== ''
@@ -141,7 +147,11 @@ export default function DirectoryPicker({
             ))}
 
           {isCreatingFolder && (
-            <CreateFolderRow onConfirm={handleCreateFolder} onCancel={() => setIsCreatingFolder(false)} />
+            <NameInputDialog
+              title="New Folder"
+              onSubmit={(name) => void handleCreateFolder(name)}
+              onCancel={() => setIsCreatingFolder(false)}
+            />
           )}
         </div>
 
