@@ -10,6 +10,7 @@ import '/styles/editor-files.css'
 import AltArrowRightIcon from '../../../icons/solar/Alt Arrow Right.svg?react'
 import AltArrowDownIcon from '../../../icons/solar/Alt Arrow Down.svg?react'
 import { useShortcut } from '~/hooks/use-shortcut'
+import { useFileWatcher } from '~/hooks/use-file-watcher'
 import type { StudioContextMenuState } from './use-studio-context-menu'
 
 import {
@@ -67,6 +68,10 @@ export default function StudioFileStructure() {
   useEffect(() => {
     expandedItemsRef.current = studioExpandedItems
   }, [studioExpandedItems])
+
+  useFileWatcher(project?.name, () => {
+    if (dataProvider) void dataProvider.reloadDirectory('root')
+  })
 
   const studioContextMenu = useStudioContextMenu({
     projectName: project?.name,
