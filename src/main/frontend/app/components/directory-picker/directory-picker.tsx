@@ -149,6 +149,7 @@ export default function DirectoryPicker({
           {isCreatingFolder && (
             <NameInputDialog
               title="New Folder"
+              submitLabel="Create"
               onSubmit={(name) => void handleCreateFolder(name)}
               onCancel={() => setIsCreatingFolder(false)}
             />

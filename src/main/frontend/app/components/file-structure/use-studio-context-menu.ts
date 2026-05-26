@@ -27,6 +27,7 @@ export interface StudioContextMenuState {
 export interface NameDialogState {
   title: string
   initialValue?: string
+  submitLabel?: string
   onSubmit: (name: string) => void
   patterns?: Record<string, RegExp>
 }
@@ -171,6 +172,7 @@ export function useStudioContextMenu({ projectName, dataProvider }: UseStudioCon
 
       setNameDialog({
         title: 'New Configuration File',
+        submitLabel: 'Create',
         onSubmit: async (name: string) => {
           const fileName = ensureXmlExtension(name)
           try {
@@ -201,6 +203,7 @@ export function useStudioContextMenu({ projectName, dataProvider }: UseStudioCon
 
       setNameDialog({
         title: 'New Adapter',
+        submitLabel: 'Create',
         onSubmit: async (name: string) => {
           try {
             await createAdapter(projectName, name, menu.path)
@@ -224,6 +227,7 @@ export function useStudioContextMenu({ projectName, dataProvider }: UseStudioCon
 
       setNameDialog({
         title: 'New Folder',
+        submitLabel: 'Create',
         onSubmit: async (name: string) => {
           try {
             await createFolderInProject(projectName, `${menu.folderPath}/${name}`)

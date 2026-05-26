@@ -25,6 +25,7 @@ export const FOLDER_OR_ADAPTER_NAME_PATTERNS: Record<string, RegExp> = BASE_NAME
 interface NameInputDialogProps {
   title: string
   initialValue?: string
+  submitLabel?: string
   onSubmit: (name: string) => void
   onCancel: () => void
   patterns?: Record<string, RegExp>
@@ -33,6 +34,7 @@ interface NameInputDialogProps {
 export default function NameInputDialog({
   title,
   initialValue = '',
+  submitLabel = 'OK',
   onSubmit,
   onCancel,
   patterns = FOLDER_OR_ADAPTER_NAME_PATTERNS,
@@ -82,7 +84,7 @@ export default function NameInputDialog({
             Cancel
           </Button>
           <Button onClick={handleSubmit} disabled={!isValid} className="px-3 py-1 text-sm">
-            OK
+            {submitLabel}
           </Button>
         </div>
       </div>
