@@ -10,4 +10,8 @@ export const filesystemService = {
     const result = await this.browse(path)
     return result.resolvedPath
   },
+
+  async createDirectory(path: string): Promise<void> {
+    return apiFetch(`/filesystem/mkdir?path=${encodeURIComponent(path)}`, { method: 'POST' })
+  },
 }
