@@ -145,8 +145,9 @@ export default function StudioFileStructure() {
 
     const configItemId = itemId.slice(0, itemId.lastIndexOf('/'))
 
+    await dataProvider.loadAncestorDirectories(configItemId)
+
     for (const ancestorId of getAncestorIds(configItemId)) {
-      await dataProvider.loadDirectory(ancestorId)
       tree.current.expandItem(ancestorId)
     }
 
@@ -371,7 +372,7 @@ export default function StudioFileStructure() {
 
     const isObject = typeof item.data === 'object'
 
-    const pathEndsWithXmlExtension = (item.data as Partial<StudioFolderData>).path?.endsWith('.xml')
+    const pathEndsWithXmlExtension = (item.data as Partial<StudioFolderData>).path?.endsWith('.xml') ?? false
 
     const isRoot = typeof item.data === 'string'
     const isConfigFile = item.isFolder && isObject && item.data !== null && pathEndsWithXmlExtension
