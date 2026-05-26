@@ -177,12 +177,12 @@ export default function ConfigurationOverview() {
 
   return (
     <div className="bg-background flex h-full w-full flex-col p-6">
-      <div className="hover:text-foreground flex w-fit hover:cursor-pointer" onClick={() => navigate('/')}>
-        <ArrowLeftIcon className="mb-4 h-6 w-auto fill-current hover:cursor-pointer" />
+      <div className="hover:bg-hover flex w-fit hover:cursor-pointer py-2 px-4 rounded" onClick={() => navigate('/')}>
+        <ArrowLeftIcon className="h-6 w-auto fill-current hover:cursor-pointer" />
         <p>Switch configuration</p>
       </div>
 
-      <h1 className="ml-2 text-2xl font-bold">Configuration Overview</h1>
+      <h1 className="ml-2 text-2xl font-bold mt-4">Configuration Overview</h1>
       <div className="mb-4 flex items-center justify-between">
         <p className="ml-2">
           Configuration files within <span className="font-bold">{currentConfigurationProject.name}</span>
