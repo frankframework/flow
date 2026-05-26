@@ -145,29 +145,31 @@ public class FileWatcherService {
 
 	private void watchLoop() {
 		while (!Thread.currentThread().isInterrupted()) {
-			WatchKey key;
-			try {
-				key = watchService.take();
-			} catch (InterruptedException exception) {
-				Thread.currentThread().interrupt();
-				break;
-
-			} catch (ClosedWatchServiceException exception) {
+			WatchKey key = takeNextKey();
+			if (key == null) {
 				break;
 			}
 
 			String channelId = watchKeyChannels.get(key);
-			if (channelId == null) {
-				key.reset();
-				continue;
+			if (channelId != null) {
+				registerNewSubdirectories(key, channelId);
+				scheduleBroadcast(channelId);
 			}
-
-			registerNewSubdirectories(key, channelId);
-			scheduleBroadcast(channelId);
 
 			if (!key.reset()) {
 				watchKeyChannels.remove(key);
 			}
+		}
+	}
+
+	private WatchKey takeNextKey() {
+		try {
+			return watchService.take();
+		} catch (InterruptedException _) {
+			Thread.currentThread().interrupt();
+			return null;
+		} catch (ClosedWatchServiceException _) {
+			return null;
 		}
 	}
 
@@ -182,7 +184,7 @@ public class FileWatcherService {
 			if (Files.isDirectory(created)) {
 				try {
 					registerRecursively(created, channelId);
-				} catch (IOException exception) {
+				} catch (IOException _) {
 					log.warn("Failed to register new directory: {}", created);
 				}
 			}

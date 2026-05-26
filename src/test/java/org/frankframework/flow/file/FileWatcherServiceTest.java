@@ -58,7 +58,7 @@ class FileWatcherServiceTest {
 	}
 
 	@Test
-	void cloudEnvironment_doesNotStartWatchService() throws IOException {
+	void cloudEnvironment_doesNotStartWatchService() {
 		when(fileSystemStorage.isLocalEnvironment()).thenReturn(false);
 		FileWatcherService cloudService = new FileWatcherService(fileSystemStorage, fileTreeService, configurationProjectService, new SseChannelService());
 		cloudService.start();
@@ -70,7 +70,7 @@ class FileWatcherServiceTest {
 	}
 
 	@Test
-	void subscribeToProject_returnsEmitter() throws Exception {
+	void subscribeToProject_returnsEmitter() {
 		ConfigurationProject project = new ConfigurationProject("test", tempDir.toString());
 		when(configurationProjectService.getProject("test")).thenReturn(project);
 		when(fileSystemStorage.toAbsolutePath(tempDir.toString())).thenReturn(tempDir);

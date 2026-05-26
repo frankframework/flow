@@ -33,7 +33,7 @@ public class SseChannelService {
 		for (SseEmitter emitter : emitters) {
 			try {
 				emitter.send(event);
-			} catch (Exception exception) {
+			} catch (Exception _) {
 				dead.add(emitter);
 			}
 		}
