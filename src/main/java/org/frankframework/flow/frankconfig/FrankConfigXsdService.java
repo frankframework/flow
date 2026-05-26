@@ -1,14 +1,14 @@
 package org.frankframework.flow.frankconfig;
 
-import lombok.extern.slf4j.Slf4j;
+import lombok.extern.log4j.Log4j2;
 import org.frankframework.flow.exception.ApiException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+@Log4j2
 @Service
-@Slf4j
 public class FrankConfigXsdService {
 	private static final String FRANKCONFIG_XSD_URL = "https://schemas.frankframework.org/FrankConfig.xsd";
 

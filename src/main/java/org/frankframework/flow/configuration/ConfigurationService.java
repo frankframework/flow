@@ -8,7 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
-import lombok.extern.slf4j.Slf4j;
+import lombok.extern.log4j.Log4j2;
 import org.frankframework.flow.exception.ApiException;
 import org.frankframework.flow.file.FileTreeService;
 import org.frankframework.flow.filesystem.FileSystemStorage;
@@ -26,7 +26,7 @@ import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-@Slf4j
+@Log4j2
 @Service
 public class ConfigurationService {
 

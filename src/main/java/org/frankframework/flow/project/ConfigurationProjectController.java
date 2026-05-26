@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import lombok.extern.slf4j.Slf4j;
+import lombok.extern.log4j.Log4j2;
 import org.frankframework.flow.common.AllowAllFrankUserRoles;
 import org.frankframework.flow.common.FrankFrameworkService;
 import org.frankframework.flow.common.config.ClientSession;
@@ -28,7 +28,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-@Slf4j
+@Log4j2
 @RestController
 @RequestMapping("/projects")
 public class ConfigurationProjectController {
