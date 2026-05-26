@@ -50,6 +50,14 @@ public class FileTreeController {
 		return fileTreeService.getShallowDirectoryTree(projectName, path);
 	}
 
+	@GetMapping(value = "/tree/ancestors", params = "path")
+	public FileTreeNode getAncestorPath(
+			@PathVariable String projectName,
+			@RequestParam String path
+	) throws IOException {
+		return fileTreeService.getAncestorPath(projectName, path);
+	}
+
 	@PostMapping("/folder")
 	public ResponseEntity<FileTreeNode> createFolder(@PathVariable String projectName, @RequestBody FolderCreateDTO dto) throws IOException, ApiException {
 		FileTreeNode node = fileTreeService.createFolder(projectName, dto.path());

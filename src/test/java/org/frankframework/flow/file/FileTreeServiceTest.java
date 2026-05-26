@@ -424,6 +424,321 @@ public class FileTreeServiceTest {
 		);
 	}
 
+	@Test
+	@DisplayName("Should throw IllegalArgumentException when the project is not registered")
+	void getAncestorPath_unknownProject_throwsIllegalArgument() throws ApiException {
+		when(configurationProjectService.getProject("Unknown")).thenThrow(new ApiException("err", HttpStatus.NOT_FOUND));
+		assertThrows(IllegalArgumentException.class, () -> fileTreeService.getAncestorPath("Unknown", "."));
+	}
+
+	@Test
+	@DisplayName("Should throw SecurityException when the path escapes the project root")
+	void getAncestorPath_pathTraversal_throwsSecurityException() throws ApiException {
+		stubToAbsolutePath();
+		ConfigurationProject project = new ConfigurationProject(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+		when(configurationProjectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
+
+		SecurityException ex = assertThrows(
+				SecurityException.class,
+				() -> fileTreeService.getAncestorPath(TEST_PROJECT_NAME, "../outside")
+		);
+		assertTrue(ex.getMessage().contains("Invalid path"));
+	}
+
+	@Test
+	@DisplayName("Should throw IllegalArgumentException when the target directory does not exist on disk")
+	void getAncestorPath_nonExistentDirectory_throwsIllegalArgument() throws ApiException {
+		stubToAbsolutePath();
+		ConfigurationProject project = new ConfigurationProject(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+		when(configurationProjectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
+
+		IllegalArgumentException ex = assertThrows(
+				IllegalArgumentException.class,
+				() -> fileTreeService.getAncestorPath(TEST_PROJECT_NAME, "nonexistent")
+		);
+		assertTrue(ex.getMessage().contains("Directory does not exist"));
+	}
+
+	@Test
+	@DisplayName("Should throw IllegalArgumentException when the target path points to a file instead of a directory")
+	void getAncestorPath_pathIsFile_throwsIllegalArgument() throws IOException, ApiException {
+		stubToAbsolutePath();
+		Files.writeString(tempProjectRoot.resolve("aFile.xml"), "<config/>");
+		ConfigurationProject project = new ConfigurationProject(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+		when(configurationProjectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
+
+		assertThrows(
+				IllegalArgumentException.class,
+				() -> fileTreeService.getAncestorPath(TEST_PROJECT_NAME, "aFile.xml")
+		);
+	}
+
+	@Test
+	@DisplayName("Should return the shallow project-root tree when the target is the project root itself")
+	void getAncestorPath_targetIsProjectRoot_returnsShallowRootTree() throws IOException, ApiException {
+		stubToAbsolutePath();
+		when(fileSystemStorage.isLocalEnvironment()).thenReturn(true);
+
+		Files.writeString(tempProjectRoot.resolve("config.xml"), "<config/>");
+		Files.createDirectory(tempProjectRoot.resolve("subdir"));
+
+		ConfigurationProject project = new ConfigurationProject(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+		when(configurationProjectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
+
+		FileTreeNode result = fileTreeService.getAncestorPath(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+
+		assertNotNull(result);
+		assertEquals(NodeType.DIRECTORY, result.getType());
+		assertEquals(2, result.getChildren().size());
+		assertTrue(result.getChildren().stream().anyMatch(c -> c.getName().equals("config.xml")));
+		assertTrue(result.getChildren().stream().anyMatch(c -> c.getName().equals("subdir")));
+		result.getChildren().forEach(c -> assertNull(c.getChildren()));
+	}
+
+	@Test
+	@DisplayName("Should return a node with empty children list when the target directory is empty")
+	void getAncestorPath_emptyTargetDirectory_spineHasEmptyChildrenList() throws IOException, ApiException {
+		stubToAbsolutePath();
+		when(fileSystemStorage.isLocalEnvironment()).thenReturn(true);
+
+		Path emptyDir = Files.createDirectory(tempProjectRoot.resolve("emptyDir"));
+
+		ConfigurationProject project = new ConfigurationProject(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+		when(configurationProjectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
+
+		FileTreeNode root = fileTreeService.getAncestorPath(TEST_PROJECT_NAME, emptyDir.toAbsolutePath().toString());
+
+		FileTreeNode spineChild = root.getChildren().stream()
+				.filter(c -> c.getName().equals("emptyDir"))
+				.findFirst().orElseThrow();
+		assertNotNull(spineChild.getChildren());
+		assertTrue(spineChild.getChildren().isEmpty());
+	}
+
+	@Test
+	@DisplayName("Spine child has children populated; all siblings have null children")
+	void getAncestorPath_singleLevel_spineHasChildrenSiblingsAreShallow() throws IOException, ApiException {
+		stubToAbsolutePath();
+		when(fileSystemStorage.isLocalEnvironment()).thenReturn(true);
+
+		Path target = Files.createDirectory(tempProjectRoot.resolve("target"));
+		Files.writeString(target.resolve("content.xml"), "<c/>");
+		Files.createDirectory(tempProjectRoot.resolve("sibling"));
+		Files.writeString(tempProjectRoot.resolve("root.xml"), "<r/>");
+
+		ConfigurationProject project = new ConfigurationProject(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+		when(configurationProjectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
+
+		FileTreeNode root = fileTreeService.getAncestorPath(TEST_PROJECT_NAME, target.toAbsolutePath().toString());
+
+		assertEquals(3, root.getChildren().size());
+
+		FileTreeNode spineChild = root.getChildren().stream()
+				.filter(c -> c.getName().equals("target"))
+				.findFirst().orElseThrow();
+		assertNotNull(spineChild.getChildren());
+		assertEquals(1, spineChild.getChildren().size());
+		assertEquals("content.xml", spineChild.getChildren().getFirst().getName());
+
+		root.getChildren().stream()
+				.filter(c -> !c.getName().equals("target"))
+				.forEach(c -> assertNull(c.getChildren()));
+	}
+
+	@Test
+	@DisplayName("Two-level path: root has full shallow children; spine expands into target with its shallow children")
+	void getAncestorPath_twoLevel_correctSpineAtBothLevels() throws IOException, ApiException {
+		stubToAbsolutePath();
+		when(fileSystemStorage.isLocalEnvironment()).thenReturn(true);
+
+		Path level1 = Files.createDirectory(tempProjectRoot.resolve("level1"));
+		Path level2 = Files.createDirectory(level1.resolve("level2"));
+		Files.writeString(level2.resolve("target.xml"), "<t/>");
+		Files.createDirectory(level1.resolve("level1Sibling"));
+		Files.createDirectory(tempProjectRoot.resolve("rootSibling"));
+
+		ConfigurationProject project = new ConfigurationProject(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+		when(configurationProjectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
+
+		FileTreeNode root = fileTreeService.getAncestorPath(TEST_PROJECT_NAME, level2.toAbsolutePath().toString());
+
+		FileTreeNode level1Node = root.getChildren().stream()
+				.filter(c -> c.getName().equals("level1")).findFirst().orElseThrow();
+		FileTreeNode rootSiblingNode = root.getChildren().stream()
+				.filter(c -> c.getName().equals("rootSibling")).findFirst().orElseThrow();
+		assertNotNull(level1Node.getChildren());
+		assertNull(rootSiblingNode.getChildren());
+
+		FileTreeNode level2Node = level1Node.getChildren().stream()
+				.filter(c -> c.getName().equals("level2")).findFirst().orElseThrow();
+		FileTreeNode level1SiblingNode = level1Node.getChildren().stream()
+				.filter(c -> c.getName().equals("level1Sibling")).findFirst().orElseThrow();
+		assertNotNull(level2Node.getChildren());
+		assertNull(level1SiblingNode.getChildren());
+
+		assertEquals(1, level2Node.getChildren().size());
+		assertEquals("target.xml", level2Node.getChildren().getFirst().getName());
+		assertNull(level2Node.getChildren().getFirst().getChildren());
+	}
+
+	@Test
+	@DisplayName("Three-level deep path: spine is correctly threaded through all intermediate directories")
+	void getAncestorPath_threeLevel_spineThreadedCorrectly() throws IOException, ApiException {
+		stubToAbsolutePath();
+		when(fileSystemStorage.isLocalEnvironment()).thenReturn(true);
+
+		Path l1 = Files.createDirectory(tempProjectRoot.resolve("l1"));
+		Path l2 = Files.createDirectory(l1.resolve("l2"));
+		Path l3 = Files.createDirectory(l2.resolve("l3"));
+		Files.writeString(l3.resolve("deep.xml"), "<d/>");
+		Files.createDirectory(l2.resolve("l2Sibling"));
+		Files.createDirectory(l1.resolve("l1Sibling"));
+
+		ConfigurationProject project = new ConfigurationProject(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+		when(configurationProjectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
+
+		FileTreeNode root = fileTreeService.getAncestorPath(TEST_PROJECT_NAME, l3.toAbsolutePath().toString());
+
+		FileTreeNode l1Node = root.getChildren().stream().filter(c -> c.getName().equals("l1")).findFirst().orElseThrow();
+		assertNotNull(l1Node.getChildren());
+
+		FileTreeNode l1SiblingNode = l1Node.getChildren().stream()
+				.filter(c -> c.getName().equals("l1Sibling")).findFirst().orElseThrow();
+		assertNull(l1SiblingNode.getChildren());
+
+		FileTreeNode l2Node = l1Node.getChildren().stream().filter(c -> c.getName().equals("l2")).findFirst().orElseThrow();
+		assertNotNull(l2Node.getChildren());
+
+		FileTreeNode l2SiblingNode = l2Node.getChildren().stream()
+				.filter(c -> c.getName().equals("l2Sibling")).findFirst().orElseThrow();
+		assertNull(l2SiblingNode.getChildren());
+
+		FileTreeNode l3Node = l2Node.getChildren().stream().filter(c -> c.getName().equals("l3")).findFirst().orElseThrow();
+		assertNotNull(l3Node.getChildren());
+		assertEquals(1, l3Node.getChildren().size());
+		assertEquals("deep.xml", l3Node.getChildren().getFirst().getName());
+		assertNull(l3Node.getChildren().getFirst().getChildren());
+	}
+
+	@Test
+	@DisplayName("Multiple siblings at each spine level: only the single spine child has children set")
+	void getAncestorPath_manySiblingsAtEachLevel_exactlyOneSpineChildPerLevel() throws IOException, ApiException {
+		stubToAbsolutePath();
+		when(fileSystemStorage.isLocalEnvironment()).thenReturn(true);
+
+		Path target = Files.createDirectory(tempProjectRoot.resolve("target"));
+		Files.writeString(target.resolve("file.xml"), "<f/>");
+		for (int i = 0; i < 4; i++) {
+			Files.createDirectory(tempProjectRoot.resolve("sibling" + i));
+		}
+
+		ConfigurationProject project = new ConfigurationProject(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+		when(configurationProjectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
+
+		FileTreeNode root = fileTreeService.getAncestorPath(TEST_PROJECT_NAME, target.toAbsolutePath().toString());
+
+		long spineCount = root.getChildren().stream().filter(c -> c.getChildren() != null).count();
+		assertEquals(1, spineCount);
+
+		FileTreeNode spineChild = root.getChildren().stream()
+				.filter(c -> c.getChildren() != null).findFirst().orElseThrow();
+		assertEquals("target", spineChild.getName());
+	}
+
+	@Test
+	@DisplayName("Should use relative paths for all nodes when not in local environment")
+	void getAncestorPath_nonLocalEnvironment_usesRelativePaths() throws IOException, ApiException {
+		stubToAbsolutePath();
+		when(fileSystemStorage.isLocalEnvironment()).thenReturn(false);
+
+		Path subDir = Files.createDirectory(tempProjectRoot.resolve("subdir"));
+		Files.writeString(subDir.resolve("file.xml"), "<f/>");
+
+		ConfigurationProject project = new ConfigurationProject(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+		when(configurationProjectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
+
+		FileTreeNode root = fileTreeService.getAncestorPath(TEST_PROJECT_NAME, subDir.toAbsolutePath().toString());
+
+		assertFalse(Paths.get(root.getPath()).isAbsolute());
+
+		FileTreeNode spineChild = root.getChildren().stream()
+				.filter(c -> c.getName().equals("subdir")).findFirst().orElseThrow();
+		assertFalse(Paths.get(spineChild.getPath()).isAbsolute());
+		assertFalse(Paths.get(spineChild.getChildren().getFirst().getPath()).isAbsolute());
+	}
+
+	@Test
+	@DisplayName("Should extract adapter names from .xml files at the target level")
+	void getAncestorPath_xmlFilesAtTargetLevel_haveAdapterNamesExtracted() throws IOException, ApiException {
+		stubToAbsolutePath();
+		when(fileSystemStorage.isLocalEnvironment()).thenReturn(true);
+
+		Path subDir = Files.createDirectory(tempProjectRoot.resolve("subdir"));
+		Files.writeString(subDir.resolve("config.xml"),
+				"<Configuration><Adapter name=\"MyAdapter\"/></Configuration>");
+
+		ConfigurationProject project = new ConfigurationProject(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+		when(configurationProjectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
+
+		FileTreeNode root = fileTreeService.getAncestorPath(TEST_PROJECT_NAME, subDir.toAbsolutePath().toString());
+		FileTreeNode spineChild = root.getChildren().stream()
+				.filter(c -> c.getName().equals("subdir")).findFirst().orElseThrow();
+		FileTreeNode xmlNode = spineChild.getChildren().stream()
+				.filter(c -> c.getName().equals("config.xml")).findFirst().orElseThrow();
+
+		assertNotNull(xmlNode.getAdapterNames());
+		assertEquals(List.of("MyAdapter"), xmlNode.getAdapterNames());
+	}
+
+	@Test
+	@DisplayName("Non-.xml files at target level should have null adapterNames")
+	void getAncestorPath_nonXmlFilesAtTargetLevel_haveNoAdapterNames() throws IOException, ApiException {
+		stubToAbsolutePath();
+		when(fileSystemStorage.isLocalEnvironment()).thenReturn(true);
+
+		Path subDir = Files.createDirectory(tempProjectRoot.resolve("subdir"));
+		Files.writeString(subDir.resolve("readme.txt"), "hello");
+
+		ConfigurationProject project = new ConfigurationProject(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+		when(configurationProjectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
+
+		FileTreeNode root = fileTreeService.getAncestorPath(TEST_PROJECT_NAME, subDir.toAbsolutePath().toString());
+		FileTreeNode spineChild = root.getChildren().stream()
+				.filter(c -> c.getName().equals("subdir")).findFirst().orElseThrow();
+		FileTreeNode txtNode = spineChild.getChildren().stream()
+				.filter(c -> c.getName().equals("readme.txt")).findFirst().orElseThrow();
+
+		assertNull(txtNode.getAdapterNames());
+	}
+
+	@Test
+	@DisplayName("Node types should be correct: DIRECTORY for directories, FILE for files at target level")
+	void getAncestorPath_nodeTypesAreCorrect() throws IOException, ApiException {
+		stubToAbsolutePath();
+		when(fileSystemStorage.isLocalEnvironment()).thenReturn(true);
+
+		Path subDir = Files.createDirectory(tempProjectRoot.resolve("subdir"));
+		Files.writeString(subDir.resolve("file.xml"), "<f/>");
+		Files.createDirectory(subDir.resolve("nested"));
+
+		ConfigurationProject project = new ConfigurationProject(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+		when(configurationProjectService.getProject(TEST_PROJECT_NAME)).thenReturn(project);
+
+		FileTreeNode root = fileTreeService.getAncestorPath(TEST_PROJECT_NAME, subDir.toAbsolutePath().toString());
+		FileTreeNode spineChild = root.getChildren().stream()
+				.filter(c -> c.getName().equals("subdir")).findFirst().orElseThrow();
+
+		assertEquals(NodeType.DIRECTORY, spineChild.getType());
+
+		FileTreeNode fileNode = spineChild.getChildren().stream()
+				.filter(c -> c.getName().equals("file.xml")).findFirst().orElseThrow();
+		FileTreeNode nestedNode = spineChild.getChildren().stream()
+				.filter(c -> c.getName().equals("nested")).findFirst().orElseThrow();
+
+		assertEquals(NodeType.FILE, fileNode.getType());
+		assertEquals(NodeType.DIRECTORY, nestedNode.getType());
+	}
+
 	private void stubCreateProjectDirectory() throws IOException {
 		when(fileSystemStorage.createProjectDirectory(anyString())).thenAnswer(invocation -> {
 			String path = invocation.getArgument(0);

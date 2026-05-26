@@ -15,7 +15,7 @@ export function useShortcut(handlers: ShortcutHandlers) {
 
     for (const id of handlerIds) {
       setHandler(id, () => {
-        handlersRef.current[id]?.()
+        return handlersRef.current[id]?.()
       })
     }
 

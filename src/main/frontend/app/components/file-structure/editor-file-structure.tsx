@@ -1,8 +1,9 @@
-import React, { type JSX, useCallback, useEffect, useRef, useState } from 'react'
+import React, { type JSX, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Search from '~/components/search/search'
 import LoadingSpinner from '~/components/loading-spinner'
 import FolderIcon from '../../../icons/solar/Folder.svg?react'
 import FolderOpenIcon from '../../../icons/solar/Folder Open.svg?react'
+import ListDown from '../../../icons/solar/List Down.svg?react'
 import '/styles/editor-files.css'
 import AltArrowRightIcon from '../../../icons/solar/Alt Arrow Right.svg?react'
 import AltArrowDownIcon from '../../../icons/solar/Alt Arrow Down.svg?react'
@@ -12,6 +13,7 @@ import TrashBinIcon from '../../../icons/solar/Trash Bin.svg?react'
 import Pen from '../../../icons/solar/Pen.svg?react'
 import { useShortcut } from '~/hooks/use-shortcut'
 import { useFileWatcher } from '~/hooks/use-file-watcher'
+import { getAncestorIds, isVisibleInTree, selectAndReveal, toTreeItemId } from './tree-utilities'
 import type { ContextMenuState } from './use-file-tree-context-menu'
 
 import {
@@ -52,9 +54,11 @@ export default function EditorFileStructure() {
   const getTab = useEditorTabStore((state) => state.getTab)
   const removeTab = useEditorTabStore((state) => state.removeTab)
   const removeTabAndSelectFallback = useEditorTabStore((state) => state.removeTabAndSelectFallback)
+  const activeTabFilePath = useEditorTabStore((state) => state.activeTabFilePath)
 
   const [dataProvider, setDataProvider] = useState<EditorFilesDataProvider | null>(null)
   const [selectedItemId, setSelectedItemId] = useState<TreeItemIndex | null>(null)
+  const [rootPath, setRootPath] = useState<string | null>(null)
 
   const expandedItemsRef = useRef(editorExpandedItems)
 
@@ -65,6 +69,26 @@ export default function EditorFileStructure() {
   useFileWatcher(project?.name ?? null, () => {
     if (dataProvider) void dataProvider.reloadDirectory('root')
   })
+  
+  useEffect(() => {
+    if (!dataProvider) {
+      setRootPath(null)
+      return
+    }
+    void dataProvider.getTreeItem('root').then((root) => {
+      if (root) setRootPath((root.data as FileNode).path)
+    })
+  }, [dataProvider])
+
+  const activeTabItemId = useMemo(
+    () => (rootPath && activeTabFilePath ? toTreeItemId(activeTabFilePath, rootPath) : null),
+    [rootPath, activeTabFilePath],
+  )
+
+  const isActiveItemVisible = useMemo(
+    () => isVisibleInTree(activeTabItemId, editorExpandedItems),
+    [activeTabItemId, editorExpandedItems],
+  )
 
   const onAfterRename = useCallback(
     (oldPath: string, newName: string) => {
@@ -131,12 +155,31 @@ export default function EditorFileStructure() {
     [buildContextForItem],
   )
 
+  const revealActiveFile = useCallback(async () => {
+    if (!dataProvider || !activeTabFilePath || !rootPath || !tree.current) return
+
+    const itemId = toTreeItemId(activeTabFilePath, rootPath)
+
+    for (const ancestorId of getAncestorIds(itemId)) {
+      await dataProvider.loadDirectory(ancestorId)
+      tree.current.expandItem(ancestorId)
+    }
+
+    selectAndReveal(tree.current, itemId)
+  }, [dataProvider, activeTabFilePath, rootPath])
+
   useShortcut({
     'explorer.new-file': () => triggerExplorerAction(editorContextMenu.handleNewFile, false),
     'explorer.new-folder': () => triggerExplorerAction(editorContextMenu.handleNewFolder, false),
-    'explorer.rename': () => triggerExplorerAction(editorContextMenu.handleRename, true),
-    'explorer.delete': () => triggerExplorerAction(editorContextMenu.handleDelete, true),
-    'explorer.delete-mac': () => triggerExplorerAction(editorContextMenu.handleDelete, true),
+    'explorer.rename': () => {
+      if (!selectedItemId) return false
+      triggerExplorerAction(editorContextMenu.handleRename, true)
+    },
+    'explorer.delete': () => {
+      if (!selectedItemId) return false
+      triggerExplorerAction(editorContextMenu.handleDelete, true)
+    },
+    'explorer.reveal': () => void revealActiveFile(),
   })
 
   useEffect(() => {
@@ -427,6 +470,14 @@ export default function EditorFileStructure() {
         <span className="text-foreground/50 text-xs font-semibold tracking-wider uppercase">Explorer</span>
         <div className="flex items-center gap-0.5">
           <button
+            className={`${toolbarBtnClass} ${!activeTabFilePath || isActiveItemVisible ? 'cursor-not-allowed opacity-40' : ''}`}
+            title="Open File Tree to Active Tab"
+            disabled={!activeTabFilePath || isActiveItemVisible}
+            onClick={() => void revealActiveFile()}
+          >
+            <ListDown className="fill-foreground h-5 w-5" />
+          </button>
+          <button
             className={toolbarBtnClass}
             title="New File"
             onClick={() => triggerExplorerAction(editorContextMenu.handleNewFile, false)}
@@ -463,6 +514,9 @@ export default function EditorFileStructure() {
           }}
           onCollapseItem={(item) => {
             removeEditorExpandedItem(String(item.index))
+            setSelectedItemId((previous) =>
+              previous && String(previous).startsWith(`${String(item.index)}/`) ? null : previous,
+            )
           }}
           getItemTitle={getItemTitle}
           dataProvider={dataProvider}
