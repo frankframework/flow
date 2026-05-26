@@ -63,6 +63,7 @@ export function TabsView<T extends string>({ tabs, activeTab, onSelectTab, onClo
         ref={tabsListReference}
         style={{ scrollbarWidth: 'none' }}
         className="m-0 flex rotate-x-180 flex-nowrap overflow-x-auto p-0 whitespace-nowrap [&::-webkit-scrollbar]:hidden"
+        onScroll={calculateScrollShadows}
       >
         {entries.map(([key, tab]) => (
           <Tab
