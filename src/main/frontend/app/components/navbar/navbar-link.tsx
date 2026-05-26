@@ -21,7 +21,7 @@ export default function NavbarLink({ route, label, Icon }: Readonly<NavbarLinkPr
       <button
         type="button"
         onClick={handleClick}
-        className="group hover:bg-hover relative flex w-full flex-col items-center p-4 text-center hover:cursor-pointer"
+        className={clsx('group relative flex w-full flex-col items-center p-4 text-center hover:cursor-pointer', !isActive && 'hover:bg-hover')}
       >
         <div
           className={clsx('absolute top-1/2 left-1 h-10/12 w-[2px] -translate-y-1/2 rounded', isActive && 'bg-brand')}
@@ -29,8 +29,8 @@ export default function NavbarLink({ route, label, Icon }: Readonly<NavbarLinkPr
         {Icon && (
           <Icon
             className={clsx(
-              'group-hover:fill-foreground h-8 w-auto',
-              isActive ? 'fill-brand' : 'fill-foreground-muted',
+              'h-8 w-auto',
+              isActive ? 'fill-brand' : 'fill-foreground-muted group-hover:fill-foreground',
             )}
           />
         )}
