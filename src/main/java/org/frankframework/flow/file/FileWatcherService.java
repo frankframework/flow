@@ -14,12 +14,9 @@ import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -28,6 +25,7 @@ import lombok.extern.log4j.Log4j2;
 import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.frankframework.flow.project.ConfigurationProject;
 import org.frankframework.flow.project.ConfigurationProjectService;
+import org.frankframework.flow.sse.SseChannelService;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -41,11 +39,11 @@ public class FileWatcherService {
 	private final FileSystemStorage fileSystemStorage;
 	private final FileTreeService fileTreeService;
 	private final ConfigurationProjectService configurationProjectService;
+	private final SseChannelService sseChannelService;
 
 	private WatchService watchService;
 
 	private final Map<WatchKey, String> watchKeyChannels = new ConcurrentHashMap<>();
-	private final Map<String, List<SseEmitter>> channelEmitters = new ConcurrentHashMap<>();
 	private final Map<String, Runnable> channelCallbacks = new ConcurrentHashMap<>();
 	private final Map<String, ScheduledFuture<?>> pendingBroadcasts = new ConcurrentHashMap<>();
 
@@ -56,11 +54,13 @@ public class FileWatcherService {
 	public FileWatcherService(
 			FileSystemStorage fileSystemStorage,
 			FileTreeService fileTreeService,
-			ConfigurationProjectService configurationProjectService
+			ConfigurationProjectService configurationProjectService,
+			SseChannelService sseChannelService
 	) {
 		this.fileSystemStorage = fileSystemStorage;
 		this.fileTreeService = fileTreeService;
 		this.configurationProjectService = configurationProjectService;
+		this.sseChannelService = sseChannelService;
 	}
 
 	@PostConstruct
@@ -92,7 +92,7 @@ public class FileWatcherService {
 
 	public SseEmitter subscribeToProject(String projectName) {
 		if (watchService == null) {
-			return createEmitter(projectName);
+			return sseChannelService.subscribe(projectName);
 		}
 		try {
 			ConfigurationProject project = configurationProjectService.getProject(projectName);
@@ -101,10 +101,10 @@ public class FileWatcherService {
 			channelCallbacks.put(channelId, () -> fileTreeService.invalidateTreeCache(projectName));
 			registerRecursively(projectPath, channelId);
 
-			return createEmitter(channelId);
+			return sseChannelService.subscribe(channelId);
 		} catch (Exception exception) {
 			log.warn("Failed to register project for watching: {}", projectName, exception);
-			return createEmitter(projectName);
+			return sseChannelService.subscribe(projectName);
 		}
 	}
 
@@ -119,25 +119,7 @@ public class FileWatcherService {
 			);
 			watchKeyChannels.put(key, channelId);
 		}
-		return createEmitter(channelId);
-	}
-
-	private SseEmitter createEmitter(String channelId) {
-		SseEmitter emitter = new SseEmitter(0L);
-		channelEmitters.computeIfAbsent(channelId, _ -> new CopyOnWriteArrayList<>()).add(emitter);
-		Runnable cleanup = () -> removeFromChannel(channelId, emitter);
-		emitter.onCompletion(cleanup);
-		emitter.onTimeout(cleanup);
-		emitter.onError(_ -> cleanup.run());
-
-		return emitter;
-	}
-
-	private void removeFromChannel(String channelId, SseEmitter emitter) {
-		List<SseEmitter> list = channelEmitters.get(channelId);
-		if (list != null) {
-			list.remove(emitter);
-		}
+		return sseChannelService.subscribe(channelId);
 	}
 
 	private void registerRecursively(Path dir, String channelId) throws IOException {
@@ -218,26 +200,8 @@ public class FileWatcherService {
 				callback.run();
 			}
 
-			broadcast(channelId);
+			sseChannelService.broadcast(channelId, SseEmitter.event().name("file-change").data("changed"));
 			pendingBroadcasts.remove(channelId);
 		}, DEBOUNCE_DELAY_MS, TimeUnit.MILLISECONDS));
-	}
-
-	private void broadcast(String channelId) {
-		List<SseEmitter> emitters = channelEmitters.get(channelId);
-		if (emitters == null || emitters.isEmpty()) {
-			return;
-		}
-
-		List<SseEmitter> dead = new ArrayList<>();
-		for (SseEmitter emitter : emitters) {
-			try {
-				emitter.send(SseEmitter.event().name("file-change").data("changed"));
-			} catch (Exception exception) {
-				dead.add(emitter);
-			}
-		}
-
-		emitters.removeAll(dead);
 	}
 }

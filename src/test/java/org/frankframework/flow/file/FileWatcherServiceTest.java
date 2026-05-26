@@ -12,6 +12,7 @@ import java.util.Comparator;
 import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.frankframework.flow.project.ConfigurationProject;
 import org.frankframework.flow.project.ConfigurationProjectService;
+import org.frankframework.flow.sse.SseChannelService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -39,7 +40,7 @@ class FileWatcherServiceTest {
 	void setUp() throws IOException {
 		tempDir = Files.createTempDirectory("file-watcher-test");
 		when(fileSystemStorage.isLocalEnvironment()).thenReturn(true);
-		service = new FileWatcherService(fileSystemStorage, fileTreeService, configurationProjectService);
+		service = new FileWatcherService(fileSystemStorage, fileTreeService, configurationProjectService, new SseChannelService());
 		service.start();
 	}
 
@@ -59,7 +60,7 @@ class FileWatcherServiceTest {
 	@Test
 	void cloudEnvironment_doesNotStartWatchService() throws IOException {
 		when(fileSystemStorage.isLocalEnvironment()).thenReturn(false);
-		FileWatcherService cloudService = new FileWatcherService(fileSystemStorage, fileTreeService, configurationProjectService);
+		FileWatcherService cloudService = new FileWatcherService(fileSystemStorage, fileTreeService, configurationProjectService, new SseChannelService());
 		cloudService.start();
 
 		SseEmitter emitter = cloudService.subscribeToProject("project");
