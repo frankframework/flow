@@ -1,7 +1,7 @@
-import { useEffect, useState, useCallback, useRef } from 'react'
+import React, { useEffect, useState, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router'
 import FfIcon from '/icons/custom/ff!-icon.svg?react'
-import ArchiveIcon from '/icons/solar/Archive.svg?react'
+import LibraryIcon from '/icons/solar/Library.svg?react'
 import { fetchInstanceConfigurations, type FFConfiguration } from '~/services/frank-framework-service'
 import { useProjectStore } from '~/stores/project-store'
 import { ApiError } from '~/utils/api'
@@ -193,10 +193,10 @@ export default function ProjectLanding() {
   if (isLoading || isOpeningProject) return <LoadingState />
 
   return (
-    <div className="bg-backdrop flex min-h-screen w-full flex-col items-center pt-20">
+    <div className="bg-backdrop flex min-h-screen w-full flex-col items-center justify-center pt-8 pb-48">
       <Header />
 
-      <main className="border-border bg-background flex min-h-100 w-2/5 flex-col rounded border shadow">
+      <main className="border-border bg-background flex min-h-100 w-full max-w-5xl flex-col rounded border shadow lg:w-3/4">
         <Toolbar onSearchChange={setSearchTerm} />
 
         <div className="flex flex-1 overflow-hidden">
@@ -218,14 +218,14 @@ export default function ProjectLanding() {
             isDiscovering={isDiscovering}
           />
         </div>
-
-        {!isLocalEnvironment && (
-          <div className="border-border bg-warning/10 text-warning border-t px-4 py-2 text-xs">
-            Cloud workspace projects are automatically removed after 24 hours of inactivity. After you are done please
-            use the Export functionality in the landing page to download a backup of your project.
-          </div>
-        )}
       </main>
+
+      {!isLocalEnvironment && (
+        <div className="border-border bg-warning/10 text-warning mt-3 w-full max-w-5xl rounded border px-4 py-2 text-xs lg:w-3/4">
+          Cloud workspace projects are automatically removed after 24 hours of inactivity. After you are done please use
+          the Export functionality in the landing page to download a backup of your project.
+        </div>
+      )}
 
       <NewConfigurationModal
         isOpen={isModalOpen}
@@ -264,9 +264,11 @@ export default function ProjectLanding() {
 }
 
 const Header = () => (
-  <header className="mb-6 flex w-2/5 items-center gap-3">
-    <FfIcon className="h-12 w-auto" />
-    <h1 className="dark:text-foreground text-lg font-semibold text-black">Flow</h1>
+  <header className="mb-4 flex w-full max-w-5xl lg:w-3/4">
+    <div className="flex w-1/4 min-w-50 items-center gap-3 px-4">
+      <FfIcon className="h-10 w-auto" />
+      <h1 className="dark:text-foreground text-lg font-semibold text-black">Flow</h1>
+    </div>
   </header>
 )
 
@@ -283,11 +285,15 @@ const Sidebar = ({
   onCloneClick: () => void
   onImportClick: () => void
 }) => (
-  <nav className="border-border flex w-1/4 min-w-50 flex-col gap-3 border-r p-4">
-    <ActionButton label={isLocal ? 'Open Local Folder' : 'Open Workspace Configuration'} onClick={onOpenClick} />
-    <ActionButton label="Clone Repository" onClick={onCloneClick} />
-    <ActionButton label="New Configuration" onClick={onNewClick} />
-    {!isLocal && <ActionButton label="Import Configuration Folder" onClick={onImportClick} />}
+  <nav className="border-border flex w-1/4 min-w-50 flex-col border-r py-2">
+    <ActionButton
+      label={isLocal ? 'Open Local Folder' : 'Open Workspace Configuration'}
+      onClick={onOpenClick}
+      className="text-start"
+    />
+    <ActionButton label="Clone Repository" onClick={onCloneClick} className="text-start" />
+    <ActionButton label="New Configuration" onClick={onNewClick} className="text-start" />
+    {!isLocal && <ActionButton label="Import Configuration Folder" onClick={onImportClick} className="text-start" />}
   </nav>
 )
 
@@ -336,7 +342,6 @@ const ProjectList = ({
     )}
     {projects.length > 0 && (
       <>
-        <p className="text-foreground mb-2 text-xs font-semibold tracking-wider uppercase">Recent</p>
         {projects.map((project) => (
           <ConfigurationRow
             key={project.rootPath}
@@ -353,12 +358,13 @@ const ProjectList = ({
 )
 
 const Toolbar = ({ onSearchChange }: { onSearchChange: (value: string) => void }) => (
-  <div className="border-border flex h-12 border-b">
+  <div className="border-border flex h-11 border-b">
     <div className="border-border text-foreground flex w-1/4 min-w-50 items-center border-r px-4 text-xs font-bold tracking-wider uppercase">
-      <ArchiveIcon className="fill-foreground mr-2 h-4 w-4" /> Recent
+      <LibraryIcon className="fill-foreground h-5 w-5" />
+      <p className="ms-3 align-middle text-sm font-medium normal-case">Configurations</p>
     </div>
-    <div className="flex flex-1 items-center px-4">
-      <Search onChange={(event) => onSearchChange(event.target.value)} />
+    <div className="flex flex-1 items-center justify-center px-4">
+      <Search className="w-full" inputClassName="py-1" onChange={(changeEvent) => onSearchChange(changeEvent.target.value)} />
     </div>
   </div>
 )

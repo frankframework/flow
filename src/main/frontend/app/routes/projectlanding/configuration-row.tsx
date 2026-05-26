@@ -1,6 +1,7 @@
-import CloseSquareIcon from 'icons/solar/Close Square.svg?react'
 import ArchiveIcon from '/icons/solar/Archive.svg?react'
+import TrashBinIcon from '/icons/solar/Trash Bin.svg?react'
 import type { RecentConfigurationProject } from '~/types/project.types'
+import KebabMenu, { type KebabMenuItem } from '~/components/inputs/kebab-menu'
 
 interface ConfigurationRowProperties {
   project: RecentConfigurationProject
@@ -17,6 +18,24 @@ export default function ConfigurationRow({
   onRemove,
   onExport,
 }: Readonly<ConfigurationRowProperties>) {
+  const menuItems: KebabMenuItem[] = [
+    ...(isLocal
+      ? []
+      : [
+          {
+            label: 'Export as .zip',
+            icon: <ArchiveIcon className="h-4 w-4 fill-current" />,
+            onClick: onExport,
+          },
+        ]),
+    {
+      label: 'Remove from recent',
+      icon: <TrashBinIcon className="h-4 w-4 fill-current" />,
+      onClick: onRemove,
+      className: 'text-red-500',
+    },
+  ]
+
   return (
     <div
       className="hover:bg-backdrop mb-2 flex w-full cursor-pointer items-center justify-between rounded px-3 py-1"
@@ -27,32 +46,7 @@ export default function ConfigurationRow({
         <p className="text-foreground-muted text-xs">{project.rootPath}</p>
       </div>
 
-      <div className="flex items-center gap-1">
-        {!isLocal && (
-          <button
-            onClick={(event) => {
-              event.stopPropagation()
-              onExport()
-            }}
-            className="text-foreground-muted hover:text-foreground cursor-pointer rounded p-2 transition-colors"
-            aria-label="Export configuration as zip"
-            title="Export as .zip"
-          >
-            <ArchiveIcon className="h-4 w-4" />
-          </button>
-        )}
-
-        <button
-          onClick={(event) => {
-            event.stopPropagation()
-            onRemove()
-          }}
-          className="text-foreground-muted hover:text-foreground cursor-pointer rounded p-2 transition-colors"
-          aria-label="Remove from recent configurations"
-        >
-          <CloseSquareIcon className="h-4 w-4" />
-        </button>
-      </div>
+      <KebabMenu items={menuItems} />
     </div>
   )
 }

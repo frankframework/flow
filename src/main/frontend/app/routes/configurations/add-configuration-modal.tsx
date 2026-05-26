@@ -3,6 +3,7 @@ import { createConfigurationFile } from '~/services/configuration-file-service'
 import { useProjectStore } from '~/stores/project-store'
 import type { ConfigurationProject } from '~/types/project.types'
 import Button from '~/components/inputs/button'
+import CloseButton from '~/components/inputs/close-button'
 import Input from '~/components/inputs/input'
 import DirectoryPicker from '~/components/directory-picker/directory-picker'
 import { fetchProject } from '~/services/project-service'
@@ -135,9 +136,7 @@ export default function AddConfigurationModal({
             {loading ? 'Adding...' : `Add ${displayFilename || 'configuration file'} to ${currentConfiguration.name}`}
           </Button>
 
-          <Button onClick={handleClose} className="absolute top-3 right-3">
-            Close
-          </Button>
+          <CloseButton onClick={handleClose} className="absolute top-3 right-3" />
         </div>
 
         {error && <p className="mt-4 text-sm text-red-500">{error}</p>}

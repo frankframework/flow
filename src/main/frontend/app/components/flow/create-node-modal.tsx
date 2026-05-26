@@ -3,6 +3,7 @@ import useFlowStore from '~/stores/flow-store'
 import useNodeContextStore from '~/stores/node-context-store'
 import { useFFDoc } from '@frankframework/doc-library-react'
 import Button from '../inputs/button'
+import CloseButton from '../inputs/close-button'
 import Search from '~/components/search/search'
 import type { Elements, FFDocJson } from '@frankframework/doc-library-core'
 
@@ -147,9 +148,7 @@ function CreateNodeModal({
           </ul>
         </div>
 
-        <Button onClick={onClose} className="absolute top-3 right-3">
-          Close
-        </Button>
+        <CloseButton onClick={onClose} className="absolute top-3 right-3" />
         <Button onClick={handleCreateNode}>Create Node</Button>
       </div>
     </div>

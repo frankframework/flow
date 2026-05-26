@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import DirectoryPicker from '~/components/directory-picker/directory-picker'
 import Button from '~/components/inputs/button'
+import CloseButton from '~/components/inputs/close-button'
 import Input from '~/components/inputs/input'
 import { filesystemService } from '~/services/filesystem-service'
 
@@ -103,9 +104,7 @@ export default function NewConfigurationModal({
               Create Configuration
             </Button>
 
-            <Button onClick={handleClose} className="absolute top-3 right-3">
-              Close
-            </Button>
+            <CloseButton onClick={handleClose} className="absolute top-3 right-3" />
           </div>
         </div>
       </div>
