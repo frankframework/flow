@@ -166,7 +166,11 @@ public class FileWatcherService {
 			WatchKey key;
 			try {
 				key = watchService.take();
-			} catch (InterruptedException | ClosedWatchServiceException exception) {
+			} catch (InterruptedException exception) {
+				Thread.currentThread().interrupt();
+				break;
+
+			} catch (ClosedWatchServiceException exception) {
 				break;
 			}
 
