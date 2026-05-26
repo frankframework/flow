@@ -53,10 +53,6 @@ export default function DirectoryPicker({
 
   useDirectoryWatcher(isOpen ? currentPath : null, () => void loadEntries(currentPath))
 
-  const handleNavigateUp = () => {
-    loadEntries(parentPath)
-  }
-
   useEffect(() => {
     if (isOpen) {
       setSelectedEntry(null)

@@ -6,6 +6,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
@@ -51,7 +52,8 @@ class FileWatcherServiceTest {
 			stream.sorted(Comparator.reverseOrder()).forEach(path -> {
 				try {
 					Files.delete(path);
-				} catch (IOException _) {
+				} catch (IOException exception) {
+					throw new UncheckedIOException("Failed to delete " + path, exception);
 				}
 			});
 		}

@@ -1,5 +1,6 @@
 package org.frankframework.flow.sse;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 
@@ -31,7 +32,9 @@ class SseChannelServiceTest {
 
 	@Test
 	void broadcast_emptyChannel_doesNotThrow() {
-		service.broadcast("unknown", SseEmitter.event().name("test").data("data"));
+		assertDoesNotThrow(() ->
+				service.broadcast("unknown", SseEmitter.event().name("test").data("data"))
+		);
 	}
 
 	@Test
@@ -39,6 +42,8 @@ class SseChannelServiceTest {
 		SseEmitter emitter = service.subscribe("channel");
 		emitter.complete();
 
-		service.broadcast("channel", SseEmitter.event().name("test").data("data"));
+		assertDoesNotThrow(() ->
+				service.broadcast("channel", SseEmitter.event().name("test").data("data"))
+		);
 	}
 }
