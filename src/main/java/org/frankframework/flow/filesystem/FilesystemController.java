@@ -6,6 +6,7 @@ import org.frankframework.flow.file.FileWatcherService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -36,5 +37,17 @@ public class FilesystemController {
 	@GetMapping("/watch")
 	public SseEmitter watch(@RequestParam String path) throws IOException {
 		return fileWatcherService.subscribeToPath(fileSystemStorage.toAbsolutePath(path));
+  }
+  
+	@PostMapping("/mkdir")
+	public ResponseEntity<Void> mkdir(@RequestParam String path) throws IOException {
+		try {
+			fileSystemStorage.createProjectDirectory(path);
+			return ResponseEntity.ok().build();
+		} catch (AccessDeniedException _) {
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+		} catch (SecurityException _) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+		}
 	}
 }
