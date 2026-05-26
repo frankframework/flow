@@ -34,6 +34,7 @@ import { useProjectStore } from '~/stores/project-store'
 import { useTreeStore } from '~/stores/tree-store'
 import { useStudioContextMenu, detectItemType, getItemName, resolveItemPaths } from './use-studio-context-menu'
 import StudioFileTreeDialogs from './studio-file-tree-dialogs'
+import TreeActionButton from './tree-action-button'
 
 const TREE_ID = 'studio-files-tree'
 
@@ -415,7 +416,6 @@ export default function StudioFileStructure() {
     }
 
     const isHighlighted = highlightedItemId == item.index
-    const actionBtnClass = 'cursor-pointer rounded p-0.5 hover:bg-hover flex-shrink-0'
 
     return (
       <div
@@ -432,89 +432,44 @@ export default function StudioFileStructure() {
         </span>
         <div className="ml-1 hidden items-center gap-0.5 group-hover/row:flex">
           {(isRoot || isPlainFolder) && (
-            <div
-              role="button"
-              tabIndex={0}
-              className={actionBtnClass}
+            <TreeActionButton
               title="New Configuration File"
-              onClick={(mouseEvent) => {
-                mouseEvent.stopPropagation()
-                triggerItemAction(item.index, studioContextMenu.handleNewConfiguration)
-              }}
-              onKeyDown={(keyboardEvent) =>
-                keyboardEvent.key === 'Enter' && triggerItemAction(item.index, studioContextMenu.handleNewConfiguration)
-              }
+              onAction={() => triggerItemAction(item.index, studioContextMenu.handleNewConfiguration)}
             >
               <SettingsIcon className="fill-foreground h-3.5 w-3.5" />
-            </div>
+            </TreeActionButton>
           )}
           {(isRoot || isPlainFolder) && (
-            <div
-              role="button"
-              tabIndex={0}
-              className={actionBtnClass}
+            <TreeActionButton
               title="New Folder"
-              onClick={(mouseEvent) => {
-                mouseEvent.stopPropagation()
-                triggerItemAction(item.index, studioContextMenu.handleNewFolder)
-              }}
-              onKeyDown={(keyboardEvent) =>
-                keyboardEvent.key === 'Enter' && triggerItemAction(item.index, studioContextMenu.handleNewFolder)
-              }
+              onAction={() => triggerItemAction(item.index, studioContextMenu.handleNewFolder)}
             >
               <FolderIcon className="fill-foreground h-3.5 w-3.5" />
-            </div>
+            </TreeActionButton>
           )}
           {isConfigFile && (
-            <div
-              role="button"
-              tabIndex={0}
-              className={actionBtnClass}
+            <TreeActionButton
               title="New Adapter"
-              onClick={(mouseEvent) => {
-                mouseEvent.stopPropagation()
-                triggerItemAction(item.index, studioContextMenu.handleNewAdapter)
-              }}
-              onKeyDown={(keyboardEvent) =>
-                keyboardEvent.key === 'Enter' && triggerItemAction(item.index, studioContextMenu.handleNewAdapter)
-              }
+              onAction={() => triggerItemAction(item.index, studioContextMenu.handleNewAdapter)}
             >
               <CodeIcon className="fill-foreground h-4 w-4" />
-            </div>
+            </TreeActionButton>
           )}
           {!isRoot && (
-            <div
-              role="button"
-              tabIndex={0}
-              className={actionBtnClass}
+            <TreeActionButton
               title="Rename"
-              onClick={(mouseEvent) => {
-                mouseEvent.stopPropagation()
-                triggerItemAction(item.index, studioContextMenu.handleRename)
-              }}
-              onKeyDown={(keyboardEvent) =>
-                keyboardEvent.key === 'Enter' && triggerItemAction(item.index, studioContextMenu.handleRename)
-              }
+              onAction={() => triggerItemAction(item.index, studioContextMenu.handleRename)}
             >
               <Pen className="stroke-foreground h-3.5 w-3.5" />
-            </div>
+            </TreeActionButton>
           )}
           {!isRoot && (
-            <div
-              role="button"
-              tabIndex={0}
-              className={actionBtnClass}
+            <TreeActionButton
               title="Delete"
-              onClick={(mouseEvent) => {
-                mouseEvent.stopPropagation()
-                triggerItemAction(item.index, studioContextMenu.handleDelete)
-              }}
-              onKeyDown={(keyboardEvent) =>
-                keyboardEvent.key === 'Enter' && triggerItemAction(item.index, studioContextMenu.handleDelete)
-              }
+              onAction={() => triggerItemAction(item.index, studioContextMenu.handleDelete)}
             >
               <TrashBinIcon className="fill-foreground h-3.5 w-3.5" />
-            </div>
+            </TreeActionButton>
           )}
         </div>
       </div>

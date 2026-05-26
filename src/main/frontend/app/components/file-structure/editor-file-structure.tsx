@@ -31,6 +31,7 @@ import { useTreeStore } from '~/stores/tree-store'
 import EditorFilesDataProvider, { type FileNode } from './editor-data-provider'
 import { useFileTreeContextMenu } from './use-file-tree-context-menu'
 import FileTreeDialogs from './file-tree-dialogs'
+import TreeActionButton from './tree-action-button'
 
 const TREE_ID = 'editor-files-tree'
 
@@ -371,8 +372,6 @@ export default function EditorFileStructure() {
 
     const isHighlighted = highlightedItemId === item.index
 
-    const actionBtnClass = 'cursor-pointer rounded p-0.5 hover:bg-hover flex-shrink-0'
-
     return (
       <div
         className="group/row flex h-full w-full items-center"
@@ -388,72 +387,36 @@ export default function EditorFileStructure() {
         </span>
         <div className="ml-1 hidden items-center gap-0.5 group-hover/row:flex">
           {item.isFolder && (
-            <div
-              role="button"
-              tabIndex={0}
-              className={actionBtnClass}
+            <TreeActionButton
               title="New File"
-              onClick={(mouseEvent) => {
-                mouseEvent.stopPropagation()
-                triggerItemAction(item.index, editorContextMenu.handleNewFile)
-              }}
-              onKeyDown={(keyboardEvent) =>
-                keyboardEvent.key === 'Enter' && triggerItemAction(item.index, editorContextMenu.handleNewFile)
-              }
+              onAction={() => triggerItemAction(item.index, editorContextMenu.handleNewFile)}
             >
               <CodeFileIcon className="fill-foreground h-3.5 w-3.5" />
-            </div>
+            </TreeActionButton>
           )}
           {item.isFolder && (
-            <div
-              role="button"
-              tabIndex={0}
-              className={actionBtnClass}
+            <TreeActionButton
               title="New Folder"
-              onClick={(mouseEvent) => {
-                mouseEvent.stopPropagation()
-                triggerItemAction(item.index, editorContextMenu.handleNewFolder)
-              }}
-              onKeyDown={(keyboardEvent) =>
-                keyboardEvent.key === 'Enter' && triggerItemAction(item.index, editorContextMenu.handleNewFolder)
-              }
+              onAction={() => triggerItemAction(item.index, editorContextMenu.handleNewFolder)}
             >
               <FolderIcon className="fill-foreground h-3.5 w-3.5" />
-            </div>
+            </TreeActionButton>
           )}
           {!isRoot && (
-            <div
-              role="button"
-              tabIndex={0}
-              className={actionBtnClass}
+            <TreeActionButton
               title="Rename"
-              onClick={(mouseEvent) => {
-                mouseEvent.stopPropagation()
-                triggerItemAction(item.index, editorContextMenu.handleRename)
-              }}
-              onKeyDown={(keyboardEvent) =>
-                keyboardEvent.key === 'Enter' && triggerItemAction(item.index, editorContextMenu.handleRename)
-              }
+              onAction={() => triggerItemAction(item.index, editorContextMenu.handleRename)}
             >
               <Pen className="fill-foreground h-3.5 w-3.5" />
-            </div>
+            </TreeActionButton>
           )}
           {!isRoot && (
-            <div
-              role="button"
-              tabIndex={0}
-              className={actionBtnClass}
+            <TreeActionButton
               title="Delete"
-              onClick={(mouseEvent) => {
-                mouseEvent.stopPropagation()
-                triggerItemAction(item.index, editorContextMenu.handleDelete)
-              }}
-              onKeyDown={(keyboardEvent) =>
-                keyboardEvent.key === 'Enter' && triggerItemAction(item.index, editorContextMenu.handleDelete)
-              }
+              onAction={() => triggerItemAction(item.index, editorContextMenu.handleDelete)}
             >
               <TrashBinIcon className="fill-foreground h-3.5 w-3.5" />
-            </div>
+            </TreeActionButton>
           )}
         </div>
       </div>
