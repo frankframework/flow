@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
-import lombok.extern.slf4j.Slf4j;
+import lombok.extern.log4j.Log4j2;
 import org.frankframework.flow.common.config.ClientSession;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
@@ -19,7 +19,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @Profile("cloud")
-@Slf4j
+@Log4j2
 public class CloudFileSystemStorageService implements FileSystemStorage {
 	@Value("${frankflow.workspace.root:/tmp/frankflow/workspace}")
 	private String baseWorkspacePath;
