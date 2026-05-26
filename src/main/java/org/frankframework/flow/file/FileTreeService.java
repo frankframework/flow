@@ -66,25 +66,8 @@ public class FileTreeService {
 	}
 
 	public FileTreeNode getShallowDirectoryTree(String projectName, String directoryPath) throws IOException {
-		try {
-			ConfigurationProject configurationProject = configurationProjectService.getProject(projectName);
-			Path projectPath = fileSystemStorage.toAbsolutePath(configurationProject.getRootPath());
-			Path dirPath = fileSystemStorage.toAbsolutePath(directoryPath).normalize();
-
-			if (!dirPath.startsWith(projectPath)) {
-				throw new SecurityException("Invalid path: outside project directory");
-			}
-
-			if (!Files.exists(dirPath) || !Files.isDirectory(dirPath)) {
-				throw new IllegalArgumentException("Directory does not exist: " + dirPath);
-			}
-
-			boolean useRelativePaths = !fileSystemStorage.isLocalEnvironment();
-			Path relativizeRoot = useRelativePaths ? fileSystemStorage.toAbsolutePath("") : projectPath;
-			return buildShallowTree(dirPath, relativizeRoot, useRelativePaths);
-		} catch (ApiException _) {
-			throw new IllegalArgumentException("Project does not exist: " + projectName);
-		}
+		ProjectDirectory projectDirectory = resolveProjectDirectory(projectName, directoryPath);
+		return buildShallowTree(projectDirectory.dirPath, projectDirectory.relativizeRoot, projectDirectory.useRelativePaths);
 	}
 
 	public FileTreeNode getShallowConfigurationsDirectoryTree(String projectName) throws IOException {
@@ -103,6 +86,11 @@ public class FileTreeService {
 		} catch (ApiException _) {
 			throw new IllegalArgumentException("Configurations directory does not exist: " + projectName);
 		}
+	}
+
+	public FileTreeNode getAncestorPath(String projectName, String directoryPath) throws IOException {
+		ProjectDirectory projecetDirectory = resolveProjectDirectory(projectName, directoryPath);
+		return buildAncestorTree(projecetDirectory.projectPath, projecetDirectory.dirPath, projecetDirectory.relativizeRoot, projecetDirectory.useRelativePaths);
 	}
 
 	public FileTreeNode createFolder(String projectName, String path) throws IOException {
@@ -201,6 +189,33 @@ public class FileTreeService {
 		return relativePath.isEmpty() ? "." : relativePath;
 	}
 
+	private FileTreeNode buildAncestorTree(Path current, Path target, Path relativizeRoot, boolean useRelativePaths) throws IOException {
+		FileTreeNode node = buildShallowTree(current, relativizeRoot, useRelativePaths);
+		if (current.equals(target)) {
+			return node;
+		}
+
+		Path nextOnPath = target;
+		while (!nextOnPath.getParent().equals(current)) {
+			nextOnPath = nextOnPath.getParent();
+		}
+
+		String spineChildName = nextOnPath.getFileName().toString();
+		Path spineChildPath = nextOnPath;
+
+		List<FileTreeNode> updatedChildren = new ArrayList<>(node.getChildren().size());
+		for (FileTreeNode child : node.getChildren()) {
+			if (child.getName().equals(spineChildName)) {
+				updatedChildren.add(buildAncestorTree(spineChildPath, target, relativizeRoot, useRelativePaths));
+			} else {
+				updatedChildren.add(child);
+			}
+		}
+
+		node.setChildren(updatedChildren);
+		return node;
+	}
+
 	private FileTreeNode buildShallowTree(Path path, Path relativizeRoot, boolean useRelativePaths) throws IOException {
 		FileTreeNode node = new FileTreeNode();
 		node.setName(path.getFileName().toString());
@@ -230,6 +245,35 @@ public class FileTreeService {
 
 		return node;
 	}
+
+	private ProjectDirectory resolveProjectDirectory(String projectName, String directoryPath) throws IOException {
+		try {
+			ConfigurationProject configurationProject = configurationProjectService.getProject(projectName);
+			Path projectPath = fileSystemStorage.toAbsolutePath(configurationProject.getRootPath());
+			Path dirPath = fileSystemStorage.toAbsolutePath(directoryPath).normalize();
+
+			if (!dirPath.startsWith(projectPath)) {
+				throw new SecurityException("Invalid path: outside project directory");
+			}
+
+			if (!Files.exists(dirPath) || !Files.isDirectory(dirPath)) {
+				throw new IllegalArgumentException("Directory does not exist: " + dirPath);
+			}
+
+			boolean useRelativePaths = !fileSystemStorage.isLocalEnvironment();
+			Path relativizeRoot = useRelativePaths ? fileSystemStorage.toAbsolutePath("") : projectPath;
+			return new ProjectDirectory(projectPath, dirPath, relativizeRoot, useRelativePaths);
+		} catch (ApiException _) {
+			throw new IllegalArgumentException("Project does not exist: " + projectName);
+		}
+	}
+
+	private record ProjectDirectory(
+			Path projectPath,
+			Path dirPath,
+			Path relativizeRoot,
+			boolean useRelativePaths
+	) {}
 
 	private record ConfigurationDirectory(
 			Path directoryPath,

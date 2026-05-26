@@ -184,6 +184,7 @@ export const ALL_SHORTCUTS: Omit<ShortcutDefinition, 'handler'>[] = [
   { id: 'studio-explorer.new-adapter', label: 'New Adapter', scope: 'studio', key: 'a' },
   { id: 'studio-explorer.new-folder', label: 'New Folder', scope: 'studio', key: 'n', modifiers: { shift: true } },
   { id: 'studio-explorer.rename', label: 'Rename Item', scope: 'studio', key: 'r' },
+  { id: 'studio-explorer.reveal', label: 'Open File Tree to Active Tab', scope: 'studio', key: 'o' },
   {
     id: 'studio-explorer.delete',
     label: 'Delete Item',
@@ -196,6 +197,7 @@ export const ALL_SHORTCUTS: Omit<ShortcutDefinition, 'handler'>[] = [
   { id: 'explorer.new-file', label: 'New File', scope: 'editor', key: 'n' },
   { id: 'explorer.new-folder', label: 'New Folder', scope: 'editor', key: 'n', modifiers: { shift: true } },
   { id: 'explorer.rename', label: 'Rename Item', scope: 'editor', key: 'r' },
+  { id: 'explorer.reveal', label: 'Open File Tree to Active Tab', scope: 'editor', key: 'o' },
   {
     id: 'explorer.delete',
     label: 'Delete Item',

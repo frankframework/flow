@@ -23,6 +23,16 @@ export async function fetchDirectoryByPath(
   })
 }
 
+export async function fetchAncestorPath(
+  projectName: string,
+  path: string,
+  signal?: AbortSignal,
+): Promise<FileTreeNode> {
+  return apiFetch<FileTreeNode>(`${getTreeUrl(projectName)}/ancestors?path=${encodeURIComponent(path)}`, {
+    signal,
+  })
+}
+
 export async function createFolderInProject(projectName: string, path: string): Promise<FileTreeNode> {
   return apiFetch<FileTreeNode>(`${getBaseUrl(projectName)}/folder`, {
     method: 'POST',
