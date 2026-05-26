@@ -16,6 +16,7 @@ import EditorFileStructure from '~/components/file-structure/editor-file-structu
 import DiffTabView from '~/components/git/diff-tab-view'
 import GitPanel from '~/components/git/git-panel'
 import Button from '~/components/inputs/button'
+import SegmentedButton from '~/components/inputs/segmented-button'
 import SidebarContentClose from '~/components/sidebars-layout/sidebar-content-close'
 import SidebarHeader from '~/components/sidebars-layout/sidebar-header'
 import SidebarLayout from '~/components/sidebars-layout/sidebar-layout'
@@ -763,29 +764,17 @@ export default function CodeEditor() {
         <div className="flex h-12 items-center justify-between pr-4">
           <SidebarHeader side={SidebarSide.LEFT} title="Files" />
           {isGitRepo && (
-            <div className="border-border ml-auto flex overflow-hidden rounded border text-sm">
-              <button
-                onClick={() => setLeftTab('files')}
-                className={clsx(
-                  'cursor-pointer px-3 py-1 transition-colors',
-                  leftTab === 'files'
-                    ? 'bg-selected text-foreground font-medium'
-                    : 'hover:bg-hover text-foreground-muted',
-                )}
-              >
+            <div className="border-border ml-auto flex overflow-hidden rounded border">
+              <SegmentedButton isActive={leftTab === 'files'} onClick={() => setLeftTab('files')}>
                 Files
-              </button>
-              <button
+              </SegmentedButton>
+              <SegmentedButton
+                isActive={leftTab === 'git'}
                 onClick={() => setLeftTab('git')}
-                className={clsx(
-                  'border-border cursor-pointer border-l px-3 py-1 transition-colors',
-                  leftTab === 'git'
-                    ? 'bg-selected text-foreground font-medium'
-                    : 'hover:bg-hover text-foreground-muted',
-                )}
+                className="border-border border-l"
               >
                 Git
-              </button>
+              </SegmentedButton>
             </div>
           )}
         </div>
