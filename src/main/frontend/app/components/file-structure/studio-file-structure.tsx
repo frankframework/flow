@@ -69,7 +69,7 @@ export default function StudioFileStructure() {
     expandedItemsRef.current = studioExpandedItems
   }, [studioExpandedItems])
 
-  useFileWatcher(project?.name, () => {
+  useFileWatcher(project?.name ?? null, () => {
     if (dataProvider) void dataProvider.reloadDirectory('root')
   })
 

@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { apiUrl } from '~/utils/api'
 
-function useSseWatcher(url: string | undefined, onFileChange: () => void) {
+function useSseWatcher(url: string | null, onFileChange: () => void) {
   const callbackRef = useRef(onFileChange)
   callbackRef.current = onFileChange
 
@@ -20,12 +20,12 @@ function useSseWatcher(url: string | undefined, onFileChange: () => void) {
   }, [url])
 }
 
-export function useFileWatcher(projectName: string | undefined, onFileChange: () => void) {
-  const url = projectName ? apiUrl(`/projects/${projectName}/watch`) : undefined
+export function useFileWatcher(projectName: string | null | undefined, onFileChange: () => void) {
+  const url = projectName ? apiUrl(`/projects/${projectName}/watch`) : null
   useSseWatcher(url, onFileChange)
 }
 
-export function useDirectoryWatcher(path: string | undefined, onFileChange: () => void) {
-  const url = path ? apiUrl(`/filesystem/watch?path=${encodeURIComponent(path)}`) : undefined
+export function useDirectoryWatcher(path: string | null, onFileChange: () => void) {
+  const url = path ? apiUrl(`/filesystem/watch?path=${encodeURIComponent(path)}`) : null
   useSseWatcher(url, onFileChange)
 }

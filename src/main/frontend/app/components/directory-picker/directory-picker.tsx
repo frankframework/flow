@@ -48,7 +48,7 @@ export default function DirectoryPicker({
     }
   }, [])
 
-  useDirectoryWatcher(isOpen ? currentPath : undefined, () => void loadEntries(currentPath))
+  useDirectoryWatcher(isOpen ? currentPath : null, () => void loadEntries(currentPath))
 
   const handleNavigateUp = () => {
     loadEntries(parentPath)

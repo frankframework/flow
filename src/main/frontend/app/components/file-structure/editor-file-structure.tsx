@@ -62,7 +62,7 @@ export default function EditorFileStructure() {
     expandedItemsRef.current = editorExpandedItems
   }, [editorExpandedItems])
 
-  useFileWatcher(project?.name, () => {
+  useFileWatcher(project?.name ?? null, () => {
     if (dataProvider) void dataProvider.reloadDirectory('root')
   })
 
