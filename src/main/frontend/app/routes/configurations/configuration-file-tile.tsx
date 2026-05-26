@@ -109,7 +109,7 @@ function AdapterListItem({ name, adapterPosition, onOpenInStudio }: AdapterListI
 
       {/* Button – 1/3 */}
       <button
-        className="bg-backdrop text-foreground hover:bg-hover ml-2 flex w-1/3 items-center justify-center gap-1 rounded px-2 py-1 text-xs font-medium transition hover:cursor-pointer"
+        className="text-foreground hover:bg-hover ml-2 flex w-1/3 items-center justify-center gap-1 rounded px-2 py-1 text-xs font-medium transition hover:cursor-pointer"
         onClick={() => onOpenInStudio(name, adapterPosition)}
       >
         <RulerCrossPenIcon className="h-4 w-4 fill-current" />
