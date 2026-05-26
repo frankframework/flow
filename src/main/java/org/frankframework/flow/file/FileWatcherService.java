@@ -17,6 +17,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executors;
@@ -35,6 +36,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 public class FileWatcherService {
 
 	private static final long DEBOUNCE_DELAY_MS = 150;
+	private static final Set<String> IGNORED_DIRECTORIES = Set.of(".git", "target", "node_modules");
 
 	private final FileSystemStorage fileSystemStorage;
 	private final FileTreeService fileTreeService;
@@ -42,16 +44,9 @@ public class FileWatcherService {
 
 	private WatchService watchService;
 
-	// WatchKey -> channel ID (absolute path of the project root or watched directory)
 	private final Map<WatchKey, String> watchKeyChannels = new ConcurrentHashMap<>();
-
-	// Channel ID -> SSE emitters
 	private final Map<String, List<SseEmitter>> channelEmitters = new ConcurrentHashMap<>();
-
-	// Channel ID -> optional callback run before broadcasting (e.g. cache invalidation)
 	private final Map<String, Runnable> channelCallbacks = new ConcurrentHashMap<>();
-
-	// Channel ID -> pending debounced broadcast
 	private final Map<String, ScheduledFuture<?>> pendingBroadcasts = new ConcurrentHashMap<>();
 
 	private final ScheduledExecutorService debounceExecutor = Executors.newSingleThreadScheduledExecutor(
@@ -73,6 +68,7 @@ public class FileWatcherService {
 		if (!fileSystemStorage.isLocalEnvironment()) {
 			return;
 		}
+
 		try {
 			watchService = FileSystems.getDefault().newWatchService();
 			Thread.ofVirtual().name("file-watcher").start(this::watchLoop);
@@ -95,23 +91,25 @@ public class FileWatcherService {
 	}
 
 	public SseEmitter subscribeToProject(String projectName) {
-		if (watchService != null) {
-			try {
-				ConfigurationProject project = configurationProjectService.getProject(projectName);
-				Path projectPath = fileSystemStorage.toAbsolutePath(project.getRootPath());
-				String channelId = projectPath.toAbsolutePath().toString();
-				channelCallbacks.put(channelId, () -> fileTreeService.invalidateTreeCache(projectName));
-				registerRecursively(projectPath, channelId);
-				return createEmitter(channelId);
-			} catch (Exception exception) {
-				log.warn("Failed to register project for watching: {}", projectName, exception);
-			}
+		if (watchService == null) {
+			return createEmitter(projectName);
 		}
-		return createEmitter(projectName);
+		try {
+			ConfigurationProject project = configurationProjectService.getProject(projectName);
+			Path projectPath = fileSystemStorage.toAbsolutePath(project.getRootPath());
+			String channelId = projectPath.toString();
+			channelCallbacks.put(channelId, () -> fileTreeService.invalidateTreeCache(projectName));
+			registerRecursively(projectPath, channelId);
+
+			return createEmitter(channelId);
+		} catch (Exception exception) {
+			log.warn("Failed to register project for watching: {}", projectName, exception);
+			return createEmitter(projectName);
+		}
 	}
 
 	public SseEmitter subscribeToPath(Path absolutePath) throws IOException {
-		String channelId = absolutePath.toAbsolutePath().toString();
+		String channelId = absolutePath.toString();
 		if (watchService != null && Files.isDirectory(absolutePath)) {
 			WatchKey key = absolutePath.register(
 					watchService,
@@ -131,6 +129,7 @@ public class FileWatcherService {
 		emitter.onCompletion(cleanup);
 		emitter.onTimeout(cleanup);
 		emitter.onError(_ -> cleanup.run());
+
 		return emitter;
 	}
 
@@ -143,10 +142,11 @@ public class FileWatcherService {
 
 	private void registerRecursively(Path dir, String channelId) throws IOException {
 		Files.walkFileTree(dir, new SimpleFileVisitor<>() {
+
 			@Override
 			public FileVisitResult preVisitDirectory(Path directory, BasicFileAttributes attrs) throws IOException {
 				String name = directory.getFileName() != null ? directory.getFileName().toString() : "";
-				if (name.equals(".git") || name.equals("target") || name.equals("node_modules")) {
+				if (IGNORED_DIRECTORIES.contains(name)) {
 					return FileVisitResult.SKIP_SUBTREE;
 				}
 				WatchKey key = directory.register(
@@ -176,26 +176,29 @@ public class FileWatcherService {
 				continue;
 			}
 
-			Path watchedDir = (Path) key.watchable();
-
-			for (WatchEvent<?> event : key.pollEvents()) {
-				if (event.kind() == StandardWatchEventKinds.ENTRY_CREATE) {
-					@SuppressWarnings("unchecked")
-					Path created = watchedDir.resolve(((WatchEvent<Path>) event).context());
-					if (Files.isDirectory(created)) {
-						try {
-							registerRecursively(created, channelId);
-						} catch (IOException exception) {
-							log.warn("Failed to register new directory: {}", created);
-						}
-					}
-				}
-			}
-
+			registerNewSubdirectories(key, channelId);
 			scheduleBroadcast(channelId);
 
 			if (!key.reset()) {
 				watchKeyChannels.remove(key);
+			}
+		}
+	}
+
+	private void registerNewSubdirectories(WatchKey key, String channelId) {
+		Path watchedDir = (Path) key.watchable();
+		for (WatchEvent<?> event : key.pollEvents()) {
+			if (event.kind() != StandardWatchEventKinds.ENTRY_CREATE) {
+				continue;
+			}
+
+			Path created = watchedDir.resolve(((WatchEvent<Path>) event).context());
+			if (Files.isDirectory(created)) {
+				try {
+					registerRecursively(created, channelId);
+				} catch (IOException exception) {
+					log.warn("Failed to register new directory: {}", created);
+				}
 			}
 		}
 	}
@@ -210,6 +213,7 @@ public class FileWatcherService {
 			if (callback != null) {
 				callback.run();
 			}
+
 			broadcast(channelId);
 			pendingBroadcasts.remove(channelId);
 		}, DEBOUNCE_DELAY_MS, TimeUnit.MILLISECONDS));
@@ -220,6 +224,7 @@ public class FileWatcherService {
 		if (emitters == null || emitters.isEmpty()) {
 			return;
 		}
+
 		List<SseEmitter> dead = new ArrayList<>();
 		for (SseEmitter emitter : emitters) {
 			try {
@@ -228,6 +233,7 @@ public class FileWatcherService {
 				dead.add(emitter);
 			}
 		}
+
 		emitters.removeAll(dead);
 	}
 }

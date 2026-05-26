@@ -96,7 +96,6 @@ class FileWatcherServiceTest {
 
 		Files.writeString(tempDir.resolve("new-file.xml"), "<Configuration/>");
 
-		// Allow time for WatchService event + 150ms debounce
 		verify(fileTreeService, after(2000).atLeastOnce()).invalidateTreeCache("test");
 	}
 
