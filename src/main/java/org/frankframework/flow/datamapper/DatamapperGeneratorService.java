@@ -6,7 +6,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import javax.xml.transform.stream.StreamSource;
-import lombok.extern.slf4j.Slf4j;
+import lombok.extern.log4j.Log4j2;
 import net.sf.saxon.s9api.*;
 import org.frankframework.flow.exception.ApiException;
 import org.frankframework.flow.file.FileTreeService;
@@ -14,7 +14,7 @@ import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-@Slf4j
+@Log4j2
 @Service
 public class DatamapperGeneratorService {
 

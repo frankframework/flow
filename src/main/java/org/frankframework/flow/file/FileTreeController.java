@@ -11,15 +11,18 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @RestController
 @RequestMapping("/projects/{projectName}")
 public class FileTreeController {
 
 	private final FileTreeService fileTreeService;
+	private final FileWatcherService fileWatcherService;
 
-	public FileTreeController(FileTreeService fileTreeService) {
+	public FileTreeController(FileTreeService fileTreeService, FileWatcherService fileWatcherService) {
 		this.fileTreeService = fileTreeService;
+		this.fileWatcherService = fileWatcherService;
 	}
 
 	@GetMapping("/tree")
@@ -47,9 +50,22 @@ public class FileTreeController {
 		return fileTreeService.getShallowDirectoryTree(projectName, path);
 	}
 
+	@GetMapping(value = "/tree/ancestors", params = "path")
+	public FileTreeNode getAncestorPath(
+			@PathVariable String projectName,
+			@RequestParam String path
+	) throws IOException {
+		return fileTreeService.getAncestorPath(projectName, path);
+	}
+
 	@PostMapping("/folder")
 	public ResponseEntity<FileTreeNode> createFolder(@PathVariable String projectName, @RequestBody FolderCreateDTO dto) throws IOException, ApiException {
 		FileTreeNode node = fileTreeService.createFolder(projectName, dto.path());
 		return ResponseEntity.status(HttpStatus.CREATED.value()).body(node);
+	}
+
+	@GetMapping("/watch")
+	public SseEmitter watchProject(@PathVariable String projectName) {
+		return fileWatcherService.subscribeToProject(projectName);
 	}
 }

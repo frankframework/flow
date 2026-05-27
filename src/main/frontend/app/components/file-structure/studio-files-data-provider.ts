@@ -1,7 +1,7 @@
 import type { TreeItemIndex } from 'react-complex-tree'
 import { logApiError } from '~/utils/logger'
-import { sortChildren } from './tree-utilities'
-import { fetchProjectTree, fetchDirectoryByPath } from '~/services/file-tree-service'
+import { sortChildren, getAncestorIds } from './tree-utilities'
+import { fetchProjectTree, fetchDirectoryByPath, fetchAncestorPath } from '~/services/file-tree-service'
 import type { FileTreeNode } from '~/types/filesystem.types'
 import { BaseFilesDataProvider } from './base-files-data-provider'
 
@@ -128,6 +128,43 @@ export default class FilesDataProvider extends BaseFilesDataProvider<StudioItemD
 
     this.loadedDirectories.add(path)
     this.notifyListeners([itemId])
+  }
+
+  public async loadAncestorDirectories(itemId: TreeItemIndex) {
+    const ancestorIds = getAncestorIds(itemId as string)
+    const deepestAncestorId = ancestorIds.at(-1)
+    if (!deepestAncestorId || deepestAncestorId === 'root') return
+
+    const ancestorItem = this.data[deepestAncestorId]
+    if (!ancestorItem || !isFolderData(ancestorItem.data)) return
+
+    const { path } = ancestorItem.data
+    try {
+      const ancestorTree = await fetchAncestorPath(this.projectName, path)
+      const changedIds: TreeItemIndex[] = []
+      this.applyAncestorTree(ancestorTree, 'root', changedIds)
+      if (changedIds.length > 0) this.notifyListeners(changedIds)
+    } catch (error) {
+      console.error(`Failed to load ancestor directories for ${path}`, error)
+    }
+  }
+
+  private applyAncestorTree(node: FileTreeNode, itemId: TreeItemIndex, changedIds: TreeItemIndex[]) {
+    const item = this.data[itemId]
+    if (!item?.isFolder) return
+
+    const childOnPath = node.children?.find((child) => child.children != null)
+
+    if (isFolderData(item.data) && !this.loadedDirectories.has(node.path)) {
+      item.children = sortChildren(node.children ?? []).map((child) => this.buildChildItem(itemId, child))
+      this.loadedDirectories.add(node.path)
+      changedIds.push(itemId)
+    }
+
+    if (childOnPath) {
+      const childItemId = `${itemId}/${childOnPath.name}`
+      this.applyAncestorTree(childOnPath, childItemId, changedIds)
+    }
   }
 
   private buildChildItem(parentId: TreeItemIndex, child: FileTreeNode): TreeItemIndex {

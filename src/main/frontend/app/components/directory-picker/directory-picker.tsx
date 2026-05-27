@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
 import FolderIcon from '/icons/solar/Folder.svg?react'
+import NameInputDialog from '~/components/file-structure/name-input-dialog'
 import { filesystemService } from '~/services/filesystem-service'
 import type { FilesystemEntry } from '~/types/filesystem.types'
 import { ApiError } from '~/utils/api'
+import { useDirectoryWatcher } from '~/hooks/use-file-watcher'
 import Button from '../inputs/button'
 
 interface DirectoryPickerProperties {
@@ -26,11 +28,13 @@ export default function DirectoryPicker({
   const [selectedEntry, setSelectedEntry] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isCreatingFolder, setIsCreatingFolder] = useState(false)
 
   const loadEntries = useCallback(async (path: string) => {
     setLoading(true)
     setError(null)
     setSelectedEntry(null)
+    setIsCreatingFolder(false)
     try {
       const result = await filesystemService.browse(path)
       setEntries(result.entries)
@@ -47,9 +51,7 @@ export default function DirectoryPicker({
     }
   }, [])
 
-  const handleNavigateUp = () => {
-    loadEntries(parentPath)
-  }
+  useDirectoryWatcher(isOpen ? currentPath : null, () => void loadEntries(currentPath))
 
   useEffect(() => {
     if (isOpen) {
@@ -60,8 +62,6 @@ export default function DirectoryPicker({
 
   if (!isOpen) return null
 
-  const canGoUp = parentPath !== ''
-
   const handleClick = (entry: FilesystemEntry) => {
     setSelectedEntry(entry.path)
   }
@@ -70,6 +70,21 @@ export default function DirectoryPicker({
     loadEntries(entry.path)
   }
 
+  const handleCreateFolder = async (folderName: string) => {
+    const basePath = selectedEntry ?? currentPath
+    const separator = basePath.includes('\\') ? '\\' : '/'
+    const newPath = `${basePath}${separator}${folderName}`
+    setIsCreatingFolder(false)
+    try {
+      await filesystemService.createDirectory(newPath)
+      await loadEntries(basePath)
+      setSelectedEntry(newPath)
+    } catch {
+      setError('Failed to create folder')
+    }
+  }
+
+  const canGoUp = parentPath !== ''
   const activePath = selectedEntry ?? currentPath
 
   return (
@@ -87,21 +102,32 @@ export default function DirectoryPicker({
 
         <div className="border-border flex items-center gap-2 border-b px-4 py-2">
           <Button
-            onClick={handleNavigateUp}
+            onClick={() => loadEntries(parentPath)}
             disabled={!canGoUp}
             className="disabled:text-foreground-muted text-xs disabled:opacity-30"
           >
             ..
           </Button>
-          <span className="text-foreground-muted truncate text-xs">{currentPath || rootLabel}</span>
+          <span className="text-foreground-muted flex-1 truncate text-xs">{currentPath || rootLabel}</span>
+          {currentPath && !isCreatingFolder && (
+            <Button
+              onClick={() => setIsCreatingFolder(true)}
+              className="text-foreground-muted hover:text-foreground shrink-0 text-xs"
+              title="Create a new folder here"
+            >
+              New Folder
+            </Button>
+          )}
         </div>
 
-        <div className="flex-1 overflow-y-auto p-2">
-          {loading && <p className="text-foreground-muted p-4 text-center text-xs">Loading...</p>}
+        <div className="flex-1 overflow-y-auto py-1">
+          {loading && <p className="text-foreground-muted p-4 text-center text-xs">Loading…</p>}
           {error && <p className="p-4 text-center text-xs text-red-500">{error}</p>}
-          {!loading && !error && entries.length === 0 && (
+
+          {!loading && !error && entries.length === 0 && !isCreatingFolder && (
             <p className="text-foreground-muted p-4 text-center text-xs italic">No subdirectories</p>
           )}
+
           {!loading &&
             !error &&
             entries.map((entry) => (
@@ -113,8 +139,8 @@ export default function DirectoryPicker({
                   selectedEntry === entry.path ? 'bg-backdrop font-medium' : 'hover:bg-backdrop/50'
                 }`}
               >
-                <span className="relative text-xs">
-                  <FolderIcon className="fill-foreground w-4 flex-shrink-0" />
+                <span className="relative flex-shrink-0 text-xs">
+                  <FolderIcon className="fill-foreground w-4" />
                   {entry.projectRoot && (
                     <span className="absolute bottom-0.5 h-1.5 w-1.5 rounded-full bg-black" style={{ left: '65%' }} />
                   )}
@@ -122,6 +148,15 @@ export default function DirectoryPicker({
                 <span className="truncate">{entry.name}</span>
               </button>
             ))}
+
+          {isCreatingFolder && (
+            <NameInputDialog
+              title="New Folder"
+              submitLabel="Create"
+              onSubmit={(name) => void handleCreateFolder(name)}
+              onCancel={() => setIsCreatingFolder(false)}
+            />
+          )}
         </div>
 
         <div className="border-border flex items-center justify-between border-t px-4 py-3">

@@ -21,6 +21,7 @@ export interface ContextMenuState {
 export interface NameDialogState {
   title: string
   initialValue?: string
+  submitLabel?: string
   onSubmit: (name: string) => void
   patterns?: Record<string, RegExp>
 }
@@ -119,6 +120,7 @@ export function useFileTreeContextMenu({
 
       setNameDialog({
         title: 'New File',
+        submitLabel: 'Create',
         onSubmit: async (name: string) => {
           if (!ensureHasCorrectExtension(name)) {
             showErrorToast(`Filename must have one of the following extensions: ${ALLOWED_EXTENSIONS.join(', ')}`)
@@ -149,6 +151,7 @@ export function useFileTreeContextMenu({
 
       setNameDialog({
         title: 'New Folder',
+        submitLabel: 'Create',
         onSubmit: async (name: string) => {
           try {
             await createFolderInProject(projectName, `${parentPath}/${name}`)
