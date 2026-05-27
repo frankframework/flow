@@ -1,4 +1,5 @@
 import type { TreeItemIndex } from 'react-complex-tree'
+import { logApiError } from '~/utils/logger'
 import { sortChildren, getAncestorIds } from './tree-utilities'
 import { fetchProjectTree, fetchDirectoryByPath, fetchAncestorPath } from '~/services/file-tree-service'
 import type { FileTreeNode } from '~/types/filesystem.types'
@@ -62,7 +63,7 @@ export default class FilesDataProvider extends BaseFilesDataProvider<StudioItemD
     const tree = await fetchProjectTree(this.projectName)
 
     if (!tree) {
-      console.warn('[StudioFilesDataProvider] Received empty tree from API')
+      console.warn('Received empty tree from API')
       this.data = {}
       return
     }
@@ -96,7 +97,7 @@ export default class FilesDataProvider extends BaseFilesDataProvider<StudioItemD
 
       const directory = await fetchDirectoryByPath(this.projectName, path)
       if (!directory) {
-        console.warn('[StudioFilesDataProvider] Received empty directory from API')
+        console.warn('Received empty directory from API')
         return
       }
 
@@ -104,7 +105,7 @@ export default class FilesDataProvider extends BaseFilesDataProvider<StudioItemD
       this.loadedDirectories.add(path)
       this.notifyListeners([itemId])
     } catch (error) {
-      console.error(`Failed to load directory for ${path}`, error)
+      logApiError(`Failed to load directory for ${path}`, error as Error)
     }
   }
 

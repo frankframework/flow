@@ -10,8 +10,9 @@ import {
   pullChanges,
   refreshOpenDiffs,
 } from '~/services/git-service'
-import { showErrorToastFrom, showInfoToast, showSuccessToast, showErrorToast } from '~/components/toast'
+import { showInfoToast, showSuccessToast, showErrorToast } from '~/components/toast'
 import useEditorTabStore from '~/stores/editor-tab-store'
+import { logApiError } from '~/utils/logger'
 import GitToolbar from './git-toolbar'
 import GitChanges from './git-changes'
 import GitCommitBox from './git-commit-box'
@@ -45,7 +46,7 @@ export default function GitPanel({ projectName, hasStoredToken }: GitPanelProps)
       const newStatus = await fetchGitStatus(projectName)
       setStatus(newStatus)
     } catch (error) {
-      showErrorToastFrom('Failed to fetch git status', error)
+      logApiError('Failed to fetch git status', error as Error)
     }
   }, [projectName, setStatus])
 
@@ -77,7 +78,7 @@ export default function GitPanel({ projectName, hasStoredToken }: GitPanelProps)
         })
         editorTabStore.setActiveTab(tabId)
       } catch (error) {
-        showErrorToastFrom('Failed to load diff', error)
+        logApiError('Failed to load diff', error as Error)
       }
     },
     [projectName, setSelectedFile, setFileDiff, initFileHunks],
@@ -124,7 +125,7 @@ export default function GitPanel({ projectName, hasStoredToken }: GitPanelProps)
       await refreshOpenDiffs(projectName)
       showSuccessToast(`Committed: ${result.commitId.slice(0, 7)}`)
     } catch (error) {
-      showErrorToastFrom('Failed to commit', error)
+      logApiError('Failed to commit', error as Error)
     } finally {
       setIsLoading(false)
     }
@@ -144,7 +145,7 @@ export default function GitPanel({ projectName, hasStoredToken }: GitPanelProps)
       }
       await refreshStatus()
     } catch (error) {
-      showErrorToastFrom('Failed to push', error)
+      logApiError('Failed to push', error as Error)
     }
   }, [projectName, token, refreshStatus, status?.ahead])
 
@@ -165,7 +166,7 @@ export default function GitPanel({ projectName, hasStoredToken }: GitPanelProps)
       await refreshStatus()
       await refreshOpenDiffs(projectName)
     } catch (error) {
-      showErrorToastFrom('Failed to pull', error)
+      logApiError('Failed to pull', error as Error)
     }
   }, [projectName, token, refreshStatus])
 

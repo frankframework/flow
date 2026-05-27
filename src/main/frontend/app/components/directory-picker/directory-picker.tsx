@@ -40,11 +40,11 @@ export default function DirectoryPicker({
       setEntries(result.entries)
       setCurrentPath(result.resolvedPath)
       setParentPath(result.parentPath)
-    } catch (error_) {
-      if (error_ instanceof ApiError && error_.status === 403) {
+    } catch (error) {
+      if (error instanceof ApiError && error.httpCode === 403) {
         setError('Access denied')
       } else {
-        setError(error_ instanceof Error ? error_.message : 'Failed to load directories')
+        setError(error instanceof Error ? error.message : 'Failed to load directories')
       }
     } finally {
       setLoading(false)

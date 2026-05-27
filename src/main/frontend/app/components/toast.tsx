@@ -18,13 +18,13 @@ const toastStyles = {
     container: defaultStyle,
     card: `${toastBaseCard} bg-error`,
     icon: '',
-    defaultDuration: 2000,
+    defaultDuration: 5000,
   },
   WARNING: {
     container: defaultStyle,
     card: `${toastBaseCard} bg-warning`,
     icon: '⚠️',
-    defaultDuration: 3000,
+    defaultDuration: 5000,
   },
   INFO: {
     container: defaultStyle,
@@ -36,7 +36,7 @@ const toastStyles = {
     container: defaultStyle,
     card: `${toastBaseCard} bg-success`,
     icon: '✅',
-    defaultDuration: 3000,
+    defaultDuration: 2000,
   },
 } as const
 
@@ -69,11 +69,6 @@ export function showWarningToast(message: string, title = 'Warning') {
 
 export function showErrorToast(message: string, title = 'Error') {
   showToast({ type: 'ERROR', title, message })
-}
-
-/** Shows an error toast with a prefix, extracting the message from an unknown error. */
-export function showErrorToastFrom(prefix: string, error: unknown) {
-  showErrorToast(`${prefix}: ${error instanceof Error ? error.message : String(error)}`)
 }
 
 export function Toast() {

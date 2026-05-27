@@ -1,6 +1,7 @@
 import type { TreeItem, TreeItemIndex } from 'react-complex-tree'
 import type { FileTreeNode } from '~/types/filesystem.types'
 import { fetchProjectRootTree, fetchDirectoryByPath } from '~/services/file-tree-service'
+import { logApiError } from '~/utils/logger'
 import { sortChildren } from './tree-utilities'
 import type { DataProviderLike } from './use-file-tree-context-menu'
 import { BaseFilesDataProvider } from './base-files-data-provider'
@@ -50,7 +51,7 @@ export default class EditorFilesDataProvider extends BaseFilesDataProvider<FileN
       const tree = await fetchProjectRootTree(this.projectName)
 
       if (!tree) {
-        console.warn('[EditorFilesDataProvider] Received empty tree from API')
+        console.warn('Received empty tree from API')
         this.data = {}
         return
       }
@@ -66,7 +67,7 @@ export default class EditorFilesDataProvider extends BaseFilesDataProvider<FileN
       this.loadedDirectories.add(tree.path)
       this.notifyListeners(['root'])
     } catch (error) {
-      console.error('[EditorFilesDataProvider] Unexpected error loading tree:', error)
+      logApiError('Unexpected error loading project file tree', error as Error)
       this.data = {}
       this.notifyListeners(['root'])
     }
@@ -80,7 +81,7 @@ export default class EditorFilesDataProvider extends BaseFilesDataProvider<FileN
     try {
       const directory = await fetchDirectoryByPath(this.projectName, item.data.path)
       if (!directory) {
-        console.warn('[EditorFilesDataProvider] Received empty directory from API')
+        console.warn('Received empty directory from API')
         return
       }
 
@@ -88,7 +89,7 @@ export default class EditorFilesDataProvider extends BaseFilesDataProvider<FileN
       this.loadedDirectories.add(item.data.path)
       this.notifyListeners([itemId])
     } catch (error) {
-      console.error('Failed to load directory', error)
+      logApiError('Failed to load directory', error as Error)
     }
   }
 

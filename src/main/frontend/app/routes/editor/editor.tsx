@@ -23,7 +23,6 @@ import { SidebarSide } from '~/components/sidebars-layout/sidebar-layout-store'
 import EditorTabs from '~/components/tabs/editor-tabs'
 import { SaveStatusIndicator } from '~/components/save-status-indicator'
 import { useSaveStatusStore } from '~/stores/save-status-store'
-import { showErrorToastFrom } from '~/components/toast'
 import { useTheme } from '~/hooks/use-theme'
 import { fetchConfigurationFile, saveConfigurationFile } from '~/services/configuration-file-service'
 import { fetchFile, updateFile } from '~/services/file-service'
@@ -32,6 +31,7 @@ import { fetchFrankConfigXsd } from '~/services/xsd-service'
 import useEditorTabStore from '~/stores/editor-tab-store'
 import { useProjectStore } from '~/stores/project-store'
 import { useSettingsStore } from '~/stores/settings-store'
+import { logApiError } from '~/utils/logger'
 import flowXsd from '../../../src/assets/xsd/FlowConfig.xsd?raw'
 import {
   extractFlowElements,
@@ -363,14 +363,14 @@ export default function CodeEditor() {
             if (project.isGitRepository) refreshOpenDiffs(project.name)
           })
           .catch((error) => {
-            showErrorToastFrom('Error saving', error)
+            logApiError('Error saving', error)
             setIdle()
           })
       } else {
         updateFile(project.name, configPath, updatedContent)
           .then(() => finishSaving())
           .catch((error) => {
-            showErrorToastFrom('Error saving', error)
+            logApiError('Error saving', error)
             setIdle()
           })
       }
@@ -425,7 +425,7 @@ export default function CodeEditor() {
     monaco.editor.setModelMarkers(
       model,
       'xsd-validation',
-      errors.map((e) => toMarker(e, monaco.MarkerSeverity.Error)),
+      errors.map((error) => toMarker(error, monaco.MarkerSeverity.Error)),
     )
   }, [])
 
@@ -451,7 +451,7 @@ export default function CodeEditor() {
       )
       editor.pushUndoStop()
     } catch (error) {
-      console.error('Failed to reformat XML:', error)
+      logApiError('Failed to reformat XML', error as Error)
     }
   }, [project, activeTabFilePath])
 
@@ -630,7 +630,7 @@ export default function CodeEditor() {
         .then((content) => setMonacoContent(content, 'xml', abortController.signal))
         .catch((error) => {
           if (!abortController.signal.aborted) {
-            console.error('Failed to load configuration XML:', error)
+            logApiError('Failed to load configuration XML:', error)
           }
         })
     } else {
@@ -642,7 +642,7 @@ export default function CodeEditor() {
         .catch((error) => {
           if (!abortController.signal.aborted) {
             setMonacoContent('', 'plaintext', abortController.signal)
-            console.error('Failed to load file:', error)
+            logApiError('Failed to load file:', error)
           }
         })
     }
