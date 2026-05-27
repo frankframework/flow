@@ -1,4 +1,5 @@
 import type { FlowNode } from '~/routes/studio/canvas/flow'
+import type { Filters } from '@frankframework/doc-library-core'
 
 const REFERENCE_KEYS = new Set(['source', 'target', 'parentId'])
 
@@ -127,22 +128,51 @@ function capitalize(value: string): string {
   return value.charAt(0).toUpperCase() + value.slice(1)
 }
 
-export function frankdocChipStyle(name: string): { borderColor: string; backgroundColor: string } {
-  let sum = 0
-  for (const char of name) sum += char.codePointAt(0) ?? 0
-  const h = sum % 360
-  const s = 0.9
-  const l = 0.78
-  const a = s * Math.min(l, 1 - l)
-  const f = (n: number) => {
-    const k = (n + h / 30) % 12
-    return l - a * Math.max(-1, Math.min(k - 3, Math.min(9 - k, 1)))
+function hashToCuratedHue(name: string): number {
+  let hash = 5381
+  for (let i = 0; i < name.length; i++) {
+    hash = (hash * 33) ^ (name.codePointAt(i) ?? 0)
   }
-  const r = Math.round(f(0) * 255)
-  const g = Math.round(f(8) * 255)
-  const b = Math.round(f(4) * 255)
+
+  const CURATED_HUES = [10, 215, 140, 45, 290, 180, 30, 330]
+
+  const index = Math.abs(hash) % CURATED_HUES.length
+  return CURATED_HUES[index]
+}
+
+export function getPaletteColor(key: string, theme: 'light' | 'dark'): string {
+  const hue = hashToCuratedHue(key)
+
+  const saturation = theme === 'dark' ? 35 : 70
+  const lightness = theme === 'dark' ? 35 : 55
+
+  return `hsl(${hue} ${saturation}% ${lightness}%)`
+}
+
+export function getCategoryColor(subtype: string, filters: Filters | null, theme: 'light' | 'dark'): string {
+  if (filters?.Components) {
+    const matchedCategory = Object.entries(filters.Components).find(([, names]) => names.includes(subtype))
+
+    if (matchedCategory) {
+      return getPaletteColor(matchedCategory[0], theme)
+    }
+  }
+
+  return getPaletteColor(subtype, theme)
+}
+
+// Simplified to use native CSS hsl() formatting. Added theme support for better contrast.
+export function frankdocChipStyle(
+  name: string,
+  theme: 'light' | 'dark' = 'light',
+): { borderColor: string; backgroundColor: string } {
+  const hue = hashToCuratedHue(name)
+
+  const saturation = theme === 'dark' ? 80 : 85
+  const lightness = theme === 'dark' ? 45 : 40
+
   return {
-    borderColor: `rgb(${r} ${g} ${b})`,
-    backgroundColor: `rgb(${r} ${g} ${b} / 0.2)`,
+    borderColor: `hsl(${hue} ${saturation}% ${lightness}%)`,
+    backgroundColor: `hsl(${hue} ${saturation}% ${lightness}% / 0.2)`,
   }
 }

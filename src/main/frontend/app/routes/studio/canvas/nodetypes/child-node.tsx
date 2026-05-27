@@ -5,6 +5,8 @@ import useNodeContextStore from '~/stores/node-context-store'
 import { useNodeContextMenu } from '../node-context-menu-context'
 import { canAcceptChildStatic, type FrankElement } from './node-utilities'
 import { useFFDoc } from '@frankframework/doc-library-react'
+import { useTheme } from '~/hooks/use-theme'
+import { getCategoryColor } from '~/utils/flow-utils'
 
 export interface ChildNode {
   id: string
@@ -39,6 +41,7 @@ export function ChildNodeComponent({
   const [canDropDraggedElement, setCanDropDraggedElement] = useState(false)
   const [dragForbidden, setDragForbidden] = useState(false)
   const { elements, filters, ffDoc } = useFFDoc()
+  const theme = useTheme()
 
   const frankElement = useMemo(() => {
     if (!elements) return null
@@ -174,10 +177,10 @@ export function ChildNodeComponent({
           background: gradientEnabled
             ? `radial-gradient(
               ellipse farthest-corner at 20% 20%,
-              var(--type-${child.type?.toLowerCase()}) 0%,
+              ${getCategoryColor(child.subtype, filters, theme)} 0%,
               var(--color-background) 100%
             )`
-            : `var(--type-${child.type?.toLowerCase()})`,
+            : getCategoryColor(child.subtype, filters, theme),
         }}
       >
         <h1 className="font-bold">{child.subtype}</h1>

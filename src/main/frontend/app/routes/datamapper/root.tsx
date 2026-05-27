@@ -1,4 +1,6 @@
 import { useEffect, useReducer, useState } from 'react'
+import { useTheme } from '~/hooks/use-theme'
+import { getPaletteColor } from '~/utils/flow-utils'
 import PropertyList from './property-list'
 import { showErrorToast, showSuccessToast } from '~/components/toast'
 import {
@@ -15,6 +17,7 @@ import { SAVING_THROTTLE } from '~/utils/datamapper_utils/constant'
 
 export default function Root() {
   const routes = ['Initialize', 'Properties', 'Mappings']
+  const theme = useTheme()
 
   const project = useProjectStore.getState().project
 
@@ -87,7 +90,12 @@ export default function Root() {
       <div className="bg-backdrop inset-0 z-50 h-screen items-center justify-center">
         <div className="bg-background text-foreground rounded-lg shadow-lg">
           {/* Header */}
-          <div className="border-b-border box-border h-10 w-full rounded-t-md border-b bg-[radial-gradient(ellipse_farthest-corner_at_20%_20%,var(--type-pipe)_0%,var(--color-background)_100%)] p-2 text-lg font-semibold">
+          <div
+            className="border-b-border box-border h-10 w-full rounded-t-md border-b p-2 text-lg font-semibold"
+            style={{
+              background: `radial-gradient(ellipse farthest-corner at 20% 20%, ${getPaletteColor('Pipes', theme)} 0%, var(--color-background) 100%)`,
+            }}
+          >
             Mapping (mappingName)
           </div>
 
