@@ -20,7 +20,7 @@ export default function SidebarLayout({ children, name }: Readonly<SidebarLayout
 
   return (
     <SidebarContext.Provider value={name}>
-      <Allotment onVisibleChange={handleVisibilityChange}>
+      <Allotment key={name} onVisibleChange={handleVisibilityChange}>
         <Allotment.Pane
           snap
           minSize={200}
