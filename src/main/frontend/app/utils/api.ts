@@ -41,7 +41,7 @@ export async function apiFetch<T>(path: string, options?: RequestInit): Promise<
     ...(options?.headers as Record<string, string>),
     'X-Session-ID': getAnonymousSessionId(),
   }
-  if (options?.body && !isFormData) headers['Content-Type'] = 'application/json'
+  if (options?.body && !isFormData && !headers['Content-Type']) headers['Content-Type'] = 'application/json'
 
   const token = getAuthToken()
   if (token) {
@@ -62,6 +62,12 @@ export async function apiFetch<T>(path: string, options?: RequestInit): Promise<
     throw new ApiError('Server Error', `HTTP ${response.status} - ${response.statusText}`, response.status)
   }
 
-  // assume the response is in json as our API should always do, errors can be caught with <promise>.catch()
+  const contentType = response.headers.get('content-type')
+  const contentLength = response.headers.get('content-length')
+  const hasNoBody = response.status === 204 || contentLength === '0'
+  if (hasNoBody || !contentType?.includes('application/json')) {
+    // a little dirty but allows void to be returned without breaking the generic type constraint
+    return undefined as T
+  }
   return response.json()
 }
