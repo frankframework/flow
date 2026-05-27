@@ -11,7 +11,6 @@ interface HandleProperties {
   onChangeType: (newType: string) => void
   absolutePosition: { x: number; y: number }
   typesAllowed?: Record<string, ElementProperty>
-  rightOverride?: string
 }
 
 const HANDLE_TYPE_COLOURS: Record<string, string> = {
@@ -69,8 +68,8 @@ export function CustomHandle(properties: Readonly<HandleProperties>) {
           isConnectableEnd={connections.length === 0}
           onClick={handleClick}
           style={{
-            top: `${properties.firstHandlePosition + (properties.index - 1) * properties.handleSpacing}px`,
-            right: properties.rightOverride ?? '-15px',
+            top: `${properties.firstHandlePosition + properties.index * properties.handleSpacing}px`,
+            right: '-15px',
             width: '15px',
             height: '15px',
             backgroundColor: translateHandleTypeToColour(type),
