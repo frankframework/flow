@@ -161,7 +161,6 @@ export function getCategoryColor(subtype: string, filters: Filters | null, theme
   return getPaletteColor(subtype, theme)
 }
 
-// Simplified to use native CSS hsl() formatting. Added theme support for better contrast.
 export function frankdocChipStyle(
   name: string,
   theme: 'light' | 'dark' = 'light',
