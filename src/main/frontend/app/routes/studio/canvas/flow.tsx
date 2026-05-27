@@ -10,6 +10,7 @@ import {
   type OnConnectEnd,
   ReactFlow,
   ReactFlowProvider,
+  useNodesInitialized,
   useReactFlow,
   useUpdateNodeInternals,
 } from '@xyflow/react'
@@ -221,8 +222,10 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
   const reactFlow = useReactFlow()
   const reactFlowRef = useRef(reactFlow)
   reactFlowRef.current = reactFlow
+  const nodesInitialized = useNodesInitialized()
   const canvasRef = useRef<HTMLDivElement>(null)
   const fitAfterLayoutRef = useRef<{ id: string }[] | null>(null)
+  const pendingInitialRelayoutRef = useRef<{ pendingSelection: { subtype: string; name: string } | null } | null>(null)
 
   const applySelectionToNodes = useCallback((pendingSelection: { subtype: string; name: string }) => {
     const currentNodes = useFlowStore.getState().nodes
@@ -573,6 +576,36 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
     fitAfterLayoutRef.current = nodeIds
     flowStore.setNodes(laidOut)
   }, [layoutGraph])
+
+  useEffect(() => {
+    if (!nodesInitialized || !pendingInitialRelayoutRef.current) return
+
+    const { pendingSelection } = pendingInitialRelayoutRef.current
+    pendingInitialRelayoutRef.current = null
+
+    const flowStore = useFlowStore.getState()
+    const nodesWithResetPositions = flowStore.nodes.map((node) =>
+      node.type === 'frankNode' || node.type === 'exitNode' ? { ...node, position: { x: 0, y: 0 } } : node,
+    )
+    const laidOutNodes = layoutGraph(nodesWithResetPositions, flowStore.edges, 'LR')
+    flowStore.setNodes(laidOutNodes)
+
+    if (pendingSelection) {
+      applySelectionToNodes(pendingSelection)
+    } else {
+      waitForStableCanvasDimensions((canvasWidth, canvasHeight) => {
+        const freshViewport = computeAdapterCenteredViewport(laidOutNodes, canvasWidth, canvasHeight)
+        useFlowStore.getState().setViewport(freshViewport)
+        reactFlowRef.current?.setViewport(freshViewport)
+      })
+    }
+  }, [
+    nodesInitialized,
+    layoutGraph,
+    waitForStableCanvasDimensions,
+    computeAdapterCenteredViewport,
+    applySelectionToNodes,
+  ])
 
   const getFullySelectedGroupIds = useCallback(
     (parentIds: (string | undefined)[], selectedNodes: FlowNode[]) => {
@@ -1285,20 +1318,10 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
       const adapterJson = await convertAdapterXmlToJson(adapter)
 
       flowStore.setEdges(adapterJson.edges)
-      const laidOutNodes = layoutGraph(adapterJson.nodes, adapterJson.edges, 'LR')
-      flowStore.setNodes(laidOutNodes)
+      flowStore.setNodes(adapterJson.nodes)
       flowStore.setHistory([])
       flowStore.setFuture([])
-
-      if (pendingSelection) {
-        applySelectionToNodes(pendingSelection)
-      } else {
-        waitForStableCanvasDimensions((canvasWidth, canvasHeight) => {
-          const freshViewport = computeAdapterCenteredViewport(laidOutNodes, canvasWidth, canvasHeight)
-          useFlowStore.getState().setViewport(freshViewport)
-          reactFlowRef.current?.setViewport(freshViewport)
-        })
-      }
+      pendingInitialRelayoutRef.current = { pendingSelection }
     }
 
     async function loadFlowFromTab(tab: TabData) {
