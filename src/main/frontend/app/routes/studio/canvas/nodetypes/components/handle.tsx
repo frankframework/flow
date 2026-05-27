@@ -68,7 +68,7 @@ export function CustomHandle(properties: Readonly<HandleProperties>) {
           isConnectableEnd={connections.length === 0}
           onClick={handleClick}
           style={{
-            top: `${properties.firstHandlePosition + properties.index * properties.handleSpacing}px`,
+            top: `${properties.firstHandlePosition + (properties.index - 1) * properties.handleSpacing}px`,
             right: '-15px',
             width: '15px',
             height: '15px',

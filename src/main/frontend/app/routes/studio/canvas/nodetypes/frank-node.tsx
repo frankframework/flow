@@ -118,8 +118,8 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
   }, [dimensions.height, properties.data.sourceHandles.length])
 
   const compactFirstHandlePosition = useMemo(() => {
-    return (minNodeHeight - (properties.data.sourceHandles.length - 1) * handleSpacing) / 2
-  }, [minNodeHeight, properties.data.sourceHandles.length])
+    return (FlowConfig.NODE_ZOOMED_OUT_HEIGHT - (properties.data.sourceHandles.length - 1) * handleSpacing) / 2
+  }, [properties.data.sourceHandles.length])
 
   const allForwardTypesUsed = useMemo(() => {
     if (availableHandleTypes.length === 0) return true
@@ -142,6 +142,10 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
       setDimensions((previous) => ({ ...previous, height: newHeight }))
     }
   }, [dragOver, properties.id, updateNodeInternals])
+
+  useEffect(() => {
+    updateNodeInternals(properties.id)
+  }, [dimensions.height, isCompact, properties.id, updateNodeInternals])
 
   useEffect(() => {
     fetchFrankConfigXsd().then((xsd) => {
@@ -401,21 +405,21 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
     return (
       <>
         <div
-          className="bg-background border-border flex h-full w-full flex-col items-center justify-center gap-2 overflow-hidden rounded-md border py-8"
+          className="bg-background border-border flex w-full flex-col items-center justify-center gap-2 overflow-hidden rounded-md border py-8"
           style={{
             minWidth: `${minNodeWidth}px`,
-            minHeight: `${minNodeHeight}px`,
-            ...(properties.selected && { borderColor: `var(${colorVariable})` }),
+            height: `${FlowConfig.NODE_ZOOMED_OUT_HEIGHT}px`,
+            ...(properties.selected && { borderColor: `${nodeColor}` }),
           }}
         >
           <div
             className="flex h-32 w-32 shrink-0 items-center justify-center rounded-3xl shadow-md"
             style={{
-              backgroundColor: `color-mix(in srgb, var(${colorVariable}) 25%, transparent)`,
-              border: `3px solid var(${colorVariable})`,
+              backgroundColor: `color-mix(in srgb, ${nodeColor} 25%, transparent)`,
+              border: `3px solid ${nodeColor}`,
             }}
           >
-            <span className="text-4xl font-black tracking-tight" style={{ color: `var(${colorVariable})` }}>
+            <span className="text-4xl font-black tracking-tight" style={{ color: `${nodeColor}` }}>
               {abbr}
             </span>
           </div>
@@ -477,7 +481,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
         className={`bg-background border-border relative flex w-full flex-col items-center overflow-x-visible rounded-md border ${isManuallyResized ? 'h-full overflow-y-hidden' : 'overflow-y-visible'}`}
         style={{
           minWidth: `${minNodeWidth}px`,
-          ...(properties.selected && { borderColor: `var(${colorVariable})` }),
+          ...(properties.selected && { borderColor: `${nodeColor}` }),
         }}
         ref={containerReference}
         onDragOver={handleDragOver}
@@ -490,10 +494,10 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
             background: gradientEnabled
               ? `radial-gradient(
                 ellipse farthest-corner at 20% 20%,
-                var(${colorVariable}) 0%,
+                ${nodeColor} 0%,
                 var(--color-background) 100%
               )`
-              : `var(${colorVariable})`,
+              : `${nodeColor}`,
           }}
         >
           <h1 className="text-foreground font-bold">{properties.data.subtype}</h1>
@@ -634,7 +638,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
           }}
           className="nodrag absolute -right-5.75 h-3.75 w-3.75 cursor-pointer justify-center rounded-full border bg-gray-400 text-center text-[8px] font-bold text-white"
           style={{
-            top: `${firstHandlePosition + properties.data.sourceHandles.length * handleSpacing + handleSpacing}px`,
+            top: `${firstHandlePosition + properties.data.sourceHandles.length * handleSpacing}px`,
           }}
         >
           +
