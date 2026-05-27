@@ -4,6 +4,7 @@ import NameInputDialog from '~/components/file-structure/name-input-dialog'
 import { filesystemService } from '~/services/filesystem-service'
 import type { FilesystemEntry } from '~/types/filesystem.types'
 import { ApiError } from '~/utils/api'
+import { useDirectoryWatcher } from '~/hooks/use-file-watcher'
 import Button from '../inputs/button'
 
 interface DirectoryPickerProperties {
@@ -49,6 +50,8 @@ export default function DirectoryPicker({
       setLoading(false)
     }
   }, [])
+
+  useDirectoryWatcher(isOpen ? currentPath : null, () => void loadEntries(currentPath))
 
   useEffect(() => {
     if (isOpen) {

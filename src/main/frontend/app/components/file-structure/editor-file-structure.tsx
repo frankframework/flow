@@ -12,6 +12,7 @@ import CodeFileIcon from '../../../icons/solar/Code File.svg?react'
 import TrashBinIcon from '../../../icons/solar/Trash Bin.svg?react'
 import Pen from '../../../icons/solar/Pen.svg?react'
 import { useShortcut } from '~/hooks/use-shortcut'
+import { useFileWatcher } from '~/hooks/use-file-watcher'
 import { getAncestorIds, isVisibleInTree, selectAndReveal, toTreeItemId } from './tree-utilities'
 import type { ContextMenuState } from './use-file-tree-context-menu'
 
@@ -64,6 +65,10 @@ export default function EditorFileStructure() {
   useEffect(() => {
     expandedItemsRef.current = editorExpandedItems
   }, [editorExpandedItems])
+
+  useFileWatcher(project?.name ?? null, () => {
+    if (dataProvider) void dataProvider.reloadDirectory('root')
+  })
 
   useEffect(() => {
     if (!dataProvider) {

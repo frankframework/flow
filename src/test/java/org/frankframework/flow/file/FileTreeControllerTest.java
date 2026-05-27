@@ -1,10 +1,12 @@
 package org.frankframework.flow.file;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -16,6 +18,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @WebMvcTest(FileTreeController.class)
 @AutoConfigureMockMvc(addFilters = false)
@@ -26,6 +29,9 @@ class FileTreeControllerTest {
 
 	@MockitoBean
 	private FileTreeService fileTreeService;
+
+	@MockitoBean
+	private FileWatcherService fileWatcherService;
 
 	@Test
 	void getProjectTreeReturnsTree() throws Exception {
@@ -89,6 +95,16 @@ class FileTreeControllerTest {
 	}
 
 	@Test
+	void watchProject_returnsEventStream() throws Exception {
+		when(fileWatcherService.subscribeToProject("MyProject")).thenReturn(new SseEmitter());
+
+		mockMvc.perform(get("/api/projects/MyProject/watch"))
+				.andExpect(status().isOk())
+				.andExpect(header().string("Content-Type", containsString("text/event-stream")));
+
+		verify(fileWatcherService).subscribeToProject("MyProject");
+}
+
 	void getAncestorPathReturnsSparseTreeNode() throws Exception {
 		FileTreeNode spineChild = new FileTreeNode();
 		spineChild.setName("MyConfig");
