@@ -117,9 +117,16 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
     return (dimensions.height - (properties.data.sourceHandles.length - 1) * handleSpacing) / 2
   }, [dimensions.height, properties.data.sourceHandles.length])
 
-  const compactFirstHandlePosition = useMemo(() => {
-    return (FlowConfig.NODE_ZOOMED_OUT_HEIGHT - (properties.data.sourceHandles.length - 1) * handleSpacing) / 2
-  }, [properties.data.sourceHandles.length])
+  const COMPACT_INITIALS_BOX_SIZE = 160
+  const COMPACT_PADDING_TOP = 8
+  const COMPACT_HANDLE_SIZE = 15
+  const COMPACT_HANDLE_GAP = 4
+
+  const compactHandleXOffset = `${(FlowConfig.NODE_DEFAULT_WIDTH - COMPACT_INITIALS_BOX_SIZE) / 2 - COMPACT_HANDLE_SIZE - COMPACT_HANDLE_GAP}px`
+  const compactHandleTop = COMPACT_PADDING_TOP + COMPACT_INITIALS_BOX_SIZE / 2 - COMPACT_HANDLE_SIZE / 2 + 10
+  const compactDotTop = compactHandleTop - 8
+  const compactDotXOffset = `${(FlowConfig.NODE_DEFAULT_WIDTH - COMPACT_INITIALS_BOX_SIZE) / 2 - COMPACT_HANDLE_SIZE - COMPACT_HANDLE_GAP - 10}px`
+  const compactTargetXOffset = `${(FlowConfig.NODE_DEFAULT_WIDTH - COMPACT_INITIALS_BOX_SIZE) / 2 - COMPACT_HANDLE_SIZE - COMPACT_HANDLE_GAP + 10}px`
 
   const allForwardTypesUsed = useMemo(() => {
     if (availableHandleTypes.length === 0) return true
@@ -405,33 +412,32 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
     return (
       <>
         <div
-          className="bg-background border-border flex w-full flex-col items-center justify-center gap-2 overflow-hidden rounded-md border py-8"
+          className="flex flex-col items-center gap-2 rounded-md"
           style={{
-            minWidth: `${minNodeWidth}px`,
-            height: `${FlowConfig.NODE_ZOOMED_OUT_HEIGHT}px`,
+            width: `${FlowConfig.NODE_DEFAULT_WIDTH}px`,
+            paddingTop: `${COMPACT_PADDING_TOP}px`,
+            paddingBottom: '8px',
             ...(properties.selected && { borderColor: `${nodeColor}` }),
           }}
         >
           <div
-            className="flex h-32 w-32 shrink-0 items-center justify-center rounded-3xl shadow-md"
+            className="flex h-40 w-40 shrink-0 items-center justify-center rounded-3xl shadow-md"
             style={{
               backgroundColor: `color-mix(in srgb, ${nodeColor} 25%, transparent)`,
               border: `3px solid ${nodeColor}`,
             }}
           >
-            <span className="text-4xl font-black tracking-tight" style={{ color: `${nodeColor}` }}>
+            <span className="text-5xl font-black tracking-tight" style={{ color: `${nodeColor}` }}>
               {abbr}
             </span>
           </div>
 
-          <span className="mt-5 line-clamp-2 w-full px-2 text-center text-2xl leading-snug font-semibold">
+          <span className="text-center text-3xl leading-snug font-semibold whitespace-nowrap">
             {properties.data.subtype}
           </span>
 
           {properties.data.name && (
-            <span className="text-foreground-muted line-clamp-1 w-full px-1 text-center text-2xl">
-              {properties.data.name}
-            </span>
+            <span className="text-foreground-muted text-center text-3xl whitespace-nowrap">{properties.data.name}</span>
           )}
         </div>
 
@@ -439,20 +445,43 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
           <Handle
             type="target"
             position={Position.Left}
-            style={{ opacity: 0, left: '-15px', width: '15px', height: '15px' }}
+            style={{
+              opacity: 0,
+              left: compactTargetXOffset,
+              width: '15px',
+              height: '15px',
+              top: `${compactHandleTop}px`,
+            }}
+          />
+        )}
+
+        {properties.data.sourceHandles.length > 0 && (
+          <div
+            className="pointer-events-none absolute rounded-full"
+            style={{
+              right: compactDotXOffset,
+              top: `${compactDotTop}px`,
+              width: '15px',
+              height: '15px',
+              backgroundColor: '#B2B2B2',
+              border: '1px solid rgba(107, 114, 128, 0.5)',
+            }}
           />
         )}
 
         {properties.data.sourceHandles.map((handle) => (
-          <CustomHandle
+          <Handle
             key={handle.type + handle.index}
-            type={handle.type}
-            index={handle.index}
-            firstHandlePosition={compactFirstHandlePosition}
-            handleSpacing={handleSpacing}
-            onChangeType={(newType) => changeHandleType(handle.index, newType)}
-            absolutePosition={{ x: properties.positionAbsoluteX, y: properties.positionAbsoluteY }}
-            typesAllowed={frankElement?.forwards}
+            type="source"
+            position={Position.Right}
+            id={handle.index.toString()}
+            style={{
+              top: `${compactHandleTop}px`,
+              right: compactHandleXOffset,
+              width: '15px',
+              height: '15px',
+              opacity: 0,
+            }}
           />
         ))}
       </>
