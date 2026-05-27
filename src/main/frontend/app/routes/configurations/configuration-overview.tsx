@@ -117,7 +117,7 @@ export default function ConfigurationOverview() {
 
     const xmlFiles = collectXmlFiles(configurationDirectory)
     return xmlFiles.map((file) => {
-      const relativePath = toRelativePath(file.path, 'src/main/configurations/') ?? file.name
+      const relativePath = toRelativePath(file.path, `${configurationDirectory.path}/`) ?? file.name
       return { ...file, relativePath, path: file.path }
     })
   }, [tree, currentConfigurationProject])

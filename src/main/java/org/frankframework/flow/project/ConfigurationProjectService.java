@@ -245,8 +245,7 @@ public class ConfigurationProjectService {
 		Path absolutePath = fileSystemStorage.toAbsolutePath(configurationProject.getRootPath());
 		boolean isGitRepo = Files.isDirectory(absolutePath.resolve(".git"));
 
-		boolean hasStoredToken =
-				configurationProject.getGitToken() != null && !configurationProject.getGitToken().isBlank();
+		boolean hasStoredToken = configurationProject.getGitToken() != null && !configurationProject.getGitToken().isBlank();
 
 		return new ConfigurationProjectDTO(
 				configurationProject.getName(),
