@@ -12,11 +12,14 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+
 import lombok.extern.log4j.Log4j2;
+
 import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.transport.CredentialsProvider;
+
 import org.frankframework.flow.exception.ApiException;
 import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.frankframework.flow.filesystem.FilesystemEntry;
@@ -25,6 +28,7 @@ import org.frankframework.flow.git.GitService;
 import org.frankframework.flow.projectsettings.FilterType;
 import org.frankframework.flow.recentproject.RecentProject;
 import org.frankframework.flow.recentproject.RecentProjectsService;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpStatus;
@@ -126,6 +130,8 @@ public class ConfigurationProjectService {
 		Path absolutePath = fileSystemStorage.toAbsolutePath(path);
 		if (!Files.exists(absolutePath) || !Files.isDirectory(absolutePath)) {
 			throw new ApiException("Project not found at: " + path, HttpStatus.NOT_FOUND);
+		} else if (!absolutePath.endsWith(CONFIGURATIONS_DIR + "/" + absolutePath.getFileName())) {
+			throw new ApiException("Provided path doesn't seem to be a singular configuration", HttpStatus.BAD_REQUEST);
 		}
 		return loadProjectAndCache(path);
 	}
@@ -194,7 +200,7 @@ public class ConfigurationProjectService {
 		}
 
 		try (ZipOutputStream zos = new ZipOutputStream(outputStream);
-			Stream<Path> paths = Files.walk(projectPath)) {
+		     Stream<Path> paths = Files.walk(projectPath)) {
 			paths.filter(Files::isRegularFile).forEach(filePath -> {
 				try {
 					String entryName = projectPath.relativize(filePath).toString().replace("\\", "/");

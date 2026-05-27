@@ -1,11 +1,14 @@
 package org.frankframework.flow.project;
 
 import jakarta.servlet.http.HttpServletResponse;
+
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import lombok.extern.log4j.Log4j2;
+
 import org.frankframework.flow.common.AllowAllFrankUserRoles;
 import org.frankframework.flow.common.FrankFrameworkService;
 import org.frankframework.flow.common.config.ClientSession;
@@ -15,6 +18,7 @@ import org.frankframework.management.bus.BusAction;
 import org.frankframework.management.bus.BusTopic;
 import org.frankframework.management.bus.message.RequestMessageBuilder;
 import org.frankframework.util.JacksonUtils;
+
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -80,7 +84,8 @@ public class ConfigurationProjectController {
 	}
 
 	@PostMapping("/open")
-	public ResponseEntity<ConfigurationProjectDTO> openProject(@RequestBody ConfigurationProjectCreateDTO configurationProjectCreateDTO) throws IOException, ApiException {
+	public ResponseEntity<ConfigurationProjectDTO> openProject(@RequestBody ConfigurationProjectCreateDTO configurationProjectCreateDTO)
+			throws IOException, ApiException {
 		ConfigurationProject configurationProject = configurationProjectService.openProjectFromDisk(configurationProjectCreateDTO.rootPath());
 		recentProjectsService.addRecentProject(configurationProject.getName(), configurationProject.getRootPath());
 		return ResponseEntity.ok(configurationProjectService.toDto(configurationProject));
