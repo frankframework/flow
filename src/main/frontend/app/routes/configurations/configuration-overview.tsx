@@ -11,7 +11,7 @@ import type { FileTreeNode } from '~/types/filesystem.types'
 import { fetchProjectTree } from '~/services/file-tree-service'
 import Button from '~/components/inputs/button'
 import Search from '~/components/search/search'
-import {normalizePath, toRelativePath} from '~/utils/path-utils'
+import { normalizePath, toRelativePath } from '~/utils/path-utils'
 
 interface ConfigurationFile {
   path: string
