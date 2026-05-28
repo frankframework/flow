@@ -6,6 +6,7 @@ import { fetchInstanceConfigurations, type FFConfiguration } from '~/services/fr
 import { useProjectStore } from '~/stores/project-store'
 import { ApiError } from '~/utils/api'
 import { logApiError } from '~/utils/logger'
+import {getParentPath, normalizePath} from '~/utils/path-utils'
 
 import ConfigurationRow from './configuration-row'
 import Search from '~/components/search/search'
@@ -187,7 +188,7 @@ export default function ProjectLanding() {
   const projects = recentProjects ?? []
   const filteredProjects = projects.filter((project) => project.name.toLowerCase().includes(searchTerm.toLowerCase()))
 
-  const lastRecentRootPath = projects[0]?.rootPath
+  const lastRecentRootPath = normalizePath(projects[0]?.rootPath ?? '')
 
   if (isLoading || isOpeningProject) return <LoadingState />
 
@@ -231,14 +232,14 @@ export default function ProjectLanding() {
         onClose={() => setIsModalOpen(false)}
         onCreate={onCreateProject}
         isLocal={isLocalEnvironment}
-        initialPath={lastRecentRootPath}
+        initialPath={getParentPath(lastRecentRootPath)}
       />
       <CloneConfigurationModal
         isOpen={isCloneModalOpen}
         isLocal={isLocalEnvironment}
         onClose={() => setIsCloneModalOpen(false)}
         onClone={onCloneProject}
-        initialPath={lastRecentRootPath}
+        initialPath={getParentPath(lastRecentRootPath)}
       />
       {!isLocalEnvironment && (
         <input
@@ -256,7 +257,7 @@ export default function ProjectLanding() {
         onSelect={onOpenFolder}
         onCancel={() => setIsOpenPickerOpen(false)}
         rootLabel={rootLocationName}
-        initialPath={lastRecentRootPath}
+        initialPath={getParentPath(lastRecentRootPath)}
       />
     </div>
   )
@@ -351,13 +352,13 @@ const ProjectList = ({
   </section>
 )
 
-const Toolbar = ({ onSearchChange }: { onSearchChange: (val: string) => void }) => (
+const Toolbar = ({ onSearchChange }: { onSearchChange: (value: string) => void }) => (
   <div className="border-border flex h-12 border-b">
     <div className="border-border flex w-1/4 min-w-50 items-center border-r px-4 text-xs font-bold tracking-wider text-slate-500 uppercase">
       <ArchiveIcon className="mr-2 h-4 w-4" /> Recent
     </div>
     <div className="flex flex-1 items-center px-4">
-      <Search onChange={(e) => onSearchChange(e.target.value)} />
+      <Search onChange={(event) => onSearchChange(event.target.value)} />
     </div>
   </div>
 )

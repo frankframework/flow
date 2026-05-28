@@ -11,7 +11,7 @@ import type { FileTreeNode } from '~/types/filesystem.types'
 import { fetchProjectTree } from '~/services/file-tree-service'
 import Button from '~/components/inputs/button'
 import Search from '~/components/search/search'
-import { toRelativePath } from '~/utils/path-utils'
+import {normalizePath, toRelativePath} from '~/utils/path-utils'
 
 interface ConfigurationFile {
   path: string
@@ -22,7 +22,7 @@ interface ConfigurationFile {
 function findConfigurationsDir(node: FileTreeNode | undefined | null): FileTreeNode | null {
   if (!node || !node.path) return null
 
-  const normalizedPath = node.path.replaceAll('\\', '/')
+  const normalizedPath = normalizePath(node.path)
 
   if (node.type === 'DIRECTORY' && normalizedPath.endsWith(`/src/main/configurations/${node.name}`)) {
     return node
@@ -185,13 +185,12 @@ export default function ConfigurationOverview() {
       <h1 className="ml-2 text-2xl font-bold">Configuration Overview</h1>
       <div className="mb-4 flex items-center justify-between">
         <p className="ml-2">
-          Configuration files within src/main/configurations/
-          <span className="font-bold">{currentConfigurationProject.name}</span>:
+          Configuration files within <span className="font-bold">{currentConfigurationProject.name}</span>
         </p>
         <Search value={searchQuery} onChange={handleSearch} />
       </div>
 
-      <div className="border-border bg-background flex flex-wrap gap-4 self-start rounded border p-4">
+      <div className="border-border bg-background flex flex-wrap gap-4 self-start">
         {filteredConfigurationFiles.map((file) => (
           <ConfigurationFileTile
             key={file.path}

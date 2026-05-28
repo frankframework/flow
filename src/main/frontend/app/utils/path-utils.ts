@@ -3,7 +3,17 @@
  * Returns null if the marker is not found.
  */
 export function toRelativePath(absolutePath: string, marker: string): string | null {
-  const normalized = absolutePath.replaceAll('\\', '/')
-  const idx = normalized.indexOf(marker)
-  return idx === -1 ? null : normalized.slice(idx + marker.length)
+  const normalizedPath = normalizePath(absolutePath)
+  const normalizedMarker = normalizePath(marker)
+  const idx = normalizedPath.indexOf(marker)
+  return idx === -1 ? null : normalizedMarker.slice(idx + marker.length)
+}
+
+export function normalizePath(path: string) {
+  return path.replaceAll('\\', '/')
+}
+
+export function getParentPath(path: string): string {
+  if (!path) return path // Return empty string if path is empty, small optimization to avoid regex processing
+  return path.replace(/\/?[^/]*$/, '')
 }
