@@ -4,6 +4,7 @@ import {
   type NodeProps,
   NodeResizeControl,
   Position,
+  useReactFlow,
   useStore,
   useUpdateNodeInternals,
 } from '@xyflow/react'
@@ -101,6 +102,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
   const [mandatoryChildrenFulfilled, setMandatoryChildrenFulfilled] = useState(false)
   const [missingChildren, setMissingChildren] = useState<string[]>([])
 
+  const reactFlow = useReactFlow()
   const updateNodeInternals = useUpdateNodeInternals()
   const [isHandleMenuOpen, setIsHandleMenuOpen] = useState(false)
   const [handleMenuPosition, setHandleMenuPosition] = useState({ x: 0, y: 0 })
@@ -241,6 +243,24 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
     setEditingSubtype(child.subtype)
     showNodeContextMenu(true)
     setIsEditing(true)
+  }
+
+  const selectChild = (childId: string) => {
+    const child = findChildRecursive(properties.data.children, childId)
+    if (!child) return
+
+    const recordElements = elements as Record<string, ElementDetails>
+    const attributes = Object.values(recordElements).find((element) => element.name === child.subtype)?.attributes
+
+    const isFirstLevel = properties.data.children.some((childNode) => childNode.id === childId)
+    setParentId(properties.id)
+    setChildParentId(isFirstLevel ? null : properties.id)
+    setNodeId(+childId)
+    setAttributes(attributes)
+    setEditingSubtype(child.subtype)
+    showNodeContextMenu(true)
+
+    reactFlow.setNodes((nodes) => nodes.map((node) => ({ ...node, selected: false })))
   }
 
   const changeHandleType = (handleIndex: number, newType: string) => {
@@ -514,6 +534,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
                     child={child}
                     gradientEnabled={gradientEnabled}
                     onEdit={editChild}
+                    onSelect={selectChild}
                     parentId={properties.id}
                     rootId={properties.id}
                   />

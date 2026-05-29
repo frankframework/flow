@@ -825,6 +825,17 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
 
   const deleteSelection = useCallback((): boolean => {
     if (isEditing) return false
+
+    const { parentId: storeParentId, nodeId: storeNodeId } = useNodeContextStore.getState()
+    if (storeParentId !== null) {
+      useFlowStore.getState().deleteChild(storeParentId, storeNodeId.toString())
+      useNodeContextStore.getState().setParentId(null)
+      useNodeContextStore.getState().setChildParentId(null)
+      useNodeContextStore.getState().setNodeId(0)
+      showNodeContextMenu(false)
+      return true
+    }
+
     const { nodes, edges, setNodes, setEdges } = useFlowStore.getState()
     const selectedNodeIds = new Set(nodes.filter((n) => n.selected).map((n) => n.id))
     const hasSelection = selectedNodeIds.size > 0 || edges.some((e) => e.selected)
