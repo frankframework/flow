@@ -128,22 +128,19 @@ function capitalize(value: string): string {
   return value.charAt(0).toUpperCase() + value.slice(1)
 }
 
-// Each hash step multiplies by 33 and XORs the codepoint,
-// spreading bits so that strings differing by one character land far more apart on the hue wheel.
 function stringToHue(name: string): number {
-  let hash = 5381
-  for (let i = 0; i < name.length; i++) {
-    hash = Math.imul(hash, 33) ^ (name.codePointAt(i) ?? 0)
+  let hash = 0
+  for (let index = 0; index < name.length; index++) {
+    hash += name.codePointAt(index) ?? 0
   }
-
-  return Math.abs(hash) % 360
+  return hash % 360
 }
 
 export function getPaletteColor(key: string, theme: 'light' | 'dark'): string {
   const hue = stringToHue(key)
 
-  const saturation = theme === 'dark' ? 35 : 70
-  const lightness = theme === 'dark' ? 35 : 55
+  const saturation = 100
+  const lightness = theme === 'dark' ? 60 : 45
 
   return `hsl(${hue} ${saturation}% ${lightness}%)`
 }
@@ -166,8 +163,8 @@ export function frankdocChipStyle(
 ): { borderColor: string; backgroundColor: string } {
   const hue = stringToHue(name)
 
-  const saturation = theme === 'dark' ? 80 : 85
-  const lightness = theme === 'dark' ? 45 : 40
+  const saturation = 100
+  const lightness = theme === 'dark' ? 60 : 45
 
   return {
     borderColor: `hsl(${hue} ${saturation}% ${lightness}%)`,
