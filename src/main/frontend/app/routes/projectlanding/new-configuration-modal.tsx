@@ -8,7 +8,7 @@ interface NewProjectModalProperties {
   isLocal: boolean
   onClose: () => void
   onCreate: (name: string, rootPath: string) => void
-  initialPath?: string
+  initialPath: string
 }
 
 const CONFIG_DIR = 'src/main/configurations'
@@ -26,12 +26,12 @@ export default function NewConfigurationModal({
 
   useEffect(() => {
     if (!isOpen || !isLocal) {
-      if (isOpen) setLocation(initialPath ?? '')
+      if (isOpen) setLocation(initialPath)
       return
     }
 
     filesystemService
-      .resolveNearestAccessiblePath(initialPath ?? '')
+      .resolveNearestAccessiblePath(initialPath)
       .then(setLocation)
       .catch(() => setLocation(''))
   }, [isOpen, isLocal, initialPath])

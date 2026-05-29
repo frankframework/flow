@@ -40,7 +40,7 @@ export default function ConfigurationFileTile({
   return (
     <div className="border-border bg-background relative flex h-75 w-100 flex-col rounded border p-4 shadow-sm">
       {/* Header */}
-      <div className="text-foreground mb-3 truncate text-sm font-semibold" title={relativePath}>
+      <div className="text-foreground text-md mb-3 truncate font-semibold" title={relativePath}>
         {relativePath}
       </div>
 
@@ -55,9 +55,9 @@ export default function ConfigurationFileTile({
       {adapterNames.length > 0 ? (
         <>
           <h1 className="text-foreground mb-2 text-xs">
-            Adapter{adapterNames.length == 1 ? '' : 's'} within this configuration:
+            Adapter{adapterNames.length == 1 ? '' : 's'} within this file
           </h1>
-          <div className="bg-backdrop border-border flex-1 overflow-y-auto rounded border p-2">
+          <div className="border-border flex-1 overflow-y-auto rounded border p-2 shadow-inner">
             <ul className="space-y-2">
               {adapterNames.map((name, index) => (
                 <AdapterListItem
@@ -101,7 +101,7 @@ interface AdapterListItemProps {
 
 function AdapterListItem({ name, adapterPosition, onOpenInStudio }: AdapterListItemProps) {
   return (
-    <li className="border-border bg-background flex items-center rounded border px-2 py-1">
+    <li className="border-border bg-background flex items-center rounded border px-2 py-1 shadow-sm">
       {/* Adapter name – 2/3 */}
       <span className="text-foreground border-border w-2/3 truncate border-r text-xs" title={name}>
         {name}

@@ -93,7 +93,7 @@ export default function AddConfigurationModal({
       onClick={handleClickedOutside}
     >
       <div className="bg-background border-border relative h-100 w-1/3 min-w-200 rounded-lg border p-6 shadow-lg">
-        <h2 className="mb-4 text-lg font-semibold">Add Configuration</h2>
+        <h2 className="mb-4 text-lg font-semibold">Add File</h2>
         <p className="mb-4">Add a new configuration file.</p>
 
         <div className="mb-4 flex items-center gap-2">
