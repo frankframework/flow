@@ -145,7 +145,7 @@ function RightPanelContent({
 }
 
 export default function Studio() {
-  const setVisibility = useSidebarStore((state) => state.setVisibility)
+  const setVisible = useSidebarStore((state) => state.setVisible)
   const [showNodeContext, setShowNodeContext] = useState(false)
   const { nodeId, editingSubtype, isMultiSelect, selectedStickyId, selectedGroupId } = useNodeContextStore(
     useShallow((state) => ({
@@ -183,10 +183,10 @@ export default function Studio() {
     (visible: boolean) => {
       setShowNodeContext(visible)
       if (visible) {
-        setVisibility('studio', SidebarSide.RIGHT, true)
+        setVisible('studio', SidebarSide.RIGHT, true)
       }
     },
-    [setVisibility],
+    [setVisible],
   )
 
   useEffect(() => {

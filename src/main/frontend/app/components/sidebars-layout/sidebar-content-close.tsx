@@ -7,8 +7,7 @@ export default function SidebarContentClose(properties: Readonly<SidebarsClosePr
   const layoutName = useContext(SidebarContext)
   if (!layoutName) throw new Error('SidebarContentClose must be used within a SidebarLayout')
 
-  const visibility = useSidebarStore((state) => state.getVisibility(layoutName))
-  const isVisible = visibility[properties.side]
+  const isVisible = useSidebarStore((state) => state.instances[layoutName]?.visible[properties.side]) ?? true
 
   if (!isVisible) {
     return (

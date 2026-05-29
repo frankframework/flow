@@ -12,13 +12,13 @@ export interface SidebarsCloseProperties {
 export default function SidebarClose({ side }: Readonly<SidebarsCloseProperties>) {
   const layoutName = useContext(SidebarContext)
   const visibility = useSidebarStore((state) => state.getVisibility(layoutName ?? ''))
-  const setVisibility = useSidebarStore((state) => state.setVisibility)
+  const setVisible = useSidebarStore((state) => state.setVisible)
   const isLeft = side === SidebarSide.LEFT
 
   if (!layoutName) throw new Error('SidebarsClose must be used within a SidebarLayout')
 
   const toggleVisible = () => {
-    setVisibility(layoutName, side, !visibility[side])
+    setVisible(layoutName, side, !visibility[side])
   }
 
   return (
