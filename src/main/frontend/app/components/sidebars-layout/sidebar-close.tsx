@@ -23,7 +23,7 @@ export default function SidebarClose({ side }: Readonly<SidebarsCloseProperties>
 
   return (
     <IconButton onClick={toggleVisible} title={isLeft ? 'Collapse left sidebar' : 'Collapse right sidebar'}>
-      <SidebarIcon className={clsx('fill-foreground-muted', isLeft && 'rotate-180')} />
+      <SidebarIcon className={clsx('fill-foreground-muted group-hover:fill-foreground', isLeft && 'rotate-180')} />
     </IconButton>
   )
 }

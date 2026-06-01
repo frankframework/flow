@@ -1,15 +1,17 @@
 import React from 'react'
 import clsx from 'clsx'
 
-type ButtonVariant = 'default' | 'ghost'
+type ButtonVariant = 'default' | 'ghost' | 'primary'
 
 export function buttonClasses(variant: ButtonVariant = 'default', disabled?: boolean, className?: string) {
   return clsx(
-    'text-foreground rounded-md px-4 py-2',
-    variant === 'default' && 'border-border bg-backdrop border',
-    variant === 'ghost' && 'border border-transparent bg-transparent',
-    !disabled && 'hover:bg-hover active:bg-selected hover:cursor-pointer',
-    disabled && 'text-foreground-muted',
+    'rounded-md px-4 py-2',
+    variant === 'default' && 'text-foreground border-border bg-backdrop border',
+    variant === 'ghost' && 'text-foreground border border-transparent bg-transparent',
+    variant === 'primary' && 'bg-brand font-medium text-white',
+    !disabled && variant !== 'primary' && 'hover:bg-hover active:bg-selected cursor-pointer',
+    !disabled && variant === 'primary' && 'hover:opacity-90 cursor-pointer',
+    disabled && 'cursor-not-allowed opacity-50',
     className,
   )
 }

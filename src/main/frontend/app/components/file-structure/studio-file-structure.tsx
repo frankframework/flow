@@ -436,7 +436,7 @@ export default function StudioFileStructure() {
               title="New Configuration File"
               onAction={() => triggerItemAction(item.index, studioContextMenu.handleNewConfiguration)}
             >
-              <SettingsIcon className="fill-foreground h-3.5 w-3.5" />
+              <SettingsIcon className="fill-foreground-muted group-hover:fill-foreground h-3.5 w-3.5" />
             </TreeActionButton>
           )}
           {(isRoot || isPlainFolder) && (
@@ -444,7 +444,7 @@ export default function StudioFileStructure() {
               title="New Folder"
               onAction={() => triggerItemAction(item.index, studioContextMenu.handleNewFolder)}
             >
-              <FolderIcon className="fill-foreground h-3.5 w-3.5" />
+              <FolderIcon className="fill-foreground-muted group-hover:fill-foreground h-3.5 w-3.5" />
             </TreeActionButton>
           )}
           {isConfigFile && (
@@ -452,7 +452,7 @@ export default function StudioFileStructure() {
               title="New Adapter"
               onAction={() => triggerItemAction(item.index, studioContextMenu.handleNewAdapter)}
             >
-              <CodeIcon className="fill-foreground h-4 w-4" />
+              <CodeIcon className="fill-foreground-muted group-hover:fill-foreground h-4 w-4" />
             </TreeActionButton>
           )}
           {!isRoot && (
@@ -460,7 +460,7 @@ export default function StudioFileStructure() {
               title="Rename"
               onAction={() => triggerItemAction(item.index, studioContextMenu.handleRename)}
             >
-              <Pen className="fill-foreground h-3.5 w-3.5" />
+              <Pen className="text-foreground-muted group-hover:text-foreground h-3.5 w-3.5" />
             </TreeActionButton>
           )}
           {!isRoot && (
@@ -468,7 +468,7 @@ export default function StudioFileStructure() {
               title="Delete"
               onAction={() => triggerItemAction(item.index, studioContextMenu.handleDelete)}
             >
-              <TrashBinIcon className="fill-foreground h-3.5 w-3.5" />
+              <TrashBinIcon className="text-foreground-muted group-hover:text-foreground h-3.5 w-3.5" />
             </TreeActionButton>
           )}
         </div>
@@ -491,19 +491,19 @@ export default function StudioFileStructure() {
             disabled={!activeTab || isActiveItemVisible}
             onClick={() => void revealActiveTab()}
           >
-            <ListDown className="fill-foreground h-5 w-5" />
+            <ListDown className="fill-foreground-muted group-hover:fill-foreground h-5 w-5" />
           </IconButton>
           <IconButton
             title="New Configuration File"
             onClick={() => triggerExplorerAction(studioContextMenu.handleNewConfiguration, false)}
           >
-            <SettingsIcon className="fill-foreground h-4 w-4" />
+            <SettingsIcon className="fill-foreground-muted group-hover:fill-foreground h-4 w-4" />
           </IconButton>
           <IconButton
             title="New Folder"
             onClick={() => triggerExplorerAction(studioContextMenu.handleNewFolder, false)}
           >
-            <FolderIcon className="fill-foreground h-4 w-4" />
+            <FolderIcon className="fill-foreground-muted group-hover:fill-foreground h-4 w-4" />
           </IconButton>
         </div>
       </div>

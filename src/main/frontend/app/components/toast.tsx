@@ -10,8 +10,7 @@ interface ToastOptions {
   duration?: number
 }
 
-const toastBaseCard =
-  'shadow-lg rounded-lg p-4 w-80 max-w-full text-white flex items-start gap-3'
+const toastBaseCard = 'shadow-lg rounded-lg p-4 w-80 max-w-full text-white flex items-start gap-3'
 const defaultStyle = 'items-end justify-end pointer-events-none'
 const toastStyles = {
   ERROR: {

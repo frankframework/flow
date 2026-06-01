@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import clsx from 'clsx'
 import type { GitStatus, FileHunkState } from '~/types/git.types'
+import Checkbox from '~/components/inputs/checkbox'
 
 interface GitChangesProps {
   status: GitStatus | null
@@ -16,38 +17,6 @@ const variantConfig: Record<SectionVariant, { accent: string; badge: string; bad
   changes: { accent: 'border-l-amber-500', badge: 'bg-amber-500/15 text-amber-400', badgeLabel: 'M' },
   unversioned: { accent: 'border-l-blue-500', badge: 'bg-blue-500/15 text-blue-400', badgeLabel: 'U' },
   conflicts: { accent: 'border-l-red-500', badge: 'bg-red-500/15 text-red-400', badgeLabel: 'C' },
-}
-
-function IndeterminateCheckbox({
-  checked,
-  indeterminate,
-  onChange,
-  title,
-}: {
-  checked: boolean
-  indeterminate: boolean
-  onChange: () => void
-  title: string
-}) {
-  const ref = useRef<HTMLInputElement>(null)
-
-  useEffect(() => {
-    if (ref.current) {
-      ref.current.indeterminate = indeterminate
-    }
-  }, [indeterminate])
-
-  return (
-    <input
-      ref={ref}
-      type="checkbox"
-      checked={checked}
-      onChange={onChange}
-      className="h-3 w-3 flex-shrink-0 cursor-pointer accent-green-500"
-      title={title}
-      onClick={(e) => e.stopPropagation()}
-    />
-  )
 }
 
 function FileSection({
@@ -107,19 +76,18 @@ function FileSection({
               <div
                 key={file}
                 className={clsx(
-                  'group flex items-center gap-2 rounded-r px-3 py-1 text-xs hover:cursor-pointer',
+                  'group mx-2 flex items-center gap-2 rounded px-3 py-1 text-xs hover:cursor-pointer',
                   selectedFile === file ? 'bg-selected' : 'hover:bg-hover',
                 )}
                 onClick={() => onSelectFile(file)}
               >
-                <div onClick={(e) => e.stopPropagation()}>
-                  <IndeterminateCheckbox
-                    checked={checkboxChecked}
-                    indeterminate={checkboxIndeterminate}
-                    onChange={() => onToggleFile(file)}
-                    title={checkboxChecked ? 'Deselect all chunks' : 'Select all chunks'}
-                  />
-                </div>
+                <Checkbox
+                  checked={checkboxChecked}
+                  indeterminate={checkboxIndeterminate}
+                  onChange={() => onToggleFile(file)}
+                  title={checkboxChecked ? 'Deselect all chunks' : 'Select all chunks'}
+                  onClick={(mouseEvent) => mouseEvent.stopPropagation()}
+                />
                 <span
                   className={clsx(
                     'flex h-4 w-4 flex-shrink-0 items-center justify-center rounded text-[10px] font-bold',

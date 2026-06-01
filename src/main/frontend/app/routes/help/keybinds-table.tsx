@@ -84,11 +84,11 @@ export function KeybindsTable() {
       </div>
 
       <div className="mt-10 flex flex-col">
-        <span className="mb-2 text-foreground-muted text-sm font-semibold uppercase tracking-wider">Platform</span>
+        <span className="text-foreground-muted mb-2 text-sm font-semibold tracking-wider uppercase">Platform</span>
         <RadioList
-                options={{ pc: 'PC', mac: 'Mac' }}
-                value={platform}
-                onChange={(value) => setPlatform(value as Platform)}
+          options={{ pc: 'PC', mac: 'Mac' }}
+          value={platform}
+          onChange={(value) => setPlatform(value as Platform)}
         />
       </div>
     </div>

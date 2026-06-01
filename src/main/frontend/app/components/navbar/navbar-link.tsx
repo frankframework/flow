@@ -17,12 +17,12 @@ export default function NavbarLink({ route, label, Icon }: Readonly<NavbarLinkPr
       <button
         type="button"
         onClick={() => navigate(route)}
-        className="group relative flex w-full flex-col items-center py-1 cursor-pointer"
+        className="group relative flex w-full cursor-pointer flex-col items-center py-1"
       >
         <div
           className={clsx('absolute top-1/2 left-1 h-10/12 w-[2px] -translate-y-1/2 rounded', isActive && 'bg-brand')}
         />
-        <div className="rounded p-2 hover:bg-hover">
+        <div className="hover:bg-hover rounded p-2">
           {Icon && (
             <Icon
               className={clsx(

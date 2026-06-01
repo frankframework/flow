@@ -113,8 +113,6 @@ export function ErrorBoundary({ error }: Readonly<Route.ErrorBoundaryProps>) {
 
 export function HydrateFallback() {
   return (
-    <div className="text-foreground-muted flex h-screen w-full items-center justify-center">
-      Initializing Flow...
-    </div>
+    <div className="text-foreground-muted flex h-screen w-full items-center justify-center">Initializing Flow...</div>
   )
 }

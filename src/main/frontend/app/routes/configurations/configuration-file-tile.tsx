@@ -44,7 +44,7 @@ export default function ConfigurationFileTile({
           {relativePath}
         </p>
         <IconButton title="Delete configuration" onClick={() => setShowDeleteDialog(true)}>
-          <TrashBinIcon className="fill-foreground-muted h-4 w-4" />
+          <TrashBinIcon className="text-foreground-muted group-hover:text-foreground h-4 w-4" />
         </IconButton>
       </div>
 
@@ -70,7 +70,7 @@ export default function ConfigurationFileTile({
         <div className="text-foreground-muted flex-1 text-sm italic">No adapters found</div>
       )}
 
-      <div className="flex justify-center border-border border-t pt-4">
+      <div className="border-border flex justify-center border-t pt-4">
         <IconLabelButton
           icon={<CodeIcon className="h-4 w-4 fill-current" />}
           label="Open in Editor"

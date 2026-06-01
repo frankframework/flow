@@ -37,7 +37,7 @@ export default function ConfigurationRow({
 
   return (
     <div
-      className="hover:bg-hover has-[.icon-button:hover]:bg-transparent mb-2 flex w-full cursor-pointer items-center justify-between rounded px-3 py-1"
+      className="hover:bg-hover mb-2 flex w-full cursor-pointer items-center justify-between rounded px-3 py-1 has-[.icon-button:hover]:bg-transparent"
       onClick={onClick}
     >
       <div className="flex flex-col">

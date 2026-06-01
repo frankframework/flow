@@ -1,3 +1,5 @@
+import Button from '~/components/inputs/button'
+
 interface GitCommitBoxProps {
   commitMessage: string
   onMessageChange: (message: string) => void
@@ -19,24 +21,25 @@ export default function GitCommitBox({
     <div className="border-t-border border-t p-2">
       <textarea
         value={commitMessage}
-        onChange={(e) => onMessageChange(e.target.value)}
+        onChange={(event) => onMessageChange(event.target.value)}
         placeholder="Commit message..."
         className="border-border bg-background text-foreground placeholder:text-foreground-muted w-full resize-none rounded border p-2.5 text-xs focus:outline-none"
         rows={4}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-            e.preventDefault()
+        onKeyDown={(keyboardEvent) => {
+          if (keyboardEvent.key === 'Enter' && (keyboardEvent.ctrlKey || keyboardEvent.metaKey)) {
+            keyboardEvent.preventDefault()
             if (canCommit) onCommit()
           }
         }}
       />
-      <button
+      <Button
+        variant="primary"
         onClick={onCommit}
         disabled={!canCommit}
-        className="bg-brand hover:bg-brand/90 mt-1.5 w-full cursor-pointer rounded px-2 py-1.5 text-xs font-medium text-white disabled:opacity-50"
+        className="mt-1.5 w-full rounded px-2 py-1.5 text-xs"
       >
         {isLoading ? 'Committing...' : 'Commit'}
-      </button>
+      </Button>
     </div>
   )
 }

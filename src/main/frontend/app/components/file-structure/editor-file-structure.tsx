@@ -392,7 +392,7 @@ export default function EditorFileStructure() {
               title="New File"
               onAction={() => triggerItemAction(item.index, editorContextMenu.handleNewFile)}
             >
-              <CodeFileIcon className="fill-foreground h-3.5 w-3.5" />
+              <CodeFileIcon className="fill-foreground-muted group-hover:fill-foreground h-3.5 w-3.5" />
             </TreeActionButton>
           )}
           {item.isFolder && (
@@ -400,7 +400,7 @@ export default function EditorFileStructure() {
               title="New Folder"
               onAction={() => triggerItemAction(item.index, editorContextMenu.handleNewFolder)}
             >
-              <FolderIcon className="fill-foreground h-3.5 w-3.5" />
+              <FolderIcon className="fill-foreground-muted group-hover:fill-foreground h-3.5 w-3.5" />
             </TreeActionButton>
           )}
           {!isRoot && (
@@ -408,7 +408,7 @@ export default function EditorFileStructure() {
               title="Rename"
               onAction={() => triggerItemAction(item.index, editorContextMenu.handleRename)}
             >
-              <Pen className="fill-foreground h-3.5 w-3.5" />
+              <Pen className="text-foreground-muted group-hover:text-foreground h-3.5 w-3.5" />
             </TreeActionButton>
           )}
           {!isRoot && (
@@ -416,7 +416,7 @@ export default function EditorFileStructure() {
               title="Delete"
               onAction={() => triggerItemAction(item.index, editorContextMenu.handleDelete)}
             >
-              <TrashBinIcon className="fill-foreground h-3.5 w-3.5" />
+              <TrashBinIcon className="text-foreground-muted group-hover:text-foreground h-3.5 w-3.5" />
             </TreeActionButton>
           )}
         </div>
@@ -436,19 +436,16 @@ export default function EditorFileStructure() {
             disabled={!activeTabFilePath || isActiveItemVisible}
             onClick={() => void revealActiveFile()}
           >
-            <ListDown className="fill-foreground h-5 w-5" />
+            <ListDown className="fill-foreground-muted group-hover:fill-foreground h-5 w-5" />
           </IconButton>
-          <IconButton
-            title="New File"
-            onClick={() => triggerExplorerAction(editorContextMenu.handleNewFile, false)}
-          >
-            <CodeFileIcon className="fill-foreground h-4 w-4" />
+          <IconButton title="New File" onClick={() => triggerExplorerAction(editorContextMenu.handleNewFile, false)}>
+            <CodeFileIcon className="fill-foreground-muted group-hover:fill-foreground h-4 w-4" />
           </IconButton>
           <IconButton
             title="New Folder"
             onClick={() => triggerExplorerAction(editorContextMenu.handleNewFolder, false)}
           >
-            <FolderIcon className="fill-foreground h-4 w-4" />
+            <FolderIcon className="fill-foreground-muted group-hover:fill-foreground h-4 w-4" />
           </IconButton>
         </div>
       </div>
