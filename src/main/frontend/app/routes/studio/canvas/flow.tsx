@@ -257,7 +257,6 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
   }, [])
 
   const { nodes, edges, onNodesChange, onEdgesChange, onConnect, onReconnect } = useFlowStore(useShallow(selector))
-  const project = useProjectStore.getState().project
 
   const saveFlow = useCallback(async () => {
     const { nodes: flowNodes, edges: flowEdges, viewport: flowViewport } = useFlowStore.getState()
