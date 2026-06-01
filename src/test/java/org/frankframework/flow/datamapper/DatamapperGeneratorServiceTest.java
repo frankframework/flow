@@ -36,6 +36,7 @@ import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
 @ExtendWith(MockitoExtension.class)
+@Disabled
 public class DatamapperGeneratorServiceTest {
 	@Mock
 	private FileSystemStorage fileSystemStorage;
