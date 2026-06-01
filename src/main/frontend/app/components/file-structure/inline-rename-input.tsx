@@ -26,12 +26,12 @@ export default function InlineRenameInput({
         wrapperClassName="ml-1"
         inputClassName="py-0.5 text-sm"
         value={value}
-        onChange={(e) => onChange(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') {
-            e.preventDefault()
+        onChange={(changeEvent) => onChange(changeEvent.target.value)}
+        onKeyDown={(keyboardEvent) => {
+          if (keyboardEvent.key === 'Enter') {
+            keyboardEvent.preventDefault()
             void onSubmit(itemIndex, value)
-          } else if (e.key === 'Escape') {
+          } else if (keyboardEvent.key === 'Escape') {
             onCancel()
           }
         }}

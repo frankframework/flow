@@ -39,8 +39,6 @@ function applyHunkDecorations(
       },
     })
 
-    // Invisible but clickable glyph on all remaining lines of the hunk so that
-    // clicking anywhere in the glyph column for this hunk triggers the toggle.
     for (let line = startLine + 1; line <= endLine; line++) {
       decorations.push({
         range: new monaco.Range(line, 1, line, 1),
