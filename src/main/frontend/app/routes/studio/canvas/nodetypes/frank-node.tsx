@@ -126,7 +126,6 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
   const compactHandleTop = COMPACT_PADDING_TOP + COMPACT_INITIALS_BOX_SIZE / 2 - COMPACT_HANDLE_SIZE / 2 + 10
   const compactDotTop = compactHandleTop - 8
   const compactDotXOffset = `${(FlowConfig.NODE_DEFAULT_WIDTH - COMPACT_INITIALS_BOX_SIZE) / 2 - COMPACT_HANDLE_SIZE - COMPACT_HANDLE_GAP - 10}px`
-  const compactTargetXOffset = `${(FlowConfig.NODE_DEFAULT_WIDTH - COMPACT_INITIALS_BOX_SIZE) / 2 - COMPACT_HANDLE_SIZE - COMPACT_HANDLE_GAP + 10}px`
 
   const allForwardTypesUsed = useMemo(() => {
     if (availableHandleTypes.length === 0) return true
@@ -442,17 +441,30 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
         </div>
 
         {frankElement?.name && frankElement.name !== 'Receiver' && (
-          <Handle
-            type="target"
-            position={Position.Left}
-            style={{
-              opacity: 0,
-              left: compactTargetXOffset,
-              width: '15px',
-              height: '15px',
-              top: `${compactHandleTop}px`,
-            }}
-          />
+          <>
+            <div
+              className="pointer-events-none absolute rounded-full"
+              style={{
+                left: compactDotXOffset,
+                top: `${compactDotTop}px`,
+                width: '15px',
+                height: '15px',
+                backgroundColor: '#B2B2B2',
+                border: '1px solid rgba(107, 114, 128, 0.5)',
+              }}
+            />
+            <Handle
+              type="target"
+              position={Position.Left}
+              style={{
+                opacity: 0,
+                left: compactDotXOffset,
+                width: '15px',
+                height: '15px',
+                top: `${compactHandleTop}px`,
+              }}
+            />
+          </>
         )}
 
         {properties.data.sourceHandles.length > 0 && (
