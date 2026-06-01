@@ -261,6 +261,10 @@ body {
   max-height: 12px;
 }
 
+.react-flow__attribution {
+  background: transparent !important;
+}
+
 :root {
   /* Allotment Styling */
   --focus-border: var(--color-brand);

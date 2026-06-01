@@ -6,7 +6,7 @@ import { fetchInstanceConfigurations, type FFConfiguration } from '~/services/fr
 import { useProjectStore } from '~/stores/project-store'
 import { ApiError } from '~/utils/api'
 import { logApiError } from '~/utils/logger'
-import {getParentPath, normalizePath} from '~/utils/path-utils'
+import { getParentPath, normalizePath } from '~/utils/path-utils'
 
 import ConfigurationRow from './configuration-row'
 import Search from '~/components/search/search'
@@ -285,7 +285,7 @@ const Sidebar = ({
   onCloneClick: () => void
   onImportClick: () => void
 }) => (
-  <nav className="border-border flex w-1/4 min-w-50 flex-col border-r py-2">
+  <nav className="border-border flex w-1/4 min-w-50 flex-col border-r p-3">
     <ActionButton
       label={isLocal ? 'Open Local Folder' : 'Open Workspace Configuration'}
       onClick={onOpenClick}
@@ -364,7 +364,11 @@ const Toolbar = ({ onSearchChange }: { onSearchChange: (value: string) => void }
       <p className="ms-3 align-middle text-sm font-medium normal-case">Configurations</p>
     </div>
     <div className="flex flex-1 items-center justify-center px-4">
-      <Search className="w-full" inputClassName="py-1" onChange={(changeEvent) => onSearchChange(changeEvent.target.value)} />
+      <Search
+        className="w-full"
+        inputClassName="py-1"
+        onChange={(changeEvent) => onSearchChange(changeEvent.target.value)}
+      />
     </div>
   </div>
 )

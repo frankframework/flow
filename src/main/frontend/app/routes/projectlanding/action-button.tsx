@@ -11,7 +11,7 @@ export default function ActionButton({ onClick, label, className }: Readonly<Act
   return (
     <Button
       variant="ghost"
-      className={`w-full justify-start rounded-none text-sm whitespace-nowrap ${className ?? ''}`}
+      className={`w-full justify-start !rounded px-3 py-1 text-sm whitespace-nowrap ${className ?? ''}`}
       onClick={onClick}
     >
       {label}

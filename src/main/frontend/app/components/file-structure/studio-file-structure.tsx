@@ -26,7 +26,7 @@ import {
   type TreeItemIndex,
   UncontrolledTreeEnvironment,
 } from 'react-complex-tree'
-import FilesDataProvider, {
+import StudioFilesDataProvider, {
   type StudioItemData,
   type StudioFolderData,
 } from '~/components/file-structure/studio-files-data-provider'
@@ -38,7 +38,7 @@ import TreeActionButton from './tree-action-button'
 
 const TREE_ID = 'studio-files-tree'
 
-function studioTabItemId(activeTab: string, dataProvider: FilesDataProvider): string | null {
+function studioTabItemId(activeTab: string, dataProvider: StudioFilesDataProvider): string | null {
   const firstSep = activeTab.indexOf('::')
   if (firstSep === -1) return null
   const configPath = activeTab.slice(0, firstSep)
@@ -75,7 +75,7 @@ export default function StudioFileStructure() {
 
   const tree = useRef<TreeRef>(null)
 
-  const [dataProvider, setDataProvider] = useState<FilesDataProvider | null>(null)
+  const [dataProvider, setDataProvider] = useState<StudioFilesDataProvider | null>(null)
   const [providerLoading, setProviderLoading] = useState(false)
   const [selectedItemId, setSelectedItemId] = useState<TreeItemIndex | null>(null)
   const setTabData = useTabStore((state) => state.setTabData)
@@ -186,7 +186,7 @@ export default function StudioFileStructure() {
     const initProvider = async () => {
       setProviderLoading(true)
 
-      const provider = new FilesDataProvider(project.name)
+      const provider = new StudioFilesDataProvider(project.name)
       await provider.init(expandedItemsRef.current)
 
       if (isMounted) {
@@ -460,7 +460,7 @@ export default function StudioFileStructure() {
               title="Rename"
               onAction={() => triggerItemAction(item.index, studioContextMenu.handleRename)}
             >
-              <Pen className="stroke-foreground h-3.5 w-3.5" />
+              <Pen className="fill-foreground h-3.5 w-3.5" />
             </TreeActionButton>
           )}
           {!isRoot && (
