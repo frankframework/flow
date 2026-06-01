@@ -5,7 +5,7 @@ type ButtonVariant = 'default' | 'ghost'
 
 export function buttonClasses(variant: ButtonVariant = 'default', disabled?: boolean, className?: string) {
   return clsx(
-    'text-foreground rounded-md px-4 py-2 transition-colors',
+    'text-foreground rounded-md px-4 py-2',
     variant === 'default' && 'border-border bg-backdrop border',
     variant === 'ghost' && 'border border-transparent bg-transparent',
     !disabled && 'hover:bg-hover active:bg-selected hover:cursor-pointer',

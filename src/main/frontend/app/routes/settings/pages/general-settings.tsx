@@ -8,11 +8,8 @@ export default function GeneralSettings() {
   const { general, setGeneralSettings } = useSettingsStore()
 
   return (
-    <div className="space-y-3 p-6">
-      <div className="border-border bg-background space-y-6 rounded-md border p-6">
-        <p>Customize the application to your liking</p>
-
-        <div className="border-border space-y-2 rounded-md border p-4">
+    <div className="space-y-3 p-6 ">
+        <div className="border-border space-y-2 rounded-md border p-4 bg-background">
           <p className="font-medium">Theme</p>
           <RadioList
             options={{
@@ -25,7 +22,7 @@ export default function GeneralSettings() {
           />
         </div>
 
-        <div className="border-border space-y-4 rounded-md border p-4">
+        <div className="border-border space-y-4 rounded-md border p-4 bg-background">
           <p className="font-medium">Autosave</p>
           <InputWithLabel
             inputSide="right"
@@ -68,7 +65,6 @@ export default function GeneralSettings() {
             />
           </InputWithLabel>
         </div>
-      </div>
     </div>
   )
 }

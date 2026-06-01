@@ -1,6 +1,6 @@
 import React from 'react'
-import clsx from 'clsx'
 import CloseIcon from '/icons/custom/Close.svg?react'
+import IconButton from '~/components/inputs/icon-button'
 
 interface CloseButtonProps {
   onClick?: (event: React.MouseEvent) => void
@@ -9,9 +9,8 @@ interface CloseButtonProps {
 
 export default function CloseButton({ onClick, className }: Readonly<CloseButtonProps>) {
   return (
-    <CloseIcon
-      className={clsx('fill-foreground-muted hover:fill-foreground h-5 w-auto cursor-pointer', className)}
-      onClick={onClick}
-    />
+    <IconButton onClick={onClick} className={className}>
+      <CloseIcon className="fill-foreground-muted h-4 w-4" />
+    </IconButton>
   )
 }

@@ -66,7 +66,7 @@ export default function GroupContext({ nodeId }: Readonly<{ nodeId: string }>) {
                 key={value}
                 title={colorLabel}
                 onClick={() => useFlowStore.getState().setGroupnodeColor(nodeId, value)}
-                className="h-7 w-7 rounded-full border-2 transition-transform hover:scale-110"
+                className="h-7 w-7 rounded-full border-2"
                 style={{
                   background: value,
                   borderColor: color === value ? '#3b82f6' : 'transparent',

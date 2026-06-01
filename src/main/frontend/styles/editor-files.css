@@ -1,5 +1,39 @@
 @import "react-complex-tree/lib/style-modern.css";
 
+/*
+  The fold-out arrow and the row button are siblings inside .rct-tree-item-title-container.
+  When hovering the arrow, :has() on the common parent suppresses the button's hover background,
+  preventing the full row from lighting up when only the arrow is hovered.
+*/
+.rct-tree-item-title-container:has(.rct-tree-item-arrow:hover) .rct-tree-item-button {
+  background-color: transparent;
+}
+
+/*
+  Tree action buttons (New File, Rename, Delete, etc.) render inside .rct-tree-item-button.
+  Hovering them would normally also highlight the entire row. This rule suppresses the row's
+  hover background whenever an icon-button inside it is directly hovered.
+*/
+.rct-tree-item-button:has(.icon-button:hover) {
+  background-color: transparent;
+}
+
+/* Kill the library's built-in transition on tree row hover. */
+.rct-tree-item-button {
+  transition: none;
+}
+
+/* Fix vertical centering of the arrow icon inside its flex container. */
+.rct-tree-item-arrow {
+  align-items: center;
+}
+
+/* Make the arrow SVG match the size of other icons in the UI. */
+.rct-tree-item-arrow svg {
+  width: 14px;
+  height: 14px;
+}
+
 :root {
   --rct-color-tree-bg: transparent;
   --rct-item-height: 28px;

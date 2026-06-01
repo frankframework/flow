@@ -33,7 +33,7 @@ export default function StickyNoteContext({ nodeId }: Readonly<{ nodeId: string 
               key={value}
               title={label}
               onClick={() => useFlowStore.getState().setStickyColor(nodeId, value)}
-              className="h-7 w-7 rounded-full border-2 transition-transform hover:scale-110"
+              className="h-7 w-7 rounded-full border-2"
               style={{
                 background: value,
                 borderColor: color === value ? '#3b82f6' : 'transparent',

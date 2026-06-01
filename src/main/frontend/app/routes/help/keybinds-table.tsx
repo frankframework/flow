@@ -6,7 +6,7 @@ import {
   type Platform,
   type ShortcutDefinition,
 } from '~/stores/shortcut-store'
-import SwitchToggle from '~/components/inputs/switch-toggle'
+import RadioList from '~/components/inputs/radio-list'
 
 const SCOPE_PREFIXES = [
   { prefix: 'studio-explorer.', scope: 'studio-file-explorer' },
@@ -62,15 +62,6 @@ export function KeybindsTable() {
 
   return (
     <div className="p-4">
-      <div className="mb-5 flex flex-col items-center">
-        <span className="mb-1 text-sm font-medium">Platform</span>
-        <SwitchToggle
-          options={['PC', 'Mac']}
-          value={platform === 'pc' ? 'PC' : 'Mac'}
-          onChange={(value) => setPlatform(value === 'PC' ? 'pc' : 'mac')}
-        />
-      </div>
-
       <div className="grid items-start gap-6 md:grid-cols-2">
         {[...grouped.entries()].map(([scope, defs]) => (
           <div key={scope} className="border-border overflow-hidden rounded-md border">
@@ -90,6 +81,15 @@ export function KeybindsTable() {
             ))}
           </div>
         ))}
+      </div>
+
+      <div className="mt-10 flex flex-col">
+        <span className="mb-2 text-foreground-muted text-sm font-semibold uppercase tracking-wider">Platform</span>
+        <RadioList
+                options={{ pc: 'PC', mac: 'Mac' }}
+                value={platform}
+                onChange={(value) => setPlatform(value as Platform)}
+        />
       </div>
     </div>
   )

@@ -374,7 +374,7 @@ const Toolbar = ({ onSearchChange }: { onSearchChange: (value: string) => void }
 )
 
 const LoadingState = () => (
-  <div className="text-foreground-muted flex h-screen w-full animate-pulse items-center justify-center">
+  <div className="text-foreground-muted flex h-screen w-full items-center justify-center">
     Initializing workspace...
   </div>
 )

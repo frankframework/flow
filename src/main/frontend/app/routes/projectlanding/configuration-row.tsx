@@ -32,13 +32,12 @@ export default function ConfigurationRow({
       label: 'Remove from recent',
       icon: <TrashBinIcon className="h-4 w-4 fill-current" />,
       onClick: onRemove,
-      className: 'text-red-500',
     },
   ]
 
   return (
     <div
-      className="hover:bg-hover mb-2 flex w-full cursor-pointer items-center justify-between rounded px-3 py-1"
+      className="hover:bg-hover has-[.icon-button:hover]:bg-transparent mb-2 flex w-full cursor-pointer items-center justify-between rounded px-3 py-1"
       onClick={onClick}
     >
       <div className="flex flex-col">

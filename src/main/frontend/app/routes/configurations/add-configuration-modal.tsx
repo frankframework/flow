@@ -104,7 +104,7 @@ export default function AddConfigurationModal({
           </label>
           <div className="ml-2 flex w-full items-center">
             <label
-              className="border-border bg-background w-full rounded border px-2 py-1 text-sm transition"
+              className="border-border bg-background w-full rounded border px-2 py-1 text-sm"
               aria-label="folder location"
               onDoubleClick={() => setIsOpenPickerOpen(true)}
             >

@@ -56,7 +56,10 @@ export default function KebabMenu({ items, triggerClassName }: Readonly<KebabMen
       <button
         ref={triggerRef}
         onClick={openMenu}
-        className={clsx('text-foreground-muted hover:text-foreground cursor-pointer rounded p-1', triggerClassName)}
+        className={clsx(
+          'icon-button text-foreground-muted hover:bg-hover hover:text-foreground cursor-pointer rounded p-1',
+          triggerClassName,
+        )}
         aria-label="More options"
       >
         <KebabIcon className="h-4 w-4 fill-current" />
@@ -66,7 +69,7 @@ export default function KebabMenu({ items, triggerClassName }: Readonly<KebabMen
         createPortal(
           <div
             ref={menuRef}
-            className="bg-background border-border fixed z-50 min-w-max rounded-md border py-1 shadow-md"
+            className="bg-background border-border fixed z-50 min-w-max rounded-md border p-1 shadow-md"
             style={{ top: menuPosition.y, right: `calc(100vw - ${menuPosition.x}px)` }}
           >
             {items.map((item) => (
