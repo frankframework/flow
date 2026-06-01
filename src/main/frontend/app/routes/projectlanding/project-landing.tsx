@@ -6,7 +6,7 @@ import { fetchInstanceConfigurations, type FFConfiguration } from '~/services/fr
 import { useProjectStore } from '~/stores/project-store'
 import { ApiError } from '~/utils/api'
 import { logApiError } from '~/utils/logger'
-import {getParentPath, normalizePath} from '~/utils/path-utils'
+import { getParentPath, normalizePath } from '~/utils/path-utils'
 
 import ConfigurationRow from './configuration-row'
 import Search from '~/components/search/search'
