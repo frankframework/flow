@@ -1,5 +1,4 @@
 import type { FlowNode } from '~/routes/studio/canvas/flow'
-import type { Filters } from '@frankframework/doc-library-core'
 
 const REFERENCE_KEYS = new Set(['source', 'target', 'parentId'])
 
@@ -128,46 +127,22 @@ function capitalize(value: string): string {
   return value.charAt(0).toUpperCase() + value.slice(1)
 }
 
-function stringToHue(name: string): number {
-  let hash = 0
-  for (let index = 0; index < name.length; index++) {
-    hash += name.codePointAt(index) ?? 0
+export function frankdocChipStyle(name: string): { borderColor: string; backgroundColor: string } {
+  let sum = 0
+  for (const char of name) sum += char.codePointAt(0) ?? 0
+  const h = sum % 360
+  const s = 0.9
+  const l = 0.78
+  const a = s * Math.min(l, 1 - l)
+  const f = (n: number) => {
+    const k = (n + h / 30) % 12
+    return l - a * Math.max(-1, Math.min(k - 3, Math.min(9 - k, 1)))
   }
-  return hash % 360
-}
-
-export function getPaletteColor(key: string, theme: 'light' | 'dark'): string {
-  const hue = stringToHue(key)
-
-  const saturation = 100
-  const lightness = theme === 'dark' ? 60 : 45
-
-  return `hsl(${hue} ${saturation}% ${lightness}%)`
-}
-
-export function getCategoryColor(subtype: string, filters: Filters | null, theme: 'light' | 'dark'): string {
-  if (filters?.Components) {
-    const matchedCategory = Object.entries(filters.Components).find(([, names]) => names.includes(subtype))
-
-    if (matchedCategory) {
-      return getPaletteColor(matchedCategory[0], theme)
-    }
-  }
-
-  return getPaletteColor(subtype, theme)
-}
-
-export function frankdocChipStyle(
-  name: string,
-  theme: 'light' | 'dark' = 'light',
-): { borderColor: string; backgroundColor: string } {
-  const hue = stringToHue(name)
-
-  const saturation = 100
-  const lightness = theme === 'dark' ? 60 : 45
-
+  const r = Math.round(f(0) * 255)
+  const g = Math.round(f(8) * 255)
+  const b = Math.round(f(4) * 255)
   return {
-    borderColor: `hsl(${hue} ${saturation}% ${lightness}%)`,
-    backgroundColor: `hsl(${hue} ${saturation}% ${lightness}% / 0.2)`,
+    borderColor: `rgb(${r} ${g} ${b})`,
+    backgroundColor: `rgb(${r} ${g} ${b} / 0.2)`,
   }
 }
