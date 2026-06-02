@@ -1475,8 +1475,10 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
         )}
 
         {isEditing && (
-          <div className="pointer-events-none absolute inset-0 z-10">
-            <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-3 rounded bg-black/30 px-3 py-2 text-xs text-white backdrop-blur-sm">
+          <div
+            className={`absolute inset-0 z-10 ${isDirty ? 'bg-background/30 backdrop-blur-[0.5px]' : 'pointer-events-none'}`}
+          >
+            <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-3 rounded bg-black/30 px-3 py-2 text-xs text-white backdrop-blur-[0.5px]">
               <span>
                 <kbd className="rounded border border-white/40 bg-white/15 px-1.5 py-0.5 font-mono text-xs text-white">
                   Esc
