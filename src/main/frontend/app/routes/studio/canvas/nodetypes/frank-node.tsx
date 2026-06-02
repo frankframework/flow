@@ -417,17 +417,17 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
             width: `${FlowConfig.NODE_DEFAULT_WIDTH}px`,
             paddingTop: `${COMPACT_PADDING_TOP}px`,
             paddingBottom: '8px',
-            ...(properties.selected && { borderColor: `${nodeColor}` }),
+            ...(properties.selected && { borderColor: `var(${colorVariable})` }),
           }}
         >
           <div
             className="flex h-40 w-40 shrink-0 items-center justify-center rounded-3xl shadow-md"
             style={{
-              backgroundColor: `color-mix(in srgb, ${nodeColor} 25%, transparent)`,
-              border: `3px solid ${nodeColor}`,
+              backgroundColor: `color-mix(in srgb, var(${colorVariable}) 25%, transparent)`,
+              border: `3px solid var(${colorVariable})`,
             }}
           >
-            <span className="text-5xl font-black tracking-tight" style={{ color: `${nodeColor}` }}>
+            <span className="text-5xl font-black tracking-tight" style={{ color: `var(${colorVariable})` }}>
               {abbr}
             </span>
           </div>
@@ -532,7 +532,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
         className={`bg-background border-border relative flex w-full flex-col items-center overflow-x-visible rounded-md border ${isManuallyResized ? 'h-full overflow-y-hidden' : 'overflow-y-visible'}`}
         style={{
           minWidth: `${minNodeWidth}px`,
-          ...(properties.selected && { borderColor: `${nodeColor}` }),
+          ...(properties.selected && { borderColor: `var(${colorVariable})` }),
         }}
         ref={containerReference}
         onDragOver={handleDragOver}
@@ -545,10 +545,10 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
             background: gradientEnabled
               ? `radial-gradient(
                 ellipse farthest-corner at 20% 20%,
-                ${nodeColor} 0%,
+                var(${colorVariable}) 0%,
                 var(--color-background) 100%
               )`
-              : `${nodeColor}`,
+              : `var(${colorVariable})`,
           }}
         >
           <h1 className="text-foreground font-bold">{properties.data.subtype}</h1>
