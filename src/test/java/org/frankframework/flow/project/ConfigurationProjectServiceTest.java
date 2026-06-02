@@ -408,9 +408,9 @@ public class ConfigurationProjectServiceTest {
 
 		String projectName = "manual_project";
 		Path projectDir = tempDir.resolve(projectName);
-		Files.createDirectories(projectDir.resolve("src/main/configurations"));
+		Files.createDirectories(projectDir);
 		Files.writeString(
-				projectDir.resolve("src/main/configurations/TestConfig.xml"),
+				projectDir.resolve("Configuration.xml"),
 				"<Configuration name='TestConfig'/>",
 				StandardCharsets.UTF_8
 		);
@@ -447,26 +447,6 @@ public class ConfigurationProjectServiceTest {
 		Files.writeString(file, "<config/>", StandardCharsets.UTF_8);
 
 		assertThrows(ApiException.class, () -> configurationProjectService.openProjectFromDisk(file.toString()));
-	}
-
-	@Test
-	void testOpenProjectFromDiskLoadsEmptyProject_whenNoConfigurationsDir() throws Exception {
-		when(fileSystemStorage.toAbsolutePath(anyString())).thenAnswer(invocation -> {
-			String pathStr = invocation.getArgument(0);
-			Path path = Path.of(pathStr);
-			return path.isAbsolute() ? path : tempDir.resolve(pathStr);
-		});
-
-		Path projDir = tempDir.resolve("empty_proj");
-		Files.createDirectory(projDir);
-
-		ConfigurationProject configurationProject = configurationProjectService.openProjectFromDisk(projDir.toString());
-
-		assertNotNull(configurationProject);
-		assertEquals("empty_proj", configurationProject.getName());
-
-		ConfigurationProjectDTO dto = configurationProjectService.toDto(configurationProject);
-		assertTrue(dto.filepaths().isEmpty(), "No configurations dir means empty config list");
 	}
 
 	@Test

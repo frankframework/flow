@@ -64,7 +64,7 @@ function ArrayGroupNode({ id, data, variant = 'source', onDelete, onHighlight }:
                 height: 10,
                 top: '20px',
               }} //Can't set this with tailwind for some reason
-              className={`${variant == 'source' ? '' : 'translate-x-1.25'} relative transition-opacity ${isConnectable ? 'opacity-100' : 'opacity-0'} `}
+              className={`${variant == 'source' ? '' : 'translate-x-1.25'} relative ${isConnectable ? 'opacity-100' : 'opacity-0'} `}
             />
             <Handle
               key={variant === 'source' ? 'target' : 'source'}

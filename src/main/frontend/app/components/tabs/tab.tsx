@@ -1,6 +1,6 @@
 import React from 'react'
 import clsx from 'clsx'
-import CloseIcon from '/icons/custom/Close.svg?react'
+import CloseButton from '~/components/inputs/close-button'
 import CodeIcon from '/icons/solar/Code.svg?react'
 import type { TabData } from '~/stores/tab-store'
 
@@ -32,13 +32,7 @@ export default function Tab({ name, configurationPath, icon, isSelected, onSelec
     >
       <Icon className={'fill-foreground-muted h-4 w-auto'} />
       {name}
-      <CloseIcon
-        className={clsx(
-          'hover:fill-foreground h-5 w-auto hover:cursor-pointer',
-          isSelected ? 'fill-foreground-muted' : 'group-hover:fill-foreground-muted',
-        )}
-        onClick={handleClose}
-      />
+      <CloseButton className={clsx(isSelected ? '' : 'opacity-0 group-hover:opacity-100')} onClick={handleClose} />
     </li>
   )
 }

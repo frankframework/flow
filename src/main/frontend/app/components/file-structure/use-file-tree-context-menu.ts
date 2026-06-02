@@ -5,8 +5,9 @@ import { createFolderInProject } from '~/services/file-tree-service'
 import { clearConfigurationFileCache } from '~/services/configuration-file-service'
 import useTabStore from '~/stores/tab-store'
 import useEditorTabStore from '~/stores/editor-tab-store'
-import { showErrorToast, showErrorToastFrom } from '~/components/toast'
+import { showErrorToast } from '~/components/toast'
 import { FILE_NAME_PATTERNS, FOLDER_OR_ADAPTER_NAME_PATTERNS } from '~/components/file-structure/name-input-dialog'
+import { logApiError } from '~/utils/logger'
 
 export interface ContextMenuState {
   position: { x: number; y: number }
@@ -130,7 +131,7 @@ export function useFileTreeContextMenu({
             await createFile(projectName, `${parentPath}/${name}`)
             await dataProvider.reloadDirectory(parentItemId)
           } catch (error) {
-            showErrorToastFrom('Failed to create file', error)
+            logApiError('Failed to create file', error as Error)
           }
           setNameDialog(null)
         },
@@ -156,7 +157,7 @@ export function useFileTreeContextMenu({
             await createFolderInProject(projectName, `${parentPath}/${name}`)
             await dataProvider.reloadDirectory(parentItemId)
           } catch (error) {
-            showErrorToastFrom('Failed to create folder', error)
+            logApiError('Failed to create folder', error as Error)
           }
           setNameDialog(null)
         },
@@ -196,7 +197,7 @@ export function useFileTreeContextMenu({
             await dataProvider.reloadDirectory(getParentItemId(itemId))
             onAfterRename?.(oldPath, newName)
           } catch (error) {
-            showErrorToastFrom('Failed to rename', error)
+            logApiError('Failed to rename', error as Error)
           }
           setNameDialog(null)
         },
@@ -231,7 +232,7 @@ export function useFileTreeContextMenu({
       useEditorTabStore.getState().refreshAllTabs()
       onAfterDelete?.(deleteTarget.path)
     } catch (error) {
-      showErrorToastFrom('Failed to delete', error)
+      logApiError('Failed to delete', error as Error)
     }
 
     await dataProvider.reloadDirectory(deleteTarget.parentItemId)

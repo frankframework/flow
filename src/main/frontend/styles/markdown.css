@@ -118,7 +118,7 @@
   }
 
   h6 {
-    color: #777777;
+    color: var(--color-foreground-muted);
     font-size: 14px;
   }
 
@@ -135,7 +135,7 @@
 
   hr {
     border: 0 none;
-    color: #cccccc;
+    color: var(--color-border);
     height: 4px;
     padding: 0;
   }
@@ -246,9 +246,9 @@
   }
 
   blockquote {
-    border-left: 4px solid #dddddd;
+    border-left: 4px solid var(--color-border);
     padding: 0 15px;
-    color: #777777;
+    color: var(--color-foreground-muted);
   }
 
   blockquote > :first-child {
@@ -411,8 +411,8 @@
   }
 
   .highlight pre {
-    background-color: #f8f8f8;
-    border: 1px solid #cccccc;
+    background-color: var(--color-backdrop);
+    border: 1px solid var(--color-border);
     font-size: 13px;
     line-height: 19px;
     overflow: auto;
@@ -421,8 +421,8 @@
   }
 
   pre {
-    background-color: #f8f8f8;
-    border: 1px solid #cccccc;
+    background-color: var(--color-backdrop);
+    border: 1px solid var(--color-border);
     font-size: 13px;
     line-height: 19px;
     overflow: auto;

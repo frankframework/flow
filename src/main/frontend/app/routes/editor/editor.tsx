@@ -4,7 +4,6 @@ type ITextModel = Monaco['editor']['ITextModel']
 type FindMatch = Monaco['editor']['FindMatch']
 type IModelDeltaDecoration = Monaco['editor']['IModelDeltaDecoration']
 type IEditorDecorationsCollection = Monaco['editor']['IEditorDecorationsCollection']
-import clsx from 'clsx'
 import XsdFeatures from 'monaco-xsd-code-completion/esm/XsdFeatures'
 import 'monaco-xsd-code-completion/src/style.css'
 import XsdManager from 'monaco-xsd-code-completion/esm/XsdManager'
@@ -16,14 +15,14 @@ import EditorFileStructure from '~/components/file-structure/editor-file-structu
 import DiffTabView from '~/components/git/diff-tab-view'
 import GitPanel from '~/components/git/git-panel'
 import Button from '~/components/inputs/button'
+import SegmentedButton from '~/components/inputs/segmented-button'
 import SidebarContentClose from '~/components/sidebars-layout/sidebar-content-close'
 import SidebarHeader from '~/components/sidebars-layout/sidebar-header'
 import SidebarLayout from '~/components/sidebars-layout/sidebar-layout'
-import { SidebarSide } from '~/components/sidebars-layout/sidebar-layout-store'
+import { SidebarSide } from '~/stores/sidebar-layout-store'
 import EditorTabs from '~/components/tabs/editor-tabs'
 import { SaveStatusIndicator } from '~/components/save-status-indicator'
 import { useSaveStatusStore } from '~/stores/save-status-store'
-import { showErrorToastFrom } from '~/components/toast'
 import { useTheme } from '~/hooks/use-theme'
 import { fetchConfigurationFile, saveConfigurationFile } from '~/services/configuration-file-service'
 import { fetchFile, updateFile } from '~/services/file-service'
@@ -32,6 +31,7 @@ import { fetchFrankConfigXsd } from '~/services/xsd-service'
 import useEditorTabStore from '~/stores/editor-tab-store'
 import { useProjectStore } from '~/stores/project-store'
 import { useSettingsStore } from '~/stores/settings-store'
+import { logApiError } from '~/utils/logger'
 import flowXsd from '../../../src/assets/xsd/FlowConfig.xsd?raw'
 import {
   extractFlowElements,
@@ -363,14 +363,14 @@ export default function CodeEditor() {
             if (project.isGitRepository) refreshOpenDiffs(project.name)
           })
           .catch((error) => {
-            showErrorToastFrom('Error saving', error)
+            logApiError('Error saving', error)
             setIdle()
           })
       } else {
         updateFile(project.name, configPath, updatedContent)
           .then(() => finishSaving())
           .catch((error) => {
-            showErrorToastFrom('Error saving', error)
+            logApiError('Error saving', error)
             setIdle()
           })
       }
@@ -425,7 +425,7 @@ export default function CodeEditor() {
     monaco.editor.setModelMarkers(
       model,
       'xsd-validation',
-      errors.map((e) => toMarker(e, monaco.MarkerSeverity.Error)),
+      errors.map((error) => toMarker(error, monaco.MarkerSeverity.Error)),
     )
   }, [])
 
@@ -451,7 +451,7 @@ export default function CodeEditor() {
       )
       editor.pushUndoStop()
     } catch (error) {
-      console.error('Failed to reformat XML:', error)
+      logApiError('Failed to reformat XML', error as Error)
     }
   }, [project, activeTabFilePath])
 
@@ -630,7 +630,7 @@ export default function CodeEditor() {
         .then((content) => setMonacoContent(content, 'xml', abortController.signal))
         .catch((error) => {
           if (!abortController.signal.aborted) {
-            console.error('Failed to load configuration XML:', error)
+            logApiError('Failed to load configuration XML:', error)
           }
         })
     } else {
@@ -642,7 +642,7 @@ export default function CodeEditor() {
         .catch((error) => {
           if (!abortController.signal.aborted) {
             setMonacoContent('', 'plaintext', abortController.signal)
-            console.error('Failed to load file:', error)
+            logApiError('Failed to load file:', error)
           }
         })
     }
@@ -758,34 +758,22 @@ export default function CodeEditor() {
   const isGitRepo = !!project?.isGitRepository
 
   return (
-    <SidebarLayout name="editor">
+    <SidebarLayout name="editor" windowResizeOnChange={true}>
       <>
         <div className="flex h-12 items-center justify-between pr-4">
           <SidebarHeader side={SidebarSide.LEFT} title="Files" />
           {isGitRepo && (
-            <div className="border-border ml-auto flex overflow-hidden rounded border text-sm">
-              <button
-                onClick={() => setLeftTab('files')}
-                className={clsx(
-                  'cursor-pointer px-3 py-1 transition-colors',
-                  leftTab === 'files'
-                    ? 'bg-selected text-foreground font-medium'
-                    : 'hover:bg-foreground-active text-muted-foreground',
-                )}
-              >
+            <div className="border-border ml-auto flex overflow-hidden rounded border">
+              <SegmentedButton isActive={leftTab === 'files'} onClick={() => setLeftTab('files')}>
                 Files
-              </button>
-              <button
+              </SegmentedButton>
+              <SegmentedButton
+                isActive={leftTab === 'git'}
                 onClick={() => setLeftTab('git')}
-                className={clsx(
-                  'border-border cursor-pointer border-l px-3 py-1 transition-colors',
-                  leftTab === 'git'
-                    ? 'bg-selected text-foreground font-medium'
-                    : 'hover:bg-foreground-active text-muted-foreground',
-                )}
+                className="border-border border-l"
               >
                 Git
-              </button>
+              </SegmentedButton>
             </div>
           )}
         </div>

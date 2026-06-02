@@ -59,7 +59,7 @@ export default function MissingRequirements({ missingChildren, isFulfilled }: Mi
                 {values.join(', ')}
               </div>
 
-              {expanded && <span className="hover:text-foreground-active ml-2 text-xs italic">(show less)</span>}
+              {expanded && <span className="hover:text-foreground ml-2 text-xs italic">(show less)</span>}
             </li>
           )
         })}

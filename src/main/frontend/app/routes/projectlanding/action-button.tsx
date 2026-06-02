@@ -4,11 +4,16 @@ import Button from '~/components/inputs/button'
 interface ActionButtonProperties {
   onClick?: React.MouseEventHandler<HTMLButtonElement>
   label: string
+  className?: string
 }
 
-export default function ActionButton({ onClick, label }: Readonly<ActionButtonProperties>) {
+export default function ActionButton({ onClick, label, className }: Readonly<ActionButtonProperties>) {
   return (
-    <Button className="justify-left flex border-none text-sm whitespace-nowrap" onClick={onClick}>
+    <Button
+      variant="ghost"
+      className={`w-full justify-start !rounded px-3 py-1 text-sm whitespace-nowrap ${className ?? ''}`}
+      onClick={onClick}
+    >
       {label}
     </Button>
   )
