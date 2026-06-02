@@ -52,13 +52,13 @@ export default function SidebarLayout({
     const previous = useSidebarStore.getState().getSizes(name) ?? []
     const merged = newSizes.map((size, i) => (size === 0 ? (previous[i] ?? 0) : size))
     setSizes(name, merged)
+    if (windowResizeOnChange) {
+      globalThis.dispatchEvent(new Event('resize'))
+    }
   }
 
   const onChangeHandler = () => {
     if (!allotmentReady) setAllotmentReady(true)
-    if (windowResizeOnChange) {
-      globalThis.dispatchEvent(new Event('resize'))
-    }
   }
 
   return (
