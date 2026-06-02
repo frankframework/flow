@@ -57,6 +57,7 @@ export default function EditorFileStructure() {
   const removeTab = useEditorTabStore((state) => state.removeTab)
   const removeTabAndSelectFallback = useEditorTabStore((state) => state.removeTabAndSelectFallback)
   const activeTabFilePath = useEditorTabStore((state) => state.activeTabFilePath)
+  const activeTab = useEditorTabStore((state) => state.tabs[state.activeTabFilePath])
 
   const [dataProvider, setDataProvider] = useState<EditorFilesDataProvider | null>(null)
   const [selectedItemId, setSelectedItemId] = useState<TreeItemIndex | null>(null)
@@ -159,6 +160,7 @@ export default function EditorFileStructure() {
 
   const revealActiveFile = useCallback(async () => {
     if (!dataProvider || !activeTabFilePath || !rootPath || !tree.current) return
+    if (activeTab?.type === 'diff') return
 
     const itemId = toTreeItemId(activeTabFilePath, rootPath)
 
@@ -168,7 +170,7 @@ export default function EditorFileStructure() {
     }
 
     selectAndReveal(tree.current, itemId)
-  }, [dataProvider, activeTabFilePath, rootPath])
+  }, [dataProvider, activeTabFilePath, rootPath, activeTab])
 
   useShortcut({
     'explorer.new-file': () => triggerExplorerAction(editorContextMenu.handleNewFile, false),
@@ -433,7 +435,7 @@ export default function EditorFileStructure() {
         <div className="flex items-center gap-0.5">
           <IconButton
             title="Open File Tree to Active Tab"
-            disabled={!activeTabFilePath || isActiveItemVisible}
+            disabled={!activeTabFilePath || isActiveItemVisible || activeTab?.type === 'diff'}
             onClick={() => void revealActiveFile()}
           >
             <ListDown className="fill-foreground-muted group-hover:fill-foreground h-5 w-5" />
