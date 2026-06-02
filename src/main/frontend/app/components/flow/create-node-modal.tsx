@@ -116,7 +116,10 @@ function CreateNodeModal({
   }
 
   return (
-    <div className="bg-background/50 absolute inset-0 z-50 flex items-center justify-center">
+    <div
+      className="bg-background/50 absolute inset-0 z-50 flex items-center justify-center"
+      onContextMenu={(mouseEvent) => mouseEvent.stopPropagation()}
+    >
       <div className="bg-background border-border relative h-[400px] w-[600px] rounded-lg border p-6 shadow-lg">
         <h2 className="mb-4 text-lg font-semibold">Add Node</h2>
         <p className="mb-4">Select the element to be added from the list below.</p>
