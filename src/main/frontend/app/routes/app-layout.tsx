@@ -8,9 +8,13 @@ import { openProject } from '~/services/project-service'
 import LoadingSpinner from '~/components/loading-spinner'
 import { apiUrl } from '~/utils/api'
 import { useShortcutListener } from '~/hooks/use-shortcut-listener'
+import { useFileWatcher } from '~/hooks/use-file-watcher'
 
 export default function AppLayout() {
   useShortcutListener()
+
+  const projectName = useProjectStore((state) => state.project?.name)
+  useFileWatcher(projectName)
 
   const [restoring, setRestoring] = useState(!!getStoredProjectRootPath())
 

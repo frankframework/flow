@@ -9,7 +9,7 @@ interface WatcherEntry {
 
 const watchers = new Map<string, WatcherEntry>()
 
-function useSseWatcher(url: string | null, onFileChange: () => void) {
+function useSseWatcher(url: string | null, onFileChange?: () => void) {
   const callbackRef = useRef(onFileChange)
   callbackRef.current = onFileChange
 
@@ -29,7 +29,7 @@ function useSseWatcher(url: string | null, onFileChange: () => void) {
       watchers.set(url, entry)
     }
 
-    const handler = () => callbackRef.current()
+    const handler = () => callbackRef.current?.()
     entry.handlers.add(handler)
     entry.source.addEventListener('file-change', handler)
 
@@ -49,7 +49,7 @@ function useSseWatcher(url: string | null, onFileChange: () => void) {
   }, [url])
 }
 
-export function useFileWatcher(projectName: string | null | undefined, onFileChange: () => void) {
+export function useFileWatcher(projectName: string | null | undefined, onFileChange?: () => void) {
   const url = projectName ? apiUrl(`/projects/${projectName}/watch`) : null
   useSseWatcher(url, onFileChange)
 }
