@@ -6,6 +6,7 @@ import type { FilesystemEntry } from '~/types/filesystem.types'
 import { ApiError } from '~/utils/api'
 import { useDirectoryWatcher } from '~/hooks/use-file-watcher'
 import Button from '../inputs/button'
+import CloseButton from '../inputs/close-button'
 
 interface DirectoryPickerProperties {
   isOpen: boolean
@@ -40,11 +41,11 @@ export default function DirectoryPicker({
       setEntries(result.entries)
       setCurrentPath(result.resolvedPath)
       setParentPath(result.parentPath)
-    } catch (error_) {
-      if (error_ instanceof ApiError && error_.status === 403) {
+    } catch (error) {
+      if (error instanceof ApiError && error.httpCode === 403) {
         setError('Access denied')
       } else {
-        setError(error_ instanceof Error ? error_.message : 'Failed to load directories')
+        setError(error instanceof Error ? error.message : 'Failed to load directories')
       }
     } finally {
       setLoading(false)
@@ -92,12 +93,7 @@ export default function DirectoryPicker({
       <div className="bg-background border-border flex h-[450px] w-1/3 min-w-[500px] flex-col rounded-lg border shadow-lg">
         <div className="border-border flex items-center justify-between border-b px-4 py-3">
           <h3 className="text-sm font-semibold">Select Directory</h3>
-          <Button
-            onClick={onCancel}
-            className="text-foreground-muted hover:text-foreground cursor-pointer text-lg leading-none"
-          >
-            &times;
-          </Button>
+          <CloseButton onClick={onCancel} />
         </div>
 
         <div className="border-border flex items-center gap-2 border-b px-4 py-2">

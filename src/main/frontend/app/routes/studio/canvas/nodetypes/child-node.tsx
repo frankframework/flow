@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import clsx from 'clsx'
 import useFlowStore from '~/stores/flow-store'
 import { getElementTypeFromName } from '../../node-translator-module'
 import useNodeContextStore from '~/stores/node-context-store'
@@ -22,6 +23,7 @@ interface ChildNodeProperties {
   child: ChildNode
   gradientEnabled: boolean
   onEdit: (id: string) => void
+  onSelect: (id: string) => void
   parentId: string
   rootId: string
 }
@@ -30,11 +32,23 @@ export function ChildNodeComponent({
   child,
   gradientEnabled,
   onEdit,
+  onSelect,
   parentId,
   rootId,
 }: Readonly<ChildNodeProperties>) {
-  const { setParentId, setChildParentId, setIsEditing, setDraggedName, draggedName, setNodeId, setAttributes } =
-    useNodeContextStore()
+  const {
+    setParentId,
+    setChildParentId,
+    setIsEditing,
+    setDraggedName,
+    draggedName,
+    setNodeId,
+    setAttributes,
+    nodeId,
+    parentId: selectedParentId,
+    isDirty,
+  } = useNodeContextStore()
+  const isSelected = nodeId === +child.id && selectedParentId !== null
   const showNodeContextMenu = useNodeContextMenu()
   const addChildToChild = useFlowStore((state) => state.addChildToChild)
   const [dragOver, setDragOver] = useState(false)
@@ -70,12 +84,9 @@ export function ChildNodeComponent({
 
     event.dataTransfer.dropEffect = allowed ? 'copy' : 'none'
 
-    if (!allowed && isThisNode) {
-      setDragForbidden(true)
-      setDragOver(false)
-    } else if (allowed && isThisNode) {
-      setDragForbidden(false)
-      setDragOver(true)
+    if (isThisNode) {
+      setDragForbidden(!allowed)
+      setDragOver(allowed)
     }
   }
 
@@ -145,29 +156,30 @@ export function ChildNodeComponent({
   )
 
   useEffect(() => {
-    if (!draggedName) {
-      setCanDropDraggedElement(false)
-      return
-    }
-
-    const allowed = canAcceptChild(draggedName)
-
-    if (allowed) {
-      setCanDropDraggedElement(true)
-      return
-    }
-    setCanDropDraggedElement(false)
+    setCanDropDraggedElement(draggedName !== null && canAcceptChild(draggedName))
   }, [draggedName, canAcceptChild, frankElement, child.subtype])
 
   return (
     <div
       data-childnode-id={child.id}
-      className={`bg-background relative mr-0.5 mb-2 rounded-md border ${dragForbidden ? 'border-2 border-dashed' : 'border-border'}`}
+      className={clsx(
+        'bg-background relative mr-0.5 mb-2 rounded-md border',
+        isSelected && 'border-1',
+        !isSelected && dragForbidden && 'border-2 border-dashed',
+        !isSelected && !dragForbidden && 'border-border',
+      )}
+      style={isSelected ? { borderColor: `var(--type-${child.type?.toLowerCase()})` } : undefined}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
+      onClick={(mouseEvent) => {
+        mouseEvent.stopPropagation()
+        if (isDirty) return
+        onSelect(child.id)
+      }}
       onDoubleClick={(event) => {
         event.stopPropagation()
+        if (isDirty) return
         onEdit(child.id)
       }}
     >
@@ -207,6 +219,7 @@ export function ChildNodeComponent({
                 child={nested}
                 gradientEnabled={gradientEnabled}
                 onEdit={onEdit}
+                onSelect={onSelect}
                 parentId={child.id}
                 rootId={rootId}
               />

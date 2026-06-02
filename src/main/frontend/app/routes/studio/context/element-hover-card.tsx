@@ -3,6 +3,7 @@ import { useFFDoc, useJavadocTransform } from '@frankframework/doc-library-react
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useShortcut } from '~/hooks/use-shortcut'
+import LinkButton from '~/components/inputs/link-button'
 import { frankdocChipStyle, getFirstLabelGroup } from '~/utils/flow-utils'
 import ExternalLinkIcon from '../../../../icons/solar/External Link.svg?react'
 
@@ -83,15 +84,15 @@ export default function ElementHoverCard({ anchorRect, element, onUnlock, onEnte
             </p>
             <h2 className="text-base leading-snug font-semibold">{element.name}</h2>
           </div>
-          <a
+          <LinkButton
             href={frankdocUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="border-border bg-backdrop hover:border-foreground-active hover:text-foreground-active flex shrink-0 flex-col items-center justify-center gap-1 self-stretch rounded border px-3 text-xs transition-colors"
+            className="flex shrink-0 flex-col items-center justify-center gap-1 self-stretch px-3 text-xs"
           >
             <ExternalLinkIcon className="mt-1 h-3.5 w-3.5" />
             <span>FrankDoc</span>
-          </a>
+          </LinkButton>
         </div>
 
         {/* Labels / tags — Angular-style key:value chips */}

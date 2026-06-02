@@ -1,7 +1,8 @@
-// ContextInputField.tsx
 import React from 'react'
+import Dropdown from '~/components/inputs/dropdown'
 import Toggle from '~/components/inputs/toggle'
 import ValidatedInput from '~/components/inputs/validatedInput'
+import Input from '~/components/inputs/input'
 
 interface ContextInputFieldProperties {
   id: string
@@ -23,20 +24,14 @@ export default function ContextInputField({
   // Render enum dropdown
   if (enumOptions) {
     return (
-      <select
+      <Dropdown
         id={id}
         value={value}
-        onChange={(event) => onChange(event.currentTarget.value)}
-        onKeyDown={onKeyDown}
-        className="border-border bg-background focus:border-foreground-active focus:ring-foreground-active mt-1 w-full rounded-md border px-3 py-2 shadow-sm sm:text-sm"
-      >
-        <option value="">Select option…</option>
-        {Object.keys(enumOptions).map((optKey) => (
-          <option key={optKey} value={optKey}>
-            {optKey}
-          </option>
-        ))}
-      </select>
+        onChange={onChange}
+        options={Object.fromEntries(Object.keys(enumOptions).map((key) => [key, key]))}
+        placeholder="Select option…"
+        className="mt-1"
+      />
     )
   }
 
@@ -67,13 +62,13 @@ export default function ContextInputField({
 
   // Default text input
   return (
-    <input
+    <Input
       id={id}
       type="text"
       value={value}
       onChange={(event) => onChange(event.currentTarget.value)}
       onKeyDown={onKeyDown}
-      className="border-border focus:border-foreground-active mt-1 w-full rounded-md border px-3 py-2 shadow-sm focus:ring-0 focus:outline-none sm:text-sm"
+      wrapperClassName="mt-1"
     />
   )
 }

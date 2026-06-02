@@ -69,8 +69,9 @@ export default function SortedElements({ type, items, onDragStart, searchTerm }:
     const isInsideCanvas = targetElement?.closest('#flow-canvas')
 
     if (!dropSuccessful && draggedName && isInsideCanvas) {
-      showWarningToast(`Element "${draggedName}" is not allowed to be dropped on the canvas`)
-      console.warn(`Element "${draggedName}" could not be dropped on the canvas`)
+      const errorMessage = `Element "${draggedName}" could not be dropped on the canvas`
+      showWarningToast(errorMessage)
+      console.warn(errorMessage)
     }
   }
 
@@ -78,7 +79,8 @@ export default function SortedElements({ type, items, onDragStart, searchTerm }:
     <div key={type} className="mb-2">
       <Button
         onClick={toggleExpansion}
-        className="text-foreground-muted hover:text-foreground-active hover:bg-hover flex w-full cursor-pointer items-center gap-2 rounded-sm border-0 bg-transparent px-3 py-3 text-left text-sm font-semibold capitalize transition-colors"
+        style={{ borderLeft: `3px solid ${categoryColor}` }}
+        className="text-foreground-muted hover:text-foreground hover:bg-hover flex w-full cursor-pointer items-center gap-2 rounded-sm border-0 bg-transparent px-3 py-3 text-left text-sm font-semibold capitalize"
         style={{ borderLeft: `3px solid ${categoryColor}` }}
       >
         {shouldExpand ? (
@@ -96,7 +98,7 @@ export default function SortedElements({ type, items, onDragStart, searchTerm }:
             return (
               <li
                 key={value.name}
-                className="text-foreground hover:bg-hover group mb-1 flex cursor-move items-center justify-between rounded-sm py-3 pr-3 pl-3 text-sm transition-colors"
+                className="text-foreground dark:text-foreground-muted hover:text-foreground hover:bg-hover group mb-1 flex cursor-move items-center justify-between rounded-sm py-3 pr-3 pl-3 text-sm"
                 style={{ borderLeft: `3px solid ${categoryColor}` }}
                 draggable
                 onDragStart={(event) => {
@@ -125,7 +127,7 @@ export default function SortedElements({ type, items, onDragStart, searchTerm }:
 
                 {value.deprecated && (
                   <div
-                    className="ml-2 shrink-0 opacity-60 transition-opacity group-hover:opacity-100"
+                    className="ml-2 shrink-0 opacity-60 group-hover:opacity-100"
                     onMouseEnter={(event) => {
                       const rect = event.currentTarget.getBoundingClientRect()
                       setDeprecatedRect(rect)

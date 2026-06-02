@@ -1,5 +1,5 @@
 import SidebarClose, { type SidebarsCloseProperties } from '~/components/sidebars-layout/sidebar-close'
-import { SidebarSide } from '~/components/sidebars-layout/sidebar-layout-store'
+import { SidebarSide } from '~/stores/sidebar-layout-store'
 import clsx from 'clsx'
 
 type SidebarsHeaderProperties = {

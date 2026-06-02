@@ -79,8 +79,8 @@ export default function Root() {
         <button
           className="border-border hover:bg-hover active:bg-selected hidden w-48 rounded-md border bg-red-500 px-4 py-2 text-sm"
           onClick={() => {
-            console.dir(mappingListConfig)
-            showSuccessToast('Logging config to console!', 'Debug')
+            console.log(mappingListConfig)
+            showSuccessToast('Logging config to console', 'Debug')
           }}
         >
           Test External node log

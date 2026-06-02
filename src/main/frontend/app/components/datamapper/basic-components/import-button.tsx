@@ -19,7 +19,7 @@ function ImportButton({ fileType, importFunc, file, setFile }: ImportButtonPrope
       <label
         htmlFor={inputId}
         className={clsx(
-          'w-full cursor-pointer rounded-lg border px-3 py-3 text-center text-sm font-medium transition-colors',
+          'w-full cursor-pointer rounded-lg border px-3 py-3 text-center text-sm font-medium',
           file && 'border-green-600 bg-green-600 text-white hover:bg-green-500',
           !file && 'border-border bg-backdrop text-foreground hover:bg-hover active:bg-selected',
         )}

@@ -80,7 +80,8 @@ public class ConfigurationProjectController {
 	}
 
 	@PostMapping("/open")
-	public ResponseEntity<ConfigurationProjectDTO> openProject(@RequestBody ConfigurationProjectCreateDTO configurationProjectCreateDTO) throws IOException, ApiException {
+	public ResponseEntity<ConfigurationProjectDTO> openProject(@RequestBody ConfigurationProjectCreateDTO configurationProjectCreateDTO)
+			throws IOException, ApiException {
 		ConfigurationProject configurationProject = configurationProjectService.openProjectFromDisk(configurationProjectCreateDTO.rootPath());
 		recentProjectsService.addRecentProject(configurationProject.getName(), configurationProject.getRootPath());
 		return ResponseEntity.ok(configurationProjectService.toDto(configurationProject));

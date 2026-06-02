@@ -67,7 +67,7 @@ function Initialize({ config, configDispatch, confirmed, setRoute }: InitializeP
       {/* Confirm Button */}
       <div className="flex justify-center" hidden={confirmed}>
         <Button
-          className="bg-foreground-active disabled:bg-backdrop disabled:text-foreground-muted font-medium text-neutral-900 transition hover:brightness-110"
+          className="bg-foreground-active disabled:bg-backdrop disabled:text-foreground-muted font-medium text-neutral-900"
           disabled={confirmed || !config.formatTypes.target || !config.formatTypes.source}
           onClick={() => {
             configConfirmDispatched()

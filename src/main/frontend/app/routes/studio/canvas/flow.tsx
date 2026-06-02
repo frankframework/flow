@@ -10,6 +10,7 @@ import {
   type OnConnectEnd,
   ReactFlow,
   ReactFlowProvider,
+  useNodesInitialized,
   useReactFlow,
   useUpdateNodeInternals,
 } from '@xyflow/react'
@@ -28,6 +29,7 @@ import { useShallow } from 'zustand/react/shallow'
 import { FlowConfig } from '~/routes/studio/canvas/flow.config'
 import { getElementTypeFromName } from '~/routes/studio/node-translator-module'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
+import { logApiError } from '~/utils/logger'
 import { NodeContextMenuContext, useNodeContextMenu } from './node-context-menu-context'
 import StickyNoteComponent, { type StickyNote } from '~/routes/studio/canvas/nodetypes/sticky-note'
 import useTabStore, { type TabData } from '~/stores/tab-store'
@@ -50,7 +52,7 @@ import { showErrorToast } from '~/components/toast'
 import { useSettingsStore } from '~/stores/settings-store'
 import { useShortcut } from '~/hooks/use-shortcut'
 import CanvasContextMenu from '~/components/flow/canvas-context-menu'
-import { useSidebarStore, SidebarSide } from '~/components/sidebars-layout/sidebar-layout-store'
+import { useSidebarStore, SidebarSide } from '~/stores/sidebar-layout-store'
 import { openInEditorAtElement } from '~/actions/navigationActions'
 
 export type FlowNode = FrankNodeType | ExitNode | StickyNote | GroupNode | Node
@@ -221,8 +223,10 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
   const reactFlow = useReactFlow()
   const reactFlowRef = useRef(reactFlow)
   reactFlowRef.current = reactFlow
+  const nodesInitialized = useNodesInitialized()
   const canvasRef = useRef<HTMLDivElement>(null)
   const fitAfterLayoutRef = useRef<{ id: string }[] | null>(null)
+  const pendingInitialRelayoutRef = useRef<{ pendingSelection: { subtype: string; name: string } | null } | null>(null)
 
   const applySelectionToNodes = useCallback((pendingSelection: { subtype: string; name: string }) => {
     const currentNodes = useFlowStore.getState().nodes
@@ -253,7 +257,6 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
   }, [])
 
   const { nodes, edges, onNodesChange, onEdgesChange, onConnect, onReconnect } = useFlowStore(useShallow(selector))
-  const project = useProjectStore.getState().project
 
   const saveFlow = useCallback(async () => {
     const { nodes: flowNodes, edges: flowEdges, viewport: flowViewport } = useFlowStore.getState()
@@ -314,11 +317,10 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
 
       setSaved()
     } catch (error) {
-      console.error('Failed to save XML:', error)
-      showErrorToast(`Failed to save XML: ${error instanceof Error ? error.message : error}`)
+      logApiError('Failed to save XML', error as Error)
       setIdle()
     }
-  }, [project])
+  }, [])
 
   const autosaveEnabled = useSettingsStore((s) => s.general.autoSave.enabled)
   const autosaveDelay = useSettingsStore((s) => s.general.autoSave.delayMs)
@@ -574,6 +576,36 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
     flowStore.setNodes(laidOut)
   }, [layoutGraph])
 
+  useEffect(() => {
+    if (!nodesInitialized || !pendingInitialRelayoutRef.current) return
+
+    const { pendingSelection } = pendingInitialRelayoutRef.current
+    pendingInitialRelayoutRef.current = null
+
+    const flowStore = useFlowStore.getState()
+    const nodesWithResetPositions = flowStore.nodes.map((node) =>
+      node.type === 'frankNode' || node.type === 'exitNode' ? { ...node, position: { x: 0, y: 0 } } : node,
+    )
+    const laidOutNodes = layoutGraph(nodesWithResetPositions, flowStore.edges, 'LR')
+    flowStore.setNodes(laidOutNodes)
+
+    if (pendingSelection) {
+      applySelectionToNodes(pendingSelection)
+    } else {
+      waitForStableCanvasDimensions((canvasWidth, canvasHeight) => {
+        const freshViewport = computeAdapterCenteredViewport(laidOutNodes, canvasWidth, canvasHeight)
+        useFlowStore.getState().setViewport(freshViewport)
+        reactFlowRef.current?.setViewport(freshViewport)
+      })
+    }
+  }, [
+    nodesInitialized,
+    layoutGraph,
+    waitForStableCanvasDimensions,
+    computeAdapterCenteredViewport,
+    applySelectionToNodes,
+  ])
+
   const getFullySelectedGroupIds = useCallback(
     (parentIds: (string | undefined)[], selectedNodes: FlowNode[]) => {
       return parentIds.filter((parentId) => {
@@ -792,6 +824,17 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
 
   const deleteSelection = useCallback((): boolean => {
     if (isEditing) return false
+
+    const { parentId: storeParentId, nodeId: storeNodeId } = useNodeContextStore.getState()
+    if (storeParentId !== null) {
+      useFlowStore.getState().deleteChild(storeParentId, storeNodeId.toString())
+      useNodeContextStore.getState().setParentId(null)
+      useNodeContextStore.getState().setChildParentId(null)
+      useNodeContextStore.getState().setNodeId(0)
+      showNodeContextMenu(false)
+      return true
+    }
+
     const { nodes, edges, setNodes, setEdges } = useFlowStore.getState()
     const selectedNodeIds = new Set(nodes.filter((n) => n.selected).map((n) => n.id))
     const hasSelection = selectedNodeIds.size > 0 || edges.some((e) => e.selected)
@@ -866,7 +909,7 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
   )
 
   const showContextIfSidebarOpen = useCallback(() => {
-    const visible = useSidebarStore.getState().getVisibility('studio')[SidebarSide.RIGHT]
+    const visible = useSidebarStore.getState().getVisibility('studio')?.[SidebarSide.RIGHT] ?? false
     if (visible) showNodeContextMenu(true)
   }, [showNodeContextMenu])
 
@@ -1285,20 +1328,10 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
       const adapterJson = await convertAdapterXmlToJson(adapter)
 
       flowStore.setEdges(adapterJson.edges)
-      const laidOutNodes = layoutGraph(adapterJson.nodes, adapterJson.edges, 'LR')
-      flowStore.setNodes(laidOutNodes)
+      flowStore.setNodes(adapterJson.nodes)
       flowStore.setHistory([])
       flowStore.setFuture([])
-
-      if (pendingSelection) {
-        applySelectionToNodes(pendingSelection)
-      } else {
-        waitForStableCanvasDimensions((canvasWidth, canvasHeight) => {
-          const freshViewport = computeAdapterCenteredViewport(laidOutNodes, canvasWidth, canvasHeight)
-          useFlowStore.getState().setViewport(freshViewport)
-          reactFlowRef.current?.setViewport(freshViewport)
-        })
-      }
+      pendingInitialRelayoutRef.current = { pendingSelection }
     }
 
     async function loadFlowFromTab(tab: TabData) {
@@ -1318,8 +1351,7 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
           await loadFromApi(tab, pendingSelection)
         }
       } catch (error) {
-        console.error('Error loading tab flow:', error)
-        showErrorToast(`Failed to load flow: ${error instanceof Error ? error.message : error}`)
+        logApiError('Error loading tab flow:', error as Error)
       } finally {
         isLoadingTabRef.current = false
         setLoading(false)
@@ -1443,8 +1475,10 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
         )}
 
         {isEditing && (
-          <div className="pointer-events-none absolute inset-0 z-10">
-            <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-3 rounded bg-black/30 px-3 py-2 text-xs text-white backdrop-blur-sm">
+          <div
+            className={`absolute inset-0 z-10 ${isDirty ? 'bg-background/30 backdrop-blur-[0.5px]' : 'pointer-events-none'}`}
+          >
+            <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-3 rounded bg-black/30 px-3 py-2 text-xs text-white backdrop-blur-[0.5px]">
               <span>
                 <kbd className="rounded border border-white/40 bg-white/15 px-1.5 py-0.5 font-mono text-xs text-white">
                   Esc
@@ -1495,7 +1529,7 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
           deleteKeyCode={null}
           minZoom={0.2}
         >
-          <Controls position="top-left" style={{ color: '#000' }}>
+          <Controls position="top-left">
             <ControlButton onClick={handleAutoLayout} title="Auto layout">
               <svg
                 viewBox="0 0 24 24"

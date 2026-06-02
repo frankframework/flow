@@ -156,9 +156,10 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
       setEditingMapping,
       openMapping,
     })
-    //Don't add flow as dependancy here, it'll become an infinite loop flow changes every rerender --> updates the memo --> the memo updates the nodetypes --> updating the nodetypes causes react to trigger a rerender resulting in a infinite loop
+    //UseMemo is used here to ensure nodetype is not changed throughout rerenders. If the variable is updated reactflow throws a warning in the console;
+    //Don't add flow as dependency here, it'll become an infinite loop flow changes every rerender --> updates the memo --> the memo updates the nodetypes --> updating the nodetypes causes react to trigger a rerender resulting in a infinite loop
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [openMapping]) //UseMemo is used here to ensure nodetype is not changed throughout rerenders. If the variable is updated reactflow throws a warning in the console;
+  }, [openMapping])
 
   useEffect(() => {
     if (!reactFlowInstance) return
@@ -171,7 +172,6 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
 
     window.addEventListener('resize', updateSize)
 
-    // delay initial run
     requestAnimationFrame(updateSize)
 
     return () => {
@@ -189,14 +189,13 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
     })
   }, [reactFlowNodes, edges, reactFlowInstance, configDispatch])
 
-  //Updates the outer canvas whenever something is added
   useEffect(() => {
     setCanvasSize((size) => updateCanvasSize(reactFlowNodes, size))
   }, [reactFlowNodes])
 
   const onRestore = useCallback(() => {
     const restoreFlow = async () => {
-      if (config.propertyData) await flow.importJsonConfiguration(JSON.stringify(config.propertyData))
+      if (config.propertyData) flow.importJsonConfiguration(JSON.stringify(config.propertyData))
     }
 
     restoreFlow().then(() => {
@@ -258,8 +257,8 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
   )
 
   function openMappingModal(sources: NodeLabels[], targets: NodeLabels[]) {
-    setMappingSources(sources.filter((s) => s.id?.includes('item')))
-    setMappingTargets(targets.filter((t) => t.id?.includes('item')))
+    setMappingSources(sources.filter((source) => source.id?.includes('item')))
+    setMappingTargets(targets.filter((target) => target.id?.includes('item')))
     setAddMappingModal(true)
   }
 
@@ -286,7 +285,7 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
       }
       setEditingNode(null)
       setAddFieldModal(false)
-      showSuccessToast('Added property succesfully!')
+      showSuccessToast('Added property successfully')
     } catch (error) {
       if (error instanceof Error) {
         showErrorToast(error.message)
@@ -307,7 +306,7 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
     setEdges(updatedEdges)
     setEditingMapping(null)
     setAddMappingModal(false)
-    showSuccessToast('Added mapping succesfully!')
+    showSuccessToast('Added mapping successfully')
     setReactFlowNodes((previous) =>
       previous.map((node) => ({
         ...node,
@@ -343,10 +342,7 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
       </div>
 
       <div className="flex w-full justify-center overflow-auto">
-        <div
-          style={{ height: canvasSize.height }} //Using inline style for height because Tailwind doesn't support dynamic pixel values
-          className="flex w-full flex-col items-center"
-        >
+        <div style={{ height: canvasSize.height }} className="flex w-full flex-col items-center">
           <ReactFlow
             nodeTypes={nodeTypes}
             nodes={reactFlowNodes.map((node) => ({

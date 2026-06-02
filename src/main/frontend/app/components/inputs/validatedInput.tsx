@@ -54,13 +54,13 @@ export default function ValidatedInput({
     setInputValue(newValue)
     validateInput(newValue)
 
-    onChange(event)
+    onChange?.(event)
   }
 
   return (
     <div className="relative">
       <Input
-        inputClassName={clsx(!isValid && 'focus:border-b-red-500')}
+        inputClassName={clsx(!isValid && 'focus:border-b-red-500', patterns && 'pr-10')}
         onChange={handleChange}
         value={inputValue}
         {...properties}

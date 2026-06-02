@@ -15,6 +15,7 @@ import { useShortcut } from '~/hooks/use-shortcut'
 import { useFileWatcher } from '~/hooks/use-file-watcher'
 import { getAncestorIds, isVisibleInTree, selectAndReveal, toTreeItemId } from './tree-utilities'
 import type { ContextMenuState } from './use-file-tree-context-menu'
+import IconButton from '~/components/inputs/icon-button'
 
 import {
   Tree,
@@ -31,6 +32,7 @@ import { useTreeStore } from '~/stores/tree-store'
 import EditorFilesDataProvider, { type FileNode } from './editor-data-provider'
 import { useFileTreeContextMenu } from './use-file-tree-context-menu'
 import FileTreeDialogs from './file-tree-dialogs'
+import TreeActionButton from '../inputs/tree-action-button'
 
 const TREE_ID = 'editor-files-tree'
 
@@ -319,19 +321,19 @@ export default function EditorFileStructure() {
   const renderItemArrow = ({ item, context }: { item: TreeItem; context: TreeItemRenderContext }) => {
     if (!item.isFolder) return null
 
-    const Icon = context.isExpanded ? AltArrowDownIcon : AltArrowRightIcon
-
-    const handleClick = (event: React.MouseEvent) => {
-      event.stopPropagation()
-      context.toggleExpandedState()
-    }
+    const ArrowIcon = context.isExpanded ? AltArrowDownIcon : AltArrowRightIcon
 
     return (
-      <Icon
-        onClick={handleClick}
+      <div
+        className="rct-tree-item-arrow-isFolder rct-tree-item-arrow"
+        onClick={(mouseEvent) => {
+          mouseEvent.stopPropagation()
+          context.toggleExpandedState()
+        }}
         onContextMenu={(mouseEvent) => editorContextMenu.openContextMenu(mouseEvent, item.index)}
-        className="rct-tree-item-arrow-isFolder rct-tree-item-arrow fill-foreground"
-      />
+      >
+        <ArrowIcon className="fill-foreground" />
+      </div>
     )
   }
 
@@ -344,7 +346,7 @@ export default function EditorFileStructure() {
     item: TreeItem
     context: TreeItemRenderContext
   }) => {
-    const Icon = item.isFolder ? (context.isExpanded ? FolderOpenIcon : FolderIcon) : CodeIcon
+    const ItemIcon = item.isFolder ? (context.isExpanded ? FolderOpenIcon : FolderIcon) : CodeIcon
     const isRoot = (item.data as { projectRoot?: boolean }).projectRoot ?? false
 
     const searchLower = searchTerm.toLowerCase()
@@ -353,16 +355,16 @@ export default function EditorFileStructure() {
     let highlightedTitle: JSX.Element | string = title
 
     if (searchTerm && titleLower.includes(searchLower)) {
-      const parts = title.split(new RegExp(`(${searchTerm})`, 'gi'))
+      const titleParts = title.split(new RegExp(`(${searchTerm})`, 'gi'))
       highlightedTitle = (
         <>
-          {parts.map((part, i) =>
+          {titleParts.map((part, partIndex) =>
             part.toLowerCase() === searchLower ? (
-              <mark key={i} className="text-foreground bg-foreground-active rounded-sm">
+              <mark key={partIndex} className="text-foreground bg-foreground-active rounded-sm">
                 {part}
               </mark>
             ) : (
-              <span key={i}>{part}</span>
+              <span key={partIndex}>{part}</span>
             ),
           )}
         </>
@@ -371,14 +373,12 @@ export default function EditorFileStructure() {
 
     const isHighlighted = highlightedItemId === item.index
 
-    const actionBtnClass = 'cursor-pointer rounded p-0.5 hover:bg-hover flex-shrink-0'
-
     return (
       <div
         className="group/row flex h-full w-full items-center"
-        onContextMenu={(e) => editorContextMenu.openContextMenu(e, item.index)}
+        onContextMenu={(mouseEvent) => editorContextMenu.openContextMenu(mouseEvent, item.index)}
       >
-        {Icon && <Icon className="fill-foreground w-4 flex-shrink-0" />}
+        {ItemIcon && <ItemIcon className="fill-foreground w-4 flex-shrink-0" />}
         <span
           className={`ml-1 min-w-0 flex-1 overflow-hidden text-nowrap text-ellipsis ${
             isHighlighted ? 'outline-foreground-active rounded-sm px-1 outline-2' : ''
@@ -388,72 +388,36 @@ export default function EditorFileStructure() {
         </span>
         <div className="ml-1 hidden items-center gap-0.5 group-hover/row:flex">
           {item.isFolder && (
-            <div
-              role="button"
-              tabIndex={0}
-              className={actionBtnClass}
+            <TreeActionButton
               title="New File"
-              onClick={(mouseEvent) => {
-                mouseEvent.stopPropagation()
-                triggerItemAction(item.index, editorContextMenu.handleNewFile)
-              }}
-              onKeyDown={(keyboardEvent) =>
-                keyboardEvent.key === 'Enter' && triggerItemAction(item.index, editorContextMenu.handleNewFile)
-              }
+              onAction={() => triggerItemAction(item.index, editorContextMenu.handleNewFile)}
             >
-              <CodeFileIcon className="fill-foreground h-3.5 w-3.5" />
-            </div>
+              <CodeFileIcon className="fill-foreground-muted group-hover:fill-foreground h-3.5 w-3.5" />
+            </TreeActionButton>
           )}
           {item.isFolder && (
-            <div
-              role="button"
-              tabIndex={0}
-              className={actionBtnClass}
+            <TreeActionButton
               title="New Folder"
-              onClick={(mouseEvent) => {
-                mouseEvent.stopPropagation()
-                triggerItemAction(item.index, editorContextMenu.handleNewFolder)
-              }}
-              onKeyDown={(keyboardEvent) =>
-                keyboardEvent.key === 'Enter' && triggerItemAction(item.index, editorContextMenu.handleNewFolder)
-              }
+              onAction={() => triggerItemAction(item.index, editorContextMenu.handleNewFolder)}
             >
-              <FolderIcon className="fill-foreground h-3.5 w-3.5" />
-            </div>
+              <FolderIcon className="fill-foreground-muted group-hover:fill-foreground h-3.5 w-3.5" />
+            </TreeActionButton>
           )}
           {!isRoot && (
-            <div
-              role="button"
-              tabIndex={0}
-              className={actionBtnClass}
+            <TreeActionButton
               title="Rename"
-              onClick={(mouseEvent) => {
-                mouseEvent.stopPropagation()
-                triggerItemAction(item.index, editorContextMenu.handleRename)
-              }}
-              onKeyDown={(keyboardEvent) =>
-                keyboardEvent.key === 'Enter' && triggerItemAction(item.index, editorContextMenu.handleRename)
-              }
+              onAction={() => triggerItemAction(item.index, editorContextMenu.handleRename)}
             >
-              <Pen className="stroke-foreground h-3.5 w-3.5" />
-            </div>
+              <Pen className="text-foreground-muted group-hover:text-foreground h-3.5 w-3.5" />
+            </TreeActionButton>
           )}
           {!isRoot && (
-            <div
-              role="button"
-              tabIndex={0}
-              className={actionBtnClass}
+            <TreeActionButton
               title="Delete"
-              onClick={(mouseEvent) => {
-                mouseEvent.stopPropagation()
-                triggerItemAction(item.index, editorContextMenu.handleDelete)
-              }}
-              onKeyDown={(keyboardEvent) =>
-                keyboardEvent.key === 'Enter' && triggerItemAction(item.index, editorContextMenu.handleDelete)
-              }
+              onAction={() => triggerItemAction(item.index, editorContextMenu.handleDelete)}
             >
-              <TrashBinIcon className="fill-foreground h-3.5 w-3.5" />
-            </div>
+              <TrashBinIcon className="text-foreground-muted group-hover:text-foreground h-3.5 w-3.5" />
+            </TreeActionButton>
           )}
         </div>
       </div>
@@ -462,35 +426,27 @@ export default function EditorFileStructure() {
 
   if (!dataProvider) return <LoadingSpinner message="Loading files..." className="p-8" />
 
-  const toolbarBtnClass = 'cursor-pointer rounded p-1 hover:bg-hover text-foreground'
-
   return (
     <>
       <div className="border-border flex items-center justify-between border-b px-2 py-1">
         <span className="text-foreground/50 text-xs font-semibold tracking-wider uppercase">Explorer</span>
         <div className="flex items-center gap-0.5">
-          <button
-            className={`${toolbarBtnClass} ${!activeTabFilePath || isActiveItemVisible ? 'cursor-not-allowed opacity-40' : ''}`}
+          <IconButton
             title="Open File Tree to Active Tab"
             disabled={!activeTabFilePath || isActiveItemVisible}
             onClick={() => void revealActiveFile()}
           >
-            <ListDown className="fill-foreground h-5 w-5" />
-          </button>
-          <button
-            className={toolbarBtnClass}
-            title="New File"
-            onClick={() => triggerExplorerAction(editorContextMenu.handleNewFile, false)}
-          >
-            <CodeFileIcon className="fill-foreground h-4 w-4" />
-          </button>
-          <button
-            className={toolbarBtnClass}
+            <ListDown className="fill-foreground-muted group-hover:fill-foreground h-5 w-5" />
+          </IconButton>
+          <IconButton title="New File" onClick={() => triggerExplorerAction(editorContextMenu.handleNewFile, false)}>
+            <CodeFileIcon className="fill-foreground-muted group-hover:fill-foreground h-4 w-4" />
+          </IconButton>
+          <IconButton
             title="New Folder"
             onClick={() => triggerExplorerAction(editorContextMenu.handleNewFolder, false)}
           >
-            <FolderIcon className="fill-foreground h-4 w-4" />
-          </button>
+            <FolderIcon className="fill-foreground-muted group-hover:fill-foreground h-4 w-4" />
+          </IconButton>
         </div>
       </div>
       <div className="mt-2">
@@ -498,8 +454,8 @@ export default function EditorFileStructure() {
       </div>
       <div
         className="h-full overflow-auto pr-2"
-        onContextMenu={(e) => {
-          void editorContextMenu.openContextMenu(e, 'root')
+        onContextMenu={(mouseEvent) => {
+          void editorContextMenu.openContextMenu(mouseEvent, 'root')
         }}
       >
         <UncontrolledTreeEnvironment

@@ -34,8 +34,6 @@ import org.springframework.web.multipart.MultipartFile;
 @Log4j2
 @Service
 public class ConfigurationProjectService {
-	private static final String CONFIGURATIONS_DIR = "src/main/configurations";
-
 	private final FileSystemStorage fileSystemStorage;
 	private final RecentProjectsService recentProjectsService;
 
@@ -70,7 +68,7 @@ public class ConfigurationProjectService {
 				ConfigurationProject configurationProject = loadProjectCached(recent.rootPath());
 				foundProjects.add(configurationProject);
 			} catch (Exception _) {
-				log.debug("Recent project no longer valid: {}", recent.rootPath());
+				log.debug("Recent project is no longer valid: {}", recent.rootPath());
 			}
 		}
 		return foundProjects;
@@ -101,13 +99,16 @@ public class ConfigurationProjectService {
 		return getProjects().stream()
 				.filter(project -> project.getName().equals(name))
 				.findFirst()
-				.orElseThrow(() -> new ApiException("Project not found: " + name, HttpStatus.NOT_FOUND));
+				.orElseThrow(() -> new ApiException("Project \"" + name +"\" not found", HttpStatus.NOT_FOUND));
 	}
 
 	public ConfigurationProject createProjectOnDisk(ConfigurationProjectCreateDTO projectCreate) throws IOException {
 		Path rootPath = Path.of(projectCreate.rootPath());
-		String resolvedRootPath = rootPath.endsWith(CONFIGURATIONS_DIR) ? projectCreate.name() : CONFIGURATIONS_DIR + "/" + projectCreate.name();
-		Path projectCreationPath = rootPath.resolve(resolvedRootPath);
+		Path projectCreationPath = rootPath.resolve(projectCreate.name());
+
+		if (Files.exists(projectCreationPath)) {
+			throw new ApiException("Project already exists at " + projectCreationPath, HttpStatus.NOT_FOUND);
+		}
 		Path projectPath = fileSystemStorage.createProjectDirectory(projectCreationPath.toString());
 
 		ClassPathResource resource = new ClassPathResource("templates/default-configuration.xml");
@@ -125,7 +126,9 @@ public class ConfigurationProjectService {
 	public ConfigurationProject openProjectFromDisk(String path) throws IOException, ApiException {
 		Path absolutePath = fileSystemStorage.toAbsolutePath(path);
 		if (!Files.exists(absolutePath) || !Files.isDirectory(absolutePath)) {
-			throw new ApiException("Project not found at: " + path, HttpStatus.NOT_FOUND);
+			throw new ApiException("Project not found at \"" + path + "\"", HttpStatus.NOT_FOUND);
+		} else if (!absolutePath.resolve("Configuration.xml").toFile().exists()) {
+			throw new ApiException("Project doesn't seem to be a valid configuration or Configuration.xml might be missing", HttpStatus.BAD_REQUEST);
 		}
 		return loadProjectAndCache(path);
 	}
@@ -134,7 +137,7 @@ public class ConfigurationProjectService {
 		Path targetDir = fileSystemStorage.toAbsolutePath(localPath);
 
 		if (Files.exists(targetDir)) {
-			throw new IllegalArgumentException("Project already exists at: " + localPath);
+			throw new IllegalArgumentException("Project already exists at \"" + localPath + "\"");
 		}
 
 		try {
@@ -152,9 +155,9 @@ public class ConfigurationProjectService {
 		} catch (GitAPIException exception) {
 			String msg = exception.getMessage() != null ? exception.getMessage().toLowerCase() : "";
 			if (msg.contains("auth") || msg.contains("not permitted") || msg.contains("403") || msg.contains("401")) {
-				throw new IllegalArgumentException("Clone failed — authentication error. Please provide a valid Personal Access Token (PAT)", exception);
+				throw new IllegalArgumentException("Cloning authentication error. Please provide a valid Personal Access Token (PAT)", exception);
 			}
-			throw new IllegalArgumentException("Clone failed: " + exception.getMessage(), exception);
+			throw new IllegalArgumentException("Cloning failed: " + exception.getMessage(), exception);
 		}
 
 		ConfigurationProject configurationProject = loadProjectAndCache(targetDir.toString());
@@ -239,8 +242,7 @@ public class ConfigurationProjectService {
 		Path absolutePath = fileSystemStorage.toAbsolutePath(configurationProject.getRootPath());
 		boolean isGitRepo = Files.isDirectory(absolutePath.resolve(".git"));
 
-		boolean hasStoredToken =
-				configurationProject.getGitToken() != null && !configurationProject.getGitToken().isBlank();
+		boolean hasStoredToken = configurationProject.getGitToken() != null && !configurationProject.getGitToken().isBlank();
 
 		return new ConfigurationProjectDTO(
 				configurationProject.getName(),
