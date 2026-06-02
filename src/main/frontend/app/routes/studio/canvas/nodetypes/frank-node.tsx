@@ -11,7 +11,7 @@ import {
 import DangerIcon from '../../../../../icons/solar/Danger Triangle.svg?react'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import useFlowStore from '~/stores/flow-store'
-import { CustomHandle } from '~/routes/studio/canvas/nodetypes/components/handle'
+import { CustomHandle, translateHandleTypeToColour } from '~/routes/studio/canvas/nodetypes/components/handle'
 import { FlowConfig } from '~/routes/studio/canvas/flow.config'
 import { useNodeContextMenu } from '~/routes/studio/canvas/node-context-menu-context'
 import useNodeContextStore from '~/stores/node-context-store'
@@ -122,14 +122,11 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
   const COMPACT_HANDLE_SIZE = 15
   const COMPACT_HANDLE_GAP = 4
 
-  const compactBaseXOffsetPx =
+  const compactXOffsetPx =
     (FlowConfig.NODE_DEFAULT_WIDTH - COMPACT_INITIALS_BOX_SIZE) / 2 - COMPACT_HANDLE_SIZE - COMPACT_HANDLE_GAP
 
-  const compactHandleXOffset = `${compactBaseXOffsetPx}px`
-  const compactHandleTop = COMPACT_PADDING_TOP + COMPACT_INITIALS_BOX_SIZE / 2 - COMPACT_HANDLE_SIZE / 2 + 10
-
-  const compactDotTop = compactHandleTop - 8
-  const compactDotXOffset = `${compactBaseXOffsetPx - 10}px`
+  const compactHandleTop =
+    COMPACT_PADDING_TOP + COMPACT_INITIALS_BOX_SIZE / 2 - COMPACT_HANDLE_SIZE / 2 + COMPACT_HANDLE_SIZE
 
   const allForwardTypesUsed = useMemo(() => {
     if (availableHandleTypes.length === 0) return true
@@ -442,6 +439,12 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
           {properties.data.name && (
             <span className="text-foreground-muted text-center text-3xl whitespace-nowrap">{properties.data.name}</span>
           )}
+          {properties.data.attributes &&
+            Object.entries(properties.data.attributes).map(([key, value]) => (
+              <span key={key} className="text-foreground-muted text-center text-2xl whitespace-nowrap">
+                {value || key}
+              </span>
+            ))}
         </div>
 
         {frankElement?.name && frankElement.name !== 'Receiver' && (
@@ -449,8 +452,9 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
             <div
               className="pointer-events-none absolute rounded-full"
               style={{
-                left: compactDotXOffset,
-                top: `${compactDotTop}px`,
+                left: compactXOffsetPx,
+                top: `${compactHandleTop}px`,
+                transform: 'translate(-50%, -50%)',
                 width: '15px',
                 height: '15px',
                 backgroundColor: '#B2B2B2',
@@ -460,9 +464,10 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
             <Handle
               type="target"
               position={Position.Left}
+              isConnectableStart={false}
               style={{
                 opacity: 0,
-                left: compactDotXOffset,
+                left: compactXOffsetPx,
                 width: '15px',
                 height: '15px',
                 top: `${compactHandleTop}px`,
@@ -475,11 +480,12 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
           <div
             className="pointer-events-none absolute rounded-full"
             style={{
-              right: compactDotXOffset,
-              top: `${compactDotTop}px`,
-              width: '15px',
-              height: '15px',
-              backgroundColor: '#B2B2B2',
+              right: compactXOffsetPx,
+              top: `${compactHandleTop}px`,
+              transform: 'translate(50%, -50%)',
+              width: `${COMPACT_HANDLE_SIZE}px`,
+              height: `${COMPACT_HANDLE_SIZE}px`,
+              backgroundColor: translateHandleTypeToColour(properties.data.sourceHandles[0].type),
               border: '1px solid rgba(107, 114, 128, 0.5)',
             }}
           />
@@ -493,7 +499,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
             id={handle.index.toString()}
             style={{
               top: `${compactHandleTop}px`,
-              right: compactHandleXOffset,
+              right: compactXOffsetPx,
               width: '15px',
               height: '15px',
               opacity: 0,
@@ -654,6 +660,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
         <Handle
           type="target"
           position={Position.Left}
+          isConnectableStart={false}
           className="flex items-center justify-center text-white"
           style={{
             left: '-15px',
@@ -681,9 +688,10 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
           onClick={(event) => {
             toggleHandleMenu(event)
           }}
-          className="nodrag absolute -right-5.5 h-3.75 w-3.75 cursor-pointer justify-center rounded-full border bg-gray-400 text-center text-[8px] font-bold text-white"
+          className="nodrag absolute h-4 w-4 cursor-pointer justify-center rounded-full border bg-gray-400 text-center text-[8px] font-bold text-white"
           style={{
-            top: `${firstHandlePosition + properties.data.sourceHandles.length * handleSpacing + 15}px`,
+            top: `${firstHandlePosition + properties.data.sourceHandles.length * handleSpacing + 12.5}px`,
+            right: '-23px',
           }}
         >
           +

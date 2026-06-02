@@ -213,6 +213,12 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
     sourceNodeSubtype: string
     position: { x: number; y: number }
   } | null>(null)
+  const [pendingEdgeDrop, setPendingEdgeDrop] = useState<{
+    position: { x: number; y: number }
+    sourceNodeSubtype: string
+  } | null>(null)
+
+  const [edgeDropHandleType, setEdgeDropHandleType] = useState<string | null>(null)
 
   const clipboardRef = useRef<{
     nodes: FlowNode[]
@@ -470,6 +476,18 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
   const handleConnectEnd: OnConnectEnd = (event, connectionState) => {
     const mouseEvent = event as MouseEvent
     if (!connectionState.isValid) {
+      const zoom = reactFlow.getZoom()
+      if (zoom < 0.4 && sourceInfoReference.current.handleType === 'source') {
+        const { nodes } = useFlowStore.getState()
+        const sourceNode = nodes.find((node) => node.id === sourceInfoReference.current.nodeId)
+        if (sourceNode && isFrankNode(sourceNode)) {
+          setPendingEdgeDrop({
+            position: { x: mouseEvent.clientX, y: mouseEvent.clientY },
+            sourceNodeSubtype: sourceNode.data.subtype,
+          })
+          return
+        }
+      }
       handleEdgeDropOnCanvas(mouseEvent.clientX, mouseEvent.clientY)
     }
   }
@@ -545,6 +563,18 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
     setEdgeDropPositions(flowPositions)
     setShowModal(true)
   }
+
+  const handleEdgeDropHandleSelect = useCallback(
+    (type: string) => {
+      if (!pendingEdgeDrop) return
+      const flowPositions = reactFlow.screenToFlowPosition(pendingEdgeDrop.position)
+      setEdgeDropHandleType(type)
+      setEdgeDropPositions(flowPositions)
+      setPendingEdgeDrop(null)
+      setShowModal(true)
+    },
+    [pendingEdgeDrop, reactFlow],
+  )
 
   const computeAdapterCenteredViewport = useCallback(
     (nodes: Node[], canvasWidth: number, canvasHeight: number): { x: number; y: number; zoom: number } => {
@@ -1229,16 +1259,38 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
       const sourceNode = flowStore.nodes.find((node) => node.id === sourceInfo.nodeId)
 
       if (reactFlow.getZoom() < 0.4 && sourceNode && isFrankNode(sourceNode)) {
-        setPendingCompactConnection({
-          connection: {
-            source: sourceInfo.nodeId,
-            sourceHandle: null,
-            target: newId.toString(),
-            targetHandle: null,
-          },
-          sourceNodeSubtype: sourceNode.data.subtype,
-          position: reactFlow.flowToScreenPosition(position),
-        })
+        if (edgeDropHandleType) {
+          const existingHandle = sourceNode.data.sourceHandles.find((handle) => handle.type === edgeDropHandleType)
+          if (existingHandle) {
+            onConnect({
+              source: sourceInfo.nodeId!,
+              sourceHandle: existingHandle.index.toString(),
+              target: newId.toString(),
+              targetHandle: null,
+            })
+          } else {
+            const newIndex = sourceNode.data.sourceHandles.length + 1
+            flowStore.addHandle(sourceInfo.nodeId!, { type: edgeDropHandleType, index: newIndex })
+            onConnect({
+              source: sourceInfo.nodeId!,
+              sourceHandle: newIndex.toString(),
+              target: newId.toString(),
+              targetHandle: null,
+            })
+          }
+          setEdgeDropHandleType(null)
+        } else {
+          setPendingCompactConnection({
+            connection: {
+              source: sourceInfo.nodeId,
+              sourceHandle: null,
+              target: newId.toString(),
+              targetHandle: null,
+            },
+            sourceNodeSubtype: sourceNode.data.subtype,
+            position: reactFlow.flowToScreenPosition(position),
+          })
+        }
 
         sourceInfoReference.current = { nodeId: null, handleId: null, handleType: null }
         return
@@ -1560,9 +1612,9 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
           </div>
         )}
 
-        {isEditing && (
+        {isEditing && !pendingCompactConnection && (
           <div
-            className={`absolute inset-0 z-10 ${isDirty ? 'bg-background/30 backdrop-blur-[0.5px]' : 'pointer-events-none'}`}
+            className={`absolute inset-0 z-10 ${isDirty ? 'bg-background/10' : 'pointer-events-none'}`}
           >
             <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-3 rounded bg-black/30 px-3 py-2 text-xs text-white backdrop-blur-[0.5px]">
               <span>
@@ -1655,6 +1707,18 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
             typesAllowed={
               (elements as Record<string, ElementDetails> | null)?.[pendingCompactConnection.sourceNodeSubtype]
                 ?.forwards
+            }
+          />
+        )}
+
+        {pendingEdgeDrop && (
+          <HandleMenu
+            title="Select Handle Type"
+            position={pendingEdgeDrop.position}
+            onClose={() => setPendingEdgeDrop(null)}
+            onSelect={handleEdgeDropHandleSelect}
+            typesAllowed={
+              (elements as Record<string, ElementDetails> | null)?.[pendingEdgeDrop.sourceNodeSubtype]?.forwards
             }
           />
         )}

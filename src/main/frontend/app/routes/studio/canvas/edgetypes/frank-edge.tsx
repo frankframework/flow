@@ -68,10 +68,11 @@ export default function FrankEdge({
             position: 'absolute',
             transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
             pointerEvents: 'all',
+            zIndex: 20,
           }}
-          className="flex flex-col items-center"
+          className="nodrag flex flex-col items-center"
         >
-          <p className="bg-background border-border relative rounded-md p-1 px-2 text-sm">
+          <p className="bg-background border-border relative rounded-md border p-1 px-2 text-sm">
             {sourceHandleType}
             {selected && (
               <button
