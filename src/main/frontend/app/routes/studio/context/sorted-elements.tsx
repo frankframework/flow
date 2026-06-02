@@ -79,7 +79,6 @@ export default function SortedElements({ type, items, onDragStart, searchTerm }:
     <div key={type} className="mb-2">
       <Button
         onClick={toggleExpansion}
-        style={{ borderLeft: `3px solid ${categoryColor}` }}
         className="text-foreground-muted hover:text-foreground hover:bg-hover flex w-full cursor-pointer items-center gap-2 rounded-sm border-0 bg-transparent px-3 py-3 text-left text-sm font-semibold capitalize"
         style={{ borderLeft: `3px solid ${categoryColor}` }}
       >
