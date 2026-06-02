@@ -70,6 +70,8 @@ function FileSection({
               } else if (selectedCount > 0) {
                 checkboxIndeterminate = true
               }
+            } else if (hunkState && hunkState.totalHunks === 0 && hunkState.selected) {
+              checkboxChecked = true
             }
 
             return (

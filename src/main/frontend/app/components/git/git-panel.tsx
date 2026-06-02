@@ -92,18 +92,34 @@ export default function GitPanel({ projectName, hasStoredToken }: GitPanelProps)
   const handleToggleFile = useCallback(
     async (filePath: string) => {
       const hunkState = useGitStore.getState().fileHunkStates[filePath]
-      if (!hunkState || hunkState.totalHunks === 0) {
+      if (!hunkState) {
         await handleSelectFile(filePath)
       }
 
       const updatedState = useGitStore.getState().fileHunkStates[filePath]
+
+      if (!updatedState) {
+        initFileHunks(filePath, 0)
+        selectAllFileHunks(filePath)
+        return
+      }
+
+      if (updatedState.totalHunks === 0) {
+        if (updatedState.selected) {
+          clearFileHunks(filePath)
+        } else {
+          selectAllFileHunks(filePath)
+        }
+        return
+      }
+
       if (updatedState.selectedHunks.size === updatedState.totalHunks) {
         clearFileHunks(filePath)
       } else {
         selectAllFileHunks(filePath)
       }
     },
-    [handleSelectFile, clearFileHunks, selectAllFileHunks],
+    [handleSelectFile, initFileHunks, clearFileHunks, selectAllFileHunks],
   )
 
   const handleCommit = useCallback(async () => {
@@ -113,8 +129,11 @@ export default function GitPanel({ projectName, hasStoredToken }: GitPanelProps)
       const allHunkStates = useGitStore.getState().fileHunkStates
 
       for (const [filePath, hunkState] of Object.entries(allHunkStates)) {
-        if (hunkState.selectedHunks.size === 0) continue
-        await (hunkState.selectedHunks.size === hunkState.totalHunks
+        const isZeroHunkSelected = hunkState.totalHunks === 0 && hunkState.selected
+
+        if (hunkState.selectedHunks.size === 0 && !isZeroHunkSelected) continue
+
+        await (isZeroHunkSelected || hunkState.selectedHunks.size === hunkState.totalHunks
           ? stageFile(projectName, filePath)
           : stageHunks(projectName, filePath, [...hunkState.selectedHunks]))
       }
@@ -175,7 +194,9 @@ export default function GitPanel({ projectName, hasStoredToken }: GitPanelProps)
     }
   }, [projectName, token, refreshStatus])
 
-  const hasSelectedChunks = Object.values(fileHunkStates).some((s) => s.selectedHunks.size > 0)
+  const hasSelectedChunks = Object.values(fileHunkStates).some(
+    (s) => s.selectedHunks.size > 0 || (s.totalHunks === 0 && s.selected),
+  )
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
