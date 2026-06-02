@@ -122,10 +122,14 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
   const COMPACT_HANDLE_SIZE = 15
   const COMPACT_HANDLE_GAP = 4
 
-  const compactHandleXOffset = `${(FlowConfig.NODE_DEFAULT_WIDTH - COMPACT_INITIALS_BOX_SIZE) / 2 - COMPACT_HANDLE_SIZE - COMPACT_HANDLE_GAP}px`
+  const compactBaseXOffsetPx =
+    (FlowConfig.NODE_DEFAULT_WIDTH - COMPACT_INITIALS_BOX_SIZE) / 2 - COMPACT_HANDLE_SIZE - COMPACT_HANDLE_GAP
+
+  const compactHandleXOffset = `${compactBaseXOffsetPx}px`
   const compactHandleTop = COMPACT_PADDING_TOP + COMPACT_INITIALS_BOX_SIZE / 2 - COMPACT_HANDLE_SIZE / 2 + 10
+
   const compactDotTop = compactHandleTop - 8
-  const compactDotXOffset = `${(FlowConfig.NODE_DEFAULT_WIDTH - COMPACT_INITIALS_BOX_SIZE) / 2 - COMPACT_HANDLE_SIZE - COMPACT_HANDLE_GAP - 10}px`
+  const compactDotXOffset = `${compactBaseXOffsetPx - 10}px`
 
   const allForwardTypesUsed = useMemo(() => {
     if (availableHandleTypes.length === 0) return true
@@ -677,9 +681,9 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
           onClick={(event) => {
             toggleHandleMenu(event)
           }}
-          className="nodrag absolute -right-5.75 h-3.75 w-3.75 cursor-pointer justify-center rounded-full border bg-gray-400 text-center text-[8px] font-bold text-white"
+          className="nodrag absolute -right-5.5 h-3.75 w-3.75 cursor-pointer justify-center rounded-full border bg-gray-400 text-center text-[8px] font-bold text-white"
           style={{
-            top: `${firstHandlePosition + properties.data.sourceHandles.length * handleSpacing}px`,
+            top: `${firstHandlePosition + properties.data.sourceHandles.length * handleSpacing + 15}px`,
           }}
         >
           +

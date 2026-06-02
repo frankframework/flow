@@ -4,6 +4,7 @@ import {
   BackgroundVariant,
   ControlButton,
   Controls,
+  type Connection,
   type Edge,
   type Node,
   type OnConnectStart,
@@ -54,6 +55,7 @@ import { useShortcut } from '~/hooks/use-shortcut'
 import CanvasContextMenu from '~/components/flow/canvas-context-menu'
 import { useSidebarStore, SidebarSide } from '~/stores/sidebar-layout-store'
 import { openInEditorAtElement } from '~/actions/navigationActions'
+import HandleMenu from '~/routes/studio/canvas/nodetypes/components/handle-menu'
 
 export type FlowNode = FrankNodeType | ExitNode | StickyNote | GroupNode | Node
 
@@ -206,6 +208,12 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
 
   const [showModal, setShowModal] = useState(false)
   const [edgeDropPositions, setEdgeDropPositions] = useState<{ x: number; y: number } | null>(null)
+  const [pendingCompactConnection, setPendingCompactConnection] = useState<{
+    connection: Connection
+    sourceNodeSubtype: string
+    position: { x: number; y: number }
+  } | null>(null)
+
   const clipboardRef = useRef<{
     nodes: FlowNode[]
     edges: Edge[]
@@ -460,13 +468,75 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
   }
 
   const handleConnectEnd: OnConnectEnd = (event, connectionState) => {
+    const mouseEvent = event as MouseEvent
     if (!connectionState.isValid) {
-      const mouseEvent = event as MouseEvent
-      const x = mouseEvent.clientX
-      const y = mouseEvent.clientY
-      handleEdgeDropOnCanvas(x, y)
+      handleEdgeDropOnCanvas(mouseEvent.clientX, mouseEvent.clientY)
     }
   }
+
+  const handleConnect = useCallback(
+    (connection: Connection) => {
+      const zoom = reactFlow.getZoom()
+
+      if (zoom < 0.4 && connection.source) {
+        const { nodes } = useFlowStore.getState()
+        const sourceNode = nodes.find((node) => node.id === connection.source)
+
+        if (sourceNode && isFrankNode(sourceNode)) {
+          const targetNode = nodes.find((node) => node.id === connection.target)
+          const position = targetNode
+            ? reactFlow.flowToScreenPosition({
+                x: targetNode.position.x + (targetNode.measured?.width ?? FlowConfig.NODE_DEFAULT_WIDTH) / 2,
+                y: targetNode.position.y + (targetNode.measured?.height ?? FlowConfig.NODE_ZOOMED_OUT_HEIGHT) / 2,
+              })
+            : { x: window.innerWidth / 2, y: window.innerHeight / 2 }
+
+          setPendingCompactConnection({
+            connection,
+            sourceNodeSubtype: sourceNode.data.subtype,
+            position,
+          })
+          return
+        }
+      }
+
+      onConnect(connection)
+    },
+    [onConnect, reactFlow],
+  )
+
+  const handleCompactHandleSelect = useCallback(
+    (type: string) => {
+      if (!pendingCompactConnection) return
+
+      const { nodes } = useFlowStore.getState()
+      const sourceNode = nodes.find((node) => node.id === pendingCompactConnection.connection.source)
+
+      if (!sourceNode || !isFrankNode(sourceNode)) {
+        setPendingCompactConnection(null)
+        return
+      }
+
+      const existingHandle = sourceNode.data.sourceHandles.find((handle) => handle.type === type)
+
+      if (existingHandle) {
+        onConnect({
+          ...pendingCompactConnection.connection,
+          sourceHandle: existingHandle.index.toString(),
+        })
+      } else {
+        const newIndex = sourceNode.data.sourceHandles.length + 1
+        useFlowStore.getState().addHandle(pendingCompactConnection.connection.source!, { type, index: newIndex })
+        onConnect({
+          ...pendingCompactConnection.connection,
+          sourceHandle: newIndex.toString(),
+        })
+      }
+
+      setPendingCompactConnection(null)
+    },
+    [pendingCompactConnection, onConnect],
+  )
 
   const handleEdgeDropOnCanvas = (x: number, y: number) => {
     const { screenToFlowPosition } = reactFlow
@@ -1158,6 +1228,22 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
     if (sourceInfo?.nodeId && sourceInfo.handleType === 'source') {
       const sourceNode = flowStore.nodes.find((node) => node.id === sourceInfo.nodeId)
 
+      if (reactFlow.getZoom() < 0.4 && sourceNode && isFrankNode(sourceNode)) {
+        setPendingCompactConnection({
+          connection: {
+            source: sourceInfo.nodeId,
+            sourceHandle: null,
+            target: newId.toString(),
+            targetHandle: null,
+          },
+          sourceNodeSubtype: sourceNode.data.subtype,
+          position: reactFlow.flowToScreenPosition(position),
+        })
+
+        sourceInfoReference.current = { nodeId: null, handleId: null, handleType: null }
+        return
+      }
+
       const label = getEdgeLabelFromHandle(sourceNode, sourceInfo.handleId)
 
       const newEdge: Edge = {
@@ -1504,7 +1590,7 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
           }}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
-          onConnect={onConnect}
+          onConnect={handleConnect}
           onReconnect={onReconnect}
           onNodeClick={handleNodeClick}
           onNodeDoubleClick={handleNodeDoubleClick}
@@ -1559,6 +1645,19 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
           positions={edgeDropPositions}
           sourceInfo={sourceInfoReference.current}
         />
+
+        {pendingCompactConnection && (
+          <HandleMenu
+            title="Select Handle Type"
+            position={pendingCompactConnection.position}
+            onClose={() => setPendingCompactConnection(null)}
+            onSelect={handleCompactHandleSelect}
+            typesAllowed={
+              (elements as Record<string, ElementDetails> | null)?.[pendingCompactConnection.sourceNodeSubtype]
+                ?.forwards
+            }
+          />
+        )}
 
         {contextMenu && (
           <CanvasContextMenu
