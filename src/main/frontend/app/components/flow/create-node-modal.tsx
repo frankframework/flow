@@ -119,12 +119,17 @@ function CreateNodeModal({
 
   return (
     <div className="bg-background/50 absolute inset-0 z-50 flex items-center justify-center">
-      <div className="bg-background border-border relative h-[400px] w-[600px] rounded-lg border p-6 shadow-lg">
-        <h2 className="mb-4 text-lg font-semibold">Add Node</h2>
-        <p className="mb-4">Select the element to be added from the list below.</p>
-        <Search placeholder="Search elements..." value={search} onChange={(event) => handleOnChange(event)} />
-        <div className="border-border bg-background mb-2 w-full rounded border">
-          <ul className="max-h-[150px] overflow-y-auto">
+      <div className="bg-background border-border relative w-[600px] rounded-lg border p-6 shadow-lg">
+        <h2 className="text-lg font-semibold">Add Node</h2>
+        <p className="my-4">Select the element to be added from the list below.</p>
+        <Search
+          placeholder="Search elements..."
+          className="mb-4 px-0"
+          value={search}
+          onChange={(event) => handleOnChange(event)}
+        />
+        <div className="border-border bg-background w-full rounded border">
+          <ul className="max-h-[300px] overflow-y-auto">
             {filteredElements.length > 0 ? (
               filteredElements.map((element) => {
                 const isSelected = selectedElement === element.name
@@ -149,7 +154,9 @@ function CreateNodeModal({
         </div>
 
         <CloseButton onClick={onClose} className="absolute top-3 right-3" />
-        <Button onClick={handleCreateNode}>Create Node</Button>
+        <Button onClick={handleCreateNode} className="mt-4">
+          Create Node
+        </Button>
       </div>
     </div>
   )
