@@ -49,7 +49,7 @@ export default function SwitchToggle({
       >
         <span
           className={clsx(
-            'bg-background absolute h-5 w-5 rounded-full shadow transition-transform duration-200 ease-in-out',
+            'bg-background absolute h-5 w-5 rounded-full shadow',
             selected === options[0] ? 'translate-x-0' : 'translate-x-6',
           )}
         />

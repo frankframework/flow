@@ -99,7 +99,7 @@ function OneEdgeNode({ id, data, variant = 'source', onEdit, onDelete, onHighlig
           width: 10,
           height: 10,
         }} //Can't set this with tailwind for some reason
-        className={`${variant == 'target' ? 'translate-x-1.25' : '-translate-x-2.5'} transition-opacity ${isConnectable ? 'opacity-100' : 'opacity-0'} `}
+        className={`${variant == 'target' ? 'translate-x-1.25' : '-translate-x-2.5'} ${isConnectable ? 'opacity-100' : 'opacity-0'} `}
       />
 
       {/* Hidden opposite handle */}

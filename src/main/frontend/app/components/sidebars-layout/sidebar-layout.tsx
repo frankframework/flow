@@ -27,7 +27,7 @@ export default function SidebarLayout({ children, name }: Readonly<SidebarLayout
           maxSize={500}
           preferredSize={300}
           visible={visible[SidebarSide.LEFT]}
-          className="flex h-full flex-col"
+          className="bg-background flex h-full flex-col"
         >
           {childrenArray[SidebarSide.LEFT]}
         </Allotment.Pane>
@@ -41,7 +41,7 @@ export default function SidebarLayout({ children, name }: Readonly<SidebarLayout
             maxSize={1000}
             preferredSize={500}
             visible={visible[SidebarSide.RIGHT]}
-            className="flex h-full flex-col"
+            className="bg-background flex h-full flex-col"
           >
             {childrenArray[SidebarSide.RIGHT]}
           </Allotment.Pane>

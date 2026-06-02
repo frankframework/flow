@@ -2,6 +2,7 @@ import useFlowStore, { isGroupNode } from '~/stores/flow-store'
 import { GROUP_COLORS, GROUP_DEFAULT_COLOR } from '~/routes/studio/canvas/nodetypes/group-node'
 import { ALL_SHORTCUTS, formatShortcutParts, useShortcutStore } from '~/stores/shortcut-store'
 import Button from '~/components/inputs/button'
+import Input from '~/components/inputs/input'
 
 export default function GroupContext({ nodeId }: Readonly<{ nodeId: string }>) {
   const node = useFlowStore((state) => state.nodes.find((node) => node.id === nodeId))
@@ -38,11 +39,9 @@ export default function GroupContext({ nodeId }: Readonly<{ nodeId: string }>) {
       <div className="flex flex-col gap-4 p-4">
         <div className="flex flex-col gap-1">
           <label className="text-foreground-muted text-xs font-semibold tracking-wide uppercase">Name</label>
-          <input
-            type="text"
+          <Input
             value={label}
             onChange={(changeEvent) => useFlowStore.getState().setGroupnodeLabel(nodeId, changeEvent.target.value)}
-            className="border-border bg-background text-foreground focus:ring-ring w-full rounded border px-3 py-2 text-sm focus:ring-1 focus:outline-none"
           />
         </div>
 
@@ -67,7 +66,7 @@ export default function GroupContext({ nodeId }: Readonly<{ nodeId: string }>) {
                 key={value}
                 title={colorLabel}
                 onClick={() => useFlowStore.getState().setGroupnodeColor(nodeId, value)}
-                className="h-7 w-7 rounded-full border-2 transition-transform hover:scale-110"
+                className="h-7 w-7 rounded-full border-2"
                 style={{
                   background: value,
                   borderColor: color === value ? '#3b82f6' : 'transparent',

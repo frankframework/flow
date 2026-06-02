@@ -228,7 +228,7 @@ function AddMappingForm({ onSave, sources, targets, initialData }: MappingModalP
       {/* Target → Output */}
       <div className="mb-4 grid shrink-0 grid-cols-[1fr_auto_1fr] items-end gap-4">
         <div className="flex flex-col gap-1">
-          <label className="text-muted-foreground text-sm font-semibold">Output</label>
+          <label className="text-foreground-muted text-sm font-semibold">Output</label>
           <Dropdown
             className="max-w-50"
             value={output}
@@ -242,7 +242,7 @@ function AddMappingForm({ onSave, sources, targets, initialData }: MappingModalP
         <div className="flex items-center justify-center pb-2 text-2xl">→</div>
 
         <div className="flex flex-col gap-1">
-          <label className="text-muted-foreground text-sm font-semibold">Target</label>
+          <label className="text-foreground-muted text-sm font-semibold">Target</label>
 
           <Dropdown
             className="max-w-50"

@@ -11,7 +11,7 @@ export const HelpImage: React.FC<HelpImageProps> = ({ src, alt = '', caption, wi
   return (
     <div className="my-6">
       <img src={src} alt={alt} style={{ width }} className="rounded-md border shadow-md" />
-      {caption && <p className="text-muted-foreground mt-2 text-sm">{caption}</p>}
+      {caption && <p className="text-foreground-muted mt-2 text-sm">{caption}</p>}
     </div>
   )
 }

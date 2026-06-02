@@ -3,6 +3,7 @@ import { SidebarSide, useSidebarStore } from '~/components/sidebars-layout/sideb
 import clsx from 'clsx'
 import { useContext } from 'react'
 import { SidebarContext } from '~/components/sidebars-layout/sidebar-layout'
+import IconButton from '~/components/inputs/icon-button'
 
 export interface SidebarsCloseProperties {
   side: SidebarSide
@@ -21,9 +22,8 @@ export default function SidebarClose({ side }: Readonly<SidebarsCloseProperties>
   }
 
   return (
-    <SidebarIcon
-      onClick={toggleVisible}
-      className={clsx('fill-foreground hover:fill-brand cursor-pointer', isLeft && 'rotate-180')}
-    ></SidebarIcon>
+    <IconButton onClick={toggleVisible} title={isLeft ? 'Collapse left sidebar' : 'Collapse right sidebar'}>
+      <SidebarIcon className={clsx('fill-foreground-muted group-hover:fill-foreground', isLeft && 'rotate-180')} />
+    </IconButton>
   )
 }

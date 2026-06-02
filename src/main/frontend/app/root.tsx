@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { isRouteErrorResponse, Links, Meta, Outlet, Scripts, ScrollRestoration } from 'react-router'
 import { useTheme } from '~/hooks/use-theme'
+import { useProjectStore } from '~/stores/project-store'
 import type { Route } from './+types/root'
 import 'allotment/dist/style.css'
 import './app.css'
@@ -33,6 +34,16 @@ export const links: Route.LinksFunction = () => [
   { rel: 'manifest', href: '/favicons/site.webmanifest' },
 ]
 
+function TitleSync() {
+  const project = useProjectStore((state) => state.project)
+
+  useEffect(() => {
+    document.title = project ? `FF! Flow | ${project.name}` : 'FF! Flow'
+  }, [project])
+
+  return null
+}
+
 function ThemeProvider({ children }: { children: React.ReactNode }) {
   const theme = useTheme()
 
@@ -40,7 +51,12 @@ function ThemeProvider({ children }: { children: React.ReactNode }) {
     document.documentElement.dataset.theme = theme
   }, [theme])
 
-  return <>{children}</>
+  return (
+    <>
+      <TitleSync />
+      {children}
+    </>
+  )
 }
 
 export function Layout({ children }: Readonly<{ children: React.ReactNode }>) {
@@ -97,8 +113,6 @@ export function ErrorBoundary({ error }: Readonly<Route.ErrorBoundaryProps>) {
 
 export function HydrateFallback() {
   return (
-    <div className="flex h-screen w-full animate-pulse items-center justify-center text-slate-400">
-      Initializing Flow...
-    </div>
+    <div className="text-foreground-muted flex h-screen w-full items-center justify-center">Initializing Flow...</div>
   )
 }

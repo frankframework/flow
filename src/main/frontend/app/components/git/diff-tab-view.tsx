@@ -5,6 +5,7 @@ import { useTheme } from '~/hooks/use-theme'
 import { useGitStore } from '~/stores/git-store'
 import type { DiffTabData } from '~/stores/editor-tab-store'
 import type { GitHunk } from '~/types/git.types'
+import Checkbox from '~/components/inputs/checkbox'
 
 type CodeEditor = ReturnType<MonacoDiffEditor['getModifiedEditor']>
 
@@ -29,6 +30,7 @@ function applyHunkDecorations(
     const startLine = hunk.newStart
     const endLine = hunk.newStart + hunk.newCount - 1
 
+    // Visible checkbox on the first line of the hunk
     decorations.push({
       range: new monaco.Range(startLine, 1, startLine, 1),
       options: {
@@ -36,6 +38,15 @@ function applyHunkDecorations(
         glyphMarginHoverMessage: { value: isSelected ? 'Deselect chunk' : 'Select chunk' },
       },
     })
+
+    for (let line = startLine + 1; line <= endLine; line++) {
+      decorations.push({
+        range: new monaco.Range(line, 1, line, 1),
+        options: {
+          glyphMarginClassName: 'hunk-glyph-hit-area',
+        },
+      })
+    }
 
     if (isSelected) {
       decorations.push({
@@ -127,11 +138,30 @@ export default function DiffTabView({ diffData }: DiffTabViewProps) {
     setEditorReady(true)
   }, [])
 
+  const selectableHunks = hunks.filter((hunk) => hunk.newCount > 0)
+  const allSelected = selectableHunks.length > 0 && selectableHunks.every((hunk) => selectedHunks.has(hunk.index))
+  const someSelected = selectableHunks.some((hunk) => selectedHunks.has(hunk.index))
+
+  const handleToggleAllHunks = () => {
+    for (const hunk of selectableHunks) {
+      const isSelected = selectedHunks.has(hunk.index)
+      if (allSelected ? isSelected : !isSelected) {
+        toggleFileHunk(filePath, hunk.index)
+      }
+    }
+  }
+
   const language = getLanguage(filePath)
 
   return (
     <>
-      <div className="border-b-border bg-background flex h-12 items-center border-b px-4">
+      <div className="border-b-border bg-background flex h-12 items-center gap-3 border-b px-4">
+        <Checkbox
+          checked={allSelected}
+          indeterminate={!allSelected && someSelected}
+          onChange={handleToggleAllHunks}
+          title={allSelected ? 'Deselect all chunks' : 'Select all chunks'}
+        />
         <span className="text-sm font-medium">{filePath}</span>
       </div>
       <div className="min-h-0 flex-1">

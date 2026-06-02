@@ -1,7 +1,13 @@
 import { useState } from 'react'
 import clsx from 'clsx'
 import type { GitStatus } from '~/types/git.types'
-import Button from '~/components/inputs/button'
+import IconButton from '~/components/inputs/icon-button'
+import IconLabelButton from '~/components/inputs/icon-label-button'
+import Input from '~/components/inputs/input'
+import RefreshIcon from '/icons/solar/Refresh.svg?react'
+import AltArrowDownIcon from '/icons/solar/Alt Arrow Down.svg?react'
+import AltArrowUpIcon from '/icons/solar/Alt Arrow Up.svg?react'
+import KeyIcon from '/icons/solar/Key.svg?react'
 
 interface GitToolbarProps {
   status: GitStatus | null
@@ -62,49 +68,49 @@ export default function GitToolbar({
             </span>
           )}
         </div>
-        <Button onClick={onRefresh} className="px-2 py-1 text-xs" title="Refresh status">
-          ↻
-        </Button>
+        <IconButton onClick={onRefresh} title="Refresh status">
+          <RefreshIcon className="fill-foreground-muted group-hover:fill-foreground h-4 w-4" />
+        </IconButton>
       </div>
+
       {status?.hasRemote && (
-        <div className="flex gap-1.5 px-2 pb-2">
-          <Button
+        <div className="flex items-center gap-1.5 px-2 pb-2">
+          <IconLabelButton
+            icon={<AltArrowDownIcon className="fill-foreground-muted group-hover:fill-foreground h-4 w-4" />}
+            label={isPulling ? '...' : 'Pull'}
             onClick={handlePull}
-            disabled={isPulling}
-            className="flex-1 py-1.5 text-xs disabled:opacity-50"
-            title="Pull"
-          >
-            {isPulling ? '...' : '↓ Pull'}
-          </Button>
-          <Button
+            className={clsx('flex-1 justify-center', isPulling && 'cursor-not-allowed opacity-50')}
+          />
+          <IconLabelButton
+            icon={<AltArrowUpIcon className="fill-foreground-muted group-hover:fill-foreground h-4 w-4" />}
+            label={isPushing ? '...' : 'Push'}
             onClick={handlePush}
-            disabled={isPushing || (status?.ahead ?? 0) === 0}
-            className="flex-1 py-1.5 text-xs disabled:opacity-50"
-            title={status.ahead === 0 ? 'Nothing to push' : 'Push'}
-          >
-            {isPushing ? '...' : '↑ Push'}
-          </Button>
+            className={clsx(
+              'flex-1 justify-center',
+              (isPushing || (status?.ahead ?? 0) === 0) && 'cursor-not-allowed opacity-50',
+            )}
+          />
           {!status?.isLocal && (
-            <Button
+            <IconButton
               onClick={() => setShowToken(!showToken)}
-              className={clsx('px-2 py-1.5 text-xs', showToken && 'bg-selected')}
               title="Authentication token for private repos"
+              className={clsx(showToken && 'bg-selected')}
             >
-              🔑
-            </Button>
+              <KeyIcon className="fill-foreground-muted group-hover:fill-foreground h-4 w-4" />
+            </IconButton>
           )}
         </div>
       )}
+
       {showToken && !status?.isLocal && (
         <div className="border-t-border border-t px-2 py-1.5">
-          <input
+          <Input
             type="password"
             value={token}
-            onChange={(e) => onTokenChange(e.target.value)}
+            onChange={(event) => onTokenChange(event.target.value)}
             placeholder={
               hasStoredToken ? 'Using saved token (override here)' : 'Personal access token (for private repos)'
             }
-            className="border-border bg-background text-foreground placeholder:text-muted-foreground w-full rounded border px-2 py-1 text-xs focus:outline-none"
           />
         </div>
       )}

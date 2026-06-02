@@ -39,7 +39,8 @@ export default function Dropdown({
   }, [optionsArray, selectedValue])
 
   const getSelectedLabel = () => {
-    return selectedValue ? options[selectedValue] : placeholder
+    if (selectedValue !== undefined && selectedValue in options) return options[selectedValue]
+    return placeholder
   }
 
   const toggleDropdown = useCallback(() => {
@@ -184,7 +185,9 @@ export default function Dropdown({
             isOpen ? 'bg-selected' : 'hover:bg-hover',
           )}
         >
-          <span className={clsx('text-foreground flex-1 truncate sm:text-sm', !selectedValue && 'text-gray-400')}>
+          <span
+            className={clsx('text-foreground flex-1 truncate sm:text-sm', !selectedValue && 'text-foreground-muted')}
+          >
             {getSelectedLabel()}
           </span>
           <AltArrowDownIcon className={clsx('fill-foreground h-4 w-4', isOpen && 'rotate-180')} />
