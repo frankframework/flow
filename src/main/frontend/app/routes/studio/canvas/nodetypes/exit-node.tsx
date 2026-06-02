@@ -2,6 +2,7 @@ import { Handle, type Node, type NodeProps, NodeResizeControl, Position } from '
 import { ResizeIcon } from '~/routes/studio/canvas/nodetypes/frank-node'
 import { FlowConfig } from '~/routes/studio/canvas/flow.config'
 import { useSettingsStore } from '~/stores/settings-store'
+import { useTheme } from '~/hooks/use-theme'
 
 export type ExitNode = Node<{
   subtype: string
@@ -14,6 +15,8 @@ export default function ExitNodeComponent(properties: NodeProps<ExitNode>) {
   const minNodeWidth = FlowConfig.EXIT_DEFAULT_WIDTH
   const minNodeHeight = FlowConfig.EXIT_DEFAULT_HEIGHT
   const gradientEnabled = useSettingsStore((state) => state.studio.gradient)
+  const theme = useTheme()
+  const exitColor = `hsl(0 90% ${theme === 'dark' ? 62 : 45}%)`
 
   return (
     <>
@@ -44,10 +47,10 @@ export default function ExitNodeComponent(properties: NodeProps<ExitNode>) {
             background: gradientEnabled
               ? `radial-gradient(
                 ellipse farthest-corner at 20% 20%,
-                var(--type-exit) 0%,
+                ${exitColor} 0%,
                 var(--color-background) 100%
               )`
-              : `var(--type-exit)`,
+              : exitColor,
           }}
         >
           <h1 className="font-bold">{properties.data.subtype}</h1>

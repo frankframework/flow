@@ -27,6 +27,8 @@ import { DeprecatedPopover } from './components/deprecated-popover'
 import { showWarningToast } from '~/components/toast'
 import { useHandleTypes } from '~/hooks/use-handle-types'
 import AddSubcomponentModal from '~/components/flow/add-subcomponent-modal'
+import { useTheme } from '~/hooks/use-theme'
+import { getCategoryColor } from '~/utils/flow-utils'
 import { fetchFrankConfigXsd } from '~/services/xsd-service'
 import {
   type Requirement,
@@ -52,14 +54,14 @@ export type FrankNodeType = Node<{
 export default function FrankNode(properties: NodeProps<FrankNodeType>) {
   const minNodeWidth = FlowConfig.NODE_DEFAULT_WIDTH
   const minNodeHeight = FlowConfig.NODE_MIN_HEIGHT
-  const type = properties.data.type.toLowerCase()
-  const colorVariable = `--type-${type}`
   const handleSpacing = 20
+  const theme = useTheme()
+  const { elements, filters, ffDoc } = useFFDoc()
+  const nodeColor = getCategoryColor(properties.data.subtype, filters, theme)
   const containerReference = useRef<HTMLDivElement>(null)
   const [dragOver, setDragOver] = useState(false)
   const [canDropDraggedElement, setCanDropDraggedElement] = useState(false)
   const showNodeContextMenu = useNodeContextMenu()
-  const { elements, filters, ffDoc } = useFFDoc()
   const {
     setNodeId,
     setIsNewNode,
@@ -405,17 +407,17 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
           style={{
             minWidth: `${minNodeWidth}px`,
             minHeight: `${minNodeHeight}px`,
-            ...(properties.selected && { borderColor: `var(${colorVariable})` }),
+            ...(properties.selected && { borderColor: `${nodeColor}` }),
           }}
         >
           <div
             className="flex h-32 w-32 shrink-0 items-center justify-center rounded-3xl shadow-md"
             style={{
-              backgroundColor: `color-mix(in srgb, var(${colorVariable}) 25%, transparent)`,
-              border: `3px solid var(${colorVariable})`,
+              backgroundColor: `color-mix(in srgb, ${nodeColor} 25%, transparent)`,
+              border: `3px solid ${nodeColor}`,
             }}
           >
-            <span className="text-4xl font-black tracking-tight" style={{ color: `var(${colorVariable})` }}>
+            <span className="text-4xl font-black tracking-tight" style={{ color: `${nodeColor}` }}>
               {abbr}
             </span>
           </div>
@@ -477,7 +479,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
         className={`bg-background border-border relative flex w-full flex-col items-center overflow-x-visible rounded-md border ${isManuallyResized ? 'h-full overflow-y-hidden' : 'overflow-y-visible'}`}
         style={{
           minWidth: `${minNodeWidth}px`,
-          ...(properties.selected && { borderColor: `var(${colorVariable})` }),
+          ...(properties.selected && { borderColor: `${nodeColor}` }),
         }}
         ref={containerReference}
         onDragOver={handleDragOver}
@@ -490,10 +492,10 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
             background: gradientEnabled
               ? `radial-gradient(
                 ellipse farthest-corner at 20% 20%,
-                var(${colorVariable}) 0%,
+                ${nodeColor} 0%,
                 var(--color-background) 100%
               )`
-              : `var(${colorVariable})`,
+              : `${nodeColor}`,
           }}
         >
           <h1 className="text-foreground font-bold">{properties.data.subtype}</h1>
