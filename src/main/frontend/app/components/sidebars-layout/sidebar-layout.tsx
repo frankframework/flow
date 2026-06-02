@@ -17,11 +17,16 @@ export default function SidebarLayout({
   defaultVisible,
   windowResizeOnChange,
 }: Readonly<SidebarLayoutProperties>) {
-  const { initializeInstance, setSizes, setVisible } = useSidebarStore()
+  const initializeInstance = useSidebarStore((state) => state.initializeInstance)
+  const setSizes = useSidebarStore((state) => state.setSizes)
+  const setVisible = useSidebarStore((state) => state.setVisible)
   const sizesRaw = useSidebarStore((state) => state.getSizes(name))
   const visibleRaw = useSidebarStore((state) => state.getVisibility(name))
   const sizes = useMemo(() => sizesRaw ?? [], [sizesRaw])
-  const visible = useMemo(() => visibleRaw ?? [], [visibleRaw])
+  const visible = useMemo<VisibilityState>(
+    () => visibleRaw ?? defaultVisible ?? [true, true, true],
+    [visibleRaw, defaultVisible],
+  )
   const childrenArray = React.Children.toArray(children)
   const allotmentRef = useRef<AllotmentHandle>(null)
   const [allotmentReady, setAllotmentReady] = useState(false)

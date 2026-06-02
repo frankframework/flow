@@ -70,7 +70,7 @@ export const useSidebarStore = create<SidebarState>()(
           const instance = state.instances[name]
           if (!instance) return state
 
-          const newVisible: VisibilityState = [...instance.visible]
+          const newVisible = [...instance.visible] as VisibilityState
           newVisible[side] = value
 
           return updateInstanceState(state, name, { visible: newVisible })
