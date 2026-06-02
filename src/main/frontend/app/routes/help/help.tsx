@@ -1,7 +1,7 @@
 import '/styles/markdown.css'
 import HelpTopicTreeItems, { type HelpTopicTreeItem } from './help-topic-tree-items'
 import SidebarContentClose from '~/components/sidebars-layout/sidebar-content-close'
-import { SidebarSide } from '~/components/sidebars-layout/sidebar-layout-store'
+import { SidebarSide } from '~/stores/sidebar-layout-store'
 import SidebarLayout from '~/components/sidebars-layout/sidebar-layout'
 import SidebarHeader from '~/components/sidebars-layout/sidebar-header'
 import HelpTopics from '~/routes/help/help-topics'
@@ -17,7 +17,7 @@ export default function Help() {
   const MarkdownContent = helpTopic?.data.content
 
   return (
-    <SidebarLayout name="help">
+    <SidebarLayout name="help" windowResizeOnChange={true}>
       <>
         <SidebarHeader side={SidebarSide.LEFT} title="Topics" />
         <HelpTopics selectedTopic={helpTopicKey} />

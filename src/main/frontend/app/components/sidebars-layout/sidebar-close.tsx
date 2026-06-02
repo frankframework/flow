@@ -1,5 +1,5 @@
 import SidebarIcon from '/icons/solar/Sidebar Minimalistic.svg?react'
-import { SidebarSide, useSidebarStore } from '~/components/sidebars-layout/sidebar-layout-store'
+import { SidebarSide, useSidebarStore } from '~/stores/sidebar-layout-store'
 import clsx from 'clsx'
 import { useContext } from 'react'
 import { SidebarContext } from '~/components/sidebars-layout/sidebar-layout'
@@ -11,14 +11,13 @@ export interface SidebarsCloseProperties {
 
 export default function SidebarClose({ side }: Readonly<SidebarsCloseProperties>) {
   const layoutName = useContext(SidebarContext)
-  const visibility = useSidebarStore((state) => state.getVisibility(layoutName ?? ''))
-  const setVisible = useSidebarStore((state) => state.setVisible)
+  const { toggleSidebar } = useSidebarStore()
   const isLeft = side === SidebarSide.LEFT
 
-  if (!layoutName) throw new Error('SidebarsClose must be used within a SidebarLayout')
+  if (!layoutName) throw new Error('SidebarsClose must be used within a SidebarLayout or be provided a layoutName prop')
 
   const toggleVisible = () => {
-    setVisible(layoutName, side, !visibility[side])
+    toggleSidebar(layoutName, side)
   }
 
   return (

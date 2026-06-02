@@ -16,12 +16,12 @@ interface SideBarInstance {
 
 interface SidebarState {
   instances: Record<string, SideBarInstance>
-
   initializeInstance: (name: string, defaultVisible?: VisibilityState) => void
   toggleSidebar: (name: string, side: SidebarSide) => void
   setSizes: (name: string, sizes: number[]) => void
   setVisible: (name: string, side: SidebarSide, value: boolean) => void
-  getVisibility: (name: string) => VisibilityState
+  getSizes: (name: string) => number[] | undefined
+  getVisibility: (name: string) => VisibilityState | undefined
 }
 
 const DEFAULT_VISIBILITY: VisibilityState = [true, true, true]
@@ -51,7 +51,7 @@ export const useSidebarStore = create<SidebarState>()(
           const instance = state.instances[name]
           if (!instance) return state
 
-          const newVisible: VisibilityState = [...instance.visible] as VisibilityState
+          const newVisible: VisibilityState = [...instance.visible]
           newVisible[side] = !newVisible[side]
 
           return updateInstanceState(state, name, { visible: newVisible })
@@ -70,15 +70,14 @@ export const useSidebarStore = create<SidebarState>()(
           const instance = state.instances[name]
           if (!instance) return state
 
-          const newVisible: VisibilityState = [...instance.visible] as VisibilityState
+          const newVisible: VisibilityState = [...instance.visible]
           newVisible[side] = value
 
           return updateInstanceState(state, name, { visible: newVisible })
         }),
 
-      getVisibility: (name) => {
-        return get().instances[name]?.visible ?? DEFAULT_VISIBILITY
-      },
+      getSizes: (name) => get().instances[name]?.sizes,
+      getVisibility: (name) => get().instances[name]?.visible,
     }),
     {
       name: 'sidebar-storage',

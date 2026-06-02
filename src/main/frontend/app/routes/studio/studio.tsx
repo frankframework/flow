@@ -8,7 +8,7 @@ import StickyNoteContext from '~/routes/studio/context/sticky-note-context'
 import useNodeContextStore from '~/stores/node-context-store'
 import SidebarContentClose from '~/components/sidebars-layout/sidebar-content-close'
 import SidebarHeader from '~/components/sidebars-layout/sidebar-header'
-import { SidebarSide, useSidebarStore } from '~/components/sidebars-layout/sidebar-layout-store'
+import { SidebarSide, useSidebarStore } from '~/stores/sidebar-layout-store'
 import SidebarLayout from '~/components/sidebars-layout/sidebar-layout'
 import useTabStore from '~/stores/tab-store'
 import { useShallow } from 'zustand/react/shallow'
@@ -145,7 +145,7 @@ function RightPanelContent({
 }
 
 export default function Studio() {
-  const setVisible = useSidebarStore((state) => state.setVisible)
+  const setVisibility = useSidebarStore((state) => state.setVisible)
   const [showNodeContext, setShowNodeContext] = useState(false)
   const { nodeId, editingSubtype, isMultiSelect, selectedStickyId, selectedGroupId } = useNodeContextStore(
     useShallow((state) => ({
@@ -183,10 +183,10 @@ export default function Studio() {
     (visible: boolean) => {
       setShowNodeContext(visible)
       if (visible) {
-        setVisible('studio', SidebarSide.RIGHT, true)
+        setVisibility('studio', SidebarSide.RIGHT, true)
       }
     },
-    [setVisible],
+    [setVisibility],
   )
 
   useEffect(() => {
@@ -215,7 +215,7 @@ export default function Studio() {
   )
 
   return (
-    <SidebarLayout name="studio">
+    <SidebarLayout name="studio" windowResizeOnChange={true}>
       <>
         <SidebarHeader side={SidebarSide.LEFT} title="Adapter" />
         <StudioFileStructure />

@@ -1,6 +1,6 @@
-import React, { createContext, useEffect } from 'react'
-import { Allotment } from 'allotment'
-import { SidebarSide, useSidebarStore, type VisibilityState } from '~/components/sidebars-layout/sidebar-layout-store'
+import React, { createContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { Allotment, type AllotmentHandle } from 'allotment'
+import { SidebarSide, useSidebarStore, type VisibilityState } from '~/stores/sidebar-layout-store'
 
 export const SidebarContext = createContext<string | undefined>(undefined)
 
@@ -18,25 +18,39 @@ export default function SidebarLayout({
   windowResizeOnChange,
 }: Readonly<SidebarLayoutProperties>) {
   const { initializeInstance, setSizes, setVisible } = useSidebarStore()
-  const sizes = useSidebarStore((state) => state.instances[name]?.sizes) ?? []
-  const visible = useSidebarStore((state) => state.instances[name]?.visible) ?? []
+  const sizesRaw = useSidebarStore((state) => state.getSizes(name))
+  const visibleRaw = useSidebarStore((state) => state.getVisibility(name))
+  const sizes = useMemo(() => sizesRaw ?? [], [sizesRaw])
+  const visible = useMemo(() => visibleRaw ?? [], [visibleRaw])
   const childrenArray = React.Children.toArray(children)
+  const allotmentRef = useRef<AllotmentHandle>(null)
+  const [allotmentReady, setAllotmentReady] = useState(false)
 
   useEffect(() => {
     initializeInstance(name, defaultVisible)
   }, [initializeInstance, name, defaultVisible])
+
+  useLayoutEffect(() => {
+    if (!allotmentReady || !allotmentRef.current) return
+    if (sizes.length === 0) return
+
+    const target = sizes.map((size, i) => (visible[i] ? size : 0))
+
+    allotmentRef.current.resize(target)
+  }, [sizes, visible, allotmentReady])
 
   const handleVisibilityChange = (index: SidebarSide, value: boolean) => {
     setVisible(name, index, value)
   }
 
   const saveSizes = (newSizes: number[]) => {
-    const previous = useSidebarStore.getState().instances[name]?.sizes ?? []
+    const previous = useSidebarStore.getState().getSizes(name) ?? []
     const merged = newSizes.map((size, i) => (size === 0 ? (previous[i] ?? 0) : size))
     setSizes(name, merged)
   }
 
   const onChangeHandler = () => {
+    if (!allotmentReady) setAllotmentReady(true)
     if (windowResizeOnChange) {
       globalThis.dispatchEvent(new Event('resize'))
     }
@@ -45,12 +59,18 @@ export default function SidebarLayout({
   return (
     <SidebarContext.Provider value={name}>
       {sizes && visible.length > 0 && (
-        <Allotment key={name} onChange={onChangeHandler} onDragEnd={saveSizes} onVisibleChange={handleVisibilityChange}>
+        <Allotment
+          key={name}
+          ref={allotmentRef}
+          onChange={onChangeHandler}
+          onDragEnd={saveSizes}
+          onVisibleChange={handleVisibilityChange}
+        >
           <Allotment.Pane
             snap
             minSize={200}
             maxSize={500}
-            preferredSize={sizes[SidebarSide.LEFT] || 300}
+            preferredSize={300}
             visible={visible[SidebarSide.LEFT]}
             className="bg-background flex h-full flex-col"
           >
@@ -64,7 +84,7 @@ export default function SidebarLayout({
               snap
               minSize={200}
               maxSize={1000}
-              preferredSize={visible[SidebarSide.RIGHT] ? sizes[SidebarSide.RIGHT] || 500 : undefined}
+              preferredSize={300}
               visible={visible[SidebarSide.RIGHT]}
               className="bg-background flex h-full flex-col"
             >

@@ -19,7 +19,7 @@ import SegmentedButton from '~/components/inputs/segmented-button'
 import SidebarContentClose from '~/components/sidebars-layout/sidebar-content-close'
 import SidebarHeader from '~/components/sidebars-layout/sidebar-header'
 import SidebarLayout from '~/components/sidebars-layout/sidebar-layout'
-import { SidebarSide } from '~/components/sidebars-layout/sidebar-layout-store'
+import { SidebarSide } from '~/stores/sidebar-layout-store'
 import EditorTabs from '~/components/tabs/editor-tabs'
 import { SaveStatusIndicator } from '~/components/save-status-indicator'
 import { useSaveStatusStore } from '~/stores/save-status-store'
@@ -758,7 +758,7 @@ export default function CodeEditor() {
   const isGitRepo = !!project?.isGitRepository
 
   return (
-    <SidebarLayout name="editor">
+    <SidebarLayout name="editor" windowResizeOnChange={true}>
       <>
         <div className="flex h-12 items-center justify-between pr-4">
           <SidebarHeader side={SidebarSide.LEFT} title="Files" />
