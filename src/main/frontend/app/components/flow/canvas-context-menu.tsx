@@ -46,7 +46,7 @@ export default function CanvasContextMenu({
 
   const itemClass = 'flex items-center justify-between gap-6 px-3 py-1.5 text-sm whitespace-nowrap'
   const enabledClass = `${itemClass} cursor-pointer hover:bg-hover text-foreground`
-  const disabledClass = `${itemClass} cursor-default text-muted-foreground opacity-50`
+  const disabledClass = `${itemClass} cursor-default text-foreground-muted opacity-50`
 
   function menuItem(label: string, onClick: () => void, enabled: boolean, shortcutId?: string) {
     return (
@@ -62,7 +62,7 @@ export default function CanvasContextMenu({
         }
       >
         <span>{label}</span>
-        {shortcutId && <span className="text-muted-foreground ml-4 text-xs">{formatShortcut(shortcutId)}</span>}
+        {shortcutId && <span className="text-foreground-muted ml-4 text-xs">{formatShortcut(shortcutId)}</span>}
       </div>
     )
   }

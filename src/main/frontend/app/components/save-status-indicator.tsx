@@ -23,7 +23,7 @@ export function SaveStatusIndicator() {
   if (saveStatus === 'saving') {
     return (
       <span className="text-foreground-muted inline-flex items-center gap-1.5 text-xs">
-        <CloudIcon className="animate-pulse" />
+        <CloudIcon />
         Saving...
       </span>
     )

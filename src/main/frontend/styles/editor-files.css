@@ -1,5 +1,26 @@
 @import "react-complex-tree/lib/style-modern.css";
 
+.rct-tree-item-title-container:has(.rct-tree-item-arrow:hover) .rct-tree-item-button {
+  background-color: transparent;
+}
+
+.rct-tree-item-button:has(.icon-button:hover) {
+  background-color: transparent;
+}
+
+.rct-tree-item-button {
+  transition: none;
+}
+
+.rct-tree-item-arrow {
+  align-items: center;
+}
+
+.rct-tree-item-arrow svg {
+  width: 14px;
+  height: 14px;
+}
+
 :root {
   --rct-color-tree-bg: transparent;
   --rct-item-height: 28px;

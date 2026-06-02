@@ -3,6 +3,8 @@ import { createConfigurationFile } from '~/services/configuration-file-service'
 import { useProjectStore } from '~/stores/project-store'
 import type { ConfigurationProject } from '~/types/project.types'
 import Button from '~/components/inputs/button'
+import CloseButton from '~/components/inputs/close-button'
+import Input from '~/components/inputs/input'
 import DirectoryPicker from '~/components/directory-picker/directory-picker'
 import { fetchProject } from '~/services/project-service'
 
@@ -102,7 +104,7 @@ export default function AddConfigurationModal({
           </label>
           <div className="ml-2 flex w-full items-center">
             <label
-              className="border-border bg-background w-full rounded border px-2 py-1 text-sm transition"
+              className="border-border bg-background w-full rounded border px-2 py-1 text-sm"
               aria-label="folder location"
               onDoubleClick={() => setIsOpenPickerOpen(true)}
             >
@@ -119,11 +121,10 @@ export default function AddConfigurationModal({
             Filename
           </label>
           <div className="ml-2 flex w-full items-center">
-            <input
+            <Input
               id="configuration-filename-input"
               value={filename}
               onChange={(event) => setFilename(event.target.value)}
-              className="border-border bg-background focus:border-foreground-active focus:ring-foreground-active w-full rounded border px-2 py-1 text-sm transition focus:ring-2 focus:outline-none"
               placeholder="Choose a filename"
               aria-label="configuration filename"
             />
@@ -135,9 +136,7 @@ export default function AddConfigurationModal({
             {loading ? 'Adding...' : `Add ${displayFilename || 'configuration file'} to ${currentConfiguration.name}`}
           </Button>
 
-          <Button onClick={handleClose} className="absolute top-3 right-3">
-            Close
-          </Button>
+          <CloseButton onClick={handleClose} className="absolute top-3 right-3" />
         </div>
 
         {error && <p className="mt-4 text-sm text-red-500">{error}</p>}

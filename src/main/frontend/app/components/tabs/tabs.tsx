@@ -52,16 +52,18 @@ export function TabsView<T extends string>({ tabs, activeTab, onSelectTab, onClo
     <div className="relative flex h-12">
       <div
         ref={shadowLeftReference}
-        className="absolute top-0 bottom-0 left-0 z-10 w-2 bg-gradient-to-r from-black/15 to-transparent opacity-0"
+        className="from-foreground/20 absolute top-0 bottom-0 left-0 z-10 w-2 bg-gradient-to-r to-transparent opacity-0"
       />
       <div
         ref={shadowRightReference}
-        className="absolute top-0 right-0 bottom-0 z-10 w-2 bg-gradient-to-l from-black/15 to-transparent opacity-0"
+        className="from-foreground/20 absolute top-0 right-0 bottom-0 z-10 w-2 bg-gradient-to-l to-transparent opacity-0"
       />
 
       <ul
         ref={tabsListReference}
-        className="m-0 flex rotate-x-180 flex-nowrap overflow-x-auto p-0 whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        style={{ scrollbarWidth: 'none' }}
+        className="m-0 flex rotate-x-180 flex-nowrap overflow-x-auto p-0 whitespace-nowrap [&::-webkit-scrollbar]:hidden"
+        onScroll={calculateScrollShadows}
       >
         {entries.map(([key, tab]) => (
           <Tab

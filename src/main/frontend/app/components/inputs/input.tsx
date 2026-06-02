@@ -2,7 +2,7 @@ import React from 'react'
 import { twMerge } from 'tailwind-merge'
 
 export type InputProperties = {
-  onChange: (event: React.ChangeEvent<HTMLInputElement>) => void
+  onChange?: (event: React.ChangeEvent<HTMLInputElement>) => void
   value?: string
   placeholder?: string
   wrapperClassName?: string

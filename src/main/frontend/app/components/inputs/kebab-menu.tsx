@@ -1,0 +1,97 @@
+import { type ReactNode, useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
+import clsx from 'clsx'
+import KebabIcon from '/icons/solar/Kebab Vertical.svg?react'
+
+export interface KebabMenuItem {
+  label: string
+  icon?: ReactNode
+  onClick: () => void
+  className?: string
+}
+
+interface KebabMenuProperties {
+  items: KebabMenuItem[]
+  triggerClassName?: string
+}
+
+export default function KebabMenu({ items, triggerClassName }: Readonly<KebabMenuProperties>) {
+  const [menuPosition, setMenuPosition] = useState<{ x: number; y: number } | null>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!menuPosition) return
+
+    const handleMouseDown = (event: MouseEvent) => {
+      const clickedTrigger = triggerRef.current?.contains(event.target as Node)
+      const clickedMenu = menuRef.current?.contains(event.target as Node)
+      if (!clickedTrigger && !clickedMenu) setMenuPosition(null)
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setMenuPosition(null)
+    }
+
+    document.addEventListener('mousedown', handleMouseDown)
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('mousedown', handleMouseDown)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [menuPosition])
+
+  const openMenu = (event: React.MouseEvent) => {
+    event.stopPropagation()
+    if (menuPosition) {
+      setMenuPosition(null)
+      return
+    }
+    const rect = triggerRef.current?.getBoundingClientRect()
+    if (rect) setMenuPosition({ x: rect.right, y: rect.bottom })
+  }
+
+  return (
+    <>
+      <button
+        ref={triggerRef}
+        onClick={openMenu}
+        className={clsx(
+          'icon-button text-foreground-muted hover:bg-hover hover:text-foreground cursor-pointer rounded p-1',
+          triggerClassName,
+        )}
+        aria-label="More options"
+      >
+        <KebabIcon className="h-4 w-4 fill-current" />
+      </button>
+
+      {menuPosition &&
+        createPortal(
+          <div
+            ref={menuRef}
+            className="bg-background border-border fixed z-50 min-w-max rounded-md border p-1 shadow-md"
+            style={{ top: menuPosition.y, right: `calc(100vw - ${menuPosition.x}px)` }}
+          >
+            {items.map((item) => (
+              <button
+                key={item.label}
+                onClick={(event) => {
+                  event.stopPropagation()
+                  item.onClick()
+                  setMenuPosition(null)
+                }}
+                className={clsx(
+                  'text-foreground hover:bg-hover flex w-full cursor-pointer items-center gap-2 px-3 py-1.5 text-sm whitespace-nowrap',
+                  item.className,
+                )}
+              >
+                {item.icon}
+                {item.label}
+              </button>
+            ))}
+          </div>,
+          document.body,
+        )}
+    </>
+  )
+}

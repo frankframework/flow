@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import DirectoryPicker from '~/components/directory-picker/directory-picker'
 import Button from '~/components/inputs/button'
+import CloseButton from '~/components/inputs/close-button'
+import Input from '~/components/inputs/input'
 import { filesystemService } from '~/services/filesystem-service'
 
 interface NewProjectModalProperties {
@@ -64,15 +66,14 @@ export default function NewConfigurationModal({
           <div className="mb-4">
             <label className="mb-1 block text-sm font-medium">Location</label>
             <div className="flex items-center gap-2">
-              <input
+              <Input
                 value={location || (isLocal ? '' : 'Workspace root')}
                 readOnly
-                className="border-border bg-background focus:border-foreground-active focus:ring-foreground-active w-full rounded border px-2 py-1 text-sm transition focus:ring-2 focus:outline-none"
                 placeholder={isLocal ? 'Select a parent directory...' : 'Workspace root (or browse for subfolder)'}
                 onDoubleClick={() => setShowPicker(true)}
               />
 
-              <Button onClick={() => setShowPicker(true)} className="h-8 text-sm">
+              <Button onClick={() => setShowPicker(true)} className="text-sm">
                 Browse...
               </Button>
             </div>
@@ -80,10 +81,9 @@ export default function NewConfigurationModal({
 
           <div className="mb-4">
             <label className="mb-1 block text-sm font-medium">Configuration Name</label>
-            <input
+            <Input
               value={name}
               onChange={(event) => setName(event.target.value)}
-              className="border-border bg-background focus:border-foreground-active focus:ring-foreground-active w-full rounded border px-2 py-1 text-sm transition focus:ring-2 focus:outline-none"
               placeholder="Enter configuration name"
             />
           </div>
@@ -104,9 +104,7 @@ export default function NewConfigurationModal({
               Create Configuration
             </Button>
 
-            <Button onClick={handleClose} className="absolute top-3 right-3">
-              Close
-            </Button>
+            <CloseButton onClick={handleClose} className="absolute top-3 right-3" />
           </div>
         </div>
       </div>

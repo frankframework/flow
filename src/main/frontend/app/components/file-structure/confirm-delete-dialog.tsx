@@ -40,7 +40,7 @@ export default function ConfirmDeleteDialog({ name, isFolder, onConfirm, onCance
           <Button onClick={onCancel} className="px-3 py-1 text-sm">
             Cancel
           </Button>
-          <Button onClick={onConfirm} className="bg-red-600 px-3 py-1 text-sm text-white hover:bg-red-700">
+          <Button variant="destructive" onClick={onConfirm} className="px-3 py-1 text-sm">
             Delete
           </Button>
         </div>
