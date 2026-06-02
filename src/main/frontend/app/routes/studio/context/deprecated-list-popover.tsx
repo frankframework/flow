@@ -9,7 +9,7 @@ export interface DeprecatedInfo {
 export function DeprecatedListPopover({ deprecated, anchorRect }: { deprecated: DeprecatedInfo; anchorRect: DOMRect }) {
   return createPortal(
     <div
-      className="bg-background text-foreground fixed z-[9999] w-64 rounded-md border border-red-400 p-3 text-xs shadow-lg transition-all"
+      className="bg-background text-foreground fixed z-[9999] w-64 rounded-md border border-red-400 p-3 text-xs shadow-lg"
       style={{
         top: anchorRect.top + anchorRect.height / 2,
         left: anchorRect.left - 260,
@@ -32,7 +32,7 @@ export function DeprecatedListPopover({ deprecated, anchorRect }: { deprecated: 
         )}
 
         {deprecated.description && (
-          <li className="text-muted-foreground border-border rounded-md border p-2">{deprecated.description}</li>
+          <li className="text-foreground-muted border-border rounded-md border p-2">{deprecated.description}</li>
         )}
       </ul>
     </div>,

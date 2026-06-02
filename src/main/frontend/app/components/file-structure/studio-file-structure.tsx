@@ -1,4 +1,5 @@
 import React, { type JSX, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import IconButton from '~/components/inputs/icon-button'
 import { getListenerIcon } from './tree-utilities'
 import useTabStore from '~/stores/tab-store'
 import Search from '~/components/search/search'
@@ -26,7 +27,7 @@ import {
   type TreeItemIndex,
   UncontrolledTreeEnvironment,
 } from 'react-complex-tree'
-import FilesDataProvider, {
+import StudioFilesDataProvider, {
   type StudioItemData,
   type StudioFolderData,
 } from '~/components/file-structure/studio-files-data-provider'
@@ -34,10 +35,11 @@ import { useProjectStore } from '~/stores/project-store'
 import { useTreeStore } from '~/stores/tree-store'
 import { useStudioContextMenu, detectItemType, getItemName, resolveItemPaths } from './use-studio-context-menu'
 import StudioFileTreeDialogs from './studio-file-tree-dialogs'
+import TreeActionButton from '../inputs/tree-action-button'
 
 const TREE_ID = 'studio-files-tree'
 
-function studioTabItemId(activeTab: string, dataProvider: FilesDataProvider): string | null {
+function studioTabItemId(activeTab: string, dataProvider: StudioFilesDataProvider): string | null {
   const firstSep = activeTab.indexOf('::')
   if (firstSep === -1) return null
   const configPath = activeTab.slice(0, firstSep)
@@ -74,7 +76,7 @@ export default function StudioFileStructure() {
 
   const tree = useRef<TreeRef>(null)
 
-  const [dataProvider, setDataProvider] = useState<FilesDataProvider | null>(null)
+  const [dataProvider, setDataProvider] = useState<StudioFilesDataProvider | null>(null)
   const [providerLoading, setProviderLoading] = useState(false)
   const [selectedItemId, setSelectedItemId] = useState<TreeItemIndex | null>(null)
   const setTabData = useTabStore((state) => state.setTabData)
@@ -185,7 +187,7 @@ export default function StudioFileStructure() {
     const initProvider = async () => {
       setProviderLoading(true)
 
-      const provider = new FilesDataProvider(project.name)
+      const provider = new StudioFilesDataProvider(project.name)
       await provider.init(expandedItemsRef.current)
 
       if (isMounted) {
@@ -345,19 +347,19 @@ export default function StudioFileStructure() {
   const renderItemArrow = ({ item, context }: { item: TreeItem<StudioItemData>; context: TreeItemRenderContext }) => {
     if (!item.isFolder) return null
 
-    const Icon = context.isExpanded ? AltArrowDownIcon : AltArrowRightIcon
-
-    const handleArrowClick = (event: React.MouseEvent) => {
-      event.stopPropagation()
-      context.toggleExpandedState()
-    }
+    const ArrowIcon = context.isExpanded ? AltArrowDownIcon : AltArrowRightIcon
 
     return (
-      <Icon
-        onClick={handleArrowClick}
-        onContextMenu={(mouseEvent: React.MouseEvent) => studioContextMenu.openContextMenu(mouseEvent, item.index)}
-        className="rct-tree-item-arrow-isFolder rct-tree-item-arrow fill-foreground"
-      />
+      <div
+        className="rct-tree-item-arrow-isFolder rct-tree-item-arrow"
+        onClick={(mouseEvent) => {
+          mouseEvent.stopPropagation()
+          context.toggleExpandedState()
+        }}
+        onContextMenu={(mouseEvent) => studioContextMenu.openContextMenu(mouseEvent, item.index)}
+      >
+        <ArrowIcon className="fill-foreground" />
+      </div>
     )
   }
 
@@ -375,21 +377,20 @@ export default function StudioFileStructure() {
         ? (item.data as { listenerName: string | null }).listenerName
         : null
 
-    const isObject = typeof item.data === 'object'
-
-    const pathEndsWithXmlExtension = (item.data as Partial<StudioFolderData>).path?.endsWith('.xml') ?? false
+    const isDataObject = typeof item.data === 'object'
+    const pathEndsWithXml = (item.data as Partial<StudioFolderData>).path?.endsWith('.xml') ?? false
 
     const isRoot = typeof item.data === 'string'
-    const isConfigFile = item.isFolder && isObject && item.data !== null && pathEndsWithXmlExtension
+    const isConfigFile = item.isFolder && isDataObject && item.data !== null && pathEndsWithXml
     const isPlainFolder = item.isFolder && !isConfigFile && !isRoot
 
-    let Icon
+    let ItemIcon
     if (isConfigFile) {
-      Icon = SettingsIcon
+      ItemIcon = SettingsIcon
     } else if (item.isFolder) {
-      Icon = context.isExpanded ? FolderOpenIcon : FolderIcon
+      ItemIcon = context.isExpanded ? FolderOpenIcon : FolderIcon
     } else {
-      Icon = getListenerIcon(listenerType)
+      ItemIcon = getListenerIcon(listenerType)
     }
 
     const searchLower = searchTerm.toLowerCase()
@@ -398,31 +399,30 @@ export default function StudioFileStructure() {
     let highlightedTitle: JSX.Element | string = title
 
     if (searchTerm && titleLower.includes(searchLower)) {
-      const parts = title.split(new RegExp(`(${searchTerm})`, 'gi'))
+      const titleParts = title.split(new RegExp(`(${searchTerm})`, 'gi'))
       highlightedTitle = (
         <>
-          {parts.map((part, index) =>
+          {titleParts.map((part, partIndex) =>
             part.toLowerCase() === searchLower ? (
-              <mark key={`mark-${index}`} className="text-foreground bg-foreground-active rounded-sm">
+              <mark key={`mark-${partIndex}`} className="text-foreground bg-foreground-active rounded-sm">
                 {part}
               </mark>
             ) : (
-              <span key={`span-${index}`}>{part}</span>
+              <span key={`span-${partIndex}`}>{part}</span>
             ),
           )}
         </>
       )
     }
 
-    const isHighlighted = highlightedItemId == item.index
-    const actionBtnClass = 'cursor-pointer rounded p-0.5 hover:bg-hover flex-shrink-0'
+    const isHighlighted = highlightedItemId === item.index
 
     return (
       <div
         className="group/row flex h-full w-full items-center"
         onContextMenu={(mouseEvent) => studioContextMenu.openContextMenu(mouseEvent, item.index)}
       >
-        <Icon className="fill-foreground w-4 flex-shrink-0" />
+        <ItemIcon className="fill-foreground w-4 flex-shrink-0" />
         <span
           className={`font-inter ml-1 min-w-0 flex-1 overflow-hidden text-nowrap text-ellipsis ${
             isHighlighted ? 'outline-foreground-active rounded-sm px-1 outline' : ''
@@ -432,129 +432,79 @@ export default function StudioFileStructure() {
         </span>
         <div className="ml-1 hidden items-center gap-0.5 group-hover/row:flex">
           {(isRoot || isPlainFolder) && (
-            <div
-              role="button"
-              tabIndex={0}
-              className={actionBtnClass}
+            <TreeActionButton
               title="New Configuration File"
-              onClick={(mouseEvent) => {
-                mouseEvent.stopPropagation()
-                triggerItemAction(item.index, studioContextMenu.handleNewConfiguration)
-              }}
-              onKeyDown={(keyboardEvent) =>
-                keyboardEvent.key === 'Enter' && triggerItemAction(item.index, studioContextMenu.handleNewConfiguration)
-              }
+              onAction={() => triggerItemAction(item.index, studioContextMenu.handleNewConfiguration)}
             >
-              <SettingsIcon className="fill-foreground h-3.5 w-3.5" />
-            </div>
+              <SettingsIcon className="fill-foreground-muted group-hover:fill-foreground h-3.5 w-3.5" />
+            </TreeActionButton>
           )}
           {(isRoot || isPlainFolder) && (
-            <div
-              role="button"
-              tabIndex={0}
-              className={actionBtnClass}
+            <TreeActionButton
               title="New Folder"
-              onClick={(mouseEvent) => {
-                mouseEvent.stopPropagation()
-                triggerItemAction(item.index, studioContextMenu.handleNewFolder)
-              }}
-              onKeyDown={(keyboardEvent) =>
-                keyboardEvent.key === 'Enter' && triggerItemAction(item.index, studioContextMenu.handleNewFolder)
-              }
+              onAction={() => triggerItemAction(item.index, studioContextMenu.handleNewFolder)}
             >
-              <FolderIcon className="fill-foreground h-3.5 w-3.5" />
-            </div>
+              <FolderIcon className="fill-foreground-muted group-hover:fill-foreground h-3.5 w-3.5" />
+            </TreeActionButton>
           )}
           {isConfigFile && (
-            <div
-              role="button"
-              tabIndex={0}
-              className={actionBtnClass}
+            <TreeActionButton
               title="New Adapter"
-              onClick={(mouseEvent) => {
-                mouseEvent.stopPropagation()
-                triggerItemAction(item.index, studioContextMenu.handleNewAdapter)
-              }}
-              onKeyDown={(keyboardEvent) =>
-                keyboardEvent.key === 'Enter' && triggerItemAction(item.index, studioContextMenu.handleNewAdapter)
-              }
+              onAction={() => triggerItemAction(item.index, studioContextMenu.handleNewAdapter)}
             >
-              <CodeIcon className="fill-foreground h-4 w-4" />
-            </div>
+              <CodeIcon className="fill-foreground-muted group-hover:fill-foreground h-4 w-4" />
+            </TreeActionButton>
           )}
           {!isRoot && (
-            <div
-              role="button"
-              tabIndex={0}
-              className={actionBtnClass}
+            <TreeActionButton
               title="Rename"
-              onClick={(mouseEvent) => {
-                mouseEvent.stopPropagation()
-                triggerItemAction(item.index, studioContextMenu.handleRename)
-              }}
-              onKeyDown={(keyboardEvent) =>
-                keyboardEvent.key === 'Enter' && triggerItemAction(item.index, studioContextMenu.handleRename)
-              }
+              onAction={() => triggerItemAction(item.index, studioContextMenu.handleRename)}
             >
-              <Pen className="stroke-foreground h-3.5 w-3.5" />
-            </div>
+              <Pen className="text-foreground-muted group-hover:text-foreground h-3.5 w-3.5" />
+            </TreeActionButton>
           )}
           {!isRoot && (
-            <div
-              role="button"
-              tabIndex={0}
-              className={actionBtnClass}
+            <TreeActionButton
               title="Delete"
-              onClick={(mouseEvent) => {
-                mouseEvent.stopPropagation()
-                triggerItemAction(item.index, studioContextMenu.handleDelete)
-              }}
-              onKeyDown={(keyboardEvent) =>
-                keyboardEvent.key === 'Enter' && triggerItemAction(item.index, studioContextMenu.handleDelete)
-              }
+              onAction={() => triggerItemAction(item.index, studioContextMenu.handleDelete)}
             >
-              <TrashBinIcon className="fill-foreground h-3.5 w-3.5" />
-            </div>
+              <TrashBinIcon className="text-foreground-muted group-hover:text-foreground h-3.5 w-3.5" />
+            </TreeActionButton>
           )}
         </div>
       </div>
     )
   }
 
-  if (!project) return <p className="text-muted-foreground p-4 text-sm">No Project Selected</p>
+  if (!project) return <p className="text-foreground-muted p-4 text-sm">No Project Selected</p>
   if (providerLoading) return <LoadingSpinner message="Loading configurations..." className="p-8" />
   if (!dataProvider)
-    return <p className="text-muted-foreground p-4 text-sm">No configurations found in src/main/configurations</p>
-
-  const toolbarBtnClass = 'cursor-pointer rounded p-1 hover:bg-hover text-foreground'
+    return <p className="text-foreground-muted p-4 text-sm">No configurations found in src/main/configurations</p>
 
   return (
     <>
       <div className="border-border flex items-center justify-between border-b px-2 py-1">
         <span className="text-foreground/50 text-xs font-semibold tracking-wider uppercase">Explorer</span>
         <div className="flex items-center gap-0.5">
-          <button
-            className={`${toolbarBtnClass} ${!activeTab || isActiveItemVisible ? 'cursor-not-allowed opacity-40' : ''}`}
+          <IconButton
             title="Open File Tree to Active Tab"
             disabled={!activeTab || isActiveItemVisible}
             onClick={() => void revealActiveTab()}
           >
-            <ListDown className="fill-foreground h-5 w-5" />
-          </button>
-          <button
-            className={toolbarBtnClass}
+            <ListDown className="fill-foreground-muted group-hover:fill-foreground h-5 w-5" />
+          </IconButton>
+          <IconButton
             title="New Configuration File"
             onClick={() => triggerExplorerAction(studioContextMenu.handleNewConfiguration, false)}
           >
-            <SettingsIcon className="fill-foreground h-4 w-4" />
-          </button>
-          <button
-            className={toolbarBtnClass}
+            <SettingsIcon className="fill-foreground-muted group-hover:fill-foreground h-4 w-4" />
+          </IconButton>
+          <IconButton
             title="New Folder"
             onClick={() => triggerExplorerAction(studioContextMenu.handleNewFolder, false)}
           >
-            <FolderIcon className="fill-foreground h-4 w-4" />
-          </button>
+            <FolderIcon className="fill-foreground-muted group-hover:fill-foreground h-4 w-4" />
+          </IconButton>
         </div>
       </div>
       <div className="mt-2">
@@ -562,8 +512,8 @@ export default function StudioFileStructure() {
       </div>
       <div
         className="h-full overflow-auto pr-2"
-        onContextMenu={(e) => {
-          void studioContextMenu.openContextMenu(e, 'root')
+        onContextMenu={(mouseEvent) => {
+          void studioContextMenu.openContextMenu(mouseEvent, 'root')
         }}
       >
         <UncontrolledTreeEnvironment

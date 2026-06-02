@@ -21,7 +21,7 @@ function isFolderData(data: StudioItemData): data is StudioFolderData {
   return typeof data === 'object' && 'path' in data
 }
 
-export default class FilesDataProvider extends BaseFilesDataProvider<StudioItemData> {
+export default class StudioFilesDataProvider extends BaseFilesDataProvider<StudioItemData> {
   private readonly projectName: string
   private rootPath = ''
 

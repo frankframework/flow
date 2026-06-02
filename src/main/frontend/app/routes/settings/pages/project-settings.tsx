@@ -49,7 +49,7 @@ export default function ProjectSettings() {
         </>
       ) : (
         // No project loaded
-        <div className="border-border bg-background text-muted-foreground flex h-64 items-center justify-center rounded-md border p-6 text-center text-sm">
+        <div className="border-border bg-background text-foreground-muted flex h-64 items-center justify-center rounded-md border p-6 text-center text-sm">
           Load a project in the&nbsp;
           <Link to="/" className="font-medium text-blue-600 hover:underline">
             Project Overview

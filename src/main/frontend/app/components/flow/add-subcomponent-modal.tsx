@@ -1,5 +1,6 @@
 import { createPortal } from 'react-dom'
 import Button from '../inputs/button'
+import Search from '~/components/search/search'
 import type { ElementDetails } from '@frankframework/doc-library-core'
 import { useMemo, useState, type ChangeEvent } from 'react'
 
@@ -80,13 +81,7 @@ export default function AddSubcomponentModal({
         <h2 className="mb-4 text-lg font-bold">Add Subcomponent</h2>
 
         {/* Paragraph / content */}
-        <input
-          type="text"
-          placeholder="Search elements..."
-          value={search}
-          onChange={handleOnChange}
-          className="border-border focus:ring-foreground-active mb-3 w-full rounded border px-3 py-2 focus:ring focus:outline-none"
-        />
+        <Search placeholder="Search elements..." value={search} onChange={handleOnChange} />
         <div className="border-border bg-background mb-3 w-full flex-1 overflow-hidden rounded border">
           <ul className="h-full overflow-y-auto">
             {filteredChildren.length > 0 ? (
@@ -99,7 +94,7 @@ export default function AddSubcomponentModal({
                     onClick={() => setSelectedElement(child)}
                     onDoubleClick={handleAddChild}
                     className={`cursor-pointer px-3 py-2 ${
-                      isSelected ? 'bg-foreground-active text-background' : 'hover:bg-foreground-active/10'
+                      isSelected ? 'bg-foreground-active text-background' : 'hover:bg-hover'
                     }`}
                   >
                     {child.name}
@@ -107,7 +102,7 @@ export default function AddSubcomponentModal({
                 )
               })
             ) : (
-              <li className="text-muted-foreground px-3 py-2">No results found</li>
+              <li className="text-foreground-muted px-3 py-2">No results found</li>
             )}
           </ul>
         </div>

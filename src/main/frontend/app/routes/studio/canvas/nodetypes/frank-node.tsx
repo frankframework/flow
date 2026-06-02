@@ -496,8 +496,10 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
               : `var(${colorVariable})`,
           }}
         >
-          <h1 className="font-bold">{properties.data.subtype}</h1>
-          <p className="overflow-hidden text-sm text-ellipsis whitespace-nowrap">{properties.data.name}</p>
+          <h1 className="text-foreground font-bold">{properties.data.subtype}</h1>
+          <p className="text-foreground overflow-hidden text-sm text-ellipsis whitespace-nowrap">
+            {properties.data.name}
+          </p>
           {isDeprecated && frankElement?.deprecated && (
             <>
               <div
@@ -521,8 +523,8 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
         {properties.data.attributes &&
           Object.entries(properties.data.attributes).map(([key, value]) => (
             <div key={key} className="my-1 w-full max-w-full px-1">
-              <p className="text-gray-1000 overflow-hidden text-sm font-bold text-ellipsis whitespace-nowrap">{key}</p>
-              <p className="overflow-hidden text-sm text-ellipsis whitespace-nowrap">{value}</p>
+              <p className="text-foreground overflow-hidden text-sm font-bold text-ellipsis whitespace-nowrap">{key}</p>
+              <p className="text-foreground overflow-hidden text-sm text-ellipsis whitespace-nowrap">{value}</p>
             </div>
           ))}
         {(properties.data.children.length > 0 || dragOver || canDropDraggedElement) && (
@@ -577,7 +579,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
 
         {possibleChildren.length > 0 && (
           <div
-            className="hover:text-foreground-active text-foreground/30 flex cursor-pointer gap-1 self-start p-1"
+            className="hover:text-foreground text-foreground-muted flex cursor-pointer gap-1 self-start p-1"
             onClick={() => setIsModalOpen(true)}
           >
             <div className="bg-foreground/30 border-border h-4 w-4 justify-center rounded-full border text-center text-[8px] font-bold">

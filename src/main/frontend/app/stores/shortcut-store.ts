@@ -59,6 +59,7 @@ function detectPlatform(): Platform {
   if (typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.userAgent)) {
     return 'mac'
   }
+
   return 'pc'
 }
 

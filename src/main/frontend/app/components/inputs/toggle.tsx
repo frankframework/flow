@@ -20,58 +20,40 @@ export default function Toggle({
     setIsChecked(checked)
   }, [checked])
 
-  const toggle = () => {
-    if (disabled) return
-
-    const next = !isChecked
-    setIsChecked(next)
-    onChange(next)
-  }
-
-  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (disabled) return
-
-    if (event.key === 'Enter') {
-      event.preventDefault()
-      toggle()
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!disabled) {
+      const newIsChecked = event.target.checked
+      setIsChecked(newIsChecked)
+      onChange?.(newIsChecked)
     }
   }
 
   return (
-    <div className="group inline-flex items-center">
+    <div className="group flex items-center gap-2">
       <label
         className={clsx(
-          'relative inline-block h-6 w-12',
-          disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer',
+          'relative inline-block h-6 w-12 cursor-pointer',
+          disabled && 'cursor-not-allowed opacity-50',
           className,
         )}
       >
         <input
           type="checkbox"
           checked={isChecked}
-          onChange={toggle}
-          onKeyDown={handleKeyDown}
+          onChange={handleChange}
           disabled={disabled}
-          className="peer sr-only"
+          className="absolute h-0 w-0 opacity-0"
           {...properties}
         />
-
-        <span
-          className={clsx(
-            'absolute inset-0 rounded-full transition-colors duration-200 ease-in-out',
-            isChecked ? 'bg-brand' : 'bg-border',
-            'peer-focus-visible:ring-brand peer-focus-visible:ring-offset-background peer-focus-visible:ring-2 peer-focus-visible:ring-offset-2',
-          )}
-        />
-
-        <span
-          className={clsx(
-            'bg-backdrop absolute top-1/2 h-5 w-5 rounded-full shadow-md',
-            'transition-transform duration-200 ease-in-out',
-            'group-hover:bg-hover',
-            isChecked ? 'translate-x-6 -translate-y-1/2' : 'translate-x-1 -translate-y-1/2',
-          )}
-        />
+        <span className={clsx('absolute inset-0 rounded-full', isChecked ? 'bg-brand' : 'bg-border')}>
+          <span
+            className={clsx(
+              'bg-background group-hover:bg-hover absolute top-[50%] h-5 w-5 -translate-y-1/2 transform rounded-full',
+              'bg-backdrop group-hover:bg-hover absolute top-[50%] h-5 w-5 -translate-y-1/2 transform rounded-full',
+              isChecked ? 'right-0.5' : 'left-0.5',
+            )}
+          />
+        </span>
       </label>
     </div>
   )

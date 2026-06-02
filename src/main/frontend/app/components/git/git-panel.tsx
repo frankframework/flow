@@ -41,14 +41,19 @@ export default function GitPanel({ projectName, hasStoredToken }: GitPanelProps)
     setToken,
   } = useGitStore()
 
-  const refreshStatus = useCallback(async () => {
-    try {
-      const newStatus = await fetchGitStatus(projectName)
-      setStatus(newStatus)
-    } catch (error) {
-      logApiError('Failed to fetch git status', error as Error)
-    }
-  }, [projectName, setStatus])
+  const refreshStatus = useCallback(
+    async (showToast = false) => {
+      try {
+        const newStatus = await fetchGitStatus(projectName)
+        setStatus(newStatus)
+        if (showToast) showInfoToast('Status refreshed')
+      } catch (error) {
+        logApiError('Failed to fetch git status', error as Error)
+        if (showToast) showErrorToast('Failed to refresh status')
+      }
+    },
+    [projectName, setStatus],
+  )
 
   useEffect(() => {
     refreshStatus()
@@ -176,7 +181,7 @@ export default function GitPanel({ projectName, hasStoredToken }: GitPanelProps)
     <div className="flex h-full flex-col overflow-hidden">
       <GitToolbar
         status={status}
-        onRefresh={refreshStatus}
+        onRefresh={() => void refreshStatus(true)}
         onPush={handlePush}
         onPull={handlePull}
         token={token}

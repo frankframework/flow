@@ -7,6 +7,8 @@ interface SearchProperties {
   type?: string
   placeholder?: string
   value?: string
+  className?: string
+  inputClassName?: string
   onChange: (event: React.ChangeEvent<HTMLInputElement>) => void
   onKeyDown?: (event: React.KeyboardEvent<HTMLInputElement>) => void
 }
@@ -16,26 +18,30 @@ export default function Search({
   type = 'search',
   placeholder = 'Search',
   value,
+  className,
+  inputClassName,
   onChange,
   onKeyDown,
 }: Readonly<SearchProperties>) {
   const generatedId = useId()
   const inputId = id ?? generatedId
   return (
-    <div className="relative px-4">
-      <label htmlFor={inputId} className="absolute top-1/2 left-6 -translate-y-1/2">
-        <MagnifierIcon className="fill-foreground-muted h-auto w-4" />
-      </label>
-      <Input
-        id={inputId}
-        type={type}
-        placeholder={placeholder}
-        value={value}
-        onChange={onChange}
-        onKeyDown={onKeyDown}
-        wrapperClassName="rounded-full"
-        inputClassName="rounded-full pl-7"
-      />
+    <div className={className ?? 'px-4'}>
+      <div className="relative">
+        <label htmlFor={inputId} className="absolute top-1/2 left-3 -translate-y-1/2">
+          <MagnifierIcon className="fill-foreground-muted h-auto w-4" />
+        </label>
+        <Input
+          id={inputId}
+          type={type}
+          placeholder={placeholder}
+          value={value}
+          onChange={onChange}
+          onKeyDown={onKeyDown}
+          wrapperClassName="rounded-full"
+          inputClassName={`rounded-full pl-8 ${inputClassName ?? 'py-2'}`}
+        />
+      </div>
     </div>
   )
 }

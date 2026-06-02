@@ -32,7 +32,7 @@ export default function Help() {
             </div>
           </div>
         </div>
-        <div className="markdown-body h-full overflow-auto p-6">
+        <div className="markdown-body text-foreground h-full overflow-auto p-6">
           <div className="border-border bg-background rounded-md border p-6">
             {(MarkdownContent && <MarkdownContent />) || (
               <div>
