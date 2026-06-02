@@ -20,6 +20,7 @@ export default function Root() {
   const theme = useTheme()
 
   const project = useProjectStore.getState().project
+  const pipesColor = getPaletteColor('Pipes', theme)
 
   const [mappingListConfig, dispatchMappingListConfig] = useReducer(
     mappingListConfigReducer,
@@ -93,7 +94,7 @@ export default function Root() {
           <div
             className="border-b-border box-border h-10 w-full rounded-t-md border-b p-2 text-lg font-semibold"
             style={{
-              background: `radial-gradient(ellipse farthest-corner at 20% 20%, ${getPaletteColor('Pipes', theme)} 0%, var(--color-background) 100%)`,
+              background: `radial-gradient(ellipse farthest-corner at 20% 20%, ${pipesColor} 0%, var(--color-background) 100%)`,
             }}
           >
             Mapping (mappingName)

@@ -42,6 +42,7 @@ export function ChildNodeComponent({
   const [dragForbidden, setDragForbidden] = useState(false)
   const { elements, filters, ffDoc } = useFFDoc()
   const theme = useTheme()
+  const categoryColor = getCategoryColor(child.subtype, filters, theme)
 
   const frankElement = useMemo(() => {
     if (!elements) return null
@@ -177,10 +178,10 @@ export function ChildNodeComponent({
           background: gradientEnabled
             ? `radial-gradient(
               ellipse farthest-corner at 20% 20%,
-              ${getCategoryColor(child.subtype, filters, theme)} 0%,
+              ${categoryColor} 0%,
               var(--color-background) 100%
             )`
-            : getCategoryColor(child.subtype, filters, theme),
+            : categoryColor,
         }}
       >
         <h1 className="font-bold">{child.subtype}</h1>
