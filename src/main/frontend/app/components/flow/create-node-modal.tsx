@@ -117,7 +117,7 @@ function CreateNodeModal({
 
   return (
     <div
-      className="bg-background/50 absolute inset-0 z-50 flex items-center justify-center"
+      className="bg-background/50 absolute inset-0 z-50 flex items-center justify-center backdrop-blur-[0.5px]"
       onContextMenu={(mouseEvent) => mouseEvent.stopPropagation()}
     >
       <div className="bg-background border-border relative h-[400px] w-[600px] rounded-lg border p-6 shadow-lg">
