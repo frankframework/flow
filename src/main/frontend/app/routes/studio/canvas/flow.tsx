@@ -52,7 +52,7 @@ import { showErrorToast } from '~/components/toast'
 import { useSettingsStore } from '~/stores/settings-store'
 import { useShortcut } from '~/hooks/use-shortcut'
 import CanvasContextMenu from '~/components/flow/canvas-context-menu'
-import { useSidebarStore, SidebarSide } from '~/components/sidebars-layout/sidebar-layout-store'
+import { useSidebarStore, SidebarSide } from '~/stores/sidebar-layout-store'
 import { openInEditorAtElement } from '~/actions/navigationActions'
 
 export type FlowNode = FrankNodeType | ExitNode | StickyNote | GroupNode | Node
@@ -909,7 +909,7 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
   )
 
   const showContextIfSidebarOpen = useCallback(() => {
-    const visible = useSidebarStore.getState().getVisibility('studio')[SidebarSide.RIGHT]
+    const visible = useSidebarStore.getState().getVisibility('studio')?.[SidebarSide.RIGHT] ?? false
     if (visible) showNodeContextMenu(true)
   }, [showNodeContextMenu])
 
