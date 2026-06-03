@@ -26,7 +26,7 @@ function hasDataProperty(node: FlowNode): node is Extract<FlowNode, { data: Node
 }
 
 function escapeXml(string_: string): string {
-  return string_.replaceAll('&', '&amp;').replaceAll('"', '&quot;')
+  return string_.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;')
 }
 
 export async function exportFlowToXml(

@@ -117,9 +117,16 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
     return (dimensions.height - (properties.data.sourceHandles.length - 1) * handleSpacing) / 2
   }, [dimensions.height, properties.data.sourceHandles.length])
 
-  const compactFirstHandlePosition = useMemo(() => {
-    return (minNodeHeight - (properties.data.sourceHandles.length - 1) * handleSpacing) / 2
-  }, [minNodeHeight, properties.data.sourceHandles.length])
+  const COMPACT_INITIALS_BOX_SIZE = 160
+  const COMPACT_PADDING_TOP = 8
+  const COMPACT_HANDLE_SIZE = 15
+  const COMPACT_HANDLE_GAP = 4
+
+  const compactXOffsetPx =
+    (FlowConfig.NODE_DEFAULT_WIDTH - COMPACT_INITIALS_BOX_SIZE) / 2 - COMPACT_HANDLE_SIZE - COMPACT_HANDLE_GAP
+
+  const compactHandleTop =
+    COMPACT_PADDING_TOP + COMPACT_INITIALS_BOX_SIZE / 2 - COMPACT_HANDLE_SIZE / 2 + COMPACT_HANDLE_SIZE
 
   const allForwardTypesUsed = useMemo(() => {
     if (availableHandleTypes.length === 0) return true
@@ -142,6 +149,10 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
       setDimensions((previous) => ({ ...previous, height: newHeight }))
     }
   }, [dragOver, properties.id, updateNodeInternals])
+
+  useEffect(() => {
+    updateNodeInternals(properties.id)
+  }, [dimensions.height, isCompact, properties.id, updateNodeInternals])
 
   useEffect(() => {
     fetchFrankConfigXsd().then((xsd) => {
@@ -401,54 +412,98 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
     return (
       <>
         <div
-          className="bg-background border-border flex h-full w-full flex-col items-center justify-center gap-2 overflow-hidden rounded-md border py-8"
+          className="flex flex-col items-center gap-2 rounded-md"
           style={{
-            minWidth: `${minNodeWidth}px`,
-            minHeight: `${minNodeHeight}px`,
+            width: `${FlowConfig.NODE_DEFAULT_WIDTH}px`,
+            paddingTop: `${COMPACT_PADDING_TOP}px`,
+            paddingBottom: '8px',
             ...(properties.selected && { borderColor: `var(${colorVariable})` }),
           }}
         >
           <div
-            className="flex h-32 w-32 shrink-0 items-center justify-center rounded-3xl shadow-md"
+            className="flex h-40 w-40 shrink-0 items-center justify-center rounded-3xl shadow-md"
             style={{
               backgroundColor: `color-mix(in srgb, var(${colorVariable}) 25%, transparent)`,
               border: `3px solid var(${colorVariable})`,
             }}
           >
-            <span className="text-4xl font-black tracking-tight" style={{ color: `var(${colorVariable})` }}>
+            <span className="text-5xl font-black tracking-tight" style={{ color: `var(${colorVariable})` }}>
               {abbr}
             </span>
           </div>
 
-          <span className="mt-5 line-clamp-2 w-full px-2 text-center text-2xl leading-snug font-semibold">
+          <span className="text-center text-3xl leading-snug font-semibold whitespace-nowrap">
             {properties.data.subtype}
           </span>
 
           {properties.data.name && (
-            <span className="text-foreground-muted line-clamp-1 w-full px-1 text-center text-2xl">
-              {properties.data.name}
-            </span>
+            <span className="text-foreground-muted text-center text-3xl whitespace-nowrap">{properties.data.name}</span>
           )}
+          {properties.data.attributes &&
+            Object.entries(properties.data.attributes).map(([key, value]) => (
+              <span key={key} className="text-foreground-muted text-center text-2xl whitespace-nowrap">
+                {value || key}
+              </span>
+            ))}
         </div>
 
-        {frankElement?.name && frankElement.name !== 'Receiver' && (
-          <Handle
-            type="target"
-            position={Position.Left}
-            style={{ opacity: 0, left: '-15px', width: '15px', height: '15px' }}
+        {properties.data.subtype !== 'Receiver' && (
+          <>
+            <div
+              className="pointer-events-none absolute rounded-full"
+              style={{
+                left: compactXOffsetPx,
+                top: `${compactHandleTop}px`,
+                transform: 'translate(-50%, -50%)',
+                width: '15px',
+                height: '15px',
+                backgroundColor: '#B2B2B2',
+                border: '1px solid rgba(107, 114, 128, 0.5)',
+              }}
+            />
+            <Handle
+              type="target"
+              position={Position.Left}
+              isConnectableStart={false}
+              style={{
+                opacity: 0,
+                left: compactXOffsetPx,
+                width: '15px',
+                height: '15px',
+                top: `${compactHandleTop}px`,
+              }}
+            />
+          </>
+        )}
+
+        {properties.data.sourceHandles.length > 0 && (
+          <div
+            className="pointer-events-none absolute rounded-full"
+            style={{
+              right: compactXOffsetPx,
+              top: `${compactHandleTop}px`,
+              transform: 'translate(50%, -50%)',
+              width: `${COMPACT_HANDLE_SIZE}px`,
+              height: `${COMPACT_HANDLE_SIZE}px`,
+              backgroundColor: '#B2B2B2',
+              border: '1px solid rgba(107, 114, 128, 0.5)',
+            }}
           />
         )}
 
         {properties.data.sourceHandles.map((handle) => (
-          <CustomHandle
+          <Handle
             key={handle.type + handle.index}
-            type={handle.type}
-            index={handle.index}
-            firstHandlePosition={compactFirstHandlePosition}
-            handleSpacing={handleSpacing}
-            onChangeType={(newType) => changeHandleType(handle.index, newType)}
-            absolutePosition={{ x: properties.positionAbsoluteX, y: properties.positionAbsoluteY }}
-            typesAllowed={frankElement?.forwards}
+            type="source"
+            position={Position.Right}
+            id={handle.index.toString()}
+            style={{
+              top: `${compactHandleTop}px`,
+              right: compactXOffsetPx,
+              width: '15px',
+              height: '15px',
+              opacity: 0,
+            }}
           />
         ))}
       </>
@@ -601,10 +656,11 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
       </div>
 
       {/* Receivers can only have outgoing connections, so we hide the input handle for them */}
-      {frankElement?.name && frankElement.name !== 'Receiver' && (
+      {properties.data.subtype !== 'Receiver' && (
         <Handle
           type="target"
           position={Position.Left}
+          isConnectableStart={false}
           className="flex items-center justify-center text-white"
           style={{
             left: '-15px',
@@ -632,9 +688,10 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
           onClick={(event) => {
             toggleHandleMenu(event)
           }}
-          className="nodrag absolute -right-5.75 h-3.75 w-3.75 cursor-pointer justify-center rounded-full border bg-gray-400 text-center text-[8px] font-bold text-white"
+          className="nodrag absolute h-4 w-4 cursor-pointer justify-center rounded-full border bg-gray-400 text-center text-[8px] font-bold text-white"
           style={{
-            top: `${firstHandlePosition + properties.data.sourceHandles.length * handleSpacing + handleSpacing}px`,
+            top: `${firstHandlePosition + properties.data.sourceHandles.length * handleSpacing + 12.5}px`,
+            right: '-23px',
           }}
         >
           +

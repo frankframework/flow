@@ -10,7 +10,7 @@ import org.springframework.web.client.RestTemplate;
 @Log4j2
 @Service
 public class FrankDocService {
-	private static final String FRANKDOC_JSON_URL = "https://frankdoc.frankframework.org/js/frankdoc.json";
+	private static final String FRANKDOC_JSON_URL = "https://reference.frankframework.org/js/frankdoc.json";
 
 	private final RestTemplate restTemplate;
 

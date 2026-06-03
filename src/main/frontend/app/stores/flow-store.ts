@@ -254,7 +254,7 @@ const useFlowStore = create<FlowState>()(
       if (wouldCreateDuplicateForward(edges, connection.source, connection.target, label)) return
 
       get().saveToHistory()
-      set({ edges: addEdge({ ...connection, type: 'frankEdge', animated: true, data: { label } }, get().edges) })
+      set({ edges: addEdge({ ...connection, type: 'frankEdge', data: { label } }, get().edges) })
     },
     onReconnect: (oldEdge, newConnection) => {
       const { nodes, edges } = get()

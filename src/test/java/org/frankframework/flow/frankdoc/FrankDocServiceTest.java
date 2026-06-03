@@ -20,7 +20,7 @@ class FrankDocServiceTest {
 
 	private FrankDocService frankDocService;
 
-	private static final String FRANKDOC_URL = "https://frankdoc.frankframework.org/js/frankdoc.json";
+	private static final String FRANKDOC_URL = "https://reference.frankframework.org/js/frankdoc.json";
 
 	@BeforeEach
 	void setUp() {
