@@ -447,7 +447,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
             ))}
         </div>
 
-        {frankElement?.name && frankElement.name !== 'Receiver' && (
+        {properties.data.subtype !== 'Receiver' && (
           <>
             <div
               className="pointer-events-none absolute rounded-full"
@@ -656,7 +656,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
       </div>
 
       {/* Receivers can only have outgoing connections, so we hide the input handle for them */}
-      {frankElement?.name && frankElement.name !== 'Receiver' && (
+      {properties.data.subtype !== 'Receiver' && (
         <Handle
           type="target"
           position={Position.Left}
