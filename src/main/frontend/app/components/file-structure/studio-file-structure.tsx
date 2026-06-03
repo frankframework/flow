@@ -17,7 +17,7 @@ import AltArrowDownIcon from '../../../icons/solar/Alt Arrow Down.svg?react'
 import { useShortcut } from '~/hooks/use-shortcut'
 import { useFileWatcher } from '~/hooks/use-file-watcher'
 import { getAncestorIds, isVisibleInTree, selectAndReveal, toTreeItemId } from './tree-utilities'
-import type { StudioContextMenuState } from './use-studio-context-menu'
+import type { StudioContextMenuState, StudioItemType } from './use-studio-context-menu'
 
 import {
   Tree,
@@ -79,6 +79,8 @@ export default function StudioFileStructure() {
   const [dataProvider, setDataProvider] = useState<StudioFilesDataProvider | null>(null)
   const [providerLoading, setProviderLoading] = useState(false)
   const [selectedItemId, setSelectedItemId] = useState<TreeItemIndex | null>(null)
+  const [selectedItemType, setSelectedItemType] = useState<StudioItemType | null>(null)
+  const treeContainerRef = useRef<HTMLDivElement>(null)
   const setTabData = useTabStore((state) => state.setTabData)
   const setActiveTab = useTabStore((state) => state.setActiveTab)
   const getTab = useTabStore((state) => state.getTab)
@@ -125,14 +127,17 @@ export default function StudioFileStructure() {
 
   const triggerExplorerAction = useCallback(
     (action: (menuState: StudioContextMenuState) => void, requireSelection: boolean) => {
-      const itemId = selectedItemId ?? (requireSelection ? null : 'root')
-      if (!itemId || (itemId === 'root' && requireSelection)) return
+      const itemId = requireSelection
+        ? selectedItemId
+        : ((selectedItemType === 'adapter' ? null : selectedItemId) ?? 'root')
+
+      if (!itemId) return
 
       void buildContextForItem(itemId).then((menuState) => {
         if (menuState) action(menuState)
       })
     },
-    [selectedItemId, buildContextForItem],
+    [selectedItemId, selectedItemType, buildContextForItem],
   )
 
   const triggerItemAction = useCallback(
@@ -174,6 +179,7 @@ export default function StudioFileStructure() {
     },
     'studio-explorer.delete': () => {
       if (!selectedItemId) return false
+      if (!treeContainerRef.current?.contains(document.activeElement)) return false
       triggerExplorerAction(studioContextMenu.handleDelete, true)
     },
     'studio-explorer.reveal': () => void revealActiveTab(),
@@ -235,7 +241,13 @@ export default function StudioFileStructure() {
   }, [searchTerm, dataProvider])
 
   const handleItemClick = (items: TreeItemIndex[], _treeId: string): void => {
-    if (items.length > 0) setSelectedItemId(items[0])
+    if (items.length > 0) {
+      setSelectedItemId(items[0])
+    } else {
+      setSelectedItemId(null)
+      setSelectedItemType(null)
+    }
+
     void handleItemClickAsync(items)
   }
 
@@ -280,6 +292,7 @@ export default function StudioFileStructure() {
       if (!item) return
 
       const data = item.data
+      setSelectedItemType(detectItemType(data, item.isFolder))
 
       if (item.isFolder) {
         return
@@ -511,6 +524,7 @@ export default function StudioFileStructure() {
         <Search onChange={(event) => setSearchTerm(event.target.value)} />
       </div>
       <div
+        ref={treeContainerRef}
         className="h-full overflow-auto pr-2"
         onContextMenu={(mouseEvent) => {
           void studioContextMenu.openContextMenu(mouseEvent, 'root')
