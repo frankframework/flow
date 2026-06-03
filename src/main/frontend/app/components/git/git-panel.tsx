@@ -195,7 +195,7 @@ export default function GitPanel({ projectName, hasStoredToken }: GitPanelProps)
   }, [projectName, token, refreshStatus])
 
   const hasSelectedChunks = Object.values(fileHunkStates).some(
-    (s) => s.selectedHunks.size > 0 || (s.totalHunks === 0 && s.selected),
+    (state) => state.selectedHunks.size > 0 || (state.totalHunks === 0 && state.selected),
   )
 
   return (
