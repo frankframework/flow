@@ -43,7 +43,7 @@ export const useGitStore = create<GitStoreState>((set, get) => ({
     set((state) => ({
       fileHunkStates: {
         ...state.fileHunkStates,
-        [file]: { selectedHunks: new Set(), totalHunks },
+        [file]: { selectedHunks: new Set(), totalHunks, selected: false },
       },
     }))
   },
@@ -73,7 +73,7 @@ export const useGitStore = create<GitStoreState>((set, get) => ({
     set((s) => ({
       fileHunkStates: {
         ...s.fileHunkStates,
-        [file]: { ...state, selectedHunks: all },
+        [file]: { ...state, selectedHunks: all, selected: true },
       },
     }))
   },
@@ -84,7 +84,7 @@ export const useGitStore = create<GitStoreState>((set, get) => ({
     set((s) => ({
       fileHunkStates: {
         ...s.fileHunkStates,
-        [file]: { ...state, selectedHunks: new Set() },
+        [file]: { ...state, selectedHunks: new Set(), selected: false },
       },
     }))
   },

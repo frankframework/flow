@@ -52,4 +52,5 @@ export interface GitPullResult {
 export interface FileHunkState {
   selectedHunks: Set<number>
   totalHunks: number
+  selected: boolean
 }
