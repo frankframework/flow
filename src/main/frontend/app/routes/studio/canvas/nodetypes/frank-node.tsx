@@ -11,7 +11,7 @@ import {
 import DangerIcon from '../../../../../icons/solar/Danger Triangle.svg?react'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import useFlowStore from '~/stores/flow-store'
-import { CustomHandle, translateHandleTypeToColour } from '~/routes/studio/canvas/nodetypes/components/handle'
+import { CustomHandle } from '~/routes/studio/canvas/nodetypes/components/handle'
 import { FlowConfig } from '~/routes/studio/canvas/flow.config'
 import { useNodeContextMenu } from '~/routes/studio/canvas/node-context-menu-context'
 import useNodeContextStore from '~/stores/node-context-store'
@@ -485,7 +485,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
               transform: 'translate(50%, -50%)',
               width: `${COMPACT_HANDLE_SIZE}px`,
               height: `${COMPACT_HANDLE_SIZE}px`,
-              backgroundColor: translateHandleTypeToColour(properties.data.sourceHandles[0].type),
+              backgroundColor: '#B2B2B2',
               border: '1px solid rgba(107, 114, 128, 0.5)',
             }}
           />
