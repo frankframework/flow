@@ -30,7 +30,7 @@ export default function ExitNodeComponent(properties: NodeProps<ExitNode>) {
         <ResizeIcon />
       </NodeResizeControl>
       <div
-        className={`bg-background flex h-full w-full flex-col items-center rounded-md border shadow-[3px_3px_8px_rgba(0,0,0,0.15)] ${
+        className={`bg-background flex h-full w-full flex-col items-center rounded-md border shadow-[2px_3px_14px_rgba(0,0,0,0.06)] ${
           properties.selected ? 'border-blue-500' : 'border-border'
         }`}
         style={{
