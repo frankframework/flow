@@ -4,7 +4,8 @@ import ArrowRightIcon from 'icons/solar/Alt Arrow Right.svg?react'
 import { useSettingsStore } from '~/stores/settings-store'
 import useNodeContextStore from '~/stores/node-context-store'
 import type { ElementDetails } from '@frankframework/doc-library-core'
-import { getElementTypeFromName } from '../node-translator-module'
+import { useTheme } from '~/hooks/use-theme'
+import { getPaletteColor } from '~/utils/flow-utils'
 import DangerIcon from '../../../../icons/solar/Danger Triangle.svg?react'
 import { DeprecatedListPopover, type DeprecatedInfo } from './deprecated-list-popover'
 import ElementHoverCard from './element-hover-card'
@@ -22,6 +23,8 @@ const CLOSE_DELAY = 200
 
 export default function SortedElements({ type, items, onDragStart, searchTerm }: Readonly<Properties>) {
   const paletteExpandedByDefault = useSettingsStore((state) => state.studio.paletteExpandedByDefault)
+  const theme = useTheme()
+  const categoryColor = getPaletteColor(type, theme)
   const [isExpanded, setIsExpanded] = useState(paletteExpandedByDefault)
   const { draggedName, setDraggedName, dropSuccessful, setDropSuccessful } = useNodeContextStore((state) => state)
   const [hoveredRect, setHoveredRect] = useState<DOMRect | null>(null)
@@ -77,7 +80,7 @@ export default function SortedElements({ type, items, onDragStart, searchTerm }:
       <Button
         onClick={toggleExpansion}
         className="text-foreground-muted hover:text-foreground hover:bg-hover flex w-full cursor-pointer items-center gap-2 rounded-sm border-0 bg-transparent px-3 py-3 text-left text-sm font-semibold capitalize"
-        style={{ borderLeft: `3px solid var(--palette-${type.toLowerCase()})` }}
+        style={{ borderLeft: `3px solid ${categoryColor}` }}
       >
         {shouldExpand ? (
           <ArrowDownIcon className="h-4 w-4 shrink-0 fill-current" />
@@ -91,13 +94,11 @@ export default function SortedElements({ type, items, onDragStart, searchTerm }:
       {shouldExpand && (
         <div className="mt-1 space-y-0.5 pl-3">
           {items.map((value) => {
-            const elementType = getElementTypeFromName(value.name)
-
             return (
               <li
                 key={value.name}
                 className="text-foreground dark:text-foreground-muted hover:text-foreground hover:bg-hover group mb-1 flex cursor-move items-center justify-between rounded-sm py-3 pr-3 pl-3 text-sm"
-                style={{ borderLeft: `3px solid var(--type-${elementType})` }}
+                style={{ borderLeft: `3px solid ${categoryColor}` }}
                 draggable
                 onDragStart={(event) => {
                   cancelClose()
