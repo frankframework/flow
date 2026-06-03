@@ -60,19 +60,14 @@ function FileSection({
             const dirPath = file.includes('/') ? file.slice(0, file.lastIndexOf('/')) : ''
 
             const hunkState = fileHunkStates[file]
-            let checkboxChecked = false
-            let checkboxIndeterminate = false
+            const totalHunks = hunkState?.totalHunks ?? 0
+            const selectedCount = hunkState?.selectedHunks.size ?? 0
+            const allHunksSelected = totalHunks > 0 && selectedCount === totalHunks
+            const someHunksSelected = totalHunks > 0 && selectedCount > 0
+            const fileSelectedWithNoHunks = totalHunks === 0 && (hunkState?.selected ?? false)
 
-            if (hunkState && hunkState.totalHunks > 0) {
-              const selectedCount = hunkState.selectedHunks.size
-              if (selectedCount === hunkState.totalHunks) {
-                checkboxChecked = true
-              } else if (selectedCount > 0) {
-                checkboxIndeterminate = true
-              }
-            } else if (hunkState && hunkState.totalHunks === 0 && hunkState.selected) {
-              checkboxChecked = true
-            }
+            const checkboxChecked = allHunksSelected || fileSelectedWithNoHunks
+            const checkboxIndeterminate = someHunksSelected && !allHunksSelected
 
             return (
               <div
