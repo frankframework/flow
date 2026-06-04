@@ -16,19 +16,9 @@ public class FlowExceptionHandler {
 
 	@ExceptionHandler(ApiException.class)
 	public ResponseEntity<ErrorResponse> handleApiException(ApiException exception) {
-		log.error("Exception occurred: {} - {}", exception.getClass().getSimpleName(), exception.getMessage(), exception);
+		log.trace("Exception occurred: {} - {}", exception.getClass().getSimpleName(), exception.getMessage(), exception);
 		ErrorResponse response = new ErrorResponse(exception.getStatus().getReasonPhrase(), formatMessage(exception.getMessage()));
 		return ResponseEntity.status(exception.getStatus()).body(response);
-	}
-
-	@ExceptionHandler(ParserConfigurationException.class)
-	public ResponseEntity<ErrorResponse> handleParserConfigurationException(ParserConfigurationException exception, HttpServletRequest request) {
-		log.error("XML parser configuration error: {} - Method: {} URL: {}", exception.getMessage(), request.getMethod(), request.getRequestURI(), exception);
-		ErrorResponse response = new ErrorResponse(
-				HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
-				"XML parser configuration error: " + formatMessage(exception.getMessage())
-		);
-		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
 	}
 
 }

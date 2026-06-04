@@ -43,6 +43,10 @@ export async function apiFetch<T>(path: string, options?: RequestInit): Promise<
   }
   if (options?.body && !isFormData && !headers['Content-Type']) headers['Content-Type'] = 'application/json'
 
+  if (options?.method && !['GET', 'HEAD', 'OPTIONS'].includes(options?.method)) {
+    headers['X-XSRF-TOKEN'] = getCookie('XSRF-TOKEN') ?? ''
+  }
+
   const token = getAuthToken()
   if (token) {
     headers['Authorization'] = `Bearer ${token}`
@@ -51,6 +55,7 @@ export async function apiFetch<T>(path: string, options?: RequestInit): Promise<
   const response = await fetch(apiUrl(path), {
     ...options,
     headers,
+    // credentials: 'include',
   })
 
   if (!response.ok) {
@@ -70,4 +75,9 @@ export async function apiFetch<T>(path: string, options?: RequestInit): Promise<
     return undefined as T
   }
   return response.json()
+}
+
+function getCookie(name: string) {
+  const cookieKV = document.cookie.match(String.raw`(^|;)\s*${name}\s*=\s*([^;]+)`)
+  return cookieKV ? cookieKV.pop() : ''
 }

@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.xml.sax.SAXException;
 
+import javax.xml.parsers.ParserConfigurationException;
+
 @Log4j2
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -40,9 +42,19 @@ public class GlobalExceptionHandler {
 		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
 	}
 
+	@ExceptionHandler(ParserConfigurationException.class)
+	public ResponseEntity<ErrorResponse> handleParserConfigurationException(ParserConfigurationException exception, HttpServletRequest request) {
+		log.warn("XML parser configuration error: {} - Method: {} URL: {}", exception.getMessage(), request.getMethod(), request.getRequestURI(), exception);
+		ErrorResponse response = new ErrorResponse(
+				HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
+				"XML parser configuration error: " + formatMessage(exception.getMessage())
+		);
+		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+	}
+
 	@ExceptionHandler(SAXException.class)
 	public ResponseEntity<ErrorResponse> handleSaxException(SAXException exception, HttpServletRequest request) {
-		log.error("XML parsing error: {} - Method: {} URL: {}", exception.getMessage(), request.getMethod(), request.getRequestURI(), exception);
+		log.warn("XML parsing error: {} - Method: {} URL: {}", exception.getMessage(), request.getMethod(), request.getRequestURI(), exception);
 		ErrorResponse response = new ErrorResponse(
 				HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
 				"Invalid XML content: " + formatMessage(exception.getMessage())
