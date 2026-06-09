@@ -5,14 +5,13 @@ import static org.frankframework.flow.exception.ExceptionHandlerUtilities.format
 import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
+import javax.xml.parsers.ParserConfigurationException;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.xml.sax.SAXException;
-
-import javax.xml.parsers.ParserConfigurationException;
 
 @Log4j2
 @RestControllerAdvice

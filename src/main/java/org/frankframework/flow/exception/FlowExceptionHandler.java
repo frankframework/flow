@@ -2,10 +2,7 @@ package org.frankframework.flow.exception;
 
 import static org.frankframework.flow.exception.ExceptionHandlerUtilities.formatMessage;
 
-import jakarta.servlet.http.HttpServletRequest;
-import javax.xml.parsers.ParserConfigurationException;
 import lombok.extern.log4j.Log4j2;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
