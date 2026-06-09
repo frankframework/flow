@@ -13,7 +13,7 @@ import { saveDatamapperConfiguration, fetchDatamapperConfiguration } from '~/ser
 import { useProjectStore } from '~/stores/project-store'
 import { SAVING_THROTTLE } from '~/utils/datamapper_utils/constant'
 
-export default function Root() {
+export default function DataMapperRoot() {
   const routes = ['Initialize', 'Properties', 'Mappings']
 
   const project = useProjectStore.getState().project

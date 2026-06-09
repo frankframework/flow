@@ -1,4 +1,9 @@
 import { createBrowserRouter } from 'react-router'
+import ConfigurationOverview from '~/routes/configurations/configuration-overview'
+import CodeEditor from '~/routes/editor/editor'
+import Help from '~/routes/help/help'
+import Settings from '~/routes/settings/settings'
+import Studio from '~/routes/studio/studio'
 import ProjectLanding from './routes/projectlanding/project-landing'
 import AppLayout from './routes/app-layout'
 
@@ -11,7 +16,7 @@ function RootErrorBoundary() {
   )
 }
 
-export const router = createBrowserRouter([
+/*export const router = createBrowserRouter([
   {
     path: '/',
     element: <ProjectLanding />,
@@ -21,5 +26,69 @@ export const router = createBrowserRouter([
     path: '*',
     element: <AppLayout />,
     errorElement: <RootErrorBoundary />,
+    children: [
+      {
+        path: 'configurations',
+        element: <ConfigurationOverview />,
+      },
+      {
+        path: 'studio',
+        element: <Studio />,
+      },
+      {
+        path: 'editor',
+        element: <CodeEditor />,
+      },
+      /!*{
+        path: 'datamapper',
+        element: <DataMapperRoot />,
+      },*!/
+      {
+        path: 'help',
+        element: <Help />,
+      },
+      {
+        path: 'settings',
+        element: <Settings />,
+      },
+    ],
+  },
+])*/
+
+export const router = createBrowserRouter([
+  {
+    path: '/',
+    errorElement: <RootErrorBoundary />,
+    children: [
+      {
+        index: true,
+        element: <ProjectLanding />,
+      },
+      {
+        element: <AppLayout />,
+        children: [
+          {
+            path: 'configurations',
+            element: <ConfigurationOverview />,
+          },
+          {
+            path: 'studio',
+            element: <Studio />,
+          },
+          {
+            path: 'editor',
+            element: <CodeEditor />,
+          },
+          {
+            path: 'help',
+            element: <Help />,
+          },
+          {
+            path: 'settings',
+            element: <Settings />,
+          },
+        ],
+      },
+    ],
   },
 ])

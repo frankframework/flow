@@ -1,8 +1,8 @@
 import { FFDocProvider } from '@frankframework/doc-library-react'
+import { Outlet } from 'react-router'
 import Navbar from '~/components/navbar/navbar'
 import { FrankConfigXsdProvider } from '~/providers/frankconfig-xsd-provider'
-import AppContent from '~/components/app-content'
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useProjectStore, getStoredProjectRootPath } from '~/stores/project-store'
 import { openProject } from '~/services/project-service'
 import LoadingSpinner from '~/components/loading-spinner'
@@ -45,13 +45,23 @@ export default function AppLayout() {
     )
   }
 
+  function LoadingFallback() {
+    return (
+      <div className="flex h-full w-full items-center justify-center">
+        <LoadingSpinner size="lg" message="Loading..." />
+      </div>
+    )
+  }
+
   return (
     <FFDocProvider jsonUrl={apiUrl('/json/frankdoc')}>
       <FrankConfigXsdProvider>
         <div className="flex h-screen">
           <Navbar />
           <main className="grow overflow-auto">
-            <AppContent />
+            <Suspense fallback={<LoadingFallback />}>
+              <Outlet />
+            </Suspense>
           </main>
         </div>
       </FrankConfigXsdProvider>
