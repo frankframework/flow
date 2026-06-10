@@ -1,16 +1,17 @@
 import '/styles/markdown.css'
+import { useParams } from 'react-router'
 import HelpTopicTreeItems, { type HelpTopicTreeItem } from './help-topic-tree-items'
 import SidebarContentClose from '~/components/sidebars-layout/sidebar-content-close'
 import { SidebarSide } from '~/stores/sidebar-layout-store'
 import SidebarLayout from '~/components/sidebars-layout/sidebar-layout'
 import SidebarHeader from '~/components/sidebars-layout/sidebar-header'
 import HelpTopics from '~/routes/help/help-topics'
-import { useNavigationStore } from '~/stores/navigation-store'
 
 const firstTopic = HelpTopicTreeItems['root']?.children?.[0] as string
 
 export default function Help() {
-  const topic = useNavigationStore((state) => state.routeParams.topic)
+  const params = useParams()
+  const topic: string | null = params.topic ?? null
   const helpTopicKey = topic ?? firstTopic
   const helpTopic: HelpTopicTreeItem | undefined = HelpTopicTreeItems[helpTopicKey]
 

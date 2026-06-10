@@ -1,16 +1,16 @@
 import clsx from 'clsx'
-import { type AppRoute, useNavigationStore } from '~/stores/navigation-store'
+import React from 'react'
+import { useMatch, useNavigate } from 'react-router'
 
 interface NavbarLinkProperties {
-  route: AppRoute
+  route: string
   label: string
   Icon?: React.FC<React.SVGProps<SVGSVGElement>>
 }
 
 export default function NavbarLink({ route, label, Icon }: Readonly<NavbarLinkProperties>) {
-  const currentRoute = useNavigationStore((state) => state.currentRoute)
-  const navigate = useNavigationStore((state) => state.navigate)
-  const isActive = currentRoute === route
+  const navigate = useNavigate()
+  const isActive = useMatch(route)
 
   return (
     <li className="m-0 list-none p-0">

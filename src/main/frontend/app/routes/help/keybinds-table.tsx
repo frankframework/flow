@@ -67,16 +67,16 @@ export function KeybindsTable() {
           <div key={scope} className="border-border overflow-hidden rounded-md border">
             <h3 className="text-center">{scopeLabels[scope] ?? `${capitalize(scope)} Keybinds`}</h3>
             <div className="border-b-border bg-backdrop flex border-b font-bold">
-              <div className="border-r-border flex-1 border-r px-[13px] py-[6px] text-sm">Action</div>
-              <div className="flex-1 px-[13px] py-[6px] text-sm">Keybinds</div>
+              <div className="border-r-border flex-1 border-r px-3.25 py-1.5 text-sm">Action</div>
+              <div className="flex-1 px-3.25 py-1.5 text-sm">Keybinds</div>
             </div>
             {defs.map((shortcut, i) => (
               <div
                 key={shortcut.id}
                 className={`border-b-border flex border-b last:border-b-0 ${i % 2 === 1 ? 'bg-backdrop' : 'bg-background'}`}
               >
-                <div className="border-r-border flex-1 border-r px-[13px] py-[6px] text-sm">{shortcut.label}</div>
-                <div className="flex-1 px-[13px] py-[6px] text-sm">{formatKeybind(shortcut, platform)}</div>
+                <div className="border-r-border flex-1 border-r px-3.25 py-1.5 text-sm">{shortcut.label}</div>
+                <div className="flex-1 px-3.25 py-1.5 text-sm">{formatKeybind(shortcut, platform)}</div>
               </div>
             ))}
           </div>

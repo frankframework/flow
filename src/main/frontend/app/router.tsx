@@ -16,45 +16,6 @@ function RootErrorBoundary() {
   )
 }
 
-/*export const router = createBrowserRouter([
-  {
-    path: '/',
-    element: <ProjectLanding />,
-    errorElement: <RootErrorBoundary />,
-  },
-  {
-    path: '*',
-    element: <AppLayout />,
-    errorElement: <RootErrorBoundary />,
-    children: [
-      {
-        path: 'configurations',
-        element: <ConfigurationOverview />,
-      },
-      {
-        path: 'studio',
-        element: <Studio />,
-      },
-      {
-        path: 'editor',
-        element: <CodeEditor />,
-      },
-      /!*{
-        path: 'datamapper',
-        element: <DataMapperRoot />,
-      },*!/
-      {
-        path: 'help',
-        element: <Help />,
-      },
-      {
-        path: 'settings',
-        element: <Settings />,
-      },
-    ],
-  },
-])*/
-
 export const router = createBrowserRouter([
   {
     path: '/',
@@ -80,7 +41,7 @@ export const router = createBrowserRouter([
             element: <CodeEditor />,
           },
           {
-            path: 'help',
+            path: 'help/:topic?',
             element: <Help />,
           },
           {
