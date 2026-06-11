@@ -103,7 +103,7 @@ export default function ProjectLanding() {
       try {
         const project = await openProject(rootPath)
         setProject(project)
-        navigate(`/studio/${encodeURIComponent(project.name)}`)
+        navigate(`/studio`)
       } catch (error) {
         showErrorToast(error instanceof Error ? error.message : 'Failed to open project')
       } finally {
@@ -124,7 +124,7 @@ export default function ProjectLanding() {
       const project = await createProject(name, rootPath)
       setProject(project)
       setIsModalOpen(false)
-      navigate(`/studio/${encodeURIComponent(project.name)}`)
+      navigate(`/studio`)
     } catch (error) {
       showErrorToast(error instanceof Error ? error.message : 'Failed to create project')
     } finally {
@@ -138,7 +138,7 @@ export default function ProjectLanding() {
       const project = await cloneProject(repoUrl, localPath, token)
       setProject(project)
       setIsCloneModalOpen(false)
-      navigate(`/studio/${encodeURIComponent(project.name)}`)
+      navigate(`/studio`)
     } catch (error) {
       showErrorToast(error instanceof Error ? error.message : 'Failed to clone project from GitHub')
     } finally {
@@ -173,7 +173,7 @@ export default function ProjectLanding() {
       const project = await importProjectFolder(files)
       setProject(project)
       refetch()
-      navigate(`/studio/${encodeURIComponent(project.name)}`)
+      navigate(`/studio`)
     } catch (error) {
       showErrorToast(error instanceof Error ? error.message : 'Failed to import project')
     } finally {

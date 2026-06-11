@@ -23,7 +23,7 @@ export default function HelpTopics({ selectedTopic }: Readonly<HelpCategoriesPro
   const navigate = useNavigate()
   const tree = useRef<TreeRef>(null)
 
-  const navigateToTopic = (items: TreeItemIndex[]) => navigate(`help/${items[0]}`)
+  const navigateToTopic = (items: TreeItemIndex[]) => navigate(`/help/${items[0]}`)
 
   const renderItemArrow = ({ item, context }: { item: HelpTopicTreeItem; context: TreeItemRenderContext }) => {
     if (!item.isFolder) return null
