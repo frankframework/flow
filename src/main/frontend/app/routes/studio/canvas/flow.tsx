@@ -16,6 +16,7 @@ import {
   useUpdateNodeInternals,
 } from '@xyflow/react'
 import Dagre from '@dagrejs/dagre'
+import { useNavigate } from 'react-router'
 import { SaveStatusIndicator } from '~/components/save-status-indicator'
 import { useSaveStatusStore } from '~/stores/save-status-store'
 import Button from '~/components/inputs/button'
@@ -197,6 +198,7 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
   const { elements } = useFFDoc()
   const elementsRef = useRef(elements)
   const showNodeContextMenuRef = useRef(showNodeContextMenu)
+  const navigate = useNavigate()
 
   useEffect(() => {
     elementsRef.current = elements
@@ -1392,7 +1394,7 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
     const tabData = useTabStore.getState().getTab(useTabStore.getState().activeTab)
     if (!tabData?.configurationPath) return
 
-    openInEditorAtElement(node.data.subtype, node.data.name || undefined, tabData.configurationPath)
+    openInEditorAtElement(node.data.subtype, node.data.name || undefined, tabData.configurationPath, navigate)
   }, [])
 
   const handleRightMouseButtonClick = useCallback(

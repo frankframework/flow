@@ -755,8 +755,8 @@ export default function CodeEditor() {
     const adapterPosition =
       adapters.length === 1 || !cursorLine ? 0 : findAdapterIndexAtOffset(adapters, lineToOffset(xml, cursorLine))
 
-    openInStudio(adapters[adapterPosition].name, editorTab.configurationPath, adapterPosition)
-  }, [activeTabFilePath, fileContent])
+    openInStudio(adapters[adapterPosition].name, editorTab.configurationPath, adapterPosition, navigateFn)
+  }, [activeTabFilePath, fileContent, navigateFn])
 
   const isGitRepo = !!project?.isGitRepository
 
