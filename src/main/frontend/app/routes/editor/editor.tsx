@@ -269,7 +269,7 @@ export default function CodeEditor() {
   const validationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const validationCounterRef = useRef(0)
   const contentCacheRef = useRef<Map<string, CachedFile>>(new Map())
-  const navigateFn = useNavigate()
+  const navigate = useNavigate()
 
   const [pendingHighlight, setPendingHighlightLocal] = useState<{ subtype: string; name?: string } | null>(
     () => useEditorTabStore.getState().pendingHighlight,
@@ -575,7 +575,7 @@ export default function CodeEditor() {
           element.adapterPosition,
           element.subtype,
           element.name,
-          navigateFn,
+          navigate,
         )
       }
     })
@@ -755,8 +755,8 @@ export default function CodeEditor() {
     const adapterPosition =
       adapters.length === 1 || !cursorLine ? 0 : findAdapterIndexAtOffset(adapters, lineToOffset(xml, cursorLine))
 
-    openInStudio(adapters[adapterPosition].name, editorTab.configurationPath, adapterPosition, navigateFn)
-  }, [activeTabFilePath, fileContent, navigateFn])
+    openInStudio(adapters[adapterPosition].name, editorTab.configurationPath, adapterPosition, navigate)
+  }, [activeTabFilePath, fileContent, navigate])
 
   const isGitRepo = !!project?.isGitRepository
 

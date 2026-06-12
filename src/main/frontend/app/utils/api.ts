@@ -44,7 +44,8 @@ export async function apiFetch<T>(path: string, options?: RequestInit): Promise<
   if (options?.body && !isFormData && !headers['Content-Type']) headers['Content-Type'] = 'application/json'
 
   if (options?.method && !['GET', 'HEAD', 'OPTIONS'].includes(options?.method)) {
-    headers['X-XSRF-TOKEN'] = getCookie('XSRF-TOKEN') ?? ''
+    const xsrfToken = getCookie('XSRF-TOKEN')
+    if (xsrfToken) headers['X-XSRF-TOKEN'] = xsrfToken
   }
 
   const token = getAuthToken()

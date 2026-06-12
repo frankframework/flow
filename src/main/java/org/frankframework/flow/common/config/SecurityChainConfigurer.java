@@ -5,6 +5,7 @@ import org.frankframework.lifecycle.servlets.IAuthenticator;
 import org.frankframework.lifecycle.servlets.SecuritySettings;
 import org.frankframework.lifecycle.servlets.ServletConfiguration;
 import org.frankframework.lifecycle.servlets.SpaCsrfTokenRequestHandler;
+
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -32,7 +33,7 @@ import org.springframework.security.web.util.matcher.AnyRequestMatcher;
 public class SecurityChainConfigurer implements ApplicationContextAware, EnvironmentAware {
 
 	private ApplicationContext applicationContext;
-	private boolean csrfEnabled;
+	private boolean csrfEnabled = true;
 
 	@Override
 	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {

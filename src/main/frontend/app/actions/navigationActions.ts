@@ -6,7 +6,7 @@ export function openInStudio(
   adapterName: string,
   filepath: string,
   adapterPosition: number,
-  navigateFn: NavigateFunction,
+  navigate: NavigateFunction,
 ) {
   const { setTabData, setActiveTab, getTab } = useTabStore.getState()
 
@@ -22,10 +22,10 @@ export function openInStudio(
   }
 
   setActiveTab(tabId)
-  navigateFn('studio')
+  navigate('/studio')
 }
 
-export function openInEditor(relativePath: string, filepath: string, navigateFn: NavigateFunction) {
+export function openInEditor(relativePath: string, filepath: string, navigate: NavigateFunction) {
   const { setTabData, setActiveTab, getTab } = useEditorTabStore.getState()
 
   if (!getTab(filepath)) {
@@ -36,14 +36,14 @@ export function openInEditor(relativePath: string, filepath: string, navigateFn:
   }
 
   setActiveTab(filepath)
-  navigateFn('editor')
+  navigate('/editor')
 }
 
 export function openInEditorAtElement(
   subtype: string,
   name: string | undefined,
   filepath: string,
-  navigateFn: NavigateFunction,
+  navigate: NavigateFunction,
 ) {
   const editorStore = useEditorTabStore.getState()
   const fileName = filepath.split(/[/\\]/).pop() ?? filepath
@@ -57,7 +57,7 @@ export function openInEditorAtElement(
 
   editorStore.setPendingHighlight({ subtype, name })
   editorStore.setActiveTab(filepath)
-  navigateFn('editor')
+  navigate('/editor')
 }
 
 export function openInStudioAtNode(
@@ -66,7 +66,7 @@ export function openInStudioAtNode(
   adapterPosition: number,
   subtype: string,
   name: string,
-  navigateFn: NavigateFunction,
+  navigate: NavigateFunction,
 ) {
   const { setTabData, setActiveTab, getTab } = useTabStore.getState()
 
@@ -86,5 +86,5 @@ export function openInStudioAtNode(
   }
 
   setActiveTab(tabId)
-  navigateFn('studio')
+  navigate('/studio')
 }

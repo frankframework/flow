@@ -1394,8 +1394,8 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
     const tabData = useTabStore.getState().getTab(useTabStore.getState().activeTab)
     if (!tabData?.configurationPath) return
 
-    openInEditorAtElement(node.data.subtype, node.data.name || undefined, tabData.configurationPath, navigate)
-  }, [])
+    openInEditorAtElement(node.data.subtype, node.data.name, tabData.configurationPath, navigate)
+  }, [navigate])
 
   const handleRightMouseButtonClick = useCallback(
     (event: React.MouseEvent) => {
