@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useNavigate } from 'react-router'
 import StudioTabs from '~/components/tabs/studio-tabs'
 import StudioFileStructure from '~/components/file-structure/studio-file-structure'
 import StudioContext from '~/routes/studio/context/studio-context'
@@ -156,6 +157,7 @@ export default function Studio() {
       selectedGroupId: state.selectedGroupId,
     })),
   )
+  const navigate = useNavigate()
 
   const stickyNodeExists = useFlowStore(
     (state) => selectedStickyId != null && state.nodes.some((node) => node.id === selectedStickyId),
@@ -202,7 +204,7 @@ export default function Studio() {
     const fileName = activeTabPath.split(/[/\\]/).pop()
     if (!fileName) return
 
-    openInEditor(fileName, activeTabPath)
+    openInEditor(fileName, activeTabPath, navigate)
   }, [activeTabPath])
 
   const rightPanelTitle = getRightPanelTitle(

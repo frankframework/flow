@@ -1,16 +1,16 @@
 import clsx from 'clsx'
-import { type AppRoute, useNavigationStore } from '~/stores/navigation-store'
+import React from 'react'
+import { useMatch, useNavigate } from 'react-router'
 
 interface NavbarLinkProperties {
-  route: AppRoute
+  route: string
   label: string
   Icon?: React.FC<React.SVGProps<SVGSVGElement>>
 }
 
 export default function NavbarLink({ route, label, Icon }: Readonly<NavbarLinkProperties>) {
-  const currentRoute = useNavigationStore((state) => state.currentRoute)
-  const navigate = useNavigationStore((state) => state.navigate)
-  const isActive = currentRoute === route
+  const navigate = useNavigate()
+  const isActive = useMatch(route)
 
   return (
     <li className="m-0 list-none p-0">
@@ -20,7 +20,7 @@ export default function NavbarLink({ route, label, Icon }: Readonly<NavbarLinkPr
         className="group relative flex w-full cursor-pointer flex-col items-center py-1"
       >
         <div
-          className={clsx('absolute top-1/2 left-1 h-10/12 w-[2px] -translate-y-1/2 rounded', isActive && 'bg-brand')}
+          className={clsx('absolute top-1/2 left-1 h-10/12 w-0.5 -translate-y-1/2 rounded', isActive && 'bg-brand')}
         />
         <div className="hover:bg-hover rounded p-2">
           {Icon && (

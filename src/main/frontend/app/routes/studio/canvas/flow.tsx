@@ -16,6 +16,7 @@ import {
   useUpdateNodeInternals,
 } from '@xyflow/react'
 import Dagre from '@dagrejs/dagre'
+import { useNavigate } from 'react-router'
 import { SaveStatusIndicator } from '~/components/save-status-indicator'
 import { useSaveStatusStore } from '~/stores/save-status-store'
 import Button from '~/components/inputs/button'
@@ -175,28 +176,29 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
     setSelectedStickyId,
     setSelectedGroupId,
   } = useNodeContextStore(
-    useShallow((s) => ({
-      isEditing: s.isEditing,
-      isDirty: s.isDirty,
-      setIsEditing: s.setIsEditing,
-      setIsNewNode: s.setIsNewNode,
-      setParentId: s.setParentId,
-      setChildParentId: s.setChildParentId,
-      setDraggedName: s.setDraggedName,
-      setEditingSubtype: s.setEditingSubtype,
-      setAttributes: s.setAttributes,
-      setNodeId: s.setNodeId,
-      allowedOnCanvas: s.allowedOnCanvas,
-      setDropSuccessful: s.setDropSuccessful,
-      setIsMultiSelect: s.setIsMultiSelect,
-      setSelectedStickyId: s.setSelectedStickyId,
-      selectedStickyId: s.selectedStickyId,
-      setSelectedGroupId: s.setSelectedGroupId,
+    useShallow((store) => ({
+      isEditing: store.isEditing,
+      isDirty: store.isDirty,
+      setIsEditing: store.setIsEditing,
+      setIsNewNode: store.setIsNewNode,
+      setParentId: store.setParentId,
+      setChildParentId: store.setChildParentId,
+      setDraggedName: store.setDraggedName,
+      setEditingSubtype: store.setEditingSubtype,
+      setAttributes: store.setAttributes,
+      setNodeId: store.setNodeId,
+      allowedOnCanvas: store.allowedOnCanvas,
+      setDropSuccessful: store.setDropSuccessful,
+      setIsMultiSelect: store.setIsMultiSelect,
+      setSelectedStickyId: store.setSelectedStickyId,
+      selectedStickyId: store.selectedStickyId,
+      setSelectedGroupId: store.setSelectedGroupId,
     })),
   )
   const { elements } = useFFDoc()
   const elementsRef = useRef(elements)
   const showNodeContextMenuRef = useRef(showNodeContextMenu)
+  const navigate = useNavigate()
 
   useEffect(() => {
     elementsRef.current = elements
@@ -1388,12 +1390,16 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
     ) as FrankNodeType[]
     if (selectedFrankNodes.length !== 1) return
 
-    const node = selectedFrankNodes[0]
+    const { data: nodeData } = selectedFrankNodes[0]
     const tabData = useTabStore.getState().getTab(useTabStore.getState().activeTab)
     if (!tabData?.configurationPath) return
 
-    openInEditorAtElement(node.data.subtype, node.data.name || undefined, tabData.configurationPath)
-  }, [])
+    openInEditorAtElement(navigate, {
+      subtype: nodeData.subtype,
+      name: nodeData.name,
+      filepath: tabData.configurationPath,
+    })
+  }, [navigate])
 
   const handleRightMouseButtonClick = useCallback(
     (event: React.MouseEvent) => {

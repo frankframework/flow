@@ -9,9 +9,9 @@ import {
 import AltArrowRightIcon from '/icons/solar/Alt Arrow Right.svg?react'
 import AltArrowDownIcon from '/icons/solar/Alt Arrow Down.svg?react'
 import { useRef } from 'react'
+import { useNavigate } from 'react-router'
 import helpTopics, { type HelpTopicTreeItem } from './help-topic-tree-items'
 import '/styles/editor-files.css'
-import { useNavigationStore } from '~/stores/navigation-store'
 
 interface HelpCategoriesProperties {
   selectedTopic: keyof typeof helpTopics
@@ -20,10 +20,10 @@ interface HelpCategoriesProperties {
 const TREE_ID = 'help-topics-tree'
 
 export default function HelpTopics({ selectedTopic }: Readonly<HelpCategoriesProperties>) {
-  const navigate = useNavigationStore((state) => state.navigate)
+  const navigate = useNavigate()
   const tree = useRef<TreeRef>(null)
 
-  const navigateToTopic = (items: TreeItemIndex[]) => navigate('help', { topic: String(items[0]) })
+  const navigateToTopic = (items: TreeItemIndex[]) => navigate(`/help/${items[0]}`)
 
   const renderItemArrow = ({ item, context }: { item: HelpTopicTreeItem; context: TreeItemRenderContext }) => {
     if (!item.isFolder) return null

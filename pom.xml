@@ -383,7 +383,7 @@
 							<outputDirectory>${project.build.outputDirectory}/frontend</outputDirectory>
 							<resources>
 								<resource>
-									<directory>${project.basedir}/src/main/frontend/build/client</directory>
+									<directory>${project.basedir}/src/main/frontend/dist</directory>
 									<filtering>false</filtering>
 								</resource>
 							</resources>

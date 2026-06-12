@@ -3,7 +3,7 @@
 
 # React Router
 /.react-router/
-/build/
+/dist/
 
 # Env files
 /.env

@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="FlowApplication Cloud" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
-    <option name="ACTIVE_PROFILES" value="cloud" />
+    <option name="ACTIVE_PROFILES" value="cloud, dev" />
     <module name="flow" />
     <option name="SPRING_BOOT_MAIN_CLASS" value="org.frankframework.flow.FlowApplication" />
     <method v="2">

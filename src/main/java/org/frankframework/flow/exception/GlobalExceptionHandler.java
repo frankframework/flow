@@ -5,6 +5,7 @@ import static org.frankframework.flow.exception.ExceptionHandlerUtilities.format
 import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
+import javax.xml.parsers.ParserConfigurationException;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -40,9 +41,19 @@ public class GlobalExceptionHandler {
 		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
 	}
 
+	@ExceptionHandler(ParserConfigurationException.class)
+	public ResponseEntity<ErrorResponse> handleParserConfigurationException(ParserConfigurationException exception, HttpServletRequest request) {
+		log.warn("XML parser configuration error: {} - Method: {} URL: {}", exception.getMessage(), request.getMethod(), request.getRequestURI(), exception);
+		ErrorResponse response = new ErrorResponse(
+				HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
+				"XML parser configuration error: " + formatMessage(exception.getMessage())
+		);
+		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+	}
+
 	@ExceptionHandler(SAXException.class)
 	public ResponseEntity<ErrorResponse> handleSaxException(SAXException exception, HttpServletRequest request) {
-		log.error("XML parsing error: {} - Method: {} URL: {}", exception.getMessage(), request.getMethod(), request.getRequestURI(), exception);
+		log.warn("XML parsing error: {} - Method: {} URL: {}", exception.getMessage(), request.getMethod(), request.getRequestURI(), exception);
 		ErrorResponse response = new ErrorResponse(
 				HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
 				"Invalid XML content: " + formatMessage(exception.getMessage())

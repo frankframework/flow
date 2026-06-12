@@ -1,8 +1,11 @@
+import { type NavigateFunction } from 'react-router'
 import useTabStore from '~/stores/tab-store'
 import useEditorTabStore from '~/stores/editor-tab-store'
-import { useNavigationStore } from '~/stores/navigation-store'
 
-export function openInStudio(adapterName: string, filepath: string, adapterPosition: number) {
+export function openInStudio(
+  navigate: NavigateFunction,
+  { adapterName, filepath, adapterPosition }: { adapterName: string; filepath: string; adapterPosition: number },
+) {
   const { setTabData, setActiveTab, getTab } = useTabStore.getState()
 
   const tabId = `${filepath}::${adapterName}::${adapterPosition}`
@@ -17,10 +20,10 @@ export function openInStudio(adapterName: string, filepath: string, adapterPosit
   }
 
   setActiveTab(tabId)
-  useNavigationStore.getState().navigate('studio')
+  navigate('/studio')
 }
 
-export function openInEditor(relativePath: string, filepath: string) {
+export function openInEditor(relativePath: string, filepath: string, navigate: NavigateFunction) {
   const { setTabData, setActiveTab, getTab } = useEditorTabStore.getState()
 
   if (!getTab(filepath)) {
@@ -31,10 +34,13 @@ export function openInEditor(relativePath: string, filepath: string) {
   }
 
   setActiveTab(filepath)
-  useNavigationStore.getState().navigate('editor')
+  navigate('/editor')
 }
 
-export function openInEditorAtElement(subtype: string, name: string | undefined, filepath: string) {
+export function openInEditorAtElement(
+  navigate: NavigateFunction,
+  { subtype, filepath, name }: { subtype: string; filepath: string; name?: string },
+) {
   const editorStore = useEditorTabStore.getState()
   const fileName = filepath.split(/[/\\]/).pop() ?? filepath
 
@@ -47,15 +53,24 @@ export function openInEditorAtElement(subtype: string, name: string | undefined,
 
   editorStore.setPendingHighlight({ subtype, name })
   editorStore.setActiveTab(filepath)
-  useNavigationStore.getState().navigate('editor')
+  navigate('/editor')
 }
 
 export function openInStudioAtNode(
-  adapterName: string,
-  filepath: string,
-  adapterPosition: number,
-  subtype: string,
-  name: string,
+  navigate: NavigateFunction,
+  {
+    adapterName,
+    filepath,
+    adapterPosition,
+    subtype,
+    name,
+  }: {
+    adapterName: string
+    filepath: string
+    adapterPosition: number
+    subtype: string
+    name: string
+  },
 ) {
   const { setTabData, setActiveTab, getTab } = useTabStore.getState()
 
@@ -75,5 +90,5 @@ export function openInStudioAtNode(
   }
 
   setActiveTab(tabId)
-  useNavigationStore.getState().navigate('studio')
+  navigate('/studio')
 }

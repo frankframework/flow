@@ -8,6 +8,7 @@ import XsdFeatures from 'monaco-xsd-code-completion/esm/XsdFeatures'
 import 'monaco-xsd-code-completion/src/style.css'
 import XsdManager from 'monaco-xsd-code-completion/esm/XsdManager'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router'
 import { validateXML, type XMLValidationError } from 'xmllint-wasm'
 import { useShallow } from 'zustand/react/shallow'
 import { openInStudio } from '~/actions/navigationActions'
@@ -268,6 +269,7 @@ export default function CodeEditor() {
   const validationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const validationCounterRef = useRef(0)
   const contentCacheRef = useRef<Map<string, CachedFile>>(new Map())
+  const navigate = useNavigate()
 
   const [pendingHighlight, setPendingHighlightLocal] = useState<{ subtype: string; name?: string } | null>(
     () => useEditorTabStore.getState().pendingHighlight,
@@ -567,13 +569,15 @@ export default function CodeEditor() {
         const element = frankElementsRef.current.find((element) => element.startLine === lineNumber)
         if (!element) return
 
-        openInStudioAtNode(
-          element.adapterName,
-          editorTab.configurationPath,
-          element.adapterPosition,
-          element.subtype,
-          element.name,
-        )
+        const { adapterName, adapterPosition, subtype, name } = element
+
+        openInStudioAtNode(navigate, {
+          adapterName,
+          adapterPosition,
+          subtype,
+          name,
+          filepath: editorTab.configurationPath,
+        })
       }
     })
   }
@@ -752,8 +756,12 @@ export default function CodeEditor() {
     const adapterPosition =
       adapters.length === 1 || !cursorLine ? 0 : findAdapterIndexAtOffset(adapters, lineToOffset(xml, cursorLine))
 
-    openInStudio(adapters[adapterPosition].name, editorTab.configurationPath, adapterPosition)
-  }, [activeTabFilePath, fileContent])
+    openInStudio(navigate, {
+      adapterName: adapters[adapterPosition].name,
+      filepath: editorTab.configurationPath,
+      adapterPosition,
+    })
+  }, [activeTabFilePath, fileContent, navigate])
 
   const isGitRepo = !!project?.isGitRepository
 

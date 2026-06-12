@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router'
 import useNodeContextStore from '~/stores/node-context-store'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useShortcut } from '~/hooks/use-shortcut'
@@ -27,6 +28,7 @@ export default function NodeContext({
   const [inputValues, setInputValues] = useState<Record<string, string>>({})
   const [initiallyFilledKeys, setInitiallyFilledKeys] = useState<Set<string>>(new Set())
   const [initialValues, setInitialValues] = useState<Record<string, string>>({})
+  const navigate = useNavigate()
 
   const { elements, ffDoc } = useFFDoc()
   const {
@@ -300,8 +302,8 @@ export default function NodeContext({
     const tabData = useTabStore.getState().getTab(useTabStore.getState().activeTab)
     if (!tabData?.configurationPath || !editingSubtype) return
     const nodeName = inputValues['name']
-    openInEditorAtElement(editingSubtype, nodeName || undefined, tabData.configurationPath)
-  }, [editingSubtype, inputValues])
+    openInEditorAtElement(navigate, { subtype: editingSubtype, name: nodeName, filepath: tabData.configurationPath })
+  }, [editingSubtype, inputValues, navigate])
 
   // Build sorted attribute list: mandatory first, then initially-filled, then rest
   const entriesWithIndex: [string, Attribute, number][] = attributes

@@ -1,6 +1,7 @@
 import RulerCrossPenIcon from '/icons/solar/Ruler Cross Pen.svg?react'
 import TrashBinIcon from '/icons/solar/Trash Bin.svg?react'
 import CodeIcon from '/icons/solar/Code.svg?react'
+import { useNavigate } from 'react-router'
 import { openInStudio, openInEditor } from '~/actions/navigationActions'
 import IconButton from '~/components/inputs/icon-button'
 import IconLabelButton from '~/components/inputs/icon-label-button'
@@ -21,15 +22,16 @@ export default function ConfigurationFileTile({
   onDelete,
 }: Readonly<ConfigurationFileTileProperties>) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const navigate = useNavigate()
 
   const handleOpenInStudio = (adapterName: string, adapterPosition: number) => {
-    openInStudio(adapterName, filepath, adapterPosition)
+    openInStudio(navigate, { adapterName, filepath, adapterPosition })
   }
 
   const handleOpenInEditor = () => {
     const fileName = relativePath.split(/[/\\]/).pop()
     if (!fileName) return
-    openInEditor(fileName, filepath)
+    openInEditor(fileName, filepath, navigate)
   }
 
   const handleConfirmDelete = async () => {

@@ -1,5 +1,4 @@
 import { create } from 'zustand'
-import type { AppRoute } from '~/stores/navigation-store'
 
 export type Platform = 'mac' | 'pc'
 
@@ -14,7 +13,7 @@ export interface KeyModifiers {
 export interface ShortcutDefinition {
   id: string
   label: string
-  scope: AppRoute | 'global'
+  scope: string
   key: PlatformValue<string>
   modifiers?: PlatformValue<KeyModifiers>
   allowInInput?: boolean
