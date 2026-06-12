@@ -3,10 +3,8 @@ import useTabStore from '~/stores/tab-store'
 import useEditorTabStore from '~/stores/editor-tab-store'
 
 export function openInStudio(
-  adapterName: string,
-  filepath: string,
-  adapterPosition: number,
   navigate: NavigateFunction,
+  { adapterName, filepath, adapterPosition }: { adapterName: string; filepath: string; adapterPosition: number },
 ) {
   const { setTabData, setActiveTab, getTab } = useTabStore.getState()
 
@@ -40,10 +38,8 @@ export function openInEditor(relativePath: string, filepath: string, navigate: N
 }
 
 export function openInEditorAtElement(
-  subtype: string,
-  name: string | undefined,
-  filepath: string,
   navigate: NavigateFunction,
+  { subtype, filepath, name }: { subtype: string; filepath: string; name?: string },
 ) {
   const editorStore = useEditorTabStore.getState()
   const fileName = filepath.split(/[/\\]/).pop() ?? filepath
@@ -61,12 +57,20 @@ export function openInEditorAtElement(
 }
 
 export function openInStudioAtNode(
-  adapterName: string,
-  filepath: string,
-  adapterPosition: number,
-  subtype: string,
-  name: string,
   navigate: NavigateFunction,
+  {
+    adapterName,
+    filepath,
+    adapterPosition,
+    subtype,
+    name,
+  }: {
+    adapterName: string
+    filepath: string
+    adapterPosition: number
+    subtype: string
+    name: string
+  },
 ) {
   const { setTabData, setActiveTab, getTab } = useTabStore.getState()
 
