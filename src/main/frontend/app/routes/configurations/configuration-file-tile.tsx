@@ -25,7 +25,7 @@ export default function ConfigurationFileTile({
   const navigate = useNavigate()
 
   const handleOpenInStudio = (adapterName: string, adapterPosition: number) => {
-    openInStudio(adapterName, filepath, adapterPosition, navigate)
+    openInStudio(navigate, { adapterName, filepath, adapterPosition })
   }
 
   const handleOpenInEditor = () => {

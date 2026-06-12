@@ -569,14 +569,15 @@ export default function CodeEditor() {
         const element = frankElementsRef.current.find((element) => element.startLine === lineNumber)
         if (!element) return
 
-        openInStudioAtNode(
-          element.adapterName,
-          editorTab.configurationPath,
-          element.adapterPosition,
-          element.subtype,
-          element.name,
-          navigate,
-        )
+        const { adapterName, adapterPosition, subtype, name } = element
+
+        openInStudioAtNode(navigate, {
+          adapterName,
+          adapterPosition,
+          subtype,
+          name,
+          filepath: editorTab.configurationPath,
+        })
       }
     })
   }
@@ -755,7 +756,11 @@ export default function CodeEditor() {
     const adapterPosition =
       adapters.length === 1 || !cursorLine ? 0 : findAdapterIndexAtOffset(adapters, lineToOffset(xml, cursorLine))
 
-    openInStudio(adapters[adapterPosition].name, editorTab.configurationPath, adapterPosition, navigate)
+    openInStudio(navigate, {
+      adapterName: adapters[adapterPosition].name,
+      filepath: editorTab.configurationPath,
+      adapterPosition,
+    })
   }, [activeTabFilePath, fileContent, navigate])
 
   const isGitRepo = !!project?.isGitRepository

@@ -302,8 +302,8 @@ export default function NodeContext({
     const tabData = useTabStore.getState().getTab(useTabStore.getState().activeTab)
     if (!tabData?.configurationPath || !editingSubtype) return
     const nodeName = inputValues['name']
-    openInEditorAtElement(editingSubtype, nodeName, tabData.configurationPath, navigate)
-  }, [editingSubtype, inputValues])
+    openInEditorAtElement(navigate, { subtype: editingSubtype, name: nodeName, filepath: tabData.configurationPath })
+  }, [editingSubtype, inputValues, navigate])
 
   // Build sorted attribute list: mandatory first, then initially-filled, then rest
   const entriesWithIndex: [string, Attribute, number][] = attributes

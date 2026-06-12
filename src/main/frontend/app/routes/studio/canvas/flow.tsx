@@ -1390,11 +1390,15 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
     ) as FrankNodeType[]
     if (selectedFrankNodes.length !== 1) return
 
-    const node = selectedFrankNodes[0]
+    const { data: nodeData } = selectedFrankNodes[0]
     const tabData = useTabStore.getState().getTab(useTabStore.getState().activeTab)
     if (!tabData?.configurationPath) return
 
-    openInEditorAtElement(node.data.subtype, node.data.name, tabData.configurationPath, navigate)
+    openInEditorAtElement(navigate, {
+      subtype: nodeData.subtype,
+      name: nodeData.name,
+      filepath: tabData.configurationPath,
+    })
   }, [navigate])
 
   const handleRightMouseButtonClick = useCallback(
