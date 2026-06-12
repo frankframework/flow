@@ -159,7 +159,7 @@ export function ChildNodeComponent({
     <div
       data-childnode-id={child.id}
       className={clsx(
-        'bg-background relative mr-0.5 mb-2 rounded-md border',
+        'bg-background relative mr-0.5 mb-2 rounded-md border shadow-[0_4px_6px_1px_rgba(0,0,0,0.05)]',
         isSelected && 'border-1',
         !isSelected && dragForbidden && 'border-2 border-dashed',
         !isSelected && !dragForbidden && 'border-border',
@@ -197,7 +197,7 @@ export function ChildNodeComponent({
       </div>
 
       {/* Body */}
-      <div className="child-node-body relative min-h-25 px-1 py-1">
+      <div className="child-node-body border-border/40 relative min-h-25 rounded-b-md border px-1 py-1">
         {child.attributes &&
           Object.entries(child.attributes).map(([key, value]) => (
             <div key={key} className="my-1">
