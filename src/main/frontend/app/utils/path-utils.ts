@@ -5,8 +5,8 @@
 export function toRelativePath(absolutePath: string, marker: string): string | null {
   const normalizedPath = normalizePath(absolutePath)
   const normalizedMarker = normalizePath(marker)
-  const idx = normalizedPath.indexOf(marker)
-  return idx === -1 ? null : normalizedMarker.slice(idx + marker.length)
+  const idx = normalizedPath.indexOf(normalizedMarker)
+  return idx === -1 ? null : normalizedPath.slice(idx + normalizedMarker.length)
 }
 
 export function normalizePath(path: string) {

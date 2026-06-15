@@ -1,13 +1,15 @@
 import React, { useCallback, useRef, useState } from 'react'
+import { useNavigate } from 'react-router'
 import type { TreeItemIndex } from 'react-complex-tree'
 import { createFile, deleteFile, renameFile } from '~/services/file-service'
 import { createFolderInProject } from '~/services/file-tree-service'
-import { clearConfigurationFileCache } from '~/services/configuration-file-service'
+import { clearConfigurationFileCache, createConfigurationFile } from '~/services/configuration-file-service'
 import useTabStore from '~/stores/tab-store'
 import useEditorTabStore from '~/stores/editor-tab-store'
 import { showErrorToast } from '~/components/toast'
 import { FILE_NAME_PATTERNS, FOLDER_OR_ADAPTER_NAME_PATTERNS } from '~/components/file-structure/name-input-dialog'
 import { logApiError } from '~/utils/logger'
+import { openInEditor } from '~/actions/navigationActions'
 
 export interface ContextMenuState {
   position: { x: number; y: number }
@@ -43,6 +45,7 @@ export interface DataProviderLike {
 interface UseFileTreeContextMenuOptions {
   projectName: string | undefined
   dataProvider: DataProviderLike | null
+  configurationsRootPath?: string
   onAfterRename?: (oldPath: string, newName: string) => void
   onAfterDelete?: (path: string) => void
 }
@@ -70,9 +73,11 @@ function buildNewPath(oldPath: string, newName: string): string {
 export function useFileTreeContextMenu({
   projectName,
   dataProvider,
+  configurationsRootPath,
   onAfterRename,
   onAfterDelete,
 }: UseFileTreeContextMenuOptions) {
+  const navigate = useNavigate()
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null)
   const [nameDialog, setNameDialog] = useState<NameDialogState | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<DeleteTargetState | null>(null)
@@ -127,9 +132,20 @@ export function useFileTreeContextMenu({
             return
           }
 
+          const filePath = `${parentPath}/${name}`
+          const isXml = name.toLowerCase().endsWith('.xml')
+          const configsRoot = configurationsRootPath?.replaceAll('\\', '/')
+          const normalizedParent = parentPath.replaceAll('\\', '/')
+          const isInsideConfigurations = !!configsRoot && normalizedParent.startsWith(configsRoot)
+
           try {
-            await createFile(projectName, `${parentPath}/${name}`)
+            await (isXml && isInsideConfigurations
+              ? createConfigurationFile(projectName, filePath)
+              : createFile(projectName, filePath))
+
             await dataProvider.reloadDirectory(parentItemId)
+
+            openInEditor(name, filePath, navigate)
           } catch (error) {
             logApiError('Failed to create file', error as Error)
           }
@@ -138,7 +154,7 @@ export function useFileTreeContextMenu({
         patterns: FILE_NAME_PATTERNS,
       })
     },
-    [projectName, dataProvider, closeContextMenu],
+    [projectName, dataProvider, configurationsRootPath, navigate, closeContextMenu],
   )
 
   const handleNewFolder = useCallback(

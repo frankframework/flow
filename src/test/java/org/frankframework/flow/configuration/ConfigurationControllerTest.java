@@ -136,7 +136,9 @@ class ConfigurationControllerTest {
 		when(settings.getFilters()).thenReturn(Map.of(FilterType.ADAPTER, true));
 		when(configurationProject.getConfigurationSettings()).thenReturn(settings);
 
-		when(configurationService.addConfiguration(TEST_PROJECT_NAME, "NewConfig.xml"))
+		String filepath = "/path/to/" + TEST_PROJECT_NAME + "/NewConfig.xml";
+
+		when(configurationService.addConfiguration(TEST_PROJECT_NAME, filepath))
 				.thenReturn("");
 		when(configurationProjectService.toDto(configurationProject))
 				.thenReturn(new ConfigurationProjectDTO(
@@ -148,11 +150,11 @@ class ConfigurationControllerTest {
 						false
 				));
 
-		mockMvc.perform(post("/api/projects/" + TEST_PROJECT_NAME + "/configuration?name=NewConfig.xml")
+		mockMvc.perform(post("/api/projects/" + TEST_PROJECT_NAME + "/configuration?path=" + filepath)
 						.accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.xmlContent").value(""));
 
-		verify(configurationService).addConfiguration(TEST_PROJECT_NAME, "NewConfig.xml");
+		verify(configurationService).addConfiguration(TEST_PROJECT_NAME, filepath);
 	}
 }

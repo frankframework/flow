@@ -114,9 +114,26 @@ export default function EditorFileStructure() {
     [getTab, removeTabAndSelectFallback],
   )
 
+  const configurationsRootPath = useMemo(() => {
+    const paths = project?.filepaths
+    if (!paths?.length) return
+
+    // each path → its directory segments (drop the filename)
+    const segments = paths.map((p) => p.replaceAll('\\', '/').split('/').slice(0, -1))
+
+    const common = segments.reduce((a, b) => {
+      let i = 0
+      while (i < a.length && i < b.length && a[i] === b[i]) i++
+      return a.slice(0, i)
+    })
+
+    return common.length > 0 ? common.join('/') : undefined
+  }, [project?.filepaths])
+
   const editorContextMenu = useFileTreeContextMenu({
     projectName: project?.name,
     dataProvider,
+    configurationsRootPath,
     onAfterRename,
     onAfterDelete,
   })

@@ -183,7 +183,7 @@ public class FileTreeService {
 
 	private String toNodePath(Path path, Path relativizeRoot, boolean useRelativePaths) {
 		if (!useRelativePaths) {
-			return path.toAbsolutePath().toString();
+			return path.toAbsolutePath().toString().replace("\\", "/");
 		}
 		String relativePath = relativizeRoot.relativize(path).toString().replace("\\", "/");
 		return relativePath.isEmpty() ? "." : relativePath;

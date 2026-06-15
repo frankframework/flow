@@ -44,9 +44,9 @@ public class AdapterController {
 	}
 
 	@PostMapping("/{projectName}/adapters")
-	public ResponseEntity<Void> createAdapter(@PathVariable String projectName, @RequestBody AdapterCreateDTO dto) throws IOException {
-		adapterService.createAdapter(dto.configurationPath(), dto.adapterName());
-		return ResponseEntity.ok().build();
+	public ResponseEntity<ConfigurationXmlDTO> createAdapter(@PathVariable String projectName, @RequestBody AdapterCreateDTO dto) throws IOException {
+		String content = adapterService.createAdapter(dto.configurationPath(), dto.adapterName());
+		return ResponseEntity.ok(new ConfigurationXmlDTO(content));
 	}
 
 	@PatchMapping("/{projectName}/adapters/rename")

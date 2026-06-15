@@ -48,8 +48,8 @@ export async function saveConfigurationFile(
   })
 }
 
-export async function createConfigurationFile(projectName: string, filename: string): Promise<XmlResponse> {
-  return apiFetch<XmlResponse>(`${getBaseUrl(projectName)}?name=${encodeURIComponent(filename)}`, { method: 'POST' })
+export async function createConfigurationFile(projectName: string, filepath: string): Promise<XmlResponse> {
+  return apiFetch<XmlResponse>(`${getBaseUrl(projectName)}?path=${encodeURIComponent(filepath)}`, { method: 'POST' })
 }
 
 function getBaseUrl(projectName: string): string {

@@ -41,8 +41,9 @@ public class AdapterService {
 			throws IOException, ApiException, SAXException, ParserConfigurationException, TransformerException {
 
 		ConfigurationProject configurationProject = configurationProjectService.getProject(projectName);
+		String normalizedConfigPath = configurationPath.replace("\\", "/");
 		ConfigurationFile config = configurationProject.getConfigurationFiles().stream()
-				.filter(configurationFile -> configurationFile.getFilepath().equals(configurationPath))
+				.filter(configurationFile -> configurationFile.getFilepath().replace("\\", "/").equals(normalizedConfigPath))
 				.findFirst()
 				.orElseThrow(() -> new ApiException(String.format("Configuration File with path: %s not found", configurationPath), HttpStatus.NOT_FOUND));
 
@@ -84,7 +85,7 @@ public class AdapterService {
 		}
 	}
 
-	public void createAdapter(String configurationPath, String adapterName) throws IOException {
+	public String createAdapter(String configurationPath, String adapterName) throws IOException {
 		if (configurationPath == null || configurationPath.isBlank()) {
 			throw new IllegalArgumentException("Configuration path must not be empty");
 		}
@@ -107,6 +108,7 @@ public class AdapterService {
 
 			String updatedXml = XmlConfigurationUtils.convertNodeToString(configDoc);
 			Files.writeString(absConfigFile, updatedXml, StandardCharsets.UTF_8, StandardOpenOption.TRUNCATE_EXISTING);
+			return updatedXml;
 		} catch (Exception exception) {
 			throw new IOException("Failed to create adapter: " + exception.getMessage(), exception);
 		}

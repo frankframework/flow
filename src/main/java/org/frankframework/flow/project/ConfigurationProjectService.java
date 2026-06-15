@@ -234,7 +234,7 @@ public class ConfigurationProjectService {
 	}
 
 	public ConfigurationProjectDTO toDto(ConfigurationProject configurationProject) {
-		String cleanPath = fileSystemStorage.toRelativePath(configurationProject.getRootPath());
+		String cleanPath = fileSystemStorage.toRelativePath(configurationProject.getRootPath()).replace("\\", "/");
 
 		// Dynamically fetch configurations from disk as the single source of truth
 		List<String> filepaths = getConfigurationFilesDynamically(configurationProject.getRootPath());
@@ -265,7 +265,7 @@ public class ConfigurationProjectService {
 			try (Stream<Path> stream = Files.walk(absolutePath)) {
 				return stream.filter(Files::isRegularFile)
 						.filter(path -> path.toString().toLowerCase().endsWith(".xml"))
-						.map(path -> fileSystemStorage.toRelativePath(path.toString()))
+						.map(path -> fileSystemStorage.toRelativePath(path.toString()).replace("\\", "/"))
 						.toList();
 			}
 		} catch (IOException exception) {

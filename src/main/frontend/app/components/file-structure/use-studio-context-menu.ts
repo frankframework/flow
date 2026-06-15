@@ -1,4 +1,5 @@
 import React, { useCallback, useRef, useState } from 'react'
+import { useNavigate } from 'react-router'
 import type { TreeItemIndex } from 'react-complex-tree'
 import { deleteFile, renameFile } from '~/services/file-service'
 import { createFolderInProject } from '~/services/file-tree-service'
@@ -12,6 +13,8 @@ import {
   FILE_NAME_PATTERNS,
   FOLDER_OR_ADAPTER_NAME_PATTERNS,
 } from '~/components/file-structure/name-input-dialog'
+import { openInStudio } from '~/actions/navigationActions'
+import { findAdaptersInXml } from '~/routes/editor/xml-utils'
 
 export type StudioItemType = 'root' | 'folder' | 'configuration' | 'adapter' | 'file'
 
@@ -123,6 +126,7 @@ function getRenamePatterns(itemType: StudioItemType): Record<string, RegExp> {
 }
 
 export function useStudioContextMenu({ projectName, dataProvider }: UseStudioContextMenuOptions) {
+  const navigate = useNavigate()
   const [contextMenu, setContextMenu] = useState<StudioContextMenuState | null>(null)
   const [nameDialog, setNameDialog] = useState<NameDialogState | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<DeleteTargetState | null>(null)
@@ -176,14 +180,12 @@ export function useStudioContextMenu({ projectName, dataProvider }: UseStudioCon
         onSubmit: async (name: string) => {
           const fileName = ensureXmlExtension(name)
           try {
-            const rootPath = dataProvider.getRootPath().replace(/[/\\]$/, '')
             const folderPath = menu.folderPath.replace(/[/\\]$/, '')
-            const relativePath =
-              folderPath === rootPath
-                ? fileName
-                : `${folderPath.slice(rootPath.length + 1).replaceAll('\\', '/')}/${fileName}`
-            await createConfigurationFile(projectName, relativePath)
+            const absoluteFilePath = `${folderPath}/${fileName}`
+            await createConfigurationFile(projectName, absoluteFilePath)
             await dataProvider.reloadDirectory('root')
+
+            openInStudio(navigate, { adapterName: 'SampleAdapter', filepath: absoluteFilePath, adapterPosition: 0 })
           } catch (error) {
             logApiError('Failed to create configuration', error as Error)
           }
@@ -192,7 +194,7 @@ export function useStudioContextMenu({ projectName, dataProvider }: UseStudioCon
         patterns: CONFIGURATION_NAME_PATTERNS,
       })
     },
-    [projectName, dataProvider, closeContextMenu],
+    [projectName, dataProvider, navigate, closeContextMenu],
   )
 
   const handleNewAdapter = useCallback(
@@ -206,8 +208,14 @@ export function useStudioContextMenu({ projectName, dataProvider }: UseStudioCon
         submitLabel: 'Create',
         onSubmit: async (name: string) => {
           try {
-            await createAdapter(projectName, name, menu.path)
+            const { xmlContent } = await createAdapter(projectName, name, menu.path)
             await dataProvider.reloadDirectory('root')
+
+            const adapterIndex = findAdaptersInXml(xmlContent).findIndex((adapter) => adapter.name === name)
+
+            if (adapterIndex !== -1) {
+              openInStudio(navigate, { adapterName: name, filepath: menu.path, adapterPosition: adapterIndex })
+            }
           } catch (error) {
             logApiError('Failed to create adapter', error as Error)
           }
@@ -216,7 +224,7 @@ export function useStudioContextMenu({ projectName, dataProvider }: UseStudioCon
         patterns: FOLDER_OR_ADAPTER_NAME_PATTERNS,
       })
     },
-    [projectName, dataProvider, closeContextMenu],
+    [projectName, dataProvider, navigate, closeContextMenu],
   )
 
   const handleNewFolder = useCallback(

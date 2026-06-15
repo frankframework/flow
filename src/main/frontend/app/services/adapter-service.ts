@@ -30,8 +30,8 @@ export async function createAdapter(
   projectName: string,
   adapterName: string,
   configurationPath: string,
-): Promise<void> {
-  await apiFetch<void>(`/projects/${encodeURIComponent(projectName)}/adapters`, {
+): Promise<XmlResponse> {
+  return apiFetch<XmlResponse>(`/projects/${encodeURIComponent(projectName)}/adapters`, {
     method: 'POST',
     body: JSON.stringify({ adapterName, configurationPath }),
   })
