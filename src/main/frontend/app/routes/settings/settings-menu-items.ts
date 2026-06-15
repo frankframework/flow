@@ -2,7 +2,6 @@ import type { TreeItem } from 'react-complex-tree'
 import React from 'react'
 import WidgetIcon from '/icons/solar/Widget.svg?react'
 import RulerCrossPenIcon from '/icons/solar/Ruler Cross Pen.svg?react'
-// import CodeIcon from '/icons/solar/Code.svg?react'
 import GeneralSettings from '~/routes/settings/pages/general-settings'
 import StudioSettings from '~/routes/settings/pages/studio-settings'
 import ProjectSettings from './pages/project-settings'
@@ -21,12 +20,7 @@ export interface SettingsMenuItemData {
 const SettingsMenuItems = {
   root: {
     index: 'root',
-    children: [
-      'general',
-      'projects',
-      'studio',
-      // 'editor'
-    ],
+    children: ['general', 'projects', 'studio'],
     data: {
       title: '',
       description: '',
@@ -58,14 +52,16 @@ const SettingsMenuItems = {
       content: StudioSettings,
     },
   },
-  // editor: {
-  //   index: 'editor',
-  //   data: {
-  //     title: 'Editor',
-  //     description: 'Editor settings',
-  //     icon: CodeIcon,
-  //   },
-  // },
+  /*
+   *editor: {
+   *index: 'editor',
+   *data: {
+   *  title: 'Editor',
+   *  description: 'Editor settings',
+   *  icon: CodeIcon,
+   *},
+   *},
+   */
 } as Record<string, SettingsMenuItem>
 
 export default SettingsMenuItems

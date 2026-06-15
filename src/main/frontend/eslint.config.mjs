@@ -5,6 +5,7 @@ import reactHooksPlugin from 'eslint-plugin-react-hooks';
 import prettierPlugin from 'eslint-plugin-prettier';
 import unicorn from 'eslint-plugin-unicorn';
 import sonarjs from 'eslint-plugin-sonarjs';
+import stylistic from '@stylistic/eslint-plugin';
 import js from '@eslint/js';
 import eslintConfigPrettier from 'eslint-config-prettier';
 
@@ -35,6 +36,7 @@ export default [
       'react-hooks': reactHooksPlugin,
       'prettier': prettierPlugin,
       'sonarjs': sonarjs,
+      '@stylistic': stylistic,
     },
     settings: {
       react: {
@@ -63,6 +65,8 @@ export default [
       'no-undef': 'off',
 
       'prettier/prettier': 'warn',
+
+      '@stylistic/multiline-comment-style': ['error', 'starred-block'],
 
       'sonarjs/cognitive-complexity': 'warn',
       'sonarjs/no-duplicate-string': 'warn',

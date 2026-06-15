@@ -170,8 +170,10 @@ export function sequentialReposition(nodes: Node[], startParentId: string, getNo
 
     //Set height for parent
     nodes = nodes.map((node) => (node.id === parentId ? { ...node, height: yOffset } : node))
-    //Add padding at the bottom of a group
-    //Move up one
+    /*
+     * Add padding at the bottom of a group
+     * Move up one
+     */
     parentId = getNodeFunc(parentId)?.parentId ?? null
   }
 
