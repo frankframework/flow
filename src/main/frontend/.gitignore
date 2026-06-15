@@ -9,5 +9,3 @@
 /.env
 /.env.production
 /.env.development
-
-/build
