@@ -56,6 +56,11 @@ public class SecurityChainConfigurer implements ApplicationContextAware, Environ
 		http.formLogin(FormLoginConfigurer::disable);
 		http.logout(LogoutConfigurer::disable);
 		http.sessionManagement(management -> management.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED));
+
+		if (csrfEnabled) {
+			http.addFilterAfter(new CsrfCookieFilter(), CsrfFilter.class);
+		}
+
 		return authenticator.configureHttpSecurity(http);
 	}
 
