@@ -23,6 +23,7 @@ import org.springframework.security.config.annotation.web.configurers.LogoutConf
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfFilter;
 import org.springframework.security.web.util.matcher.AnyRequestMatcher;
 
 @Configuration
@@ -61,6 +62,11 @@ public class SecurityChainConfigurer implements ApplicationContextAware, Environ
 		http.formLogin(FormLoginConfigurer::disable);
 		http.logout(LogoutConfigurer::disable);
 		http.sessionManagement(management -> management.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED));
+
+		if (csrfEnabled) {
+			http.addFilterAfter(new CsrfCookieFilter(), CsrfFilter.class);
+		}
+
 		return authenticator.configureHttpSecurity(http);
 	}
 
