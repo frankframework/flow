@@ -118,8 +118,7 @@ export default function EditorFileStructure() {
     const paths = project?.filepaths
     if (!paths?.length) return
 
-    // each path → its directory segments (drop the filename)
-    const segments = paths.map((p) => p.replaceAll('\\', '/').split('/').slice(0, -1))
+    const segments = paths.map((path) => path.replaceAll('\\', '/').split('/').slice(0, -1))
 
     const common = segments.reduce((a, b) => {
       let i = 0
