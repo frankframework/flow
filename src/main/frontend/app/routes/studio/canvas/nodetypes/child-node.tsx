@@ -159,7 +159,7 @@ export function ChildNodeComponent({
     <div
       data-childnode-id={child.id}
       className={clsx(
-        'bg-background relative mr-0.5 mb-2 rounded-md border shadow-[4px_4px_6px_-2px_rgba(0,0,0,0.05)]',
+        'bg-background relative mr-0.5 mb-2 rounded-md border shadow-md',
         isSelected && 'border-1',
         !isSelected && dragForbidden && 'border-2 border-dashed',
         !isSelected && !dragForbidden && 'border-border',

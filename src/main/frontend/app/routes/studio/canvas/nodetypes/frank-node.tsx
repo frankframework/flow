@@ -529,7 +529,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
         <ResizeIcon />
       </NodeResizeControl>
       <div
-        className={`bg-background border-border relative flex w-full flex-col items-center overflow-x-visible rounded-md border shadow-[6px_6px_8px_-2px_rgba(0,0,0,0.05)] ${isManuallyResized ? 'h-full overflow-y-hidden' : 'overflow-y-visible'}`}
+        className={`bg-background border-border relative flex w-full flex-col items-center overflow-x-visible rounded-md border shadow-md ${isManuallyResized ? 'h-full overflow-y-hidden' : 'overflow-y-visible'}`}
         style={{
           minWidth: `${minNodeWidth}px`,
           ...(properties.selected && { borderColor: `var(${colorVariable})` }),
@@ -584,7 +584,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
           ))}
         {(properties.data.children.length > 0 || dragOver || canDropDraggedElement) && (
           <div className="w-full p-4">
-            <div className="border-border/40 bg-background w-full rounded-md border p-4 shadow-[inset_0_3px_6px_rgba(0,0,0,0.15)]">
+            <div className="border-border/40 bg-background w-full rounded-md border p-4 inset-shadow-sm">
               {properties.data.children.map((child) => (
                 <div key={child.id} data-child-id={child.id} className="child-drop-zone">
                   <ChildNodeComponent
