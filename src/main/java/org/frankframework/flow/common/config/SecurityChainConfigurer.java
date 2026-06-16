@@ -17,12 +17,14 @@ import org.springframework.core.env.Environment;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.FormLoginConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.annotation.web.configurers.LogoutConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfFilter;
 import org.springframework.security.web.util.matcher.AnyRequestMatcher;
 
 @Configuration
@@ -49,14 +51,7 @@ public class SecurityChainConfigurer implements ApplicationContextAware, Environ
 	public SecurityFilterChain configureChain(IAuthenticator authenticator, HttpSecurity http) throws Exception {
 		configureAuthenticator(authenticator);
 		http.headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin));
-		http.csrf(csrf -> {
-			if (csrfEnabled) {
-				csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse());
-				csrf.csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler());
-				return;
-			}
-			csrf.disable();
-		});
+		configureCsrf(http);
 		http.securityMatcher(AnyRequestMatcher.INSTANCE);
 		http.formLogin(FormLoginConfigurer::disable);
 		http.logout(LogoutConfigurer::disable);
@@ -74,5 +69,19 @@ public class SecurityChainConfigurer implements ApplicationContextAware, Environ
 		ServletConfiguration servletConfig = new ServletConfiguration();
 		servletConfig.setUrlMapping("/*");
 		authenticator.registerServlet(servletConfig);
+	}
+
+	private void configureCsrf(HttpSecurity http) {
+		if (!csrfEnabled) {
+			http.csrf(AbstractHttpConfigurer::disable);
+			return;
+		}
+
+		http.csrf(csrf -> {
+			csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse());
+			csrf.csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler());
+		});
+
+		http.addFilterAfter(new CsrfCookieFilter(), CsrfFilter.class);
 	}
 }
