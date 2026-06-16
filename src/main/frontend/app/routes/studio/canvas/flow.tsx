@@ -243,6 +243,8 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
   const canvasRef = useRef<HTMLDivElement>(null)
   const fitAfterLayoutRef = useRef<{ id: string }[] | null>(null)
   const pendingInitialRelayoutRef = useRef<{ pendingSelection: { subtype: string; name: string } | null } | null>(null)
+  const [relayoutNonce, setRelayoutNonce] = useState(0)
+  const loadedTabIdRef = useRef<string | null>(null)
 
   const applySelectionToNodes = useCallback((pendingSelection: { subtype: string; name: string }) => {
     const currentNodes = useFlowStore.getState().nodes
@@ -702,6 +704,7 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
     }
   }, [
     nodesInitialized,
+    relayoutNonce,
     layoutGraph,
     waitForStableCanvasDimensions,
     computeAdapterCenteredViewport,
@@ -1451,10 +1454,26 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
       flowStore.resetStore()
     }
 
-    function loadFromCache(tab: TabData, pendingSelection: { subtype: string; name: string } | null) {
+    function loadFromCache(
+      tab: TabData,
+      pendingSelection: { subtype: string; name: string } | null,
+      recenter: boolean,
+    ) {
       const hasPendingSelection = !!pendingSelection
-      restoreFlowFromTab(tab, { skipViewport: hasPendingSelection, forceRemeasure: hasPendingSelection })
-      if (pendingSelection) applySelectionToNodes(pendingSelection)
+      restoreFlowFromTab(tab, {
+        skipViewport: hasPendingSelection || recenter,
+        forceRemeasure: hasPendingSelection,
+      })
+      if (pendingSelection) {
+        applySelectionToNodes(pendingSelection)
+      } else if (recenter) {
+        const cachedNodes = useFlowStore.getState().nodes
+        waitForStableCanvasDimensions((canvasWidth, canvasHeight) => {
+          const viewport = computeAdapterCenteredViewport(cachedNodes, canvasWidth, canvasHeight)
+          useFlowStore.getState().setViewport(viewport)
+          reactFlowRef.current?.setViewport(viewport)
+        })
+      }
     }
 
     async function loadFromApi(tab: TabData, pendingSelection: { subtype: string; name: string } | null) {
@@ -1476,21 +1495,28 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
       flowStore.setHistory([])
       flowStore.setFuture([])
       pendingInitialRelayoutRef.current = { pendingSelection }
+      setRelayoutNonce((nonce) => nonce + 1)
     }
 
     async function loadFlowFromTab(tab: TabData) {
+      const tabId = useTabStore.getState().activeTab
+      const pendingSelection = tab.pendingNodeSelection ?? null
+      const recenter = tab.pendingRecenter ?? false
+
+      if (tabId === loadedTabIdRef.current && !pendingSelection && !recenter) return
+      loadedTabIdRef.current = tabId
+
       isLoadingTabRef.current = true
       setLoading(true)
 
-      const pendingSelection = tab.pendingNodeSelection ?? null
-      if (pendingSelection) {
-        useTabStore.getState().setTabData(useTabStore.getState().activeTab, { ...tab, pendingNodeSelection: null })
+      if (pendingSelection || recenter) {
+        useTabStore.getState().setTabData(tabId, { ...tab, pendingNodeSelection: null, pendingRecenter: null })
       }
 
       try {
         const hasCachedFlow = tab.flowJson && Object.keys(tab.flowJson).length > 0
         if (hasCachedFlow) {
-          loadFromCache(tab, pendingSelection)
+          loadFromCache(tab, pendingSelection, recenter)
         } else if (tab.configurationPath && tab.name) {
           await loadFromApi(tab, pendingSelection)
         }

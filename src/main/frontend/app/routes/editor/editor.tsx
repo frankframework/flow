@@ -1,4 +1,3 @@
-import RulerCrossPenIcon from '/icons/solar/Ruler Cross Pen.svg?react'
 import Editor, { type Monaco, type OnMount } from '@monaco-editor/react'
 type ITextModel = Monaco['editor']['ITextModel']
 type FindMatch = Monaco['editor']['FindMatch']
@@ -15,7 +14,6 @@ import { openInStudio } from '~/actions/navigationActions'
 import EditorFileStructure from '~/components/file-structure/editor-file-structure'
 import DiffTabView from '~/components/git/diff-tab-view'
 import GitPanel from '~/components/git/git-panel'
-import Button from '~/components/inputs/button'
 import SegmentedButton from '~/components/inputs/segmented-button'
 import SidebarContentClose from '~/components/sidebars-layout/sidebar-content-close'
 import SidebarHeader from '~/components/sidebars-layout/sidebar-header'
@@ -35,13 +33,11 @@ import { useSettingsStore } from '~/stores/settings-store'
 import { logApiError } from '~/utils/logger'
 import flowXsd from '../../../src/assets/xsd/FlowConfig.xsd?raw'
 import {
+  ADAPTER_GLYPH_SUBTYPE,
   extractFlowElements,
-  findAdapterIndexAtOffset,
-  findAdaptersInXml,
   findElementRangeInXml,
   findFrankElementsForGlyphs,
   findFlowElementsStartLine,
-  lineToOffset,
   wrapFlowXml,
 } from './xml-utils'
 import { openInStudioAtNode } from '~/actions/navigationActions'
@@ -323,13 +319,18 @@ export default function CodeEditor() {
       const elements = findFrankElementsForGlyphs(content)
       frankElementsRef.current = elements
 
-      const decorations = elements.map((element) => ({
-        range: { startLineNumber: element.startLine, startColumn: 1, endLineNumber: element.startLine, endColumn: 1 },
-        options: {
-          glyphMarginClassName: 'frank-node-glyph',
-          glyphMarginHoverMessage: { value: `Open **${element.name}** in Studio` },
-        },
-      }))
+      const decorations = elements.map((element) => {
+        const isAdapter = element.subtype === ADAPTER_GLYPH_SUBTYPE
+        return {
+          range: { startLineNumber: element.startLine, startColumn: 1, endLineNumber: element.startLine, endColumn: 1 },
+          options: {
+            glyphMarginClassName: isAdapter ? 'frank-adapter-glyph' : 'frank-node-glyph',
+            glyphMarginHoverMessage: {
+              value: isAdapter ? `Open adapter **${element.name}** in Studio` : `Open **${element.name}** in Studio`,
+            },
+          },
+        }
+      })
 
       if (frankGlyphsDecorationsRef.current) {
         frankGlyphsDecorationsRef.current.set(decorations)
@@ -571,6 +572,15 @@ export default function CodeEditor() {
 
         const { adapterName, adapterPosition, subtype, name } = element
 
+        if (subtype === ADAPTER_GLYPH_SUBTYPE) {
+          openInStudio(navigate, {
+            adapterName,
+            adapterPosition,
+            filepath: editorTab.configurationPath,
+          })
+          return
+        }
+
         openInStudioAtNode(navigate, {
           adapterName,
           adapterPosition,
@@ -742,27 +752,6 @@ export default function CodeEditor() {
     ])
   }, [pendingHighlight, fileContent, isDiffTab, editorMounted])
 
-  const handleOpenInStudio = useCallback(() => {
-    const editorTab = useEditorTabStore.getState().getTab(activeTabFilePath)
-    if (!editorTab) return
-
-    const xml = editorReference.current?.getValue() || fileContent
-    if (!xml) return
-
-    const adapters = findAdaptersInXml(xml)
-    if (adapters.length === 0) return
-
-    const cursorLine = editorReference.current?.getPosition()?.lineNumber
-    const adapterPosition =
-      adapters.length === 1 || !cursorLine ? 0 : findAdapterIndexAtOffset(adapters, lineToOffset(xml, cursorLine))
-
-    openInStudio(navigate, {
-      adapterName: adapters[adapterPosition].name,
-      filepath: editorTab.configurationPath,
-      adapterPosition,
-    })
-  }, [activeTabFilePath, fileContent, navigate])
-
   const isGitRepo = !!project?.isGitRepository
 
   return (
@@ -802,16 +791,8 @@ export default function CodeEditor() {
             <DiffTabView diffData={activeTab.diffData} />
           ) : (
             <div className="flex h-full flex-col">
-              <div className="border-b-border bg-background flex h-10 shrink-0 items-center justify-between border-b px-3">
+              <div className="border-b-border bg-background flex h-10 shrink-0 items-center border-b px-3">
                 <SaveStatusIndicator />
-                <Button
-                  onClick={handleOpenInStudio}
-                  className="flex items-center gap-1.5 text-xs"
-                  title="Open in Studio"
-                >
-                  <RulerCrossPenIcon className="h-3.5 w-3.5 fill-current" />
-                  Open in Studio
-                </Button>
               </div>
               <div className="relative min-h-0 flex-1">
                 <Editor

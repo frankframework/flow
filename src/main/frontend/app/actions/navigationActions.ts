@@ -10,12 +10,16 @@ export function openInStudio(
 
   const tabId = `${filepath}::${adapterName}::${adapterPosition}`
 
-  if (!getTab(tabId)) {
+  const existing = getTab(tabId)
+  if (existing) {
+    setTabData(tabId, { ...existing, pendingRecenter: true, pendingNodeSelection: null })
+  } else {
     setTabData(tabId, {
       name: adapterName,
       configurationPath: filepath,
       adapterPosition,
       flowJson: {},
+      pendingRecenter: true,
     })
   }
 
@@ -78,7 +82,7 @@ export function openInStudioAtNode(
 
   const existing = getTab(tabId)
   if (existing) {
-    setTabData(tabId, { ...existing, pendingNodeSelection: { subtype, name } })
+    setTabData(tabId, { ...existing, pendingNodeSelection: { subtype, name }, pendingRecenter: null })
   } else {
     setTabData(tabId, {
       name: adapterName,

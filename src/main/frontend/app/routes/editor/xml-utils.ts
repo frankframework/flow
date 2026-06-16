@@ -11,6 +11,8 @@ export interface FrankElementLocation {
   adapterPosition: number
 }
 
+export const ADAPTER_GLYPH_SUBTYPE = 'Adapter'
+
 const STRUCTURAL_TAGS = new Set([
   'Adapter',
   'Configuration',
@@ -142,6 +144,16 @@ export function lineToOffset(xml: string, lineNumber: number): number {
   return offset
 }
 
+export function offsetToLine(xml: string, offset: number): number {
+  let line = 1
+
+  for (let i = 0; i < offset && i < xml.length; i++) {
+    if (xml[i] === '\n') line++
+  }
+
+  return line
+}
+
 export function findAdapterIndexAtOffset(adapters: AdapterLocation[], cursorOffset: number): number {
   for (let i = adapters.length - 1; i >= 0; i--) {
     if (adapters[i].offset <= cursorOffset) return i
@@ -243,7 +255,13 @@ export function findFrankElementsForGlyphs(xml: string): FrankElementLocation[] 
   if (adapters.length === 0) return []
 
   const lines = xml.split('\n')
-  const results: FrankElementLocation[] = []
+  const results: FrankElementLocation[] = adapters.map((adapter, adapterPosition) => ({
+    subtype: ADAPTER_GLYPH_SUBTYPE,
+    name: adapter.name,
+    startLine: offsetToLine(xml, adapter.offset),
+    adapterName: adapter.name,
+    adapterPosition,
+  }))
   const tagStack: string[] = []
 
   for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
