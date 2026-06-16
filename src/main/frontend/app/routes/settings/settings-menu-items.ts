@@ -15,8 +15,6 @@ export interface SettingsMenuItemData {
   content?: React.FC
 }
 
-//todo: add editor settings and icon after there are settings to add there
-
 const SettingsMenuItems = {
   root: {
     index: 'root',
@@ -52,16 +50,6 @@ const SettingsMenuItems = {
       content: StudioSettings,
     },
   },
-  /*
-   *editor: {
-   *index: 'editor',
-   *data: {
-   *  title: 'Editor',
-   *  description: 'Editor settings',
-   *  icon: CodeIcon,
-   *},
-   *},
-   */
 } as Record<string, SettingsMenuItem>
 
 export default SettingsMenuItems
