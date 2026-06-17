@@ -54,9 +54,11 @@ export async function apiFetch<T>(path: string, options?: RequestInit): Promise<
   const response = await fetch(apiUrl(path), {
     ...options,
     headers,
-    /* credentials is a requirement for csrf according to multiple sources, but seems to work fine without it ??
-      It also breaks because of our CORS configuration which will result in
-      "credential is not supported if the CORS header 'Access-Control-Allow-Origin' is '*'" */
+    /*
+     * credentials is a requirement for csrf according to multiple sources, but seems to work fine without it ??
+     * It also breaks because of our CORS configuration which will result in
+     * "credential is not supported if the CORS header 'Access-Control-Allow-Origin' is '*'"
+     */
     // credentials: 'include',
   })
 
