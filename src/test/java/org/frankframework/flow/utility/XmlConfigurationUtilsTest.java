@@ -85,4 +85,43 @@ class XmlConfigurationUtilsTest {
 	void insertFlowNamespace_returnsNullForBlankInput() throws Exception {
 		assertNull(XmlConfigurationUtils.insertFlowNamespace("   "));
 	}
+
+	// ── repairFlowNamespace ──
+
+	@Test
+	void repairFlowNamespace_addsNamespaceToModuleRootWithUndeclaredPrefix() {
+		String xml = "<Module><Adapter name=\"A\"><Pipeline><EchoPipe name=\"R\" flow:x=\"1\"/></Pipeline></Adapter></Module>";
+
+		String result = XmlConfigurationUtils.repairFlowNamespace(xml);
+
+		assertTrue(result.contains("<Module xmlns:flow=\"urn:frank-flow\">"));
+	}
+
+	@Test
+	void repairFlowNamespace_addsNamespaceToConfigurationRootWithUndeclaredPrefix() {
+		String xml = "<Configuration name=\"C\"><Adapter name=\"A\" flow:x=\"1\"/></Configuration>";
+
+		String result = XmlConfigurationUtils.repairFlowNamespace(xml);
+
+		assertTrue(result.contains("<Configuration xmlns:flow=\"urn:frank-flow\""));
+	}
+
+	@Test
+	void repairFlowNamespace_leavesXmlWithDeclaredNamespaceUnchanged() {
+		String xml = "<Module xmlns:flow=\"urn:frank-flow\"><Adapter name=\"A\" flow:x=\"1\"/></Module>";
+
+		assertEquals(xml, XmlConfigurationUtils.repairFlowNamespace(xml));
+	}
+
+	@Test
+	void repairFlowNamespace_leavesXmlWithoutFlowMarkupUnchanged() {
+		String xml = "<Module><Adapter name=\"A\"/></Module>";
+
+		assertEquals(xml, XmlConfigurationUtils.repairFlowNamespace(xml));
+	}
+
+	@Test
+	void repairFlowNamespace_returnsNullForNullInput() {
+		assertNull(XmlConfigurationUtils.repairFlowNamespace(null));
+	}
 }

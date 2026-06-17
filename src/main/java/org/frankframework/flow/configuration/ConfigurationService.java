@@ -63,6 +63,9 @@ public class ConfigurationService {
 		}
 
 		String content = fileSystemStorage.readFile(filePath.toString());
+		// Repair configurations that were saved with undeclared flow:* layout metadata (e.g. <Module>
+		// roots) so the studio can parse and open their adapters again.
+		content = XmlConfigurationUtils.repairFlowNamespace(content);
 		return new ConfigurationDTO(filepath, content);
 	}
 
@@ -123,7 +126,7 @@ public class ConfigurationService {
 			return xml;
 		}
 
-		return xml.replaceFirst("(<Configuration)\\b", "$1 xmlns:flow=\"urn:frank-flow\"");
+		return xml.replaceFirst("(<(?:Configuration|Module))\\b", "$1 xmlns:flow=\"urn:frank-flow\"");
 	}
 
 	private String loadDefaultConfigurationXml() throws IOException {

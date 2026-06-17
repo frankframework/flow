@@ -45,6 +45,16 @@ public class XmlConfigurationUtils {
 		return configDoc;
 	}
 
+	public static String repairFlowNamespace(String configurationXml) {
+		if (configurationXml == null
+				|| configurationXml.contains("xmlns:flow")
+				|| !configurationXml.contains("flow:")) {
+			return configurationXml;
+		}
+
+		return configurationXml.replaceFirst("(<(?:Configuration|Module))\\b", "$1 xmlns:flow=\"urn:frank-flow\"");
+	}
+
 	/**
 	 * Converts a DOM Node to a formatted XML string.
 	 * @throws TransformerException

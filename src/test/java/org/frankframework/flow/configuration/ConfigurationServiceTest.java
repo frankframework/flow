@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -18,6 +19,7 @@ import org.frankframework.flow.frankconfig.FrankConfigXsdService;
 import org.frankframework.flow.project.ConfigurationProject;
 import org.frankframework.flow.project.ConfigurationProjectService;
 import org.frankframework.flow.utility.XmlFormatterUtils;
+import org.frankframework.flow.utility.XmlSecurityUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,6 +28,9 @@ import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 
 @ExtendWith(MockitoExtension.class)
 class ConfigurationServiceTest {
@@ -187,6 +192,86 @@ class ConfigurationServiceTest {
 
 		assertEquals(content, result);
 		verify(fileSystemStorage).writeFile(eq(file.toString()), eq(content));
+	}
+
+	@Test
+	void updateConfiguration_FormatFalse_AddsFlowNamespaceToModuleRoot() throws Exception {
+		stubToAbsolutePath();
+		stubWriteFile();
+
+		Path file = tempDir.resolve("config.xml");
+		Files.writeString(file, "<Module/>", StandardCharsets.UTF_8);
+
+		String result = configurationService.updateConfiguration("test", file.toString(), "<Module/>", false);
+
+		assertTrue(
+				result.contains("xmlns:flow=\"urn:frank-flow\""),
+				"flow namespace should be declared on <Module> roots"
+		);
+	}
+
+	@Test
+	void getConfigurationContent_RepairsUndeclaredFlowNamespace() throws Exception {
+		stubToAbsolutePath();
+		stubReadFile();
+
+		// A configuration previously corrupted by the studio: flow:* layout metadata but no
+		// xmlns:flow declaration. Reading it must heal it so the adapter can be opened again.
+		Path file = tempDir.resolve("config.xml");
+		Files.writeString(
+				file,
+				"<Module><Adapter name=\"MyAdapter\"><Pipeline><EchoPipe name=\"Result\" flow:x=\"10\"/></Pipeline></Adapter></Module>",
+				StandardCharsets.UTF_8
+		);
+
+		ConfigurationDTO result = configurationService.getConfigurationContent("test", file.toString());
+
+		assertTrue(result.content().contains("xmlns:flow=\"urn:frank-flow\""));
+
+		Document doc = XmlSecurityUtils.createSecureDocumentBuilder()
+				.parse(new ByteArrayInputStream(result.content().getBytes(StandardCharsets.UTF_8)));
+		assertEquals("MyAdapter", ((Element) doc.getElementsByTagName("Adapter").item(0)).getAttribute("name"));
+	}
+
+	@Test
+	void getConfigurationContent_LeavesCleanConfigurationUnchanged() throws Exception {
+		stubToAbsolutePath();
+		stubReadFile();
+
+		String original = "<Configuration><Adapter name=\"A\"/></Configuration>";
+		Path file = tempDir.resolve("config.xml");
+		Files.writeString(file, original, StandardCharsets.UTF_8);
+
+		ConfigurationDTO result = configurationService.getConfigurationContent("test", file.toString());
+
+		assertEquals(original, result.content());
+	}
+
+	@Test
+	void updateConfiguration_FormatTrue_ModuleRootWithFlowAttributes_StaysNamespaceAwareParseable() throws Exception {
+		stubToAbsolutePath();
+		stubWriteFile();
+
+		Path file = tempDir.resolve("config.xml");
+		Files.writeString(file, "<Module/>", StandardCharsets.UTF_8);
+
+		String studioOutput = "<Module>"
+				+ "<Adapter name=\"MyAdapter\">"
+				+ "<Pipeline>"
+				+ "<EchoPipe name=\"Result\" flow:x=\"10\" flow:y=\"20\" flow:width=\"200\"/>"
+				+ "</Pipeline>"
+				+ "</Adapter>"
+				+ "</Module>";
+
+		String result = configurationService.updateConfiguration("test", file.toString(), studioOutput, true);
+
+		assertTrue(result.contains("xmlns:flow=\"urn:frank-flow\""));
+
+		Document doc = XmlSecurityUtils.createSecureDocumentBuilder()
+				.parse(new ByteArrayInputStream(result.getBytes(StandardCharsets.UTF_8)));
+		NodeList adapters = doc.getElementsByTagName("Adapter");
+		assertEquals(1, adapters.getLength(), "adapter must remain recognizable after a studio save");
+		assertEquals("MyAdapter", ((Element) adapters.item(0)).getAttribute("name"));
 	}
 
 	@Test
