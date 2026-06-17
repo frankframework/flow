@@ -15,5 +15,25 @@ export function normalizePath(path: string) {
 
 export function getParentPath(path: string): string {
   if (!path) return path // Return empty string if path is empty, small optimization to avoid regex processing
-  return path.replace(/\/?[^/]*$/, '')
+  const parent = path.replace(/\/?[^/]*$/, '')
+
+  if (/^[a-zA-Z]:$/.test(parent)) return `${parent}/`
+  return parent
+}
+
+/**
+ * Removes trailing path separators (`/` or `\`) from a path.
+ */
+export function stripTrailingSeparators(path: string): string {
+  if (!path) return path
+  const stripped = path.replace(/[\\/]+$/, '')
+  if (stripped === '') return '/'
+  if (/^[a-zA-Z]:$/.test(stripped)) return `${stripped}/`
+  return stripped
+}
+
+export function joinPath(base: string, segment: string): string {
+  const trimmedBase = base.replace(/[\\/]+$/, '')
+  const trimmedSegment = segment.replace(/^[\\/]+/, '')
+  return trimmedBase ? `${trimmedBase}/${trimmedSegment}` : `/${trimmedSegment}`
 }

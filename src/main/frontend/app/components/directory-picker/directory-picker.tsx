@@ -5,6 +5,7 @@ import { filesystemService } from '~/services/filesystem-service'
 import type { FilesystemEntry } from '~/types/filesystem.types'
 import { ApiError } from '~/utils/api'
 import { useDirectoryWatcher } from '~/hooks/use-file-watcher'
+import { normalizePath } from '~/utils/path-utils'
 import Button from '../inputs/button'
 import CloseButton from '../inputs/close-button'
 
@@ -36,9 +37,9 @@ export default function DirectoryPicker({
     setIsCreatingFolder(false)
     try {
       const result = await filesystemService.browse(path)
-      setEntries(result.entries)
-      setCurrentPath(result.resolvedPath)
-      setParentPath(result.parentPath)
+      setEntries(result.entries.map((entry) => ({ ...entry, path: normalizePath(entry.path) })))
+      setCurrentPath(normalizePath(result.resolvedPath))
+      setParentPath(normalizePath(result.parentPath))
     } catch (error) {
       if (error instanceof ApiError && error.httpCode === 403) {
         setError('Access denied')

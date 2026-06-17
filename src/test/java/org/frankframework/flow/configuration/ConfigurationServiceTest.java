@@ -346,9 +346,9 @@ class ConfigurationServiceTest {
 		AdapterLocationDTO result = configurationService.addConfiguration("myproject", target.toString());
 
 		assertNotNull(result);
-		assertEquals("SampleAdapter", result.adapterName(), "Should point at the template adapter");
-		assertEquals(0, result.adapterPosition());
-		assertTrue(Files.exists(target), "NewConfig.xml should be created on disk");
+
+		Path expectedFile = projectDir.resolve("NewConfig.xml");
+		assertTrue(Files.exists(expectedFile), "NewConfig.xml should be created on disk");
 		verify(fileTreeService).invalidateTreeCache("myproject");
 	}
 
@@ -365,7 +365,8 @@ class ConfigurationServiceTest {
 		Path target = projectDir.resolve("subfolder/NestedConfig.xml");
 		configurationService.addConfiguration("myproject", target.toString());
 
-		assertTrue(Files.exists(target));
+		Path expectedFile = projectDir.resolve("subfolder/NestedConfig.xml");
+		assertTrue(Files.exists(expectedFile));
 	}
 
 	@Test

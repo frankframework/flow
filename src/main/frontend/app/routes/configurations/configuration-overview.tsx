@@ -11,31 +11,12 @@ import type { FileTreeNode } from '~/types/filesystem.types'
 import { fetchProjectTree } from '~/services/file-tree-service'
 import Button from '~/components/inputs/button'
 import Search from '~/components/search/search'
-import { normalizePath, toRelativePath } from '~/utils/path-utils'
+import { toRelativePath } from '~/utils/path-utils'
 
 type ConfigurationFile = {
   path: string
   relativePath: string
   adapterNames: string[]
-}
-
-function findConfigurationsDir(node: FileTreeNode | undefined | null): FileTreeNode | null {
-  if (!node || !node.path) return null
-
-  const normalizedPath = normalizePath(node.path)
-
-  if (node.type === 'DIRECTORY' && normalizedPath.endsWith(`/src/main/configurations/${node.name}`)) {
-    return node
-  }
-
-  if (!node.children) return null
-
-  for (const child of node.children) {
-    const found = findConfigurationsDir(child)
-    if (found) return found
-  }
-
-  return null
 }
 
 function collectXmlFiles(node: FileTreeNode | undefined | null): FileTreeNode[] {
@@ -61,7 +42,6 @@ export default function ConfigurationOverview() {
   const [showModal, setShowModal] = useState(false)
   const [tree, setTree] = useState<FileTreeNode | null>(null)
   const [isLoading, setIsLoading] = useState(false)
-  const [configurationsDir, setConfigurationsDir] = useState<FileTreeNode | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState(searchQuery)
 
@@ -91,13 +71,6 @@ export default function ConfigurationOverview() {
     return () => controller.abort()
   }, [loadTree])
 
-  useEffect(() => {
-    if (tree) {
-      const configDir = findConfigurationsDir(tree)
-      setConfigurationsDir(configDir)
-    }
-  }, [tree])
-
   const handleConfigAdded = useCallback(() => {
     setShowModal(false)
     loadTree()
@@ -112,12 +85,15 @@ export default function ConfigurationOverview() {
   const configFiles = useMemo(() => {
     if (!tree || !currentConfigurationProject) return []
 
-    const configurationDirectory = findConfigurationsDir(tree)
-    if (!configurationDirectory) return []
-
-    const xmlFiles = collectXmlFiles(configurationDirectory)
+    /*
+     * The project root already is the configuration directory (it is the opened
+     * src/main/configurations/<configuration> folder, or a freshly created project
+     * whose Configuration.xml lives at the top level), so collect the configuration
+     * files straight from the root rather than searching for a nested directory.
+     */
+    const xmlFiles = collectXmlFiles(tree)
     return xmlFiles.map((file) => {
-      const relativePath = toRelativePath(file.path, `${configurationDirectory.path}/`) ?? file.name
+      const relativePath = toRelativePath(file.path, `${tree.path}/`) ?? file.name
       return { ...file, relativePath, path: file.path }
     })
   }, [tree, currentConfigurationProject])
@@ -208,7 +184,7 @@ export default function ConfigurationOverview() {
         onClose={() => setShowModal(false)}
         onSuccess={handleConfigAdded}
         currentConfiguration={currentConfigurationProject}
-        configurationsDirPath={configurationsDir?.path ?? ''}
+        configurationsDirPath={tree?.path ?? ''}
       />
     </div>
   )

@@ -47,14 +47,25 @@ export default function AddConfigurationModal({
         setLoading(false)
         return
       }
-      // Ensure .xml suffix
+
+      if (/[/\\]/.test(configname) || configname.includes('..')) {
+        setError(String.raw`Filename cannot contain "/", "\" or ".."`)
+        setLoading(false)
+        return
+      }
+
       if (!configname.toLowerCase().endsWith('.xml')) {
         configname = `${configname}.xml`
       }
 
-      const folderPath = rootLocationName.replace(/[/\\]$/, '')
-      const absoluteFilePath = `${folderPath}/${configname}`
-      await createConfigurationFile(currentConfiguration.name, absoluteFilePath)
+      const projectRoot = currentConfiguration.rootPath.replace(/[/\\]$/, '')
+      const selectedFolder = rootLocationName.replace(/[/\\]$/, '')
+      const relativePath =
+              !selectedFolder || selectedFolder === projectRoot
+                      ? configname
+                      : `${selectedFolder.slice(projectRoot.length + 1).replaceAll('\\', '/')}/${configname}`
+
+      await createConfigurationFile(currentConfiguration.name, relativePath)
       const updatedProject = await fetchProject(currentConfiguration.name)
       setProject(updatedProject)
       onSuccess?.()
@@ -85,10 +96,13 @@ export default function AddConfigurationModal({
     setIsOpenPickerOpen(false)
   }
 
+  const trimmedFilename = filename.trim()
+  const filenameHasInvalidChars = /[/\\]/.test(trimmedFilename) || trimmedFilename.includes('..')
+  const isFilenameValid = trimmedFilename.length > 0 && !filenameHasInvalidChars
+
   const displayFilename = (() => {
-    const trimmed = filename.trim()
-    if (!trimmed) return ''
-    return trimmed.toLowerCase().endsWith('.xml') ? trimmed : `${trimmed}.xml`
+    if (!trimmedFilename) return ''
+    return trimmedFilename.toLowerCase().endsWith('.xml') ? trimmedFilename : `${trimmedFilename}.xml`
   })()
 
   return (
@@ -122,19 +136,25 @@ export default function AddConfigurationModal({
           <label className="text-sm font-medium" htmlFor="configuration-filename-input">
             Filename
           </label>
-          <div className="ml-2 flex w-full items-center">
-            <Input
-              id="configuration-filename-input"
-              value={filename}
-              onChange={(event) => setFilename(event.target.value)}
-              placeholder="Choose a filename"
-              aria-label="configuration filename"
-            />
+          <div className="ml-2 flex w-full flex-col">
+            <div className="flex w-full items-center gap-1">
+              <Input
+                id="configuration-filename-input"
+                value={filename}
+                onChange={(event) => setFilename(event.target.value)}
+                placeholder="Choose a filename"
+                aria-label="configuration filename"
+              />
+              <span className="text-foreground-muted text-sm">.xml</span>
+            </div>
+            {filenameHasInvalidChars && (
+              <p className="mt-1 text-xs text-red-500">{String.raw`Filename cannot contain "/", "\" or ".."`}</p>
+            )}
           </div>
         </div>
 
         <div className="flex gap-2">
-          <Button onClick={handleAdd} disabled={loading} className="disabled:opacity-50">
+          <Button onClick={handleAdd} disabled={loading || !isFilenameValid} className="disabled:opacity-50">
             {loading ? 'Adding...' : `Add ${displayFilename || 'configuration file'} to ${currentConfiguration.name}`}
           </Button>
 

@@ -4,6 +4,7 @@ import Button from '~/components/inputs/button'
 import CloseButton from '~/components/inputs/close-button'
 import Input from '~/components/inputs/input'
 import { filesystemService } from '~/services/filesystem-service'
+import { joinPath } from '~/utils/path-utils'
 
 type CloneProjectModalProperties = {
   isLocal: boolean
@@ -39,6 +40,9 @@ export default function CloneConfigurationModal({
     .pop()
     ?.replace(/\.git$/i, '')
 
+  const targetName = repoName || 'cloned-project'
+  const targetPath = location ? joinPath(location, targetName) : targetName
+
   const handleClone = () => {
     if (!repoUrl.trim()) return
     if (isLocal && !location) return
@@ -53,7 +57,7 @@ export default function CloneConfigurationModal({
       finalPath = location ? `${location}/${name}` : name
     }
 
-    onClone(repoUrl.trim(), finalPath, token)
+    onClone(repoUrl.trim(), finalPath, token || undefined)
     handleClose()
   }
 
@@ -113,14 +117,7 @@ export default function CloneConfigurationModal({
             </div>
           )}
 
-          {repoName && (
-            <p className="text-foreground-muted mb-4 text-xs">
-              Will clone to:{' '}
-              {isLocal
-                ? `${location}${location.includes('/') ? '/' : '\\'}${repoName}`
-                : `${location ? `${location}/` : ''}${repoName}`}
-            </p>
-          )}
+          {repoName && <p className="text-foreground-muted mb-4 text-xs">Will clone to: {targetPath}</p>}
 
           <div className="flex gap-2">
             <Button
