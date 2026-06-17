@@ -63,8 +63,6 @@ public class ConfigurationService {
 		}
 
 		String content = fileSystemStorage.readFile(filePath.toString());
-		// Repair configurations that were saved with undeclared flow:* layout metadata (e.g. <Module>
-		// roots) so the studio can parse and open their adapters again.
 		content = XmlConfigurationUtils.repairFlowNamespace(content);
 		return new ConfigurationDTO(filepath, content);
 	}

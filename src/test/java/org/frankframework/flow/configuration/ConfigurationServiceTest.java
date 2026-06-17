@@ -215,8 +215,6 @@ class ConfigurationServiceTest {
 		stubToAbsolutePath();
 		stubReadFile();
 
-		// A configuration previously corrupted by the studio: flow:* layout metadata but no
-		// xmlns:flow declaration. Reading it must heal it so the adapter can be opened again.
 		Path file = tempDir.resolve("config.xml");
 		Files.writeString(
 				file,

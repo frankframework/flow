@@ -4,6 +4,8 @@ import static org.junit.Assert.assertNull;
 import static org.junit.jupiter.api.Assertions.*;
 
 import javax.xml.parsers.DocumentBuilderFactory;
+
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -78,15 +80,13 @@ class XmlConfigurationUtilsTest {
 
 	@Test
 	void insertFlowNamespace_returnsNullForNullInput() throws Exception {
-		assertNull(XmlConfigurationUtils.insertFlowNamespace(null));
+		Assertions.assertNull(XmlConfigurationUtils.insertFlowNamespace(null));
 	}
 
 	@Test
 	void insertFlowNamespace_returnsNullForBlankInput() throws Exception {
-		assertNull(XmlConfigurationUtils.insertFlowNamespace("   "));
+		Assertions.assertNull(XmlConfigurationUtils.insertFlowNamespace("   "));
 	}
-
-	// ── repairFlowNamespace ──
 
 	@Test
 	void repairFlowNamespace_addsNamespaceToModuleRootWithUndeclaredPrefix() {
@@ -122,6 +122,6 @@ class XmlConfigurationUtilsTest {
 
 	@Test
 	void repairFlowNamespace_returnsNullForNullInput() {
-		assertNull(XmlConfigurationUtils.repairFlowNamespace(null));
+		Assertions.assertNull(XmlConfigurationUtils.repairFlowNamespace(null));
 	}
 }
