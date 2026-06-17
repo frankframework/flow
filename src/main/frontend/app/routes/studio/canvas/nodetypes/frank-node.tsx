@@ -19,6 +19,8 @@ import { getElementTypeFromName } from '~/routes/studio/node-translator-module'
 import { useSettingsStore } from '~/stores/settings-store'
 import { useFFDoc } from '@frankframework/doc-library-react'
 import HandleMenu from './components/handle-menu'
+import { NodeHeader } from './components/node-header'
+import { NodeChildrenContainer } from './components/node-children-container'
 import { ChildNodeComponent, type ChildNode } from './child-node'
 import { findChildRecursive } from '~/stores/child-utilities'
 import { canAcceptChildStatic } from './node-utilities'
@@ -539,22 +541,12 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
         onDragLeave={handleDragLeave}
         onDrop={handleDropOnNode}
       >
-        <div
-          className={`border-b-border relative box-border w-full rounded-t-md border-b p-1`}
-          style={{
-            background: gradientEnabled
-              ? `radial-gradient(
-                ellipse farthest-corner at 20% 20%,
-                var(${colorVariable}) 0%,
-                var(--color-background) 100%
-              )`
-              : `var(${colorVariable})`,
-          }}
+        <NodeHeader
+          subtype={properties.data.subtype}
+          name={properties.data.name}
+          colorVariable={colorVariable}
+          gradientEnabled={gradientEnabled}
         >
-          <h1 className="text-foreground font-bold">{properties.data.subtype}</h1>
-          <p className="text-foreground overflow-hidden text-sm text-ellipsis whitespace-nowrap">
-            {properties.data.name}
-          </p>
           {isDeprecated && frankElement?.deprecated && (
             <>
               <div
@@ -574,7 +566,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
               {showDeprecated && <DeprecatedPopover deprecated={frankElement.deprecated} anchorRect={anchorRect} />}
             </>
           )}
-        </div>
+        </NodeHeader>
         {properties.data.attributes &&
           Object.entries(properties.data.attributes).map(([key, value]) => (
             <div key={key} className="my-1 w-full max-w-full px-1">
@@ -584,7 +576,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
           ))}
         {(properties.data.children.length > 0 || dragOver || canDropDraggedElement) && (
           <div className="w-full p-4">
-            <div className="border-border/40 bg-background w-full rounded-md border p-4 inset-shadow-sm">
+            <NodeChildrenContainer>
               {properties.data.children.map((child) => (
                 <div key={child.id} data-child-id={child.id} className="child-drop-zone">
                   <ChildNodeComponent
@@ -626,7 +618,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
                   </div>
                 </div>
               )}
-            </div>
+            </NodeChildrenContainer>
           </div>
         )}
         {/* Show missing mandatory children if the node is missing any */}

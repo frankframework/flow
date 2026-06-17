@@ -2,6 +2,7 @@ import { Handle, type Node, type NodeProps, NodeResizeControl, Position } from '
 import { ResizeIcon } from '~/routes/studio/canvas/nodetypes/frank-node'
 import { FlowConfig } from '~/routes/studio/canvas/flow.config'
 import { useSettingsStore } from '~/stores/settings-store'
+import { NodeHeader } from './components/node-header'
 
 export type ExitNode = Node<{
   subtype: string
@@ -38,21 +39,12 @@ export default function ExitNodeComponent(properties: NodeProps<ExitNode>) {
           minWidth: `${minNodeWidth}px`,
         }}
       >
-        <div
-          className="border-b-border box-border w-full rounded-t-md border-b p-1"
-          style={{
-            background: gradientEnabled
-              ? `radial-gradient(
-                ellipse farthest-corner at 20% 20%,
-                var(--type-exit) 0%,
-                var(--color-background) 100%
-              )`
-              : `var(--type-exit)`,
-          }}
-        >
-          <h1 className="font-bold">{properties.data.subtype}</h1>
-          <p className="overflow-hidden text-sm overflow-ellipsis whitespace-nowrap">{properties.data.name}</p>
-        </div>
+        <NodeHeader
+          subtype={properties.data.subtype}
+          name={properties.data.name}
+          colorVariable="--type-exit"
+          gradientEnabled={gradientEnabled}
+        />
       </div>
       <Handle
         type="target"
