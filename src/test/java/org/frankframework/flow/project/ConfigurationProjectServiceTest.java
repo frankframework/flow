@@ -1,5 +1,6 @@
 package org.frankframework.flow.project;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -20,6 +21,7 @@ import java.util.List;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 import org.frankframework.flow.exception.ApiException;
 import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.frankframework.flow.filesystem.FilesystemEntry;
@@ -33,7 +35,6 @@ import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.web.multipart.MultipartFile;
 
 @ExtendWith(MockitoExtension.class)
 public class ConfigurationProjectServiceTest {
@@ -88,6 +89,23 @@ public class ConfigurationProjectServiceTest {
 		})
 				.when(fileSystemStorage)
 				.writeFile(anyString(), anyString());
+	}
+
+	private void stubCreateProjectDirectoryUnderTempDir() throws IOException {
+		when(fileSystemStorage.createProjectDirectory(anyString())).thenAnswer(invocation -> {
+			String dirName = invocation.getArgument(0);
+			Path projectDir = tempDir.resolve(Path.of(dirName).getFileName().toString());
+			Files.createDirectories(projectDir);
+			return projectDir;
+		});
+	}
+
+	private void stubToAbsolutePathUnderTempDir() {
+		when(fileSystemStorage.toAbsolutePath(anyString())).thenAnswer(invocation -> {
+			String pathStr = invocation.getArgument(0);
+			Path path = Path.of(pathStr);
+			return path.isAbsolute() ? path : tempDir.resolve(pathStr);
+		});
 	}
 
 	@Test
@@ -261,7 +279,7 @@ public class ConfigurationProjectServiceTest {
 	}
 
 	@Test
-	public void importProjectFromFilesSuccess() throws Exception {
+	public void importProjectFromZipSuccess() throws Exception {
 		when(fileSystemStorage.createProjectDirectory(anyString())).thenAnswer(invocation -> {
 			String dirName = invocation.getArgument(0);
 			Path dirPath = Path.of(dirName);
@@ -282,21 +300,12 @@ public class ConfigurationProjectServiceTest {
 
 		String projectName = "imported_project";
 
-		MockMultipartFile configFile = new MockMultipartFile(
-				"files",
-				"Configuration.xml",
-				"application/xml",
-				"<Configuration><Adapter name='TestAdapter'/></Configuration>".getBytes(StandardCharsets.UTF_8)
+		MockMultipartFile archive = zipArchive(
+				"src/main/configurations/Configuration.xml", "<Configuration><Adapter name='TestAdapter'/></Configuration>",
+				"src/main/resources/application.properties", "key=value"
 		);
 
-		MockMultipartFile propsFile = new MockMultipartFile(
-				"files", "application.properties", "text/plain", "key=value".getBytes(StandardCharsets.UTF_8));
-
-		List<MultipartFile> files = List.of(configFile, propsFile);
-		List<String> paths =
-				List.of("src/main/configurations/Configuration.xml", "src/main/resources/application.properties");
-
-		ConfigurationProject configurationProject = configurationProjectService.importProjectFromFiles(projectName, files, paths);
+		ConfigurationProject configurationProject = configurationProjectService.importProjectFromZip(projectName, archive);
 
 		assertNotNull(configurationProject);
 		assertEquals(projectName, configurationProject.getName());
@@ -313,7 +322,7 @@ public class ConfigurationProjectServiceTest {
 	}
 
 	@Test
-	void importProjectFromFilesRejectsPathTraversalWithDoubleDots() throws IOException {
+	void importProjectFromZipRejectsPathTraversalWithDoubleDots() throws IOException {
 		when(fileSystemStorage.createProjectDirectory(anyString())).thenAnswer(invocation -> {
 			String dirName = invocation.getArgument(0);
 			Path projectDir = tempDir.resolve(dirName);
@@ -323,19 +332,15 @@ public class ConfigurationProjectServiceTest {
 
 		String projectName = "traversal_project";
 
-		MockMultipartFile maliciousFile = new MockMultipartFile(
-				"files", "evil.xml", "application/xml", "<evil/>".getBytes(StandardCharsets.UTF_8));
+		MockMultipartFile archive = zipArchive("../../../etc/evil.xml", "<evil/>");
 
-		List<MultipartFile> files = List.of(maliciousFile);
-		List<String> paths = List.of("../../../etc/evil.xml");
-
-		SecurityException ex = assertThrows(SecurityException.class, () -> configurationProjectService.importProjectFromFiles(projectName, files, paths));
+		SecurityException ex = assertThrows(SecurityException.class, () -> configurationProjectService.importProjectFromZip(projectName, archive));
 
 		assertTrue(ex.getMessage().contains("Invalid file path"));
 	}
 
 	@Test
-	void importProjectFromFilesRejectsAbsolutePath() throws IOException {
+	void importProjectFromZipRejectsAbsolutePath() throws IOException {
 		when(fileSystemStorage.createProjectDirectory(anyString())).thenAnswer(invocation -> {
 			String dirName = invocation.getArgument(0);
 			Path projectDir = tempDir.resolve(dirName);
@@ -345,15 +350,241 @@ public class ConfigurationProjectServiceTest {
 
 		String projectName = "abs_path_project";
 
-		MockMultipartFile maliciousFile = new MockMultipartFile(
-				"files", "evil.xml", "application/xml", "<evil/>".getBytes(StandardCharsets.UTF_8));
+		MockMultipartFile archive = zipArchive("/etc/passwd", "root:x:0:0");
 
-		List<MultipartFile> files = List.of(maliciousFile);
-		List<String> paths = List.of("/etc/passwd");
-
-		SecurityException ex = assertThrows(SecurityException.class, () -> configurationProjectService.importProjectFromFiles(projectName, files, paths));
+		SecurityException ex = assertThrows(SecurityException.class, () -> configurationProjectService.importProjectFromZip(projectName, archive));
 
 		assertTrue(ex.getMessage().contains("Invalid file path"));
+	}
+
+	@Test
+	void importProjectFromZipWithEmptyArchiveCreatesEmptyProject() throws Exception {
+		stubCreateProjectDirectoryUnderTempDir();
+		stubToAbsolutePathUnderTempDir();
+
+		ConfigurationProject configurationProject =
+				configurationProjectService.importProjectFromZip("empty_archive_project", emptyZipArchive());
+
+		assertNotNull(configurationProject);
+		assertEquals("empty_archive_project", configurationProject.getName());
+
+		Path projectDir = tempDir.resolve("empty_archive_project");
+		assertTrue(Files.isDirectory(projectDir), "Project directory should be created even for an empty archive");
+		try (Stream<Path> files = Files.walk(projectDir)) {
+			assertEquals(0, files.filter(Files::isRegularFile).count(), "Empty archive should not produce any files");
+		}
+	}
+
+	@Test
+	void importProjectFromZipWritesEmptyFileEntry() throws Exception {
+		stubCreateProjectDirectoryUnderTempDir();
+		stubToAbsolutePathUnderTempDir();
+
+		MockMultipartFile archive = zipArchive("src/main/configurations/Empty.xml", "");
+
+		configurationProjectService.importProjectFromZip("empty_file_project", archive);
+
+		Path emptyFile = tempDir.resolve("empty_file_project/src/main/configurations/Empty.xml");
+		assertTrue(Files.exists(emptyFile), "An empty file entry should still be written to disk");
+		assertEquals(0, Files.size(emptyFile), "An empty file entry should be zero bytes");
+	}
+
+	@Test
+	void importProjectFromZipCreatesNestedDirectoryStructure() throws Exception {
+		stubCreateProjectDirectoryUnderTempDir();
+		stubToAbsolutePathUnderTempDir();
+
+		MockMultipartFile archive = zipArchive("a/b/c/Deep.xml", "<deep/>");
+
+		configurationProjectService.importProjectFromZip("nested_project", archive);
+
+		Path deepFile = tempDir.resolve("nested_project/a/b/c/Deep.xml");
+		assertTrue(Files.exists(deepFile), "Missing parent directories should be created for deep entries");
+		assertEquals("<deep/>", Files.readString(deepFile, StandardCharsets.UTF_8));
+	}
+
+	@Test
+	void importProjectFromZipCreatesExplicitDirectoryEntries() throws Exception {
+		stubCreateProjectDirectoryUnderTempDir();
+		stubToAbsolutePathUnderTempDir();
+
+		MockMultipartFile archive = zipArchiveWithDirectory("emptyfolder/", "emptyfolder/keep.xml", "<keep/>");
+
+		configurationProjectService.importProjectFromZip("dir_entry_project", archive);
+
+		Path dir = tempDir.resolve("dir_entry_project/emptyfolder");
+		assertTrue(Files.isDirectory(dir), "Explicit directory entries should be created");
+		assertTrue(Files.exists(dir.resolve("keep.xml")), "Files inside an explicit directory entry should be written");
+	}
+
+	@Test
+	void importProjectFromZipPreservesBinaryContentByteForByte() throws Exception {
+		stubCreateProjectDirectoryUnderTempDir();
+		stubToAbsolutePathUnderTempDir();
+
+		byte[] binary = {0, 1, 2, (byte) 0xFF, (byte) 0xFE, 65, 66, 0, 67};
+		MockMultipartFile archive = binaryZipArchive("assets/blob.bin", binary);
+
+		configurationProjectService.importProjectFromZip("binary_project", archive);
+
+		Path blob = tempDir.resolve("binary_project/assets/blob.bin");
+		assertTrue(Files.exists(blob));
+		assertArrayEquals(binary, Files.readAllBytes(blob), "Binary content should be written byte-for-byte");
+	}
+
+	@Test
+	void importProjectFromZipWritesAllFilesFromMultiEntryArchive() throws Exception {
+		stubCreateProjectDirectoryUnderTempDir();
+		stubToAbsolutePathUnderTempDir();
+
+		MockMultipartFile archive = zipArchive(
+				"Configuration.xml", "<Configuration/>",
+				"src/main/resources/application.properties", "key=value",
+				"DeploymentSpecifics.properties", "env=test",
+				"README.md", "# Imported"
+		);
+
+		configurationProjectService.importProjectFromZip("multi_file_project", archive);
+
+		Path projectDir = tempDir.resolve("multi_file_project");
+		assertTrue(Files.exists(projectDir.resolve("Configuration.xml")));
+		assertTrue(Files.exists(projectDir.resolve("src/main/resources/application.properties")));
+		assertTrue(Files.exists(projectDir.resolve("DeploymentSpecifics.properties")));
+		assertTrue(Files.exists(projectDir.resolve("README.md")));
+	}
+
+	@Test
+	void importedProjectIsRetrievableFromCacheAfterImport() throws Exception {
+		stubCreateProjectDirectoryUnderTempDir();
+		stubToAbsolutePathUnderTempDir();
+
+		MockMultipartFile archive = zipArchive("Configuration.xml", "<Configuration/>");
+		configurationProjectService.importProjectFromZip("retrievable_project", archive);
+
+		ConfigurationProject retrieved = configurationProjectService.getProject("retrievable_project");
+		assertNotNull(retrieved, "An imported project should be cached and retrievable by name");
+		assertEquals("retrievable_project", retrieved.getName());
+	}
+
+	@Test
+	void importProjectFromZipRejectsArchiveExceedingMaxUncompressedSize() throws Exception {
+		stubCreateProjectDirectoryUnderTempDir();
+
+		ConfigurationProjectService limitedService =
+				new ConfigurationProjectService(fileSystemStorage, recentProjectsService, 16);
+
+		MockMultipartFile archive = zipArchive("big.bin", "a".repeat(64));
+
+		SecurityException ex = assertThrows(
+				SecurityException.class,
+				() -> limitedService.importProjectFromZip("too_large_project", archive));
+
+		assertTrue(ex.getMessage().contains("exceeds the maximum allowed size"));
+	}
+
+	@Test
+	void importProjectFromZipEnforcesLimitAcrossMultipleEntries() throws Exception {
+		stubCreateProjectDirectoryUnderTempDir();
+
+		ConfigurationProjectService limitedService =
+				new ConfigurationProjectService(fileSystemStorage, recentProjectsService, 100);
+
+		// Each entry is within the limit on its own, but together they exceed it.
+		MockMultipartFile archive = zipArchive(
+				"part1.bin", "a".repeat(60),
+				"part2.bin", "b".repeat(60)
+		);
+
+		SecurityException ex = assertThrows(
+				SecurityException.class,
+				() -> limitedService.importProjectFromZip("cumulative_too_large_project", archive));
+
+		assertTrue(ex.getMessage().contains("exceeds the maximum allowed size"));
+	}
+
+	@Test
+	void importProjectFromZipAllowsArchiveExactlyAtMaxUncompressedSize() throws Exception {
+		stubCreateProjectDirectoryUnderTempDir();
+		stubToAbsolutePathUnderTempDir();
+
+		long limit = 64;
+		ConfigurationProjectService limitedService =
+				new ConfigurationProjectService(fileSystemStorage, recentProjectsService, limit);
+
+		MockMultipartFile archive = zipArchive("exact.bin", "a".repeat((int) limit));
+
+		ConfigurationProject configurationProject = limitedService.importProjectFromZip("boundary_project", archive);
+
+		assertNotNull(configurationProject);
+		Path written = tempDir.resolve("boundary_project/exact.bin");
+		assertEquals(limit, Files.size(written), "Content exactly at the limit should be accepted");
+	}
+
+	@Test
+	void importProjectFromZipRejectsNestedPathTraversal() throws Exception {
+		stubCreateProjectDirectoryUnderTempDir();
+
+		MockMultipartFile archive = zipArchive("config/../../../evil.xml", "<evil/>");
+
+		SecurityException ex = assertThrows(
+				SecurityException.class,
+				() -> configurationProjectService.importProjectFromZip("nested_traversal_project", archive));
+
+		assertTrue(ex.getMessage().contains("Invalid file path"));
+	}
+
+	@Test
+	void importProjectFromZipRejectsBackslashPathTraversal() throws Exception {
+		stubCreateProjectDirectoryUnderTempDir();
+
+		MockMultipartFile archive = zipArchive("..\\..\\evil.xml", "<evil/>");
+
+		SecurityException ex = assertThrows(
+				SecurityException.class,
+				() -> configurationProjectService.importProjectFromZip("backslash_traversal_project", archive));
+
+		assertTrue(ex.getMessage().contains("Invalid file path"));
+	}
+
+	private static MockMultipartFile zipArchive(String... pathThenContent) throws IOException {
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		try (ZipOutputStream zos = new ZipOutputStream(baos)) {
+			for (int i = 0; i < pathThenContent.length; i += 2) {
+				zos.putNextEntry(new ZipEntry(pathThenContent[i]));
+				zos.write(pathThenContent[i + 1].getBytes(StandardCharsets.UTF_8));
+				zos.closeEntry();
+			}
+		}
+		return new MockMultipartFile("file", "import.zip", "application/zip", baos.toByteArray());
+	}
+
+	private static MockMultipartFile emptyZipArchive() throws IOException {
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		ZipOutputStream zos = new ZipOutputStream(baos);
+		zos.close();
+		return new MockMultipartFile("file", "empty-import.zip", "application/zip", baos.toByteArray());
+	}
+
+	private static MockMultipartFile binaryZipArchive(String entryName, byte[] content) throws IOException {
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		try (ZipOutputStream zos = new ZipOutputStream(baos)) {
+			zos.putNextEntry(new ZipEntry(entryName));
+			zos.write(content);
+			zos.closeEntry();
+		}
+		return new MockMultipartFile("file", "binary-import.zip", "application/zip", baos.toByteArray());
+	}
+
+	private static MockMultipartFile zipArchiveWithDirectory(String directoryEntry, String fileEntry, String fileContent) throws IOException {
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		try (ZipOutputStream zos = new ZipOutputStream(baos)) {
+			zos.putNextEntry(new ZipEntry(directoryEntry));
+			zos.closeEntry();
+			zos.putNextEntry(new ZipEntry(fileEntry));
+			zos.write(fileContent.getBytes(StandardCharsets.UTF_8));
+			zos.closeEntry();
+		}
+		return new MockMultipartFile("file", "dir-import.zip", "application/zip", baos.toByteArray());
 	}
 
 	@Test

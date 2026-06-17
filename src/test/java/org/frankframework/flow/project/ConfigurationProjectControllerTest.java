@@ -1,12 +1,12 @@
 package org.frankframework.flow.project;
 
-import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -313,38 +313,67 @@ class ConfigurationProjectControllerTest {
 		when(configurationProject.getRootPath()).thenReturn("/path/to/ImportedProject");
 		when(configurationProject.getConfigurationFiles()).thenReturn(new ArrayList<>());
 
-		when(configurationProjectService.importProjectFromFiles(eq("ImportedProject"), anyList(), anyList()))
+		when(configurationProjectService.importProjectFromZip(eq("ImportedProject"), any()))
 				.thenReturn(configurationProject);
 
-		MockMultipartFile file1 = new MockMultipartFile(
-				"files", "ConfigurationFile.xml", MediaType.APPLICATION_XML_VALUE, "<config>test</config>".getBytes());
-		MockMultipartFile file2 =
-				new MockMultipartFile("files", "pom.xml", MediaType.APPLICATION_XML_VALUE, "<project/>".getBytes());
+		MockMultipartFile zip = new MockMultipartFile(
+				"file", "ImportedProject.zip", "application/zip", "fake-zip-bytes".getBytes());
 
 		mockMvc.perform(multipart("/api/projects/import")
-						.file(file1)
-						.file(file2)
-						.param("paths", "src/main/configurations/ConfigurationFile.xml", "pom.xml")
+						.file(zip)
 						.param("projectName", "ImportedProject"))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.name").value("ImportedProject"))
 				.andExpect(jsonPath("$.rootPath").value("/path/to/ImportedProject"));
 
-		verify(configurationProjectService).importProjectFromFiles(eq("ImportedProject"), anyList(), anyList());
+		verify(configurationProjectService).importProjectFromZip(eq("ImportedProject"), any());
 		verify(recentProjectsService).addRecentProject("ImportedProject", "/path/to/ImportedProject");
 	}
 
 	@Test
-	void importProjectWithMismatchedFilesAndPathsReturnsBadRequest() throws Exception {
-		MockMultipartFile file1 = new MockMultipartFile(
-				"files", "ConfigurationFile.xml", MediaType.APPLICATION_XML_VALUE, "<config>test</config>".getBytes());
+	void importProjectWithEmptyFileReturnsBadRequest() throws Exception {
+		MockMultipartFile emptyZip = new MockMultipartFile("file", "empty.zip", "application/zip", new byte[0]);
 
 		mockMvc.perform(multipart("/api/projects/import")
-						.file(file1)
-						.param("paths", "path1.xml", "path2.xml")
+						.file(emptyZip)
 						.param("projectName", "TestProject"))
 				.andExpect(status().isBadRequest());
 
-		verify(configurationProjectService, never()).importProjectFromFiles(anyString(), anyList(), anyList());
+		verify(configurationProjectService, never()).importProjectFromZip(anyString(), any());
+	}
+
+	@Test
+	void importProjectWithoutProjectNameParamReturnsBadRequest() throws Exception {
+		MockMultipartFile zip = new MockMultipartFile("file", "noname.zip", "application/zip", "zip-bytes".getBytes());
+
+		mockMvc.perform(multipart("/api/projects/import").file(zip))
+				.andExpect(status().isBadRequest());
+
+		verify(configurationProjectService, never()).importProjectFromZip(anyString(), any());
+	}
+
+	@Test
+	void importProjectWithoutFilePartReturnsBadRequest() throws Exception {
+		mockMvc.perform(multipart("/api/projects/import").param("projectName", "NoFileProject"))
+				.andExpect(status().isBadRequest());
+
+		verify(configurationProjectService, never()).importProjectFromZip(anyString(), any());
+	}
+
+	@Test
+	void importProjectWhenServiceThrowsIOExceptionReturnsServerError() throws Exception {
+		when(configurationProjectService.importProjectFromZip(eq("FailingProject"), any()))
+				.thenThrow(new IOException("disk full"));
+
+		MockMultipartFile zip = new MockMultipartFile(
+				"file", "FailingProject.zip", "application/zip", "fake-zip-bytes".getBytes());
+
+		mockMvc.perform(multipart("/api/projects/import")
+						.file(zip)
+						.param("projectName", "FailingProject"))
+				.andExpect(status().isInternalServerError());
+
+		verify(configurationProjectService).importProjectFromZip(eq("FailingProject"), any());
+		verify(recentProjectsService, never()).addRecentProject(anyString(), anyString());
 	}
 }

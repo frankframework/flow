@@ -1,5 +1,19 @@
+import { zip } from 'fflate'
 import { apiFetch, apiUrl } from '~/utils/api'
 import type { ConfigurationProject } from '~/types/project.types'
+
+/**
+ * Upper bound for the zipped import, kept in sync with the nginx `client_max_body_size`.
+ * The check runs on the compressed archive, so the original folder may be considerably larger.
+ */
+export const MAX_IMPORT_ZIP_BYTES = 80 * 1024 * 1024
+
+export class ImportTooLargeError extends Error {
+  constructor(public readonly zipBytes: number) {
+    super('Configuration is too large to import')
+    this.name = 'ImportTooLargeError'
+  }
+}
 
 export async function fetchProject(name: string): Promise<ConfigurationProject> {
   return apiFetch<ConfigurationProject>(`/projects/${encodeURIComponent(name)}`)
@@ -53,20 +67,36 @@ export async function exportProject(projectName: string): Promise<void> {
 }
 
 export async function importProjectFolder(files: FileList): Promise<ConfigurationProject> {
-  const formData = new FormData()
+  const projectName = files[0].webkitRelativePath.split('/')[0]
 
-  const firstPath = files[0].webkitRelativePath
-  const projectName = firstPath.split('/')[0]
-  formData.append('projectName', projectName)
-
+  const entries: Record<string, Uint8Array> = {}
   for (const file of files) {
-    formData.append('files', file)
     const relativePath = file.webkitRelativePath.split('/').slice(1).join('/')
-    formData.append('paths', relativePath)
+    if (!relativePath) continue
+    entries[relativePath] = new Uint8Array(await file.arrayBuffer())
   }
+
+  const archive = await zipAsync(entries)
+
+  if (archive.byteLength > MAX_IMPORT_ZIP_BYTES) {
+    throw new ImportTooLargeError(archive.byteLength)
+  }
+
+  const formData = new FormData()
+  formData.append('projectName', projectName)
+  formData.append('file', new Blob([archive], { type: 'application/zip' }), `${projectName}.zip`)
 
   return apiFetch<ConfigurationProject>('/projects/import', {
     method: 'POST',
     body: formData,
+  })
+}
+
+function zipAsync(entries: Record<string, Uint8Array>): Promise<Uint8Array<ArrayBuffer>> {
+  return new Promise((resolve, reject) => {
+    zip(entries, { level: 6 }, (error, data) => {
+      if (error) reject(error)
+      else resolve(data as Uint8Array<ArrayBuffer>)
+    })
   })
 }

@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 import lombok.extern.log4j.Log4j2;
 import org.eclipse.jgit.api.CloneCommand;
@@ -35,15 +36,22 @@ import org.springframework.web.multipart.MultipartFile;
 @Log4j2
 @Service
 public class ConfigurationProjectService {
+	private static final long DEFAULT_MAX_UNCOMPRESSED_IMPORT_BYTES = 500L * 1024 * 1024;
+
 	private final FileSystemStorage fileSystemStorage;
 	private final RecentProjectsService recentProjectsService;
 
-	// Cache is now ONLY for lightweight Project state (Tokens, Filters), NOT files.
+	private final long maxUncompressedImportBytes;
 	private final Map<String, ConfigurationProject> projectCache = new ConcurrentHashMap<>();
 
 	public ConfigurationProjectService(FileSystemStorage fileSystemStorage, @Lazy RecentProjectsService recentProjectsService) {
+		this(fileSystemStorage, recentProjectsService, DEFAULT_MAX_UNCOMPRESSED_IMPORT_BYTES);
+	}
+
+	ConfigurationProjectService(FileSystemStorage fileSystemStorage, RecentProjectsService recentProjectsService, long maxUncompressedImportBytes) {
 		this.fileSystemStorage = fileSystemStorage;
 		this.recentProjectsService = recentProjectsService;
+		this.maxUncompressedImportBytes = maxUncompressedImportBytes;
 	}
 
 	private static void validatePathSafety(Path path) {
@@ -209,26 +217,66 @@ public class ConfigurationProjectService {
 		}
 	}
 
-	public ConfigurationProject importProjectFromFiles(String projectName, List<MultipartFile> files, List<String> paths) throws IOException {
+	public ConfigurationProject importProjectFromZip(String projectName, MultipartFile zipFile) throws IOException {
+		log.info("Importing project \"{}\" from uploaded archive \"{}\" ({} bytes)",
+				projectName, zipFile.getOriginalFilename(), zipFile.getSize());
+
 		Path projectDir = fileSystemStorage.createProjectDirectory(projectName);
 
-		for (int i = 0; i < files.size(); i++) {
-			String relativePath = PathUtils.toForwardSlash(paths.get(i));
+		int fileCount = 0;
+		long totalUncompressedBytes = 0;
+		try (ZipInputStream zipInputStream = new ZipInputStream(zipFile.getInputStream())) {
+			ZipEntry entry;
+			while ((entry = zipInputStream.getNextEntry()) != null) {
+				String relativePath = PathUtils.toForwardSlash(entry.getName());
 
-			if (relativePath.contains("..") || relativePath.startsWith("/")) {
-				throw new SecurityException("Invalid file path: " + relativePath);
+				if (relativePath.contains("..") || relativePath.startsWith("/")) {
+					log.warn("Rejected import of project \"{}\": invalid file path \"{}\"", projectName, relativePath);
+					throw new SecurityException("Invalid file path: " + relativePath);
+				}
+
+				Path targetPath = projectDir.resolve(relativePath).normalize();
+				if (!targetPath.startsWith(projectDir)) {
+					log.warn("Rejected import of project \"{}\": file path escapes project directory \"{}\"", projectName, relativePath);
+					throw new SecurityException("File path escapes project directory: " + relativePath);
+				}
+
+				if (entry.isDirectory()) {
+					Files.createDirectories(targetPath);
+				} else {
+					Files.createDirectories(targetPath.getParent());
+					totalUncompressedBytes += copyZipEntry(zipInputStream, targetPath, totalUncompressedBytes);
+					fileCount++;
+					log.trace("Extracted import entry \"{}\" for project \"{}\"", relativePath, projectName);
+				}
+
+				zipInputStream.closeEntry();
 			}
-
-			Path targetPath = projectDir.resolve(relativePath).normalize();
-			if (!targetPath.startsWith(projectDir)) {
-				throw new SecurityException("File path escapes project directory: " + relativePath);
-			}
-
-			Files.createDirectories(targetPath.getParent());
-			files.get(i).transferTo(targetPath);
+		} catch (IOException | SecurityException exception) {
+			log.error("Failed to import project \"{}\" from uploaded archive", projectName, exception);
+			throw exception;
 		}
 
+		log.info("Imported project \"{}\": extracted {} files ({} uncompressed bytes) to {}",
+				projectName, fileCount, totalUncompressedBytes, projectDir);
+
 		return loadProjectAndCache(projectDir.toString());
+	}
+
+	private long copyZipEntry(ZipInputStream zipInputStream, Path targetPath, long bytesWrittenSoFar) throws IOException {
+		long entryBytes = 0;
+		byte[] buffer = new byte[8192];
+		try (OutputStream out = Files.newOutputStream(targetPath)) {
+			int read;
+			while ((read = zipInputStream.read(buffer)) != -1) {
+				entryBytes += read;
+				if (bytesWrittenSoFar + entryBytes > maxUncompressedImportBytes) {
+					throw new SecurityException("Decompressed import exceeds the maximum allowed size");
+				}
+				out.write(buffer, 0, read);
+			}
+		}
+		return entryBytes;
 	}
 
 	public ConfigurationProjectDTO toDto(ConfigurationProject configurationProject) {

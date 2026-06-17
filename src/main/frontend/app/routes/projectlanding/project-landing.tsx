@@ -23,10 +23,12 @@ import {
   createProject,
   exportProject,
   importProjectFolder,
+  ImportTooLargeError,
+  MAX_IMPORT_ZIP_BYTES,
   openProject,
 } from '~/services/project-service'
 import { useRecentProjects } from '~/hooks/use-projects'
-import { showErrorToast } from '~/components/toast'
+import { showErrorToast, showWarningToast } from '~/components/toast'
 
 export default function ProjectLanding() {
   const navigate = useNavigate()
@@ -178,7 +180,21 @@ export default function ProjectLanding() {
       openProjectAndNavigate(project)
       refetch()
     } catch (error) {
-      showErrorToast(error instanceof Error ? error.message : 'Failed to import project')
+      const limitMb = Math.round(MAX_IMPORT_ZIP_BYTES / (1024 * 1024))
+      if (error instanceof ImportTooLargeError) {
+        const sizeMb = (error.zipBytes / (1024 * 1024)).toFixed(1)
+        showWarningToast(
+          `This configuration is ${sizeMb} MB when zipped, which exceeds the ${limitMb} MB limit. Please import a smaller folder.`,
+          'Configuration too large',
+        )
+      } else if (error instanceof ApiError && error.httpCode === 413) {
+        showWarningToast(
+          `This configuration is too large to upload (over ${limitMb} MB). Please import a smaller folder.`,
+          'Configuration too large',
+        )
+      } else {
+        showErrorToast(error instanceof Error ? error.message : 'Failed to import project')
+      }
     } finally {
       setIsOpeningProject(false)
     }
