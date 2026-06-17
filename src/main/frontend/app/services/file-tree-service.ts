@@ -13,12 +13,22 @@ export async function fetchProjectRootTree(projectName: string, signal?: AbortSi
   return apiFetch<FileTreeNode>(getTreeUrl(projectName), { signal })
 }
 
-export async function fetchDirectoryByPath(
+export async function fetchEditorDirectoryByPath(
   projectName: string,
   path: string,
   signal?: AbortSignal,
 ): Promise<FileTreeNode> {
-  return apiFetch<FileTreeNode>(`${getTreeUrl(projectName)}/directory?path=${encodeURIComponent(path)}`, {
+  return apiFetch<FileTreeNode>(`${getTreeUrl(projectName)}/editor/directory?path=${encodeURIComponent(path)}`, {
+    signal,
+  })
+}
+
+export async function fetchStudioDirectoryByPath(
+  projectName: string,
+  path: string,
+  signal?: AbortSignal,
+): Promise<FileTreeNode> {
+  return apiFetch<FileTreeNode>(`${getTreeUrl(projectName)}/studio/directory?path=${encodeURIComponent(path)}`, {
     signal,
   })
 }

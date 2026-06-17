@@ -70,10 +70,15 @@ public class FileTreeService {
 		return buildShallowTree(projectDirectory.dirPath, projectDirectory.relativizeRoot, projectDirectory.useRelativePaths);
 	}
 
+	public FileTreeNode getShallowStudioDirectoryTree(String projectName, String directoryPath) throws IOException {
+		return filterStudioTree(getShallowDirectoryTree(projectName, directoryPath));
+	}
+
 	public FileTreeNode getShallowConfigurationsDirectoryTree(String projectName) throws IOException {
 		try {
 			ConfigurationDirectory configurationDirectory = getConfigurationsDirectory(projectName);
-			return buildShallowTree(configurationDirectory.directoryPath, configurationDirectory.relativizeRoot, configurationDirectory.useRelativePaths);
+			FileTreeNode tree = buildShallowTree(configurationDirectory.directoryPath, configurationDirectory.relativizeRoot, configurationDirectory.useRelativePaths);
+			return filterStudioTree(tree);
 		} catch (ApiException _) {
 			throw new IllegalArgumentException("Configurations directory does not exist: " + projectName);
 		}
@@ -82,7 +87,8 @@ public class FileTreeService {
 	public FileTreeNode getConfigurationsDirectoryTree(String projectName) throws IOException {
 		try {
 			ConfigurationDirectory configurationDirectory = getConfigurationsDirectory(projectName);
-			return buildTree(configurationDirectory.directoryPath, configurationDirectory.relativizeRoot, configurationDirectory.useRelativePaths);
+			FileTreeNode tree = buildTree(configurationDirectory.directoryPath, configurationDirectory.relativizeRoot, configurationDirectory.useRelativePaths);
+			return filterStudioTree(tree);
 		} catch (ApiException _) {
 			throw new IllegalArgumentException("Configurations directory does not exist: " + projectName);
 		}
@@ -157,6 +163,45 @@ public class FileTreeService {
 		boolean useRelativePaths = !fileSystemStorage.isLocalEnvironment();
 		Path relativizeRoot = useRelativePaths ? fileSystemStorage.toAbsolutePath("") : configurationPath;
 		return new ConfigurationDirectory(configurationPath, relativizeRoot, useRelativePaths);
+	}
+
+	/**
+	 * Prunes a tree to the nodes relevant to the Studio. Only configuration files are
+	 * kept, and a directory survives only when it (recursively) contains at least one configuration
+	 * file; directories that would end up empty are dropped so the Studio is not cluttered with folders
+	 * that hold no adapters. The supplied root node is always returned so the Studio still has a tree to
+	 * render, even when it ends up without any children.
+	 */
+	private FileTreeNode filterStudioTree(FileTreeNode root) {
+		if (root.getType() == NodeType.DIRECTORY && root.getChildren() != null) {
+			root.setChildren(pruneStudioChildren(root.getChildren()));
+		}
+		return root;
+	}
+
+	private List<FileTreeNode> pruneStudioChildren(List<FileTreeNode> children) {
+		List<FileTreeNode> kept = new ArrayList<>();
+		for (FileTreeNode child : children) {
+			if (keepStudioNode(child)) {
+				kept.add(child);
+			}
+		}
+		return kept;
+	}
+
+	private boolean keepStudioNode(FileTreeNode node) {
+		if (node.getType() == NodeType.FILE) {
+			return isStudioConfigurationFile(node.getName());
+		}
+		if (node.getChildren() == null) {
+			return true;
+		}
+		node.setChildren(pruneStudioChildren(node.getChildren()));
+		return !node.getChildren().isEmpty();
+	}
+
+	private boolean isStudioConfigurationFile(String fileName) {
+		return fileName.toLowerCase().endsWith(".xml");
 	}
 
 	private List<String> extractAdapterNames(Path xmlFile) {

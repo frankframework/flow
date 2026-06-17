@@ -87,11 +87,53 @@ class FileTreeControllerTest {
 	}
 
 	@Test
-	void getDirectoryContentRequiresPathParameter() throws Exception {
-		mockMvc.perform(get("/api/projects/MyProject/tree/directory"))
+	void getEditorDirectoryContentRequiresPathParameter() throws Exception {
+		mockMvc.perform(get("/api/projects/MyProject/tree/editor/directory"))
 				.andExpect(status().isBadRequest());
 
 		verify(fileTreeService, never()).getShallowDirectoryTree("MyProject", "");
+	}
+
+	@Test
+	void getStudioDirectoryContentRequiresPathParameter() throws Exception {
+		mockMvc.perform(get("/api/projects/MyProject/tree/studio/directory"))
+				.andExpect(status().isBadRequest());
+
+		verify(fileTreeService, never()).getShallowStudioDirectoryTree("MyProject", "");
+	}
+
+	@Test
+	void getEditorDirectoryContentReturnsUnfilteredTree() throws Exception {
+		FileTreeNode treeNode = new FileTreeNode();
+		treeNode.setName("MyConfig");
+		treeNode.setPath("configurations/MyConfig");
+		treeNode.setType(NodeType.DIRECTORY);
+
+		when(fileTreeService.getShallowDirectoryTree("MyProject", "configurations/MyConfig"))
+				.thenReturn(treeNode);
+
+		mockMvc.perform(get("/api/projects/MyProject/tree/editor/directory").param("path", "configurations/MyConfig"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.name").value("MyConfig"));
+
+		verify(fileTreeService).getShallowDirectoryTree("MyProject", "configurations/MyConfig");
+	}
+
+	@Test
+	void getStudioDirectoryContentReturnsFilteredTree() throws Exception {
+		FileTreeNode treeNode = new FileTreeNode();
+		treeNode.setName("MyConfig");
+		treeNode.setPath("configurations/MyConfig");
+		treeNode.setType(NodeType.DIRECTORY);
+
+		when(fileTreeService.getShallowStudioDirectoryTree("MyProject", "configurations/MyConfig"))
+				.thenReturn(treeNode);
+
+		mockMvc.perform(get("/api/projects/MyProject/tree/studio/directory").param("path", "configurations/MyConfig"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.name").value("MyConfig"));
+
+		verify(fileTreeService).getShallowStudioDirectoryTree("MyProject", "configurations/MyConfig");
 	}
 
 	@Test
