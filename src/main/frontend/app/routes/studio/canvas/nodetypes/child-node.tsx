@@ -192,17 +192,17 @@ export function ChildNodeComponent({
             : `var(--type-${child.type?.toLowerCase()})`,
         }}
       >
-        <h1 className="font-bold">{child.subtype}</h1>
-        <p className="overflow-hidden text-sm whitespace-nowrap">{child.name}</p>
+        <h1 className="font-bold break-words">{child.subtype}</h1>
+        <p className="overflow-hidden text-sm text-ellipsis whitespace-nowrap">{child.name}</p>
       </div>
 
       {/* Body */}
       <div className="child-node-body relative min-h-25 px-1 py-1">
         {child.attributes &&
           Object.entries(child.attributes).map(([key, value]) => (
-            <div key={key} className="my-1">
-              <p className="text-sm font-bold">{key}</p>
-              <p className="text-sm">{value}</p>
+            <div key={key} className="my-1 min-w-0">
+              <p className="overflow-hidden text-sm font-bold text-ellipsis whitespace-nowrap">{key}</p>
+              <p className="overflow-hidden text-sm text-ellipsis whitespace-nowrap">{value}</p>
             </div>
           ))}
 

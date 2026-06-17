@@ -44,6 +44,7 @@ export type FrankNodeType = Node<{
   sourceHandles: { type: string; index: number }[]
   attributes?: Record<string, string>
   children: ChildNode[]
+  manuallyResized?: boolean
 }> & {
   width?: number
   height?: number
@@ -51,6 +52,7 @@ export type FrankNodeType = Node<{
 
 export default function FrankNode(properties: NodeProps<FrankNodeType>) {
   const minNodeWidth = FlowConfig.NODE_DEFAULT_WIDTH
+  const maxNodeWidth = FlowConfig.NODE_MAX_WIDTH
   const minNodeHeight = FlowConfig.NODE_MIN_HEIGHT
   const type = properties.data.type.toLowerCase()
   const colorVariable = `--type-${type}`
@@ -106,7 +108,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
   const updateNodeInternals = useUpdateNodeInternals()
   const [isHandleMenuOpen, setIsHandleMenuOpen] = useState(false)
   const [handleMenuPosition, setHandleMenuPosition] = useState({ x: 0, y: 0 })
-  const [isManuallyResized, setIsManuallyResized] = useState(false)
+  const [isManuallyResized, setIsManuallyResized] = useState(properties.data.manuallyResized)
 
   const [dimensions, setDimensions] = useState({
     width: properties.width ?? minNodeWidth,
@@ -529,9 +531,10 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
         <ResizeIcon />
       </NodeResizeControl>
       <div
-        className={`bg-background border-border relative flex w-full flex-col items-center overflow-x-visible rounded-md border ${isManuallyResized ? 'h-full overflow-y-hidden' : 'overflow-y-visible'}`}
+        className={`bg-background border-border relative flex flex-col items-center overflow-x-visible rounded-md border ${isManuallyResized ? 'h-full w-full overflow-y-hidden' : 'overflow-y-visible'}`}
         style={{
           minWidth: `${minNodeWidth}px`,
+          ...(isManuallyResized ? {} : { width: 'max-content', maxWidth: `${maxNodeWidth}px` }),
           ...(properties.selected && { borderColor: `var(${colorVariable})` }),
         }}
         ref={containerReference}
@@ -540,7 +543,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
         onDrop={handleDropOnNode}
       >
         <div
-          className={`border-b-border relative box-border w-full rounded-t-md border-b p-1`}
+          className={`border-b-border relative box-border w-full min-w-0 rounded-t-md border-b p-1`}
           style={{
             background: gradientEnabled
               ? `radial-gradient(
@@ -551,7 +554,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
               : `var(${colorVariable})`,
           }}
         >
-          <h1 className="text-foreground font-bold">{properties.data.subtype}</h1>
+          <h1 className="text-foreground font-bold break-words">{properties.data.subtype}</h1>
           <p className="text-foreground overflow-hidden text-sm text-ellipsis whitespace-nowrap">
             {properties.data.name}
           </p>
@@ -577,13 +580,13 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
         </div>
         {properties.data.attributes &&
           Object.entries(properties.data.attributes).map(([key, value]) => (
-            <div key={key} className="my-1 w-full max-w-full px-1">
+            <div key={key} className="my-1 w-full max-w-full min-w-0 px-1">
               <p className="text-foreground overflow-hidden text-sm font-bold text-ellipsis whitespace-nowrap">{key}</p>
               <p className="text-foreground overflow-hidden text-sm text-ellipsis whitespace-nowrap">{value}</p>
             </div>
           ))}
         {(properties.data.children.length > 0 || dragOver || canDropDraggedElement) && (
-          <div className="w-full p-4">
+          <div className="w-full min-w-0 p-4">
             <div className="border-border bg-background w-full rounded-md p-4 shadow-[inset_0px_2px_4px_rgba(0,0,0,0.1)]">
               {properties.data.children.map((child) => (
                 <div key={child.id} data-child-id={child.id} className="child-drop-zone">
