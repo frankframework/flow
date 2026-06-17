@@ -1,10 +1,8 @@
 package org.frankframework.flow.utility;
 
-import static org.junit.Assert.assertNull;
 import static org.junit.jupiter.api.Assertions.*;
 
 import javax.xml.parsers.DocumentBuilderFactory;
-
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.w3c.dom.Document;
