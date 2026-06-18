@@ -560,11 +560,13 @@ function convertElementToNode(element: Element, idCounter: IdCounter, sourceHand
     usedClassName,
   )
 
+  const manuallyResized = height !== undefined
+
   return {
     id: thisId,
     type: 'frankNode',
     position: { x, y },
-    width,
+    width: manuallyResized ? width : undefined,
     height,
     data: {
       name,
@@ -573,6 +575,7 @@ function convertElementToNode(element: Element, idCounter: IdCounter, sourceHand
       children: convertChildren([...element.children], idCounter),
       sourceHandles,
       attributes: Object.keys(attributes).length > 0 ? attributes : undefined,
+      manuallyResized,
     },
   }
 }

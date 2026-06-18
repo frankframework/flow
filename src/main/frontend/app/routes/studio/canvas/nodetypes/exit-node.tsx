@@ -51,10 +51,11 @@ export default function ExitNodeComponent(properties: NodeProps<ExitNode>) {
         style={{
           minHeight: `${minNodeHeight}px`,
           minWidth: `${minNodeWidth}px`,
+          maxWidth: `${FlowConfig.NODE_MAX_WIDTH}px`,
         }}
       >
         <div
-          className="border-b-border box-border w-full rounded-t-md border-b p-1"
+          className="border-b-border box-border w-full min-w-0 rounded-t-md border-b p-1"
           style={{
             background: gradientEnabled
               ? `radial-gradient(
