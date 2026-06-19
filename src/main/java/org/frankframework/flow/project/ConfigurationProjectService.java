@@ -137,7 +137,7 @@ public class ConfigurationProjectService {
 		Path targetDir = fileSystemStorage.toAbsolutePath(localPath);
 
 		if (Files.exists(targetDir)) {
-			throw new ApiException("Project already exists at \"" + localPath + "\"");
+			throw new ApiException("Project already exists at \"" + localPath + "\"", HttpStatus.CONFLICT);
 		}
 
 		CloneCommand cloneCommand = Git.cloneRepository().setURI(repoUrl).setDirectory(targetDir.toFile());
