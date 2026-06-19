@@ -6,7 +6,6 @@ import Input from '~/components/inputs/input'
 import { filesystemService } from '~/services/filesystem-service'
 
 interface CloneProjectModalProperties {
-  isOpen: boolean
   isLocal: boolean
   onClose: () => void
   onClone: (repoUrl: string, localPath: string, token?: string) => void
@@ -14,7 +13,6 @@ interface CloneProjectModalProperties {
 }
 
 export default function CloneConfigurationModal({
-  isOpen,
   isLocal,
   onClose,
   onClone,
@@ -26,7 +24,6 @@ export default function CloneConfigurationModal({
   const [showPicker, setShowPicker] = useState(false)
 
   useEffect(() => {
-    if (!isOpen) return
     if (isLocal) {
       filesystemService
         .resolveNearestAccessiblePath(initialPath ?? '')
@@ -35,9 +32,7 @@ export default function CloneConfigurationModal({
       return
     }
     setLocation(initialPath ?? '')
-  }, [isOpen, isLocal, initialPath])
-
-  if (!isOpen) return null
+  }, [isLocal, initialPath])
 
   const repoName = repoUrl.split('/').pop()?.replace('.git', '')
 
@@ -138,15 +133,16 @@ export default function CloneConfigurationModal({
         </div>
       </div>
 
-      <DirectoryPicker
-        isOpen={showPicker}
-        onSelect={(path) => {
-          setLocation(path)
-          setShowPicker(false)
-        }}
-        onCancel={() => setShowPicker(false)}
-        initialPath={location}
-      />
+      {showPicker && (
+        <DirectoryPicker
+          onSelect={(path) => {
+            setLocation(path)
+            setShowPicker(false)
+          }}
+          onCancel={() => setShowPicker(false)}
+          initialPath={location}
+        />
+      )}
     </>
   )
 }

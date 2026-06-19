@@ -1,20 +1,18 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router'
 import FfIcon from '/icons/custom/ff!-icon.svg?react'
-import LibraryIcon from '/icons/solar/Library.svg?react'
+import ProjectList from '~/routes/projectlanding/project-list'
+import Sidebar from '~/routes/projectlanding/sidebar'
+import Toolbar from '~/routes/projectlanding/toolbar'
 import { fetchInstanceConfigurations, type FFConfiguration } from '~/services/frank-framework-service'
 import { useProjectStore } from '~/stores/project-store'
 import { ApiError } from '~/utils/api'
 import { logApiError } from '~/utils/logger'
 import { getParentPath, normalizePath } from '~/utils/path-utils'
 
-import ConfigurationRow from './configuration-row'
-import Search from '~/components/search/search'
-import ActionButton from './action-button'
 import NewConfigurationModal from './new-configuration-modal'
 import CloneConfigurationModal from './clone-configuration-modal'
 import DirectoryPicker from '~/components/directory-picker/directory-picker'
-import type { RecentConfigurationProject } from '~/types/project.types'
 import { fetchAppInfo } from '~/services/app-info-service'
 import { removeRecentProject } from '~/services/recent-project-service'
 import useTabStore from '~/stores/tab-store'
@@ -40,7 +38,7 @@ export default function ProjectLanding() {
   const [searchTerm, setSearchTerm] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isCloneModalOpen, setIsCloneModalOpen] = useState(false)
-  const [isOpenPickerOpen, setIsOpenPickerOpen] = useState(false)
+  const [isDirectoryPickerOpen, setIsDirectoryPickerOpen] = useState(false)
   const [isLocalEnvironment, setIsLocalEnvironment] = useState(true)
   const [rootLocationName, setRootLocationName] = useState('Computer')
   const [isOpeningProject, setIsOpeningProject] = useState(false)
@@ -114,7 +112,7 @@ export default function ProjectLanding() {
   )
 
   const onOpenFolder = async (selectedPath: string) => {
-    setIsOpenPickerOpen(false)
+    setIsDirectoryPickerOpen(false)
     await handleOpenProject(selectedPath)
   }
 
@@ -203,7 +201,7 @@ export default function ProjectLanding() {
           <Sidebar
             isLocal={isLocalEnvironment}
             onNewClick={() => setIsModalOpen(true)}
-            onOpenClick={() => setIsOpenPickerOpen(true)}
+            onOpenClick={() => setIsDirectoryPickerOpen(true)}
             onCloneClick={() => setIsCloneModalOpen(true)}
             onImportClick={() => importInputRef.current?.click()}
           />
@@ -227,20 +225,22 @@ export default function ProjectLanding() {
         </div>
       )}
 
-      <NewConfigurationModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onCreate={onCreateProject}
-        isLocal={isLocalEnvironment}
-        initialPath={getParentPath(lastRecentRootPath)}
-      />
-      <CloneConfigurationModal
-        isOpen={isCloneModalOpen}
-        isLocal={isLocalEnvironment}
-        onClose={() => setIsCloneModalOpen(false)}
-        onClone={onCloneProject}
-        initialPath={getParentPath(lastRecentRootPath)}
-      />
+      {isModalOpen && (
+        <NewConfigurationModal
+          onClose={() => setIsModalOpen(false)}
+          onCreate={onCreateProject}
+          isLocal={isLocalEnvironment}
+          initialPath={getParentPath(lastRecentRootPath)}
+        />
+      )}
+      {isCloneModalOpen && (
+        <CloneConfigurationModal
+          isLocal={isLocalEnvironment}
+          onClose={() => setIsCloneModalOpen(false)}
+          onClone={onCloneProject}
+          initialPath={getParentPath(lastRecentRootPath)}
+        />
+      )}
       {!isLocalEnvironment && (
         <input
           ref={importInputRef}
@@ -252,13 +252,14 @@ export default function ProjectLanding() {
           onChange={handleImportFolderChange}
         />
       )}
-      <DirectoryPicker
-        isOpen={isOpenPickerOpen}
-        onSelect={onOpenFolder}
-        onCancel={() => setIsOpenPickerOpen(false)}
-        rootLabel={rootLocationName}
-        initialPath={getParentPath(lastRecentRootPath)}
-      />
+      {isDirectoryPickerOpen && (
+        <DirectoryPicker
+          onSelect={onOpenFolder}
+          onCancel={() => setIsDirectoryPickerOpen(false)}
+          rootLabel={rootLocationName}
+          initialPath={getParentPath(lastRecentRootPath)}
+        />
+      )}
     </div>
   )
 }
@@ -270,107 +271,6 @@ const Header = () => (
       <h1 className="dark:text-foreground text-lg font-semibold text-black">Flow</h1>
     </div>
   </header>
-)
-
-const Sidebar = ({
-  isLocal,
-  onNewClick,
-  onOpenClick,
-  onCloneClick,
-  onImportClick,
-}: {
-  isLocal?: boolean
-  onNewClick: () => void
-  onOpenClick: () => void
-  onCloneClick: () => void
-  onImportClick: () => void
-}) => (
-  <nav className="border-border flex w-1/4 min-w-50 flex-col border-r p-3">
-    <ActionButton
-      label={isLocal ? 'Open Local Folder' : 'Open Workspace Configuration'}
-      onClick={onOpenClick}
-      className="text-start"
-    />
-    <ActionButton label="Clone Repository" onClick={onCloneClick} className="text-start" />
-    <ActionButton label="New Configuration" onClick={onNewClick} className="text-start" />
-    {!isLocal && <ActionButton label="Import Configuration Folder" onClick={onImportClick} className="text-start" />}
-  </nav>
-)
-
-const ProjectList = ({
-  projects,
-  isLocal,
-  onProjectClick,
-  onRemoveProject,
-  onExportProject,
-  frameworkInstanceName,
-  frameworkConfigurations,
-  isDiscovering,
-}: {
-  projects: RecentConfigurationProject[]
-  isLocal: boolean
-  onProjectClick: (rootPath: string) => void
-  onRemoveProject: (rootPath: string) => void
-  onExportProject: (projectName: string) => void
-  frameworkInstanceName: string
-  frameworkConfigurations: FFConfiguration[]
-  isDiscovering: boolean
-}) => (
-  <section className="h-full flex-1 overflow-y-auto p-4">
-    {frameworkConfigurations.length > 0 && (
-      <div className="mb-4">
-        <p className="text-foreground mb-2 text-xs font-semibold tracking-wider uppercase">Remote</p>
-        {frameworkConfigurations.map((configuration) => (
-          <div
-            key={configuration.name}
-            className="hover:bg-backdrop mb-2 flex w-full cursor-pointer items-center justify-between rounded px-3 py-2"
-          >
-            <div className="flex flex-col">
-              <div className="font-medium">{configuration.name}</div>
-              {configuration.filename && <p className="text-foreground-muted text-xs">{configuration.filename}</p>}
-            </div>
-            <span className="rounded bg-green-100 px-2 py-0.5 text-xs text-green-700">{frameworkInstanceName}</span>
-          </div>
-        ))}
-      </div>
-    )}
-    {isDiscovering && frameworkConfigurations.length === 0 && (
-      <p className="text-foreground-muted mb-2 text-xs italic">Scanning for remote instances...</p>
-    )}
-    {projects.length === 0 && frameworkConfigurations.length === 0 && !isDiscovering && (
-      <p className="text-foreground-muted mt-10 text-center text-sm italic">No configurations found</p>
-    )}
-    {projects.length > 0 && (
-      <>
-        {projects.map((project) => (
-          <ConfigurationRow
-            key={project.rootPath}
-            project={project}
-            isLocal={isLocal}
-            onClick={() => onProjectClick(project.rootPath)}
-            onRemove={() => onRemoveProject(project.rootPath)}
-            onExport={() => onExportProject(project.name)}
-          />
-        ))}
-      </>
-    )}
-  </section>
-)
-
-const Toolbar = ({ onSearchChange }: { onSearchChange: (value: string) => void }) => (
-  <div className="border-border flex h-11 border-b">
-    <div className="border-border text-foreground flex w-1/4 min-w-50 items-center border-r px-4 text-xs font-bold tracking-wider uppercase">
-      <LibraryIcon className="fill-foreground h-5 w-5" />
-      <p className="ms-3 align-middle text-sm font-medium normal-case">Configurations</p>
-    </div>
-    <div className="flex flex-1 items-center justify-center px-4">
-      <Search
-        className="w-full"
-        inputClassName="py-1"
-        onChange={(changeEvent) => onSearchChange(changeEvent.target.value)}
-      />
-    </div>
-  </div>
 )
 
 const LoadingState = () => (
