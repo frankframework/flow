@@ -86,12 +86,6 @@ public class AdapterService {
 		}
 	}
 
-	/**
-	 * Creates a new adapter from the default template and appends it to the configuration file.
-	 *
-	 * @return the zero-based position of the newly appended adapter, matching the order the frontend
-	 *         uses to address adapters within a configuration
-	 */
 	public int createAdapter(String configurationPath, String adapterName) throws IOException {
 		if (configurationPath == null || configurationPath.isBlank()) {
 			throw new IllegalArgumentException("Configuration path must not be empty");
@@ -116,7 +110,6 @@ public class AdapterService {
 			String updatedXml = XmlConfigurationUtils.convertNodeToString(configDoc);
 			Files.writeString(absConfigFile, updatedXml, StandardCharsets.UTF_8, StandardOpenOption.TRUNCATE_EXISTING);
 
-			// The adapter is appended last, so its position is the final index in document order.
 			return XmlAdapterUtils.countAdapters(configDoc) - 1;
 		} catch (Exception exception) {
 			throw new IOException("Failed to create adapter: " + exception.getMessage(), exception);

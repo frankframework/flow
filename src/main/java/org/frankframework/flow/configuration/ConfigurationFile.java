@@ -11,7 +11,6 @@ public class ConfigurationFile {
 	private String xmlContent;
 
 	public ConfigurationFile(String filepath, String xmlContent) {
-		// Store the filepath normalized to forward slashes so every consumer can compare paths consistently.
 		this.filepath = PathUtils.toForwardSlash(filepath);
 		this.xmlContent = xmlContent;
 	}
