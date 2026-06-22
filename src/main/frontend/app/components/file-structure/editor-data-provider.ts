@@ -1,6 +1,6 @@
 import type { TreeItem, TreeItemIndex } from 'react-complex-tree'
 import type { FileTreeNode } from '~/types/filesystem.types'
-import { fetchProjectRootTree, fetchDirectoryByPath } from '~/services/file-tree-service'
+import { fetchProjectRootTree, fetchEditorDirectoryByPath } from '~/services/file-tree-service'
 import { logApiError } from '~/utils/logger'
 import { sortChildren } from './tree-utilities'
 import type { DataProviderLike } from './use-file-tree-context-menu'
@@ -79,7 +79,7 @@ export default class EditorFilesDataProvider extends BaseFilesDataProvider<FileN
     if (this.loadedDirectories.has(item.data.path)) return
 
     try {
-      const directory = await fetchDirectoryByPath(this.projectName, item.data.path)
+      const directory = await fetchEditorDirectoryByPath(this.projectName, item.data.path)
       if (!directory) {
         console.warn('Received empty directory from API')
         return

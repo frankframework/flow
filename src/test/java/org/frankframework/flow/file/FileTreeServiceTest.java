@@ -145,6 +145,30 @@ public class FileTreeServiceTest {
 	}
 
 	@Test
+	@DisplayName("Studio directory tree should strip non-configuration files but keep subfolders")
+	public void getShallowStudioDirectoryTreeFiltersNonConfigurationFiles() throws IOException, ApiException {
+		stubToAbsolutePath();
+
+		Files.writeString(tempProjectRoot.resolve("config1.xml"), "<config/>");
+		Files.writeString(tempProjectRoot.resolve("readme.txt"), "hello");
+		Files.writeString(tempProjectRoot.resolve("application.properties"), "key=value");
+		Files.createDirectory(tempProjectRoot.resolve("subfolder"));
+
+		ConfigurationProject configurationProject =
+				new ConfigurationProject(TEST_PROJECT_NAME, tempProjectRoot.toAbsolutePath().toString());
+		when(configurationProjectService.getProject(TEST_PROJECT_NAME)).thenReturn(configurationProject);
+
+		FileTreeNode node = fileTreeService.getShallowStudioDirectoryTree(TEST_PROJECT_NAME, ".");
+
+		assertNotNull(node);
+		assertEquals(2, node.getChildren().size());
+		assertTrue(node.getChildren().stream().anyMatch(childNode -> childNode.getName().equals("config1.xml")));
+		assertTrue(node.getChildren().stream().anyMatch(childNode -> childNode.getName().equals("subfolder")));
+		assertFalse(node.getChildren().stream().anyMatch(childNode -> childNode.getName().equals("readme.txt")));
+		assertFalse(node.getChildren().stream().anyMatch(childNode -> childNode.getName().equals("application.properties")));
+	}
+
+	@Test
 	void getShallowDirectoryTreeThrowsSecurityExceptionForPathTraversal() throws ApiException {
 		stubToAbsolutePath();
 
@@ -191,10 +215,10 @@ public class FileTreeServiceTest {
 		assertEquals(TEST_PROJECT_NAME, node.getName());
 		assertEquals(NodeType.DIRECTORY, node.getType());
 		assertNotNull(node.getChildren());
-		assertEquals(2, node.getChildren().size());
+		assertEquals(1, node.getChildren().size());
 
 		assertTrue(node.getChildren().stream().anyMatch(childNode -> childNode.getName().equals("config1.xml")));
-		assertTrue(node.getChildren().stream().anyMatch(childNode -> childNode.getName().equals("readme.txt")));
+		assertFalse(node.getChildren().stream().anyMatch(childNode -> childNode.getName().equals("readme.txt")));
 	}
 
 	@Test
@@ -235,6 +259,11 @@ public class FileTreeServiceTest {
 		Path subDir = tempConfigurationRoot.resolve("subconfigs");
 		Files.createDirectory(subDir);
 		Files.writeString(subDir.resolve("nested.xml"), "<nested></nested>");
+		Files.writeString(subDir.resolve("notes.txt"), "ignored");
+		Files.createDirectory(tempConfigurationRoot.resolve("emptyDir"));
+		Path docsOnly = tempConfigurationRoot.resolve("docsOnly");
+		Files.createDirectory(docsOnly);
+		Files.writeString(docsOnly.resolve("guide.md"), "# guide");
 
 		ConfigurationProject configurationProject = new ConfigurationProject(TEST_PROJECT_NAME, tempConfigurationRoot.toAbsolutePath().toString());
 		when(configurationProjectService.getProject(TEST_PROJECT_NAME)).thenReturn(configurationProject);
@@ -245,10 +274,12 @@ public class FileTreeServiceTest {
 		assertEquals(TEST_PROJECT_NAME, node.getName());
 		assertEquals(NodeType.DIRECTORY, node.getType());
 		assertNotNull(node.getChildren());
-		assertEquals(3, node.getChildren().size());
+		assertEquals(2, node.getChildren().size());
 
 		assertTrue(node.getChildren().stream().anyMatch(childNode -> childNode.getName().equals("config1.xml")));
-		assertTrue(node.getChildren().stream().anyMatch(childNode -> childNode.getName().equals("readme.txt")));
+		assertFalse(node.getChildren().stream().anyMatch(childNode -> childNode.getName().equals("readme.txt")));
+		assertFalse(node.getChildren().stream().anyMatch(childNode -> childNode.getName().equals("emptyDir")));
+		assertFalse(node.getChildren().stream().anyMatch(childNode -> childNode.getName().equals("docsOnly")));
 
 		FileTreeNode subConfigNode = node.getChildren().stream()
 				.filter(c -> c.getName().equals("subconfigs"))

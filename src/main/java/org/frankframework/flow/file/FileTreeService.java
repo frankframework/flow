@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import javax.xml.parsers.DocumentBuilder;
 import org.frankframework.flow.exception.ApiException;
@@ -70,10 +71,15 @@ public class FileTreeService {
 		return buildShallowTree(projectDirectory.dirPath, projectDirectory.relativizeRoot, projectDirectory.useRelativePaths);
 	}
 
+	public FileTreeNode getShallowStudioDirectoryTree(String projectName, String directoryPath) throws IOException {
+		return filterStudioTree(getShallowDirectoryTree(projectName, directoryPath));
+	}
+
 	public FileTreeNode getShallowConfigurationsDirectoryTree(String projectName) throws IOException {
 		try {
 			ConfigurationDirectory configurationDirectory = getConfigurationsDirectory(projectName);
-			return buildShallowTree(configurationDirectory.directoryPath, configurationDirectory.relativizeRoot, configurationDirectory.useRelativePaths);
+			FileTreeNode tree = buildShallowTree(configurationDirectory.directoryPath, configurationDirectory.relativizeRoot, configurationDirectory.useRelativePaths);
+			return filterStudioTree(tree);
 		} catch (ApiException _) {
 			throw new IllegalArgumentException("Configurations directory does not exist: " + projectName);
 		}
@@ -82,7 +88,8 @@ public class FileTreeService {
 	public FileTreeNode getConfigurationsDirectoryTree(String projectName) throws IOException {
 		try {
 			ConfigurationDirectory configurationDirectory = getConfigurationsDirectory(projectName);
-			return buildTree(configurationDirectory.directoryPath, configurationDirectory.relativizeRoot, configurationDirectory.useRelativePaths);
+			FileTreeNode tree = buildTree(configurationDirectory.directoryPath, configurationDirectory.relativizeRoot, configurationDirectory.useRelativePaths);
+			return filterStudioTree(tree);
 		} catch (ApiException _) {
 			throw new IllegalArgumentException("Configurations directory does not exist: " + projectName);
 		}
@@ -159,6 +166,40 @@ public class FileTreeService {
 		return new ConfigurationDirectory(configurationPath, relativizeRoot, useRelativePaths);
 	}
 
+	/**
+	 * Keeps only configuration files and the directories that recursively contain configuration files. The root is
+	 * always returned so the Studio has a tree to render, even when it has no children.
+	 */
+	private FileTreeNode filterStudioTree(FileTreeNode root) {
+		if (root.getType() == NodeType.DIRECTORY && root.getChildren() != null) {
+			root.setChildren(pruneStudioChildren(root.getChildren()));
+		}
+		return root;
+	}
+
+	private List<FileTreeNode> pruneStudioChildren(List<FileTreeNode> children) {
+		return children.stream()
+				.filter(this::keepStudioNode)
+				.toList();
+	}
+
+	private boolean keepStudioNode(FileTreeNode node) {
+		if (node.getType() == NodeType.FILE) {
+			return isStudioConfigurationFile(node.getName());
+		}
+
+		if (node.getChildren() == null) {
+			return true;
+		}
+
+		node.setChildren(pruneStudioChildren(node.getChildren()));
+		return !node.getChildren().isEmpty();
+	}
+
+	private boolean isStudioConfigurationFile(String fileName) {
+		return fileName.toLowerCase().endsWith(".xml");
+	}
+
 	private List<String> extractAdapterNames(Path xmlFile) {
 		try {
 			DocumentBuilder builder = XmlSecurityUtils.createSecureDocumentBuilder();
@@ -168,14 +209,12 @@ public class FileTreeService {
 			if (adapters.getLength() == 0) {
 				adapters = doc.getElementsByTagName("adapter");
 			}
-			List<String> names = new ArrayList<>();
-			for (int i = 0; i < adapters.getLength(); i++) {
-				String name = ((Element) adapters.item(i)).getAttribute("name");
-				if (!name.isBlank()) {
-					names.add(name);
-				}
-			}
-			return names;
+
+			NodeList resolvedAdapters = adapters;
+			return IntStream.range(0, resolvedAdapters.getLength())
+					.mapToObj(index -> ((Element) resolvedAdapters.item(index)).getAttribute("name"))
+					.filter(name -> !name.isBlank())
+					.toList();
 		} catch (Exception _) {
 			return List.of();
 		}
@@ -246,7 +285,7 @@ public class FileTreeService {
 		return node;
 	}
 
-	private ProjectDirectory resolveProjectDirectory(String projectName, String directoryPath) throws IOException {
+	private ProjectDirectory resolveProjectDirectory(String projectName, String directoryPath) {
 		try {
 			ConfigurationProject configurationProject = configurationProjectService.getProject(projectName);
 			Path projectPath = fileSystemStorage.toAbsolutePath(configurationProject.getRootPath());
