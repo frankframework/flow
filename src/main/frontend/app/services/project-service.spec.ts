@@ -43,7 +43,6 @@ describe('importProjectFolder', () => {
   })
 
   it('ignores the top-level folder entry (empty relative path) when summing sizes', async () => {
-    // The folder root has an empty relative path and must not count towards the size.
     const files = fileList(makeFile('proj', MAX_IMPORT_UNCOMPRESSED_BYTES), makeFile('proj/Configuration.xml', 10))
 
     await expect(importProjectFolder(files)).resolves.toMatchObject({ name: 'proj' })

@@ -4,13 +4,11 @@ import type { ConfigurationProject } from '~/types/project.types'
 
 /**
  * Upper bound for the zipped import, kept in sync with the nginx `client_max_body_size`.
- * The check runs on the compressed archive, so the original folder may be considerably larger.
  */
 export const MAX_IMPORT_ZIP_BYTES = 80 * 1024 * 1024
 
 /**
  * Upper bound for the *uncompressed* project, mirrored from the backend import guard.
- * Checked before uploading so an oversized folder fails fast without a round-trip.
  */
 export const MAX_IMPORT_UNCOMPRESSED_BYTES = 80 * 1024 * 1024
 
@@ -79,8 +77,7 @@ export async function importProjectFolder(files: FileList): Promise<Configuratio
   const projectName = files[0].webkitRelativePath.split('/')[0]
 
   /*
-   * Cheap pre-check on the uncompressed size so an oversized folder fails fast,
-   * before we spend time reading and zipping it. Mirrors the backend's 413 guard.
+   * pre-check on the uncompressed size so an oversized folder fails fast,
    */
   let uncompressedBytes = 0
   for (const file of files) {

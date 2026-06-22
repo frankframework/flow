@@ -491,7 +491,6 @@ public class ConfigurationProjectServiceTest {
 		ConfigurationProjectService limitedService =
 				new ConfigurationProjectService(fileSystemStorage, recentProjectsService, 100);
 
-		// Each entry is within the limit on its own, but together they exceed it.
 		MockMultipartFile archive = zipArchive(
 				"part1.bin", "a".repeat(60),
 				"part2.bin", "b".repeat(60)
