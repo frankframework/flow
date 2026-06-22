@@ -1244,7 +1244,6 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
         x: position.x - width / 2,
         y: position.y - height / 2,
       },
-      width: FlowConfig.NODE_DEFAULT_WIDTH,
       data: {
         subtype: elementName,
         type: elementType,

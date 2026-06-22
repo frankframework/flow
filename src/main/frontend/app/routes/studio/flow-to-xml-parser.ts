@@ -172,11 +172,7 @@ function generateXmlElement(
   const roundedX = Math.round(x)
   const roundedY = Math.round(y)
 
-  let width = FlowConfig.NODE_DEFAULT_WIDTH
-  if (node.measured?.width) {
-    width = node.measured.width
-  }
-
+  const width = node.measured?.width ?? FlowConfig.NODE_DEFAULT_WIDTH
   const height: number | null = node.height ?? null
   const attributes = (node.data as NodeData).attributes || {}
   const children = (node.data as NodeData).children || []
@@ -186,8 +182,7 @@ function generateXmlElement(
     name,
     'flow:x': String(roundedX),
     'flow:y': String(roundedY),
-    'flow:width': String(width),
-    ...(height === null ? {} : { 'flow:height': String(height) }),
+    ...(height === null ? {} : { 'flow:width': String(width), 'flow:height': String(height) }),
   }
   const attrStr = Object.entries(allAttrs)
     .map(([k, v]) => `${k}="${escapeXml(v)}"`)

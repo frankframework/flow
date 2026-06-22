@@ -143,13 +143,14 @@ export default function AddConfigurationModal({
 
         {error && <p className="mt-4 text-sm text-red-500">{error}</p>}
       </div>
-      <DirectoryPicker
-        isOpen={isOpenPickerOpen}
-        onSelect={handleDirectorySelect}
-        onCancel={() => setIsOpenPickerOpen(false)}
-        rootLabel={currentConfiguration.rootPath}
-        initialPath={rootLocationName === '' ? configurationsDirPath : rootLocationName}
-      />
+      {isOpenPickerOpen && (
+        <DirectoryPicker
+          onSelect={handleDirectorySelect}
+          onCancel={() => setIsOpenPickerOpen(false)}
+          rootLabel={currentConfiguration.rootPath}
+          initialPath={rootLocationName === '' ? configurationsDirPath : rootLocationName}
+        />
+      )}
     </div>
   )
 }

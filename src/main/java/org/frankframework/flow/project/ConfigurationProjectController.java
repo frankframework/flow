@@ -74,7 +74,10 @@ public class ConfigurationProjectController {
 	@PostMapping("/clone")
 	public ResponseEntity<ConfigurationProjectDTO> cloneProject(@RequestBody ConfigurationProjectCloneDTO configurationProjectCloneDTO) throws IOException {
 		ConfigurationProject configurationProject = configurationProjectService.cloneAndOpenProject(
-				configurationProjectCloneDTO.repoUrl(), configurationProjectCloneDTO.localPath(), configurationProjectCloneDTO.token());
+			configurationProjectCloneDTO.repoUrl(),
+			configurationProjectCloneDTO.localPath(),
+			configurationProjectCloneDTO.token()
+		);
 		recentProjectsService.addRecentProject(configurationProject.getName(), configurationProject.getRootPath());
 		return ResponseEntity.ok(configurationProjectService.toDto(configurationProject));
 	}
