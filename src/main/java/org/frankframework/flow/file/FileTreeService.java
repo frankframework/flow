@@ -1,7 +1,9 @@
 package org.frankframework.flow.file;
 
 import java.io.IOException;
+import java.io.StringReader;
 import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -15,11 +17,13 @@ import org.frankframework.flow.exception.ApiException;
 import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.frankframework.flow.project.ConfigurationProject;
 import org.frankframework.flow.project.ConfigurationProjectService;
+import org.frankframework.flow.utility.XmlConfigurationUtils;
 import org.frankframework.flow.utility.XmlSecurityUtils;
 import org.springframework.stereotype.Service;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
 import org.xml.sax.helpers.DefaultHandler;
 
 @Service
@@ -202,9 +206,10 @@ public class FileTreeService {
 
 	private List<String> extractAdapterNames(Path xmlFile) {
 		try {
+			String content = XmlConfigurationUtils.repairFlowNamespace(Files.readString(xmlFile, StandardCharsets.UTF_8));
 			DocumentBuilder builder = XmlSecurityUtils.createSecureDocumentBuilder();
 			builder.setErrorHandler(new DefaultHandler());
-			Document doc = builder.parse(Files.newInputStream(xmlFile));
+			Document doc = builder.parse(new InputSource(new StringReader(content)));
 			NodeList adapters = doc.getElementsByTagName("Adapter");
 			if (adapters.getLength() == 0) {
 				adapters = doc.getElementsByTagName("adapter");

@@ -63,6 +63,7 @@ public class ConfigurationService {
 		}
 
 		String content = fileSystemStorage.readFile(filePath.toString());
+		content = XmlConfigurationUtils.repairFlowNamespace(content);
 		return new ConfigurationDTO(filepath, content);
 	}
 
@@ -123,7 +124,7 @@ public class ConfigurationService {
 			return xml;
 		}
 
-		return xml.replaceFirst("(<Configuration)\\b", "$1 xmlns:flow=\"urn:frank-flow\"");
+		return XmlConfigurationUtils.addFlowNamespaceDeclaration(xml);
 	}
 
 	private String loadDefaultConfigurationXml() throws IOException {
