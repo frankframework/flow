@@ -1,6 +1,6 @@
 import { importProjectFolder, ImportTooLargeError, MAX_IMPORT_UNCOMPRESSED_BYTES } from './project-service'
 
-vi.mock('~/utils/api', () => ({
+vi.mock('../utils/api', () => ({
   apiFetch: vi.fn(() => Promise.resolve({ name: 'proj', rootPath: '/tmp/proj', filepaths: [] })),
   apiUrl: (path: string) => path,
 }))
@@ -16,6 +16,7 @@ vi.mock('fflate', () => ({
 function makeFile(relativePath: string, sizeOverride?: number): File {
   const file = new File([new Uint8Array(4)], relativePath.split('/').pop() ?? 'file')
   Object.defineProperty(file, 'webkitRelativePath', { value: relativePath })
+  Object.defineProperty(file, 'arrayBuffer', { value: () => Promise.resolve(new ArrayBuffer(4)) })
   if (sizeOverride !== undefined) {
     Object.defineProperty(file, 'size', { value: sizeOverride })
   }
