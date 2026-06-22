@@ -361,6 +361,23 @@ class ConfigurationProjectControllerTest {
 	}
 
 	@Test
+	void importProjectTooLargeReturnsPayloadTooLarge() throws Exception {
+		when(configurationProjectService.importProjectFromZip(eq("HugeProject"), any()))
+				.thenThrow(new ApiException("Imported project exceeds the maximum allowed size of 80 MB", HttpStatus.PAYLOAD_TOO_LARGE));
+
+		MockMultipartFile zip = new MockMultipartFile(
+				"file", "HugeProject.zip", "application/zip", "fake-zip-bytes".getBytes());
+
+		mockMvc.perform(multipart("/api/projects/import")
+						.file(zip)
+						.param("projectName", "HugeProject"))
+				.andExpect(status().isPayloadTooLarge())
+				.andExpect(jsonPath("$.error").value("Imported project exceeds the maximum allowed size of 80 MB"));
+
+		verify(recentProjectsService, never()).addRecentProject(anyString(), anyString());
+	}
+
+	@Test
 	void importProjectWhenServiceThrowsIOExceptionReturnsServerError() throws Exception {
 		when(configurationProjectService.importProjectFromZip(eq("FailingProject"), any()))
 				.thenThrow(new IOException("disk full"));

@@ -34,6 +34,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockMultipartFile;
 
 @ExtendWith(MockitoExtension.class)
@@ -475,10 +476,11 @@ public class ConfigurationProjectServiceTest {
 
 		MockMultipartFile archive = zipArchive("big.bin", "a".repeat(64));
 
-		SecurityException ex = assertThrows(
-				SecurityException.class,
+		ApiException ex = assertThrows(
+				ApiException.class,
 				() -> limitedService.importProjectFromZip("too_large_project", archive));
 
+		assertEquals(HttpStatus.PAYLOAD_TOO_LARGE, ex.getStatus());
 		assertTrue(ex.getMessage().contains("exceeds the maximum allowed size"));
 	}
 
@@ -495,10 +497,11 @@ public class ConfigurationProjectServiceTest {
 				"part2.bin", "b".repeat(60)
 		);
 
-		SecurityException ex = assertThrows(
-				SecurityException.class,
+		ApiException ex = assertThrows(
+				ApiException.class,
 				() -> limitedService.importProjectFromZip("cumulative_too_large_project", archive));
 
+		assertEquals(HttpStatus.PAYLOAD_TOO_LARGE, ex.getStatus());
 		assertTrue(ex.getMessage().contains("exceeds the maximum allowed size"));
 	}
 
@@ -656,7 +659,7 @@ public class ConfigurationProjectServiceTest {
 	}
 
 	@Test
-	void testOpenProjectFromDiskThrowsWhenPathDoesNotExist() throws Exception {
+	void testOpenProjectFromDiskThrowsWhenPathDoesNotExist() {
 		when(fileSystemStorage.toAbsolutePath(anyString())).thenAnswer(invocation -> {
 			String pathStr = invocation.getArgument(0);
 			Path path = Path.of(pathStr);

@@ -182,14 +182,15 @@ export default function ProjectLanding() {
     } catch (error) {
       const limitMb = Math.round(MAX_IMPORT_ZIP_BYTES / (1024 * 1024))
       if (error instanceof ImportTooLargeError) {
-        const sizeMb = (error.zipBytes / (1024 * 1024)).toFixed(1)
+        const sizeMb = (error.bytes / (1024 * 1024)).toFixed(1)
+        const dimension = error.kind === 'compressed' ? 'when zipped' : 'uncompressed'
         showWarningToast(
-          `This configuration is ${sizeMb} MB when zipped, which exceeds the ${limitMb} MB limit. Please import a smaller folder.`,
+          `This configuration is ${sizeMb} MB ${dimension}, which exceeds the ${limitMb} MB limit. Please import a smaller folder.`,
           'Configuration too large',
         )
       } else if (error instanceof ApiError && error.httpCode === 413) {
         showWarningToast(
-          `This configuration is too large to upload (over ${limitMb} MB). Please import a smaller folder.`,
+          `This configuration is too large to import (over ${limitMb} MB). Please import a smaller folder.`,
           'Configuration too large',
         )
       } else {

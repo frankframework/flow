@@ -8,8 +8,17 @@ import type { ConfigurationProject } from '~/types/project.types'
  */
 export const MAX_IMPORT_ZIP_BYTES = 80 * 1024 * 1024
 
+/**
+ * Upper bound for the *uncompressed* project, mirrored from the backend import guard.
+ * Checked before uploading so an oversized folder fails fast without a round-trip.
+ */
+export const MAX_IMPORT_UNCOMPRESSED_BYTES = 80 * 1024 * 1024
+
 export class ImportTooLargeError extends Error {
-  constructor(public readonly zipBytes: number) {
+  constructor(
+    public readonly bytes: number,
+    public readonly kind: 'compressed' | 'uncompressed' = 'compressed',
+  ) {
     super('Configuration is too large to import')
     this.name = 'ImportTooLargeError'
   }
@@ -69,6 +78,21 @@ export async function exportProject(projectName: string): Promise<void> {
 export async function importProjectFolder(files: FileList): Promise<ConfigurationProject> {
   const projectName = files[0].webkitRelativePath.split('/')[0]
 
+  /*
+   * Cheap pre-check on the uncompressed size so an oversized folder fails fast,
+   * before we spend time reading and zipping it. Mirrors the backend's 413 guard.
+   */
+  let uncompressedBytes = 0
+  for (const file of files) {
+    if (file.webkitRelativePath.split('/').slice(1).join('/')) {
+      uncompressedBytes += file.size
+    }
+  }
+
+  if (uncompressedBytes > MAX_IMPORT_UNCOMPRESSED_BYTES) {
+    throw new ImportTooLargeError(uncompressedBytes, 'uncompressed')
+  }
+
   const entries: Record<string, Uint8Array> = {}
   for (const file of files) {
     const relativePath = file.webkitRelativePath.split('/').slice(1).join('/')
@@ -79,7 +103,7 @@ export async function importProjectFolder(files: FileList): Promise<Configuratio
   const archive = await zipAsync(entries)
 
   if (archive.byteLength > MAX_IMPORT_ZIP_BYTES) {
-    throw new ImportTooLargeError(archive.byteLength)
+    throw new ImportTooLargeError(archive.byteLength, 'compressed')
   }
 
   const formData = new FormData()

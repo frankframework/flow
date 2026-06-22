@@ -26,6 +26,7 @@ import org.frankframework.flow.git.GitService;
 import org.frankframework.flow.projectsettings.FilterType;
 import org.frankframework.flow.recentproject.RecentProject;
 import org.frankframework.flow.recentproject.RecentProjectsService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.frankframework.flow.utility.PathUtils;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.ClassPathResource;
@@ -36,7 +37,7 @@ import org.springframework.web.multipart.MultipartFile;
 @Log4j2
 @Service
 public class ConfigurationProjectService {
-	private static final long DEFAULT_MAX_UNCOMPRESSED_IMPORT_BYTES = 500L * 1024 * 1024;
+	private static final long DEFAULT_MAX_UNCOMPRESSED_IMPORT_BYTES = 80L * 1024 * 1024;
 
 	private final FileSystemStorage fileSystemStorage;
 	private final RecentProjectsService recentProjectsService;
@@ -44,6 +45,7 @@ public class ConfigurationProjectService {
 	private final long maxUncompressedImportBytes;
 	private final Map<String, ConfigurationProject> projectCache = new ConcurrentHashMap<>();
 
+	@Autowired
 	public ConfigurationProjectService(FileSystemStorage fileSystemStorage, @Lazy RecentProjectsService recentProjectsService) {
 		this(fileSystemStorage, recentProjectsService, DEFAULT_MAX_UNCOMPRESSED_IMPORT_BYTES);
 	}
@@ -252,7 +254,7 @@ public class ConfigurationProjectService {
 
 				zipInputStream.closeEntry();
 			}
-		} catch (IOException | SecurityException exception) {
+		} catch (IOException exception) {
 			log.error("Failed to import project \"{}\" from uploaded archive", projectName, exception);
 			throw exception;
 		}
@@ -271,7 +273,9 @@ public class ConfigurationProjectService {
 			while ((read = zipInputStream.read(buffer)) != -1) {
 				entryBytes += read;
 				if (bytesWrittenSoFar + entryBytes > maxUncompressedImportBytes) {
-					throw new SecurityException("Decompressed import exceeds the maximum allowed size");
+					long limitMb = maxUncompressedImportBytes / (1024 * 1024);
+					log.warn("Rejected import: decompressed size exceeds the maximum allowed {} MB", limitMb);
+					throw new ApiException("Imported project exceeds the maximum allowed size of " + limitMb + " MB", HttpStatus.PAYLOAD_TOO_LARGE);
 				}
 				out.write(buffer, 0, read);
 			}
