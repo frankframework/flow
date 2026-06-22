@@ -2,9 +2,6 @@ import { zip } from 'fflate'
 import { apiFetch, apiUrl } from '~/utils/api'
 import type { ConfigurationProject } from '~/types/project.types'
 
-/**
- * Upper bound for the zipped import, kept in sync with the nginx `client_max_body_size`.
- */
 export const MAX_IMPORT_ZIP_BYTES = 80 * 1024 * 1024
 
 /**
