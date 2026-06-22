@@ -9,7 +9,6 @@ import Button from '../inputs/button'
 import CloseButton from '../inputs/close-button'
 
 interface DirectoryPickerProperties {
-  isOpen: boolean
   onSelect: (absolutePath: string) => void
   onCancel: () => void
   rootLabel?: string
@@ -17,7 +16,6 @@ interface DirectoryPickerProperties {
 }
 
 export default function DirectoryPicker({
-  isOpen,
   onSelect,
   onCancel,
   rootLabel = 'Computer',
@@ -52,16 +50,12 @@ export default function DirectoryPicker({
     }
   }, [])
 
-  useDirectoryWatcher(isOpen ? currentPath : null, () => void loadEntries(currentPath))
+  useDirectoryWatcher(currentPath, () => void loadEntries(currentPath))
 
   useEffect(() => {
-    if (isOpen) {
-      setSelectedEntry(null)
-      loadEntries(initialPath ?? '')
-    }
-  }, [isOpen, loadEntries, initialPath])
-
-  if (!isOpen) return null
+    setSelectedEntry(null)
+    loadEntries(initialPath ?? '')
+  }, [loadEntries, initialPath])
 
   const handleClick = (entry: FilesystemEntry) => {
     setSelectedEntry(entry.path)
@@ -89,8 +83,8 @@ export default function DirectoryPicker({
   const activePath = selectedEntry ?? currentPath
 
   return (
-    <div className="bg-background/50 absolute inset-0 z-[60] flex items-center justify-center">
-      <div className="bg-background border-border flex h-[450px] w-1/3 min-w-[500px] flex-col rounded-lg border shadow-lg">
+    <div className="bg-background/50 absolute inset-0 z-60 flex items-center justify-center">
+      <div className="bg-background border-border flex h-112.5 w-1/3 min-w-125 flex-col rounded-lg border shadow-lg">
         <div className="border-border flex items-center justify-between border-b px-4 py-3">
           <h3 className="text-sm font-semibold">Select Directory</h3>
           <CloseButton onClick={onCancel} />
@@ -135,7 +129,7 @@ export default function DirectoryPicker({
                   selectedEntry === entry.path ? 'bg-backdrop font-medium' : 'hover:bg-backdrop/50'
                 }`}
               >
-                <span className="relative flex-shrink-0 text-xs">
+                <span className="relative shrink-0 text-xs">
                   <FolderIcon className="fill-foreground w-4" />
                   {entry.projectRoot && (
                     <span className="absolute bottom-0.5 h-1.5 w-1.5 rounded-full bg-black" style={{ left: '65%' }} />

@@ -7,6 +7,8 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.log4j.Log4j2;
 import org.eclipse.jgit.lib.Repository;
@@ -45,7 +47,10 @@ public final class GitCredentialHelper {
 	 * Resolves credentials for a URL directly (used for clone where no repo exists yet).
 	 */
 	public static CredentialsProvider resolveForUrl(
-			String remoteUrl, String explicitToken, boolean isLocalEnvironment) {
+		String remoteUrl,
+		String explicitToken,
+		boolean isLocalEnvironment
+	) {
 		if (explicitToken != null && !explicitToken.isBlank()) {
 			return new UsernamePasswordCredentialsProvider("token", explicitToken);
 		}
@@ -73,8 +78,8 @@ public final class GitCredentialHelper {
 			}
 
 			return queryGitCredential(uri);
-		} catch (Exception e) {
-			log.debug("Could not resolve credentials from system helper: {}", e.getMessage());
+		} catch (Exception exception) {
+			log.debug("Could not resolve credentials from system helper: {}", exception.getMessage());
 			return null;
 		}
 	}
@@ -132,8 +137,7 @@ public final class GitCredentialHelper {
 			String username = null;
 			String password = null;
 
-			try (BufferedReader reader =
-					new BufferedReader(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
+			try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
 				String line;
 				while ((line = reader.readLine()) != null) {
 					if (line.startsWith("username=")) {
@@ -150,12 +154,12 @@ public final class GitCredentialHelper {
 			}
 
 			return null;
-		} catch (InterruptedException e) {
+		} catch (InterruptedException exception) {
 			log.debug("Git credential helper interrupted");
 			Thread.currentThread().interrupt();
 			return null;
-		} catch (Exception e) {
-			log.debug("Failed to query system git credential helper: {}", e.getMessage());
+		} catch (Exception exception) {
+			log.debug("Failed to query system git credential helper: {}", exception.getMessage());
 			return null;
 		}
 	}
@@ -182,26 +186,23 @@ public final class GitCredentialHelper {
 	 * Uses absolute paths in ProcessBuilder to satisfy SonarQube S4036.
 	 */
 	private static String findGitOnPath() {
-		boolean isWindows = System.getProperty("os.name", "").toLowerCase().contains("win");
-		String[] candidates = isWindows ? new String[] {"git.exe", "git.cmd"} : new String[] {"git"};
-
-		String pathEnv = System.getenv("PATH");
-		if (pathEnv == null) {
-			log.debug("PATH environment variable not set; git credential helper unavailable");
+		String environmentalPaths = System.getenv("PATH");
+		if (environmentalPaths == null) {
+			log.debug("PATH environment variable not set, git credential helper unavailable");
 			return null;
 		}
 
+		boolean isWindows = System.getProperty("os.name", "").toLowerCase().contains("win");
 		String separator = isWindows ? ";" : ":";
-		for (String dir : pathEnv.split(separator)) {
-			Path dirPath = Path.of(dir);
-			if (!Files.isDirectory(dirPath)) continue;
-			for (String candidate : candidates) {
-				Path exe = dirPath.resolve(candidate);
-				if (Files.isRegularFile(exe) && Files.isExecutable(exe)) {
-					String absolutePath = exe.toAbsolutePath().toString();
-					log.debug("Resolved git executable: {}", absolutePath);
-					return absolutePath;
-				}
+
+		List<Path> environmentDirectories = Arrays.stream(environmentalPaths.split(separator)).map(Path::of).filter(Files::isDirectory).toList();
+		for (Path directory : environmentDirectories) {
+			String executableName = isWindows ? "git.exe" : "git";
+			Path executable = directory.resolve(executableName);
+			if (Files.isRegularFile(executable) && Files.isExecutable(executable)) {
+				String absolutePath = executable.toAbsolutePath().toString();
+				log.debug("Resolved git executable: {}", absolutePath);
+				return absolutePath;
 			}
 		}
 

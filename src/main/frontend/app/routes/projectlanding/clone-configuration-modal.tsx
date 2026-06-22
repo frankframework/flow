@@ -6,7 +6,6 @@ import Input from '~/components/inputs/input'
 import { filesystemService } from '~/services/filesystem-service'
 
 interface CloneProjectModalProperties {
-  isOpen: boolean
   isLocal: boolean
   onClose: () => void
   onClone: (repoUrl: string, localPath: string, token?: string) => void
@@ -14,7 +13,6 @@ interface CloneProjectModalProperties {
 }
 
 export default function CloneConfigurationModal({
-  isOpen,
   isLocal,
   onClose,
   onClone,
@@ -26,23 +24,17 @@ export default function CloneConfigurationModal({
   const [showPicker, setShowPicker] = useState(false)
 
   useEffect(() => {
-    if (!isOpen || !isLocal) {
-      if (isOpen) setLocation(initialPath ?? '')
+    if (isLocal) {
+      filesystemService
+        .resolveNearestAccessiblePath(initialPath ?? '')
+        .then(setLocation)
+        .catch(() => setLocation(''))
       return
     }
+    setLocation(initialPath ?? '')
+  }, [isLocal, initialPath])
 
-    filesystemService
-      .resolveNearestAccessiblePath(initialPath ?? '')
-      .then(setLocation)
-      .catch(() => setLocation(''))
-  }, [isOpen, isLocal, initialPath])
-
-  if (!isOpen) return null
-
-  const repoName = repoUrl
-    .split('/')
-    .pop()
-    ?.replace(/\.git$/, '')
+  const repoName = repoUrl.split('/').pop()?.replace(/\.git$/i, '')
 
   const handleClone = () => {
     if (!repoUrl.trim()) return
@@ -58,7 +50,7 @@ export default function CloneConfigurationModal({
       finalPath = location ? `${location}/${name}` : name
     }
 
-    onClone(repoUrl.trim(), finalPath, token || undefined)
+    onClone(repoUrl.trim(), finalPath, token)
     handleClose()
   }
 
@@ -73,7 +65,7 @@ export default function CloneConfigurationModal({
   return (
     <>
       <div className="bg-background/50 absolute inset-0 z-50 flex items-center justify-center">
-        <div className="bg-background border-border relative w-[600px] rounded-lg border p-6 shadow-lg">
+        <div className="bg-background border-border relative w-150 rounded-lg border p-6 shadow-lg">
           <h2 className="mb-4 text-lg font-semibold">Clone Repository</h2>
           <p className="text-foreground-muted mb-4 text-sm">
             {isLocal ? 'Clone a Git repository to a local folder' : 'Clone a Git repository into the workspace'}
@@ -141,15 +133,16 @@ export default function CloneConfigurationModal({
         </div>
       </div>
 
-      <DirectoryPicker
-        isOpen={showPicker}
-        onSelect={(path) => {
-          setLocation(path)
-          setShowPicker(false)
-        }}
-        onCancel={() => setShowPicker(false)}
-        initialPath={location}
-      />
+      {showPicker && (
+        <DirectoryPicker
+          onSelect={(path) => {
+            setLocation(path)
+            setShowPicker(false)
+          }}
+          onCancel={() => setShowPicker(false)}
+          initialPath={location}
+        />
+      )}
     </>
   )
 }
