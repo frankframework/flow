@@ -137,27 +137,25 @@ public class ConfigurationProjectService {
 		Path targetDir = fileSystemStorage.toAbsolutePath(localPath);
 
 		if (Files.exists(targetDir)) {
-			throw new IllegalArgumentException("Project already exists at \"" + localPath + "\"");
+			throw new ApiException("Project already exists at \"" + localPath + "\"", HttpStatus.CONFLICT);
 		}
 
-		try {
-			CloneCommand cloneCommand = Git.cloneRepository().setURI(repoUrl).setDirectory(targetDir.toFile());
+		CloneCommand cloneCommand = Git.cloneRepository().setURI(repoUrl).setDirectory(targetDir.toFile());
 
-			CredentialsProvider credentials = GitCredentialHelper.resolveForUrl(repoUrl, token, fileSystemStorage.isLocalEnvironment());
-			if (credentials != null) {
-				cloneCommand.setCredentialsProvider(credentials);
-			}
+		CredentialsProvider credentials = GitCredentialHelper.resolveForUrl(repoUrl, token, fileSystemStorage.isLocalEnvironment());
+		if (credentials != null) {
+			cloneCommand.setCredentialsProvider(credentials);
+		}
 
-			try (Git git = cloneCommand.call()) {
-				log.info("Cloned repository {} to {}", repoUrl, targetDir);
-				GitService.hardenRepository(git.getRepository());
-			}
+		try (Git git = cloneCommand.call()) {
+			log.info("Cloned repository {} to {}", repoUrl, targetDir);
+			GitService.hardenRepository(git.getRepository());
 		} catch (GitAPIException exception) {
 			String msg = exception.getMessage() != null ? exception.getMessage().toLowerCase() : "";
 			if (msg.contains("auth") || msg.contains("not permitted") || msg.contains("403") || msg.contains("401")) {
 				throw new IllegalArgumentException("Cloning authentication error. Please provide a valid Personal Access Token (PAT)", exception);
 			}
-			throw new IllegalArgumentException("Cloning failed: " + exception.getMessage(), exception);
+			throw new ApiException("Cloning failed", exception);
 		}
 
 		ConfigurationProject configurationProject = loadProjectAndCache(targetDir.toString());
@@ -175,8 +173,7 @@ public class ConfigurationProjectService {
 		projectCache.entrySet().removeIf(entry -> entry.getValue().getName().equals(projectName));
 	}
 
-	public ConfigurationProject enableFilter(String projectName, String type)
-			throws ApiException {
+	public ConfigurationProject enableFilter(String projectName, String type) throws ApiException {
 		ConfigurationProject configurationProject = getProject(projectName);
 		configurationProject.enableFilter(parseFilterType(type));
 		return configurationProject;
@@ -196,14 +193,14 @@ public class ConfigurationProjectService {
 			throw new ApiException("Project directory not found: " + projectName, HttpStatus.NOT_FOUND);
 		}
 
-		try (ZipOutputStream zos = new ZipOutputStream(outputStream);
+		try (ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream);
 			Stream<Path> paths = Files.walk(projectPath)) {
 			paths.filter(Files::isRegularFile).forEach(filePath -> {
 				try {
 					String entryName = projectPath.relativize(filePath).toString().replace("\\", "/");
-					zos.putNextEntry(new ZipEntry(entryName));
-					Files.copy(filePath, zos);
-					zos.closeEntry();
+					zipOutputStream.putNextEntry(new ZipEntry(entryName));
+					Files.copy(filePath, zipOutputStream);
+					zipOutputStream.closeEntry();
 				} catch (IOException exception) {
 					throw new RuntimeException("Error zipping file: " + filePath, exception);
 				}
@@ -255,19 +252,17 @@ public class ConfigurationProjectService {
 	}
 
 	private List<String> getConfigurationFilesDynamically(String projectRoot) {
-		try {
-			Path absolutePath = fileSystemStorage.toAbsolutePath(projectRoot);
+		Path absolutePath = fileSystemStorage.toAbsolutePath(projectRoot);
 
-			if (!Files.exists(absolutePath) || !Files.isDirectory(absolutePath)) {
-				return List.of();
-			}
+		if (!Files.exists(absolutePath) || !Files.isDirectory(absolutePath)) {
+			return List.of();
+		}
 
-			try (Stream<Path> stream = Files.walk(absolutePath)) {
-				return stream.filter(Files::isRegularFile)
-						.filter(path -> path.toString().toLowerCase().endsWith(".xml"))
-						.map(path -> fileSystemStorage.toRelativePath(path.toString()))
-						.toList();
-			}
+		try (Stream<Path> stream = Files.walk(absolutePath)) {
+			return stream.filter(Files::isRegularFile)
+					.filter(path -> path.toString().toLowerCase().endsWith(".xml"))
+					.map(path -> fileSystemStorage.toRelativePath(path.toString()))
+					.toList();
 		} catch (IOException exception) {
 			log.error("Failed to read configurations from disk for project {}", projectRoot, exception);
 			return List.of();

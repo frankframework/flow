@@ -38,6 +38,7 @@ import {
   parseXsd,
 } from '~/utils/xsd-utils'
 import MissingRequirements from './components/missing-requirements'
+import ZoomedOutNode from './zoomed-out-node'
 
 export type FrankNodeType = Node<{
   subtype: string
@@ -46,6 +47,7 @@ export type FrankNodeType = Node<{
   sourceHandles: { type: string; index: number }[]
   attributes?: Record<string, string>
   children: ChildNode[]
+  manuallyResized?: boolean
 }> & {
   width?: number
   height?: number
@@ -53,6 +55,7 @@ export type FrankNodeType = Node<{
 
 export default function FrankNode(properties: NodeProps<FrankNodeType>) {
   const minNodeWidth = FlowConfig.NODE_DEFAULT_WIDTH
+  const maxNodeWidth = FlowConfig.NODE_MAX_WIDTH
   const minNodeHeight = FlowConfig.NODE_MIN_HEIGHT
   const type = properties.data.type.toLowerCase()
   const colorVariable = `--type-${type}`
@@ -108,7 +111,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
   const updateNodeInternals = useUpdateNodeInternals()
   const [isHandleMenuOpen, setIsHandleMenuOpen] = useState(false)
   const [handleMenuPosition, setHandleMenuPosition] = useState({ x: 0, y: 0 })
-  const [isManuallyResized, setIsManuallyResized] = useState(false)
+  const [isManuallyResized, setIsManuallyResized] = useState(properties.data.manuallyResized)
 
   const [dimensions, setDimensions] = useState({
     width: properties.width ?? minNodeWidth,
@@ -118,17 +121,6 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
   const firstHandlePosition = useMemo(() => {
     return (dimensions.height - (properties.data.sourceHandles.length - 1) * handleSpacing) / 2
   }, [dimensions.height, properties.data.sourceHandles.length])
-
-  const COMPACT_INITIALS_BOX_SIZE = 160
-  const COMPACT_PADDING_TOP = 8
-  const COMPACT_HANDLE_SIZE = 15
-  const COMPACT_HANDLE_GAP = 4
-
-  const compactXOffsetPx =
-    (FlowConfig.NODE_DEFAULT_WIDTH - COMPACT_INITIALS_BOX_SIZE) / 2 - COMPACT_HANDLE_SIZE - COMPACT_HANDLE_GAP
-
-  const compactHandleTop =
-    COMPACT_PADDING_TOP + COMPACT_INITIALS_BOX_SIZE / 2 - COMPACT_HANDLE_SIZE / 2 + COMPACT_HANDLE_SIZE
 
   const allForwardTypesUsed = useMemo(() => {
     if (availableHandleTypes.length === 0) return true
@@ -408,107 +400,16 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
   }, [draggedName, canAcceptChild, frankElement])
 
   if (isCompact) {
-    const abbr =
-      properties.data.subtype.replaceAll(/[a-z]/g, '').slice(0, 4) || properties.data.subtype.slice(0, 2).toUpperCase()
-
     return (
-      <>
-        <div
-          className="flex flex-col items-center gap-2 rounded-md"
-          style={{
-            width: `${FlowConfig.NODE_DEFAULT_WIDTH}px`,
-            paddingTop: `${COMPACT_PADDING_TOP}px`,
-            paddingBottom: '8px',
-            ...(properties.selected && { borderColor: `var(${colorVariable})` }),
-          }}
-        >
-          <div
-            className="flex h-40 w-40 shrink-0 items-center justify-center rounded-3xl shadow-md"
-            style={{
-              backgroundColor: `color-mix(in srgb, var(${colorVariable}) 25%, transparent)`,
-              border: `3px solid var(${colorVariable})`,
-            }}
-          >
-            <span className="text-5xl font-black tracking-tight" style={{ color: `var(${colorVariable})` }}>
-              {abbr}
-            </span>
-          </div>
-
-          <span className="text-center text-3xl leading-snug font-semibold whitespace-nowrap">
-            {properties.data.subtype}
-          </span>
-
-          {properties.data.name && (
-            <span className="text-foreground-muted text-center text-3xl whitespace-nowrap">{properties.data.name}</span>
-          )}
-          {properties.data.attributes &&
-            Object.entries(properties.data.attributes).map(([key, value]) => (
-              <span key={key} className="text-foreground-muted text-center text-2xl whitespace-nowrap">
-                {value || key}
-              </span>
-            ))}
-        </div>
-
-        {properties.data.subtype !== 'Receiver' && (
-          <>
-            <div
-              className="pointer-events-none absolute rounded-full"
-              style={{
-                left: compactXOffsetPx,
-                top: `${compactHandleTop}px`,
-                transform: 'translate(-50%, -50%)',
-                width: '15px',
-                height: '15px',
-                backgroundColor: '#B2B2B2',
-                border: '1px solid rgba(107, 114, 128, 0.5)',
-              }}
-            />
-            <Handle
-              type="target"
-              position={Position.Left}
-              isConnectableStart={false}
-              style={{
-                opacity: 0,
-                left: compactXOffsetPx,
-                width: '15px',
-                height: '15px',
-                top: `${compactHandleTop}px`,
-              }}
-            />
-          </>
-        )}
-
-        {properties.data.sourceHandles.length > 0 && (
-          <div
-            className="pointer-events-none absolute rounded-full"
-            style={{
-              right: compactXOffsetPx,
-              top: `${compactHandleTop}px`,
-              transform: 'translate(50%, -50%)',
-              width: `${COMPACT_HANDLE_SIZE}px`,
-              height: `${COMPACT_HANDLE_SIZE}px`,
-              backgroundColor: '#B2B2B2',
-              border: '1px solid rgba(107, 114, 128, 0.5)',
-            }}
-          />
-        )}
-
-        {properties.data.sourceHandles.map((handle) => (
-          <Handle
-            key={handle.type + handle.index}
-            type="source"
-            position={Position.Right}
-            id={handle.index.toString()}
-            style={{
-              top: `${compactHandleTop}px`,
-              right: compactXOffsetPx,
-              width: '15px',
-              height: '15px',
-              opacity: 0,
-            }}
-          />
-        ))}
-      </>
+      <ZoomedOutNode
+        subtype={properties.data.subtype}
+        name={properties.data.name}
+        attributes={properties.data.attributes}
+        colorVariable={colorVariable}
+        selected={properties.selected}
+        showTargetHandle={properties.data.subtype !== 'Receiver'}
+        sourceHandles={properties.data.sourceHandles}
+      />
     )
   }
 
@@ -531,9 +432,10 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
         <ResizeIcon />
       </NodeResizeControl>
       <div
-        className={`bg-background border-border relative flex w-full flex-col items-center overflow-x-visible rounded-md border shadow-md ${isManuallyResized ? 'h-full overflow-y-hidden' : 'overflow-y-visible'}`}
+        className={`bg-background border-border relative flex flex-col items-center overflow-x-visible rounded-md border shadow-md ${isManuallyResized ? 'h-full w-full overflow-y-hidden' : 'overflow-y-visible'}`}
         style={{
           minWidth: `${minNodeWidth}px`,
+          ...(isManuallyResized ? {} : { width: 'max-content', maxWidth: `${maxNodeWidth}px` }),
           ...(properties.selected && { borderColor: `var(${colorVariable})` }),
         }}
         ref={containerReference}
@@ -569,13 +471,13 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
         </NodeHeader>
         {properties.data.attributes &&
           Object.entries(properties.data.attributes).map(([key, value]) => (
-            <div key={key} className="my-1 w-full max-w-full px-1">
+            <div key={key} className="my-1 w-full max-w-full min-w-0 px-1">
               <p className="text-foreground overflow-hidden text-sm font-bold text-ellipsis whitespace-nowrap">{key}</p>
               <p className="text-foreground overflow-hidden text-sm text-ellipsis whitespace-nowrap">{value}</p>
             </div>
           ))}
         {(properties.data.children.length > 0 || dragOver || canDropDraggedElement) && (
-          <div className="w-full p-4">
+          <div className="w-full min-w-0 p-4">
             <NodeChildrenContainer>
               {properties.data.children.map((child) => (
                 <div key={child.id} data-child-id={child.id} className="child-drop-zone">

@@ -677,11 +677,11 @@ public class ConfigurationProjectServiceTest {
 
 		when(fileSystemStorage.toAbsolutePath("already_exists")).thenReturn(existing);
 
-		IllegalArgumentException ex = assertThrows(
-				IllegalArgumentException.class,
+		ApiException exception = assertThrows(
+				ApiException.class,
 				() -> configurationProjectService.cloneAndOpenProject("https://example.com/repo.git", "already_exists", null)
 		);
 
-		assertTrue(ex.getMessage().contains("already_exists"));
+		assertTrue(exception.getMessage().contains("already_exists"));
 	}
 }

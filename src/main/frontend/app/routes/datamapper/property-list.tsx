@@ -156,8 +156,10 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
       setEditingMapping,
       openMapping,
     })
-    //UseMemo is used here to ensure nodetype is not changed throughout rerenders. If the variable is updated reactflow throws a warning in the console;
-    //Don't add flow as dependency here, it'll become an infinite loop flow changes every rerender --> updates the memo --> the memo updates the nodetypes --> updating the nodetypes causes react to trigger a rerender resulting in a infinite loop
+    /*
+     * UseMemo is used here to ensure nodetype is not changed throughout rerenders. If the variable is updated reactflow throws a warning in the console;
+     * Don't add flow as dependency here, it'll become an infinite loop flow changes every rerender --> updates the memo --> the memo updates the nodetypes --> updating the nodetypes causes react to trigger a rerender resulting in a infinite loop
+     */
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openMapping])
 

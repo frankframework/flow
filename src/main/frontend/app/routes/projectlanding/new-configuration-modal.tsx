@@ -6,7 +6,6 @@ import Input from '~/components/inputs/input'
 import { filesystemService } from '~/services/filesystem-service'
 
 interface NewProjectModalProperties {
-  isOpen: boolean
   isLocal: boolean
   onClose: () => void
   onCreate: (name: string, rootPath: string) => void
@@ -16,7 +15,6 @@ interface NewProjectModalProperties {
 const CONFIG_DIR = 'src/main/configurations'
 
 export default function NewConfigurationModal({
-  isOpen,
   isLocal,
   onClose,
   onCreate,
@@ -27,8 +25,8 @@ export default function NewConfigurationModal({
   const [showPicker, setShowPicker] = useState(false)
 
   useEffect(() => {
-    if (!isOpen || !isLocal) {
-      if (isOpen) setLocation(initialPath)
+    if (!isLocal) {
+      setLocation(initialPath)
       return
     }
 
@@ -36,9 +34,7 @@ export default function NewConfigurationModal({
       .resolveNearestAccessiblePath(initialPath)
       .then(setLocation)
       .catch(() => setLocation(''))
-  }, [isOpen, isLocal, initialPath])
-
-  if (!isOpen) return null
+  }, [isLocal, initialPath])
 
   const handleCreate = () => {
     if (!name.trim() || (isLocal && !location)) return
@@ -109,15 +105,16 @@ export default function NewConfigurationModal({
         </div>
       </div>
 
-      <DirectoryPicker
-        isOpen={showPicker}
-        onSelect={(path) => {
-          setLocation(path)
-          setShowPicker(false)
-        }}
-        onCancel={() => setShowPicker(false)}
-        initialPath={location}
-      />
+      {showPicker && (
+        <DirectoryPicker
+          onSelect={(path) => {
+            setLocation(path)
+            setShowPicker(false)
+          }}
+          onCancel={() => setShowPicker(false)}
+          initialPath={location}
+        />
+      )}
     </>
   )
 }

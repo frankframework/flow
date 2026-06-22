@@ -193,9 +193,9 @@ export function ChildNodeComponent({
       <div className="child-node-body border-border/40 relative min-h-25 rounded-b-md border px-1 py-1">
         {child.attributes &&
           Object.entries(child.attributes).map(([key, value]) => (
-            <div key={key} className="my-1">
-              <p className="text-sm font-bold">{key}</p>
-              <p className="text-sm">{value}</p>
+            <div key={key} className="my-1 min-w-0">
+              <p className="overflow-hidden text-sm font-bold text-ellipsis whitespace-nowrap">{key}</p>
+              <p className="overflow-hidden text-sm text-ellipsis whitespace-nowrap">{value}</p>
             </div>
           ))}
 

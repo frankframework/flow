@@ -52,7 +52,8 @@ export function getEdgeLabelFromHandle(node: FlowNode | undefined, handleId: str
   return matched?.type?.toLowerCase() ?? 'success'
 }
 
-/**  Converts the tagname of a non capitalized element that has a classname attribute to the last part of said classname, e.g.:
+/**
+ *  Converts the tagname of a non capitalized element that has a classname attribute to the last part of said classname, e.g.:
  * <pipe name="uploadFiles" className="org.frankframework.pipes.ForEachChildElementPipe" />
  * Becomes <ForEachChildElementPipe name="uploadFiles" />
  */
