@@ -16,6 +16,7 @@ import { useFileWatcher } from '~/hooks/use-file-watcher'
 import { getAncestorIds, isVisibleInTree, selectAndReveal, toTreeItemId } from './tree-utilities'
 import type { ContextMenuState } from './use-file-tree-context-menu'
 import IconButton from '~/components/inputs/icon-button'
+import { normalizePath } from '~/utils/path-utils'
 
 import {
   Tree,
@@ -118,7 +119,7 @@ export default function EditorFileStructure() {
     const paths = project?.filepaths
     if (!paths?.length) return
 
-    const segments = paths.map((path) => path.replaceAll('\\', '/').split('/').slice(0, -1))
+    const segments = paths.map((path) => normalizePath(path).split('/').slice(0, -1))
 
     const common = segments.reduce((a, b) => {
       let i = 0

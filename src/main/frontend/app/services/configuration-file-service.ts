@@ -1,5 +1,5 @@
 import { apiFetch } from '~/utils/api'
-import type { XmlResponse } from '~/types/project.types'
+import type { AdapterLocationResponse, XmlResponse } from '~/types/project.types'
 
 const configCache = new Map<string, string>()
 
@@ -48,8 +48,13 @@ export async function saveConfigurationFile(
   })
 }
 
-export async function createConfigurationFile(projectName: string, filepath: string): Promise<XmlResponse> {
-  return apiFetch<XmlResponse>(`${getBaseUrl(projectName)}?path=${encodeURIComponent(filepath)}`, { method: 'POST' })
+export async function createConfigurationFile(
+  projectName: string,
+  filepath: string,
+): Promise<AdapterLocationResponse> {
+  return apiFetch<AdapterLocationResponse>(`${getBaseUrl(projectName)}?path=${encodeURIComponent(filepath)}`, {
+    method: 'POST',
+  })
 }
 
 function getBaseUrl(projectName: string): string {

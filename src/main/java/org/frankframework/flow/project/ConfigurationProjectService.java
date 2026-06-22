@@ -25,6 +25,7 @@ import org.frankframework.flow.git.GitService;
 import org.frankframework.flow.projectsettings.FilterType;
 import org.frankframework.flow.recentproject.RecentProject;
 import org.frankframework.flow.recentproject.RecentProjectsService;
+import org.frankframework.flow.utility.PathUtils;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpStatus;
@@ -200,7 +201,7 @@ public class ConfigurationProjectService {
 			Stream<Path> paths = Files.walk(projectPath)) {
 			paths.filter(Files::isRegularFile).forEach(filePath -> {
 				try {
-					String entryName = projectPath.relativize(filePath).toString().replace("\\", "/");
+					String entryName = PathUtils.toForwardSlash(projectPath.relativize(filePath).toString());
 					zos.putNextEntry(new ZipEntry(entryName));
 					Files.copy(filePath, zos);
 					zos.closeEntry();
@@ -215,7 +216,7 @@ public class ConfigurationProjectService {
 		Path projectDir = fileSystemStorage.createProjectDirectory(projectName);
 
 		for (int i = 0; i < files.size(); i++) {
-			String relativePath = paths.get(i).replace("\\", "/");
+			String relativePath = PathUtils.toForwardSlash(paths.get(i));
 
 			if (relativePath.contains("..") || relativePath.startsWith("/")) {
 				throw new SecurityException("Invalid file path: " + relativePath);
@@ -234,7 +235,7 @@ public class ConfigurationProjectService {
 	}
 
 	public ConfigurationProjectDTO toDto(ConfigurationProject configurationProject) {
-		String cleanPath = fileSystemStorage.toRelativePath(configurationProject.getRootPath()).replace("\\", "/");
+		String cleanPath = fileSystemStorage.toRelativePath(configurationProject.getRootPath());
 
 		// Dynamically fetch configurations from disk as the single source of truth
 		List<String> filepaths = getConfigurationFilesDynamically(configurationProject.getRootPath());
@@ -265,7 +266,7 @@ public class ConfigurationProjectService {
 			try (Stream<Path> stream = Files.walk(absolutePath)) {
 				return stream.filter(Files::isRegularFile)
 						.filter(path -> path.toString().toLowerCase().endsWith(".xml"))
-						.map(path -> fileSystemStorage.toRelativePath(path.toString()).replace("\\", "/"))
+						.map(path -> fileSystemStorage.toRelativePath(path.toString()))
 						.toList();
 			}
 		} catch (IOException exception) {

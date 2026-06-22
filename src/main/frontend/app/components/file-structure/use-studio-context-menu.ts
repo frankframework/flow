@@ -14,7 +14,6 @@ import {
   FOLDER_OR_ADAPTER_NAME_PATTERNS,
 } from '~/components/file-structure/name-input-dialog'
 import { openInStudio } from '~/actions/navigationActions'
-import { findAdaptersInXml } from '~/routes/editor/xml-utils'
 
 export type StudioItemType = 'root' | 'folder' | 'configuration' | 'adapter' | 'file'
 
@@ -182,10 +181,12 @@ export function useStudioContextMenu({ projectName, dataProvider }: UseStudioCon
           try {
             const folderPath = menu.folderPath.replace(/[/\\]$/, '')
             const absoluteFilePath = `${folderPath}/${fileName}`
-            await createConfigurationFile(projectName, absoluteFilePath)
+            const { adapterName, adapterPosition } = await createConfigurationFile(projectName, absoluteFilePath)
             await dataProvider.reloadDirectory('root')
 
-            openInStudio(navigate, { adapterName: 'SampleAdapter', filepath: absoluteFilePath, adapterPosition: 0 })
+            if (adapterName) {
+              openInStudio(navigate, { adapterName, filepath: absoluteFilePath, adapterPosition })
+            }
           } catch (error) {
             logApiError('Failed to create configuration', error as Error)
           }
@@ -208,14 +209,10 @@ export function useStudioContextMenu({ projectName, dataProvider }: UseStudioCon
         submitLabel: 'Create',
         onSubmit: async (name: string) => {
           try {
-            const { xmlContent } = await createAdapter(projectName, name, menu.path)
+            const { adapterName, adapterPosition } = await createAdapter(projectName, name, menu.path)
             await dataProvider.reloadDirectory('root')
 
-            const adapterIndex = findAdaptersInXml(xmlContent).findIndex((adapter) => adapter.name === name)
-
-            if (adapterIndex !== -1) {
-              openInStudio(navigate, { adapterName: name, filepath: menu.path, adapterPosition: adapterIndex })
-            }
+            openInStudio(navigate, { adapterName: adapterName ?? name, filepath: menu.path, adapterPosition })
           } catch (error) {
             logApiError('Failed to create adapter', error as Error)
           }

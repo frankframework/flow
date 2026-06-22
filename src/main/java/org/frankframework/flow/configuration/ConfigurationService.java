@@ -15,6 +15,7 @@ import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.frankframework.flow.frankconfig.FrankConfigXsdService;
 import org.frankframework.flow.project.ConfigurationProject;
 import org.frankframework.flow.project.ConfigurationProjectService;
+import org.frankframework.flow.utility.XmlAdapterUtils;
 import org.frankframework.flow.utility.XmlConfigurationUtils;
 import org.frankframework.flow.utility.XmlFormatterUtils;
 import org.frankframework.flow.utility.XmlSecurityUtils;
@@ -23,6 +24,7 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
@@ -92,7 +94,13 @@ public class ConfigurationService {
 		}
 	}
 
-	public String addConfiguration(String projectName, String filepath) throws IOException, ApiException, TransformerException, ParserConfigurationException, SAXException {
+	/**
+	 * Creates a new configuration file from the default template.
+	 *
+	 * @return the location of the first adapter in the created file, so the frontend can open it in the studio;
+	 *         the actual content is loaded lazily when the studio renders the adapter
+	 */
+	public AdapterLocationDTO addConfiguration(String projectName, String filepath) throws IOException, ApiException, TransformerException, ParserConfigurationException, SAXException {
 		if (filepath == null || filepath.isBlank()) {
 			throw new ApiException("Configuration path must not be empty", HttpStatus.BAD_REQUEST);
 		}
@@ -115,7 +123,10 @@ public class ConfigurationService {
 		String updatedContent = XmlConfigurationUtils.convertNodeToString(updatedDocument);
 		fileSystemStorage.writeFile(absoluteFilePath.toString(), updatedContent);
 		fileTreeService.invalidateTreeCache(projectName);
-		return updatedContent;
+
+		Element firstAdapter = XmlAdapterUtils.findFirstAdapter(updatedDocument);
+		String adapterName = firstAdapter != null ? firstAdapter.getAttribute("name") : null;
+		return new AdapterLocationDTO(adapterName, 0);
 	}
 
 	private String ensureFlowNamespace(String xml) {

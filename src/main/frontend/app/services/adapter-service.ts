@@ -1,4 +1,4 @@
-import type { XmlResponse } from '~/types/project.types'
+import type { AdapterLocationResponse, XmlResponse } from '~/types/project.types'
 import { apiFetch } from '~/utils/api'
 
 export async function saveAdapter(
@@ -30,8 +30,8 @@ export async function createAdapter(
   projectName: string,
   adapterName: string,
   configurationPath: string,
-): Promise<XmlResponse> {
-  return apiFetch<XmlResponse>(`/projects/${encodeURIComponent(projectName)}/adapters`, {
+): Promise<AdapterLocationResponse> {
+  return apiFetch<AdapterLocationResponse>(`/projects/${encodeURIComponent(projectName)}/adapters`, {
     method: 'POST',
     body: JSON.stringify({ adapterName, configurationPath }),
   })

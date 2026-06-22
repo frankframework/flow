@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.stream.Stream;
 import lombok.extern.log4j.Log4j2;
 import org.frankframework.flow.common.config.ClientSession;
+import org.frankframework.flow.utility.PathUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -113,8 +114,8 @@ public class CloudFileSystemStorageService implements FileSystemStorage {
 
 	@Override
 	public String toRelativePath(String absolutePath) {
-		String normalized = absolutePath.replace("\\", "/");
-		String userRoot = getUserRootPath().toString().replace("\\", "/");
+		String normalized = PathUtils.toForwardSlash(absolutePath);
+		String userRoot = PathUtils.toForwardSlash(getUserRootPath().toString());
 
 		if (normalized.startsWith(userRoot)) {
 			String relative = normalized.substring(userRoot.length());

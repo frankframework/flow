@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.List;
+import org.frankframework.flow.utility.PathUtils;
 
 public interface FileSystemStorage {
 	boolean isLocalEnvironment();
@@ -58,12 +59,12 @@ public interface FileSystemStorage {
 	Path rename(String oldPath, String newPath) throws IOException;
 
 	/**
-	 * Strips the workspace root prefix from a path.
-	 * Local: returns the path unchanged.
-	 * Cloud: returns the path relative to the user's workspace root.
+	 * Strips the workspace root prefix from a path and normalizes it to forward slashes.
+	 * Local: returns the path normalized to forward slashes.
+	 * Cloud: returns the path relative to the user's workspace root, normalized to forward slashes.
 	 */
 	default String toRelativePath(String absolutePath) {
-		return absolutePath;
+		return PathUtils.toForwardSlash(absolutePath);
 	}
 
 

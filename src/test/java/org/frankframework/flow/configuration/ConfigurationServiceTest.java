@@ -260,9 +260,11 @@ class ConfigurationServiceTest {
 		when(configurationProjectService.getProject("myproject")).thenReturn(configurationProject);
 
 		Path target = projectDir.resolve("src/main/configurations/NewConfig.xml");
-		String result = configurationService.addConfiguration("myproject", target.toString());
+		AdapterLocationDTO result = configurationService.addConfiguration("myproject", target.toString());
 
 		assertNotNull(result);
+		assertEquals("SampleAdapter", result.adapterName(), "Should point at the template adapter");
+		assertEquals(0, result.adapterPosition());
 		assertTrue(Files.exists(target), "NewConfig.xml should be created on disk");
 		verify(fileTreeService).invalidateTreeCache("myproject");
 	}
