@@ -61,8 +61,8 @@ export default function GroupNodeComponent({ data, selected }: NodeProps<GroupNo
             <HamburgerMenu />
           </div>
 
-          <div className="flex max-w-1/2 gap-1 px-2 py-1 text-sm font-bold">
-            <div>{data.label}</div>
+          <div className="flex max-w-1/2 min-w-0 gap-1 px-2 py-1 text-sm font-bold">
+            <div className="overflow-hidden text-ellipsis whitespace-nowrap">{data.label}</div>
           </div>
         </div>
       </div>

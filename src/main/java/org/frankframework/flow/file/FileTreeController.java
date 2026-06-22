@@ -42,12 +42,20 @@ public class FileTreeController {
 		}
 	}
 
-	@GetMapping(value = "/tree/directory", params = "path")
-	public FileTreeNode getDirectoryContent(
+	@GetMapping(value = "/tree/editor/directory", params = "path")
+	public FileTreeNode getEditorDirectoryContent(
 			@PathVariable String projectName,
 			@RequestParam String path
 	) throws IOException {
 		return fileTreeService.getShallowDirectoryTree(projectName, path);
+	}
+
+	@GetMapping(value = "/tree/studio/directory", params = "path")
+	public FileTreeNode getStudioDirectoryContent(
+			@PathVariable String projectName,
+			@RequestParam String path
+	) throws IOException {
+		return fileTreeService.getShallowStudioDirectoryTree(projectName, path);
 	}
 
 	@GetMapping(value = "/tree/ancestors", params = "path")

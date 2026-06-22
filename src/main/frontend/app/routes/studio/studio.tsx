@@ -205,7 +205,7 @@ export default function Studio() {
     if (!fileName) return
 
     openInEditor(fileName, activeTabPath, navigate)
-  }, [activeTabPath])
+  }, [activeTabPath, navigate])
 
   const rightPanelTitle = getRightPanelTitle(
     isMultiSelect,
