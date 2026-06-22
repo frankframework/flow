@@ -124,7 +124,7 @@ public class ConfigurationService {
 			return xml;
 		}
 
-		return xml.replaceFirst("(<(?:Configuration|Module))\\b", "$1 xmlns:flow=\"urn:frank-flow\"");
+		return XmlConfigurationUtils.addFlowNamespaceDeclaration(xml);
 	}
 
 	private String loadDefaultConfigurationXml() throws IOException {

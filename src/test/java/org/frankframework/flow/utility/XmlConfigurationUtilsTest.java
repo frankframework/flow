@@ -58,6 +58,16 @@ class XmlConfigurationUtilsTest {
 	}
 
 	@Test
+	void insertFlowNamespace_addsNamespaceToModuleRoot() throws Exception {
+		String xml = "<Module><Adapter name=\"A\"/></Module>";
+
+		Document updated = XmlConfigurationUtils.insertFlowNamespace(xml);
+
+		Element module = updated.getDocumentElement();
+		assertEquals("urn:frank-flow", module.getAttribute("xmlns:flow"));
+	}
+
+	@Test
 	void insertFlowNamespace_doesNotDuplicateWhenAlreadyPresent() throws Exception {
 		String xml = "<Configuration name=\"TestConfig\" xmlns:flow=\"urn:frank-flow\"><Adapter name=\"A\"/></Configuration>";
 
