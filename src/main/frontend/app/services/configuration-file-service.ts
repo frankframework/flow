@@ -48,10 +48,7 @@ export async function saveConfigurationFile(
   })
 }
 
-export async function createConfigurationFile(
-  projectName: string,
-  filepath: string,
-): Promise<AdapterLocationResponse> {
+export async function createConfigurationFile(projectName: string, filepath: string): Promise<AdapterLocationResponse> {
   return apiFetch<AdapterLocationResponse>(`${getBaseUrl(projectName)}?path=${encodeURIComponent(filepath)}`, {
     method: 'POST',
   })
