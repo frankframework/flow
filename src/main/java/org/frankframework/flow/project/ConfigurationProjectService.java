@@ -37,7 +37,9 @@ import org.springframework.web.multipart.MultipartFile;
 @Log4j2
 @Service
 public class ConfigurationProjectService {
-	private static final long DEFAULT_MAX_UNCOMPRESSED_IMPORT_BYTES = 80L * 1024 * 1024;
+	private static final long BYTES_PER_MB = 1024L * 1024;
+	private static final int IMPORT_BUFFER_SIZE = 8192;
+	private static final long DEFAULT_MAX_UNCOMPRESSED_IMPORT_BYTES = 80L * BYTES_PER_MB;
 
 	private final FileSystemStorage fileSystemStorage;
 	private final RecentProjectsService recentProjectsService;
@@ -267,13 +269,13 @@ public class ConfigurationProjectService {
 
 	private long copyZipEntry(ZipInputStream zipInputStream, Path targetPath, long bytesWrittenSoFar) throws IOException {
 		long entryBytes = 0;
-		byte[] buffer = new byte[8192];
+		byte[] buffer = new byte[IMPORT_BUFFER_SIZE];
 		try (OutputStream out = Files.newOutputStream(targetPath)) {
 			int read;
 			while ((read = zipInputStream.read(buffer)) != -1) {
 				entryBytes += read;
 				if (bytesWrittenSoFar + entryBytes > maxUncompressedImportBytes) {
-					long limitMb = maxUncompressedImportBytes / (1024 * 1024);
+					long limitMb = maxUncompressedImportBytes / BYTES_PER_MB;
 					log.warn("Rejected import: decompressed size exceeds the maximum allowed {} MB", limitMb);
 					throw new ApiException("Imported project exceeds the maximum allowed size of " + limitMb + " MB", HttpStatus.PAYLOAD_TOO_LARGE);
 				}
