@@ -14,6 +14,7 @@ import SidebarLayout from '~/components/sidebars-layout/sidebar-layout'
 import useTabStore from '~/stores/tab-store'
 import { useShallow } from 'zustand/react/shallow'
 import { openInEditor } from '~/actions/navigationActions'
+import { getBaseName } from '~/utils/path-utils'
 import Button from '~/components/inputs/button'
 import useFlowStore, { isStickyNote } from '~/stores/flow-store'
 import type { StickyNote } from '~/routes/studio/canvas/nodetypes/sticky-note'
@@ -201,7 +202,7 @@ export default function Studio() {
   const handleOpenInEditor = useCallback(() => {
     if (!activeTabPath) return
 
-    const fileName = activeTabPath.split(/[/\\]/).pop()
+    const fileName = getBaseName(activeTabPath)
     if (!fileName) return
 
     openInEditor(fileName, activeTabPath, navigate)

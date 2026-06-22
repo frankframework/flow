@@ -1,39 +1,44 @@
-/**
- * Extracts the portion of a path after the first occurrence of a marker segment.
- * Returns null if the marker is not found.
- */
-export function toRelativePath(absolutePath: string, marker: string): string | null {
-  const normalizedPath = normalizePath(absolutePath)
-  const normalizedMarker = normalizePath(marker)
-  const idx = normalizedPath.indexOf(normalizedMarker)
-  return idx === -1 ? null : normalizedPath.slice(idx + normalizedMarker.length)
-}
-
-export function normalizePath(path: string) {
+export function normalizePath(path: string): string {
   return path.replaceAll('\\', '/')
 }
 
-export function getParentPath(path: string): string {
-  if (!path) return path // Return empty string if path is empty, small optimization to avoid regex processing
-  const parent = path.replace(/\/?[^/]*$/, '')
-
-  if (/^[a-zA-Z]:$/.test(parent)) return `${parent}/`
-  return parent
+export function containsPathSeparator(path: string): boolean {
+  return /[/\\]/.test(path)
 }
 
 /**
- * Removes trailing path separators (`/` or `\`) from a path.
+ * Removes trailing path separators from a path, keeping filesystem roots intact
  */
 export function stripTrailingSeparators(path: string): string {
   if (!path) return path
-  const stripped = path.replace(/[\\/]+$/, '')
+  const stripped = normalizePath(path).replace(/\/+$/, '')
   if (stripped === '') return '/'
   if (/^[a-zA-Z]:$/.test(stripped)) return `${stripped}/`
   return stripped
 }
 
+export function getBaseName(path: string): string {
+  const normalized = stripTrailingSeparators(path)
+  return normalized.slice(normalized.lastIndexOf('/') + 1)
+}
+
+export function getParentPath(path: string): string {
+  if (!path) return path
+  const parent = normalizePath(path).replace(/\/?[^/]*$/, '')
+  if (/^[a-zA-Z]:$/.test(parent)) return `${parent}/`
+  return parent
+}
+
 export function joinPath(base: string, segment: string): string {
-  const trimmedBase = base.replace(/[\\/]+$/, '')
-  const trimmedSegment = segment.replace(/^[\\/]+/, '')
+  const trimmedBase = normalizePath(base).replace(/\/+$/, '')
+  const trimmedSegment = normalizePath(segment).replace(/^\/+/, '')
   return trimmedBase ? `${trimmedBase}/${trimmedSegment}` : `/${trimmedSegment}`
+}
+
+export function relativeTo(base: string, target: string): string | null {
+  const normalizedBase = stripTrailingSeparators(base)
+  const normalizedTarget = stripTrailingSeparators(target)
+  if (normalizedTarget === normalizedBase) return ''
+  const prefix = normalizedBase.endsWith('/') ? normalizedBase : `${normalizedBase}/`
+  return normalizedTarget.startsWith(prefix) ? normalizedTarget.slice(prefix.length) : null
 }

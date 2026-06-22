@@ -7,6 +7,7 @@ import IconButton from '~/components/inputs/icon-button'
 import IconLabelButton from '~/components/inputs/icon-label-button'
 import ConfirmDeleteDialog from '~/components/file-structure/confirm-delete-dialog'
 import { useState } from 'react'
+import { getBaseName } from '~/utils/path-utils'
 
 type ConfigurationFileTileProperties = {
   filepath: string
@@ -29,7 +30,7 @@ export default function ConfigurationFileTile({
   }
 
   const handleOpenInEditor = () => {
-    const fileName = relativePath.split(/[/\\]/).pop()
+    const fileName = getBaseName(relativePath)
     if (!fileName) return
     openInEditor(fileName, filepath, navigate)
   }
@@ -82,7 +83,7 @@ export default function ConfigurationFileTile({
 
       {showDeleteDialog && (
         <ConfirmDeleteDialog
-          name={relativePath.split(/[/\\]/).pop() ?? relativePath}
+          name={getBaseName(relativePath)}
           isFolder={false}
           onCancel={() => setShowDeleteDialog(false)}
           onConfirm={handleConfirmDelete}

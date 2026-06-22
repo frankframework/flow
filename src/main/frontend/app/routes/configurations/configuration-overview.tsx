@@ -11,7 +11,7 @@ import type { FileTreeNode } from '~/types/filesystem.types'
 import { fetchProjectTree } from '~/services/file-tree-service'
 import Button from '~/components/inputs/button'
 import Search from '~/components/search/search'
-import { toRelativePath } from '~/utils/path-utils'
+import { relativeTo } from '~/utils/path-utils'
 
 type ConfigurationFile = {
   path: string
@@ -85,15 +85,9 @@ export default function ConfigurationOverview() {
   const configFiles = useMemo(() => {
     if (!tree || !currentConfigurationProject) return []
 
-    /*
-     * The project root already is the configuration directory (it is the opened
-     * src/main/configurations/<configuration> folder, or a freshly created project
-     * whose Configuration.xml lives at the top level), so collect the configuration
-     * files straight from the root rather than searching for a nested directory.
-     */
     const xmlFiles = collectXmlFiles(tree)
     return xmlFiles.map((file) => {
-      const relativePath = toRelativePath(file.path, `${tree.path}/`) ?? file.name
+      const relativePath = relativeTo(tree.path, file.path) || file.name
       return { ...file, relativePath, path: file.path }
     })
   }, [tree, currentConfigurationProject])

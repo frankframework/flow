@@ -7,6 +7,7 @@ import CloseButton from '~/components/inputs/close-button'
 import Input from '~/components/inputs/input'
 import DirectoryPicker from '~/components/directory-picker/directory-picker'
 import { fetchProject } from '~/services/project-service'
+import { containsPathSeparator, joinPath, relativeTo } from '~/utils/path-utils'
 
 type AddConfigurationModalProperties = {
   isOpen: boolean
@@ -48,7 +49,7 @@ export default function AddConfigurationModal({
         return
       }
 
-      if (/[/\\]/.test(configname) || configname.includes('..')) {
+      if (containsPathSeparator(configname) || configname.includes('..')) {
         setError(String.raw`Filename cannot contain "/", "\" or ".."`)
         setLoading(false)
         return
@@ -58,12 +59,8 @@ export default function AddConfigurationModal({
         configname = `${configname}.xml`
       }
 
-      const projectRoot = currentConfiguration.rootPath.replace(/[/\\]$/, '')
-      const selectedFolder = rootLocationName.replace(/[/\\]$/, '')
-      const relativePath =
-              !selectedFolder || selectedFolder === projectRoot
-                      ? configname
-                      : `${selectedFolder.slice(projectRoot.length + 1).replaceAll('\\', '/')}/${configname}`
+      const relativeFolder = relativeTo(currentConfiguration.rootPath, rootLocationName)
+      const relativePath = relativeFolder ? joinPath(relativeFolder, configname) : configname
 
       await createConfigurationFile(currentConfiguration.name, relativePath)
       const updatedProject = await fetchProject(currentConfiguration.name)
@@ -97,7 +94,7 @@ export default function AddConfigurationModal({
   }
 
   const trimmedFilename = filename.trim()
-  const filenameHasInvalidChars = /[/\\]/.test(trimmedFilename) || trimmedFilename.includes('..')
+  const filenameHasInvalidChars = containsPathSeparator(trimmedFilename) || trimmedFilename.includes('..')
   const isFilenameValid = trimmedFilename.length > 0 && !filenameHasInvalidChars
 
   const displayFilename = (() => {
