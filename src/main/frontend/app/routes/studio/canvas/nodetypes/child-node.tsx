@@ -4,8 +4,8 @@ import useFlowStore from '~/stores/flow-store'
 import { getElementTypeFromName } from '../../node-translator-module'
 import useNodeContextStore from '~/stores/node-context-store'
 import { useNodeContextMenu } from '../node-context-menu-context'
-import { canAcceptChildStatic, type FrankElement } from './node-utilities'
-import { useFFDoc } from '@frankframework/doc-library-react'
+import { useFrankConfigXsd } from '~/providers/frankconfig-xsd-provider'
+import { getAllowedChildElementsForElement } from '~/utils/xsd-utils'
 import { NodeHeader } from './components/node-header'
 import { NodeChildrenContainer } from './components/node-children-container'
 
@@ -54,14 +54,12 @@ export function ChildNodeComponent({
   const [dragOver, setDragOver] = useState(false)
   const [canDropDraggedElement, setCanDropDraggedElement] = useState(false)
   const [dragForbidden, setDragForbidden] = useState(false)
-  const { elements, filters, ffDoc } = useFFDoc()
+  const { xsdDoc } = useFrankConfigXsd()
 
-  const frankElement = useMemo(() => {
-    if (!elements) return null
-    const recordElements = elements as Record<string, { name: string; [key: string]: unknown }>
-
-    return Object.values(recordElements).find((element) => element.name === child.subtype) ?? null
-  }, [elements, child.subtype])
+  const allowedChildNames = useMemo(
+    () => (xsdDoc ? new Set(getAllowedChildElementsForElement(xsdDoc, child.subtype)) : null),
+    [xsdDoc, child.subtype],
+  )
 
   const handleDragOver = (event: React.DragEvent) => {
     event.preventDefault()
@@ -94,10 +92,8 @@ export function ChildNodeComponent({
   }
 
   const canAcceptChild = useCallback(
-    (droppedName: string) => {
-      return canAcceptChildStatic(frankElement as FrankElement | null, droppedName, filters, ffDoc?.elements)
-    },
-    [frankElement, filters, ffDoc],
+    (droppedName: string) => allowedChildNames?.has(droppedName) ?? false,
+    [allowedChildNames],
   )
 
   const handleDrop = useCallback(
@@ -155,7 +151,7 @@ export function ChildNodeComponent({
 
   useEffect(() => {
     setCanDropDraggedElement(draggedName !== null && canAcceptChild(draggedName))
-  }, [draggedName, canAcceptChild, frankElement, child.subtype])
+  }, [draggedName, canAcceptChild, child.subtype])
 
   return (
     <div

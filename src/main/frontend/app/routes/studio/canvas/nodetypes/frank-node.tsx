@@ -23,19 +23,18 @@ import { NodeHeader } from './components/node-header'
 import { NodeChildrenContainer } from './components/node-children-container'
 import { ChildNodeComponent, type ChildNode } from './child-node'
 import { findChildRecursive } from '~/stores/child-utilities'
-import { canAcceptChildStatic } from './node-utilities'
 import type { ElementDetails } from '@frankframework/doc-library-core'
 import { DeprecatedPopover } from './components/deprecated-popover'
 import { showWarningToast } from '~/components/toast'
 import { useHandleTypes } from '~/hooks/use-handle-types'
 import AddSubcomponentModal from '~/components/flow/add-subcomponent-modal'
-import { fetchFrankConfigXsd } from '~/services/xsd-service'
+import { useFrankConfigXsd } from '~/providers/frankconfig-xsd-provider'
 import {
   type Requirement,
+  getAllowedChildElementsForElement,
   getElementRequirements,
   getMissingRequirements,
   isRequirementFulfilled,
-  parseXsd,
 } from '~/utils/xsd-utils'
 import MissingRequirements from './components/missing-requirements'
 import ZoomedOutNode from './zoomed-out-node'
@@ -64,7 +63,8 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
   const [dragOver, setDragOver] = useState(false)
   const [canDropDraggedElement, setCanDropDraggedElement] = useState(false)
   const showNodeContextMenu = useNodeContextMenu()
-  const { elements, filters, ffDoc } = useFFDoc()
+  const { elements } = useFFDoc()
+  const { xsdDoc } = useFrankConfigXsd()
   const {
     setNodeId,
     setIsNewNode,
@@ -94,15 +94,19 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const dangerTriangleReference = useRef<HTMLDivElement>(null)
   const availableHandleTypes = useHandleTypes(frankElement?.forwards)
+
+  const allowedChildNames = useMemo(
+    () => (xsdDoc ? new Set(getAllowedChildElementsForElement(xsdDoc, properties.data.subtype)) : null),
+    [xsdDoc, properties.data.subtype],
+  )
+
   const possibleChildren = useMemo(() => {
-    if (!elements || !frankElement) return []
+    if (!elements || !allowedChildNames) return []
 
     const recordElements = elements as Record<string, ElementDetails>
 
-    return Object.values(recordElements).filter((element) =>
-      canAcceptChildStatic(frankElement, element.name, filters, ffDoc?.elements),
-    )
-  }, [elements, frankElement, filters, ffDoc])
+    return Object.values(recordElements).filter((element) => allowedChildNames.has(element.name))
+  }, [elements, allowedChildNames])
   const [mandatoryChildren, setMandatoryChildren] = useState<Requirement[]>([])
   const [mandatoryChildrenFulfilled, setMandatoryChildrenFulfilled] = useState(false)
   const [missingChildren, setMissingChildren] = useState<string[]>([])
@@ -149,12 +153,9 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
   }, [dimensions.height, isCompact, properties.id, updateNodeInternals])
 
   useEffect(() => {
-    fetchFrankConfigXsd().then((xsd) => {
-      const doc = parseXsd(xsd)
-      const mandatory = getElementRequirements(doc, properties.data.subtype)
-      setMandatoryChildren(mandatory)
-    })
-  }, [properties.data.subtype])
+    if (!xsdDoc) return
+    setMandatoryChildren(getElementRequirements(xsdDoc, properties.data.subtype))
+  }, [xsdDoc, properties.data.subtype])
 
   useEffect(() => {
     const children = properties.data.children
@@ -288,10 +289,8 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
   }
 
   const canAcceptChild = useCallback(
-    (droppedName: string) => {
-      return canAcceptChildStatic(frankElement, droppedName, filters, ffDoc?.elements)
-    },
-    [frankElement, filters, ffDoc],
+    (droppedName: string) => allowedChildNames?.has(droppedName) ?? false,
+    [allowedChildNames],
   )
 
   const handleDragOver = (event: React.DragEvent) => {

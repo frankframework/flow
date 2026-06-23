@@ -127,6 +127,20 @@ function evaluateXPath(
   return doc.evaluate(xpath, context, nsResolver, type, null)
 }
 
+export function resolveElementTypeName(doc: Document, elementName: string): string | null {
+  const elementNode = queryOne(doc, `//xs:element[@name='${elementName}']`)
+  if (!elementNode) return null
+
+  return elementNode.getAttribute('type') ?? getBaseTypeFromElement(elementNode) ?? `${elementName}Type`
+}
+
+export function getAllowedChildElementsForElement(doc: Document, elementName: string): string[] {
+  const typeName = resolveElementTypeName(doc, elementName)
+  if (!typeName) return []
+
+  return getFirstLevelElementsForType(doc, typeName)
+}
+
 export function getFirstLevelElementsForType(doc: Document, typeName: string): string[] {
   const typeNode = getComplexTypeByName(doc, typeName)
   if (!typeNode) return []
@@ -175,21 +189,8 @@ export function getFirstLevelElementsForType(doc: Document, typeName: string): s
 }
 
 export function getElementRequirements(doc: Document, elementName: string): Requirement[] {
-  const elementNode = doc.evaluate(
-    `//xs:element[@name='${elementName}']`,
-    doc,
-    (prefix) => (prefix === 'xs' ? 'http://www.w3.org/2001/XMLSchema' : null),
-    XPathResult.FIRST_ORDERED_NODE_TYPE,
-    null,
-  ).singleNodeValue as Element | null
-
-  if (!elementNode) return []
-
-  let typeName = elementNode.getAttribute('type')
-
-  if (!typeName) {
-    typeName = `${elementName}Type`
-  }
+  const typeName = resolveElementTypeName(doc, elementName)
+  if (!typeName) return []
 
   const typeNode = getComplexTypeByName(doc, typeName)
   if (!typeNode) {
