@@ -18,16 +18,16 @@ function parseConfigurationXml(xmlString: string): Document {
   return new DOMParser().parseFromString(withFlowNamespace, 'text/xml')
 }
 
-interface IdCounter {
+type IdCounter = {
   current: number
 }
 
-interface SourceHandle {
+type SourceHandle = {
   type: string
   index: number
 }
 
-export interface AdapterInfo {
+export type AdapterInfo = {
   name: string
   listenerType: string | null
 }
@@ -818,7 +818,7 @@ function parseElementAttributes(
   return { attributes, name, x, y, width, height }
 }
 
-interface FrankEdge {
+type FrankEdge = {
   id: string
   source: string
   target: string
@@ -827,7 +827,7 @@ interface FrankEdge {
   data: { label: string }
 }
 
-interface ParsedAttributes {
+type ParsedAttributes = {
   attributes: Record<string, string>
   name: string
   x: number

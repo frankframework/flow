@@ -1,7 +1,7 @@
 import clsx from 'clsx'
 import type { ReactNode } from 'react'
 
-interface NodeChildrenContainerProperties {
+type NodeChildrenContainerProperties = {
   className?: string
   children: ReactNode
 }

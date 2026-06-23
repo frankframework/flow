@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-interface TreestoreState {
+type TreestoreState = {
   isLoading: boolean
   setIsLoading: (loading: boolean) => void
   clearConfigs: () => void

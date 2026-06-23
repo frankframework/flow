@@ -43,20 +43,20 @@ import {
 import { openInStudioAtNode } from '~/actions/navigationActions'
 
 type LeftTab = 'files' | 'git'
-export interface ValidationError {
+export type ValidationError = {
   message: string
   lineNumber: number
   startColumn: number
   endColumn: number
 }
 
-export interface TextModel {
+export type TextModel = {
   getLineContent: (n: number) => string
   getLineCount: () => number
   getLineMaxColumn: (n: number) => number
 }
 
-interface CachedFile {
+type CachedFile = {
   content: string
   type: string
 }

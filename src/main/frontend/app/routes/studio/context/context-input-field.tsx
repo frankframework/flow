@@ -4,7 +4,7 @@ import Toggle from '~/components/inputs/toggle'
 import ValidatedInput from '~/components/inputs/validatedInput'
 import Input from '~/components/inputs/input'
 
-interface ContextInputFieldProperties {
+type ContextInputFieldProperties = {
   id: string
   value: string
   onChange: (value: string) => void

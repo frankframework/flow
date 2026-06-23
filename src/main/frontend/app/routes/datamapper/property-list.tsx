@@ -33,7 +33,7 @@ import { updateCanvasSize } from '~/utils/datamapper_utils/canvas-management-uti
 import { getNodesByTypeAndId } from '~/utils/datamapper_utils/property-node-utils'
 import type { MappingListConfig } from '~/types/datamapper_types/config-types'
 
-interface PropertyListProperties {
+type PropertyListProperties = {
   config: MappingListConfig
   configDispatch: Dispatch<ConfigActions>
 }

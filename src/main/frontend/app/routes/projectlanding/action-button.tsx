@@ -1,7 +1,7 @@
 import React from 'react'
 import Button from '~/components/inputs/button'
 
-interface ActionButtonProperties {
+type ActionButtonProperties = {
   onClick?: React.MouseEventHandler<HTMLButtonElement>
   label: string
   className?: string

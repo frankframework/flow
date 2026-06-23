@@ -22,7 +22,7 @@ export const CONFIGURATION_NAME_PATTERNS: Record<string, RegExp> = {
 
 export const FOLDER_OR_ADAPTER_NAME_PATTERNS: Record<string, RegExp> = BASE_NAME_PATTERNS
 
-interface NameInputDialogProps {
+type NameInputDialogProps = {
   title: string
   initialValue?: string
   submitLabel?: string

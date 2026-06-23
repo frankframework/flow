@@ -4,13 +4,13 @@ export type Platform = 'mac' | 'pc'
 
 type PlatformValue<T> = T | Partial<Record<Platform, T>>
 
-export interface KeyModifiers {
+export type KeyModifiers = {
   cmdOrCtrl?: boolean
   shift?: boolean
   alt?: boolean
 }
 
-export interface ShortcutDefinition {
+export type ShortcutDefinition = {
   id: string
   label: string
   scope: string
@@ -215,7 +215,7 @@ function buildInitialShortcuts(): Map<string, ShortcutDefinition> {
   return map
 }
 
-interface ShortcutState {
+type ShortcutState = {
   platform: Platform
   shortcuts: Map<string, ShortcutDefinition>
   setHandler: (id: string, handler: (() => void) | undefined) => void

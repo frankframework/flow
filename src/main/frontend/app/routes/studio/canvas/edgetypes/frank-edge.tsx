@@ -1,7 +1,7 @@
 import { BaseEdge, EdgeLabelRenderer, getBezierPath, type Position } from '@xyflow/react'
 import useFlowStore from '~/stores/flow-store'
 
-export interface FrankEdgeProperties {
+export type FrankEdgeProperties = {
   id: string
   source: string
   target: string
@@ -35,7 +35,7 @@ export default function FrankEdge({
     const node = state.nodes.find((n) => n.id === source)
     if (!node?.data) return ''
 
-    interface NodeData {
+    type NodeData = {
       sourceHandles?: { type: string; index: number }[]
     }
     const typedData = node?.data as NodeData

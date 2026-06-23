@@ -6,7 +6,7 @@ import { sortChildren } from './tree-utilities'
 import type { DataProviderLike } from './use-file-tree-context-menu'
 import { BaseFilesDataProvider } from './base-files-data-provider'
 
-export interface FileNode {
+export type FileNode = {
   name: string
   path: string
   projectRoot?: boolean

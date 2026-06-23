@@ -13,7 +13,7 @@ import Button from '~/components/inputs/button'
 import Search from '~/components/search/search'
 import { normalizePath, toRelativePath } from '~/utils/path-utils'
 
-interface ConfigurationFile {
+type ConfigurationFile = {
   path: string
   relativePath: string
   adapterNames: string[]

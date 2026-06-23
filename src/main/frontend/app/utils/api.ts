@@ -16,7 +16,7 @@ const getAuthToken = () => {
   return localStorage.getItem('access_token') || null
 }
 
-interface BackendErrorResponse {
+type BackendErrorResponse = {
   status: string
   error: string
 }

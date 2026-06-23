@@ -13,7 +13,7 @@ import DeleteButton from '~/components/datamapper/basic-components/delete-button
 import { getNodesByTypeAndId } from '~/utils/datamapper_utils/property-node-utils'
 import { flowToMappingTable } from '~/utils/datamapper_utils/conversion-utils'
 
-interface PropertyListProperties {
+type PropertyListProperties = {
   config: MappingListConfig
   configDispatch: Dispatch<ConfigActions>
 }

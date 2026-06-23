@@ -2,26 +2,26 @@ import { create } from 'zustand'
 import { subscribeWithSelector } from 'zustand/middleware'
 import type { GitHunk } from '~/types/git.types'
 
-export interface DiffTabData {
+export type DiffTabData = {
   oldContent: string
   newContent: string
   filePath: string
   hunks: GitHunk[]
 }
 
-export interface EditorTabData {
+export type EditorTabData = {
   name: string
   configurationPath: string
   type?: 'editor' | 'diff'
   diffData?: DiffTabData
 }
 
-export interface PendingHighlight {
+export type PendingHighlight = {
   subtype: string
   name?: string
 }
 
-interface EditorTabStoreState {
+type EditorTabStoreState = {
   tabs: Record<string, EditorTabData>
   activeTabFilePath: string
   refreshCounter: number

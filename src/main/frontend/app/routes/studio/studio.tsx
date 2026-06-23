@@ -20,7 +20,7 @@ import type { StickyNote } from '~/routes/studio/canvas/nodetypes/sticky-note'
 import { ALL_SHORTCUTS, formatShortcutParts, useShortcutStore } from '~/stores/shortcut-store'
 import GroupContext from '~/routes/studio/context/group-context'
 
-interface RightPanelProps {
+type RightPanelProps = {
   isMultiSelect: boolean
   selectedStickyId: string | null
   selectedGroupId: string | null

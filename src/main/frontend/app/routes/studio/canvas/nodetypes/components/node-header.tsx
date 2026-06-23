@@ -1,7 +1,7 @@
 import clsx from 'clsx'
 import type { ReactNode } from 'react'
 
-interface NodeHeaderProperties {
+type NodeHeaderProperties = {
   subtype: string
   name?: string
   colorVariable: string

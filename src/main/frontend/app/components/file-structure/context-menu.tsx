@@ -2,7 +2,7 @@ import { useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { useContextMenuDismiss } from '~/hooks/use-context-menu-dismiss'
 
-interface ContextMenuProps {
+type ContextMenuProps = {
   position: { x: number; y: number }
   isFolder: boolean
   isRoot?: boolean

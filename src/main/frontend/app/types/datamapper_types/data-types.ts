@@ -1,16 +1,16 @@
-export interface RuleSet {
+export type RuleSet = {
   minValue?: number
   maxValue?: number
   decimalAllowed?: boolean
 }
 
-export interface PropertyDefinition {
+export type PropertyDefinition = {
   name: string
   type: PropertyBasicTypes
   rules: RuleSet
 }
 
-export interface FormatDefinition {
+export type FormatDefinition = {
   name: string
   schemaFileExtension: string
   duplicateKeysAllowed: boolean
@@ -19,7 +19,7 @@ export interface FormatDefinition {
 
 export type DataTypeSchema = FormatDefinition[]
 
-export interface FormatState {
+export type FormatState = {
   source: FormatDefinition | null
   target: FormatDefinition | null
 }

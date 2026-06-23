@@ -2,7 +2,7 @@ import React, { useId } from 'react'
 import MagnifierIcon from '/icons/solar/Magnifier.svg?react'
 import Input from '~/components/inputs/input'
 
-interface SearchProperties {
+type SearchProperties = {
   id?: string
   type?: string
   placeholder?: string

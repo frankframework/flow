@@ -51,6 +51,7 @@ export default [
       ...eslintConfigPrettier?.rules,
 
       // TypeScript rules
+      '@typescript-eslint/consistent-type-definitions': ['error', 'type'],
       '@typescript-eslint/explicit-function-return-type': 'off',
       '@typescript-eslint/no-unused-vars': ['warn', { varsIgnorePattern: '^_', argsIgnorePattern: '^_' }],
       '@typescript-eslint/triple-slash-reference': 'warn',

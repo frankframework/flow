@@ -1,4 +1,4 @@
-﻿export interface ConfigurationProject {
+﻿export type ConfigurationProject = {
   name: string
   rootPath: string
   filepaths: string[]
@@ -7,13 +7,13 @@
   hasStoredToken: boolean
 }
 
-export interface RecentConfigurationProject {
+export type RecentConfigurationProject = {
   name: string
   rootPath: string
   lastOpened: string
 }
 
-export interface XmlResponse {
+export type XmlResponse = {
   xmlContent: string
 }
 

@@ -5,7 +5,7 @@ import DeleteButton from '../basic-components/delete-button'
 import clsx from 'clsx'
 import VariableTypeIcon from '../basic-components/variable-type-icon'
 
-export interface ArrayGroupNodeProperties {
+export type ArrayGroupNodeProperties = {
   id: string
   data: CustomNodeData
   variant?: 'source' | 'target'

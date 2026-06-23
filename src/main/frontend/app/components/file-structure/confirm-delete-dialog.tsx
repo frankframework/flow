@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import Button from '~/components/inputs/button'
 
-interface ConfirmDeleteDialogProps {
+type ConfirmDeleteDialogProps = {
   name: string
   isFolder: boolean
   onConfirm: () => void

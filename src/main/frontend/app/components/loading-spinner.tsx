@@ -1,6 +1,6 @@
 import clsx from 'clsx'
 
-interface LoadingSpinnerProperties {
+type LoadingSpinnerProperties = {
   size?: 'sm' | 'md' | 'lg'
   message?: string
   className?: string

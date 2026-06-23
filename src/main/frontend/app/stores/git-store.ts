@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import type { GitStatus, GitFileDiff, FileHunkState } from '~/types/git.types'
 
-interface GitStoreState {
+type GitStoreState = {
   status: GitStatus | null
   selectedFile: string | null
   fileDiff: GitFileDiff | null

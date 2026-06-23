@@ -5,12 +5,12 @@ import { fetchProjectTree, fetchStudioDirectoryByPath, fetchAncestorPath } from 
 import type { FileTreeNode } from '~/types/filesystem.types'
 import { BaseFilesDataProvider } from './base-files-data-provider'
 
-export interface StudioFolderData {
+export type StudioFolderData = {
   name: string
   path: string
   adapterNames?: string[]
 }
-export interface StudioAdapterData {
+export type StudioAdapterData = {
   adapterName: string
   configPath: string
   adapterPosition: number

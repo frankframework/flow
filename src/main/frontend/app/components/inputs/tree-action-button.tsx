@@ -1,7 +1,7 @@
 import React from 'react'
 import IconButton from '~/components/inputs/icon-button'
 
-interface TreeActionButtonProps {
+type TreeActionButtonProps = {
   title: string
   onAction: () => void
   children: React.ReactNode

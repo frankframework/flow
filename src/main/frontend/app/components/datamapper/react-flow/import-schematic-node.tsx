@@ -10,7 +10,7 @@ import clsx from 'clsx'
 import { showErrorToast } from '~/components/toast'
 
 //DataType needed
-export interface ImportSchematicNodeprops {
+export type ImportSchematicNodeprops = {
   data: {
     fileType: string
     side: 'source' | 'target'

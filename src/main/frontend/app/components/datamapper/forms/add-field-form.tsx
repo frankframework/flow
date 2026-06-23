@@ -13,7 +13,7 @@ import Dropdown from '~/components/inputs/dropdown'
 import Button from '~/components/inputs/button'
 import Checkbox from '~/components/inputs/checkbox'
 
-export interface FieldModalProperties {
+export type FieldModalProperties = {
   fieldType: 'source' | 'target'
   onSave: (data: CustomNodeData) => void
   parents: NodeLabels[]

@@ -1,26 +1,26 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
-export interface EditorSettings {
+export type EditorSettings = {
   fontSize: number
   tabSize: number
   wordWrap: boolean
   lineNumbers: boolean
 }
 
-export interface StudioSettings {
+export type StudioSettings = {
   previewOnSave: boolean
   autoRefresh: boolean
   gradient: boolean
   paletteExpandedByDefault: boolean
 }
 
-export interface ProjectSettings {
+export type ProjectSettings = {
   recentProjects: string[]
   defaultLocation: string
 }
 
-export interface GeneralSettings {
+export type GeneralSettings = {
   theme: 'light' | 'dark' | 'system'
   language: string
   telemetry: boolean
@@ -28,12 +28,12 @@ export interface GeneralSettings {
   autoSave: AutosaveSettings
 }
 
-export interface AutosaveSettings {
+export type AutosaveSettings = {
   enabled: boolean
   delayMs: number
 }
 
-export interface SettingsState {
+export type SettingsState = {
   editor: EditorSettings
   studio: StudioSettings
   projects: ProjectSettings

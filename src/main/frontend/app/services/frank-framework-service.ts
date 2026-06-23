@@ -1,11 +1,11 @@
 import { apiFetch } from '~/utils/api'
 
-interface FFInstance {
+type FFInstance = {
   name: string
   configurations: FFConfiguration[]
 }
 
-export interface FFConfiguration {
+export type FFConfiguration = {
   name: string
   stubbed: boolean
   version?: string

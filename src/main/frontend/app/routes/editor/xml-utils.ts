@@ -1,9 +1,9 @@
-export interface AdapterLocation {
+export type AdapterLocation = {
   name: string
   offset: number
 }
 
-export interface FrankElementLocation {
+export type FrankElementLocation = {
   subtype: string
   name: string
   startLine: number

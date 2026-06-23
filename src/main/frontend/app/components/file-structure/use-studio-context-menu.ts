@@ -17,7 +17,7 @@ import { openInStudio } from '~/actions/navigationActions'
 
 export type StudioItemType = 'root' | 'folder' | 'configuration' | 'adapter' | 'file'
 
-export interface StudioContextMenuState {
+export type StudioContextMenuState = {
   position: { x: number; y: number }
   itemId: TreeItemIndex
   itemType: StudioItemType
@@ -26,7 +26,7 @@ export interface StudioContextMenuState {
   name: string
 }
 
-export interface NameDialogState {
+export type NameDialogState = {
   title: string
   initialValue?: string
   submitLabel?: string
@@ -34,13 +34,13 @@ export interface NameDialogState {
   patterns?: Record<string, RegExp>
 }
 
-export interface DeleteTargetState {
+export type DeleteTargetState = {
   name: string
   itemType: StudioItemType
   path: string
 }
 
-export interface StudioDataProviderLike {
+export type StudioDataProviderLike = {
   getTreeItem(itemId: TreeItemIndex): Promise<{ data: StudioItemData; isFolder?: boolean } | undefined>
   reloadDirectory(itemId: TreeItemIndex): Promise<void>
   getRootPath(): string
@@ -113,7 +113,7 @@ function removeAdapterTab(configPath: string, adapterName: string): void {
   }
 }
 
-interface UseStudioContextMenuOptions {
+type UseStudioContextMenuOptions = {
   projectName: string | undefined
   dataProvider: StudioDataProviderLike | null
 }

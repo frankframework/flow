@@ -7,7 +7,7 @@ import LinkButton from '~/components/inputs/link-button'
 import { frankdocChipStyle, getFirstLabelGroup } from '~/utils/flow-utils'
 import ExternalLinkIcon from '../../../../icons/solar/External Link.svg?react'
 
-interface ElementHoverCardProps {
+type ElementHoverCardProps = {
   anchorRect: DOMRect
   element: ElementDetails
   onUnlock?: () => void

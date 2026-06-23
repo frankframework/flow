@@ -2,7 +2,7 @@ import { create } from 'zustand'
 
 export type SaveStatus = 'idle' | 'saving' | 'saved'
 
-interface SaveStatusState {
+type SaveStatusState = {
   saveStatus: SaveStatus
   savedAt: Date | null
   setSaving: () => void

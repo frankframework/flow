@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-interface MissingRequirementsProps {
+type MissingRequirementsProps = {
   missingChildren: string[]
   isFulfilled: boolean
 }

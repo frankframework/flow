@@ -3,7 +3,7 @@ import clsx from 'clsx'
 import Button from '../../inputs/button'
 import { showErrorToast } from '../../toast'
 
-interface ImportButtonProperties {
+type ImportButtonProperties = {
   fileType: string
   importFunc: (file: File) => void
   file: File | null

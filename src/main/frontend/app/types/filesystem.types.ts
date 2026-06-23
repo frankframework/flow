@@ -1,19 +1,19 @@
 export type EntryType = 'DIRECTORY' | 'FILE'
 
-export interface BrowseResult {
+export type BrowseResult = {
   resolvedPath: string
   parentPath: string
   entries: FilesystemEntry[]
 }
 
-export interface FilesystemEntry {
+export type FilesystemEntry = {
   name: string
   path: string
   type: EntryType
   projectRoot: boolean
 }
 
-export interface FileTreeNode {
+export type FileTreeNode = {
   name: string
   path: string
   type: EntryType

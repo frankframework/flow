@@ -14,7 +14,7 @@ import type {
 import conditionConfigJson from '~/utils/datamapper_utils/config/condition-config.json'
 import { generateConditionName } from '~/utils/datamapper_utils/function-utils'
 
-interface AddConditionFormProperties {
+type AddConditionFormProperties = {
   sources: Source[]
   onSave: (condition: Condition) => void
   conditionToEdit?: Condition

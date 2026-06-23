@@ -1,6 +1,6 @@
 import clsx from 'clsx'
 
-interface RoundedToggleProperties {
+type RoundedToggleProperties = {
   label: string
   enabled?: boolean
   onClick?: () => void

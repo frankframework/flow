@@ -1,6 +1,6 @@
 import Button from '~/components/inputs/button'
 
-interface GitCommitBoxProps {
+type GitCommitBoxProps = {
   commitMessage: string
   onMessageChange: (message: string) => void
   onCommit: () => void

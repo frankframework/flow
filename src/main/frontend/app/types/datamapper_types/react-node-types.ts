@@ -22,11 +22,11 @@ export type GroupNode = Node & {
   height: number
 }
 
-export interface GroupNodeData {
+export type GroupNodeData = {
   label?: string
   children?: React.ReactNode
 }
-export interface NodeLabels {
+export type NodeLabels = {
   id: string
   label: string
   checked?: boolean

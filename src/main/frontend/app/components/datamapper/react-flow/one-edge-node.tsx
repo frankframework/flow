@@ -7,7 +7,7 @@ import HighlightButton from '../basic-components/highlight-button'
 import VariableTypeIcon from '../basic-components/variable-type-icon'
 import HoverInfo from '../basic-components/hover-info'
 
-export interface OneEdgeNodeProperties {
+export type OneEdgeNodeProperties = {
   id: string
   data: CustomNodeData
   variant?: 'source' | 'target'

@@ -1,7 +1,7 @@
 import type { FileTreeNode } from '~/types/filesystem.types'
 import { apiFetch } from '~/utils/api'
 
-export interface FileDTO {
+export type FileDTO = {
   content: string
   type: string | null
 }

@@ -1,4 +1,4 @@
-interface AddConfigurationTileProertiess {
+type AddConfigurationTileProertiess = {
   onClick?: () => void
 }
 

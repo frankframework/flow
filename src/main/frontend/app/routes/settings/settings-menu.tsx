@@ -13,7 +13,7 @@ import settingsCategories, { type SettingsMenuItem } from './settings-menu-items
 import '/styles/editor-files.css'
 import SettingsIcon from '/icons/solar/Settings.svg?react'
 
-interface SettingsMenuProperties {
+type SettingsMenuProperties = {
   selectedCategory: keyof typeof settingsCategories
   onSelectedCategory: (category: keyof typeof settingsCategories) => void
 }

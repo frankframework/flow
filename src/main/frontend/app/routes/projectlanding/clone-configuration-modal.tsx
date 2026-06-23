@@ -5,7 +5,7 @@ import CloseButton from '~/components/inputs/close-button'
 import Input from '~/components/inputs/input'
 import { filesystemService } from '~/services/filesystem-service'
 
-interface CloneProjectModalProperties {
+type CloneProjectModalProperties = {
   isLocal: boolean
   onClose: () => void
   onClone: (repoUrl: string, localPath: string, token?: string) => void

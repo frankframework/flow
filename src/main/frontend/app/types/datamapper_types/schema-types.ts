@@ -2,45 +2,45 @@
 
 export type JsonSchema = JsonSchemaObject | JsonSchemaArray | JsonSchemaPrimitive
 
-export interface JsonSchemaBase {
+export type JsonSchemaBase = {
   type?: string
   defaultValue?: string
 }
 
-export interface JsonSchemaObject extends JsonSchemaBase {
+export type JsonSchemaObject = {
   type: 'object'
   properties: Record<string, JsonSchema>
-}
+} & JsonSchemaBase
 
-export interface JsonSchemaArray extends JsonSchemaBase {
+export type JsonSchemaArray = {
   type: 'array'
   items: JsonSchema
-}
+} & JsonSchemaBase
 
-export interface JsonSchemaPrimitive extends JsonSchemaBase {
+export type JsonSchemaPrimitive = {
   type: 'string' | 'number' | 'boolean' | 'date'
-}
+} & JsonSchemaBase
 
 // XSD schema types
 
-export interface XsdSchema {
+export type XsdSchema = {
   'xs:complexType'?: XsdComplexType | XsdComplexType[]
   'xs:element'?: XsdElement | XsdElement[]
 }
 
-export interface XsdComplexType {
+export type XsdComplexType = {
   '@_name'?: string
   'xs:sequence'?: XsdSequence
   'xs:attribute'?: XsdAttribute[]
 }
 
-export interface XsdSequence {
+export type XsdSequence = {
   xs: {
     element: XsdElement[]
   }
 }
 
-export interface XsdElement {
+export type XsdElement = {
   '@_name'?: string
   '@_type'?: string
   '@_maxOccurs'?: string
@@ -50,7 +50,7 @@ export interface XsdElement {
   'xs:attribute'?: XsdAttribute[]
 }
 
-export interface XsdAttribute {
+export type XsdAttribute = {
   '@_name': string
   '@_type': string
   '@_use'?: string
@@ -58,7 +58,7 @@ export interface XsdAttribute {
 
 // SAX parser context type
 
-export interface SaxContext {
+export type SaxContext = {
   node: XsdComplexType | XsdSequence | XsdElement
   parentId: string | null
 }

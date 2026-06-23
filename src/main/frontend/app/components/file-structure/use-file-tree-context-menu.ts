@@ -11,7 +11,7 @@ import { FILE_NAME_PATTERNS, FOLDER_OR_ADAPTER_NAME_PATTERNS } from '~/component
 import { logApiError } from '~/utils/logger'
 import { openInEditor } from '~/actions/navigationActions'
 
-export interface ContextMenuState {
+export type ContextMenuState = {
   position: { x: number; y: number }
   itemId: TreeItemIndex
   isFolder: boolean
@@ -20,7 +20,7 @@ export interface ContextMenuState {
   name: string
 }
 
-export interface NameDialogState {
+export type NameDialogState = {
   title: string
   initialValue?: string
   submitLabel?: string
@@ -28,21 +28,21 @@ export interface NameDialogState {
   patterns?: Record<string, RegExp>
 }
 
-export interface DeleteTargetState {
+export type DeleteTargetState = {
   name: string
   path: string
   isFolder: boolean
   parentItemId: TreeItemIndex
 }
 
-export interface DataProviderLike {
+export type DataProviderLike = {
   getTreeItem(
     itemId: TreeItemIndex,
   ): Promise<{ data: { path: string; name: string; projectRoot?: boolean }; isFolder?: boolean } | undefined>
   reloadDirectory(itemId: TreeItemIndex): Promise<void>
 }
 
-interface UseFileTreeContextMenuOptions {
+type UseFileTreeContextMenuOptions = {
   projectName: string | undefined
   dataProvider: DataProviderLike | null
   configurationsRootPath?: string

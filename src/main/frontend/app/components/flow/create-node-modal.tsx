@@ -7,7 +7,7 @@ import CloseButton from '../inputs/close-button'
 import Search from '~/components/search/search'
 import type { Elements, FFDocJson } from '@frankframework/doc-library-core'
 
-interface CreateNodeModalProperties {
+type CreateNodeModalProperties = {
   isOpen: boolean
   onClose: () => void
   addNodeAtPosition: (

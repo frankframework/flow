@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { apiUrl } from '~/utils/api'
 
-interface WatcherEntry {
+type WatcherEntry = {
   source: EventSource
   handlers: Set<() => void>
   closeTimer: ReturnType<typeof setTimeout> | null

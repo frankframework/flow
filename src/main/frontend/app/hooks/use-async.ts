@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-interface UseAsyncOptions {
+type UseAsyncOptions = {
   enabled?: boolean
   key?: string | number | null
 }
 
-interface UseAsyncResult<T> {
+type UseAsyncResult<T> = {
   data: T | null
   isLoading: boolean
   error: Error | null
