@@ -2,6 +2,7 @@ import { Handle, type Node, type NodeProps, NodeResizeControl, Position, useStor
 import { ResizeIcon } from '~/routes/studio/canvas/nodetypes/frank-node'
 import { FlowConfig } from '~/routes/studio/canvas/flow.config'
 import { useSettingsStore } from '~/stores/settings-store'
+import { NodeHeader } from './components/node-header'
 import ZoomedOutNode from './zoomed-out-node'
 
 export type ExitNode = Node<{
@@ -45,7 +46,7 @@ export default function ExitNodeComponent(properties: NodeProps<ExitNode>) {
         <ResizeIcon />
       </NodeResizeControl>
       <div
-        className={`bg-background flex h-full w-full flex-col items-center rounded-md border ${
+        className={`bg-background flex h-full w-full flex-col items-center rounded-md border shadow-md ${
           properties.selected ? 'border-blue-500' : 'border-border'
         }`}
         style={{
@@ -54,21 +55,12 @@ export default function ExitNodeComponent(properties: NodeProps<ExitNode>) {
           maxWidth: `${FlowConfig.NODE_MAX_WIDTH}px`,
         }}
       >
-        <div
-          className="border-b-border box-border w-full min-w-0 rounded-t-md border-b p-1"
-          style={{
-            background: gradientEnabled
-              ? `radial-gradient(
-                ellipse farthest-corner at 20% 20%,
-                var(--type-exit) 0%,
-                var(--color-background) 100%
-              )`
-              : `var(--type-exit)`,
-          }}
-        >
-          <h1 className="font-bold">{properties.data.subtype}</h1>
-          <p className="overflow-hidden text-sm overflow-ellipsis whitespace-nowrap">{properties.data.name}</p>
-        </div>
+        <NodeHeader
+          subtype={properties.data.subtype}
+          name={properties.data.name}
+          colorVariable="--type-exit"
+          gradientEnabled={gradientEnabled}
+        />
       </div>
       <Handle
         type="target"

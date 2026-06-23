@@ -19,6 +19,8 @@ import { getElementTypeFromName } from '~/routes/studio/node-translator-module'
 import { useSettingsStore } from '~/stores/settings-store'
 import { useFFDoc } from '@frankframework/doc-library-react'
 import HandleMenu from './components/handle-menu'
+import { NodeHeader } from './components/node-header'
+import { NodeChildrenContainer } from './components/node-children-container'
 import { ChildNodeComponent, type ChildNode } from './child-node'
 import { findChildRecursive } from '~/stores/child-utilities'
 import { canAcceptChildStatic } from './node-utilities'
@@ -430,7 +432,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
         <ResizeIcon />
       </NodeResizeControl>
       <div
-        className={`bg-background border-border relative flex flex-col items-center overflow-x-visible rounded-md border ${isManuallyResized ? 'h-full w-full overflow-y-hidden' : 'overflow-y-visible'}`}
+        className={`bg-background border-border relative flex flex-col items-center overflow-x-visible rounded-md border shadow-md ${isManuallyResized ? 'h-full w-full overflow-y-hidden' : 'overflow-y-visible'}`}
         style={{
           minWidth: `${minNodeWidth}px`,
           ...(isManuallyResized ? {} : { width: 'max-content', maxWidth: `${maxNodeWidth}px` }),
@@ -441,22 +443,12 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
         onDragLeave={handleDragLeave}
         onDrop={handleDropOnNode}
       >
-        <div
-          className={`border-b-border relative box-border w-full min-w-0 rounded-t-md border-b p-1`}
-          style={{
-            background: gradientEnabled
-              ? `radial-gradient(
-                ellipse farthest-corner at 20% 20%,
-                var(${colorVariable}) 0%,
-                var(--color-background) 100%
-              )`
-              : `var(${colorVariable})`,
-          }}
+        <NodeHeader
+          subtype={properties.data.subtype}
+          name={properties.data.name}
+          colorVariable={colorVariable}
+          gradientEnabled={gradientEnabled}
         >
-          <h1 className="text-foreground font-bold break-words">{properties.data.subtype}</h1>
-          <p className="text-foreground overflow-hidden text-sm text-ellipsis whitespace-nowrap">
-            {properties.data.name}
-          </p>
           {isDeprecated && frankElement?.deprecated && (
             <>
               <div
@@ -476,7 +468,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
               {showDeprecated && <DeprecatedPopover deprecated={frankElement.deprecated} anchorRect={anchorRect} />}
             </>
           )}
-        </div>
+        </NodeHeader>
         {properties.data.attributes &&
           Object.entries(properties.data.attributes).map(([key, value]) => (
             <div key={key} className="my-1 w-full max-w-full min-w-0 px-1">
@@ -486,7 +478,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
           ))}
         {(properties.data.children.length > 0 || dragOver || canDropDraggedElement) && (
           <div className="w-full min-w-0 p-4">
-            <div className="border-border bg-background w-full rounded-md p-4 shadow-[inset_0px_2px_4px_rgba(0,0,0,0.1)]">
+            <NodeChildrenContainer>
               {properties.data.children.map((child) => (
                 <div key={child.id} data-child-id={child.id} className="child-drop-zone">
                   <ChildNodeComponent
@@ -528,7 +520,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
                   </div>
                 </div>
               )}
-            </div>
+            </NodeChildrenContainer>
           </div>
         )}
         {/* Show missing mandatory children if the node is missing any */}

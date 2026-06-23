@@ -6,6 +6,8 @@ import useNodeContextStore from '~/stores/node-context-store'
 import { useNodeContextMenu } from '../node-context-menu-context'
 import { canAcceptChildStatic, type FrankElement } from './node-utilities'
 import { useFFDoc } from '@frankframework/doc-library-react'
+import { NodeHeader } from './components/node-header'
+import { NodeChildrenContainer } from './components/node-children-container'
 
 export interface ChildNode {
   id: string
@@ -159,7 +161,7 @@ export function ChildNodeComponent({
     <div
       data-childnode-id={child.id}
       className={clsx(
-        'bg-background relative mr-0.5 mb-2 rounded-md border',
+        'bg-background relative mr-0.5 mb-2 rounded-md border shadow-md',
         isSelected && 'border-1',
         !isSelected && dragForbidden && 'border-2 border-dashed',
         !isSelected && !dragForbidden && 'border-border',
@@ -180,24 +182,15 @@ export function ChildNodeComponent({
       }}
     >
       {/* Header */}
-      <div
-        className="border-border rounded-t-md border-b p-1"
-        style={{
-          background: gradientEnabled
-            ? `radial-gradient(
-              ellipse farthest-corner at 20% 20%,
-              var(--type-${child.type?.toLowerCase()}) 0%,
-              var(--color-background) 100%
-            )`
-            : `var(--type-${child.type?.toLowerCase()})`,
-        }}
-      >
-        <h1 className="font-bold break-words">{child.subtype}</h1>
-        <p className="overflow-hidden text-sm text-ellipsis whitespace-nowrap">{child.name}</p>
-      </div>
+      <NodeHeader
+        subtype={child.subtype}
+        name={child.name}
+        colorVariable={`--type-${child.type?.toLowerCase()}`}
+        gradientEnabled={gradientEnabled}
+      />
 
       {/* Body */}
-      <div className="child-node-body relative min-h-25 px-1 py-1">
+      <div className="child-node-body border-border/40 relative min-h-25 rounded-b-md border px-1 py-1">
         {child.attributes &&
           Object.entries(child.attributes).map(([key, value]) => (
             <div key={key} className="my-1 min-w-0">
@@ -206,10 +199,9 @@ export function ChildNodeComponent({
             </div>
           ))}
 
-        {/* Recursive children */}
-        {child.children && child.children.length > 0 && (
-          <div className="relative mt-2 pl-4">
-            {child.children.map((nested) => (
+        {((child.children && child.children.length > 0) || dragOver || canDropDraggedElement) && (
+          <NodeChildrenContainer className="mt-2">
+            {child.children?.map((nested) => (
               <ChildNodeComponent
                 key={nested.id}
                 child={nested}
@@ -220,37 +212,36 @@ export function ChildNodeComponent({
                 rootId={rootId}
               />
             ))}
-          </div>
-        )}
 
-        {/* Drop zone */}
-        {dragOver && (
-          <div className="mt-2 pl-4">
-            <div
-              className="border-foreground-muted bg-foreground-muted/20 flex items-center justify-center border-2 border-dashed text-center text-xs italic"
-              style={{
-                height: '100px',
-                width: '100%',
-                borderRadius: '6px',
-              }}
-            >
-              Drop to add child
-            </div>
-          </div>
-        )}
-        {canDropDraggedElement && !dragOver && (
-          <div className="mt-2 pl-4">
-            <div
-              className="border-foreground-muted bg-foreground-muted/20 flex items-center justify-center border-2 border-dashed text-center text-xs italic"
-              style={{
-                height: '20px', // half height
-                width: '100%', // full width
-                borderRadius: '6px',
-              }}
-            >
-              Can drop here
-            </div>
-          </div>
+            {/* Drop zone */}
+            {dragOver && (
+              <div
+                className="border-foreground-muted bg-foreground-muted/20 flex items-center justify-center border-2 border-dashed text-center text-xs italic"
+                style={{
+                  height: '100px',
+                  width: '100%',
+                  marginTop: '8px',
+                  borderRadius: '6px',
+                }}
+              >
+                Drop to add child
+              </div>
+            )}
+            {canDropDraggedElement && !dragOver && (
+              <div className="mt-2 pl-4">
+                <div
+                  className="border-foreground-muted bg-foreground-muted/20 flex items-center justify-center border-2 border-dashed text-center text-xs italic"
+                  style={{
+                    height: '20px', // half height
+                    width: '100%', // full width
+                    borderRadius: '6px',
+                  }}
+                >
+                  Can drop here
+                </div>
+              </div>
+            )}
+          </NodeChildrenContainer>
         )}
       </div>
     </div>
