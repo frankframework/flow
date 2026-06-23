@@ -34,7 +34,10 @@ export default function CloneConfigurationModal({
     setLocation(initialPath ?? '')
   }, [isLocal, initialPath])
 
-  const repoName = repoUrl.split('/').pop()?.replace(/\.git$/i, '')
+  const repoName = repoUrl
+    .split('/')
+    .pop()
+    ?.replace(/\.git$/i, '')
 
   const handleClone = () => {
     if (!repoUrl.trim()) return
