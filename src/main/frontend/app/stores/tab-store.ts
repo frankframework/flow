@@ -11,6 +11,7 @@ export interface TabData {
   history?: FlowSnapshot[]
   future?: FlowSnapshot[]
   pendingNodeSelection?: { subtype: string; name: string } | null
+  pendingRecenter?: boolean | null
 }
 
 interface TabStoreState {

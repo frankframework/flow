@@ -10,6 +10,14 @@ import type { GroupNode } from './canvas/nodetypes/group-node'
 import { isFrankNode } from '~/stores/flow-store'
 import type { StickyNote } from './canvas/nodetypes/sticky-note'
 
+function parseConfigurationXml(xmlString: string): Document {
+  const withFlowNamespace = /\bxmlns:flow\s*=/.test(xmlString)
+    ? xmlString
+    : xmlString.replace(/<([A-Za-z_][\w.-]*)/, (_match, tagName) => `<${tagName} xmlns:flow="urn:frank-flow"`)
+
+  return new DOMParser().parseFromString(withFlowNamespace, 'text/xml')
+}
+
 interface IdCounter {
   current: number
 }
@@ -26,8 +34,7 @@ export interface AdapterInfo {
 
 export async function getAdaptersFromConfiguration(projectName: string, filepath: string): Promise<AdapterInfo[]> {
   const xmlString = await fetchConfigurationFileCached(projectName, filepath)
-  const parser = new DOMParser()
-  const xmlDoc = parser.parseFromString(xmlString, 'text/xml')
+  const xmlDoc = parseConfigurationXml(xmlString)
 
   const adapters: AdapterInfo[] = []
   const adapterElements = xmlDoc.querySelectorAll('Adapter, adapter')
@@ -63,8 +70,7 @@ export async function getAdapterFromConfiguration(
   adapterPosition?: number,
 ): Promise<Element | null> {
   const xmlString = await fetchConfigurationFileCached(projectname, filename)
-  const parser = new DOMParser()
-  const xmlDoc = parser.parseFromString(xmlString, 'text/xml')
+  const xmlDoc = parseConfigurationXml(xmlString)
 
   const adapterList = [...xmlDoc.querySelectorAll('Adapter, adapter')]
 
