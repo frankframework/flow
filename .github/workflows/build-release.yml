@@ -17,7 +17,7 @@ env:
   IMAGE_NAME: ${{ github.repository }}
   JAVA_VERSION: 25
   NODE_VERSION: 23
-  PNPM_VERSION: 10.4.0
+  PNPM_VERSION: 10.32.1
 
 
 jobs:
