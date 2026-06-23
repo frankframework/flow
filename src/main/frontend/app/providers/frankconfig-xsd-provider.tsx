@@ -1,9 +1,11 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { fetchFrankConfigXsd } from '~/services/xsd-service'
+import { parseXsd } from '~/utils/xsd-utils'
 import { logApiWarning } from '~/utils/logger'
 
 interface FrankConfigXsdContextValue {
   xsdContent: string | null
+  xsdDoc: Document | null
 }
 
 const FrankConfigXsdContext = createContext<FrankConfigXsdContextValue | null>(null)
@@ -17,7 +19,9 @@ export function FrankConfigXsdProvider({ children }: { children: ReactNode }) {
       .catch((error) => logApiWarning('Failed to load FrankConfig XSD:', error as Error))
   }, [])
 
-  return <FrankConfigXsdContext.Provider value={{ xsdContent }}>{children}</FrankConfigXsdContext.Provider>
+  const xsdDoc = useMemo(() => (xsdContent ? parseXsd(xsdContent) : null), [xsdContent])
+
+  return <FrankConfigXsdContext.Provider value={{ xsdContent, xsdDoc }}>{children}</FrankConfigXsdContext.Provider>
 }
 
 export function useFrankConfigXsd(): FrankConfigXsdContextValue {
