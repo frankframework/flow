@@ -6,12 +6,8 @@
 		":configMigration",
 		"security:minimumReleaseAgeNpm"
 	],
-	"labels": [
-		"Dependencies"
-	],
-	"ignoreDeps": [
-		"pnpm"
-	],
+	"labels": ["Dependencies"],
+	"ignoreDeps": ["pnpm"],
 	"dependencyDashboard": true,
 	"rebaseWhen": "conflicted",
 	"rangeStrategy": "bump",
@@ -21,9 +17,7 @@
 	"commitMessageSuffix": "",
 	"lockFileMaintenance": {
 		"enabled": true,
-		"schedule": [
-			"before 5am on monday"
-		]
+		"schedule": ["before 5am on monday"]
 	},
 	"packageRules": [
 		{
