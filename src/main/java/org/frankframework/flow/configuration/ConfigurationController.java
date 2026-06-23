@@ -49,12 +49,11 @@ public class ConfigurationController {
 	}
 
 	@PostMapping()
-	public ResponseEntity<ConfigurationXmlDTO> addConfiguration(
+	public ResponseEntity<AdapterLocationDTO> addConfiguration(
 			@PathVariable String projectName,
-			@RequestParam String name
+			@RequestParam String path
 	) throws ApiException, IOException, TransformerException, ParserConfigurationException, SAXException {
-		String content = configurationService.addConfiguration(projectName, name);
-		ConfigurationXmlDTO configurationXmlDTO = new ConfigurationXmlDTO(content);
-		return ResponseEntity.ok(configurationXmlDTO);
+		AdapterLocationDTO adapterLocation = configurationService.addConfiguration(projectName, path);
+		return ResponseEntity.ok(adapterLocation);
 	}
 }

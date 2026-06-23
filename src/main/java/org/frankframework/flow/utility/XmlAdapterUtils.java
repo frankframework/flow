@@ -67,6 +67,20 @@ public class XmlAdapterUtils {
 		configDoc.getDocumentElement().appendChild(importedNode);
 	}
 
+	public static int countAdapters(Document configDoc) {
+		return configDoc.getElementsByTagName("Adapter").getLength()
+				+ configDoc.getElementsByTagName("adapter").getLength();
+	}
+
+	public static Element findFirstAdapter(Document configDoc) {
+		NodeList adapters = configDoc.getElementsByTagName("Adapter");
+		if (adapters.getLength() == 0) {
+			adapters = configDoc.getElementsByTagName("adapter");
+		}
+
+		return adapters.getLength() > 0 ? (Element) adapters.item(0) : null;
+	}
+
 	/**
 	 * Renames an Adapter element (matched by old name) in the given configuration document.
 	 *

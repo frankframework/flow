@@ -342,12 +342,13 @@ class ConfigurationServiceTest {
 
 		when(configurationProjectService.getProject("myproject")).thenReturn(configurationProject);
 
-		String result = configurationService.addConfiguration("myproject", "NewConfig.xml");
+		Path target = projectDir.resolve("src/main/configurations/NewConfig.xml");
+		AdapterLocationDTO result = configurationService.addConfiguration("myproject", target.toString());
 
 		assertNotNull(result);
-
-		Path expectedFile = projectDir.resolve("src/main/configurations/NewConfig.xml");
-		assertTrue(Files.exists(expectedFile), "NewConfig.xml should be created on disk");
+		assertEquals("SampleAdapter", result.adapterName(), "Should point at the template adapter");
+		assertEquals(0, result.adapterPosition());
+		assertTrue(Files.exists(target), "NewConfig.xml should be created on disk");
 		verify(fileTreeService).invalidateTreeCache("myproject");
 	}
 
@@ -361,10 +362,10 @@ class ConfigurationServiceTest {
 		ConfigurationProject configurationProject = new ConfigurationProject("myproject", projectDir.toString());
 		when(configurationProjectService.getProject("myproject")).thenReturn(configurationProject);
 
-		configurationService.addConfiguration("myproject", "subfolder/NestedConfig.xml");
+		Path target = projectDir.resolve("subfolder/NestedConfig.xml");
+		configurationService.addConfiguration("myproject", target.toString());
 
-		Path expectedFile = projectDir.resolve("src/main/configurations/subfolder/NestedConfig.xml");
-		assertTrue(Files.exists(expectedFile));
+		assertTrue(Files.exists(target));
 	}
 
 	@Test
@@ -374,7 +375,14 @@ class ConfigurationServiceTest {
 	}
 
 	@Test
-	void addConfiguration_PathTraversal_ThrowsSecurityException() throws Exception {
+	void addConfiguration_PathTraversal_ThrowsException() throws Exception {
+		ApiException exception = assertThrows(
+				ApiException.class, () -> configurationService.addConfiguration("myproject", "../../../evil.xml"));
+		assertEquals(HttpStatus.BAD_REQUEST, exception.getStatus());
+	}
+
+	@Test
+	void addConfiguration_OutsideProject_ThrowsException() throws Exception {
 		stubToAbsolutePath();
 
 		Path projectDir = tempDir.resolve("myproject");
@@ -382,8 +390,9 @@ class ConfigurationServiceTest {
 		ConfigurationProject configurationProject = new ConfigurationProject("myproject", projectDir.toString());
 		when(configurationProjectService.getProject("myproject")).thenReturn(configurationProject);
 
+		String outsidePath = tempDir.resolve("other/evil.xml").toString();
 		ApiException exception = assertThrows(
-				ApiException.class, () -> configurationService.addConfiguration("myproject", "../../../evil.xml"));
+				ApiException.class, () -> configurationService.addConfiguration("myproject", outsidePath));
 		assertEquals(HttpStatus.BAD_REQUEST, exception.getStatus());
 	}
 

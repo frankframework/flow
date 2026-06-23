@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
+import org.frankframework.flow.configuration.AdapterLocationDTO;
 import org.frankframework.flow.configuration.ConfigurationXmlDTO;
 import org.frankframework.flow.exception.ApiException;
 import org.springframework.http.ResponseEntity;
@@ -44,9 +45,9 @@ public class AdapterController {
 	}
 
 	@PostMapping("/{projectName}/adapters")
-	public ResponseEntity<Void> createAdapter(@PathVariable String projectName, @RequestBody AdapterCreateDTO dto) throws IOException {
-		adapterService.createAdapter(dto.configurationPath(), dto.adapterName());
-		return ResponseEntity.ok().build();
+	public ResponseEntity<AdapterLocationDTO> createAdapter(@PathVariable String projectName, @RequestBody AdapterCreateDTO dto) throws IOException {
+		int adapterPosition = adapterService.createAdapter(dto.configurationPath(), dto.adapterName());
+		return ResponseEntity.ok(new AdapterLocationDTO(dto.adapterName(), adapterPosition));
 	}
 
 	@PatchMapping("/{projectName}/adapters/rename")

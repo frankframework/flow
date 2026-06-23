@@ -123,7 +123,7 @@ class ConfigurationControllerTest {
 	}
 
 	@Test
-	void addConfigurationReturnsDefaultContent() throws Exception {
+	void addConfigurationReturnsAdapterLocation() throws Exception {
 		ConfigurationProject configurationProject = mock(ConfigurationProject.class);
 		when(configurationProject.getName()).thenReturn(TEST_PROJECT_NAME);
 		when(configurationProject.getRootPath()).thenReturn("/path/to/" + TEST_PROJECT_NAME);
@@ -136,8 +136,10 @@ class ConfigurationControllerTest {
 		when(settings.getFilters()).thenReturn(Map.of(FilterType.ADAPTER, true));
 		when(configurationProject.getConfigurationSettings()).thenReturn(settings);
 
-		when(configurationService.addConfiguration(TEST_PROJECT_NAME, "NewConfig.xml"))
-				.thenReturn("");
+		String filepath = "/path/to/" + TEST_PROJECT_NAME + "/NewConfig.xml";
+
+		when(configurationService.addConfiguration(TEST_PROJECT_NAME, filepath))
+				.thenReturn(new AdapterLocationDTO("SampleAdapter", 0));
 		when(configurationProjectService.toDto(configurationProject))
 				.thenReturn(new ConfigurationProjectDTO(
 						TEST_PROJECT_NAME,
@@ -148,11 +150,12 @@ class ConfigurationControllerTest {
 						false
 				));
 
-		mockMvc.perform(post("/api/projects/" + TEST_PROJECT_NAME + "/configuration?name=NewConfig.xml")
+		mockMvc.perform(post("/api/projects/" + TEST_PROJECT_NAME + "/configuration?path=" + filepath)
 						.accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.xmlContent").value(""));
+				.andExpect(jsonPath("$.adapterName").value("SampleAdapter"))
+				.andExpect(jsonPath("$.adapterPosition").value(0));
 
-		verify(configurationService).addConfiguration(TEST_PROJECT_NAME, "NewConfig.xml");
+		verify(configurationService).addConfiguration(TEST_PROJECT_NAME, filepath);
 	}
 }

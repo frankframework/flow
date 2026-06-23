@@ -17,6 +17,7 @@ import org.frankframework.flow.exception.ApiException;
 import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.frankframework.flow.project.ConfigurationProject;
 import org.frankframework.flow.project.ConfigurationProjectService;
+import org.frankframework.flow.utility.PathUtils;
 import org.frankframework.flow.utility.XmlConfigurationUtils;
 import org.frankframework.flow.utility.XmlSecurityUtils;
 import org.springframework.stereotype.Service;
@@ -227,9 +228,9 @@ public class FileTreeService {
 
 	private String toNodePath(Path path, Path relativizeRoot, boolean useRelativePaths) {
 		if (!useRelativePaths) {
-			return path.toAbsolutePath().toString();
+			return PathUtils.toForwardSlash(path.toAbsolutePath().toString());
 		}
-		String relativePath = relativizeRoot.relativize(path).toString().replace("\\", "/");
+		String relativePath = PathUtils.toForwardSlash(relativizeRoot.relativize(path).toString());
 		return relativePath.isEmpty() ? "." : relativePath;
 	}
 

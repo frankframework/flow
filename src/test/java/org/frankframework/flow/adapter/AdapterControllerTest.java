@@ -154,6 +154,8 @@ class AdapterControllerTest {
 
 	@Test
 	void createAdapterReturns200() throws Exception {
+		when(adapterService.createAdapter("config1.xml", "NewAdapter")).thenReturn(2);
+
 		mockMvc.perform(
 						post("/api/projects/MyProject/adapters")
 								.contentType(MediaType.APPLICATION_JSON)
@@ -164,7 +166,9 @@ class AdapterControllerTest {
 												"adapterName": "NewAdapter"
 												}
 												"""))
-				.andExpect(status().isOk());
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.adapterName").value("NewAdapter"))
+				.andExpect(jsonPath("$.adapterPosition").value(2));
 
 		verify(adapterService).createAdapter("config1.xml", "NewAdapter");
 	}

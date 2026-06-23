@@ -16,3 +16,8 @@ export interface RecentConfigurationProject {
 export interface XmlResponse {
   xmlContent: string
 }
+
+export interface AdapterLocationResponse {
+  adapterName: string | null
+  adapterPosition: number
+}

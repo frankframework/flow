@@ -283,8 +283,9 @@ class AdapterServiceTest {
 		Files.writeString(configFile, xml, StandardCharsets.UTF_8);
 		when(fileSystemStorage.toAbsolutePath("config.xml")).thenReturn(configFile);
 
-		adapterService.createAdapter("config.xml", "NewAdapter");
+		int position = adapterService.createAdapter("config.xml", "NewAdapter");
 
+		assertEquals(0, position, "First adapter in the file should be at position 0");
 		String written = Files.readString(configFile, StandardCharsets.UTF_8);
 		assertTrue(written.contains("NewAdapter"));
 		assertTrue(written.contains("Receiver"));
@@ -298,8 +299,9 @@ class AdapterServiceTest {
 		Files.writeString(configFile, xml, StandardCharsets.UTF_8);
 		when(fileSystemStorage.toAbsolutePath("config.xml")).thenReturn(configFile);
 
-		adapterService.createAdapter("config.xml", "NewAdapter");
+		int position = adapterService.createAdapter("config.xml", "NewAdapter");
 
+		assertEquals(1, position, "New adapter should be appended after the existing one");
 		String written = Files.readString(configFile, StandardCharsets.UTF_8);
 		assertTrue(written.contains("Existing"));
 		assertTrue(written.contains("OldPipe"));

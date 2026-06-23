@@ -15,6 +15,7 @@ import org.frankframework.flow.exception.ApiException;
 import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.frankframework.flow.project.ConfigurationProject;
 import org.frankframework.flow.project.ConfigurationProjectService;
+import org.frankframework.flow.utility.PathUtils;
 import org.frankframework.flow.utility.XmlAdapterUtils;
 import org.frankframework.flow.utility.XmlConfigurationUtils;
 import org.frankframework.flow.utility.XmlSecurityUtils;
@@ -41,8 +42,9 @@ public class AdapterService {
 			throws IOException, ApiException, SAXException, ParserConfigurationException, TransformerException {
 
 		ConfigurationProject configurationProject = configurationProjectService.getProject(projectName);
+		String normalizedConfigPath = PathUtils.toForwardSlash(configurationPath);
 		ConfigurationFile config = configurationProject.getConfigurationFiles().stream()
-				.filter(configurationFile -> configurationFile.getFilepath().equals(configurationPath))
+				.filter(configurationFile -> normalizedConfigPath.equals(configurationFile.getFilepath()))
 				.findFirst()
 				.orElseThrow(() -> new ApiException(String.format("Configuration File with path: %s not found", configurationPath), HttpStatus.NOT_FOUND));
 
@@ -84,7 +86,7 @@ public class AdapterService {
 		}
 	}
 
-	public void createAdapter(String configurationPath, String adapterName) throws IOException {
+	public int createAdapter(String configurationPath, String adapterName) throws IOException {
 		if (configurationPath == null || configurationPath.isBlank()) {
 			throw new IllegalArgumentException("Configuration path must not be empty");
 		}
@@ -107,6 +109,8 @@ public class AdapterService {
 
 			String updatedXml = XmlConfigurationUtils.convertNodeToString(configDoc);
 			Files.writeString(absConfigFile, updatedXml, StandardCharsets.UTF_8, StandardOpenOption.TRUNCATE_EXISTING);
+
+			return XmlAdapterUtils.countAdapters(configDoc) - 1;
 		} catch (Exception exception) {
 			throw new IOException("Failed to create adapter: " + exception.getMessage(), exception);
 		}

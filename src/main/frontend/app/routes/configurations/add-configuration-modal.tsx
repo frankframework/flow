@@ -52,7 +52,9 @@ export default function AddConfigurationModal({
         configname = `${configname}.xml`
       }
 
-      await createConfigurationFile(currentConfiguration.name, `${rootLocationName}/${configname}`)
+      const folderPath = rootLocationName.replace(/[/\\]$/, '')
+      const absoluteFilePath = `${folderPath}/${configname}`
+      await createConfigurationFile(currentConfiguration.name, absoluteFilePath)
       const updatedProject = await fetchProject(currentConfiguration.name)
       setProject(updatedProject)
       onSuccess?.()

@@ -114,9 +114,12 @@ export default function EditorFileStructure() {
     [getTab, removeTabAndSelectFallback],
   )
 
+  const configurationsRootPath = project?.rootPath
+
   const editorContextMenu = useFileTreeContextMenu({
     projectName: project?.name,
     dataProvider,
+    configurationsRootPath,
     onAfterRename,
     onAfterDelete,
   })
