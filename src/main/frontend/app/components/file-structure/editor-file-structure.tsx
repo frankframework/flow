@@ -16,7 +16,6 @@ import { useFileWatcher } from '~/hooks/use-file-watcher'
 import { getAncestorIds, isVisibleInTree, selectAndReveal, toTreeItemId } from './tree-utilities'
 import type { ContextMenuState } from './use-file-tree-context-menu'
 import IconButton from '~/components/inputs/icon-button'
-import { normalizePath } from '~/utils/path-utils'
 
 import {
   Tree,
@@ -115,7 +114,7 @@ export default function EditorFileStructure() {
     [getTab, removeTabAndSelectFallback],
   )
 
-  const configurationsRootPath = project?.rootPath ? normalizePath(project.rootPath) : undefined
+  const configurationsRootPath = project?.rootPath
 
   const editorContextMenu = useFileTreeContextMenu({
     projectName: project?.name,

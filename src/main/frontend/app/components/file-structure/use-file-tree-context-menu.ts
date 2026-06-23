@@ -10,7 +10,6 @@ import { showErrorToast } from '~/components/toast'
 import { FILE_NAME_PATTERNS, FOLDER_OR_ADAPTER_NAME_PATTERNS } from '~/components/file-structure/name-input-dialog'
 import { logApiError } from '~/utils/logger'
 import { openInEditor } from '~/actions/navigationActions'
-import { normalizePath } from '~/utils/path-utils'
 
 export interface ContextMenuState {
   position: { x: number; y: number }
@@ -135,9 +134,7 @@ export function useFileTreeContextMenu({
 
           const filePath = `${parentPath}/${name}`
           const isXml = name.toLowerCase().endsWith('.xml')
-          const configsRoot = configurationsRootPath ? normalizePath(configurationsRootPath) : undefined
-          const normalizedParent = normalizePath(parentPath)
-          const isInsideConfigurations = !!configsRoot && normalizedParent.startsWith(configsRoot)
+          const isInsideConfigurations = parentPath.startsWith(configurationsRootPath ?? '')
 
           try {
             await (isXml && isInsideConfigurations
