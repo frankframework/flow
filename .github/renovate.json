@@ -119,11 +119,11 @@
 			"minimumReleaseAge": "5 days"
 		},
 		{
-			"description": "Frank!Framework packages",
+			"description": "Frontend Frank!Framework packages",
 			"matchManagers": [
 				"npm"
 			],
-			"groupName": "Frank!Framework",
+			"groupName": "Frank!Framework Frontend",
 			"matchPackageNames": [
 				"/^@frankframework\\//"
 			],
@@ -134,6 +134,23 @@
 				"before 6am on monday"
 			]
 		},
+		{
+			"description": "Backend Frank!Framework packages (Maven)",
+			"matchManagers": [
+				"maven"
+			],
+			"groupName": "Frank!Framework Backend",
+			"matchPackageNames": [
+				"/^org\\.frankframework:/",
+				"frankframework.version"
+			],
+			"addLabels": [
+				"Java"
+			],
+			"schedule": [
+				"before 6am on monday"
+			]
+		}
 		{
 			"description": "Maven (incl. wrapper) - daily early morning, Java label, supply-chain cool-off",
 			"matchManagers": [
