@@ -1,8 +1,9 @@
-import Editor, { type Monaco, type OnMount } from '@monaco-editor/react'
-type ITextModel = Monaco['editor']['ITextModel']
-type FindMatch = Monaco['editor']['FindMatch']
-type IModelDeltaDecoration = Monaco['editor']['IModelDeltaDecoration']
-type IEditorDecorationsCollection = Monaco['editor']['IEditorDecorationsCollection']
+import '~/utils/monaco-setup'
+import * as monaco from 'monaco-editor'
+type ITextModel = monaco.editor.ITextModel
+type FindMatch = monaco.editor.FindMatch
+type IModelDeltaDecoration = monaco.editor.IModelDeltaDecoration
+type IEditorDecorationsCollection = monaco.editor.IEditorDecorationsCollection
 import XsdFeatures from 'monaco-xsd-code-completion/esm/XsdFeatures'
 import 'monaco-xsd-code-completion/src/style.css'
 import XsdManager from 'monaco-xsd-code-completion/esm/XsdManager'
@@ -253,8 +254,8 @@ export default function CodeEditor() {
   const [leftTab, setLeftTab] = useState<LeftTab>('files')
   const [editorMounted, setEditorMounted] = useState(false)
   const [xsdLoaded, setXsdLoaded] = useState(false)
-  const editorReference = useRef<Parameters<OnMount>[0] | null>(null)
-  const monacoReference = useRef<Monaco | null>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const editorReference = useRef<monaco.editor.IStandaloneCodeEditor | null>(null)
   const xsdContentRef = useRef<string | null>(null)
   const errorDecorationsRef = useRef<{ clear: () => void } | null>(null)
   const flowDecorationsRef = useRef<IEditorDecorationsCollection | null>(null)
@@ -265,6 +266,7 @@ export default function CodeEditor() {
   const validationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const validationCounterRef = useRef(0)
   const contentCacheRef = useRef<Map<string, CachedFile>>(new Map())
+  const syncingValueRef = useRef(false)
   const navigate = useNavigate()
 
   const [pendingHighlight, setPendingHighlightLocal] = useState<{ subtype: string; name?: string } | null>(
@@ -409,9 +411,8 @@ export default function CodeEditor() {
   }, [])
 
   const applyValidationDecorations = useCallback((errors: ValidationError[]) => {
-    const monaco = monacoReference.current
     const editor = editorReference.current
-    if (!monaco || !editor) return
+    if (!editor) return
 
     const model = editor.getModel()
     if (!model) return
@@ -497,11 +498,38 @@ export default function CodeEditor() {
     [runSchemaValidation],
   )
 
+  const performSaveRef = useRef(performSave)
+  const runReformatRef = useRef(runReformat)
+  const scheduleSaveRef = useRef(scheduleSave)
+  const onChangeRef = useRef<((value: string) => void) | null>(null)
+
   useEffect(() => {
-    if (!editorMounted || !editorReference.current || !monacoReference.current) return
+    performSaveRef.current = performSave
+  }, [performSave])
+
+  useEffect(() => {
+    runReformatRef.current = runReformat
+  }, [runReformat])
+
+  useEffect(() => {
+    scheduleSaveRef.current = scheduleSave
+  }, [scheduleSave])
+
+  useEffect(() => {
+    onChangeRef.current = (value: string) => {
+      scheduleSaveRef.current()
+      if (value && fileLanguage === 'xml') {
+        scheduleSchemaValidation(value)
+        applyFlowHighlighter()
+      }
+    }
+  }, [scheduleSchemaValidation, applyFlowHighlighter, fileLanguage])
+
+  useEffect(() => {
+    if (!editorMounted || !editorReference.current) return
 
     const xsdManager = new XsdManager(editorReference.current)
-    const xsdFeatures = new XsdFeatures(xsdManager, monacoReference.current, editorReference.current)
+    const xsdFeatures = new XsdFeatures(xsdManager, monaco, editorReference.current)
 
     xsdFeatures.addCompletion()
     xsdFeatures.addGenerateAction()
@@ -516,28 +544,38 @@ export default function CodeEditor() {
       .catch(console.error)
   }, [editorMounted])
 
-  const handleEditorMount: OnMount = (editor, monacoInstance) => {
+  const showCodeEditor = !!activeTabFilePath && !isDiffTab
+
+  useEffect(() => {
+    if (!showCodeEditor || !containerRef.current || editorReference.current) return
+
+    const editor = monaco.editor.create(containerRef.current, {
+      value: '',
+      language: 'xml',
+      automaticLayout: true,
+      quickSuggestions: false,
+      tabSize: 2,
+      insertSpaces: true,
+      detectIndentation: false,
+      glyphMargin: true,
+    })
+
     editorReference.current = editor
-    monacoReference.current = monacoInstance
     frankGlyphsDecorationsRef.current = null
     setEditorMounted(true)
-
-    editor.updateOptions({ glyphMargin: true })
-
-    applyFlowHighlighter()
 
     editor.addAction({
       id: 'save-file',
       label: 'Save File',
       contextMenuGroupId: 'navigation',
       contextMenuOrder: 1,
-      keybindings: [monacoInstance.KeyMod.CtrlCmd | monacoInstance.KeyCode.KeyS],
+      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS],
       run: () => {
         if (debounceTimerRef.current) {
           clearTimeout(debounceTimerRef.current)
           debounceTimerRef.current = null
         }
-        performSave()
+        performSaveRef.current()
       },
     })
 
@@ -546,12 +584,8 @@ export default function CodeEditor() {
       label: 'Reformat',
       contextMenuGroupId: 'navigation',
       contextMenuOrder: 3,
-      keybindings: [
-        monacoReference.current.KeyMod.Alt |
-          monacoReference.current.KeyMod.Shift |
-          monacoReference.current.KeyCode.KeyF,
-      ],
-      run: runReformat,
+      keybindings: [monaco.KeyMod.Alt | monaco.KeyMod.Shift | monaco.KeyCode.KeyF],
+      run: () => runReformatRef.current(),
     })
 
     editor.onMouseDown((event) => {
@@ -560,7 +594,7 @@ export default function CodeEditor() {
         highlightDecorationsRef.current = null
       }
 
-      if (event.target.type === monacoInstance.editor.MouseTargetType.GUTTER_GLYPH_MARGIN) {
+      if (event.target.type === monaco.editor.MouseTargetType.GUTTER_GLYPH_MARGIN) {
         const lineNumber = event.target.position?.lineNumber
         if (!lineNumber) return
 
@@ -590,7 +624,41 @@ export default function CodeEditor() {
         })
       }
     })
-  }
+
+    editor.onDidChangeModelContent(() => {
+      if (syncingValueRef.current) return
+      onChangeRef.current?.(editor.getValue())
+    })
+
+    return () => {
+      editor.dispose()
+      editorReference.current = null
+      setEditorMounted(false)
+    }
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showCodeEditor])
+
+  useEffect(() => {
+    const editor = editorReference.current
+    if (!editor || editor.getValue() === fileContent) return
+
+    syncingValueRef.current = true
+    editor.setValue(fileContent)
+    syncingValueRef.current = false
+  }, [fileContent])
+
+  useEffect(() => {
+    const editor = editorReference.current
+    if (!editor) return
+
+    const model = editor.getModel()
+    if (model) monaco.editor.setModelLanguage(model, fileLanguage)
+  }, [fileLanguage])
+
+  useEffect(() => {
+    monaco.editor.setTheme(theme === 'dark' ? 'vs-dark' : 'vs')
+  }, [theme])
 
   useEffect(() => {
     return useEditorTabStore.subscribe(
@@ -675,12 +743,9 @@ export default function CodeEditor() {
       frankGlyphsDecorationsRef.current.clear()
       frankGlyphsDecorationsRef.current = null
     }
-    const monaco = monacoReference.current
     const editor = editorReference.current
-    if (monaco && editor) {
-      const model = editor.getModel()
-      if (model) monaco.editor.setModelMarkers(model, 'xsd-validation', [])
-    }
+    const model = editor?.getModel()
+    if (model) monaco.editor.setModelMarkers(model, 'xsd-validation', [])
   }, [activeTabFilePath])
 
   useEffect(() => {
@@ -795,27 +860,7 @@ export default function CodeEditor() {
                 <SaveStatusIndicator />
               </div>
               <div className="relative min-h-0 flex-1">
-                <Editor
-                  language={fileLanguage}
-                  theme={theme === 'dark' ? 'vs-dark' : 'vs'}
-                  value={fileContent}
-                  onMount={handleEditorMount}
-                  onChange={(value) => {
-                    scheduleSave()
-                    if (value && fileLanguage === 'xml') {
-                      scheduleSchemaValidation(value)
-                      applyFlowHighlighter()
-                    }
-                  }}
-                  options={{
-                    automaticLayout: true,
-                    quickSuggestions: false,
-                    tabSize: 2,
-                    insertSpaces: true,
-                    detectIndentation: false,
-                    glyphMargin: true,
-                  }}
-                />
+                <div ref={containerRef} className="h-full w-full" />
               </div>
             </div>
           )
