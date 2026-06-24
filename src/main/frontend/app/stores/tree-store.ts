@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-type TreestoreState = {
+type TreeStoreState = {
   isLoading: boolean
   setIsLoading: (loading: boolean) => void
   clearConfigs: () => void
@@ -16,7 +16,7 @@ type TreestoreState = {
   clearExpandedItems: () => void
 }
 
-export const useTreeStore = create<TreestoreState>((set) => ({
+export const useTreeStore = create<TreeStoreState>((set) => ({
   isLoading: true,
   setIsLoading: (isLoading) => set({ isLoading }),
   clearConfigs: () =>
