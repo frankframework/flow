@@ -132,8 +132,7 @@
 			],
 			"schedule": [
 				"before 6am on monday"
-			],
-			"minimumReleaseAge": "5 days"
+			]
 		},
 		{
 			"description": "Maven (incl. wrapper) - daily early morning, Java label, supply-chain cool-off",
