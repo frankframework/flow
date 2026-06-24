@@ -67,14 +67,17 @@ class NonCanvasElementServiceTest {
 	}
 
 	private void stubReadFile() throws IOException {
-		when(fileSystemStorage.readFile(anyString()))
-				.thenAnswer(invocation -> Files.readString(Path.of(invocation.getArgument(0)), StandardCharsets.UTF_8));
+		when(fileSystemStorage.readFile(anyString())).thenAnswer(invocation -> {
+			String path = invocation.getArgument(0);
+			return Files.readString(Path.of(path), StandardCharsets.UTF_8);
+		});
 	}
 
 	private void stubWriteFile() throws IOException {
 		doAnswer(invocation -> {
-			Path filePath = Path.of(invocation.getArgument(0));
-			Files.writeString(filePath, invocation.getArgument(1), StandardCharsets.UTF_8);
+			String path = invocation.getArgument(0);
+			String content = invocation.getArgument(1);
+			Files.writeString(Path.of(path), content, StandardCharsets.UTF_8);
 			return null;
 		})
 				.when(fileSystemStorage)
