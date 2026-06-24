@@ -9,6 +9,7 @@ type SidebarLayoutProperties = {
   name: string
   defaultVisible?: VisibilityState
   windowResizeOnChange?: boolean
+  hideLeft?: boolean
 }
 
 export default function SidebarLayout({
@@ -16,6 +17,7 @@ export default function SidebarLayout({
   name,
   defaultVisible,
   windowResizeOnChange,
+  hideLeft,
 }: Readonly<SidebarLayoutProperties>) {
   const initializeInstance = useSidebarStore((state) => state.initializeInstance)
   const setSizes = useSidebarStore((state) => state.setSizes)
@@ -39,18 +41,20 @@ export default function SidebarLayout({
     if (!allotmentReady || !allotmentRef.current) return
     if (sizes.length === 0) return
 
-    const target = sizes.map((size, i) => (visible[i] ? size : 0))
+    let target = sizes.map((size, i) => (visible[i] ? size : 0))
+    if (hideLeft) target = target.slice(1)
 
     allotmentRef.current.resize(target)
-  }, [sizes, visible, allotmentReady])
+  }, [sizes, visible, allotmentReady, hideLeft])
 
   const handleVisibilityChange = (index: SidebarSide, value: boolean) => {
-    setVisible(name, index, value)
+    setVisible(name, hideLeft ? index + 1 : index, value)
   }
 
   const saveSizes = (newSizes: number[]) => {
     const previous = useSidebarStore.getState().getSizes(name) ?? []
-    const merged = newSizes.map((size, i) => (size === 0 ? (previous[i] ?? 0) : size))
+    const aligned = hideLeft ? [previous[0] ?? 0, ...newSizes] : newSizes
+    const merged = aligned.map((size, i) => (size === 0 ? (previous[i] ?? 0) : size))
     setSizes(name, merged)
     if (windowResizeOnChange) {
       globalThis.dispatchEvent(new Event('resize'))
@@ -71,16 +75,18 @@ export default function SidebarLayout({
           onDragEnd={saveSizes}
           onVisibleChange={handleVisibilityChange}
         >
-          <Allotment.Pane
-            snap
-            minSize={200}
-            maxSize={500}
-            preferredSize={300}
-            visible={visible[SidebarSide.LEFT]}
-            className="bg-background flex h-full flex-col"
-          >
-            {childrenArray[SidebarSide.LEFT]}
-          </Allotment.Pane>
+          {!hideLeft && (
+            <Allotment.Pane
+              snap
+              minSize={200}
+              maxSize={500}
+              preferredSize={300}
+              visible={visible[SidebarSide.LEFT]}
+              className="bg-background flex h-full flex-col"
+            >
+              {childrenArray[SidebarSide.LEFT]}
+            </Allotment.Pane>
+          )}
           <Allotment.Pane className="bg-backdrop flex h-full flex-col">
             {childrenArray[SidebarSide.MIDDLE]}
           </Allotment.Pane>

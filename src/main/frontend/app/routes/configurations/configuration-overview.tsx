@@ -11,6 +11,17 @@ import type { FileTreeNode } from '~/types/filesystem.types'
 import { fetchProjectTree } from '~/services/file-tree-service'
 import Button from '~/components/inputs/button'
 import Search from '~/components/search/search'
+import SidebarLayout from '~/components/sidebars-layout/sidebar-layout'
+import SidebarHeader from '~/components/sidebars-layout/sidebar-header'
+import SidebarContentClose from '~/components/sidebars-layout/sidebar-content-close'
+import { SidebarSide, useSidebarStore } from '~/stores/sidebar-layout-store'
+import NonCanvasElementContext, { type NonCanvasEditorState } from './non-canvas-element-context'
+import NonCanvasElementPalette from './non-canvas-element-palette'
+import AddNonCanvasElementMenu from './add-non-canvas-element-menu'
+import type { NonCanvasElement } from '~/services/non-canvas-element-service'
+import { useNonCanvasElements } from './use-non-canvas-elements'
+
+const SIDEBAR_NAME = 'configuration-overview-v2'
 import { relativeTo } from '~/utils/path-utils'
 
 type ConfigurationFile = {
@@ -44,6 +55,59 @@ export default function ConfigurationOverview() {
   const [isLoading, setIsLoading] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState(searchQuery)
+  const [editor, setEditor] = useState<NonCanvasEditorState | null>(null)
+  const [editorName, setEditorName] = useState('')
+  const [addMenuConfigPath, setAddMenuConfigPath] = useState<string | null>(null)
+  const [isDraggingFromPalette, setIsDraggingFromPalette] = useState(false)
+
+  const setSidebarVisible = useSidebarStore((state) => state.setVisible)
+
+  const openEditor = useCallback(
+    (state: NonCanvasEditorState) => {
+      setEditor(state)
+      setEditorName(state.initialAttributes?.name ?? '')
+      setSidebarVisible(SIDEBAR_NAME, SidebarSide.RIGHT, true)
+    },
+    [setSidebarVisible],
+  )
+
+  const closeEditor = useCallback(() => {
+    setEditor(null)
+    setEditorName('')
+  }, [])
+
+  const handleAddElement = useCallback((configPath: string) => {
+    setAddMenuConfigPath(configPath)
+  }, [])
+
+  const handleSelectElementType = useCallback(
+    (tagName: string) => {
+      if (!addMenuConfigPath) return
+      openEditor({ mode: 'add', configPath: addMenuConfigPath, tagName })
+      setAddMenuConfigPath(null)
+    },
+    [addMenuConfigPath, openEditor],
+  )
+
+  const handleEditElement = useCallback(
+    (configurationPath: string, element: NonCanvasElement) => {
+      openEditor({
+        mode: 'edit',
+        configPath: configurationPath,
+        tagName: element.tagName,
+        index: element.index,
+        initialAttributes: element.attributes,
+      })
+    },
+    [openEditor],
+  )
+
+  const handleDropElement = useCallback(
+    (configurationPath: string, tagName: string) => {
+      openEditor({ mode: 'add', configPath: configurationPath, tagName })
+    },
+    [openEditor],
+  )
 
   const loadTree = useCallback(
     (signal?: AbortSignal) => {
@@ -104,27 +168,46 @@ export default function ConfigurationOverview() {
     return () => clearTimeout(handler)
   }, [searchQuery])
 
-  const filesWithAdapters = useMemo((): ConfigurationFile[] => {
-    return configFiles
-      .filter((file) => file.adapterNames && file.adapterNames.length > 0)
-      .map((file) => ({
-        path: file.path,
-        relativePath: file.relativePath,
-        adapterNames: file.adapterNames!,
-      }))
+  const allConfigFiles = useMemo((): ConfigurationFile[] => {
+    const files = configFiles.map((file) => ({
+      path: file.path,
+      relativePath: file.relativePath,
+      adapterNames: file.adapterNames ?? [],
+    }))
+
+    return files.toSorted((a, b) => {
+      const aIsRoot = a.relativePath.split(/[/\\]/).pop()?.toLowerCase() === 'configuration.xml'
+      const bIsRoot = b.relativePath.split(/[/\\]/).pop()?.toLowerCase() === 'configuration.xml'
+      if (aIsRoot === bIsRoot) return 0
+      return aIsRoot ? -1 : 1
+    })
   }, [configFiles])
 
   const filteredConfigurationFiles = useMemo(() => {
-    if (!debouncedQuery.trim()) return filesWithAdapters
+    if (!debouncedQuery.trim()) return allConfigFiles
 
     const query = debouncedQuery.toLowerCase()
 
-    return filesWithAdapters.filter((file) => {
+    return allConfigFiles.filter((file) => {
       const matchesFile = file.relativePath.toLowerCase().includes(query)
       const matchesAdapter = file.adapterNames.some((adapter) => adapter.toLowerCase().includes(query))
       return matchesFile || matchesAdapter
     })
-  }, [filesWithAdapters, debouncedQuery])
+  }, [allConfigFiles, debouncedQuery])
+
+  const configurationPaths = useMemo(() => allConfigFiles.map((file) => file.path), [allConfigFiles])
+  const { elementsByPath, loadingByPath, replaceElements } = useNonCanvasElements(
+    currentConfigurationProject?.name ?? '',
+    configurationPaths,
+  )
+
+  const handleElementSaved = useCallback(
+    (configurationPath: string, elements: NonCanvasElement[]) => {
+      replaceElements(configurationPath, elements)
+      closeEditor()
+    },
+    [replaceElements, closeEditor],
+  )
 
   if (!currentConfigurationProject) {
     return (
@@ -145,40 +228,99 @@ export default function ConfigurationOverview() {
     )
   }
 
+  let sidebarTitle = 'Elements'
+  if (editor) {
+    if (editorName) {
+      sidebarTitle = `${editor.tagName} · ${editorName}`
+    } else {
+      sidebarTitle = editor.mode === 'add' ? `Add ${editor.tagName}` : editor.tagName
+    }
+  }
+
   return (
-    <div className="bg-background flex h-full w-full flex-col p-6">
-      <div className="hover:bg-hover flex w-fit rounded px-4 py-2 hover:cursor-pointer" onClick={() => navigate('/')}>
-        <ArrowLeftIcon className="h-6 w-auto fill-current hover:cursor-pointer" />
-        <p>Switch configuration</p>
-      </div>
+    <div className="h-full w-full">
+      <SidebarLayout name={SIDEBAR_NAME} defaultVisible={[false, true, true]} windowResizeOnChange hideLeft>
+        {/* Left slot is intentionally unused; hideLeft keeps it from rendering. */}
+        <></>
 
-      <h1 className="mt-4 ml-2 text-2xl font-bold">Configuration Overview</h1>
-      <div className="mb-4 flex items-center justify-between">
-        <p className="ml-2">
-          Configuration files within <span className="font-bold">{currentConfigurationProject.name}</span>
-        </p>
-        <Search value={searchQuery} onChange={handleSearch} />
-      </div>
+        <div className="bg-background flex h-full w-full flex-col">
+          <div className="border-b-border flex h-12 shrink-0 items-center justify-between border-b">
+            <div
+              className="hover:bg-hover ms-4 flex cursor-pointer items-center gap-2 rounded py-1 ps-1 pe-2"
+              onClick={() => navigate('/')}
+            >
+              <ArrowLeftIcon className="h-5 w-auto fill-current" />
+              <span>Switch configuration</span>
+            </div>
+            <SidebarContentClose side={SidebarSide.RIGHT} />
+          </div>
 
-      <div className="border-border bg-background flex flex-wrap gap-4 self-start">
-        {filteredConfigurationFiles.map((file) => (
-          <ConfigurationFileTile
-            key={file.path}
-            filepath={file.path}
-            relativePath={file.relativePath}
-            adapterNames={file.adapterNames}
-            onDelete={() => handleDelete(file.path)}
-          />
-        ))}
+          <div className="border-b-border grid shrink-0 grid-cols-4 items-center border-b px-4 py-3">
+            <div className="min-w-0">
+              <h1 className="text-xl font-bold">Configuration Overview</h1>
+              <p className="text-foreground-muted text-sm">
+                Configuration files within{' '}
+                <span className="text-foreground font-bold">{currentConfigurationProject.name}</span>
+              </p>
+            </div>
+            <div className="col-span-2 flex justify-center">
+              <Search className="w-full" value={searchQuery} onChange={handleSearch} />
+            </div>
+            <div />
+          </div>
 
-        <AddConfigurationTile onClick={() => setShowModal(true)} />
-      </div>
-      <AddConfigurationModal
-        isOpen={showModal}
-        onClose={() => setShowModal(false)}
-        onSuccess={handleConfigAdded}
-        currentConfiguration={currentConfigurationProject}
-        configurationsDirPath={tree?.path ?? ''}
+          <div className="flex-1 overflow-y-auto p-6">
+            <div className="flex w-full flex-col gap-4">
+              {filteredConfigurationFiles.map((file) => (
+                <ConfigurationFileTile
+                  key={file.path}
+                  filepath={file.path}
+                  relativePath={file.relativePath}
+                  adapterNames={file.adapterNames}
+                  nonCanvasElements={elementsByPath[file.path] ?? []}
+                  loadingElements={loadingByPath[file.path] ?? true}
+                  dragActive={isDraggingFromPalette}
+                  onDelete={() => handleDelete(file.path)}
+                  onAddElement={handleAddElement}
+                  onEditElement={handleEditElement}
+                  onDropElement={handleDropElement}
+                />
+              ))}
+
+              <AddConfigurationTile onClick={() => setShowModal(true)} />
+            </div>
+
+            <AddConfigurationModal
+              isOpen={showModal}
+              onClose={() => setShowModal(false)}
+              onSuccess={handleConfigAdded}
+              currentConfiguration={currentConfigurationProject}
+              configurationsDirPath={tree?.path ?? ''}
+            />
+          </div>
+        </div>
+
+        <>
+          <SidebarHeader side={SidebarSide.RIGHT} title={sidebarTitle} />
+          {editor ? (
+            <NonCanvasElementContext
+              key={`${editor.configPath}:${editor.tagName}:${editor.index ?? 'new'}`}
+              projectName={currentConfigurationProject.name}
+              editor={editor}
+              onSaved={(elements) => handleElementSaved(editor.configPath, elements)}
+              onClose={closeEditor}
+              onNameChange={setEditorName}
+            />
+          ) : (
+            <NonCanvasElementPalette onDragActiveChange={setIsDraggingFromPalette} />
+          )}
+        </>
+      </SidebarLayout>
+
+      <AddNonCanvasElementMenu
+        isOpen={addMenuConfigPath !== null}
+        onClose={() => setAddMenuConfigPath(null)}
+        onSelect={handleSelectElementType}
       />
     </div>
   )

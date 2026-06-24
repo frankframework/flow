@@ -6,12 +6,34 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerFactory;
 import lombok.experimental.UtilityClass;
+import lombok.extern.log4j.Log4j2;
+import org.xml.sax.ErrorHandler;
+import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
 
 /**
  * Utility class for creating secure XML parsers and transformers that prevent XXE vulnerabilities.
  */
+@Log4j2
 @UtilityClass
 public class XmlSecurityUtils {
+
+	private static final ErrorHandler QUIET_ERROR_HANDLER = new ErrorHandler() {
+		@Override
+		public void warning(SAXParseException exception) {
+			log.debug("XML parse warning: {}", exception.getMessage());
+		}
+
+		@Override
+		public void error(SAXParseException exception) throws SAXException {
+			throw exception;
+		}
+
+		@Override
+		public void fatalError(SAXParseException exception) throws SAXException {
+			throw exception;
+		}
+	};
 
 	/**
 	 * Creates a secure DocumentBuilderFactory configured to prevent XXE attacks.
@@ -23,10 +45,8 @@ public class XmlSecurityUtils {
 		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 		factory.setNamespaceAware(true);
 		factory.setIgnoringComments(true);
-
-		// Prevent XXE vulnerabilities
 		factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
-		factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+		factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", false);
 		factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
 		factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
 		factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
@@ -43,7 +63,9 @@ public class XmlSecurityUtils {
 	 * @throws ParserConfigurationException if the parser cannot be created
 	 */
 	public static DocumentBuilder createSecureDocumentBuilder() throws ParserConfigurationException {
-		return createSecureDocumentBuilderFactory().newDocumentBuilder();
+		DocumentBuilder builder = createSecureDocumentBuilderFactory().newDocumentBuilder();
+		builder.setErrorHandler(QUIET_ERROR_HANDLER);
+		return builder;
 	}
 
 	/**
