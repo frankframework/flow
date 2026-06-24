@@ -11,9 +11,6 @@ export interface NonCanvasElement {
 
 const ROOT_TYPE_CANDIDATES = ['ConfigurationType', 'ModuleType', 'Configuration', 'Module']
 
-/** MIME-like key used to carry a non-canvas element tag name across a drag-and-drop onto a configuration tile. */
-export const NON_CANVAS_DRAG_TYPE = 'application/x-noncanvas-element'
-
 function getBaseUrl(projectName: string): string {
   return `/projects/${encodeURIComponent(projectName)}/non-canvas-elements`
 }

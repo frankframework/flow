@@ -58,7 +58,7 @@ export default function ConfigurationOverview() {
   const [editor, setEditor] = useState<NonCanvasEditorState | null>(null)
   const [editorName, setEditorName] = useState('')
   const [addMenuConfigPath, setAddMenuConfigPath] = useState<string | null>(null)
-  const [isDraggingFromPalette, setIsDraggingFromPalette] = useState(false)
+  const [draggedElementTagName, setDraggedElementTagName] = useState<string | null>(null)
 
   const setSidebarVisible = useSidebarStore((state) => state.setVisible)
 
@@ -240,7 +240,7 @@ export default function ConfigurationOverview() {
   return (
     <div className="h-full w-full">
       <SidebarLayout name={SIDEBAR_NAME} defaultVisible={[false, true, true]} windowResizeOnChange hideLeft>
-        {/* Left slot is intentionally unused; hideLeft keeps it from rendering. */}
+        {/* Left slot is intentionally unused; hideLeft keeps its pane hidden. */}
         <></>
 
         <div className="bg-background flex h-full w-full flex-col">
@@ -279,7 +279,7 @@ export default function ConfigurationOverview() {
                   adapterNames={file.adapterNames}
                   nonCanvasElements={elementsByPath[file.path] ?? []}
                   loadingElements={loadingByPath[file.path] ?? true}
-                  dragActive={isDraggingFromPalette}
+                  draggedTagName={draggedElementTagName}
                   onDelete={() => handleDelete(file.path)}
                   onAddElement={handleAddElement}
                   onEditElement={handleEditElement}
@@ -312,7 +312,10 @@ export default function ConfigurationOverview() {
               onNameChange={setEditorName}
             />
           ) : (
-            <NonCanvasElementPalette onDragActiveChange={setIsDraggingFromPalette} />
+            <NonCanvasElementPalette
+              onDragStart={setDraggedElementTagName}
+              onDragEnd={() => setDraggedElementTagName(null)}
+            />
           )}
         </>
       </SidebarLayout>

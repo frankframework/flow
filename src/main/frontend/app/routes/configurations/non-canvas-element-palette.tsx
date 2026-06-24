@@ -4,17 +4,17 @@ import Search from '~/components/search/search'
 import LoadingSpinner from '~/components/loading-spinner'
 import { useFrankConfigXsd } from '~/providers/frankconfig-xsd-provider'
 import { getElementTypeFromName } from '~/routes/studio/node-translator-module'
-import { getAddableNonCanvasElementNames, NON_CANVAS_DRAG_TYPE } from '~/services/non-canvas-element-service'
+import { getAddableNonCanvasElementNames } from '~/services/non-canvas-element-service'
 
 /**
  * Palette of non-canvas elements that can be dragged onto a configuration tile to add them.
- * Shares the look and drag behaviour of the studio element palette,
- * but is scoped to the elements that are only allowed as direct children of a Configuration/Module.
  */
 export default function NonCanvasElementPalette({
-  onDragActiveChange,
+  onDragStart,
+  onDragEnd,
 }: {
-  onDragActiveChange?: (active: boolean) => void
+  onDragStart?: (tagName: string) => void
+  onDragEnd?: () => void
 }) {
   const { elements, isLoading } = useFFDoc()
   const { xsdContent } = useFrankConfigXsd()
@@ -30,12 +30,12 @@ export default function NonCanvasElementPalette({
   const handleSearchChange = (event: ChangeEvent<HTMLInputElement>) => setSearch(event.target.value)
 
   const handleDragStart = (tagName: string) => (event: DragEvent<HTMLLIElement>) => {
-    event.dataTransfer.setData(NON_CANVAS_DRAG_TYPE, tagName)
+    event.dataTransfer.setData('text/plain', tagName)
     event.dataTransfer.effectAllowed = 'copy'
-    onDragActiveChange?.(true)
+    onDragStart?.(tagName)
   }
 
-  const handleDragEnd = () => onDragActiveChange?.(false)
+  const handleDragEnd = () => onDragEnd?.()
 
   return (
     <div className="flex h-full flex-col overflow-hidden">

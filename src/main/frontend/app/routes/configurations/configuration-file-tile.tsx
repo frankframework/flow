@@ -12,6 +12,8 @@ import LoadingSpinner from '~/components/loading-spinner'
 import { NON_CANVAS_DRAG_TYPE, type NonCanvasElement } from '~/services/non-canvas-element-service'
 import {useRef, useState} from 'react'
 import { getBaseName } from '~/utils/path-utils'
+import { useRef, useState, type DragEvent } from 'react'
+import { type NonCanvasElement } from '~/services/non-canvas-element-service'
 
 type ConfigurationFileTileProperties = {
   filepath: string
@@ -23,21 +25,11 @@ type ConfigurationFileTileProperties = {
   onAddElement: (configurationPath: string) => void
   onEditElement: (configurationPath: string, element: NonCanvasElement) => void
   onDropElement: (configurationPath: string, tagName: string) => void
-  dragActive?: boolean
+  draggedTagName?: string | null
 }
 
 function isRootConfiguration(relativePath: string): boolean {
   return relativePath.split(/[/\\]/).pop()?.toLowerCase() === 'configuration.xml'
-}
-
-function isElementDrag(event: DragEvent<HTMLDivElement>): boolean {
-  return event.dataTransfer.types.includes(NON_CANVAS_DRAG_TYPE)
-}
-
-function handleDragOver(event: DragEvent<HTMLDivElement>) {
-  if (!isElementDrag(event)) return
-  event.preventDefault()
-  event.dataTransfer.dropEffect = 'copy'
 }
 
 export default function ConfigurationFileTile({
@@ -50,22 +42,30 @@ export default function ConfigurationFileTile({
   onAddElement,
   onEditElement,
   onDropElement,
-  dragActive = false,
+  draggedTagName = null,
 }: Readonly<ConfigurationFileTileProperties>) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [isDropTarget, setIsDropTarget] = useState(false)
   const dragDepth = useRef(0)
   const navigate = useNavigate()
 
+  const isElementDrag = draggedTagName !== null
+
+  const handleDragOver = (event: DragEvent<HTMLDivElement>) => {
+    if (!isElementDrag) return
+    event.preventDefault()
+    event.dataTransfer.dropEffect = 'copy'
+  }
+
   const handleDragEnter = (event: DragEvent<HTMLDivElement>) => {
-    if (!isElementDrag(event)) return
+    if (!isElementDrag) return
     event.preventDefault()
     dragDepth.current += 1
     setIsDropTarget(true)
   }
 
-  const handleDragLeave = (event: DragEvent<HTMLDivElement>) => {
-    if (!isElementDrag(event)) return
+  const handleDragLeave = () => {
+    if (!isElementDrag) return
     dragDepth.current -= 1
     if (dragDepth.current <= 0) {
       dragDepth.current = 0
@@ -74,12 +74,11 @@ export default function ConfigurationFileTile({
   }
 
   const handleDrop = (event: DragEvent<HTMLDivElement>) => {
-    if (!isElementDrag(event)) return
+    if (!draggedTagName) return
     event.preventDefault()
     dragDepth.current = 0
     setIsDropTarget(false)
-    const tagName = event.dataTransfer.getData(NON_CANVAS_DRAG_TYPE)
-    if (tagName) onDropElement(filepath, tagName)
+    onDropElement(filepath, draggedTagName)
   }
 
   const handleOpenInStudio = (adapterName: string, adapterPosition: number) => {
@@ -102,7 +101,7 @@ export default function ConfigurationFileTile({
   let dropZoneClasses = 'border-border'
   if (isDropTarget) {
     dropZoneClasses = 'border-foreground-active ring-foreground-active border-dashed ring-2'
-  } else if (dragActive) {
+  } else if (isElementDrag) {
     dropZoneClasses = 'border-foreground-active/50 border-dashed'
   }
 

@@ -217,16 +217,9 @@ export default function NonCanvasElementContext({
             {isSaving ? 'Saving...' : 'Save & Close'}
           </Button>
 
-          <div className="flex items-center gap-2">
-            <Button className="w-auto" onClick={onClose} disabled={isSaving}>
-              Cancel
-            </Button>
-            {mode === 'edit' && (
-              <Button className="w-auto" variant="destructive" onClick={handleDelete} disabled={isSaving}>
-                Delete
-              </Button>
-            )}
-          </div>
+          <Button className="w-auto" onClick={mode === 'edit' ? handleDelete : onClose} disabled={isSaving}>
+            Delete
+          </Button>
         </div>
 
         {errorMessage && <p className="text-error mt-2 text-sm">{errorMessage}</p>}
