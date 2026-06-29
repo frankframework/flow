@@ -1,3 +1,4 @@
+import { T } from '@stylistic/eslint-plugin/dist/dts/types'
 import React, { useEffect, useState, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router'
 import FfIcon from '/icons/custom/ff!-icon.svg?react'
@@ -28,7 +29,7 @@ import {
 import { useRecentProjects } from '~/hooks/use-projects'
 import { showErrorToast } from '~/components/toast'
 
-export default function ProjectLanding() {
+export default function ProjectLanding(callback: T, deps: React.DependencyList) {
   const navigate = useNavigate()
   const { data: recentProjects, isLoading, error: apiError, refetch } = useRecentProjects()
   const clearProjectState = useProjectStore((state) => state.clearProject)
@@ -96,6 +97,14 @@ export default function ProjectLanding() {
     }
   }, [isLocalEnvironment])
 
+  const openProjectAndNavigate = useCallback(
+    (project: ConfigurationProject) => {
+      setProject(project)
+      navigate(`/configurations`)
+    },
+    [navigate, setProject],
+  )
+
   const handleOpenProject = useCallback(
     async (rootPath: string) => {
       setIsOpeningProject(true)
@@ -108,7 +117,7 @@ export default function ProjectLanding() {
         setIsOpeningProject(false)
       }
     },
-    [navigate, setProject],
+    [openProjectAndNavigate],
   )
 
   const onOpenFolder = async (selectedPath: string) => {
@@ -178,11 +187,6 @@ export default function ProjectLanding() {
     if (importInputRef.current) {
       importInputRef.current.value = ''
     }
-  }
-
-  const openProjectAndNavigate = (project: ConfigurationProject) => {
-    setProject(project)
-    navigate(`/configurations`)
   }
 
   const projects = recentProjects ?? []
