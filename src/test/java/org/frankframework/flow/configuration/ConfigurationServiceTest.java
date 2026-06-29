@@ -343,7 +343,7 @@ class ConfigurationServiceTest {
 		when(configurationProjectService.getProject("myproject")).thenReturn(configurationProject);
 
 		Path target = projectDir.resolve("src/main/configurations/NewConfig.xml");
-		AdapterLocationDTO result = configurationService.addConfiguration("myproject", target.toString());
+		AdapterLocationDTO result = configurationService.addConfigurationFile("myproject", target.toString());
 
 		assertNotNull(result);
 		assertTrue(Files.exists(target), "NewConfig.xml should be created inside src/main/configurations");
@@ -361,7 +361,7 @@ class ConfigurationServiceTest {
 		when(configurationProjectService.getProject("myproject")).thenReturn(configurationProject);
 
 		Path target = projectDir.resolve("subfolder/NestedConfig.xml");
-		configurationService.addConfiguration("myproject", target.toString());
+		configurationService.addConfigurationFile("myproject", target.toString());
 
 		Path expectedFile = projectDir.resolve("subfolder/NestedConfig.xml");
 		assertTrue(Files.exists(expectedFile));
@@ -370,13 +370,13 @@ class ConfigurationServiceTest {
 	@Test
 	void addConfiguration_ProjectNotFound_ThrowsException() throws ApiException {
 		when(configurationProjectService.getProject("unknown")).thenThrow(new ApiException("not found", HttpStatus.NOT_FOUND));
-		assertThrows(ApiException.class, () -> configurationService.addConfiguration("unknown", "Config.xml"));
+		assertThrows(ApiException.class, () -> configurationService.addConfigurationFile("unknown", "Config.xml"));
 	}
 
 	@Test
 	void addConfiguration_PathTraversal_ThrowsException() throws Exception {
 		ApiException exception = assertThrows(
-				ApiException.class, () -> configurationService.addConfiguration("myproject", "../../../evil.xml"));
+				ApiException.class, () -> configurationService.addConfigurationFile("myproject", "../../../evil.xml"));
 		assertEquals(HttpStatus.BAD_REQUEST, exception.getStatus());
 	}
 
@@ -391,7 +391,7 @@ class ConfigurationServiceTest {
 
 		String outsidePath = tempDir.resolve("other/evil.xml").toString();
 		ApiException exception = assertThrows(
-				ApiException.class, () -> configurationService.addConfiguration("myproject", outsidePath));
+				ApiException.class, () -> configurationService.addConfigurationFile("myproject", outsidePath));
 		assertEquals(HttpStatus.BAD_REQUEST, exception.getStatus());
 	}
 
