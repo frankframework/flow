@@ -1,13 +1,14 @@
-import { DiffEditor, type Monaco, type DiffOnMount, type MonacoDiffEditor } from '@monaco-editor/react'
+import '~/utils/monaco-setup'
+import * as monaco from 'monaco-editor'
 import { useShallow } from 'zustand/react/shallow'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTheme } from '~/hooks/use-theme'
 import { useGitStore } from '~/stores/git-store'
 import type { DiffTabData } from '~/stores/editor-tab-store'
 import type { GitHunk } from '~/types/git.types'
 import Checkbox from '~/components/inputs/checkbox'
 
-type CodeEditor = ReturnType<MonacoDiffEditor['getModifiedEditor']>
+type CodeEditor = monaco.editor.IStandaloneCodeEditor
 
 function getLanguage(filePath: string): string {
   if (filePath.endsWith('.xml')) return 'xml'
@@ -17,7 +18,6 @@ function getLanguage(filePath: string): string {
 
 function applyHunkDecorations(
   modifiedEditor: CodeEditor,
-  monaco: Monaco,
   hunks: GitHunk[],
   selectedHunks: Set<number>,
   prevDecorations: string[],
@@ -77,11 +77,12 @@ export default function DiffTabView({ diffData }: DiffTabViewProps) {
 
   const filePath = diffData.filePath
   const hunks = diffData.hunks
+  const language = getLanguage(filePath)
   const hunkState = fileHunkStates[filePath]
   const selectedHunks = useMemo(() => hunkState?.selectedHunks ?? new Set<number>(), [hunkState?.selectedHunks])
 
-  const diffEditorRef = useRef<MonacoDiffEditor | null>(null)
-  const monacoRef = useRef<Monaco | null>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const diffEditorRef = useRef<monaco.editor.IStandaloneDiffEditor | null>(null)
   const decorationsRef = useRef<string[]>([])
   const [editorReady, setEditorReady] = useState(false)
 
@@ -93,27 +94,30 @@ export default function DiffTabView({ diffData }: DiffTabViewProps) {
   filePathRef.current = filePath
 
   useEffect(() => {
-    if (!editorReady || !diffEditorRef.current || !monacoRef.current) return
+    if (!editorReady || !diffEditorRef.current) return
     const modifiedEditor = diffEditorRef.current.getModifiedEditor()
-    decorationsRef.current = applyHunkDecorations(
-      modifiedEditor,
-      monacoRef.current,
-      hunks,
-      selectedHunks,
-      decorationsRef.current,
-    )
+    decorationsRef.current = applyHunkDecorations(modifiedEditor, hunks, selectedHunks, decorationsRef.current)
   }, [hunks, selectedHunks, editorReady])
 
-  const handleDiffMount: DiffOnMount = useCallback((diffEditor: MonacoDiffEditor, monaco: Monaco) => {
+  useEffect(() => {
+    if (!containerRef.current) return
+
+    const diffEditor = monaco.editor.createDiffEditor(containerRef.current, {
+      readOnly: true,
+      automaticLayout: true,
+      renderSideBySide: true,
+      minimap: { enabled: false },
+      scrollBeyondLastLine: false,
+      glyphMargin: true,
+    })
+
     diffEditorRef.current = diffEditor
-    monacoRef.current = monaco
 
     const modifiedEditor = diffEditor.getModifiedEditor()
     modifiedEditor.updateOptions({ glyphMargin: true })
 
     decorationsRef.current = applyHunkDecorations(
       modifiedEditor,
-      monaco,
       hunksRef.current,
       useGitStore.getState().fileHunkStates[filePathRef.current]?.selectedHunks ?? new Set(),
       decorationsRef.current,
@@ -136,7 +140,32 @@ export default function DiffTabView({ diffData }: DiffTabViewProps) {
     })
 
     setEditorReady(true)
+
+    return () => {
+      diffEditor.dispose()
+      diffEditorRef.current = null
+      decorationsRef.current = []
+      setEditorReady(false)
+    }
   }, [])
+
+  useEffect(() => {
+    const diffEditor = diffEditorRef.current
+    if (!diffEditor || !editorReady) return
+
+    const originalModel = monaco.editor.createModel(diffData.oldContent, language)
+    const modifiedModel = monaco.editor.createModel(diffData.newContent, language)
+    diffEditor.setModel({ original: originalModel, modified: modifiedModel })
+
+    return () => {
+      originalModel.dispose()
+      modifiedModel.dispose()
+    }
+  }, [diffData, language, editorReady])
+
+  useEffect(() => {
+    monaco.editor.setTheme(theme === 'dark' ? 'vs-dark' : 'vs')
+  }, [theme])
 
   const selectableHunks = hunks.filter((hunk) => hunk.newCount > 0)
   const allSelected = selectableHunks.length > 0 && selectableHunks.every((hunk) => selectedHunks.has(hunk.index))
@@ -151,8 +180,6 @@ export default function DiffTabView({ diffData }: DiffTabViewProps) {
     }
   }
 
-  const language = getLanguage(filePath)
-
   return (
     <>
       <div className="border-b-border bg-background flex h-12 items-center gap-3 border-b px-4">
@@ -165,21 +192,7 @@ export default function DiffTabView({ diffData }: DiffTabViewProps) {
         <span className="text-sm font-medium">{filePath}</span>
       </div>
       <div className="min-h-0 flex-1">
-        <DiffEditor
-          original={diffData.oldContent}
-          modified={diffData.newContent}
-          language={language}
-          theme={`vs-${theme}`}
-          onMount={handleDiffMount}
-          options={{
-            readOnly: true,
-            automaticLayout: true,
-            renderSideBySide: true,
-            minimap: { enabled: false },
-            scrollBeyondLastLine: false,
-            glyphMargin: true,
-          }}
-        />
+        <div ref={containerRef} className="h-full w-full" />
       </div>
     </>
   )
