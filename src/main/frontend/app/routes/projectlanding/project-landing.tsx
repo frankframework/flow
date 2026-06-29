@@ -167,8 +167,8 @@ export default function ProjectLanding() {
     setIsOpeningProject(true)
     try {
       const project = await importProjectFolder(files)
-      refetch()
       openProjectAndNavigate(project)
+      refetch()
     } catch (error) {
       showErrorToast(error instanceof Error ? error.message : 'Failed to import project')
     } finally {
