@@ -43,6 +43,7 @@ interface AdapterListItemProperties {
   onConfigure: () => void
   onOpenInStudio: (adapterName: string, adapterPosition: number) => void
 }
+
 interface ComponentListItemProperties {
   component: NonCanvasComponent
   onConfigure: () => void
