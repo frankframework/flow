@@ -1,4 +1,4 @@
-package org.frankframework.flow.noncanvaselement;
+package org.frankframework.flow.noncanvascomponent;
 
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyMap;
@@ -24,23 +24,23 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-@WebMvcTest(NonCanvasElementController.class)
+@WebMvcTest(NonCanvasComponentController.class)
 @AutoConfigureMockMvc(addFilters = false)
-class NonCanvasElementControllerTest {
+class NonCanvasComponentControllerTest {
 
 	@Autowired
 	private MockMvc mockMvc;
 
 	@MockitoBean
-	private NonCanvasElementService nonCanvasElementService;
+	private NonCanvasComponentService nonCanvasComponentService;
 
 	private static final String PROJECT = "FrankFlowTestProject";
-	private static final String BASE_URL = "/api/projects/" + PROJECT + "/non-canvas-elements";
+	private static final String BASE_URL = "/api/projects/" + PROJECT + "/non-canvas-components";
 
 	@Test
-	void getNonCanvasElements_returnsList() throws Exception {
-		NonCanvasElementDTO element = new NonCanvasElementDTO("Monitoring", "monitor", 0, Map.of("enabled", "true"));
-		when(nonCanvasElementService.getNonCanvasElements("config.xml")).thenReturn(List.of(element));
+	void getNonCanvasComponents_returnsList() throws Exception {
+		NonCanvasComponentDTO component = new NonCanvasComponentDTO("Monitoring", "monitor", 0, Map.of("enabled", "true"));
+		when(nonCanvasComponentService.getNonCanvasComponents("config.xml")).thenReturn(List.of(component));
 
 		mockMvc.perform(get(BASE_URL).param("configurationPath", "config.xml").accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk())
@@ -49,18 +49,18 @@ class NonCanvasElementControllerTest {
 				.andExpect(jsonPath("$[0].index").value(0))
 				.andExpect(jsonPath("$[0].attributes.enabled").value("true"));
 
-		verify(nonCanvasElementService).getNonCanvasElements("config.xml");
+		verify(nonCanvasComponentService).getNonCanvasComponents("config.xml");
 	}
 
 	@Test
-	void getNonCanvasElements_missingConfigurationPath_returns400() throws Exception {
+	void getNonCanvasComponents_missingConfigurationPath_returns400() throws Exception {
 		mockMvc.perform(get(BASE_URL).accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isBadRequest());
 	}
 
 	@Test
-	void getNonCanvasElements_serviceThrowsNotFound_returns404() throws Exception {
-		when(nonCanvasElementService.getNonCanvasElements("missing.xml"))
+	void getNonCanvasComponents_serviceThrowsNotFound_returns404() throws Exception {
+		when(nonCanvasComponentService.getNonCanvasComponents("missing.xml"))
 				.thenThrow(new ApiException("Configuration file not found: missing.xml", HttpStatus.NOT_FOUND));
 
 		mockMvc.perform(get(BASE_URL).param("configurationPath", "missing.xml").accept(MediaType.APPLICATION_JSON))
@@ -70,10 +70,10 @@ class NonCanvasElementControllerTest {
 	}
 
 	@Test
-	void addNonCanvasElement_deserializesBodyAndReturnsUpdatedList() throws Exception {
-		NonCanvasElementDTO element = new NonCanvasElementDTO("Scheduler", "daily", 0, Map.of("name", "daily"));
-		when(nonCanvasElementService.addNonCanvasElement("config.xml", "Scheduler", Map.of("name", "daily")))
-				.thenReturn(List.of(element));
+	void addNonCanvasComponent_deserializesBodyAndReturnsUpdatedList() throws Exception {
+		NonCanvasComponentDTO component = new NonCanvasComponentDTO("Scheduler", "daily", 0, Map.of("name", "daily"));
+		when(nonCanvasComponentService.addNonCanvasComponent("config.xml", "Scheduler", Map.of("name", "daily")))
+				.thenReturn(List.of(component));
 
 		String body = "{\"configurationPath\":\"config.xml\",\"tagName\":\"Scheduler\",\"attributes\":{\"name\":\"daily\"}}";
 
@@ -82,14 +82,14 @@ class NonCanvasElementControllerTest {
 				.andExpect(jsonPath("$[0].tagName").value("Scheduler"))
 				.andExpect(jsonPath("$[0].name").value("daily"));
 
-		verify(nonCanvasElementService).addNonCanvasElement("config.xml", "Scheduler", Map.of("name", "daily"));
+		verify(nonCanvasComponentService).addNonCanvasComponent("config.xml", "Scheduler", Map.of("name", "daily"));
 	}
 
 	@Test
-	void updateNonCanvasElement_deserializesBodyAndReturnsUpdatedList() throws Exception {
-		NonCanvasElementDTO element = new NonCanvasElementDTO("Monitoring", "monitor", 0, Map.of("enabled", "false"));
-		when(nonCanvasElementService.updateNonCanvasElement("config.xml", "Monitoring", 0, Map.of("enabled", "false")))
-				.thenReturn(List.of(element));
+	void updateNonCanvasComponent_deserializesBodyAndReturnsUpdatedList() throws Exception {
+		NonCanvasComponentDTO component = new NonCanvasComponentDTO("Monitoring", "monitor", 0, Map.of("enabled", "false"));
+		when(nonCanvasComponentService.updateNonCanvasComponent("config.xml", "Monitoring", 0, Map.of("enabled", "false")))
+				.thenReturn(List.of(component));
 
 		String body =
 				"{\"configurationPath\":\"config.xml\",\"tagName\":\"Monitoring\",\"index\":0,\"attributes\":{\"enabled\":\"false\"}}";
@@ -98,25 +98,25 @@ class NonCanvasElementControllerTest {
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$[0].attributes.enabled").value("false"));
 
-		verify(nonCanvasElementService).updateNonCanvasElement("config.xml", "Monitoring", 0, Map.of("enabled", "false"));
+		verify(nonCanvasComponentService).updateNonCanvasComponent("config.xml", "Monitoring", 0, Map.of("enabled", "false"));
 	}
 
 	@Test
-	void updateNonCanvasElement_serviceThrowsNotFound_returns404() throws Exception {
-		when(nonCanvasElementService.updateNonCanvasElement(anyString(), anyString(), anyInt(), anyMap()))
-				.thenThrow(new ApiException("Non-canvas element not found: Monitoring", HttpStatus.NOT_FOUND));
+	void updateNonCanvasComponent_serviceThrowsNotFound_returns404() throws Exception {
+		when(nonCanvasComponentService.updateNonCanvasComponent(anyString(), anyString(), anyInt(), anyMap()))
+				.thenThrow(new ApiException("Non-canvas component not found: Monitoring", HttpStatus.NOT_FOUND));
 
 		String body =
 				"{\"configurationPath\":\"config.xml\",\"tagName\":\"Monitoring\",\"index\":3,\"attributes\":{}}";
 
 		mockMvc.perform(put(BASE_URL).contentType(MediaType.APPLICATION_JSON).content(body))
 				.andExpect(status().isNotFound())
-				.andExpect(jsonPath("$.error").value("Non-canvas element not found: Monitoring"));
+				.andExpect(jsonPath("$.error").value("Non-canvas component not found: Monitoring"));
 	}
 
 	@Test
-	void deleteNonCanvasElement_returnsRemainingList() throws Exception {
-		when(nonCanvasElementService.deleteNonCanvasElement("config.xml", "Scheduler", 0)).thenReturn(List.of());
+	void deleteNonCanvasComponent_returnsRemainingList() throws Exception {
+		when(nonCanvasComponentService.deleteNonCanvasComponent("config.xml", "Scheduler", 0)).thenReturn(List.of());
 
 		mockMvc.perform(delete(BASE_URL)
 						.param("configurationPath", "config.xml")
@@ -126,19 +126,19 @@ class NonCanvasElementControllerTest {
 				.andExpect(jsonPath("$").isArray())
 				.andExpect(jsonPath("$.length()").value(0));
 
-		verify(nonCanvasElementService).deleteNonCanvasElement("config.xml", "Scheduler", 0);
+		verify(nonCanvasComponentService).deleteNonCanvasComponent("config.xml", "Scheduler", 0);
 	}
 
 	@Test
-	void deleteNonCanvasElement_serviceThrowsNotFound_returns404() throws Exception {
-		when(nonCanvasElementService.deleteNonCanvasElement("config.xml", "Scheduler", 9))
-				.thenThrow(new ApiException("Non-canvas element not found: Scheduler", HttpStatus.NOT_FOUND));
+	void deleteNonCanvasComponent_serviceThrowsNotFound_returns404() throws Exception {
+		when(nonCanvasComponentService.deleteNonCanvasComponent("config.xml", "Scheduler", 9))
+				.thenThrow(new ApiException("Non-canvas component not found: Scheduler", HttpStatus.NOT_FOUND));
 
 		mockMvc.perform(delete(BASE_URL)
 						.param("configurationPath", "config.xml")
 						.param("tagName", "Scheduler")
 						.param("index", "9"))
 				.andExpect(status().isNotFound())
-				.andExpect(jsonPath("$.error").value("Non-canvas element not found: Scheduler"));
+				.andExpect(jsonPath("$.error").value("Non-canvas component not found: Scheduler"));
 	}
 }

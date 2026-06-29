@@ -4,25 +4,25 @@ import { useFFDoc } from '@frankframework/doc-library-react'
 import Button from '~/components/inputs/button'
 import Search from '~/components/search/search'
 import { useFrankConfigXsd } from '~/providers/frankconfig-xsd-provider'
-import { getAddableNonCanvasElementNames } from '~/services/non-canvas-element-service'
+import { getAddableNonCanvasComponentNames } from '~/services/non-canvas-component-service'
 
-interface AddNonCanvasElementMenuProperties {
+interface AddNonCanvasComponentMenuProperties {
   isOpen: boolean
   onClose: () => void
   onSelect: (tagName: string) => void
 }
 
-export default function AddNonCanvasElementMenu({
+export default function AddNonCanvasComponentMenu({
   isOpen,
   onClose,
   onSelect,
-}: Readonly<AddNonCanvasElementMenuProperties>) {
+}: Readonly<AddNonCanvasComponentMenuProperties>) {
   const { elements } = useFFDoc()
   const { xsdContent } = useFrankConfigXsd()
   const [search, setSearch] = useState('')
   const [selected, setSelected] = useState<string | null>(null)
 
-  const addableNames = useMemo(() => getAddableNonCanvasElementNames(xsdContent, elements), [xsdContent, elements])
+  const addableNames = useMemo(() => getAddableNonCanvasComponentNames(xsdContent, elements), [xsdContent, elements])
 
   const filteredNames = useMemo(
     () => addableNames.filter((name) => name.toLowerCase().includes(search.toLowerCase())),
@@ -65,9 +65,9 @@ export default function AddNonCanvasElementMenu({
           &times;
         </Button>
 
-        <h2 className="mb-4 text-lg font-bold">Add non-canvas element</h2>
+        <h2 className="mb-4 text-lg font-bold">Add non-canvas component</h2>
 
-        <Search placeholder="Search elements..." value={search} onChange={handleSearchChange} />
+        <Search placeholder="Search components..." value={search} onChange={handleSearchChange} />
         <div className="border-border bg-background my-3 w-full flex-1 overflow-hidden rounded border">
           <ul className="h-full overflow-y-auto">
             {filteredNames.length > 0 ? (
@@ -88,14 +88,14 @@ export default function AddNonCanvasElementMenu({
               })
             ) : (
               <li className="text-foreground-muted px-3 py-2">
-                {addableNames.length === 0 ? 'No addable elements found.' : 'No results found.'}
+                {addableNames.length === 0 ? 'No addable components found.' : 'No results found.'}
               </li>
             )}
           </ul>
         </div>
 
         <Button onClick={() => handleConfirm()} disabled={!selected}>
-          Add element
+          Add component
         </Button>
       </div>
     </div>,

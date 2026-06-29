@@ -12,18 +12,18 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 @UtilityClass
-public class XmlNonCanvasElementUtils {
+public class XmlNonCanvasComponentUtils {
 
 	private static final String ADAPTER_TAG_NAME = "adapter";
 	private static final String NAMESPACE_SEPARATOR = ":";
 	private static final String NAMESPACE_DECLARATION_PREFIX = "xmlns";
 
-	public static List<Element> getNonCanvasElements(Document configurationDocument) {
-		List<Element> nonCanvasElements = new ArrayList<>();
+	public static List<Element> getNonCanvasComponents(Document configurationDocument) {
+		List<Element> nonCanvasComponents = new ArrayList<>();
 		Element rootElement = configurationDocument.getDocumentElement();
 
 		if (rootElement == null) {
-			return nonCanvasElements;
+			return nonCanvasComponents;
 		}
 
 		NodeList childNodes = rootElement.getChildNodes();
@@ -39,16 +39,16 @@ public class XmlNonCanvasElementUtils {
 				continue;
 			}
 
-			nonCanvasElements.add(childElement);
+			nonCanvasComponents.add(childElement);
 		}
 
-		return nonCanvasElements;
+		return nonCanvasComponents;
 	}
 
-	public static Element findNonCanvasElement(Document configurationDocument, String tagName, int occurrenceIndex) {
+	public static Element findNonCanvasComponent(Document configurationDocument, String tagName, int occurrenceIndex) {
 		int matchedOccurrences = 0;
 
-		for (Element element : getNonCanvasElements(configurationDocument)) {
+		for (Element element : getNonCanvasComponents(configurationDocument)) {
 			if (!element.getTagName().equals(tagName)) {
 				continue;
 			}
@@ -63,14 +63,14 @@ public class XmlNonCanvasElementUtils {
 		return null;
 	}
 
-	public static void addNonCanvasElement(Document configurationDocument, String tagName, Map<String, String> attributes) {
+	public static void addNonCanvasComponent(Document configurationDocument, String tagName, Map<String, String> attributes) {
 		Element element = configurationDocument.createElement(tagName);
 		applyAttributes(element, attributes);
 		configurationDocument.getDocumentElement().appendChild(element);
 	}
 
-	public static boolean updateNonCanvasElement(Document configurationDocument, String tagName, int occurrenceIndex, Map<String, String> attributes) {
-		Element element = findNonCanvasElement(configurationDocument, tagName, occurrenceIndex);
+	public static boolean updateNonCanvasComponent(Document configurationDocument, String tagName, int occurrenceIndex, Map<String, String> attributes) {
+		Element element = findNonCanvasComponent(configurationDocument, tagName, occurrenceIndex);
 
 		if (element == null) {
 			return false;
@@ -81,8 +81,8 @@ public class XmlNonCanvasElementUtils {
 		return true;
 	}
 
-	public static boolean removeNonCanvasElement(Document configurationDocument, String tagName, int occurrenceIndex) {
-		Element element = findNonCanvasElement(configurationDocument, tagName, occurrenceIndex);
+	public static boolean removeNonCanvasComponent(Document configurationDocument, String tagName, int occurrenceIndex) {
+		Element element = findNonCanvasComponent(configurationDocument, tagName, occurrenceIndex);
 
 		if (element == null) {
 			return false;

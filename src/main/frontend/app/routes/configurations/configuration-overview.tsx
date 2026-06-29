@@ -15,11 +15,12 @@ import SidebarLayout from '~/components/sidebars-layout/sidebar-layout'
 import SidebarHeader from '~/components/sidebars-layout/sidebar-header'
 import SidebarContentClose from '~/components/sidebars-layout/sidebar-content-close'
 import { SidebarSide, useSidebarStore } from '~/stores/sidebar-layout-store'
-import NonCanvasElementContext, { type NonCanvasEditorState } from './non-canvas-element-context'
-import NonCanvasElementPalette from './non-canvas-element-palette'
-import AddNonCanvasElementMenu from './add-non-canvas-element-menu'
-import type { NonCanvasElement } from '~/services/non-canvas-element-service'
-import { useNonCanvasElements } from './use-non-canvas-elements'
+import NonCanvasComponentContext, { type NonCanvasComponentEditorState } from './non-canvas-component-context'
+import AdapterContext, { type AdapterEditorState } from './adapter-context'
+import NonCanvasComponentPalette from './non-canvas-component-palette'
+import AddNonCanvasComponentMenu from './add-non-canvas-component-menu'
+import type { NonCanvasComponent } from '~/services/non-canvas-component-service'
+import { useNonCanvasComponents } from './use-non-canvas-components'
 
 const SIDEBAR_NAME = 'configuration-overview-v2'
 import { relativeTo } from '~/utils/path-utils'
@@ -55,15 +56,17 @@ export default function ConfigurationOverview() {
   const [isLoading, setIsLoading] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState(searchQuery)
-  const [editor, setEditor] = useState<NonCanvasEditorState | null>(null)
+  const [editor, setEditor] = useState<NonCanvasComponentEditorState | null>(null)
+  const [adapterEditor, setAdapterEditor] = useState<AdapterEditorState | null>(null)
   const [editorName, setEditorName] = useState('')
   const [addMenuConfigPath, setAddMenuConfigPath] = useState<string | null>(null)
-  const [draggedElementTagName, setDraggedElementTagName] = useState<string | null>(null)
+  const [draggedComponentTagName, setDraggedComponentTagName] = useState<string | null>(null)
 
   const setSidebarVisible = useSidebarStore((state) => state.setVisible)
 
   const openEditor = useCallback(
-    (state: NonCanvasEditorState) => {
+    (state: NonCanvasComponentEditorState) => {
+      setAdapterEditor(null)
       setEditor(state)
       setEditorName(state.initialAttributes?.name ?? '')
       setSidebarVisible(SIDEBAR_NAME, SidebarSide.RIGHT, true)
@@ -71,16 +74,27 @@ export default function ConfigurationOverview() {
     [setSidebarVisible],
   )
 
+  const openAdapterEditor = useCallback(
+    (state: AdapterEditorState) => {
+      setEditor(null)
+      setAdapterEditor(state)
+      setEditorName(state.adapterName)
+      setSidebarVisible(SIDEBAR_NAME, SidebarSide.RIGHT, true)
+    },
+    [setSidebarVisible],
+  )
+
   const closeEditor = useCallback(() => {
     setEditor(null)
+    setAdapterEditor(null)
     setEditorName('')
   }, [])
 
-  const handleAddElement = useCallback((configPath: string) => {
+  const handleAddComponent = useCallback((configPath: string) => {
     setAddMenuConfigPath(configPath)
   }, [])
 
-  const handleSelectElementType = useCallback(
+  const handleSelectComponentType = useCallback(
     (tagName: string) => {
       if (!addMenuConfigPath) return
       openEditor({ mode: 'add', configPath: addMenuConfigPath, tagName })
@@ -89,20 +103,27 @@ export default function ConfigurationOverview() {
     [addMenuConfigPath, openEditor],
   )
 
-  const handleEditElement = useCallback(
-    (configurationPath: string, element: NonCanvasElement) => {
+  const handleEditComponent = useCallback(
+    (configurationPath: string, component: NonCanvasComponent) => {
       openEditor({
         mode: 'edit',
         configPath: configurationPath,
-        tagName: element.tagName,
-        index: element.index,
-        initialAttributes: element.attributes,
+        tagName: component.tagName,
+        index: component.index,
+        initialAttributes: component.attributes,
       })
     },
     [openEditor],
   )
 
-  const handleDropElement = useCallback(
+  const handleConfigureAdapter = useCallback(
+    (configurationPath: string, adapterName: string, adapterPosition: number) => {
+      openAdapterEditor({ configPath: configurationPath, adapterName, adapterPosition })
+    },
+    [openAdapterEditor],
+  )
+
+  const handleDropComponent = useCallback(
     (configurationPath: string, tagName: string) => {
       openEditor({ mode: 'add', configPath: configurationPath, tagName })
     },
@@ -196,18 +217,23 @@ export default function ConfigurationOverview() {
   }, [allConfigFiles, debouncedQuery])
 
   const configurationPaths = useMemo(() => allConfigFiles.map((file) => file.path), [allConfigFiles])
-  const { elementsByPath, loadingByPath, replaceElements } = useNonCanvasElements(
+  const { componentsByPath, loadingByPath, replaceComponents } = useNonCanvasComponents(
     currentConfigurationProject?.name ?? '',
     configurationPaths,
   )
 
-  const handleElementSaved = useCallback(
-    (configurationPath: string, elements: NonCanvasElement[]) => {
-      replaceElements(configurationPath, elements)
+  const handleComponentSaved = useCallback(
+    (configurationPath: string, components: NonCanvasComponent[]) => {
+      replaceComponents(configurationPath, components)
       closeEditor()
     },
-    [replaceElements, closeEditor],
+    [replaceComponents, closeEditor],
   )
+
+  const handleAdapterChanged = useCallback(() => {
+    closeEditor()
+    loadTree()
+  }, [closeEditor, loadTree])
 
   if (!currentConfigurationProject) {
     return (
@@ -228,13 +254,47 @@ export default function ConfigurationOverview() {
     )
   }
 
-  let sidebarTitle = 'Elements'
-  if (editor) {
+  let sidebarTitle = 'Components'
+  if (adapterEditor) {
+    sidebarTitle = editorName ? `Adapter · ${editorName}` : 'Adapter'
+  } else if (editor) {
     if (editorName) {
       sidebarTitle = `${editor.tagName} · ${editorName}`
     } else {
       sidebarTitle = editor.mode === 'add' ? `Add ${editor.tagName}` : editor.tagName
     }
+  }
+
+  let sidebarContent
+  if (adapterEditor) {
+    sidebarContent = (
+      <AdapterContext
+        key={`adapter:${adapterEditor.configPath}:${adapterEditor.adapterName}:${adapterEditor.adapterPosition}`}
+        projectName={currentConfigurationProject.name}
+        editor={adapterEditor}
+        onSaved={handleAdapterChanged}
+        onDeleted={handleAdapterChanged}
+        onNameChange={setEditorName}
+      />
+    )
+  } else if (editor) {
+    sidebarContent = (
+      <NonCanvasComponentContext
+        key={`${editor.configPath}:${editor.tagName}:${editor.index ?? 'new'}`}
+        projectName={currentConfigurationProject.name}
+        editor={editor}
+        onSaved={(components) => handleComponentSaved(editor.configPath, components)}
+        onClose={closeEditor}
+        onNameChange={setEditorName}
+      />
+    )
+  } else {
+    sidebarContent = (
+      <NonCanvasComponentPalette
+        onDragStart={setDraggedComponentTagName}
+        onDragEnd={() => setDraggedComponentTagName(null)}
+      />
+    )
   }
 
   return (
@@ -277,13 +337,14 @@ export default function ConfigurationOverview() {
                   filepath={file.path}
                   relativePath={file.relativePath}
                   adapterNames={file.adapterNames}
-                  nonCanvasElements={elementsByPath[file.path] ?? []}
-                  loadingElements={loadingByPath[file.path] ?? true}
-                  draggedTagName={draggedElementTagName}
+                  nonCanvasComponents={componentsByPath[file.path] ?? []}
+                  loadingComponents={loadingByPath[file.path] ?? true}
+                  draggedTagName={draggedComponentTagName}
                   onDelete={() => handleDelete(file.path)}
-                  onAddElement={handleAddElement}
-                  onEditElement={handleEditElement}
-                  onDropElement={handleDropElement}
+                  onAddComponent={handleAddComponent}
+                  onEditComponent={handleEditComponent}
+                  onConfigureAdapter={handleConfigureAdapter}
+                  onDropComponent={handleDropComponent}
                 />
               ))}
 
@@ -302,28 +363,14 @@ export default function ConfigurationOverview() {
 
         <>
           <SidebarHeader side={SidebarSide.RIGHT} title={sidebarTitle} />
-          {editor ? (
-            <NonCanvasElementContext
-              key={`${editor.configPath}:${editor.tagName}:${editor.index ?? 'new'}`}
-              projectName={currentConfigurationProject.name}
-              editor={editor}
-              onSaved={(elements) => handleElementSaved(editor.configPath, elements)}
-              onClose={closeEditor}
-              onNameChange={setEditorName}
-            />
-          ) : (
-            <NonCanvasElementPalette
-              onDragStart={setDraggedElementTagName}
-              onDragEnd={() => setDraggedElementTagName(null)}
-            />
-          )}
+          {sidebarContent}
         </>
       </SidebarLayout>
 
-      <AddNonCanvasElementMenu
+      <AddNonCanvasComponentMenu
         isOpen={addMenuConfigPath !== null}
         onClose={() => setAddMenuConfigPath(null)}
-        onSelect={handleSelectElementType}
+        onSelect={handleSelectComponentType}
       />
     </div>
   )

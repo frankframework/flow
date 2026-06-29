@@ -1,4 +1,4 @@
-package org.frankframework.flow.noncanvaselement;
+package org.frankframework.flow.noncanvascomponent;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -29,12 +29,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 
 @ExtendWith(MockitoExtension.class)
-class NonCanvasElementServiceTest {
+class NonCanvasComponentServiceTest {
 
 	@Mock
 	private FileSystemStorage fileSystemStorage;
 
-	private NonCanvasElementService nonCanvasElementService;
+	private NonCanvasComponentService nonCanvasComponentService;
 
 	@TempDir
 	Path tempDir;
@@ -55,7 +55,7 @@ class NonCanvasElementServiceTest {
 
 	@BeforeEach
 	void setUp() {
-		nonCanvasElementService = new NonCanvasElementService(fileSystemStorage);
+		nonCanvasComponentService = new NonCanvasComponentService(fileSystemStorage);
 	}
 
 	private void stubToAbsolutePath() {
@@ -91,23 +91,23 @@ class NonCanvasElementServiceTest {
 	}
 
 	@Test
-	void getNonCanvasElements_returnsDirectChildrenExcludingAdapters() throws Exception {
+	void getNonCanvasComponents_returnsDirectChildrenExcludingAdapters() throws Exception {
 		stubToAbsolutePath();
 		stubReadFile();
 		Path file = writeConfiguration(CONFIGURATION);
 
-		List<NonCanvasElementDTO> elements = nonCanvasElementService.getNonCanvasElements(file.toString());
+		List<NonCanvasComponentDTO> components = nonCanvasComponentService.getNonCanvasComponents(file.toString());
 
-		assertEquals(2, elements.size());
-		assertEquals("Scheduler", elements.get(0).tagName());
-		assertNull(elements.get(0).name());
-		assertEquals("Monitoring", elements.get(1).tagName());
-		assertEquals("monitor", elements.get(1).name());
-		assertEquals("true", elements.get(1).attributes().get("enabled"));
+		assertEquals(2, components.size());
+		assertEquals("Scheduler", components.get(0).tagName());
+		assertNull(components.get(0).name());
+		assertEquals("Monitoring", components.get(1).tagName());
+		assertEquals("monitor", components.get(1).name());
+		assertEquals("true", components.get(1).attributes().get("enabled"));
 	}
 
 	@Test
-	void getNonCanvasElements_assignsOccurrenceIndexPerTagName() throws Exception {
+	void getNonCanvasComponents_assignsOccurrenceIndexPerTagName() throws Exception {
 		stubToAbsolutePath();
 		stubReadFile();
 		Path file = writeConfiguration("""
@@ -118,67 +118,67 @@ class NonCanvasElementServiceTest {
 				</Configuration>
 				""");
 
-		List<NonCanvasElementDTO> elements = nonCanvasElementService.getNonCanvasElements(file.toString());
+		List<NonCanvasComponentDTO> components = nonCanvasComponentService.getNonCanvasComponents(file.toString());
 
-		assertEquals(3, elements.size());
-		assertEquals(0, elements.get(0).index());
-		assertEquals("first", elements.get(0).name());
-		assertEquals(0, elements.get(1).index());
-		assertEquals(1, elements.get(2).index());
-		assertEquals("second", elements.get(2).name());
+		assertEquals(3, components.size());
+		assertEquals(0, components.get(0).index());
+		assertEquals("first", components.get(0).name());
+		assertEquals(0, components.get(1).index());
+		assertEquals(1, components.get(2).index());
+		assertEquals("second", components.get(2).name());
 	}
 
 	@Test
-	void getNonCanvasElements_blankPath_throwsBadRequest() {
+	void getNonCanvasComponents_blankPath_throwsBadRequest() {
 		ApiException exception =
-				assertThrows(ApiException.class, () -> nonCanvasElementService.getNonCanvasElements("  "));
+				assertThrows(ApiException.class, () -> nonCanvasComponentService.getNonCanvasComponents("  "));
 		assertEquals(HttpStatus.BAD_REQUEST, exception.getStatus());
 	}
 
 	@Test
-	void getNonCanvasElements_fileNotFound_throwsNotFound() {
+	void getNonCanvasComponents_fileNotFound_throwsNotFound() {
 		stubToAbsolutePath();
 		String path = tempDir.resolve("missing.xml").toString();
 
 		ApiException exception =
-				assertThrows(ApiException.class, () -> nonCanvasElementService.getNonCanvasElements(path));
+				assertThrows(ApiException.class, () -> nonCanvasComponentService.getNonCanvasComponents(path));
 		assertEquals(HttpStatus.NOT_FOUND, exception.getStatus());
 	}
 
 	@Test
-	void getNonCanvasElements_pathIsDirectory_throwsNotFound() throws IOException {
+	void getNonCanvasComponents_pathIsDirectory_throwsNotFound() throws IOException {
 		stubToAbsolutePath();
 		Path directory = Files.createDirectory(tempDir.resolve("subdir"));
 
 		ApiException exception =
-				assertThrows(ApiException.class, () -> nonCanvasElementService.getNonCanvasElements(directory.toString()));
+				assertThrows(ApiException.class, () -> nonCanvasComponentService.getNonCanvasComponents(directory.toString()));
 		assertEquals(HttpStatus.NOT_FOUND, exception.getStatus());
 	}
 
 	@Test
-	void getNonCanvasElements_malformedXml_throwsBadRequest() throws Exception {
+	void getNonCanvasComponents_malformedXml_throwsBadRequest() throws Exception {
 		stubToAbsolutePath();
 		stubReadFile();
 		Path file = writeConfiguration("<Configuration><unclosed></Configuration>");
 
 		ApiException exception =
-				assertThrows(ApiException.class, () -> nonCanvasElementService.getNonCanvasElements(file.toString()));
+				assertThrows(ApiException.class, () -> nonCanvasComponentService.getNonCanvasComponents(file.toString()));
 		assertEquals(HttpStatus.BAD_REQUEST, exception.getStatus());
 	}
 
 	@Test
-	void addNonCanvasElement_appendsElementAndPersists() throws Exception {
+	void addNonCanvasComponent_appendsComponentAndPersists() throws Exception {
 		stubToAbsolutePath();
 		stubReadFile();
 		stubWriteFile();
 		Path file = writeConfiguration("<Configuration name=\"Main\"/>");
 
-		List<NonCanvasElementDTO> elements = nonCanvasElementService.addNonCanvasElement(
+		List<NonCanvasComponentDTO> components = nonCanvasComponentService.addNonCanvasComponent(
 				file.toString(), "Monitoring", Map.of("name", "monitor", "enabled", "true"));
 
-		assertEquals(1, elements.size());
-		assertEquals("Monitoring", elements.getFirst().tagName());
-		assertEquals("monitor", elements.getFirst().name());
+		assertEquals(1, components.size());
+		assertEquals("Monitoring", components.getFirst().tagName());
+		assertEquals("monitor", components.getFirst().name());
 
 		verify(fileSystemStorage).writeFile(eq(file.toString()), anyString());
 		String persisted = Files.readString(file, StandardCharsets.UTF_8);
@@ -187,17 +187,17 @@ class NonCanvasElementServiceTest {
 	}
 
 	@Test
-	void addNonCanvasElement_blankTagName_throwsBadRequestAndDoesNotWrite() throws IOException {
+	void addNonCanvasComponent_blankTagName_throwsBadRequestAndDoesNotWrite() throws IOException {
 		ApiException exception = assertThrows(
 				ApiException.class,
-				() -> nonCanvasElementService.addNonCanvasElement("configuration.xml", "  ", Map.of()));
+				() -> nonCanvasComponentService.addNonCanvasComponent("configuration.xml", "  ", Map.of()));
 
 		assertEquals(HttpStatus.BAD_REQUEST, exception.getStatus());
 		verify(fileSystemStorage, never()).writeFile(anyString(), anyString());
 	}
 
 	@Test
-	void updateNonCanvasElement_replacesAttributesAndPersists() throws Exception {
+	void updateNonCanvasComponent_replacesAttributesAndPersists() throws Exception {
 		stubToAbsolutePath();
 		stubReadFile();
 		stubWriteFile();
@@ -207,30 +207,30 @@ class NonCanvasElementServiceTest {
 				</Configuration>
 				""");
 
-		List<NonCanvasElementDTO> elements = nonCanvasElementService.updateNonCanvasElement(
+		List<NonCanvasComponentDTO> components = nonCanvasComponentService.updateNonCanvasComponent(
 				file.toString(), "Monitoring", 0, Map.of("name", "monitor", "enabled", "false"));
 
-		assertEquals(1, elements.size());
-		assertEquals("false", elements.getFirst().attributes().get("enabled"));
+		assertEquals(1, components.size());
+		assertEquals("false", components.getFirst().attributes().get("enabled"));
 		assertTrue(Files.readString(file, StandardCharsets.UTF_8).contains("enabled=\"false\""));
 	}
 
 	@Test
-	void updateNonCanvasElement_notFound_throwsNotFoundAndDoesNotWrite() throws Exception {
+	void updateNonCanvasComponent_notFound_throwsNotFoundAndDoesNotWrite() throws Exception {
 		stubToAbsolutePath();
 		stubReadFile();
 		Path file = writeConfiguration("<Configuration><Monitoring name=\"monitor\"/></Configuration>");
 
 		ApiException exception = assertThrows(
 				ApiException.class,
-				() -> nonCanvasElementService.updateNonCanvasElement(file.toString(), "Scheduler", 0, Map.of("name", "x")));
+				() -> nonCanvasComponentService.updateNonCanvasComponent(file.toString(), "Scheduler", 0, Map.of("name", "x")));
 
 		assertEquals(HttpStatus.NOT_FOUND, exception.getStatus());
 		verify(fileSystemStorage, never()).writeFile(anyString(), anyString());
 	}
 
 	@Test
-	void deleteNonCanvasElement_removesElementAndPersists() throws Exception {
+	void deleteNonCanvasComponent_removesComponentAndPersists() throws Exception {
 		stubToAbsolutePath();
 		stubReadFile();
 		stubWriteFile();
@@ -241,22 +241,22 @@ class NonCanvasElementServiceTest {
 				</Configuration>
 				""");
 
-		List<NonCanvasElementDTO> elements = nonCanvasElementService.deleteNonCanvasElement(file.toString(), "Scheduler", 0);
+		List<NonCanvasComponentDTO> components = nonCanvasComponentService.deleteNonCanvasComponent(file.toString(), "Scheduler", 0);
 
-		assertEquals(1, elements.size());
-		assertEquals("Monitoring", elements.getFirst().tagName());
+		assertEquals(1, components.size());
+		assertEquals("Monitoring", components.getFirst().tagName());
 		assertFalse(Files.readString(file, StandardCharsets.UTF_8).contains("<Scheduler"));
 	}
 
 	@Test
-	void deleteNonCanvasElement_notFound_throwsNotFoundAndDoesNotWrite() throws Exception {
+	void deleteNonCanvasComponent_notFound_throwsNotFoundAndDoesNotWrite() throws Exception {
 		stubToAbsolutePath();
 		stubReadFile();
 		Path file = writeConfiguration("<Configuration><Monitoring name=\"monitor\"/></Configuration>");
 
 		ApiException exception = assertThrows(
 				ApiException.class,
-				() -> nonCanvasElementService.deleteNonCanvasElement(file.toString(), "Scheduler", 0));
+				() -> nonCanvasComponentService.deleteNonCanvasComponent(file.toString(), "Scheduler", 0));
 
 		assertEquals(HttpStatus.NOT_FOUND, exception.getStatus());
 		verify(fileSystemStorage, never()).writeFile(anyString(), anyString());

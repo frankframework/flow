@@ -1,17 +1,21 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useFFDoc } from '@frankframework/doc-library-react'
-import type { Attribute } from '@frankframework/doc-library-core'
+import {
+  flattenInheritedParentElementProperties,
+  getInheritedProperties,
+  type Attribute,
+} from '@frankframework/doc-library-core'
 import Button from '~/components/inputs/button'
 import ContextInput from '~/routes/studio/context/context-input'
 import LoadingSpinner from '~/components/loading-spinner'
 import {
-  addNonCanvasElement,
-  deleteNonCanvasElement,
-  updateNonCanvasElement,
-  type NonCanvasElement,
-} from '~/services/non-canvas-element-service'
+  addNonCanvasComponent,
+  deleteNonCanvasComponent,
+  updateNonCanvasComponent,
+  type NonCanvasComponent,
+} from '~/services/non-canvas-component-service'
 
-export interface NonCanvasEditorState {
+export interface NonCanvasComponentEditorState {
   mode: 'add' | 'edit'
   configPath: string
   tagName: string
@@ -19,23 +23,23 @@ export interface NonCanvasEditorState {
   initialAttributes?: Record<string, string>
 }
 
-interface NonCanvasElementContextProperties {
+interface NonCanvasComponentContextProperties {
   projectName: string
-  editor: NonCanvasEditorState
-  onSaved: (elements: NonCanvasElement[]) => void
+  editor: NonCanvasComponentEditorState
+  onSaved: (components: NonCanvasComponent[]) => void
   onClose: () => void
   onNameChange?: (name: string) => void
 }
 
 const EMPTY_ATTRIBUTE: Attribute = {}
 
-export default function NonCanvasElementContext({
+export default function NonCanvasComponentContext({
   projectName,
   editor,
   onSaved,
   onClose,
   onNameChange,
-}: Readonly<NonCanvasElementContextProperties>) {
+}: Readonly<NonCanvasComponentContextProperties>) {
   const { elements, ffDoc, isLoading } = useFFDoc()
   const { mode, configPath, tagName, index, initialAttributes } = editor
 
@@ -45,10 +49,20 @@ export default function NonCanvasElementContext({
   const [isSaving, setIsSaving] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
 
-  const attributeDefinitions = useMemo<Record<string, Attribute>>(
-    () => elements?.[tagName]?.attributes ?? {},
-    [elements, tagName],
-  )
+  const attributeDefinitions = useMemo<Record<string, Attribute>>(() => {
+    const element = elements?.[tagName]
+    if (!element) return {}
+
+    const directAttributes = element.attributes ?? {}
+    if (!ffDoc) return directAttributes
+
+    const inherited = getInheritedProperties(element, ffDoc.elements, ffDoc.enums)
+    return {
+      ...flattenInheritedParentElementProperties(inherited.attributesOptional),
+      ...flattenInheritedParentElementProperties(inherited.attributesRequired),
+      ...directAttributes,
+    }
+  }, [elements, ffDoc, tagName])
 
   const fieldKeys = useMemo(() => {
     const keys = new Set<string>(Object.keys(attributeDefinitions))
@@ -86,11 +100,11 @@ export default function NonCanvasElementContext({
     return mandatoryFilled && integersValid
   }, [fieldKeys, attributeDefinitions, inputValues])
 
-  const elementName = inputValues['name']?.trim() ?? ''
+  const componentName = inputValues['name']?.trim() ?? ''
 
   useEffect(() => {
-    onNameChange?.(elementName)
-  }, [elementName, onNameChange])
+    onNameChange?.(componentName)
+  }, [componentName, onNameChange])
 
   const makeEnumOptions = useCallback(
     (attribute: Attribute) => {
@@ -110,12 +124,14 @@ export default function NonCanvasElementContext({
     const filled: string[] = []
     const rest: string[] = []
     for (const key of fieldKeys) {
+      if (key === 'name') continue // always shown first, handled below
       if (attributeDefinitions[key]?.mandatory) mandatory.push(key)
       else if (initiallyFilledKeys.has(key)) filled.push(key)
       else rest.push(key)
     }
 
-    return { baseKeys: [...mandatory, ...filled], restKeys: rest }
+    const leading = fieldKeys.includes('name') ? ['name'] : []
+    return { baseKeys: [...leading, ...mandatory, ...filled], restKeys: rest }
   }, [fieldKeys, attributeDefinitions, initiallyFilledKeys])
 
   const orderedKeys = showAll ? [...baseKeys, ...restKeys] : baseKeys
@@ -141,10 +157,10 @@ export default function NonCanvasElementContext({
       const attributes = resolveFilledAttributes()
       const pendingSave =
         mode === 'add'
-          ? addNonCanvasElement(projectName, configPath, tagName, attributes)
-          : updateNonCanvasElement(projectName, configPath, tagName, index ?? 0, attributes)
-      const updatedElements = await pendingSave
-      onSaved(updatedElements)
+          ? addNonCanvasComponent(projectName, configPath, tagName, attributes)
+          : updateNonCanvasComponent(projectName, configPath, tagName, index ?? 0, attributes)
+      const updatedComponents = await pendingSave
+      onSaved(updatedComponents)
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : `Failed to save ${tagName}`)
     } finally {
@@ -157,8 +173,8 @@ export default function NonCanvasElementContext({
     setErrorMessage('')
 
     try {
-      const updatedElements = await deleteNonCanvasElement(projectName, configPath, tagName, index ?? 0)
-      onSaved(updatedElements)
+      const updatedComponents = await deleteNonCanvasComponent(projectName, configPath, tagName, index ?? 0)
+      onSaved(updatedComponents)
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : `Failed to delete ${tagName}`)
       setIsSaving(false)
@@ -168,7 +184,7 @@ export default function NonCanvasElementContext({
   if (isLoading || !elements) {
     return (
       <div className="flex h-full items-center justify-center">
-        <LoadingSpinner message="Loading element..." />
+        <LoadingSpinner message="Loading component..." />
       </div>
     )
   }
@@ -177,11 +193,11 @@ export default function NonCanvasElementContext({
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="flex-1 overflow-y-auto px-4">
         <div className="text-foreground-muted mt-2 text-xs font-semibold tracking-wider uppercase">{tagName}</div>
-        {elementName && <h2 className="mb-2 font-semibold">{elementName}</h2>}
+        {componentName && <h2 className="mb-2 font-semibold">{componentName}</h2>}
 
         <div className="bg-background w-full space-y-4 rounded-md p-6">
           {fieldKeys.length === 0 && (
-            <p className="text-foreground-muted text-sm italic">This element has no configurable attributes.</p>
+            <p className="text-foreground-muted text-sm italic">This component has no configurable attributes.</p>
           )}
 
           {orderedKeys.map((key) => (

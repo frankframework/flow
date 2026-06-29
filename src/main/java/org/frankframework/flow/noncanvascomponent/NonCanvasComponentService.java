@@ -1,4 +1,4 @@
-package org.frankframework.flow.noncanvaselement;
+package org.frankframework.flow.noncanvascomponent;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -14,7 +14,7 @@ import lombok.extern.log4j.Log4j2;
 import org.frankframework.flow.exception.ApiException;
 import org.frankframework.flow.filesystem.FileSystemStorage;
 import org.frankframework.flow.utility.XmlConfigurationUtils;
-import org.frankframework.flow.utility.XmlNonCanvasElementUtils;
+import org.frankframework.flow.utility.XmlNonCanvasComponentUtils;
 import org.frankframework.flow.utility.XmlSecurityUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -25,70 +25,70 @@ import org.xml.sax.SAXException;
 
 @Log4j2
 @Service
-public class NonCanvasElementService {
+public class NonCanvasComponentService {
 
 	private static final String NAME_ATTRIBUTE = "name";
 
 	private final FileSystemStorage fileSystemStorage;
 
-	public NonCanvasElementService(FileSystemStorage fileSystemStorage) {
+	public NonCanvasComponentService(FileSystemStorage fileSystemStorage) {
 		this.fileSystemStorage = fileSystemStorage;
 	}
 
-	public List<NonCanvasElementDTO> getNonCanvasElements(String configurationPath) {
+	public List<NonCanvasComponentDTO> getNonCanvasComponents(String configurationPath) {
 		Document configurationDocument = readConfigurationDocument(configurationPath);
 		return toDataTransferObjects(configurationDocument);
 	}
 
-	public List<NonCanvasElementDTO> addNonCanvasElement(String configurationPath, String tagName, Map<String, String> attributes) {
+	public List<NonCanvasComponentDTO> addNonCanvasComponent(String configurationPath, String tagName, Map<String, String> attributes) {
 		validateTagName(tagName);
 		Document configurationDocument = readConfigurationDocument(configurationPath);
-		XmlNonCanvasElementUtils.addNonCanvasElement(configurationDocument, tagName, attributes);
+		XmlNonCanvasComponentUtils.addNonCanvasComponent(configurationDocument, tagName, attributes);
 		return writeAndList(configurationPath, configurationDocument);
 	}
 
-	public List<NonCanvasElementDTO> updateNonCanvasElement(String configurationPath, String tagName, int index, Map<String, String> attributes) {
+	public List<NonCanvasComponentDTO> updateNonCanvasComponent(String configurationPath, String tagName, int index, Map<String, String> attributes) {
 		validateTagName(tagName);
 		Document configurationDocument = readConfigurationDocument(configurationPath);
-		boolean updated = XmlNonCanvasElementUtils.updateNonCanvasElement(configurationDocument, tagName, index, attributes);
+		boolean updated = XmlNonCanvasComponentUtils.updateNonCanvasComponent(configurationDocument, tagName, index, attributes);
 
 		if (!updated) {
-			throw new ApiException("Non-canvas element not found: " + tagName, HttpStatus.NOT_FOUND);
+			throw new ApiException("Non-canvas component not found: " + tagName, HttpStatus.NOT_FOUND);
 		}
 
 		return writeAndList(configurationPath, configurationDocument);
 	}
 
-	public List<NonCanvasElementDTO> deleteNonCanvasElement(String configurationPath, String tagName, int index) {
+	public List<NonCanvasComponentDTO> deleteNonCanvasComponent(String configurationPath, String tagName, int index) {
 		validateTagName(tagName);
 		Document configurationDocument = readConfigurationDocument(configurationPath);
-		boolean removed = XmlNonCanvasElementUtils.removeNonCanvasElement(configurationDocument, tagName, index);
+		boolean removed = XmlNonCanvasComponentUtils.removeNonCanvasComponent(configurationDocument, tagName, index);
 
 		if (!removed) {
-			throw new ApiException("Non-canvas element not found: " + tagName, HttpStatus.NOT_FOUND);
+			throw new ApiException("Non-canvas component not found: " + tagName, HttpStatus.NOT_FOUND);
 		}
 
 		return writeAndList(configurationPath, configurationDocument);
 	}
 
-	private List<NonCanvasElementDTO> writeAndList(String configurationPath, Document configurationDocument) {
+	private List<NonCanvasComponentDTO> writeAndList(String configurationPath, Document configurationDocument) {
 		writeConfigurationDocument(configurationPath, configurationDocument);
 		return toDataTransferObjects(configurationDocument);
 	}
 
-	private List<NonCanvasElementDTO> toDataTransferObjects(Document configurationDocument) {
-		List<NonCanvasElementDTO> elements = new ArrayList<>();
+	private List<NonCanvasComponentDTO> toDataTransferObjects(Document configurationDocument) {
+		List<NonCanvasComponentDTO> components = new ArrayList<>();
 		Map<String, Integer> occurrenceByTagName = new HashMap<>();
 
-		for (Element element : XmlNonCanvasElementUtils.getNonCanvasElements(configurationDocument)) {
+		for (Element element : XmlNonCanvasComponentUtils.getNonCanvasComponents(configurationDocument)) {
 			String tagName = element.getTagName();
 			int index = occurrenceByTagName.merge(tagName, 1, Integer::sum) - 1;
-			Map<String, String> attributes = XmlNonCanvasElementUtils.getAttributes(element);
+			Map<String, String> attributes = XmlNonCanvasComponentUtils.getAttributes(element);
 			String name = attributes.get(NAME_ATTRIBUTE);
-			elements.add(new NonCanvasElementDTO(tagName, name, index, attributes));
+			components.add(new NonCanvasComponentDTO(tagName, name, index, attributes));
 		}
 
-		return elements;
+		return components;
 	}
 
 	private Document readConfigurationDocument(String configurationPath) {
@@ -129,7 +129,7 @@ public class NonCanvasElementService {
 
 	private void validateTagName(String tagName) {
 		if (tagName == null || tagName.isBlank()) {
-			throw new ApiException("Element type must not be empty", HttpStatus.BAD_REQUEST);
+			throw new ApiException("Component type must not be empty", HttpStatus.BAD_REQUEST);
 		}
 	}
 }

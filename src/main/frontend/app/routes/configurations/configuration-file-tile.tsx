@@ -2,13 +2,14 @@ import RulerCrossPenIcon from '/icons/solar/Ruler Cross Pen.svg?react'
 import TrashBinIcon from '/icons/solar/Trash Bin.svg?react'
 import CodeIcon from '/icons/solar/Code.svg?react'
 import WidgetIcon from '/icons/solar/Widget.svg?react'
-import TuningIcon from '/icons/solar/Tuning.svg?react'
 import { useNavigate } from 'react-router'
 import { openInStudio, openInEditor } from '~/actions/navigationActions'
 import IconButton from '~/components/inputs/icon-button'
 import IconLabelButton from '~/components/inputs/icon-label-button'
 import ConfirmDeleteDialog from '~/components/file-structure/confirm-delete-dialog'
 import LoadingSpinner from '~/components/loading-spinner'
+import { useRef, useState, type DragEvent, type ReactNode } from 'react'
+import { type NonCanvasComponent } from '~/services/non-canvas-component-service'
 import { NON_CANVAS_DRAG_TYPE, type NonCanvasElement } from '~/services/non-canvas-element-service'
 import {useRef, useState} from 'react'
 import { getBaseName } from '~/utils/path-utils'
@@ -19,29 +20,57 @@ type ConfigurationFileTileProperties = {
   filepath: string
   relativePath: string
   adapterNames: string[]
-  nonCanvasElements: NonCanvasElement[]
-  loadingElements: boolean
+  nonCanvasComponents: NonCanvasComponent[]
+  loadingComponents: boolean
   onDelete: () => Promise<void>
-  onAddElement: (configurationPath: string) => void
-  onEditElement: (configurationPath: string, element: NonCanvasElement) => void
-  onDropElement: (configurationPath: string, tagName: string) => void
+  onAddComponent: (configurationPath: string) => void
+  onEditComponent: (configurationPath: string, component: NonCanvasComponent) => void
+  onConfigureAdapter: (configurationPath: string, adapterName: string, adapterPosition: number) => void
+  onDropComponent: (configurationPath: string, tagName: string) => void
   draggedTagName?: string | null
+}
+
+interface ComponentRowProperties {
+  typeLabel: string | null
+  primaryLabel: string
+  onConfigure: () => void
+  action?: ReactNode
+}
+
+interface AdapterListItemProperties {
+  adapterName: string
+  adapterPosition: number
+  onConfigure: () => void
+  onOpenInStudio: (adapterName: string, adapterPosition: number) => void
+}
+interface ComponentListItemProperties {
+  component: NonCanvasComponent
+  onConfigure: () => void
 }
 
 function isRootConfiguration(relativePath: string): boolean {
   return relativePath.split(/[/\\]/).pop()?.toLowerCase() === 'configuration.xml'
 }
 
+function getComponentLabels(component: NonCanvasComponent): { typeLabel: string | null; primaryLabel: string } {
+  const primary = component.tagName === 'Include' ? component.attributes.ref : component.name
+  if (primary && primary.trim()) {
+    return { typeLabel: component.tagName, primaryLabel: primary }
+  }
+  return { typeLabel: null, primaryLabel: component.tagName }
+}
+
 export default function ConfigurationFileTile({
   filepath,
   relativePath,
   adapterNames,
-  nonCanvasElements,
-  loadingElements,
+  nonCanvasComponents,
+  loadingComponents,
   onDelete,
-  onAddElement,
-  onEditElement,
-  onDropElement,
+  onAddComponent,
+  onEditComponent,
+  onConfigureAdapter,
+  onDropComponent,
   draggedTagName = null,
 }: Readonly<ConfigurationFileTileProperties>) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
@@ -49,23 +78,23 @@ export default function ConfigurationFileTile({
   const dragDepth = useRef(0)
   const navigate = useNavigate()
 
-  const isElementDrag = draggedTagName !== null
+  const isComponentDrag = draggedTagName !== null
 
   const handleDragOver = (event: DragEvent<HTMLDivElement>) => {
-    if (!isElementDrag) return
+    if (!isComponentDrag) return
     event.preventDefault()
     event.dataTransfer.dropEffect = 'copy'
   }
 
   const handleDragEnter = (event: DragEvent<HTMLDivElement>) => {
-    if (!isElementDrag) return
+    if (!isComponentDrag) return
     event.preventDefault()
     dragDepth.current += 1
     setIsDropTarget(true)
   }
 
   const handleDragLeave = () => {
-    if (!isElementDrag) return
+    if (!isComponentDrag) return
     dragDepth.current -= 1
     if (dragDepth.current <= 0) {
       dragDepth.current = 0
@@ -78,7 +107,7 @@ export default function ConfigurationFileTile({
     event.preventDefault()
     dragDepth.current = 0
     setIsDropTarget(false)
-    onDropElement(filepath, draggedTagName)
+    onDropComponent(filepath, draggedTagName)
   }
 
   const handleOpenInStudio = (adapterName: string, adapterPosition: number) => {
@@ -96,44 +125,45 @@ export default function ConfigurationFileTile({
     setShowDeleteDialog(false)
   }
 
-  const hasContent = adapterNames.length > 0 || nonCanvasElements.length > 0
+  const hasContent = adapterNames.length > 0 || nonCanvasComponents.length > 0
 
   let dropZoneClasses = 'border-border'
   if (isDropTarget) {
     dropZoneClasses = 'border-foreground-active ring-foreground-active border-dashed ring-2'
-  } else if (isElementDrag) {
+  } else if (isComponentDrag) {
     dropZoneClasses = 'border-foreground-active/50 border-dashed'
   }
 
-  let elementList
-  if (loadingElements && adapterNames.length === 0) {
-    elementList = (
+  let componentList
+  if (loadingComponents && adapterNames.length === 0) {
+    componentList = (
       <div className="flex justify-center py-4">
         <LoadingSpinner size="sm" />
       </div>
     )
   } else if (hasContent) {
-    elementList = (
+    componentList = (
       <ul className="space-y-2">
         {adapterNames.map((adapterName, adapterPosition) => (
           <AdapterListItem
             key={`adapter-${adapterName}-${adapterPosition}`}
             adapterName={adapterName}
             adapterPosition={adapterPosition}
+            onConfigure={() => onConfigureAdapter(filepath, adapterName, adapterPosition)}
             onOpenInStudio={handleOpenInStudio}
           />
         ))}
-        {nonCanvasElements.map((element) => (
-          <NonCanvasElementListItem
-            key={`element-${element.tagName}-${element.index}`}
-            element={element}
-            onConfigure={() => onEditElement(filepath, element)}
+        {nonCanvasComponents.map((component) => (
+          <ComponentListItem
+            key={`component-${component.tagName}-${component.index}`}
+            component={component}
+            onConfigure={() => onEditComponent(filepath, component)}
           />
         ))}
       </ul>
     )
   } else {
-    elementList = <div className="text-foreground-muted py-2 text-sm italic">No adapters or elements found</div>
+    componentList = <div className="text-foreground-muted py-2 text-sm italic">No adapters or components found</div>
   }
 
   return (
@@ -146,7 +176,7 @@ export default function ConfigurationFileTile({
     >
       {isDropTarget && (
         <div className="bg-foreground-active/10 text-foreground-active pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded text-sm font-semibold">
-          Drop to add element
+          Drop to add component
         </div>
       )}
       <div className="flex items-center justify-between gap-2">
@@ -166,8 +196,10 @@ export default function ConfigurationFileTile({
       </div>
 
       <div className="flex min-h-0 flex-col gap-2">
-        <p className="text-foreground-muted text-xs font-semibold tracking-wider uppercase">Adapters &amp; elements</p>
-        <div className="border-border max-h-96 overflow-y-auto rounded border p-3 inset-shadow-sm">{elementList}</div>
+        <p className="text-foreground-muted text-xs font-semibold tracking-wider uppercase">
+          Adapters &amp; components
+        </p>
+        <div className="border-border max-h-96 overflow-y-auto rounded border p-3 inset-shadow-sm">{componentList}</div>
       </div>
 
       <div className="border-border flex items-center justify-between border-t pt-4">
@@ -178,8 +210,8 @@ export default function ConfigurationFileTile({
         />
         <IconLabelButton
           icon={<WidgetIcon className="h-4 w-4 fill-current" />}
-          label="Add non-canvas element"
-          onClick={() => onAddElement(filepath)}
+          label="Add non-canvas component"
+          onClick={() => onAddComponent(filepath)}
         />
       </div>
 
@@ -201,34 +233,55 @@ type AdapterListItemProperties = {
   onOpenInStudio: (adapterName: string, adapterPosition: number) => void
 }
 
-function AdapterListItem({ adapterName, adapterPosition, onOpenInStudio }: Readonly<AdapterListItemProperties>) {
+function ComponentRow({ typeLabel, primaryLabel, onConfigure, action }: Readonly<ComponentRowProperties>) {
   return (
-    <li className="border-border bg-background flex items-center justify-between gap-3 rounded border px-4 py-3 shadow-md">
-      <span className="text-foreground min-w-0 flex-1 truncate" title={adapterName}>
-        {adapterName}
-      </span>
-      <IconLabelButton
-        icon={<RulerCrossPenIcon className="h-4 w-4 fill-current" />}
-        label="Open in Studio"
-        onClick={() => onOpenInStudio(adapterName, adapterPosition)}
-      />
+    <li className="border-border bg-background hover:bg-hover flex items-stretch justify-between gap-2 rounded border shadow-md transition-colors">
+      <button
+        type="button"
+        onClick={onConfigure}
+        className="flex min-w-0 flex-1 cursor-pointer flex-col justify-center gap-0.5 px-4 py-3 text-left"
+        title={`Configure ${primaryLabel}`}
+      >
+        {typeLabel && (
+          <span className="text-foreground-muted truncate text-xs font-bold tracking-wider uppercase">{typeLabel}</span>
+        )}
+        <span className="text-foreground truncate text-base" title={primaryLabel}>
+          {primaryLabel}
+        </span>
+      </button>
+      {action && <div className="flex shrink-0 items-center pr-2">{action}</div>}
     </li>
   )
 }
 
-type NonCanvasElementListItemProperties = {
+function AdapterListItem({
+  adapterName,
+  adapterPosition,
+  onConfigure,
+  onOpenInStudio,
+}: Readonly<AdapterListItemProperties>) {
+  return (
+    <ComponentRow
+      typeLabel="Adapter"
+      primaryLabel={adapterName}
+      onConfigure={onConfigure}
+      action={
+        <IconLabelButton
+          icon={<RulerCrossPenIcon className="h-4 w-4 fill-current" />}
+          label="Open in Studio"
+          onClick={() => onOpenInStudio(adapterName, adapterPosition)}
+        />
+      }
+    />
+  )
+}
+
+type NonCanvasComponentListItemProperties = {
   element: NonCanvasElement
   onConfigure: () => void
 }
 
-function NonCanvasElementListItem({ element, onConfigure }: Readonly<NonCanvasElementListItemProperties>) {
-  const label = element.name ? `${element.tagName} · ${element.name}` : element.tagName
-  return (
-    <li className="border-border bg-background flex items-center justify-between gap-3 rounded border px-4 py-3 shadow-md">
-      <span className="text-foreground min-w-0 flex-1 truncate" title={label}>
-        {label}
-      </span>
-      <IconLabelButton icon={<TuningIcon className="h-4 w-4 fill-current" />} label="Configure" onClick={onConfigure} />
-    </li>
-  )
+function ComponentListItem({ component, onConfigure }: Readonly<ComponentListItemProperties>) {
+  const { typeLabel, primaryLabel } = getComponentLabels(component)
+  return <ComponentRow typeLabel={typeLabel} primaryLabel={primaryLabel} onConfigure={onConfigure} />
 }

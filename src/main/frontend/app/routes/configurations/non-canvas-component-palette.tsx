@@ -4,12 +4,12 @@ import Search from '~/components/search/search'
 import LoadingSpinner from '~/components/loading-spinner'
 import { useFrankConfigXsd } from '~/providers/frankconfig-xsd-provider'
 import { getElementTypeFromName } from '~/routes/studio/node-translator-module'
-import { getAddableNonCanvasElementNames } from '~/services/non-canvas-element-service'
+import { getAddableNonCanvasComponentNames } from '~/services/non-canvas-component-service'
 
 /**
- * Palette of non-canvas elements that can be dragged onto a configuration tile to add them.
+ * Palette of non-canvas components that can be dragged onto a configuration tile to add them.
  */
-export default function NonCanvasElementPalette({
+export default function NonCanvasComponentPalette({
   onDragStart,
   onDragEnd,
 }: {
@@ -20,7 +20,7 @@ export default function NonCanvasElementPalette({
   const { xsdContent } = useFrankConfigXsd()
   const [search, setSearch] = useState('')
 
-  const addableNames = useMemo(() => getAddableNonCanvasElementNames(xsdContent, elements), [xsdContent, elements])
+  const addableNames = useMemo(() => getAddableNonCanvasComponentNames(xsdContent, elements), [xsdContent, elements])
 
   const filteredNames = useMemo(
     () => addableNames.filter((name) => name.toLowerCase().includes(search.toLowerCase())),
@@ -39,17 +39,17 @@ export default function NonCanvasElementPalette({
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
-      <Search placeholder="Search elements..." value={search} onChange={handleSearchChange} />
+      <Search placeholder="Search components..." value={search} onChange={handleSearchChange} />
 
       {isLoading || !elements || !xsdContent ? (
         <div className="flex flex-1 items-center justify-center">
-          <LoadingSpinner message="Loading elements..." />
+          <LoadingSpinner message="Loading components..." />
         </div>
       ) : (
         <ul className="flex-1 overflow-y-auto px-3 py-2">
           {filteredNames.length === 0 ? (
             <li className="text-foreground-muted px-1 py-2 text-sm italic">
-              {addableNames.length === 0 ? 'No addable elements found.' : 'No results found.'}
+              {addableNames.length === 0 ? 'No addable components found.' : 'No results found.'}
             </li>
           ) : (
             filteredNames.map((name) => (
