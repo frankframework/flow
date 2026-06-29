@@ -1,4 +1,3 @@
-import { T } from '@stylistic/eslint-plugin/dist/dts/types'
 import React, { useEffect, useState, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router'
 import FfIcon from '/icons/custom/ff!-icon.svg?react'
@@ -29,7 +28,7 @@ import {
 import { useRecentProjects } from '~/hooks/use-projects'
 import { showErrorToast } from '~/components/toast'
 
-export default function ProjectLanding(callback: T, deps: React.DependencyList) {
+export default function ProjectLanding() {
   const navigate = useNavigate()
   const { data: recentProjects, isLoading, error: apiError, refetch } = useRecentProjects()
   const clearProjectState = useProjectStore((state) => state.clearProject)
