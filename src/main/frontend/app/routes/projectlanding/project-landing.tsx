@@ -6,6 +6,7 @@ import Sidebar from '~/routes/projectlanding/sidebar'
 import Toolbar from '~/routes/projectlanding/toolbar'
 import { fetchInstanceConfigurations, type FFConfiguration } from '~/services/frank-framework-service'
 import { useProjectStore } from '~/stores/project-store'
+import type { ConfigurationProject } from '~/types/project.types'
 import { ApiError } from '~/utils/api'
 import { logApiError } from '~/utils/logger'
 import { getParentPath, normalizePath } from '~/utils/path-utils'
@@ -100,8 +101,7 @@ export default function ProjectLanding() {
       setIsOpeningProject(true)
       try {
         const project = await openProject(rootPath)
-        setProject(project)
-        navigate(`/studio`)
+        openProjectAndNavigate(project)
       } catch (error) {
         showErrorToast(error instanceof Error ? error.message : 'Failed to open project')
       } finally {
@@ -120,9 +120,8 @@ export default function ProjectLanding() {
     setIsOpeningProject(true)
     try {
       const project = await createProject(name, rootPath)
-      setProject(project)
       setIsModalOpen(false)
-      navigate(`/studio`)
+      openProjectAndNavigate(project)
     } catch (error) {
       showErrorToast(error instanceof Error ? error.message : 'Failed to create project')
     } finally {
@@ -134,9 +133,8 @@ export default function ProjectLanding() {
     setIsOpeningProject(true)
     try {
       const project = await cloneProject(repoUrl, localPath, token)
-      setProject(project)
       setIsCloneModalOpen(false)
-      navigate(`/studio`)
+      openProjectAndNavigate(project)
     } catch (error) {
       showErrorToast(error instanceof Error ? error.message : 'Failed to clone project from GitHub')
     } finally {
@@ -169,9 +167,8 @@ export default function ProjectLanding() {
     setIsOpeningProject(true)
     try {
       const project = await importProjectFolder(files)
-      setProject(project)
       refetch()
-      navigate(`/studio`)
+      openProjectAndNavigate(project)
     } catch (error) {
       showErrorToast(error instanceof Error ? error.message : 'Failed to import project')
     } finally {
@@ -181,6 +178,11 @@ export default function ProjectLanding() {
     if (importInputRef.current) {
       importInputRef.current.value = ''
     }
+  }
+
+  const openProjectAndNavigate = (project: ConfigurationProject) => {
+    setProject(project)
+    navigate(`/configurations`)
   }
 
   const projects = recentProjects ?? []
