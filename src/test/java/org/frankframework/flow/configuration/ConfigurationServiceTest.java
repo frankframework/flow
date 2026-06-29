@@ -346,9 +346,7 @@ class ConfigurationServiceTest {
 		AdapterLocationDTO result = configurationService.addConfiguration("myproject", target.toString());
 
 		assertNotNull(result);
-
-		Path expectedFile = projectDir.resolve("NewConfig.xml");
-		assertTrue(Files.exists(expectedFile), "NewConfig.xml should be created on disk");
+		assertTrue(Files.exists(target), "NewConfig.xml should be created inside src/main/configurations");
 		verify(fileTreeService).invalidateTreeCache("myproject");
 	}
 
