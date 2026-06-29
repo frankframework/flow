@@ -53,10 +53,13 @@ public class ConfigurationProjectServiceTest {
 
 	private final List<RecentProject> recentProjects = new ArrayList<>();
 
+	private static final long DEFAULT_MAX_UNCOMPRESSED_IMPORT_BYTES = 80L * 1024 * 1024;
+
 	@BeforeEach
 	void init() {
 		recentProjects.clear();
-		configurationProjectService = new ConfigurationProjectService(fileSystemStorage, recentProjectsService);
+		configurationProjectService =
+				new ConfigurationProjectService(fileSystemStorage, recentProjectsService, DEFAULT_MAX_UNCOMPRESSED_IMPORT_BYTES);
 	}
 
 	private void stubFileSystemForProjectCreation() throws IOException {

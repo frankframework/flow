@@ -21,10 +21,10 @@ import useEditorTabStore from '~/stores/editor-tab-store'
 import {
   cloneProject,
   createProject,
+  DEFAULT_MAX_IMPORT_BYTES,
   exportProject,
   importProjectFolder,
   ImportTooLargeError,
-  MAX_IMPORT_ZIP_BYTES,
   openProject,
 } from '~/services/project-service'
 import { useRecentProjects } from '~/hooks/use-projects'
@@ -48,6 +48,7 @@ export default function ProjectLanding() {
   const [isDiscovering, setIsDiscovering] = useState(false)
   const [ffConfiguration, setFFConfiguration] = useState<FFConfiguration[]>([])
   const [ffInstanceName, setFFInstanceName] = useState('')
+  const [maxImportBytes, setMaxImportBytes] = useState(DEFAULT_MAX_IMPORT_BYTES)
   const importInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -61,6 +62,7 @@ export default function ProjectLanding() {
       .then((info) => {
         setIsLocalEnvironment(info.isLocal)
         setRootLocationName(info.isLocal ? 'Computer' : 'Cloud Workspace')
+        setMaxImportBytes(info.maxImportSize)
       })
       .catch((_) => {
         showErrorToast('Failed to fetch environment info, defaulting to local mode.')
@@ -176,11 +178,11 @@ export default function ProjectLanding() {
 
     setIsOpeningProject(true)
     try {
-      const project = await importProjectFolder(files)
+      const project = await importProjectFolder(files, maxImportBytes)
       openProjectAndNavigate(project)
       refetch()
     } catch (error) {
-      const limitMb = Math.round(MAX_IMPORT_ZIP_BYTES / (1024 * 1024))
+      const limitMb = Math.round(maxImportBytes / (1024 * 1024))
       if (error instanceof ImportTooLargeError) {
         const sizeMb = (error.bytes / (1024 * 1024)).toFixed(1)
         const dimension = error.kind === 'compressed' ? 'when zipped' : 'uncompressed'

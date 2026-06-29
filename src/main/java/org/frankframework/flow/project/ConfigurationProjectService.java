@@ -26,8 +26,8 @@ import org.frankframework.flow.git.GitService;
 import org.frankframework.flow.projectsettings.FilterType;
 import org.frankframework.flow.recentproject.RecentProject;
 import org.frankframework.flow.recentproject.RecentProjectsService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.frankframework.flow.utility.PathUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpStatus;
@@ -39,7 +39,6 @@ import org.springframework.web.multipart.MultipartFile;
 public class ConfigurationProjectService {
 	private static final long BYTES_PER_MB = 1024L * 1024;
 	private static final int IMPORT_BUFFER_SIZE = 8192;
-	private static final long DEFAULT_MAX_UNCOMPRESSED_IMPORT_BYTES = 80L * BYTES_PER_MB;
 
 	private final FileSystemStorage fileSystemStorage;
 	private final RecentProjectsService recentProjectsService;
@@ -48,8 +47,8 @@ public class ConfigurationProjectService {
 	private final Map<String, ConfigurationProject> projectCache = new ConcurrentHashMap<>();
 
 	@Autowired
-	public ConfigurationProjectService(FileSystemStorage fileSystemStorage, @Lazy RecentProjectsService recentProjectsService) {
-		this(fileSystemStorage, recentProjectsService, DEFAULT_MAX_UNCOMPRESSED_IMPORT_BYTES);
+	public ConfigurationProjectService(FileSystemStorage fileSystemStorage, @Lazy RecentProjectsService recentProjectsService, ImportProperties importProperties) {
+		this(fileSystemStorage, recentProjectsService, importProperties.maxUploadSize().toBytes());
 	}
 
 	ConfigurationProjectService(FileSystemStorage fileSystemStorage, RecentProjectsService recentProjectsService, long maxUncompressedImportBytes) {

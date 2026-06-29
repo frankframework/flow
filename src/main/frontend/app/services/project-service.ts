@@ -2,12 +2,7 @@ import { zip } from 'fflate'
 import { apiFetch, apiUrl } from '~/utils/api'
 import type { ConfigurationProject } from '~/types/project.types'
 
-export const MAX_IMPORT_ZIP_BYTES = 80 * 1024 * 1024
-
-/**
- * Upper bound for the *uncompressed* project, mirrored from the backend import guard.
- */
-export const MAX_IMPORT_UNCOMPRESSED_BYTES = 80 * 1024 * 1024
+export const DEFAULT_MAX_IMPORT_BYTES = 80 * 1024 * 1024
 
 export class ImportTooLargeError extends Error {
   constructor(
@@ -70,7 +65,7 @@ export async function exportProject(projectName: string): Promise<void> {
   URL.revokeObjectURL(a.href)
 }
 
-export async function importProjectFolder(files: FileList): Promise<ConfigurationProject> {
+export async function importProjectFolder(files: FileList, maxImportBytes: number): Promise<ConfigurationProject> {
   const projectName = files[0].webkitRelativePath.split('/')[0]
 
   /*
@@ -83,7 +78,7 @@ export async function importProjectFolder(files: FileList): Promise<Configuratio
     }
   }
 
-  if (uncompressedBytes > MAX_IMPORT_UNCOMPRESSED_BYTES) {
+  if (uncompressedBytes > maxImportBytes) {
     throw new ImportTooLargeError(uncompressedBytes, 'uncompressed')
   }
 
@@ -96,7 +91,7 @@ export async function importProjectFolder(files: FileList): Promise<Configuratio
 
   const archive = await zipAsync(entries)
 
-  if (archive.byteLength > MAX_IMPORT_ZIP_BYTES) {
+  if (archive.byteLength > maxImportBytes) {
     throw new ImportTooLargeError(archive.byteLength, 'compressed')
   }
 

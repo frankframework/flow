@@ -1,4 +1,4 @@
-import { importProjectFolder, ImportTooLargeError, MAX_IMPORT_UNCOMPRESSED_BYTES } from './project-service'
+import { DEFAULT_MAX_IMPORT_BYTES, importProjectFolder, ImportTooLargeError } from './project-service'
 
 vi.mock('../utils/api', () => ({
   apiFetch: vi.fn(() => Promise.resolve({ name: 'proj', rootPath: '/tmp/proj', filepaths: [] })),
@@ -33,10 +33,10 @@ describe('importProjectFolder', () => {
   })
 
   it('rejects with an uncompressed ImportTooLargeError when the folder exceeds the limit', async () => {
-    const half = MAX_IMPORT_UNCOMPRESSED_BYTES / 2
+    const half = DEFAULT_MAX_IMPORT_BYTES / 2
     const files = fileList(makeFile('proj/big1.bin', half + 1), makeFile('proj/big2.bin', half + 1))
 
-    const error = await importProjectFolder(files).catch((error_: unknown) => error_)
+    const error = await importProjectFolder(files, DEFAULT_MAX_IMPORT_BYTES).catch((error_: unknown) => error_)
 
     expect(error).toBeInstanceOf(ImportTooLargeError)
     expect((error as ImportTooLargeError).kind).toBe('uncompressed')
@@ -44,9 +44,9 @@ describe('importProjectFolder', () => {
   })
 
   it('ignores the top-level folder entry (empty relative path) when summing sizes', async () => {
-    const files = fileList(makeFile('proj', MAX_IMPORT_UNCOMPRESSED_BYTES), makeFile('proj/Configuration.xml', 10))
+    const files = fileList(makeFile('proj', DEFAULT_MAX_IMPORT_BYTES), makeFile('proj/Configuration.xml', 10))
 
-    await expect(importProjectFolder(files)).resolves.toMatchObject({ name: 'proj' })
+    await expect(importProjectFolder(files, DEFAULT_MAX_IMPORT_BYTES)).resolves.toMatchObject({ name: 'proj' })
   })
 
   it('uploads folders that stay within the limit', async () => {
@@ -55,6 +55,6 @@ describe('importProjectFolder', () => {
       makeFile('proj/src/main/resources/application.properties', 50),
     )
 
-    await expect(importProjectFolder(files)).resolves.toMatchObject({ name: 'proj' })
+    await expect(importProjectFolder(files, DEFAULT_MAX_IMPORT_BYTES)).resolves.toMatchObject({ name: 'proj' })
   })
 })
