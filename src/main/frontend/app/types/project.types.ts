@@ -17,7 +17,7 @@ export type XmlResponse = {
   xmlContent: string
 }
 
-export interface AdapterLocationResponse {
+export type AdapterLocationResponse = {
   adapterName: string | null
   adapterPosition: number
 }
