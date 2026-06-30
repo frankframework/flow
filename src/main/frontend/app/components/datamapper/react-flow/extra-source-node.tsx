@@ -3,7 +3,7 @@ import type { CustomNodeData } from '~/types/datamapper_types/react-node-types'
 import HighlightButton from '../basic-components/highlight-button'
 import DeleteButton from '../basic-components/delete-button'
 
-export interface ExtraSourceNodeProperties {
+export type ExtraSourceNodeProperties = {
   id: string
   data: CustomNodeData
   onDelete?: (id: string) => void

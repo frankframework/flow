@@ -3,7 +3,7 @@ import { useState } from 'react'
 import type { ElementProperty } from '@frankframework/doc-library-core'
 import HandleMenu from './handle-menu'
 
-interface HandleProperties {
+type HandleProperties = {
   type: string
   index: number
   firstHandlePosition: number

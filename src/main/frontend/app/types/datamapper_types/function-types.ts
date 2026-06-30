@@ -1,29 +1,29 @@
-export interface ConditionInput {
+export type ConditionInput = {
   type: 'source' | 'defaultValue' | 'attribute' | 'operator' | ''
   value: string
   sourceId?: string
 }
 
-export interface Condition {
+export type Condition = {
   id: string
   name: string
   type: ConditionType | null
   inputs: ConditionInput[]
 }
 
-export interface MutationInput {
+export type MutationInput = {
   type: 'source' | 'defaultValue' | 'attribute'
   sourceId?: string
   value: string
 }
 
-export interface Mutation {
+export type Mutation = {
   name: string
   id: string
   mutationType: MutationType | null
   inputs: MutationInput[]
 }
-export interface MutationTypeInput {
+export type MutationTypeInput = {
   label: string
   type: 'source' | 'attribute'
   allowDefaultValue: boolean
@@ -31,7 +31,7 @@ export interface MutationTypeInput {
   inputsAllowed: string
 }
 
-export interface MutationType {
+export type MutationType = {
   name: string
   maxInputs: number | null
   requiredInputs: number
@@ -39,30 +39,30 @@ export interface MutationType {
   outputType: string
 }
 
-export interface MutationsConfig {
+export type MutationsConfig = {
   mutations: MutationType[]
 }
 
-export interface ConditionOperatorConfig {
+export type ConditionOperatorConfig = {
   label: string
   allowedValues: string[]
   resultType: string
 }
 
-export interface ConditionTypeInput {
+export type ConditionTypeInput = {
   label: string
   type: string
   allowDefaultValue: boolean
   inputsAllowed: string
 }
 
-export interface ConditionType {
+export type ConditionType = {
   name: string
   maxInputs: number | null
   requiredInputs: number
   inputs: ConditionTypeInput[]
 }
-export interface ConditionTypeConfig {
+export type ConditionTypeConfig = {
   operators: Record<string, ConditionOperatorConfig>
   conditions: ConditionType[]
 }

@@ -3,7 +3,7 @@ import NameInputDialog from './name-input-dialog'
 import ConfirmDeleteDialog from './confirm-delete-dialog'
 import type { ContextMenuState, NameDialogState, DeleteTargetState } from './use-file-tree-context-menu'
 
-interface FileTreeDialogsProps {
+type FileTreeDialogsProps = {
   contextMenu: ContextMenuState | null
   nameDialog: NameDialogState | null
   deleteTarget: DeleteTargetState | null

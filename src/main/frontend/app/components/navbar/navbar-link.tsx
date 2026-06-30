@@ -2,7 +2,7 @@ import clsx from 'clsx'
 import React from 'react'
 import { useMatch, useNavigate } from 'react-router'
 
-interface NavbarLinkProperties {
+type NavbarLinkProperties = {
   route: string
   label: string
   Icon?: React.FC<React.SVGProps<SVGSVGElement>>

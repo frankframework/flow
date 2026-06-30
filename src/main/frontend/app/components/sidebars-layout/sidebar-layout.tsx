@@ -4,7 +4,7 @@ import { SidebarSide, useSidebarStore, type VisibilityState } from '~/stores/sid
 
 export const SidebarContext = createContext<string | undefined>(undefined)
 
-interface SidebarLayoutProperties {
+type SidebarLayoutProperties = {
   children: React.ReactNode
   name: string
   defaultVisible?: VisibilityState

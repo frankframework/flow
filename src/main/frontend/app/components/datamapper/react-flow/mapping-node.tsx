@@ -5,7 +5,7 @@ import EditButton from '../basic-components/edit-button'
 import { MAPPING_WIDTH } from '~/utils/datamapper_utils/constant'
 import HoverInfo from '../basic-components/hover-info'
 
-export interface MappingNodeProperties {
+export type MappingNodeProperties = {
   id: string
   data: MappingNodeData
 

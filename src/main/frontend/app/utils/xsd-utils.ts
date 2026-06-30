@@ -387,20 +387,20 @@ function getRequiredOnly(requirement: Requirement): Requirement | null {
   return null
 }
 
-interface RequirementBase {
+type RequirementBase = {
   kind: 'element' | 'group'
 }
 
-interface ElementRequirement extends RequirementBase {
+type ElementRequirement = {
   kind: 'element'
   name: string
   required: boolean
-}
+} & RequirementBase
 
 export type Requirement = ElementRequirement | GroupRequirement
 
-interface GroupRequirement extends RequirementBase {
+type GroupRequirement = {
   kind: 'group'
   mode: 'all' | 'one'
   children: Requirement[]
-}
+} & RequirementBase

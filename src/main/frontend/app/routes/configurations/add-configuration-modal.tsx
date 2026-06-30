@@ -8,7 +8,7 @@ import Input from '~/components/inputs/input'
 import DirectoryPicker from '~/components/directory-picker/directory-picker'
 import { fetchProject } from '~/services/project-service'
 
-interface AddConfigurationModalProperties {
+type AddConfigurationModalProperties = {
   isOpen: boolean
   onClose: () => void
   onSuccess?: () => void

@@ -1,7 +1,7 @@
 import type { TreeItemIndex } from 'react-complex-tree'
 import Input from '~/components/inputs/input'
 
-interface InlineRenameInputProps {
+type InlineRenameInputProps = {
   icon: React.ComponentType<{ className?: string }>
   value: string
   onChange: (value: string) => void

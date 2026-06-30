@@ -8,7 +8,7 @@ import IconLabelButton from '~/components/inputs/icon-label-button'
 import ConfirmDeleteDialog from '~/components/file-structure/confirm-delete-dialog'
 import { useState } from 'react'
 
-interface ConfigurationFileTileProperties {
+type ConfigurationFileTileProperties = {
   filepath: string
   relativePath: string
   adapterNames: string[]
@@ -92,7 +92,7 @@ export default function ConfigurationFileTile({
   )
 }
 
-interface AdapterListItemProperties {
+type AdapterListItemProperties = {
   name: string
   adapterPosition: number
   onOpenInStudio: (name: string, adapterPosition: number) => void

@@ -41,7 +41,7 @@ export function getReactflowType(id: string, parentId: string): string {
   }
 }
 
-interface GetNodesOptions {
+type GetNodesOptions = {
   typeIncludes?: string | string[]
   idIncludes?: string
   includeChecked?: boolean

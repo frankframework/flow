@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import clsx from 'clsx'
 
-interface SwitchToggleProperties {
+type SwitchToggleProperties = {
   options: [string, string] // Left and right labels
   value?: string
   onChange: (value: string) => void

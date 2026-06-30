@@ -13,7 +13,7 @@ import { useNavigate } from 'react-router'
 import helpTopics, { type HelpTopicTreeItem } from './help-topic-tree-items'
 import '/styles/editor-files.css'
 
-interface HelpCategoriesProperties {
+type HelpCategoriesProperties = {
   selectedTopic: keyof typeof helpTopics
 }
 

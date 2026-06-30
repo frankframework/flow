@@ -12,7 +12,7 @@ import EditButton from '../basic-components/edit-button'
 import Button from '~/components/inputs/button'
 import type { Condition, Mutation } from '~/types/datamapper_types/function-types'
 
-export interface MappingModalProps {
+export type MappingModalProps = {
   onSave: (data: MappingNodeData) => void
   sources: NodeLabels[]
   targets: NodeLabels[]

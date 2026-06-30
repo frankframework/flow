@@ -8,7 +8,7 @@ import { useDirectoryWatcher } from '~/hooks/use-file-watcher'
 import Button from '../inputs/button'
 import CloseButton from '../inputs/close-button'
 
-interface DirectoryPickerProperties {
+type DirectoryPickerProperties = {
   onSelect: (absolutePath: string) => void
   onCancel: () => void
   rootLabel?: string

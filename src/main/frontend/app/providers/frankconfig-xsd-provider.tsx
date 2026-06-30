@@ -3,7 +3,7 @@ import { fetchFrankConfigXsd } from '~/services/xsd-service'
 import { parseXsd } from '~/utils/xsd-utils'
 import { logApiWarning } from '~/utils/logger'
 
-interface FrankConfigXsdContextValue {
+type FrankConfigXsdContextValue = {
   xsdContent: string | null
   xsdDoc: Document | null
 }

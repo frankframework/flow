@@ -3,16 +3,16 @@ import type { NodeLabels, MappingNodeData, ArrayNodeData } from '~/types/datamap
 import { findNodeById } from './generic-node-utils'
 import { getNodesByTypeAndId } from './property-node-utils'
 
-export interface DeleteMappingNodeResult {
+export type DeleteMappingNodeResult = {
   remainingNodes: Node[]
   remainingEdges: Edge[]
 }
 
-export interface MappingNodeResult {
+export type MappingNodeResult = {
   updatedNodes: Node[]
   updatedEdges: Edge[]
 }
-interface MappingEdgeInput {
+type MappingEdgeInput = {
   id: string
   sources: string[]
   target: string

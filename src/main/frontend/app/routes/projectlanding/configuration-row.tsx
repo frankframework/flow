@@ -3,7 +3,7 @@ import TrashBinIcon from '/icons/solar/Trash Bin.svg?react'
 import type { RecentConfigurationProject } from '~/types/project.types'
 import KebabMenu, { type KebabMenuItem } from '~/components/inputs/kebab-menu'
 
-interface ConfigurationRowProperties {
+type ConfigurationRowProperties = {
   project: RecentConfigurationProject
   isLocal: boolean
   onClick: () => void

@@ -13,7 +13,7 @@ export function updateCanvasSize(nodes: Node[], currentSize: { height: number })
   }
   return { ...currentSize, height: maxY }
 }
-export interface TablePositions {
+export type TablePositions = {
   sourceX: number
   mappingX: number
   targetX: number

@@ -5,7 +5,7 @@ import CloseButton from '~/components/inputs/close-button'
 import Input from '~/components/inputs/input'
 import { filesystemService } from '~/services/filesystem-service'
 
-interface NewProjectModalProperties {
+type NewProjectModalProperties = {
   isLocal: boolean
   onClose: () => void
   onCreate: (name: string, rootPath: string) => void

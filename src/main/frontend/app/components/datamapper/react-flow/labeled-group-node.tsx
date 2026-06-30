@@ -6,7 +6,7 @@ import DeleteButton from '../basic-components/delete-button'
 import VariableTypeIcon from '../basic-components/variable-type-icon'
 import clsx from 'clsx'
 
-export interface LabeledGroupNodeProperties {
+export type LabeledGroupNodeProperties = {
   id: string
   data: CustomNodeData
   onEdit?: (data: CustomNodeData) => void

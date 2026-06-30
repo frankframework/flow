@@ -9,7 +9,7 @@ import AltArrowDownIcon from '/icons/solar/Alt Arrow Down.svg?react'
 import AltArrowUpIcon from '/icons/solar/Alt Arrow Up.svg?react'
 import KeyIcon from '/icons/solar/Key.svg?react'
 
-interface GitToolbarProps {
+type GitToolbarProps = {
   status: GitStatus | null
   onRefresh: () => void
   onPush: () => void

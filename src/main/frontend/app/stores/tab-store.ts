@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { subscribeWithSelector } from 'zustand/middleware'
 import type { FlowSnapshot } from './flow-store'
 
-export interface TabData {
+export type TabData = {
   name: string
   icon?: React.ComponentType<React.SVGProps<SVGSVGElement>>
   flowJson?: Record<string, unknown>
@@ -14,7 +14,7 @@ export interface TabData {
   pendingRecenter?: boolean | null
 }
 
-interface TabStoreState {
+type TabStoreState = {
   tabs: Record<string, TabData>
   activeTab: string
   setTabData: (tabId: string, data: TabData) => void

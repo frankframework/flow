@@ -1,4 +1,4 @@
-export interface GitStatus {
+export type GitStatus = {
   staged: string[]
   modified: string[]
   untracked: string[]
@@ -10,7 +10,7 @@ export interface GitStatus {
   isLocal: boolean
 }
 
-export interface GitHunk {
+export type GitHunk = {
   index: number
   header: string
   content: string
@@ -20,36 +20,36 @@ export interface GitHunk {
   newCount: number
 }
 
-export interface GitFileDiff {
+export type GitFileDiff = {
   filePath: string
   oldContent: string
   newContent: string
   hunks: GitHunk[]
 }
 
-export interface GitCommitRequest {
+export type GitCommitRequest = {
   message: string
 }
 
-export interface GitCommitResult {
+export type GitCommitResult = {
   commitId: string
   message: string
   author: string
   timestamp: number
 }
 
-export interface GitPushResult {
+export type GitPushResult = {
   success: boolean
   message: string
 }
 
-export interface GitPullResult {
+export type GitPullResult = {
   success: boolean
   message: string
   hasConflicts: boolean
 }
 
-export interface FileHunkState {
+export type FileHunkState = {
   selectedHunks: Set<number>
   totalHunks: number
   selected: boolean

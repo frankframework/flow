@@ -9,12 +9,12 @@ export enum SidebarSide {
 
 export type VisibilityState = [boolean, boolean, boolean]
 
-interface SideBarInstance {
+type SideBarInstance = {
   visible: VisibilityState
   sizes: number[]
 }
 
-interface SidebarState {
+type SidebarState = {
   instances: Record<string, SideBarInstance>
   initializeInstance: (name: string, defaultVisible?: VisibilityState) => void
   toggleSidebar: (name: string, side: SidebarSide) => void

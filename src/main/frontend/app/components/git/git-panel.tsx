@@ -17,7 +17,7 @@ import GitToolbar from './git-toolbar'
 import GitChanges from './git-changes'
 import GitCommitBox from './git-commit-box'
 
-interface GitPanelProps {
+type GitPanelProps = {
   projectName: string
   hasStoredToken: boolean
 }

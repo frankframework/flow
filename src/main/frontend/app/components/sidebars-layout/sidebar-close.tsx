@@ -5,7 +5,7 @@ import { useContext } from 'react'
 import { SidebarContext } from '~/components/sidebars-layout/sidebar-layout'
 import IconButton from '~/components/inputs/icon-button'
 
-export interface SidebarsCloseProperties {
+export type SidebarsCloseProperties = {
   side: SidebarSide
 }
 

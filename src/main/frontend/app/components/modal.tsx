@@ -4,7 +4,7 @@ import { useTheme } from '~/hooks/use-theme'
 
 import CloseButton from './datamapper/basic-components/close-button'
 
-interface ModalProperties {
+type ModalProperties = {
   isOpen: boolean
   onClose: () => void
   title?: string

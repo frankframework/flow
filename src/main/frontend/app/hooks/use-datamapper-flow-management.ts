@@ -25,7 +25,7 @@ import { generateImportButton, importJsonSchema, importXsdSchema } from '~/utils
 import { deleteMappingNode } from '~/utils/datamapper_utils/mapping-node-utils'
 import { showErrorToast } from '~/components/toast'
 
-interface UseFlowManagementProperties {
+type UseFlowManagementProperties = {
   reactFlowInstance: ReactFlowInstance
   config: MappingListConfig
   setReactFlowNodes: Dispatch<SetStateAction<Node[]>>

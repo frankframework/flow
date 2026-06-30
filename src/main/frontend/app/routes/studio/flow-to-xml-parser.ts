@@ -6,13 +6,13 @@ import { FlowConfig } from './canvas/flow.config'
 import { isGroupNode, isFrankNode, isStickyNote } from '~/stores/flow-store'
 import type { GroupNode } from './canvas/nodetypes/group-node'
 
-interface ReactFlowJson {
+type ReactFlowJson = {
   nodes: FlowNode[]
   edges: Edge[]
   viewport: { x: number; y: number; zoom: number }
 }
 
-interface NodeData {
+type NodeData = {
   subtype: string
   type: string
   name: string

@@ -11,7 +11,7 @@ import type { ArrayMappingNodeProperties } from './array-mapping-node'
 import ArrayMappingNode from './array-mapping-node'
 import ImportSchematicNode, { type ImportSchematicNodeprops } from './import-schematic-node'
 
-interface GetNodeTypesParameters {
+type GetNodeTypesParameters = {
   flow: ReturnType<typeof useFlowManagement>
   setReactFlowNodes: Dispatch<SetStateAction<Node[]>>
   setEditingNode: Dispatch<SetStateAction<CustomNodeData | null>>

@@ -5,7 +5,7 @@ import type { ElementProperty } from '@frankframework/doc-library-core'
 import { useHandleTypes } from '~/hooks/use-handle-types'
 import { createPortal } from 'react-dom'
 
-interface HandleMenuProperties {
+type HandleMenuProperties = {
   title: string
   position: { x: number; y: number }
   onClose: () => void

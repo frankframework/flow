@@ -3,7 +3,7 @@ import clsx from 'clsx'
 import type { GitStatus, FileHunkState } from '~/types/git.types'
 import Checkbox from '~/components/inputs/checkbox'
 
-interface GitChangesProps {
+type GitChangesProps = {
   status: GitStatus | null
   selectedFile: string | null
   fileHunkStates: Record<string, FileHunkState>

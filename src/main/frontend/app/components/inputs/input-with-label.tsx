@@ -1,6 +1,6 @@
 import React from 'react'
 
-interface InputWithLabelProperties {
+type InputWithLabelProperties = {
   htmlFor: string
   label: string
   description?: string

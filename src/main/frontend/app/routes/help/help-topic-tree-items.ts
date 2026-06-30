@@ -6,7 +6,7 @@ import React from 'react'
 
 export type HelpTopicTreeItem = TreeItem<HelpTopicTreeItemData>
 
-export interface HelpTopicTreeItemData {
+export type HelpTopicTreeItemData = {
   title: string
   description: string
   content?: React.FC

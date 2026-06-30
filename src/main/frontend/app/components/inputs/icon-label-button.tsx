@@ -1,7 +1,7 @@
 import React from 'react'
 import clsx from 'clsx'
 
-interface IconLabelButtonProps {
+type IconLabelButtonProps = {
   icon: React.ReactNode
   label: string
   onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void

@@ -1,6 +1,6 @@
 ﻿import { apiFetch } from '~/utils/api'
 
-export interface AppInfo {
+export type AppInfo = {
   isLocal: boolean
 }
 

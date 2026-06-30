@@ -9,7 +9,7 @@ import { getAllowedChildElementsForElement } from '~/utils/xsd-utils'
 import { NodeHeader } from './components/node-header'
 import { NodeChildrenContainer } from './components/node-children-container'
 
-export interface ChildNode {
+export type ChildNode = {
   id: string
   subtype: string
   type: string
@@ -19,7 +19,7 @@ export interface ChildNode {
   children?: ChildNode[]
 }
 
-interface ChildNodeProperties {
+type ChildNodeProperties = {
   child: ChildNode
   gradientEnabled: boolean
   onEdit: (id: string) => void

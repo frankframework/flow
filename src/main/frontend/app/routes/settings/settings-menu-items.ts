@@ -8,7 +8,7 @@ import ProjectSettings from './pages/project-settings'
 
 export type SettingsMenuItem = TreeItem<SettingsMenuItemData>
 
-export interface SettingsMenuItemData {
+export type SettingsMenuItemData = {
   title: string
   description: string
   icon?: React.FC

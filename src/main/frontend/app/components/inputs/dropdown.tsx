@@ -4,7 +4,7 @@ import AltArrowDownIcon from '/icons/solar/Alt Arrow Down.svg?react'
 
 export type DropdownOptions = Record<string, string>
 
-export interface DropdownProperties {
+export type DropdownProperties = {
   options: DropdownOptions
   onChange: (value: string) => void
   value?: string

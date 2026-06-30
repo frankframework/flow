@@ -4,7 +4,7 @@ import Search from '~/components/search/search'
 import type { ElementDetails } from '@frankframework/doc-library-core'
 import { useMemo, useState, type ChangeEvent } from 'react'
 
-interface AddSubcomponentModalProps {
+type AddSubcomponentModalProps = {
   isOpen: boolean
   onClose: () => void
   possibleChildren: ElementDetails[]

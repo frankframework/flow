@@ -6,7 +6,7 @@ import useEditorTabStore from '~/stores/editor-tab-store'
 
 const STORAGE_ROOT_PATH_KEY = 'active-project-root-path'
 
-interface ProjectStoreState {
+type ProjectStoreState = {
   project?: ConfigurationProject
   setProject: (project: ConfigurationProject) => void
   clearProject: () => void

@@ -1,6 +1,6 @@
 import type { Condition, Mutation } from './function-types'
 
-export interface Property {
+export type Property = {
   type: string
   internalId: string
   label: string
@@ -10,13 +10,13 @@ export interface Property {
   parentArray?: string
 }
 
-export interface Source {
+export type Source = {
   id: string
   label: string
   type: string
 }
 
-export interface Mapping {
+export type Mapping = {
   id: string
   sources: Property[]
   target: Property
@@ -26,19 +26,19 @@ export interface Mapping {
   output: string
 }
 
-export interface Target extends Property {
+export type Target = {
   mapping?: Mapping
   isAttribute?: boolean
-}
+} & Property
 
-export interface MappingFile {
+export type MappingFile = {
   sourceType: string
   targetType: string
   targetStructure: Target[]
   sourceStructure: Property[]
 }
 
-export interface MappingRow {
+export type MappingRow = {
   id: string
   sourcesNames: string[]
   targetsNames: string[]

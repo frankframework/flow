@@ -11,7 +11,7 @@ import ElementHoverCard from './element-hover-card'
 import { showWarningToast } from '~/components/toast'
 import Button from '~/components/inputs/button'
 
-interface Properties {
+type Properties = {
   type: string
   items: ElementDetails[]
   onDragStart: (item: ElementDetails) => React.DragEventHandler<HTMLLIElement>

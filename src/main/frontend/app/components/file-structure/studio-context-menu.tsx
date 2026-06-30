@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import { useContextMenuDismiss } from '~/hooks/use-context-menu-dismiss'
 import type { StudioItemType } from './use-studio-context-menu'
 
-interface StudioContextMenuProps {
+type StudioContextMenuProps = {
   position: { x: number; y: number }
   itemType: StudioItemType
   onNewConfiguration: () => void

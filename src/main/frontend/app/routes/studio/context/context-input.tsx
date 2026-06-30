@@ -8,7 +8,7 @@ import type { Attribute, Elements } from '@frankframework/doc-library-core'
 import type { DeprecatedInfo } from './deprecated-list-popover'
 import { DeprecatedPopover } from '../canvas/nodetypes/components/deprecated-popover'
 
-export interface ContextInputProperties {
+export type ContextInputProperties = {
   id: string
   value: string
   onChange: (value: string) => void

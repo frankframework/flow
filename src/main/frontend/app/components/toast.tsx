@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTheme } from '~/hooks/use-theme'
 
-interface ToastOptions {
+type ToastOptions = {
   type: 'ERROR' | 'WARNING' | 'INFO' | 'SUCCESS'
   title?: string
   message: string

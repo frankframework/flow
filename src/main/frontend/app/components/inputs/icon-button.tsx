@@ -1,7 +1,7 @@
 import React from 'react'
 import clsx from 'clsx'
 
-interface IconButtonProps {
+type IconButtonProps = {
   title?: string
   onClick?: (event: React.MouseEvent) => void
   onContextMenu?: (event: React.MouseEvent) => void

@@ -3,7 +3,7 @@ import type { ArrayNodeData } from '~/types/datamapper_types/react-node-types'
 import DeleteButton from '../basic-components/delete-button'
 import { MAPPING_WIDTH } from '~/utils/datamapper_utils/constant'
 
-export interface ArrayMappingNodeProperties {
+export type ArrayMappingNodeProperties = {
   id: string
   data: ArrayNodeData
   onClick?: (id: string) => void

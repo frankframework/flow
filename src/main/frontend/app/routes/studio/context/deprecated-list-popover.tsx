@@ -1,6 +1,6 @@
 import { createPortal } from 'react-dom'
 
-export interface DeprecatedInfo {
+export type DeprecatedInfo = {
   since?: string
   forRemoval?: boolean
   description?: string

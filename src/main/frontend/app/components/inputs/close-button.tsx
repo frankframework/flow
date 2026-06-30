@@ -2,7 +2,7 @@ import React from 'react'
 import CloseIcon from '/icons/custom/Close.svg?react'
 import IconButton from '~/components/inputs/icon-button'
 
-interface CloseButtonProps {
+type CloseButtonProps = {
   onClick?: (event: React.MouseEvent) => void
   className?: string
 }

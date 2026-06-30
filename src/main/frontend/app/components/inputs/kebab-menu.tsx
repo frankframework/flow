@@ -3,14 +3,14 @@ import { createPortal } from 'react-dom'
 import clsx from 'clsx'
 import KebabIcon from '/icons/solar/Kebab Vertical.svg?react'
 
-export interface KebabMenuItem {
+export type KebabMenuItem = {
   label: string
   icon?: ReactNode
   onClick: () => void
   className?: string
 }
 
-interface KebabMenuProperties {
+type KebabMenuProperties = {
   items: KebabMenuItem[]
   triggerClassName?: string
 }

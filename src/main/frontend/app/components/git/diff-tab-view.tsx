@@ -62,7 +62,7 @@ function applyHunkDecorations(
   return modifiedEditor.deltaDecorations(prevDecorations, decorations)
 }
 
-interface DiffTabViewProps {
+type DiffTabViewProps = {
   diffData: DiffTabData
 }
 

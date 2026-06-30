@@ -6,7 +6,7 @@ import type { MappingListConfig } from '~/types/datamapper_types/config-types'
 import type { DataTypeSchema } from '~/types/datamapper_types/data-types'
 import datatypesJson from '~/utils/datamapper_utils/config/data-types.json'
 
-interface InitializeProperties {
+type InitializeProperties = {
   config: MappingListConfig
   configDispatch: Dispatch<ConfigActions>
   confirmed: boolean

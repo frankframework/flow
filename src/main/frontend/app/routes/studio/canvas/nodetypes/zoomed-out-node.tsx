@@ -6,7 +6,7 @@ const COMPACT_PADDING_TOP = 8
 const COMPACT_HANDLE_SIZE = 15
 const COMPACT_HANDLE_GAP = 4
 
-export interface ZoomedOutNodeProps {
+export type ZoomedOutNodeProps = {
   subtype: string
   name?: string
   attributes?: Record<string, string>

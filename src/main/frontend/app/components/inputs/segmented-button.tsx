@@ -1,9 +1,9 @@
 import React from 'react'
 import clsx from 'clsx'
 
-interface SegmentedButtonProperties extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+type SegmentedButtonProperties = {
   isActive?: boolean
-}
+} & React.ButtonHTMLAttributes<HTMLButtonElement>
 
 export default function SegmentedButton({
   isActive = false,

@@ -1,4 +1,4 @@
-export interface HandleMenuItemProperties {
+export type HandleMenuItemProperties = {
   label: string
   iconColor?: string
   onClick: () => void

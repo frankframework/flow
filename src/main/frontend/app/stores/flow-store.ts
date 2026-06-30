@@ -23,12 +23,12 @@ import { subscribeWithSelector } from 'zustand/middleware'
 import { getEdgeLabelFromHandle } from '~/utils/flow-utils'
 import type { GroupNode } from '~/routes/studio/canvas/nodetypes/group-node'
 
-export interface FlowSnapshot {
+export type FlowSnapshot = {
   nodes: FlowNode[]
   edges: Edge[]
 }
 
-export interface FlowState {
+export type FlowState = {
   nodes: FlowNode[]
   edges: Edge[]
   viewport: { x: number; y: number; zoom: number }

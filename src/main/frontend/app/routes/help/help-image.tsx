@@ -1,6 +1,6 @@
 import React from 'react'
 
-interface HelpImageProps {
+type HelpImageProps = {
   src: string
   alt?: string
   caption?: string
