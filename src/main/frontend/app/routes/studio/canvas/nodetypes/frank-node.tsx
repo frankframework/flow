@@ -27,6 +27,7 @@ import type { ElementDetails } from '@frankframework/doc-library-core'
 import { DeprecatedPopover } from './components/deprecated-popover'
 import { showWarningToast } from '~/components/toast'
 import { useHandleTypes } from '~/hooks/use-handle-types'
+import { resolveForwardsWithInheritance } from '~/utils/frankdoc-utils'
 import AddSubcomponentModal from '~/components/flow/add-subcomponent-modal'
 import { useFrankConfigXsd } from '~/providers/frankconfig-xsd-provider'
 import {
@@ -63,7 +64,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
   const [dragOver, setDragOver] = useState(false)
   const [canDropDraggedElement, setCanDropDraggedElement] = useState(false)
   const showNodeContextMenu = useNodeContextMenu()
-  const { elements } = useFFDoc()
+  const { elements, ffDoc } = useFFDoc()
   const { xsdDoc } = useFrankConfigXsd()
   const {
     setNodeId,
@@ -85,8 +86,14 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
     if (!elements) return null
     const recordElements = elements as Record<string, ElementDetails>
 
-    return Object.values(recordElements).find((element) => element.name === properties.data.subtype) ?? null
-  }, [elements, properties.data.subtype])
+    const element = Object.values(recordElements).find((element) => element.name === properties.data.subtype) ?? null
+    if (!element || !ffDoc) return element
+
+    return {
+      ...element,
+      forwards: resolveForwardsWithInheritance(element.forwards, ffDoc.elements),
+    }
+  }, [elements, ffDoc, properties.data.subtype])
 
   const isDeprecated = frankElement?.deprecated
   const [showDeprecated, setShowDeprecated] = useState(false)

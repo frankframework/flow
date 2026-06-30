@@ -5,6 +5,8 @@ import type { FrankNodeType } from '~/routes/studio/canvas/nodetypes/frank-node'
 import { getElementTypeFromName } from '~/routes/studio/node-translator-module'
 import { fetchConfigurationFileCached } from '~/services/configuration-file-service'
 import { translateElementFromOldToNewFormat } from '~/utils/flow-utils'
+import { getDefaultSourceHandles } from '~/utils/frankdoc-utils'
+import type { ElementProperty } from '@frankframework/doc-library-core'
 import { FlowConfig } from './canvas/flow.config'
 import type { GroupNode } from './canvas/nodetypes/group-node'
 import { isFrankNode } from '~/stores/flow-store'
@@ -102,15 +104,22 @@ export async function getAdapterListenerType(
   return null
 }
 
-export async function convertAdapterXmlToJson(adapter: Element) {
+export type ResolveForwards = (subtype: string) => Record<string, ElementProperty> | undefined
+
+function supportsSuccessForward(subtype: string, resolveForwards?: ResolveForwards): boolean {
+  const forwards = resolveForwards?.(subtype)
+  return forwards ? 'success' in forwards : true
+}
+
+export async function convertAdapterXmlToJson(adapter: Element, resolveForwards?: ResolveForwards) {
   const idCounter: IdCounter = { current: 0 }
-  const { nodes: flowNodes, elementToId } = convertAdapterToFlowNodes(adapter, idCounter)
+  const { nodes: flowNodes, elementToId } = convertAdapterToFlowNodes(adapter, idCounter, resolveForwards)
   const stickyNotes = extractStickyNotesFromAdapter(adapter, idCounter, flowNodes)
   const groupNodes = extractGroupNodesFromAdapter(adapter, flowNodes, idCounter)
   assignParentRelationships(flowNodes, groupNodes)
   const allNodes: FlowNode[] = [...groupNodes, ...flowNodes, ...stickyNotes]
 
-  return { nodes: allNodes, edges: extractEdgesFromAdapter(adapter, flowNodes, elementToId) }
+  return { nodes: allNodes, edges: extractEdgesFromAdapter(adapter, flowNodes, elementToId, resolveForwards) }
 }
 
 function buildNodeNameToIdMap(nodes: FlowNode[]): Map<string, string> {
@@ -174,7 +183,12 @@ function buildNameToNodeMap(nodes: FlowNode[]): Map<string, FlowNode> {
  * @param elementToId A mapping of XML Elements to their corresponding node IDs, used for edge creation
  * @returns An array of FrankEdge objects representing all generated edges
  */
-function extractEdgesFromAdapter(adapter: Element, nodes: FlowNode[], elementToId: Map<Element, string>): FrankEdge[] {
+function extractEdgesFromAdapter(
+  adapter: Element,
+  nodes: FlowNode[],
+  elementToId: Map<Element, string>,
+  resolveForwards?: ResolveForwards,
+): FrankEdge[] {
   const pipelineElement = [...adapter.children].find((el) => el.tagName.toLowerCase() === 'pipeline') || null
 
   if (!pipelineElement) return []
@@ -207,9 +221,10 @@ function extractEdgesFromAdapter(adapter: Element, nodes: FlowNode[], elementToI
     explicitTargetsBySourceId,
     sourcesWithSuccessExitForward,
     sourcesWithSuccessPipeForward,
+    resolveForwards,
   )
 
-  addImplicitSuccessExitEdge(nodes, edges, forwardIndexBySourceId)
+  addImplicitSuccessExitEdge(nodes, edges, forwardIndexBySourceId, resolveForwards)
 
   return edges
 }
@@ -347,6 +362,7 @@ function addSequentialFallbackEdges(
   explicitTargetsBySourceId: Map<string, Set<string>>,
   sourcesWithSuccessExitForward: Set<string>,
   sourcesWithSuccessPipeForward: Set<string>,
+  resolveForwards?: ResolveForwards,
 ) {
   for (let i = 0; i < nodes.length - 1; i++) {
     const current = nodes[i]
@@ -354,6 +370,7 @@ function addSequentialFallbackEdges(
     if (current.type === 'exitNode') continue
     // skip receivers (they already get edges to first pipeline pipe)
     if (isFrankNode(current) && current.data.type === 'receiver') continue
+    if (isFrankNode(current) && !supportsSuccessForward(current.data.subtype, resolveForwards)) continue
 
     // find next NON-exit node
     const next = nodes.slice(i + 1).find((n) => n.type !== 'exitNode')
@@ -385,6 +402,7 @@ function addImplicitSuccessExitEdge(
   nodes: FlowNode[],
   edges: FrankEdge[],
   forwardIndexBySourceId: Map<string, number>,
+  resolveForwards?: ResolveForwards,
 ) {
   const successExit = findSuccessExit(nodes)
   if (!successExit) return
@@ -396,6 +414,8 @@ function addImplicitSuccessExitEdge(
   const lastPipelineNode = nodes.toReversed().find((node) => node.type !== 'exitNode')
 
   if (!lastPipelineNode) return
+
+  if (isFrankNode(lastPipelineNode) && !supportsSuccessForward(lastPipelineNode.data.subtype, resolveForwards)) return
 
   const handleIndex = forwardIndexBySourceId.get(lastPipelineNode.id) ?? 1
   forwardIndexBySourceId.set(lastPipelineNode.id, handleIndex + 1)
@@ -438,15 +458,16 @@ function collectPipelineElements(adapter: Element): Element[] {
   return elements
 }
 
-function extractSourceHandles(element: Element): SourceHandle[] {
+export function extractSourceHandles(element: Element, resolveForwards?: ResolveForwards): SourceHandle[] {
+  const { subtype } = translateElementFromOldToNewFormat(element)
+  const forwards = resolveForwards?.(subtype)
+
   let forwardElements = [...element.querySelectorAll('Forward')]
 
-  // Check if forwards are lower case instead
   if (forwardElements.length === 0) {
     forwardElements = [...element.querySelectorAll('forward')]
-    // No forwards? Create a single implicit success handle
     if (forwardElements.length === 0) {
-      return [{ type: 'success', index: 1 }]
+      return forwards ? getDefaultSourceHandles(forwards) : [{ type: 'success', index: 1 }]
     }
   }
 
@@ -459,18 +480,10 @@ function extractSourceHandles(element: Element): SourceHandle[] {
     }
   })
 
-  // Check if any forward represents SUCCESS
-  const hasSuccessForward = forwardElements.some((forward) => {
-    const name = forward.getAttribute('name')?.toUpperCase()
-    return name === 'SUCCESS'
-  })
+  const hasSuccessForward = forwardElements.some((forward) => forward.getAttribute('name')?.toUpperCase() === 'SUCCESS')
 
-  // If not, add implicit fallback handle
-  if (!hasSuccessForward) {
-    handles.push({
-      type: 'success',
-      index: handles.length + 1,
-    })
+  if (!hasSuccessForward && supportsSuccessForward(subtype, resolveForwards)) {
+    handles.push({ type: 'success', index: handles.length + 1 })
   }
 
   return handles
@@ -505,6 +518,7 @@ function processExitElements(element: Element, exitNodes: ExitNode[]) {
 function convertAdapterToFlowNodes(
   adapter: Element,
   idCounter: IdCounter,
+  resolveForwards?: ResolveForwards,
 ): { nodes: FlowNode[]; elementToId: Map<Element, string> } {
   const nodes: FlowNode[] = []
   const exitNodes: ExitNode[] = []
@@ -540,7 +554,7 @@ function convertAdapterToFlowNodes(
       continue
     }
 
-    const sourceHandles = extractSourceHandles(element)
+    const sourceHandles = extractSourceHandles(element, resolveForwards)
     const frankNode: FrankNodeType = convertElementToNode(element, idCounter, sourceHandles)
     elementToId.set(element, frankNode.id)
     nodes.push(frankNode)

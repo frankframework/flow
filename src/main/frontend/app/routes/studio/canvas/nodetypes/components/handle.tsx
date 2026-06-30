@@ -13,25 +13,49 @@ type HandleProperties = {
   typesAllowed?: Record<string, ElementProperty>
 }
 
-const HANDLE_TYPE_COLOURS: Record<string, string> = {
+const SEMANTIC_COLOURS: Record<string, string> = {
   success: '#68D250',
   failure: '#E84E4E',
   exception: '#424242',
   timeout: '#F2A900',
   error: '#ff7605ff',
-  default: '#1B97D1',
+}
+
+const FORWARD_COLOURS: Record<string, string> = {
+  notfound: '#1B97D1',
+  empty: '#26A69A',
+  // eslint-disable-next-line unicorn/no-thenable
+  then: '#7E57C2',
+  else: '#EC407A',
+  lessthan: '#5C6BC0',
+  greaterthan: '#00ACC1',
+  equals: '#AB47BC',
+  stop: '#D81B60',
+  continue: '#42A5F5',
+  notinrole: '#8D6E63',
+  custom: '#9575CD',
+}
+
+const FALLBACK_PALETTE = Object.values(FORWARD_COLOURS)
+
+function colourFromName(type: string): string {
+  let hash = 0
+  for (let index = 0; index < type.length; index++) {
+    hash = (hash * 31 + (type.codePointAt(index) ?? 0)) % FALLBACK_PALETTE.length
+  }
+  return FALLBACK_PALETTE[hash]
 }
 
 export function translateHandleTypeToColour(type: string): string {
   const normalized = type.toLowerCase()
 
-  for (const [suffix, colour] of Object.entries(HANDLE_TYPE_COLOURS)) {
-    if (normalized.endsWith(suffix)) {
-      return colour
-    }
+  if (normalized in FORWARD_COLOURS) return FORWARD_COLOURS[normalized]
+
+  for (const [suffix, colour] of Object.entries(SEMANTIC_COLOURS)) {
+    if (normalized.endsWith(suffix)) return colour
   }
 
-  return HANDLE_TYPE_COLOURS.default
+  return colourFromName(normalized)
 }
 
 export function CustomHandle(properties: Readonly<HandleProperties>) {

@@ -35,12 +35,17 @@ import { logApiError } from '~/utils/logger'
 import { NodeContextMenuContext, useNodeContextMenu } from './node-context-menu-context'
 import StickyNoteComponent, { type StickyNote } from '~/routes/studio/canvas/nodetypes/sticky-note'
 import useTabStore, { type TabData } from '~/stores/tab-store'
-import { convertAdapterXmlToJson, getAdapterFromConfiguration } from '~/routes/studio/xml-to-json-parser'
+import {
+  convertAdapterXmlToJson,
+  getAdapterFromConfiguration,
+  type ResolveForwards,
+} from '~/routes/studio/xml-to-json-parser'
 import { exportFlowToXml, replaceAdapterInXml } from '~/routes/studio/flow-to-xml-parser'
 import useNodeContextStore from '~/stores/node-context-store'
 import CreateNodeModal from '~/components/flow/create-node-modal'
 import { useFFDoc } from '@frankframework/doc-library-react'
 import type { ElementDetails } from '@frankframework/doc-library-core'
+import { getDefaultSourceHandles, resolveForwardsWithInheritance } from '~/utils/frankdoc-utils'
 import { useProjectStore } from '~/stores/project-store'
 import {
   clearConfigurationFileCache,
@@ -195,7 +200,7 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
       setSelectedGroupId: store.setSelectedGroupId,
     })),
   )
-  const { elements } = useFFDoc()
+  const { elements, ffDoc } = useFFDoc()
   const elementsRef = useRef(elements)
   const showNodeContextMenuRef = useRef(showNodeContextMenu)
   const navigate = useNavigate()
@@ -995,6 +1000,18 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
     [elements],
   )
 
+  const resolveForwards = useCallback(
+    (subtype: string) => {
+      const element = lookupFrankElement(subtype)
+      if (!element || !ffDoc) return element?.forwards
+      return resolveForwardsWithInheritance(element.forwards, ffDoc.elements)
+    },
+    [lookupFrankElement, ffDoc],
+  )
+
+  const importForwardsResolverRef = useRef<ResolveForwards | undefined>(undefined)
+  importForwardsResolverRef.current = ffDoc ? resolveForwards : undefined
+
   const deselectOtherNodes = useCallback(
     (nodeId: string) => {
       const flowNodes = reactFlow.getNodes()
@@ -1244,6 +1261,11 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
     const width = nodeType === 'exitNode' ? FlowConfig.EXIT_DEFAULT_WIDTH : FlowConfig.NODE_DEFAULT_WIDTH
     const height = nodeType === 'exitNode' ? FlowConfig.EXIT_DEFAULT_HEIGHT : FlowConfig.NODE_MIN_HEIGHT
 
+    const sourceHandles =
+      nodeType === 'frankNode' && ffDoc
+        ? getDefaultSourceHandles(resolveForwards(elementName))
+        : [{ type: 'success', index: 1 }]
+
     const newNode: FrankNodeType = {
       id: newId.toString(),
       position: {
@@ -1254,7 +1276,7 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
         subtype: elementName,
         type: elementType,
         name: ``,
-        sourceHandles: [{ type: 'success', index: 1 }],
+        sourceHandles,
         children: [],
       },
       type: nodeType,
@@ -1491,7 +1513,7 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
         tab.adapterPosition,
       )
       if (!adapter) return
-      const adapterJson = await convertAdapterXmlToJson(adapter)
+      const adapterJson = await convertAdapterXmlToJson(adapter, importForwardsResolverRef.current)
 
       flowStore.setEdges(adapterJson.edges)
       flowStore.setNodes(adapterJson.nodes)
@@ -1737,10 +1759,7 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
             position={pendingCompactConnection.position}
             onClose={() => setPendingCompactConnection(null)}
             onSelect={handleCompactHandleSelect}
-            typesAllowed={
-              (elements as Record<string, ElementDetails> | null)?.[pendingCompactConnection.sourceNodeSubtype]
-                ?.forwards
-            }
+            typesAllowed={resolveForwards(pendingCompactConnection.sourceNodeSubtype)}
           />
         )}
 
@@ -1750,9 +1769,7 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
             position={pendingEdgeDrop.position}
             onClose={() => setPendingEdgeDrop(null)}
             onSelect={handleEdgeDropHandleSelect}
-            typesAllowed={
-              (elements as Record<string, ElementDetails> | null)?.[pendingEdgeDrop.sourceNodeSubtype]?.forwards
-            }
+            typesAllowed={resolveForwards(pendingEdgeDrop.sourceNodeSubtype)}
           />
         )}
 
