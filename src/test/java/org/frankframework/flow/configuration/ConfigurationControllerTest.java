@@ -138,7 +138,7 @@ class ConfigurationControllerTest {
 
 		String filepath = "/path/to/" + TEST_PROJECT_NAME + "/NewConfig.xml";
 
-		when(configurationService.addConfiguration(TEST_PROJECT_NAME, filepath))
+		when(configurationService.addConfigurationFile(TEST_PROJECT_NAME, filepath))
 				.thenReturn(new AdapterLocationDTO("SampleAdapter", 0));
 		when(configurationProjectService.toDto(configurationProject))
 				.thenReturn(new ConfigurationProjectDTO(
@@ -156,6 +156,6 @@ class ConfigurationControllerTest {
 				.andExpect(jsonPath("$.adapterName").value("SampleAdapter"))
 				.andExpect(jsonPath("$.adapterPosition").value(0));
 
-		verify(configurationService).addConfiguration(TEST_PROJECT_NAME, filepath);
+		verify(configurationService).addConfigurationFile(TEST_PROJECT_NAME, filepath);
 	}
 }

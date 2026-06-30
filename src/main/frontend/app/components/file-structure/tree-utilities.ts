@@ -5,6 +5,7 @@ import MailIcon from '../../../icons/solar/Mailbox.svg?react'
 import FolderIcon from '../../../icons/solar/Folder.svg?react'
 import type { FileTreeNode } from '~/types/filesystem.types'
 import type { TreeRef } from 'react-complex-tree'
+import { relativeTo } from '~/utils/path-utils'
 
 export function getListenerIcon(listenerType: string | null) {
   if (!listenerType) return CodeIcon
@@ -31,8 +32,8 @@ export function getAncestorIds(itemId: string): string[] {
 }
 
 export function toTreeItemId(absolutePath: string, rootPath: string): string {
-  const relativePath = absolutePath.slice(rootPath.length).replace(/^[/\\]/, '')
-  return `root/${relativePath.split(/[/\\]/).join('/')}`
+  const relativePath = relativeTo(rootPath, absolutePath)
+  return relativePath ? `root/${relativePath}` : 'root'
 }
 
 export function isVisibleInTree(itemId: string | null, expandedItems: string[]): boolean {

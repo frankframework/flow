@@ -13,6 +13,7 @@ import {
   FILE_NAME_PATTERNS,
   FOLDER_OR_ADAPTER_NAME_PATTERNS,
 } from '~/components/file-structure/name-input-dialog'
+import { getBaseName, getParentPath, joinPath, relativeTo } from '~/utils/path-utils'
 import { openInStudio } from '~/actions/navigationActions'
 
 export type StudioItemType = 'root' | 'folder' | 'configuration' | 'adapter' | 'file'
@@ -58,7 +59,7 @@ export function detectItemType(data: StudioItemData, isFolder?: boolean): Studio
 
   if (isFolder) return 'folder'
 
-  const lastSegment = path.split(/[/\\]/).at(-1) ?? path
+  const lastSegment = getBaseName(path)
   if (lastSegment.includes('.')) return 'file'
   return 'folder'
 }
@@ -68,11 +69,6 @@ export function getItemName(data: StudioItemData): string {
   if ('adapterName' in data) return (data as StudioAdapterData).adapterName
   if ('name' in data) return (data as StudioFolderData).name
   return 'Unnamed'
-}
-
-function getParentDir(filePath: string): string {
-  const lastSep = Math.max(filePath.lastIndexOf('/'), filePath.lastIndexOf('\\'))
-  return lastSep > 0 ? filePath.slice(0, lastSep) : filePath
 }
 
 function ensureXmlExtension(name: string): string {
@@ -92,12 +88,12 @@ export function resolveItemPaths(
 
   if (itemType === 'adapter') {
     const configPath = (data as StudioAdapterData).configPath
-    return { path: configPath, folderPath: getParentDir(configPath) }
+    return { path: configPath, folderPath: getParentPath(configPath) }
   }
 
   const folderData = data as StudioFolderData
   if (itemType === 'configuration' || itemType === 'file') {
-    return { path: folderData.path, folderPath: getParentDir(folderData.path) }
+    return { path: folderData.path, folderPath: getParentPath(folderData.path) }
   }
 
   return { path: folderData.path, folderPath: folderData.path }
@@ -179,13 +175,13 @@ export function useStudioContextMenu({ projectName, dataProvider }: UseStudioCon
         onSubmit: async (name: string) => {
           const fileName = ensureXmlExtension(name)
           try {
-            const folderPath = menu.folderPath.replace(/[/\\]$/, '')
-            const absoluteFilePath = `${folderPath}/${fileName}`
-            const { adapterName, adapterPosition } = await createConfigurationFile(projectName, absoluteFilePath)
+            const relativeFolder = relativeTo(dataProvider.getRootPath(), menu.folderPath)
+            const relativePath = relativeFolder ? joinPath(relativeFolder, fileName) : fileName
+            const { adapterName, adapterPosition } = await createConfigurationFile(projectName, relativePath)
             await dataProvider.reloadDirectory('root')
 
             if (adapterName) {
-              openInStudio(navigate, { adapterName, filepath: absoluteFilePath, adapterPosition })
+              openInStudio(navigate, { adapterName, filepath: relativePath, adapterPosition })
             }
           } catch (error) {
             logApiError('Failed to create configuration', error as Error)
@@ -273,7 +269,7 @@ export function useStudioContextMenu({ projectName, dataProvider }: UseStudioCon
               clearConfigurationFileCache(projectName, menu.path)
               useTabStore.getState().renameTabsForConfig(menu.path, newPath)
             } else {
-              await renameFile(projectName, menu.path, `${getParentDir(menu.path)}/${newName}`)
+              await renameFile(projectName, menu.path, `${getParentPath(menu.path)}/${newName}`)
             }
             await dataProvider.reloadDirectory('root')
           } catch (error) {

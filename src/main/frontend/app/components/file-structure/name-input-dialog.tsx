@@ -22,6 +22,11 @@ export const CONFIGURATION_NAME_PATTERNS: Record<string, RegExp> = {
 
 export const FOLDER_OR_ADAPTER_NAME_PATTERNS: Record<string, RegExp> = BASE_NAME_PATTERNS
 
+export const PROJECT_NAME_PATTERNS: Record<string, RegExp> = {
+  ...BASE_NAME_PATTERNS,
+  'Cannot have a file extension': /^(?!.*\.[^.\\/]+$).*$/,
+}
+
 type NameInputDialogProps = {
   title: string
   initialValue?: string

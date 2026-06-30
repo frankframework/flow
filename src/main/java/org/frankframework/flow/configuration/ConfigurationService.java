@@ -101,7 +101,7 @@ public class ConfigurationService {
 	 * @return the location of the first adapter in the created file, so the frontend can open it in the studio;
 	 *         the actual content is loaded lazily when the studio renders the adapter
 	 */
-	public AdapterLocationDTO addConfiguration(String projectName, String filepath) throws IOException, ApiException, TransformerException, ParserConfigurationException, SAXException {
+	public AdapterLocationDTO addConfigurationFile(String projectName, String filepath) throws IOException, ApiException, TransformerException, ParserConfigurationException, SAXException {
 		if (filepath == null || filepath.isBlank()) {
 			throw new ApiException("Configuration path must not be empty", HttpStatus.BAD_REQUEST);
 		}
