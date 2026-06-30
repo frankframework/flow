@@ -17,17 +17,11 @@ export default function ExitNodeComponent(properties: NodeProps<ExitNode>) {
   const minNodeHeight = FlowConfig.EXIT_DEFAULT_HEIGHT
   const gradientEnabled = useSettingsStore((state) => state.studio.gradient)
   const zoom = useStore((state) => state.transform[2])
-  const isCompact = zoom < 0.4
+  const isCompact = zoom < FlowConfig.ZOOM_THRESHOLD
 
   if (isCompact) {
     return (
-      <ZoomedOutNode
-        subtype={properties.data.subtype}
-        name={properties.data.name}
-        attributes={properties.data.attributes}
-        colorVariable="--type-exit"
-        selected={properties.selected}
-      />
+      <ZoomedOutNode subtype={properties.data.subtype} colorVariable="--type-exit" selected={properties.selected} />
     )
   }
 

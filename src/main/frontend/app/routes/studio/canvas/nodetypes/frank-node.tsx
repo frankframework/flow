@@ -78,7 +78,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
   } = useNodeContextStore()
   const gradientEnabled = useSettingsStore((state) => state.studio.gradient)
   const zoom = useStore((state) => state.transform[2])
-  const isCompact = zoom < 0.4
+  const isCompact = zoom < FlowConfig.ZOOM_THRESHOLD
   const [isOverflowing, setIsOverflowing] = useState(false)
 
   const frankElement = useMemo(() => {
@@ -402,8 +402,6 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
     return (
       <ZoomedOutNode
         subtype={properties.data.subtype}
-        name={properties.data.name}
-        attributes={properties.data.attributes}
         colorVariable={colorVariable}
         selected={properties.selected}
         showTargetHandle={properties.data.subtype !== 'Receiver'}

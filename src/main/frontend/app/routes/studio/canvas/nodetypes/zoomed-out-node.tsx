@@ -1,15 +1,14 @@
-import { Handle, Position } from '@xyflow/react'
-import { FlowConfig } from '~/routes/studio/canvas/flow.config'
+import { Handle, Position, useStore } from '@xyflow/react'
+import { FlowConfig, getCompactLabelScale } from '~/routes/studio/canvas/flow.config'
 
 const COMPACT_INITIALS_BOX_SIZE = 160
 const COMPACT_PADDING_TOP = 8
 const COMPACT_HANDLE_SIZE = 15
 const COMPACT_HANDLE_GAP = 4
+const COMPACT_LABEL_BASE_FONT_PX = 22
 
 export type ZoomedOutNodeProps = {
   subtype: string
-  name?: string
-  attributes?: Record<string, string>
   colorVariable: string
   selected?: boolean
   showTargetHandle?: boolean
@@ -23,13 +22,10 @@ function getAbbreviation(subtype: string): string {
 
 /**
  * Compact representation of a node shown when the canvas is zoomed out far enough that the full
- * node would be unreadable. Renders an initials box with the subtype, name attributes and the
- * handles aligned under it.
+ * node would be unreadable. Renders an initials box with the subtype aligned under it.
  */
 export default function ZoomedOutNode({
   subtype,
-  name,
-  attributes,
   colorVariable,
   selected,
   showTargetHandle = true,
@@ -37,6 +33,8 @@ export default function ZoomedOutNode({
   width = FlowConfig.NODE_DEFAULT_WIDTH,
 }: Readonly<ZoomedOutNodeProps>) {
   const abbr = getAbbreviation(subtype)
+  const zoom = useStore((state) => state.transform[2])
+  const labelFontSize = `${COMPACT_LABEL_BASE_FONT_PX * getCompactLabelScale(zoom)}px`
 
   const compactXOffsetPx = (width - COMPACT_INITIALS_BOX_SIZE) / 2 - COMPACT_HANDLE_SIZE - COMPACT_HANDLE_GAP
   const compactHandleTop =
@@ -65,15 +63,9 @@ export default function ZoomedOutNode({
           </span>
         </div>
 
-        <span className="text-center text-3xl leading-snug font-semibold whitespace-nowrap">{subtype}</span>
-
-        {name && <span className="text-foreground-muted text-center text-3xl whitespace-nowrap">{name}</span>}
-        {attributes &&
-          Object.entries(attributes).map(([key, value]) => (
-            <span key={key} className="text-foreground-muted text-center text-2xl whitespace-nowrap">
-              {value || key}
-            </span>
-          ))}
+        <span className="text-center leading-snug font-semibold whitespace-nowrap" style={{ fontSize: labelFontSize }}>
+          {subtype}
+        </span>
       </div>
 
       {showTargetHandle && (
