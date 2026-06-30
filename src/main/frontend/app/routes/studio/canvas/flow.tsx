@@ -200,7 +200,7 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
       setSelectedGroupId: store.setSelectedGroupId,
     })),
   )
-  const { elements, ffDoc } = useFFDoc()
+  const { elements } = useFFDoc()
   const elementsRef = useRef(elements)
   const showNodeContextMenuRef = useRef(showNodeContextMenu)
   const navigate = useNavigate()
@@ -1001,16 +1001,12 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
   )
 
   const resolveForwards = useCallback(
-    (subtype: string) => {
-      const element = lookupFrankElement(subtype)
-      if (!element || !ffDoc) return element?.forwards
-      return resolveForwardsWithInheritance(element.forwards, ffDoc.elements)
-    },
-    [lookupFrankElement, ffDoc],
+    (subtype: string) => resolveForwardsWithInheritance(lookupFrankElement(subtype)?.forwards),
+    [lookupFrankElement],
   )
 
-  const importForwardsResolverRef = useRef<ResolveForwards | undefined>(undefined)
-  importForwardsResolverRef.current = ffDoc ? resolveForwards : undefined
+  const importForwardsResolverRef = useRef<ResolveForwards>(resolveForwards)
+  importForwardsResolverRef.current = resolveForwards
 
   const deselectOtherNodes = useCallback(
     (nodeId: string) => {
@@ -1261,10 +1257,7 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
     const width = nodeType === 'exitNode' ? FlowConfig.EXIT_DEFAULT_WIDTH : FlowConfig.NODE_DEFAULT_WIDTH
     const height = nodeType === 'exitNode' ? FlowConfig.EXIT_DEFAULT_HEIGHT : FlowConfig.NODE_MIN_HEIGHT
 
-    const sourceHandles =
-      nodeType === 'frankNode' && ffDoc
-        ? getDefaultSourceHandles(resolveForwards(elementName))
-        : [{ type: 'success', index: 1 }]
+    const sourceHandles = getDefaultSourceHandles(resolveForwards(elementName))
 
     const newNode: FrankNodeType = {
       id: newId.toString(),

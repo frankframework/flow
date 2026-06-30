@@ -64,7 +64,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
   const [dragOver, setDragOver] = useState(false)
   const [canDropDraggedElement, setCanDropDraggedElement] = useState(false)
   const showNodeContextMenu = useNodeContextMenu()
-  const { elements, ffDoc } = useFFDoc()
+  const { elements } = useFFDoc()
   const { xsdDoc } = useFrankConfigXsd()
   const {
     setNodeId,
@@ -87,13 +87,13 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
     const recordElements = elements as Record<string, ElementDetails>
 
     const element = Object.values(recordElements).find((element) => element.name === properties.data.subtype) ?? null
-    if (!element || !ffDoc) return element
+    if (!element) return element
 
     return {
       ...element,
-      forwards: resolveForwardsWithInheritance(element.forwards, ffDoc.elements),
+      forwards: resolveForwardsWithInheritance(element.forwards),
     }
-  }, [elements, ffDoc, properties.data.subtype])
+  }, [elements, properties.data.subtype])
 
   const isDeprecated = frankElement?.deprecated
   const [showDeprecated, setShowDeprecated] = useState(false)

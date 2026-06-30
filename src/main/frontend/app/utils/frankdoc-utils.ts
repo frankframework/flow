@@ -1,7 +1,5 @@
-import type { ElementProperty, FFDocJson } from '@frankframework/doc-library-core'
+import type { ElementProperty } from '@frankframework/doc-library-core'
 import { getHandleTypes } from '~/hooks/use-handle-types'
-
-const FIXED_FORWARD_PIPE_CLASS = 'org.frankframework.pipes.FixedForwardPipe'
 
 const ROUTING_OUTCOME_FORWARDS = new Set([
   'then',
@@ -20,18 +18,14 @@ export interface SourceHandle {
 }
 
 export function resolveForwardsWithInheritance(
-  effectiveForwards: Record<string, ElementProperty> | undefined,
-  rawElements: FFDocJson['elements'],
+  forwards: Record<string, ElementProperty> | undefined,
 ): Record<string, ElementProperty> {
-  const forwards = effectiveForwards ?? {}
+  const resolved = forwards ?? {}
 
-  const fixedForwardPipe = rawElements[FIXED_FORWARD_PIPE_CLASS]
-  if (!fixedForwardPipe?.forwards) return forwards
+  const isRoutingPipe = Object.keys(resolved).some((forward) => ROUTING_OUTCOME_FORWARDS.has(forward))
+  if (isRoutingPipe) return resolved
 
-  const isRoutingPipe = Object.keys(forwards).some((forward) => ROUTING_OUTCOME_FORWARDS.has(forward))
-  if (isRoutingPipe) return forwards
-
-  return { ...fixedForwardPipe.forwards, ...forwards }
+  return { success: {}, ...resolved }
 }
 
 export function getDefaultSourceHandles(resolvedForwards: Record<string, ElementProperty> | undefined): SourceHandle[] {
