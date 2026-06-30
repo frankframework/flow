@@ -1,4 +1,3 @@
-// @vitest-environment node
 import { getDefaultSourceHandles, resolveForwardsWithInheritance } from './frankdoc-utils'
 import type { ElementProperty } from '@frankframework/doc-library-core'
 
