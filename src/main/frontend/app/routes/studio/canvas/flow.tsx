@@ -691,7 +691,7 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
       node.type === 'frankNode' || node.type === 'exitNode' ? { ...node, position: { x: 0, y: 0 } } : node,
     )
     const laidOutNodes = layoutGraph(nodesWithResetPositions, flowStore.edges, 'LR')
-    flowStore.setNodes(laidOutNodes)
+    flowStore.setNodesWithoutHistory(laidOutNodes)
 
     if (pendingSelection) {
       applySelectionToNodes(pendingSelection)
@@ -702,6 +702,9 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
         reactFlowRef.current?.setViewport(freshViewport)
       })
     }
+
+    flowStore.setHistory([])
+    flowStore.setFuture([])
   }, [
     nodesInitialized,
     relayoutNonce,
