@@ -57,7 +57,7 @@ export default function CloneConfigurationModal({
       finalPath = location ? `${location}/${name}` : name
     }
 
-    onClone(repoUrl.trim(), finalPath, token || undefined)
+    onClone(repoUrl.trim(), finalPath, token)
     handleClose()
   }
 
