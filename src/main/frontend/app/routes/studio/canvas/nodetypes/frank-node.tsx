@@ -91,7 +91,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
 
     return {
       ...element,
-      forwards: resolveForwardsWithInheritance(element.forwards),
+      forwards: resolveForwardsWithInheritance(element),
     }
   }, [elements, properties.data.subtype])
 

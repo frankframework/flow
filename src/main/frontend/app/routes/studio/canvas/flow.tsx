@@ -1001,7 +1001,7 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
   )
 
   const resolveForwards = useCallback(
-    (subtype: string) => resolveForwardsWithInheritance(lookupFrankElement(subtype)?.forwards),
+    (subtype: string) => resolveForwardsWithInheritance(lookupFrankElement(subtype)),
     [lookupFrankElement],
   )
 
