@@ -38,14 +38,18 @@ function getBezierControlPoint(
   curvature: number,
 ): Point {
   switch (position) {
-    case 'left':
+    case 'left': {
       return { x: x1 - getBezierControlOffset(x1 - x2, curvature), y: y1 }
-    case 'right':
+    }
+    case 'right': {
       return { x: x1 + getBezierControlOffset(x2 - x1, curvature), y: y1 }
-    case 'top':
+    }
+    case 'top': {
       return { x: x1, y: y1 - getBezierControlOffset(y1 - y2, curvature) }
-    case 'bottom':
+    }
+    case 'bottom': {
       return { x: x1, y: y1 + getBezierControlOffset(y2 - y1, curvature) }
+    }
   }
 }
 

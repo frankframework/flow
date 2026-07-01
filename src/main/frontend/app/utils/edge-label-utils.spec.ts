@@ -5,6 +5,15 @@ import {
   SHORT_EDGE_LABEL_THRESHOLD,
 } from './edge-label-utils'
 
+const horizontal = (length: number) => ({
+  sourceX: 0,
+  sourceY: 0,
+  targetX: length,
+  targetY: 0,
+  sourcePosition: 'right',
+  targetPosition: 'left',
+})
+
 describe('getEdgeLength', () => {
   it('returns the Pythagorean distance between the handles', () => {
     expect(getEdgeLength({ sourceX: 0, sourceY: 0, targetX: 3, targetY: 4 })).toBe(5)
@@ -39,14 +48,6 @@ describe('getPointOnBezierEdge', () => {
 })
 
 describe('getEdgeLabelPositions', () => {
-  const horizontal = (length: number) => ({
-    sourceX: 0,
-    sourceY: 0,
-    targetX: length,
-    targetY: 0,
-    sourcePosition: 'right',
-    targetPosition: 'left',
-  })
   const center = { x: 50, y: 50 }
 
   it('keeps a single centred label for forwards shorter than the threshold', () => {
