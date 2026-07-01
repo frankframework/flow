@@ -1406,6 +1406,7 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
   const handleRightMouseButtonClick = useCallback(
     (event: React.MouseEvent) => {
       event.preventDefault()
+      event.stopPropagation()
       const { screenToFlowPosition } = reactFlow
       const flowPos = screenToFlowPosition({ x: event.clientX, y: event.clientY })
       setContextMenu({ x: event.clientX, y: event.clientY, flowPos })
