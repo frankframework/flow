@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useShortcut } from '~/hooks/use-shortcut'
 import useFlowStore, { isFrankNode } from '~/stores/flow-store'
 import Button from '~/components/inputs/button'
+import Toggle from '~/components/inputs/toggle'
 import { useShallow } from 'zustand/react/shallow'
 import ContextInput from './context-input'
 import { findChildRecursive } from '~/stores/child-utilities'
@@ -312,6 +313,15 @@ export default function NodeContext({
 
   const currentName = inputValues['name'] ?? ''
 
+  const editedNode = !parentId && !childParentId ? nodes.find((node) => node.id === nodeId.toString()) : undefined
+  const canHideForwards = !!editedNode && isFrankNode(editedNode) && !isNewNode
+  const hiddenForwards = editedNode && isFrankNode(editedNode) ? Boolean(editedNode.data.hiddenForwards) : false
+
+  const handleToggleHiddenForwards = (value: boolean) => {
+    useFlowStore.getState().setNodesHiddenForwards([nodeId.toString()], value)
+    void useNodeContextStore.getState().saveFlow?.()
+  }
+
   const categorizedAttributes = (() => {
     if (!attributes) return []
 
@@ -347,6 +357,15 @@ export default function NodeContext({
     <>
       <div className="flex-1 overflow-y-auto px-4">
         {currentName && <h2 className="mb-2 font-semibold">{currentName}</h2>}
+        {canHideForwards && (
+          <div className="bg-background mb-4 flex items-center justify-between gap-4 rounded-md p-4">
+            <div>
+              <p className="text-sm font-medium">Hide forwards</p>
+              <p className="text-foreground-muted text-xs">Hide this node&apos;s forwards to declutter the canvas</p>
+            </div>
+            <Toggle checked={hiddenForwards} onChange={handleToggleHiddenForwards} />
+          </div>
+        )}
         <div className="bg-background w-full space-y-4 rounded-md p-6">
           {categorizedAttributes.map(([key, attribute, originalIndex]) => (
             <div key={originalIndex}>

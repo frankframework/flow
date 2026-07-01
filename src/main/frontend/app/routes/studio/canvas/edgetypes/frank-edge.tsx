@@ -14,6 +14,7 @@ export type FrankEdgeProperties = {
   selected?: boolean
   sourceHandleId?: string | null
   targetHandleId?: string | null
+  data?: { label?: string; faded?: boolean }
   type: string
 }
 
@@ -28,8 +29,10 @@ export default function FrankEdge({
   targetPosition,
   selected,
   sourceHandleId,
+  data,
 }: Readonly<FrankEdgeProperties>) {
   const deleteEdge = useFlowStore((state) => state.deleteEdge)
+  const faded = data?.faded ?? false
 
   const sourceHandleType = useFlowStore((state) => {
     const node = state.nodes.find((n) => n.id === source)
@@ -61,13 +64,20 @@ export default function FrankEdge({
 
   return (
     <>
-      <BaseEdge id={id} path={edgePath} style={{ strokeWidth: 3 }} />
+      <BaseEdge
+        id={id}
+        path={edgePath}
+        style={{ strokeWidth: 3, opacity: faded ? 0 : 1, transition: 'opacity 150ms cubic-bezier(0.4, 0, 0.2, 1)' }}
+        interactionWidth={faded ? 0 : undefined}
+      />
       <EdgeLabelRenderer>
         <div
           style={{
             position: 'absolute',
             transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
-            pointerEvents: 'all',
+            pointerEvents: faded ? 'none' : 'all',
+            opacity: faded ? 0 : 1,
+            transition: 'opacity 150ms cubic-bezier(0.4, 0, 0.2, 1)',
             zIndex: 20,
           }}
           className="nodrag flex flex-col items-center"

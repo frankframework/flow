@@ -76,6 +76,7 @@ export const ALL_SHORTCUTS: Omit<ShortcutDefinition, 'handler'>[] = [
   { id: 'studio.cut', label: 'Cut Selection', scope: 'studio', key: 'x', modifiers: { cmdOrCtrl: true } },
   { id: 'studio.group', label: 'Group Selection', scope: 'studio', key: 'g' },
   { id: 'studio.ungroup', label: 'Ungroup Selection', scope: 'studio', key: 'g', modifiers: { shift: true } },
+  { id: 'studio.hide', label: 'Hide / Show Forwards', scope: 'studio', key: 'h' },
   { id: 'studio.save', label: 'Save Changes', scope: 'studio', key: 's', modifiers: { cmdOrCtrl: true } },
   {
     id: 'studio.close-palette-card',

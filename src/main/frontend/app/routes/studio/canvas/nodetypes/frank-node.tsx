@@ -10,7 +10,8 @@ import {
 } from '@xyflow/react'
 import DangerIcon from '../../../../../icons/solar/Danger Triangle.svg?react'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import useFlowStore from '~/stores/flow-store'
+import { useShallow } from 'zustand/react/shallow'
+import useFlowStore, { isFrankNode } from '~/stores/flow-store'
 import { CustomHandle } from '~/routes/studio/canvas/nodetypes/components/handle'
 import { FlowConfig } from '~/routes/studio/canvas/flow.config'
 import { useNodeContextMenu } from '~/routes/studio/canvas/node-context-menu-context'
@@ -47,6 +48,7 @@ export type FrankNodeType = Node<{
   attributes?: Record<string, string>
   children: ChildNode[]
   manuallyResized?: boolean
+  hiddenForwards?: boolean
 }> & {
   width?: number
   height?: number
@@ -94,6 +96,34 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const dangerTriangleReference = useRef<HTMLDivElement>(null)
   const availableHandleTypes = useHandleTypes(frankElement?.forwards)
+
+  const hoveredNodeId = useNodeContextStore((state) => state.hoveredNodeId)
+  const showAllForwards = useNodeContextStore((state) => state.showAllForwards)
+  const edges = useFlowStore((state) => state.edges)
+  const hiddenForwardNodeIds = useFlowStore(
+    useShallow((state) =>
+      state.nodes.filter((node) => isFrankNode(node) && node.data.hiddenForwards).map((node) => node.id),
+    ),
+  )
+
+  const dimmedHandleIndices = useMemo(() => {
+    const dimmed = new Set<number>()
+    if (hiddenForwardNodeIds.length === 0) return dimmed
+    const hiddenSet = new Set(hiddenForwardNodeIds)
+    const isRevealed = (targetId: string) =>
+      showAllForwards ||
+      hoveredNodeId === targetId ||
+      (hoveredNodeId !== null && edges.some((edge) => edge.source === hoveredNodeId && edge.target === targetId))
+
+    for (const edge of edges) {
+      if (edge.source !== properties.id || !hiddenSet.has(edge.target) || isRevealed(edge.target)) continue
+
+      const handleIndex = Number(edge.sourceHandle)
+      if (!Number.isNaN(handleIndex)) dimmed.add(handleIndex)
+    }
+
+    return dimmed
+  }, [edges, hiddenForwardNodeIds, hoveredNodeId, showAllForwards, properties.id])
 
   const allowedChildNames = useMemo(
     () => (xsdDoc ? new Set(getAllowedChildElementsForElement(xsdDoc, properties.data.subtype)) : null),
@@ -573,6 +603,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
           onChangeType={(newType) => changeHandleType(handle.index, newType)}
           absolutePosition={{ x: properties.positionAbsoluteX, y: properties.positionAbsoluteY }}
           typesAllowed={frankElement?.forwards}
+          dimmed={dimmedHandleIndices.has(handle.index)}
         />
       ))}
       {/* Only show the add handle button if there are available handle types that are not yet used on this node */}

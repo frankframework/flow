@@ -17,6 +17,8 @@ type NodeContextStore = {
   selectedStickyId: string | null
   selectedGroupId: string | null
   saveFlow: (() => Promise<void>) | null
+  hoveredNodeId: string | null
+  showAllForwards: boolean
   setNodeId: (nodeId: number) => void
   setAttributes: (attributes?: Record<string, Attribute>) => void
   setIsEditing: (value: boolean) => void
@@ -33,6 +35,9 @@ type NodeContextStore = {
   setIsMultiSelect: (value: boolean) => void
   setSelectedStickyId: (id: string | null) => void
   setSelectedGroupId: (id: string | null) => void
+  setHoveredNodeId: (id: string | null) => void
+  setShowAllForwards: (value: boolean) => void
+  toggleShowAllForwards: () => void
 }
 
 const useNodeContextStore = create<NodeContextStore>((set) => ({
@@ -51,6 +56,8 @@ const useNodeContextStore = create<NodeContextStore>((set) => ({
   selectedStickyId: null,
   selectedGroupId: null,
   saveFlow: null,
+  hoveredNodeId: null,
+  showAllForwards: false,
   setNodeId: (nodeId) => set({ nodeId }),
   setAttributes: (attributes) => set({ attributes }),
   setIsEditing: (value) => set({ isEditing: value }),
@@ -67,6 +74,9 @@ const useNodeContextStore = create<NodeContextStore>((set) => ({
   setIsMultiSelect: (isMultiSelect) => set({ isMultiSelect }),
   setSelectedStickyId: (selectedStickyId) => set({ selectedStickyId }),
   setSelectedGroupId: (selectedGroupId) => set({ selectedGroupId }),
+  setHoveredNodeId: (id) => set((state) => (state.hoveredNodeId === id ? state : { hoveredNodeId: id })),
+  setShowAllForwards: (showAllForwards) => set({ showAllForwards }),
+  toggleShowAllForwards: () => set((state) => ({ showAllForwards: !state.showAllForwards })),
 }))
 
 export default useNodeContextStore

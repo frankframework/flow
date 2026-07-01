@@ -19,6 +19,7 @@ type NodeData = {
   attributes?: Record<string, string>
   sourceHandles?: []
   children?: ChildNode[]
+  hiddenForwards?: boolean
 }
 
 function hasDataProperty(node: FlowNode): node is Extract<FlowNode, { data: NodeData }> {
@@ -183,6 +184,7 @@ function generateXmlElement(
     'flow:x': String(roundedX),
     'flow:y': String(roundedY),
     ...(height === null ? {} : { 'flow:width': String(width), 'flow:height': String(height) }),
+    ...((node.data as NodeData).hiddenForwards ? { 'flow:hiddenForwards': 'true' } : {}),
   }
   const attrStr = Object.entries(allAttrs)
     .map(([k, v]) => `${k}="${escapeXml(v)}"`)
