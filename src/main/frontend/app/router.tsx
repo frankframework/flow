@@ -1,13 +1,20 @@
-import { createBrowserRouter } from 'react-router'
+import { createBrowserRouter, isRouteErrorResponse, useRouteError } from 'react-router'
 import ConfigurationOverview from '~/routes/configurations/configuration-overview'
 import CodeEditor from '~/routes/editor/editor'
 import Help from '~/routes/help/help'
+import NotFound from '~/routes/notfound/not-found'
 import Settings from '~/routes/settings/settings'
 import Studio from '~/routes/studio/studio'
 import ProjectLanding from './routes/projectlanding/project-landing'
 import AppLayout from './routes/app-layout'
 
 function RootErrorBoundary() {
+  const error = useRouteError()
+
+  if (isRouteErrorResponse(error) && error.status === 404) {
+    return <NotFound />
+  }
+
   return (
     <main className="container mx-auto p-4 pt-16">
       <h1>Oops!</h1>
@@ -49,6 +56,10 @@ export const router = createBrowserRouter([
             element: <Settings />,
           },
         ],
+      },
+      {
+        path: '*',
+        element: <NotFound />,
       },
     ],
   },
