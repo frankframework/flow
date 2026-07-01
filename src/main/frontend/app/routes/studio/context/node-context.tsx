@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useShortcut } from '~/hooks/use-shortcut'
 import useFlowStore, { isFrankNode } from '~/stores/flow-store'
 import Button from '~/components/inputs/button'
+import ContextEditorFooter from '~/components/context-editor-footer'
 import { useShallow } from 'zustand/react/shallow'
 import ContextInput from './context-input'
 import { findChildRecursive } from '~/stores/child-utilities'
@@ -376,29 +377,17 @@ export default function NodeContext({
         </div>
       </div>
 
-      <div className="border-t-border bg-background border-t p-4">
-        <div className="flex w-full items-center justify-between">
-          <Button
-            onClick={handleSave}
-            disabled={!canSave}
-            className="disabled:text-foreground-muted w-auto disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            Save & Close
+      <ContextEditorFooter
+        onSave={handleSave}
+        saveDisabled={!canSave}
+        onDelete={handleDiscard}
+        errorMessage={canSave ? undefined : errorMessage}
+        leadingActions={
+          <Button className="flex w-auto items-center gap-1.5" title="Show in Editor" onClick={handleShowInEditor}>
+            <CodeIcon className="my-1 h-4 w-4 fill-current" />
           </Button>
-
-          <div className="flex items-center gap-2">
-            <Button className="flex w-auto items-center gap-1.5" title="Show in Editor" onClick={handleShowInEditor}>
-              <CodeIcon className="my-1 h-4 w-4 fill-current" />
-            </Button>
-
-            <Button className="w-auto" onClick={handleDiscard}>
-              Delete
-            </Button>
-          </div>
-        </div>
-
-        {!canSave && errorMessage && <p className="mt-2 text-sm text-red-600">{errorMessage}</p>}
-      </div>
+        }
+      />
     </>
   )
 }

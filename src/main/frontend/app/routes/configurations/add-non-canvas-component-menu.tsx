@@ -6,7 +6,7 @@ import Search from '~/components/search/search'
 import { useFrankConfigXsd } from '~/providers/frankconfig-xsd-provider'
 import { getAddableNonCanvasComponentNames } from '~/services/non-canvas-component-service'
 
-interface AddNonCanvasComponentMenuProperties {
+type AddNonCanvasComponentMenuProperties = {
   isOpen: boolean
   onClose: () => void
   onSelect: (tagName: string) => void

@@ -1,15 +1,15 @@
 import { useEffect, useState } from 'react'
-import Button from '~/components/inputs/button'
 import Input from '~/components/inputs/input'
+import ContextEditorFooter from '~/components/context-editor-footer'
 import { deleteAdapter, renameAdapter } from '~/services/adapter-service'
 
-export interface AdapterEditorState {
+export type AdapterEditorState = {
   configPath: string
   adapterName: string
   adapterPosition: number
 }
 
-interface AdapterContextProperties {
+type AdapterContextProperties = {
   projectName: string
   editor: AdapterEditorState
   onSaved: () => void
@@ -80,23 +80,14 @@ export default function AdapterContext({
         </div>
       </div>
 
-      <div className="border-t-border bg-background border-t p-4">
-        <div className="flex w-full items-center justify-between">
-          <Button
-            onClick={handleSave}
-            disabled={!canSave}
-            className="disabled:text-foreground-muted w-auto disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {isSaving ? 'Saving...' : 'Save & Close'}
-          </Button>
-
-          <Button className="w-auto" onClick={handleDelete} disabled={isSaving}>
-            Delete
-          </Button>
-        </div>
-
-        {errorMessage && <p className="text-error mt-2 text-sm">{errorMessage}</p>}
-      </div>
+      <ContextEditorFooter
+        onSave={handleSave}
+        saveDisabled={!canSave}
+        saveLabel={isSaving ? 'Saving...' : 'Save & Close'}
+        onDelete={handleDelete}
+        deleteDisabled={isSaving}
+        errorMessage={errorMessage}
+      />
     </div>
   )
 }

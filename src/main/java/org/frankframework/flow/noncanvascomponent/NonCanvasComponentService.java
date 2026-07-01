@@ -99,7 +99,7 @@ public class NonCanvasComponentService {
 			String repairedContent = XmlConfigurationUtils.repairFlowNamespace(content);
 			return XmlSecurityUtils.createSecureDocumentBuilder().parse(new InputSource(new StringReader(repairedContent)));
 		} catch (IOException | ParserConfigurationException | SAXException exception) {
-			throw new ApiException("Failed to read configuration: " + exception.getMessage(), HttpStatus.BAD_REQUEST);
+			throw new ApiException("Failed to read configuration: " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
 
@@ -110,7 +110,7 @@ public class NonCanvasComponentService {
 			String updatedContent = XmlConfigurationUtils.convertNodeToString(configurationDocument);
 			fileSystemStorage.writeFile(absolutePath.toString(), updatedContent);
 		} catch (TransformerException | IOException exception) {
-			throw new ApiException("Failed to write configuration: " + exception.getMessage(), HttpStatus.BAD_REQUEST);
+			throw new ApiException("Failed to write configuration: " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
 

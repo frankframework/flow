@@ -4,9 +4,7 @@ import {
   type NonCanvasComponent,
 } from '~/services/non-canvas-component-service'
 
-const PATH_SEPARATOR = '\n'
-
-interface NonCanvasComponentsState {
+type NonCanvasComponentsState = {
   componentsByPath: Record<string, NonCanvasComponent[]>
   loadingByPath: Record<string, boolean>
   replaceComponents: (configurationPath: string, components: NonCanvasComponent[]) => void
@@ -15,10 +13,10 @@ interface NonCanvasComponentsState {
 export function useNonCanvasComponents(projectName: string, configurationPaths: string[]): NonCanvasComponentsState {
   const [componentsByPath, setComponentsByPath] = useState<Record<string, NonCanvasComponent[]>>({})
   const [loadingByPath, setLoadingByPath] = useState<Record<string, boolean>>({})
-  const pathsKey = configurationPaths.join(PATH_SEPARATOR)
+  const pathsKey = JSON.stringify(configurationPaths)
 
   useEffect(() => {
-    const paths = pathsKey ? pathsKey.split(PATH_SEPARATOR) : []
+    const paths: string[] = JSON.parse(pathsKey)
     const controller = new AbortController()
 
     setLoadingByPath(Object.fromEntries(paths.map((path) => [path, true])))

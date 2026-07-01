@@ -7,6 +7,7 @@ import {
 } from '@frankframework/doc-library-core'
 import Button from '~/components/inputs/button'
 import ContextInput from '~/routes/studio/context/context-input'
+import ContextEditorFooter from '~/components/context-editor-footer'
 import LoadingSpinner from '~/components/loading-spinner'
 import {
   addNonCanvasComponent,
@@ -15,7 +16,7 @@ import {
   type NonCanvasComponent,
 } from '~/services/non-canvas-component-service'
 
-export interface NonCanvasComponentEditorState {
+export type NonCanvasComponentEditorState = {
   mode: 'add' | 'edit'
   configPath: string
   tagName: string
@@ -23,7 +24,7 @@ export interface NonCanvasComponentEditorState {
   initialAttributes?: Record<string, string>
 }
 
-interface NonCanvasComponentContextProperties {
+type NonCanvasComponentContextProperties = {
   projectName: string
   editor: NonCanvasComponentEditorState
   onSaved: (components: NonCanvasComponent[]) => void
@@ -223,23 +224,14 @@ export default function NonCanvasComponentContext({
         </div>
       </div>
 
-      <div className="border-t-border bg-background border-t p-4">
-        <div className="flex w-full items-center justify-between">
-          <Button
-            onClick={handleSave}
-            disabled={!canSave || isSaving}
-            className="disabled:text-foreground-muted w-auto disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {isSaving ? 'Saving...' : 'Save & Close'}
-          </Button>
-
-          <Button className="w-auto" onClick={mode === 'edit' ? handleDelete : onClose} disabled={isSaving}>
-            Delete
-          </Button>
-        </div>
-
-        {errorMessage && <p className="text-error mt-2 text-sm">{errorMessage}</p>}
-      </div>
+      <ContextEditorFooter
+        onSave={handleSave}
+        saveDisabled={!canSave || isSaving}
+        saveLabel={isSaving ? 'Saving...' : 'Save & Close'}
+        onDelete={mode === 'edit' ? handleDelete : onClose}
+        deleteDisabled={isSaving}
+        errorMessage={errorMessage}
+      />
     </div>
   )
 }

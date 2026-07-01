@@ -156,14 +156,14 @@ class NonCanvasComponentServiceTest {
 	}
 
 	@Test
-	void getNonCanvasComponents_malformedXml_throwsBadRequest() throws Exception {
+	void getNonCanvasComponents_malformedXml_throwsInternalServerError() throws Exception {
 		stubToAbsolutePath();
 		stubReadFile();
 		Path file = writeConfiguration("<Configuration><unclosed></Configuration>");
 
 		ApiException exception =
 				assertThrows(ApiException.class, () -> nonCanvasComponentService.getNonCanvasComponents(file.toString()));
-		assertEquals(HttpStatus.BAD_REQUEST, exception.getStatus());
+		assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, exception.getStatus());
 	}
 
 	@Test

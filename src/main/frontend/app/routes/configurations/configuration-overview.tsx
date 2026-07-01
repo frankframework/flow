@@ -21,9 +21,10 @@ import NonCanvasComponentPalette from './non-canvas-component-palette'
 import AddNonCanvasComponentMenu from './add-non-canvas-component-menu'
 import type { NonCanvasComponent } from '~/services/non-canvas-component-service'
 import { useNonCanvasComponents } from './use-non-canvas-components'
+import { relativeTo } from '~/utils/path-utils'
+import { isRootConfiguration } from './configuration-utils'
 
 const SIDEBAR_NAME = 'configuration-overview-v2'
-import { relativeTo } from '~/utils/path-utils'
 
 type ConfigurationFile = {
   path: string
@@ -197,8 +198,8 @@ export default function ConfigurationOverview() {
     }))
 
     return files.toSorted((a, b) => {
-      const aIsRoot = a.relativePath.split(/[/\\]/).pop()?.toLowerCase() === 'configuration.xml'
-      const bIsRoot = b.relativePath.split(/[/\\]/).pop()?.toLowerCase() === 'configuration.xml'
+      const aIsRoot = isRootConfiguration(a.relativePath)
+      const bIsRoot = isRootConfiguration(b.relativePath)
       if (aIsRoot === bIsRoot) return 0
       return aIsRoot ? -1 : 1
     })
