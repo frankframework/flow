@@ -1,4 +1,4 @@
-import { zip } from 'fflate'
+import { zipSync } from 'fflate'
 import { apiFetch, apiUrl } from '~/utils/api'
 import type { ConfigurationProject } from '~/types/project.types'
 
@@ -105,11 +105,6 @@ export async function importProjectFolder(files: FileList, maxImportBytes: numbe
   })
 }
 
-function zipAsync(entries: Record<string, Uint8Array>): Promise<Uint8Array<ArrayBuffer>> {
-  return new Promise((resolve, reject) => {
-    zip(entries, { level: 6 }, (error, data) => {
-      if (error) reject(error)
-      else resolve(data as Uint8Array<ArrayBuffer>)
-    })
-  })
+async function zipAsync(entries: Record<string, Uint8Array>): Promise<Uint8Array<ArrayBuffer>> {
+  return zipSync(entries, { level: 6 }) as Uint8Array<ArrayBuffer>
 }
