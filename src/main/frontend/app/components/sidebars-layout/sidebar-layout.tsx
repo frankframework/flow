@@ -43,7 +43,6 @@ export default function SidebarLayout({
 
     const target = sizes.map((size, index) => (visible[index] ? size : 0))
     if (hideLeft) target.shift()
-    console.log(target)
     allotmentRef.current.resize(target)
   }, [sizes, visible, allotmentReady, hideLeft])
 
