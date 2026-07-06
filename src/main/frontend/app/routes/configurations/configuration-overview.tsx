@@ -330,7 +330,7 @@ export default function ConfigurationOverview() {
             <div />
           </div>
 
-          <div className="flex-1 overflow-y-auto p-6">
+          <div className="bg-backdrop flex-1 overflow-y-auto p-6">
             <div className="flex w-full flex-col gap-4">
               {filteredConfigurationFiles.map((file) => (
                 <ConfigurationFileTile

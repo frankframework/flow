@@ -15,12 +15,10 @@ export default function ComponentRow({
   action,
 }: Readonly<ComponentRowProperties>) {
   return (
-    <li className="border-border bg-background hover:bg-hover flex items-stretch justify-between gap-2 rounded border shadow-md transition-colors">
-      <Button
-        variant="unstyled"
-        type="button"
+    <span className="flex w-full items-stretch gap-2 transition-colors">
+      <span
         onClick={onConfigure}
-        className="flex min-w-0 flex-1 cursor-pointer flex-col justify-center gap-0.5 px-4 py-3 text-left"
+        className="hover:bg-hover flex min-w-0 flex-1 cursor-pointer flex-col justify-center gap-0.5 rounded px-4 py-3 text-left"
         title={`Configure ${primaryLabel}`}
       >
         {typeLabel && (
@@ -29,8 +27,8 @@ export default function ComponentRow({
         <span className="text-foreground truncate text-base" title={primaryLabel}>
           {primaryLabel}
         </span>
-      </Button>
-      {action && <div className="flex shrink-0 items-center pr-2">{action}</div>}
-    </li>
+      </span>
+      {action && <div className="flex shrink-0 items-center">{action}</div>}
+    </span>
   )
 }

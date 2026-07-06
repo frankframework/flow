@@ -13,6 +13,7 @@ import { type NonCanvasComponent } from '~/services/non-canvas-component-service
 import { isRootConfiguration } from './configuration-utils'
 import AdapterListItem from './adapter-list-item'
 import ComponentListItem from './component-list-item'
+import { frankdocChipStyle } from '~/utils/flow-utils'
 
 type ConfigurationFileTileProperties = {
   filepath: string
@@ -136,7 +137,7 @@ export default function ConfigurationFileTile({
 
   return (
     <div
-      className={`bg-background relative flex w-full flex-col gap-4 rounded border p-6 shadow-md transition-colors ${dropZoneClasses}`}
+      className={`bg-background relative flex w-full flex-col gap-4 rounded border p-6 transition-colors ${dropZoneClasses}`}
       onDragEnter={handleDragEnter}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
@@ -153,7 +154,10 @@ export default function ConfigurationFileTile({
             {relativePath}
           </p>
           {isRootConfiguration(relativePath) && (
-            <span className="rounded bg-green-500 px-2 py-0.5 text-xs font-bold text-black dark:bg-green-800 dark:text-green-200">
+            <span
+              className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px]"
+              style={frankdocChipStyle('root')}
+            >
               Root
             </span>
           )}
@@ -163,12 +167,7 @@ export default function ConfigurationFileTile({
         </IconButton>
       </div>
 
-      <div className="flex min-h-0 flex-col gap-2">
-        <p className="text-foreground-muted text-xs font-semibold tracking-wider uppercase">
-          Adapters &amp; components
-        </p>
-        <div className="border-border max-h-96 overflow-y-auto rounded border p-3 inset-shadow-sm">{componentList}</div>
-      </div>
+      <div className="border-border flex min-h-0 flex-col gap-2 border-t pt-4">{componentList}</div>
 
       <div className="border-border flex items-center justify-between border-t pt-4">
         <IconLabelButton
