@@ -1,4 +1,5 @@
 import {
+  type Edge,
   Handle,
   type Node,
   type NodeProps,
@@ -52,6 +53,17 @@ export type FrankNodeType = Node<{
 }> & {
   width?: number
   height?: number
+}
+
+function isForwardRevealed(
+  targetId: string,
+  hoveredNodeId: string | null,
+  showAllForwards: boolean,
+  edges: Edge[],
+): boolean {
+  if (showAllForwards || hoveredNodeId === targetId) return true
+
+  return hoveredNodeId !== null && edges.some((edge) => edge.source === hoveredNodeId && edge.target === targetId)
 }
 
 export default function FrankNode(properties: NodeProps<FrankNodeType>) {
@@ -110,13 +122,14 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
     const dimmed = new Set<number>()
     if (hiddenForwardNodeIds.length === 0) return dimmed
     const hiddenSet = new Set(hiddenForwardNodeIds)
-    const isRevealed = (targetId: string) =>
-      showAllForwards ||
-      hoveredNodeId === targetId ||
-      (hoveredNodeId !== null && edges.some((edge) => edge.source === hoveredNodeId && edge.target === targetId))
 
     for (const edge of edges) {
-      if (edge.source !== properties.id || !hiddenSet.has(edge.target) || isRevealed(edge.target)) continue
+      if (
+        edge.source !== properties.id ||
+        !hiddenSet.has(edge.target) ||
+        isForwardRevealed(edge.target, hoveredNodeId, showAllForwards, edges)
+      )
+        continue
 
       const handleIndex = Number(edge.sourceHandle)
       if (!Number.isNaN(handleIndex)) dimmed.add(handleIndex)
