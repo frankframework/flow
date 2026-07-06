@@ -108,7 +108,8 @@ export type ResolveForwards = (subtype: string) => Record<string, ElementPropert
 
 function supportsSuccessForward(subtype: string, resolveForwards?: ResolveForwards): boolean {
   const forwards = resolveForwards?.(subtype)
-  return forwards ? 'success' in forwards : true
+  if (!forwards || Object.keys(forwards).length === 0) return true
+  return 'success' in forwards
 }
 
 export async function convertAdapterXmlToJson(adapter: Element, resolveForwards?: ResolveForwards) {
@@ -467,7 +468,8 @@ export function extractSourceHandles(element: Element, resolveForwards?: Resolve
   if (forwardElements.length === 0) {
     forwardElements = [...element.querySelectorAll('forward')]
     if (forwardElements.length === 0) {
-      return forwards ? getDefaultSourceHandles(forwards) : [{ type: 'success', index: 1 }]
+      const hasForwards = forwards && Object.keys(forwards).length > 0
+      return hasForwards ? getDefaultSourceHandles(forwards) : [{ type: 'success', index: 1 }]
     }
   }
 

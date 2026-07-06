@@ -200,7 +200,7 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
       setSelectedGroupId: store.setSelectedGroupId,
     })),
   )
-  const { elements } = useFFDoc()
+  const { elements, ffDoc } = useFFDoc()
   const elementsRef = useRef(elements)
   const showNodeContextMenuRef = useRef(showNodeContextMenu)
   const navigate = useNavigate()
@@ -1001,8 +1001,8 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
   )
 
   const resolveForwards = useCallback(
-    (subtype: string) => resolveForwardsWithInheritance(lookupFrankElement(subtype)),
-    [lookupFrankElement],
+    (subtype: string) => resolveForwardsWithInheritance(lookupFrankElement(subtype), ffDoc?.elements, ffDoc?.enums),
+    [lookupFrankElement, ffDoc],
   )
 
   const importForwardsResolverRef = useRef<ResolveForwards>(resolveForwards)

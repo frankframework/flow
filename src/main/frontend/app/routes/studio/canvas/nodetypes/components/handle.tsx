@@ -24,10 +24,12 @@ const SEMANTIC_COLOURS: Record<string, string> = {
 const GREEN_BAND_START = 95
 const GREEN_BAND_SIZE = 70
 
+const HASH_MULTIPLIER = 31
+
 function colourFromName(type: string): string {
   let hash = 0
   for (const character of type) {
-    hash = (hash * 31 + (character.codePointAt(0) ?? 0)) % (360 - GREEN_BAND_SIZE)
+    hash = (hash * HASH_MULTIPLIER + (character.codePointAt(0) ?? 0)) % (360 - GREEN_BAND_SIZE)
   }
   const hue = hash < GREEN_BAND_START ? hash : hash + GREEN_BAND_SIZE
   return `hsl(${hue}, 65%, 52%)`

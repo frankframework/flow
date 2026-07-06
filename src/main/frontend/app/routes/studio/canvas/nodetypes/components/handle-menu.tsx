@@ -57,7 +57,7 @@ export default function HandleMenu({
   return createPortal(
     <div
       ref={menuRef}
-      className="nodrag bg-background border-border absolute rounded border shadow-md"
+      className="nodrag bg-background border-border absolute z-5 rounded border shadow-md"
       style={{
         left: `${position.x + 10}px`,
         top: `${position.y - 5}px`,
