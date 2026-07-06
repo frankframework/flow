@@ -1,8 +1,9 @@
 import { createPortal } from 'react-dom'
+import { useSubmitOnEnter } from '~/hooks/use-submit-on-enter'
 import Button from '../inputs/button'
 import Search from '~/components/search/search'
 import type { ElementDetails } from '@frankframework/doc-library-core'
-import { useMemo, useState, type ChangeEvent } from 'react'
+import { useEffect, useMemo, useState, type ChangeEvent } from 'react'
 
 type AddSubcomponentModalProps = {
   isOpen: boolean
@@ -26,7 +27,14 @@ export default function AddSubcomponentModal({
       .toSorted((a, b) => a.name.localeCompare(b.name))
   }, [possibleChildren, search])
 
-  if (!isOpen) return null
+  useEffect(() => {
+    if (!isOpen) return
+    setSelectedElement((current) =>
+      current && filteredChildren.some((child) => child.name === current.name)
+        ? current
+        : (filteredChildren[0] ?? null),
+    )
+  }, [isOpen, filteredChildren])
 
   const handleClose = (event: React.MouseEvent<HTMLDivElement>) => {
     if (event.target === event.currentTarget) {
@@ -63,6 +71,10 @@ export default function AddSubcomponentModal({
     setSelectedElement(null)
   }
 
+  useSubmitOnEnter(handleAddChild, isOpen)
+
+  if (!isOpen) return null
+
   return createPortal(
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40" onClick={handleClose}>
       <div className="bg-background border-border relative flex h-1/2 w-1/3 min-w-[400px] flex-col rounded-lg border p-6 shadow-lg">
@@ -81,7 +93,7 @@ export default function AddSubcomponentModal({
         <h2 className="mb-4 text-lg font-bold">Add Subcomponent</h2>
 
         {/* Paragraph / content */}
-        <Search placeholder="Search elements..." value={search} onChange={handleOnChange} />
+        <Search autoFocus placeholder="Search elements..." value={search} onChange={handleOnChange} />
         <div className="border-border bg-background mb-3 w-full flex-1 overflow-hidden rounded border">
           <ul className="h-full overflow-y-auto">
             {filteredChildren.length > 0 ? (

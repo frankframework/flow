@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useSubmitOnEnter } from '~/hooks/use-submit-on-enter'
 import DirectoryPicker from '~/components/directory-picker/directory-picker'
 import Button from '~/components/inputs/button'
 import CloseButton from '~/components/inputs/close-button'
@@ -68,6 +69,8 @@ export default function CloneConfigurationModal({
     setShowPicker(false)
     onClose()
   }
+
+  useSubmitOnEnter(handleClone, !showPicker)
 
   return (
     <>

@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { useSubmitOnEnter } from '~/hooks/use-submit-on-enter'
 import Button from '~/components/inputs/button'
 import ValidatedInput from '~/components/inputs/validatedInput'
 
@@ -53,11 +54,10 @@ export default function NameInputDialog({
     onSubmit(value.trim())
   }
 
+  useSubmitOnEnter(handleSubmit)
+
   const handleKeyDown = (event: React.KeyboardEvent) => {
-    if (event.key === 'Enter') {
-      event.preventDefault()
-      handleSubmit()
-    } else if (event.key === 'Escape') {
+    if (event.key === 'Escape') {
       event.preventDefault()
       onCancel()
     }

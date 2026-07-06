@@ -96,7 +96,6 @@ export const ALL_SHORTCUTS: Omit<ShortcutDefinition, 'handler'>[] = [
     label: 'Save Node',
     scope: 'studio',
     key: 'enter',
-    modifiers: { cmdOrCtrl: true },
     allowInInput: true,
   },
   {

@@ -9,6 +9,7 @@ type SearchProperties = {
   value?: string
   className?: string
   inputClassName?: string
+  autoFocus?: boolean
   onChange: (event: React.ChangeEvent<HTMLInputElement>) => void
   onKeyDown?: (event: React.KeyboardEvent<HTMLInputElement>) => void
 }
@@ -20,6 +21,7 @@ export default function Search({
   value,
   className,
   inputClassName,
+  autoFocus,
   onChange,
   onKeyDown,
 }: Readonly<SearchProperties>) {
@@ -36,6 +38,7 @@ export default function Search({
           type={type}
           placeholder={placeholder}
           value={value}
+          autoFocus={autoFocus}
           onChange={onChange}
           onKeyDown={onKeyDown}
           wrapperClassName="rounded-full"
