@@ -2,12 +2,12 @@ import { getInheritedProperties } from '@frankframework/doc-library-core'
 import type { ElementClass, ElementProperty, EnumValue } from '@frankframework/doc-library-core'
 import { getHandleTypes } from '~/hooks/use-handle-types'
 
-export interface SourceHandle {
+export type SourceHandle = {
   type: string
   index: number
 }
 
-interface ForwardSource {
+type ForwardSource = {
   forwards?: Record<string, ElementProperty>
   labels?: Record<string, string>
   parent?: string
