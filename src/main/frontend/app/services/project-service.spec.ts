@@ -6,7 +6,11 @@ vi.mock('../utils/api', () => ({
 }))
 
 vi.mock('fflate', () => ({
-  zipSync: (_entries: Record<string, Uint8Array>, _options: unknown) => new Uint8Array(8),
+  zip: (
+    _entries: Record<string, Uint8Array>,
+    _options: unknown,
+    callback: (error: Error | null, data: Uint8Array) => void,
+  ) => callback(null, new Uint8Array(8)),
 }))
 
 function makeFile(relativePath: string, sizeOverride?: number): File {
