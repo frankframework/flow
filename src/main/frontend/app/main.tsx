@@ -5,8 +5,8 @@ import { Toast } from '~/components/toast'
 import { useTheme } from '~/hooks/use-theme'
 import { useProjectStore } from '~/stores/project-store'
 import { router } from './router'
-import './app.css'
 import 'allotment/dist/style.css'
+import './app.css'
 
 function TitleSync() {
   const project = useProjectStore((state) => state.project)
