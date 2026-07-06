@@ -1,6 +1,6 @@
 import React, { createContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Allotment, type AllotmentHandle } from 'allotment'
-import { SidebarSide, useSidebarStore, type VisibilityState } from '~/stores/sidebar-layout-store'
+import { SidebarSide, useSidebarStore, type VisibilityState } from '~/components/sidebars-layout/sidebar-layout-store'
 
 export const SidebarContext = createContext<string | undefined>(undefined)
 
@@ -42,8 +42,10 @@ export default function SidebarLayout({
     if (sizes.length === 0) return
 
     const target = sizes.map((size, index) => (visible[index] ? size : 0))
+    if (hideLeft) target.shift()
+    console.log(target)
     allotmentRef.current.resize(target)
-  }, [sizes, visible, allotmentReady])
+  }, [sizes, visible, allotmentReady, hideLeft])
 
   const handleVisibilityChange = (index: SidebarSide, value: boolean) => {
     setVisible(name, index, value)
@@ -71,17 +73,20 @@ export default function SidebarLayout({
           onChange={onChangeHandler}
           onDragEnd={saveSizes}
           onVisibleChange={handleVisibilityChange}
+          proportionalLayout={false}
         >
-          <Allotment.Pane
-            snap
-            minSize={200}
-            maxSize={500}
-            preferredSize={300}
-            visible={!hideLeft && visible[SidebarSide.LEFT]}
-            className="bg-background flex h-full flex-col"
-          >
-            {childrenArray[SidebarSide.LEFT]}
-          </Allotment.Pane>
+          {hideLeft || (
+            <Allotment.Pane
+              snap
+              minSize={200}
+              maxSize={500}
+              preferredSize={300}
+              visible={visible[SidebarSide.LEFT]}
+              className="bg-background flex h-full flex-col"
+            >
+              {childrenArray[SidebarSide.LEFT]}
+            </Allotment.Pane>
+          )}
           <Allotment.Pane className="bg-backdrop flex h-full flex-col">
             {childrenArray[SidebarSide.MIDDLE]}
           </Allotment.Pane>

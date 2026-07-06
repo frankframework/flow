@@ -54,7 +54,7 @@ import { showErrorToast } from '~/components/toast'
 import { useSettingsStore } from '~/stores/settings-store'
 import { useShortcut } from '~/hooks/use-shortcut'
 import CanvasContextMenu from '~/components/flow/canvas-context-menu'
-import { useSidebarStore, SidebarSide } from '~/stores/sidebar-layout-store'
+import { useSidebarStore, SidebarSide } from '~/components/sidebars-layout/sidebar-layout-store'
 import { openInEditorAtElement } from '~/actions/navigationActions'
 import HandleMenu from '~/routes/studio/canvas/nodetypes/components/handle-menu'
 

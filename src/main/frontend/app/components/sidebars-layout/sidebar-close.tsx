@@ -1,5 +1,5 @@
 import SidebarIcon from '/icons/solar/Sidebar Minimalistic.svg?react'
-import { SidebarSide, useSidebarStore } from '~/stores/sidebar-layout-store'
+import { SidebarSide, useSidebarStore } from '~/components/sidebars-layout/sidebar-layout-store'
 import clsx from 'clsx'
 import { useContext } from 'react'
 import { SidebarContext } from '~/components/sidebars-layout/sidebar-layout'
