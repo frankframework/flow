@@ -63,7 +63,7 @@ export default function ZoomedOutNode({
           </span>
         </div>
 
-        <span className="text-center leading-snug font-semibold whitespace-nowrap" style={{ fontSize: labelFontSize }}>
+        <span className="text-center leading-snug font-medium whitespace-nowrap" style={{ fontSize: labelFontSize }}>
           {subtype}
         </span>
       </div>
