@@ -22,7 +22,7 @@ type NodeData = {
   hiddenForwards?: boolean
 }
 
-function hasDataProperty(node: FlowNode): node is Extract<FlowNode, { data: NodeData }> {
+function hasDataProperty(node: FlowNode): node is FlowNode & { data: NodeData } {
   return (node as FlowNode).data != undefined
 }
 

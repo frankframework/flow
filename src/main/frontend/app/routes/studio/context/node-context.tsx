@@ -359,9 +359,9 @@ export default function NodeContext({
   return (
     <>
       <div className="flex-1 overflow-y-auto px-4">
-        {currentName && <h2 className="mb-2 font-semibold">{currentName}</h2>}
+        {currentName && <h2 className="mb-2 ms-4 font-semibold">{currentName}</h2>}
         {canHideForwards && (
-          <div className="bg-background mb-4 flex items-center justify-between gap-4 rounded-md p-4">
+          <div className="bg-background flex items-center justify-between gap-2 rounded-md p-4">
             <div>
               <p className="text-sm font-medium">{isExit ? 'Hide exit' : 'Hide forwards'}</p>
               <p className="text-foreground-muted text-xs">
@@ -373,7 +373,7 @@ export default function NodeContext({
             <Toggle checked={hiddenForwards} onChange={handleToggleHiddenForwards} />
           </div>
         )}
-        <div className="bg-background w-full space-y-4 rounded-md p-6">
+        <div className="bg-background w-full space-y-4 rounded-md px-4 py-1">
           {categorizedAttributes.map(([key, attribute, originalIndex]) => (
             <div key={originalIndex}>
               <ContextInput
