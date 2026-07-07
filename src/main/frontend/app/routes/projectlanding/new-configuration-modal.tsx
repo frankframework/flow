@@ -1,9 +1,13 @@
 import { useState, useEffect } from 'react'
+import { useSubmitOnEnter } from '~/hooks/use-submit-on-enter'
 import DirectoryPicker from '~/components/directory-picker/directory-picker'
 import Button from '~/components/inputs/button'
 import CloseButton from '~/components/inputs/close-button'
 import Input from '~/components/inputs/input'
+import ValidatedInput from '~/components/inputs/validatedInput'
+import { PROJECT_NAME_PATTERNS } from '~/components/file-structure/name-input-dialog'
 import { filesystemService } from '~/services/filesystem-service'
+import { joinPath, normalizePath, stripTrailingSeparators } from '~/utils/path-utils'
 
 type NewProjectModalProperties = {
   isLocal: boolean
@@ -12,8 +16,6 @@ type NewProjectModalProperties = {
   initialPath: string
 }
 
-const CONFIG_DIR = 'src/main/configurations'
-
 export default function NewConfigurationModal({
   isLocal,
   onClose,
@@ -21,6 +23,7 @@ export default function NewConfigurationModal({
   initialPath,
 }: Readonly<NewProjectModalProperties>) {
   const [name, setName] = useState('')
+  const [isNameValid, setIsNameValid] = useState(false)
   const [location, setLocation] = useState('')
   const [showPicker, setShowPicker] = useState(false)
 
@@ -32,14 +35,14 @@ export default function NewConfigurationModal({
 
     filesystemService
       .resolveNearestAccessiblePath(initialPath)
-      .then(setLocation)
+      .then((resolved) => setLocation(normalizePath(resolved)))
       .catch(() => setLocation(''))
   }, [isLocal, initialPath])
 
   const handleCreate = () => {
-    if (!name.trim() || (isLocal && !location)) return
+    if (!isNameValid || !name.trim() || (isLocal && !location)) return
     const trimmedName = name.trim()
-    onCreate(trimmedName, location ?? '')
+    onCreate(trimmedName, stripTrailingSeparators(location ?? ''))
     handleClose()
   }
 
@@ -49,6 +52,8 @@ export default function NewConfigurationModal({
     setShowPicker(false)
     onClose()
   }
+
+  useSubmitOnEnter(handleCreate, !showPicker)
 
   return (
     <>
@@ -77,8 +82,10 @@ export default function NewConfigurationModal({
 
           <div className="mb-4">
             <label className="mb-1 block text-sm font-medium">Configuration Name</label>
-            <Input
+            <ValidatedInput
               value={name}
+              patterns={PROJECT_NAME_PATTERNS}
+              onValidChange={setIsNameValid}
               onChange={(event) => setName(event.target.value)}
               placeholder="Enter configuration name"
             />
@@ -94,7 +101,7 @@ export default function NewConfigurationModal({
           <div className="flex gap-2">
             <Button
               onClick={handleCreate}
-              disabled={!name.trim() || (isLocal && !location)}
+              disabled={!isNameValid || !name.trim() || (isLocal && !location)}
               className="disabled:text-foreground-muted disabled:cursor-not-allowed disabled:opacity-50"
             >
               Create Configuration
@@ -108,7 +115,7 @@ export default function NewConfigurationModal({
       {showPicker && (
         <DirectoryPicker
           onSelect={(path) => {
-            setLocation(path)
+            setLocation(normalizePath(path))
             setShowPicker(false)
           }}
           onCancel={() => setShowPicker(false)}
@@ -120,9 +127,6 @@ export default function NewConfigurationModal({
 }
 
 function getConfigurationPath(location: string, name: string, isLocal: boolean) {
-  let configPath = isLocal ? location.replace('\\', '/') : location
-  if (!configPath.endsWith(CONFIG_DIR)) {
-    configPath = `${configPath}/${CONFIG_DIR}`
-  }
-  return `${configPath}/${name.trim()}`
+  const base = isLocal ? normalizePath(location) : location
+  return joinPath(base, name.trim())
 }

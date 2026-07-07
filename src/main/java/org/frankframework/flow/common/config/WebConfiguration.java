@@ -5,8 +5,11 @@ import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
+import jakarta.servlet.MultipartConfigElement;
+import org.frankframework.flow.project.ImportProperties;
 import org.frankframework.management.gateway.InputStreamHttpMessageConverter;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.converter.FormHttpMessageConverter;
@@ -20,9 +23,12 @@ import org.springframework.web.servlet.config.annotation.PathMatchConfigurer;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
+@EnableConfigurationProperties(ImportProperties.class)
 public class WebConfiguration implements WebMvcConfigurer {
 
 	private static final long MAX_AGE_SECONDS = 3600;
+
+	private static final long MULTIPART_REQUEST_HEADROOM_BYTES = 5L * 1024 * 1024;
 
 	@Value("${cors.allowed.origins:}")
 	private String[] allowedOrigins;
@@ -59,6 +65,12 @@ public class WebConfiguration implements WebMvcConfigurer {
 		builder.addCustomConverter(new FormHttpMessageConverter());
 	}
 
+	@Bean
+	public MultipartConfigElement multipartConfigElement(ImportProperties importProperties) {
+		long maxFileSize = importProperties.maxUploadSize().toBytes();
+		long maxRequestSize = maxFileSize + MULTIPART_REQUEST_HEADROOM_BYTES;
+		return new MultipartConfigElement(null, maxFileSize, maxRequestSize, 0);
+	}
 
 	@Bean
 	public ObjectMapper objectMapper() {

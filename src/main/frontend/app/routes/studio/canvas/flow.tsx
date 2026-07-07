@@ -208,7 +208,7 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
     showNodeContextMenuRef.current = showNodeContextMenu
   }, [showNodeContextMenu])
 
-  const [showModal, setShowModal] = useState(false)
+  const [showCreateNodeModal, setShowCreateNodeModal] = useState(false)
   const [edgeDropPositions, setEdgeDropPositions] = useState<{ x: number; y: number } | null>(null)
   const [pendingCompactConnection, setPendingCompactConnection] = useState<{
     connection: Connection
@@ -565,7 +565,7 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
     const flowPositions = screenToFlowPosition({ x: x, y: y })
 
     setEdgeDropPositions(flowPositions)
-    setShowModal(true)
+    setShowCreateNodeModal(true)
   }
 
   const handleEdgeDropHandleSelect = useCallback(
@@ -575,7 +575,7 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
       setEdgeDropHandleType(type)
       setEdgeDropPositions(flowPositions)
       setPendingEdgeDrop(null)
-      setShowModal(true)
+      setShowCreateNodeModal(true)
     },
     [pendingEdgeDrop, reactFlow],
   )
@@ -691,7 +691,7 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
       node.type === 'frankNode' || node.type === 'exitNode' ? { ...node, position: { x: 0, y: 0 } } : node,
     )
     const laidOutNodes = layoutGraph(nodesWithResetPositions, flowStore.edges, 'LR')
-    flowStore.setNodes(laidOutNodes)
+    flowStore.setNodesWithoutHistory(laidOutNodes)
 
     if (pendingSelection) {
       applySelectionToNodes(pendingSelection)
@@ -702,6 +702,9 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
         reactFlowRef.current?.setViewport(freshViewport)
       })
     }
+
+    flowStore.setHistory([])
+    flowStore.setFuture([])
   }, [
     nodesInitialized,
     relayoutNonce,
@@ -1406,6 +1409,7 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
   const handleRightMouseButtonClick = useCallback(
     (event: React.MouseEvent) => {
       event.preventDefault()
+      event.stopPropagation()
       const { screenToFlowPosition } = reactFlow
       const flowPos = screenToFlowPosition({ x: event.clientX, y: event.clientY })
       setContextMenu({ x: event.clientX, y: event.clientY, flowPos })
@@ -1719,13 +1723,14 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
           <Background variant={BackgroundVariant.Dots} size={3} gap={100}></Background>
         </ReactFlow>
 
-        <CreateNodeModal
-          isOpen={showModal}
-          onClose={() => setShowModal(false)}
-          addNodeAtPosition={addNodeAtPosition}
-          positions={edgeDropPositions}
-          sourceInfo={sourceInfoReference.current}
-        />
+        {showCreateNodeModal && (
+          <CreateNodeModal
+            onClose={() => setShowCreateNodeModal(false)}
+            addNodeAtPosition={addNodeAtPosition}
+            positions={edgeDropPositions}
+            sourceInfo={sourceInfoReference.current}
+          />
+        )}
 
         {pendingCompactConnection && (
           <HandleMenu

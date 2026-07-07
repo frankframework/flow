@@ -21,12 +21,14 @@ import useEditorTabStore from '~/stores/editor-tab-store'
 import {
   cloneProject,
   createProject,
+  DEFAULT_MAX_IMPORT_BYTES,
   exportProject,
   importProjectFolder,
+  ImportTooLargeError,
   openProject,
 } from '~/services/project-service'
 import { useRecentProjects } from '~/hooks/use-projects'
-import { showErrorToast } from '~/components/toast'
+import { showErrorToast, showWarningToast } from '~/components/toast'
 
 export default function ProjectLanding() {
   const navigate = useNavigate()
@@ -46,6 +48,7 @@ export default function ProjectLanding() {
   const [isDiscovering, setIsDiscovering] = useState(false)
   const [ffConfiguration, setFFConfiguration] = useState<FFConfiguration[]>([])
   const [ffInstanceName, setFFInstanceName] = useState('')
+  const [maxImportBytes, setMaxImportBytes] = useState(DEFAULT_MAX_IMPORT_BYTES)
   const importInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -59,6 +62,7 @@ export default function ProjectLanding() {
       .then((info) => {
         setIsLocalEnvironment(info.isLocal)
         setRootLocationName(info.isLocal ? 'Computer' : 'Cloud Workspace')
+        setMaxImportBytes(info.maxImportSize)
       })
       .catch((_) => {
         showErrorToast('Failed to fetch environment info, defaulting to local mode.')
@@ -174,11 +178,26 @@ export default function ProjectLanding() {
 
     setIsOpeningProject(true)
     try {
-      const project = await importProjectFolder(files)
+      const project = await importProjectFolder(files, maxImportBytes)
       openProjectAndNavigate(project)
       refetch()
     } catch (error) {
-      showErrorToast(error instanceof Error ? error.message : 'Failed to import project')
+      const limitMb = Math.round(maxImportBytes / (1024 * 1024))
+      if (error instanceof ImportTooLargeError) {
+        const sizeMb = (error.bytes / (1024 * 1024)).toFixed(1)
+        const dimension = error.kind === 'compressed' ? 'when zipped' : 'uncompressed'
+        showWarningToast(
+          `This configuration is ${sizeMb} MB ${dimension}, which exceeds the ${limitMb} MB limit. Please import a smaller folder.`,
+          'Configuration too large',
+        )
+      } else if (error instanceof ApiError && error.httpCode === 413) {
+        showWarningToast(
+          `This configuration is too large to import (over ${limitMb} MB). Please import a smaller folder.`,
+          'Configuration too large',
+        )
+      } else {
+        showErrorToast(error instanceof Error ? error.message : 'Failed to import project')
+      }
     } finally {
       setIsOpeningProject(false)
     }

@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import Button from '~/components/inputs/button'
+import { useSubmitOnEnter } from '~/hooks/use-submit-on-enter'
 
 type ConfirmDeleteDialogProps = {
   name: string
@@ -11,6 +12,8 @@ type ConfirmDeleteDialogProps = {
 
 export default function ConfirmDeleteDialog({ name, isFolder, onConfirm, onCancel }: ConfirmDeleteDialogProps) {
   const overlayRef = useRef<HTMLDivElement>(null)
+
+  useSubmitOnEnter(onConfirm)
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {

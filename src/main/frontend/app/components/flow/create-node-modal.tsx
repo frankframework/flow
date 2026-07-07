@@ -1,4 +1,5 @@
-import { useMemo, useState, type ChangeEvent } from 'react'
+import { useEffect, useMemo, useState, type ChangeEvent } from 'react'
+import { useSubmitOnEnter } from '~/hooks/use-submit-on-enter'
 import useFlowStore from '~/stores/flow-store'
 import useNodeContextStore from '~/stores/node-context-store'
 import { useFFDoc } from '@frankframework/doc-library-react'
@@ -8,7 +9,6 @@ import Search from '~/components/search/search'
 import type { Elements, FFDocJson } from '@frankframework/doc-library-core'
 
 type CreateNodeModalProperties = {
-  isOpen: boolean
   onClose: () => void
   addNodeAtPosition: (
     position: { x: number; y: number },
@@ -36,13 +36,7 @@ function getElementNamesForType(fullName: string, types: FFDocJson['types'], ele
   )
 }
 
-function CreateNodeModal({
-  isOpen,
-  onClose,
-  addNodeAtPosition,
-  positions,
-  sourceInfo,
-}: Readonly<CreateNodeModalProperties>) {
+function CreateNodeModal({ onClose, addNodeAtPosition, positions, sourceInfo }: Readonly<CreateNodeModalProperties>) {
   const { elements, ffDoc } = useFFDoc()
   const { setAttributes, setNodeId } = useNodeContextStore((state) => state)
   const nodes = useFlowStore((state) => state.nodes)
@@ -103,7 +97,13 @@ function CreateNodeModal({
     }
   }
 
-  if (!isOpen) return null
+  useEffect(() => {
+    setSelectedElement((current) =>
+      current && filteredElements.some((element) => element.name === current)
+        ? current
+        : (filteredElements[0]?.name ?? ''),
+    )
+  }, [filteredElements])
 
   const handleCreateNode = () => {
     if (!selectedElement || !positions || !sourceInfo || !elements) return
@@ -117,6 +117,8 @@ function CreateNodeModal({
     onClose()
   }
 
+  useSubmitOnEnter(handleCreateNode)
+
   return (
     <div
       className="bg-background/50 absolute inset-0 z-50 flex items-center justify-center backdrop-blur-[0.5px]"
@@ -126,6 +128,7 @@ function CreateNodeModal({
         <h2 className="text-lg font-semibold">Add Node</h2>
         <p className="my-4">Select the element to be added from the list below.</p>
         <Search
+          autoFocus
           placeholder="Search elements..."
           className="mb-4 px-0"
           value={search}

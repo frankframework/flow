@@ -1,6 +1,7 @@
 import { type NavigateFunction } from 'react-router'
 import useTabStore from '~/stores/tab-store'
 import useEditorTabStore from '~/stores/editor-tab-store'
+import { getBaseName } from '~/utils/path-utils'
 
 export function openInStudio(
   navigate: NavigateFunction,
@@ -46,7 +47,7 @@ export function openInEditorAtElement(
   { subtype, filepath, name }: { subtype: string; filepath: string; name?: string },
 ) {
   const editorStore = useEditorTabStore.getState()
-  const fileName = filepath.split(/[/\\]/).pop() ?? filepath
+  const fileName = getBaseName(filepath)
 
   if (!editorStore.getTab(filepath)) {
     editorStore.setTabData(filepath, {

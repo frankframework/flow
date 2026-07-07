@@ -91,7 +91,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
   const isDeprecated = frankElement?.deprecated
   const [showDeprecated, setShowDeprecated] = useState(false)
   const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null)
-  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isSubcomponentModalOpen, setIsSubcomponentModalOpen] = useState(false)
   const dangerTriangleReference = useRef<HTMLDivElement>(null)
   const availableHandleTypes = useHandleTypes(frankElement?.forwards)
 
@@ -526,7 +526,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
         {possibleChildren.length > 0 && (
           <div
             className="hover:text-foreground text-foreground-muted flex cursor-pointer gap-1 self-start p-1"
-            onClick={() => setIsModalOpen(true)}
+            onClick={() => setIsSubcomponentModalOpen(true)}
           >
             <div className="bg-foreground/30 border-border h-4 w-4 justify-center rounded-full border text-center text-[8px] font-bold">
               +
@@ -598,13 +598,13 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
         />
       )}
 
-      {/* Modal */}
-      <AddSubcomponentModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        possibleChildren={possibleChildren}
-        onAddChild={createChildFromElement}
-      />
+      {isSubcomponentModalOpen && (
+        <AddSubcomponentModal
+          onClose={() => setIsSubcomponentModalOpen(false)}
+          possibleChildren={possibleChildren}
+          onAddChild={createChildFromElement}
+        />
+      )}
     </>
   )
 }

@@ -47,8 +47,7 @@ function studioTabItemId(activeTab: string, dataProvider: StudioFilesDataProvide
   const lastSep = rest.lastIndexOf('::')
   const adapterName = lastSep === -1 ? rest : rest.slice(0, lastSep)
   const position = lastSep === -1 ? '0' : rest.slice(lastSep + 2)
-  const rootPath = dataProvider.getRootPath().replace(/[/\\]$/, '')
-  return `${toTreeItemId(configPath, rootPath)}/${adapterName}::${position}`
+  return `${toTreeItemId(configPath, dataProvider.getRootPath())}/${adapterName}::${position}`
 }
 
 function getItemTitle(item: TreeItem<StudioItemData>): string {

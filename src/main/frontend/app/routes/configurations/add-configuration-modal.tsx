@@ -7,6 +7,7 @@ import CloseButton from '~/components/inputs/close-button'
 import Input from '~/components/inputs/input'
 import DirectoryPicker from '~/components/directory-picker/directory-picker'
 import { fetchProject } from '~/services/project-service'
+import { hasUnsafeNameChars, joinPath, relativeTo } from '~/utils/path-utils'
 
 type AddConfigurationModalProperties = {
   isOpen: boolean
@@ -47,14 +48,21 @@ export default function AddConfigurationModal({
         setLoading(false)
         return
       }
-      // Ensure .xml suffix
+
+      if (hasUnsafeNameChars(configname) || configname.includes('..')) {
+        setError('Filename may only contain letters, digits, spaces, and . _ - (no "..")')
+        setLoading(false)
+        return
+      }
+
       if (!configname.toLowerCase().endsWith('.xml')) {
         configname = `${configname}.xml`
       }
 
-      const folderPath = rootLocationName.replace(/[/\\]$/, '')
-      const absoluteFilePath = `${folderPath}/${configname}`
-      await createConfigurationFile(currentConfiguration.name, absoluteFilePath)
+      const relativeFolder = relativeTo(currentConfiguration.rootPath, rootLocationName)
+      const relativePath = relativeFolder ? joinPath(relativeFolder, configname) : configname
+
+      await createConfigurationFile(currentConfiguration.name, relativePath)
       const updatedProject = await fetchProject(currentConfiguration.name)
       setProject(updatedProject)
       onSuccess?.()
@@ -85,10 +93,13 @@ export default function AddConfigurationModal({
     setIsOpenPickerOpen(false)
   }
 
+  const trimmedFilename = filename.trim()
+  const filenameHasInvalidChars = hasUnsafeNameChars(trimmedFilename) || trimmedFilename.includes('..')
+  const isFilenameValid = trimmedFilename.length > 0 && !filenameHasInvalidChars
+
   const displayFilename = (() => {
-    const trimmed = filename.trim()
-    if (!trimmed) return ''
-    return trimmed.toLowerCase().endsWith('.xml') ? trimmed : `${trimmed}.xml`
+    if (!trimmedFilename) return ''
+    return trimmedFilename.toLowerCase().endsWith('.xml') ? trimmedFilename : `${trimmedFilename}.xml`
   })()
 
   return (
@@ -122,19 +133,27 @@ export default function AddConfigurationModal({
           <label className="text-sm font-medium" htmlFor="configuration-filename-input">
             Filename
           </label>
-          <div className="ml-2 flex w-full items-center">
-            <Input
-              id="configuration-filename-input"
-              value={filename}
-              onChange={(event) => setFilename(event.target.value)}
-              placeholder="Choose a filename"
-              aria-label="configuration filename"
-            />
+          <div className="ml-2 flex w-full flex-col">
+            <div className="flex w-full items-center gap-1">
+              <Input
+                id="configuration-filename-input"
+                value={filename}
+                onChange={(event) => setFilename(event.target.value)}
+                placeholder="Choose a filename"
+                aria-label="configuration filename"
+              />
+              <span className="text-foreground-muted text-sm">.xml</span>
+            </div>
+            {filenameHasInvalidChars && (
+              <p className="mt-1 text-xs text-red-500">
+                Filename may only contain letters, digits, spaces, and . _ - (no &quot;..&quot;)
+              </p>
+            )}
           </div>
         </div>
 
         <div className="flex gap-2">
-          <Button onClick={handleAdd} disabled={loading} className="disabled:opacity-50">
+          <Button onClick={handleAdd} disabled={loading || !isFilenameValid} className="disabled:opacity-50">
             {loading ? 'Adding...' : `Add ${displayFilename || 'configuration file'} to ${currentConfiguration.name}`}
           </Button>
 
