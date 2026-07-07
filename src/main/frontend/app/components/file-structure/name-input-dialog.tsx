@@ -2,12 +2,12 @@ import React, { useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import Button from '~/components/inputs/button'
 import ValidatedInput from '~/components/inputs/validatedInput'
+import { SAFE_NAME_PATTERN } from '~/utils/path-utils'
 
 const BASE_NAME_PATTERNS: Record<string, RegExp> = {
   'Cannot be empty': /^(?!\s*$).+/,
-  'Cannot contain /': /^[^/]*$/,
-  'Cannot contain \\': /^[^\\]*$/,
   'Cannot contain ..': /^(?!.*\.\.).*$/,
+  'Only letters, digits, spaces, and . _ - allowed': SAFE_NAME_PATTERN,
 }
 
 export const FILE_NAME_PATTERNS: Record<string, RegExp> = {
