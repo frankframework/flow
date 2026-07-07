@@ -4,7 +4,7 @@ import ConfigurationFileTile from './configuration-file-tile'
 import ArrowLeftIcon from '/icons/solar/Alt Arrow Left.svg?react'
 import { useNavigate } from 'react-router'
 import AddConfigurationTile from './add-configuration-tile'
-import { useState, useEffect, useCallback, type ChangeEvent, useMemo } from 'react'
+import { useState, useEffect, useCallback, type ChangeEvent, useMemo, useRef } from 'react'
 import AddConfigurationModal from './add-configuration-modal'
 import LoadingSpinner from '~/components/loading-spinner'
 import type { FileTreeNode } from '~/types/filesystem.types'
@@ -24,7 +24,7 @@ import { useNonCanvasComponents } from './use-non-canvas-components'
 import { relativeTo } from '~/utils/path-utils'
 import { isRootConfiguration } from './configuration-utils'
 
-const SIDEBAR_NAME = 'configuration-overview-v2'
+const SIDEBAR_NAME = 'configuration-overview'
 
 type ConfigurationFile = {
   path: string
@@ -63,7 +63,14 @@ export default function ConfigurationOverview() {
   const [addMenuConfigPath, setAddMenuConfigPath] = useState<string | null>(null)
   const [draggedComponentTagName, setDraggedComponentTagName] = useState<string | null>(null)
 
+  const sidebarVisibleBeforeEditRef = useRef(true)
+
   const setSidebarVisible = useSidebarStore((state) => state.setVisible)
+  const getSidebarVisibility = useSidebarStore((state) => state.getVisibility)
+
+  const captureSidebarVisibility = useCallback(() => {
+    sidebarVisibleBeforeEditRef.current = getSidebarVisibility(SIDEBAR_NAME)?.[SidebarSide.RIGHT] ?? true
+  }, [getSidebarVisibility])
 
   const openEditor = useCallback(
     (state: NonCanvasComponentEditorState) => {
@@ -98,14 +105,16 @@ export default function ConfigurationOverview() {
   const handleSelectComponentType = useCallback(
     (tagName: string) => {
       if (!addMenuConfigPath) return
+      captureSidebarVisibility()
       openEditor({ mode: 'add', configPath: addMenuConfigPath, tagName })
       setAddMenuConfigPath(null)
     },
-    [addMenuConfigPath, openEditor],
+    [addMenuConfigPath, openEditor, captureSidebarVisibility],
   )
 
   const handleEditComponent = useCallback(
     (configurationPath: string, component: NonCanvasComponent) => {
+      captureSidebarVisibility()
       openEditor({
         mode: 'edit',
         configPath: configurationPath,
@@ -114,7 +123,7 @@ export default function ConfigurationOverview() {
         initialAttributes: component.attributes,
       })
     },
-    [openEditor],
+    [openEditor, captureSidebarVisibility],
   )
 
   const handleConfigureAdapter = useCallback(
@@ -126,9 +135,12 @@ export default function ConfigurationOverview() {
 
   const handleDropComponent = useCallback(
     (configurationPath: string, tagName: string) => {
+      captureSidebarVisibility()
+      setDraggedComponentTagName(null)
+      setSidebarVisible(SIDEBAR_NAME, SidebarSide.RIGHT, false)
       openEditor({ mode: 'add', configPath: configurationPath, tagName })
     },
-    [openEditor],
+    [openEditor, setSidebarVisible, captureSidebarVisibility],
   )
 
   const loadTree = useCallback(
@@ -227,8 +239,9 @@ export default function ConfigurationOverview() {
     (configurationPath: string, components: NonCanvasComponent[]) => {
       replaceComponents(configurationPath, components)
       closeEditor()
+      setSidebarVisible(SIDEBAR_NAME, SidebarSide.RIGHT, sidebarVisibleBeforeEditRef.current)
     },
-    [replaceComponents, closeEditor],
+    [replaceComponents, closeEditor, setSidebarVisible],
   )
 
   const handleAdapterChanged = useCallback(() => {
@@ -257,10 +270,10 @@ export default function ConfigurationOverview() {
 
   let sidebarTitle = 'Components'
   if (adapterEditor) {
-    sidebarTitle = editorName ? `Adapter · ${editorName}` : 'Adapter'
+    sidebarTitle = 'Adapter'
   } else if (editor) {
     if (editorName) {
-      sidebarTitle = `${editor.tagName} · ${editorName}`
+      sidebarTitle = editor.tagName
     } else {
       sidebarTitle = editor.mode === 'add' ? `Add ${editor.tagName}` : editor.tagName
     }

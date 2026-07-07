@@ -1,0 +1,31 @@
+import { type MouseEvent, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
+import CloseButton from '~/components/inputs/close-button'
+
+type DialogProperties = {
+  isOpen: boolean
+  onClose: () => void
+  title: string
+  children: ReactNode
+  className?: string
+  overlay?: ReactNode
+}
+export default function Dialog({ isOpen, onClose, title, children, className, overlay }: Readonly<DialogProperties>) {
+  if (!isOpen) return null
+
+  const handleBackdropClick = (event: MouseEvent<HTMLDivElement>) => {
+    if (event.target === event.currentTarget) onClose()
+  }
+
+  return createPortal(
+    <div className="bg-background/50 fixed inset-0 z-50 flex items-center justify-center" onClick={handleBackdropClick}>
+      <div className={`bg-background border-border relative rounded-lg border p-6 shadow-lg ${className ?? ''}`}>
+        <h2 className="mb-4 text-lg font-semibold">{title}</h2>
+        {children}
+        <CloseButton onClick={onClose} className="absolute top-3 right-3" />
+      </div>
+      {overlay}
+    </div>,
+    document.body,
+  )
+}

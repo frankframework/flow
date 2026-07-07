@@ -125,7 +125,7 @@ export default function NonCanvasComponentContext({
     const filled: string[] = []
     const rest: string[] = []
     for (const key of fieldKeys) {
-      if (key === 'name') continue // always shown first, handled below
+      if (key === 'name') continue
       if (attributeDefinitions[key]?.mandatory) mandatory.push(key)
       else if (initiallyFilledKeys.has(key)) filled.push(key)
       else rest.push(key)
@@ -193,8 +193,7 @@ export default function NonCanvasComponentContext({
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="flex-1 overflow-y-auto px-4">
-        <div className="text-foreground-muted mt-2 text-xs font-semibold tracking-wider uppercase">{tagName}</div>
-        {componentName && <h2 className="mb-2 font-semibold">{componentName}</h2>}
+        <div className="text-foreground-muted mt-2 text-xs font-semibold tracking-wider uppercase">{componentName}</div>
 
         <div className="bg-background w-full space-y-4 rounded-md p-6">
           {fieldKeys.length === 0 && (
