@@ -9,7 +9,6 @@ import Search from '~/components/search/search'
 import type { Elements, FFDocJson } from '@frankframework/doc-library-core'
 
 type CreateNodeModalProperties = {
-  isOpen: boolean
   onClose: () => void
   addNodeAtPosition: (
     position: { x: number; y: number },
@@ -37,13 +36,7 @@ function getElementNamesForType(fullName: string, types: FFDocJson['types'], ele
   )
 }
 
-function CreateNodeModal({
-  isOpen,
-  onClose,
-  addNodeAtPosition,
-  positions,
-  sourceInfo,
-}: Readonly<CreateNodeModalProperties>) {
+function CreateNodeModal({ onClose, addNodeAtPosition, positions, sourceInfo }: Readonly<CreateNodeModalProperties>) {
   const { elements, ffDoc } = useFFDoc()
   const { setAttributes, setNodeId } = useNodeContextStore((state) => state)
   const nodes = useFlowStore((state) => state.nodes)
@@ -105,13 +98,12 @@ function CreateNodeModal({
   }
 
   useEffect(() => {
-    if (!isOpen) return
     setSelectedElement((current) =>
       current && filteredElements.some((element) => element.name === current)
         ? current
         : (filteredElements[0]?.name ?? ''),
     )
-  }, [isOpen, filteredElements])
+  }, [filteredElements])
 
   const handleCreateNode = () => {
     if (!selectedElement || !positions || !sourceInfo || !elements) return
@@ -125,9 +117,7 @@ function CreateNodeModal({
     onClose()
   }
 
-  useSubmitOnEnter(handleCreateNode, isOpen)
-
-  if (!isOpen) return null
+  useSubmitOnEnter(handleCreateNode)
 
   return (
     <div
