@@ -11,11 +11,13 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(AppInfoController.class)
 @AutoConfigureMockMvc(addFilters = false)
+@TestPropertySource(properties = "flow.import.max-upload-size=120MB")
 class AppInfoControllerTest {
 
 	@Autowired
@@ -44,5 +46,14 @@ class AppInfoControllerTest {
 				.andExpect(jsonPath("$.isLocal").value(false));
 
 		verify(fileSystemStorage).isLocalEnvironment();
+	}
+
+	@Test
+	void getInfoReturnsConfiguredMaxImportSize() throws Exception {
+		when(fileSystemStorage.isLocalEnvironment()).thenReturn(true);
+
+		mockMvc.perform(get("/api/app-info"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.maxImportSize").value(120 * 1024 * 1024));
 	}
 }

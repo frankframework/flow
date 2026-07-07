@@ -111,15 +111,15 @@ public class ConfigurationProjectController {
 
 	@PostMapping("/import")
 	public ResponseEntity<ConfigurationProjectDTO> importProject(
-			@RequestParam("files") List<MultipartFile> files,
-			@RequestParam("paths") List<String> paths,
+			@RequestParam("file") MultipartFile file,
 			@RequestParam("projectName") String projectName
 	) throws IOException {
-		if (files.isEmpty() || files.size() != paths.size()) {
+		if (file.isEmpty()) {
+			log.warn("Rejected import for project \"{}\": uploaded file is empty", projectName);
 			return ResponseEntity.badRequest().build();
 		}
 
-		ConfigurationProject configurationProject = configurationProjectService.importProjectFromFiles(projectName, files, paths);
+		ConfigurationProject configurationProject = configurationProjectService.importProjectFromZip(projectName, file);
 		recentProjectsService.addRecentProject(configurationProject.getName(), configurationProject.getRootPath());
 		return ResponseEntity.ok(configurationProjectService.toDto(configurationProject));
 	}
