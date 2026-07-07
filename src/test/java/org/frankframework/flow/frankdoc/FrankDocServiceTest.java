@@ -3,6 +3,8 @@ package org.frankframework.flow.frankdoc;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import org.frankframework.flow.exception.ApiException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,13 +20,16 @@ class FrankDocServiceTest {
 	@Mock
 	private RestTemplate restTemplate;
 
+	@Mock
+	private ObjectMapper objectMapper;
+
 	private FrankDocService frankDocService;
 
 	private static final String FRANKDOC_URL = "https://reference.frankframework.org/js/frankdoc.json";
 
 	@BeforeEach
 	void setUp() {
-		frankDocService = new FrankDocService(restTemplate);
+		frankDocService = new FrankDocService(restTemplate, objectMapper);
 	}
 
 	@Test
