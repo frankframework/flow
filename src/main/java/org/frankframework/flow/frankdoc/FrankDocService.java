@@ -3,11 +3,11 @@ package org.frankframework.flow.frankdoc;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 import lombok.extern.log4j.Log4j2;
 import org.frankframework.flow.exception.ApiException;
 import org.springframework.http.HttpStatus;
@@ -49,7 +49,7 @@ public class FrankDocService {
 			JsonNode elements = root.path("elements");
 
 			Map<String, List<String>> childrenByParent = groupChildrenByParent(elements);
-			childrenByParent.forEach((parentFqn, siblings) ->
+			childrenByParent.values().forEach(siblings ->
 					findSuccessDeclaringAbstract(elements, siblings)
 							.ifPresent(successBase -> repointSiblingsToBase(elements, siblings, successBase))
 			);
@@ -62,26 +62,24 @@ public class FrankDocService {
 	}
 
 	private static Map<String, List<String>> groupChildrenByParent(JsonNode elements) {
-		Map<String, List<String>> childrenByParent = new HashMap<>();
-		elements.fields().forEachRemaining(entry -> {
-			String parentFqn = entry.getValue().path("parent").asText(null);
-			if (parentFqn != null) {
-				childrenByParent.computeIfAbsent(parentFqn, k -> new ArrayList<>()).add(entry.getKey());
-			}
-		});
-		return childrenByParent;
+		Iterable<Map.Entry<String, JsonNode>> fields = elements::fields;
+		return StreamSupport.stream(fields.spliterator(), false)
+				.filter(entry -> entry.getValue().hasNonNull("parent"))
+				.collect(Collectors.groupingBy(
+						entry -> entry.getValue().get("parent").asText(),
+						Collectors.mapping(Map.Entry::getKey, Collectors.toList())));
 	}
 
 	private static Optional<String> findSuccessDeclaringAbstract(JsonNode elements, List<String> siblings) {
 		return siblings.stream()
-				.filter(fqn -> isAbstract(elements.path(fqn)) && declaresSuccessForward(elements.path(fqn)))
+				.filter(fullyQualifiedName -> isAbstract(elements.path(fullyQualifiedName)) && declaresSuccessForward(elements.path(fullyQualifiedName)))
 				.findFirst();
 	}
 
 	private static void repointSiblingsToBase(JsonNode elements, List<String> siblings, String successBase) {
 		siblings.stream()
-				.filter(fqn -> !fqn.equals(successBase))
-				.forEach(fqn -> ((ObjectNode) elements.path(fqn)).put("parent", successBase));
+				.filter(fullyQualifiedName -> !fullyQualifiedName.equals(successBase))
+				.forEach(fullyQualifiedName -> ((ObjectNode) elements.path(fullyQualifiedName)).put("parent", successBase));
 	}
 
 	private static boolean isAbstract(JsonNode element) {

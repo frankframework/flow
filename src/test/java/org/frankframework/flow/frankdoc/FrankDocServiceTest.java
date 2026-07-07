@@ -37,8 +37,8 @@ class FrankDocServiceTest {
 		return objectMapper.readTree(result);
 	}
 
-	private static String parentOf(JsonNode root, String elementFqn) {
-		return root.path("elements").path(elementFqn).path("parent").asText(null);
+	private static String parentOf(JsonNode root, String elementFullyQualifiedName) {
+		return root.path("elements").path(elementFullyQualifiedName).path("parent").asText(null);
 	}
 
 	@Test
