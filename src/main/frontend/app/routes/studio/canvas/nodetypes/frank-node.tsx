@@ -12,7 +12,7 @@ import {
 import DangerIcon from '../../../../../icons/solar/Danger Triangle.svg?react'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useShallow } from 'zustand/react/shallow'
-import useFlowStore, { isFrankNode } from '~/stores/flow-store'
+import useFlowStore, { isExitNode, isFrankNode } from '~/stores/flow-store'
 import { CustomHandle } from '~/routes/studio/canvas/nodetypes/components/handle'
 import { FlowConfig } from '~/routes/studio/canvas/flow.config'
 import { useNodeContextMenu } from '~/routes/studio/canvas/node-context-menu-context'
@@ -114,7 +114,9 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
   const edges = useFlowStore((state) => state.edges)
   const hiddenForwardNodeIds = useFlowStore(
     useShallow((state) =>
-      state.nodes.filter((node) => isFrankNode(node) && node.data.hiddenForwards).map((node) => node.id),
+      state.nodes
+        .filter((node) => (isFrankNode(node) || isExitNode(node)) && node.data.hiddenForwards)
+        .map((node) => node.id),
     ),
   )
 

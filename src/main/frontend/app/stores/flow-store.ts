@@ -82,7 +82,7 @@ export function isFrankNode(node: FlowNode): node is FrankNodeType {
   return node.type === 'frankNode'
 }
 
-function isExitNode(node: FlowNode): node is ExitNode {
+export function isExitNode(node: FlowNode): node is ExitNode {
   return node.type === 'exitNode'
 }
 
@@ -522,7 +522,9 @@ const useFlowStore = create<FlowState>()(
       const ids = new Set(nodeIds)
       set({
         nodes: get().nodes.map((node) =>
-          ids.has(node.id) && isFrankNode(node) ? { ...node, data: { ...node.data, hiddenForwards } } : node,
+          ids.has(node.id) && (isFrankNode(node) || isExitNode(node))
+            ? { ...node, data: { ...node.data, hiddenForwards } }
+            : node,
         ),
       })
     },

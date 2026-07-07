@@ -479,7 +479,7 @@ function extractSourceHandles(element: Element): SourceHandle[] {
 function processExitElements(element: Element, exitNodes: ExitNode[]) {
   const exits = [...element.children]
   for (const exit of exits) {
-    const { attributes, name, x, y, width, height } = parseElementAttributes(
+    const { attributes, name, x, y, width, height, hiddenForwards } = parseElementAttributes(
       exit.attributes,
       FlowConfig.EXIT_DEFAULT_WIDTH,
       FlowConfig.EXIT_DEFAULT_HEIGHT,
@@ -496,6 +496,7 @@ function processExitElements(element: Element, exitNodes: ExitNode[]) {
         type: 'Exit',
         subtype: 'Exit',
         attributes,
+        hiddenForwards: hiddenForwards || null,
       },
     }
     exitNodes.push(exitNode)
@@ -517,7 +518,7 @@ function convertAdapterToFlowNodes(
       continue
     }
     if (element.tagName.toLowerCase() === 'exit') {
-      const { attributes, name, x, y, width, height } = parseElementAttributes(
+      const { attributes, name, x, y, width, height, hiddenForwards } = parseElementAttributes(
         element.attributes,
         FlowConfig.EXIT_DEFAULT_WIDTH,
         FlowConfig.EXIT_DEFAULT_HEIGHT,
@@ -534,6 +535,7 @@ function convertAdapterToFlowNodes(
           type: 'Exit',
           subtype: 'Exit',
           attributes,
+          hiddenForwards: hiddenForwards || null,
         },
       }
       exitNodes.push(exitNode)
