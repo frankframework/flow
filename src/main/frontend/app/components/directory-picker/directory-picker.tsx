@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import FolderIcon from '/icons/solar/Folder.svg?react'
 import NameInputDialog from '~/components/file-structure/name-input-dialog'
+import { useSubmitOnEnter } from '~/hooks/use-submit-on-enter'
 import { filesystemService } from '~/services/filesystem-service'
 import type { FilesystemEntry } from '~/types/filesystem.types'
 import { ApiError } from '~/utils/api'
@@ -82,6 +83,8 @@ export default function DirectoryPicker({
 
   const canGoUp = parentPath !== ''
   const activePath = selectedEntry ?? currentPath
+
+  useSubmitOnEnter(() => onSelect(activePath), !isCreatingFolder && !!activePath)
 
   return (
     <div className="bg-background/50 absolute inset-0 z-60 flex items-center justify-center">
