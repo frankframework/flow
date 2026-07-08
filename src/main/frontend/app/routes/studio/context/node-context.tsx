@@ -2,8 +2,9 @@ import { useNavigate } from 'react-router'
 import useNodeContextStore from '~/stores/node-context-store'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useShortcut } from '~/hooks/use-shortcut'
-import useFlowStore, { isFrankNode } from '~/stores/flow-store'
+import useFlowStore, { isExitNode, isFrankNode } from '~/stores/flow-store'
 import Button from '~/components/inputs/button'
+import Toggle from '~/components/inputs/toggle'
 import { useShallow } from 'zustand/react/shallow'
 import ContextInput from './context-input'
 import { findChildRecursive } from '~/stores/child-utilities'
@@ -312,6 +313,18 @@ export default function NodeContext({
 
   const currentName = inputValues['name'] ?? ''
 
+  const editedNode = !parentId && !childParentId ? nodes.find((node) => node.id === nodeId.toString()) : undefined
+  const isExit = (editedNode && isExitNode(editedNode)) ?? false
+  const canHideForwards = (editedNode && !isNewNode && (isFrankNode(editedNode) || isExit)) ?? false
+
+  const hiddenForwards =
+    editedNode && (isFrankNode(editedNode) || isExitNode(editedNode)) ? Boolean(editedNode.data.hiddenForwards) : false
+
+  const handleToggleHiddenForwards = (value: boolean) => {
+    useFlowStore.getState().setNodesHiddenForwards([nodeId.toString()], value)
+    void useNodeContextStore.getState().saveFlow?.()
+  }
+
   const categorizedAttributes = (() => {
     if (!attributes) return []
 
@@ -346,8 +359,21 @@ export default function NodeContext({
   return (
     <>
       <div className="flex-1 overflow-y-auto px-4">
-        {currentName && <h2 className="mb-2 font-semibold">{currentName}</h2>}
-        <div className="bg-background w-full space-y-4 rounded-md p-6">
+        {currentName && <h2 className="mb-2 ms-4 font-semibold">{currentName}</h2>}
+        {canHideForwards && (
+          <div className="bg-background flex items-center justify-between gap-2 rounded-md p-4">
+            <div>
+              <p className="text-sm font-medium">{isExit ? 'Hide exit' : 'Hide forwards'}</p>
+              <p className="text-foreground-muted text-xs">
+                {isExit
+                  ? 'Hide this exit and its incoming forwards to declutter the canvas'
+                  : "Hide this node's forwards to declutter the canvas"}
+              </p>
+            </div>
+            <Toggle checked={hiddenForwards} onChange={handleToggleHiddenForwards} />
+          </div>
+        )}
+        <div className="bg-background w-full space-y-4 rounded-md px-4 py-1">
           {categorizedAttributes.map(([key, attribute, originalIndex]) => (
             <div key={originalIndex}>
               <ContextInput

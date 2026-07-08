@@ -11,6 +11,7 @@ type HandleProperties = {
   onChangeType: (newType: string) => void
   absolutePosition: { x: number; y: number }
   typesAllowed?: Record<string, ElementProperty>
+  dimmed?: boolean
 }
 
 const HANDLE_TYPE_COLOURS: Record<string, string> = {
@@ -75,6 +76,8 @@ export function CustomHandle(properties: Readonly<HandleProperties>) {
             backgroundColor: translateHandleTypeToColour(type),
             border: '1px solid rgba(107, 114, 128, 0.5)',
             pointerEvents: 'all',
+            opacity: properties.dimmed ? 0.5 : 1,
+            transition: 'opacity 150ms cubic-bezier(0.4, 0, 0.2, 1)',
           }}
         />
       </div>

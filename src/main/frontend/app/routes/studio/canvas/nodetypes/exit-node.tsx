@@ -19,6 +19,7 @@ export type ExitNode = Node<{
   type: string
   name: string
   attributes: Record<string, string>
+  hiddenForwards?: boolean | null
 }>
 
 export default function ExitNodeComponent(properties: NodeProps<ExitNode>) {
