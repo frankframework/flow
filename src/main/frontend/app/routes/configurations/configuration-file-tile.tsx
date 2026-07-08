@@ -14,6 +14,7 @@ import { isRootConfiguration } from './configuration-utils'
 import AdapterListItem from './adapter-list-item'
 import ComponentListItem from './component-list-item'
 import { frankdocChipStyle } from '~/utils/flow-utils'
+import clsx from "clsx";
 
 type ConfigurationFileTileProperties = {
   filepath: string
@@ -27,6 +28,7 @@ type ConfigurationFileTileProperties = {
   onConfigureAdapter: (configurationPath: string, adapterName: string, adapterPosition: number) => void
   onDropComponent: (configurationPath: string, tagName: string) => void
   draggedTagName?: string | null
+  listViewTile?: boolean
 }
 
 export default function ConfigurationFileTile({
@@ -41,6 +43,7 @@ export default function ConfigurationFileTile({
   onConfigureAdapter,
   onDropComponent,
   draggedTagName = null,
+  listViewTile = false,
 }: Readonly<ConfigurationFileTileProperties>) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [isDropTarget, setIsDropTarget] = useState(false)
@@ -137,7 +140,10 @@ export default function ConfigurationFileTile({
 
   return (
     <div
-      className={`bg-background relative flex w-full flex-col gap-4 rounded border p-6 transition-colors ${dropZoneClasses}`}
+      className={clsx(
+        `bg-background relative flex flex-col gap-4 rounded border p-6 transition-colors ${dropZoneClasses}`,
+        listViewTile ? 'w-full' : 'h-100 w-150',
+      )}
       onDragEnter={handleDragEnter}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
@@ -167,7 +173,7 @@ export default function ConfigurationFileTile({
         </IconButton>
       </div>
 
-      <div className="border-border flex min-h-0 flex-col gap-2 border-t pt-4">{componentList}</div>
+      <div className="border-border flex min-h-0 grow flex-col gap-2 overflow-auto border-t pt-4">{componentList}</div>
 
       <div className="border-border flex items-center justify-between border-t pt-4">
         <IconLabelButton
