@@ -60,7 +60,13 @@ export default function AddSubcomponentModal({ onClose, possibleChildren, onAddC
   useSubmitOnEnter(handleAddChild)
 
   return createPortal(
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40" onClick={handleClose}>
+    <div
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40"
+      onClick={(mouseEvent) => {
+        mouseEvent.stopPropagation()
+        handleClose(mouseEvent)
+      }}
+    >
       <div className="bg-background border-border relative flex h-1/2 w-1/3 min-w-[400px] flex-col rounded-lg border p-6 shadow-lg">
         {/* Close button */}
         <Button

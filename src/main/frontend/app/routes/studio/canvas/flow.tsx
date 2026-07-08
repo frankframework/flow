@@ -1779,6 +1779,8 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
           }}
           deleteKeyCode={null}
           minZoom={0.2}
+          nodeDragThreshold={4}
+          nodeClickDistance={4}
         >
           <Controls position="top-left">
             {hiddenForwardNodeIds.size > 0 && (
