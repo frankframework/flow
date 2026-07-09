@@ -14,6 +14,7 @@ export type BezierEdgeGeometry = {
 
 export const SHORT_EDGE_LABEL_THRESHOLD = 600
 export const EDGE_LABEL_END_OFFSET = 150
+const DEFAULT_EDGE_CURVATURE = 0.25
 
 export function getEdgeLength({ sourceX, sourceY, targetX, targetY }: BezierEdgeGeometry): number {
   return Math.hypot(targetX - sourceX, targetY - sourceY)
@@ -29,47 +30,73 @@ function getBezierControlOffset(distance: number, curvature: number): number {
   return distance >= 0 ? 0.5 * distance : curvature * 25 * Math.sqrt(-distance)
 }
 
+/**
+ * Builds one of the two cubic bezier control points based on where an edge leaves/enters a node.
+ */
 function getBezierControlPoint(
   position: CardinalPosition,
-  x1: number,
-  y1: number,
-  x2: number,
-  y2: number,
+  handleX: number,
+  handleY: number,
+  oppositeX: number,
+  oppositeY: number,
   curvature: number,
 ): Point {
   switch (position) {
     case 'left': {
-      return { x: x1 - getBezierControlOffset(x1 - x2, curvature), y: y1 }
+      return { x: handleX - getBezierControlOffset(handleX - oppositeX, curvature), y: handleY }
     }
     case 'right': {
-      return { x: x1 + getBezierControlOffset(x2 - x1, curvature), y: y1 }
+      return { x: handleX + getBezierControlOffset(oppositeX - handleX, curvature), y: handleY }
     }
     case 'top': {
-      return { x: x1, y: y1 - getBezierControlOffset(y1 - y2, curvature) }
+      return { x: handleX, y: handleY - getBezierControlOffset(handleY - oppositeY, curvature) }
     }
     case 'bottom': {
-      return { x: x1, y: y1 + getBezierControlOffset(y2 - y1, curvature) }
+      return { x: handleX, y: handleY + getBezierControlOffset(oppositeY - handleY, curvature) }
     }
   }
 }
 
-export function getPointOnBezierEdge(geometry: BezierEdgeGeometry, t: number): Point {
-  const { sourceX, sourceY, targetX, targetY, curvature = 0.25 } = geometry
+function getCubicBezierWeights(curveProgress: number): {
+  source: number
+  sourceControl: number
+  targetControl: number
+  target: number
+} {
+  const oneMinusCurveProgress = 1 - curveProgress
+
+  return {
+    source: oneMinusCurveProgress * oneMinusCurveProgress * oneMinusCurveProgress,
+    sourceControl: 3 * oneMinusCurveProgress * oneMinusCurveProgress * curveProgress,
+    targetControl: 3 * oneMinusCurveProgress * curveProgress * curveProgress,
+    target: curveProgress * curveProgress * curveProgress,
+  }
+}
+
+/**
+ * Returns the exact point on the cubic bezier edge for normalized curve progress (0 = source, 1 = target).
+ */
+export function getPointOnBezierEdge(geometry: BezierEdgeGeometry, curveProgress: number): Point {
+  const { sourceX, sourceY, targetX, targetY, curvature = DEFAULT_EDGE_CURVATURE } = geometry
   const sourcePosition = toCardinalPosition(geometry.sourcePosition, 'bottom')
   const targetPosition = toCardinalPosition(geometry.targetPosition, 'top')
 
   const sourceControl = getBezierControlPoint(sourcePosition, sourceX, sourceY, targetX, targetY, curvature)
   const targetControl = getBezierControlPoint(targetPosition, targetX, targetY, sourceX, sourceY, curvature)
 
-  const mt = 1 - t
-  const a = mt * mt * mt
-  const b = 3 * mt * mt * t
-  const c = 3 * mt * t * t
-  const d = t * t * t
+  const weights = getCubicBezierWeights(curveProgress)
 
   return {
-    x: a * sourceX + b * sourceControl.x + c * targetControl.x + d * targetX,
-    y: a * sourceY + b * sourceControl.y + c * targetControl.y + d * targetY,
+    x:
+      weights.source * sourceX +
+      weights.sourceControl * sourceControl.x +
+      weights.targetControl * targetControl.x +
+      weights.target * targetX,
+    y:
+      weights.source * sourceY +
+      weights.sourceControl * sourceControl.y +
+      weights.targetControl * targetControl.y +
+      weights.target * targetY,
   }
 }
 
@@ -85,6 +112,6 @@ export function getEdgeLabelPositions(geometry: BezierEdgeGeometry, center: Poin
     return [center]
   }
 
-  const t = Math.min(0.5, EDGE_LABEL_END_OFFSET / length)
-  return [getPointOnBezierEdge(geometry, t), getPointOnBezierEdge(geometry, 1 - t)]
+  const labelInsetProgress = Math.min(0.5, EDGE_LABEL_END_OFFSET / length)
+  return [getPointOnBezierEdge(geometry, labelInsetProgress), getPointOnBezierEdge(geometry, 1 - labelInsetProgress)]
 }
