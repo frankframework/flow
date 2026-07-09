@@ -348,22 +348,23 @@ export default function ConfigurationOverview() {
             <Button className="shrink-0" onClick={() => setShowModal(true)}>
               + Add adapter
             </Button>
-            <Search className="w-3/4" placeholder="Search file names..." value={searchQuery} onChange={handleSearch} />
-
-            <ul className="ml-auto flex gap-1">
-              <ActiveIconButton
-                isActive={tileView === 'list'}
-                label="List view"
-                Icon={ListIcon}
-                onClick={() => setTileView('list')}
-              />
-              <ActiveIconButton
-                isActive={tileView === 'grid'}
-                label="Grid view"
-                Icon={WidgetIcon}
-                onClick={() => setTileView('grid')}
-              />
-            </ul>
+            <Search className="w-1/2" placeholder="Search file names..." value={searchQuery} onChange={handleSearch} />
+            <div>
+              <ul className="ml-auto flex gap-1">
+                <ActiveIconButton
+                  isActive={tileView === 'list'}
+                  label="List view"
+                  Icon={ListIcon}
+                  onClick={() => setTileView('list')}
+                />
+                <ActiveIconButton
+                  isActive={tileView === 'grid'}
+                  label="Grid view"
+                  Icon={WidgetIcon}
+                  onClick={() => setTileView('grid')}
+                />
+              </ul>
+            </div>
           </div>
 
           <div className="bg-backdrop flex-1 overflow-y-auto p-6">
