@@ -2,13 +2,13 @@ import {
   addEdge,
   Background,
   BackgroundVariant,
+  type Connection,
   ControlButton,
   Controls,
-  type Connection,
   type Edge,
   type Node,
-  type OnConnectStart,
   type OnConnectEnd,
+  type OnConnectStart,
   ReactFlow,
   ReactFlowProvider,
   useNodesInitialized,
@@ -19,14 +19,13 @@ import Dagre from '@dagrejs/dagre'
 import { useNavigate } from 'react-router'
 import { SaveStatusIndicator } from '~/components/save-status-indicator'
 import { useSaveStatusStore } from '~/stores/save-status-store'
-import Button from '~/components/inputs/button'
 import CodeIcon from '/icons/solar/Code.svg?react'
 import '@xyflow/react/dist/style.css'
 import FrankNodeComponent, { type FrankNodeType } from '~/routes/studio/canvas/nodetypes/frank-node'
 import FrankEdgeComponent from '~/routes/studio/canvas/edgetypes/frank-edge'
 import ExitNodeComponent, { type ExitNode } from '~/routes/studio/canvas/nodetypes/exit-node'
 import GroupNodeComponent, { type GroupNode } from '~/routes/studio/canvas/nodetypes/group-node'
-import useFlowStore, { isStickyNote, type FlowState } from '~/stores/flow-store'
+import useFlowStore, { type FlowState, isStickyNote } from '~/stores/flow-store'
 import { useShallow } from 'zustand/react/shallow'
 import { FlowConfig } from '~/routes/studio/canvas/flow.config'
 import { getElementTypeFromName } from '~/routes/studio/node-translator-module'
@@ -55,9 +54,10 @@ import { useSettingsStore } from '~/stores/settings-store'
 import { useShortcut } from '~/hooks/use-shortcut'
 import LightbulbIcon from '/icons/solar/Lightbulb.svg?react'
 import CanvasContextMenu from '~/components/flow/canvas-context-menu'
-import { useSidebarStore, SidebarSide } from '~/stores/sidebar-layout-store'
+import { SidebarSide, useSidebarStore } from '~/stores/sidebar-layout-store'
 import { openInEditorAtElement } from '~/actions/navigationActions'
 import HandleMenu from '~/routes/studio/canvas/nodetypes/components/handle-menu'
+import IconLabelButton from '~/components/inputs/icon-label-button'
 
 export type FlowNode = FrankNodeType | ExitNode | StickyNote | GroupNode | Node
 
@@ -1712,10 +1712,12 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
     >
       <div className="border-b-border bg-background flex h-10 shrink-0 items-center justify-between border-b px-3">
         <SaveStatusIndicator />
-        <Button onClick={onOpenInEditor} className="flex items-center gap-1.5 text-xs" title="Open in Editor">
-          <CodeIcon className="h-3.5 w-3.5 fill-current" />
-          Open in Editor
-        </Button>
+        <IconLabelButton
+          label="Open in Editor"
+          icon={<CodeIcon className="h-3.5 w-3.5 fill-current" />}
+          onClick={onOpenInEditor}
+          className="flex items-center gap-1.5 text-xs"
+        />
       </div>
 
       <div ref={canvasRef} className="relative flex-1 overflow-hidden">
