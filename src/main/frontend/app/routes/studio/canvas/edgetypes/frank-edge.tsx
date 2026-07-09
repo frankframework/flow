@@ -145,12 +145,20 @@ export default function FrankEdge({
           />
         ))}
         {!pinnedLabelPosition && hoverLabelPosition && sourceHandleType && !faded && (
-          <EdgeLabel position={hoverLabelPosition} text={sourceHandleType} onDelete={() => {}} />
+          <EdgeLabel
+            compactScale={isCompact ? getCompactLabelScale(zoom) : undefined}
+            position={hoverLabelPosition}
+            text={sourceHandleType}
+            onDelete={() => {
+              /* empty */
+            }}
+          />
         )}
         {pinnedLabelPosition && sourceHandleType && !faded && (
           <div ref={pinnedLabelContainerReference}>
             <EdgeLabel
               position={pinnedLabelPosition}
+              compactScale={isCompact ? getCompactLabelScale(zoom) : undefined}
               text={sourceHandleType}
               selected={true}
               onDelete={() => deleteEdge(id)}
