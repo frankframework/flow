@@ -1,13 +1,14 @@
 import React, { useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { useSubmitOnEnter } from '~/hooks/use-submit-on-enter'
 import Button from '~/components/inputs/button'
 import ValidatedInput from '~/components/inputs/validatedInput'
+import { SAFE_NAME_PATTERN } from '~/utils/path-utils'
 
 const BASE_NAME_PATTERNS: Record<string, RegExp> = {
   'Cannot be empty': /^(?!\s*$).+/,
-  'Cannot contain /': /^[^/]*$/,
-  'Cannot contain \\': /^[^\\]*$/,
   'Cannot contain ..': /^(?!.*\.\.).*$/,
+  'Only letters, digits, spaces, and . _ - allowed': SAFE_NAME_PATTERN,
 }
 
 export const FILE_NAME_PATTERNS: Record<string, RegExp> = {
@@ -53,11 +54,10 @@ export default function NameInputDialog({
     onSubmit(value.trim())
   }
 
+  useSubmitOnEnter(handleSubmit)
+
   const handleKeyDown = (event: React.KeyboardEvent) => {
-    if (event.key === 'Enter') {
-      event.preventDefault()
-      handleSubmit()
-    } else if (event.key === 'Escape') {
+    if (event.key === 'Escape') {
       event.preventDefault()
       onCancel()
     }

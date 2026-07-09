@@ -1,23 +1,25 @@
 import useNodeContextStore from '~/stores/node-context-store'
-import { useState, useMemo } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import SortedElements from '~/routes/studio/context/sorted-elements'
 import Search from '~/components/search/search'
 import { useProjectStore } from '~/stores/project-store'
 import type { ElementDetails } from '@frankframework/doc-library-core'
 import { useFFDoc } from '@frankframework/doc-library-react'
 import LoadingSpinner from '~/components/loading-spinner'
+import LoadError from '~/components/load-error'
 import { useFrankConfigXsd } from '~/providers/frankconfig-xsd-provider'
 import { getChildrenForType, getFirstLevelElementsForType } from '~/utils/xsd-utils'
 import { DEFAULT_ELEMENTS, NON_CANVAS_ELEMENTS } from './palette-config'
 
 const ROOT_TYPES = ['PipelineType', 'ReceiverType']
+const PALETTE_LOAD_TIMEOUT_MS = 15_000
 
 export default function StudioContext() {
   const { setDraggedName, setAllowedOnCanvas } = useNodeContextStore((state) => state)
   const [searchTerm, setSearchTerm] = useState('')
   const project = useProjectStore((state) => state.project)
-  const { filters, elements, isLoading } = useFFDoc()
-  const { xsdDoc } = useFrankConfigXsd()
+  const { filters, elements, isLoading, error: ffDocError, refetch: refetchFFDoc } = useFFDoc()
+  const { xsdDoc, error: xsdError, refetch: refetchXsd } = useFrankConfigXsd()
 
   const { allowed, elementsAllowedOnCanvas } = useMemo(() => {
     if (!xsdDoc) return { allowed: null, elementsAllowedOnCanvas: [] }
@@ -33,7 +35,33 @@ export default function StudioContext() {
     }
   }, [xsdDoc])
 
-  if (isLoading || !elements || allowed === null) {
+  const isReady = !isLoading && !!elements && allowed !== null
+  const hasError = ffDocError !== null || xsdError !== null
+
+  const [timedOut, setTimedOut] = useState(false)
+
+  useEffect(() => {
+    if (isReady || hasError) return
+
+    const timer = setTimeout(() => setTimedOut(true), PALETTE_LOAD_TIMEOUT_MS)
+    return () => clearTimeout(timer)
+  }, [isReady, hasError])
+
+  const retry = () => {
+    setTimedOut(false)
+    refetchFFDoc()
+    refetchXsd()
+  }
+
+  if (!isReady) {
+    if (hasError || timedOut) {
+      return (
+        <div className="flex h-full items-center justify-center">
+          <LoadError message={"Couldn't load the palette.\nCheck your connection and try again."} onRetry={retry} />
+        </div>
+      )
+    }
+
     return (
       <div className="flex h-full items-center justify-center">
         <LoadingSpinner message="Loading palette..." />

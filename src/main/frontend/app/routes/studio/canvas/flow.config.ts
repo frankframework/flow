@@ -14,4 +14,17 @@ export const FlowConfig = {
   MAX_HISTORY: 20, // Adjust this value as needed to limit the number of undo steps
   LAYOUT_HORIZONTAL_OFFSET: 300,
   LAYOUT_VERTICAL_OFFSET: 200,
+  ZOOM_THRESHOLD: 0.6,
+}
+
+/**
+ * Counter-scale factor for compact-mode labels so they stay readable when zoomed out.
+ *
+ * The React Flow viewport scales all node content by `zoom`, so a fixed font size shrinks on
+ * screen as you zoom out. Multiplying a label's font size by this factor keeps its on-screen
+ * size roughly constant. Only called in compact mode (zoom < {@link FlowConfig.ZOOM_THRESHOLD}),
+ * so the result is always >= 1, and the canvas `minZoom` bounds how large it can get.
+ */
+export function getCompactLabelScale(zoom: number): number {
+  return FlowConfig.ZOOM_THRESHOLD / zoom
 }

@@ -1,22 +1,17 @@
 import { createPortal } from 'react-dom'
+import { useSubmitOnEnter } from '~/hooks/use-submit-on-enter'
 import Button from '../inputs/button'
 import Search from '~/components/search/search'
 import type { ElementDetails } from '@frankframework/doc-library-core'
-import { useMemo, useState, type ChangeEvent } from 'react'
+import { useEffect, useMemo, useState, type ChangeEvent } from 'react'
 
 type AddSubcomponentModalProps = {
-  isOpen: boolean
   onClose: () => void
   possibleChildren: ElementDetails[]
   onAddChild: (element: ElementDetails) => void
 }
 
-export default function AddSubcomponentModal({
-  isOpen,
-  onClose,
-  possibleChildren,
-  onAddChild,
-}: AddSubcomponentModalProps) {
+export default function AddSubcomponentModal({ onClose, possibleChildren, onAddChild }: AddSubcomponentModalProps) {
   const [search, setSearch] = useState('')
   const [selectedElement, setSelectedElement] = useState<ElementDetails | null>(null)
 
@@ -26,11 +21,16 @@ export default function AddSubcomponentModal({
       .toSorted((a, b) => a.name.localeCompare(b.name))
   }, [possibleChildren, search])
 
-  if (!isOpen) return null
+  useEffect(() => {
+    setSelectedElement((current) =>
+      current && filteredChildren.some((child) => child.name === current.name)
+        ? current
+        : (filteredChildren[0] ?? null),
+    )
+  }, [filteredChildren])
 
   const handleClose = (event: React.MouseEvent<HTMLDivElement>) => {
     if (event.target === event.currentTarget) {
-      clearStates()
       onClose()
     }
   }
@@ -54,24 +54,23 @@ export default function AddSubcomponentModal({
     if (!selectedElement) return
 
     onAddChild(selectedElement)
-    clearStates()
     onClose()
   }
 
-  const clearStates = () => {
-    setSearch('')
-    setSelectedElement(null)
-  }
+  useSubmitOnEnter(handleAddChild)
 
   return createPortal(
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40" onClick={handleClose}>
-      <div className="bg-background border-border relative flex h-1/2 w-1/3 min-w-[400px] flex-col rounded-lg border p-6 shadow-lg">
+    <div
+      className="fixed inset-0 z-60 flex items-center justify-center bg-black/40"
+      onClick={(mouseEvent) => {
+        mouseEvent.stopPropagation()
+        handleClose(mouseEvent)
+      }}
+    >
+      <div className="bg-background border-border relative flex h-1/2 w-1/3 min-w-100 flex-col rounded-lg border p-6 shadow-lg">
         {/* Close button */}
         <Button
-          onClick={() => {
-            clearStates()
-            onClose()
-          }}
+          onClick={onClose}
           className="text-foreground-muted hover:text-foreground absolute top-3 right-3 cursor-pointer text-lg leading-none"
         >
           &times;
@@ -81,7 +80,7 @@ export default function AddSubcomponentModal({
         <h2 className="mb-4 text-lg font-bold">Add Subcomponent</h2>
 
         {/* Paragraph / content */}
-        <Search placeholder="Search elements..." value={search} onChange={handleOnChange} />
+        <Search autoFocus placeholder="Search elements..." value={search} onChange={handleOnChange} />
         <div className="border-border bg-background mb-3 w-full flex-1 overflow-hidden rounded border">
           <ul className="h-full overflow-y-auto">
             {filteredChildren.length > 0 ? (

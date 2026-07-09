@@ -65,6 +65,7 @@ export type FlowState = {
   setGroupnodeColor: (nodeId: string, color: string) => void
   setNodeName: (nodeId: string, name: string, options?: { isNewNode?: boolean }) => void
   getNodeName: (nodeId: string) => string | null
+  setNodesHiddenForwards: (nodeIds: string[], hiddenForwards: boolean) => void
   addHandle: (nodeId: string, handle: { type: string; index: number }) => void
   updateHandle: (nodeId: string, handleIndex: number, newHandle: { type: string; index: number }) => void
   updateChild: (parentNodeId: string, updatedChild: ChildNode, options?: { isNewNode?: boolean }) => void
@@ -81,7 +82,7 @@ export function isFrankNode(node: FlowNode): node is FrankNodeType {
   return node.type === 'frankNode'
 }
 
-function isExitNode(node: FlowNode): node is ExitNode {
+export function isExitNode(node: FlowNode): node is ExitNode {
   return node.type === 'exitNode'
 }
 
@@ -515,6 +516,17 @@ const useFlowStore = create<FlowState>()(
       if (!node) return null
       if (isFrankNode(node) || isExitNode(node)) return node.data.name ?? null
       return null
+    },
+    setNodesHiddenForwards: (nodeIds: string[], hiddenForwards: boolean) => {
+      get().saveToHistory()
+      const ids = new Set(nodeIds)
+      set({
+        nodes: get().nodes.map((node) =>
+          ids.has(node.id) && (isFrankNode(node) || isExitNode(node))
+            ? { ...node, data: { ...node.data, hiddenForwards } }
+            : node,
+        ),
+      })
     },
     addHandle: (nodeId: string, handle: { type: string; index: number }) => {
       get().saveToHistory()

@@ -479,7 +479,7 @@ function extractSourceHandles(element: Element): SourceHandle[] {
 function processExitElements(element: Element, exitNodes: ExitNode[]) {
   const exits = [...element.children]
   for (const exit of exits) {
-    const { attributes, name, x, y, width, height } = parseElementAttributes(
+    const { attributes, name, x, y, width, height, hiddenForwards } = parseElementAttributes(
       exit.attributes,
       FlowConfig.EXIT_DEFAULT_WIDTH,
       FlowConfig.EXIT_DEFAULT_HEIGHT,
@@ -496,6 +496,7 @@ function processExitElements(element: Element, exitNodes: ExitNode[]) {
         type: 'Exit',
         subtype: 'Exit',
         attributes,
+        hiddenForwards: hiddenForwards || null,
       },
     }
     exitNodes.push(exitNode)
@@ -517,7 +518,7 @@ function convertAdapterToFlowNodes(
       continue
     }
     if (element.tagName.toLowerCase() === 'exit') {
-      const { attributes, name, x, y, width, height } = parseElementAttributes(
+      const { attributes, name, x, y, width, height, hiddenForwards } = parseElementAttributes(
         element.attributes,
         FlowConfig.EXIT_DEFAULT_WIDTH,
         FlowConfig.EXIT_DEFAULT_HEIGHT,
@@ -534,6 +535,7 @@ function convertAdapterToFlowNodes(
           type: 'Exit',
           subtype: 'Exit',
           attributes,
+          hiddenForwards: hiddenForwards || null,
         },
       }
       exitNodes.push(exitNode)
@@ -559,7 +561,7 @@ function convertElementToNode(element: Element, idCounter: IdCounter, sourceHand
   const thisId = (idCounter.current++).toString()
   const { subtype, usedClassName } = translateElementFromOldToNewFormat(element)
 
-  const { attributes, name, x, y, width, height } = parseElementAttributes(
+  const { attributes, name, x, y, width, height, hiddenForwards } = parseElementAttributes(
     element.attributes,
     FlowConfig.NODE_DEFAULT_WIDTH,
     FlowConfig.NODE_MIN_HEIGHT,
@@ -582,6 +584,7 @@ function convertElementToNode(element: Element, idCounter: IdCounter, sourceHand
       sourceHandles,
       attributes: Object.keys(attributes).length > 0 ? attributes : undefined,
       manuallyResized,
+      hiddenForwards: hiddenForwards || undefined,
     },
   }
 }
@@ -777,6 +780,7 @@ function parseElementAttributes(
   let y = 0
   let width = defaultWidth
   let height: number | undefined = undefined
+  let hiddenForwards = false
 
   for (const attr of attrs) {
     const attrName = attr.name
@@ -806,8 +810,14 @@ function parseElementAttributes(
       width = parseNumericAttribute(value, defaultWidth)
       continue
     }
+
     if (attrName === 'flow:height') {
       height = parseNumericAttribute(value, defaultHeight)
+      continue
+    }
+
+    if (attrName === 'flow:hiddenForwards') {
+      hiddenForwards = value === 'true'
       continue
     }
 
@@ -815,7 +825,7 @@ function parseElementAttributes(
     attributes[attrName] = value
   }
 
-  return { attributes, name, x, y, width, height }
+  return { attributes, name, x, y, width, height, hiddenForwards }
 }
 
 type FrankEdge = {
@@ -834,4 +844,5 @@ type ParsedAttributes = {
   y: number
   width: number
   height: number | undefined
+  hiddenForwards: boolean
 }

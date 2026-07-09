@@ -1,4 +1,5 @@
 import {
+  type Edge,
   Handle,
   type Node,
   type NodeProps,
@@ -10,7 +11,8 @@ import {
 } from '@xyflow/react'
 import DangerIcon from '../../../../../icons/solar/Danger Triangle.svg?react'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import useFlowStore from '~/stores/flow-store'
+import { useShallow } from 'zustand/react/shallow'
+import useFlowStore, { isExitNode, isFrankNode } from '~/stores/flow-store'
 import { CustomHandle } from '~/routes/studio/canvas/nodetypes/components/handle'
 import { FlowConfig } from '~/routes/studio/canvas/flow.config'
 import { useNodeContextMenu } from '~/routes/studio/canvas/node-context-menu-context'
@@ -47,9 +49,21 @@ export type FrankNodeType = Node<{
   attributes?: Record<string, string>
   children: ChildNode[]
   manuallyResized?: boolean
+  hiddenForwards?: boolean
 }> & {
   width?: number
   height?: number
+}
+
+function isForwardRevealed(
+  targetId: string,
+  hoveredNodeId: string | null,
+  showAllForwards: boolean,
+  edges: Edge[],
+): boolean {
+  if (showAllForwards || hoveredNodeId === targetId) return true
+
+  return hoveredNodeId !== null && edges.some((edge) => edge.source === hoveredNodeId && edge.target === targetId)
 }
 
 export default function FrankNode(properties: NodeProps<FrankNodeType>) {
@@ -78,7 +92,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
   } = useNodeContextStore()
   const gradientEnabled = useSettingsStore((state) => state.studio.gradient)
   const zoom = useStore((state) => state.transform[2])
-  const isCompact = zoom < 0.4
+  const isCompact = zoom < FlowConfig.ZOOM_THRESHOLD
   const [isOverflowing, setIsOverflowing] = useState(false)
 
   const frankElement = useMemo(() => {
@@ -91,9 +105,40 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
   const isDeprecated = frankElement?.deprecated
   const [showDeprecated, setShowDeprecated] = useState(false)
   const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null)
-  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isSubcomponentModalOpen, setIsSubcomponentModalOpen] = useState(false)
   const dangerTriangleReference = useRef<HTMLDivElement>(null)
   const availableHandleTypes = useHandleTypes(frankElement?.forwards)
+
+  const hoveredNodeId = useNodeContextStore((state) => state.hoveredNodeId)
+  const showAllForwards = useNodeContextStore((state) => state.showAllForwards)
+  const edges = useFlowStore((state) => state.edges)
+  const hiddenForwardNodeIds = useFlowStore(
+    useShallow((state) =>
+      state.nodes
+        .filter((node) => (isFrankNode(node) || isExitNode(node)) && node.data.hiddenForwards)
+        .map((node) => node.id),
+    ),
+  )
+
+  const dimmedHandleIndices = useMemo(() => {
+    const dimmed = new Set<number>()
+    if (hiddenForwardNodeIds.length === 0) return dimmed
+    const hiddenSet = new Set(hiddenForwardNodeIds)
+
+    for (const edge of edges) {
+      if (
+        edge.source !== properties.id ||
+        !hiddenSet.has(edge.target) ||
+        isForwardRevealed(edge.target, hoveredNodeId, showAllForwards, edges)
+      )
+        continue
+
+      const handleIndex = Number(edge.sourceHandle)
+      if (!Number.isNaN(handleIndex)) dimmed.add(handleIndex)
+    }
+
+    return dimmed
+  }, [edges, hiddenForwardNodeIds, hoveredNodeId, showAllForwards, properties.id])
 
   const allowedChildNames = useMemo(
     () => (xsdDoc ? new Set(getAllowedChildElementsForElement(xsdDoc, properties.data.subtype)) : null),
@@ -402,8 +447,6 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
     return (
       <ZoomedOutNode
         subtype={properties.data.subtype}
-        name={properties.data.name}
-        attributes={properties.data.attributes}
         colorVariable={colorVariable}
         selected={properties.selected}
         showTargetHandle={properties.data.subtype !== 'Receiver'}
@@ -528,7 +571,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
         {possibleChildren.length > 0 && (
           <div
             className="hover:text-foreground text-foreground-muted flex cursor-pointer gap-1 self-start p-1"
-            onClick={() => setIsModalOpen(true)}
+            onClick={() => setIsSubcomponentModalOpen(true)}
           >
             <div className="bg-foreground/30 border-border h-4 w-4 justify-center rounded-full border text-center text-[8px] font-bold">
               +
@@ -573,6 +616,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
           onChangeType={(newType) => changeHandleType(handle.index, newType)}
           absolutePosition={{ x: properties.positionAbsoluteX, y: properties.positionAbsoluteY }}
           typesAllowed={frankElement?.forwards}
+          dimmed={dimmedHandleIndices.has(handle.index)}
         />
       ))}
       {/* Only show the add handle button if there are available handle types that are not yet used on this node */}
@@ -600,13 +644,13 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
         />
       )}
 
-      {/* Modal */}
-      <AddSubcomponentModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        possibleChildren={possibleChildren}
-        onAddChild={createChildFromElement}
-      />
+      {isSubcomponentModalOpen && (
+        <AddSubcomponentModal
+          onClose={() => setIsSubcomponentModalOpen(false)}
+          possibleChildren={possibleChildren}
+          onAddChild={createChildFromElement}
+        />
+      )}
     </>
   )
 }

@@ -30,7 +30,7 @@ import useFlowStore, { isStickyNote, type FlowState } from '~/stores/flow-store'
 import { useShallow } from 'zustand/react/shallow'
 import { FlowConfig } from '~/routes/studio/canvas/flow.config'
 import { getElementTypeFromName } from '~/routes/studio/node-translator-module'
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { logApiError } from '~/utils/logger'
 import { NodeContextMenuContext, useNodeContextMenu } from './node-context-menu-context'
 import StickyNoteComponent, { type StickyNote } from '~/routes/studio/canvas/nodetypes/sticky-note'
@@ -53,6 +53,7 @@ import { cloneWithRemappedIds, getEdgeLabelFromHandle } from '~/utils/flow-utils
 import { showErrorToast } from '~/components/toast'
 import { useSettingsStore } from '~/stores/settings-store'
 import { useShortcut } from '~/hooks/use-shortcut'
+import LightbulbIcon from '/icons/solar/Lightbulb.svg?react'
 import CanvasContextMenu from '~/components/flow/canvas-context-menu'
 import { useSidebarStore, SidebarSide } from '~/stores/sidebar-layout-store'
 import { openInEditorAtElement } from '~/actions/navigationActions'
@@ -159,6 +160,10 @@ function computeNodeCenteredViewport(
 function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
   const showNodeContextMenu = useNodeContextMenu()
   const [loading, setLoading] = useState(false)
+  const hoveredNodeId = useNodeContextStore((state) => state.hoveredNodeId)
+  const showAllForwards = useNodeContextStore((state) => state.showAllForwards)
+  const setHoveredNodeId = useNodeContextStore((state) => state.setHoveredNodeId)
+  const toggleShowAllForwards = useNodeContextStore((state) => state.toggleShowAllForwards)
   const {
     isEditing,
     isDirty,
@@ -208,7 +213,7 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
     showNodeContextMenuRef.current = showNodeContextMenu
   }, [showNodeContextMenu])
 
-  const [showModal, setShowModal] = useState(false)
+  const [showCreateNodeModal, setShowCreateNodeModal] = useState(false)
   const [edgeDropPositions, setEdgeDropPositions] = useState<{ x: number; y: number } | null>(null)
   const [pendingCompactConnection, setPendingCompactConnection] = useState<{
     connection: Connection
@@ -275,6 +280,54 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
   }, [])
 
   const { nodes, edges, onNodesChange, onEdgesChange, onConnect, onReconnect } = useFlowStore(useShallow(selector))
+
+  const hiddenForwardNodeIds = useMemo(() => {
+    const ids = new Set<string>()
+    for (const node of nodes) {
+      if (isFrankNode(node) && node.data.hiddenForwards) ids.add(node.id)
+    }
+
+    return ids
+  }, [nodes])
+
+  const revealedHiddenIds = useMemo(() => {
+    const revealed = new Set<string>()
+    if (hiddenForwardNodeIds.size === 0) return revealed
+    if (showAllForwards) {
+      for (const id of hiddenForwardNodeIds) revealed.add(id)
+      return revealed
+    }
+
+    if (hoveredNodeId !== null) {
+      if (hiddenForwardNodeIds.has(hoveredNodeId)) revealed.add(hoveredNodeId)
+      for (const edge of edges) {
+        if (edge.source === hoveredNodeId && hiddenForwardNodeIds.has(edge.target)) revealed.add(edge.target)
+      }
+    }
+
+    return revealed
+  }, [edges, hiddenForwardNodeIds, hoveredNodeId, showAllForwards])
+
+  const displayEdges = useMemo(() => {
+    if (hiddenForwardNodeIds.size === 0) return edges
+    const isHiddenAndNotRevealed = (nodeId: string) =>
+      hiddenForwardNodeIds.has(nodeId) && !revealedHiddenIds.has(nodeId)
+
+    return edges.map((edge) => {
+      const faded = isHiddenAndNotRevealed(edge.source) || isHiddenAndNotRevealed(edge.target)
+      return faded ? { ...edge, data: { ...edge.data, faded: true } } : edge
+    })
+  }, [edges, hiddenForwardNodeIds, revealedHiddenIds])
+
+  const displayNodes = useMemo(() => {
+    if (hiddenForwardNodeIds.size === 0) return nodes
+
+    return nodes.map((node) => {
+      if (!hiddenForwardNodeIds.has(node.id)) return node
+      const opacity = revealedHiddenIds.has(node.id) ? 1 : 0.5
+      return { ...node, style: { ...node.style, opacity, transition: 'opacity 150ms cubic-bezier(0.4, 0, 0.2, 1)' } }
+    })
+  }, [nodes, hiddenForwardNodeIds, revealedHiddenIds])
 
   const saveFlow = useCallback(async () => {
     const { nodes: flowNodes, edges: flowEdges, viewport: flowViewport } = useFlowStore.getState()
@@ -481,7 +534,7 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
     const mouseEvent = event as MouseEvent
     if (!connectionState.isValid) {
       const zoom = reactFlow.getZoom()
-      if (zoom < 0.4 && sourceInfoReference.current.handleType === 'source') {
+      if (zoom < FlowConfig.ZOOM_THRESHOLD && sourceInfoReference.current.handleType === 'source') {
         const { nodes } = useFlowStore.getState()
         const sourceNode = nodes.find((node) => node.id === sourceInfoReference.current.nodeId)
         if (sourceNode && isFrankNode(sourceNode)) {
@@ -500,7 +553,7 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
     (connection: Connection) => {
       const zoom = reactFlow.getZoom()
 
-      if (zoom < 0.4 && connection.source) {
+      if (zoom < FlowConfig.ZOOM_THRESHOLD && connection.source) {
         const { nodes } = useFlowStore.getState()
         const sourceNode = nodes.find((node) => node.id === connection.source)
 
@@ -565,7 +618,7 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
     const flowPositions = screenToFlowPosition({ x: x, y: y })
 
     setEdgeDropPositions(flowPositions)
-    setShowModal(true)
+    setShowCreateNodeModal(true)
   }
 
   const handleEdgeDropHandleSelect = useCallback(
@@ -575,7 +628,7 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
       setEdgeDropHandleType(type)
       setEdgeDropPositions(flowPositions)
       setPendingEdgeDrop(null)
-      setShowModal(true)
+      setShowCreateNodeModal(true)
     },
     [pendingEdgeDrop, reactFlow],
   )
@@ -691,7 +744,7 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
       node.type === 'frankNode' || node.type === 'exitNode' ? { ...node, position: { x: 0, y: 0 } } : node,
     )
     const laidOutNodes = layoutGraph(nodesWithResetPositions, flowStore.edges, 'LR')
-    flowStore.setNodes(laidOutNodes)
+    flowStore.setNodesWithoutHistory(laidOutNodes)
 
     if (pendingSelection) {
       applySelectionToNodes(pendingSelection)
@@ -702,6 +755,9 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
         reactFlowRef.current?.setViewport(freshViewport)
       })
     }
+
+    flowStore.setHistory([])
+    flowStore.setFuture([])
   }, [
     nodesInitialized,
     relayoutNonce,
@@ -956,6 +1012,19 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
     return true
   }, [isEditing, showNodeContextMenu])
 
+  const toggleSelectedHidden = useCallback(() => {
+    const selected = useFlowStore
+      .getState()
+      .nodes.filter((node): node is FrankNodeType => Boolean(node.selected) && isFrankNode(node))
+    if (selected.length === 0) return false
+
+    const shouldHide = selected.some((node) => !node.data.hiddenForwards)
+    useFlowStore.getState().setNodesHiddenForwards(
+      selected.map((node) => node.id),
+      shouldHide,
+    )
+  }, [])
+
   useShortcut({
     'studio.copy': () => copySelection(),
     'studio.paste': () => pasteSelection(),
@@ -965,6 +1034,7 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
     'studio.redo-alt': () => useFlowStore.getState().redo(),
     'studio.group': () => handleGrouping(),
     'studio.ungroup': () => handleUngroup(),
+    'studio.hide': () => toggleSelectedHidden(),
     'studio.save': () => void saveFlow(),
     'studio.close-context': () => closeEditNodeContextOnEscape(),
     'studio.delete': () => deleteSelection(),
@@ -1088,6 +1158,17 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
       showNodeContextMenu,
     ],
   )
+
+  const handleNodeMouseEnter = useCallback(
+    (_event: React.MouseEvent, node: FlowNode) => {
+      setHoveredNodeId(node.id)
+    },
+    [setHoveredNodeId],
+  )
+
+  const handleNodeMouseLeave = useCallback(() => {
+    setHoveredNodeId(null)
+  }, [setHoveredNodeId])
 
   const handleEdgeClick = useCallback(() => {
     setIsMultiSelect(false)
@@ -1262,7 +1343,7 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
     if (sourceInfo?.nodeId && sourceInfo.handleType === 'source') {
       const sourceNode = flowStore.nodes.find((node) => node.id === sourceInfo.nodeId)
 
-      if (reactFlow.getZoom() < 0.4 && sourceNode && isFrankNode(sourceNode)) {
+      if (reactFlow.getZoom() < FlowConfig.ZOOM_THRESHOLD && sourceNode && isFrankNode(sourceNode)) {
         if (edgeDropHandleType) {
           const existingHandle = sourceNode.data.sourceHandles.find((handle) => handle.type === edgeDropHandleType)
           if (existingHandle) {
@@ -1406,6 +1487,7 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
   const handleRightMouseButtonClick = useCallback(
     (event: React.MouseEvent) => {
       event.preventDefault()
+      event.stopPropagation()
       const { screenToFlowPosition } = reactFlow
       const flowPos = screenToFlowPosition({ x: event.clientX, y: event.clientY })
       setContextMenu({ x: event.clientX, y: event.clientY, flowPos })
@@ -1664,8 +1746,8 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
         )}
 
         <ReactFlow
-          nodes={nodes}
-          edges={edges}
+          nodes={displayNodes}
+          edges={displayEdges}
           onViewportChange={(viewPort) => {
             useFlowStore.getState().setViewport(viewPort)
           }}
@@ -1675,6 +1757,8 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
           onReconnect={onReconnect}
           onNodeClick={handleNodeClick}
           onNodeDoubleClick={handleNodeDoubleClick}
+          onNodeMouseEnter={handleNodeMouseEnter}
+          onNodeMouseLeave={handleNodeMouseLeave}
           onNodeDragStop={handleNodeDragStop}
           onEdgeClick={handleEdgeClick}
           onSelectionChange={handleSelectionChange}
@@ -1695,8 +1779,21 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
           }}
           deleteKeyCode={null}
           minZoom={0.2}
+          nodeDragThreshold={4}
+          nodeClickDistance={4}
         >
           <Controls position="top-left">
+            {hiddenForwardNodeIds.size > 0 && (
+              <ControlButton
+                onClick={toggleShowAllForwards}
+                title={showAllForwards ? 'Hide forwards again' : 'Temporarily show all forwards'}
+              >
+                <LightbulbIcon
+                  className={showAllForwards ? 'fill-brand' : 'fill-foreground-muted'}
+                  style={{ width: '100%', height: '100%' }}
+                />
+              </ControlButton>
+            )}
             <ControlButton onClick={handleAutoLayout} title="Auto layout">
               <svg
                 viewBox="0 0 24 24"
@@ -1719,13 +1816,14 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
           <Background variant={BackgroundVariant.Dots} size={3} gap={100}></Background>
         </ReactFlow>
 
-        <CreateNodeModal
-          isOpen={showModal}
-          onClose={() => setShowModal(false)}
-          addNodeAtPosition={addNodeAtPosition}
-          positions={edgeDropPositions}
-          sourceInfo={sourceInfoReference.current}
-        />
+        {showCreateNodeModal && (
+          <CreateNodeModal
+            onClose={() => setShowCreateNodeModal(false)}
+            addNodeAtPosition={addNodeAtPosition}
+            positions={edgeDropPositions}
+            sourceInfo={sourceInfoReference.current}
+          />
+        )}
 
         {pendingCompactConnection && (
           <HandleMenu

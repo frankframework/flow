@@ -7,7 +7,7 @@ import CloseButton from '~/components/inputs/close-button'
 import Input from '~/components/inputs/input'
 import DirectoryPicker from '~/components/directory-picker/directory-picker'
 import { fetchProject } from '~/services/project-service'
-import { containsPathSeparator, joinPath, relativeTo } from '~/utils/path-utils'
+import { hasUnsafeNameChars, joinPath, relativeTo } from '~/utils/path-utils'
 
 type AddConfigurationModalProperties = {
   isOpen: boolean
@@ -49,8 +49,8 @@ export default function AddConfigurationModal({
         return
       }
 
-      if (containsPathSeparator(configname) || configname.includes('..')) {
-        setError(String.raw`Filename cannot contain "/", "\" or ".."`)
+      if (hasUnsafeNameChars(configname) || configname.includes('..')) {
+        setError('Filename may only contain letters, digits, spaces, and . _ - (no "..")')
         setLoading(false)
         return
       }
@@ -94,7 +94,7 @@ export default function AddConfigurationModal({
   }
 
   const trimmedFilename = filename.trim()
-  const filenameHasInvalidChars = containsPathSeparator(trimmedFilename) || trimmedFilename.includes('..')
+  const filenameHasInvalidChars = hasUnsafeNameChars(trimmedFilename) || trimmedFilename.includes('..')
   const isFilenameValid = trimmedFilename.length > 0 && !filenameHasInvalidChars
 
   const displayFilename = (() => {
@@ -145,7 +145,9 @@ export default function AddConfigurationModal({
               <span className="text-foreground-muted text-sm">.xml</span>
             </div>
             {filenameHasInvalidChars && (
-              <p className="mt-1 text-xs text-red-500">{String.raw`Filename cannot contain "/", "\" or ".."`}</p>
+              <p className="mt-1 text-xs text-red-500">
+                Filename may only contain letters, digits, spaces, and . _ - (no &quot;..&quot;)
+              </p>
             )}
           </div>
         </div>
