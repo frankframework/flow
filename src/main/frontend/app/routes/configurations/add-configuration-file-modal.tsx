@@ -7,7 +7,7 @@ import CloseButton from '~/components/inputs/close-button'
 import Input from '~/components/inputs/input'
 import DirectoryPicker from '~/components/directory-picker/directory-picker'
 import { fetchProject } from '~/services/project-service'
-import { containsPathSeparator, joinPath, relativeTo } from '~/utils/path-utils'
+import { hasUnsafeNameChars, joinPath, relativeTo } from '~/utils/path-utils'
 import InputWithLabel from '~/components/inputs/input-with-label'
 import ValidatedInput from '~/components/inputs/validatedInput'
 
@@ -54,8 +54,8 @@ export default function AddConfigurationFileModal({
         return
       }
 
-      if (containsPathSeparator(configname) || configname.includes('..')) {
-        setError(String.raw`Filename cannot contain "/", "\" or ".."`)
+      if (hasUnsafeNameChars(configname) || configname.includes('..')) {
+        setError('Filename may only contain letters, digits, spaces, and . _ - (no "..")')
         setLoading(false)
         return
       }
@@ -99,6 +99,9 @@ export default function AddConfigurationFileModal({
   }
 
   const trimmedFilename = filename.trim()
+  const filenameHasInvalidChars = hasUnsafeNameChars(trimmedFilename) || trimmedFilename.includes('..')
+  const isFilenameValid = trimmedFilename.length > 0 && !filenameHasInvalidChars
+
   const displayFilename = (() => {
     if (!trimmedFilename) return ''
     return trimmedFilename.toLowerCase().endsWith('.xml') ? trimmedFilename : `${trimmedFilename}.xml`
@@ -134,6 +137,7 @@ export default function AddConfigurationFileModal({
               patterns={{
                 'Filename cannot contain "/", "\\" or ".."': INVALID_FILENAME_CHARACTERS_REGEXP,
                 'Filename cannot be empty': /^.+$/,
+                // Filename may only contain letters, digits, spaces, and . _ - (no &quot;..&quot;)
               }}
               onValidChange={(isValid) => {
                 setIsFilenameValid(isValid)

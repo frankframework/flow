@@ -1,5 +1,6 @@
-import { BaseEdge, EdgeLabelRenderer, getBezierPath, type Position } from '@xyflow/react'
+import { BaseEdge, EdgeLabelRenderer, getBezierPath, type Position, useStore } from '@xyflow/react'
 import useFlowStore from '~/stores/flow-store'
+import { FlowConfig, getCompactLabelScale } from '~/routes/studio/canvas/flow.config'
 
 export type FrankEdgeProperties = {
   id: string
@@ -14,6 +15,7 @@ export type FrankEdgeProperties = {
   selected?: boolean
   sourceHandleId?: string | null
   targetHandleId?: string | null
+  data?: { label?: string; faded?: boolean }
   type: string
 }
 
@@ -28,8 +30,10 @@ export default function FrankEdge({
   targetPosition,
   selected,
   sourceHandleId,
+  data,
 }: Readonly<FrankEdgeProperties>) {
   const deleteEdge = useFlowStore((state) => state.deleteEdge)
+  const faded = data?.faded ?? false
 
   const sourceHandleType = useFlowStore((state) => {
     const node = state.nodes.find((n) => n.id === source)
@@ -50,6 +54,9 @@ export default function FrankEdge({
     return ''
   })
 
+  const zoom = useStore((state) => state.transform[2])
+  const isCompact = zoom < FlowConfig.ZOOM_THRESHOLD
+
   const [edgePath, labelX, labelY] = getBezierPath({
     sourceX,
     sourceY,
@@ -61,31 +68,40 @@ export default function FrankEdge({
 
   return (
     <>
-      <BaseEdge id={id} path={edgePath} style={{ strokeWidth: 3 }} />
+      <BaseEdge
+        id={id}
+        path={edgePath}
+        style={{ strokeWidth: 3, opacity: faded ? 0 : 1, transition: 'opacity 150ms cubic-bezier(0.4, 0, 0.2, 1)' }}
+        interactionWidth={faded ? 0 : undefined}
+      />
       <EdgeLabelRenderer>
         <div
           style={{
             position: 'absolute',
             transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
-            pointerEvents: 'all',
+            pointerEvents: faded ? 'none' : 'all',
+            opacity: faded ? 0 : 1,
+            transition: 'opacity 150ms cubic-bezier(0.4, 0, 0.2, 1)',
             zIndex: 20,
           }}
           className="nodrag flex flex-col items-center"
         >
-          <p className="bg-background border-border relative rounded-md border p-1 px-2 text-sm">
-            {sourceHandleType}
-            {selected && (
-              <button
-                className="text-foreground absolute -top-3 -right-2.5 rounded-full border border-black shadow-sm hover:border-red-400 hover:text-red-400"
-                onClick={() => deleteEdge(id)}
-              >
-                <svg width="15" height="15" viewBox="0 0 15 15" stroke="currentColor" strokeLinecap="round">
-                  <line x1="5" y1="5" x2="10" y2="10" />
-                  <line x1="5" y1="10" x2="10" y2="5" />
-                </svg>
-              </button>
-            )}
-          </p>
+          <div style={isCompact ? { transform: `scale(${getCompactLabelScale(zoom)})` } : undefined}>
+            <p className="bg-background border-border relative rounded-md border p-1 px-2 text-sm">
+              {sourceHandleType}
+              {selected && (
+                <button
+                  className="text-foreground absolute -top-3 -right-2.5 rounded-full border border-black shadow-sm hover:border-red-400 hover:text-red-400"
+                  onClick={() => deleteEdge(id)}
+                >
+                  <svg width="15" height="15" viewBox="0 0 15 15" stroke="currentColor" strokeLinecap="round">
+                    <line x1="5" y1="5" x2="10" y2="10" />
+                    <line x1="5" y1="10" x2="10" y2="5" />
+                  </svg>
+                </button>
+              )}
+            </p>
+          </div>
         </div>
       </EdgeLabelRenderer>
     </>

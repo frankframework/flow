@@ -111,6 +111,7 @@ export default function Dropdown({
 
     if (openKeys.includes(event.key)) {
       event.preventDefault()
+      event.stopPropagation()
       setIsOpen(true)
       setHighlightedIndex(getSelectedIndex())
     }
@@ -138,16 +139,19 @@ export default function Dropdown({
     switch (event.key) {
       case 'ArrowDown': {
         event.preventDefault()
+        event.stopPropagation()
         setHighlightedIndex((prev) => Math.min(prev + 1, optionsArray.length - 1))
         break
       }
       case 'ArrowUp': {
         event.preventDefault()
+        event.stopPropagation()
         setHighlightedIndex((prev) => Math.max(prev - 1, 0))
         break
       }
       case 'Enter': {
         event.preventDefault()
+        event.stopPropagation()
         if (highlightedIndex >= 0 && highlightedIndex < optionsArray.length) {
           handleOptionClick(optionsArray[highlightedIndex])
         }
@@ -155,6 +159,7 @@ export default function Dropdown({
       }
       case 'Escape': {
         event.preventDefault()
+        event.stopPropagation()
         setIsOpen(false)
         break
       }
