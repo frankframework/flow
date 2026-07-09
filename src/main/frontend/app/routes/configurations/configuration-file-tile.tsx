@@ -142,7 +142,7 @@ export default function ConfigurationFileTile({
     <div
       className={clsx(
         `bg-background relative flex flex-col gap-4 rounded border p-6 transition-colors ${dropZoneClasses}`,
-        listViewTile ? 'w-full' : 'h-100 w-150',
+        listViewTile ? 'w-full' : 'h-100 w-140',
       )}
       onDragEnter={handleDragEnter}
       onDragOver={handleDragOver}

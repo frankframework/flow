@@ -7,7 +7,7 @@ import CloseButton from '~/components/inputs/close-button'
 import Input from '~/components/inputs/input'
 import DirectoryPicker from '~/components/directory-picker/directory-picker'
 import { fetchProject } from '~/services/project-service'
-import { hasUnsafeNameChars, joinPath, relativeTo } from '~/utils/path-utils'
+import { joinPath, relativeTo, SAFE_NAME_PATTERN } from '~/utils/path-utils'
 import InputWithLabel from '~/components/inputs/input-with-label'
 import ValidatedInput from '~/components/inputs/validatedInput'
 
@@ -18,8 +18,6 @@ type AddConfigurationModalProperties = {
   currentConfiguration?: ConfigurationProject
   configurationsDirPath?: string
 }
-
-const INVALID_FILENAME_CHARACTERS_REGEXP = /^(?!.*(?:[/\\]|\.\.)).*$/
 
 export default function AddConfigurationFileModal({
   isOpen,
@@ -48,17 +46,6 @@ export default function AddConfigurationFileModal({
 
     try {
       let configname = filename.trim()
-      if (!configname) {
-        setError('Configuration name cannot be empty')
-        setLoading(false)
-        return
-      }
-
-      if (hasUnsafeNameChars(configname) || configname.includes('..')) {
-        setError('Filename may only contain letters, digits, spaces, and . _ - (no "..")')
-        setLoading(false)
-        return
-      }
 
       if (!configname.toLowerCase().endsWith('.xml')) {
         configname = `${configname}.xml`
@@ -99,8 +86,6 @@ export default function AddConfigurationFileModal({
   }
 
   const trimmedFilename = filename.trim()
-  const filenameHasInvalidChars = hasUnsafeNameChars(trimmedFilename) || trimmedFilename.includes('..')
-  const isFilenameValid = trimmedFilename.length > 0 && !filenameHasInvalidChars
 
   const displayFilename = (() => {
     if (!trimmedFilename) return ''
@@ -135,9 +120,8 @@ export default function AddConfigurationFileModal({
               placeholder="Choose a filename"
               aria-label="configuration filename"
               patterns={{
-                'Filename cannot contain "/", "\\" or ".."': INVALID_FILENAME_CHARACTERS_REGEXP,
                 'Filename cannot be empty': /^.+$/,
-                // Filename may only contain letters, digits, spaces, and . _ - (no &quot;..&quot;)
+                'Filename may only contain letters, digits, spaces, and . _ - (no "..")': SAFE_NAME_PATTERN,
               }}
               onValidChange={(isValid) => {
                 setIsFilenameValid(isValid)
