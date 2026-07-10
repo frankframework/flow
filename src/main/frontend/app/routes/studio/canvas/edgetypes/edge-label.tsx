@@ -9,7 +9,14 @@ type EdgeLabelProperties = {
   onDelete: () => void
 }
 
-export default function EdgeLabel({ position, text, selected, faded, compactScale, onDelete }: Readonly<EdgeLabelProperties>) {
+export default function EdgeLabel({
+  position,
+  text,
+  selected,
+  faded,
+  compactScale,
+  onDelete,
+}: Readonly<EdgeLabelProperties>) {
   return (
     <div
       style={{
@@ -22,7 +29,7 @@ export default function EdgeLabel({ position, text, selected, faded, compactScal
       }}
       className="nodrag flex flex-col items-center"
     >
-      <div style={compactScale !== undefined ? { transform: `scale(${compactScale})` } : undefined}>
+      <div style={compactScale === undefined ? undefined : { transform: `scale(${compactScale})` }}>
         <p className="bg-background border-border relative rounded-md border p-1 px-2 text-sm">
           {text}
           {selected && (
