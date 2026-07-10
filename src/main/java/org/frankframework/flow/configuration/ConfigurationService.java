@@ -1,18 +1,14 @@
 package org.frankframework.flow.configuration;
 
 import jakarta.annotation.PostConstruct;
-
 import java.io.IOException;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
-
 import lombok.extern.log4j.Log4j2;
-
 import org.frankframework.flow.exception.ApiException;
 import org.frankframework.flow.file.FileTreeService;
 import org.frankframework.flow.filesystem.FileSystemStorage;
@@ -24,7 +20,6 @@ import org.frankframework.flow.utility.XmlConfigurationUtils;
 import org.frankframework.flow.utility.XmlFormatterUtils;
 import org.frankframework.flow.utility.XmlSecurityUtils;
 import org.frankframework.flow.utility.XsdAttributeOrdererUtils;
-
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
