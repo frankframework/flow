@@ -1,7 +1,7 @@
 import '/styles/markdown.css'
 import SettingsMenuItems, { type SettingsMenuItem } from './settings-menu-items'
 import SidebarContentClose from '~/components/sidebars-layout/sidebar-content-close'
-import { SidebarSide } from '~/stores/sidebar-layout-store'
+import { SidebarSide } from '~/components/sidebars-layout/sidebar-layout-store'
 import SidebarLayout from '~/components/sidebars-layout/sidebar-layout'
 import SidebarHeader from '~/components/sidebars-layout/sidebar-header'
 import SettingsMenu from '~/routes/settings/settings-menu'

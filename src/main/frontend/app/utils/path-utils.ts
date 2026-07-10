@@ -6,7 +6,7 @@ export function containsPathSeparator(path: string): boolean {
   return /[/\\]/.test(path)
 }
 
-export const SAFE_NAME_PATTERN = /^[A-Za-z0-9 ._-]*$/
+export const SAFE_NAME_PATTERN = /^(?!.*\.\.)[A-Za-z0-9 ._-]*$/
 
 export function hasUnsafeNameChars(name: string): boolean {
   return !SAFE_NAME_PATTERN.test(name)

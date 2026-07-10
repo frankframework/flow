@@ -1,11 +1,11 @@
 import React from 'react'
 import clsx from 'clsx'
 
-type ButtonVariant = 'default' | 'ghost' | 'primary' | 'destructive'
+type ButtonVariant = 'default' | 'ghost' | 'primary' | 'destructive' | 'unstyled'
 
 export function buttonClasses(variant: ButtonVariant = 'default', disabled?: boolean, className?: string) {
   return clsx(
-    'rounded-md px-4 py-2',
+    variant !== 'unstyled' && 'rounded-md px-4 py-2',
     variant === 'default' && 'text-foreground border-border bg-backdrop border',
     variant === 'ghost' && 'text-foreground border border-transparent bg-transparent',
     variant === 'primary' && 'bg-brand font-medium text-white',

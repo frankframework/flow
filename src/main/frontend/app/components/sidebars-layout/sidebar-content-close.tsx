@@ -1,5 +1,5 @@
 import SidebarClose, { type SidebarsCloseProperties } from '~/components/sidebars-layout/sidebar-close'
-import { useSidebarStore } from '~/stores/sidebar-layout-store'
+import { useSidebarStore } from '~/components/sidebars-layout/sidebar-layout-store'
 import { useContext } from 'react'
 import { SidebarContext } from '~/components/sidebars-layout/sidebar-layout'
 

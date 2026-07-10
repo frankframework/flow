@@ -160,7 +160,7 @@ function CreateNodeModal({ onClose, addNodeAtPosition, positions, sourceInfo }: 
         </div>
 
         <CloseButton onClick={onClose} className="absolute top-3 right-3" />
-        <Button onClick={handleCreateNode} className="mt-4">
+        <Button disabled={!selectedElement} onClick={handleCreateNode} className="mt-4 w-full">
           Create Node
         </Button>
       </div>

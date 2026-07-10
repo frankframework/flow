@@ -23,7 +23,7 @@ export default function IconButton({
       role="button"
       tabIndex={disabled ? -1 : 0}
       className={clsx(
-        'icon-button group flex-shrink-0 cursor-pointer rounded p-0.5',
+        'icon-button group shrink-0 cursor-pointer rounded p-0.5',
         disabled ? 'cursor-not-allowed opacity-40' : 'hover:bg-hover',
         className,
       )}

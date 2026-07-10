@@ -1,6 +1,6 @@
 import React, { createContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Allotment, type AllotmentHandle } from 'allotment'
-import { SidebarSide, useSidebarStore, type VisibilityState } from '~/stores/sidebar-layout-store'
+import { SidebarSide, useSidebarStore, type VisibilityState } from '~/components/sidebars-layout/sidebar-layout-store'
 
 export const SidebarContext = createContext<string | undefined>(undefined)
 
@@ -9,6 +9,7 @@ type SidebarLayoutProperties = {
   name: string
   defaultVisible?: VisibilityState
   windowResizeOnChange?: boolean
+  hideLeft?: boolean
 }
 
 export default function SidebarLayout({
@@ -16,6 +17,7 @@ export default function SidebarLayout({
   name,
   defaultVisible,
   windowResizeOnChange,
+  hideLeft,
 }: Readonly<SidebarLayoutProperties>) {
   const initializeInstance = useSidebarStore((state) => state.initializeInstance)
   const setSizes = useSidebarStore((state) => state.setSizes)
@@ -39,10 +41,10 @@ export default function SidebarLayout({
     if (!allotmentReady || !allotmentRef.current) return
     if (sizes.length === 0) return
 
-    const target = sizes.map((size, i) => (visible[i] ? size : 0))
-
+    const target = sizes.map((size, index) => (visible[index] ? size : 0))
+    if (hideLeft) target.shift()
     allotmentRef.current.resize(target)
-  }, [sizes, visible, allotmentReady])
+  }, [sizes, visible, allotmentReady, hideLeft])
 
   const handleVisibilityChange = (index: SidebarSide, value: boolean) => {
     setVisible(name, index, value)
@@ -50,7 +52,7 @@ export default function SidebarLayout({
 
   const saveSizes = (newSizes: number[]) => {
     const previous = useSidebarStore.getState().getSizes(name) ?? []
-    const merged = newSizes.map((size, i) => (size === 0 ? (previous[i] ?? 0) : size))
+    const merged = newSizes.map((size, index) => (size === 0 ? (previous[index] ?? 0) : size))
     setSizes(name, merged)
     if (windowResizeOnChange) {
       globalThis.dispatchEvent(new Event('resize'))
@@ -70,17 +72,20 @@ export default function SidebarLayout({
           onChange={onChangeHandler}
           onDragEnd={saveSizes}
           onVisibleChange={handleVisibilityChange}
+          proportionalLayout={false}
         >
-          <Allotment.Pane
-            snap
-            minSize={200}
-            maxSize={500}
-            preferredSize={300}
-            visible={visible[SidebarSide.LEFT]}
-            className="bg-background flex h-full flex-col"
-          >
-            {childrenArray[SidebarSide.LEFT]}
-          </Allotment.Pane>
+          {hideLeft || (
+            <Allotment.Pane
+              snap
+              minSize={200}
+              maxSize={500}
+              preferredSize={300}
+              visible={visible[SidebarSide.LEFT]}
+              className="bg-background flex h-full flex-col"
+            >
+              {childrenArray[SidebarSide.LEFT]}
+            </Allotment.Pane>
+          )}
           <Allotment.Pane className="bg-backdrop flex h-full flex-col">
             {childrenArray[SidebarSide.MIDDLE]}
           </Allotment.Pane>

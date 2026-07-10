@@ -7,18 +7,18 @@ import CloseButton from '~/components/inputs/close-button'
 import Input from '~/components/inputs/input'
 import DirectoryPicker from '~/components/directory-picker/directory-picker'
 import { fetchProject } from '~/services/project-service'
-import { hasUnsafeNameChars, joinPath, relativeTo } from '~/utils/path-utils'
+import { joinPath, relativeTo, SAFE_NAME_PATTERN } from '~/utils/path-utils'
+import InputWithLabel from '~/components/inputs/input-with-label'
+import ValidatedInput from '~/components/inputs/validatedInput'
 
 type AddConfigurationModalProperties = {
-  isOpen: boolean
   onClose: () => void
   onSuccess?: () => void
-  currentConfiguration?: ConfigurationProject
+  currentConfiguration: ConfigurationProject
   configurationsDirPath?: string
 }
 
-export default function AddConfigurationModal({
-  isOpen,
+export default function AddConfigurationFileModal({
   onClose,
   onSuccess,
   currentConfiguration,
@@ -29,13 +29,12 @@ export default function AddConfigurationModal({
   const [filename, setFilename] = useState<string>('')
   const [isOpenPickerOpen, setIsOpenPickerOpen] = useState(false)
   const [rootLocationName, setRootLocationName] = useState('')
+  const [isFilenameValid, setIsFilenameValid] = useState(false)
   const setProject = useProjectStore((s) => s.setProject)
 
   useEffect(() => {
     setRootLocationName(configurationsDirPath ?? '')
   }, [configurationsDirPath])
-
-  if (!isOpen || !currentConfiguration) return null
 
   const handleAdd = async () => {
     setLoading(true)
@@ -43,17 +42,6 @@ export default function AddConfigurationModal({
 
     try {
       let configname = filename.trim()
-      if (!configname) {
-        setError('Configuration name cannot be empty')
-        setLoading(false)
-        return
-      }
-
-      if (hasUnsafeNameChars(configname) || configname.includes('..')) {
-        setError('Filename may only contain letters, digits, spaces, and . _ - (no "..")')
-        setLoading(false)
-        return
-      }
 
       if (!configname.toLowerCase().endsWith('.xml')) {
         configname = `${configname}.xml`
@@ -94,8 +82,6 @@ export default function AddConfigurationModal({
   }
 
   const trimmedFilename = filename.trim()
-  const filenameHasInvalidChars = hasUnsafeNameChars(trimmedFilename) || trimmedFilename.includes('..')
-  const isFilenameValid = trimmedFilename.length > 0 && !filenameHasInvalidChars
 
   const displayFilename = (() => {
     if (!trimmedFilename) return ''
@@ -111,45 +97,35 @@ export default function AddConfigurationModal({
         <h2 className="mb-4 text-lg font-semibold">Add File</h2>
         <p className="mb-4">Add a new configuration file.</p>
 
-        <div className="mb-4 flex items-center gap-2">
-          <label className="text-sm font-medium" htmlFor="configuration-filename-input">
-            Location
-          </label>
-          <div className="ml-2 flex w-full items-center">
-            <label
-              className="border-border bg-background w-full rounded border px-2 py-1 text-sm"
+        <div className="space-y-4">
+          <InputWithLabel label="Location" htmlFor="configuration-filename-input" inputSide="right" grow={true}>
+            <Input
+              id="configuration-filename-input"
               aria-label="folder location"
+              readOnly={true}
               onDoubleClick={() => setIsOpenPickerOpen(true)}
-            >
-              {rootLocationName || configurationsDirPath}
-            </label>
-          </div>
-          <Button onClick={() => setIsOpenPickerOpen(true)} className="ml-2 h-8 text-sm">
-            Browse...
-          </Button>
-        </div>
+              value={rootLocationName || configurationsDirPath}
+            />
+            <Button onClick={() => setIsOpenPickerOpen(true)}>Browse...</Button>
+          </InputWithLabel>
 
-        <div className="mb-4 flex items-center gap-2">
-          <label className="text-sm font-medium" htmlFor="configuration-filename-input">
-            Filename
-          </label>
-          <div className="ml-2 flex w-full flex-col">
-            <div className="flex w-full items-center gap-1">
-              <Input
-                id="configuration-filename-input"
-                value={filename}
-                onChange={(event) => setFilename(event.target.value)}
-                placeholder="Choose a filename"
-                aria-label="configuration filename"
-              />
-              <span className="text-foreground-muted text-sm">.xml</span>
-            </div>
-            {filenameHasInvalidChars && (
-              <p className="mt-1 text-xs text-red-500">
-                Filename may only contain letters, digits, spaces, and . _ - (no &quot;..&quot;)
-              </p>
-            )}
-          </div>
+          <InputWithLabel grow={true} label="Filename" htmlFor="configuration-filename-input" inputSide="right">
+            <ValidatedInput
+              id="configuration-filename-input"
+              value={filename}
+              onChange={(event) => setFilename(event.target.value)}
+              placeholder="Choose a filename"
+              aria-label="configuration filename"
+              patterns={{
+                'Filename cannot be empty': /^.+$/,
+                'Filename may only contain letters, digits, spaces, and . _ - (no "..")': SAFE_NAME_PATTERN,
+              }}
+              onValidChange={(isValid) => {
+                setIsFilenameValid(isValid)
+              }}
+            />
+            <span className="text-foreground-muted text-sm">.xml</span>
+          </InputWithLabel>
         </div>
 
         <div className="flex gap-2">
