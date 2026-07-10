@@ -12,15 +12,13 @@ import InputWithLabel from '~/components/inputs/input-with-label'
 import ValidatedInput from '~/components/inputs/validatedInput'
 
 type AddConfigurationModalProperties = {
-  isOpen: boolean
   onClose: () => void
   onSuccess?: () => void
-  currentConfiguration?: ConfigurationProject
+  currentConfiguration: ConfigurationProject
   configurationsDirPath?: string
 }
 
 export default function AddConfigurationFileModal({
-  isOpen,
   onClose,
   onSuccess,
   currentConfiguration,
@@ -37,8 +35,6 @@ export default function AddConfigurationFileModal({
   useEffect(() => {
     setRootLocationName(configurationsDirPath ?? '')
   }, [configurationsDirPath])
-
-  if (!isOpen || !currentConfiguration) return null
 
   const handleAdd = async () => {
     setLoading(true)
@@ -106,7 +102,8 @@ export default function AddConfigurationFileModal({
             <Input
               id="configuration-filename-input"
               aria-label="folder location"
-              onClick={() => setIsOpenPickerOpen(true)}
+              readOnly={true}
+              onDoubleClick={() => setIsOpenPickerOpen(true)}
               value={rootLocationName || configurationsDirPath}
             />
             <Button onClick={() => setIsOpenPickerOpen(true)}>Browse...</Button>

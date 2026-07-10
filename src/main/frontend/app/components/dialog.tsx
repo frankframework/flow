@@ -3,16 +3,13 @@ import { createPortal } from 'react-dom'
 import CloseButton from '~/components/inputs/close-button'
 
 type DialogProperties = {
-  isOpen: boolean
   onClose: () => void
   title: string
   children: ReactNode
   className?: string
   overlay?: ReactNode
 }
-export default function Dialog({ isOpen, onClose, title, children, className, overlay }: Readonly<DialogProperties>) {
-  if (!isOpen) return null
-
+export default function Dialog({ onClose, title, children, className, overlay }: Readonly<DialogProperties>) {
   const handleBackdropClick = (event: MouseEvent<HTMLDivElement>) => {
     if (event.target === event.currentTarget) onClose()
   }

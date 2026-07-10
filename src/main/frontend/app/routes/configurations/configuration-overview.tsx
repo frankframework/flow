@@ -21,7 +21,7 @@ import NonCanvasComponentContext, { type NonCanvasComponentEditorState } from '.
 import AdapterContext, { type AdapterEditorState } from './adapter-context'
 import NonCanvasComponentPalette from './non-canvas-component-palette'
 import AddNonCanvasComponentMenu from './add-non-canvas-component-menu'
-import type { NonCanvasComponent } from '~/services/non-canvas-component-service'
+import { type NonCanvasComponent } from '~/services/non-canvas-component-service'
 import { useNonCanvasComponents } from './use-non-canvas-components'
 import { relativeTo } from '~/utils/path-utils'
 import { isRootConfiguration } from './configuration-utils'
@@ -318,6 +318,8 @@ export default function ConfigurationOverview() {
     )
   }
 
+  const addNonCanvasComponentIsOpen = addMenuConfigPath !== null
+
   return (
     <div className="h-full w-full">
       <SidebarLayout name={SIDEBAR_NAME} defaultVisible={[false, true, true]} windowResizeOnChange hideLeft>
@@ -346,7 +348,7 @@ export default function ConfigurationOverview() {
 
           <div className="border-b-border bg-background flex items-center justify-between gap-2 border-b px-6 py-4">
             <Button className="shrink-0" onClick={() => setShowModal(true)}>
-              + Add adapter
+              + Add configuration file
             </Button>
             <Search className="w-1/2" placeholder="Search file names..." value={searchQuery} onChange={handleSearch} />
             <div>
@@ -390,13 +392,14 @@ export default function ConfigurationOverview() {
               <AddConfigurationFileTile onClick={() => setShowModal(true)} />
             </div>
 
-            <AddConfigurationFileModal
-              isOpen={showModal}
-              onClose={() => setShowModal(false)}
-              onSuccess={handleConfigAdded}
-              currentConfiguration={currentConfigurationProject}
-              configurationsDirPath={tree?.path ?? ''}
-            />
+            {showModal && currentConfigurationProject && (
+              <AddConfigurationFileModal
+                onClose={() => setShowModal(false)}
+                onSuccess={handleConfigAdded}
+                currentConfiguration={currentConfigurationProject}
+                configurationsDirPath={tree?.path ?? ''}
+              />
+            )}
           </div>
         </>
 
@@ -406,11 +409,9 @@ export default function ConfigurationOverview() {
         </>
       </SidebarLayout>
 
-      <AddNonCanvasComponentMenu
-        isOpen={addMenuConfigPath !== null}
-        onClose={() => setAddMenuConfigPath(null)}
-        onSelect={handleSelectComponentType}
-      />
+      {addNonCanvasComponentIsOpen && (
+        <AddNonCanvasComponentMenu onClose={() => setAddMenuConfigPath(null)} onSelect={handleSelectComponentType} />
+      )}
     </div>
   )
 }

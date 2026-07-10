@@ -7,13 +7,11 @@ import { useFrankConfigXsd } from '~/providers/frankconfig-xsd-provider'
 import { getAddableNonCanvasComponentNames } from '~/services/non-canvas-component-service'
 
 type AddNonCanvasComponentMenuProperties = {
-  isOpen: boolean
   onClose: () => void
   onSelect: (tagName: string) => void
 }
 
 export default function AddNonCanvasComponentMenu({
-  isOpen,
   onClose,
   onSelect,
 }: Readonly<AddNonCanvasComponentMenuProperties>) {
@@ -50,12 +48,7 @@ export default function AddNonCanvasComponentMenu({
   }
 
   return (
-    <Dialog
-      isOpen={isOpen}
-      onClose={clearAndClose}
-      title="Add non-canvas component"
-      className="flex h-1/2 w-1/3 min-w-[400px] flex-col"
-    >
+    <Dialog onClose={clearAndClose} title="Add non-canvas component" className="flex h-1/2 w-1/3 min-w-100 flex-col">
       <Search placeholder="Search components..." value={search} onChange={handleSearchChange} />
       <div className="border-border bg-background my-3 w-full flex-1 overflow-hidden rounded border">
         <ul className="h-full overflow-y-auto">

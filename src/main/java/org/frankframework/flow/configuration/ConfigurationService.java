@@ -1,14 +1,18 @@
 package org.frankframework.flow.configuration;
 
 import jakarta.annotation.PostConstruct;
+
 import java.io.IOException;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
+
 import lombok.extern.log4j.Log4j2;
+
 import org.frankframework.flow.exception.ApiException;
 import org.frankframework.flow.file.FileTreeService;
 import org.frankframework.flow.filesystem.FileSystemStorage;
@@ -20,6 +24,7 @@ import org.frankframework.flow.utility.XmlConfigurationUtils;
 import org.frankframework.flow.utility.XmlFormatterUtils;
 import org.frankframework.flow.utility.XmlSecurityUtils;
 import org.frankframework.flow.utility.XsdAttributeOrdererUtils;
+
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -67,8 +72,7 @@ public class ConfigurationService {
 		return new ConfigurationDTO(filepath, content);
 	}
 
-	public String updateConfiguration(String projectName, String filepath, String content, boolean format)
-			throws ApiException {
+	public String updateConfiguration(String projectName, String filepath, String content, boolean format) throws ApiException {
 		Path absolutePath = fileSystemStorage.toAbsolutePath(filepath);
 
 		if (!Files.exists(absolutePath) || Files.isDirectory(absolutePath)) {
@@ -99,22 +103,24 @@ public class ConfigurationService {
 	 * Creates a new configuration file from the default template.
 	 *
 	 * @return the location of the first adapter in the created file, so the frontend can open it in the studio;
-	 *         the actual content is loaded lazily when the studio renders the adapter
+	 * 		the actual content is loaded lazily when the studio renders the adapter
 	 */
 	public AdapterLocationDTO addConfigurationFile(String projectName, String filepath) throws IOException, ApiException, TransformerException, ParserConfigurationException, SAXException {
 		if (filepath == null || filepath.isBlank()) {
 			throw new ApiException("Configuration path must not be empty", HttpStatus.BAD_REQUEST);
 		}
 		if (filepath.contains("..")) {
-			throw new ApiException("Invalid configuration path: " + filepath, HttpStatus.BAD_REQUEST);
+			throw new ApiException("Configuration path may not contain \"..\": " + filepath, HttpStatus.BAD_REQUEST);
 		}
 
 		ConfigurationProject configurationProject = configurationProjectService.getProject(projectName);
 		Path projectRoot = fileSystemStorage.toAbsolutePath(configurationProject.getRootPath()).normalize();
-		Path absoluteFilePath = fileSystemStorage.toAbsolutePath(filepath).normalize();
+		Path requestedPath = Path.of(filepath);
+		Path targetPath = requestedPath.isAbsolute() ? requestedPath : projectRoot.resolve(requestedPath);
+		Path absoluteFilePath = fileSystemStorage.toAbsolutePath(targetPath.toString()).normalize();
 
 		if (!absoluteFilePath.startsWith(projectRoot)) {
-			throw new ApiException("Invalid configuration path: " + filepath, HttpStatus.BAD_REQUEST);
+			throw new ApiException("Path is not in project: " + absoluteFilePath + ", project path: " + projectRoot, HttpStatus.BAD_REQUEST);
 		}
 
 		Files.createDirectories(absoluteFilePath.getParent());

@@ -368,13 +368,29 @@ class ConfigurationServiceTest {
 	}
 
 	@Test
+	void addConfiguration_RelativeFilename_IsCreatedInProjectRoot() throws Exception {
+		stubToAbsolutePath();
+		stubWriteFile();
+
+		Path projectDir = tempDir.resolve("myproject");
+		Files.createDirectories(projectDir);
+		ConfigurationProject configurationProject = new ConfigurationProject("myproject", projectDir.toString());
+		when(configurationProjectService.getProject("myproject")).thenReturn(configurationProject);
+
+		configurationService.addConfigurationFile("myproject", "NewConfig.xml");
+
+		assertTrue(Files.exists(projectDir.resolve("NewConfig.xml")));
+		assertFalse(Files.exists(tempDir.resolve("NewConfig.xml")));
+	}
+
+	@Test
 	void addConfiguration_ProjectNotFound_ThrowsException() throws ApiException {
 		when(configurationProjectService.getProject("unknown")).thenThrow(new ApiException("not found", HttpStatus.NOT_FOUND));
 		assertThrows(ApiException.class, () -> configurationService.addConfigurationFile("unknown", "Config.xml"));
 	}
 
 	@Test
-	void addConfiguration_PathTraversal_ThrowsException() throws Exception {
+	void addConfiguration_PathTraversal_ThrowsException() {
 		ApiException exception = assertThrows(
 				ApiException.class, () -> configurationService.addConfigurationFile("myproject", "../../../evil.xml"));
 		assertEquals(HttpStatus.BAD_REQUEST, exception.getStatus());
