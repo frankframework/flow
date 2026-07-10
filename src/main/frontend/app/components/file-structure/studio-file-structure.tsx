@@ -434,7 +434,7 @@ export default function StudioFileStructure() {
         className="group/row flex h-full w-full items-center"
         onContextMenu={(mouseEvent) => studioContextMenu.openContextMenu(mouseEvent, item.index)}
       >
-        <ItemIcon className="fill-foreground w-4 flex-shrink-0" />
+        <ItemIcon className="fill-foreground w-4 shrink-0" />
         <span
           className={`font-inter ml-1 min-w-0 flex-1 overflow-hidden text-nowrap text-ellipsis ${
             isHighlighted ? 'outline-foreground-active rounded-sm px-1 outline' : ''
@@ -494,8 +494,8 @@ export default function StudioFileStructure() {
     return <p className="text-foreground-muted p-4 text-sm">No configurations found in src/main/configurations</p>
 
   return (
-    <>
-      <div className="border-border flex items-center justify-between border-b px-2 py-1">
+    <div className="flex h-full min-h-0 flex-col">
+      <div className="flex items-center justify-between p-4 py-2">
         <span className="text-foreground/50 text-xs font-semibold tracking-wider uppercase">Explorer</span>
         <div className="flex items-center gap-0.5">
           <IconButton
@@ -519,12 +519,11 @@ export default function StudioFileStructure() {
           </IconButton>
         </div>
       </div>
-      <div className="mt-2">
-        <Search onChange={(event) => setSearchTerm(event.target.value)} />
-      </div>
+      <Search onChange={(event) => setSearchTerm(event.target.value)} />
+
       <div
         ref={treeContainerRef}
-        className="h-full overflow-auto pr-2"
+        className="min-h-0 flex-1 overflow-auto pr-2"
         onContextMenu={(mouseEvent) => {
           void studioContextMenu.openContextMenu(mouseEvent, 'root')
         }}
@@ -570,6 +569,6 @@ export default function StudioFileStructure() {
         onCloseNameDialog={() => studioContextMenu.setNameDialog(null)}
         onCloseDeleteDialog={() => studioContextMenu.setDeleteTarget(null)}
       />
-    </>
+    </div>
   )
 }
