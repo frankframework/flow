@@ -1,11 +1,14 @@
 package org.frankframework.flow.project;
 
 import jakarta.servlet.http.HttpServletResponse;
+
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import lombok.extern.log4j.Log4j2;
+
 import org.frankframework.flow.common.AllowAllFrankUserRoles;
 import org.frankframework.flow.common.FrankFrameworkService;
 import org.frankframework.flow.common.config.ClientSession;
@@ -15,6 +18,7 @@ import org.frankframework.management.bus.BusAction;
 import org.frankframework.management.bus.BusTopic;
 import org.frankframework.management.bus.message.RequestMessageBuilder;
 import org.frankframework.util.JacksonUtils;
+
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -74,9 +78,9 @@ public class ConfigurationProjectController {
 	@PostMapping("/clone")
 	public ResponseEntity<ConfigurationProjectDTO> cloneProject(@RequestBody ConfigurationProjectCloneDTO configurationProjectCloneDTO) throws IOException {
 		ConfigurationProject configurationProject = configurationProjectService.cloneAndOpenProject(
-			configurationProjectCloneDTO.repoUrl(),
-			configurationProjectCloneDTO.localPath(),
-			configurationProjectCloneDTO.token()
+				configurationProjectCloneDTO.repoUrl(),
+				configurationProjectCloneDTO.localPath(),
+				configurationProjectCloneDTO.token()
 		);
 		recentProjectsService.addRecentProject(configurationProject.getName(), configurationProject.getRootPath());
 		return ResponseEntity.ok(configurationProjectService.toDto(configurationProject));
@@ -128,7 +132,7 @@ public class ConfigurationProjectController {
 	@GetMapping("/configurations")
 	public Map<String, Object> getFrameworkConfigurations() throws ApiException {
 		if (session.getMemberTarget() == null) {
-			throw new ApiException("No cluster member target found for the current session.", HttpStatus.NOT_FOUND);
+			throw new ApiException("No cluster member target found for the current session.", HttpStatus.NO_CONTENT);
 		}
 
 		RequestMessageBuilder builder = RequestMessageBuilder.create(BusTopic.CONFIGURATION, BusAction.FIND);
