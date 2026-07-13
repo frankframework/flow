@@ -7,8 +7,12 @@ import {
   Controls,
   type Edge,
   type Node,
+  type OnConnect,
   type OnConnectEnd,
   type OnConnectStart,
+  type OnEdgesChange,
+  type OnNodesChange,
+  type OnReconnect,
   ReactFlow,
   ReactFlowProvider,
   useNodesInitialized,
@@ -61,23 +65,41 @@ import IconLabelButton from '~/components/inputs/icon-label-button'
 
 export type FlowNode = FrankNodeType | ExitNode | StickyNote | GroupNode | Node
 
-const selector = (state: FlowState) => ({
-  nodes: state.nodes,
-  edges: state.edges,
-  onNodesChange: state.onNodesChange,
-  onEdgesChange: state.onEdgesChange,
-  onConnect: state.onConnect,
-  onReconnect: state.onReconnect,
-})
-
 const STICKY_SNAP_DISTANCE = 60
+const nodeTypes = {
+  frankNode: FrankNodeComponent,
+  exitNode: ExitNodeComponent,
+  stickyNote: StickyNoteComponent,
+  groupNode: GroupNodeComponent,
+}
+const edgeTypes = { frankEdge: FrankEdgeComponent }
 
-const getStickyCenter = (sticky: StickyNote) => ({
-  x: sticky.position.x + (sticky.measured?.width ?? FlowConfig.STICKY_NOTE_DEFAULT_WIDTH) / 2,
-  y: sticky.position.y + (sticky.measured?.height ?? FlowConfig.STICKY_NOTE_DEFAULT_HEIGHT) / 2,
-})
+function selector(state: FlowState): {
+  nodes: FlowNode[]
+  edges: Edge[]
+  onNodesChange: OnNodesChange<FlowNode>
+  onEdgesChange: OnEdgesChange
+  onConnect: OnConnect
+  onReconnect: OnReconnect
+} {
+  return {
+    nodes: state.nodes,
+    edges: state.edges,
+    onNodesChange: state.onNodesChange,
+    onEdgesChange: state.onEdgesChange,
+    onConnect: state.onConnect,
+    onReconnect: state.onReconnect,
+  }
+}
 
-const isWithinSnapDistance = (sticky: StickyNote, frankNode: FlowNode) => {
+function getStickyCenter(sticky: StickyNote): { x: number; y: number } {
+  return {
+    x: sticky.position.x + (sticky.measured?.width ?? FlowConfig.STICKY_NOTE_DEFAULT_WIDTH) / 2,
+    y: sticky.position.y + (sticky.measured?.height ?? FlowConfig.STICKY_NOTE_DEFAULT_HEIGHT) / 2,
+  }
+}
+
+function isWithinSnapDistance(sticky: StickyNote, frankNode: FlowNode): boolean {
   const center = getStickyCenter(sticky)
   return (
     center.x >= frankNode.position.x - STICKY_SNAP_DISTANCE &&
@@ -88,30 +110,25 @@ const isWithinSnapDistance = (sticky: StickyNote, frankNode: FlowNode) => {
   )
 }
 
-const distanceToFrankNode = (sticky: StickyNote, frankNode: FlowNode) => {
+function distanceToFrankNode(sticky: StickyNote, frankNode: FlowNode): number {
   const center = getStickyCenter(sticky)
   const dx = center.x - (frankNode.position.x + (frankNode.measured?.width ?? FlowConfig.NODE_DEFAULT_WIDTH) / 2)
   const dy = center.y - (frankNode.position.y + (frankNode.measured?.height ?? FlowConfig.NODE_MIN_HEIGHT) / 2)
   return Math.hypot(dx, dy)
 }
 
-const isFrankNode = (node: FlowNode): node is FrankNodeType => node.type === 'frankNode' || node.type === 'exitNode'
+function isFrankNode(node: FlowNode): node is FrankNodeType {
+  return node.type === 'frankNode' || node.type === 'exitNode'
+}
 
-const findNearestFrankNode = (sticky: StickyNote, candidates: FlowNode[]) =>
-  candidates
+function findNearestFrankNode(sticky: StickyNote, candidates: FlowNode[]): FlowNode | null {
+  return candidates
     .filter((n) => (n.type === 'frankNode' || n.type === 'exitNode') && isWithinSnapDistance(sticky, n))
     .reduce<FlowNode | null>((best, n) => {
       if (best === null) return n
       return distanceToFrankNode(sticky, n) < distanceToFrankNode(sticky, best) ? n : best
     }, null)
-
-const nodeTypes = {
-  frankNode: FrankNodeComponent,
-  exitNode: ExitNodeComponent,
-  stickyNote: StickyNoteComponent,
-  groupNode: GroupNodeComponent,
 }
-const edgeTypes = { frankEdge: FrankEdgeComponent }
 
 function computeAbsoluteNodePosition(
   targetNode: FlowNode,
@@ -330,34 +347,39 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
   }, [nodes, hiddenForwardNodeIds, revealedHiddenIds])
 
   const saveFlow = useCallback(async () => {
-    const { nodes: flowNodes, edges: flowEdges, viewport: flowViewport } = useFlowStore.getState()
-    const flowData = { nodes: flowNodes, edges: flowEdges, viewport: flowViewport }
-    const currentProject = useProjectStore.getState().project
-    const activeTabKey = useTabStore.getState().activeTab
-    const tabData = useTabStore.getState().getTab(activeTabKey)
+    const tabStoreState = useTabStore.getState()
+    const activeTabKey = tabStoreState.activeTab
+    const tabData = tabStoreState.getTab(activeTabKey)
     const configurationPath = tabData?.configurationPath
     const adapterName = tabData?.name
-    const adapterPosition = tabData?.adapterPosition
-
+    const currentProject = useProjectStore.getState().project
     if (!configurationPath || !adapterName || !currentProject) return
 
+    const { nodes: flowNodes, edges: flowEdges, viewport: flowViewport } = useFlowStore.getState()
+    const flowData = { nodes: flowNodes, edges: flowEdges, viewport: flowViewport }
+    const adapterPosition = tabData?.adapterPosition
+
     setSaving()
+    const allAdapters: Element[] = []
+    const fullConfigXml = await fetchConfigurationFileCached(currentProject.name, configurationPath)
     try {
-      const fullConfigXml = await fetchConfigurationFileCached(currentProject.name, configurationPath)
       const configDoc = new DOMParser().parseFromString(fullConfigXml, 'text/xml')
-      const allAdapters = [...configDoc.querySelectorAll('Adapter, adapter')]
+      allAdapters.push(...configDoc.querySelectorAll('Adapter, adapter'))
+    } catch (error) {
+      logApiError('Failed to parse configuration XML', error as Error)
+    }
 
-      const existingAdapter =
-        adapterPosition === undefined
-          ? (allAdapters.find((a) => a.getAttribute('name') === adapterName) ?? null)
-          : (allAdapters[adapterPosition] ?? null)
+    const existingAdapter =
+      adapterPosition === undefined
+        ? (allAdapters.find((element) => element.getAttribute('name') === adapterName) ?? null)
+        : (allAdapters[adapterPosition] ?? null)
 
-      if (!existingAdapter) {
-        throw new Error(`Could not find adapter "${adapterName}" at position ${adapterPosition} in configuration`)
-      }
+    if (!existingAdapter) {
+      throw new Error(`Could not find adapter "${adapterName}" at position ${adapterPosition} in configuration`)
+    }
 
+    try {
       const existingAdapterXml = new XMLSerializer().serializeToString(existingAdapter)
-
       const newAdapterXml = await exportFlowToXml(
         flowData,
         currentProject.name,
@@ -391,7 +413,7 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
       logApiError('Failed to save XML', error as Error)
       setIdle()
     }
-  }, [])
+  }, [setIdle, setSaved, setSaving])
 
   const autosaveEnabled = useSettingsStore((s) => s.general.autoSave.enabled)
   const autosaveDelay = useSettingsStore((s) => s.general.autoSave.delayMs)
@@ -465,8 +487,6 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
         }
         return
       }
-
-      requestAnimationFrame(checkDimensions)
     }
 
     requestAnimationFrame(checkDimensions)
