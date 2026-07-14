@@ -54,7 +54,7 @@ import {
 import { refreshOpenDiffs } from '~/services/git-service'
 import useEditorTabStore from '~/stores/editor-tab-store'
 import { cloneWithRemappedIds, getEdgeLabelFromHandle } from '~/utils/flow-utils'
-import { showErrorToast, showWarningToast} from '~/components/toast'
+import { showErrorToast, showWarningToast } from '~/components/toast'
 import { useSettingsStore } from '~/stores/settings-store'
 import { useShortcut } from '~/hooks/use-shortcut'
 import LightbulbIcon from '/icons/solar/Lightbulb.svg?react'
@@ -340,33 +340,38 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
 
   /* useCallback */
 
-  const applySelectionToNodes = useCallback((pendingSelection: { subtype: string; name: string }) => {
-    const currentNodes = useFlowStore.getState().nodes
-    const nodeToSelect = currentNodes.find(
-            (node): node is FrankNodeType =>
-                    isFrankNode(node) && node.data.subtype === pendingSelection.subtype && node.data.name === pendingSelection.name,
-    )
+  const applySelectionToNodes = useCallback(
+    (pendingSelection: { subtype: string; name: string }) => {
+      const currentNodes = useFlowStore.getState().nodes
+      const nodeToSelect = currentNodes.find(
+        (node): node is FrankNodeType =>
+          isFrankNode(node) &&
+          node.data.subtype === pendingSelection.subtype &&
+          node.data.name === pendingSelection.name,
+      )
 
-    if (!nodeToSelect) return
+      if (!nodeToSelect) return
 
-    useFlowStore.getState().setNodes(
-            currentNodes.map((node) => ({
-              ...node,
-              selected: node.id === nodeToSelect.id,
-            })),
-    )
+      useFlowStore.getState().setNodes(
+        currentNodes.map((node) => ({
+          ...node,
+          selected: node.id === nodeToSelect.id,
+        })),
+      )
 
-    pendingFitViewRef.current = nodeToSelect.id
+      pendingFitViewRef.current = nodeToSelect.id
 
-    const nodeContextStore = useNodeContextStore.getState()
-    nodeContextStore.setParentId(null)
-    nodeContextStore.setChildParentId(null)
-    nodeContextStore.setNodeId(+nodeToSelect.id)
-    nodeContextStore.setAttributes(elements?.[nodeToSelect.data.subtype]?.attributes)
-    nodeContextStore.setEditingSubtype(nodeToSelect.data.subtype)
-    nodeContextStore.setIsEditing(true)
-    showNodeContextMenuRef.current(true)
-  }, [])
+      const nodeContextStore = useNodeContextStore.getState()
+      nodeContextStore.setParentId(null)
+      nodeContextStore.setChildParentId(null)
+      nodeContextStore.setNodeId(+nodeToSelect.id)
+      nodeContextStore.setAttributes(elements?.[nodeToSelect.data.subtype]?.attributes)
+      nodeContextStore.setEditingSubtype(nodeToSelect.data.subtype)
+      nodeContextStore.setIsEditing(true)
+      showNodeContextMenuRef.current(true)
+    },
+    [elements],
+  )
 
   const saveFlow = useCallback(async () => {
     const tabStoreState = useTabStore.getState()
@@ -392,9 +397,9 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
     }
 
     const existingAdapter =
-            adapterPosition === undefined
-                    ? (allAdapters.find((element) => element.getAttribute('name') === adapterName) ?? null)
-                    : (allAdapters[adapterPosition] ?? null)
+      adapterPosition === undefined
+        ? (allAdapters.find((element) => element.getAttribute('name') === adapterName) ?? null)
+        : (allAdapters[adapterPosition] ?? null)
 
     if (!existingAdapter) {
       throw new Error(`Could not find adapter "${adapterName}" at position ${adapterPosition} in configuration`)
@@ -403,11 +408,11 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
     try {
       const existingAdapterXml = new XMLSerializer().serializeToString(existingAdapter)
       const newAdapterXml = await exportFlowToXml(
-              flowData,
-              currentProject.name,
-              configurationPath,
-              adapterName,
-              existingAdapterXml,
+        flowData,
+        currentProject.name,
+        configurationPath,
+        adapterName,
+        existingAdapterXml,
       )
 
       const adapterIndex = allAdapters.indexOf(existingAdapter)
@@ -1094,32 +1099,32 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
   )
 
   const addStickyNote = useCallback(
-          (flowPos: { x: number; y: number }) => {
-            const flowStore = useFlowStore.getState()
-            const newId = flowStore.getNextNodeId()
+    (flowPos: { x: number; y: number }) => {
+      const flowStore = useFlowStore.getState()
+      const newId = flowStore.getNextNodeId()
 
-            const deselectedNodes = flowStore.nodes.map((node) => ({
-              ...node,
-              selected: false,
-            }))
+      const deselectedNodes = flowStore.nodes.map((node) => ({
+        ...node,
+        selected: false,
+      }))
 
-            const stickyNote: StickyNote = {
-              id: newId,
-              position: { x: flowPos.x, y: flowPos.y },
-              data: { content: '' },
-              type: 'stickyNote',
-              selected: true,
-              style: {
-                width: FlowConfig.STICKY_NOTE_DEFAULT_WIDTH,
-                height: FlowConfig.STICKY_NOTE_DEFAULT_HEIGHT,
-              },
-            }
+      const stickyNote: StickyNote = {
+        id: newId,
+        position: { x: flowPos.x, y: flowPos.y },
+        data: { content: '' },
+        type: 'stickyNote',
+        selected: true,
+        style: {
+          width: FlowConfig.STICKY_NOTE_DEFAULT_WIDTH,
+          height: FlowConfig.STICKY_NOTE_DEFAULT_HEIGHT,
+        },
+      }
 
-            flowStore.setNodes([...deselectedNodes, stickyNote])
-            setSelectedStickyId(newId)
-            showNodeContextMenu(true)
-          },
-          [setSelectedStickyId, showNodeContextMenu],
+      flowStore.setNodes([...deselectedNodes, stickyNote])
+      setSelectedStickyId(newId)
+      showNodeContextMenu(true)
+    },
+    [setSelectedStickyId, showNodeContextMenu],
   )
 
   const cutSelection = useCallback(() => {
@@ -1131,7 +1136,7 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
     const selectedNodeIds = new Set(selectedNodes.map((n) => n.id))
     const remainingNodes = flowStore.nodes.filter((n) => !selectedNodeIds.has(n.id))
     const remainingEdges = flowStore.edges.filter(
-            (e) => !selectedNodeIds.has(e.source) && !selectedNodeIds.has(e.target),
+      (e) => !selectedNodeIds.has(e.source) && !selectedNodeIds.has(e.target),
     )
     flowStore.setNodes(remainingNodes)
     flowStore.setEdges(remainingEdges)
@@ -1165,7 +1170,7 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
   const showSelectedNodeInEditor = useCallback(() => {
     const flowStore = useFlowStore.getState()
     const selectedFrankNodes = flowStore.nodes.filter(
-            (node) => node.selected && node.type === 'frankNode',
+      (node) => node.selected && node.type === 'frankNode',
     ) as FrankNodeType[]
     if (selectedFrankNodes.length !== 1) return
 
@@ -1181,14 +1186,14 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
   }, [navigate])
 
   const handleRightMouseButtonClick = useCallback(
-          (event: React.MouseEvent) => {
-            event.preventDefault()
-            event.stopPropagation()
-            const { screenToFlowPosition } = reactFlow
-            const flowPos = screenToFlowPosition({ x: event.clientX, y: event.clientY })
-            setContextMenu({ x: event.clientX, y: event.clientY, flowPos })
-          },
-          [reactFlow],
+    (event: React.MouseEvent) => {
+      event.preventDefault()
+      event.stopPropagation()
+      const { screenToFlowPosition } = reactFlow
+      const flowPos = screenToFlowPosition({ x: event.clientX, y: event.clientY })
+      setContextMenu({ x: event.clientX, y: event.clientY, flowPos })
+    },
+    [reactFlow],
   )
 
   /* useEffect */
@@ -1235,12 +1240,12 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
       const { absoluteX, absoluteY } = computeAbsoluteNodePosition(node, allNodes)
 
       const viewport = computeNodeCenteredViewport(
-              absoluteX,
-              absoluteY,
-              node.measured.width,
-              node.measured.height,
-              canvasWidth,
-              canvasHeight,
+        absoluteX,
+        absoluteY,
+        node.measured.width,
+        node.measured.height,
+        canvasWidth,
+        canvasHeight,
       )
 
       reactFlowInstance.setViewport(viewport, { duration: 400 })
@@ -1515,10 +1520,7 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
     }
   }
 
-  function handleConnectEnd(
-    event: MouseEvent | TouchEvent,
-    connectionState: FinalConnectionState<InternalNode>,
-  ): void {
+  function handleConnectEnd(event: MouseEvent | TouchEvent, connectionState: FinalConnectionState<InternalNode>): void {
     const mouseEvent = event as MouseEvent
     if (!connectionState.isValid) {
       const zoom = reactFlow.getZoom()
@@ -1564,7 +1566,7 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
     setChildParentId(null)
   }
 
-  function groupNodes(nodesToGroup: FlowNode[], currentNodes: FlowNode[]){
+  function groupNodes(nodesToGroup: FlowNode[], currentNodes: FlowNode[]) {
     const minX = Math.min(...nodesToGroup.map((node) => node.position.x))
     const minY = Math.min(...nodesToGroup.map((node) => node.position.y))
     const maxX = Math.max(...nodesToGroup.map((node) => node.position.x + (node.measured?.width ?? 0)))
