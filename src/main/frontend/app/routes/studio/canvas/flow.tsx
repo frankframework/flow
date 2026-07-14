@@ -6,10 +6,11 @@ import {
   ControlButton,
   Controls,
   type Edge,
+  type FinalConnectionState,
+  type InternalNode,
   type Node,
   type OnConnect,
-  type OnConnectEnd,
-  type OnConnectStart,
+  type OnConnectStartParams,
   type OnEdgesChange,
   type OnNodesChange,
   type OnReconnect,
@@ -53,7 +54,7 @@ import {
 import { refreshOpenDiffs } from '~/services/git-service'
 import useEditorTabStore from '~/stores/editor-tab-store'
 import { cloneWithRemappedIds, getEdgeLabelFromHandle } from '~/utils/flow-utils'
-import { showErrorToast } from '~/components/toast'
+import { showErrorToast, showWarningToast} from '~/components/toast'
 import { useSettingsStore } from '~/stores/settings-store'
 import { useShortcut } from '~/hooks/use-shortcut'
 import LightbulbIcon from '/icons/solar/Lightbulb.svg?react'
@@ -123,10 +124,10 @@ function isFrankNode(node: FlowNode): node is FrankNodeType {
 
 function findNearestFrankNode(sticky: StickyNote, candidates: FlowNode[]): FlowNode | null {
   return candidates
-    .filter((n) => (n.type === 'frankNode' || n.type === 'exitNode') && isWithinSnapDistance(sticky, n))
-    .reduce<FlowNode | null>((best, n) => {
-      if (best === null) return n
-      return distanceToFrankNode(sticky, n) < distanceToFrankNode(sticky, best) ? n : best
+    .filter((node) => (node.type === 'frankNode' || node.type === 'exitNode') && isWithinSnapDistance(sticky, node))
+    .reduce<FlowNode | null>((best, node) => {
+      if (best === null) return node
+      return distanceToFrankNode(sticky, node) < distanceToFrankNode(sticky, best) ? node : best
     }, null)
 }
 
@@ -175,8 +176,77 @@ function computeNodeCenteredViewport(
 }
 
 function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
+  /* Hooks */
+
   const showNodeContextMenu = useNodeContextMenu()
+  const navigate = useNavigate()
+  const { elements } = useFFDoc()
+  const updateNodeInternals = useUpdateNodeInternals()
+  const reactFlow = useReactFlow()
+  const nodesInitialized = useNodesInitialized()
+  useShortcut({
+    'studio.copy': () => copySelection(),
+    'studio.paste': () => pasteSelection(),
+    'studio.cut': () => cutSelection(),
+    'studio.undo': () => useFlowStore.getState().undo(),
+    'studio.redo': () => useFlowStore.getState().redo(),
+    'studio.redo-alt': () => useFlowStore.getState().redo(),
+    'studio.group': () => handleGrouping(),
+    'studio.ungroup': () => handleUngroup(),
+    'studio.hide': () => toggleSelectedHidden(),
+    'studio.save': () => void saveFlow(),
+    'studio.close-context': () => closeEditNodeContextOnEscape(),
+    'studio.delete': () => deleteSelection(),
+    'studio.show-in-editor': () => showSelectedNodeInEditor(),
+  })
+
+  /* useState */
+
   const [loading, setLoading] = useState(false)
+  const [showCreateNodeModal, setShowCreateNodeModal] = useState(false)
+  const [edgeDropPositions, setEdgeDropPositions] = useState<{ x: number; y: number } | null>(null)
+  const [edgeDropHandleType, setEdgeDropHandleType] = useState<string | null>(null)
+  const [relayoutNonce, setRelayoutNonce] = useState(0)
+  const [pendingCompactConnection, setPendingCompactConnection] = useState<{
+    connection: Connection
+    sourceNodeSubtype: string
+    position: { x: number; y: number }
+  } | null>(null)
+  const [pendingEdgeDrop, setPendingEdgeDrop] = useState<{
+    position: { x: number; y: number }
+    sourceNodeSubtype: string
+  } | null>(null)
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; flowPos: { x: number; y: number } } | null>(
+    null,
+  )
+
+  /* useRef */
+
+  const showNodeContextMenuRef = useRef(showNodeContextMenu)
+  const clipboardRef = useRef<{
+    nodes: FlowNode[]
+    edges: Edge[]
+  } | null>(null)
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const isLoadingTabRef = useRef(false)
+  const pendingFitViewRef = useRef<string | null>(null)
+  const reactFlowRef = useRef(reactFlow)
+  const canvasRef = useRef<HTMLDivElement>(null)
+  const fitAfterLayoutRef = useRef<{ id: string }[] | null>(null)
+  const pendingInitialRelayoutRef = useRef<{ pendingSelection: { subtype: string; name: string } | null } | null>(null)
+  const loadedTabIdRef = useRef<string | null>(null)
+  const sourceInfoReference = useRef<{
+    nodeId: string | null
+    handleId: string | null
+    handleType: 'source' | 'target' | null
+  }>({ nodeId: null, handleId: null, handleType: null })
+
+  /* useStore */
+
+  const { nodes, edges, onNodesChange, onEdgesChange, onConnect, onReconnect } = useFlowStore(useShallow(selector))
+  const { setSaving, setSaved, setIdle } = useSaveStatusStore()
+  const autosaveEnabled = useSettingsStore((state) => state.general.autoSave.enabled)
+  const autosaveDelay = useSettingsStore((state) => state.general.autoSave.delayMs)
   const hoveredNodeId = useNodeContextStore((state) => state.hoveredNodeId)
   const showAllForwards = useNodeContextStore((state) => state.showAllForwards)
   const setHoveredNodeId = useNodeContextStore((state) => state.setHoveredNodeId)
@@ -217,86 +287,8 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
       setSelectedGroupId: store.setSelectedGroupId,
     })),
   )
-  const { elements } = useFFDoc()
-  const elementsRef = useRef(elements)
-  const showNodeContextMenuRef = useRef(showNodeContextMenu)
-  const navigate = useNavigate()
 
-  useEffect(() => {
-    elementsRef.current = elements
-  }, [elements])
-
-  useEffect(() => {
-    showNodeContextMenuRef.current = showNodeContextMenu
-  }, [showNodeContextMenu])
-
-  const [showCreateNodeModal, setShowCreateNodeModal] = useState(false)
-  const [edgeDropPositions, setEdgeDropPositions] = useState<{ x: number; y: number } | null>(null)
-  const [pendingCompactConnection, setPendingCompactConnection] = useState<{
-    connection: Connection
-    sourceNodeSubtype: string
-    position: { x: number; y: number }
-  } | null>(null)
-  const [pendingEdgeDrop, setPendingEdgeDrop] = useState<{
-    position: { x: number; y: number }
-    sourceNodeSubtype: string
-  } | null>(null)
-
-  const [edgeDropHandleType, setEdgeDropHandleType] = useState<string | null>(null)
-
-  const clipboardRef = useRef<{
-    nodes: FlowNode[]
-    edges: Edge[]
-  } | null>(null)
-
-  const { setSaving, setSaved, setIdle } = useSaveStatusStore()
-  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; flowPos: { x: number; y: number } } | null>(
-    null,
-  )
-  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const isLoadingTabRef = useRef(false)
-  const pendingFitViewRef = useRef<string | null>(null)
-
-  const updateNodeInternals = useUpdateNodeInternals()
-  const reactFlow = useReactFlow()
-  const reactFlowRef = useRef(reactFlow)
-  reactFlowRef.current = reactFlow
-  const nodesInitialized = useNodesInitialized()
-  const canvasRef = useRef<HTMLDivElement>(null)
-  const fitAfterLayoutRef = useRef<{ id: string }[] | null>(null)
-  const pendingInitialRelayoutRef = useRef<{ pendingSelection: { subtype: string; name: string } | null } | null>(null)
-  const [relayoutNonce, setRelayoutNonce] = useState(0)
-  const loadedTabIdRef = useRef<string | null>(null)
-
-  const applySelectionToNodes = useCallback((pendingSelection: { subtype: string; name: string }) => {
-    const currentNodes = useFlowStore.getState().nodes
-    const nodeToSelect = currentNodes.find(
-      (node): node is FrankNodeType =>
-        isFrankNode(node) && node.data.subtype === pendingSelection.subtype && node.data.name === pendingSelection.name,
-    )
-
-    if (!nodeToSelect) return
-
-    useFlowStore.getState().setNodes(
-      currentNodes.map((node) => ({
-        ...node,
-        selected: node.id === nodeToSelect.id,
-      })),
-    )
-
-    pendingFitViewRef.current = nodeToSelect.id
-
-    const nodeContextStore = useNodeContextStore.getState()
-    nodeContextStore.setParentId(null)
-    nodeContextStore.setChildParentId(null)
-    nodeContextStore.setNodeId(+nodeToSelect.id)
-    nodeContextStore.setAttributes(elementsRef.current?.[nodeToSelect.data.subtype]?.attributes)
-    nodeContextStore.setEditingSubtype(nodeToSelect.data.subtype)
-    nodeContextStore.setIsEditing(true)
-    showNodeContextMenuRef.current(true)
-  }, [])
-
-  const { nodes, edges, onNodesChange, onEdgesChange, onConnect, onReconnect } = useFlowStore(useShallow(selector))
+  /* useMemo */
 
   const hiddenForwardNodeIds = useMemo(() => {
     const ids = new Set<string>()
@@ -346,6 +338,36 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
     })
   }, [nodes, hiddenForwardNodeIds, revealedHiddenIds])
 
+  /* useCallback */
+
+  const applySelectionToNodes = useCallback((pendingSelection: { subtype: string; name: string }) => {
+    const currentNodes = useFlowStore.getState().nodes
+    const nodeToSelect = currentNodes.find(
+            (node): node is FrankNodeType =>
+                    isFrankNode(node) && node.data.subtype === pendingSelection.subtype && node.data.name === pendingSelection.name,
+    )
+
+    if (!nodeToSelect) return
+
+    useFlowStore.getState().setNodes(
+            currentNodes.map((node) => ({
+              ...node,
+              selected: node.id === nodeToSelect.id,
+            })),
+    )
+
+    pendingFitViewRef.current = nodeToSelect.id
+
+    const nodeContextStore = useNodeContextStore.getState()
+    nodeContextStore.setParentId(null)
+    nodeContextStore.setChildParentId(null)
+    nodeContextStore.setNodeId(+nodeToSelect.id)
+    nodeContextStore.setAttributes(elements?.[nodeToSelect.data.subtype]?.attributes)
+    nodeContextStore.setEditingSubtype(nodeToSelect.data.subtype)
+    nodeContextStore.setIsEditing(true)
+    showNodeContextMenuRef.current(true)
+  }, [])
+
   const saveFlow = useCallback(async () => {
     const tabStoreState = useTabStore.getState()
     const activeTabKey = tabStoreState.activeTab
@@ -370,9 +392,9 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
     }
 
     const existingAdapter =
-      adapterPosition === undefined
-        ? (allAdapters.find((element) => element.getAttribute('name') === adapterName) ?? null)
-        : (allAdapters[adapterPosition] ?? null)
+            adapterPosition === undefined
+                    ? (allAdapters.find((element) => element.getAttribute('name') === adapterName) ?? null)
+                    : (allAdapters[adapterPosition] ?? null)
 
     if (!existingAdapter) {
       throw new Error(`Could not find adapter "${adapterName}" at position ${adapterPosition} in configuration`)
@@ -381,11 +403,11 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
     try {
       const existingAdapterXml = new XMLSerializer().serializeToString(existingAdapter)
       const newAdapterXml = await exportFlowToXml(
-        flowData,
-        currentProject.name,
-        configurationPath,
-        adapterName,
-        existingAdapterXml,
+              flowData,
+              currentProject.name,
+              configurationPath,
+              adapterName,
+              existingAdapterXml,
       )
 
       const adapterIndex = allAdapters.indexOf(existingAdapter)
@@ -415,9 +437,6 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
     }
   }, [setIdle, setSaved, setSaving])
 
-  const autosaveEnabled = useSettingsStore((s) => s.general.autoSave.enabled)
-  const autosaveDelay = useSettingsStore((s) => s.general.autoSave.delayMs)
-
   const scheduleAutoSave = useCallback(() => {
     if (!autosaveEnabled) return
     if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current)
@@ -426,27 +445,6 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
       saveFlow()
     }, autosaveDelay)
   }, [saveFlow, autosaveEnabled, autosaveDelay])
-
-  useEffect(() => {
-    return () => {
-      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current)
-    }
-  }, [])
-
-  useEffect(() => {
-    if (nodes.length > 0 && !isLoadingTabRef.current) {
-      scheduleAutoSave()
-    }
-  }, [nodes, edges, scheduleAutoSave])
-
-  useEffect(() => {
-    if (!fitAfterLayoutRef.current) return
-    const nodeIds = fitAfterLayoutRef.current
-    fitAfterLayoutRef.current = null
-    requestAnimationFrame(() => {
-      reactFlowRef.current?.fitView({ nodes: nodeIds, padding: 0.15, duration: 300 })
-    })
-  }, [nodes])
 
   const waitForStableCanvasDimensions = useCallback((onStable: (canvasWidth: number, canvasHeight: number) => void) => {
     let previousWidth = -1
@@ -491,83 +489,6 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
 
     requestAnimationFrame(checkDimensions)
   }, [])
-
-  useEffect(() => {
-    const nodeId = pendingFitViewRef.current
-    if (!nodeId) return
-
-    const targetNode = nodes.find((node) => node.id === nodeId)
-    if (!targetNode?.measured?.width || !targetNode?.measured?.height) return
-    if (!targetNode.selected) return
-
-    pendingFitViewRef.current = null
-
-    waitForStableCanvasDimensions((canvasWidth, canvasHeight) => {
-      const reactFlowInstance = reactFlowRef.current
-      if (!reactFlowInstance) return
-
-      const allNodes = useFlowStore.getState().nodes
-      const node = allNodes.find((node) => node.id === nodeId)
-      if (!node?.measured?.width || !node?.measured?.height) return
-
-      const { absoluteX, absoluteY } = computeAbsoluteNodePosition(node, allNodes)
-
-      const viewport = computeNodeCenteredViewport(
-        absoluteX,
-        absoluteY,
-        node.measured.width,
-        node.measured.height,
-        canvasWidth,
-        canvasHeight,
-      )
-
-      reactFlowInstance.setViewport(viewport, { duration: 400 })
-    })
-  }, [nodes, waitForStableCanvasDimensions])
-
-  useEffect(() => {
-    useNodeContextStore.getState().registerSaveFlow(async () => {
-      if (autoSaveTimerRef.current) {
-        clearTimeout(autoSaveTimerRef.current)
-        autoSaveTimerRef.current = null
-      }
-      await saveFlow()
-    })
-    return () => useNodeContextStore.getState().registerSaveFlow(null)
-  }, [saveFlow])
-
-  const sourceInfoReference = useRef<{
-    nodeId: string | null
-    handleId: string | null
-    handleType: 'source' | 'target' | null
-  }>({ nodeId: null, handleId: null, handleType: null })
-
-  const handleConnectStart: OnConnectStart = (_, params) => {
-    sourceInfoReference.current = {
-      nodeId: params.nodeId,
-      handleId: params.handleId,
-      handleType: params.handleType,
-    }
-  }
-
-  const handleConnectEnd: OnConnectEnd = (event, connectionState) => {
-    const mouseEvent = event as MouseEvent
-    if (!connectionState.isValid) {
-      const zoom = reactFlow.getZoom()
-      if (zoom < FlowConfig.ZOOM_THRESHOLD && sourceInfoReference.current.handleType === 'source') {
-        const { nodes } = useFlowStore.getState()
-        const sourceNode = nodes.find((node) => node.id === sourceInfoReference.current.nodeId)
-        if (sourceNode && isFrankNode(sourceNode)) {
-          setPendingEdgeDrop({
-            position: { x: mouseEvent.clientX, y: mouseEvent.clientY },
-            sourceNodeSubtype: sourceNode.data.subtype,
-          })
-          return
-        }
-      }
-      handleEdgeDropOnCanvas(mouseEvent.clientX, mouseEvent.clientY)
-    }
-  }
 
   const handleConnect = useCallback(
     (connection: Connection) => {
@@ -632,14 +553,6 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
     },
     [pendingCompactConnection, onConnect],
   )
-
-  const handleEdgeDropOnCanvas = (x: number, y: number) => {
-    const { screenToFlowPosition } = reactFlow
-    const flowPositions = screenToFlowPosition({ x: x, y: y })
-
-    setEdgeDropPositions(flowPositions)
-    setShowCreateNodeModal(true)
-  }
 
   const handleEdgeDropHandleSelect = useCallback(
     (type: string) => {
@@ -753,45 +666,11 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
     flowStore.setNodes(laidOut)
   }, [layoutGraph])
 
-  useEffect(() => {
-    if (!nodesInitialized || !pendingInitialRelayoutRef.current) return
-
-    const { pendingSelection } = pendingInitialRelayoutRef.current
-    pendingInitialRelayoutRef.current = null
-
-    const flowStore = useFlowStore.getState()
-    const nodesWithResetPositions = flowStore.nodes.map((node) =>
-      node.type === 'frankNode' || node.type === 'exitNode' ? { ...node, position: { x: 0, y: 0 } } : node,
-    )
-    const laidOutNodes = layoutGraph(nodesWithResetPositions, flowStore.edges, 'LR')
-    flowStore.setNodesWithoutHistory(laidOutNodes)
-
-    if (pendingSelection) {
-      applySelectionToNodes(pendingSelection)
-    } else {
-      waitForStableCanvasDimensions((canvasWidth, canvasHeight) => {
-        const freshViewport = computeAdapterCenteredViewport(laidOutNodes, canvasWidth, canvasHeight)
-        useFlowStore.getState().setViewport(freshViewport)
-        reactFlowRef.current?.setViewport(freshViewport)
-      })
-    }
-
-    flowStore.setHistory([])
-    flowStore.setFuture([])
-  }, [
-    nodesInitialized,
-    relayoutNonce,
-    layoutGraph,
-    waitForStableCanvasDimensions,
-    computeAdapterCenteredViewport,
-    applySelectionToNodes,
-  ])
-
   const getFullySelectedGroupIds = useCallback(
-    (parentIds: (string | undefined)[], selectedNodes: FlowNode[]) => {
+    (parentIds: string[], selectedNodes: FlowNode[]) => {
       return parentIds.filter((parentId) => {
         const children = nodes.filter((node) => node.parentId === parentId)
-        return children.every((child) => selectedNodes.some((sn) => sn.id === child.id))
+        return children.every((child) => selectedNodes.some((selectedNode) => selectedNode.id === child.id))
       })
     },
     [nodes],
@@ -801,42 +680,36 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
     return selectedNodes.every((node) => node.parentId && node.parentId === selectedNodes[0].parentId)
   }, [])
 
-  const degroupNodes = useCallback(
-    (selectedNodes: FlowNode[], parentId: string | undefined, allNodes: FlowNode[]): FlowNode[] => {
-      const groupNode = allNodes.find((node) => node.id === parentId)
-      if (!groupNode) return allNodes
+  const degroupNodes = useCallback((selectedNodes: FlowNode[], parentId: string, allNodes: FlowNode[]): FlowNode[] => {
+    const groupNode = allNodes.find((node) => node.id === parentId)
+    if (!groupNode) return allNodes
 
-      const groupX = groupNode.position.x
-      const groupY = groupNode.position.y
+    const groupX = groupNode.position.x
+    const groupY = groupNode.position.y
+    const ungroupedNodes = []
 
-      return allNodes
-        .map((node) => {
-          if (node.id === parentId) {
-            return null
-          }
+    for (const node of allNodes) {
+      if (node.id === parentId) continue
+      if (!selectedNodes.includes(node) && node.parentId !== parentId) ungroupedNodes.push(node)
 
-          if (selectedNodes.includes(node) && node.parentId === parentId) {
-            return {
-              ...node,
-              parentId: undefined,
-              extent: undefined,
-              position: {
-                x: node.position.x + groupX,
-                y: node.position.y + groupY,
-              },
-            }
-          }
-
-          return node
-        })
-        .filter((node): node is FlowNode => node !== null)
-    },
-    [],
-  )
+      const ungroupedNode = {
+        ...node,
+        position: {
+          x: node.position.x + groupX,
+          y: node.position.y + groupY,
+        },
+        parentId: undefined,
+        extent: undefined,
+      }
+      ungroupedNodes.push(ungroupedNode)
+    }
+    return ungroupedNodes
+  }, [])
 
   const handleDegroupSingleGroup = useCallback(
     (selectedNodes: FlowNode[]) => {
-      const parentId = selectedNodes[0].parentId!
+      const parentId = selectedNodes[0].parentId
+      if (!parentId) return
       const updatedNodes = degroupNodes(selectedNodes, parentId, nodes)
       useFlowStore.getState().setNodes(updatedNodes)
     },
@@ -860,6 +733,7 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
   const handleMergeUngroupedIntoGroup = useCallback(
     (selectedNodes: FlowNode[]) => {
       const parentId = selectedNodes.find((n) => n.parentId)?.parentId
+      if (!parentId) return
       const updatedNodes = degroupNodes(selectedNodes, parentId, nodes)
       const updatedSelectedNodes = updatedNodes.filter((node) =>
         selectedNodes.some((selectedNode) => selectedNode.id === node.id),
@@ -870,11 +744,11 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
   )
 
   const handleMultiGroupMerge = useCallback(
-    (groupIds: (string | undefined)[], selectedNodes: FlowNode[]) => {
+    (groupIds: string[], selectedNodes: FlowNode[]) => {
       let updatedNodes = [...nodes]
       for (const parentId of groupIds) {
         const groupChildren = updatedNodes.filter((node) => node.parentId === parentId)
-        updatedNodes = degroupNodes(groupChildren, parentId!, updatedNodes)
+        updatedNodes = degroupNodes(groupChildren, parentId, updatedNodes)
       }
 
       const degroupedSelectedNodes = updatedNodes.filter((node) =>
@@ -890,7 +764,7 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
     const selectedNodes = nodes.filter((node) => node.selected)
     if (selectedNodes.length < 2) return
 
-    const parentIds = [...new Set(selectedNodes.map((node) => node.parentId).filter(Boolean))]
+    const parentIds = [...new Set(selectedNodes.map((node) => node.parentId).filter(Boolean))] as string[]
     const fullySelectedGroupIds = getFullySelectedGroupIds(parentIds, selectedNodes)
 
     if (fullySelectedGroupIds.length > 1) {
@@ -920,18 +794,18 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
   ])
 
   const copySelection = useCallback(() => {
-    const selectedNodes = nodes.filter((n) => n.selected)
+    const selectedNodes = nodes.filter((node) => node.selected)
     if (selectedNodes.length === 0) return
 
-    const selectedNodeIds = new Set(selectedNodes.map((n) => n.id))
-    const selectedEdges = edges.filter((e) => selectedNodeIds.has(e.source) && selectedNodeIds.has(e.target))
+    const selectedNodeIds = new Set(selectedNodes.map((node) => node.id))
+    const selectedEdges = edges.filter((edge) => selectedNodeIds.has(edge.source) && selectedNodeIds.has(edge.target))
 
     const data = { nodes: selectedNodes, edges: selectedEdges }
     clipboardRef.current = data
 
-    navigator.clipboard.writeText(JSON.stringify(data)).catch(() => {
-      // clipboard write failed, ignore
-    })
+    navigator.clipboard
+      .writeText(JSON.stringify(data))
+      .catch(() => showWarningToast('Copy/paste may not work in this browser.', 'Failed to copy'))
   }, [nodes, edges])
 
   const applyClipboardData = useCallback((clipboard: { nodes: FlowNode[]; edges: Edge[] }) => {
@@ -956,8 +830,8 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
 
     const newEdges: Edge[] = clipboard.edges.map((edge) => cloneWithRemappedIds(edge, idMap, generateId))
 
-    const deselectedNodes = flowStore.nodes.map((n) => ({ ...n, selected: false }))
-    const deselectedEdges = flowStore.edges.map((e) => ({ ...e, selected: false }))
+    const deselectedNodes = flowStore.nodes.map((node) => ({ ...node, selected: false }))
+    const deselectedEdges = flowStore.edges.map((edge) => ({ ...edge, selected: false }))
 
     flowStore.setNodes([...deselectedNodes, ...newNodes])
     flowStore.setEdges([...deselectedEdges, ...newEdges])
@@ -983,25 +857,6 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
         if (clipboardRef.current) applyClipboardData(clipboardRef.current)
       })
   }, [applyClipboardData])
-
-  function closeEditNodeContextOnEscape(): void {
-    const { isNewNode, nodeId, parentId } = useNodeContextStore.getState()
-
-    if (isNewNode) {
-      if (parentId) {
-        useFlowStore.getState().deleteChild(parentId, nodeId.toString())
-      } else {
-        useFlowStore.getState().deleteNode(nodeId.toString())
-      }
-      useNodeContextStore.getState().setIsNewNode(false)
-    }
-
-    showNodeContextMenu(false)
-    setIsEditing(false)
-    setIsMultiSelect(false)
-    setParentId(null)
-    setChildParentId(null)
-  }
 
   const deleteSelection = useCallback((): boolean => {
     if (isEditing) return false
@@ -1045,23 +900,7 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
     )
   }, [])
 
-  useShortcut({
-    'studio.copy': () => copySelection(),
-    'studio.paste': () => pasteSelection(),
-    'studio.cut': () => cutSelection(),
-    'studio.undo': () => useFlowStore.getState().undo(),
-    'studio.redo': () => useFlowStore.getState().redo(),
-    'studio.redo-alt': () => useFlowStore.getState().redo(),
-    'studio.group': () => handleGrouping(),
-    'studio.ungroup': () => handleUngroup(),
-    'studio.hide': () => toggleSelectedHidden(),
-    'studio.save': () => void saveFlow(),
-    'studio.close-context': () => closeEditNodeContextOnEscape(),
-    'studio.delete': () => deleteSelection(),
-    'studio.show-in-editor': () => showSelectedNodeInEditor(),
-  })
-
-  const handleNodeDragStop = useCallback((_event: React.MouseEvent, node: FlowNode) => {
+  const handleNodeDragStop = useCallback((_event: MouseEvent | TouchEvent, node: FlowNode) => {
     if (!isStickyNote(node)) return
 
     const flowStore = useFlowStore.getState()
@@ -1246,43 +1085,6 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
     ],
   )
 
-  const groupNodes = (nodesToGroup: FlowNode[], currentNodes: FlowNode[]) => {
-    const minX = Math.min(...nodesToGroup.map((node) => node.position.x))
-    const minY = Math.min(...nodesToGroup.map((node) => node.position.y))
-    const maxX = Math.max(...nodesToGroup.map((node) => node.position.x + (node.measured?.width ?? 0)))
-    const maxY = Math.max(...nodesToGroup.map((node) => node.position.y + (node.measured?.height ?? 0)))
-
-    const padding = 30
-    const width = maxX - minX + padding * 2
-    const height = maxY - minY + padding * 2
-
-    const newGroupId = useFlowStore.getState().getNextNodeId()
-
-    const groupNode: FlowNode = {
-      id: newGroupId,
-      position: { x: minX - padding, y: minY - padding },
-      type: 'groupNode',
-      data: { label: 'New Group', width: width, height: height },
-      dragHandle: '.drag-handle',
-      selectable: true,
-    }
-
-    const updatedSelectedNodes: FlowNode[] = nodesToGroup.map((node) => ({
-      ...node,
-      position: {
-        x: node.position.x - minX + padding,
-        y: node.position.y - minY + padding,
-      },
-      parentId: newGroupId,
-      extent: 'parent',
-      selected: true,
-    }))
-
-    const allNodes = [...currentNodes.filter((node) => !node.selected), groupNode, ...updatedSelectedNodes]
-
-    useFlowStore.getState().setNodes(allNodes)
-  }
-
   const onDragOver = useCallback(
     (event: React.DragEvent) => {
       event.preventDefault()
@@ -1291,159 +1093,33 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
     [allowedOnCanvas],
   )
 
-  const onDrop = (event: React.DragEvent) => {
-    event.preventDefault()
-    setDraggedName(null)
-    setParentId(null)
-
-    const data = event.dataTransfer.getData('application/reactflow')
-    if (!data) return
-
-    setDropSuccessful(true)
-
-    const parsedData = JSON.parse(data)
-    const { screenToFlowPosition } = reactFlow
-
-    if (elements) {
-      const elementData = elements[parsedData.name]
-      if (elementData) {
-        setAttributes(elementData.attributes)
-        setNodeId(+useFlowStore.getState().nodeIdCounter)
-      }
-    }
-
-    const position = screenToFlowPosition({ x: event.clientX, y: event.clientY })
-    addNodeAtPosition(position, parsedData.name)
-  }
-
-  const onDragEnd = () => {
-    setDraggedName(null)
-    setParentId(null)
-  }
-
-  function addNodeAtPosition(
-    position: { x: number; y: number },
-    elementName: string,
-    sourceInfo?: { nodeId: string | null; handleId: string | null; handleType: 'source' | 'target' | null },
-  ) {
-    showNodeContextMenu(true)
-    setIsNewNode(true)
-    setEditingSubtype(elementName)
-    setIsEditing(true)
-    setParentId(null)
-    setChildParentId(null)
-
-    const flowStore = useFlowStore.getState()
-    const newId = flowStore.getNextNodeId()
-
-    const elementType = getElementTypeFromName(elementName)
-    const nodeType = elementType === 'exit' ? 'exitNode' : 'frankNode'
-
-    const width = nodeType === 'exitNode' ? FlowConfig.EXIT_DEFAULT_WIDTH : FlowConfig.NODE_DEFAULT_WIDTH
-    const height = nodeType === 'exitNode' ? FlowConfig.EXIT_DEFAULT_HEIGHT : FlowConfig.NODE_MIN_HEIGHT
-
-    const newNode: FrankNodeType = {
-      id: newId.toString(),
-      position: {
-        x: position.x - width / 2,
-        y: position.y - height / 2,
-      },
-      data: {
-        subtype: elementName,
-        type: elementType,
-        name: ``,
-        sourceHandles: [{ type: 'success', index: 1 }],
-        children: [],
-      },
-      type: nodeType,
-    }
-
-    flowStore.addNode(newNode)
-
-    if (sourceInfo?.nodeId && sourceInfo.handleType === 'source') {
-      const sourceNode = flowStore.nodes.find((node) => node.id === sourceInfo.nodeId)
-
-      if (reactFlow.getZoom() < FlowConfig.ZOOM_THRESHOLD && sourceNode && isFrankNode(sourceNode)) {
-        if (edgeDropHandleType) {
-          const existingHandle = sourceNode.data.sourceHandles.find((handle) => handle.type === edgeDropHandleType)
-          if (existingHandle) {
-            onConnect({
-              source: sourceInfo.nodeId!,
-              sourceHandle: existingHandle.index.toString(),
-              target: newId.toString(),
-              targetHandle: null,
-            })
-          } else {
-            const newIndex = sourceNode.data.sourceHandles.length + 1
-            flowStore.addHandle(sourceInfo.nodeId!, { type: edgeDropHandleType, index: newIndex })
-            onConnect({
-              source: sourceInfo.nodeId!,
-              sourceHandle: newIndex.toString(),
-              target: newId.toString(),
-              targetHandle: null,
-            })
-          }
-          setEdgeDropHandleType(null)
-        } else {
-          setPendingCompactConnection({
-            connection: {
-              source: sourceInfo.nodeId,
-              sourceHandle: null,
-              target: newId.toString(),
-              targetHandle: null,
-            },
-            sourceNodeSubtype: sourceNode.data.subtype,
-            position: reactFlow.flowToScreenPosition(position),
-          })
-        }
-
-        sourceInfoReference.current = { nodeId: null, handleId: null, handleType: null }
-        return
-      }
-
-      const label = getEdgeLabelFromHandle(sourceNode, sourceInfo.handleId)
-
-      const newEdge: Edge = {
-        id: `e${sourceInfo.nodeId}-${newId}`,
-        source: sourceInfo.nodeId,
-        sourceHandle: sourceInfo.handleId ?? undefined,
-        target: newId.toString(),
-        type: 'frankEdge',
-        data: { label },
-      }
-
-      flowStore.setEdges(addEdge(newEdge, flowStore.edges))
-      sourceInfoReference.current = { nodeId: null, handleId: null, handleType: null }
-    }
-  }
-
   const addStickyNote = useCallback(
-    (flowPos: { x: number; y: number }) => {
-      const flowStore = useFlowStore.getState()
-      const newId = flowStore.getNextNodeId()
+          (flowPos: { x: number; y: number }) => {
+            const flowStore = useFlowStore.getState()
+            const newId = flowStore.getNextNodeId()
 
-      const deselectedNodes = flowStore.nodes.map((node) => ({
-        ...node,
-        selected: false,
-      }))
+            const deselectedNodes = flowStore.nodes.map((node) => ({
+              ...node,
+              selected: false,
+            }))
 
-      const stickyNote: StickyNote = {
-        id: newId,
-        position: { x: flowPos.x, y: flowPos.y },
-        data: { content: '' },
-        type: 'stickyNote',
-        selected: true,
-        style: {
-          width: FlowConfig.STICKY_NOTE_DEFAULT_WIDTH,
-          height: FlowConfig.STICKY_NOTE_DEFAULT_HEIGHT,
-        },
-      }
+            const stickyNote: StickyNote = {
+              id: newId,
+              position: { x: flowPos.x, y: flowPos.y },
+              data: { content: '' },
+              type: 'stickyNote',
+              selected: true,
+              style: {
+                width: FlowConfig.STICKY_NOTE_DEFAULT_WIDTH,
+                height: FlowConfig.STICKY_NOTE_DEFAULT_HEIGHT,
+              },
+            }
 
-      flowStore.setNodes([...deselectedNodes, stickyNote])
-      setSelectedStickyId(newId)
-      showNodeContextMenu(true)
-    },
-    [setSelectedStickyId, showNodeContextMenu],
+            flowStore.setNodes([...deselectedNodes, stickyNote])
+            setSelectedStickyId(newId)
+            showNodeContextMenu(true)
+          },
+          [setSelectedStickyId, showNodeContextMenu],
   )
 
   const cutSelection = useCallback(() => {
@@ -1455,7 +1131,7 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
     const selectedNodeIds = new Set(selectedNodes.map((n) => n.id))
     const remainingNodes = flowStore.nodes.filter((n) => !selectedNodeIds.has(n.id))
     const remainingEdges = flowStore.edges.filter(
-      (e) => !selectedNodeIds.has(e.source) && !selectedNodeIds.has(e.target),
+            (e) => !selectedNodeIds.has(e.source) && !selectedNodeIds.has(e.target),
     )
     flowStore.setNodes(remainingNodes)
     flowStore.setEdges(remainingEdges)
@@ -1489,7 +1165,7 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
   const showSelectedNodeInEditor = useCallback(() => {
     const flowStore = useFlowStore.getState()
     const selectedFrankNodes = flowStore.nodes.filter(
-      (node) => node.selected && node.type === 'frankNode',
+            (node) => node.selected && node.type === 'frankNode',
     ) as FrankNodeType[]
     if (selectedFrankNodes.length !== 1) return
 
@@ -1505,16 +1181,118 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
   }, [navigate])
 
   const handleRightMouseButtonClick = useCallback(
-    (event: React.MouseEvent) => {
-      event.preventDefault()
-      event.stopPropagation()
-      const { screenToFlowPosition } = reactFlow
-      const flowPos = screenToFlowPosition({ x: event.clientX, y: event.clientY })
-      setContextMenu({ x: event.clientX, y: event.clientY, flowPos })
-    },
-    [reactFlow],
+          (event: React.MouseEvent) => {
+            event.preventDefault()
+            event.stopPropagation()
+            const { screenToFlowPosition } = reactFlow
+            const flowPos = screenToFlowPosition({ x: event.clientX, y: event.clientY })
+            setContextMenu({ x: event.clientX, y: event.clientY, flowPos })
+          },
+          [reactFlow],
   )
 
+  /* useEffect */
+
+  useEffect(() => {
+    return () => {
+      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (nodes.length > 0 && !isLoadingTabRef.current) {
+      scheduleAutoSave()
+    }
+  }, [nodes, edges, scheduleAutoSave])
+
+  useEffect(() => {
+    if (!fitAfterLayoutRef.current) return
+    const nodeIds = fitAfterLayoutRef.current
+    fitAfterLayoutRef.current = null
+    requestAnimationFrame(() => {
+      reactFlowRef.current?.fitView({ nodes: nodeIds, padding: 0.15, duration: 300 })
+    })
+  }, [nodes])
+
+  useEffect(() => {
+    const nodeId = pendingFitViewRef.current
+    if (!nodeId) return
+
+    const targetNode = nodes.find((node) => node.id === nodeId)
+    if (!targetNode?.measured?.width || !targetNode?.measured?.height) return
+    if (!targetNode.selected) return
+
+    pendingFitViewRef.current = null
+
+    waitForStableCanvasDimensions((canvasWidth, canvasHeight) => {
+      const reactFlowInstance = reactFlowRef.current
+      if (!reactFlowInstance) return
+
+      const allNodes = useFlowStore.getState().nodes
+      const node = allNodes.find((node) => node.id === nodeId)
+      if (!node?.measured?.width || !node?.measured?.height) return
+
+      const { absoluteX, absoluteY } = computeAbsoluteNodePosition(node, allNodes)
+
+      const viewport = computeNodeCenteredViewport(
+              absoluteX,
+              absoluteY,
+              node.measured.width,
+              node.measured.height,
+              canvasWidth,
+              canvasHeight,
+      )
+
+      reactFlowInstance.setViewport(viewport, { duration: 400 })
+    })
+  }, [nodes, waitForStableCanvasDimensions])
+
+  useEffect(() => {
+    useNodeContextStore.getState().registerSaveFlow(async () => {
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current)
+        autoSaveTimerRef.current = null
+      }
+      await saveFlow()
+    })
+    return () => useNodeContextStore.getState().registerSaveFlow(null)
+  }, [saveFlow])
+
+  useEffect(() => {
+    if (!nodesInitialized || !pendingInitialRelayoutRef.current) return
+
+    const { pendingSelection } = pendingInitialRelayoutRef.current
+    pendingInitialRelayoutRef.current = null
+
+    const flowStore = useFlowStore.getState()
+    const nodesWithResetPositions = flowStore.nodes.map((node) =>
+      node.type === 'frankNode' || node.type === 'exitNode' ? { ...node, position: { x: 0, y: 0 } } : node,
+    )
+    const laidOutNodes = layoutGraph(nodesWithResetPositions, flowStore.edges, 'LR')
+    flowStore.setNodesWithoutHistory(laidOutNodes)
+
+    if (pendingSelection) {
+      applySelectionToNodes(pendingSelection)
+    } else {
+      waitForStableCanvasDimensions((canvasWidth, canvasHeight) => {
+        const freshViewport = computeAdapterCenteredViewport(laidOutNodes, canvasWidth, canvasHeight)
+        useFlowStore.getState().setViewport(freshViewport)
+        reactFlowRef.current?.setViewport(freshViewport)
+      })
+    }
+
+    flowStore.setHistory([])
+    flowStore.setFuture([])
+  }, [
+    nodesInitialized,
+    relayoutNonce,
+    layoutGraph,
+    waitForStableCanvasDimensions,
+    computeAdapterCenteredViewport,
+    applySelectionToNodes,
+  ])
+
+  // TODO disect this monster
   useEffect(() => {
     function stripMeasuredDimensions(nodes: FlowNode[]): FlowNode[] {
       return nodes.map((node) => {
@@ -1720,6 +1498,235 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
 
     return () => unsub()
   }, [updateNodeInternals])
+
+  /* TODO ????? */
+  useEffect(() => {
+    showNodeContextMenuRef.current = showNodeContextMenu
+  }, [showNodeContextMenu])
+  reactFlowRef.current = reactFlow
+
+  /* Functions */
+
+  function handleConnectStart(_: MouseEvent | TouchEvent, params: OnConnectStartParams): void {
+    sourceInfoReference.current = {
+      nodeId: params.nodeId,
+      handleId: params.handleId,
+      handleType: params.handleType,
+    }
+  }
+
+  function handleConnectEnd(
+    event: MouseEvent | TouchEvent,
+    connectionState: FinalConnectionState<InternalNode>,
+  ): void {
+    const mouseEvent = event as MouseEvent
+    if (!connectionState.isValid) {
+      const zoom = reactFlow.getZoom()
+      if (zoom < FlowConfig.ZOOM_THRESHOLD && sourceInfoReference.current.handleType === 'source') {
+        const { nodes } = useFlowStore.getState()
+        const sourceNode = nodes.find((node) => node.id === sourceInfoReference.current.nodeId)
+        if (sourceNode && isFrankNode(sourceNode)) {
+          setPendingEdgeDrop({
+            position: { x: mouseEvent.clientX, y: mouseEvent.clientY },
+            sourceNodeSubtype: sourceNode.data.subtype,
+          })
+          return
+        }
+      }
+      handleEdgeDropOnCanvas(mouseEvent.clientX, mouseEvent.clientY)
+    }
+  }
+
+  function handleEdgeDropOnCanvas(x: number, y: number): void {
+    const { screenToFlowPosition } = reactFlow
+    const flowPositions = screenToFlowPosition({ x: x, y: y })
+
+    setEdgeDropPositions(flowPositions)
+    setShowCreateNodeModal(true)
+  }
+
+  function closeEditNodeContextOnEscape(): void {
+    const { isNewNode, nodeId, parentId } = useNodeContextStore.getState()
+
+    if (isNewNode) {
+      if (parentId) {
+        useFlowStore.getState().deleteChild(parentId, nodeId.toString())
+      } else {
+        useFlowStore.getState().deleteNode(nodeId.toString())
+      }
+      useNodeContextStore.getState().setIsNewNode(false)
+    }
+
+    showNodeContextMenu(false)
+    setIsEditing(false)
+    setIsMultiSelect(false)
+    setParentId(null)
+    setChildParentId(null)
+  }
+
+  function groupNodes(nodesToGroup: FlowNode[], currentNodes: FlowNode[]){
+    const minX = Math.min(...nodesToGroup.map((node) => node.position.x))
+    const minY = Math.min(...nodesToGroup.map((node) => node.position.y))
+    const maxX = Math.max(...nodesToGroup.map((node) => node.position.x + (node.measured?.width ?? 0)))
+    const maxY = Math.max(...nodesToGroup.map((node) => node.position.y + (node.measured?.height ?? 0)))
+
+    const padding = 30
+    const width = maxX - minX + padding * 2
+    const height = maxY - minY + padding * 2
+
+    const newGroupId = useFlowStore.getState().getNextNodeId()
+
+    const groupNode: FlowNode = {
+      id: newGroupId,
+      position: { x: minX - padding, y: minY - padding },
+      type: 'groupNode',
+      data: { label: 'New Group', width: width, height: height },
+      dragHandle: '.drag-handle',
+      selectable: true,
+    }
+
+    const updatedSelectedNodes: FlowNode[] = nodesToGroup.map((node) => ({
+      ...node,
+      position: {
+        x: node.position.x - minX + padding,
+        y: node.position.y - minY + padding,
+      },
+      parentId: newGroupId,
+      extent: 'parent',
+      selected: true,
+    }))
+
+    const allNodes = [...currentNodes.filter((node) => !node.selected), groupNode, ...updatedSelectedNodes]
+
+    useFlowStore.getState().setNodes(allNodes)
+  }
+
+  function onDrop(event: React.DragEvent) {
+    event.preventDefault()
+    setDraggedName(null)
+    setParentId(null)
+
+    const data = event.dataTransfer.getData('application/reactflow')
+    if (!data) return
+
+    setDropSuccessful(true)
+
+    const parsedData = JSON.parse(data)
+    const { screenToFlowPosition } = reactFlow
+
+    if (elements) {
+      const elementData = elements[parsedData.name]
+      if (elementData) {
+        setAttributes(elementData.attributes)
+        setNodeId(+useFlowStore.getState().nodeIdCounter)
+      }
+    }
+
+    const position = screenToFlowPosition({ x: event.clientX, y: event.clientY })
+    addNodeAtPosition(position, parsedData.name)
+  }
+
+  function onDragEnd() {
+    setDraggedName(null)
+    setParentId(null)
+  }
+
+  /* TODO another big one */
+  function addNodeAtPosition(
+    position: { x: number; y: number },
+    elementName: string,
+    sourceInfo?: { nodeId: string | null; handleId: string | null; handleType: 'source' | 'target' | null },
+  ) {
+    showNodeContextMenu(true)
+    setIsNewNode(true)
+    setEditingSubtype(elementName)
+    setIsEditing(true)
+    setParentId(null)
+    setChildParentId(null)
+
+    const flowStore = useFlowStore.getState()
+    const newId = flowStore.getNextNodeId()
+
+    const elementType = getElementTypeFromName(elementName)
+    const nodeType = elementType === 'exit' ? 'exitNode' : 'frankNode'
+
+    const width = nodeType === 'exitNode' ? FlowConfig.EXIT_DEFAULT_WIDTH : FlowConfig.NODE_DEFAULT_WIDTH
+    const height = nodeType === 'exitNode' ? FlowConfig.EXIT_DEFAULT_HEIGHT : FlowConfig.NODE_MIN_HEIGHT
+
+    const newNode: FrankNodeType = {
+      id: newId.toString(),
+      position: {
+        x: position.x - width / 2,
+        y: position.y - height / 2,
+      },
+      data: {
+        subtype: elementName,
+        type: elementType,
+        name: ``,
+        sourceHandles: [{ type: 'success', index: 1 }],
+        children: [],
+      },
+      type: nodeType,
+    }
+
+    flowStore.addNode(newNode)
+
+    if (sourceInfo?.nodeId && sourceInfo.handleType === 'source') {
+      const sourceNode = flowStore.nodes.find((node) => node.id === sourceInfo.nodeId)
+
+      if (reactFlow.getZoom() < FlowConfig.ZOOM_THRESHOLD && sourceNode && isFrankNode(sourceNode)) {
+        if (edgeDropHandleType) {
+          const existingHandle = sourceNode.data.sourceHandles.find((handle) => handle.type === edgeDropHandleType)
+          if (existingHandle) {
+            onConnect({
+              source: sourceInfo.nodeId!,
+              sourceHandle: existingHandle.index.toString(),
+              target: newId.toString(),
+              targetHandle: null,
+            })
+          } else {
+            const newIndex = sourceNode.data.sourceHandles.length + 1
+            flowStore.addHandle(sourceInfo.nodeId!, { type: edgeDropHandleType, index: newIndex })
+            onConnect({
+              source: sourceInfo.nodeId!,
+              sourceHandle: newIndex.toString(),
+              target: newId.toString(),
+              targetHandle: null,
+            })
+          }
+          setEdgeDropHandleType(null)
+        } else {
+          setPendingCompactConnection({
+            connection: {
+              source: sourceInfo.nodeId,
+              sourceHandle: null,
+              target: newId.toString(),
+              targetHandle: null,
+            },
+            sourceNodeSubtype: sourceNode.data.subtype,
+            position: reactFlow.flowToScreenPosition(position),
+          })
+        }
+
+        sourceInfoReference.current = { nodeId: null, handleId: null, handleType: null }
+        return
+      }
+
+      const label = getEdgeLabelFromHandle(sourceNode, sourceInfo.handleId)
+
+      const newEdge: Edge = {
+        id: `e${sourceInfo.nodeId}-${newId}`,
+        source: sourceInfo.nodeId,
+        sourceHandle: sourceInfo.handleId ?? undefined,
+        target: newId.toString(),
+        type: 'frankEdge',
+        data: { label },
+      }
+
+      flowStore.setEdges(addEdge(newEdge, flowStore.edges))
+      sourceInfoReference.current = { nodeId: null, handleId: null, handleType: null }
+    }
+  }
 
   return (
     <div
