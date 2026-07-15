@@ -1,9 +1,11 @@
-import { useCallback, useEffect, useState } from 'react'
+import { ReactFlowProvider } from '@xyflow/react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 import StudioTabs from '~/components/tabs/studio-tabs'
 import StudioFileStructure from '~/components/file-structure/studio-file-structure'
+import FlowCanvas from '~/routes/studio/canvas-flow/canvas-flow'
+import { NodeContextMenuContext } from '~/routes/studio/canvas-flow/node-context-menu-context'
 import StudioContext from '~/routes/studio/context/studio-context'
-import Flow from '~/routes/studio/canvas/flow'
 import NodeContext from '~/routes/studio/context/node-context'
 import StickyNoteContext from '~/routes/studio/context/sticky-note-context'
 import useNodeContextStore from '~/stores/node-context-store'
@@ -17,7 +19,7 @@ import { openInEditor } from '~/actions/navigationActions'
 import { getBaseName } from '~/utils/path-utils'
 import Button from '~/components/inputs/button'
 import useFlowStore, { isStickyNote } from '~/stores/flow-store'
-import type { StickyNote } from '~/routes/studio/canvas/nodetypes/sticky-note'
+import type { StickyNote } from '~/routes/studio/canvas-flow/nodetypes/sticky-note'
 import { ALL_SHORTCUTS, formatShortcutParts, useShortcutStore } from '~/stores/shortcut-store'
 import GroupContext from '~/routes/studio/context/group-context'
 
@@ -169,7 +171,7 @@ export default function Studio() {
   const { activeTab, activeTabPath } = useTabStore(
     useShallow((state) => ({
       activeTab: state.activeTab,
-      activeTabPath: state.activeTab ? state.tabs[state.activeTab]?.configurationPath : undefined,
+      activeTabPath: state.activeTab ? state.tabs[state.activeTab]?.configurationPath : null,
     })),
   )
 
@@ -233,9 +235,11 @@ export default function Studio() {
         </div>
 
         {activeTab ? (
-          <>
-            <Flow showNodeContextMenu={handleShowNodeContext} onOpenInEditor={handleOpenInEditor} />
-          </>
+          <NodeContextMenuContext.Provider value={handleShowNodeContext}>
+            <ReactFlowProvider>
+              <FlowCanvas onOpenInEditor={handleOpenInEditor} />
+            </ReactFlowProvider>
+          </NodeContextMenuContext.Provider>
         ) : (
           <div className="text-foreground-muted flex h-full flex-col items-center justify-center p-8 text-center">
             <h2 className="mb-2 text-xl font-semibold">No adapter selected</h2>

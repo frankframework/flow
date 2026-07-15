@@ -1,14 +1,14 @@
-import type { FlowNode } from '~/routes/studio/canvas/flow'
-import type { ChildNode } from '~/routes/studio/canvas/nodetypes/child-node'
-import type { ExitNode } from '~/routes/studio/canvas/nodetypes/exit-node'
-import type { FrankNodeType } from '~/routes/studio/canvas/nodetypes/frank-node'
+import type { FlowNode } from '~/routes/studio/canvas-flow/flow'
+import type { ChildNode } from '~/routes/studio/canvas-flow/nodetypes/child-node'
+import type { ExitNode } from '~/routes/studio/canvas-flow/nodetypes/exit-node'
+import type { FrankNodeType } from '~/routes/studio/canvas-flow/nodetypes/frank-node'
 import { getElementTypeFromName } from '~/routes/studio/node-translator-module'
 import { fetchConfigurationFileCached } from '~/services/configuration-file-service'
 import { translateElementFromOldToNewFormat } from '~/utils/flow-utils'
-import { FlowConfig } from './canvas/flow.config'
-import type { GroupNode } from './canvas/nodetypes/group-node'
+import { FlowConfig } from '~/routes/studio/canvas-flow/flow.config'
+import type { GroupNode } from '~/routes/studio/canvas-flow/nodetypes/group-node'
 import { isFrankNode } from '~/stores/flow-store'
-import type { StickyNote } from './canvas/nodetypes/sticky-note'
+import type { StickyNote } from '~/routes/studio/canvas-flow/nodetypes/sticky-note'
 
 function parseConfigurationXml(xmlString: string): Document {
   const withFlowNamespace = /\bxmlns:flow\s*=/.test(xmlString)

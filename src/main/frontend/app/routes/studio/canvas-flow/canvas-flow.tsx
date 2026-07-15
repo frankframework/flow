@@ -15,7 +15,6 @@ import {
   type OnNodesChange,
   type OnReconnect,
   ReactFlow,
-  ReactFlowProvider,
   useNodesInitialized,
   useReactFlow,
   useUpdateNodeInternals,
@@ -26,20 +25,19 @@ import { SaveStatusIndicator } from '~/components/save-status-indicator'
 import { useSaveStatusStore } from '~/stores/save-status-store'
 import CodeIcon from '/icons/solar/Code.svg?react'
 import '@xyflow/react/dist/style.css'
-import FrankNodeComponent, { type FrankNodeType } from '~/routes/studio/canvas/nodetypes/frank-node'
-import FrankEdgeComponent from '~/routes/studio/canvas/edgetypes/frank-edge'
-import ExitNodeComponent, { type ExitNode } from '~/routes/studio/canvas/nodetypes/exit-node'
-import GroupNodeComponent, { type GroupNode } from '~/routes/studio/canvas/nodetypes/group-node'
+import FrankNodeComponent, { type FrankNodeType } from '~/routes/studio/canvas-flow/nodetypes/frank-node'
+import FrankEdgeComponent from '~/routes/studio/canvas-flow/edgetypes/frank-edge'
+import ExitNodeComponent, { type ExitNode } from '~/routes/studio/canvas-flow/nodetypes/exit-node'
+import GroupNodeComponent, { type GroupNode } from '~/routes/studio/canvas-flow/nodetypes/group-node'
 import useFlowStore, { type FlowState, isStickyNote } from '~/stores/flow-store'
 import { useShallow } from 'zustand/react/shallow'
-import { FlowConfig } from '~/routes/studio/canvas/flow.config'
+import { FlowConfig } from '~/routes/studio/canvas-flow/flow.config'
 import { getElementTypeFromName } from '~/routes/studio/node-translator-module'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { logApiError } from '~/utils/logger'
-import { NodeContextMenuContext, useNodeContextMenu } from './node-context-menu-context'
-import StickyNoteComponent, { type StickyNote } from '~/routes/studio/canvas/nodetypes/sticky-note'
-import useTabStore, { type TabData } from '~/stores/tab-store'
-import { convertAdapterXmlToJson, getAdapterFromConfiguration } from '~/routes/studio/xml-to-json-parser'
+import { useNodeContextMenu } from './node-context-menu-context'
+import StickyNoteComponent, { type StickyNote } from '~/routes/studio/canvas-flow/nodetypes/sticky-note'
+import useTabStore from '~/stores/tab-store'
 import { exportFlowToXml, replaceAdapterInXml } from '~/routes/studio/flow-to-xml-parser'
 import useNodeContextStore from '~/stores/node-context-store'
 import CreateNodeModal from '~/components/flow/create-node-modal'
@@ -61,7 +59,7 @@ import LightbulbIcon from '/icons/solar/Lightbulb.svg?react'
 import CanvasContextMenu from '~/components/flow/canvas-context-menu'
 import { SidebarSide, useSidebarStore } from '~/components/sidebars-layout/sidebar-layout-store'
 import { openInEditorAtElement } from '~/actions/navigationActions'
-import HandleMenu from '~/routes/studio/canvas/nodetypes/components/handle-menu'
+import HandleMenu from '~/routes/studio/canvas-flow/nodetypes/components/handle-menu'
 import IconLabelButton from '~/components/inputs/icon-label-button'
 
 export type FlowNode = FrankNodeType | ExitNode | StickyNote | GroupNode | Node
@@ -175,7 +173,7 @@ function computeNodeCenteredViewport(
   }
 }
 
-function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
+export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
   /* Hooks */
 
   const showNodeContextMenu = useNodeContextMenu()
@@ -234,7 +232,6 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
   const canvasRef = useRef<HTMLDivElement>(null)
   const fitAfterLayoutRef = useRef<{ id: string }[] | null>(null)
   const pendingInitialRelayoutRef = useRef<{ pendingSelection: { subtype: string; name: string } | null } | null>(null)
-  const loadedTabIdRef = useRef<string | null>(null)
   const sourceInfoReference = useRef<{
     nodeId: string | null
     handleId: string | null
@@ -1196,6 +1193,57 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
     [reactFlow],
   )
 
+  const connectEdgeToSource = useCallback(
+    (
+      flowStore: FlowState,
+      {
+        sourceNode,
+        sourceNodeId,
+        newId,
+        position,
+      }: {
+        sourceNode: FrankNodeType
+        sourceNodeId: string
+        newId: string
+        position: { x: number; y: number }
+      },
+    ) => {
+      if (edgeDropHandleType) {
+        const existingHandle = sourceNode.data.sourceHandles.find((handle) => handle.type === edgeDropHandleType)
+        if (existingHandle) {
+          onConnect({
+            source: sourceNodeId,
+            sourceHandle: existingHandle.index.toString(),
+            target: newId.toString(),
+            targetHandle: null,
+          })
+        } else {
+          const newIndex = sourceNode.data.sourceHandles.length + 1
+          flowStore.addHandle(sourceNodeId, { type: edgeDropHandleType, index: newIndex })
+          onConnect({
+            source: sourceNodeId,
+            sourceHandle: newIndex.toString(),
+            target: newId.toString(),
+            targetHandle: null,
+          })
+        }
+        setEdgeDropHandleType(null)
+      } else {
+        setPendingCompactConnection({
+          connection: {
+            source: sourceNodeId,
+            sourceHandle: null,
+            target: newId.toString(),
+            targetHandle: null,
+          },
+          sourceNodeSubtype: sourceNode.data.subtype,
+          position: reactFlow.flowToScreenPosition(position),
+        })
+      }
+    },
+    [edgeDropHandleType, onConnect, reactFlow],
+  )
+
   /* useEffect */
 
   useEffect(() => {
@@ -1296,170 +1344,6 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
     computeAdapterCenteredViewport,
     applySelectionToNodes,
   ])
-
-  // TODO disect this monster
-  useEffect(() => {
-    function stripMeasuredDimensions(nodes: FlowNode[]): FlowNode[] {
-      return nodes.map((node) => {
-        if (!('measured' in node)) return node
-        const { measured: _measured, ...nodeWithoutMeasured } = node as FlowNode & { measured?: unknown }
-        return nodeWithoutMeasured as FlowNode
-      })
-    }
-
-    function restoreFlowFromTab(tab: TabData, options: { skipViewport: boolean; forceRemeasure: boolean }) {
-      const flowStore = useFlowStore.getState()
-      const flowJson = tab.flowJson
-
-      if (flowJson) {
-        let nodes = Array.isArray(flowJson.nodes) ? flowJson.nodes : []
-        if (options.forceRemeasure) {
-          nodes = stripMeasuredDimensions(nodes)
-        }
-        flowStore.setNodes(nodes)
-        flowStore.setEdges(Array.isArray(flowJson.edges) ? flowJson.edges : [])
-
-        if (!options.skipViewport) {
-          const savedViewport = flowJson.viewport as { x: number; y: number; zoom: number } | undefined
-          const targetViewport = savedViewport ?? { x: 0, y: 0, zoom: 1 }
-          flowStore.setViewport(targetViewport)
-          requestAnimationFrame(() => reactFlowRef.current?.setViewport(targetViewport))
-        }
-
-        flowStore.setHistory(tab.history ?? [])
-        flowStore.setFuture(tab.future ?? [])
-      } else {
-        clearFlow()
-      }
-    }
-
-    function clearFlow() {
-      const flowStore = useFlowStore.getState()
-      flowStore.resetStore()
-    }
-
-    function loadFromCache(
-      tab: TabData,
-      pendingSelection: { subtype: string; name: string } | null,
-      recenter: boolean,
-    ) {
-      const hasPendingSelection = !!pendingSelection
-      restoreFlowFromTab(tab, {
-        skipViewport: hasPendingSelection || recenter,
-        forceRemeasure: hasPendingSelection,
-      })
-      if (pendingSelection) {
-        applySelectionToNodes(pendingSelection)
-      } else if (recenter) {
-        const cachedNodes = useFlowStore.getState().nodes
-        waitForStableCanvasDimensions((canvasWidth, canvasHeight) => {
-          const viewport = computeAdapterCenteredViewport(cachedNodes, canvasWidth, canvasHeight)
-          useFlowStore.getState().setViewport(viewport)
-          reactFlowRef.current?.setViewport(viewport)
-        })
-      }
-    }
-
-    async function loadFromApi(tab: TabData, pendingSelection: { subtype: string; name: string } | null) {
-      const flowStore = useFlowStore.getState()
-      const currentProject = useProjectStore.getState().project
-      if (!currentProject) return
-
-      const adapter = await getAdapterFromConfiguration(
-        currentProject.name,
-        tab.configurationPath,
-        tab.name!,
-        tab.adapterPosition,
-      )
-      if (!adapter) return
-      const adapterJson = await convertAdapterXmlToJson(adapter)
-
-      flowStore.setEdges(adapterJson.edges)
-      flowStore.setNodes(adapterJson.nodes)
-      flowStore.setHistory([])
-      flowStore.setFuture([])
-      pendingInitialRelayoutRef.current = { pendingSelection }
-      setRelayoutNonce((nonce) => nonce + 1)
-    }
-
-    async function loadFlowFromTab(tab: TabData) {
-      const tabId = useTabStore.getState().activeTab
-      const pendingSelection = tab.pendingNodeSelection ?? null
-      const recenter = tab.pendingRecenter ?? false
-
-      if (tabId === loadedTabIdRef.current && !pendingSelection && !recenter) return
-      loadedTabIdRef.current = tabId
-
-      isLoadingTabRef.current = true
-      setLoading(true)
-
-      if (pendingSelection || recenter) {
-        useTabStore.getState().setTabData(tabId, { ...tab, pendingNodeSelection: null, pendingRecenter: null })
-      }
-
-      try {
-        const hasCachedFlow = tab.flowJson && Object.keys(tab.flowJson).length > 0
-        if (hasCachedFlow) {
-          loadFromCache(tab, pendingSelection, recenter)
-        } else if (tab.configurationPath && tab.name) {
-          await loadFromApi(tab, pendingSelection)
-        }
-      } catch (error) {
-        logApiError('Error loading tab flow:', error as Error)
-      } finally {
-        isLoadingTabRef.current = false
-        setLoading(false)
-      }
-    }
-
-    function saveFlowToTab(tabId: string) {
-      const tabStore = useTabStore.getState()
-      const flowStore = useFlowStore.getState()
-
-      const tabData = tabStore.getTab(tabId)
-      if (!tabData) return
-
-      tabStore.setTabData(tabId, {
-        ...tabData,
-        flowJson: {
-          nodes: flowStore.nodes,
-          edges: flowStore.edges,
-          viewport: flowStore.viewport,
-        },
-        history: flowStore.history,
-        future: flowStore.future,
-      })
-    }
-
-    const tabStore = useTabStore.getState()
-    const currentActiveTabKey = tabStore.activeTab
-
-    if (currentActiveTabKey) {
-      const activeTab = tabStore.getTab(currentActiveTabKey)
-      if (activeTab) {
-        loadFlowFromTab(activeTab)
-      }
-    }
-
-    const unsubscribe = useTabStore.subscribe(
-      (state) => state.activeTab,
-      async (newTab, oldTab) => {
-        if (!newTab) {
-          clearFlow()
-          return
-        }
-
-        if (oldTab) saveFlowToTab(oldTab)
-
-        const activeTab = useTabStore.getState().getTab(newTab)
-        if (!activeTab) return
-
-        await loadFlowFromTab(activeTab)
-      },
-    )
-
-    return () => unsubscribe()
-  }, [layoutGraph, computeAdapterCenteredViewport, applySelectionToNodes, waitForStableCanvasDimensions])
 
   useEffect(() => {
     const unsub = useFlowStore.subscribe(
@@ -1633,7 +1517,6 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
     setParentId(null)
   }
 
-  /* TODO another big one */
   function addNodeAtPosition(
     position: { x: number; y: number },
     elementName: string,
@@ -1676,39 +1559,8 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
     if (sourceInfo?.nodeId && sourceInfo.handleType === 'source') {
       const sourceNode = flowStore.nodes.find((node) => node.id === sourceInfo.nodeId)
 
-      if (reactFlow.getZoom() < FlowConfig.ZOOM_THRESHOLD && sourceNode && isFrankNode(sourceNode)) {
-        if (edgeDropHandleType) {
-          const existingHandle = sourceNode.data.sourceHandles.find((handle) => handle.type === edgeDropHandleType)
-          if (existingHandle) {
-            onConnect({
-              source: sourceInfo.nodeId!,
-              sourceHandle: existingHandle.index.toString(),
-              target: newId.toString(),
-              targetHandle: null,
-            })
-          } else {
-            const newIndex = sourceNode.data.sourceHandles.length + 1
-            flowStore.addHandle(sourceInfo.nodeId!, { type: edgeDropHandleType, index: newIndex })
-            onConnect({
-              source: sourceInfo.nodeId!,
-              sourceHandle: newIndex.toString(),
-              target: newId.toString(),
-              targetHandle: null,
-            })
-          }
-          setEdgeDropHandleType(null)
-        } else {
-          setPendingCompactConnection({
-            connection: {
-              source: sourceInfo.nodeId,
-              sourceHandle: null,
-              target: newId.toString(),
-              targetHandle: null,
-            },
-            sourceNodeSubtype: sourceNode.data.subtype,
-            position: reactFlow.flowToScreenPosition(position),
-          })
-        }
+      if (sourceNode && isFrankNode(sourceNode) && reactFlow.getZoom() < FlowConfig.ZOOM_THRESHOLD) {
+        connectEdgeToSource(flowStore, { sourceNode, sourceNodeId: sourceInfo.nodeId, newId, position })
 
         sourceInfoReference.current = { nodeId: null, handleId: null, handleType: null }
         return
@@ -1902,18 +1754,5 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
         )}
       </div>
     </div>
-  )
-}
-
-export default function Flow({
-  showNodeContextMenu,
-  onOpenInEditor,
-}: Readonly<{ showNodeContextMenu: (b: boolean) => void; onOpenInEditor: () => void }>) {
-  return (
-    <NodeContextMenuContext.Provider value={showNodeContextMenu}>
-      <ReactFlowProvider>
-        <FlowCanvas onOpenInEditor={onOpenInEditor} />
-      </ReactFlowProvider>
-    </NodeContextMenuContext.Provider>
   )
 }

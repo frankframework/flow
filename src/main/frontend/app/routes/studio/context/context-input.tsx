@@ -6,7 +6,7 @@ import { useJavadocTransform } from '@frankframework/doc-library-react'
 import ContextInputField from './context-input-field'
 import type { Attribute, Elements } from '@frankframework/doc-library-core'
 import type { DeprecatedInfo } from './deprecated-list-popover'
-import { DeprecatedPopover } from '../canvas/nodetypes/components/deprecated-popover'
+import { DeprecatedPopover } from '~/routes/studio/canvas-flow/nodetypes/components/deprecated-popover'
 
 export type ContextInputProperties = {
   id: string

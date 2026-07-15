@@ -8,8 +8,8 @@ import {
   useUpdateNodeInternals,
 } from '@xyflow/react'
 import { useEffect } from 'react'
-import { ResizeIcon } from '~/routes/studio/canvas/nodetypes/frank-node'
-import { FlowConfig } from '~/routes/studio/canvas/flow.config'
+import { ResizeIcon } from '~/routes/studio/canvas-flow/nodetypes/frank-node'
+import { FlowConfig } from '~/routes/studio/canvas-flow/flow.config'
 import { useSettingsStore } from '~/stores/settings-store'
 import { NodeHeader } from './components/node-header'
 import ZoomedOutNode from './zoomed-out-node'

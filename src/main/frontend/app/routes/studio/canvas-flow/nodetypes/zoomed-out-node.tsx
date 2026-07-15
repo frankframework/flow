@@ -1,5 +1,5 @@
 import { Handle, Position, useStore } from '@xyflow/react'
-import { FlowConfig, getCompactLabelScale } from '~/routes/studio/canvas/flow.config'
+import { FlowConfig, getCompactLabelScale } from '~/routes/studio/canvas-flow/flow.config'
 
 const COMPACT_INITIALS_BOX_SIZE = 160
 const COMPACT_PADDING_TOP = 8
