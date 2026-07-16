@@ -1,4 +1,4 @@
-import type { FlowNode } from '~/routes/studio/canvas-flow/flow'
+import type { FlowNode } from '~/routes/studio/canvas-flow/canvas-flow'
 import type { ChildNode } from '~/routes/studio/canvas-flow/nodetypes/child-node'
 import type { ExitNode } from '~/routes/studio/canvas-flow/nodetypes/exit-node'
 import type { FrankNodeType } from '~/routes/studio/canvas-flow/nodetypes/frank-node'

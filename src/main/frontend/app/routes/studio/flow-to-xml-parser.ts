@@ -1,4 +1,4 @@
-import type { FlowNode } from '~/routes/studio/canvas-flow/flow'
+import type { FlowNode } from '~/routes/studio/canvas-flow/canvas-flow'
 import type { Edge } from '@xyflow/react'
 import type { ChildNode } from '~/routes/studio/canvas-flow/nodetypes/child-node'
 import { getAdapter } from '~/services/adapter-service'

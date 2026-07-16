@@ -1,4 +1,4 @@
-import type { FlowNode } from '~/routes/studio/canvas-flow/flow'
+import type { FlowNode } from '~/routes/studio/canvas-flow/canvas-flow'
 
 const REFERENCE_KEYS = new Set(['source', 'target', 'parentId'])
 

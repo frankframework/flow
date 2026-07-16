@@ -82,6 +82,7 @@ export default function ProjectLanding() {
       setIsDiscovering(true)
       fetchInstanceConfigurations()
         .then((ffInstance) => {
+          if (!ffInstance) return
           setFFInstanceName(ffInstance.name)
           setFFConfiguration(ffInstance.configurations)
         })
