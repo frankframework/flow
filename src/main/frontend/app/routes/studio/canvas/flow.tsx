@@ -1332,7 +1332,7 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
         subtype: elementName,
         type: elementType,
         name: ``,
-        sourceHandles: [{ type: 'success', index: 1 }],
+        sourceHandles: [],
         children: [],
       },
       type: nodeType,

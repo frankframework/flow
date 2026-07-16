@@ -5,6 +5,8 @@ import {
   type NodeProps,
   NodeResizeControl,
   Position,
+  type ResizeDragEvent,
+  type ResizeParams,
   useReactFlow,
   useStore,
   useUpdateNodeInternals,
@@ -23,20 +25,21 @@ import { useFFDoc } from '@frankframework/doc-library-react'
 import HandleMenu from './components/handle-menu'
 import { NodeHeader } from './components/node-header'
 import { NodeChildrenContainer } from './components/node-children-container'
-import { ChildNodeComponent, type ChildNode } from './child-node'
+import { type ChildNode, ChildNodeComponent } from './child-node'
 import { findChildRecursive } from '~/stores/child-utilities'
 import type { ElementDetails } from '@frankframework/doc-library-core'
+import { getInheritedProperties } from '@frankframework/doc-library-core'
 import { DeprecatedPopover } from './components/deprecated-popover'
 import { showWarningToast } from '~/components/toast'
 import { useHandleTypes } from '~/hooks/use-handle-types'
 import AddSubcomponentModal from '~/components/flow/add-subcomponent-modal'
 import { useFrankConfigXsd } from '~/providers/frankconfig-xsd-provider'
 import {
-  type Requirement,
   getAllowedChildElementsForElement,
   getElementRequirements,
   getMissingRequirements,
   isRequirementFulfilled,
+  type Requirement,
 } from '~/utils/xsd-utils'
 import MissingRequirements from './components/missing-requirements'
 import ZoomedOutNode from './zoomed-out-node'
@@ -77,7 +80,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
   const [dragOver, setDragOver] = useState(false)
   const [canDropDraggedElement, setCanDropDraggedElement] = useState(false)
   const showNodeContextMenu = useNodeContextMenu()
-  const { elements } = useFFDoc()
+  const { elements, ffDoc } = useFFDoc()
   const { xsdDoc } = useFrankConfigXsd()
   const {
     setNodeId,
@@ -96,11 +99,20 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
   const [isOverflowing, setIsOverflowing] = useState(false)
 
   const frankElement = useMemo(() => {
-    if (!elements) return null
-    const recordElements = elements as Record<string, ElementDetails>
+    if (!elements || !ffDoc) return
 
-    return Object.values(recordElements).find((element) => element.name === properties.data.subtype) ?? null
-  }, [elements, properties.data.subtype])
+    const element = elements[properties.data.subtype]
+    if (!element) return
+
+    const inherited = getInheritedProperties(element, ffDoc.elements, ffDoc.enums)
+    // TODO: Remove when https://github.com/frankframework/frank-doc/issues/466 is fixed.
+    const fixedForwardPipeForwards = ffDoc.elements['org.frankframework.pipes.FixedForwardPipe']?.forwards
+    const successForward = element.labels['EIP'] !== 'Router' && fixedForwardPipeForwards
+
+    element.forwards = { ...element.forwards, ...inherited.forwards, ...successForward }
+
+    return element
+  }, [elements, ffDoc, properties.data.subtype])
 
   const isDeprecated = frankElement?.deprecated
   const [showDeprecated, setShowDeprecated] = useState(false)
@@ -460,7 +472,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
       <NodeResizeControl
         minWidth={minNodeWidth}
         minHeight={minNodeHeight}
-        onResize={(event, data) => {
+        onResize={(_event: ResizeDragEvent, data: ResizeParams) => {
           setIsManuallyResized(true)
           setDimensions({ width: data.width, height: data.height })
         }}

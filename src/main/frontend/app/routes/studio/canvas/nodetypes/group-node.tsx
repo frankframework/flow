@@ -1,4 +1,4 @@
-import { type Node, type NodeProps, NodeResizeControl } from '@xyflow/react'
+import { type Node, type NodeProps, NodeResizeControl, type ResizeDragEvent, type ResizeParams } from '@xyflow/react'
 import { useState } from 'react'
 import { ResizeIcon } from '~/routes/studio/canvas/nodetypes/frank-node'
 
@@ -32,10 +32,10 @@ export default function GroupNodeComponent({ data, selected }: NodeProps<GroupNo
   return (
     <>
       <NodeResizeControl
-        onResize={(_event, resizeData) => {
+        onResize={(_event: ResizeDragEvent, data: ResizeParams) => {
           setDimensions({
-            width: resizeData.width,
-            height: resizeData.height,
+            width: data.width,
+            height: data.height,
           })
         }}
         style={{ background: 'transparent', border: 'none' }}
