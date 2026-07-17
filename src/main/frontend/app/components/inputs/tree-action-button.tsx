@@ -7,9 +7,9 @@ type TreeActionButtonProperties = {
   children: React.ReactNode
 }
 
-export default function TreeActionButton({ title, onAction, children }: TreeActionButtonProperties) {
+export default function TreeActionButton({ title, onAction, children }: TreeActionButtonProperties): React.JSX.Element {
   return (
-    <IconButton title={title} onClick={() => onAction()}>
+    <IconButton title={title} onClick={(): void => onAction()}>
       {children}
     </IconButton>
   )

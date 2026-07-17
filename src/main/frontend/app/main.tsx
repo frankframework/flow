@@ -8,20 +8,20 @@ import { router } from './router'
 import 'allotment/dist/style.css'
 import './app.css' // Always last for overwriting variables
 
-function TitleSync() {
-  const project = useProjectStore((state) => state.project)
+function TitleSync(): null {
+  const project = useProjectStore((state): ConfigurationProject | undefined => state.project)
 
-  useEffect(() => {
+  useEffect((): void => {
     document.title = project ? `FF! Flow | ${project.name}` : 'FF! Flow'
   }, [project])
 
   return null
 }
 
-function ThemeSync() {
+function ThemeSync(): null {
   const theme = useTheme()
 
-  useEffect(() => {
+  useEffect((): void => {
     document.documentElement.dataset.theme = theme
   }, [theme])
 

@@ -29,56 +29,3706 @@ export function applyHighlightToElements(
   edges: Edge[],
   highlightedNodes: Set<string>,
 ): { nodes: Node[]; edges: Edge[] } {
-  const updatedEdges = edges.map((edge) => {
-    const isHighlighted = highlightedNodes.has(edge.source) && highlightedNodes.has(edge.target)
-
-    return {
-      ...edge,
+  const updatedEdges = edges.map(
+    (
+      edge,
+    ): {
       style: {
-        ...edge.style,
-        opacity: isHighlighted ? 1 : 0.01,
-      },
-      animated: isHighlighted,
-    }
-  })
+        opacity: number
+        accentColor?: Property.AccentColor | undefined
+        alignContent?: Property.AlignContent | undefined
+        alignItems?: Property.AlignItems | undefined
+        alignSelf?: Property.AlignSelf | undefined
+        alignTracks?: Property.AlignTracks | undefined
+        alignmentBaseline?: Property.AlignmentBaseline | undefined
+        anchorName?: Property.AnchorName | undefined
+        anchorScope?: Property.AnchorScope | undefined
+        animationComposition?: Property.AnimationComposition | undefined
+        animationDelay?: Property.AnimationDelay<string & {}> | undefined
+        animationDirection?: Property.AnimationDirection | undefined
+        animationDuration?: Property.AnimationDuration<string & {}> | undefined
+        animationFillMode?: Property.AnimationFillMode | undefined
+        animationIterationCount?: Property.AnimationIterationCount | undefined
+        animationName?: Property.AnimationName | undefined
+        animationPlayState?: Property.AnimationPlayState | undefined
+        animationRangeEnd?: Property.AnimationRangeEnd<string | number> | undefined
+        animationRangeStart?: Property.AnimationRangeStart<string | number> | undefined
+        animationTimeline?: Property.AnimationTimeline | undefined
+        animationTimingFunction?: Property.AnimationTimingFunction | undefined
+        appearance?: Property.Appearance | undefined
+        aspectRatio?: Property.AspectRatio | undefined
+        backdropFilter?: Property.BackdropFilter | undefined
+        backfaceVisibility?: Property.BackfaceVisibility | undefined
+        backgroundAttachment?: Property.BackgroundAttachment | undefined
+        backgroundBlendMode?: Property.BackgroundBlendMode | undefined
+        backgroundClip?: Property.BackgroundClip | undefined
+        backgroundColor?: Property.BackgroundColor | undefined
+        backgroundImage?: Property.BackgroundImage | undefined
+        backgroundOrigin?: Property.BackgroundOrigin | undefined
+        backgroundPositionX?: Property.BackgroundPositionX<string | number> | undefined
+        backgroundPositionY?: Property.BackgroundPositionY<string | number> | undefined
+        backgroundRepeat?: Property.BackgroundRepeat | undefined
+        backgroundSize?: Property.BackgroundSize<string | number> | undefined
+        baselineShift?: Property.BaselineShift<string | number> | undefined
+        blockSize?: Property.BlockSize<string | number> | undefined
+        borderBlockEndColor?: Property.BorderBlockEndColor | undefined
+        borderBlockEndStyle?: Property.BorderBlockEndStyle | undefined
+        borderBlockEndWidth?: Property.BorderBlockEndWidth<string | number> | undefined
+        borderBlockStartColor?: Property.BorderBlockStartColor | undefined
+        borderBlockStartStyle?: Property.BorderBlockStartStyle | undefined
+        borderBlockStartWidth?: Property.BorderBlockStartWidth<string | number> | undefined
+        borderBottomColor?: Property.BorderBottomColor | undefined
+        borderBottomLeftRadius?: Property.BorderBottomLeftRadius<string | number> | undefined
+        borderBottomRightRadius?: Property.BorderBottomRightRadius<string | number> | undefined
+        borderBottomStyle?: Property.BorderBottomStyle | undefined
+        borderBottomWidth?: Property.BorderBottomWidth<string | number> | undefined
+        borderCollapse?: Property.BorderCollapse | undefined
+        borderEndEndRadius?: Property.BorderEndEndRadius<string | number> | undefined
+        borderEndStartRadius?: Property.BorderEndStartRadius<string | number> | undefined
+        borderImageOutset?: Property.BorderImageOutset<string | number> | undefined
+        borderImageRepeat?: Property.BorderImageRepeat | undefined
+        borderImageSlice?: Property.BorderImageSlice | undefined
+        borderImageSource?: Property.BorderImageSource | undefined
+        borderImageWidth?: Property.BorderImageWidth<string | number> | undefined
+        borderInlineEndColor?: Property.BorderInlineEndColor | undefined
+        borderInlineEndStyle?: Property.BorderInlineEndStyle | undefined
+        borderInlineEndWidth?: Property.BorderInlineEndWidth<string | number> | undefined
+        borderInlineStartColor?: Property.BorderInlineStartColor | undefined
+        borderInlineStartStyle?: Property.BorderInlineStartStyle | undefined
+        borderInlineStartWidth?: Property.BorderInlineStartWidth<string | number> | undefined
+        borderLeftColor?: Property.BorderLeftColor | undefined
+        borderLeftStyle?: Property.BorderLeftStyle | undefined
+        borderLeftWidth?: Property.BorderLeftWidth<string | number> | undefined
+        borderRightColor?: Property.BorderRightColor | undefined
+        borderRightStyle?: Property.BorderRightStyle | undefined
+        borderRightWidth?: Property.BorderRightWidth<string | number> | undefined
+        borderSpacing?: Property.BorderSpacing<string | number> | undefined
+        borderStartEndRadius?: Property.BorderStartEndRadius<string | number> | undefined
+        borderStartStartRadius?: Property.BorderStartStartRadius<string | number> | undefined
+        borderTopColor?: Property.BorderTopColor | undefined
+        borderTopLeftRadius?: Property.BorderTopLeftRadius<string | number> | undefined
+        borderTopRightRadius?: Property.BorderTopRightRadius<string | number> | undefined
+        borderTopStyle?: Property.BorderTopStyle | undefined
+        borderTopWidth?: Property.BorderTopWidth<string | number> | undefined
+        bottom?: Property.Bottom<string | number> | undefined
+        boxDecorationBreak?: Property.BoxDecorationBreak | undefined
+        boxShadow?: Property.BoxShadow | undefined
+        boxSizing?: Property.BoxSizing | undefined
+        breakAfter?: Property.BreakAfter | undefined
+        breakBefore?: Property.BreakBefore | undefined
+        breakInside?: Property.BreakInside | undefined
+        captionSide?: Property.CaptionSide | undefined
+        caretColor?: Property.CaretColor | undefined
+        caretShape?: Property.CaretShape | undefined
+        clear?: Property.Clear | undefined
+        clipPath?: Property.ClipPath | undefined
+        clipRule?: Property.ClipRule | undefined
+        color?: Property.Color | undefined
+        colorAdjust?: Property.PrintColorAdjust | undefined
+        colorInterpolationFilters?: Property.ColorInterpolationFilters | undefined
+        colorScheme?: Property.ColorScheme | undefined
+        columnCount?: Property.ColumnCount | undefined
+        columnFill?: Property.ColumnFill | undefined
+        columnGap?: Property.ColumnGap<string | number> | undefined
+        columnRuleColor?: Property.ColumnRuleColor | undefined
+        columnRuleStyle?: Property.ColumnRuleStyle | undefined
+        columnRuleWidth?: Property.ColumnRuleWidth<string | number> | undefined
+        columnSpan?: Property.ColumnSpan | undefined
+        columnWidth?: Property.ColumnWidth<string | number> | undefined
+        contain?: Property.Contain | undefined
+        containIntrinsicBlockSize?: Property.ContainIntrinsicBlockSize<string | number> | undefined
+        containIntrinsicHeight?: Property.ContainIntrinsicHeight<string | number> | undefined
+        containIntrinsicInlineSize?: Property.ContainIntrinsicInlineSize<string | number> | undefined
+        containIntrinsicWidth?: Property.ContainIntrinsicWidth<string | number> | undefined
+        containerName?: Property.ContainerName | undefined
+        containerType?: Property.ContainerType | undefined
+        content?: Property.Content | undefined
+        contentVisibility?: Property.ContentVisibility | undefined
+        counterIncrement?: Property.CounterIncrement | undefined
+        counterReset?: Property.CounterReset | undefined
+        counterSet?: Property.CounterSet | undefined
+        cursor?: Property.Cursor | undefined
+        cx?: Property.Cx<string | number> | undefined
+        cy?: Property.Cy<string | number> | undefined
+        d?: Property.D | undefined
+        direction?: Property.Direction | undefined
+        display?: Property.Display | undefined
+        dominantBaseline?: Property.DominantBaseline | undefined
+        emptyCells?: Property.EmptyCells | undefined
+        fieldSizing?: Property.FieldSizing | undefined
+        fill?: Property.Fill | undefined
+        fillOpacity?: Property.FillOpacity | undefined
+        fillRule?: Property.FillRule | undefined
+        filter?: Property.Filter | undefined
+        flexBasis?: Property.FlexBasis<string | number> | undefined
+        flexDirection?: Property.FlexDirection | undefined
+        flexGrow?: Property.FlexGrow | undefined
+        flexShrink?: Property.FlexShrink | undefined
+        flexWrap?: Property.FlexWrap | undefined
+        float?: Property.Float | undefined
+        floodColor?: Property.FloodColor | undefined
+        floodOpacity?: Property.FloodOpacity | undefined
+        fontFamily?: Property.FontFamily | undefined
+        fontFeatureSettings?: Property.FontFeatureSettings | undefined
+        fontKerning?: Property.FontKerning | undefined
+        fontLanguageOverride?: Property.FontLanguageOverride | undefined
+        fontOpticalSizing?: Property.FontOpticalSizing | undefined
+        fontPalette?: Property.FontPalette | undefined
+        fontSize?: Property.FontSize<string | number> | undefined
+        fontSizeAdjust?: Property.FontSizeAdjust | undefined
+        fontSmooth?: Property.FontSmooth<string | number> | undefined
+        fontStyle?: Property.FontStyle | undefined
+        fontSynthesis?: Property.FontSynthesis | undefined
+        fontSynthesisPosition?: Property.FontSynthesisPosition | undefined
+        fontSynthesisSmallCaps?: Property.FontSynthesisSmallCaps | undefined
+        fontSynthesisStyle?: Property.FontSynthesisStyle | undefined
+        fontSynthesisWeight?: Property.FontSynthesisWeight | undefined
+        fontVariant?: Property.FontVariant | undefined
+        fontVariantAlternates?: Property.FontVariantAlternates | undefined
+        fontVariantCaps?: Property.FontVariantCaps | undefined
+        fontVariantEastAsian?: Property.FontVariantEastAsian | undefined
+        fontVariantEmoji?: Property.FontVariantEmoji | undefined
+        fontVariantLigatures?: Property.FontVariantLigatures | undefined
+        fontVariantNumeric?: Property.FontVariantNumeric | undefined
+        fontVariantPosition?: Property.FontVariantPosition | undefined
+        fontVariationSettings?: Property.FontVariationSettings | undefined
+        fontWeight?: Property.FontWeight | undefined
+        fontWidth?: Property.FontWidth | undefined
+        forcedColorAdjust?: Property.ForcedColorAdjust | undefined
+        gridAutoColumns?: Property.GridAutoColumns<string | number> | undefined
+        gridAutoFlow?: Property.GridAutoFlow | undefined
+        gridAutoRows?: Property.GridAutoRows<string | number> | undefined
+        gridColumnEnd?: Property.GridColumnEnd | undefined
+        gridColumnStart?: Property.GridColumnStart | undefined
+        gridRowEnd?: Property.GridRowEnd | undefined
+        gridRowStart?: Property.GridRowStart | undefined
+        gridTemplateAreas?: Property.GridTemplateAreas | undefined
+        gridTemplateColumns?: Property.GridTemplateColumns<string | number> | undefined
+        gridTemplateRows?: Property.GridTemplateRows<string | number> | undefined
+        hangingPunctuation?: Property.HangingPunctuation | undefined
+        height?: Property.Height<string | number> | undefined
+        hyphenateCharacter?: Property.HyphenateCharacter | undefined
+        hyphenateLimitChars?: Property.HyphenateLimitChars | undefined
+        hyphens?: Property.Hyphens | undefined
+        imageOrientation?: Property.ImageOrientation | undefined
+        imageRendering?: Property.ImageRendering | undefined
+        imageResolution?: Property.ImageResolution | undefined
+        initialLetter?: Property.InitialLetter | undefined
+        initialLetterAlign?: Property.InitialLetterAlign | undefined
+        inlineSize?: Property.InlineSize<string | number> | undefined
+        insetBlockEnd?: Property.InsetBlockEnd<string | number> | undefined
+        insetBlockStart?: Property.InsetBlockStart<string | number> | undefined
+        insetInlineEnd?: Property.InsetInlineEnd<string | number> | undefined
+        insetInlineStart?: Property.InsetInlineStart<string | number> | undefined
+        interpolateSize?: Property.InterpolateSize | undefined
+        isolation?: Property.Isolation | undefined
+        justifyContent?: Property.JustifyContent | undefined
+        justifyItems?: Property.JustifyItems | undefined
+        justifySelf?: Property.JustifySelf | undefined
+        justifyTracks?: Property.JustifyTracks | undefined
+        left?: Property.Left<string | number> | undefined
+        letterSpacing?: Property.LetterSpacing<string | number> | undefined
+        lightingColor?: Property.LightingColor | undefined
+        lineBreak?: Property.LineBreak | undefined
+        lineHeight?: Property.LineHeight<string | number> | undefined
+        lineHeightStep?: Property.LineHeightStep<string | number> | undefined
+        listStyleImage?: Property.ListStyleImage | undefined
+        listStylePosition?: Property.ListStylePosition | undefined
+        listStyleType?: Property.ListStyleType | undefined
+        marginBlockEnd?: Property.MarginBlockEnd<string | number> | undefined
+        marginBlockStart?: Property.MarginBlockStart<string | number> | undefined
+        marginBottom?: Property.MarginBottom<string | number> | undefined
+        marginInlineEnd?: Property.MarginInlineEnd<string | number> | undefined
+        marginInlineStart?: Property.MarginInlineStart<string | number> | undefined
+        marginLeft?: Property.MarginLeft<string | number> | undefined
+        marginRight?: Property.MarginRight<string | number> | undefined
+        marginTop?: Property.MarginTop<string | number> | undefined
+        marginTrim?: Property.MarginTrim | undefined
+        marker?: Property.Marker | undefined
+        markerEnd?: Property.MarkerEnd | undefined
+        markerMid?: Property.MarkerMid | undefined
+        markerStart?: Property.MarkerStart | undefined
+        maskBorderMode?: Property.MaskBorderMode | undefined
+        maskBorderOutset?: Property.MaskBorderOutset<string | number> | undefined
+        maskBorderRepeat?: Property.MaskBorderRepeat | undefined
+        maskBorderSlice?: Property.MaskBorderSlice | undefined
+        maskBorderSource?: Property.MaskBorderSource | undefined
+        maskBorderWidth?: Property.MaskBorderWidth<string | number> | undefined
+        maskClip?: Property.MaskClip | undefined
+        maskComposite?: Property.MaskComposite | undefined
+        maskImage?: Property.MaskImage | undefined
+        maskMode?: Property.MaskMode | undefined
+        maskOrigin?: Property.MaskOrigin | undefined
+        maskPosition?: Property.MaskPosition<string | number> | undefined
+        maskRepeat?: Property.MaskRepeat | undefined
+        maskSize?: Property.MaskSize<string | number> | undefined
+        maskType?: Property.MaskType | undefined
+        masonryAutoFlow?: Property.MasonryAutoFlow | undefined
+        mathDepth?: Property.MathDepth | undefined
+        mathShift?: Property.MathShift | undefined
+        mathStyle?: Property.MathStyle | undefined
+        maxBlockSize?: Property.MaxBlockSize<string | number> | undefined
+        maxHeight?: Property.MaxHeight<string | number> | undefined
+        maxInlineSize?: Property.MaxInlineSize<string | number> | undefined
+        maxLines?: Property.MaxLines | undefined
+        maxWidth?: Property.MaxWidth<string | number> | undefined
+        minBlockSize?: Property.MinBlockSize<string | number> | undefined
+        minHeight?: Property.MinHeight<string | number> | undefined
+        minInlineSize?: Property.MinInlineSize<string | number> | undefined
+        minWidth?: Property.MinWidth<string | number> | undefined
+        mixBlendMode?: Property.MixBlendMode | undefined
+        motionDistance?: Property.OffsetDistance<string | number> | undefined
+        motionPath?: Property.OffsetPath | undefined
+        motionRotation?: Property.OffsetRotate | undefined
+        objectFit?: Property.ObjectFit | undefined
+        objectPosition?: Property.ObjectPosition<string | number> | undefined
+        objectViewBox?: Property.ObjectViewBox | undefined
+        offsetAnchor?: Property.OffsetAnchor<string | number> | undefined
+        offsetDistance?: Property.OffsetDistance<string | number> | undefined
+        offsetPath?: Property.OffsetPath | undefined
+        offsetPosition?: Property.OffsetPosition<string | number> | undefined
+        offsetRotate?: Property.OffsetRotate | undefined
+        offsetRotation?: Property.OffsetRotate | undefined
+        order?: Property.Order | undefined
+        orphans?: Property.Orphans | undefined
+        outlineColor?: Property.OutlineColor | undefined
+        outlineOffset?: Property.OutlineOffset<string | number> | undefined
+        outlineStyle?: Property.OutlineStyle | undefined
+        outlineWidth?: Property.OutlineWidth<string | number> | undefined
+        overflowAnchor?: Property.OverflowAnchor | undefined
+        overflowBlock?: Property.OverflowBlock | undefined
+        overflowClipBox?: Property.OverflowClipBox | undefined
+        overflowClipMargin?: Property.OverflowClipMargin<string | number> | undefined
+        overflowInline?: Property.OverflowInline | undefined
+        overflowWrap?: Property.OverflowWrap | undefined
+        overflowX?: Property.OverflowX | undefined
+        overflowY?: Property.OverflowY | undefined
+        overlay?: Property.Overlay | undefined
+        overscrollBehaviorBlock?: Property.OverscrollBehaviorBlock | undefined
+        overscrollBehaviorInline?: Property.OverscrollBehaviorInline | undefined
+        overscrollBehaviorX?: Property.OverscrollBehaviorX | undefined
+        overscrollBehaviorY?: Property.OverscrollBehaviorY | undefined
+        paddingBlockEnd?: Property.PaddingBlockEnd<string | number> | undefined
+        paddingBlockStart?: Property.PaddingBlockStart<string | number> | undefined
+        paddingBottom?: Property.PaddingBottom<string | number> | undefined
+        paddingInlineEnd?: Property.PaddingInlineEnd<string | number> | undefined
+        paddingInlineStart?: Property.PaddingInlineStart<string | number> | undefined
+        paddingLeft?: Property.PaddingLeft<string | number> | undefined
+        paddingRight?: Property.PaddingRight<string | number> | undefined
+        paddingTop?: Property.PaddingTop<string | number> | undefined
+        page?: Property.Page | undefined
+        paintOrder?: Property.PaintOrder | undefined
+        perspective?: Property.Perspective<string | number> | undefined
+        perspectiveOrigin?: Property.PerspectiveOrigin<string | number> | undefined
+        pointerEvents?: Property.PointerEvents | undefined
+        position?: Property.Position | undefined
+        positionAnchor?: Property.PositionAnchor | undefined
+        positionArea?: Property.PositionArea | undefined
+        positionTryFallbacks?: Property.PositionTryFallbacks | undefined
+        positionTryOrder?: Property.PositionTryOrder | undefined
+        positionVisibility?: Property.PositionVisibility | undefined
+        printColorAdjust?: Property.PrintColorAdjust | undefined
+        quotes?: Property.Quotes | undefined
+        r?: Property.R<string | number> | undefined
+        resize?: Property.Resize | undefined
+        right?: Property.Right<string | number> | undefined
+        rotate?: Property.Rotate | undefined
+        rowGap?: Property.RowGap<string | number> | undefined
+        rubyAlign?: Property.RubyAlign | undefined
+        rubyMerge?: Property.RubyMerge | undefined
+        rubyOverhang?: Property.RubyOverhang | undefined
+        rubyPosition?: Property.RubyPosition | undefined
+        rx?: Property.Rx<string | number> | undefined
+        ry?: Property.Ry<string | number> | undefined
+        scale?: Property.Scale | undefined
+        scrollBehavior?: Property.ScrollBehavior | undefined
+        scrollInitialTarget?: Property.ScrollInitialTarget | undefined
+        scrollMarginBlockEnd?: Property.ScrollMarginBlockEnd<string | number> | undefined
+        scrollMarginBlockStart?: Property.ScrollMarginBlockStart<string | number> | undefined
+        scrollMarginBottom?: Property.ScrollMarginBottom<string | number> | undefined
+        scrollMarginInlineEnd?: Property.ScrollMarginInlineEnd<string | number> | undefined
+        scrollMarginInlineStart?: Property.ScrollMarginInlineStart<string | number> | undefined
+        scrollMarginLeft?: Property.ScrollMarginLeft<string | number> | undefined
+        scrollMarginRight?: Property.ScrollMarginRight<string | number> | undefined
+        scrollMarginTop?: Property.ScrollMarginTop<string | number> | undefined
+        scrollPaddingBlockEnd?: Property.ScrollPaddingBlockEnd<string | number> | undefined
+        scrollPaddingBlockStart?: Property.ScrollPaddingBlockStart<string | number> | undefined
+        scrollPaddingBottom?: Property.ScrollPaddingBottom<string | number> | undefined
+        scrollPaddingInlineEnd?: Property.ScrollPaddingInlineEnd<string | number> | undefined
+        scrollPaddingInlineStart?: Property.ScrollPaddingInlineStart<string | number> | undefined
+        scrollPaddingLeft?: Property.ScrollPaddingLeft<string | number> | undefined
+        scrollPaddingRight?: Property.ScrollPaddingRight<string | number> | undefined
+        scrollPaddingTop?: Property.ScrollPaddingTop<string | number> | undefined
+        scrollSnapAlign?: Property.ScrollSnapAlign | undefined
+        scrollSnapMarginBottom?: Property.ScrollMarginBottom<string | number> | undefined
+        scrollSnapMarginLeft?: Property.ScrollMarginLeft<string | number> | undefined
+        scrollSnapMarginRight?: Property.ScrollMarginRight<string | number> | undefined
+        scrollSnapMarginTop?: Property.ScrollMarginTop<string | number> | undefined
+        scrollSnapStop?: Property.ScrollSnapStop | undefined
+        scrollSnapType?: Property.ScrollSnapType | undefined
+        scrollTimelineAxis?: Property.ScrollTimelineAxis | undefined
+        scrollTimelineName?: Property.ScrollTimelineName | undefined
+        scrollbarColor?: Property.ScrollbarColor | undefined
+        scrollbarGutter?: Property.ScrollbarGutter | undefined
+        scrollbarWidth?: Property.ScrollbarWidth | undefined
+        shapeImageThreshold?: Property.ShapeImageThreshold | undefined
+        shapeMargin?: Property.ShapeMargin<string | number> | undefined
+        shapeOutside?: Property.ShapeOutside | undefined
+        shapeRendering?: Property.ShapeRendering | undefined
+        speakAs?: Property.SpeakAs | undefined
+        stopColor?: Property.StopColor | undefined
+        stopOpacity?: Property.StopOpacity | undefined
+        stroke?: Property.Stroke | undefined
+        strokeColor?: Property.StrokeColor | undefined
+        strokeDasharray?: Property.StrokeDasharray<string | number> | undefined
+        strokeDashoffset?: Property.StrokeDashoffset<string | number> | undefined
+        strokeLinecap?: Property.StrokeLinecap | undefined
+        strokeLinejoin?: Property.StrokeLinejoin | undefined
+        strokeMiterlimit?: Property.StrokeMiterlimit | undefined
+        strokeOpacity?: Property.StrokeOpacity | undefined
+        strokeWidth?: Property.StrokeWidth<string | number> | undefined
+        tabSize?: Property.TabSize<string | number> | undefined
+        tableLayout?: Property.TableLayout | undefined
+        textAlign?: Property.TextAlign | undefined
+        textAlignLast?: Property.TextAlignLast | undefined
+        textAnchor?: Property.TextAnchor | undefined
+        textAutospace?: Property.TextAutospace | undefined
+        textBox?: Property.TextBox | undefined
+        textBoxEdge?: Property.TextBoxEdge | undefined
+        textBoxTrim?: Property.TextBoxTrim | undefined
+        textCombineUpright?: Property.TextCombineUpright | undefined
+        textDecorationColor?: Property.TextDecorationColor | undefined
+        textDecorationLine?: Property.TextDecorationLine | undefined
+        textDecorationSkip?: Property.TextDecorationSkip | undefined
+        textDecorationSkipInk?: Property.TextDecorationSkipInk | undefined
+        textDecorationStyle?: Property.TextDecorationStyle | undefined
+        textDecorationThickness?: Property.TextDecorationThickness<string | number> | undefined
+        textEmphasisColor?: Property.TextEmphasisColor | undefined
+        textEmphasisPosition?: Property.TextEmphasisPosition | undefined
+        textEmphasisStyle?: Property.TextEmphasisStyle | undefined
+        textIndent?: Property.TextIndent<string | number> | undefined
+        textJustify?: Property.TextJustify | undefined
+        textOrientation?: Property.TextOrientation | undefined
+        textOverflow?: Property.TextOverflow | undefined
+        textRendering?: Property.TextRendering | undefined
+        textShadow?: Property.TextShadow | undefined
+        textSizeAdjust?: Property.TextSizeAdjust | undefined
+        textSpacingTrim?: Property.TextSpacingTrim | undefined
+        textTransform?: Property.TextTransform | undefined
+        textUnderlineOffset?: Property.TextUnderlineOffset<string | number> | undefined
+        textUnderlinePosition?: Property.TextUnderlinePosition | undefined
+        textWrapMode?: Property.TextWrapMode | undefined
+        textWrapStyle?: Property.TextWrapStyle | undefined
+        timelineScope?: Property.TimelineScope | undefined
+        top?: Property.Top<string | number> | undefined
+        touchAction?: Property.TouchAction | undefined
+        transform?: Property.Transform | undefined
+        transformBox?: Property.TransformBox | undefined
+        transformOrigin?: Property.TransformOrigin<string | number> | undefined
+        transformStyle?: Property.TransformStyle | undefined
+        transitionBehavior?: Property.TransitionBehavior | undefined
+        transitionDelay?: Property.TransitionDelay<string & {}> | undefined
+        transitionDuration?: Property.TransitionDuration<string & {}> | undefined
+        transitionProperty?: Property.TransitionProperty | undefined
+        transitionTimingFunction?: Property.TransitionTimingFunction | undefined
+        translate?: Property.Translate<string | number> | undefined
+        unicodeBidi?: Property.UnicodeBidi | undefined
+        userSelect?: Property.UserSelect | undefined
+        vectorEffect?: Property.VectorEffect | undefined
+        verticalAlign?: Property.VerticalAlign<string | number> | undefined
+        viewTimelineAxis?: Property.ViewTimelineAxis | undefined
+        viewTimelineInset?: Property.ViewTimelineInset<string | number> | undefined
+        viewTimelineName?: Property.ViewTimelineName | undefined
+        viewTransitionClass?: Property.ViewTransitionClass | undefined
+        viewTransitionName?: Property.ViewTransitionName | undefined
+        visibility?: Property.Visibility | undefined
+        whiteSpace?: Property.WhiteSpace | undefined
+        whiteSpaceCollapse?: Property.WhiteSpaceCollapse | undefined
+        widows?: Property.Widows | undefined
+        width?: Property.Width<string | number> | undefined
+        willChange?: Property.WillChange | undefined
+        wordBreak?: Property.WordBreak | undefined
+        wordSpacing?: Property.WordSpacing<string | number> | undefined
+        wordWrap?: Property.WordWrap | undefined
+        writingMode?: Property.WritingMode | undefined
+        x?: Property.X<string | number> | undefined
+        y?: Property.Y<string | number> | undefined
+        zIndex?: Property.ZIndex | undefined
+        zoom?: Property.Zoom | undefined
+        all?: Property.All | undefined
+        animation?: Property.Animation<string & {}> | undefined
+        animationRange?: Property.AnimationRange<string | number> | undefined
+        background?: Property.Background<string | number> | undefined
+        backgroundPosition?: Property.BackgroundPosition<string | number> | undefined
+        border?: Property.Border<string | number> | undefined
+        borderBlock?: Property.BorderBlock<string | number> | undefined
+        borderBlockColor?: Property.BorderBlockColor | undefined
+        borderBlockEnd?: Property.BorderBlockEnd<string | number> | undefined
+        borderBlockStart?: Property.BorderBlockStart<string | number> | undefined
+        borderBlockStyle?: Property.BorderBlockStyle | undefined
+        borderBlockWidth?: Property.BorderBlockWidth<string | number> | undefined
+        borderBottom?: Property.BorderBottom<string | number> | undefined
+        borderColor?: Property.BorderColor | undefined
+        borderImage?: Property.BorderImage | undefined
+        borderInline?: Property.BorderInline<string | number> | undefined
+        borderInlineColor?: Property.BorderInlineColor | undefined
+        borderInlineEnd?: Property.BorderInlineEnd<string | number> | undefined
+        borderInlineStart?: Property.BorderInlineStart<string | number> | undefined
+        borderInlineStyle?: Property.BorderInlineStyle | undefined
+        borderInlineWidth?: Property.BorderInlineWidth<string | number> | undefined
+        borderLeft?: Property.BorderLeft<string | number> | undefined
+        borderRadius?: Property.BorderRadius<string | number> | undefined
+        borderRight?: Property.BorderRight<string | number> | undefined
+        borderStyle?: Property.BorderStyle | undefined
+        borderTop?: Property.BorderTop<string | number> | undefined
+        borderWidth?: Property.BorderWidth<string | number> | undefined
+        caret?: Property.Caret | undefined
+        columnRule?: Property.ColumnRule<string | number> | undefined
+        columns?: Property.Columns<string | number> | undefined
+        containIntrinsicSize?: Property.ContainIntrinsicSize<string | number> | undefined
+        container?: Property.Container | undefined
+        flex?: Property.Flex<string | number> | undefined
+        flexFlow?: Property.FlexFlow | undefined
+        font?: Property.Font | undefined
+        gap?: Property.Gap<string | number> | undefined
+        grid?: Property.Grid | undefined
+        gridArea?: Property.GridArea | undefined
+        gridColumn?: Property.GridColumn | undefined
+        gridRow?: Property.GridRow | undefined
+        gridTemplate?: Property.GridTemplate | undefined
+        inset?: Property.Inset<string | number> | undefined
+        insetBlock?: Property.InsetBlock<string | number> | undefined
+        insetInline?: Property.InsetInline<string | number> | undefined
+        lineClamp?: Property.LineClamp | undefined
+        listStyle?: Property.ListStyle | undefined
+        margin?: Property.Margin<string | number> | undefined
+        marginBlock?: Property.MarginBlock<string | number> | undefined
+        marginInline?: Property.MarginInline<string | number> | undefined
+        mask?: Property.Mask<string | number> | undefined
+        maskBorder?: Property.MaskBorder | undefined
+        motion?: Property.Offset<string | number> | undefined
+        offset?: Property.Offset<string | number> | undefined
+        outline?: Property.Outline<string | number> | undefined
+        overflow?: Property.Overflow | undefined
+        overscrollBehavior?: Property.OverscrollBehavior | undefined
+        padding?: Property.Padding<string | number> | undefined
+        paddingBlock?: Property.PaddingBlock<string | number> | undefined
+        paddingInline?: Property.PaddingInline<string | number> | undefined
+        placeContent?: Property.PlaceContent | undefined
+        placeItems?: Property.PlaceItems | undefined
+        placeSelf?: Property.PlaceSelf | undefined
+        positionTry?: Property.PositionTry | undefined
+        scrollMargin?: Property.ScrollMargin<string | number> | undefined
+        scrollMarginBlock?: Property.ScrollMarginBlock<string | number> | undefined
+        scrollMarginInline?: Property.ScrollMarginInline<string | number> | undefined
+        scrollPadding?: Property.ScrollPadding<string | number> | undefined
+        scrollPaddingBlock?: Property.ScrollPaddingBlock<string | number> | undefined
+        scrollPaddingInline?: Property.ScrollPaddingInline<string | number> | undefined
+        scrollSnapMargin?: Property.ScrollMargin<string | number> | undefined
+        scrollTimeline?: Property.ScrollTimeline | undefined
+        textDecoration?: Property.TextDecoration<string | number> | undefined
+        textEmphasis?: Property.TextEmphasis | undefined
+        textWrap?: Property.TextWrap | undefined
+        transition?: Property.Transition<string & {}> | undefined
+        viewTimeline?: Property.ViewTimeline | undefined
+        MozAnimationDelay?: Property.AnimationDelay<string & {}> | undefined
+        MozAnimationDirection?: Property.AnimationDirection | undefined
+        MozAnimationDuration?: Property.AnimationDuration<string & {}> | undefined
+        MozAnimationFillMode?: Property.AnimationFillMode | undefined
+        MozAnimationIterationCount?: Property.AnimationIterationCount | undefined
+        MozAnimationName?: Property.AnimationName | undefined
+        MozAnimationPlayState?: Property.AnimationPlayState | undefined
+        MozAnimationTimingFunction?: Property.AnimationTimingFunction | undefined
+        MozAppearance?: Property.MozAppearance | undefined
+        MozBackfaceVisibility?: Property.BackfaceVisibility | undefined
+        MozBinding?: Property.MozBinding | undefined
+        MozBorderBottomColors?: Property.MozBorderBottomColors | undefined
+        MozBorderEndColor?: Property.BorderInlineEndColor | undefined
+        MozBorderEndStyle?: Property.BorderInlineEndStyle | undefined
+        MozBorderEndWidth?: Property.BorderInlineEndWidth<string | number> | undefined
+        MozBorderLeftColors?: Property.MozBorderLeftColors | undefined
+        MozBorderRightColors?: Property.MozBorderRightColors | undefined
+        MozBorderStartColor?: Property.BorderInlineStartColor | undefined
+        MozBorderStartStyle?: Property.BorderInlineStartStyle | undefined
+        MozBorderTopColors?: Property.MozBorderTopColors | undefined
+        MozBoxSizing?: Property.BoxSizing | undefined
+        MozColumnRuleColor?: Property.ColumnRuleColor | undefined
+        MozColumnRuleStyle?: Property.ColumnRuleStyle | undefined
+        MozColumnRuleWidth?: Property.ColumnRuleWidth<string | number> | undefined
+        MozColumnWidth?: Property.ColumnWidth<string | number> | undefined
+        MozContextProperties?: Property.MozContextProperties | undefined
+        MozFontFeatureSettings?: Property.FontFeatureSettings | undefined
+        MozFontLanguageOverride?: Property.FontLanguageOverride | undefined
+        MozHyphens?: Property.Hyphens | undefined
+        MozMarginEnd?: Property.MarginInlineEnd<string | number> | undefined
+        MozMarginStart?: Property.MarginInlineStart<string | number> | undefined
+        MozOrient?: Property.MozOrient | undefined
+        MozOsxFontSmoothing?: Property.FontSmooth<string | number> | undefined
+        MozOutlineRadiusBottomleft?: Property.MozOutlineRadiusBottomleft<string | number> | undefined
+        MozOutlineRadiusBottomright?: Property.MozOutlineRadiusBottomright<string | number> | undefined
+        MozOutlineRadiusTopleft?: Property.MozOutlineRadiusTopleft<string | number> | undefined
+        MozOutlineRadiusTopright?: Property.MozOutlineRadiusTopright<string | number> | undefined
+        MozPaddingEnd?: Property.PaddingInlineEnd<string | number> | undefined
+        MozPaddingStart?: Property.PaddingInlineStart<string | number> | undefined
+        MozPerspective?: Property.Perspective<string | number> | undefined
+        MozPerspectiveOrigin?: Property.PerspectiveOrigin<string | number> | undefined
+        MozStackSizing?: Property.MozStackSizing | undefined
+        MozTabSize?: Property.TabSize<string | number> | undefined
+        MozTextBlink?: Property.MozTextBlink | undefined
+        MozTextSizeAdjust?: Property.TextSizeAdjust | undefined
+        MozTransform?: Property.Transform | undefined
+        MozTransformOrigin?: Property.TransformOrigin<string | number> | undefined
+        MozTransformStyle?: Property.TransformStyle | undefined
+        MozUserModify?: Property.MozUserModify | undefined
+        MozUserSelect?: Property.UserSelect | undefined
+        MozWindowDragging?: Property.MozWindowDragging | undefined
+        MozWindowShadow?: Property.MozWindowShadow | undefined
+        msAccelerator?: Property.MsAccelerator | undefined
+        msBlockProgression?: Property.MsBlockProgression | undefined
+        msContentZoomChaining?: Property.MsContentZoomChaining | undefined
+        msContentZoomLimitMax?: Property.MsContentZoomLimitMax | undefined
+        msContentZoomLimitMin?: Property.MsContentZoomLimitMin | undefined
+        msContentZoomSnapPoints?: Property.MsContentZoomSnapPoints | undefined
+        msContentZoomSnapType?: Property.MsContentZoomSnapType | undefined
+        msContentZooming?: Property.MsContentZooming | undefined
+        msFilter?: Property.MsFilter | undefined
+        msFlexDirection?: Property.FlexDirection | undefined
+        msFlexPositive?: Property.FlexGrow | undefined
+        msFlowFrom?: Property.MsFlowFrom | undefined
+        msFlowInto?: Property.MsFlowInto | undefined
+        msGridColumns?: Property.MsGridColumns<string | number> | undefined
+        msGridRows?: Property.MsGridRows<string | number> | undefined
+        msHighContrastAdjust?: Property.MsHighContrastAdjust | undefined
+        msHyphenateLimitChars?: Property.MsHyphenateLimitChars | undefined
+        msHyphenateLimitLines?: Property.MsHyphenateLimitLines | undefined
+        msHyphenateLimitZone?: Property.MsHyphenateLimitZone<string | number> | undefined
+        msHyphens?: Property.Hyphens | undefined
+        msImeAlign?: Property.MsImeAlign | undefined
+        msLineBreak?: Property.LineBreak | undefined
+        msOrder?: Property.Order | undefined
+        msOverflowStyle?: Property.MsOverflowStyle | undefined
+        msOverflowX?: Property.OverflowX | undefined
+        msOverflowY?: Property.OverflowY | undefined
+        msScrollChaining?: Property.MsScrollChaining | undefined
+        msScrollLimitXMax?: Property.MsScrollLimitXMax<string | number> | undefined
+        msScrollLimitXMin?: Property.MsScrollLimitXMin<string | number> | undefined
+        msScrollLimitYMax?: Property.MsScrollLimitYMax<string | number> | undefined
+        msScrollLimitYMin?: Property.MsScrollLimitYMin<string | number> | undefined
+        msScrollRails?: Property.MsScrollRails | undefined
+        msScrollSnapPointsX?: Property.MsScrollSnapPointsX | undefined
+        msScrollSnapPointsY?: Property.MsScrollSnapPointsY | undefined
+        msScrollSnapType?: Property.MsScrollSnapType | undefined
+        msScrollTranslation?: Property.MsScrollTranslation | undefined
+        msScrollbar3dlightColor?: Property.MsScrollbar3dlightColor | undefined
+        msScrollbarArrowColor?: Property.MsScrollbarArrowColor | undefined
+        msScrollbarBaseColor?: Property.MsScrollbarBaseColor | undefined
+        msScrollbarDarkshadowColor?: Property.MsScrollbarDarkshadowColor | undefined
+        msScrollbarFaceColor?: Property.MsScrollbarFaceColor | undefined
+        msScrollbarHighlightColor?: Property.MsScrollbarHighlightColor | undefined
+        msScrollbarShadowColor?: Property.MsScrollbarShadowColor | undefined
+        msScrollbarTrackColor?: Property.MsScrollbarTrackColor | undefined
+        msTextAutospace?: Property.MsTextAutospace | undefined
+        msTextCombineHorizontal?: Property.TextCombineUpright | undefined
+        msTextOverflow?: Property.TextOverflow | undefined
+        msTouchAction?: Property.TouchAction | undefined
+        msTouchSelect?: Property.MsTouchSelect | undefined
+        msTransform?: Property.Transform | undefined
+        msTransformOrigin?: Property.TransformOrigin<string | number> | undefined
+        msTransitionDelay?: Property.TransitionDelay<string & {}> | undefined
+        msTransitionDuration?: Property.TransitionDuration<string & {}> | undefined
+        msTransitionProperty?: Property.TransitionProperty | undefined
+        msTransitionTimingFunction?: Property.TransitionTimingFunction | undefined
+        msUserSelect?: Property.MsUserSelect | undefined
+        msWordBreak?: Property.WordBreak | undefined
+        msWrapFlow?: Property.MsWrapFlow | undefined
+        msWrapMargin?: Property.MsWrapMargin<string | number> | undefined
+        msWrapThrough?: Property.MsWrapThrough | undefined
+        msWritingMode?: Property.WritingMode | undefined
+        WebkitAlignContent?: Property.AlignContent | undefined
+        WebkitAlignItems?: Property.AlignItems | undefined
+        WebkitAlignSelf?: Property.AlignSelf | undefined
+        WebkitAnimationDelay?: Property.AnimationDelay<string & {}> | undefined
+        WebkitAnimationDirection?: Property.AnimationDirection | undefined
+        WebkitAnimationDuration?: Property.AnimationDuration<string & {}> | undefined
+        WebkitAnimationFillMode?: Property.AnimationFillMode | undefined
+        WebkitAnimationIterationCount?: Property.AnimationIterationCount | undefined
+        WebkitAnimationName?: Property.AnimationName | undefined
+        WebkitAnimationPlayState?: Property.AnimationPlayState | undefined
+        WebkitAnimationTimingFunction?: Property.AnimationTimingFunction | undefined
+        WebkitAppearance?: Property.WebkitAppearance | undefined
+        WebkitBackdropFilter?: Property.BackdropFilter | undefined
+        WebkitBackfaceVisibility?: Property.BackfaceVisibility | undefined
+        WebkitBackgroundClip?: Property.BackgroundClip | undefined
+        WebkitBackgroundOrigin?: Property.BackgroundOrigin | undefined
+        WebkitBackgroundSize?: Property.BackgroundSize<string | number> | undefined
+        WebkitBorderBeforeColor?: Property.WebkitBorderBeforeColor | undefined
+        WebkitBorderBeforeStyle?: Property.WebkitBorderBeforeStyle | undefined
+        WebkitBorderBeforeWidth?: Property.WebkitBorderBeforeWidth<string | number> | undefined
+        WebkitBorderBottomLeftRadius?: Property.BorderBottomLeftRadius<string | number> | undefined
+        WebkitBorderBottomRightRadius?: Property.BorderBottomRightRadius<string | number> | undefined
+        WebkitBorderImageSlice?: Property.BorderImageSlice | undefined
+        WebkitBorderTopLeftRadius?: Property.BorderTopLeftRadius<string | number> | undefined
+        WebkitBorderTopRightRadius?: Property.BorderTopRightRadius<string | number> | undefined
+        WebkitBoxDecorationBreak?: Property.BoxDecorationBreak | undefined
+        WebkitBoxReflect?: Property.WebkitBoxReflect<string | number> | undefined
+        WebkitBoxShadow?: Property.BoxShadow | undefined
+        WebkitBoxSizing?: Property.BoxSizing | undefined
+        WebkitClipPath?: Property.ClipPath | undefined
+        WebkitColumnCount?: Property.ColumnCount | undefined
+        WebkitColumnFill?: Property.ColumnFill | undefined
+        WebkitColumnRuleColor?: Property.ColumnRuleColor | undefined
+        WebkitColumnRuleStyle?: Property.ColumnRuleStyle | undefined
+        WebkitColumnRuleWidth?: Property.ColumnRuleWidth<string | number> | undefined
+        WebkitColumnSpan?: Property.ColumnSpan | undefined
+        WebkitColumnWidth?: Property.ColumnWidth<string | number> | undefined
+        WebkitFilter?: Property.Filter | undefined
+        WebkitFlexBasis?: Property.FlexBasis<string | number> | undefined
+        WebkitFlexDirection?: Property.FlexDirection | undefined
+        WebkitFlexGrow?: Property.FlexGrow | undefined
+        WebkitFlexShrink?: Property.FlexShrink | undefined
+        WebkitFlexWrap?: Property.FlexWrap | undefined
+        WebkitFontFeatureSettings?: Property.FontFeatureSettings | undefined
+        WebkitFontKerning?: Property.FontKerning | undefined
+        WebkitFontSmoothing?: Property.FontSmooth<string | number> | undefined
+        WebkitFontVariantLigatures?: Property.FontVariantLigatures | undefined
+        WebkitHyphenateCharacter?: Property.HyphenateCharacter | undefined
+        WebkitHyphens?: Property.Hyphens | undefined
+        WebkitInitialLetter?: Property.InitialLetter | undefined
+        WebkitJustifyContent?: Property.JustifyContent | undefined
+        WebkitLineBreak?: Property.LineBreak | undefined
+        WebkitLineClamp?: Property.WebkitLineClamp | undefined
+        WebkitLogicalHeight?: Property.BlockSize<string | number> | undefined
+        WebkitLogicalWidth?: Property.InlineSize<string | number> | undefined
+        WebkitMarginEnd?: Property.MarginInlineEnd<string | number> | undefined
+        WebkitMarginStart?: Property.MarginInlineStart<string | number> | undefined
+        WebkitMaskAttachment?: Property.WebkitMaskAttachment | undefined
+        WebkitMaskBoxImageOutset?: Property.MaskBorderOutset<string | number> | undefined
+        WebkitMaskBoxImageRepeat?: Property.MaskBorderRepeat | undefined
+        WebkitMaskBoxImageSlice?: Property.MaskBorderSlice | undefined
+        WebkitMaskBoxImageSource?: Property.MaskBorderSource | undefined
+        WebkitMaskBoxImageWidth?: Property.MaskBorderWidth<string | number> | undefined
+        WebkitMaskClip?: Property.WebkitMaskClip | undefined
+        WebkitMaskComposite?: Property.WebkitMaskComposite | undefined
+        WebkitMaskImage?: Property.WebkitMaskImage | undefined
+        WebkitMaskOrigin?: Property.WebkitMaskOrigin | undefined
+        WebkitMaskPosition?: Property.WebkitMaskPosition<string | number> | undefined
+        WebkitMaskPositionX?: Property.WebkitMaskPositionX<string | number> | undefined
+        WebkitMaskPositionY?: Property.WebkitMaskPositionY<string | number> | undefined
+        WebkitMaskRepeat?: Property.WebkitMaskRepeat | undefined
+        WebkitMaskRepeatX?: Property.WebkitMaskRepeatX | undefined
+        WebkitMaskRepeatY?: Property.WebkitMaskRepeatY | undefined
+        WebkitMaskSize?: Property.WebkitMaskSize<string | number> | undefined
+        WebkitMaxInlineSize?: Property.MaxInlineSize<string | number> | undefined
+        WebkitOrder?: Property.Order | undefined
+        WebkitOverflowScrolling?: Property.WebkitOverflowScrolling | undefined
+        WebkitPaddingEnd?: Property.PaddingInlineEnd<string | number> | undefined
+        WebkitPaddingStart?: Property.PaddingInlineStart<string | number> | undefined
+        WebkitPerspective?: Property.Perspective<string | number> | undefined
+        WebkitPerspectiveOrigin?: Property.PerspectiveOrigin<string | number> | undefined
+        WebkitPrintColorAdjust?: Property.PrintColorAdjust | undefined
+        WebkitRubyPosition?: Property.RubyPosition | undefined
+        WebkitScrollSnapType?: Property.ScrollSnapType | undefined
+        WebkitShapeMargin?: Property.ShapeMargin<string | number> | undefined
+        WebkitTapHighlightColor?: Property.WebkitTapHighlightColor | undefined
+        WebkitTextCombine?: Property.TextCombineUpright | undefined
+        WebkitTextDecorationColor?: Property.TextDecorationColor | undefined
+        WebkitTextDecorationLine?: Property.TextDecorationLine | undefined
+        WebkitTextDecorationSkip?: Property.TextDecorationSkip | undefined
+        WebkitTextDecorationStyle?: Property.TextDecorationStyle | undefined
+        WebkitTextEmphasisColor?: Property.TextEmphasisColor | undefined
+        WebkitTextEmphasisPosition?: Property.TextEmphasisPosition | undefined
+        WebkitTextEmphasisStyle?: Property.TextEmphasisStyle | undefined
+        WebkitTextFillColor?: Property.WebkitTextFillColor | undefined
+        WebkitTextOrientation?: Property.TextOrientation | undefined
+        WebkitTextSizeAdjust?: Property.TextSizeAdjust | undefined
+        WebkitTextStrokeColor?: Property.WebkitTextStrokeColor | undefined
+        WebkitTextStrokeWidth?: Property.WebkitTextStrokeWidth<string | number> | undefined
+        WebkitTextUnderlinePosition?: Property.TextUnderlinePosition | undefined
+        WebkitTouchCallout?: Property.WebkitTouchCallout | undefined
+        WebkitTransform?: Property.Transform | undefined
+        WebkitTransformOrigin?: Property.TransformOrigin<string | number> | undefined
+        WebkitTransformStyle?: Property.TransformStyle | undefined
+        WebkitTransitionDelay?: Property.TransitionDelay<string & {}> | undefined
+        WebkitTransitionDuration?: Property.TransitionDuration<string & {}> | undefined
+        WebkitTransitionProperty?: Property.TransitionProperty | undefined
+        WebkitTransitionTimingFunction?: Property.TransitionTimingFunction | undefined
+        WebkitUserModify?: Property.WebkitUserModify | undefined
+        WebkitUserSelect?: Property.WebkitUserSelect | undefined
+        WebkitWritingMode?: Property.WritingMode | undefined
+        MozAnimation?: Property.Animation<string & {}> | undefined
+        MozBorderImage?: Property.BorderImage | undefined
+        MozColumnRule?: Property.ColumnRule<string | number> | undefined
+        MozColumns?: Property.Columns<string | number> | undefined
+        MozOutlineRadius?: Property.MozOutlineRadius<string | number> | undefined
+        MozTransition?: Property.Transition<string & {}> | undefined
+        msContentZoomLimit?: Property.MsContentZoomLimit | undefined
+        msContentZoomSnap?: Property.MsContentZoomSnap | undefined
+        msFlex?: Property.Flex<string | number> | undefined
+        msScrollLimit?: Property.MsScrollLimit | undefined
+        msScrollSnapX?: Property.MsScrollSnapX | undefined
+        msScrollSnapY?: Property.MsScrollSnapY | undefined
+        msTransition?: Property.Transition<string & {}> | undefined
+        WebkitAnimation?: Property.Animation<string & {}> | undefined
+        WebkitBorderBefore?: Property.WebkitBorderBefore<string | number> | undefined
+        WebkitBorderImage?: Property.BorderImage | undefined
+        WebkitBorderRadius?: Property.BorderRadius<string | number> | undefined
+        WebkitColumnRule?: Property.ColumnRule<string | number> | undefined
+        WebkitColumns?: Property.Columns<string | number> | undefined
+        WebkitFlex?: Property.Flex<string | number> | undefined
+        WebkitFlexFlow?: Property.FlexFlow | undefined
+        WebkitMask?: Property.WebkitMask<string | number> | undefined
+        WebkitMaskBoxImage?: Property.MaskBorder | undefined
+        WebkitTextEmphasis?: Property.TextEmphasis | undefined
+        WebkitTextStroke?: Property.WebkitTextStroke<string | number> | undefined
+        WebkitTransition?: Property.Transition<string & {}> | undefined
+        boxAlign?: Property.BoxAlign | undefined
+        boxDirection?: Property.BoxDirection | undefined
+        boxFlex?: Property.BoxFlex | undefined
+        boxFlexGroup?: Property.BoxFlexGroup | undefined
+        boxLines?: Property.BoxLines | undefined
+        boxOrdinalGroup?: Property.BoxOrdinalGroup | undefined
+        boxOrient?: Property.BoxOrient | undefined
+        boxPack?: Property.BoxPack | undefined
+        clip?: Property.Clip | undefined
+        fontStretch?: Property.FontStretch | undefined
+        gridColumnGap?: Property.GridColumnGap<string | number> | undefined
+        gridGap?: Property.GridGap<string | number> | undefined
+        gridRowGap?: Property.GridRowGap<string | number> | undefined
+        imeMode?: Property.ImeMode | undefined
+        insetArea?: Property.PositionArea | undefined
+        offsetBlock?: Property.InsetBlock<string | number> | undefined
+        offsetBlockEnd?: Property.InsetBlockEnd<string | number> | undefined
+        offsetBlockStart?: Property.InsetBlockStart<string | number> | undefined
+        offsetInline?: Property.InsetInline<string | number> | undefined
+        offsetInlineEnd?: Property.InsetInlineEnd<string | number> | undefined
+        offsetInlineStart?: Property.InsetInlineStart<string | number> | undefined
+        pageBreakAfter?: Property.PageBreakAfter | undefined
+        pageBreakBefore?: Property.PageBreakBefore | undefined
+        pageBreakInside?: Property.PageBreakInside | undefined
+        positionTryOptions?: Property.PositionTryFallbacks | undefined
+        scrollSnapCoordinate?: Property.ScrollSnapCoordinate<string | number> | undefined
+        scrollSnapDestination?: Property.ScrollSnapDestination<string | number> | undefined
+        scrollSnapPointsX?: Property.ScrollSnapPointsX | undefined
+        scrollSnapPointsY?: Property.ScrollSnapPointsY | undefined
+        scrollSnapTypeX?: Property.ScrollSnapTypeX | undefined
+        scrollSnapTypeY?: Property.ScrollSnapTypeY | undefined
+        KhtmlBoxAlign?: Property.BoxAlign | undefined
+        KhtmlBoxDirection?: Property.BoxDirection | undefined
+        KhtmlBoxFlex?: Property.BoxFlex | undefined
+        KhtmlBoxFlexGroup?: Property.BoxFlexGroup | undefined
+        KhtmlBoxLines?: Property.BoxLines | undefined
+        KhtmlBoxOrdinalGroup?: Property.BoxOrdinalGroup | undefined
+        KhtmlBoxOrient?: Property.BoxOrient | undefined
+        KhtmlBoxPack?: Property.BoxPack | undefined
+        KhtmlLineBreak?: Property.LineBreak | undefined
+        KhtmlOpacity?: Property.Opacity | undefined
+        KhtmlUserSelect?: Property.UserSelect | undefined
+        MozBackgroundClip?: Property.BackgroundClip | undefined
+        MozBackgroundOrigin?: Property.BackgroundOrigin | undefined
+        MozBackgroundSize?: Property.BackgroundSize<string | number> | undefined
+        MozBorderRadius?: Property.BorderRadius<string | number> | undefined
+        MozBorderRadiusBottomleft?: Property.BorderBottomLeftRadius<string | number> | undefined
+        MozBorderRadiusBottomright?: Property.BorderBottomRightRadius<string | number> | undefined
+        MozBorderRadiusTopleft?: Property.BorderTopLeftRadius<string | number> | undefined
+        MozBorderRadiusTopright?: Property.BorderTopRightRadius<string | number> | undefined
+        MozBoxAlign?: Property.BoxAlign | undefined
+        MozBoxDirection?: Property.BoxDirection | undefined
+        MozBoxFlex?: Property.BoxFlex | undefined
+        MozBoxOrdinalGroup?: Property.BoxOrdinalGroup | undefined
+        MozBoxOrient?: Property.BoxOrient | undefined
+        MozBoxPack?: Property.BoxPack | undefined
+        MozBoxShadow?: Property.BoxShadow | undefined
+        MozColumnCount?: Property.ColumnCount | undefined
+        MozColumnFill?: Property.ColumnFill | undefined
+        MozFloatEdge?: Property.MozFloatEdge | undefined
+        MozForceBrokenImageIcon?: Property.MozForceBrokenImageIcon | undefined
+        MozOpacity?: Property.Opacity | undefined
+        MozOutline?: Property.Outline<string | number> | undefined
+        MozOutlineColor?: Property.OutlineColor | undefined
+        MozOutlineStyle?: Property.OutlineStyle | undefined
+        MozOutlineWidth?: Property.OutlineWidth<string | number> | undefined
+        MozTextAlignLast?: Property.TextAlignLast | undefined
+        MozTextDecorationColor?: Property.TextDecorationColor | undefined
+        MozTextDecorationLine?: Property.TextDecorationLine | undefined
+        MozTextDecorationStyle?: Property.TextDecorationStyle | undefined
+        MozTransitionDelay?: Property.TransitionDelay<string & {}> | undefined
+        MozTransitionDuration?: Property.TransitionDuration<string & {}> | undefined
+        MozTransitionProperty?: Property.TransitionProperty | undefined
+        MozTransitionTimingFunction?: Property.TransitionTimingFunction | undefined
+        MozUserFocus?: Property.MozUserFocus | undefined
+        MozUserInput?: Property.MozUserInput | undefined
+        msImeMode?: Property.ImeMode | undefined
+        OAnimation?: Property.Animation<string & {}> | undefined
+        OAnimationDelay?: Property.AnimationDelay<string & {}> | undefined
+        OAnimationDirection?: Property.AnimationDirection | undefined
+        OAnimationDuration?: Property.AnimationDuration<string & {}> | undefined
+        OAnimationFillMode?: Property.AnimationFillMode | undefined
+        OAnimationIterationCount?: Property.AnimationIterationCount | undefined
+        OAnimationName?: Property.AnimationName | undefined
+        OAnimationPlayState?: Property.AnimationPlayState | undefined
+        OAnimationTimingFunction?: Property.AnimationTimingFunction | undefined
+        OBackgroundSize?: Property.BackgroundSize<string | number> | undefined
+        OBorderImage?: Property.BorderImage | undefined
+        OObjectFit?: Property.ObjectFit | undefined
+        OObjectPosition?: Property.ObjectPosition<string | number> | undefined
+        OTabSize?: Property.TabSize<string | number> | undefined
+        OTextOverflow?: Property.TextOverflow | undefined
+        OTransform?: Property.Transform | undefined
+        OTransformOrigin?: Property.TransformOrigin<string | number> | undefined
+        OTransition?: Property.Transition<string & {}> | undefined
+        OTransitionDelay?: Property.TransitionDelay<string & {}> | undefined
+        OTransitionDuration?: Property.TransitionDuration<string & {}> | undefined
+        OTransitionProperty?: Property.TransitionProperty | undefined
+        OTransitionTimingFunction?: Property.TransitionTimingFunction | undefined
+        WebkitBoxAlign?: Property.BoxAlign | undefined
+        WebkitBoxDirection?: Property.BoxDirection | undefined
+        WebkitBoxFlex?: Property.BoxFlex | undefined
+        WebkitBoxFlexGroup?: Property.BoxFlexGroup | undefined
+        WebkitBoxLines?: Property.BoxLines | undefined
+        WebkitBoxOrdinalGroup?: Property.BoxOrdinalGroup | undefined
+        WebkitBoxOrient?: Property.BoxOrient | undefined
+        WebkitBoxPack?: Property.BoxPack | undefined
+        colorInterpolation?: Property.ColorInterpolation | undefined
+        colorRendering?: Property.ColorRendering | undefined
+        glyphOrientationVertical?: Property.GlyphOrientationVertical | undefined
+      }
+      animated: boolean
+      id: string
+      type?: string | undefined
+      source: string
+      target: string
+      sourceHandle?: string | null
+      targetHandle?: string | null
+      hidden?: boolean
+      deletable?: boolean
+      selectable?: boolean
+      data?: Record<string, unknown> | undefined
+      selected?: boolean
+      markerStart?: EdgeMarkerType
+      markerEnd?: EdgeMarkerType
+      zIndex?: number
+      ariaLabel?: string
+      interactionWidth?: number
+      label?: ReactNode
+      labelStyle?: CSSProperties
+      labelShowBg?: boolean
+      labelBgStyle?: CSSProperties
+      labelBgPadding?: [number, number]
+      labelBgBorderRadius?: number
+      className?: string
+      reconnectable?: boolean | HandleType
+      focusable?: boolean
+      ariaRole?: AriaRole
+      domAttributes?: Omit<
+        SVGAttributes<SVGGElement>,
+        'id' | 'style' | 'className' | 'role' | 'aria-label' | 'dangerouslySetInnerHTML'
+      >
+    } => {
+      const isHighlighted = highlightedNodes.has(edge.source) && highlightedNodes.has(edge.target)
 
-  const updatedNodes = nodes.map((node) => ({
-    ...node,
-    data: { ...node.data, isHidden: !highlightedNodes.has(node.id) },
-  }))
+      return {
+        ...edge,
+        style: {
+          ...edge.style,
+          opacity: isHighlighted ? 1 : 0.01,
+        },
+        animated: isHighlighted,
+      }
+    },
+  )
+
+  const updatedNodes = nodes.map(
+    (
+      node,
+    ): {
+      data: { isHidden: boolean }
+      id: string
+      position: XYPosition
+      sourcePosition?: Position
+      targetPosition?: Position
+      hidden?: boolean
+      selected?: boolean
+      dragging?: boolean
+      draggable?: boolean
+      selectable?: boolean
+      connectable?: boolean
+      deletable?: boolean
+      dragHandle?: string
+      width?: number
+      height?: number
+      initialWidth?: number
+      initialHeight?: number
+      parentId?: string
+      zIndex?: number
+      extent?: 'parent' | CoordinateExtent | null
+      expandParent?: boolean
+      ariaLabel?: string
+      origin?: NodeOrigin
+      handles?: NodeHandle[]
+      measured?: { width?: number; height?: number }
+      type?: string | undefined
+      style?: CSSProperties
+      className?: string
+      resizing?: boolean
+      focusable?: boolean
+      ariaRole?: AriaRole
+      domAttributes?: Omit<
+        HTMLAttributes<HTMLDivElement>,
+        | 'id'
+        | 'style'
+        | 'className'
+        | 'draggable'
+        | 'role'
+        | 'aria-label'
+        | 'defaultValue'
+        | 'dangerouslySetInnerHTML'
+        | keyof DOMAttributes<HTMLDivElement>
+      >
+    } => ({
+      ...node,
+      data: { ...node.data, isHidden: !highlightedNodes.has(node.id) },
+    }),
+  )
 
   return { nodes: updatedNodes, edges: updatedEdges }
 }
 export function resetHighlightElements(nodes: Node[], edges: Edge[]): { nodes: Node[]; edges: Edge[] } {
   return {
-    edges: edges.map((edge) => ({
-      ...edge,
-      style: { ...edge.style, opacity: 1 },
-      animated: false,
-    })),
-    nodes: nodes.map((node) => ({
-      ...node,
-      data: { ...node.data, isHidden: false },
-      style: {
-        ...node.style,
-        opacity: 1,
-        borderWidth: 0,
-        borderColor: 'none',
-      },
-    })),
+    edges: edges.map(
+      (
+        edge,
+      ): {
+        style: {
+          opacity: number
+          accentColor?: Property.AccentColor | undefined
+          alignContent?: Property.AlignContent | undefined
+          alignItems?: Property.AlignItems | undefined
+          alignSelf?: Property.AlignSelf | undefined
+          alignTracks?: Property.AlignTracks | undefined
+          alignmentBaseline?: Property.AlignmentBaseline | undefined
+          anchorName?: Property.AnchorName | undefined
+          anchorScope?: Property.AnchorScope | undefined
+          animationComposition?: Property.AnimationComposition | undefined
+          animationDelay?: Property.AnimationDelay<string & {}> | undefined
+          animationDirection?: Property.AnimationDirection | undefined
+          animationDuration?: Property.AnimationDuration<string & {}> | undefined
+          animationFillMode?: Property.AnimationFillMode | undefined
+          animationIterationCount?: Property.AnimationIterationCount | undefined
+          animationName?: Property.AnimationName | undefined
+          animationPlayState?: Property.AnimationPlayState | undefined
+          animationRangeEnd?: Property.AnimationRangeEnd<string | number> | undefined
+          animationRangeStart?: Property.AnimationRangeStart<string | number> | undefined
+          animationTimeline?: Property.AnimationTimeline | undefined
+          animationTimingFunction?: Property.AnimationTimingFunction | undefined
+          appearance?: Property.Appearance | undefined
+          aspectRatio?: Property.AspectRatio | undefined
+          backdropFilter?: Property.BackdropFilter | undefined
+          backfaceVisibility?: Property.BackfaceVisibility | undefined
+          backgroundAttachment?: Property.BackgroundAttachment | undefined
+          backgroundBlendMode?: Property.BackgroundBlendMode | undefined
+          backgroundClip?: Property.BackgroundClip | undefined
+          backgroundColor?: Property.BackgroundColor | undefined
+          backgroundImage?: Property.BackgroundImage | undefined
+          backgroundOrigin?: Property.BackgroundOrigin | undefined
+          backgroundPositionX?: Property.BackgroundPositionX<string | number> | undefined
+          backgroundPositionY?: Property.BackgroundPositionY<string | number> | undefined
+          backgroundRepeat?: Property.BackgroundRepeat | undefined
+          backgroundSize?: Property.BackgroundSize<string | number> | undefined
+          baselineShift?: Property.BaselineShift<string | number> | undefined
+          blockSize?: Property.BlockSize<string | number> | undefined
+          borderBlockEndColor?: Property.BorderBlockEndColor | undefined
+          borderBlockEndStyle?: Property.BorderBlockEndStyle | undefined
+          borderBlockEndWidth?: Property.BorderBlockEndWidth<string | number> | undefined
+          borderBlockStartColor?: Property.BorderBlockStartColor | undefined
+          borderBlockStartStyle?: Property.BorderBlockStartStyle | undefined
+          borderBlockStartWidth?: Property.BorderBlockStartWidth<string | number> | undefined
+          borderBottomColor?: Property.BorderBottomColor | undefined
+          borderBottomLeftRadius?: Property.BorderBottomLeftRadius<string | number> | undefined
+          borderBottomRightRadius?: Property.BorderBottomRightRadius<string | number> | undefined
+          borderBottomStyle?: Property.BorderBottomStyle | undefined
+          borderBottomWidth?: Property.BorderBottomWidth<string | number> | undefined
+          borderCollapse?: Property.BorderCollapse | undefined
+          borderEndEndRadius?: Property.BorderEndEndRadius<string | number> | undefined
+          borderEndStartRadius?: Property.BorderEndStartRadius<string | number> | undefined
+          borderImageOutset?: Property.BorderImageOutset<string | number> | undefined
+          borderImageRepeat?: Property.BorderImageRepeat | undefined
+          borderImageSlice?: Property.BorderImageSlice | undefined
+          borderImageSource?: Property.BorderImageSource | undefined
+          borderImageWidth?: Property.BorderImageWidth<string | number> | undefined
+          borderInlineEndColor?: Property.BorderInlineEndColor | undefined
+          borderInlineEndStyle?: Property.BorderInlineEndStyle | undefined
+          borderInlineEndWidth?: Property.BorderInlineEndWidth<string | number> | undefined
+          borderInlineStartColor?: Property.BorderInlineStartColor | undefined
+          borderInlineStartStyle?: Property.BorderInlineStartStyle | undefined
+          borderInlineStartWidth?: Property.BorderInlineStartWidth<string | number> | undefined
+          borderLeftColor?: Property.BorderLeftColor | undefined
+          borderLeftStyle?: Property.BorderLeftStyle | undefined
+          borderLeftWidth?: Property.BorderLeftWidth<string | number> | undefined
+          borderRightColor?: Property.BorderRightColor | undefined
+          borderRightStyle?: Property.BorderRightStyle | undefined
+          borderRightWidth?: Property.BorderRightWidth<string | number> | undefined
+          borderSpacing?: Property.BorderSpacing<string | number> | undefined
+          borderStartEndRadius?: Property.BorderStartEndRadius<string | number> | undefined
+          borderStartStartRadius?: Property.BorderStartStartRadius<string | number> | undefined
+          borderTopColor?: Property.BorderTopColor | undefined
+          borderTopLeftRadius?: Property.BorderTopLeftRadius<string | number> | undefined
+          borderTopRightRadius?: Property.BorderTopRightRadius<string | number> | undefined
+          borderTopStyle?: Property.BorderTopStyle | undefined
+          borderTopWidth?: Property.BorderTopWidth<string | number> | undefined
+          bottom?: Property.Bottom<string | number> | undefined
+          boxDecorationBreak?: Property.BoxDecorationBreak | undefined
+          boxShadow?: Property.BoxShadow | undefined
+          boxSizing?: Property.BoxSizing | undefined
+          breakAfter?: Property.BreakAfter | undefined
+          breakBefore?: Property.BreakBefore | undefined
+          breakInside?: Property.BreakInside | undefined
+          captionSide?: Property.CaptionSide | undefined
+          caretColor?: Property.CaretColor | undefined
+          caretShape?: Property.CaretShape | undefined
+          clear?: Property.Clear | undefined
+          clipPath?: Property.ClipPath | undefined
+          clipRule?: Property.ClipRule | undefined
+          color?: Property.Color | undefined
+          colorAdjust?: Property.PrintColorAdjust | undefined
+          colorInterpolationFilters?: Property.ColorInterpolationFilters | undefined
+          colorScheme?: Property.ColorScheme | undefined
+          columnCount?: Property.ColumnCount | undefined
+          columnFill?: Property.ColumnFill | undefined
+          columnGap?: Property.ColumnGap<string | number> | undefined
+          columnRuleColor?: Property.ColumnRuleColor | undefined
+          columnRuleStyle?: Property.ColumnRuleStyle | undefined
+          columnRuleWidth?: Property.ColumnRuleWidth<string | number> | undefined
+          columnSpan?: Property.ColumnSpan | undefined
+          columnWidth?: Property.ColumnWidth<string | number> | undefined
+          contain?: Property.Contain | undefined
+          containIntrinsicBlockSize?: Property.ContainIntrinsicBlockSize<string | number> | undefined
+          containIntrinsicHeight?: Property.ContainIntrinsicHeight<string | number> | undefined
+          containIntrinsicInlineSize?: Property.ContainIntrinsicInlineSize<string | number> | undefined
+          containIntrinsicWidth?: Property.ContainIntrinsicWidth<string | number> | undefined
+          containerName?: Property.ContainerName | undefined
+          containerType?: Property.ContainerType | undefined
+          content?: Property.Content | undefined
+          contentVisibility?: Property.ContentVisibility | undefined
+          counterIncrement?: Property.CounterIncrement | undefined
+          counterReset?: Property.CounterReset | undefined
+          counterSet?: Property.CounterSet | undefined
+          cursor?: Property.Cursor | undefined
+          cx?: Property.Cx<string | number> | undefined
+          cy?: Property.Cy<string | number> | undefined
+          d?: Property.D | undefined
+          direction?: Property.Direction | undefined
+          display?: Property.Display | undefined
+          dominantBaseline?: Property.DominantBaseline | undefined
+          emptyCells?: Property.EmptyCells | undefined
+          fieldSizing?: Property.FieldSizing | undefined
+          fill?: Property.Fill | undefined
+          fillOpacity?: Property.FillOpacity | undefined
+          fillRule?: Property.FillRule | undefined
+          filter?: Property.Filter | undefined
+          flexBasis?: Property.FlexBasis<string | number> | undefined
+          flexDirection?: Property.FlexDirection | undefined
+          flexGrow?: Property.FlexGrow | undefined
+          flexShrink?: Property.FlexShrink | undefined
+          flexWrap?: Property.FlexWrap | undefined
+          float?: Property.Float | undefined
+          floodColor?: Property.FloodColor | undefined
+          floodOpacity?: Property.FloodOpacity | undefined
+          fontFamily?: Property.FontFamily | undefined
+          fontFeatureSettings?: Property.FontFeatureSettings | undefined
+          fontKerning?: Property.FontKerning | undefined
+          fontLanguageOverride?: Property.FontLanguageOverride | undefined
+          fontOpticalSizing?: Property.FontOpticalSizing | undefined
+          fontPalette?: Property.FontPalette | undefined
+          fontSize?: Property.FontSize<string | number> | undefined
+          fontSizeAdjust?: Property.FontSizeAdjust | undefined
+          fontSmooth?: Property.FontSmooth<string | number> | undefined
+          fontStyle?: Property.FontStyle | undefined
+          fontSynthesis?: Property.FontSynthesis | undefined
+          fontSynthesisPosition?: Property.FontSynthesisPosition | undefined
+          fontSynthesisSmallCaps?: Property.FontSynthesisSmallCaps | undefined
+          fontSynthesisStyle?: Property.FontSynthesisStyle | undefined
+          fontSynthesisWeight?: Property.FontSynthesisWeight | undefined
+          fontVariant?: Property.FontVariant | undefined
+          fontVariantAlternates?: Property.FontVariantAlternates | undefined
+          fontVariantCaps?: Property.FontVariantCaps | undefined
+          fontVariantEastAsian?: Property.FontVariantEastAsian | undefined
+          fontVariantEmoji?: Property.FontVariantEmoji | undefined
+          fontVariantLigatures?: Property.FontVariantLigatures | undefined
+          fontVariantNumeric?: Property.FontVariantNumeric | undefined
+          fontVariantPosition?: Property.FontVariantPosition | undefined
+          fontVariationSettings?: Property.FontVariationSettings | undefined
+          fontWeight?: Property.FontWeight | undefined
+          fontWidth?: Property.FontWidth | undefined
+          forcedColorAdjust?: Property.ForcedColorAdjust | undefined
+          gridAutoColumns?: Property.GridAutoColumns<string | number> | undefined
+          gridAutoFlow?: Property.GridAutoFlow | undefined
+          gridAutoRows?: Property.GridAutoRows<string | number> | undefined
+          gridColumnEnd?: Property.GridColumnEnd | undefined
+          gridColumnStart?: Property.GridColumnStart | undefined
+          gridRowEnd?: Property.GridRowEnd | undefined
+          gridRowStart?: Property.GridRowStart | undefined
+          gridTemplateAreas?: Property.GridTemplateAreas | undefined
+          gridTemplateColumns?: Property.GridTemplateColumns<string | number> | undefined
+          gridTemplateRows?: Property.GridTemplateRows<string | number> | undefined
+          hangingPunctuation?: Property.HangingPunctuation | undefined
+          height?: Property.Height<string | number> | undefined
+          hyphenateCharacter?: Property.HyphenateCharacter | undefined
+          hyphenateLimitChars?: Property.HyphenateLimitChars | undefined
+          hyphens?: Property.Hyphens | undefined
+          imageOrientation?: Property.ImageOrientation | undefined
+          imageRendering?: Property.ImageRendering | undefined
+          imageResolution?: Property.ImageResolution | undefined
+          initialLetter?: Property.InitialLetter | undefined
+          initialLetterAlign?: Property.InitialLetterAlign | undefined
+          inlineSize?: Property.InlineSize<string | number> | undefined
+          insetBlockEnd?: Property.InsetBlockEnd<string | number> | undefined
+          insetBlockStart?: Property.InsetBlockStart<string | number> | undefined
+          insetInlineEnd?: Property.InsetInlineEnd<string | number> | undefined
+          insetInlineStart?: Property.InsetInlineStart<string | number> | undefined
+          interpolateSize?: Property.InterpolateSize | undefined
+          isolation?: Property.Isolation | undefined
+          justifyContent?: Property.JustifyContent | undefined
+          justifyItems?: Property.JustifyItems | undefined
+          justifySelf?: Property.JustifySelf | undefined
+          justifyTracks?: Property.JustifyTracks | undefined
+          left?: Property.Left<string | number> | undefined
+          letterSpacing?: Property.LetterSpacing<string | number> | undefined
+          lightingColor?: Property.LightingColor | undefined
+          lineBreak?: Property.LineBreak | undefined
+          lineHeight?: Property.LineHeight<string | number> | undefined
+          lineHeightStep?: Property.LineHeightStep<string | number> | undefined
+          listStyleImage?: Property.ListStyleImage | undefined
+          listStylePosition?: Property.ListStylePosition | undefined
+          listStyleType?: Property.ListStyleType | undefined
+          marginBlockEnd?: Property.MarginBlockEnd<string | number> | undefined
+          marginBlockStart?: Property.MarginBlockStart<string | number> | undefined
+          marginBottom?: Property.MarginBottom<string | number> | undefined
+          marginInlineEnd?: Property.MarginInlineEnd<string | number> | undefined
+          marginInlineStart?: Property.MarginInlineStart<string | number> | undefined
+          marginLeft?: Property.MarginLeft<string | number> | undefined
+          marginRight?: Property.MarginRight<string | number> | undefined
+          marginTop?: Property.MarginTop<string | number> | undefined
+          marginTrim?: Property.MarginTrim | undefined
+          marker?: Property.Marker | undefined
+          markerEnd?: Property.MarkerEnd | undefined
+          markerMid?: Property.MarkerMid | undefined
+          markerStart?: Property.MarkerStart | undefined
+          maskBorderMode?: Property.MaskBorderMode | undefined
+          maskBorderOutset?: Property.MaskBorderOutset<string | number> | undefined
+          maskBorderRepeat?: Property.MaskBorderRepeat | undefined
+          maskBorderSlice?: Property.MaskBorderSlice | undefined
+          maskBorderSource?: Property.MaskBorderSource | undefined
+          maskBorderWidth?: Property.MaskBorderWidth<string | number> | undefined
+          maskClip?: Property.MaskClip | undefined
+          maskComposite?: Property.MaskComposite | undefined
+          maskImage?: Property.MaskImage | undefined
+          maskMode?: Property.MaskMode | undefined
+          maskOrigin?: Property.MaskOrigin | undefined
+          maskPosition?: Property.MaskPosition<string | number> | undefined
+          maskRepeat?: Property.MaskRepeat | undefined
+          maskSize?: Property.MaskSize<string | number> | undefined
+          maskType?: Property.MaskType | undefined
+          masonryAutoFlow?: Property.MasonryAutoFlow | undefined
+          mathDepth?: Property.MathDepth | undefined
+          mathShift?: Property.MathShift | undefined
+          mathStyle?: Property.MathStyle | undefined
+          maxBlockSize?: Property.MaxBlockSize<string | number> | undefined
+          maxHeight?: Property.MaxHeight<string | number> | undefined
+          maxInlineSize?: Property.MaxInlineSize<string | number> | undefined
+          maxLines?: Property.MaxLines | undefined
+          maxWidth?: Property.MaxWidth<string | number> | undefined
+          minBlockSize?: Property.MinBlockSize<string | number> | undefined
+          minHeight?: Property.MinHeight<string | number> | undefined
+          minInlineSize?: Property.MinInlineSize<string | number> | undefined
+          minWidth?: Property.MinWidth<string | number> | undefined
+          mixBlendMode?: Property.MixBlendMode | undefined
+          motionDistance?: Property.OffsetDistance<string | number> | undefined
+          motionPath?: Property.OffsetPath | undefined
+          motionRotation?: Property.OffsetRotate | undefined
+          objectFit?: Property.ObjectFit | undefined
+          objectPosition?: Property.ObjectPosition<string | number> | undefined
+          objectViewBox?: Property.ObjectViewBox | undefined
+          offsetAnchor?: Property.OffsetAnchor<string | number> | undefined
+          offsetDistance?: Property.OffsetDistance<string | number> | undefined
+          offsetPath?: Property.OffsetPath | undefined
+          offsetPosition?: Property.OffsetPosition<string | number> | undefined
+          offsetRotate?: Property.OffsetRotate | undefined
+          offsetRotation?: Property.OffsetRotate | undefined
+          order?: Property.Order | undefined
+          orphans?: Property.Orphans | undefined
+          outlineColor?: Property.OutlineColor | undefined
+          outlineOffset?: Property.OutlineOffset<string | number> | undefined
+          outlineStyle?: Property.OutlineStyle | undefined
+          outlineWidth?: Property.OutlineWidth<string | number> | undefined
+          overflowAnchor?: Property.OverflowAnchor | undefined
+          overflowBlock?: Property.OverflowBlock | undefined
+          overflowClipBox?: Property.OverflowClipBox | undefined
+          overflowClipMargin?: Property.OverflowClipMargin<string | number> | undefined
+          overflowInline?: Property.OverflowInline | undefined
+          overflowWrap?: Property.OverflowWrap | undefined
+          overflowX?: Property.OverflowX | undefined
+          overflowY?: Property.OverflowY | undefined
+          overlay?: Property.Overlay | undefined
+          overscrollBehaviorBlock?: Property.OverscrollBehaviorBlock | undefined
+          overscrollBehaviorInline?: Property.OverscrollBehaviorInline | undefined
+          overscrollBehaviorX?: Property.OverscrollBehaviorX | undefined
+          overscrollBehaviorY?: Property.OverscrollBehaviorY | undefined
+          paddingBlockEnd?: Property.PaddingBlockEnd<string | number> | undefined
+          paddingBlockStart?: Property.PaddingBlockStart<string | number> | undefined
+          paddingBottom?: Property.PaddingBottom<string | number> | undefined
+          paddingInlineEnd?: Property.PaddingInlineEnd<string | number> | undefined
+          paddingInlineStart?: Property.PaddingInlineStart<string | number> | undefined
+          paddingLeft?: Property.PaddingLeft<string | number> | undefined
+          paddingRight?: Property.PaddingRight<string | number> | undefined
+          paddingTop?: Property.PaddingTop<string | number> | undefined
+          page?: Property.Page | undefined
+          paintOrder?: Property.PaintOrder | undefined
+          perspective?: Property.Perspective<string | number> | undefined
+          perspectiveOrigin?: Property.PerspectiveOrigin<string | number> | undefined
+          pointerEvents?: Property.PointerEvents | undefined
+          position?: Property.Position | undefined
+          positionAnchor?: Property.PositionAnchor | undefined
+          positionArea?: Property.PositionArea | undefined
+          positionTryFallbacks?: Property.PositionTryFallbacks | undefined
+          positionTryOrder?: Property.PositionTryOrder | undefined
+          positionVisibility?: Property.PositionVisibility | undefined
+          printColorAdjust?: Property.PrintColorAdjust | undefined
+          quotes?: Property.Quotes | undefined
+          r?: Property.R<string | number> | undefined
+          resize?: Property.Resize | undefined
+          right?: Property.Right<string | number> | undefined
+          rotate?: Property.Rotate | undefined
+          rowGap?: Property.RowGap<string | number> | undefined
+          rubyAlign?: Property.RubyAlign | undefined
+          rubyMerge?: Property.RubyMerge | undefined
+          rubyOverhang?: Property.RubyOverhang | undefined
+          rubyPosition?: Property.RubyPosition | undefined
+          rx?: Property.Rx<string | number> | undefined
+          ry?: Property.Ry<string | number> | undefined
+          scale?: Property.Scale | undefined
+          scrollBehavior?: Property.ScrollBehavior | undefined
+          scrollInitialTarget?: Property.ScrollInitialTarget | undefined
+          scrollMarginBlockEnd?: Property.ScrollMarginBlockEnd<string | number> | undefined
+          scrollMarginBlockStart?: Property.ScrollMarginBlockStart<string | number> | undefined
+          scrollMarginBottom?: Property.ScrollMarginBottom<string | number> | undefined
+          scrollMarginInlineEnd?: Property.ScrollMarginInlineEnd<string | number> | undefined
+          scrollMarginInlineStart?: Property.ScrollMarginInlineStart<string | number> | undefined
+          scrollMarginLeft?: Property.ScrollMarginLeft<string | number> | undefined
+          scrollMarginRight?: Property.ScrollMarginRight<string | number> | undefined
+          scrollMarginTop?: Property.ScrollMarginTop<string | number> | undefined
+          scrollPaddingBlockEnd?: Property.ScrollPaddingBlockEnd<string | number> | undefined
+          scrollPaddingBlockStart?: Property.ScrollPaddingBlockStart<string | number> | undefined
+          scrollPaddingBottom?: Property.ScrollPaddingBottom<string | number> | undefined
+          scrollPaddingInlineEnd?: Property.ScrollPaddingInlineEnd<string | number> | undefined
+          scrollPaddingInlineStart?: Property.ScrollPaddingInlineStart<string | number> | undefined
+          scrollPaddingLeft?: Property.ScrollPaddingLeft<string | number> | undefined
+          scrollPaddingRight?: Property.ScrollPaddingRight<string | number> | undefined
+          scrollPaddingTop?: Property.ScrollPaddingTop<string | number> | undefined
+          scrollSnapAlign?: Property.ScrollSnapAlign | undefined
+          scrollSnapMarginBottom?: Property.ScrollMarginBottom<string | number> | undefined
+          scrollSnapMarginLeft?: Property.ScrollMarginLeft<string | number> | undefined
+          scrollSnapMarginRight?: Property.ScrollMarginRight<string | number> | undefined
+          scrollSnapMarginTop?: Property.ScrollMarginTop<string | number> | undefined
+          scrollSnapStop?: Property.ScrollSnapStop | undefined
+          scrollSnapType?: Property.ScrollSnapType | undefined
+          scrollTimelineAxis?: Property.ScrollTimelineAxis | undefined
+          scrollTimelineName?: Property.ScrollTimelineName | undefined
+          scrollbarColor?: Property.ScrollbarColor | undefined
+          scrollbarGutter?: Property.ScrollbarGutter | undefined
+          scrollbarWidth?: Property.ScrollbarWidth | undefined
+          shapeImageThreshold?: Property.ShapeImageThreshold | undefined
+          shapeMargin?: Property.ShapeMargin<string | number> | undefined
+          shapeOutside?: Property.ShapeOutside | undefined
+          shapeRendering?: Property.ShapeRendering | undefined
+          speakAs?: Property.SpeakAs | undefined
+          stopColor?: Property.StopColor | undefined
+          stopOpacity?: Property.StopOpacity | undefined
+          stroke?: Property.Stroke | undefined
+          strokeColor?: Property.StrokeColor | undefined
+          strokeDasharray?: Property.StrokeDasharray<string | number> | undefined
+          strokeDashoffset?: Property.StrokeDashoffset<string | number> | undefined
+          strokeLinecap?: Property.StrokeLinecap | undefined
+          strokeLinejoin?: Property.StrokeLinejoin | undefined
+          strokeMiterlimit?: Property.StrokeMiterlimit | undefined
+          strokeOpacity?: Property.StrokeOpacity | undefined
+          strokeWidth?: Property.StrokeWidth<string | number> | undefined
+          tabSize?: Property.TabSize<string | number> | undefined
+          tableLayout?: Property.TableLayout | undefined
+          textAlign?: Property.TextAlign | undefined
+          textAlignLast?: Property.TextAlignLast | undefined
+          textAnchor?: Property.TextAnchor | undefined
+          textAutospace?: Property.TextAutospace | undefined
+          textBox?: Property.TextBox | undefined
+          textBoxEdge?: Property.TextBoxEdge | undefined
+          textBoxTrim?: Property.TextBoxTrim | undefined
+          textCombineUpright?: Property.TextCombineUpright | undefined
+          textDecorationColor?: Property.TextDecorationColor | undefined
+          textDecorationLine?: Property.TextDecorationLine | undefined
+          textDecorationSkip?: Property.TextDecorationSkip | undefined
+          textDecorationSkipInk?: Property.TextDecorationSkipInk | undefined
+          textDecorationStyle?: Property.TextDecorationStyle | undefined
+          textDecorationThickness?: Property.TextDecorationThickness<string | number> | undefined
+          textEmphasisColor?: Property.TextEmphasisColor | undefined
+          textEmphasisPosition?: Property.TextEmphasisPosition | undefined
+          textEmphasisStyle?: Property.TextEmphasisStyle | undefined
+          textIndent?: Property.TextIndent<string | number> | undefined
+          textJustify?: Property.TextJustify | undefined
+          textOrientation?: Property.TextOrientation | undefined
+          textOverflow?: Property.TextOverflow | undefined
+          textRendering?: Property.TextRendering | undefined
+          textShadow?: Property.TextShadow | undefined
+          textSizeAdjust?: Property.TextSizeAdjust | undefined
+          textSpacingTrim?: Property.TextSpacingTrim | undefined
+          textTransform?: Property.TextTransform | undefined
+          textUnderlineOffset?: Property.TextUnderlineOffset<string | number> | undefined
+          textUnderlinePosition?: Property.TextUnderlinePosition | undefined
+          textWrapMode?: Property.TextWrapMode | undefined
+          textWrapStyle?: Property.TextWrapStyle | undefined
+          timelineScope?: Property.TimelineScope | undefined
+          top?: Property.Top<string | number> | undefined
+          touchAction?: Property.TouchAction | undefined
+          transform?: Property.Transform | undefined
+          transformBox?: Property.TransformBox | undefined
+          transformOrigin?: Property.TransformOrigin<string | number> | undefined
+          transformStyle?: Property.TransformStyle | undefined
+          transitionBehavior?: Property.TransitionBehavior | undefined
+          transitionDelay?: Property.TransitionDelay<string & {}> | undefined
+          transitionDuration?: Property.TransitionDuration<string & {}> | undefined
+          transitionProperty?: Property.TransitionProperty | undefined
+          transitionTimingFunction?: Property.TransitionTimingFunction | undefined
+          translate?: Property.Translate<string | number> | undefined
+          unicodeBidi?: Property.UnicodeBidi | undefined
+          userSelect?: Property.UserSelect | undefined
+          vectorEffect?: Property.VectorEffect | undefined
+          verticalAlign?: Property.VerticalAlign<string | number> | undefined
+          viewTimelineAxis?: Property.ViewTimelineAxis | undefined
+          viewTimelineInset?: Property.ViewTimelineInset<string | number> | undefined
+          viewTimelineName?: Property.ViewTimelineName | undefined
+          viewTransitionClass?: Property.ViewTransitionClass | undefined
+          viewTransitionName?: Property.ViewTransitionName | undefined
+          visibility?: Property.Visibility | undefined
+          whiteSpace?: Property.WhiteSpace | undefined
+          whiteSpaceCollapse?: Property.WhiteSpaceCollapse | undefined
+          widows?: Property.Widows | undefined
+          width?: Property.Width<string | number> | undefined
+          willChange?: Property.WillChange | undefined
+          wordBreak?: Property.WordBreak | undefined
+          wordSpacing?: Property.WordSpacing<string | number> | undefined
+          wordWrap?: Property.WordWrap | undefined
+          writingMode?: Property.WritingMode | undefined
+          x?: Property.X<string | number> | undefined
+          y?: Property.Y<string | number> | undefined
+          zIndex?: Property.ZIndex | undefined
+          zoom?: Property.Zoom | undefined
+          all?: Property.All | undefined
+          animation?: Property.Animation<string & {}> | undefined
+          animationRange?: Property.AnimationRange<string | number> | undefined
+          background?: Property.Background<string | number> | undefined
+          backgroundPosition?: Property.BackgroundPosition<string | number> | undefined
+          border?: Property.Border<string | number> | undefined
+          borderBlock?: Property.BorderBlock<string | number> | undefined
+          borderBlockColor?: Property.BorderBlockColor | undefined
+          borderBlockEnd?: Property.BorderBlockEnd<string | number> | undefined
+          borderBlockStart?: Property.BorderBlockStart<string | number> | undefined
+          borderBlockStyle?: Property.BorderBlockStyle | undefined
+          borderBlockWidth?: Property.BorderBlockWidth<string | number> | undefined
+          borderBottom?: Property.BorderBottom<string | number> | undefined
+          borderColor?: Property.BorderColor | undefined
+          borderImage?: Property.BorderImage | undefined
+          borderInline?: Property.BorderInline<string | number> | undefined
+          borderInlineColor?: Property.BorderInlineColor | undefined
+          borderInlineEnd?: Property.BorderInlineEnd<string | number> | undefined
+          borderInlineStart?: Property.BorderInlineStart<string | number> | undefined
+          borderInlineStyle?: Property.BorderInlineStyle | undefined
+          borderInlineWidth?: Property.BorderInlineWidth<string | number> | undefined
+          borderLeft?: Property.BorderLeft<string | number> | undefined
+          borderRadius?: Property.BorderRadius<string | number> | undefined
+          borderRight?: Property.BorderRight<string | number> | undefined
+          borderStyle?: Property.BorderStyle | undefined
+          borderTop?: Property.BorderTop<string | number> | undefined
+          borderWidth?: Property.BorderWidth<string | number> | undefined
+          caret?: Property.Caret | undefined
+          columnRule?: Property.ColumnRule<string | number> | undefined
+          columns?: Property.Columns<string | number> | undefined
+          containIntrinsicSize?: Property.ContainIntrinsicSize<string | number> | undefined
+          container?: Property.Container | undefined
+          flex?: Property.Flex<string | number> | undefined
+          flexFlow?: Property.FlexFlow | undefined
+          font?: Property.Font | undefined
+          gap?: Property.Gap<string | number> | undefined
+          grid?: Property.Grid | undefined
+          gridArea?: Property.GridArea | undefined
+          gridColumn?: Property.GridColumn | undefined
+          gridRow?: Property.GridRow | undefined
+          gridTemplate?: Property.GridTemplate | undefined
+          inset?: Property.Inset<string | number> | undefined
+          insetBlock?: Property.InsetBlock<string | number> | undefined
+          insetInline?: Property.InsetInline<string | number> | undefined
+          lineClamp?: Property.LineClamp | undefined
+          listStyle?: Property.ListStyle | undefined
+          margin?: Property.Margin<string | number> | undefined
+          marginBlock?: Property.MarginBlock<string | number> | undefined
+          marginInline?: Property.MarginInline<string | number> | undefined
+          mask?: Property.Mask<string | number> | undefined
+          maskBorder?: Property.MaskBorder | undefined
+          motion?: Property.Offset<string | number> | undefined
+          offset?: Property.Offset<string | number> | undefined
+          outline?: Property.Outline<string | number> | undefined
+          overflow?: Property.Overflow | undefined
+          overscrollBehavior?: Property.OverscrollBehavior | undefined
+          padding?: Property.Padding<string | number> | undefined
+          paddingBlock?: Property.PaddingBlock<string | number> | undefined
+          paddingInline?: Property.PaddingInline<string | number> | undefined
+          placeContent?: Property.PlaceContent | undefined
+          placeItems?: Property.PlaceItems | undefined
+          placeSelf?: Property.PlaceSelf | undefined
+          positionTry?: Property.PositionTry | undefined
+          scrollMargin?: Property.ScrollMargin<string | number> | undefined
+          scrollMarginBlock?: Property.ScrollMarginBlock<string | number> | undefined
+          scrollMarginInline?: Property.ScrollMarginInline<string | number> | undefined
+          scrollPadding?: Property.ScrollPadding<string | number> | undefined
+          scrollPaddingBlock?: Property.ScrollPaddingBlock<string | number> | undefined
+          scrollPaddingInline?: Property.ScrollPaddingInline<string | number> | undefined
+          scrollSnapMargin?: Property.ScrollMargin<string | number> | undefined
+          scrollTimeline?: Property.ScrollTimeline | undefined
+          textDecoration?: Property.TextDecoration<string | number> | undefined
+          textEmphasis?: Property.TextEmphasis | undefined
+          textWrap?: Property.TextWrap | undefined
+          transition?: Property.Transition<string & {}> | undefined
+          viewTimeline?: Property.ViewTimeline | undefined
+          MozAnimationDelay?: Property.AnimationDelay<string & {}> | undefined
+          MozAnimationDirection?: Property.AnimationDirection | undefined
+          MozAnimationDuration?: Property.AnimationDuration<string & {}> | undefined
+          MozAnimationFillMode?: Property.AnimationFillMode | undefined
+          MozAnimationIterationCount?: Property.AnimationIterationCount | undefined
+          MozAnimationName?: Property.AnimationName | undefined
+          MozAnimationPlayState?: Property.AnimationPlayState | undefined
+          MozAnimationTimingFunction?: Property.AnimationTimingFunction | undefined
+          MozAppearance?: Property.MozAppearance | undefined
+          MozBackfaceVisibility?: Property.BackfaceVisibility | undefined
+          MozBinding?: Property.MozBinding | undefined
+          MozBorderBottomColors?: Property.MozBorderBottomColors | undefined
+          MozBorderEndColor?: Property.BorderInlineEndColor | undefined
+          MozBorderEndStyle?: Property.BorderInlineEndStyle | undefined
+          MozBorderEndWidth?: Property.BorderInlineEndWidth<string | number> | undefined
+          MozBorderLeftColors?: Property.MozBorderLeftColors | undefined
+          MozBorderRightColors?: Property.MozBorderRightColors | undefined
+          MozBorderStartColor?: Property.BorderInlineStartColor | undefined
+          MozBorderStartStyle?: Property.BorderInlineStartStyle | undefined
+          MozBorderTopColors?: Property.MozBorderTopColors | undefined
+          MozBoxSizing?: Property.BoxSizing | undefined
+          MozColumnRuleColor?: Property.ColumnRuleColor | undefined
+          MozColumnRuleStyle?: Property.ColumnRuleStyle | undefined
+          MozColumnRuleWidth?: Property.ColumnRuleWidth<string | number> | undefined
+          MozColumnWidth?: Property.ColumnWidth<string | number> | undefined
+          MozContextProperties?: Property.MozContextProperties | undefined
+          MozFontFeatureSettings?: Property.FontFeatureSettings | undefined
+          MozFontLanguageOverride?: Property.FontLanguageOverride | undefined
+          MozHyphens?: Property.Hyphens | undefined
+          MozMarginEnd?: Property.MarginInlineEnd<string | number> | undefined
+          MozMarginStart?: Property.MarginInlineStart<string | number> | undefined
+          MozOrient?: Property.MozOrient | undefined
+          MozOsxFontSmoothing?: Property.FontSmooth<string | number> | undefined
+          MozOutlineRadiusBottomleft?: Property.MozOutlineRadiusBottomleft<string | number> | undefined
+          MozOutlineRadiusBottomright?: Property.MozOutlineRadiusBottomright<string | number> | undefined
+          MozOutlineRadiusTopleft?: Property.MozOutlineRadiusTopleft<string | number> | undefined
+          MozOutlineRadiusTopright?: Property.MozOutlineRadiusTopright<string | number> | undefined
+          MozPaddingEnd?: Property.PaddingInlineEnd<string | number> | undefined
+          MozPaddingStart?: Property.PaddingInlineStart<string | number> | undefined
+          MozPerspective?: Property.Perspective<string | number> | undefined
+          MozPerspectiveOrigin?: Property.PerspectiveOrigin<string | number> | undefined
+          MozStackSizing?: Property.MozStackSizing | undefined
+          MozTabSize?: Property.TabSize<string | number> | undefined
+          MozTextBlink?: Property.MozTextBlink | undefined
+          MozTextSizeAdjust?: Property.TextSizeAdjust | undefined
+          MozTransform?: Property.Transform | undefined
+          MozTransformOrigin?: Property.TransformOrigin<string | number> | undefined
+          MozTransformStyle?: Property.TransformStyle | undefined
+          MozUserModify?: Property.MozUserModify | undefined
+          MozUserSelect?: Property.UserSelect | undefined
+          MozWindowDragging?: Property.MozWindowDragging | undefined
+          MozWindowShadow?: Property.MozWindowShadow | undefined
+          msAccelerator?: Property.MsAccelerator | undefined
+          msBlockProgression?: Property.MsBlockProgression | undefined
+          msContentZoomChaining?: Property.MsContentZoomChaining | undefined
+          msContentZoomLimitMax?: Property.MsContentZoomLimitMax | undefined
+          msContentZoomLimitMin?: Property.MsContentZoomLimitMin | undefined
+          msContentZoomSnapPoints?: Property.MsContentZoomSnapPoints | undefined
+          msContentZoomSnapType?: Property.MsContentZoomSnapType | undefined
+          msContentZooming?: Property.MsContentZooming | undefined
+          msFilter?: Property.MsFilter | undefined
+          msFlexDirection?: Property.FlexDirection | undefined
+          msFlexPositive?: Property.FlexGrow | undefined
+          msFlowFrom?: Property.MsFlowFrom | undefined
+          msFlowInto?: Property.MsFlowInto | undefined
+          msGridColumns?: Property.MsGridColumns<string | number> | undefined
+          msGridRows?: Property.MsGridRows<string | number> | undefined
+          msHighContrastAdjust?: Property.MsHighContrastAdjust | undefined
+          msHyphenateLimitChars?: Property.MsHyphenateLimitChars | undefined
+          msHyphenateLimitLines?: Property.MsHyphenateLimitLines | undefined
+          msHyphenateLimitZone?: Property.MsHyphenateLimitZone<string | number> | undefined
+          msHyphens?: Property.Hyphens | undefined
+          msImeAlign?: Property.MsImeAlign | undefined
+          msLineBreak?: Property.LineBreak | undefined
+          msOrder?: Property.Order | undefined
+          msOverflowStyle?: Property.MsOverflowStyle | undefined
+          msOverflowX?: Property.OverflowX | undefined
+          msOverflowY?: Property.OverflowY | undefined
+          msScrollChaining?: Property.MsScrollChaining | undefined
+          msScrollLimitXMax?: Property.MsScrollLimitXMax<string | number> | undefined
+          msScrollLimitXMin?: Property.MsScrollLimitXMin<string | number> | undefined
+          msScrollLimitYMax?: Property.MsScrollLimitYMax<string | number> | undefined
+          msScrollLimitYMin?: Property.MsScrollLimitYMin<string | number> | undefined
+          msScrollRails?: Property.MsScrollRails | undefined
+          msScrollSnapPointsX?: Property.MsScrollSnapPointsX | undefined
+          msScrollSnapPointsY?: Property.MsScrollSnapPointsY | undefined
+          msScrollSnapType?: Property.MsScrollSnapType | undefined
+          msScrollTranslation?: Property.MsScrollTranslation | undefined
+          msScrollbar3dlightColor?: Property.MsScrollbar3dlightColor | undefined
+          msScrollbarArrowColor?: Property.MsScrollbarArrowColor | undefined
+          msScrollbarBaseColor?: Property.MsScrollbarBaseColor | undefined
+          msScrollbarDarkshadowColor?: Property.MsScrollbarDarkshadowColor | undefined
+          msScrollbarFaceColor?: Property.MsScrollbarFaceColor | undefined
+          msScrollbarHighlightColor?: Property.MsScrollbarHighlightColor | undefined
+          msScrollbarShadowColor?: Property.MsScrollbarShadowColor | undefined
+          msScrollbarTrackColor?: Property.MsScrollbarTrackColor | undefined
+          msTextAutospace?: Property.MsTextAutospace | undefined
+          msTextCombineHorizontal?: Property.TextCombineUpright | undefined
+          msTextOverflow?: Property.TextOverflow | undefined
+          msTouchAction?: Property.TouchAction | undefined
+          msTouchSelect?: Property.MsTouchSelect | undefined
+          msTransform?: Property.Transform | undefined
+          msTransformOrigin?: Property.TransformOrigin<string | number> | undefined
+          msTransitionDelay?: Property.TransitionDelay<string & {}> | undefined
+          msTransitionDuration?: Property.TransitionDuration<string & {}> | undefined
+          msTransitionProperty?: Property.TransitionProperty | undefined
+          msTransitionTimingFunction?: Property.TransitionTimingFunction | undefined
+          msUserSelect?: Property.MsUserSelect | undefined
+          msWordBreak?: Property.WordBreak | undefined
+          msWrapFlow?: Property.MsWrapFlow | undefined
+          msWrapMargin?: Property.MsWrapMargin<string | number> | undefined
+          msWrapThrough?: Property.MsWrapThrough | undefined
+          msWritingMode?: Property.WritingMode | undefined
+          WebkitAlignContent?: Property.AlignContent | undefined
+          WebkitAlignItems?: Property.AlignItems | undefined
+          WebkitAlignSelf?: Property.AlignSelf | undefined
+          WebkitAnimationDelay?: Property.AnimationDelay<string & {}> | undefined
+          WebkitAnimationDirection?: Property.AnimationDirection | undefined
+          WebkitAnimationDuration?: Property.AnimationDuration<string & {}> | undefined
+          WebkitAnimationFillMode?: Property.AnimationFillMode | undefined
+          WebkitAnimationIterationCount?: Property.AnimationIterationCount | undefined
+          WebkitAnimationName?: Property.AnimationName | undefined
+          WebkitAnimationPlayState?: Property.AnimationPlayState | undefined
+          WebkitAnimationTimingFunction?: Property.AnimationTimingFunction | undefined
+          WebkitAppearance?: Property.WebkitAppearance | undefined
+          WebkitBackdropFilter?: Property.BackdropFilter | undefined
+          WebkitBackfaceVisibility?: Property.BackfaceVisibility | undefined
+          WebkitBackgroundClip?: Property.BackgroundClip | undefined
+          WebkitBackgroundOrigin?: Property.BackgroundOrigin | undefined
+          WebkitBackgroundSize?: Property.BackgroundSize<string | number> | undefined
+          WebkitBorderBeforeColor?: Property.WebkitBorderBeforeColor | undefined
+          WebkitBorderBeforeStyle?: Property.WebkitBorderBeforeStyle | undefined
+          WebkitBorderBeforeWidth?: Property.WebkitBorderBeforeWidth<string | number> | undefined
+          WebkitBorderBottomLeftRadius?: Property.BorderBottomLeftRadius<string | number> | undefined
+          WebkitBorderBottomRightRadius?: Property.BorderBottomRightRadius<string | number> | undefined
+          WebkitBorderImageSlice?: Property.BorderImageSlice | undefined
+          WebkitBorderTopLeftRadius?: Property.BorderTopLeftRadius<string | number> | undefined
+          WebkitBorderTopRightRadius?: Property.BorderTopRightRadius<string | number> | undefined
+          WebkitBoxDecorationBreak?: Property.BoxDecorationBreak | undefined
+          WebkitBoxReflect?: Property.WebkitBoxReflect<string | number> | undefined
+          WebkitBoxShadow?: Property.BoxShadow | undefined
+          WebkitBoxSizing?: Property.BoxSizing | undefined
+          WebkitClipPath?: Property.ClipPath | undefined
+          WebkitColumnCount?: Property.ColumnCount | undefined
+          WebkitColumnFill?: Property.ColumnFill | undefined
+          WebkitColumnRuleColor?: Property.ColumnRuleColor | undefined
+          WebkitColumnRuleStyle?: Property.ColumnRuleStyle | undefined
+          WebkitColumnRuleWidth?: Property.ColumnRuleWidth<string | number> | undefined
+          WebkitColumnSpan?: Property.ColumnSpan | undefined
+          WebkitColumnWidth?: Property.ColumnWidth<string | number> | undefined
+          WebkitFilter?: Property.Filter | undefined
+          WebkitFlexBasis?: Property.FlexBasis<string | number> | undefined
+          WebkitFlexDirection?: Property.FlexDirection | undefined
+          WebkitFlexGrow?: Property.FlexGrow | undefined
+          WebkitFlexShrink?: Property.FlexShrink | undefined
+          WebkitFlexWrap?: Property.FlexWrap | undefined
+          WebkitFontFeatureSettings?: Property.FontFeatureSettings | undefined
+          WebkitFontKerning?: Property.FontKerning | undefined
+          WebkitFontSmoothing?: Property.FontSmooth<string | number> | undefined
+          WebkitFontVariantLigatures?: Property.FontVariantLigatures | undefined
+          WebkitHyphenateCharacter?: Property.HyphenateCharacter | undefined
+          WebkitHyphens?: Property.Hyphens | undefined
+          WebkitInitialLetter?: Property.InitialLetter | undefined
+          WebkitJustifyContent?: Property.JustifyContent | undefined
+          WebkitLineBreak?: Property.LineBreak | undefined
+          WebkitLineClamp?: Property.WebkitLineClamp | undefined
+          WebkitLogicalHeight?: Property.BlockSize<string | number> | undefined
+          WebkitLogicalWidth?: Property.InlineSize<string | number> | undefined
+          WebkitMarginEnd?: Property.MarginInlineEnd<string | number> | undefined
+          WebkitMarginStart?: Property.MarginInlineStart<string | number> | undefined
+          WebkitMaskAttachment?: Property.WebkitMaskAttachment | undefined
+          WebkitMaskBoxImageOutset?: Property.MaskBorderOutset<string | number> | undefined
+          WebkitMaskBoxImageRepeat?: Property.MaskBorderRepeat | undefined
+          WebkitMaskBoxImageSlice?: Property.MaskBorderSlice | undefined
+          WebkitMaskBoxImageSource?: Property.MaskBorderSource | undefined
+          WebkitMaskBoxImageWidth?: Property.MaskBorderWidth<string | number> | undefined
+          WebkitMaskClip?: Property.WebkitMaskClip | undefined
+          WebkitMaskComposite?: Property.WebkitMaskComposite | undefined
+          WebkitMaskImage?: Property.WebkitMaskImage | undefined
+          WebkitMaskOrigin?: Property.WebkitMaskOrigin | undefined
+          WebkitMaskPosition?: Property.WebkitMaskPosition<string | number> | undefined
+          WebkitMaskPositionX?: Property.WebkitMaskPositionX<string | number> | undefined
+          WebkitMaskPositionY?: Property.WebkitMaskPositionY<string | number> | undefined
+          WebkitMaskRepeat?: Property.WebkitMaskRepeat | undefined
+          WebkitMaskRepeatX?: Property.WebkitMaskRepeatX | undefined
+          WebkitMaskRepeatY?: Property.WebkitMaskRepeatY | undefined
+          WebkitMaskSize?: Property.WebkitMaskSize<string | number> | undefined
+          WebkitMaxInlineSize?: Property.MaxInlineSize<string | number> | undefined
+          WebkitOrder?: Property.Order | undefined
+          WebkitOverflowScrolling?: Property.WebkitOverflowScrolling | undefined
+          WebkitPaddingEnd?: Property.PaddingInlineEnd<string | number> | undefined
+          WebkitPaddingStart?: Property.PaddingInlineStart<string | number> | undefined
+          WebkitPerspective?: Property.Perspective<string | number> | undefined
+          WebkitPerspectiveOrigin?: Property.PerspectiveOrigin<string | number> | undefined
+          WebkitPrintColorAdjust?: Property.PrintColorAdjust | undefined
+          WebkitRubyPosition?: Property.RubyPosition | undefined
+          WebkitScrollSnapType?: Property.ScrollSnapType | undefined
+          WebkitShapeMargin?: Property.ShapeMargin<string | number> | undefined
+          WebkitTapHighlightColor?: Property.WebkitTapHighlightColor | undefined
+          WebkitTextCombine?: Property.TextCombineUpright | undefined
+          WebkitTextDecorationColor?: Property.TextDecorationColor | undefined
+          WebkitTextDecorationLine?: Property.TextDecorationLine | undefined
+          WebkitTextDecorationSkip?: Property.TextDecorationSkip | undefined
+          WebkitTextDecorationStyle?: Property.TextDecorationStyle | undefined
+          WebkitTextEmphasisColor?: Property.TextEmphasisColor | undefined
+          WebkitTextEmphasisPosition?: Property.TextEmphasisPosition | undefined
+          WebkitTextEmphasisStyle?: Property.TextEmphasisStyle | undefined
+          WebkitTextFillColor?: Property.WebkitTextFillColor | undefined
+          WebkitTextOrientation?: Property.TextOrientation | undefined
+          WebkitTextSizeAdjust?: Property.TextSizeAdjust | undefined
+          WebkitTextStrokeColor?: Property.WebkitTextStrokeColor | undefined
+          WebkitTextStrokeWidth?: Property.WebkitTextStrokeWidth<string | number> | undefined
+          WebkitTextUnderlinePosition?: Property.TextUnderlinePosition | undefined
+          WebkitTouchCallout?: Property.WebkitTouchCallout | undefined
+          WebkitTransform?: Property.Transform | undefined
+          WebkitTransformOrigin?: Property.TransformOrigin<string | number> | undefined
+          WebkitTransformStyle?: Property.TransformStyle | undefined
+          WebkitTransitionDelay?: Property.TransitionDelay<string & {}> | undefined
+          WebkitTransitionDuration?: Property.TransitionDuration<string & {}> | undefined
+          WebkitTransitionProperty?: Property.TransitionProperty | undefined
+          WebkitTransitionTimingFunction?: Property.TransitionTimingFunction | undefined
+          WebkitUserModify?: Property.WebkitUserModify | undefined
+          WebkitUserSelect?: Property.WebkitUserSelect | undefined
+          WebkitWritingMode?: Property.WritingMode | undefined
+          MozAnimation?: Property.Animation<string & {}> | undefined
+          MozBorderImage?: Property.BorderImage | undefined
+          MozColumnRule?: Property.ColumnRule<string | number> | undefined
+          MozColumns?: Property.Columns<string | number> | undefined
+          MozOutlineRadius?: Property.MozOutlineRadius<string | number> | undefined
+          MozTransition?: Property.Transition<string & {}> | undefined
+          msContentZoomLimit?: Property.MsContentZoomLimit | undefined
+          msContentZoomSnap?: Property.MsContentZoomSnap | undefined
+          msFlex?: Property.Flex<string | number> | undefined
+          msScrollLimit?: Property.MsScrollLimit | undefined
+          msScrollSnapX?: Property.MsScrollSnapX | undefined
+          msScrollSnapY?: Property.MsScrollSnapY | undefined
+          msTransition?: Property.Transition<string & {}> | undefined
+          WebkitAnimation?: Property.Animation<string & {}> | undefined
+          WebkitBorderBefore?: Property.WebkitBorderBefore<string | number> | undefined
+          WebkitBorderImage?: Property.BorderImage | undefined
+          WebkitBorderRadius?: Property.BorderRadius<string | number> | undefined
+          WebkitColumnRule?: Property.ColumnRule<string | number> | undefined
+          WebkitColumns?: Property.Columns<string | number> | undefined
+          WebkitFlex?: Property.Flex<string | number> | undefined
+          WebkitFlexFlow?: Property.FlexFlow | undefined
+          WebkitMask?: Property.WebkitMask<string | number> | undefined
+          WebkitMaskBoxImage?: Property.MaskBorder | undefined
+          WebkitTextEmphasis?: Property.TextEmphasis | undefined
+          WebkitTextStroke?: Property.WebkitTextStroke<string | number> | undefined
+          WebkitTransition?: Property.Transition<string & {}> | undefined
+          boxAlign?: Property.BoxAlign | undefined
+          boxDirection?: Property.BoxDirection | undefined
+          boxFlex?: Property.BoxFlex | undefined
+          boxFlexGroup?: Property.BoxFlexGroup | undefined
+          boxLines?: Property.BoxLines | undefined
+          boxOrdinalGroup?: Property.BoxOrdinalGroup | undefined
+          boxOrient?: Property.BoxOrient | undefined
+          boxPack?: Property.BoxPack | undefined
+          clip?: Property.Clip | undefined
+          fontStretch?: Property.FontStretch | undefined
+          gridColumnGap?: Property.GridColumnGap<string | number> | undefined
+          gridGap?: Property.GridGap<string | number> | undefined
+          gridRowGap?: Property.GridRowGap<string | number> | undefined
+          imeMode?: Property.ImeMode | undefined
+          insetArea?: Property.PositionArea | undefined
+          offsetBlock?: Property.InsetBlock<string | number> | undefined
+          offsetBlockEnd?: Property.InsetBlockEnd<string | number> | undefined
+          offsetBlockStart?: Property.InsetBlockStart<string | number> | undefined
+          offsetInline?: Property.InsetInline<string | number> | undefined
+          offsetInlineEnd?: Property.InsetInlineEnd<string | number> | undefined
+          offsetInlineStart?: Property.InsetInlineStart<string | number> | undefined
+          pageBreakAfter?: Property.PageBreakAfter | undefined
+          pageBreakBefore?: Property.PageBreakBefore | undefined
+          pageBreakInside?: Property.PageBreakInside | undefined
+          positionTryOptions?: Property.PositionTryFallbacks | undefined
+          scrollSnapCoordinate?: Property.ScrollSnapCoordinate<string | number> | undefined
+          scrollSnapDestination?: Property.ScrollSnapDestination<string | number> | undefined
+          scrollSnapPointsX?: Property.ScrollSnapPointsX | undefined
+          scrollSnapPointsY?: Property.ScrollSnapPointsY | undefined
+          scrollSnapTypeX?: Property.ScrollSnapTypeX | undefined
+          scrollSnapTypeY?: Property.ScrollSnapTypeY | undefined
+          KhtmlBoxAlign?: Property.BoxAlign | undefined
+          KhtmlBoxDirection?: Property.BoxDirection | undefined
+          KhtmlBoxFlex?: Property.BoxFlex | undefined
+          KhtmlBoxFlexGroup?: Property.BoxFlexGroup | undefined
+          KhtmlBoxLines?: Property.BoxLines | undefined
+          KhtmlBoxOrdinalGroup?: Property.BoxOrdinalGroup | undefined
+          KhtmlBoxOrient?: Property.BoxOrient | undefined
+          KhtmlBoxPack?: Property.BoxPack | undefined
+          KhtmlLineBreak?: Property.LineBreak | undefined
+          KhtmlOpacity?: Property.Opacity | undefined
+          KhtmlUserSelect?: Property.UserSelect | undefined
+          MozBackgroundClip?: Property.BackgroundClip | undefined
+          MozBackgroundOrigin?: Property.BackgroundOrigin | undefined
+          MozBackgroundSize?: Property.BackgroundSize<string | number> | undefined
+          MozBorderRadius?: Property.BorderRadius<string | number> | undefined
+          MozBorderRadiusBottomleft?: Property.BorderBottomLeftRadius<string | number> | undefined
+          MozBorderRadiusBottomright?: Property.BorderBottomRightRadius<string | number> | undefined
+          MozBorderRadiusTopleft?: Property.BorderTopLeftRadius<string | number> | undefined
+          MozBorderRadiusTopright?: Property.BorderTopRightRadius<string | number> | undefined
+          MozBoxAlign?: Property.BoxAlign | undefined
+          MozBoxDirection?: Property.BoxDirection | undefined
+          MozBoxFlex?: Property.BoxFlex | undefined
+          MozBoxOrdinalGroup?: Property.BoxOrdinalGroup | undefined
+          MozBoxOrient?: Property.BoxOrient | undefined
+          MozBoxPack?: Property.BoxPack | undefined
+          MozBoxShadow?: Property.BoxShadow | undefined
+          MozColumnCount?: Property.ColumnCount | undefined
+          MozColumnFill?: Property.ColumnFill | undefined
+          MozFloatEdge?: Property.MozFloatEdge | undefined
+          MozForceBrokenImageIcon?: Property.MozForceBrokenImageIcon | undefined
+          MozOpacity?: Property.Opacity | undefined
+          MozOutline?: Property.Outline<string | number> | undefined
+          MozOutlineColor?: Property.OutlineColor | undefined
+          MozOutlineStyle?: Property.OutlineStyle | undefined
+          MozOutlineWidth?: Property.OutlineWidth<string | number> | undefined
+          MozTextAlignLast?: Property.TextAlignLast | undefined
+          MozTextDecorationColor?: Property.TextDecorationColor | undefined
+          MozTextDecorationLine?: Property.TextDecorationLine | undefined
+          MozTextDecorationStyle?: Property.TextDecorationStyle | undefined
+          MozTransitionDelay?: Property.TransitionDelay<string & {}> | undefined
+          MozTransitionDuration?: Property.TransitionDuration<string & {}> | undefined
+          MozTransitionProperty?: Property.TransitionProperty | undefined
+          MozTransitionTimingFunction?: Property.TransitionTimingFunction | undefined
+          MozUserFocus?: Property.MozUserFocus | undefined
+          MozUserInput?: Property.MozUserInput | undefined
+          msImeMode?: Property.ImeMode | undefined
+          OAnimation?: Property.Animation<string & {}> | undefined
+          OAnimationDelay?: Property.AnimationDelay<string & {}> | undefined
+          OAnimationDirection?: Property.AnimationDirection | undefined
+          OAnimationDuration?: Property.AnimationDuration<string & {}> | undefined
+          OAnimationFillMode?: Property.AnimationFillMode | undefined
+          OAnimationIterationCount?: Property.AnimationIterationCount | undefined
+          OAnimationName?: Property.AnimationName | undefined
+          OAnimationPlayState?: Property.AnimationPlayState | undefined
+          OAnimationTimingFunction?: Property.AnimationTimingFunction | undefined
+          OBackgroundSize?: Property.BackgroundSize<string | number> | undefined
+          OBorderImage?: Property.BorderImage | undefined
+          OObjectFit?: Property.ObjectFit | undefined
+          OObjectPosition?: Property.ObjectPosition<string | number> | undefined
+          OTabSize?: Property.TabSize<string | number> | undefined
+          OTextOverflow?: Property.TextOverflow | undefined
+          OTransform?: Property.Transform | undefined
+          OTransformOrigin?: Property.TransformOrigin<string | number> | undefined
+          OTransition?: Property.Transition<string & {}> | undefined
+          OTransitionDelay?: Property.TransitionDelay<string & {}> | undefined
+          OTransitionDuration?: Property.TransitionDuration<string & {}> | undefined
+          OTransitionProperty?: Property.TransitionProperty | undefined
+          OTransitionTimingFunction?: Property.TransitionTimingFunction | undefined
+          WebkitBoxAlign?: Property.BoxAlign | undefined
+          WebkitBoxDirection?: Property.BoxDirection | undefined
+          WebkitBoxFlex?: Property.BoxFlex | undefined
+          WebkitBoxFlexGroup?: Property.BoxFlexGroup | undefined
+          WebkitBoxLines?: Property.BoxLines | undefined
+          WebkitBoxOrdinalGroup?: Property.BoxOrdinalGroup | undefined
+          WebkitBoxOrient?: Property.BoxOrient | undefined
+          WebkitBoxPack?: Property.BoxPack | undefined
+          colorInterpolation?: Property.ColorInterpolation | undefined
+          colorRendering?: Property.ColorRendering | undefined
+          glyphOrientationVertical?: Property.GlyphOrientationVertical | undefined
+        }
+        animated: false
+        id: string
+        type?: string | undefined
+        source: string
+        target: string
+        sourceHandle?: string | null
+        targetHandle?: string | null
+        hidden?: boolean
+        deletable?: boolean
+        selectable?: boolean
+        data?: Record<string, unknown> | undefined
+        selected?: boolean
+        markerStart?: EdgeMarkerType
+        markerEnd?: EdgeMarkerType
+        zIndex?: number
+        ariaLabel?: string
+        interactionWidth?: number
+        label?: ReactNode
+        labelStyle?: CSSProperties
+        labelShowBg?: boolean
+        labelBgStyle?: CSSProperties
+        labelBgPadding?: [number, number]
+        labelBgBorderRadius?: number
+        className?: string
+        reconnectable?: boolean | HandleType
+        focusable?: boolean
+        ariaRole?: AriaRole
+        domAttributes?: Omit<
+          SVGAttributes<SVGGElement>,
+          'id' | 'style' | 'className' | 'role' | 'aria-label' | 'dangerouslySetInnerHTML'
+        >
+      } => ({
+        ...edge,
+        style: { ...edge.style, opacity: 1 },
+        animated: false,
+      }),
+    ),
+    nodes: nodes.map(
+      (
+        node,
+      ): {
+        data: { isHidden: boolean }
+        style: {
+          opacity: number
+          borderWidth: number
+          borderColor: 'none'
+          accentColor?: Property.AccentColor | undefined
+          alignContent?: Property.AlignContent | undefined
+          alignItems?: Property.AlignItems | undefined
+          alignSelf?: Property.AlignSelf | undefined
+          alignTracks?: Property.AlignTracks | undefined
+          alignmentBaseline?: Property.AlignmentBaseline | undefined
+          anchorName?: Property.AnchorName | undefined
+          anchorScope?: Property.AnchorScope | undefined
+          animationComposition?: Property.AnimationComposition | undefined
+          animationDelay?: Property.AnimationDelay<string & {}> | undefined
+          animationDirection?: Property.AnimationDirection | undefined
+          animationDuration?: Property.AnimationDuration<string & {}> | undefined
+          animationFillMode?: Property.AnimationFillMode | undefined
+          animationIterationCount?: Property.AnimationIterationCount | undefined
+          animationName?: Property.AnimationName | undefined
+          animationPlayState?: Property.AnimationPlayState | undefined
+          animationRangeEnd?: Property.AnimationRangeEnd<string | number> | undefined
+          animationRangeStart?: Property.AnimationRangeStart<string | number> | undefined
+          animationTimeline?: Property.AnimationTimeline | undefined
+          animationTimingFunction?: Property.AnimationTimingFunction | undefined
+          appearance?: Property.Appearance | undefined
+          aspectRatio?: Property.AspectRatio | undefined
+          backdropFilter?: Property.BackdropFilter | undefined
+          backfaceVisibility?: Property.BackfaceVisibility | undefined
+          backgroundAttachment?: Property.BackgroundAttachment | undefined
+          backgroundBlendMode?: Property.BackgroundBlendMode | undefined
+          backgroundClip?: Property.BackgroundClip | undefined
+          backgroundColor?: Property.BackgroundColor | undefined
+          backgroundImage?: Property.BackgroundImage | undefined
+          backgroundOrigin?: Property.BackgroundOrigin | undefined
+          backgroundPositionX?: Property.BackgroundPositionX<string | number> | undefined
+          backgroundPositionY?: Property.BackgroundPositionY<string | number> | undefined
+          backgroundRepeat?: Property.BackgroundRepeat | undefined
+          backgroundSize?: Property.BackgroundSize<string | number> | undefined
+          baselineShift?: Property.BaselineShift<string | number> | undefined
+          blockSize?: Property.BlockSize<string | number> | undefined
+          borderBlockEndColor?: Property.BorderBlockEndColor | undefined
+          borderBlockEndStyle?: Property.BorderBlockEndStyle | undefined
+          borderBlockEndWidth?: Property.BorderBlockEndWidth<string | number> | undefined
+          borderBlockStartColor?: Property.BorderBlockStartColor | undefined
+          borderBlockStartStyle?: Property.BorderBlockStartStyle | undefined
+          borderBlockStartWidth?: Property.BorderBlockStartWidth<string | number> | undefined
+          borderBottomColor?: Property.BorderBottomColor | undefined
+          borderBottomLeftRadius?: Property.BorderBottomLeftRadius<string | number> | undefined
+          borderBottomRightRadius?: Property.BorderBottomRightRadius<string | number> | undefined
+          borderBottomStyle?: Property.BorderBottomStyle | undefined
+          borderBottomWidth?: Property.BorderBottomWidth<string | number> | undefined
+          borderCollapse?: Property.BorderCollapse | undefined
+          borderEndEndRadius?: Property.BorderEndEndRadius<string | number> | undefined
+          borderEndStartRadius?: Property.BorderEndStartRadius<string | number> | undefined
+          borderImageOutset?: Property.BorderImageOutset<string | number> | undefined
+          borderImageRepeat?: Property.BorderImageRepeat | undefined
+          borderImageSlice?: Property.BorderImageSlice | undefined
+          borderImageSource?: Property.BorderImageSource | undefined
+          borderImageWidth?: Property.BorderImageWidth<string | number> | undefined
+          borderInlineEndColor?: Property.BorderInlineEndColor | undefined
+          borderInlineEndStyle?: Property.BorderInlineEndStyle | undefined
+          borderInlineEndWidth?: Property.BorderInlineEndWidth<string | number> | undefined
+          borderInlineStartColor?: Property.BorderInlineStartColor | undefined
+          borderInlineStartStyle?: Property.BorderInlineStartStyle | undefined
+          borderInlineStartWidth?: Property.BorderInlineStartWidth<string | number> | undefined
+          borderLeftColor?: Property.BorderLeftColor | undefined
+          borderLeftStyle?: Property.BorderLeftStyle | undefined
+          borderLeftWidth?: Property.BorderLeftWidth<string | number> | undefined
+          borderRightColor?: Property.BorderRightColor | undefined
+          borderRightStyle?: Property.BorderRightStyle | undefined
+          borderRightWidth?: Property.BorderRightWidth<string | number> | undefined
+          borderSpacing?: Property.BorderSpacing<string | number> | undefined
+          borderStartEndRadius?: Property.BorderStartEndRadius<string | number> | undefined
+          borderStartStartRadius?: Property.BorderStartStartRadius<string | number> | undefined
+          borderTopColor?: Property.BorderTopColor | undefined
+          borderTopLeftRadius?: Property.BorderTopLeftRadius<string | number> | undefined
+          borderTopRightRadius?: Property.BorderTopRightRadius<string | number> | undefined
+          borderTopStyle?: Property.BorderTopStyle | undefined
+          borderTopWidth?: Property.BorderTopWidth<string | number> | undefined
+          bottom?: Property.Bottom<string | number> | undefined
+          boxDecorationBreak?: Property.BoxDecorationBreak | undefined
+          boxShadow?: Property.BoxShadow | undefined
+          boxSizing?: Property.BoxSizing | undefined
+          breakAfter?: Property.BreakAfter | undefined
+          breakBefore?: Property.BreakBefore | undefined
+          breakInside?: Property.BreakInside | undefined
+          captionSide?: Property.CaptionSide | undefined
+          caretColor?: Property.CaretColor | undefined
+          caretShape?: Property.CaretShape | undefined
+          clear?: Property.Clear | undefined
+          clipPath?: Property.ClipPath | undefined
+          clipRule?: Property.ClipRule | undefined
+          color?: Property.Color | undefined
+          colorAdjust?: Property.PrintColorAdjust | undefined
+          colorInterpolationFilters?: Property.ColorInterpolationFilters | undefined
+          colorScheme?: Property.ColorScheme | undefined
+          columnCount?: Property.ColumnCount | undefined
+          columnFill?: Property.ColumnFill | undefined
+          columnGap?: Property.ColumnGap<string | number> | undefined
+          columnRuleColor?: Property.ColumnRuleColor | undefined
+          columnRuleStyle?: Property.ColumnRuleStyle | undefined
+          columnRuleWidth?: Property.ColumnRuleWidth<string | number> | undefined
+          columnSpan?: Property.ColumnSpan | undefined
+          columnWidth?: Property.ColumnWidth<string | number> | undefined
+          contain?: Property.Contain | undefined
+          containIntrinsicBlockSize?: Property.ContainIntrinsicBlockSize<string | number> | undefined
+          containIntrinsicHeight?: Property.ContainIntrinsicHeight<string | number> | undefined
+          containIntrinsicInlineSize?: Property.ContainIntrinsicInlineSize<string | number> | undefined
+          containIntrinsicWidth?: Property.ContainIntrinsicWidth<string | number> | undefined
+          containerName?: Property.ContainerName | undefined
+          containerType?: Property.ContainerType | undefined
+          content?: Property.Content | undefined
+          contentVisibility?: Property.ContentVisibility | undefined
+          counterIncrement?: Property.CounterIncrement | undefined
+          counterReset?: Property.CounterReset | undefined
+          counterSet?: Property.CounterSet | undefined
+          cursor?: Property.Cursor | undefined
+          cx?: Property.Cx<string | number> | undefined
+          cy?: Property.Cy<string | number> | undefined
+          d?: Property.D | undefined
+          direction?: Property.Direction | undefined
+          display?: Property.Display | undefined
+          dominantBaseline?: Property.DominantBaseline | undefined
+          emptyCells?: Property.EmptyCells | undefined
+          fieldSizing?: Property.FieldSizing | undefined
+          fill?: Property.Fill | undefined
+          fillOpacity?: Property.FillOpacity | undefined
+          fillRule?: Property.FillRule | undefined
+          filter?: Property.Filter | undefined
+          flexBasis?: Property.FlexBasis<string | number> | undefined
+          flexDirection?: Property.FlexDirection | undefined
+          flexGrow?: Property.FlexGrow | undefined
+          flexShrink?: Property.FlexShrink | undefined
+          flexWrap?: Property.FlexWrap | undefined
+          float?: Property.Float | undefined
+          floodColor?: Property.FloodColor | undefined
+          floodOpacity?: Property.FloodOpacity | undefined
+          fontFamily?: Property.FontFamily | undefined
+          fontFeatureSettings?: Property.FontFeatureSettings | undefined
+          fontKerning?: Property.FontKerning | undefined
+          fontLanguageOverride?: Property.FontLanguageOverride | undefined
+          fontOpticalSizing?: Property.FontOpticalSizing | undefined
+          fontPalette?: Property.FontPalette | undefined
+          fontSize?: Property.FontSize<string | number> | undefined
+          fontSizeAdjust?: Property.FontSizeAdjust | undefined
+          fontSmooth?: Property.FontSmooth<string | number> | undefined
+          fontStyle?: Property.FontStyle | undefined
+          fontSynthesis?: Property.FontSynthesis | undefined
+          fontSynthesisPosition?: Property.FontSynthesisPosition | undefined
+          fontSynthesisSmallCaps?: Property.FontSynthesisSmallCaps | undefined
+          fontSynthesisStyle?: Property.FontSynthesisStyle | undefined
+          fontSynthesisWeight?: Property.FontSynthesisWeight | undefined
+          fontVariant?: Property.FontVariant | undefined
+          fontVariantAlternates?: Property.FontVariantAlternates | undefined
+          fontVariantCaps?: Property.FontVariantCaps | undefined
+          fontVariantEastAsian?: Property.FontVariantEastAsian | undefined
+          fontVariantEmoji?: Property.FontVariantEmoji | undefined
+          fontVariantLigatures?: Property.FontVariantLigatures | undefined
+          fontVariantNumeric?: Property.FontVariantNumeric | undefined
+          fontVariantPosition?: Property.FontVariantPosition | undefined
+          fontVariationSettings?: Property.FontVariationSettings | undefined
+          fontWeight?: Property.FontWeight | undefined
+          fontWidth?: Property.FontWidth | undefined
+          forcedColorAdjust?: Property.ForcedColorAdjust | undefined
+          gridAutoColumns?: Property.GridAutoColumns<string | number> | undefined
+          gridAutoFlow?: Property.GridAutoFlow | undefined
+          gridAutoRows?: Property.GridAutoRows<string | number> | undefined
+          gridColumnEnd?: Property.GridColumnEnd | undefined
+          gridColumnStart?: Property.GridColumnStart | undefined
+          gridRowEnd?: Property.GridRowEnd | undefined
+          gridRowStart?: Property.GridRowStart | undefined
+          gridTemplateAreas?: Property.GridTemplateAreas | undefined
+          gridTemplateColumns?: Property.GridTemplateColumns<string | number> | undefined
+          gridTemplateRows?: Property.GridTemplateRows<string | number> | undefined
+          hangingPunctuation?: Property.HangingPunctuation | undefined
+          height?: Property.Height<string | number> | undefined
+          hyphenateCharacter?: Property.HyphenateCharacter | undefined
+          hyphenateLimitChars?: Property.HyphenateLimitChars | undefined
+          hyphens?: Property.Hyphens | undefined
+          imageOrientation?: Property.ImageOrientation | undefined
+          imageRendering?: Property.ImageRendering | undefined
+          imageResolution?: Property.ImageResolution | undefined
+          initialLetter?: Property.InitialLetter | undefined
+          initialLetterAlign?: Property.InitialLetterAlign | undefined
+          inlineSize?: Property.InlineSize<string | number> | undefined
+          insetBlockEnd?: Property.InsetBlockEnd<string | number> | undefined
+          insetBlockStart?: Property.InsetBlockStart<string | number> | undefined
+          insetInlineEnd?: Property.InsetInlineEnd<string | number> | undefined
+          insetInlineStart?: Property.InsetInlineStart<string | number> | undefined
+          interpolateSize?: Property.InterpolateSize | undefined
+          isolation?: Property.Isolation | undefined
+          justifyContent?: Property.JustifyContent | undefined
+          justifyItems?: Property.JustifyItems | undefined
+          justifySelf?: Property.JustifySelf | undefined
+          justifyTracks?: Property.JustifyTracks | undefined
+          left?: Property.Left<string | number> | undefined
+          letterSpacing?: Property.LetterSpacing<string | number> | undefined
+          lightingColor?: Property.LightingColor | undefined
+          lineBreak?: Property.LineBreak | undefined
+          lineHeight?: Property.LineHeight<string | number> | undefined
+          lineHeightStep?: Property.LineHeightStep<string | number> | undefined
+          listStyleImage?: Property.ListStyleImage | undefined
+          listStylePosition?: Property.ListStylePosition | undefined
+          listStyleType?: Property.ListStyleType | undefined
+          marginBlockEnd?: Property.MarginBlockEnd<string | number> | undefined
+          marginBlockStart?: Property.MarginBlockStart<string | number> | undefined
+          marginBottom?: Property.MarginBottom<string | number> | undefined
+          marginInlineEnd?: Property.MarginInlineEnd<string | number> | undefined
+          marginInlineStart?: Property.MarginInlineStart<string | number> | undefined
+          marginLeft?: Property.MarginLeft<string | number> | undefined
+          marginRight?: Property.MarginRight<string | number> | undefined
+          marginTop?: Property.MarginTop<string | number> | undefined
+          marginTrim?: Property.MarginTrim | undefined
+          marker?: Property.Marker | undefined
+          markerEnd?: Property.MarkerEnd | undefined
+          markerMid?: Property.MarkerMid | undefined
+          markerStart?: Property.MarkerStart | undefined
+          maskBorderMode?: Property.MaskBorderMode | undefined
+          maskBorderOutset?: Property.MaskBorderOutset<string | number> | undefined
+          maskBorderRepeat?: Property.MaskBorderRepeat | undefined
+          maskBorderSlice?: Property.MaskBorderSlice | undefined
+          maskBorderSource?: Property.MaskBorderSource | undefined
+          maskBorderWidth?: Property.MaskBorderWidth<string | number> | undefined
+          maskClip?: Property.MaskClip | undefined
+          maskComposite?: Property.MaskComposite | undefined
+          maskImage?: Property.MaskImage | undefined
+          maskMode?: Property.MaskMode | undefined
+          maskOrigin?: Property.MaskOrigin | undefined
+          maskPosition?: Property.MaskPosition<string | number> | undefined
+          maskRepeat?: Property.MaskRepeat | undefined
+          maskSize?: Property.MaskSize<string | number> | undefined
+          maskType?: Property.MaskType | undefined
+          masonryAutoFlow?: Property.MasonryAutoFlow | undefined
+          mathDepth?: Property.MathDepth | undefined
+          mathShift?: Property.MathShift | undefined
+          mathStyle?: Property.MathStyle | undefined
+          maxBlockSize?: Property.MaxBlockSize<string | number> | undefined
+          maxHeight?: Property.MaxHeight<string | number> | undefined
+          maxInlineSize?: Property.MaxInlineSize<string | number> | undefined
+          maxLines?: Property.MaxLines | undefined
+          maxWidth?: Property.MaxWidth<string | number> | undefined
+          minBlockSize?: Property.MinBlockSize<string | number> | undefined
+          minHeight?: Property.MinHeight<string | number> | undefined
+          minInlineSize?: Property.MinInlineSize<string | number> | undefined
+          minWidth?: Property.MinWidth<string | number> | undefined
+          mixBlendMode?: Property.MixBlendMode | undefined
+          motionDistance?: Property.OffsetDistance<string | number> | undefined
+          motionPath?: Property.OffsetPath | undefined
+          motionRotation?: Property.OffsetRotate | undefined
+          objectFit?: Property.ObjectFit | undefined
+          objectPosition?: Property.ObjectPosition<string | number> | undefined
+          objectViewBox?: Property.ObjectViewBox | undefined
+          offsetAnchor?: Property.OffsetAnchor<string | number> | undefined
+          offsetDistance?: Property.OffsetDistance<string | number> | undefined
+          offsetPath?: Property.OffsetPath | undefined
+          offsetPosition?: Property.OffsetPosition<string | number> | undefined
+          offsetRotate?: Property.OffsetRotate | undefined
+          offsetRotation?: Property.OffsetRotate | undefined
+          order?: Property.Order | undefined
+          orphans?: Property.Orphans | undefined
+          outlineColor?: Property.OutlineColor | undefined
+          outlineOffset?: Property.OutlineOffset<string | number> | undefined
+          outlineStyle?: Property.OutlineStyle | undefined
+          outlineWidth?: Property.OutlineWidth<string | number> | undefined
+          overflowAnchor?: Property.OverflowAnchor | undefined
+          overflowBlock?: Property.OverflowBlock | undefined
+          overflowClipBox?: Property.OverflowClipBox | undefined
+          overflowClipMargin?: Property.OverflowClipMargin<string | number> | undefined
+          overflowInline?: Property.OverflowInline | undefined
+          overflowWrap?: Property.OverflowWrap | undefined
+          overflowX?: Property.OverflowX | undefined
+          overflowY?: Property.OverflowY | undefined
+          overlay?: Property.Overlay | undefined
+          overscrollBehaviorBlock?: Property.OverscrollBehaviorBlock | undefined
+          overscrollBehaviorInline?: Property.OverscrollBehaviorInline | undefined
+          overscrollBehaviorX?: Property.OverscrollBehaviorX | undefined
+          overscrollBehaviorY?: Property.OverscrollBehaviorY | undefined
+          paddingBlockEnd?: Property.PaddingBlockEnd<string | number> | undefined
+          paddingBlockStart?: Property.PaddingBlockStart<string | number> | undefined
+          paddingBottom?: Property.PaddingBottom<string | number> | undefined
+          paddingInlineEnd?: Property.PaddingInlineEnd<string | number> | undefined
+          paddingInlineStart?: Property.PaddingInlineStart<string | number> | undefined
+          paddingLeft?: Property.PaddingLeft<string | number> | undefined
+          paddingRight?: Property.PaddingRight<string | number> | undefined
+          paddingTop?: Property.PaddingTop<string | number> | undefined
+          page?: Property.Page | undefined
+          paintOrder?: Property.PaintOrder | undefined
+          perspective?: Property.Perspective<string | number> | undefined
+          perspectiveOrigin?: Property.PerspectiveOrigin<string | number> | undefined
+          pointerEvents?: Property.PointerEvents | undefined
+          position?: Property.Position | undefined
+          positionAnchor?: Property.PositionAnchor | undefined
+          positionArea?: Property.PositionArea | undefined
+          positionTryFallbacks?: Property.PositionTryFallbacks | undefined
+          positionTryOrder?: Property.PositionTryOrder | undefined
+          positionVisibility?: Property.PositionVisibility | undefined
+          printColorAdjust?: Property.PrintColorAdjust | undefined
+          quotes?: Property.Quotes | undefined
+          r?: Property.R<string | number> | undefined
+          resize?: Property.Resize | undefined
+          right?: Property.Right<string | number> | undefined
+          rotate?: Property.Rotate | undefined
+          rowGap?: Property.RowGap<string | number> | undefined
+          rubyAlign?: Property.RubyAlign | undefined
+          rubyMerge?: Property.RubyMerge | undefined
+          rubyOverhang?: Property.RubyOverhang | undefined
+          rubyPosition?: Property.RubyPosition | undefined
+          rx?: Property.Rx<string | number> | undefined
+          ry?: Property.Ry<string | number> | undefined
+          scale?: Property.Scale | undefined
+          scrollBehavior?: Property.ScrollBehavior | undefined
+          scrollInitialTarget?: Property.ScrollInitialTarget | undefined
+          scrollMarginBlockEnd?: Property.ScrollMarginBlockEnd<string | number> | undefined
+          scrollMarginBlockStart?: Property.ScrollMarginBlockStart<string | number> | undefined
+          scrollMarginBottom?: Property.ScrollMarginBottom<string | number> | undefined
+          scrollMarginInlineEnd?: Property.ScrollMarginInlineEnd<string | number> | undefined
+          scrollMarginInlineStart?: Property.ScrollMarginInlineStart<string | number> | undefined
+          scrollMarginLeft?: Property.ScrollMarginLeft<string | number> | undefined
+          scrollMarginRight?: Property.ScrollMarginRight<string | number> | undefined
+          scrollMarginTop?: Property.ScrollMarginTop<string | number> | undefined
+          scrollPaddingBlockEnd?: Property.ScrollPaddingBlockEnd<string | number> | undefined
+          scrollPaddingBlockStart?: Property.ScrollPaddingBlockStart<string | number> | undefined
+          scrollPaddingBottom?: Property.ScrollPaddingBottom<string | number> | undefined
+          scrollPaddingInlineEnd?: Property.ScrollPaddingInlineEnd<string | number> | undefined
+          scrollPaddingInlineStart?: Property.ScrollPaddingInlineStart<string | number> | undefined
+          scrollPaddingLeft?: Property.ScrollPaddingLeft<string | number> | undefined
+          scrollPaddingRight?: Property.ScrollPaddingRight<string | number> | undefined
+          scrollPaddingTop?: Property.ScrollPaddingTop<string | number> | undefined
+          scrollSnapAlign?: Property.ScrollSnapAlign | undefined
+          scrollSnapMarginBottom?: Property.ScrollMarginBottom<string | number> | undefined
+          scrollSnapMarginLeft?: Property.ScrollMarginLeft<string | number> | undefined
+          scrollSnapMarginRight?: Property.ScrollMarginRight<string | number> | undefined
+          scrollSnapMarginTop?: Property.ScrollMarginTop<string | number> | undefined
+          scrollSnapStop?: Property.ScrollSnapStop | undefined
+          scrollSnapType?: Property.ScrollSnapType | undefined
+          scrollTimelineAxis?: Property.ScrollTimelineAxis | undefined
+          scrollTimelineName?: Property.ScrollTimelineName | undefined
+          scrollbarColor?: Property.ScrollbarColor | undefined
+          scrollbarGutter?: Property.ScrollbarGutter | undefined
+          scrollbarWidth?: Property.ScrollbarWidth | undefined
+          shapeImageThreshold?: Property.ShapeImageThreshold | undefined
+          shapeMargin?: Property.ShapeMargin<string | number> | undefined
+          shapeOutside?: Property.ShapeOutside | undefined
+          shapeRendering?: Property.ShapeRendering | undefined
+          speakAs?: Property.SpeakAs | undefined
+          stopColor?: Property.StopColor | undefined
+          stopOpacity?: Property.StopOpacity | undefined
+          stroke?: Property.Stroke | undefined
+          strokeColor?: Property.StrokeColor | undefined
+          strokeDasharray?: Property.StrokeDasharray<string | number> | undefined
+          strokeDashoffset?: Property.StrokeDashoffset<string | number> | undefined
+          strokeLinecap?: Property.StrokeLinecap | undefined
+          strokeLinejoin?: Property.StrokeLinejoin | undefined
+          strokeMiterlimit?: Property.StrokeMiterlimit | undefined
+          strokeOpacity?: Property.StrokeOpacity | undefined
+          strokeWidth?: Property.StrokeWidth<string | number> | undefined
+          tabSize?: Property.TabSize<string | number> | undefined
+          tableLayout?: Property.TableLayout | undefined
+          textAlign?: Property.TextAlign | undefined
+          textAlignLast?: Property.TextAlignLast | undefined
+          textAnchor?: Property.TextAnchor | undefined
+          textAutospace?: Property.TextAutospace | undefined
+          textBox?: Property.TextBox | undefined
+          textBoxEdge?: Property.TextBoxEdge | undefined
+          textBoxTrim?: Property.TextBoxTrim | undefined
+          textCombineUpright?: Property.TextCombineUpright | undefined
+          textDecorationColor?: Property.TextDecorationColor | undefined
+          textDecorationLine?: Property.TextDecorationLine | undefined
+          textDecorationSkip?: Property.TextDecorationSkip | undefined
+          textDecorationSkipInk?: Property.TextDecorationSkipInk | undefined
+          textDecorationStyle?: Property.TextDecorationStyle | undefined
+          textDecorationThickness?: Property.TextDecorationThickness<string | number> | undefined
+          textEmphasisColor?: Property.TextEmphasisColor | undefined
+          textEmphasisPosition?: Property.TextEmphasisPosition | undefined
+          textEmphasisStyle?: Property.TextEmphasisStyle | undefined
+          textIndent?: Property.TextIndent<string | number> | undefined
+          textJustify?: Property.TextJustify | undefined
+          textOrientation?: Property.TextOrientation | undefined
+          textOverflow?: Property.TextOverflow | undefined
+          textRendering?: Property.TextRendering | undefined
+          textShadow?: Property.TextShadow | undefined
+          textSizeAdjust?: Property.TextSizeAdjust | undefined
+          textSpacingTrim?: Property.TextSpacingTrim | undefined
+          textTransform?: Property.TextTransform | undefined
+          textUnderlineOffset?: Property.TextUnderlineOffset<string | number> | undefined
+          textUnderlinePosition?: Property.TextUnderlinePosition | undefined
+          textWrapMode?: Property.TextWrapMode | undefined
+          textWrapStyle?: Property.TextWrapStyle | undefined
+          timelineScope?: Property.TimelineScope | undefined
+          top?: Property.Top<string | number> | undefined
+          touchAction?: Property.TouchAction | undefined
+          transform?: Property.Transform | undefined
+          transformBox?: Property.TransformBox | undefined
+          transformOrigin?: Property.TransformOrigin<string | number> | undefined
+          transformStyle?: Property.TransformStyle | undefined
+          transitionBehavior?: Property.TransitionBehavior | undefined
+          transitionDelay?: Property.TransitionDelay<string & {}> | undefined
+          transitionDuration?: Property.TransitionDuration<string & {}> | undefined
+          transitionProperty?: Property.TransitionProperty | undefined
+          transitionTimingFunction?: Property.TransitionTimingFunction | undefined
+          translate?: Property.Translate<string | number> | undefined
+          unicodeBidi?: Property.UnicodeBidi | undefined
+          userSelect?: Property.UserSelect | undefined
+          vectorEffect?: Property.VectorEffect | undefined
+          verticalAlign?: Property.VerticalAlign<string | number> | undefined
+          viewTimelineAxis?: Property.ViewTimelineAxis | undefined
+          viewTimelineInset?: Property.ViewTimelineInset<string | number> | undefined
+          viewTimelineName?: Property.ViewTimelineName | undefined
+          viewTransitionClass?: Property.ViewTransitionClass | undefined
+          viewTransitionName?: Property.ViewTransitionName | undefined
+          visibility?: Property.Visibility | undefined
+          whiteSpace?: Property.WhiteSpace | undefined
+          whiteSpaceCollapse?: Property.WhiteSpaceCollapse | undefined
+          widows?: Property.Widows | undefined
+          width?: Property.Width<string | number> | undefined
+          willChange?: Property.WillChange | undefined
+          wordBreak?: Property.WordBreak | undefined
+          wordSpacing?: Property.WordSpacing<string | number> | undefined
+          wordWrap?: Property.WordWrap | undefined
+          writingMode?: Property.WritingMode | undefined
+          x?: Property.X<string | number> | undefined
+          y?: Property.Y<string | number> | undefined
+          zIndex?: Property.ZIndex | undefined
+          zoom?: Property.Zoom | undefined
+          all?: Property.All | undefined
+          animation?: Property.Animation<string & {}> | undefined
+          animationRange?: Property.AnimationRange<string | number> | undefined
+          background?: Property.Background<string | number> | undefined
+          backgroundPosition?: Property.BackgroundPosition<string | number> | undefined
+          border?: Property.Border<string | number> | undefined
+          borderBlock?: Property.BorderBlock<string | number> | undefined
+          borderBlockColor?: Property.BorderBlockColor | undefined
+          borderBlockEnd?: Property.BorderBlockEnd<string | number> | undefined
+          borderBlockStart?: Property.BorderBlockStart<string | number> | undefined
+          borderBlockStyle?: Property.BorderBlockStyle | undefined
+          borderBlockWidth?: Property.BorderBlockWidth<string | number> | undefined
+          borderBottom?: Property.BorderBottom<string | number> | undefined
+          borderImage?: Property.BorderImage | undefined
+          borderInline?: Property.BorderInline<string | number> | undefined
+          borderInlineColor?: Property.BorderInlineColor | undefined
+          borderInlineEnd?: Property.BorderInlineEnd<string | number> | undefined
+          borderInlineStart?: Property.BorderInlineStart<string | number> | undefined
+          borderInlineStyle?: Property.BorderInlineStyle | undefined
+          borderInlineWidth?: Property.BorderInlineWidth<string | number> | undefined
+          borderLeft?: Property.BorderLeft<string | number> | undefined
+          borderRadius?: Property.BorderRadius<string | number> | undefined
+          borderRight?: Property.BorderRight<string | number> | undefined
+          borderStyle?: Property.BorderStyle | undefined
+          borderTop?: Property.BorderTop<string | number> | undefined
+          caret?: Property.Caret | undefined
+          columnRule?: Property.ColumnRule<string | number> | undefined
+          columns?: Property.Columns<string | number> | undefined
+          containIntrinsicSize?: Property.ContainIntrinsicSize<string | number> | undefined
+          container?: Property.Container | undefined
+          flex?: Property.Flex<string | number> | undefined
+          flexFlow?: Property.FlexFlow | undefined
+          font?: Property.Font | undefined
+          gap?: Property.Gap<string | number> | undefined
+          grid?: Property.Grid | undefined
+          gridArea?: Property.GridArea | undefined
+          gridColumn?: Property.GridColumn | undefined
+          gridRow?: Property.GridRow | undefined
+          gridTemplate?: Property.GridTemplate | undefined
+          inset?: Property.Inset<string | number> | undefined
+          insetBlock?: Property.InsetBlock<string | number> | undefined
+          insetInline?: Property.InsetInline<string | number> | undefined
+          lineClamp?: Property.LineClamp | undefined
+          listStyle?: Property.ListStyle | undefined
+          margin?: Property.Margin<string | number> | undefined
+          marginBlock?: Property.MarginBlock<string | number> | undefined
+          marginInline?: Property.MarginInline<string | number> | undefined
+          mask?: Property.Mask<string | number> | undefined
+          maskBorder?: Property.MaskBorder | undefined
+          motion?: Property.Offset<string | number> | undefined
+          offset?: Property.Offset<string | number> | undefined
+          outline?: Property.Outline<string | number> | undefined
+          overflow?: Property.Overflow | undefined
+          overscrollBehavior?: Property.OverscrollBehavior | undefined
+          padding?: Property.Padding<string | number> | undefined
+          paddingBlock?: Property.PaddingBlock<string | number> | undefined
+          paddingInline?: Property.PaddingInline<string | number> | undefined
+          placeContent?: Property.PlaceContent | undefined
+          placeItems?: Property.PlaceItems | undefined
+          placeSelf?: Property.PlaceSelf | undefined
+          positionTry?: Property.PositionTry | undefined
+          scrollMargin?: Property.ScrollMargin<string | number> | undefined
+          scrollMarginBlock?: Property.ScrollMarginBlock<string | number> | undefined
+          scrollMarginInline?: Property.ScrollMarginInline<string | number> | undefined
+          scrollPadding?: Property.ScrollPadding<string | number> | undefined
+          scrollPaddingBlock?: Property.ScrollPaddingBlock<string | number> | undefined
+          scrollPaddingInline?: Property.ScrollPaddingInline<string | number> | undefined
+          scrollSnapMargin?: Property.ScrollMargin<string | number> | undefined
+          scrollTimeline?: Property.ScrollTimeline | undefined
+          textDecoration?: Property.TextDecoration<string | number> | undefined
+          textEmphasis?: Property.TextEmphasis | undefined
+          textWrap?: Property.TextWrap | undefined
+          transition?: Property.Transition<string & {}> | undefined
+          viewTimeline?: Property.ViewTimeline | undefined
+          MozAnimationDelay?: Property.AnimationDelay<string & {}> | undefined
+          MozAnimationDirection?: Property.AnimationDirection | undefined
+          MozAnimationDuration?: Property.AnimationDuration<string & {}> | undefined
+          MozAnimationFillMode?: Property.AnimationFillMode | undefined
+          MozAnimationIterationCount?: Property.AnimationIterationCount | undefined
+          MozAnimationName?: Property.AnimationName | undefined
+          MozAnimationPlayState?: Property.AnimationPlayState | undefined
+          MozAnimationTimingFunction?: Property.AnimationTimingFunction | undefined
+          MozAppearance?: Property.MozAppearance | undefined
+          MozBackfaceVisibility?: Property.BackfaceVisibility | undefined
+          MozBinding?: Property.MozBinding | undefined
+          MozBorderBottomColors?: Property.MozBorderBottomColors | undefined
+          MozBorderEndColor?: Property.BorderInlineEndColor | undefined
+          MozBorderEndStyle?: Property.BorderInlineEndStyle | undefined
+          MozBorderEndWidth?: Property.BorderInlineEndWidth<string | number> | undefined
+          MozBorderLeftColors?: Property.MozBorderLeftColors | undefined
+          MozBorderRightColors?: Property.MozBorderRightColors | undefined
+          MozBorderStartColor?: Property.BorderInlineStartColor | undefined
+          MozBorderStartStyle?: Property.BorderInlineStartStyle | undefined
+          MozBorderTopColors?: Property.MozBorderTopColors | undefined
+          MozBoxSizing?: Property.BoxSizing | undefined
+          MozColumnRuleColor?: Property.ColumnRuleColor | undefined
+          MozColumnRuleStyle?: Property.ColumnRuleStyle | undefined
+          MozColumnRuleWidth?: Property.ColumnRuleWidth<string | number> | undefined
+          MozColumnWidth?: Property.ColumnWidth<string | number> | undefined
+          MozContextProperties?: Property.MozContextProperties | undefined
+          MozFontFeatureSettings?: Property.FontFeatureSettings | undefined
+          MozFontLanguageOverride?: Property.FontLanguageOverride | undefined
+          MozHyphens?: Property.Hyphens | undefined
+          MozMarginEnd?: Property.MarginInlineEnd<string | number> | undefined
+          MozMarginStart?: Property.MarginInlineStart<string | number> | undefined
+          MozOrient?: Property.MozOrient | undefined
+          MozOsxFontSmoothing?: Property.FontSmooth<string | number> | undefined
+          MozOutlineRadiusBottomleft?: Property.MozOutlineRadiusBottomleft<string | number> | undefined
+          MozOutlineRadiusBottomright?: Property.MozOutlineRadiusBottomright<string | number> | undefined
+          MozOutlineRadiusTopleft?: Property.MozOutlineRadiusTopleft<string | number> | undefined
+          MozOutlineRadiusTopright?: Property.MozOutlineRadiusTopright<string | number> | undefined
+          MozPaddingEnd?: Property.PaddingInlineEnd<string | number> | undefined
+          MozPaddingStart?: Property.PaddingInlineStart<string | number> | undefined
+          MozPerspective?: Property.Perspective<string | number> | undefined
+          MozPerspectiveOrigin?: Property.PerspectiveOrigin<string | number> | undefined
+          MozStackSizing?: Property.MozStackSizing | undefined
+          MozTabSize?: Property.TabSize<string | number> | undefined
+          MozTextBlink?: Property.MozTextBlink | undefined
+          MozTextSizeAdjust?: Property.TextSizeAdjust | undefined
+          MozTransform?: Property.Transform | undefined
+          MozTransformOrigin?: Property.TransformOrigin<string | number> | undefined
+          MozTransformStyle?: Property.TransformStyle | undefined
+          MozUserModify?: Property.MozUserModify | undefined
+          MozUserSelect?: Property.UserSelect | undefined
+          MozWindowDragging?: Property.MozWindowDragging | undefined
+          MozWindowShadow?: Property.MozWindowShadow | undefined
+          msAccelerator?: Property.MsAccelerator | undefined
+          msBlockProgression?: Property.MsBlockProgression | undefined
+          msContentZoomChaining?: Property.MsContentZoomChaining | undefined
+          msContentZoomLimitMax?: Property.MsContentZoomLimitMax | undefined
+          msContentZoomLimitMin?: Property.MsContentZoomLimitMin | undefined
+          msContentZoomSnapPoints?: Property.MsContentZoomSnapPoints | undefined
+          msContentZoomSnapType?: Property.MsContentZoomSnapType | undefined
+          msContentZooming?: Property.MsContentZooming | undefined
+          msFilter?: Property.MsFilter | undefined
+          msFlexDirection?: Property.FlexDirection | undefined
+          msFlexPositive?: Property.FlexGrow | undefined
+          msFlowFrom?: Property.MsFlowFrom | undefined
+          msFlowInto?: Property.MsFlowInto | undefined
+          msGridColumns?: Property.MsGridColumns<string | number> | undefined
+          msGridRows?: Property.MsGridRows<string | number> | undefined
+          msHighContrastAdjust?: Property.MsHighContrastAdjust | undefined
+          msHyphenateLimitChars?: Property.MsHyphenateLimitChars | undefined
+          msHyphenateLimitLines?: Property.MsHyphenateLimitLines | undefined
+          msHyphenateLimitZone?: Property.MsHyphenateLimitZone<string | number> | undefined
+          msHyphens?: Property.Hyphens | undefined
+          msImeAlign?: Property.MsImeAlign | undefined
+          msLineBreak?: Property.LineBreak | undefined
+          msOrder?: Property.Order | undefined
+          msOverflowStyle?: Property.MsOverflowStyle | undefined
+          msOverflowX?: Property.OverflowX | undefined
+          msOverflowY?: Property.OverflowY | undefined
+          msScrollChaining?: Property.MsScrollChaining | undefined
+          msScrollLimitXMax?: Property.MsScrollLimitXMax<string | number> | undefined
+          msScrollLimitXMin?: Property.MsScrollLimitXMin<string | number> | undefined
+          msScrollLimitYMax?: Property.MsScrollLimitYMax<string | number> | undefined
+          msScrollLimitYMin?: Property.MsScrollLimitYMin<string | number> | undefined
+          msScrollRails?: Property.MsScrollRails | undefined
+          msScrollSnapPointsX?: Property.MsScrollSnapPointsX | undefined
+          msScrollSnapPointsY?: Property.MsScrollSnapPointsY | undefined
+          msScrollSnapType?: Property.MsScrollSnapType | undefined
+          msScrollTranslation?: Property.MsScrollTranslation | undefined
+          msScrollbar3dlightColor?: Property.MsScrollbar3dlightColor | undefined
+          msScrollbarArrowColor?: Property.MsScrollbarArrowColor | undefined
+          msScrollbarBaseColor?: Property.MsScrollbarBaseColor | undefined
+          msScrollbarDarkshadowColor?: Property.MsScrollbarDarkshadowColor | undefined
+          msScrollbarFaceColor?: Property.MsScrollbarFaceColor | undefined
+          msScrollbarHighlightColor?: Property.MsScrollbarHighlightColor | undefined
+          msScrollbarShadowColor?: Property.MsScrollbarShadowColor | undefined
+          msScrollbarTrackColor?: Property.MsScrollbarTrackColor | undefined
+          msTextAutospace?: Property.MsTextAutospace | undefined
+          msTextCombineHorizontal?: Property.TextCombineUpright | undefined
+          msTextOverflow?: Property.TextOverflow | undefined
+          msTouchAction?: Property.TouchAction | undefined
+          msTouchSelect?: Property.MsTouchSelect | undefined
+          msTransform?: Property.Transform | undefined
+          msTransformOrigin?: Property.TransformOrigin<string | number> | undefined
+          msTransitionDelay?: Property.TransitionDelay<string & {}> | undefined
+          msTransitionDuration?: Property.TransitionDuration<string & {}> | undefined
+          msTransitionProperty?: Property.TransitionProperty | undefined
+          msTransitionTimingFunction?: Property.TransitionTimingFunction | undefined
+          msUserSelect?: Property.MsUserSelect | undefined
+          msWordBreak?: Property.WordBreak | undefined
+          msWrapFlow?: Property.MsWrapFlow | undefined
+          msWrapMargin?: Property.MsWrapMargin<string | number> | undefined
+          msWrapThrough?: Property.MsWrapThrough | undefined
+          msWritingMode?: Property.WritingMode | undefined
+          WebkitAlignContent?: Property.AlignContent | undefined
+          WebkitAlignItems?: Property.AlignItems | undefined
+          WebkitAlignSelf?: Property.AlignSelf | undefined
+          WebkitAnimationDelay?: Property.AnimationDelay<string & {}> | undefined
+          WebkitAnimationDirection?: Property.AnimationDirection | undefined
+          WebkitAnimationDuration?: Property.AnimationDuration<string & {}> | undefined
+          WebkitAnimationFillMode?: Property.AnimationFillMode | undefined
+          WebkitAnimationIterationCount?: Property.AnimationIterationCount | undefined
+          WebkitAnimationName?: Property.AnimationName | undefined
+          WebkitAnimationPlayState?: Property.AnimationPlayState | undefined
+          WebkitAnimationTimingFunction?: Property.AnimationTimingFunction | undefined
+          WebkitAppearance?: Property.WebkitAppearance | undefined
+          WebkitBackdropFilter?: Property.BackdropFilter | undefined
+          WebkitBackfaceVisibility?: Property.BackfaceVisibility | undefined
+          WebkitBackgroundClip?: Property.BackgroundClip | undefined
+          WebkitBackgroundOrigin?: Property.BackgroundOrigin | undefined
+          WebkitBackgroundSize?: Property.BackgroundSize<string | number> | undefined
+          WebkitBorderBeforeColor?: Property.WebkitBorderBeforeColor | undefined
+          WebkitBorderBeforeStyle?: Property.WebkitBorderBeforeStyle | undefined
+          WebkitBorderBeforeWidth?: Property.WebkitBorderBeforeWidth<string | number> | undefined
+          WebkitBorderBottomLeftRadius?: Property.BorderBottomLeftRadius<string | number> | undefined
+          WebkitBorderBottomRightRadius?: Property.BorderBottomRightRadius<string | number> | undefined
+          WebkitBorderImageSlice?: Property.BorderImageSlice | undefined
+          WebkitBorderTopLeftRadius?: Property.BorderTopLeftRadius<string | number> | undefined
+          WebkitBorderTopRightRadius?: Property.BorderTopRightRadius<string | number> | undefined
+          WebkitBoxDecorationBreak?: Property.BoxDecorationBreak | undefined
+          WebkitBoxReflect?: Property.WebkitBoxReflect<string | number> | undefined
+          WebkitBoxShadow?: Property.BoxShadow | undefined
+          WebkitBoxSizing?: Property.BoxSizing | undefined
+          WebkitClipPath?: Property.ClipPath | undefined
+          WebkitColumnCount?: Property.ColumnCount | undefined
+          WebkitColumnFill?: Property.ColumnFill | undefined
+          WebkitColumnRuleColor?: Property.ColumnRuleColor | undefined
+          WebkitColumnRuleStyle?: Property.ColumnRuleStyle | undefined
+          WebkitColumnRuleWidth?: Property.ColumnRuleWidth<string | number> | undefined
+          WebkitColumnSpan?: Property.ColumnSpan | undefined
+          WebkitColumnWidth?: Property.ColumnWidth<string | number> | undefined
+          WebkitFilter?: Property.Filter | undefined
+          WebkitFlexBasis?: Property.FlexBasis<string | number> | undefined
+          WebkitFlexDirection?: Property.FlexDirection | undefined
+          WebkitFlexGrow?: Property.FlexGrow | undefined
+          WebkitFlexShrink?: Property.FlexShrink | undefined
+          WebkitFlexWrap?: Property.FlexWrap | undefined
+          WebkitFontFeatureSettings?: Property.FontFeatureSettings | undefined
+          WebkitFontKerning?: Property.FontKerning | undefined
+          WebkitFontSmoothing?: Property.FontSmooth<string | number> | undefined
+          WebkitFontVariantLigatures?: Property.FontVariantLigatures | undefined
+          WebkitHyphenateCharacter?: Property.HyphenateCharacter | undefined
+          WebkitHyphens?: Property.Hyphens | undefined
+          WebkitInitialLetter?: Property.InitialLetter | undefined
+          WebkitJustifyContent?: Property.JustifyContent | undefined
+          WebkitLineBreak?: Property.LineBreak | undefined
+          WebkitLineClamp?: Property.WebkitLineClamp | undefined
+          WebkitLogicalHeight?: Property.BlockSize<string | number> | undefined
+          WebkitLogicalWidth?: Property.InlineSize<string | number> | undefined
+          WebkitMarginEnd?: Property.MarginInlineEnd<string | number> | undefined
+          WebkitMarginStart?: Property.MarginInlineStart<string | number> | undefined
+          WebkitMaskAttachment?: Property.WebkitMaskAttachment | undefined
+          WebkitMaskBoxImageOutset?: Property.MaskBorderOutset<string | number> | undefined
+          WebkitMaskBoxImageRepeat?: Property.MaskBorderRepeat | undefined
+          WebkitMaskBoxImageSlice?: Property.MaskBorderSlice | undefined
+          WebkitMaskBoxImageSource?: Property.MaskBorderSource | undefined
+          WebkitMaskBoxImageWidth?: Property.MaskBorderWidth<string | number> | undefined
+          WebkitMaskClip?: Property.WebkitMaskClip | undefined
+          WebkitMaskComposite?: Property.WebkitMaskComposite | undefined
+          WebkitMaskImage?: Property.WebkitMaskImage | undefined
+          WebkitMaskOrigin?: Property.WebkitMaskOrigin | undefined
+          WebkitMaskPosition?: Property.WebkitMaskPosition<string | number> | undefined
+          WebkitMaskPositionX?: Property.WebkitMaskPositionX<string | number> | undefined
+          WebkitMaskPositionY?: Property.WebkitMaskPositionY<string | number> | undefined
+          WebkitMaskRepeat?: Property.WebkitMaskRepeat | undefined
+          WebkitMaskRepeatX?: Property.WebkitMaskRepeatX | undefined
+          WebkitMaskRepeatY?: Property.WebkitMaskRepeatY | undefined
+          WebkitMaskSize?: Property.WebkitMaskSize<string | number> | undefined
+          WebkitMaxInlineSize?: Property.MaxInlineSize<string | number> | undefined
+          WebkitOrder?: Property.Order | undefined
+          WebkitOverflowScrolling?: Property.WebkitOverflowScrolling | undefined
+          WebkitPaddingEnd?: Property.PaddingInlineEnd<string | number> | undefined
+          WebkitPaddingStart?: Property.PaddingInlineStart<string | number> | undefined
+          WebkitPerspective?: Property.Perspective<string | number> | undefined
+          WebkitPerspectiveOrigin?: Property.PerspectiveOrigin<string | number> | undefined
+          WebkitPrintColorAdjust?: Property.PrintColorAdjust | undefined
+          WebkitRubyPosition?: Property.RubyPosition | undefined
+          WebkitScrollSnapType?: Property.ScrollSnapType | undefined
+          WebkitShapeMargin?: Property.ShapeMargin<string | number> | undefined
+          WebkitTapHighlightColor?: Property.WebkitTapHighlightColor | undefined
+          WebkitTextCombine?: Property.TextCombineUpright | undefined
+          WebkitTextDecorationColor?: Property.TextDecorationColor | undefined
+          WebkitTextDecorationLine?: Property.TextDecorationLine | undefined
+          WebkitTextDecorationSkip?: Property.TextDecorationSkip | undefined
+          WebkitTextDecorationStyle?: Property.TextDecorationStyle | undefined
+          WebkitTextEmphasisColor?: Property.TextEmphasisColor | undefined
+          WebkitTextEmphasisPosition?: Property.TextEmphasisPosition | undefined
+          WebkitTextEmphasisStyle?: Property.TextEmphasisStyle | undefined
+          WebkitTextFillColor?: Property.WebkitTextFillColor | undefined
+          WebkitTextOrientation?: Property.TextOrientation | undefined
+          WebkitTextSizeAdjust?: Property.TextSizeAdjust | undefined
+          WebkitTextStrokeColor?: Property.WebkitTextStrokeColor | undefined
+          WebkitTextStrokeWidth?: Property.WebkitTextStrokeWidth<string | number> | undefined
+          WebkitTextUnderlinePosition?: Property.TextUnderlinePosition | undefined
+          WebkitTouchCallout?: Property.WebkitTouchCallout | undefined
+          WebkitTransform?: Property.Transform | undefined
+          WebkitTransformOrigin?: Property.TransformOrigin<string | number> | undefined
+          WebkitTransformStyle?: Property.TransformStyle | undefined
+          WebkitTransitionDelay?: Property.TransitionDelay<string & {}> | undefined
+          WebkitTransitionDuration?: Property.TransitionDuration<string & {}> | undefined
+          WebkitTransitionProperty?: Property.TransitionProperty | undefined
+          WebkitTransitionTimingFunction?: Property.TransitionTimingFunction | undefined
+          WebkitUserModify?: Property.WebkitUserModify | undefined
+          WebkitUserSelect?: Property.WebkitUserSelect | undefined
+          WebkitWritingMode?: Property.WritingMode | undefined
+          MozAnimation?: Property.Animation<string & {}> | undefined
+          MozBorderImage?: Property.BorderImage | undefined
+          MozColumnRule?: Property.ColumnRule<string | number> | undefined
+          MozColumns?: Property.Columns<string | number> | undefined
+          MozOutlineRadius?: Property.MozOutlineRadius<string | number> | undefined
+          MozTransition?: Property.Transition<string & {}> | undefined
+          msContentZoomLimit?: Property.MsContentZoomLimit | undefined
+          msContentZoomSnap?: Property.MsContentZoomSnap | undefined
+          msFlex?: Property.Flex<string | number> | undefined
+          msScrollLimit?: Property.MsScrollLimit | undefined
+          msScrollSnapX?: Property.MsScrollSnapX | undefined
+          msScrollSnapY?: Property.MsScrollSnapY | undefined
+          msTransition?: Property.Transition<string & {}> | undefined
+          WebkitAnimation?: Property.Animation<string & {}> | undefined
+          WebkitBorderBefore?: Property.WebkitBorderBefore<string | number> | undefined
+          WebkitBorderImage?: Property.BorderImage | undefined
+          WebkitBorderRadius?: Property.BorderRadius<string | number> | undefined
+          WebkitColumnRule?: Property.ColumnRule<string | number> | undefined
+          WebkitColumns?: Property.Columns<string | number> | undefined
+          WebkitFlex?: Property.Flex<string | number> | undefined
+          WebkitFlexFlow?: Property.FlexFlow | undefined
+          WebkitMask?: Property.WebkitMask<string | number> | undefined
+          WebkitMaskBoxImage?: Property.MaskBorder | undefined
+          WebkitTextEmphasis?: Property.TextEmphasis | undefined
+          WebkitTextStroke?: Property.WebkitTextStroke<string | number> | undefined
+          WebkitTransition?: Property.Transition<string & {}> | undefined
+          boxAlign?: Property.BoxAlign | undefined
+          boxDirection?: Property.BoxDirection | undefined
+          boxFlex?: Property.BoxFlex | undefined
+          boxFlexGroup?: Property.BoxFlexGroup | undefined
+          boxLines?: Property.BoxLines | undefined
+          boxOrdinalGroup?: Property.BoxOrdinalGroup | undefined
+          boxOrient?: Property.BoxOrient | undefined
+          boxPack?: Property.BoxPack | undefined
+          clip?: Property.Clip | undefined
+          fontStretch?: Property.FontStretch | undefined
+          gridColumnGap?: Property.GridColumnGap<string | number> | undefined
+          gridGap?: Property.GridGap<string | number> | undefined
+          gridRowGap?: Property.GridRowGap<string | number> | undefined
+          imeMode?: Property.ImeMode | undefined
+          insetArea?: Property.PositionArea | undefined
+          offsetBlock?: Property.InsetBlock<string | number> | undefined
+          offsetBlockEnd?: Property.InsetBlockEnd<string | number> | undefined
+          offsetBlockStart?: Property.InsetBlockStart<string | number> | undefined
+          offsetInline?: Property.InsetInline<string | number> | undefined
+          offsetInlineEnd?: Property.InsetInlineEnd<string | number> | undefined
+          offsetInlineStart?: Property.InsetInlineStart<string | number> | undefined
+          pageBreakAfter?: Property.PageBreakAfter | undefined
+          pageBreakBefore?: Property.PageBreakBefore | undefined
+          pageBreakInside?: Property.PageBreakInside | undefined
+          positionTryOptions?: Property.PositionTryFallbacks | undefined
+          scrollSnapCoordinate?: Property.ScrollSnapCoordinate<string | number> | undefined
+          scrollSnapDestination?: Property.ScrollSnapDestination<string | number> | undefined
+          scrollSnapPointsX?: Property.ScrollSnapPointsX | undefined
+          scrollSnapPointsY?: Property.ScrollSnapPointsY | undefined
+          scrollSnapTypeX?: Property.ScrollSnapTypeX | undefined
+          scrollSnapTypeY?: Property.ScrollSnapTypeY | undefined
+          KhtmlBoxAlign?: Property.BoxAlign | undefined
+          KhtmlBoxDirection?: Property.BoxDirection | undefined
+          KhtmlBoxFlex?: Property.BoxFlex | undefined
+          KhtmlBoxFlexGroup?: Property.BoxFlexGroup | undefined
+          KhtmlBoxLines?: Property.BoxLines | undefined
+          KhtmlBoxOrdinalGroup?: Property.BoxOrdinalGroup | undefined
+          KhtmlBoxOrient?: Property.BoxOrient | undefined
+          KhtmlBoxPack?: Property.BoxPack | undefined
+          KhtmlLineBreak?: Property.LineBreak | undefined
+          KhtmlOpacity?: Property.Opacity | undefined
+          KhtmlUserSelect?: Property.UserSelect | undefined
+          MozBackgroundClip?: Property.BackgroundClip | undefined
+          MozBackgroundOrigin?: Property.BackgroundOrigin | undefined
+          MozBackgroundSize?: Property.BackgroundSize<string | number> | undefined
+          MozBorderRadius?: Property.BorderRadius<string | number> | undefined
+          MozBorderRadiusBottomleft?: Property.BorderBottomLeftRadius<string | number> | undefined
+          MozBorderRadiusBottomright?: Property.BorderBottomRightRadius<string | number> | undefined
+          MozBorderRadiusTopleft?: Property.BorderTopLeftRadius<string | number> | undefined
+          MozBorderRadiusTopright?: Property.BorderTopRightRadius<string | number> | undefined
+          MozBoxAlign?: Property.BoxAlign | undefined
+          MozBoxDirection?: Property.BoxDirection | undefined
+          MozBoxFlex?: Property.BoxFlex | undefined
+          MozBoxOrdinalGroup?: Property.BoxOrdinalGroup | undefined
+          MozBoxOrient?: Property.BoxOrient | undefined
+          MozBoxPack?: Property.BoxPack | undefined
+          MozBoxShadow?: Property.BoxShadow | undefined
+          MozColumnCount?: Property.ColumnCount | undefined
+          MozColumnFill?: Property.ColumnFill | undefined
+          MozFloatEdge?: Property.MozFloatEdge | undefined
+          MozForceBrokenImageIcon?: Property.MozForceBrokenImageIcon | undefined
+          MozOpacity?: Property.Opacity | undefined
+          MozOutline?: Property.Outline<string | number> | undefined
+          MozOutlineColor?: Property.OutlineColor | undefined
+          MozOutlineStyle?: Property.OutlineStyle | undefined
+          MozOutlineWidth?: Property.OutlineWidth<string | number> | undefined
+          MozTextAlignLast?: Property.TextAlignLast | undefined
+          MozTextDecorationColor?: Property.TextDecorationColor | undefined
+          MozTextDecorationLine?: Property.TextDecorationLine | undefined
+          MozTextDecorationStyle?: Property.TextDecorationStyle | undefined
+          MozTransitionDelay?: Property.TransitionDelay<string & {}> | undefined
+          MozTransitionDuration?: Property.TransitionDuration<string & {}> | undefined
+          MozTransitionProperty?: Property.TransitionProperty | undefined
+          MozTransitionTimingFunction?: Property.TransitionTimingFunction | undefined
+          MozUserFocus?: Property.MozUserFocus | undefined
+          MozUserInput?: Property.MozUserInput | undefined
+          msImeMode?: Property.ImeMode | undefined
+          OAnimation?: Property.Animation<string & {}> | undefined
+          OAnimationDelay?: Property.AnimationDelay<string & {}> | undefined
+          OAnimationDirection?: Property.AnimationDirection | undefined
+          OAnimationDuration?: Property.AnimationDuration<string & {}> | undefined
+          OAnimationFillMode?: Property.AnimationFillMode | undefined
+          OAnimationIterationCount?: Property.AnimationIterationCount | undefined
+          OAnimationName?: Property.AnimationName | undefined
+          OAnimationPlayState?: Property.AnimationPlayState | undefined
+          OAnimationTimingFunction?: Property.AnimationTimingFunction | undefined
+          OBackgroundSize?: Property.BackgroundSize<string | number> | undefined
+          OBorderImage?: Property.BorderImage | undefined
+          OObjectFit?: Property.ObjectFit | undefined
+          OObjectPosition?: Property.ObjectPosition<string | number> | undefined
+          OTabSize?: Property.TabSize<string | number> | undefined
+          OTextOverflow?: Property.TextOverflow | undefined
+          OTransform?: Property.Transform | undefined
+          OTransformOrigin?: Property.TransformOrigin<string | number> | undefined
+          OTransition?: Property.Transition<string & {}> | undefined
+          OTransitionDelay?: Property.TransitionDelay<string & {}> | undefined
+          OTransitionDuration?: Property.TransitionDuration<string & {}> | undefined
+          OTransitionProperty?: Property.TransitionProperty | undefined
+          OTransitionTimingFunction?: Property.TransitionTimingFunction | undefined
+          WebkitBoxAlign?: Property.BoxAlign | undefined
+          WebkitBoxDirection?: Property.BoxDirection | undefined
+          WebkitBoxFlex?: Property.BoxFlex | undefined
+          WebkitBoxFlexGroup?: Property.BoxFlexGroup | undefined
+          WebkitBoxLines?: Property.BoxLines | undefined
+          WebkitBoxOrdinalGroup?: Property.BoxOrdinalGroup | undefined
+          WebkitBoxOrient?: Property.BoxOrient | undefined
+          WebkitBoxPack?: Property.BoxPack | undefined
+          colorInterpolation?: Property.ColorInterpolation | undefined
+          colorRendering?: Property.ColorRendering | undefined
+          glyphOrientationVertical?: Property.GlyphOrientationVertical | undefined
+        }
+        id: string
+        position: XYPosition
+        sourcePosition?: Position
+        targetPosition?: Position
+        hidden?: boolean
+        selected?: boolean
+        dragging?: boolean
+        draggable?: boolean
+        selectable?: boolean
+        connectable?: boolean
+        deletable?: boolean
+        dragHandle?: string
+        width?: number
+        height?: number
+        initialWidth?: number
+        initialHeight?: number
+        parentId?: string
+        zIndex?: number
+        extent?: 'parent' | CoordinateExtent | null
+        expandParent?: boolean
+        ariaLabel?: string
+        origin?: NodeOrigin
+        handles?: NodeHandle[]
+        measured?: { width?: number; height?: number }
+        type?: string | undefined
+        className?: string
+        resizing?: boolean
+        focusable?: boolean
+        ariaRole?: AriaRole
+        domAttributes?: Omit<
+          HTMLAttributes<HTMLDivElement>,
+          | 'id'
+          | 'style'
+          | 'className'
+          | 'draggable'
+          | 'role'
+          | 'aria-label'
+          | 'defaultValue'
+          | 'dangerouslySetInnerHTML'
+          | keyof DOMAttributes<HTMLDivElement>
+        >
+      } => ({
+        ...node,
+        data: { ...node.data, isHidden: false },
+        style: {
+          ...node.style,
+          opacity: 1,
+          borderWidth: 0,
+          borderColor: 'none',
+        },
+      }),
+    ),
   }
 }
 export function applyUnsetHighlightToNodes(nodes: Node[], unsetNodeIds: Set<string>): Node[] {
-  return nodes.map((node) => {
-    const isUnset = unsetNodeIds.has(node.id)
-
-    return {
-      ...node,
+  return nodes.map(
+    (
+      node,
+    ): {
       style: {
-        ...node.style,
-        borderColor: isUnset ? (node.data.defaultValue ? 'yellow' : 'red') : 'none',
-        borderWidth: isUnset ? 3 : 0,
-      },
-    }
-  })
+        borderColor: 'none' | 'red' | 'yellow'
+        borderWidth: number
+        accentColor?: Property.AccentColor | undefined
+        alignContent?: Property.AlignContent | undefined
+        alignItems?: Property.AlignItems | undefined
+        alignSelf?: Property.AlignSelf | undefined
+        alignTracks?: Property.AlignTracks | undefined
+        alignmentBaseline?: Property.AlignmentBaseline | undefined
+        anchorName?: Property.AnchorName | undefined
+        anchorScope?: Property.AnchorScope | undefined
+        animationComposition?: Property.AnimationComposition | undefined
+        animationDelay?: Property.AnimationDelay<string & {}> | undefined
+        animationDirection?: Property.AnimationDirection | undefined
+        animationDuration?: Property.AnimationDuration<string & {}> | undefined
+        animationFillMode?: Property.AnimationFillMode | undefined
+        animationIterationCount?: Property.AnimationIterationCount | undefined
+        animationName?: Property.AnimationName | undefined
+        animationPlayState?: Property.AnimationPlayState | undefined
+        animationRangeEnd?: Property.AnimationRangeEnd<string | number> | undefined
+        animationRangeStart?: Property.AnimationRangeStart<string | number> | undefined
+        animationTimeline?: Property.AnimationTimeline | undefined
+        animationTimingFunction?: Property.AnimationTimingFunction | undefined
+        appearance?: Property.Appearance | undefined
+        aspectRatio?: Property.AspectRatio | undefined
+        backdropFilter?: Property.BackdropFilter | undefined
+        backfaceVisibility?: Property.BackfaceVisibility | undefined
+        backgroundAttachment?: Property.BackgroundAttachment | undefined
+        backgroundBlendMode?: Property.BackgroundBlendMode | undefined
+        backgroundClip?: Property.BackgroundClip | undefined
+        backgroundColor?: Property.BackgroundColor | undefined
+        backgroundImage?: Property.BackgroundImage | undefined
+        backgroundOrigin?: Property.BackgroundOrigin | undefined
+        backgroundPositionX?: Property.BackgroundPositionX<string | number> | undefined
+        backgroundPositionY?: Property.BackgroundPositionY<string | number> | undefined
+        backgroundRepeat?: Property.BackgroundRepeat | undefined
+        backgroundSize?: Property.BackgroundSize<string | number> | undefined
+        baselineShift?: Property.BaselineShift<string | number> | undefined
+        blockSize?: Property.BlockSize<string | number> | undefined
+        borderBlockEndColor?: Property.BorderBlockEndColor | undefined
+        borderBlockEndStyle?: Property.BorderBlockEndStyle | undefined
+        borderBlockEndWidth?: Property.BorderBlockEndWidth<string | number> | undefined
+        borderBlockStartColor?: Property.BorderBlockStartColor | undefined
+        borderBlockStartStyle?: Property.BorderBlockStartStyle | undefined
+        borderBlockStartWidth?: Property.BorderBlockStartWidth<string | number> | undefined
+        borderBottomColor?: Property.BorderBottomColor | undefined
+        borderBottomLeftRadius?: Property.BorderBottomLeftRadius<string | number> | undefined
+        borderBottomRightRadius?: Property.BorderBottomRightRadius<string | number> | undefined
+        borderBottomStyle?: Property.BorderBottomStyle | undefined
+        borderBottomWidth?: Property.BorderBottomWidth<string | number> | undefined
+        borderCollapse?: Property.BorderCollapse | undefined
+        borderEndEndRadius?: Property.BorderEndEndRadius<string | number> | undefined
+        borderEndStartRadius?: Property.BorderEndStartRadius<string | number> | undefined
+        borderImageOutset?: Property.BorderImageOutset<string | number> | undefined
+        borderImageRepeat?: Property.BorderImageRepeat | undefined
+        borderImageSlice?: Property.BorderImageSlice | undefined
+        borderImageSource?: Property.BorderImageSource | undefined
+        borderImageWidth?: Property.BorderImageWidth<string | number> | undefined
+        borderInlineEndColor?: Property.BorderInlineEndColor | undefined
+        borderInlineEndStyle?: Property.BorderInlineEndStyle | undefined
+        borderInlineEndWidth?: Property.BorderInlineEndWidth<string | number> | undefined
+        borderInlineStartColor?: Property.BorderInlineStartColor | undefined
+        borderInlineStartStyle?: Property.BorderInlineStartStyle | undefined
+        borderInlineStartWidth?: Property.BorderInlineStartWidth<string | number> | undefined
+        borderLeftColor?: Property.BorderLeftColor | undefined
+        borderLeftStyle?: Property.BorderLeftStyle | undefined
+        borderLeftWidth?: Property.BorderLeftWidth<string | number> | undefined
+        borderRightColor?: Property.BorderRightColor | undefined
+        borderRightStyle?: Property.BorderRightStyle | undefined
+        borderRightWidth?: Property.BorderRightWidth<string | number> | undefined
+        borderSpacing?: Property.BorderSpacing<string | number> | undefined
+        borderStartEndRadius?: Property.BorderStartEndRadius<string | number> | undefined
+        borderStartStartRadius?: Property.BorderStartStartRadius<string | number> | undefined
+        borderTopColor?: Property.BorderTopColor | undefined
+        borderTopLeftRadius?: Property.BorderTopLeftRadius<string | number> | undefined
+        borderTopRightRadius?: Property.BorderTopRightRadius<string | number> | undefined
+        borderTopStyle?: Property.BorderTopStyle | undefined
+        borderTopWidth?: Property.BorderTopWidth<string | number> | undefined
+        bottom?: Property.Bottom<string | number> | undefined
+        boxDecorationBreak?: Property.BoxDecorationBreak | undefined
+        boxShadow?: Property.BoxShadow | undefined
+        boxSizing?: Property.BoxSizing | undefined
+        breakAfter?: Property.BreakAfter | undefined
+        breakBefore?: Property.BreakBefore | undefined
+        breakInside?: Property.BreakInside | undefined
+        captionSide?: Property.CaptionSide | undefined
+        caretColor?: Property.CaretColor | undefined
+        caretShape?: Property.CaretShape | undefined
+        clear?: Property.Clear | undefined
+        clipPath?: Property.ClipPath | undefined
+        clipRule?: Property.ClipRule | undefined
+        color?: Property.Color | undefined
+        colorAdjust?: Property.PrintColorAdjust | undefined
+        colorInterpolationFilters?: Property.ColorInterpolationFilters | undefined
+        colorScheme?: Property.ColorScheme | undefined
+        columnCount?: Property.ColumnCount | undefined
+        columnFill?: Property.ColumnFill | undefined
+        columnGap?: Property.ColumnGap<string | number> | undefined
+        columnRuleColor?: Property.ColumnRuleColor | undefined
+        columnRuleStyle?: Property.ColumnRuleStyle | undefined
+        columnRuleWidth?: Property.ColumnRuleWidth<string | number> | undefined
+        columnSpan?: Property.ColumnSpan | undefined
+        columnWidth?: Property.ColumnWidth<string | number> | undefined
+        contain?: Property.Contain | undefined
+        containIntrinsicBlockSize?: Property.ContainIntrinsicBlockSize<string | number> | undefined
+        containIntrinsicHeight?: Property.ContainIntrinsicHeight<string | number> | undefined
+        containIntrinsicInlineSize?: Property.ContainIntrinsicInlineSize<string | number> | undefined
+        containIntrinsicWidth?: Property.ContainIntrinsicWidth<string | number> | undefined
+        containerName?: Property.ContainerName | undefined
+        containerType?: Property.ContainerType | undefined
+        content?: Property.Content | undefined
+        contentVisibility?: Property.ContentVisibility | undefined
+        counterIncrement?: Property.CounterIncrement | undefined
+        counterReset?: Property.CounterReset | undefined
+        counterSet?: Property.CounterSet | undefined
+        cursor?: Property.Cursor | undefined
+        cx?: Property.Cx<string | number> | undefined
+        cy?: Property.Cy<string | number> | undefined
+        d?: Property.D | undefined
+        direction?: Property.Direction | undefined
+        display?: Property.Display | undefined
+        dominantBaseline?: Property.DominantBaseline | undefined
+        emptyCells?: Property.EmptyCells | undefined
+        fieldSizing?: Property.FieldSizing | undefined
+        fill?: Property.Fill | undefined
+        fillOpacity?: Property.FillOpacity | undefined
+        fillRule?: Property.FillRule | undefined
+        filter?: Property.Filter | undefined
+        flexBasis?: Property.FlexBasis<string | number> | undefined
+        flexDirection?: Property.FlexDirection | undefined
+        flexGrow?: Property.FlexGrow | undefined
+        flexShrink?: Property.FlexShrink | undefined
+        flexWrap?: Property.FlexWrap | undefined
+        float?: Property.Float | undefined
+        floodColor?: Property.FloodColor | undefined
+        floodOpacity?: Property.FloodOpacity | undefined
+        fontFamily?: Property.FontFamily | undefined
+        fontFeatureSettings?: Property.FontFeatureSettings | undefined
+        fontKerning?: Property.FontKerning | undefined
+        fontLanguageOverride?: Property.FontLanguageOverride | undefined
+        fontOpticalSizing?: Property.FontOpticalSizing | undefined
+        fontPalette?: Property.FontPalette | undefined
+        fontSize?: Property.FontSize<string | number> | undefined
+        fontSizeAdjust?: Property.FontSizeAdjust | undefined
+        fontSmooth?: Property.FontSmooth<string | number> | undefined
+        fontStyle?: Property.FontStyle | undefined
+        fontSynthesis?: Property.FontSynthesis | undefined
+        fontSynthesisPosition?: Property.FontSynthesisPosition | undefined
+        fontSynthesisSmallCaps?: Property.FontSynthesisSmallCaps | undefined
+        fontSynthesisStyle?: Property.FontSynthesisStyle | undefined
+        fontSynthesisWeight?: Property.FontSynthesisWeight | undefined
+        fontVariant?: Property.FontVariant | undefined
+        fontVariantAlternates?: Property.FontVariantAlternates | undefined
+        fontVariantCaps?: Property.FontVariantCaps | undefined
+        fontVariantEastAsian?: Property.FontVariantEastAsian | undefined
+        fontVariantEmoji?: Property.FontVariantEmoji | undefined
+        fontVariantLigatures?: Property.FontVariantLigatures | undefined
+        fontVariantNumeric?: Property.FontVariantNumeric | undefined
+        fontVariantPosition?: Property.FontVariantPosition | undefined
+        fontVariationSettings?: Property.FontVariationSettings | undefined
+        fontWeight?: Property.FontWeight | undefined
+        fontWidth?: Property.FontWidth | undefined
+        forcedColorAdjust?: Property.ForcedColorAdjust | undefined
+        gridAutoColumns?: Property.GridAutoColumns<string | number> | undefined
+        gridAutoFlow?: Property.GridAutoFlow | undefined
+        gridAutoRows?: Property.GridAutoRows<string | number> | undefined
+        gridColumnEnd?: Property.GridColumnEnd | undefined
+        gridColumnStart?: Property.GridColumnStart | undefined
+        gridRowEnd?: Property.GridRowEnd | undefined
+        gridRowStart?: Property.GridRowStart | undefined
+        gridTemplateAreas?: Property.GridTemplateAreas | undefined
+        gridTemplateColumns?: Property.GridTemplateColumns<string | number> | undefined
+        gridTemplateRows?: Property.GridTemplateRows<string | number> | undefined
+        hangingPunctuation?: Property.HangingPunctuation | undefined
+        height?: Property.Height<string | number> | undefined
+        hyphenateCharacter?: Property.HyphenateCharacter | undefined
+        hyphenateLimitChars?: Property.HyphenateLimitChars | undefined
+        hyphens?: Property.Hyphens | undefined
+        imageOrientation?: Property.ImageOrientation | undefined
+        imageRendering?: Property.ImageRendering | undefined
+        imageResolution?: Property.ImageResolution | undefined
+        initialLetter?: Property.InitialLetter | undefined
+        initialLetterAlign?: Property.InitialLetterAlign | undefined
+        inlineSize?: Property.InlineSize<string | number> | undefined
+        insetBlockEnd?: Property.InsetBlockEnd<string | number> | undefined
+        insetBlockStart?: Property.InsetBlockStart<string | number> | undefined
+        insetInlineEnd?: Property.InsetInlineEnd<string | number> | undefined
+        insetInlineStart?: Property.InsetInlineStart<string | number> | undefined
+        interpolateSize?: Property.InterpolateSize | undefined
+        isolation?: Property.Isolation | undefined
+        justifyContent?: Property.JustifyContent | undefined
+        justifyItems?: Property.JustifyItems | undefined
+        justifySelf?: Property.JustifySelf | undefined
+        justifyTracks?: Property.JustifyTracks | undefined
+        left?: Property.Left<string | number> | undefined
+        letterSpacing?: Property.LetterSpacing<string | number> | undefined
+        lightingColor?: Property.LightingColor | undefined
+        lineBreak?: Property.LineBreak | undefined
+        lineHeight?: Property.LineHeight<string | number> | undefined
+        lineHeightStep?: Property.LineHeightStep<string | number> | undefined
+        listStyleImage?: Property.ListStyleImage | undefined
+        listStylePosition?: Property.ListStylePosition | undefined
+        listStyleType?: Property.ListStyleType | undefined
+        marginBlockEnd?: Property.MarginBlockEnd<string | number> | undefined
+        marginBlockStart?: Property.MarginBlockStart<string | number> | undefined
+        marginBottom?: Property.MarginBottom<string | number> | undefined
+        marginInlineEnd?: Property.MarginInlineEnd<string | number> | undefined
+        marginInlineStart?: Property.MarginInlineStart<string | number> | undefined
+        marginLeft?: Property.MarginLeft<string | number> | undefined
+        marginRight?: Property.MarginRight<string | number> | undefined
+        marginTop?: Property.MarginTop<string | number> | undefined
+        marginTrim?: Property.MarginTrim | undefined
+        marker?: Property.Marker | undefined
+        markerEnd?: Property.MarkerEnd | undefined
+        markerMid?: Property.MarkerMid | undefined
+        markerStart?: Property.MarkerStart | undefined
+        maskBorderMode?: Property.MaskBorderMode | undefined
+        maskBorderOutset?: Property.MaskBorderOutset<string | number> | undefined
+        maskBorderRepeat?: Property.MaskBorderRepeat | undefined
+        maskBorderSlice?: Property.MaskBorderSlice | undefined
+        maskBorderSource?: Property.MaskBorderSource | undefined
+        maskBorderWidth?: Property.MaskBorderWidth<string | number> | undefined
+        maskClip?: Property.MaskClip | undefined
+        maskComposite?: Property.MaskComposite | undefined
+        maskImage?: Property.MaskImage | undefined
+        maskMode?: Property.MaskMode | undefined
+        maskOrigin?: Property.MaskOrigin | undefined
+        maskPosition?: Property.MaskPosition<string | number> | undefined
+        maskRepeat?: Property.MaskRepeat | undefined
+        maskSize?: Property.MaskSize<string | number> | undefined
+        maskType?: Property.MaskType | undefined
+        masonryAutoFlow?: Property.MasonryAutoFlow | undefined
+        mathDepth?: Property.MathDepth | undefined
+        mathShift?: Property.MathShift | undefined
+        mathStyle?: Property.MathStyle | undefined
+        maxBlockSize?: Property.MaxBlockSize<string | number> | undefined
+        maxHeight?: Property.MaxHeight<string | number> | undefined
+        maxInlineSize?: Property.MaxInlineSize<string | number> | undefined
+        maxLines?: Property.MaxLines | undefined
+        maxWidth?: Property.MaxWidth<string | number> | undefined
+        minBlockSize?: Property.MinBlockSize<string | number> | undefined
+        minHeight?: Property.MinHeight<string | number> | undefined
+        minInlineSize?: Property.MinInlineSize<string | number> | undefined
+        minWidth?: Property.MinWidth<string | number> | undefined
+        mixBlendMode?: Property.MixBlendMode | undefined
+        motionDistance?: Property.OffsetDistance<string | number> | undefined
+        motionPath?: Property.OffsetPath | undefined
+        motionRotation?: Property.OffsetRotate | undefined
+        objectFit?: Property.ObjectFit | undefined
+        objectPosition?: Property.ObjectPosition<string | number> | undefined
+        objectViewBox?: Property.ObjectViewBox | undefined
+        offsetAnchor?: Property.OffsetAnchor<string | number> | undefined
+        offsetDistance?: Property.OffsetDistance<string | number> | undefined
+        offsetPath?: Property.OffsetPath | undefined
+        offsetPosition?: Property.OffsetPosition<string | number> | undefined
+        offsetRotate?: Property.OffsetRotate | undefined
+        offsetRotation?: Property.OffsetRotate | undefined
+        opacity?: Property.Opacity | undefined
+        order?: Property.Order | undefined
+        orphans?: Property.Orphans | undefined
+        outlineColor?: Property.OutlineColor | undefined
+        outlineOffset?: Property.OutlineOffset<string | number> | undefined
+        outlineStyle?: Property.OutlineStyle | undefined
+        outlineWidth?: Property.OutlineWidth<string | number> | undefined
+        overflowAnchor?: Property.OverflowAnchor | undefined
+        overflowBlock?: Property.OverflowBlock | undefined
+        overflowClipBox?: Property.OverflowClipBox | undefined
+        overflowClipMargin?: Property.OverflowClipMargin<string | number> | undefined
+        overflowInline?: Property.OverflowInline | undefined
+        overflowWrap?: Property.OverflowWrap | undefined
+        overflowX?: Property.OverflowX | undefined
+        overflowY?: Property.OverflowY | undefined
+        overlay?: Property.Overlay | undefined
+        overscrollBehaviorBlock?: Property.OverscrollBehaviorBlock | undefined
+        overscrollBehaviorInline?: Property.OverscrollBehaviorInline | undefined
+        overscrollBehaviorX?: Property.OverscrollBehaviorX | undefined
+        overscrollBehaviorY?: Property.OverscrollBehaviorY | undefined
+        paddingBlockEnd?: Property.PaddingBlockEnd<string | number> | undefined
+        paddingBlockStart?: Property.PaddingBlockStart<string | number> | undefined
+        paddingBottom?: Property.PaddingBottom<string | number> | undefined
+        paddingInlineEnd?: Property.PaddingInlineEnd<string | number> | undefined
+        paddingInlineStart?: Property.PaddingInlineStart<string | number> | undefined
+        paddingLeft?: Property.PaddingLeft<string | number> | undefined
+        paddingRight?: Property.PaddingRight<string | number> | undefined
+        paddingTop?: Property.PaddingTop<string | number> | undefined
+        page?: Property.Page | undefined
+        paintOrder?: Property.PaintOrder | undefined
+        perspective?: Property.Perspective<string | number> | undefined
+        perspectiveOrigin?: Property.PerspectiveOrigin<string | number> | undefined
+        pointerEvents?: Property.PointerEvents | undefined
+        position?: Property.Position | undefined
+        positionAnchor?: Property.PositionAnchor | undefined
+        positionArea?: Property.PositionArea | undefined
+        positionTryFallbacks?: Property.PositionTryFallbacks | undefined
+        positionTryOrder?: Property.PositionTryOrder | undefined
+        positionVisibility?: Property.PositionVisibility | undefined
+        printColorAdjust?: Property.PrintColorAdjust | undefined
+        quotes?: Property.Quotes | undefined
+        r?: Property.R<string | number> | undefined
+        resize?: Property.Resize | undefined
+        right?: Property.Right<string | number> | undefined
+        rotate?: Property.Rotate | undefined
+        rowGap?: Property.RowGap<string | number> | undefined
+        rubyAlign?: Property.RubyAlign | undefined
+        rubyMerge?: Property.RubyMerge | undefined
+        rubyOverhang?: Property.RubyOverhang | undefined
+        rubyPosition?: Property.RubyPosition | undefined
+        rx?: Property.Rx<string | number> | undefined
+        ry?: Property.Ry<string | number> | undefined
+        scale?: Property.Scale | undefined
+        scrollBehavior?: Property.ScrollBehavior | undefined
+        scrollInitialTarget?: Property.ScrollInitialTarget | undefined
+        scrollMarginBlockEnd?: Property.ScrollMarginBlockEnd<string | number> | undefined
+        scrollMarginBlockStart?: Property.ScrollMarginBlockStart<string | number> | undefined
+        scrollMarginBottom?: Property.ScrollMarginBottom<string | number> | undefined
+        scrollMarginInlineEnd?: Property.ScrollMarginInlineEnd<string | number> | undefined
+        scrollMarginInlineStart?: Property.ScrollMarginInlineStart<string | number> | undefined
+        scrollMarginLeft?: Property.ScrollMarginLeft<string | number> | undefined
+        scrollMarginRight?: Property.ScrollMarginRight<string | number> | undefined
+        scrollMarginTop?: Property.ScrollMarginTop<string | number> | undefined
+        scrollPaddingBlockEnd?: Property.ScrollPaddingBlockEnd<string | number> | undefined
+        scrollPaddingBlockStart?: Property.ScrollPaddingBlockStart<string | number> | undefined
+        scrollPaddingBottom?: Property.ScrollPaddingBottom<string | number> | undefined
+        scrollPaddingInlineEnd?: Property.ScrollPaddingInlineEnd<string | number> | undefined
+        scrollPaddingInlineStart?: Property.ScrollPaddingInlineStart<string | number> | undefined
+        scrollPaddingLeft?: Property.ScrollPaddingLeft<string | number> | undefined
+        scrollPaddingRight?: Property.ScrollPaddingRight<string | number> | undefined
+        scrollPaddingTop?: Property.ScrollPaddingTop<string | number> | undefined
+        scrollSnapAlign?: Property.ScrollSnapAlign | undefined
+        scrollSnapMarginBottom?: Property.ScrollMarginBottom<string | number> | undefined
+        scrollSnapMarginLeft?: Property.ScrollMarginLeft<string | number> | undefined
+        scrollSnapMarginRight?: Property.ScrollMarginRight<string | number> | undefined
+        scrollSnapMarginTop?: Property.ScrollMarginTop<string | number> | undefined
+        scrollSnapStop?: Property.ScrollSnapStop | undefined
+        scrollSnapType?: Property.ScrollSnapType | undefined
+        scrollTimelineAxis?: Property.ScrollTimelineAxis | undefined
+        scrollTimelineName?: Property.ScrollTimelineName | undefined
+        scrollbarColor?: Property.ScrollbarColor | undefined
+        scrollbarGutter?: Property.ScrollbarGutter | undefined
+        scrollbarWidth?: Property.ScrollbarWidth | undefined
+        shapeImageThreshold?: Property.ShapeImageThreshold | undefined
+        shapeMargin?: Property.ShapeMargin<string | number> | undefined
+        shapeOutside?: Property.ShapeOutside | undefined
+        shapeRendering?: Property.ShapeRendering | undefined
+        speakAs?: Property.SpeakAs | undefined
+        stopColor?: Property.StopColor | undefined
+        stopOpacity?: Property.StopOpacity | undefined
+        stroke?: Property.Stroke | undefined
+        strokeColor?: Property.StrokeColor | undefined
+        strokeDasharray?: Property.StrokeDasharray<string | number> | undefined
+        strokeDashoffset?: Property.StrokeDashoffset<string | number> | undefined
+        strokeLinecap?: Property.StrokeLinecap | undefined
+        strokeLinejoin?: Property.StrokeLinejoin | undefined
+        strokeMiterlimit?: Property.StrokeMiterlimit | undefined
+        strokeOpacity?: Property.StrokeOpacity | undefined
+        strokeWidth?: Property.StrokeWidth<string | number> | undefined
+        tabSize?: Property.TabSize<string | number> | undefined
+        tableLayout?: Property.TableLayout | undefined
+        textAlign?: Property.TextAlign | undefined
+        textAlignLast?: Property.TextAlignLast | undefined
+        textAnchor?: Property.TextAnchor | undefined
+        textAutospace?: Property.TextAutospace | undefined
+        textBox?: Property.TextBox | undefined
+        textBoxEdge?: Property.TextBoxEdge | undefined
+        textBoxTrim?: Property.TextBoxTrim | undefined
+        textCombineUpright?: Property.TextCombineUpright | undefined
+        textDecorationColor?: Property.TextDecorationColor | undefined
+        textDecorationLine?: Property.TextDecorationLine | undefined
+        textDecorationSkip?: Property.TextDecorationSkip | undefined
+        textDecorationSkipInk?: Property.TextDecorationSkipInk | undefined
+        textDecorationStyle?: Property.TextDecorationStyle | undefined
+        textDecorationThickness?: Property.TextDecorationThickness<string | number> | undefined
+        textEmphasisColor?: Property.TextEmphasisColor | undefined
+        textEmphasisPosition?: Property.TextEmphasisPosition | undefined
+        textEmphasisStyle?: Property.TextEmphasisStyle | undefined
+        textIndent?: Property.TextIndent<string | number> | undefined
+        textJustify?: Property.TextJustify | undefined
+        textOrientation?: Property.TextOrientation | undefined
+        textOverflow?: Property.TextOverflow | undefined
+        textRendering?: Property.TextRendering | undefined
+        textShadow?: Property.TextShadow | undefined
+        textSizeAdjust?: Property.TextSizeAdjust | undefined
+        textSpacingTrim?: Property.TextSpacingTrim | undefined
+        textTransform?: Property.TextTransform | undefined
+        textUnderlineOffset?: Property.TextUnderlineOffset<string | number> | undefined
+        textUnderlinePosition?: Property.TextUnderlinePosition | undefined
+        textWrapMode?: Property.TextWrapMode | undefined
+        textWrapStyle?: Property.TextWrapStyle | undefined
+        timelineScope?: Property.TimelineScope | undefined
+        top?: Property.Top<string | number> | undefined
+        touchAction?: Property.TouchAction | undefined
+        transform?: Property.Transform | undefined
+        transformBox?: Property.TransformBox | undefined
+        transformOrigin?: Property.TransformOrigin<string | number> | undefined
+        transformStyle?: Property.TransformStyle | undefined
+        transitionBehavior?: Property.TransitionBehavior | undefined
+        transitionDelay?: Property.TransitionDelay<string & {}> | undefined
+        transitionDuration?: Property.TransitionDuration<string & {}> | undefined
+        transitionProperty?: Property.TransitionProperty | undefined
+        transitionTimingFunction?: Property.TransitionTimingFunction | undefined
+        translate?: Property.Translate<string | number> | undefined
+        unicodeBidi?: Property.UnicodeBidi | undefined
+        userSelect?: Property.UserSelect | undefined
+        vectorEffect?: Property.VectorEffect | undefined
+        verticalAlign?: Property.VerticalAlign<string | number> | undefined
+        viewTimelineAxis?: Property.ViewTimelineAxis | undefined
+        viewTimelineInset?: Property.ViewTimelineInset<string | number> | undefined
+        viewTimelineName?: Property.ViewTimelineName | undefined
+        viewTransitionClass?: Property.ViewTransitionClass | undefined
+        viewTransitionName?: Property.ViewTransitionName | undefined
+        visibility?: Property.Visibility | undefined
+        whiteSpace?: Property.WhiteSpace | undefined
+        whiteSpaceCollapse?: Property.WhiteSpaceCollapse | undefined
+        widows?: Property.Widows | undefined
+        width?: Property.Width<string | number> | undefined
+        willChange?: Property.WillChange | undefined
+        wordBreak?: Property.WordBreak | undefined
+        wordSpacing?: Property.WordSpacing<string | number> | undefined
+        wordWrap?: Property.WordWrap | undefined
+        writingMode?: Property.WritingMode | undefined
+        x?: Property.X<string | number> | undefined
+        y?: Property.Y<string | number> | undefined
+        zIndex?: Property.ZIndex | undefined
+        zoom?: Property.Zoom | undefined
+        all?: Property.All | undefined
+        animation?: Property.Animation<string & {}> | undefined
+        animationRange?: Property.AnimationRange<string | number> | undefined
+        background?: Property.Background<string | number> | undefined
+        backgroundPosition?: Property.BackgroundPosition<string | number> | undefined
+        border?: Property.Border<string | number> | undefined
+        borderBlock?: Property.BorderBlock<string | number> | undefined
+        borderBlockColor?: Property.BorderBlockColor | undefined
+        borderBlockEnd?: Property.BorderBlockEnd<string | number> | undefined
+        borderBlockStart?: Property.BorderBlockStart<string | number> | undefined
+        borderBlockStyle?: Property.BorderBlockStyle | undefined
+        borderBlockWidth?: Property.BorderBlockWidth<string | number> | undefined
+        borderBottom?: Property.BorderBottom<string | number> | undefined
+        borderImage?: Property.BorderImage | undefined
+        borderInline?: Property.BorderInline<string | number> | undefined
+        borderInlineColor?: Property.BorderInlineColor | undefined
+        borderInlineEnd?: Property.BorderInlineEnd<string | number> | undefined
+        borderInlineStart?: Property.BorderInlineStart<string | number> | undefined
+        borderInlineStyle?: Property.BorderInlineStyle | undefined
+        borderInlineWidth?: Property.BorderInlineWidth<string | number> | undefined
+        borderLeft?: Property.BorderLeft<string | number> | undefined
+        borderRadius?: Property.BorderRadius<string | number> | undefined
+        borderRight?: Property.BorderRight<string | number> | undefined
+        borderStyle?: Property.BorderStyle | undefined
+        borderTop?: Property.BorderTop<string | number> | undefined
+        caret?: Property.Caret | undefined
+        columnRule?: Property.ColumnRule<string | number> | undefined
+        columns?: Property.Columns<string | number> | undefined
+        containIntrinsicSize?: Property.ContainIntrinsicSize<string | number> | undefined
+        container?: Property.Container | undefined
+        flex?: Property.Flex<string | number> | undefined
+        flexFlow?: Property.FlexFlow | undefined
+        font?: Property.Font | undefined
+        gap?: Property.Gap<string | number> | undefined
+        grid?: Property.Grid | undefined
+        gridArea?: Property.GridArea | undefined
+        gridColumn?: Property.GridColumn | undefined
+        gridRow?: Property.GridRow | undefined
+        gridTemplate?: Property.GridTemplate | undefined
+        inset?: Property.Inset<string | number> | undefined
+        insetBlock?: Property.InsetBlock<string | number> | undefined
+        insetInline?: Property.InsetInline<string | number> | undefined
+        lineClamp?: Property.LineClamp | undefined
+        listStyle?: Property.ListStyle | undefined
+        margin?: Property.Margin<string | number> | undefined
+        marginBlock?: Property.MarginBlock<string | number> | undefined
+        marginInline?: Property.MarginInline<string | number> | undefined
+        mask?: Property.Mask<string | number> | undefined
+        maskBorder?: Property.MaskBorder | undefined
+        motion?: Property.Offset<string | number> | undefined
+        offset?: Property.Offset<string | number> | undefined
+        outline?: Property.Outline<string | number> | undefined
+        overflow?: Property.Overflow | undefined
+        overscrollBehavior?: Property.OverscrollBehavior | undefined
+        padding?: Property.Padding<string | number> | undefined
+        paddingBlock?: Property.PaddingBlock<string | number> | undefined
+        paddingInline?: Property.PaddingInline<string | number> | undefined
+        placeContent?: Property.PlaceContent | undefined
+        placeItems?: Property.PlaceItems | undefined
+        placeSelf?: Property.PlaceSelf | undefined
+        positionTry?: Property.PositionTry | undefined
+        scrollMargin?: Property.ScrollMargin<string | number> | undefined
+        scrollMarginBlock?: Property.ScrollMarginBlock<string | number> | undefined
+        scrollMarginInline?: Property.ScrollMarginInline<string | number> | undefined
+        scrollPadding?: Property.ScrollPadding<string | number> | undefined
+        scrollPaddingBlock?: Property.ScrollPaddingBlock<string | number> | undefined
+        scrollPaddingInline?: Property.ScrollPaddingInline<string | number> | undefined
+        scrollSnapMargin?: Property.ScrollMargin<string | number> | undefined
+        scrollTimeline?: Property.ScrollTimeline | undefined
+        textDecoration?: Property.TextDecoration<string | number> | undefined
+        textEmphasis?: Property.TextEmphasis | undefined
+        textWrap?: Property.TextWrap | undefined
+        transition?: Property.Transition<string & {}> | undefined
+        viewTimeline?: Property.ViewTimeline | undefined
+        MozAnimationDelay?: Property.AnimationDelay<string & {}> | undefined
+        MozAnimationDirection?: Property.AnimationDirection | undefined
+        MozAnimationDuration?: Property.AnimationDuration<string & {}> | undefined
+        MozAnimationFillMode?: Property.AnimationFillMode | undefined
+        MozAnimationIterationCount?: Property.AnimationIterationCount | undefined
+        MozAnimationName?: Property.AnimationName | undefined
+        MozAnimationPlayState?: Property.AnimationPlayState | undefined
+        MozAnimationTimingFunction?: Property.AnimationTimingFunction | undefined
+        MozAppearance?: Property.MozAppearance | undefined
+        MozBackfaceVisibility?: Property.BackfaceVisibility | undefined
+        MozBinding?: Property.MozBinding | undefined
+        MozBorderBottomColors?: Property.MozBorderBottomColors | undefined
+        MozBorderEndColor?: Property.BorderInlineEndColor | undefined
+        MozBorderEndStyle?: Property.BorderInlineEndStyle | undefined
+        MozBorderEndWidth?: Property.BorderInlineEndWidth<string | number> | undefined
+        MozBorderLeftColors?: Property.MozBorderLeftColors | undefined
+        MozBorderRightColors?: Property.MozBorderRightColors | undefined
+        MozBorderStartColor?: Property.BorderInlineStartColor | undefined
+        MozBorderStartStyle?: Property.BorderInlineStartStyle | undefined
+        MozBorderTopColors?: Property.MozBorderTopColors | undefined
+        MozBoxSizing?: Property.BoxSizing | undefined
+        MozColumnRuleColor?: Property.ColumnRuleColor | undefined
+        MozColumnRuleStyle?: Property.ColumnRuleStyle | undefined
+        MozColumnRuleWidth?: Property.ColumnRuleWidth<string | number> | undefined
+        MozColumnWidth?: Property.ColumnWidth<string | number> | undefined
+        MozContextProperties?: Property.MozContextProperties | undefined
+        MozFontFeatureSettings?: Property.FontFeatureSettings | undefined
+        MozFontLanguageOverride?: Property.FontLanguageOverride | undefined
+        MozHyphens?: Property.Hyphens | undefined
+        MozMarginEnd?: Property.MarginInlineEnd<string | number> | undefined
+        MozMarginStart?: Property.MarginInlineStart<string | number> | undefined
+        MozOrient?: Property.MozOrient | undefined
+        MozOsxFontSmoothing?: Property.FontSmooth<string | number> | undefined
+        MozOutlineRadiusBottomleft?: Property.MozOutlineRadiusBottomleft<string | number> | undefined
+        MozOutlineRadiusBottomright?: Property.MozOutlineRadiusBottomright<string | number> | undefined
+        MozOutlineRadiusTopleft?: Property.MozOutlineRadiusTopleft<string | number> | undefined
+        MozOutlineRadiusTopright?: Property.MozOutlineRadiusTopright<string | number> | undefined
+        MozPaddingEnd?: Property.PaddingInlineEnd<string | number> | undefined
+        MozPaddingStart?: Property.PaddingInlineStart<string | number> | undefined
+        MozPerspective?: Property.Perspective<string | number> | undefined
+        MozPerspectiveOrigin?: Property.PerspectiveOrigin<string | number> | undefined
+        MozStackSizing?: Property.MozStackSizing | undefined
+        MozTabSize?: Property.TabSize<string | number> | undefined
+        MozTextBlink?: Property.MozTextBlink | undefined
+        MozTextSizeAdjust?: Property.TextSizeAdjust | undefined
+        MozTransform?: Property.Transform | undefined
+        MozTransformOrigin?: Property.TransformOrigin<string | number> | undefined
+        MozTransformStyle?: Property.TransformStyle | undefined
+        MozUserModify?: Property.MozUserModify | undefined
+        MozUserSelect?: Property.UserSelect | undefined
+        MozWindowDragging?: Property.MozWindowDragging | undefined
+        MozWindowShadow?: Property.MozWindowShadow | undefined
+        msAccelerator?: Property.MsAccelerator | undefined
+        msBlockProgression?: Property.MsBlockProgression | undefined
+        msContentZoomChaining?: Property.MsContentZoomChaining | undefined
+        msContentZoomLimitMax?: Property.MsContentZoomLimitMax | undefined
+        msContentZoomLimitMin?: Property.MsContentZoomLimitMin | undefined
+        msContentZoomSnapPoints?: Property.MsContentZoomSnapPoints | undefined
+        msContentZoomSnapType?: Property.MsContentZoomSnapType | undefined
+        msContentZooming?: Property.MsContentZooming | undefined
+        msFilter?: Property.MsFilter | undefined
+        msFlexDirection?: Property.FlexDirection | undefined
+        msFlexPositive?: Property.FlexGrow | undefined
+        msFlowFrom?: Property.MsFlowFrom | undefined
+        msFlowInto?: Property.MsFlowInto | undefined
+        msGridColumns?: Property.MsGridColumns<string | number> | undefined
+        msGridRows?: Property.MsGridRows<string | number> | undefined
+        msHighContrastAdjust?: Property.MsHighContrastAdjust | undefined
+        msHyphenateLimitChars?: Property.MsHyphenateLimitChars | undefined
+        msHyphenateLimitLines?: Property.MsHyphenateLimitLines | undefined
+        msHyphenateLimitZone?: Property.MsHyphenateLimitZone<string | number> | undefined
+        msHyphens?: Property.Hyphens | undefined
+        msImeAlign?: Property.MsImeAlign | undefined
+        msLineBreak?: Property.LineBreak | undefined
+        msOrder?: Property.Order | undefined
+        msOverflowStyle?: Property.MsOverflowStyle | undefined
+        msOverflowX?: Property.OverflowX | undefined
+        msOverflowY?: Property.OverflowY | undefined
+        msScrollChaining?: Property.MsScrollChaining | undefined
+        msScrollLimitXMax?: Property.MsScrollLimitXMax<string | number> | undefined
+        msScrollLimitXMin?: Property.MsScrollLimitXMin<string | number> | undefined
+        msScrollLimitYMax?: Property.MsScrollLimitYMax<string | number> | undefined
+        msScrollLimitYMin?: Property.MsScrollLimitYMin<string | number> | undefined
+        msScrollRails?: Property.MsScrollRails | undefined
+        msScrollSnapPointsX?: Property.MsScrollSnapPointsX | undefined
+        msScrollSnapPointsY?: Property.MsScrollSnapPointsY | undefined
+        msScrollSnapType?: Property.MsScrollSnapType | undefined
+        msScrollTranslation?: Property.MsScrollTranslation | undefined
+        msScrollbar3dlightColor?: Property.MsScrollbar3dlightColor | undefined
+        msScrollbarArrowColor?: Property.MsScrollbarArrowColor | undefined
+        msScrollbarBaseColor?: Property.MsScrollbarBaseColor | undefined
+        msScrollbarDarkshadowColor?: Property.MsScrollbarDarkshadowColor | undefined
+        msScrollbarFaceColor?: Property.MsScrollbarFaceColor | undefined
+        msScrollbarHighlightColor?: Property.MsScrollbarHighlightColor | undefined
+        msScrollbarShadowColor?: Property.MsScrollbarShadowColor | undefined
+        msScrollbarTrackColor?: Property.MsScrollbarTrackColor | undefined
+        msTextAutospace?: Property.MsTextAutospace | undefined
+        msTextCombineHorizontal?: Property.TextCombineUpright | undefined
+        msTextOverflow?: Property.TextOverflow | undefined
+        msTouchAction?: Property.TouchAction | undefined
+        msTouchSelect?: Property.MsTouchSelect | undefined
+        msTransform?: Property.Transform | undefined
+        msTransformOrigin?: Property.TransformOrigin<string | number> | undefined
+        msTransitionDelay?: Property.TransitionDelay<string & {}> | undefined
+        msTransitionDuration?: Property.TransitionDuration<string & {}> | undefined
+        msTransitionProperty?: Property.TransitionProperty | undefined
+        msTransitionTimingFunction?: Property.TransitionTimingFunction | undefined
+        msUserSelect?: Property.MsUserSelect | undefined
+        msWordBreak?: Property.WordBreak | undefined
+        msWrapFlow?: Property.MsWrapFlow | undefined
+        msWrapMargin?: Property.MsWrapMargin<string | number> | undefined
+        msWrapThrough?: Property.MsWrapThrough | undefined
+        msWritingMode?: Property.WritingMode | undefined
+        WebkitAlignContent?: Property.AlignContent | undefined
+        WebkitAlignItems?: Property.AlignItems | undefined
+        WebkitAlignSelf?: Property.AlignSelf | undefined
+        WebkitAnimationDelay?: Property.AnimationDelay<string & {}> | undefined
+        WebkitAnimationDirection?: Property.AnimationDirection | undefined
+        WebkitAnimationDuration?: Property.AnimationDuration<string & {}> | undefined
+        WebkitAnimationFillMode?: Property.AnimationFillMode | undefined
+        WebkitAnimationIterationCount?: Property.AnimationIterationCount | undefined
+        WebkitAnimationName?: Property.AnimationName | undefined
+        WebkitAnimationPlayState?: Property.AnimationPlayState | undefined
+        WebkitAnimationTimingFunction?: Property.AnimationTimingFunction | undefined
+        WebkitAppearance?: Property.WebkitAppearance | undefined
+        WebkitBackdropFilter?: Property.BackdropFilter | undefined
+        WebkitBackfaceVisibility?: Property.BackfaceVisibility | undefined
+        WebkitBackgroundClip?: Property.BackgroundClip | undefined
+        WebkitBackgroundOrigin?: Property.BackgroundOrigin | undefined
+        WebkitBackgroundSize?: Property.BackgroundSize<string | number> | undefined
+        WebkitBorderBeforeColor?: Property.WebkitBorderBeforeColor | undefined
+        WebkitBorderBeforeStyle?: Property.WebkitBorderBeforeStyle | undefined
+        WebkitBorderBeforeWidth?: Property.WebkitBorderBeforeWidth<string | number> | undefined
+        WebkitBorderBottomLeftRadius?: Property.BorderBottomLeftRadius<string | number> | undefined
+        WebkitBorderBottomRightRadius?: Property.BorderBottomRightRadius<string | number> | undefined
+        WebkitBorderImageSlice?: Property.BorderImageSlice | undefined
+        WebkitBorderTopLeftRadius?: Property.BorderTopLeftRadius<string | number> | undefined
+        WebkitBorderTopRightRadius?: Property.BorderTopRightRadius<string | number> | undefined
+        WebkitBoxDecorationBreak?: Property.BoxDecorationBreak | undefined
+        WebkitBoxReflect?: Property.WebkitBoxReflect<string | number> | undefined
+        WebkitBoxShadow?: Property.BoxShadow | undefined
+        WebkitBoxSizing?: Property.BoxSizing | undefined
+        WebkitClipPath?: Property.ClipPath | undefined
+        WebkitColumnCount?: Property.ColumnCount | undefined
+        WebkitColumnFill?: Property.ColumnFill | undefined
+        WebkitColumnRuleColor?: Property.ColumnRuleColor | undefined
+        WebkitColumnRuleStyle?: Property.ColumnRuleStyle | undefined
+        WebkitColumnRuleWidth?: Property.ColumnRuleWidth<string | number> | undefined
+        WebkitColumnSpan?: Property.ColumnSpan | undefined
+        WebkitColumnWidth?: Property.ColumnWidth<string | number> | undefined
+        WebkitFilter?: Property.Filter | undefined
+        WebkitFlexBasis?: Property.FlexBasis<string | number> | undefined
+        WebkitFlexDirection?: Property.FlexDirection | undefined
+        WebkitFlexGrow?: Property.FlexGrow | undefined
+        WebkitFlexShrink?: Property.FlexShrink | undefined
+        WebkitFlexWrap?: Property.FlexWrap | undefined
+        WebkitFontFeatureSettings?: Property.FontFeatureSettings | undefined
+        WebkitFontKerning?: Property.FontKerning | undefined
+        WebkitFontSmoothing?: Property.FontSmooth<string | number> | undefined
+        WebkitFontVariantLigatures?: Property.FontVariantLigatures | undefined
+        WebkitHyphenateCharacter?: Property.HyphenateCharacter | undefined
+        WebkitHyphens?: Property.Hyphens | undefined
+        WebkitInitialLetter?: Property.InitialLetter | undefined
+        WebkitJustifyContent?: Property.JustifyContent | undefined
+        WebkitLineBreak?: Property.LineBreak | undefined
+        WebkitLineClamp?: Property.WebkitLineClamp | undefined
+        WebkitLogicalHeight?: Property.BlockSize<string | number> | undefined
+        WebkitLogicalWidth?: Property.InlineSize<string | number> | undefined
+        WebkitMarginEnd?: Property.MarginInlineEnd<string | number> | undefined
+        WebkitMarginStart?: Property.MarginInlineStart<string | number> | undefined
+        WebkitMaskAttachment?: Property.WebkitMaskAttachment | undefined
+        WebkitMaskBoxImageOutset?: Property.MaskBorderOutset<string | number> | undefined
+        WebkitMaskBoxImageRepeat?: Property.MaskBorderRepeat | undefined
+        WebkitMaskBoxImageSlice?: Property.MaskBorderSlice | undefined
+        WebkitMaskBoxImageSource?: Property.MaskBorderSource | undefined
+        WebkitMaskBoxImageWidth?: Property.MaskBorderWidth<string | number> | undefined
+        WebkitMaskClip?: Property.WebkitMaskClip | undefined
+        WebkitMaskComposite?: Property.WebkitMaskComposite | undefined
+        WebkitMaskImage?: Property.WebkitMaskImage | undefined
+        WebkitMaskOrigin?: Property.WebkitMaskOrigin | undefined
+        WebkitMaskPosition?: Property.WebkitMaskPosition<string | number> | undefined
+        WebkitMaskPositionX?: Property.WebkitMaskPositionX<string | number> | undefined
+        WebkitMaskPositionY?: Property.WebkitMaskPositionY<string | number> | undefined
+        WebkitMaskRepeat?: Property.WebkitMaskRepeat | undefined
+        WebkitMaskRepeatX?: Property.WebkitMaskRepeatX | undefined
+        WebkitMaskRepeatY?: Property.WebkitMaskRepeatY | undefined
+        WebkitMaskSize?: Property.WebkitMaskSize<string | number> | undefined
+        WebkitMaxInlineSize?: Property.MaxInlineSize<string | number> | undefined
+        WebkitOrder?: Property.Order | undefined
+        WebkitOverflowScrolling?: Property.WebkitOverflowScrolling | undefined
+        WebkitPaddingEnd?: Property.PaddingInlineEnd<string | number> | undefined
+        WebkitPaddingStart?: Property.PaddingInlineStart<string | number> | undefined
+        WebkitPerspective?: Property.Perspective<string | number> | undefined
+        WebkitPerspectiveOrigin?: Property.PerspectiveOrigin<string | number> | undefined
+        WebkitPrintColorAdjust?: Property.PrintColorAdjust | undefined
+        WebkitRubyPosition?: Property.RubyPosition | undefined
+        WebkitScrollSnapType?: Property.ScrollSnapType | undefined
+        WebkitShapeMargin?: Property.ShapeMargin<string | number> | undefined
+        WebkitTapHighlightColor?: Property.WebkitTapHighlightColor | undefined
+        WebkitTextCombine?: Property.TextCombineUpright | undefined
+        WebkitTextDecorationColor?: Property.TextDecorationColor | undefined
+        WebkitTextDecorationLine?: Property.TextDecorationLine | undefined
+        WebkitTextDecorationSkip?: Property.TextDecorationSkip | undefined
+        WebkitTextDecorationStyle?: Property.TextDecorationStyle | undefined
+        WebkitTextEmphasisColor?: Property.TextEmphasisColor | undefined
+        WebkitTextEmphasisPosition?: Property.TextEmphasisPosition | undefined
+        WebkitTextEmphasisStyle?: Property.TextEmphasisStyle | undefined
+        WebkitTextFillColor?: Property.WebkitTextFillColor | undefined
+        WebkitTextOrientation?: Property.TextOrientation | undefined
+        WebkitTextSizeAdjust?: Property.TextSizeAdjust | undefined
+        WebkitTextStrokeColor?: Property.WebkitTextStrokeColor | undefined
+        WebkitTextStrokeWidth?: Property.WebkitTextStrokeWidth<string | number> | undefined
+        WebkitTextUnderlinePosition?: Property.TextUnderlinePosition | undefined
+        WebkitTouchCallout?: Property.WebkitTouchCallout | undefined
+        WebkitTransform?: Property.Transform | undefined
+        WebkitTransformOrigin?: Property.TransformOrigin<string | number> | undefined
+        WebkitTransformStyle?: Property.TransformStyle | undefined
+        WebkitTransitionDelay?: Property.TransitionDelay<string & {}> | undefined
+        WebkitTransitionDuration?: Property.TransitionDuration<string & {}> | undefined
+        WebkitTransitionProperty?: Property.TransitionProperty | undefined
+        WebkitTransitionTimingFunction?: Property.TransitionTimingFunction | undefined
+        WebkitUserModify?: Property.WebkitUserModify | undefined
+        WebkitUserSelect?: Property.WebkitUserSelect | undefined
+        WebkitWritingMode?: Property.WritingMode | undefined
+        MozAnimation?: Property.Animation<string & {}> | undefined
+        MozBorderImage?: Property.BorderImage | undefined
+        MozColumnRule?: Property.ColumnRule<string | number> | undefined
+        MozColumns?: Property.Columns<string | number> | undefined
+        MozOutlineRadius?: Property.MozOutlineRadius<string | number> | undefined
+        MozTransition?: Property.Transition<string & {}> | undefined
+        msContentZoomLimit?: Property.MsContentZoomLimit | undefined
+        msContentZoomSnap?: Property.MsContentZoomSnap | undefined
+        msFlex?: Property.Flex<string | number> | undefined
+        msScrollLimit?: Property.MsScrollLimit | undefined
+        msScrollSnapX?: Property.MsScrollSnapX | undefined
+        msScrollSnapY?: Property.MsScrollSnapY | undefined
+        msTransition?: Property.Transition<string & {}> | undefined
+        WebkitAnimation?: Property.Animation<string & {}> | undefined
+        WebkitBorderBefore?: Property.WebkitBorderBefore<string | number> | undefined
+        WebkitBorderImage?: Property.BorderImage | undefined
+        WebkitBorderRadius?: Property.BorderRadius<string | number> | undefined
+        WebkitColumnRule?: Property.ColumnRule<string | number> | undefined
+        WebkitColumns?: Property.Columns<string | number> | undefined
+        WebkitFlex?: Property.Flex<string | number> | undefined
+        WebkitFlexFlow?: Property.FlexFlow | undefined
+        WebkitMask?: Property.WebkitMask<string | number> | undefined
+        WebkitMaskBoxImage?: Property.MaskBorder | undefined
+        WebkitTextEmphasis?: Property.TextEmphasis | undefined
+        WebkitTextStroke?: Property.WebkitTextStroke<string | number> | undefined
+        WebkitTransition?: Property.Transition<string & {}> | undefined
+        boxAlign?: Property.BoxAlign | undefined
+        boxDirection?: Property.BoxDirection | undefined
+        boxFlex?: Property.BoxFlex | undefined
+        boxFlexGroup?: Property.BoxFlexGroup | undefined
+        boxLines?: Property.BoxLines | undefined
+        boxOrdinalGroup?: Property.BoxOrdinalGroup | undefined
+        boxOrient?: Property.BoxOrient | undefined
+        boxPack?: Property.BoxPack | undefined
+        clip?: Property.Clip | undefined
+        fontStretch?: Property.FontStretch | undefined
+        gridColumnGap?: Property.GridColumnGap<string | number> | undefined
+        gridGap?: Property.GridGap<string | number> | undefined
+        gridRowGap?: Property.GridRowGap<string | number> | undefined
+        imeMode?: Property.ImeMode | undefined
+        insetArea?: Property.PositionArea | undefined
+        offsetBlock?: Property.InsetBlock<string | number> | undefined
+        offsetBlockEnd?: Property.InsetBlockEnd<string | number> | undefined
+        offsetBlockStart?: Property.InsetBlockStart<string | number> | undefined
+        offsetInline?: Property.InsetInline<string | number> | undefined
+        offsetInlineEnd?: Property.InsetInlineEnd<string | number> | undefined
+        offsetInlineStart?: Property.InsetInlineStart<string | number> | undefined
+        pageBreakAfter?: Property.PageBreakAfter | undefined
+        pageBreakBefore?: Property.PageBreakBefore | undefined
+        pageBreakInside?: Property.PageBreakInside | undefined
+        positionTryOptions?: Property.PositionTryFallbacks | undefined
+        scrollSnapCoordinate?: Property.ScrollSnapCoordinate<string | number> | undefined
+        scrollSnapDestination?: Property.ScrollSnapDestination<string | number> | undefined
+        scrollSnapPointsX?: Property.ScrollSnapPointsX | undefined
+        scrollSnapPointsY?: Property.ScrollSnapPointsY | undefined
+        scrollSnapTypeX?: Property.ScrollSnapTypeX | undefined
+        scrollSnapTypeY?: Property.ScrollSnapTypeY | undefined
+        KhtmlBoxAlign?: Property.BoxAlign | undefined
+        KhtmlBoxDirection?: Property.BoxDirection | undefined
+        KhtmlBoxFlex?: Property.BoxFlex | undefined
+        KhtmlBoxFlexGroup?: Property.BoxFlexGroup | undefined
+        KhtmlBoxLines?: Property.BoxLines | undefined
+        KhtmlBoxOrdinalGroup?: Property.BoxOrdinalGroup | undefined
+        KhtmlBoxOrient?: Property.BoxOrient | undefined
+        KhtmlBoxPack?: Property.BoxPack | undefined
+        KhtmlLineBreak?: Property.LineBreak | undefined
+        KhtmlOpacity?: Property.Opacity | undefined
+        KhtmlUserSelect?: Property.UserSelect | undefined
+        MozBackgroundClip?: Property.BackgroundClip | undefined
+        MozBackgroundOrigin?: Property.BackgroundOrigin | undefined
+        MozBackgroundSize?: Property.BackgroundSize<string | number> | undefined
+        MozBorderRadius?: Property.BorderRadius<string | number> | undefined
+        MozBorderRadiusBottomleft?: Property.BorderBottomLeftRadius<string | number> | undefined
+        MozBorderRadiusBottomright?: Property.BorderBottomRightRadius<string | number> | undefined
+        MozBorderRadiusTopleft?: Property.BorderTopLeftRadius<string | number> | undefined
+        MozBorderRadiusTopright?: Property.BorderTopRightRadius<string | number> | undefined
+        MozBoxAlign?: Property.BoxAlign | undefined
+        MozBoxDirection?: Property.BoxDirection | undefined
+        MozBoxFlex?: Property.BoxFlex | undefined
+        MozBoxOrdinalGroup?: Property.BoxOrdinalGroup | undefined
+        MozBoxOrient?: Property.BoxOrient | undefined
+        MozBoxPack?: Property.BoxPack | undefined
+        MozBoxShadow?: Property.BoxShadow | undefined
+        MozColumnCount?: Property.ColumnCount | undefined
+        MozColumnFill?: Property.ColumnFill | undefined
+        MozFloatEdge?: Property.MozFloatEdge | undefined
+        MozForceBrokenImageIcon?: Property.MozForceBrokenImageIcon | undefined
+        MozOpacity?: Property.Opacity | undefined
+        MozOutline?: Property.Outline<string | number> | undefined
+        MozOutlineColor?: Property.OutlineColor | undefined
+        MozOutlineStyle?: Property.OutlineStyle | undefined
+        MozOutlineWidth?: Property.OutlineWidth<string | number> | undefined
+        MozTextAlignLast?: Property.TextAlignLast | undefined
+        MozTextDecorationColor?: Property.TextDecorationColor | undefined
+        MozTextDecorationLine?: Property.TextDecorationLine | undefined
+        MozTextDecorationStyle?: Property.TextDecorationStyle | undefined
+        MozTransitionDelay?: Property.TransitionDelay<string & {}> | undefined
+        MozTransitionDuration?: Property.TransitionDuration<string & {}> | undefined
+        MozTransitionProperty?: Property.TransitionProperty | undefined
+        MozTransitionTimingFunction?: Property.TransitionTimingFunction | undefined
+        MozUserFocus?: Property.MozUserFocus | undefined
+        MozUserInput?: Property.MozUserInput | undefined
+        msImeMode?: Property.ImeMode | undefined
+        OAnimation?: Property.Animation<string & {}> | undefined
+        OAnimationDelay?: Property.AnimationDelay<string & {}> | undefined
+        OAnimationDirection?: Property.AnimationDirection | undefined
+        OAnimationDuration?: Property.AnimationDuration<string & {}> | undefined
+        OAnimationFillMode?: Property.AnimationFillMode | undefined
+        OAnimationIterationCount?: Property.AnimationIterationCount | undefined
+        OAnimationName?: Property.AnimationName | undefined
+        OAnimationPlayState?: Property.AnimationPlayState | undefined
+        OAnimationTimingFunction?: Property.AnimationTimingFunction | undefined
+        OBackgroundSize?: Property.BackgroundSize<string | number> | undefined
+        OBorderImage?: Property.BorderImage | undefined
+        OObjectFit?: Property.ObjectFit | undefined
+        OObjectPosition?: Property.ObjectPosition<string | number> | undefined
+        OTabSize?: Property.TabSize<string | number> | undefined
+        OTextOverflow?: Property.TextOverflow | undefined
+        OTransform?: Property.Transform | undefined
+        OTransformOrigin?: Property.TransformOrigin<string | number> | undefined
+        OTransition?: Property.Transition<string & {}> | undefined
+        OTransitionDelay?: Property.TransitionDelay<string & {}> | undefined
+        OTransitionDuration?: Property.TransitionDuration<string & {}> | undefined
+        OTransitionProperty?: Property.TransitionProperty | undefined
+        OTransitionTimingFunction?: Property.TransitionTimingFunction | undefined
+        WebkitBoxAlign?: Property.BoxAlign | undefined
+        WebkitBoxDirection?: Property.BoxDirection | undefined
+        WebkitBoxFlex?: Property.BoxFlex | undefined
+        WebkitBoxFlexGroup?: Property.BoxFlexGroup | undefined
+        WebkitBoxLines?: Property.BoxLines | undefined
+        WebkitBoxOrdinalGroup?: Property.BoxOrdinalGroup | undefined
+        WebkitBoxOrient?: Property.BoxOrient | undefined
+        WebkitBoxPack?: Property.BoxPack | undefined
+        colorInterpolation?: Property.ColorInterpolation | undefined
+        colorRendering?: Property.ColorRendering | undefined
+        glyphOrientationVertical?: Property.GlyphOrientationVertical | undefined
+      }
+      id: string
+      position: XYPosition
+      data: Record<string, unknown>
+      sourcePosition?: Position
+      targetPosition?: Position
+      hidden?: boolean
+      selected?: boolean
+      dragging?: boolean
+      draggable?: boolean
+      selectable?: boolean
+      connectable?: boolean
+      deletable?: boolean
+      dragHandle?: string
+      width?: number
+      height?: number
+      initialWidth?: number
+      initialHeight?: number
+      parentId?: string
+      zIndex?: number
+      extent?: 'parent' | CoordinateExtent | null
+      expandParent?: boolean
+      ariaLabel?: string
+      origin?: NodeOrigin
+      handles?: NodeHandle[]
+      measured?: { width?: number; height?: number }
+      type?: string | undefined
+      className?: string
+      resizing?: boolean
+      focusable?: boolean
+      ariaRole?: AriaRole
+      domAttributes?: Omit<
+        HTMLAttributes<HTMLDivElement>,
+        | 'id'
+        | 'style'
+        | 'className'
+        | 'draggable'
+        | 'role'
+        | 'aria-label'
+        | 'defaultValue'
+        | 'dangerouslySetInnerHTML'
+        | keyof DOMAttributes<HTMLDivElement>
+      >
+    } => {
+      const isUnset = unsetNodeIds.has(node.id)
+
+      return {
+        ...node,
+        style: {
+          ...node.style,
+          borderColor: isUnset ? (node.data.defaultValue ? 'yellow' : 'red') : 'none',
+          borderWidth: isUnset ? 3 : 0,
+        },
+      }
+    },
+  )
 }

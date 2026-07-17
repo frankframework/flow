@@ -16,13 +16,13 @@ export default function ValidatedInput({
   value = '',
   onValidChange,
   ...properties
-}: ValidatedInputProperties) {
+}: ValidatedInputProperties): React.JSX.Element {
   const [isValid, setIsValid] = useState(true)
   const [checks, setChecks] = useState<Record<string, boolean>>({})
   const [inputValue, setInputValue] = useState(value)
 
   const validateInput = useCallback(
-    (inputValue: string) => {
+    (inputValue: string): void => {
       if (!patterns) {
         setIsValid(true)
         return
@@ -40,16 +40,16 @@ export default function ValidatedInput({
     [patterns],
   )
 
-  useEffect(() => {
+  useEffect((): void => {
     setInputValue(value)
     validateInput(value)
   }, [value, validateInput])
 
-  useEffect(() => {
+  useEffect((): void => {
     onValidChange?.(isValid)
   }, [isValid, onValidChange])
 
-  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>): void => {
     const newValue = event.target.value
     setInputValue(newValue)
     validateInput(newValue)
@@ -73,7 +73,7 @@ export default function ValidatedInput({
               'absolute top-1/2 right-full z-10 mr-2 ml-2 hidden -translate-y-1/2 rounded bg-gray-950 px-2 py-1 text-sm whitespace-nowrap text-white shadow-md group-hover:block',
             )}
           >
-            {Object.entries(checks).map(([check, satisfied]) => {
+            {Object.entries(checks).map(([check, satisfied]): React.JSX.Element => {
               const Icon = satisfied ? CheckSquareIcon : CloseSquareIcon
               return (
                 <div key={check} className="flex items-center gap-1">

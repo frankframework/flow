@@ -13,20 +13,21 @@ type InitializeProperties = {
   setRoute: Dispatch<string>
 }
 
-function Initialize({ config, configDispatch, confirmed, setRoute }: InitializeProperties) {
+function Initialize({ config, configDispatch, confirmed, setRoute }: InitializeProperties): JSX.Element {
   const datatypes: DataTypeSchema = datatypesJson as DataTypeSchema
 
-  const findDataType = (name: string) => datatypes.find((dataType) => dataType.name === name) ?? null
+  const findDataType = (name: string): FormatDefinition | null =>
+    datatypes.find((dataType): boolean => dataType.name === name) ?? null
 
   // Dispatch functions that take the selected value as a string
-  const configSourceDispatch = (value: string) =>
+  const configSourceDispatch = (value: string): void =>
     configDispatch({ type: 'SET_SOURCE_FORMAT', payload: findDataType(value) })
 
-  const configTargetDispatch = (value: string) =>
+  const configTargetDispatch = (value: string): void =>
     configDispatch({ type: 'SET_TARGET_FORMAT', payload: findDataType(value) })
 
-  const configConfirmDispatched = () => configDispatch({ type: 'SET_STAGE', payload: 'Schema_upload' })
-  function toProperties() {
+  const configConfirmDispatched = (): void => configDispatch({ type: 'SET_STAGE', payload: 'Schema_upload' })
+  function toProperties(): void {
     setRoute('Properties')
     configDispatch({ type: 'SET_STAGE', payload: 'Mapping' })
   }
@@ -44,7 +45,7 @@ function Initialize({ config, configDispatch, confirmed, setRoute }: InitializeP
           <Dropdown
             value={config.formatTypes?.source?.name || ''}
             onChange={configSourceDispatch}
-            options={Object.fromEntries(datatypes.map((dataType) => [dataType.name, dataType.name]))}
+            options={Object.fromEntries(datatypes.map((dataType): [string, string] => [dataType.name, dataType.name]))}
             disabled={confirmed}
           />
         </div>
@@ -58,7 +59,7 @@ function Initialize({ config, configDispatch, confirmed, setRoute }: InitializeP
           <Dropdown
             value={config.formatTypes?.target?.name || ''}
             onChange={configTargetDispatch}
-            options={Object.fromEntries(datatypes.map((dataType) => [dataType.name, dataType.name]))}
+            options={Object.fromEntries(datatypes.map((dataType): [string, string] => [dataType.name, dataType.name]))}
             disabled={confirmed}
           />
         </div>
@@ -69,7 +70,7 @@ function Initialize({ config, configDispatch, confirmed, setRoute }: InitializeP
         <Button
           className="bg-foreground-active disabled:bg-backdrop disabled:text-foreground-muted font-medium text-neutral-900"
           disabled={confirmed || !config.formatTypes.target || !config.formatTypes.source}
-          onClick={() => {
+          onClick={(): void => {
             configConfirmDispatched()
             toProperties()
           }}

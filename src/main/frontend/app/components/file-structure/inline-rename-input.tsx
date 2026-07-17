@@ -17,17 +17,17 @@ export default function InlineRenameInput({
   onSubmit,
   onCancel,
   itemIndex,
-}: InlineRenameInputProperties) {
+}: InlineRenameInputProperties): JSX.Element {
   return (
-    <div className="flex items-center" onContextMenu={(e) => e.preventDefault()}>
+    <div className="flex items-center" onContextMenu={(e): void => e.preventDefault()}>
       <Icon className="fill-foreground w-4 flex-shrink-0" />
       <Input
         autoFocus
         wrapperClassName="ml-1"
         inputClassName="py-0.5 text-sm"
         value={value}
-        onChange={(changeEvent) => onChange(changeEvent.target.value)}
-        onKeyDown={(keyboardEvent) => {
+        onChange={(changeEvent): void => onChange(changeEvent.target.value)}
+        onKeyDown={(keyboardEvent): void => {
           if (keyboardEvent.key === 'Enter') {
             keyboardEvent.preventDefault()
             void onSubmit(itemIndex, value)
@@ -36,7 +36,7 @@ export default function InlineRenameInput({
           }
         }}
         onBlur={onCancel}
-        onClick={(e) => e.stopPropagation()}
+        onClick={(e): void => e.stopPropagation()}
       />
     </div>
   )

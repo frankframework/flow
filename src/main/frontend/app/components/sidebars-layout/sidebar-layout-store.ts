@@ -28,26 +28,43 @@ const DEFAULT_VISIBILITY: VisibilityState = [true, true, true]
 
 export const useSidebarStore = create<SidebarState>()(
   persist(
-    (set, get) => ({
+    (
+      set,
+      get,
+    ): {
+      instances: Record<string, SideBarInstance>
+      initializeInstance: (name: string, defaultVisible?: VisibilityState | undefined) => unknown
+      toggleSidebar: (name: string, side: SidebarSide) => unknown
+      setSizes: (name: string, sizes: number[]) => unknown
+      setVisible: (name: string, side: SidebarSide, value: boolean) => unknown
+      getSizes: (name: string) => number[] | undefined
+      getVisibility: (name: string) => VisibilityState | undefined
+    } => ({
       instances: {},
 
-      initializeInstance: (name, defaultVisible = DEFAULT_VISIBILITY) =>
-        set((state) => {
-          if (state.instances[name]) return state
+      initializeInstance: (name, defaultVisible = DEFAULT_VISIBILITY): void =>
+        set(
+          (
+            state,
+          ):
+            | SidebarState
+            | { instances: Record<string, SideBarInstance | { visible: VisibilityState; sizes: never[] }> } => {
+            if (state.instances[name]) return state
 
-          return {
-            instances: {
-              ...state.instances,
-              [name]: {
-                visible: defaultVisible,
-                sizes: [],
+            return {
+              instances: {
+                ...state.instances,
+                [name]: {
+                  visible: defaultVisible,
+                  sizes: [],
+                },
               },
-            },
-          }
-        }),
+            }
+          },
+        ),
 
-      toggleSidebar: (name, side) =>
-        set((state) => {
+      toggleSidebar: (name, side): void =>
+        set((state): Partial<SidebarState> => {
           const instance = state.instances[name]
           if (!instance) return state
 
@@ -57,16 +74,16 @@ export const useSidebarStore = create<SidebarState>()(
           return updateInstanceState(state, name, { visible: newVisible })
         }),
 
-      setSizes: (name, sizes) =>
-        set((state) => {
+      setSizes: (name, sizes): void =>
+        set((state): Partial<SidebarState> => {
           const instance = state.instances[name]
           if (!instance) return state
 
           return updateInstanceState(state, name, { sizes })
         }),
 
-      setVisible: (name, side, value) =>
-        set((state) => {
+      setVisible: (name, side, value): void =>
+        set((state): Partial<SidebarState> => {
           const instance = state.instances[name]
           if (!instance) return state
 
@@ -76,8 +93,8 @@ export const useSidebarStore = create<SidebarState>()(
           return updateInstanceState(state, name, { visible: newVisible })
         }),
 
-      getSizes: (name) => get().instances[name]?.sizes,
-      getVisibility: (name) => get().instances[name]?.visible,
+      getSizes: (name): number[] => get().instances[name]?.sizes,
+      getVisibility: (name): VisibilityState => get().instances[name]?.visible,
     }),
     {
       name: 'sidebar-storage',

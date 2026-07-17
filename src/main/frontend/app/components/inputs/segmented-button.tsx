@@ -10,7 +10,7 @@ export default function SegmentedButton({
   className,
   children,
   ...properties
-}: Readonly<SegmentedButtonProperties>) {
+}: Readonly<SegmentedButtonProperties>): React.JSX.Element {
   return (
     <button
       className={clsx(

@@ -55,8 +55,8 @@ function collectXmlFiles(node: FileTreeNode | undefined | null): FileTreeNode[] 
   return result
 }
 
-export default function ConfigurationOverview() {
-  const currentConfigurationProject = useProjectStore((state) => state.project)
+export default function ConfigurationOverview(): React.JSX.Element {
+  const currentConfigurationProject = useProjectStore((state): ConfigurationProject | undefined => state.project)
   const navigate = useNavigate()
   const [showModal, setShowModal] = useState(false)
   const [tree, setTree] = useState<FileTreeNode | null>(null)
@@ -72,15 +72,19 @@ export default function ConfigurationOverview() {
 
   const sidebarVisibleBeforeEditReference = useRef(true)
 
-  const setSidebarVisible = useSidebarStore((state) => state.setVisible)
-  const getSidebarVisibility = useSidebarStore((state) => state.getVisibility)
+  const setSidebarVisible = useSidebarStore(
+    (state): ((name: string, side: SidebarSide, value: boolean) => void) => state.setVisible,
+  )
+  const getSidebarVisibility = useSidebarStore(
+    (state): ((name: string) => VisibilityState | undefined) => state.getVisibility,
+  )
 
-  const captureSidebarVisibility = useCallback(() => {
+  const captureSidebarVisibility = useCallback((): void => {
     sidebarVisibleBeforeEditReference.current = getSidebarVisibility(SIDEBAR_NAME)?.[SidebarSide.RIGHT] ?? true
   }, [getSidebarVisibility])
 
   const openEditor = useCallback(
-    (state: NonCanvasComponentEditorState) => {
+    (state: NonCanvasComponentEditorState): void => {
       setAdapterEditor(null)
       setEditor(state)
       setEditorName(state.initialAttributes?.name ?? '')
@@ -90,7 +94,7 @@ export default function ConfigurationOverview() {
   )
 
   const openAdapterEditor = useCallback(
-    (state: AdapterEditorState) => {
+    (state: AdapterEditorState): void => {
       setEditor(null)
       setAdapterEditor(state)
       setEditorName(state.adapterName)
@@ -99,18 +103,18 @@ export default function ConfigurationOverview() {
     [setSidebarVisible],
   )
 
-  const closeEditor = useCallback(() => {
+  const closeEditor = useCallback((): void => {
     setEditor(null)
     setAdapterEditor(null)
     setEditorName('')
   }, [])
 
-  const handleAddComponent = useCallback((configPath: string) => {
+  const handleAddComponent = useCallback((configPath: string): void => {
     setAddMenuConfigPath(configPath)
   }, [])
 
   const handleSelectComponentType = useCallback(
-    (tagName: string) => {
+    (tagName: string): void => {
       if (!addMenuConfigPath) return
       captureSidebarVisibility()
       openEditor({ mode: 'add', configPath: addMenuConfigPath, tagName })
@@ -120,7 +124,7 @@ export default function ConfigurationOverview() {
   )
 
   const handleEditComponent = useCallback(
-    (configurationPath: string, component: NonCanvasComponent) => {
+    (configurationPath: string, component: NonCanvasComponent): void => {
       captureSidebarVisibility()
       openEditor({
         mode: 'edit',
@@ -134,14 +138,14 @@ export default function ConfigurationOverview() {
   )
 
   const handleConfigureAdapter = useCallback(
-    (configurationPath: string, adapterName: string, adapterPosition: number) => {
+    (configurationPath: string, adapterName: string, adapterPosition: number): void => {
       openAdapterEditor({ configPath: configurationPath, adapterName, adapterPosition })
     },
     [openAdapterEditor],
   )
 
   const handleDropComponent = useCallback(
-    (configurationPath: string, tagName: string) => {
+    (configurationPath: string, tagName: string): void => {
       captureSidebarVisibility()
       setDraggedComponentTagName(null)
       setSidebarVisible(SIDEBAR_NAME, SidebarSide.RIGHT, false)
@@ -151,11 +155,11 @@ export default function ConfigurationOverview() {
   )
 
   const loadTree = useCallback(
-    (signal?: AbortSignal) => {
+    (signal?: AbortSignal): void => {
       if (!currentConfigurationProject?.name) return
       setIsLoading(true)
       fetchProjectTree(currentConfigurationProject.name, signal)
-        .then((data) => {
+        .then((data): void => {
           if (signal?.aborted) {
             return
           }
@@ -163,7 +167,7 @@ export default function ConfigurationOverview() {
           setTree(data)
           setIsLoading(false)
         })
-        .catch(() => {
+        .catch((): void => {
           if (!signal?.aborted) {
             setIsLoading(false)
           }
@@ -172,53 +176,73 @@ export default function ConfigurationOverview() {
     [currentConfigurationProject?.name],
   )
 
-  useEffect(() => {
+  useEffect((): (() => void) => {
     const controller = new AbortController()
     loadTree(controller.signal)
-    return () => controller.abort()
+    return (): void => controller.abort()
   }, [loadTree])
 
-  const handleConfigAdded = useCallback(() => {
+  const handleConfigAdded = useCallback((): void => {
     setShowModal(false)
     loadTree()
   }, [loadTree])
 
-  const handleDelete = async (filepath: string) => {
+  const handleDelete = async (filepath: string): Promise<void> => {
     if (!currentConfigurationProject?.name) return
     await deleteFile(currentConfigurationProject.name, filepath)
     loadTree()
   }
 
-  const configFiles = useMemo(() => {
+  const configFiles = useMemo((): {
+    relativePath: string
+    path: string
+    name: string
+    type: EntryType
+    projectRoot?: boolean
+    children?: FileTreeNode[]
+    adapterNames?: string[]
+  }[] => {
     if (!tree || !currentConfigurationProject) return []
 
     const xmlFiles = collectXmlFiles(tree)
-    return xmlFiles.map((file) => {
-      const relativePath = relativeTo(tree.path, file.path) || file.name
-      return { ...file, relativePath, path: file.path }
-    })
+    return xmlFiles.map(
+      (
+        file,
+      ): {
+        relativePath: string
+        path: string
+        name: string
+        type: EntryType
+        projectRoot?: boolean
+        children?: FileTreeNode[]
+        adapterNames?: string[]
+      } => {
+        const relativePath = relativeTo(tree.path, file.path) || file.name
+        return { ...file, relativePath, path: file.path }
+      },
+    )
   }, [tree, currentConfigurationProject])
 
-  const handleSearch = (event: ChangeEvent<HTMLInputElement>) => {
+  const handleSearch = (event: ChangeEvent<HTMLInputElement>): void => {
     setSearchQuery(event.target.value)
   }
 
-  useEffect(() => {
-    const handler = setTimeout(() => {
+  useEffect((): (() => void) => {
+    const handler = setTimeout((): void => {
       setDebouncedQuery(searchQuery)
     }, 200)
 
-    return () => clearTimeout(handler)
+    return (): void => clearTimeout(handler)
   }, [searchQuery])
 
   const allConfigFiles = useMemo((): ConfigurationFile[] => {
-    const files = configFiles.map((file) => ({
+    const files = configFiles.map((file): { path: string; relativePath: string; adapterNames: string[] } => ({
       path: file.path,
       relativePath: file.relativePath,
       adapterNames: file.adapterNames ?? [],
     }))
 
-    return files.toSorted((a, b) => {
+    return files.toSorted((a, b): 0 | 1 | -1 => {
       const aIsRoot = isRootConfiguration(a.relativePath)
       const bIsRoot = isRootConfiguration(b.relativePath)
       if (aIsRoot === bIsRoot) return 0
@@ -226,26 +250,26 @@ export default function ConfigurationOverview() {
     })
   }, [configFiles])
 
-  const filteredConfigurationFiles = useMemo(() => {
+  const filteredConfigurationFiles = useMemo((): ConfigurationFile[] => {
     if (!debouncedQuery.trim()) return allConfigFiles
 
     const query = debouncedQuery.toLowerCase()
 
-    return allConfigFiles.filter((file) => {
+    return allConfigFiles.filter((file): boolean => {
       const matchesFile = file.relativePath.toLowerCase().includes(query)
-      const matchesAdapter = file.adapterNames.some((adapter) => adapter.toLowerCase().includes(query))
+      const matchesAdapter = file.adapterNames.some((adapter): boolean => adapter.toLowerCase().includes(query))
       return matchesFile || matchesAdapter
     })
   }, [allConfigFiles, debouncedQuery])
 
-  const configurationPaths = useMemo(() => allConfigFiles.map((file) => file.path), [allConfigFiles])
+  const configurationPaths = useMemo((): string[] => allConfigFiles.map((file): string => file.path), [allConfigFiles])
   const { componentsByPath, loadingByPath, replaceComponents } = useNonCanvasComponents(
     currentConfigurationProject?.name ?? '',
     configurationPaths,
   )
 
   const handleComponentSaved = useCallback(
-    (configurationPath: string, components: NonCanvasComponent[]) => {
+    (configurationPath: string, components: NonCanvasComponent[]): void => {
       replaceComponents(configurationPath, components)
       closeEditor()
       setSidebarVisible(SIDEBAR_NAME, SidebarSide.RIGHT, sidebarVisibleBeforeEditReference.current)
@@ -253,7 +277,7 @@ export default function ConfigurationOverview() {
     [replaceComponents, closeEditor, setSidebarVisible],
   )
 
-  const handleAdapterChanged = useCallback(() => {
+  const handleAdapterChanged = useCallback((): void => {
     closeEditor()
     loadTree()
   }, [closeEditor, loadTree])
@@ -262,7 +286,7 @@ export default function ConfigurationOverview() {
     return (
       <div className="bg-backdrop flex h-full w-full flex-col items-center justify-center p-6">
         <div className="text-foreground-muted mb-4">No project selected.</div>
-        <Button onClick={() => navigate('/')} className="bg-background">
+        <Button onClick={(): void | Promise<void> => navigate('/')} className="bg-background">
           Select configuration
         </Button>
       </div>
@@ -306,7 +330,7 @@ export default function ConfigurationOverview() {
         key={`${editor.configPath}:${editor.tagName}:${editor.index ?? 'new'}`}
         projectName={currentConfigurationProject.name}
         editor={editor}
-        onSaved={(components) => handleComponentSaved(editor.configPath, components)}
+        onSaved={(components): void => handleComponentSaved(editor.configPath, components)}
         onClose={closeEditor}
         onNameChange={setEditorName}
       />
@@ -315,7 +339,7 @@ export default function ConfigurationOverview() {
     sidebarContent = (
       <NonCanvasComponentPalette
         onDragStart={setDraggedComponentTagName}
-        onDragEnd={() => setDraggedComponentTagName(null)}
+        onDragEnd={(): void => setDraggedComponentTagName(null)}
       />
     )
   }
@@ -333,7 +357,7 @@ export default function ConfigurationOverview() {
             <div className="border-b-border flex h-12 grow items-center border-b px-6">
               <div className="flex h-max items-end gap-4">
                 <span className="group relative">
-                  <IconButton onClick={() => navigate('/')}>
+                  <IconButton onClick={(): void | Promise<void> => navigate('/')}>
                     <ArrowLeftIcon className="fill-current" />
                   </IconButton>
                   <span className="bg-backdrop text-foreground border-border absolute top-1/2 left-full z-10 ml-2 hidden -translate-y-1/2 rounded border px-2 py-1 text-sm whitespace-nowrap shadow-md group-hover:block">
@@ -349,7 +373,7 @@ export default function ConfigurationOverview() {
           </div>
 
           <div className="border-b-border bg-background flex items-center justify-between gap-2 border-b px-6 py-4">
-            <Button className="shrink-0" onClick={() => setShowModal(true)}>
+            <Button className="shrink-0" onClick={(): void => setShowModal(true)}>
               + Add configuration file
             </Button>
             <Search className="w-1/2" placeholder="Search file names..." value={searchQuery} onChange={handleSearch} />
@@ -359,13 +383,13 @@ export default function ConfigurationOverview() {
                   isActive={tileView === 'list'}
                   label="List view"
                   Icon={ListIcon}
-                  onClick={() => setTileView('list')}
+                  onClick={(): void => setTileView('list')}
                 />
                 <ActiveIconButton
                   isActive={tileView === 'grid'}
                   label="Grid view"
                   Icon={WidgetIcon}
-                  onClick={() => setTileView('grid')}
+                  onClick={(): void => setTileView('grid')}
                 />
               </ul>
             </div>
@@ -373,7 +397,7 @@ export default function ConfigurationOverview() {
 
           <div className="bg-backdrop flex-1 overflow-y-auto p-6">
             <div className="flex w-full flex-wrap justify-center gap-4">
-              {filteredConfigurationFiles.map((file) => (
+              {filteredConfigurationFiles.map((file): React.JSX.Element => (
                 <ConfigurationFileTile
                   key={file.path}
                   filepath={file.path}
@@ -382,7 +406,7 @@ export default function ConfigurationOverview() {
                   nonCanvasComponents={componentsByPath[file.path] ?? []}
                   loadingComponents={loadingByPath[file.path] ?? true}
                   draggedTagName={draggedComponentTagName}
-                  onDelete={() => handleDelete(file.path)}
+                  onDelete={(): Promise<void> => handleDelete(file.path)}
                   onAddComponent={handleAddComponent}
                   onEditComponent={handleEditComponent}
                   onConfigureAdapter={handleConfigureAdapter}
@@ -391,12 +415,12 @@ export default function ConfigurationOverview() {
                 />
               ))}
 
-              <AddConfigurationFileTile onClick={() => setShowModal(true)} />
+              <AddConfigurationFileTile onClick={(): void => setShowModal(true)} />
             </div>
 
             {showModal && currentConfigurationProject && (
               <AddConfigurationFileModal
-                onClose={() => setShowModal(false)}
+                onClose={(): void => setShowModal(false)}
                 onSuccess={handleConfigAdded}
                 currentConfiguration={currentConfigurationProject}
                 configurationsDirPath={tree?.path ?? ''}
@@ -412,7 +436,10 @@ export default function ConfigurationOverview() {
       </SidebarLayout>
 
       {addNonCanvasComponentIsOpen && (
-        <AddNonCanvasComponentMenu onClose={() => setAddMenuConfigPath(null)} onSelect={handleSelectComponentType} />
+        <AddNonCanvasComponentMenu
+          onClose={(): void => setAddMenuConfigPath(null)}
+          onSelect={handleSelectComponentType}
+        />
       )}
     </div>
   )

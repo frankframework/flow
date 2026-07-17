@@ -2,18 +2,20 @@ import type { Node, Edge } from '@xyflow/react'
 import { isNodeGroup } from './property-node-utils'
 
 export function findNodeById(nodeId: string, allNodes: Node[]): Node | undefined {
-  return allNodes.find((node) => node.id === nodeId)
+  return allNodes.find((node): boolean => node.id === nodeId)
 }
 export function findNodeParent(node: Node, allNodes: Node[]): Node | undefined {
-  return allNodes.find((parent) => parent.id == node.parentId)
+  return allNodes.find((parent): boolean => parent.id == node.parentId)
 }
 export function getNodeAndChildren(nodes: Node[], nodeId: string): Set<string> {
-  const node = nodes.find((n) => n.id === nodeId)
+  const node = nodes.find((n): boolean => n.id === nodeId)
   if (node && node.type) {
     return isNodeGroup(node.type)
-      ? new Set(nodes.filter((n) => n.parentId === nodeId).flatMap((n) => [...getNodeAndChildren(nodes, n.id)])).add(
-          nodeId,
-        )
+      ? new Set(
+          nodes
+            .filter((n): boolean => n.parentId === nodeId)
+            .flatMap((n): string[] => [...getNodeAndChildren(nodes, n.id)]),
+        ).add(nodeId)
       : new Set([nodeId, node.parentId ?? ''])
   }
 

@@ -13,14 +13,14 @@ export default function Toggle({
   disabled = false,
   className,
   ...properties
-}: ToggleProperties) {
+}: ToggleProperties): React.JSX.Element {
   const [isChecked, setIsChecked] = useState(checked)
 
-  useEffect(() => {
+  useEffect((): void => {
     setIsChecked(checked)
   }, [checked])
 
-  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>): void => {
     if (disabled) {
       return
     }

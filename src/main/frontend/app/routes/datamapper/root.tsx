@@ -13,7 +13,7 @@ import { saveDatamapperConfiguration, fetchDatamapperConfiguration } from '~/ser
 import { useProjectStore } from '~/stores/project-store'
 import { SAVING_THROTTLE } from '~/utils/datamapper_utils/constant'
 
-export default function DataMapperRoot() {
+export default function DataMapperRoot(): JSX.Element {
   const routes = ['Initialize', 'Properties', 'Mappings']
 
   const project = useProjectStore.getState().project
@@ -24,8 +24,8 @@ export default function DataMapperRoot() {
   )
   const [route, setRoute] = useState('Initialize')
 
-  useEffect(() => {
-    const loadConfig = async () => {
+  useEffect((): void => {
+    const loadConfig = async (): Promise<void> => {
       if (!project) {
         return
       }
@@ -48,12 +48,12 @@ export default function DataMapperRoot() {
 
   const [confirmed, setConfirmed] = useState<boolean>(mappingListConfig.stage != 'INIT')
 
-  useEffect(() => {
+  useEffect((): void => {
     setConfirmed(mappingListConfig.stage !== 'INIT')
   }, [mappingListConfig.stage])
 
-  useEffect(() => {
-    const timeout = setTimeout(async () => {
+  useEffect((): (() => void) => {
+    const timeout = setTimeout(async (): Promise<void> => {
       if (!project || !mappingListConfig.formatTypes.source || !mappingListConfig.formatTypes.target) {
         if (!project) {
           showErrorToast('No project selected')
@@ -67,7 +67,7 @@ export default function DataMapperRoot() {
       }
     }, SAVING_THROTTLE) //Save **AFTER** 300 MS
 
-    return () => clearTimeout(timeout) // If another save occurs within the 300MS, Reset timer and save after 300MS
+    return (): void => clearTimeout(timeout) // If another save occurs within the 300MS, Reset timer and save after 300MS
   }, [mappingListConfig, project])
 
   return (
@@ -76,7 +76,7 @@ export default function DataMapperRoot() {
       <div className="top fixed right-0 z-60 gap-2">
         <button
           className="border-border hover:bg-hover active:bg-selected hidden w-48 rounded-md border bg-red-500 px-4 py-2 text-sm"
-          onClick={() => {
+          onClick={(): void => {
             console.log(mappingListConfig)
             showSuccessToast('Logging config to console', 'Debug')
           }}
@@ -97,9 +97,9 @@ export default function DataMapperRoot() {
           {mappingListConfig.stage == 'Mapping' && (
             <div className="my-3 flex h-10 w-full gap-4 px-4">
               {routes
-                .filter((routeName) => routeName != 'Initialize')
-                .map((routeName) => (
-                  <Button key={routeName} className="flex-1" onClick={() => setRoute(routeName)}>
+                .filter((routeName): boolean => routeName != 'Initialize')
+                .map((routeName): JSX.Element => (
+                  <Button key={routeName} className="flex-1" onClick={(): void => setRoute(routeName)}>
                     {routeName}
                   </Button>
                 ))}

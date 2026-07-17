@@ -43,56 +43,56 @@ type ToastListener = (toast: ToastOptions | null) => void
 
 let listener: ToastListener | null = null
 
-export const showToast = (toast: ToastOptions) => {
+export const showToast = (toast: ToastOptions): void => {
   listener?.(toast)
 }
 
-export const hideToast = () => {
+export const hideToast = (): void => {
   listener?.(null)
 }
 
-export const registerToastListener = (l: ToastListener) => {
+export const registerToastListener = (l: ToastListener): void => {
   listener = l
 }
 
-export function showSuccessToast(message: string, title = 'Success!') {
+export function showSuccessToast(message: string, title = 'Success!'): void {
   showToast({ type: 'SUCCESS', title, message })
 }
 
-export function showInfoToast(message: string, title = 'Info') {
+export function showInfoToast(message: string, title = 'Info'): void {
   showToast({ type: 'INFO', title, message })
 }
-export function showWarningToast(message: string, title = 'Warning') {
+export function showWarningToast(message: string, title = 'Warning'): void {
   showToast({ type: 'WARNING', title, message })
 }
 
-export function showErrorToast(message: string, title = 'Error') {
+export function showErrorToast(message: string, title = 'Error'): void {
   showToast({ type: 'ERROR', title, message })
 }
 
-export function Toast() {
+export function Toast(): ReactPortal | null {
   const [toast, setToast] = useState<ToastOptions | null>(null)
   const theme = useTheme()
 
-  useEffect(() => {
+  useEffect((): void => {
     registerToastListener(setToast)
   }, [])
 
   const styles = toast ? toastStyles[toast.type] : null
 
-  useEffect(() => {
+  useEffect((): (() => void) | undefined => {
     if (!toast || !styles) return
 
     const timer = setTimeout(hideToast, toast.duration ?? styles.defaultDuration)
 
-    return () => clearTimeout(timer)
+    return (): void => clearTimeout(timer)
   }, [toast, styles])
 
   if (!toast || !styles) return null
 
   return createPortal(
     <div className={clsx('fixed inset-0 z-50 flex px-4', styles.container)} onClick={hideToast} data-theme={theme}>
-      <div className="pointer-events-auto mr-4 mb-4" onClick={(e) => e.stopPropagation()}>
+      <div className="pointer-events-auto mr-4 mb-4" onClick={(e): void => e.stopPropagation()}>
         <div className={clsx(styles.card)}>
           <div className="flex items-start gap-3 text-xl">
             <div className="flex flex-col">

@@ -7,7 +7,7 @@ type CloseButtonProperties = {
   className?: string
 }
 
-export default function CloseButton({ onClick, className }: Readonly<CloseButtonProperties>) {
+export default function CloseButton({ onClick, className }: Readonly<CloseButtonProperties>): React.JSX.Element {
   return (
     <IconButton onClick={onClick} className={className}>
       <CloseIcon className="fill-foreground-muted group-hover:fill-foreground h-4 w-4" />

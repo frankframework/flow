@@ -3,7 +3,7 @@ import type { AdapterLocationResponse, XmlResponse } from '~/types/project.types
 
 const configCache = new Map<string, string>()
 
-export function clearConfigurationFileCache(projectName?: string, filepath?: string) {
+export function clearConfigurationFileCache(projectName?: string, filepath?: string): void {
   if (projectName && filepath) {
     configCache.delete(`${projectName}:${filepath}`)
   } else {

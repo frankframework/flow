@@ -17,7 +17,7 @@ export default function ConfigurationRow({
   onClick,
   onRemove,
   onExport,
-}: Readonly<ConfigurationRowProperties>) {
+}: Readonly<ConfigurationRowProperties>): JSX.Element {
   const menuItems: KebabMenuItem[] = [
     ...(isLocal
       ? []

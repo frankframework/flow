@@ -10,7 +10,12 @@ type TileViewButtonProperties = {
   onClick: () => void
 }
 
-export function ActiveIconButton({ isActive, label, Icon, onClick }: Readonly<TileViewButtonProperties>) {
+export function ActiveIconButton({
+  isActive,
+  label,
+  Icon,
+  onClick,
+}: Readonly<TileViewButtonProperties>): React.JSX.Element {
   return (
     <li className="m-0 list-none p-0">
       <button

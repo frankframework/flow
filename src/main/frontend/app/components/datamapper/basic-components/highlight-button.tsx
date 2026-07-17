@@ -1,11 +1,17 @@
 import clsx from 'clsx'
 import LightBulb from '/icons/solar/Lightbulb.svg?react'
 
-export default function HighlightButton({ onClick, className }: { onClick: () => void; className?: string }) {
+export default function HighlightButton({
+  onClick,
+  className,
+}: {
+  onClick: () => void
+  className?: string
+}): JSX.Element {
   return (
     <button
       className={clsx('hover:opacity-70', className)}
-      onClick={(event) => {
+      onClick={(event): void => {
         event.stopPropagation()
         onClick()
       }}

@@ -22,7 +22,7 @@ export default function ContextMenu({
   onRename,
   onDelete,
   onClose,
-}: ContextMenuProperties) {
+}: ContextMenuProperties): ReactPortal {
   const menuReference = useRef<HTMLDivElement>(null)
   useContextMenuDismiss(menuReference, onClose)
 
@@ -36,21 +36,21 @@ export default function ContextMenu({
     >
       {isFolder && (
         <>
-          <div className={itemClass} onClick={() => onNewFile()}>
+          <div className={itemClass} onClick={(): void => onNewFile()}>
             New File
           </div>
-          <div className={itemClass} onClick={() => onNewFolder()}>
+          <div className={itemClass} onClick={(): void => onNewFolder()}>
             New Folder
           </div>
         </>
       )}
       {!isRoot && (
-        <div className={itemClass} onClick={() => onRename()}>
+        <div className={itemClass} onClick={(): void => onRename()}>
           Rename
         </div>
       )}
       {!isRoot && (
-        <div className={`${itemClass} text-red-500`} onClick={() => onDelete()}>
+        <div className={`${itemClass} text-red-500`} onClick={(): void => onDelete()}>
           Delete
         </div>
       )}

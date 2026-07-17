@@ -1,4 +1,17 @@
-import { type Dispatch, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import {
+  type AriaRole,
+  type CSSProperties,
+  type Dispatch,
+  type DOMAttributes,
+  type HTMLAttributes,
+  type JSX,
+  type SetStateAction,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import {
   ReactFlow,
   applyNodeChanges,
@@ -10,6 +23,11 @@ import {
   type EdgeChange,
   type Connection,
   useReactFlow,
+  type XYPosition,
+  Position,
+  type CoordinateExtent,
+  type NodeOrigin,
+  type NodeHandle,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import AddFieldForm from '~/components/datamapper/forms/add-field-form'
@@ -66,7 +84,7 @@ const INITIAL_NODES: Node[] = [
 ]
 const INITIAL_EDGES: Edge[] = []
 
-function PropertyList({ config, configDispatch }: PropertyListProperties) {
+function PropertyList({ config, configDispatch }: PropertyListProperties): JSX.Element {
   const reactFlowInstance = useReactFlow()
 
   const initHasRun = useRef(false)
@@ -89,7 +107,7 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
 
   const editingMappingReference = useRef<MappingNodeData | null>(null)
 
-  useEffect(() => {
+  useEffect((): void => {
     editingMappingReference.current = editingMapping
   }, [editingMapping])
 
@@ -100,8 +118,8 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
     setEdges,
   })
 
-  const openMapping = useCallback(() => {
-    requestAnimationFrame(() => {
+  const openMapping = useCallback((): void => {
+    requestAnimationFrame((): void => {
       const nodes = reactFlowInstance.getNodes()
       const edges = reactFlowInstance.getEdges()
 
@@ -118,8 +136,8 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
           return
         }
 
-        const checkedSources = sources.filter((s) => s.checked)
-        const checkedTargets = targets.filter((t) => t.checked)
+        const checkedSources = sources.filter((s): boolean | undefined => s.checked)
+        const checkedTargets = targets.filter((t): boolean | undefined => t.checked)
 
         try {
           const isArrayMapping = handleArrayMapping(
@@ -145,7 +163,7 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
     })
   }, [reactFlowInstance])
 
-  const nodeTypes: NodeTypes = useMemo(() => {
+  const nodeTypes: NodeTypes = useMemo((): NodeTypes => {
     return getNodeTypes({
       flow,
       setReactFlowNodes,
@@ -162,11 +180,11 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openMapping])
 
-  useEffect(() => {
+  useEffect((): (() => void) | undefined => {
     if (!reactFlowInstance) return
 
-    const updateSize = () => {
-      requestAnimationFrame(() => {
+    const updateSize = (): void => {
+      requestAnimationFrame((): void => {
         flow.calculateTablePositions(canvasWidth.current?.offsetWidth ?? 0)
       })
     }
@@ -175,13 +193,13 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
 
     requestAnimationFrame(updateSize)
 
-    return () => {
+    return (): void => {
       window.removeEventListener('resize', updateSize)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reactFlowInstance]) //Adding flow as dependancy here breaks the importing.
 
-  useEffect(() => {
+  useEffect((): void => {
     if (!reactFlowInstance) return
 
     configDispatch({
@@ -190,27 +208,27 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
     })
   }, [reactFlowNodes, edges, reactFlowInstance, configDispatch])
 
-  useEffect(() => {
-    setCanvasSize((size) => updateCanvasSize(reactFlowNodes, size))
+  useEffect((): void => {
+    setCanvasSize((size): { height: number } => updateCanvasSize(reactFlowNodes, size))
   }, [reactFlowNodes])
 
-  const onRestore = useCallback(() => {
-    const restoreFlow = async () => {
+  const onRestore = useCallback((): void => {
+    const restoreFlow = async (): Promise<void> => {
       if (config.propertyData) flow.importJsonConfiguration(JSON.stringify(config.propertyData))
     }
 
-    restoreFlow().then(() => {
+    restoreFlow().then((): void => {
       flow.deleteNode('target-import-button')
-      requestAnimationFrame(() => {
+      requestAnimationFrame((): void => {
         flow.addSchematicImportButton('source')
-        if (reactFlowInstance.getNodes().filter((node) => node.id.includes('target')).length == 1) {
+        if (reactFlowInstance.getNodes().filter((node): boolean => node.id.includes('target')).length == 1) {
           flow.addSchematicImportButton('target')
         }
       })
     })
   }, [config.propertyData, flow, reactFlowInstance])
 
-  useEffect(() => {
+  useEffect((): void => {
     if (!reactFlowInstance || initHasRun.current) return
     initHasRun.current = true
 
@@ -223,32 +241,127 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
   }, [config.propertyData.nodes, flow, onRestore, reactFlowInstance])
 
   const onReactFlowNodeChange = useCallback(
-    (changes: NodeChange[]) => setReactFlowNodes((nodes) => applyNodeChanges(changes, nodes) as Node[]),
+    (changes: NodeChange[]): void => setReactFlowNodes((nodes): Node[] => applyNodeChanges(changes, nodes) as Node[]),
     [],
   )
 
   const onEdgesChange = useCallback(
-    (changes: EdgeChange[]) =>
-      setEdges((edges) => {
+    (changes: EdgeChange[]): void =>
+      setEdges((edges): EdgeBase[] => {
         return applyEdgeChanges(changes, edges)
       }),
     [],
   )
 
   const onConnect = useCallback(
-    (connection: Connection) => {
+    (connection: Connection): void => {
       const connectedIds = new Set<string>()
 
       if (connection?.source) connectedIds.add(connection.source)
       if (connection?.target) connectedIds.add(connection.target)
-      setReactFlowNodes((previous) =>
-        previous.map((node) => ({
-          ...node,
-          data: {
-            ...node.data,
-            checked: connectedIds.has(node.id),
-          },
-        })),
+      setReactFlowNodes(
+        (
+          previous,
+        ): {
+          data: { checked: boolean }
+          id: string
+          position: XYPosition
+          sourcePosition?: Position
+          targetPosition?: Position
+          hidden?: boolean
+          selected?: boolean
+          dragging?: boolean
+          draggable?: boolean
+          selectable?: boolean
+          connectable?: boolean
+          deletable?: boolean
+          dragHandle?: string
+          width?: number
+          height?: number
+          initialWidth?: number
+          initialHeight?: number
+          parentId?: string
+          zIndex?: number
+          extent?: 'parent' | CoordinateExtent | null
+          expandParent?: boolean
+          ariaLabel?: string
+          origin?: NodeOrigin
+          handles?: NodeHandle[]
+          measured?: { width?: number; height?: number }
+          type?: string | undefined
+          style?: CSSProperties
+          className?: string
+          resizing?: boolean
+          focusable?: boolean
+          ariaRole?: AriaRole
+          domAttributes?: Omit<
+            HTMLAttributes<HTMLDivElement>,
+            | 'id'
+            | 'style'
+            | 'className'
+            | 'draggable'
+            | 'role'
+            | 'aria-label'
+            | 'defaultValue'
+            | 'dangerouslySetInnerHTML'
+            | keyof DOMAttributes<HTMLDivElement>
+          >
+        }[] =>
+          previous.map(
+            (
+              node,
+            ): {
+              data: { checked: boolean }
+              id: string
+              position: XYPosition
+              sourcePosition?: Position
+              targetPosition?: Position
+              hidden?: boolean
+              selected?: boolean
+              dragging?: boolean
+              draggable?: boolean
+              selectable?: boolean
+              connectable?: boolean
+              deletable?: boolean
+              dragHandle?: string
+              width?: number
+              height?: number
+              initialWidth?: number
+              initialHeight?: number
+              parentId?: string
+              zIndex?: number
+              extent?: 'parent' | CoordinateExtent | null
+              expandParent?: boolean
+              ariaLabel?: string
+              origin?: NodeOrigin
+              handles?: NodeHandle[]
+              measured?: { width?: number; height?: number }
+              type?: string | undefined
+              style?: CSSProperties
+              className?: string
+              resizing?: boolean
+              focusable?: boolean
+              ariaRole?: AriaRole
+              domAttributes?: Omit<
+                HTMLAttributes<HTMLDivElement>,
+                | 'id'
+                | 'style'
+                | 'className'
+                | 'draggable'
+                | 'role'
+                | 'aria-label'
+                | 'defaultValue'
+                | 'dangerouslySetInnerHTML'
+                | keyof DOMAttributes<HTMLDivElement>
+              >
+            } => ({
+              ...node,
+              data: {
+                ...node.data,
+                checked: connectedIds.has(node.id),
+              },
+            }),
+          ),
       )
       openMapping()
 
@@ -257,13 +370,13 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
     [openMapping],
   )
 
-  function openMappingModal(sources: NodeLabels[], targets: NodeLabels[]) {
-    setMappingSources(sources.filter((source) => source.id?.includes('item')))
-    setMappingTargets(targets.filter((target) => target.id?.includes('item')))
+  function openMappingModal(sources: NodeLabels[], targets: NodeLabels[]): void {
+    setMappingSources(sources.filter((source): boolean => source.id?.includes('item')))
+    setMappingTargets(targets.filter((target): boolean => target.id?.includes('item')))
     setAddMappingModal(true)
   }
 
-  async function saveField(data: CustomNodeData) {
+  async function saveField(data: CustomNodeData): Promise<void> {
     if (!reactFlowInstance) {
       setAddFieldModal(false)
       setEditingNode(null)
@@ -295,7 +408,7 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
       }
     }
   }
-  async function saveMapping(mappingConfig: MappingNodeData) {
+  async function saveMapping(mappingConfig: MappingNodeData): Promise<void> {
     if (!reactFlowInstance) {
       setAddMappingModal(false)
 
@@ -308,17 +421,112 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
     setEditingMapping(null)
     setAddMappingModal(false)
     showSuccessToast('Added mapping successfully')
-    setReactFlowNodes((previous) =>
-      previous.map((node) => ({
-        ...node,
-        data: {
-          ...node.data,
-          checked: false,
-        },
-      })),
+    setReactFlowNodes(
+      (
+        previous,
+      ): {
+        data: { checked: boolean }
+        id: string
+        position: XYPosition
+        sourcePosition?: Position
+        targetPosition?: Position
+        hidden?: boolean
+        selected?: boolean
+        dragging?: boolean
+        draggable?: boolean
+        selectable?: boolean
+        connectable?: boolean
+        deletable?: boolean
+        dragHandle?: string
+        width?: number
+        height?: number
+        initialWidth?: number
+        initialHeight?: number
+        parentId?: string
+        zIndex?: number
+        extent?: 'parent' | CoordinateExtent | null
+        expandParent?: boolean
+        ariaLabel?: string
+        origin?: NodeOrigin
+        handles?: NodeHandle[]
+        measured?: { width?: number; height?: number }
+        type?: string | undefined
+        style?: CSSProperties
+        className?: string
+        resizing?: boolean
+        focusable?: boolean
+        ariaRole?: AriaRole
+        domAttributes?: Omit<
+          HTMLAttributes<HTMLDivElement>,
+          | 'id'
+          | 'style'
+          | 'className'
+          | 'draggable'
+          | 'role'
+          | 'aria-label'
+          | 'defaultValue'
+          | 'dangerouslySetInnerHTML'
+          | keyof DOMAttributes<HTMLDivElement>
+        >
+      }[] =>
+        previous.map(
+          (
+            node,
+          ): {
+            data: { checked: boolean }
+            id: string
+            position: XYPosition
+            sourcePosition?: Position
+            targetPosition?: Position
+            hidden?: boolean
+            selected?: boolean
+            dragging?: boolean
+            draggable?: boolean
+            selectable?: boolean
+            connectable?: boolean
+            deletable?: boolean
+            dragHandle?: string
+            width?: number
+            height?: number
+            initialWidth?: number
+            initialHeight?: number
+            parentId?: string
+            zIndex?: number
+            extent?: 'parent' | CoordinateExtent | null
+            expandParent?: boolean
+            ariaLabel?: string
+            origin?: NodeOrigin
+            handles?: NodeHandle[]
+            measured?: { width?: number; height?: number }
+            type?: string | undefined
+            style?: CSSProperties
+            className?: string
+            resizing?: boolean
+            focusable?: boolean
+            ariaRole?: AriaRole
+            domAttributes?: Omit<
+              HTMLAttributes<HTMLDivElement>,
+              | 'id'
+              | 'style'
+              | 'className'
+              | 'draggable'
+              | 'role'
+              | 'aria-label'
+              | 'defaultValue'
+              | 'dangerouslySetInnerHTML'
+              | keyof DOMAttributes<HTMLDivElement>
+            >
+          } => ({
+            ...node,
+            data: {
+              ...node.data,
+              checked: false,
+            },
+          }),
+        ),
     )
   }
-  function openAddFieldModal(modelType: 'source' | 'target') {
+  function openAddFieldModal(modelType: 'source' | 'target'): void {
     possibleParentGroups.current = getNodesByTypeAndId(reactFlowInstance?.getNodes(), {
       typeIncludes: modelType === 'source' ? ['labeledGroup', 'extraSourceNode'] : 'labeledGroup',
       idIncludes: modelType,
@@ -346,14 +554,62 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
         <div style={{ height: canvasSize.height }} className="flex w-full flex-col items-center">
           <ReactFlow
             nodeTypes={nodeTypes}
-            nodes={reactFlowNodes.map((node) => ({
-              ...node,
-              data: {
-                ...node.data,
-                checked: node.data?.checked ?? false,
-                setNodes: setReactFlowNodes,
-              },
-            }))}
+            nodes={reactFlowNodes.map(
+              (
+                node,
+              ): {
+                data: { checked: object; setNodes: Dispatch<SetStateAction<Node[]>> }
+                id: string
+                position: XYPosition
+                sourcePosition?: Position
+                targetPosition?: Position
+                hidden?: boolean
+                selected?: boolean
+                dragging?: boolean
+                draggable?: boolean
+                selectable?: boolean
+                connectable?: boolean
+                deletable?: boolean
+                dragHandle?: string
+                width?: number
+                height?: number
+                initialWidth?: number
+                initialHeight?: number
+                parentId?: string
+                zIndex?: number
+                extent?: 'parent' | CoordinateExtent | null
+                expandParent?: boolean
+                ariaLabel?: string
+                origin?: NodeOrigin
+                handles?: NodeHandle[]
+                measured?: { width?: number; height?: number }
+                type?: string | undefined
+                style?: CSSProperties
+                className?: string
+                resizing?: boolean
+                focusable?: boolean
+                ariaRole?: AriaRole
+                domAttributes?: Omit<
+                  HTMLAttributes<HTMLDivElement>,
+                  | 'id'
+                  | 'style'
+                  | 'className'
+                  | 'draggable'
+                  | 'role'
+                  | 'aria-label'
+                  | 'defaultValue'
+                  | 'dangerouslySetInnerHTML'
+                  | keyof DOMAttributes<HTMLDivElement>
+                >
+              } => ({
+                ...node,
+                data: {
+                  ...node.data,
+                  checked: node.data?.checked ?? false,
+                  setNodes: setReactFlowNodes,
+                },
+              }),
+            )}
             edges={edges}
             onNodesChange={onReactFlowNodeChange}
             onEdgesChange={onEdgesChange}
@@ -377,7 +633,7 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
 
       <Modal
         isOpen={addFieldModal}
-        onClose={() => {
+        onClose={(): void => {
           setAddFieldModal(false)
           setEditingNode(null)
         }}
@@ -392,7 +648,7 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
       </Modal>
       <Modal
         isOpen={addMappingModal}
-        onClose={() => {
+        onClose={(): void => {
           setAddMappingModal(false)
           setEditingMapping(null)
         }}
@@ -409,7 +665,7 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
           <div className="pointer-events-auto relative flex w-full justify-between px-12">
             <Button
               className="absolute bottom-[2vh] left-1/4 z-10 rounded-md border px-4 py-2"
-              onClick={() => openAddFieldModal('source')}
+              onClick={(): void => openAddFieldModal('source')}
             >
               Add Source
             </Button>
@@ -421,7 +677,7 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
             </Button>
             <Button
               className="absolute right-1/4 bottom-[2vh] z-10 rounded-2xl border px-4 py-2"
-              onClick={() => openAddFieldModal('target')}
+              onClick={(): void => openAddFieldModal('target')}
             >
               Add target
             </Button>

@@ -3,7 +3,7 @@ import FfIcon from '/icons/custom/ff!-icon.svg?react'
 import Button from '~/components/inputs/button'
 import { getStoredProjectRootPath } from '~/stores/project-store'
 
-export default function NotFound() {
+export default function NotFound(): JSX.Element {
   const navigate = useNavigate()
 
   const hasProject = Boolean(getStoredProjectRootPath())
@@ -22,7 +22,7 @@ export default function NotFound() {
         </p>
       </div>
 
-      <Button onClick={() => navigate(destination)}>{buttonLabel}</Button>
+      <Button onClick={(): void | Promise<void> => navigate(destination)}>{buttonLabel}</Button>
     </div>
   )
 }

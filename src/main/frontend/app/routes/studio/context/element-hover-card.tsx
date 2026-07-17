@@ -21,7 +21,7 @@ export default function ElementHoverCard({
   onUnlock,
   onEnter,
   onLeave,
-}: ElementHoverCardProperties) {
+}: ElementHoverCardProperties): ReactPortal {
   const reference = useRef<HTMLDivElement>(null)
   const [position, setPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 })
   const offset = 10 // distance between anchor and tooltip
@@ -29,11 +29,11 @@ export default function ElementHoverCard({
   const route = element.labels ? [labelGroup, label, element.name].join('/') : element.className
   const frankdocUrl = `https://frankdoc.frankframework.org/#/${route}`
   const { elements } = useFFDoc()
-  const description = useJavadocTransform(element.description ?? '', elements, false, (link) => {
+  const description = useJavadocTransform(element.description ?? '', elements, false, (link): string => {
     return `<a href="https://frankdoc.frankframework.org/#/${link.href}" target="_blank" class="underline hover:opacity-70">${link.text}</a>`
   })
 
-  useLayoutEffect(() => {
+  useLayoutEffect((): void => {
     if (!reference.current || !anchorRect) return
 
     const tooltip = reference.current
@@ -50,8 +50,8 @@ export default function ElementHoverCard({
     setPosition({ top: clampedTop, left })
   }, [anchorRect])
 
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
+  useEffect((): (() => void) => {
+    function handleClickOutside(event: MouseEvent): void {
       if (!reference.current) return
       if (!reference.current.contains(event.target as Node)) {
         onUnlock?.()
@@ -59,11 +59,11 @@ export default function ElementHoverCard({
     }
 
     document.addEventListener('pointerdown', handleClickOutside, { capture: true })
-    return () => document.removeEventListener('pointerdown', handleClickOutside, true)
+    return (): void => document.removeEventListener('pointerdown', handleClickOutside, true)
   }, [onUnlock])
 
   useShortcut({
-    'studio.close-palette-card': () => onUnlock?.(),
+    'studio.close-palette-card': (): void | undefined => onUnlock?.(),
   })
 
   return createPortal(
@@ -114,8 +114,8 @@ export default function ElementHoverCard({
             )}
             {element.labels &&
               Object.entries(element.labels)
-                .toSorted(([a], [b]) => a.localeCompare(b))
-                .map(([key, value]) => (
+                .toSorted(([a], [b]): number => a.localeCompare(b))
+                .map(([key, value]): JSX.Element => (
                   <span
                     key={key}
                     className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px]"

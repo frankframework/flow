@@ -44,19 +44,19 @@ export default function NameInputDialog({
   onSubmit,
   onCancel,
   patterns = FOLDER_OR_ADAPTER_NAME_PATTERNS,
-}: NameInputDialogProperties) {
+}: NameInputDialogProperties): React.ReactPortal {
   const [value, setValue] = useState(initialValue)
   const [isValid, setIsValid] = useState(false)
   const overlayReference = useRef<HTMLDivElement>(null)
 
-  const handleSubmit = () => {
+  const handleSubmit = (): void => {
     if (!isValid) return
     onSubmit(value.trim())
   }
 
   useSubmitOnEnter(handleSubmit)
 
-  const handleKeyDown = (event: React.KeyboardEvent) => {
+  const handleKeyDown = (event: React.KeyboardEvent): void => {
     if (event.key !== 'Escape') {
       return
     }
@@ -65,7 +65,7 @@ export default function NameInputDialog({
     onCancel()
   }
 
-  const handleOverlayClick = (event: React.MouseEvent) => {
+  const handleOverlayClick = (event: React.MouseEvent): void => {
     if (event.target === overlayReference.current) onCancel()
   }
 
@@ -79,11 +79,11 @@ export default function NameInputDialog({
         <p className="text-foreground mb-2 text-sm font-medium">{title}</p>
         <ValidatedInput
           autoFocus
-          onFocus={(event) => event.target.select()}
+          onFocus={(event): void => event.target.select()}
           value={value}
           patterns={patterns}
           onValidChange={setIsValid}
-          onChange={(event) => setValue(event.target.value)}
+          onChange={(event): void => setValue(event.target.value)}
           onKeyDown={handleKeyDown}
         />
         <div className="mt-3 flex justify-end gap-2">

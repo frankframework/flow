@@ -6,7 +6,7 @@ type SidebarsHeaderProperties = {
   title?: string
 } & SidebarsCloseProperties
 
-export default function SidebarHeader({ title, side }: Readonly<SidebarsHeaderProperties>) {
+export default function SidebarHeader({ title, side }: Readonly<SidebarsHeaderProperties>): JSX.Element {
   const isLeft = side === SidebarSide.LEFT
 
   return (

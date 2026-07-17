@@ -8,7 +8,12 @@ type IconLabelButtonProperties = {
   className?: string
 }
 
-export default function IconLabelButton({ icon, label, onClick, className }: Readonly<IconLabelButtonProperties>) {
+export default function IconLabelButton({
+  icon,
+  label,
+  onClick,
+  className,
+}: Readonly<IconLabelButtonProperties>): React.JSX.Element {
   return (
     <button
       type="button"

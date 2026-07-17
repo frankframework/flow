@@ -7,7 +7,7 @@ type IEditorDecorationsCollection = monaco.editor.IEditorDecorationsCollection
 import XsdFeatures from 'monaco-xsd-code-completion/esm/XsdFeatures'
 import 'monaco-xsd-code-completion/src/style.css'
 import XsdManager from 'monaco-xsd-code-completion/esm/XsdManager'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { type JSX, useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { validateXML, type XMLValidationError } from 'xmllint-wasm'
 import { useShallow } from 'zustand/react/shallow'
@@ -28,7 +28,7 @@ import { fetchConfigurationFile, saveConfigurationFile } from '~/services/config
 import { fetchFile, updateFile } from '~/services/file-service'
 import { refreshOpenDiffs } from '~/services/git-service'
 import { fetchFrankConfigXsd } from '~/services/xsd-service'
-import useEditorTabStore from '~/stores/editor-tab-store'
+import useEditorTabStore, { type DiffTabData, type PendingHighlight } from '~/stores/editor-tab-store'
 import { useProjectStore } from '~/stores/project-store'
 import { useSettingsStore } from '~/stores/settings-store'
 import { logApiError } from '~/utils/logger'
@@ -62,8 +62,8 @@ type CachedFile = {
   type: string
 }
 
-const ELEMENT_ERROR_RE = /[Ee]lement [\u2018\u2019'"{]?([\w:.-]+)[\u2018\u2019'"}]?/
-const ATTRIBUTE_ERROR_RE = /[Aa]ttribute [\u2018\u2019'"{]?([\w:.-]+)[\u2018\u2019'"}]?/
+const ELEMENT_ERROR_RE = /[Ee]lement [\u{2018}\u{2019}'"{]?([\w:.-]+)[\u{2018}\u{2019}'"}]?/u
+const ATTRIBUTE_ERROR_RE = /[Aa]ttribute [\u{2018}\u{2019}'"{]?([\w:.-]+)[\u{2018}\u{2019}'"}]?/u
 
 function extractLocalName(name: string): string {
   return name.includes(':') ? name.split(':').pop()! : name
@@ -113,19 +113,26 @@ function mapToValidationErrors(rawErrors: readonly XMLValidationError[], model: 
   const seen = new Set<number>()
 
   return rawErrors
-    .map((e) => {
+    .map((e): { message: string; lineNumber: number; startColumn: number; endColumn: number } => {
       const lineNumber = Math.max(1, Math.min(e.loc?.lineNumber ?? 1, totalLines))
       const { startColumn, endColumn } = findErrorRange(model.getLineContent(lineNumber), e.message)
       return { message: e.message, lineNumber, startColumn, endColumn }
     })
-    .filter((e) => {
+    .filter((e): boolean => {
       if (seen.has(e.lineNumber)) return false
       seen.add(e.lineNumber)
       return true
     })
 }
 
-function toDecoration(e: ValidationError) {
+function toDecoration(e: ValidationError): {
+  range: { startLineNumber: number; startColumn: number; endLineNumber: number; endColumn: number }
+  options: {
+    inlineClassName: string
+    hoverMessage: { value: string }
+    overviewRuler: { color: string; position: number }
+  }
+} {
   return {
     range: {
       startLineNumber: e.lineNumber,
@@ -141,7 +148,17 @@ function toDecoration(e: ValidationError) {
   }
 }
 
-function toMarker(e: ValidationError, severity: number) {
+function toMarker(
+  e: ValidationError,
+  severity: number,
+): {
+  startLineNumber: number
+  startColumn: number
+  endLineNumber: number
+  endColumn: number
+  message: string
+  severity: number
+} {
   return {
     startLineNumber: e.lineNumber,
     startColumn: e.startColumn,
@@ -152,12 +169,12 @@ function toMarker(e: ValidationError, severity: number) {
   }
 }
 
-function toMonacoType(type: string | null) {
+function toMonacoType(type: string | null): string {
   if (!type || type === 'text/plain') return 'plaintext'
   return type.split('/').pop() ?? ''
 }
 
-function isConfigurationFile(fileExtension: string) {
+function isConfigurationFile(fileExtension: string): boolean {
   return fileExtension === 'xml'
 }
 
@@ -175,12 +192,14 @@ async function validateFlow(content: string, model: ITextModel): Promise<Validat
 
   if (model.isDisposed()) return []
 
-  return mapToValidationErrors(flowResult.errors, model).map((error) => ({
-    ...error,
-    lineNumber: error.lineNumber + startLine,
-    startColumn: 1,
-    endColumn: model.getLineLength(error.lineNumber + startLine),
-  }))
+  return mapToValidationErrors(flowResult.errors, model).map(
+    (error): { lineNumber: number; startColumn: number; endColumn: number; message: string } => ({
+      ...error,
+      lineNumber: error.lineNumber + startLine,
+      startColumn: 1,
+      endColumn: model.getLineLength(error.lineNumber + startLine),
+    }),
+  )
 }
 
 async function validateConfiguration(content: string, xsd: string, model: ITextModel): Promise<ValidationError[]> {
@@ -196,7 +215,8 @@ async function validateConfiguration(content: string, xsd: string, model: ITextM
   }
 
   const filtered = result.errors.filter(
-    (e) => !e.message.includes('{urn:frank-flow}') && !e.message.includes('Skipping attribute use prohibition'),
+    (e): boolean =>
+      !e.message.includes('{urn:frank-flow}') && !e.message.includes('Skipping attribute use prohibition'),
   )
 
   return mapToValidationErrors(filtered, model)
@@ -244,7 +264,7 @@ function mapMatchToDecorations(match: FindMatch): IModelDeltaDecoration[] {
   ]
 }
 
-export default function CodeEditor() {
+export default function CodeEditor(): JSX.Element {
   const theme = useTheme()
   const project = useProjectStore.getState().project
   const [activeTabFilePath, setActiveTabFilePath] = useState<string>(useEditorTabStore.getState().activeTabFilePath)
@@ -265,31 +285,35 @@ export default function CodeEditor() {
   const debounceTimerReference = useRef<ReturnType<typeof setTimeout> | null>(null)
   const validationTimerReference = useRef<ReturnType<typeof setTimeout> | null>(null)
   const validationCounterReference = useRef(0)
-  const contentCacheRef = useRef<Map<string, CachedFile>>(new Map())
-  const syncingValueRef = useRef(false)
+  const contentCacheReference = useRef<Map<string, CachedFile>>(new Map())
+  const syncingValueReference = useRef(false)
   const navigate = useNavigate()
 
   const [pendingHighlight, setPendingHighlightLocal] = useState<{ subtype: string; name?: string } | null>(
-    () => useEditorTabStore.getState().pendingHighlight,
+    (): PendingHighlight | null => useEditorTabStore.getState().pendingHighlight,
   )
 
   const activeTab = useEditorTabStore(
-    useShallow((state) => {
-      const tab = state.activeTabFilePath ? state.tabs[state.activeTabFilePath] : undefined
-      return {
-        configurationPath: tab?.configurationPath,
-        type: tab?.type ?? 'editor',
-        diffData: tab?.diffData,
-      }
-    }),
+    useShallow(
+      (
+        state,
+      ): { configurationPath: string | undefined; type: 'editor' | 'diff'; diffData: DiffTabData | undefined } => {
+        const tab = state.activeTabFilePath ? state.tabs[state.activeTabFilePath] : undefined
+        return {
+          configurationPath: tab?.configurationPath,
+          type: tab?.type ?? 'editor',
+          diffData: tab?.diffData,
+        }
+      },
+    ),
   )
 
-  const refreshCounter = useEditorTabStore((state) => state.refreshCounter)
-  const lastRefreshCounterRef = useRef(refreshCounter)
+  const refreshCounter = useEditorTabStore((state): number => state.refreshCounter)
+  const lastRefreshCounterReference = useRef(refreshCounter)
 
   const isDiffTab = activeTab.type === 'diff'
 
-  const applyFlowHighlighter = useCallback(() => {
+  const applyFlowHighlighter = useCallback((): void => {
     const editor = editorReference.current
     const model = editor?.getModel()
 
@@ -304,7 +328,7 @@ export default function CodeEditor() {
       true,
     )
 
-    const decorations = matches.flatMap((match) => mapMatchToDecorations(match))
+    const decorations = matches.flatMap((match): monaco.editor.IModelDeltaDecoration[] => mapMatchToDecorations(match))
 
     if (flowDecorationsReference.current) {
       flowDecorationsReference.current.set(decorations)
@@ -314,25 +338,37 @@ export default function CodeEditor() {
   }, [fileLanguage])
 
   const applyFrankGlyphs = useCallback(
-    (content: string) => {
+    (content: string): void => {
       const editor = editorReference.current
       if (!editor || fileLanguage !== 'xml') return
 
       const elements = findFrankElementsForGlyphs(content)
       frankElementsReference.current = elements
 
-      const decorations = elements.map((element) => {
-        const isAdapter = element.subtype === ADAPTER_GLYPH_SUBTYPE
-        return {
-          range: { startLineNumber: element.startLine, startColumn: 1, endLineNumber: element.startLine, endColumn: 1 },
-          options: {
-            glyphMarginClassName: isAdapter ? 'frank-adapter-glyph' : 'frank-node-glyph',
-            glyphMarginHoverMessage: {
-              value: isAdapter ? `Open adapter **${element.name}** in Studio` : `Open **${element.name}** in Studio`,
+      const decorations = elements.map(
+        (
+          element,
+        ): {
+          range: { startLineNumber: number; startColumn: number; endLineNumber: number; endColumn: number }
+          options: { glyphMarginClassName: string; glyphMarginHoverMessage: { value: string } }
+        } => {
+          const isAdapter = element.subtype === ADAPTER_GLYPH_SUBTYPE
+          return {
+            range: {
+              startLineNumber: element.startLine,
+              startColumn: 1,
+              endLineNumber: element.startLine,
+              endColumn: 1,
             },
-          },
-        }
-      })
+            options: {
+              glyphMarginClassName: isAdapter ? 'frank-adapter-glyph' : 'frank-node-glyph',
+              glyphMarginHoverMessage: {
+                value: isAdapter ? `Open adapter **${element.name}** in Studio` : `Open **${element.name}** in Studio`,
+              },
+            },
+          }
+        },
+      )
 
       if (frankGlyphsDecorationsReference.current) {
         frankGlyphsDecorationsReference.current.set(decorations)
@@ -344,7 +380,7 @@ export default function CodeEditor() {
   )
 
   const performSave = useCallback(
-    (content?: string) => {
+    (content?: string): void => {
       if (!project || !activeTabFilePath || isDiffTab) return
 
       const updatedContent = content ?? editorReference.current?.getValue?.()
@@ -355,26 +391,26 @@ export default function CodeEditor() {
       const configPath = activeTab?.configurationPath
       if (!configPath) return
 
-      function finishSaving() {
+      function finishSaving(): void {
         setSaved()
       }
 
       setSaving()
       if (isConfigurationFile(fileExtension ?? '')) {
         saveConfigurationFile(project.name, configPath, updatedContent)
-          .then(({ xmlContent }) => {
-            contentCacheRef.current.set(activeTabFilePath, { type: 'xml', content: xmlContent })
+          .then(({ xmlContent }): void => {
+            contentCacheReference.current.set(activeTabFilePath, { type: 'xml', content: xmlContent })
             finishSaving()
             if (project.isGitRepository) refreshOpenDiffs(project.name)
           })
-          .catch((error) => {
+          .catch((error): void => {
             logApiError('Error saving', error)
             setIdle()
           })
       } else {
         updateFile(project.name, configPath, updatedContent)
-          .then(() => finishSaving())
-          .catch((error) => {
+          .then((): void => finishSaving())
+          .catch((error): void => {
             logApiError('Error saving', error)
             setIdle()
           })
@@ -383,34 +419,36 @@ export default function CodeEditor() {
     [project, activeTabFilePath, isDiffTab],
   )
 
-  const flushPendingSave = useCallback(() => {
-    if (debounceTimerReference.current) {
-      clearTimeout(debounceTimerReference.current)
-      debounceTimerReference.current = null
-      performSave()
+  const flushPendingSave = useCallback((): void => {
+    if (!debounceTimerReference.current) {
+      return
     }
+
+    clearTimeout(debounceTimerReference.current)
+    debounceTimerReference.current = null
+    performSave()
   }, [performSave])
 
-  const autosaveEnabled = useSettingsStore((s) => s.general.autoSave.enabled)
-  const autosaveDelay = useSettingsStore((s) => s.general.autoSave.delayMs)
+  const autosaveEnabled = useSettingsStore((s): boolean => s.general.autoSave.enabled)
+  const autosaveDelay = useSettingsStore((s): number => s.general.autoSave.delayMs)
 
-  const scheduleSave = useCallback(() => {
+  const scheduleSave = useCallback((): void => {
     if (!autosaveEnabled) return
     if (debounceTimerReference.current) clearTimeout(debounceTimerReference.current)
-    debounceTimerReference.current = setTimeout(() => {
+    debounceTimerReference.current = setTimeout((): void => {
       debounceTimerReference.current = null
       performSave()
     }, autosaveDelay)
   }, [performSave, autosaveEnabled, autosaveDelay])
 
-  useEffect(() => {
-    return () => {
+  useEffect((): (() => void) => {
+    return (): void => {
       if (debounceTimerReference.current) clearTimeout(debounceTimerReference.current)
       if (validationTimerReference.current) clearTimeout(validationTimerReference.current)
     }
   }, [])
 
-  const applyValidationDecorations = useCallback((errors: ValidationError[]) => {
+  const applyValidationDecorations = useCallback((errors: ValidationError[]): void => {
     const editor = editorReference.current
     if (!editor) return
 
@@ -423,17 +461,41 @@ export default function CodeEditor() {
     }
 
     if (errors.length > 0) {
-      errorDecorationsReference.current = editor.createDecorationsCollection(errors.map((element) => toDecoration(element)))
+      errorDecorationsReference.current = editor.createDecorationsCollection(
+        errors.map(
+          (
+            element,
+          ): {
+            range: { startLineNumber: number; startColumn: number; endLineNumber: number; endColumn: number }
+            options: {
+              inlineClassName: string
+              hoverMessage: { value: string }
+              overviewRuler: { color: string; position: number }
+            }
+          } => toDecoration(element),
+        ),
+      )
     }
 
     monaco.editor.setModelMarkers(
       model,
       'xsd-validation',
-      errors.map((error) => toMarker(error, monaco.MarkerSeverity.Error)),
+      errors.map(
+        (
+          error,
+        ): {
+          startLineNumber: number
+          startColumn: number
+          endLineNumber: number
+          endColumn: number
+          message: string
+          severity: number
+        } => toMarker(error, monaco.MarkerSeverity.Error),
+      ),
     )
   }, [])
 
-  const runReformat = useCallback(async () => {
+  const runReformat = useCallback(async (): Promise<void> => {
     const editor = editorReference.current
     if (!editor || !project || !activeTabFilePath) return
 
@@ -444,7 +506,7 @@ export default function CodeEditor() {
     try {
       const current = editor.getValue()
       const { xmlContent } = await saveConfigurationFile(project.name, configPath, current, true)
-      contentCacheRef.current.set(activeTabFilePath, { type: 'xml', content: xmlContent })
+      contentCacheReference.current.set(activeTabFilePath, { type: 'xml', content: xmlContent })
 
       const selection = editor.getSelection()
       editor.pushUndoStop()
@@ -460,7 +522,7 @@ export default function CodeEditor() {
   }, [project, activeTabFilePath])
 
   const runSchemaValidation = useCallback(
-    async (content: string) => {
+    async (content: string): Promise<void> => {
       const editor = editorReference.current
       const xsdContent = xsdContentReference.current
       if (!editor || !xsdContent) return
@@ -488,9 +550,9 @@ export default function CodeEditor() {
   )
 
   const scheduleSchemaValidation = useCallback(
-    (content: string) => {
+    (content: string): void => {
       if (validationTimerReference.current) clearTimeout(validationTimerReference.current)
-      validationTimerReference.current = setTimeout(() => {
+      validationTimerReference.current = setTimeout((): void => {
         validationTimerReference.current = null
         runSchemaValidation(content)
       }, 800)
@@ -500,24 +562,24 @@ export default function CodeEditor() {
 
   const performSaveReference = useRef(performSave)
   const runReformatReference = useRef(runReformat)
-  const scheduleSaveRef = useRef(scheduleSave)
-  const onChangeRef = useRef<((value: string) => void) | null>(null)
+  const scheduleSaveReference = useRef(scheduleSave)
+  const onChangeReference = useRef<((value: string) => void) | null>(null)
 
-  useEffect(() => {
+  useEffect((): void => {
     performSaveReference.current = performSave
   }, [performSave])
 
-  useEffect(() => {
+  useEffect((): void => {
     runReformatReference.current = runReformat
   }, [runReformat])
 
-  useEffect(() => {
-    scheduleSaveRef.current = scheduleSave
+  useEffect((): void => {
+    scheduleSaveReference.current = scheduleSave
   }, [scheduleSave])
 
-  useEffect(() => {
-    onChangeRef.current = (value: string) => {
-      scheduleSaveRef.current()
+  useEffect((): void => {
+    onChangeReference.current = (value: string): void => {
+      scheduleSaveReference.current()
       if (value && fileLanguage === 'xml') {
         scheduleSchemaValidation(value)
         applyFlowHighlighter()
@@ -525,7 +587,7 @@ export default function CodeEditor() {
     }
   }, [scheduleSchemaValidation, applyFlowHighlighter, fileLanguage])
 
-  useEffect(() => {
+  useEffect((): void => {
     if (!editorMounted || !editorReference.current) return
 
     const xsdManager = new XsdManager(editorReference.current)
@@ -535,7 +597,7 @@ export default function CodeEditor() {
     xsdFeatures.addGenerateAction()
 
     fetchFrankConfigXsd()
-      .then((xsdContent) => {
+      .then((xsdContent): void => {
         xsdContentReference.current = xsdContent
         xsdManager.set({ path: 'FrankConfig.xsd', value: xsdContent, namespace: 'xs', alwaysInclude: true })
         xsdManager.set({ path: 'FlowConfig.xsd', value: flowXsd, namespace: 'xs', alwaysInclude: true })
@@ -546,7 +608,7 @@ export default function CodeEditor() {
 
   const showCodeEditor = !!activeTabFilePath && !isDiffTab
 
-  useEffect(() => {
+  useEffect((): (() => void) | undefined => {
     if (!showCodeEditor || !containerReference.current || editorReference.current) return
 
     const editor = monaco.editor.create(containerReference.current, {
@@ -570,7 +632,7 @@ export default function CodeEditor() {
       contextMenuGroupId: 'navigation',
       contextMenuOrder: 1,
       keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS],
-      run: () => {
+      run: (): void => {
         if (debounceTimerReference.current) {
           clearTimeout(debounceTimerReference.current)
           debounceTimerReference.current = null
@@ -585,10 +647,10 @@ export default function CodeEditor() {
       contextMenuGroupId: 'navigation',
       contextMenuOrder: 3,
       keybindings: [monaco.KeyMod.Alt | monaco.KeyMod.Shift | monaco.KeyCode.KeyF],
-      run: () => runReformatReference.current(),
+      run: (): Promise<void> => runReformatReference.current(),
     })
 
-    editor.onMouseDown((event) => {
+    editor.onMouseDown((event): void => {
       if (highlightDecorationsReference.current) {
         highlightDecorationsReference.current.clear()
         highlightDecorationsReference.current = null
@@ -601,7 +663,7 @@ export default function CodeEditor() {
         const editorTab = useEditorTabStore.getState().getTab(useEditorTabStore.getState().activeTabFilePath)
         if (!editorTab) return
 
-        const element = frankElementsReference.current.find((element) => element.startLine === lineNumber)
+        const element = frankElementsReference.current.find((element): boolean => element.startLine === lineNumber)
         if (!element) return
 
         const { adapterName, adapterPosition, subtype, name } = element
@@ -625,12 +687,12 @@ export default function CodeEditor() {
       }
     })
 
-    editor.onDidChangeModelContent(() => {
-      if (syncingValueRef.current) return
-      onChangeRef.current?.(editor.getValue())
+    editor.onDidChangeModelContent((): void => {
+      if (syncingValueReference.current) return
+      onChangeReference.current?.(editor.getValue())
     })
 
-    return () => {
+    return (): void => {
       editor.dispose()
       editorReference.current = null
       setEditorMounted(false)
@@ -639,16 +701,16 @@ export default function CodeEditor() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showCodeEditor])
 
-  useEffect(() => {
+  useEffect((): void => {
     const editor = editorReference.current
     if (!editor || editor.getValue() === fileContent) return
 
-    syncingValueRef.current = true
+    syncingValueReference.current = true
     editor.setValue(fileContent)
-    syncingValueRef.current = false
+    syncingValueReference.current = false
   }, [fileContent])
 
-  useEffect(() => {
+  useEffect((): void => {
     const editor = editorReference.current
     if (!editor) return
 
@@ -656,20 +718,20 @@ export default function CodeEditor() {
     if (model) monaco.editor.setModelLanguage(model, fileLanguage)
   }, [fileLanguage])
 
-  useEffect(() => {
+  useEffect((): void => {
     monaco.editor.setTheme(theme === 'dark' ? 'vs-dark' : 'vs')
   }, [theme])
 
-  useEffect(() => {
+  useEffect((): (() => void) => {
     return useEditorTabStore.subscribe(
-      (state) => state.activeTabFilePath,
-      (newActiveTab, oldActiveTab) => {
+      (state): string => state.activeTabFilePath,
+      (newActiveTab, oldActiveTab): void => {
         if (oldActiveTab && oldActiveTab !== newActiveTab) {
           const currentEditor = editorReference.current
           if (currentEditor) {
             const content = currentEditor.getValue()
             const type = currentEditor.getModel()?.getLanguageId() || 'xml'
-            contentCacheRef.current.set(oldActiveTab, { type, content })
+            contentCacheReference.current.set(oldActiveTab, { type, content })
           }
           flushPendingSave()
         }
@@ -678,15 +740,15 @@ export default function CodeEditor() {
     )
   }, [flushPendingSave])
 
-  useEffect(() => {
+  useEffect((): (() => void) | undefined => {
     if (isDiffTab) return
 
-    function setMonacoContent(content: string, type: string, abortSignal?: AbortSignal) {
+    function setMonacoContent(content: string, type: string, abortSignal?: AbortSignal): void {
       if (abortSignal && abortSignal.aborted) {
         return
       }
 
-      contentCacheRef.current.set(activeTabFilePath, { type, content })
+      contentCacheReference.current.set(activeTabFilePath, { type, content })
       setFileContent(content)
       setFileLanguage(type)
     }
@@ -697,11 +759,11 @@ export default function CodeEditor() {
 
     const filePath = activeTab?.configurationPath
     const fileExtension = activeTab.name.split('.').pop()?.toLowerCase()
-    const isForceRefresh = refreshCounter !== lastRefreshCounterRef.current
-    lastRefreshCounterRef.current = refreshCounter
+    const isForceRefresh = refreshCounter !== lastRefreshCounterReference.current
+    lastRefreshCounterReference.current = refreshCounter
 
     if (!isForceRefresh) {
-      const cached = contentCacheRef.current.get(activeTabFilePath)
+      const cached = contentCacheReference.current.get(activeTabFilePath)
       if (cached !== undefined) {
         setFileContent(cached.content)
         setFileLanguage(cached.type)
@@ -711,19 +773,19 @@ export default function CodeEditor() {
 
     if (isConfigurationFile(fileExtension ?? '')) {
       fetchConfigurationFile(project.name, filePath, abortController.signal)
-        .then((content) => setMonacoContent(content, 'xml', abortController.signal))
-        .catch((error) => {
+        .then((content): void => setMonacoContent(content, 'xml', abortController.signal))
+        .catch((error): void => {
           if (!abortController.signal.aborted) {
             logApiError('Failed to load configuration XML:', error)
           }
         })
     } else {
       fetchFile(project.name, filePath, abortController.signal)
-        .then(({ content, type }) => {
+        .then(({ content, type }): void => {
           const fileType = toMonacoType(type)
           setMonacoContent(content, fileType, abortController.signal)
         })
-        .catch((error) => {
+        .catch((error): void => {
           if (abortController.signal.aborted) {
             return
           }
@@ -732,10 +794,10 @@ export default function CodeEditor() {
           logApiError('Failed to load file:', error)
         })
     }
-    return () => abortController.abort()
+    return (): void => abortController.abort()
   }, [project, activeTabFilePath, isDiffTab, refreshCounter])
 
-  useEffect(() => {
+  useEffect((): void => {
     if (errorDecorationsReference.current) {
       errorDecorationsReference.current.clear()
       errorDecorationsReference.current = null
@@ -752,26 +814,26 @@ export default function CodeEditor() {
     if (model) monaco.editor.setModelMarkers(model, 'xsd-validation', [])
   }, [activeTabFilePath])
 
-  useEffect(() => {
+  useEffect((): void => {
     if (!fileContent || !xsdLoaded || isDiffTab || fileLanguage !== 'xml') return
     runSchemaValidation(fileContent)
     applyFlowHighlighter()
   }, [fileContent, xsdLoaded, isDiffTab, runSchemaValidation, fileLanguage, applyFlowHighlighter])
 
-  useEffect(() => {
+  useEffect((): void => {
     if (!fileContent || !editorMounted || isDiffTab || fileLanguage !== 'xml') return
     applyFrankGlyphs(fileContent)
   }, [fileContent, editorMounted, isDiffTab, fileLanguage, applyFrankGlyphs])
 
-  useEffect(() => {
-    if (!fileContent || !activeTabFilePath || !editorReference.current || isDiffTab) return
+  useEffect((): (() => void) | undefined => {
+    if (!fileContent || !activeTabFilePath || isDiffTab || !editorReference.current) return
 
     const editor = editorReference.current
     const model = editor.getModel()
     if (!model) return
 
     const lines = fileContent.split('\n')
-    const matchIndex = lines.findIndex((line) => line.includes('<Adapter') && line.includes(activeTabFilePath))
+    const matchIndex = lines.findIndex((line): boolean => line.includes('<Adapter') && line.includes(activeTabFilePath))
     if (matchIndex === -1) return
 
     const lineNumber = matchIndex + 1
@@ -786,19 +848,19 @@ export default function CodeEditor() {
       },
     ])
 
-    const timeout = setTimeout(() => decorations.clear(), 2000)
-    return () => clearTimeout(timeout)
+    const timeout = setTimeout((): void => decorations.clear(), 2000)
+    return (): void => clearTimeout(timeout)
   }, [fileContent, activeTabFilePath, isDiffTab])
 
-  useEffect(() => {
+  useEffect((): (() => void) => {
     return useEditorTabStore.subscribe(
-      (state) => state.pendingHighlight,
-      (highlight) => setPendingHighlightLocal(highlight),
+      (state): PendingHighlight | null => state.pendingHighlight,
+      (highlight): void => setPendingHighlightLocal(highlight),
     )
   }, [])
 
-  useEffect(() => {
-    if (!pendingHighlight || !fileContent || !editorReference.current || isDiffTab) return
+  useEffect((): void => {
+    if (!pendingHighlight || !fileContent || isDiffTab || !editorReference.current) return
 
     const editor = editorReference.current
     const range = findElementRangeInXml(fileContent, pendingHighlight.subtype, pendingHighlight.name)
@@ -830,12 +892,12 @@ export default function CodeEditor() {
           <SidebarHeader side={SidebarSide.LEFT} title="Files" />
           {isGitRepo && (
             <div className="border-border ml-auto flex overflow-hidden rounded border">
-              <SegmentedButton isActive={leftTab === 'files'} onClick={() => setLeftTab('files')}>
+              <SegmentedButton isActive={leftTab === 'files'} onClick={(): void => setLeftTab('files')}>
                 Files
               </SegmentedButton>
               <SegmentedButton
                 isActive={leftTab === 'git'}
-                onClick={() => setLeftTab('git')}
+                onClick={(): void => setLeftTab('git')}
                 className="border-border border-l"
               >
                 Git

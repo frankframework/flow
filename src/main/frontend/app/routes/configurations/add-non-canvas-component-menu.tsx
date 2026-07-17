@@ -14,33 +14,36 @@ type AddNonCanvasComponentMenuProperties = {
 export default function AddNonCanvasComponentMenu({
   onClose,
   onSelect,
-}: Readonly<AddNonCanvasComponentMenuProperties>) {
+}: Readonly<AddNonCanvasComponentMenuProperties>): JSX.Element {
   const { elements } = useFFDoc()
   const { xsdContent } = useFrankConfigXsd()
   const [search, setSearch] = useState('')
   const [selected, setSelected] = useState<string | null>(null)
 
-  const addableNames = useMemo(() => getAddableNonCanvasComponentNames(xsdContent, elements), [xsdContent, elements])
+  const addableNames = useMemo(
+    (): string[] => getAddableNonCanvasComponentNames(xsdContent, elements),
+    [xsdContent, elements],
+  )
 
   const filteredNames = useMemo(
-    () => addableNames.filter((name) => name.toLowerCase().includes(search.toLowerCase())),
+    (): string[] => addableNames.filter((name): boolean => name.toLowerCase().includes(search.toLowerCase())),
     [addableNames, search],
   )
 
-  const clearAndClose = () => {
+  const clearAndClose = (): void => {
     setSearch('')
     setSelected(null)
     onClose()
   }
 
-  const handleSearchChange = (event: ChangeEvent<HTMLInputElement>) => {
+  const handleSearchChange = (event: ChangeEvent<HTMLInputElement>): void => {
     const value = event.target.value
     setSearch(value)
-    const filtered = addableNames.find((name) => name.toLowerCase().includes(value.toLowerCase()))
+    const filtered = addableNames.find((name): boolean => name.toLowerCase().includes(value.toLowerCase()))
     setSelected(filtered ?? null)
   }
 
-  const handleConfirm = (name?: string) => {
+  const handleConfirm = (name?: string): void => {
     const tagName = name ?? selected
     if (!tagName) return
     onSelect(tagName)
@@ -53,13 +56,13 @@ export default function AddNonCanvasComponentMenu({
       <div className="border-border bg-background my-3 w-full flex-1 overflow-hidden rounded border">
         <ul className="h-full overflow-y-auto">
           {filteredNames.length > 0 ? (
-            filteredNames.map((name) => {
+            filteredNames.map((name): JSX.Element => {
               const isSelected = selected === name
               return (
                 <li
                   key={name}
-                  onClick={() => setSelected(name)}
-                  onDoubleClick={() => handleConfirm(name)}
+                  onClick={(): void => setSelected(name)}
+                  onDoubleClick={(): void => handleConfirm(name)}
                   className={`cursor-pointer px-3 py-2 ${
                     isSelected ? 'bg-foreground-active text-background' : 'hover:bg-hover'
                   }`}
@@ -76,7 +79,7 @@ export default function AddNonCanvasComponentMenu({
         </ul>
       </div>
 
-      <Button onClick={() => handleConfirm()} disabled={!selected} className="w-full">
+      <Button onClick={(): void => handleConfirm()} disabled={!selected} className="w-full">
         Add component
       </Button>
     </Dialog>

@@ -1,3 +1,4 @@
+import type { JSX } from 'react'
 import ContextMenu from './context-menu'
 import NameInputDialog from './name-input-dialog'
 import ConfirmDeleteDialog from './confirm-delete-dialog'
@@ -29,7 +30,7 @@ export default function FileTreeDialogs({
   onCloseContextMenu,
   onCloseNameDialog,
   onCloseDeleteDialog,
-}: FileTreeDialogsProperties) {
+}: FileTreeDialogsProperties): JSX.Element {
   return (
     <>
       {contextMenu && (

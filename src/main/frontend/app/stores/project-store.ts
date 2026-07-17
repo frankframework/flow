@@ -12,27 +12,29 @@ type ProjectStoreState = {
   clearProject: () => void
 }
 
-export const useProjectStore = create<ProjectStoreState>((set) => ({
-  project: undefined,
-  setProject: (project: ConfigurationProject) => {
-    set((state) => {
-      if (state.project?.name !== project.name) {
-        useTreeStore.getState().clearExpandedItems()
-        useTabStore.getState().clearTabs()
-        useEditorTabStore.getState().clearTabs()
-      }
-      return { project }
-    })
-    localStorage.setItem(STORAGE_ROOT_PATH_KEY, project.rootPath)
-  },
-  clearProject: () => {
-    localStorage.removeItem(STORAGE_ROOT_PATH_KEY)
-    useTreeStore.getState().clearExpandedItems()
-    useTabStore.getState().clearTabs()
-    useEditorTabStore.getState().clearTabs()
-    set({ project: undefined })
-  },
-}))
+export const useProjectStore = create<ProjectStoreState>(
+  (set): { project: undefined; setProject: (project: ConfigurationProject) => void; clearProject: () => void } => ({
+    project: undefined,
+    setProject: (project: ConfigurationProject): void => {
+      set((state): { project: ConfigurationProject } => {
+        if (state.project?.name !== project.name) {
+          useTreeStore.getState().clearExpandedItems()
+          useTabStore.getState().clearTabs()
+          useEditorTabStore.getState().clearTabs()
+        }
+        return { project }
+      })
+      localStorage.setItem(STORAGE_ROOT_PATH_KEY, project.rootPath)
+    },
+    clearProject: (): void => {
+      localStorage.removeItem(STORAGE_ROOT_PATH_KEY)
+      useTreeStore.getState().clearExpandedItems()
+      useTabStore.getState().clearTabs()
+      useEditorTabStore.getState().clearTabs()
+      set({ project: undefined })
+    },
+  }),
+)
 
 export function getStoredProjectRootPath(): string | null {
   return localStorage.getItem(STORAGE_ROOT_PATH_KEY)

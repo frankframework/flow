@@ -20,13 +20,22 @@ type SettingsMenuProperties = {
 
 const TREE_ID = 'settings-menu-tree'
 
-export default function SettingsMenu({ selectedCategory, onSelectedCategory }: Readonly<SettingsMenuProperties>) {
+export default function SettingsMenu({
+  selectedCategory,
+  onSelectedCategory,
+}: Readonly<SettingsMenuProperties>): JSX.Element {
   const tree = useRef<TreeRef>(null)
 
-  const onSelectItemsHandler = (items: TreeItemIndex[]) =>
+  const onSelectItemsHandler = (items: TreeItemIndex[]): void =>
     onSelectedCategory(items[0] as keyof typeof settingsCategories)
 
-  const renderItemArrow = ({ item, context }: { item: SettingsMenuItem; context: TreeItemRenderContext }) => {
+  const renderItemArrow = ({
+    item,
+    context,
+  }: {
+    item: SettingsMenuItem
+    context: TreeItemRenderContext
+  }): JSX.Element | null => {
     if (!item.isFolder) return null
 
     const Icon = context.isExpanded ? AltArrowDownIcon : AltArrowRightIcon
@@ -38,7 +47,7 @@ export default function SettingsMenu({ selectedCategory, onSelectedCategory }: R
     )
   }
 
-  const renderItemTitle = ({ title, item }: { title: string; item: SettingsMenuItem }) => {
+  const renderItemTitle = ({ title, item }: { title: string; item: SettingsMenuItem }): JSX.Element => {
     const Icon = item.data.icon || SettingsIcon
     return (
       <>
@@ -53,7 +62,7 @@ export default function SettingsMenu({ selectedCategory, onSelectedCategory }: R
       <div className="overflow-auto px-2">
         <UncontrolledTreeEnvironment
           dataProvider={new StaticTreeDataProvider(settingsCategories)}
-          getItemTitle={({ data }) => data.title}
+          getItemTitle={({ data }): string => data.title}
           viewState={{ [TREE_ID]: { selectedItems: [selectedCategory] } }}
           disableMultiselect={true}
           onSelectItems={onSelectItemsHandler}

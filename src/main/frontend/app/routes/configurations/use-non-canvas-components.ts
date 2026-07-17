@@ -14,32 +14,41 @@ export function useNonCanvasComponents(projectName: string, configurationPaths: 
   const [componentsByPath, setComponentsByPath] = useState<Record<string, NonCanvasComponent[]>>({})
   const [loadingByPath, setLoadingByPath] = useState<Record<string, boolean>>({})
 
-  useEffect(() => {
+  useEffect((): (() => void) => {
     const controller = new AbortController()
 
-    setLoadingByPath(Object.fromEntries(configurationPaths.map((path) => [path, true])))
+    setLoadingByPath(Object.fromEntries(configurationPaths.map((path): [string, true] => [path, true])))
 
     for (const path of configurationPaths) {
       getNonCanvasComponentsFromConfiguration(projectName, path, controller.signal)
-        .then((components) => {
+        .then((components): void => {
           if (controller.signal.aborted) return
-          setComponentsByPath((previous) => ({ ...previous, [path]: components }))
+          setComponentsByPath((previous): Record<string, NonCanvasComponent[]> => ({
+            ...previous,
+            [path]: components,
+          }))
         })
-        .catch(() => {
+        .catch((): void => {
           if (controller.signal.aborted) return
-          setComponentsByPath((previous) => ({ ...previous, [path]: [] }))
+          setComponentsByPath((previous): Record<string, never[] | NonCanvasComponent[]> => ({
+            ...previous,
+            [path]: [],
+          }))
         })
-        .finally(() => {
+        .finally((): void => {
           if (controller.signal.aborted) return
-          setLoadingByPath((previous) => ({ ...previous, [path]: false }))
+          setLoadingByPath((previous): Record<string, boolean> => ({ ...previous, [path]: false }))
         })
     }
 
-    return () => controller.abort()
+    return (): void => controller.abort()
   }, [projectName, configurationPaths])
 
-  const replaceComponents = useCallback((configurationPath: string, components: NonCanvasComponent[]) => {
-    setComponentsByPath((previous) => ({ ...previous, [configurationPath]: components }))
+  const replaceComponents = useCallback((configurationPath: string, components: NonCanvasComponent[]): void => {
+    setComponentsByPath((previous): Record<string, NonCanvasComponent[]> => ({
+      ...previous,
+      [configurationPath]: components,
+    }))
   }, [])
 
   return { componentsByPath, loadingByPath, replaceComponents }

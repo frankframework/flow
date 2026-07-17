@@ -11,13 +11,13 @@ export default function GenerateButton({
 }: {
   highlightUnset: () => void
   mappingListConfig: MappingListConfig
-}) {
+}): JSX.Element {
   const project = useProjectStore.getState().project
 
   return (
     <Button
       className="bg-foreground-active disabled:bg-backdrop disabled:text-foreground-muted font-medium text-neutral-900"
-      onClick={async () => {
+      onClick={async (): Promise<void> => {
         highlightUnset()
         if (!project) {
           showErrorToast('Not in valid project!')

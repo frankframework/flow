@@ -5,12 +5,12 @@ type MissingRequirementsProperties = {
   isFulfilled: boolean
 }
 
-function parseRequirement(item: string) {
+function parseRequirement(item: string): { label: string; values: string[] } | { label: null; values: string[] } {
   if (item.startsWith('One of:')) {
     const values = item
       .replace('One of:', '')
       .split(',')
-      .map((v) => v.trim())
+      .map((v): string => v.trim())
 
     return {
       label: 'One of',
@@ -24,13 +24,16 @@ function parseRequirement(item: string) {
   }
 }
 
-export default function MissingRequirements({ missingChildren, isFulfilled }: MissingRequirementsProperties) {
+export default function MissingRequirements({
+  missingChildren,
+  isFulfilled,
+}: MissingRequirementsProperties): JSX.Element | null {
   const [expandedMap, setExpandedMap] = useState<Record<number, boolean>>({})
 
   if (isFulfilled || missingChildren.length === 0) return null
 
-  const toggle = (index: number) => {
-    setExpandedMap((previous) => ({
+  const toggle = (index: number): void => {
+    setExpandedMap((previous): Record<number, boolean> => ({
       ...previous,
       [index]: !previous[index],
     }))
@@ -41,12 +44,12 @@ export default function MissingRequirements({ missingChildren, isFulfilled }: Mi
       <p className="text-error text-sm font-semibold">This node is missing mandatory children:</p>
 
       <ul className="text-error mt-1 list-disc pl-4 text-sm">
-        {missingChildren.map((item, index) => {
+        {missingChildren.map((item, index): JSX.Element => {
           const { label, values } = parseRequirement(item)
           const expanded = expandedMap[index] || false
 
           return (
-            <li key={index} className="mb-1 cursor-pointer" onClick={() => toggle(index)}>
+            <li key={index} className="mb-1 cursor-pointer" onClick={(): void => toggle(index)}>
               <div
                 title={values.join(', ')}
                 className={

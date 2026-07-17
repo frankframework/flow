@@ -7,7 +7,12 @@ type HelpImageProperties = {
   width?: number | string
 }
 
-export const HelpImage: React.FC<HelpImageProperties> = ({ src, alt = '', caption, width = '100%' }) => {
+export const HelpImage: React.FC<HelpImageProperties> = ({
+  src,
+  alt = '',
+  caption,
+  width = '100%',
+}): React.JSX.Element => {
   return (
     <div className="my-6">
       <img src={src} alt={alt} style={{ width }} className="rounded-md border shadow-md" />

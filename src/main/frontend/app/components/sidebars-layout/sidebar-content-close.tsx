@@ -3,10 +3,11 @@ import { useSidebarStore } from '~/components/sidebars-layout/sidebar-layout-sto
 import { useContext } from 'react'
 import { SidebarContext } from '~/components/sidebars-layout/sidebar-layout'
 
-export default function SidebarContentClose(properties: Readonly<SidebarsCloseProperties>) {
+export default function SidebarContentClose(properties: Readonly<SidebarsCloseProperties>): JSX.Element | null {
   const layoutName = useContext(SidebarContext)
   if (!layoutName) throw new Error('SidebarContentClose must be used within a SidebarLayout')
-  const visible = useSidebarStore((state) => state.getVisibility(layoutName)?.[properties.side]) ?? null
+  const visible =
+    useSidebarStore((state): boolean | undefined => state.getVisibility(layoutName)?.[properties.side]) ?? null
 
   if (!visible) {
     return (

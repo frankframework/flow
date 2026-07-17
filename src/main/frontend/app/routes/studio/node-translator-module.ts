@@ -13,6 +13,6 @@ const typeSuffixes = [
 
 export function getElementTypeFromName(name: string): string {
   const lower = name.toLowerCase()
-  const match = typeSuffixes.find((suffix) => lower.endsWith(suffix)) // Example: Translates 'ExceptionPipe' --> 'pipe'
+  const match = typeSuffixes.find((suffix): boolean => lower.endsWith(suffix)) // Example: Translates 'ExceptionPipe' --> 'pipe'
   return match ?? 'other'
 }

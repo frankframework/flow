@@ -55,7 +55,8 @@ function analyzeTagStructure(lines: string[], startLine: number): { isSelfClosin
   const searchLimit = Math.min(startLine + MAX_TAG_LINES, lines.length)
 
   for (let currentLine = startLine; currentLine < searchLimit; currentLine++) {
-    for (const char of lines[currentLine]) {
+    const line = lines[currentLine]
+    for (const char of line) {
       if (!isInsideTag) {
         if (char === '<') isInsideTag = true
         continue
@@ -177,7 +178,7 @@ export function wrapFlowXml(fragment: string): string {
 
 export function findFlowElementsStartLine(xml: string): number {
   const lines = xml.split('\n')
-  const index = lines.findIndex((line) => line.includes('<flow:FlowElements'))
+  const index = lines.findIndex((line): boolean => line.includes('<flow:FlowElements'))
   return index === -1 ? 1 : index + 1
 }
 
@@ -217,7 +218,7 @@ function isGlyphNode(tag: string, parentTag: string): boolean {
   return (parentTag === 'adapter' && tag === 'Receiver') || (parentTag === 'pipeline' && tag !== 'Exit')
 }
 
-function processClosingTags(line: string, stack: string[]) {
+function processClosingTags(line: string, stack: string[]): void {
   for (const { 1: rawTag } of line.matchAll(REGEX_CLOSE_TAG)) {
     const tagName = getLocalName(rawTag)
     const index = stack.lastIndexOf(tagName)
@@ -255,13 +256,18 @@ export function findFrankElementsForGlyphs(xml: string): FrankElementLocation[] 
   if (adapters.length === 0) return []
 
   const lines = xml.split('\n')
-  const results: FrankElementLocation[] = adapters.map((adapter, adapterPosition) => ({
-    subtype: ADAPTER_GLYPH_SUBTYPE,
-    name: adapter.name,
-    startLine: offsetToLine(xml, adapter.offset),
-    adapterName: adapter.name,
-    adapterPosition,
-  }))
+  const results: FrankElementLocation[] = adapters.map(
+    (
+      adapter,
+      adapterPosition,
+    ): { subtype: string; name: string; startLine: number; adapterName: string; adapterPosition: number } => ({
+      subtype: ADAPTER_GLYPH_SUBTYPE,
+      name: adapter.name,
+      startLine: offsetToLine(xml, adapter.offset),
+      adapterName: adapter.name,
+      adapterPosition,
+    }),
+  )
   const tagStack: string[] = []
 
   for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {

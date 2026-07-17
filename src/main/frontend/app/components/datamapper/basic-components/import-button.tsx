@@ -11,7 +11,7 @@ type ImportButtonProperties = {
 }
 
 // Generic import button with visual feedback for uploaded files
-function ImportButton({ fileType, importFunc, file, setFile }: ImportButtonProperties) {
+function ImportButton({ fileType, importFunc, file, setFile }: ImportButtonProperties): JSX.Element {
   const inputId = `UploadImportButton${useId()}`
 
   return (
@@ -39,13 +39,13 @@ function ImportButton({ fileType, importFunc, file, setFile }: ImportButtonPrope
         type="file"
         accept={fileType}
         className="hidden"
-        onChange={(event) => setFile(event.target.files?.[0] || null)}
+        onChange={(event): void => setFile(event.target.files?.[0] || null)}
       />
       {
         <Button
           className="m-3 w-full"
           disabled={!file}
-          onClick={() => {
+          onClick={(): void => {
             if (file) importFunc(file)
             else showErrorToast('import file failed')
           }}

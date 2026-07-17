@@ -22,8 +22,8 @@ function isFolderData(data: StudioItemData): data is StudioFolderData {
 }
 
 export default class StudioFilesDataProvider extends BaseFilesDataProvider<StudioItemData> {
-  private readonly projectName: string
   private rootPath = ''
+  private readonly projectName: string
 
   constructor(projectName: string) {
     super()
@@ -34,10 +34,10 @@ export default class StudioFilesDataProvider extends BaseFilesDataProvider<Studi
     return this.rootPath
   }
 
-  public async init(expandedItems: string[] = []) {
+  public async init(expandedItems: string[] = []): Promise<void> {
     await this.loadRoot()
 
-    const sortedIds = [...expandedItems].toSorted((a, b) => a.split('/').length - b.split('/').length)
+    const sortedIds = [...expandedItems].toSorted((a, b): number => a.split('/').length - b.split('/').length)
     for (const id of sortedIds) {
       if (id === 'root') continue
 
@@ -59,7 +59,70 @@ export default class StudioFilesDataProvider extends BaseFilesDataProvider<Studi
     this.notifyListeners(Object.keys(this.data))
   }
 
-  private async loadRoot() {
+  public async loadDirectory(itemId: TreeItemIndex): Promise<void> {
+    const item = this.data[itemId]
+    if (!item || !item.isFolder || !isFolderData(item.data)) return
+    if (this.loadedDirectories.has(item.data.path)) return
+
+    const { path } = item.data
+    try {
+      if (!item.children) item.children = []
+
+      const directory = await fetchStudioDirectoryByPath(this.projectName, path)
+      if (!directory) {
+        console.warn('Received empty directory from API')
+        return
+      }
+
+      item.children = sortChildren(directory.children).map((child): TreeItemIndex => this.buildChildItem(itemId, child))
+      this.loadedDirectories.add(path)
+      this.notifyListeners([itemId])
+    } catch (error) {
+      logApiError(`Failed to load directory for ${path}`, error as Error)
+    }
+  }
+
+  public loadAdapters(itemId: TreeItemIndex): void {
+    const item = this.data[itemId]
+    if (!item || !item.isFolder || !isFolderData(item.data)) return
+    if (this.loadedDirectories.has(item.data.path)) return
+
+    const { path, adapterNames = [] } = item.data
+
+    for (const [index, adapterName] of adapterNames.entries()) {
+      const adapterIndex = `${itemId}/${adapterName}::${index}`
+      this.data[adapterIndex] = {
+        index: adapterIndex,
+        data: { adapterName, configPath: path, adapterPosition: index },
+        isFolder: false,
+      }
+      item.children!.push(adapterIndex)
+    }
+
+    this.loadedDirectories.add(path)
+    this.notifyListeners([itemId])
+  }
+
+  public async loadAncestorDirectories(itemId: TreeItemIndex): Promise<void> {
+    const ancestorIds = getAncestorIds(itemId as string)
+    const deepestAncestorId = ancestorIds.at(-1)
+    if (!deepestAncestorId || deepestAncestorId === 'root') return
+
+    const ancestorItem = this.data[deepestAncestorId]
+    if (!ancestorItem || !isFolderData(ancestorItem.data)) return
+
+    const { path } = ancestorItem.data
+    try {
+      const ancestorTree = await fetchAncestorPath(this.projectName, path)
+      const changedIds: TreeItemIndex[] = []
+      this.applyAncestorTree(ancestorTree, 'root', changedIds)
+      if (changedIds.length > 0) this.notifyListeners(changedIds)
+    } catch (error) {
+      console.error(`Failed to load ancestor directories for ${path}`, error)
+    }
+  }
+
+  private async loadRoot(): Promise<void> {
     const tree = await fetchProjectTree(this.projectName)
 
     if (!tree) {
@@ -86,77 +149,16 @@ export default class StudioFilesDataProvider extends BaseFilesDataProvider<Studi
     this.notifyListeners(['root'])
   }
 
-  public async loadDirectory(itemId: TreeItemIndex) {
-    const item = this.data[itemId]
-    if (!item || !item.isFolder || !isFolderData(item.data)) return
-    if (this.loadedDirectories.has(item.data.path)) return
-
-    const { path } = item.data
-    try {
-      if (!item.children) item.children = []
-
-      const directory = await fetchStudioDirectoryByPath(this.projectName, path)
-      if (!directory) {
-        console.warn('Received empty directory from API')
-        return
-      }
-
-      item.children = sortChildren(directory.children).map((child) => this.buildChildItem(itemId, child))
-      this.loadedDirectories.add(path)
-      this.notifyListeners([itemId])
-    } catch (error) {
-      logApiError(`Failed to load directory for ${path}`, error as Error)
-    }
-  }
-
-  public loadAdapters(itemId: TreeItemIndex) {
-    const item = this.data[itemId]
-    if (!item || !item.isFolder || !isFolderData(item.data)) return
-    if (this.loadedDirectories.has(item.data.path)) return
-
-    const { path, adapterNames = [] } = item.data
-
-    for (const [index, adapterName] of adapterNames.entries()) {
-      const adapterIndex = `${itemId}/${adapterName}::${index}`
-      this.data[adapterIndex] = {
-        index: adapterIndex,
-        data: { adapterName, configPath: path, adapterPosition: index },
-        isFolder: false,
-      }
-      item.children!.push(adapterIndex)
-    }
-
-    this.loadedDirectories.add(path)
-    this.notifyListeners([itemId])
-  }
-
-  public async loadAncestorDirectories(itemId: TreeItemIndex) {
-    const ancestorIds = getAncestorIds(itemId as string)
-    const deepestAncestorId = ancestorIds.at(-1)
-    if (!deepestAncestorId || deepestAncestorId === 'root') return
-
-    const ancestorItem = this.data[deepestAncestorId]
-    if (!ancestorItem || !isFolderData(ancestorItem.data)) return
-
-    const { path } = ancestorItem.data
-    try {
-      const ancestorTree = await fetchAncestorPath(this.projectName, path)
-      const changedIds: TreeItemIndex[] = []
-      this.applyAncestorTree(ancestorTree, 'root', changedIds)
-      if (changedIds.length > 0) this.notifyListeners(changedIds)
-    } catch (error) {
-      console.error(`Failed to load ancestor directories for ${path}`, error)
-    }
-  }
-
-  private applyAncestorTree(node: FileTreeNode, itemId: TreeItemIndex, changedIds: TreeItemIndex[]) {
+  private applyAncestorTree(node: FileTreeNode, itemId: TreeItemIndex, changedIds: TreeItemIndex[]): void {
     const item = this.data[itemId]
     if (!item?.isFolder) return
 
-    const childOnPath = node.children?.find((child) => child.children != null)
+    const childOnPath = node.children?.find((child): boolean => child.children != null)
 
     if (isFolderData(item.data) && !this.loadedDirectories.has(node.path)) {
-      item.children = sortChildren(node.children ?? []).map((child) => this.buildChildItem(itemId, child))
+      item.children = sortChildren(node.children ?? []).map((child): TreeItemIndex =>
+        this.buildChildItem(itemId, child),
+      )
       this.loadedDirectories.add(node.path)
       changedIds.push(itemId)
     }

@@ -8,7 +8,12 @@ type CheckboxWithLabelProperties = {
   description?: string
 } & CheckboxProperties
 
-export default function CheckboxWithLabel({ id, label, description, ...properties }: CheckboxWithLabelProperties) {
+export default function CheckboxWithLabel({
+  id,
+  label,
+  description,
+  ...properties
+}: CheckboxWithLabelProperties): JSX.Element {
   const generatedId = useId()
   const uniqueId = id ?? generatedId
 

@@ -1,8 +1,8 @@
 import { useMemo } from 'react'
 import type { ElementProperty } from '@frankframework/doc-library-core'
 
-export function useHandleTypes(typesAllowed?: Record<string, ElementProperty>) {
-  return useMemo(() => {
+export function useHandleTypes(typesAllowed?: Record<string, ElementProperty>): string[] {
+  return useMemo((): string[] => {
     // Always include the 'success' handle, using a Set to avoid duplicates
     const handles = new Set<string>(['success'])
 

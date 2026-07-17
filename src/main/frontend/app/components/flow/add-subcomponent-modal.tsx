@@ -15,37 +15,37 @@ export default function AddSubcomponentModal({
   onClose,
   possibleChildren,
   onAddChild,
-}: AddSubcomponentModalProperties) {
+}: AddSubcomponentModalProperties): ReactPortal {
   const [search, setSearch] = useState('')
   const [selectedElement, setSelectedElement] = useState<ElementDetails | null>(null)
 
-  const filteredChildren = useMemo(() => {
+  const filteredChildren = useMemo((): ElementDetails[] => {
     return possibleChildren
-      .filter((child) => child.name.toLowerCase().includes(search.toLowerCase()))
-      .toSorted((a, b) => a.name.localeCompare(b.name))
+      .filter((child): boolean => child.name.toLowerCase().includes(search.toLowerCase()))
+      .toSorted((a, b): number => a.name.localeCompare(b.name))
   }, [possibleChildren, search])
 
-  useEffect(() => {
-    setSelectedElement((current) =>
-      current && filteredChildren.some((child) => child.name === current.name)
+  useEffect((): void => {
+    setSelectedElement((current): ElementDetails =>
+      current && filteredChildren.some((child): boolean => child.name === current.name)
         ? current
         : (filteredChildren[0] ?? null),
     )
   }, [filteredChildren])
 
-  const handleClose = (event: React.MouseEvent<HTMLDivElement>) => {
+  const handleClose = (event: React.MouseEvent<HTMLDivElement>): void => {
     if (event.target === event.currentTarget) {
       onClose()
     }
   }
 
-  const handleOnChange = (event: ChangeEvent<HTMLInputElement>) => {
+  const handleOnChange = (event: ChangeEvent<HTMLInputElement>): void => {
     const newSearch = event.target.value
     setSearch(newSearch)
 
     const filtered = possibleChildren
-      .filter((child) => child.name.toLowerCase().includes(newSearch.toLowerCase()))
-      .toSorted((a, b) => a.name.localeCompare(b.name))
+      .filter((child): boolean => child.name.toLowerCase().includes(newSearch.toLowerCase()))
+      .toSorted((a, b): number => a.name.localeCompare(b.name))
 
     if (filtered.length > 0) {
       setSelectedElement(filtered[0])
@@ -54,7 +54,7 @@ export default function AddSubcomponentModal({
     }
   }
 
-  const handleAddChild = () => {
+  const handleAddChild = (): void => {
     if (!selectedElement) return
 
     onAddChild(selectedElement)
@@ -66,7 +66,7 @@ export default function AddSubcomponentModal({
   return createPortal(
     <div
       className="fixed inset-0 z-60 flex items-center justify-center bg-black/40"
-      onClick={(mouseEvent) => {
+      onClick={(mouseEvent): void => {
         mouseEvent.stopPropagation()
         handleClose(mouseEvent)
       }}
@@ -88,13 +88,13 @@ export default function AddSubcomponentModal({
         <div className="border-border bg-background mb-3 w-full flex-1 overflow-hidden rounded border">
           <ul className="h-full overflow-y-auto">
             {filteredChildren.length > 0 ? (
-              filteredChildren.map((child) => {
+              filteredChildren.map((child): JSX.Element => {
                 const isSelected = selectedElement?.name === child.name
 
                 return (
                   <li
                     key={child.name}
-                    onClick={() => setSelectedElement(child)}
+                    onClick={(): void => setSelectedElement(child)}
                     onDoubleClick={handleAddChild}
                     className={`cursor-pointer px-3 py-2 ${
                       isSelected ? 'bg-foreground-active text-background' : 'hover:bg-hover'

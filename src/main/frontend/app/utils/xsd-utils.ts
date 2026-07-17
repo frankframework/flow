@@ -1,6 +1,6 @@
 import { type ChildNode } from '~/routes/studio/canvas/nodetypes/child-node'
 
-export function parseXsd(xsdString: string) {
+export function parseXsd(xsdString: string): Document {
   const parser = new DOMParser()
   return parser.parseFromString(xsdString, 'text/xml')
 }
@@ -125,7 +125,8 @@ function getBaseTypeFromElement(element: Element): string | null {
   return extension?.getAttribute('base') || null
 }
 
-const nsResolver = (prefix: string | null) => (prefix === 'xs' ? 'http://www.w3.org/2001/XMLSchema' : null)
+const nsResolver = (prefix: string | null): 'http://www.w3.org/2001/XMLSchema' | null =>
+  prefix === 'xs' ? 'http://www.w3.org/2001/XMLSchema' : null
 
 function queryOne(context: Document | Element, xpath: string): Element | null {
   const result = evaluateXPath(context, xpath)
@@ -162,7 +163,7 @@ export function getFirstLevelElementsForType(document: Document, typeName: strin
 
   const results = new Set<string>()
 
-  const extract = (node: Element, visitedGroups = new Set<string>()) => {
+  const extract = (node: Element, visitedGroups = new Set<string>()): void => {
     for (const child of node.children) {
       const tag = child.localName
 
@@ -261,7 +262,11 @@ function extractRequirements(
           })
         } else {
           // optional group -> children optional
-          results.push(...children.map((c) => (c.kind === 'element' ? { ...c, required: false } : c)))
+          results.push(
+            ...children.map((c): GroupRequirement | { required: boolean; kind: 'element'; name: string } =>
+              c.kind === 'element' ? { ...c, required: false } : c,
+            ),
+          )
         }
 
         break
@@ -298,23 +303,23 @@ function extractRequirements(
 }
 
 export function isRequirementFulfilled(requirements: Requirement[], children: ChildNode[]): boolean {
-  return requirements.every((requirement) => evaluateRequirement(requirement, children))
+  return requirements.every((requirement): boolean => evaluateRequirement(requirement, children))
 }
 
 function evaluateRequirement(requirement: Requirement, children: ChildNode[]): boolean {
   if (requirement.kind === 'element') {
     if (!requirement.required) return true
 
-    return children.some((child) => child.subtype === requirement.name)
+    return children.some((child): boolean => child.subtype === requirement.name)
   }
 
   if (requirement.kind === 'group') {
     if (requirement.mode === 'all') {
-      return requirement.children.every((childRequest) => evaluateRequirement(childRequest, children))
+      return requirement.children.every((childRequest): boolean => evaluateRequirement(childRequest, children))
     }
 
     if (requirement.mode === 'one') {
-      return requirement.children.some((childRequest) => evaluateRequirement(childRequest, children))
+      return requirement.children.some((childRequest): boolean => evaluateRequirement(childRequest, children))
     }
   }
 
@@ -331,11 +336,11 @@ export function getMissingRequirements(requirements: Requirement[], children: Ch
   return missing
 }
 
-function collectMissing(requirement: Requirement, children: ChildNode[], missing: string[]) {
+function collectMissing(requirement: Requirement, children: ChildNode[], missing: string[]): void {
   if (requirement.kind === 'element') {
     if (!requirement.required) return
 
-    const exists = children.some((child) => child.subtype === requirement.name)
+    const exists = children.some((child): boolean => child.subtype === requirement.name)
 
     if (!exists) {
       missing.push(requirement.name)
@@ -347,21 +352,19 @@ function collectMissing(requirement: Requirement, children: ChildNode[], missing
   if (requirement.kind === 'group') {
     if (requirement.mode === 'all') {
       for (const childRequirement of requirement.children) collectMissing(childRequirement, children, missing)
-    }
-
-    if (requirement.mode === 'one') {
-      const anySatisfied = requirement.children.some((childRequirement) =>
+    } else if (requirement.mode === 'one') {
+      const anySatisfied = requirement.children.some((childRequirement): boolean =>
         evaluateRequirement(childRequirement, children),
       )
 
       if (!anySatisfied) {
         const requiredChildren = requirement.children
-          .map((element) => getRequiredOnly(element))
+          .map((element): Requirement | null => getRequiredOnly(element))
           .filter(Boolean) as Requirement[]
 
         if (requiredChildren.length === 0) return
 
-        const options = requiredChildren.flatMap((element) => getReadableNames(element)).join(', ')
+        const options = requiredChildren.flatMap((element): string[] => getReadableNames(element)).join(', ')
 
         missing.push(`One of: ${options}`)
       }
@@ -375,7 +378,7 @@ function getReadableNames(requirement: Requirement): string[] {
   }
 
   if (requirement.kind === 'group') {
-    return requirement.children.flatMap((element) => getReadableNames(element))
+    return requirement.children.flatMap((element): string[] => getReadableNames(element))
   }
 
   return []
@@ -388,7 +391,7 @@ function getRequiredOnly(requirement: Requirement): Requirement | null {
 
   if (requirement.kind === 'group') {
     const filteredChildren = requirement.children
-      .map((element) => getRequiredOnly(element))
+      .map((element): Requirement | null => getRequiredOnly(element))
       .filter(Boolean) as Requirement[]
 
     if (filteredChildren.length === 0) return null

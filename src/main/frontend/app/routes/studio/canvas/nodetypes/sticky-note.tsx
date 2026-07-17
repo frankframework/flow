@@ -29,7 +29,7 @@ export type StickyNote = Node<{
   height?: number
 }
 
-export default function StickyNoteComponent(properties: NodeProps<StickyNote>) {
+export default function StickyNoteComponent(properties: NodeProps<StickyNote>): JSX.Element {
   const minHeight = FlowConfig.STICKY_NOTE_DEFAULT_HEIGHT
   const minWidth = FlowConfig.STICKY_NOTE_DEFAULT_WIDTH
   const showNodeContextMenu = useNodeContextMenu()
@@ -43,7 +43,7 @@ export default function StickyNoteComponent(properties: NodeProps<StickyNote>) {
 
   const CONTENT_PADDING_Y = 24
 
-  useLayoutEffect(() => {
+  useLayoutEffect((): void => {
     if (properties.data.collapsed || !contentReference.current) return
 
     const naturalHeight = contentReference.current.scrollHeight + CONTENT_PADDING_Y
@@ -55,22 +55,22 @@ export default function StickyNoteComponent(properties: NodeProps<StickyNote>) {
     useFlowStore.getState().setStickyHeight(properties.id, clamped)
   }, [content, properties.data.collapsed, properties.id])
 
-  useEffect(() => {
+  useEffect((): void => {
     updateNodeInternals(properties.id)
   }, [properties.data.collapsed, properties.id, updateNodeInternals])
 
-  useEffect(() => {
+  useEffect((): (() => void) | undefined => {
     if (properties.data.collapsed) return
     const container = containerReference.current
     if (!container) return
-    const check = () => setIsOverflowing(container.scrollHeight > container.clientHeight)
+    const check = (): void => setIsOverflowing(container.scrollHeight > container.clientHeight)
     check()
     const observer = new ResizeObserver(check)
     observer.observe(container)
-    return () => observer.disconnect()
+    return (): void => observer.disconnect()
   }, [content, properties.data.collapsed])
 
-  const handleDelete = () => {
+  const handleDelete = (): void => {
     useNodeContextStore.getState().setSelectedStickyId(null)
     showNodeContextMenu(false)
     useFlowStore.getState().deleteNode(properties.id)
@@ -91,7 +91,7 @@ export default function StickyNoteComponent(properties: NodeProps<StickyNote>) {
           </span>
           <button
             className="nodrag ml-1 shrink-0 text-xs hover:cursor-pointer hover:opacity-70"
-            onClick={(e) => {
+            onClick={(e): void => {
               e.stopPropagation()
               useFlowStore.getState().setStickyCollapsed(properties.id, false)
             }}
@@ -157,7 +157,7 @@ export default function StickyNoteComponent(properties: NodeProps<StickyNote>) {
         <div className="nodrag absolute top-0 right-5 flex items-center">
           <div
             className="px-1 hover:cursor-pointer hover:opacity-50"
-            onClick={(e) => {
+            onClick={(e): void => {
               e.stopPropagation()
               useFlowStore.getState().setStickyCollapsed(properties.id, true)
             }}

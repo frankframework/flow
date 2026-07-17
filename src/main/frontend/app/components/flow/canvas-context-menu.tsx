@@ -40,7 +40,7 @@ export default function CanvasContextMenu({
   hasGroupedSelection,
   hasClipboard,
   hasSingleNodeSelection,
-}: CanvasContextMenuProperties) {
+}: CanvasContextMenuProperties): ReactPortal {
   const menuReference = useRef<HTMLDivElement>(null)
   useContextMenuDismiss(menuReference, onClose)
 
@@ -48,13 +48,13 @@ export default function CanvasContextMenu({
   const enabledClass = `${itemClass} cursor-pointer hover:bg-hover text-foreground`
   const disabledClass = `${itemClass} cursor-default text-foreground-muted opacity-50`
 
-  function menuItem(label: string, onClick: () => void, enabled: boolean, shortcutId?: string) {
+  function menuItem(label: string, onClick: () => void, enabled: boolean, shortcutId?: string): JSX.Element {
     return (
       <div
         className={enabled ? enabledClass : disabledClass}
         onClick={
           enabled
-            ? () => {
+            ? (): void => {
                 onClick()
                 onClose()
               }

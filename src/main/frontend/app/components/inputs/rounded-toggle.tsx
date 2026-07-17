@@ -12,7 +12,7 @@ export default function RoundedToggle({
   enabled = true,
   onClick,
   className,
-}: Readonly<RoundedToggleProperties>) {
+}: Readonly<RoundedToggleProperties>): JSX.Element {
   return (
     <span
       onClick={onClick}

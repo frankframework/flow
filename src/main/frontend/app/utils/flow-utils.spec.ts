@@ -12,7 +12,7 @@ describe('cloneWithRemappedIds', () => {
   beforeEach(() => {
     idMap = new Map()
     counter = 10
-    generateId = () => (counter++).toString() // numeric string IDs
+    generateId = (): string => (counter++).toString() // numeric string IDs
   })
 
   it('remaps the id field and stores it in the idMap', () => {
@@ -39,7 +39,7 @@ describe('cloneWithRemappedIds', () => {
     const result = cloneWithRemappedIds(input, idMap, generateId)
 
     expect(result.id).toBe('10')
-    expect(result.children[0].id).toBe('11')
+    expect(result.firstElementChild.id).toBe('11')
     expect(result.children[1].id).toBe('12')
     expect(result.children[1].children[0].id).toBe('13')
   })
@@ -52,8 +52,8 @@ describe('cloneWithRemappedIds', () => {
 
     const result = cloneWithRemappedIds(input, idMap, generateId)
 
-    expect(result.children[0].id).toBe(result.children[1].id)
-    expect(idMap.get('2')).toBe(result.children[0].id)
+    expect(result.firstElementChild.id).toBe(result.children[1].id)
+    expect(idMap.get('2')).toBe(result.firstElementChild.id)
   })
 
   it('remaps reference keys (source, target, parentId) using the same idMap', () => {
@@ -121,7 +121,7 @@ describe('cloneWithRemappedIds with various node types', () => {
   beforeEach(() => {
     idMap = new Map()
     counter = 10
-    generateId = () => (counter++).toString()
+    generateId = (): string => (counter++).toString()
   })
 
   it('remaps IDs for FrankNode with children', () => {
@@ -143,12 +143,12 @@ describe('cloneWithRemappedIds with various node types', () => {
     const cloned = cloneWithRemappedIds(input, idMap, generateId)
 
     expect(cloned.id).not.toBe(input.id)
-    expect(cloned.data.children[0].id).not.toBe('2')
+    expect(ncloned.data.firstElementChild.id).not.toBe('2')
     expect(cloned.data.children[1].children![0].id).not.toBe('4')
 
     // Check idMap
     expect(idMap.get('1')).toBe(cloned.id)
-    expect(idMap.get('2')).toBe(cloned.data.children[0].id)
+    expect(idMap.get('2')).toBe(cloned.data.firstElementChild.id)
     expect(idMap.get('3')).toBe(cloned.data.children[1].id)
     expect(idMap.get('4')).toBe(cloned.data.children[1].children![0].id)
   })

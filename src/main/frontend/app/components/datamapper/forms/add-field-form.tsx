@@ -21,7 +21,13 @@ export type FieldModalProperties = {
   initialData: CustomNodeData | null
 }
 
-function AddFieldForm({ fieldType, onSave, parents, formatDefinition, initialData }: FieldModalProperties) {
+function AddFieldForm({
+  fieldType,
+  onSave,
+  parents,
+  formatDefinition,
+  initialData,
+}: FieldModalProperties): JSX.Element {
   const [variableType, setVariableType] = useState(initialData?.variableType || '')
   const [label, setLabel] = useState(initialData?.label || '')
   const [defaultValue, setDefaultValue] = useState(initialData?.defaultValue || '')
@@ -31,23 +37,23 @@ function AddFieldForm({ fieldType, onSave, parents, formatDefinition, initialDat
   const [availableTypes, setAvailableTypes] = useState<PropertyDefinition[]>([])
   const [isAttribute, setIsAttribute] = useState<boolean>(initialData?.isAttribute || false)
 
-  useEffect(() => {
+  useEffect((): void => {
     const format: FormatDefinition | null = formatDefinition[fieldType]
     if (format) {
       setAvailableTypes(format.properties)
     }
   }, [formatDefinition, fieldType])
 
-  useEffect(() => {
+  useEffect((): void => {
     const format = formatDefinition[fieldType]
-    const propertyRules = format?.properties.find((a) => a.name == variableType)
+    const propertyRules = format?.properties.find((a): boolean => a.name == variableType)
     setDefaultValueRules(propertyRules?.rules)
     setDefaultValueInputType(propertyRules?.type)
   }, [fieldType, formatDefinition, variableType])
 
   const isFormIncomplete = !variableType || !label || !parentId
 
-  function handleSave() {
+  function handleSave(): void {
     if (isFormIncomplete) {
       showWarningToast('Please fill in all fields!', 'Invalid input')
       return
@@ -62,7 +68,7 @@ function AddFieldForm({ fieldType, onSave, parents, formatDefinition, initialDat
     })
   }
 
-  function validateDefaultValue(value: string) {
+  function validateDefaultValue(value: string): void {
     if (defaultValueInputType !== 'number') {
       setDefaultValue(value)
       return
@@ -112,9 +118,9 @@ function AddFieldForm({ fieldType, onSave, parents, formatDefinition, initialDat
             className="max-w-55"
             id="parentId"
             value={parentId}
-            onChange={(e) => setParent(e)}
+            onChange={(e): void => setParent(e)}
             options={{
-              ...Object.fromEntries(parents.map((p) => [p.id, p.label])),
+              ...Object.fromEntries(parents.map((p): [string, string] => [p.id, p.label])),
             }}
           />
         </>
@@ -125,13 +131,13 @@ function AddFieldForm({ fieldType, onSave, parents, formatDefinition, initialDat
         className="max-w-55"
         id="variableType"
         value={variableType}
-        onChange={(value) => setVariableType(value)}
+        onChange={(value): void => setVariableType(value)}
         disabled={initialData?.variableType == 'object'}
-        options={Object.fromEntries(availableTypes.map((p) => [p.name, p.name]))}
+        options={Object.fromEntries(availableTypes.map((p): [string, string] => [p.name, p.name]))}
       />
 
       <label htmlFor="propertyName">Property name:</label>
-      <Input name="propertyName" value={label} onChange={(event) => setLabel(event.target.value)} />
+      <Input name="propertyName" value={label} onChange={(event): void => setLabel(event.target.value)} />
 
       <div hidden={defaultValueInputType == 'object'}>
         <label htmlFor="defaultValue">Default value:</label>
@@ -140,7 +146,7 @@ function AddFieldForm({ fieldType, onSave, parents, formatDefinition, initialDat
             className="max-w-55"
             id="defaultValue"
             value={defaultValue}
-            onChange={(value: string) => setDefaultValue(value)}
+            onChange={(value: string): void => setDefaultValue(value)}
             options={{
               ['']: 'none',
               ['true']: 'true',
@@ -152,7 +158,7 @@ function AddFieldForm({ fieldType, onSave, parents, formatDefinition, initialDat
             name="defaultValue"
             value={defaultValue}
             type="text"
-            onChange={(event) => validateDefaultValue(event.target.value)}
+            onChange={(event): void => validateDefaultValue(event.target.value)}
           />
         )}
       </div>

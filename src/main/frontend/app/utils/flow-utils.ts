@@ -4,23 +4,25 @@ const REFERENCE_KEYS = new Set(['source', 'target', 'parentId'])
 
 export function cloneWithRemappedIds<T>(value: T, idMap: Map<string, string>, generateId: () => string): T {
   if (Array.isArray(value)) {
-    return value.map((v) => cloneWithRemappedIds(v, idMap, generateId)) as T
+    return value.map((item): T => cloneWithRemappedIds(item, idMap, generateId)) as T
   }
 
   if (value && typeof value === 'object') {
     const object = value as Record<string, unknown>
 
     return Object.fromEntries(
-      Object.entries(object).map(([key, value_]) => {
-        if (key === 'id' && typeof value_ === 'string') {
-          if (!idMap.has(value_)) {
-            idMap.set(value_, generateId())
+      Object.entries(object).map(([key, value_]): [string, unknown] => {
+        if (typeof value_ === 'string') {
+          if (key === 'id') {
+            if (!idMap.has(value_)) {
+              idMap.set(value_, generateId())
+            }
+            return [key, idMap.get(value_)!]
           }
-          return [key, idMap.get(value_)!]
-        }
 
-        if (REFERENCE_KEYS.has(key) && typeof value_ === 'string') {
-          return [key, idMap.get(value_) ?? value_]
+          if (REFERENCE_KEYS.has(key)) {
+            return [key, idMap.get(value_) ?? value_]
+          }
         }
 
         return [key, cloneWithRemappedIds(value_, idMap, generateId)]
@@ -47,7 +49,7 @@ export function getEdgeLabelFromHandle(node: FlowNode | undefined, handleId: str
   const handles = (node.data as { sourceHandles?: { type: string; index: number }[] }).sourceHandles ?? []
   const handleIndex = Number(handleId)
 
-  const matched = handles.find((handle: { index: number }) => handle.index === handleIndex)
+  const matched = handles.find((handle: { index: number }): boolean => handle.index === handleIndex)
 
   return matched?.type?.toLowerCase() ?? 'success'
 }
@@ -135,7 +137,7 @@ export function frankdocChipStyle(name: string): { borderColor: string; backgrou
   const s = 0.9
   const l = 0.78
   const a = s * Math.min(l, 1 - l)
-  const f = (n: number) => {
+  const f = (n: number): number => {
     const k = (n + h / 30) % 12
     return l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1))
   }

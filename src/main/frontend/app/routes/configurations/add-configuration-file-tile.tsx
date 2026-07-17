@@ -2,7 +2,7 @@ type AddConfigurationTileProertiess = {
   onClick?: () => void
 }
 
-export default function AddConfigurationFileTile({ onClick }: Readonly<AddConfigurationTileProertiess>) {
+export default function AddConfigurationFileTile({ onClick }: Readonly<AddConfigurationTileProertiess>): JSX.Element {
   return (
     <div
       className="border-border hover:bg-hover text-foreground-muted hover:text-foreground relative h-40 w-40 cursor-pointer rounded border p-4"

@@ -21,9 +21,8 @@ export function getEdgeLength({ sourceX, sourceY, targetX, targetY }: BezierEdge
 }
 
 function toCardinalPosition(position: string | undefined, fallback: CardinalPosition): CardinalPosition {
-  return position === 'left' || position === 'right' || position === 'top' || position === 'bottom'
-    ? position
-    : fallback
+  if (!position) return fallback
+  return ['left', 'right', 'top', 'bottom'].includes(position) ? (position as CardinalPosition) : fallback
 }
 
 function getBezierControlOffset(distance: number, curvature: number): number {

@@ -43,6 +43,7 @@ export default defineConfig([
       'unicorn/consistent-boolean-name': 'off',
       'unicorn/no-empty-file': 'warn',
       'unicorn/filename-case': 'off',
+      'unicorn/no-useless-recursion': 'off',
     },
   },
 

@@ -13,6 +13,7 @@ export type FileNode = {
 }
 
 export default class EditorFilesDataProvider extends BaseFilesDataProvider<FileNode> implements DataProviderLike {
+  private expandedItems: string[] = []
   private readonly projectName: string
 
   constructor(projectName: string) {
@@ -20,57 +21,16 @@ export default class EditorFilesDataProvider extends BaseFilesDataProvider<FileN
     this.projectName = projectName
   }
 
-  private expandedItems: string[] = []
-
-  public async init(expandedItems: string[] = []) {
+  public async init(expandedItems: string[] = []): Promise<void> {
     this.expandedItems = expandedItems
     await this.fetchAndBuildTree()
     await this.preloadExpandedItems()
-  }
-
-  private async preloadExpandedItems() {
-    const sortedIds = [...this.expandedItems].toSorted((a, b) => a.split('/').length - b.split('/').length)
-    for (const id of sortedIds) {
-      if (id === 'root') continue
-      const item = this.data[id]
-      if (!item || !item.isFolder) continue
-      await this.loadDirectory(id)
-    }
   }
 
   public override async reloadDirectory(itemId: TreeItemIndex): Promise<void> {
     await super.reloadDirectory(itemId)
     await this.preloadExpandedItems()
     this.notifyListeners(Object.keys(this.data))
-  }
-
-  private async fetchAndBuildTree() {
-    try {
-      if (!this.projectName) return
-
-      const tree = await fetchProjectRootTree(this.projectName)
-
-      if (!tree) {
-        console.warn('Received empty tree from API')
-        this.data = {}
-        return
-      }
-
-      this.data['root'] = {
-        index: 'root',
-        data: { name: tree.name, path: tree.path, projectRoot: true },
-        isFolder: true,
-        children: [],
-      }
-
-      this.data['root'].children = this.buildChildren('root', tree.children)
-      this.loadedDirectories.add(tree.path)
-      this.notifyListeners(['root'])
-    } catch (error) {
-      logApiError('Unexpected error loading project file tree', error as Error)
-      this.data = {}
-      this.notifyListeners(['root'])
-    }
   }
 
   public async loadDirectory(itemId: TreeItemIndex): Promise<void> {
@@ -90,6 +50,33 @@ export default class EditorFilesDataProvider extends BaseFilesDataProvider<FileN
       this.notifyListeners([itemId])
     } catch (error) {
       logApiError('Failed to load directory', error as Error)
+    }
+  }
+
+  public override async getTreeItem(itemId: TreeItemIndex): Promise<TreeItem<FileNode>> {
+    return (
+      this.data[itemId] ?? {
+        index: itemId,
+        isFolder: false,
+        data: { name: 'Unknown', path: '' },
+        children: [],
+      }
+    )
+  }
+
+  public async onRenameItem(item: TreeItem, name: string): Promise<void> {
+    if (Object.hasOwn(this.data, item.index)) {
+      this.data[item.index].data.name = name
+    }
+  }
+
+  private async preloadExpandedItems(): Promise<void> {
+    const sortedIds = [...this.expandedItems].toSorted((a, b): number => a.split('/').length - b.split('/').length)
+    for (const id of sortedIds) {
+      if (id === 'root') continue
+      const item = this.data[id]
+      if (!item || !item.isFolder) continue
+      await this.loadDirectory(id)
     }
   }
 
@@ -117,20 +104,32 @@ export default class EditorFilesDataProvider extends BaseFilesDataProvider<FileN
     return childIds
   }
 
-  public override async getTreeItem(itemId: TreeItemIndex): Promise<TreeItem<FileNode>> {
-    return (
-      this.data[itemId] ?? {
-        index: itemId,
-        isFolder: false,
-        data: { name: 'Unknown', path: '' },
+  private async fetchAndBuildTree(): Promise<void> {
+    try {
+      if (!this.projectName) return
+
+      const tree = await fetchProjectRootTree(this.projectName)
+
+      if (!tree) {
+        console.warn('Received empty tree from API')
+        this.data = {}
+        return
+      }
+
+      this.data['root'] = {
+        index: 'root',
+        data: { name: tree.name, path: tree.path, projectRoot: true },
+        isFolder: true,
         children: [],
       }
-    )
-  }
 
-  public async onRenameItem(item: TreeItem, name: string): Promise<void> {
-    if (this.data[item.index]) {
-      this.data[item.index].data.name = name
+      this.data['root'].children = this.buildChildren('root', tree.children)
+      this.loadedDirectories.add(tree.path)
+      this.notifyListeners(['root'])
+    } catch (error) {
+      logApiError('Unexpected error loading project file tree', error as Error)
+      this.data = {}
+      this.notifyListeners(['root'])
     }
   }
 }

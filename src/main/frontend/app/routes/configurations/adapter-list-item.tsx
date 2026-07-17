@@ -14,7 +14,7 @@ export default function AdapterListItem({
   adapterPosition,
   onConfigure,
   onOpenInStudio,
-}: Readonly<AdapterListItemProperties>) {
+}: Readonly<AdapterListItemProperties>): JSX.Element {
   return (
     <ComponentRow
       typeLabel="Adapter"
@@ -24,7 +24,7 @@ export default function AdapterListItem({
         <IconLabelButton
           icon={<RulerCrossPenIcon className="h-4 w-4 fill-current" />}
           label="Open in Studio"
-          onClick={() => onOpenInStudio(adapterName, adapterPosition)}
+          onClick={(): void => onOpenInStudio(adapterName, adapterPosition)}
         />
       }
     />

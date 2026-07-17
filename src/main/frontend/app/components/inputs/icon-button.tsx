@@ -17,7 +17,7 @@ export default function IconButton({
   className,
   disabled = false,
   children,
-}: Readonly<IconButtonProperties>) {
+}: Readonly<IconButtonProperties>): React.JSX.Element {
   return (
     <div
       role="button"
@@ -28,11 +28,11 @@ export default function IconButton({
         className,
       )}
       title={title}
-      onClick={(mouseEvent) => {
+      onClick={(mouseEvent): void => {
         mouseEvent.stopPropagation()
         if (!disabled) onClick?.(mouseEvent)
       }}
-      onKeyDown={(keyboardEvent) => {
+      onKeyDown={(keyboardEvent): void => {
         if (!disabled && keyboardEvent.key === 'Enter') {
           onClick?.(keyboardEvent as unknown as React.MouseEvent)
         }

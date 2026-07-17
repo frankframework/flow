@@ -63,10 +63,12 @@ function isForwardRevealed(
 ): boolean {
   if (showAllForwards || hoveredNodeId === targetId) return true
 
-  return hoveredNodeId !== null && edges.some((edge) => edge.source === hoveredNodeId && edge.target === targetId)
+  return (
+    hoveredNodeId !== null && edges.some((edge): boolean => edge.source === hoveredNodeId && edge.target === targetId)
+  )
 }
 
-export default function FrankNode(properties: NodeProps<FrankNodeType>) {
+export default function FrankNode(properties: NodeProps<FrankNodeType>): JSX.Element {
   const minNodeWidth = FlowConfig.NODE_DEFAULT_WIDTH
   const maxNodeWidth = FlowConfig.NODE_MAX_WIDTH
   const minNodeHeight = FlowConfig.NODE_MIN_HEIGHT
@@ -90,16 +92,16 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
     draggedName,
     setEditingSubtype,
   } = useNodeContextStore()
-  const gradientEnabled = useSettingsStore((state) => state.studio.gradient)
-  const zoom = useStore((state) => state.transform[2])
+  const gradientEnabled = useSettingsStore((state): boolean => state.studio.gradient)
+  const zoom = useStore((state): number => state.transform[2])
   const isCompact = zoom < FlowConfig.ZOOM_THRESHOLD
   const [isOverflowing, setIsOverflowing] = useState(false)
 
-  const frankElement = useMemo(() => {
+  const frankElement = useMemo((): ElementDetails | null => {
     if (!elements) return null
     const recordElements = elements as Record<string, ElementDetails>
 
-    return Object.values(recordElements).find((element) => element.name === properties.data.subtype) ?? null
+    return Object.values(recordElements).find((element): boolean => element.name === properties.data.subtype) ?? null
   }, [elements, properties.data.subtype])
 
   const isDeprecated = frankElement?.deprecated
@@ -109,18 +111,20 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
   const dangerTriangleReference = useRef<HTMLDivElement>(null)
   const availableHandleTypes = useHandleTypes(frankElement?.forwards)
 
-  const hoveredNodeId = useNodeContextStore((state) => state.hoveredNodeId)
-  const showAllForwards = useNodeContextStore((state) => state.showAllForwards)
-  const edges = useFlowStore((state) => state.edges)
+  const hoveredNodeId = useNodeContextStore((state): string | null => state.hoveredNodeId)
+  const showAllForwards = useNodeContextStore((state): boolean => state.showAllForwards)
+  const edges = useFlowStore((state): Edge[] => state.edges)
   const hiddenForwardNodeIds = useFlowStore(
-    useShallow((state) =>
+    useShallow((state): string[] =>
       state.nodes
-        .filter((node) => (isFrankNode(node) || isExitNode(node)) && node.data.hiddenForwards)
-        .map((node) => node.id),
+        .filter(
+          (node): boolean | null | undefined => (isFrankNode(node) || isExitNode(node)) && node.data.hiddenForwards,
+        )
+        .map((node): string => node.id),
     ),
   )
 
-  const dimmedHandleIndices = useMemo(() => {
+  const dimmedHandleIndices = useMemo((): Set<number> => {
     const dimmed = new Set<number>()
     if (hiddenForwardNodeIds.length === 0) return dimmed
     const hiddenSet = new Set(hiddenForwardNodeIds)
@@ -141,16 +145,17 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
   }, [edges, hiddenForwardNodeIds, hoveredNodeId, showAllForwards, properties.id])
 
   const allowedChildNames = useMemo(
-    () => (xsdDoc ? new Set(getAllowedChildElementsForElement(xsdDoc, properties.data.subtype)) : null),
+    (): Set<string> | null =>
+      xsdDoc ? new Set(getAllowedChildElementsForElement(xsdDoc, properties.data.subtype)) : null,
     [xsdDoc, properties.data.subtype],
   )
 
-  const possibleChildren = useMemo(() => {
+  const possibleChildren = useMemo((): ElementDetails[] => {
     if (!elements || !allowedChildNames) return []
 
     const recordElements = elements as Record<string, ElementDetails>
 
-    return Object.values(recordElements).filter((element) => allowedChildNames.has(element.name))
+    return Object.values(recordElements).filter((element): boolean => allowedChildNames.has(element.name))
   }, [elements, allowedChildNames])
   const [mandatoryChildren, setMandatoryChildren] = useState<Requirement[]>([])
   const [mandatoryChildrenFulfilled, setMandatoryChildrenFulfilled] = useState(false)
@@ -167,11 +172,11 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
     height: properties.height ?? minNodeHeight,
   })
 
-  const firstHandlePosition = useMemo(() => {
+  const firstHandlePosition = useMemo((): number => {
     return (dimensions.height - (properties.data.sourceHandles.length - 1) * handleSpacing) / 2
   }, [dimensions.height, properties.data.sourceHandles.length])
 
-  const allForwardTypesUsed = useMemo(() => {
+  const allForwardTypesUsed = useMemo((): boolean => {
     if (availableHandleTypes.length === 0) return true
 
     // If custom is allowed, "+" should always remain visible
@@ -184,7 +189,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
     return existingTypesCount >= availableHandleTypes.length
   }, [availableHandleTypes, properties.data.sourceHandles])
 
-  useEffect(() => {
+  useEffect((): void => {
     if (!(dragOver && containerReference.current)) {
       return
     }
@@ -192,19 +197,19 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
     updateNodeInternals(properties.id)
 
     const newHeight = containerReference.current.offsetHeight
-    setDimensions((previous) => ({ ...previous, height: newHeight }))
+    setDimensions((previous): { height: number; width: number } => ({ ...previous, height: newHeight }))
   }, [dragOver, properties.id, updateNodeInternals])
 
-  useEffect(() => {
+  useEffect((): void => {
     updateNodeInternals(properties.id)
   }, [dimensions.height, isCompact, properties.id, updateNodeInternals])
 
-  useEffect(() => {
+  useEffect((): void => {
     if (!xsdDoc) return
     setMandatoryChildren(getElementRequirements(xsdDoc, properties.data.subtype))
   }, [xsdDoc, properties.data.subtype])
 
-  useEffect(() => {
+  useEffect((): void => {
     const children = properties.data.children
 
     const allFulfilled = isRequirementFulfilled(mandatoryChildren, children)
@@ -214,7 +219,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
     setMissingChildren(missing)
   }, [mandatoryChildren, properties.data.children])
 
-  useLayoutEffect(() => {
+  useLayoutEffect((): void => {
     if (!containerReference.current) {
       return
     }
@@ -222,7 +227,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
     const measuredHeight = containerReference.current.offsetHeight
     const scrollHeight = containerReference.current.scrollHeight
     setIsOverflowing(scrollHeight > measuredHeight + 4)
-    setDimensions((previous) => {
+    setDimensions((previous): { width: number; height: number } => {
       if (Math.abs(previous.height - measuredHeight) > 2) {
         return { ...previous, height: measuredHeight }
       }
@@ -230,31 +235,31 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
     })
   }, [properties.data.children, properties.data.sourceHandles.length, dragOver])
 
-  useEffect(() => {
+  useEffect((): (() => void) | undefined => {
     const container = containerReference.current
     if (!container) return
-    const observer = new ResizeObserver(() => {
+    const observer = new ResizeObserver((): void => {
       setIsOverflowing(container.scrollHeight > container.offsetHeight + 4)
     })
     observer.observe(container)
-    return () => observer.disconnect()
+    return (): void => observer.disconnect()
   }, [])
 
   const addHandle = useFlowStore.getState().addHandle
-  const addChild = useFlowStore((state) => state.addChild)
+  const addChild = useFlowStore((state): ((nodeId: string, child: ChildNode) => void) => state.addChild)
 
   const hasHandleOfType = useCallback(
-    (type: string) => {
+    (type: string): boolean => {
       // Custom handles are never considered duplicates
       if (type === 'custom') return false
 
-      return properties.data.sourceHandles.some((handle) => handle.type === type)
+      return properties.data.sourceHandles.some((handle): boolean => handle.type === type)
     },
     [properties.data.sourceHandles],
   )
 
   const handleMenuClick = useCallback(
-    (handleType: string) => {
+    (handleType: string): void => {
       // Prevent adding duplicate handle types
       if (hasHandleOfType(handleType)) {
         showWarningToast(`Handle of type "${handleType}" is already present!`)
@@ -272,7 +277,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
     [hasHandleOfType, addHandle, properties.id, properties.data.sourceHandles.length, updateNodeInternals],
   )
 
-  const toggleHandleMenu = (event: React.MouseEvent) => {
+  const toggleHandleMenu = (event: React.MouseEvent): void => {
     const { clientX, clientY } = event
 
     setHandleMenuPosition({
@@ -280,17 +285,19 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
       y: clientY,
     })
 
-    setIsHandleMenuOpen((previous) => !previous)
+    setIsHandleMenuOpen((previous): boolean => !previous)
   }
 
-  const editChild = (childId: string) => {
+  const editChild = (childId: string): void => {
     const child = findChildRecursive(properties.data.children, childId)
     if (!child) return
 
     const recordElements = elements as Record<string, ElementDetails>
-    const attributes = Object.values(recordElements).find((element) => element.name === child.subtype)?.attributes
+    const attributes = Object.values(recordElements).find(
+      (element): boolean => element.name === child.subtype,
+    )?.attributes
 
-    const isFirstLevel = properties.data.children.some((c) => c.id === childId)
+    const isFirstLevel = properties.data.children.some((c): boolean => c.id === childId)
     setParentId(properties.id)
     setChildParentId(isFirstLevel ? null : properties.id)
     setNodeId(+childId)
@@ -300,14 +307,16 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
     setIsEditing(true)
   }
 
-  const selectChild = (childId: string) => {
+  const selectChild = (childId: string): void => {
     const child = findChildRecursive(properties.data.children, childId)
     if (!child) return
 
     const recordElements = elements as Record<string, ElementDetails>
-    const attributes = Object.values(recordElements).find((element) => element.name === child.subtype)?.attributes
+    const attributes = Object.values(recordElements).find(
+      (element): boolean => element.name === child.subtype,
+    )?.attributes
 
-    const isFirstLevel = properties.data.children.some((childNode) => childNode.id === childId)
+    const isFirstLevel = properties.data.children.some((childNode): boolean => childNode.id === childId)
     setParentId(properties.id)
     setChildParentId(isFirstLevel ? null : properties.id)
     setNodeId(+childId)
@@ -315,13 +324,110 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
     setEditingSubtype(child.subtype)
     showNodeContextMenu(true)
 
-    reactFlow.setNodes((nodes) => nodes.map((node) => ({ ...node, selected: false })))
+    reactFlow.setNodes(
+      (
+        nodes,
+      ): {
+        selected: false
+        id: string
+        position: XYPosition
+        data: Record<string, unknown>
+        sourcePosition?: Position
+        targetPosition?: Position
+        hidden?: boolean
+        dragging?: boolean
+        draggable?: boolean
+        selectable?: boolean
+        connectable?: boolean
+        deletable?: boolean
+        dragHandle?: string
+        width?: number
+        height?: number
+        initialWidth?: number
+        initialHeight?: number
+        parentId?: string
+        zIndex?: number
+        extent?: 'parent' | CoordinateExtent | null
+        expandParent?: boolean
+        ariaLabel?: string
+        origin?: NodeOrigin
+        handles?: NodeHandle[]
+        measured?: { width?: number; height?: number }
+        type?: string | undefined
+        style?: CSSProperties
+        className?: string
+        resizing?: boolean
+        focusable?: boolean
+        ariaRole?: AriaRole
+        domAttributes?: Omit<
+          HTMLAttributes<HTMLDivElement>,
+          | 'id'
+          | 'style'
+          | 'className'
+          | 'draggable'
+          | 'role'
+          | 'aria-label'
+          | 'defaultValue'
+          | 'dangerouslySetInnerHTML'
+          | keyof DOMAttributes<HTMLDivElement>
+        >
+      }[] =>
+        nodes.map(
+          (
+            node,
+          ): {
+            selected: false
+            id: string
+            position: XYPosition
+            data: Record<string, unknown>
+            sourcePosition?: Position
+            targetPosition?: Position
+            hidden?: boolean
+            dragging?: boolean
+            draggable?: boolean
+            selectable?: boolean
+            connectable?: boolean
+            deletable?: boolean
+            dragHandle?: string
+            width?: number
+            height?: number
+            initialWidth?: number
+            initialHeight?: number
+            parentId?: string
+            zIndex?: number
+            extent?: 'parent' | CoordinateExtent | null
+            expandParent?: boolean
+            ariaLabel?: string
+            origin?: NodeOrigin
+            handles?: NodeHandle[]
+            measured?: { width?: number; height?: number }
+            type?: string | undefined
+            style?: CSSProperties
+            className?: string
+            resizing?: boolean
+            focusable?: boolean
+            ariaRole?: AriaRole
+            domAttributes?: Omit<
+              HTMLAttributes<HTMLDivElement>,
+              | 'id'
+              | 'style'
+              | 'className'
+              | 'draggable'
+              | 'role'
+              | 'aria-label'
+              | 'defaultValue'
+              | 'dangerouslySetInnerHTML'
+              | keyof DOMAttributes<HTMLDivElement>
+            >
+          } => ({ ...node, selected: false }),
+        ),
+    )
   }
 
-  const changeHandleType = (handleIndex: number, newType: string) => {
+  const changeHandleType = (handleIndex: number, newType: string): void => {
     // Prevent changing to a duplicate handle type
     const existing = properties.data.sourceHandles.some(
-      (handle) => handle.type === newType && handle.index !== handleIndex,
+      (handle): boolean => handle.type === newType && handle.index !== handleIndex,
     )
 
     if (existing) {
@@ -332,17 +438,17 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
 
     useFlowStore.getState().updateHandle(properties.id, handleIndex, { type: newType, index: handleIndex })
     // Timeout to prevent bug from edgelabel not properly updating
-    setTimeout(() => {
+    setTimeout((): void => {
       updateNodeInternals(properties.id)
     }, 0)
   }
 
   const canAcceptChild = useCallback(
-    (droppedName: string) => allowedChildNames?.has(droppedName) ?? false,
+    (droppedName: string): boolean => allowedChildNames?.has(droppedName) ?? false,
     [allowedChildNames],
   )
 
-  const handleDragOver = (event: React.DragEvent) => {
+  const handleDragOver = (event: React.DragEvent): void => {
     event.preventDefault()
     event.stopPropagation()
 
@@ -366,12 +472,12 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
     }
   }
 
-  const handleDragLeave = () => {
+  const handleDragLeave = (): void => {
     setDragOver(false)
   }
 
   const createChildFromElement = useCallback(
-    (element: ElementDetails) => {
+    (element: ElementDetails): void => {
       const newId = useFlowStore.getState().getNextNodeId()
 
       setNodeId(+newId)
@@ -408,7 +514,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
   )
 
   const handleDropOnNode = useCallback(
-    (event: React.DragEvent) => {
+    (event: React.DragEvent): void => {
       setDragOver(false)
       setDraggedName(null)
       event.preventDefault()
@@ -432,7 +538,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
     [setDraggedName, canAcceptChild, properties.data.subtype, elements, createChildFromElement],
   )
 
-  useEffect(() => {
+  useEffect((): void => {
     if (!draggedName || !frankElement) {
       setCanDropDraggedElement(false)
       return
@@ -464,7 +570,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
       <NodeResizeControl
         minWidth={minNodeWidth}
         minHeight={minNodeHeight}
-        onResize={(event, data) => {
+        onResize={(event, data): void => {
           setIsManuallyResized(true)
           setDimensions({ width: data.width, height: data.height })
         }}
@@ -500,13 +606,13 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
               <div
                 ref={dangerTriangleReference}
                 className="absolute top-0.5 right-1 z-10 flex items-center justify-center"
-                onMouseEnter={() => {
+                onMouseEnter={(): void => {
                   if (dangerTriangleReference.current) {
                     setAnchorRect(dangerTriangleReference.current.getBoundingClientRect())
                   }
                   setShowDeprecated(true)
                 }}
-                onMouseLeave={() => setShowDeprecated(false)}
+                onMouseLeave={(): void => setShowDeprecated(false)}
               >
                 <DangerIcon />
               </div>
@@ -516,7 +622,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
           )}
         </NodeHeader>
         {properties.data.attributes &&
-          Object.entries(properties.data.attributes).map(([key, value]) => (
+          Object.entries(properties.data.attributes).map(([key, value]): JSX.Element => (
             <div key={key} className="my-1 w-full max-w-full min-w-0 px-1">
               <p className="text-foreground overflow-hidden text-sm font-bold text-ellipsis whitespace-nowrap">{key}</p>
               <p className="text-foreground overflow-hidden text-sm text-ellipsis whitespace-nowrap">{value}</p>
@@ -525,7 +631,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
         {(properties.data.children.length > 0 || dragOver || canDropDraggedElement) && (
           <div className="w-full min-w-0 p-4">
             <NodeChildrenContainer>
-              {properties.data.children.map((child) => (
+              {properties.data.children.map((child): JSX.Element => (
                 <div key={child.id} data-child-id={child.id} className="child-drop-zone">
                   <ChildNodeComponent
                     child={child}
@@ -575,7 +681,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
         {possibleChildren.length > 0 && (
           <div
             className="hover:text-foreground text-foreground-muted flex cursor-pointer gap-1 self-start p-1"
-            onClick={() => setIsSubcomponentModalOpen(true)}
+            onClick={(): void => setIsSubcomponentModalOpen(true)}
           >
             <div className="bg-foreground/30 border-border h-4 w-4 justify-center rounded-full border text-center text-[8px] font-bold">
               +
@@ -610,14 +716,14 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
           }}
         />
       )}
-      {properties.data.sourceHandles.map((handle) => (
+      {properties.data.sourceHandles.map((handle): JSX.Element => (
         <CustomHandle
           key={handle.type + handle.index}
           type={handle.type}
           index={handle.index}
           firstHandlePosition={firstHandlePosition}
           handleSpacing={handleSpacing}
-          onChangeType={(newType) => changeHandleType(handle.index, newType)}
+          onChangeType={(newType): void => changeHandleType(handle.index, newType)}
           absolutePosition={{ x: properties.positionAbsoluteX, y: properties.positionAbsoluteY }}
           typesAllowed={frankElement?.forwards}
           dimmed={dimmedHandleIndices.has(handle.index)}
@@ -626,7 +732,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
       {/* Only show the add handle button if there are available handle types that are not yet used on this node */}
       {!allForwardTypesUsed && (
         <div
-          onClick={(event) => {
+          onClick={(event): void => {
             toggleHandleMenu(event)
           }}
           className="nodrag absolute h-4 w-4 cursor-pointer justify-center rounded-full border bg-gray-400 text-center text-[8px] font-bold text-white"
@@ -642,7 +748,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
         <HandleMenu
           title="Select Handle Type"
           position={handleMenuPosition}
-          onClose={() => setIsHandleMenuOpen(false)}
+          onClose={(): void => setIsHandleMenuOpen(false)}
           onSelect={handleMenuClick}
           typesAllowed={frankElement?.forwards}
         />
@@ -650,7 +756,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
 
       {isSubcomponentModalOpen && (
         <AddSubcomponentModal
-          onClose={() => setIsSubcomponentModalOpen(false)}
+          onClose={(): void => setIsSubcomponentModalOpen(false)}
           possibleChildren={possibleChildren}
           onAddChild={createChildFromElement}
         />
@@ -659,7 +765,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
   )
 }
 
-export function ResizeIcon({ color = '#999999' }: Readonly<{ color?: string }>) {
+export function ResizeIcon({ color = '#999999' }: Readonly<{ color?: string }>): JSX.Element {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"

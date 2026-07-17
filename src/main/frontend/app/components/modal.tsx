@@ -11,7 +11,7 @@ type ModalProperties = {
   children: ReactNode
 }
 
-function Modal({ isOpen, onClose, title, children }: ModalProperties) {
+function Modal({ isOpen, onClose, title, children }: ModalProperties): ReactPortal | null {
   const theme = useTheme()
 
   if (!isOpen) return null
@@ -24,7 +24,7 @@ function Modal({ isOpen, onClose, title, children }: ModalProperties) {
       <div
         className="bg-background relative rounded-lg p-5 shadow-lg"
         data-theme={theme}
-        onClick={(e) => e.stopPropagation()}
+        onClick={(e): void => e.stopPropagation()}
       >
         {title && <h2 className="mb-4 text-xl font-bold">{title}</h2>}
         <div>{children}</div>

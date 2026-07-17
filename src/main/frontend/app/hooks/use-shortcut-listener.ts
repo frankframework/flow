@@ -42,26 +42,26 @@ function canExecuteShortcut(
   return matchesShortcut(event, shortcut, platform)
 }
 
-export function useShortcutListener() {
+export function useShortcutListener(): void {
   const location = useLocation()
 
   const pathnameReference = useRef(location.pathname)
   const shortcutsReference = useRef(useShortcutStore.getState().shortcuts)
   const platformReference = useRef(useShortcutStore.getState().platform)
 
-  useEffect(() => {
-    return useShortcutStore.subscribe((state) => {
+  useEffect((): (() => void) => {
+    return useShortcutStore.subscribe((state): void => {
       shortcutsReference.current = state.shortcuts
       platformReference.current = state.platform
     })
   }, [])
 
-  useEffect(() => {
+  useEffect((): void => {
     pathnameReference.current = location.pathname
   }, [location.pathname])
 
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
+  useEffect((): (() => void) => {
+    const handleKeyDown = (event: KeyboardEvent): void => {
       const pathname = pathnameReference.current
       const shortcuts = shortcutsReference.current
       const platform = platformReference.current
@@ -80,6 +80,6 @@ export function useShortcutListener() {
     }
 
     globalThis.addEventListener('keydown', handleKeyDown)
-    return () => globalThis.removeEventListener('keydown', handleKeyDown)
+    return (): void => globalThis.removeEventListener('keydown', handleKeyDown)
   }, [])
 }

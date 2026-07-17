@@ -18,26 +18,26 @@ type PropertyListProperties = {
   configDispatch: Dispatch<ConfigActions>
 }
 
-function MappingTable({ config, configDispatch }: PropertyListProperties) {
+function MappingTable({ config, configDispatch }: PropertyListProperties): JSX.Element {
   const [modalOpen, setModalOpen] = useState(false)
   const [editingMapping, setEditingMapping] = useState<MappingNodeData | null>(null)
 
-  const flow: { nodes?: Node[]; edges?: Edge[] } = useMemo(() => {
+  const flow: { nodes?: Node[]; edges?: Edge[] } = useMemo((): ReactFlowJsonObject => {
     return config.propertyData ?? {}
   }, [config.propertyData])
 
-  const nodes: Node[] = useMemo(() => flow.nodes || [], [flow.nodes])
-  const edges: Edge[] = useMemo(() => flow.edges || [], [flow.edges])
+  const nodes: Node[] = useMemo((): Node[] => flow.nodes || [], [flow.nodes])
+  const edges: Edge[] = useMemo((): Edge[] => flow.edges || [], [flow.edges])
 
   const sources = getNodesByTypeAndId(nodes, { typeIncludes: 'sourceOnly' })
   const targets = getNodesByTypeAndId(nodes, { typeIncludes: 'targetOnly' })
 
-  const rows = useMemo(() => {
+  const rows = useMemo((): MappingRow[] => {
     if (nodes.length === 0 || edges.length === 0) return []
     return flowToMappingTable(nodes, edges)
   }, [nodes, edges])
 
-  function saveMapping(mappingConfig: MappingNodeData) {
+  function saveMapping(mappingConfig: MappingNodeData): void {
     const { updatedNodes, updatedEdges } = createMappingNode(mappingConfig, nodes, edges)
 
     configDispatch({
@@ -53,7 +53,7 @@ function MappingTable({ config, configDispatch }: PropertyListProperties) {
 
   return (
     <div className="relative w-full p-4">
-      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)}>
+      <Modal isOpen={modalOpen} onClose={(): void => setModalOpen(false)}>
         <AddMappingForm sources={sources} targets={targets} initialData={editingMapping} onSave={saveMapping} />
       </Modal>
 
@@ -62,7 +62,7 @@ function MappingTable({ config, configDispatch }: PropertyListProperties) {
         <h2 className="text-xl font-bold">Mapping Table</h2>
         <Button
           className="border-border bg-foreground-active text-foreground hover:bg-hover fixed right-20 rounded-2xl border px-4 py-2"
-          onClick={() => {
+          onClick={(): void => {
             setEditingMapping(null)
             setModalOpen(true)
           }}
@@ -86,11 +86,11 @@ function MappingTable({ config, configDispatch }: PropertyListProperties) {
           </thead>
 
           <tbody>
-            {rows.map((row) => (
+            {rows.map((row): JSX.Element => (
               <tr key={row.id} className="hover:bg-hover">
                 {/* Sources */}
                 <td className="border px-3 py-2 align-top">
-                  {row.sourcesNames.map((source, index) => (
+                  {row.sourcesNames.map((source, index): JSX.Element => (
                     <div key={index} className="text-2xl">
                       {source}
                     </div>
@@ -99,7 +99,7 @@ function MappingTable({ config, configDispatch }: PropertyListProperties) {
 
                 {/* Targets */}
                 <td className="border px-3 py-2 align-top">
-                  {row.targetsNames.map((target, index) => (
+                  {row.targetsNames.map((target, index): JSX.Element => (
                     <div key={index} className="text-2xl">
                       {target}
                     </div>
@@ -108,7 +108,7 @@ function MappingTable({ config, configDispatch }: PropertyListProperties) {
 
                 {/* Mutations */}
                 <td className="border px-3 py-2 align-top">
-                  {row.mutations.map((mutation, index) => (
+                  {row.mutations.map((mutation, index): JSX.Element => (
                     <div key={index} className="leading-tight">
                       <span className="text-xl">{mutation.name}</span>{' '}
                       <span className="text-foreground-muted text-xl">(Type: {mutation.mutationType?.name})</span>
@@ -117,7 +117,7 @@ function MappingTable({ config, configDispatch }: PropertyListProperties) {
                 </td>
                 {/* Conditions */}
                 <td className="border px-3 py-2 align-top">
-                  {row.conditions.map((condition, index) => (
+                  {row.conditions.map((condition, index): JSX.Element => (
                     <div key={index} className="leading-tight">
                       <span className="text-xl">{condition.name}</span>{' '}
                       <span className="text-foreground-muted text-xl">(Type: {condition.type?.name})</span>
@@ -142,15 +142,15 @@ function MappingTable({ config, configDispatch }: PropertyListProperties) {
                 {/* Actions */}
                 <td className="border px-3 py-2 align-top">
                   <EditButton
-                    onClick={() => {
-                      const mappingNode = nodes.find((node) => node.id === row.id)
+                    onClick={(): void => {
+                      const mappingNode = nodes.find((node): boolean => node.id === row.id)
                       setEditingMapping((mappingNode?.data as MappingNodeData) ?? null)
                       setModalOpen(true)
                     }}
                   />
 
                   <DeleteButton
-                    onClick={() => {
+                    onClick={(): void => {
                       const { remainingNodes, remainingEdges } = deleteMappingNode(row.id, nodes, edges)
 
                       configDispatch({

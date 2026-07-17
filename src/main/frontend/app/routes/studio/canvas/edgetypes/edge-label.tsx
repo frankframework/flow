@@ -16,7 +16,7 @@ export default function EdgeLabel({
   faded,
   compactScale,
   onDelete,
-}: Readonly<EdgeLabelProperties>) {
+}: Readonly<EdgeLabelProperties>): JSX.Element {
   return (
     <div
       style={{

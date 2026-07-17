@@ -65,8 +65,8 @@ function getItemTitle(item: TreeItem<StudioItemData>): string {
   return 'Unnamed'
 }
 
-export default function StudioFileStructure() {
-  const project = useProjectStore((state) => state.project)
+export default function StudioFileStructure(): JSX.Element {
+  const project = useProjectStore((state): ConfigurationProject | undefined => state.project)
   const { studioExpandedItems, addStudioExpandedItem, removeStudioExpandedItem } = useTreeStore()
 
   const [searchTerm, setSearchTerm] = useState('')
@@ -81,27 +81,27 @@ export default function StudioFileStructure() {
   const [selectedItemId, setSelectedItemId] = useState<TreeItemIndex | null>(null)
   const [selectedItemType, setSelectedItemType] = useState<StudioItemType | null>(null)
   const treeContainerReference = useRef<HTMLDivElement>(null)
-  const setTabData = useTabStore((state) => state.setTabData)
-  const setActiveTab = useTabStore((state) => state.setActiveTab)
-  const getTab = useTabStore((state) => state.getTab)
-  const activeTab = useTabStore((state) => state.activeTab)
+  const setTabData = useTabStore((state): ((tabId: string, data: TabData) => void) => state.setTabData)
+  const setActiveTab = useTabStore((state): ((tabId: string | undefined) => void) => state.setActiveTab)
+  const getTab = useTabStore((state): ((tabId: string | undefined) => TabData | undefined) => state.getTab)
+  const activeTab = useTabStore((state): string => state.activeTab)
 
   const activeTabItemId = useMemo(
-    () => (dataProvider && activeTab ? studioTabItemId(activeTab, dataProvider) : null),
+    (): string | null => (dataProvider && activeTab ? studioTabItemId(activeTab, dataProvider) : null),
     [dataProvider, activeTab],
   )
 
   const isActiveItemVisible = useMemo(
-    () => isVisibleInTree(activeTabItemId, studioExpandedItems),
+    (): boolean => isVisibleInTree(activeTabItemId, studioExpandedItems),
     [activeTabItemId, studioExpandedItems],
   )
 
   const expandedItemsReference = useRef(studioExpandedItems)
-  useEffect(() => {
+  useEffect((): void => {
     expandedItemsReference.current = studioExpandedItems
   }, [studioExpandedItems])
 
-  useFileWatcher(project?.name ?? null, () => {
+  useFileWatcher(project?.name ?? null, (): void => {
     if (dataProvider) void dataProvider.reloadDirectory('root')
   })
 
@@ -126,14 +126,14 @@ export default function StudioFileStructure() {
   )
 
   const triggerExplorerAction = useCallback(
-    (action: (menuState: StudioContextMenuState) => void, requireSelection: boolean) => {
+    (action: (menuState: StudioContextMenuState) => void, requireSelection: boolean): void => {
       const itemId = requireSelection
         ? selectedItemId
         : ((selectedItemType === 'adapter' ? null : selectedItemId) ?? 'root')
 
       if (!itemId) return
 
-      void buildContextForItem(itemId).then((menuState) => {
+      void buildContextForItem(itemId).then((menuState): void => {
         if (menuState) action(menuState)
       })
     },
@@ -141,15 +141,15 @@ export default function StudioFileStructure() {
   )
 
   const triggerItemAction = useCallback(
-    (itemId: TreeItemIndex, action: (menuState: StudioContextMenuState) => void) => {
-      void buildContextForItem(itemId).then((menuState) => {
+    (itemId: TreeItemIndex, action: (menuState: StudioContextMenuState) => void): void => {
+      void buildContextForItem(itemId).then((menuState): void => {
         if (menuState) action(menuState)
       })
     },
     [buildContextForItem],
   )
 
-  const revealActiveTab = useCallback(async () => {
+  const revealActiveTab = useCallback(async (): Promise<void> => {
     if (!dataProvider || !activeTab || !tree.current) return
 
     const itemId = studioTabItemId(activeTab, dataProvider)
@@ -170,27 +170,27 @@ export default function StudioFileStructure() {
   }, [dataProvider, activeTab])
 
   useShortcut({
-    'studio-explorer.new-config': () => triggerExplorerAction(studioContextMenu.handleNewConfiguration, false),
-    'studio-explorer.new-adapter': () => triggerExplorerAction(studioContextMenu.handleNewAdapter, true),
-    'studio-explorer.new-folder': () => triggerExplorerAction(studioContextMenu.handleNewFolder, false),
-    'studio-explorer.rename': () => {
+    'studio-explorer.new-config': (): void => triggerExplorerAction(studioContextMenu.handleNewConfiguration, false),
+    'studio-explorer.new-adapter': (): void => triggerExplorerAction(studioContextMenu.handleNewAdapter, true),
+    'studio-explorer.new-folder': (): void => triggerExplorerAction(studioContextMenu.handleNewFolder, false),
+    'studio-explorer.rename': (): false | undefined => {
       if (!selectedItemId) return false
       triggerExplorerAction(studioContextMenu.handleRename, true)
     },
-    'studio-explorer.delete': () => {
+    'studio-explorer.delete': (): false | undefined => {
       if (!selectedItemId) return false
       if (!treeContainerReference.current?.contains(document.activeElement)) return false
       triggerExplorerAction(studioContextMenu.handleDelete, true)
     },
-    'studio-explorer.reveal': () => void revealActiveTab(),
+    'studio-explorer.reveal': (): undefined => void revealActiveTab(),
   })
 
-  useEffect(() => {
+  useEffect((): (() => void) | undefined => {
     if (!project) return
 
     let isMounted = true
 
-    const initProvider = async () => {
+    const initProvider = async (): Promise<void> => {
       setProviderLoading(true)
 
       const provider = new StudioFilesDataProvider(project.name)
@@ -204,13 +204,13 @@ export default function StudioFileStructure() {
 
     initProvider()
 
-    return () => {
+    return (): void => {
       isMounted = false
     }
   }, [project])
 
-  useEffect(() => {
-    const findMatchingItems = async () => {
+  useEffect((): void => {
+    const findMatchingItems = async (): Promise<void> => {
       if (!searchTerm || !dataProvider) {
         setMatchingItemIds([])
         setActiveMatchIndex(-1)
@@ -223,8 +223,8 @@ export default function StudioFileStructure() {
 
       const lower = searchTerm.toLowerCase()
       const matches = allItems
-        .filter((item) => getItemTitle(item).toLowerCase().includes(lower))
-        .map((item) => String(item.index))
+        .filter((item): boolean => getItemTitle(item).toLowerCase().includes(lower))
+        .map((item): string => String(item.index))
 
       setMatchingItemIds(matches)
 
@@ -252,7 +252,7 @@ export default function StudioFileStructure() {
   }
 
   const loadFolderContents = useCallback(
-    async (item: TreeItem<StudioItemData>) => {
+    async (item: TreeItem<StudioItemData>): Promise<void> => {
       if (!item.isFolder || !dataProvider) return
 
       const data = item.data
@@ -265,7 +265,7 @@ export default function StudioFileStructure() {
   )
 
   const openNewTab = useCallback(
-    (adapterName: string, configPath: string, adapterPosition: number) => {
+    (adapterName: string, configPath: string, adapterPosition: number): void => {
       const tabId = `${configPath}::${adapterName}::${adapterPosition}`
       if (!getTab(tabId)) {
         setTabData(tabId, {
@@ -282,7 +282,7 @@ export default function StudioFileStructure() {
   )
 
   const handleItemClickAsync = useCallback(
-    async (itemIds: TreeItemIndex[]) => {
+    async (itemIds: TreeItemIndex[]): Promise<void> => {
       if (!dataProvider || itemIds.length === 0) return
 
       const itemId = itemIds[0]
@@ -310,8 +310,8 @@ export default function StudioFileStructure() {
     [dataProvider, openNewTab],
   )
 
-  useEffect(() => {
-    const handleKeyDown = async (event: KeyboardEvent) => {
+  useEffect((): (() => void) => {
+    const handleKeyDown = async (event: KeyboardEvent): Promise<void> => {
       if (event.key === 'Escape') {
         setSearchTerm('')
         setHighlightedItemId(null)
@@ -324,10 +324,10 @@ export default function StudioFileStructure() {
 
       if (event.key === 'Tab' && !event.shiftKey) {
         event.preventDefault()
-        setActiveMatchIndex((previous) => (previous + 1) % matchingItemIds.length)
+        setActiveMatchIndex((previous): number => (previous + 1) % matchingItemIds.length)
       } else if (event.key === 'Tab' && event.shiftKey) {
         event.preventDefault()
-        setActiveMatchIndex((previous) => (previous - 1 < 0 ? matchingItemIds.length - 1 : previous - 1))
+        setActiveMatchIndex((previous): number => (previous - 1 < 0 ? matchingItemIds.length - 1 : previous - 1))
       } else if (event.key === 'Enter') {
         event.preventDefault()
         const targetItemId = highlightedItemId || matchingItemIds[0]
@@ -338,17 +338,17 @@ export default function StudioFileStructure() {
     }
 
     globalThis.addEventListener('keydown', handleKeyDown)
-    return () => globalThis.removeEventListener('keydown', handleKeyDown)
+    return (): void => globalThis.removeEventListener('keydown', handleKeyDown)
   }, [matchingItemIds, highlightedItemId, handleItemClickAsync])
 
-  useEffect(() => {
+  useEffect((): void => {
     if (activeMatchIndex === -1 || !tree.current) return
     const itemId = matchingItemIds[activeMatchIndex]
     if (!itemId) return
     setHighlightedItemId(itemId)
   }, [activeMatchIndex, matchingItemIds])
 
-  useEffect(() => {
+  useEffect((): void => {
     if (!tree.current) return
     if (!searchTerm) {
       tree.current.collapseAll()
@@ -357,7 +357,13 @@ export default function StudioFileStructure() {
     tree.current.expandAll()
   }, [searchTerm])
 
-  const renderItemArrow = ({ item, context }: { item: TreeItem<StudioItemData>; context: TreeItemRenderContext }) => {
+  const renderItemArrow = ({
+    item,
+    context,
+  }: {
+    item: TreeItem<StudioItemData>
+    context: TreeItemRenderContext
+  }): JSX.Element | null => {
     if (!item.isFolder) return null
 
     const ArrowIcon = context.isExpanded ? AltArrowDownIcon : AltArrowRightIcon
@@ -365,11 +371,11 @@ export default function StudioFileStructure() {
     return (
       <div
         className="rct-tree-item-arrow-isFolder rct-tree-item-arrow"
-        onClick={(mouseEvent) => {
+        onClick={(mouseEvent): void => {
           mouseEvent.stopPropagation()
           context.toggleExpandedState()
         }}
-        onContextMenu={(mouseEvent) => studioContextMenu.openContextMenu(mouseEvent, item.index)}
+        onContextMenu={(mouseEvent): Promise<void> => studioContextMenu.openContextMenu(mouseEvent, item.index)}
       >
         <ArrowIcon className="fill-foreground" />
       </div>
@@ -384,7 +390,7 @@ export default function StudioFileStructure() {
     title: string
     item: TreeItem<StudioItemData>
     context: TreeItemRenderContext
-  }) => {
+  }): JSX.Element => {
     const listenerType =
       !item.isFolder && typeof item.data === 'object' && item.data && 'listenerName' in item.data
         ? (item.data as { listenerName: string | null }).listenerName
@@ -415,7 +421,7 @@ export default function StudioFileStructure() {
       const titleParts = title.split(new RegExp(`(${searchTerm})`, 'gi'))
       highlightedTitle = (
         <>
-          {titleParts.map((part, partIndex) =>
+          {titleParts.map((part, partIndex): JSX.Element =>
             part.toLowerCase() === searchLower ? (
               <mark key={`mark-${partIndex}`} className="text-foreground bg-foreground-active rounded-sm">
                 {part}
@@ -433,7 +439,7 @@ export default function StudioFileStructure() {
     return (
       <div
         className="group/row flex h-full w-full items-center"
-        onContextMenu={(mouseEvent) => studioContextMenu.openContextMenu(mouseEvent, item.index)}
+        onContextMenu={(mouseEvent): Promise<void> => studioContextMenu.openContextMenu(mouseEvent, item.index)}
       >
         <ItemIcon className="fill-foreground w-4 shrink-0" />
         <span
@@ -447,7 +453,7 @@ export default function StudioFileStructure() {
           {(isRoot || isPlainFolder) && (
             <TreeActionButton
               title="New Configuration File"
-              onAction={() => triggerItemAction(item.index, studioContextMenu.handleNewConfiguration)}
+              onAction={(): void => triggerItemAction(item.index, studioContextMenu.handleNewConfiguration)}
             >
               <SettingsIcon className="fill-foreground-muted group-hover:fill-foreground h-3.5 w-3.5" />
             </TreeActionButton>
@@ -455,7 +461,7 @@ export default function StudioFileStructure() {
           {(isRoot || isPlainFolder) && (
             <TreeActionButton
               title="New Folder"
-              onAction={() => triggerItemAction(item.index, studioContextMenu.handleNewFolder)}
+              onAction={(): void => triggerItemAction(item.index, studioContextMenu.handleNewFolder)}
             >
               <FolderIcon className="fill-foreground-muted group-hover:fill-foreground h-3.5 w-3.5" />
             </TreeActionButton>
@@ -463,7 +469,7 @@ export default function StudioFileStructure() {
           {isConfigFile && (
             <TreeActionButton
               title="New Adapter"
-              onAction={() => triggerItemAction(item.index, studioContextMenu.handleNewAdapter)}
+              onAction={(): void => triggerItemAction(item.index, studioContextMenu.handleNewAdapter)}
             >
               <CodeIcon className="fill-foreground-muted group-hover:fill-foreground h-4 w-4" />
             </TreeActionButton>
@@ -471,7 +477,7 @@ export default function StudioFileStructure() {
           {!isRoot && (
             <TreeActionButton
               title="Rename"
-              onAction={() => triggerItemAction(item.index, studioContextMenu.handleRename)}
+              onAction={(): void => triggerItemAction(item.index, studioContextMenu.handleRename)}
             >
               <Pen className="text-foreground-muted group-hover:text-foreground h-3.5 w-3.5" />
             </TreeActionButton>
@@ -479,7 +485,7 @@ export default function StudioFileStructure() {
           {!isRoot && (
             <TreeActionButton
               title="Delete"
-              onAction={() => triggerItemAction(item.index, studioContextMenu.handleDelete)}
+              onAction={(): void => triggerItemAction(item.index, studioContextMenu.handleDelete)}
             >
               <TrashBinIcon className="text-foreground-muted group-hover:text-foreground h-3.5 w-3.5" />
             </TreeActionButton>
@@ -502,30 +508,30 @@ export default function StudioFileStructure() {
           <IconButton
             title="Open File Tree to Active Tab"
             disabled={!activeTab || isActiveItemVisible}
-            onClick={() => void revealActiveTab()}
+            onClick={(): undefined => void revealActiveTab()}
           >
             <ListDown className="fill-foreground-muted group-hover:fill-foreground h-5 w-5" />
           </IconButton>
           <IconButton
             title="New Configuration File"
-            onClick={() => triggerExplorerAction(studioContextMenu.handleNewConfiguration, false)}
+            onClick={(): void => triggerExplorerAction(studioContextMenu.handleNewConfiguration, false)}
           >
             <SettingsIcon className="fill-foreground-muted group-hover:fill-foreground h-4 w-4" />
           </IconButton>
           <IconButton
             title="New Folder"
-            onClick={() => triggerExplorerAction(studioContextMenu.handleNewFolder, false)}
+            onClick={(): void => triggerExplorerAction(studioContextMenu.handleNewFolder, false)}
           >
             <FolderIcon className="fill-foreground-muted group-hover:fill-foreground h-4 w-4" />
           </IconButton>
         </div>
       </div>
-      <Search onChange={(event) => setSearchTerm(event.target.value)} />
+      <Search onChange={(event): void => setSearchTerm(event.target.value)} />
 
       <div
         ref={treeContainerReference}
         className="min-h-0 flex-1 overflow-auto pr-2"
-        onContextMenu={(mouseEvent) => {
+        onContextMenu={(mouseEvent): void => {
           void studioContextMenu.openContextMenu(mouseEvent, 'root')
         }}
       >
@@ -535,13 +541,13 @@ export default function StudioFileStructure() {
               expandedItems: studioExpandedItems,
             },
           }}
-          onExpandItem={async (item) => {
+          onExpandItem={async (item): Promise<void> => {
             addStudioExpandedItem(String(item.index))
             if (dataProvider) await loadFolderContents(item)
           }}
-          onCollapseItem={(item) => {
+          onCollapseItem={(item): void => {
             removeStudioExpandedItem(String(item.index))
-            setSelectedItemId((previous) =>
+            setSelectedItemId((previous): TreeItemIndex | null =>
               previous && String(previous).startsWith(`${String(item.index)}/`) ? null : previous,
             )
           }}
@@ -569,8 +575,8 @@ export default function StudioFileStructure() {
         onDelete={studioContextMenu.handleDelete}
         onConfirmDelete={studioContextMenu.confirmDelete}
         onCloseContextMenu={studioContextMenu.closeContextMenu}
-        onCloseNameDialog={() => studioContextMenu.setNameDialog(null)}
-        onCloseDeleteDialog={() => studioContextMenu.setDeleteTarget(null)}
+        onCloseNameDialog={(): void => studioContextMenu.setNameDialog(null)}
+        onCloseDeleteDialog={(): void => studioContextMenu.setDeleteTarget(null)}
       />
     </div>
   )

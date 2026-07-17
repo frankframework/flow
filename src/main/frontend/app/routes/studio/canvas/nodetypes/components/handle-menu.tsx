@@ -19,24 +19,24 @@ export default function HandleMenu({
   onClose,
   onSelect,
   typesAllowed,
-}: Readonly<HandleMenuProperties>) {
+}: Readonly<HandleMenuProperties>): React.ReactPortal {
   const handleTypes = useHandleTypes(typesAllowed)
   const menuReference = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
-    const handleMouseDown = (e: MouseEvent) => {
+  useEffect((): (() => void) => {
+    const handleMouseDown = (e: MouseEvent): void => {
       if (menuReference.current && !menuReference.current.contains(e.target as Node)) {
         onClose()
       }
     }
 
-    const handleWheel = (e: WheelEvent) => {
+    const handleWheel = (e: WheelEvent): void => {
       if (menuReference.current && !menuReference.current.contains(e.target as Node)) {
         onClose()
       }
     }
 
-    const handleEsc = (e: KeyboardEvent) => {
+    const handleEsc = (e: KeyboardEvent): void => {
       if (e.key !== 'Escape') {
         return
       }
@@ -49,7 +49,7 @@ export default function HandleMenu({
     globalThis.addEventListener('mousedown', handleMouseDown, { capture: true })
     globalThis.addEventListener('wheel', handleWheel, { capture: true })
 
-    return () => {
+    return (): void => {
       globalThis.removeEventListener('keydown', handleEsc, { capture: true })
       globalThis.removeEventListener('mousedown', handleMouseDown, { capture: true })
       globalThis.removeEventListener('wheel', handleWheel, { capture: true })
@@ -70,12 +70,12 @@ export default function HandleMenu({
           {title}
         </div>
         <ul className="w-full">
-          {handleTypes.map((type, index) => (
+          {handleTypes.map((type, index): React.JSX.Element => (
             <HandleMenuItem
               key={type}
               label={type}
               iconColor={translateHandleTypeToColour(type)}
-              onClick={() => onSelect(type)}
+              onClick={(): void => onSelect(type)}
               isLast={index === handleTypes.length - 1}
             />
           ))}

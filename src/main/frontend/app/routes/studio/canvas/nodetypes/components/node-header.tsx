@@ -21,7 +21,7 @@ export function NodeHeader({
   gradientEnabled,
   className,
   children,
-}: Readonly<NodeHeaderProperties>) {
+}: Readonly<NodeHeaderProperties>): JSX.Element {
   return (
     <div
       className={clsx('border-b-border relative box-border w-full rounded-t-md border-b p-1', className)}

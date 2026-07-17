@@ -12,25 +12,25 @@ type FrankConfigXsdContextValue = {
 
 const FrankConfigXsdContext = createContext<FrankConfigXsdContextValue | null>(null)
 
-export function FrankConfigXsdProvider({ children }: { children: ReactNode }) {
+export function FrankConfigXsdProvider({ children }: { children: ReactNode }): JSX.Element {
   const [xsdContent, setXsdContent] = useState<string | null>(null)
   const [error, setError] = useState<Error | null>(null)
 
-  const load = useCallback(() => {
+  const load = useCallback((): void => {
     setError(null)
     fetchFrankConfigXsd()
       .then(setXsdContent)
-      .catch((error_) => {
+      .catch((error_): void => {
         setError(error_ as Error)
         logApiWarning('Failed to load FrankConfig XSD:', error_ as Error)
       })
   }, [])
 
-  useEffect(() => {
+  useEffect((): void => {
     load()
   }, [load])
 
-  const xsdDocument = useMemo(() => (xsdContent ? parseXsd(xsdContent) : null), [xsdContent])
+  const xsdDocument = useMemo((): Document | null => (xsdContent ? parseXsd(xsdContent) : null), [xsdContent])
 
   return (
     <FrankConfigXsdContext.Provider value={{ xsdContent, xsdDoc: xsdDocument, error, refetch: load }}>

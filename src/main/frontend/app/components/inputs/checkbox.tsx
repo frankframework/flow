@@ -16,15 +16,15 @@ export default function Checkbox({
   onChange,
   className,
   ...properties
-}: CheckboxProperties) {
+}: CheckboxProperties): React.JSX.Element {
   const [isChecked, setIsChecked] = useState(checked)
   const inputReference = useRef<HTMLInputElement>(null)
 
-  useEffect(() => {
+  useEffect((): void => {
     setIsChecked(checked)
   }, [checked])
 
-  useEffect(() => {
+  useEffect((): void => {
     if (inputReference.current) {
       inputReference.current.indeterminate = indeterminate
     }
@@ -32,7 +32,7 @@ export default function Checkbox({
 
   const isActive = isChecked || indeterminate
 
-  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>): void => {
     if (disabled) {
       return
     }

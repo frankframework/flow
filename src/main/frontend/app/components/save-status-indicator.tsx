@@ -9,15 +9,15 @@ function getTimeAgo(date: Date): string {
   return `${Math.floor(seconds / 3600)}h ago`
 }
 
-export function SaveStatusIndicator() {
-  const saveStatus = useSaveStatusStore((state) => state.saveStatus)
-  const savedAt = useSaveStatusStore((state) => state.savedAt)
+export function SaveStatusIndicator(): JSX.Element | null {
+  const saveStatus = useSaveStatusStore((state): SaveStatus => state.saveStatus)
+  const savedAt = useSaveStatusStore((state): Date | null => state.savedAt)
   const [, setTick] = useState(0)
 
-  useEffect(() => {
+  useEffect((): (() => void) | undefined => {
     if (!savedAt || saveStatus !== 'saved') return
-    const id = setInterval(() => setTick((t) => t + 1), 30_000)
-    return () => clearInterval(id)
+    const id = setInterval((): void => setTick((t): number => t + 1), 30_000)
+    return (): void => clearInterval(id)
   }, [savedAt, saveStatus])
 
   if (saveStatus === 'saving') {

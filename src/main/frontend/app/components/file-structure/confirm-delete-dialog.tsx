@@ -10,20 +10,25 @@ type ConfirmDeleteDialogProperties = {
   onCancel: () => void
 }
 
-export default function ConfirmDeleteDialog({ name, isFolder, onConfirm, onCancel }: ConfirmDeleteDialogProperties) {
+export default function ConfirmDeleteDialog({
+  name,
+  isFolder,
+  onConfirm,
+  onCancel,
+}: ConfirmDeleteDialogProperties): ReactPortal {
   const overlayReference = useRef<HTMLDivElement>(null)
 
   useSubmitOnEnter(onConfirm)
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
+  useEffect((): (() => void) => {
+    const handleKeyDown = (e: KeyboardEvent): void => {
       if (e.key === 'Escape') onCancel()
     }
     document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
+    return (): void => document.removeEventListener('keydown', handleKeyDown)
   }, [onCancel])
 
-  const handleOverlayClick = (e: React.MouseEvent) => {
+  const handleOverlayClick = (e: React.MouseEvent): void => {
     if (e.target === overlayReference.current) onCancel()
   }
 

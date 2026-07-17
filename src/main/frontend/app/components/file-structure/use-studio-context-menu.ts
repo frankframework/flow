@@ -120,7 +120,22 @@ function getRenamePatterns(itemType: StudioItemType): Record<string, RegExp> {
   return CONFIGURATION_NAME_PATTERNS
 }
 
-export function useStudioContextMenu({ projectName, dataProvider }: UseStudioContextMenuOptions) {
+export function useStudioContextMenu({ projectName, dataProvider }: UseStudioContextMenuOptions): {
+  contextMenu: StudioContextMenuState | null
+  setContextMenu: React.Dispatch<React.SetStateAction<StudioContextMenuState | null>>
+  closeContextMenu: () => void
+  nameDialog: NameDialogState | null
+  setNameDialog: React.Dispatch<React.SetStateAction<NameDialogState | null>>
+  deleteTarget: DeleteTargetState | null
+  setDeleteTarget: React.Dispatch<React.SetStateAction<DeleteTargetState | null>>
+  openContextMenu: (e: React.MouseEvent, itemId: TreeItemIndex) => Promise<void>
+  handleNewConfiguration: (menuState?: StudioContextMenuState) => void
+  handleNewAdapter: (menuState?: StudioContextMenuState) => void
+  handleNewFolder: (menuState?: StudioContextMenuState) => void
+  handleRename: (menuState?: StudioContextMenuState) => void
+  handleDelete: (menuState?: StudioContextMenuState) => void
+  confirmDelete: () => Promise<void>
+} {
   const navigate = useNavigate()
   const [contextMenu, setContextMenu] = useState<StudioContextMenuState | null>(null)
   const [nameDialog, setNameDialog] = useState<NameDialogState | null>(null)
@@ -128,7 +143,7 @@ export function useStudioContextMenu({ projectName, dataProvider }: UseStudioCon
   const contextMenuReference = useRef<StudioContextMenuState | null>(null)
 
   const openContextMenu = useCallback(
-    async (e: React.MouseEvent, itemId: TreeItemIndex) => {
+    async (e: React.MouseEvent, itemId: TreeItemIndex): Promise<void> => {
       e.preventDefault()
       e.stopPropagation()
       if (!dataProvider) return
@@ -154,7 +169,7 @@ export function useStudioContextMenu({ projectName, dataProvider }: UseStudioCon
     [dataProvider],
   )
 
-  const closeContextMenu = useCallback(() => {
+  const closeContextMenu = useCallback((): void => {
     contextMenuReference.current = null
     setContextMenu(null)
   }, [])
@@ -164,7 +179,7 @@ export function useStudioContextMenu({ projectName, dataProvider }: UseStudioCon
   }
 
   const handleNewConfigurationFile = useCallback(
-    (menuState?: StudioContextMenuState) => {
+    (menuState?: StudioContextMenuState): void => {
       const menu = resolveMenu(menuState)
       if (!menu || !projectName || !dataProvider) return
       closeContextMenu()
@@ -172,7 +187,7 @@ export function useStudioContextMenu({ projectName, dataProvider }: UseStudioCon
       setNameDialog({
         title: 'New Configuration File',
         submitLabel: 'Create',
-        onSubmit: async (name: string) => {
+        onSubmit: async (name: string): Promise<void> => {
           const fileName = ensureXmlExtension(name)
           try {
             const relativeFolder = relativeTo(dataProvider.getRootPath(), menu.folderPath)
@@ -195,7 +210,7 @@ export function useStudioContextMenu({ projectName, dataProvider }: UseStudioCon
   )
 
   const handleNewAdapter = useCallback(
-    (menuState?: StudioContextMenuState) => {
+    (menuState?: StudioContextMenuState): void => {
       const menu = resolveMenu(menuState)
       if (!menu || !projectName || !dataProvider) return
       closeContextMenu()
@@ -203,7 +218,7 @@ export function useStudioContextMenu({ projectName, dataProvider }: UseStudioCon
       setNameDialog({
         title: 'New Adapter',
         submitLabel: 'Create',
-        onSubmit: async (name: string) => {
+        onSubmit: async (name: string): Promise<void> => {
           try {
             const { adapterName, adapterPosition } = await createAdapter(projectName, name, menu.path)
             await dataProvider.reloadDirectory('root')
@@ -221,7 +236,7 @@ export function useStudioContextMenu({ projectName, dataProvider }: UseStudioCon
   )
 
   const handleNewFolder = useCallback(
-    (menuState?: StudioContextMenuState) => {
+    (menuState?: StudioContextMenuState): void => {
       const menu = resolveMenu(menuState)
       if (!menu || !projectName || !dataProvider) return
       closeContextMenu()
@@ -229,7 +244,7 @@ export function useStudioContextMenu({ projectName, dataProvider }: UseStudioCon
       setNameDialog({
         title: 'New Folder',
         submitLabel: 'Create',
-        onSubmit: async (name: string) => {
+        onSubmit: async (name: string): Promise<void> => {
           try {
             await createFolderInProject(projectName, `${menu.folderPath}/${name}`)
             await dataProvider.reloadDirectory('root')
@@ -245,7 +260,7 @@ export function useStudioContextMenu({ projectName, dataProvider }: UseStudioCon
   )
 
   const handleRename = useCallback(
-    (menuState?: StudioContextMenuState) => {
+    (menuState?: StudioContextMenuState): void => {
       const menu = resolveMenu(menuState)
       if (!menu || !projectName || !dataProvider) return
       const oldName = menu.name
@@ -254,7 +269,7 @@ export function useStudioContextMenu({ projectName, dataProvider }: UseStudioCon
       setNameDialog({
         title: 'Rename',
         initialValue: oldName,
-        onSubmit: async (newName: string) => {
+        onSubmit: async (newName: string): Promise<void> => {
           if (newName === oldName) {
             setNameDialog(null)
             return
@@ -284,7 +299,7 @@ export function useStudioContextMenu({ projectName, dataProvider }: UseStudioCon
   )
 
   const handleDelete = useCallback(
-    (menuState?: StudioContextMenuState) => {
+    (menuState?: StudioContextMenuState): void => {
       const menu = resolveMenu(menuState)
       if (!menu) return
       setDeleteTarget({
@@ -297,7 +312,7 @@ export function useStudioContextMenu({ projectName, dataProvider }: UseStudioCon
     [closeContextMenu],
   )
 
-  const confirmDelete = useCallback(async () => {
+  const confirmDelete = useCallback(async (): Promise<void> => {
     if (!deleteTarget || !projectName || !dataProvider) return
 
     try {

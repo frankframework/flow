@@ -14,7 +14,10 @@ function getComponentLabels(component: NonCanvasComponent): { typeLabel: string 
   return { typeLabel: null, primaryLabel: component.tagName }
 }
 
-export default function ComponentListItem({ component, onConfigure }: Readonly<ComponentListItemProperties>) {
+export default function ComponentListItem({
+  component,
+  onConfigure,
+}: Readonly<ComponentListItemProperties>): JSX.Element {
   const { typeLabel, primaryLabel } = getComponentLabels(component)
   return <ComponentRow typeLabel={typeLabel} primaryLabel={primaryLabel} onConfigure={onConfigure} />
 }

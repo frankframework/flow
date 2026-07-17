@@ -21,11 +21,11 @@ function AddMutationForm({
   sources: Source[]
   onSave: (data: Mutation) => void
   mutationToEdit?: Mutation
-}) {
+}): JSX.Element {
   const newId = `mutation-${useId()}`
   const id = mutationToEdit?.id ?? newId
   const mutations: MutationsConfig = mutationConfig as MutationsConfig
-  sources = sources.filter((source) => source.id != id)
+  sources = sources.filter((source): boolean => source.id != id)
 
   const [mutation, setMutation] = useState<Mutation>({
     id,
@@ -35,9 +35,9 @@ function AddMutationForm({
   })
 
   const isFormIncomplete = !mutation.mutationType || mutation.inputs.length === 0
-  const placeholder = useMemo(() => generateMutationName(mutation), [mutation])
+  const placeholder = useMemo((): string => generateMutationName(mutation), [mutation])
 
-  function handleSave() {
+  function handleSave(): void {
     if (!mutation.name) mutation.name = placeholder
     onSave(mutation)
   }
@@ -49,7 +49,16 @@ function AddMutationForm({
       <label>Mutation name:</label>
       <Input
         value={mutation.name}
-        onChange={(event) => setMutation((toSetMutation) => ({ ...toSetMutation, name: event.target.value }))}
+        onChange={(event): void =>
+          setMutation(
+            (
+              toSetMutation,
+            ): { name: string; id: string; mutationType: MutationType | null; inputs: MutationInput[] } => ({
+              ...toSetMutation,
+              name: event.target.value,
+            }),
+          )
+        }
         placeholder={placeholder}
       />
 
@@ -57,8 +66,8 @@ function AddMutationForm({
       <Dropdown
         className="max-w-55"
         value={mutation.mutationType?.name ?? ''}
-        onChange={(e) => {
-          const mutationType = mutations.mutations.find((mutationToFind) => mutationToFind.name === e) ?? null
+        onChange={(e): void => {
+          const mutationType = mutations.mutations.find((mutationToFind): boolean => mutationToFind.name === e) ?? null
           setMutation({
             id,
             name: mutation.name,
@@ -67,7 +76,7 @@ function AddMutationForm({
           })
         }}
         options={Object.fromEntries(
-          mutations.mutations.map((mutationToMap) => [mutationToMap.name, mutationToMap.name]),
+          mutations.mutations.map((mutationToMap): [string, string] => [mutationToMap.name, mutationToMap.name]),
         )}
       />
 
@@ -88,30 +97,34 @@ function MutationDetailsForm({
   mutation: Mutation
   setMutation: React.Dispatch<React.SetStateAction<Mutation>>
   sources: Source[]
-}) {
-  function addInputField(mutationTypeInput: MutationTypeInput) {
-    setMutation((mutationToSet) => ({
-      ...mutationToSet,
-      inputs: [
-        ...mutationToSet.inputs,
-        {
-          type: mutationTypeInput.type === 'source' ? 'source' : 'defaultValue',
-          value: '',
-        },
-      ],
-    }))
+}): JSX.Element {
+  function addInputField(mutationTypeInput: MutationTypeInput): void {
+    setMutation(
+      (mutationToSet): { inputs: MutationInput[]; name: string; id: string; mutationType: MutationType | null } => ({
+        ...mutationToSet,
+        inputs: [
+          ...mutationToSet.inputs,
+          {
+            type: mutationTypeInput.type === 'source' ? 'source' : 'defaultValue',
+            value: '',
+          },
+        ],
+      }),
+    )
   }
 
-  function removeInput(index: number) {
-    setMutation((mutations) => ({
-      ...mutations,
-      inputs: mutations.inputs.filter((_, index_) => index_ !== index),
-    }))
+  function removeInput(index: number): void {
+    setMutation(
+      (mutations): { inputs: MutationInput[]; name: string; id: string; mutationType: MutationType | null } => ({
+        ...mutations,
+        inputs: mutations.inputs.filter((_, index_): boolean => index_ !== index),
+      }),
+    )
   }
 
   return (
     <div className="max-h-[50vh] overflow-auto">
-      {mutation.mutationType?.inputs.map((mutationTypeInput, index) => {
+      {mutation.mutationType?.inputs.map((mutationTypeInput, index): JSX.Element => {
         return (
           <div key={index} className="space-y-2">
             {/* Base input */}
@@ -125,7 +138,7 @@ function MutationDetailsForm({
 
             {/* Render extra expandable inputs */}
             {mutationTypeInput.expandable &&
-              mutation.inputs.slice(index + 1).map((_, extraIndex) => {
+              mutation.inputs.slice(index + 1).map((_, extraIndex): JSX.Element => {
                 const actualIndex = extraIndex + index + 1
                 return (
                   <MutationInputField
@@ -136,14 +149,14 @@ function MutationDetailsForm({
                     setMutation={setMutation}
                     sources={sources}
                     showDelete
-                    onDelete={() => removeInput(actualIndex)}
+                    onDelete={(): void => removeInput(actualIndex)}
                   />
                 )
               })}
 
             {/* Add input button */}
             {mutationTypeInput.expandable && (
-              <Button type="button" onClick={() => addInputField(mutationTypeInput)} className="w-full">
+              <Button type="button" onClick={(): void => addInputField(mutationTypeInput)} className="w-full">
                 Add input
               </Button>
             )}
@@ -170,24 +183,26 @@ function MutationInputField({
   sources: Source[]
   showDelete?: boolean
   onDelete?: () => void
-}) {
+}): JSX.Element {
   if (mutationInput.inputsAllowed != 'all') {
-    sources = sources.filter((source) => source.type == mutationInput.inputsAllowed)
+    sources = sources.filter((source): boolean => source.type == mutationInput.inputsAllowed)
   }
   const value = mutation.inputs[index] ?? {
     type: mutationInput.type,
     value: '',
   }
 
-  function updateInput(updated: MutationInput) {
-    setMutation((mutation) => {
-      const newInputs = [...mutation.inputs]
-      newInputs[index] = { ...newInputs[index], ...updated }
-      return { ...mutation, inputs: newInputs }
-    })
+  function updateInput(updated: MutationInput): void {
+    setMutation(
+      (mutation): { inputs: MutationInput[]; name: string; id: string; mutationType: MutationType | null } => {
+        const newInputs = [...mutation.inputs]
+        newInputs[index] = { ...newInputs[index], ...updated }
+        return { ...mutation, inputs: newInputs }
+      },
+    )
   }
 
-  function handleSourceChange(sourceId: string) {
+  function handleSourceChange(sourceId: string): void {
     if (sourceId === 'defaultValue') {
       updateInput({
         type: mutationInput.type == 'attribute' ? mutationInput.type : 'defaultValue',
@@ -196,7 +211,7 @@ function MutationInputField({
       })
       return
     }
-    const source = sources.find((source) => source.id === sourceId)
+    const source = sources.find((source): boolean => source.id === sourceId)
     if (!source) return
     updateInput({ type: 'source', sourceId: source.id, value: source.label })
   }
@@ -216,7 +231,7 @@ function MutationInputField({
             className="mb-4 max-w-55"
             options={Object.fromEntries([
               ...(mutationInput.allowDefaultValue ? [['defaultValue', 'defaultValue']] : []),
-              ...sources.map((source) => [source.id, source.label]),
+              ...sources.map((source): string[] => [source.id, source.label]),
             ])}
           />
         )}
@@ -224,7 +239,7 @@ function MutationInputField({
         {(mutationInput.type === 'attribute' || value.type === 'defaultValue') && (
           <Input
             value={value.value ?? ''}
-            onChange={(event) =>
+            onChange={(event): void =>
               updateInput({
                 type: mutationInput.type === 'attribute' ? mutationInput.type : 'defaultValue',
                 value: event.target.value,

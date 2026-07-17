@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useState } from 'react'
+import { type JSX, useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 import StudioTabs from '~/components/tabs/studio-tabs'
 import StudioFileStructure from '~/components/file-structure/studio-file-structure'
 import StudioContext from '~/routes/studio/context/studio-context'
-import Flow from '~/routes/studio/canvas/flow'
+import Flow, { type FlowNode } from '~/routes/studio/canvas/flow'
 import NodeContext from '~/routes/studio/context/node-context'
 import StickyNoteContext from '~/routes/studio/context/sticky-note-context'
 import useNodeContextStore from '~/stores/node-context-store'
@@ -18,7 +18,7 @@ import { getBaseName } from '~/utils/path-utils'
 import Button from '~/components/inputs/button'
 import useFlowStore, { isStickyNote } from '~/stores/flow-store'
 import type { StickyNote } from '~/routes/studio/canvas/nodetypes/sticky-note'
-import { ALL_SHORTCUTS, formatShortcutParts, useShortcutStore } from '~/stores/shortcut-store'
+import { ALL_SHORTCUTS, formatShortcutParts, type Platform, useShortcutStore } from '~/stores/shortcut-store'
 import GroupContext from '~/routes/studio/context/group-context'
 
 type RightPanelProperties = {
@@ -46,36 +46,37 @@ function getRightPanelTitle(
   return 'Palette'
 }
 
-function MultiSelectPanel() {
+function MultiSelectPanel(): JSX.Element {
   const { allInSameGroup, groupId } = useFlowStore(
-    useShallow((state) => {
-      const selected = state.nodes.filter((node) => node.selected)
+    useShallow((state): { allInSameGroup: boolean; groupId: string | null } => {
+      const selected = state.nodes.filter((node): boolean | undefined => node.selected)
       if (selected.length < 2) return { allInSameGroup: false, groupId: null }
 
-      const content = selected.filter((node) => node.type === 'frankNode' || node.type === 'exitNode')
+      const content = selected.filter((node): boolean => node.type === 'frankNode' || node.type === 'exitNode')
       if (content.length < 2) return { allInSameGroup: false, groupId: null }
 
       const firstParent = content[0].parentId
-      const allSame = Boolean(firstParent) && content.every((node) => node.parentId === firstParent)
+      const allSame = Boolean(firstParent) && content.every((node): boolean => node.parentId === firstParent)
       return { allInSameGroup: allSame, groupId: allSame ? (firstParent ?? null) : null }
     }),
   )
 
-  const platform = useShortcutStore((shortcut) => shortcut.platform)
-  const groupDef = ALL_SHORTCUTS.find((shortCut) => shortCut.id === 'studio.group')!
-  const groupParts = formatShortcutParts(groupDef, platform)
-  const triggerGroup = () => useShortcutStore.getState().shortcuts.get('studio.group')?.handler?.()
-
+  const platform = useShortcutStore((shortcut): Platform => shortcut.platform)
   if (allInSameGroup && groupId) {
     return <GroupContext nodeId={groupId} />
   }
+
+  const groupDef = ALL_SHORTCUTS.find((shortCut): boolean => shortCut.id === 'studio.group')!
+  const groupParts = formatShortcutParts(groupDef, platform)
+  const triggerGroup = (): boolean | void | undefined =>
+    useShortcutStore.getState().shortcuts.get('studio.group')?.handler?.()
 
   return (
     <div className="p-4">
       <Button onClick={triggerGroup} className="flex w-full items-center justify-between gap-2 px-4 py-2 text-sm">
         <span>Group</span>
         <span className="flex gap-1">
-          {groupParts.map((part) => (
+          {groupParts.map((part): JSX.Element => (
             <kbd key={part} className="rounded border border-current/40 bg-current/10 px-1.5 py-0.5 font-mono text-xs">
               {part}
             </kbd>
@@ -86,11 +87,11 @@ function MultiSelectPanel() {
   )
 }
 
-function AttachedNotesPanel({ nodeId }: { nodeId: number }) {
+function AttachedNotesPanel({ nodeId }: { nodeId: number }): JSX.Element | null {
   const attachedNotes = useFlowStore(
-    useShallow((state) =>
+    useShallow((state): FlowNode[] =>
       state.nodes.filter(
-        (node) => isStickyNote(node) && (node as StickyNote).data.attachedToNodeId === nodeId.toString(),
+        (node): boolean => isStickyNote(node) && (node as StickyNote).data.attachedToNodeId === nodeId.toString(),
       ),
     ),
   ) as StickyNote[]
@@ -103,7 +104,7 @@ function AttachedNotesPanel({ nodeId }: { nodeId: number }) {
         {attachedNotes.length === 1 ? 'Note' : 'Notes'}
       </div>
       <div className="flex flex-col gap-2">
-        {attachedNotes.map((note) => (
+        {attachedNotes.map((note): JSX.Element => (
           <div
             key={note.id}
             className="rounded-lg p-2 text-xs leading-snug wrap-break-word whitespace-pre-wrap"
@@ -124,7 +125,7 @@ function RightPanelContent({
   showNodeContext,
   nodeId,
   onShowNodeContext,
-}: RightPanelProperties) {
+}: RightPanelProperties): JSX.Element {
   const showPalette = !isMultiSelect && !selectedStickyId && !selectedGroupId && !showNodeContext
 
   return (
@@ -146,44 +147,56 @@ function RightPanelContent({
   )
 }
 
-export default function Studio() {
-  const setVisibility = useSidebarStore((state) => state.setVisible)
+export default function Studio(): JSX.Element {
+  const setVisibility = useSidebarStore(
+    (state): ((name: string, side: SidebarSide, value: boolean) => void) => state.setVisible,
+  )
   const [showNodeContext, setShowNodeContext] = useState(false)
   const { nodeId, editingSubtype, isMultiSelect, selectedStickyId, selectedGroupId } = useNodeContextStore(
-    useShallow((state) => ({
-      nodeId: state.nodeId,
-      editingSubtype: state.editingSubtype,
-      isMultiSelect: state.isMultiSelect,
-      selectedStickyId: state.selectedStickyId,
-      selectedGroupId: state.selectedGroupId,
-    })),
+    useShallow(
+      (
+        state,
+      ): {
+        nodeId: number
+        editingSubtype: string | null
+        isMultiSelect: boolean
+        selectedStickyId: string | null
+        selectedGroupId: string | null
+      } => ({
+        nodeId: state.nodeId,
+        editingSubtype: state.editingSubtype,
+        isMultiSelect: state.isMultiSelect,
+        selectedStickyId: state.selectedStickyId,
+        selectedGroupId: state.selectedGroupId,
+      }),
+    ),
   )
   const navigate = useNavigate()
 
   const stickyNodeExists = useFlowStore(
-    (state) => selectedStickyId != null && state.nodes.some((node) => node.id === selectedStickyId),
+    (state): boolean => selectedStickyId != null && state.nodes.some((node): boolean => node.id === selectedStickyId),
   )
 
   const activeStickyId = stickyNodeExists ? selectedStickyId : null
 
   const { activeTab, activeTabPath } = useTabStore(
-    useShallow((state) => ({
+    useShallow((state): { activeTab: string; activeTabPath: string | undefined } => ({
       activeTab: state.activeTab,
       activeTabPath: state.activeTab ? state.tabs[state.activeTab]?.configurationPath : undefined,
     })),
   )
 
-  const allInSameGroup = useFlowStore((flowStore) => {
-    const selected = flowStore.nodes.filter((node) => node.selected)
+  const allInSameGroup = useFlowStore((flowStore): boolean => {
+    const selected = flowStore.nodes.filter((node): boolean | undefined => node.selected)
     if (selected.length <= 1) return false
-    const content = selected.filter((node) => node.type === 'frankNode' || node.type === 'exitNode')
+    const content = selected.filter((node): boolean => node.type === 'frankNode' || node.type === 'exitNode')
     if (content.length <= 1) return false
     const firstParentId = content[0].parentId
-    return !!firstParentId && content.every((node) => node.parentId === firstParentId)
+    return !!firstParentId && content.every((node): boolean => node.parentId === firstParentId)
   })
 
   const handleShowNodeContext = useCallback(
-    (visible: boolean) => {
+    (visible: boolean): void => {
       setShowNodeContext(visible)
       if (visible) {
         setVisibility('studio', SidebarSide.RIGHT, true)
@@ -192,7 +205,7 @@ export default function Studio() {
     [setVisibility],
   )
 
-  useEffect(() => {
+  useEffect((): void => {
     if (!selectedStickyId || stickyNodeExists) {
       return
     }
@@ -201,7 +214,7 @@ export default function Studio() {
     setShowNodeContext(false)
   }, [selectedStickyId, stickyNodeExists])
 
-  const handleOpenInEditor = useCallback(() => {
+  const handleOpenInEditor = useCallback((): void => {
     if (!activeTabPath) return
 
     const fileName = getBaseName(activeTabPath)

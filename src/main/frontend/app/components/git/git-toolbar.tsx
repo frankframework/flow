@@ -27,12 +27,12 @@ export default function GitToolbar({
   token,
   onTokenChange,
   hasStoredToken,
-}: GitToolbarProperties) {
+}: GitToolbarProperties): JSX.Element {
   const [isPushing, setIsPushing] = useState(false)
   const [isPulling, setIsPulling] = useState(false)
   const [showToken, setShowToken] = useState(false)
 
-  const handlePush = async () => {
+  const handlePush = async (): Promise<void> => {
     setIsPushing(true)
     try {
       await onPush()
@@ -41,7 +41,7 @@ export default function GitToolbar({
     }
   }
 
-  const handlePull = async () => {
+  const handlePull = async (): Promise<void> => {
     setIsPulling(true)
     try {
       await onPull()
@@ -92,7 +92,7 @@ export default function GitToolbar({
           />
           {!status?.isLocal && (
             <IconButton
-              onClick={() => setShowToken(!showToken)}
+              onClick={(): void => setShowToken(!showToken)}
               title="Authentication token for private repos"
               className={clsx(showToken && 'bg-selected')}
             >
@@ -107,7 +107,7 @@ export default function GitToolbar({
           <Input
             type="password"
             value={token}
-            onChange={(event) => onTokenChange(event.target.value)}
+            onChange={(event): void => onTokenChange(event.target.value)}
             placeholder={
               hasStoredToken ? 'Using saved token (override here)' : 'Personal access token (for private repos)'
             }

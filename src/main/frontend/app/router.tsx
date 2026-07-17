@@ -8,7 +8,7 @@ import Studio from '~/routes/studio/studio'
 import ProjectLanding from './routes/projectlanding/project-landing'
 import AppLayout from './routes/app-layout'
 
-function RootErrorBoundary() {
+function RootErrorBoundary(): JSX.Element {
   const error = useRouteError()
 
   if (isRouteErrorResponse(error) && error.status === 404) {

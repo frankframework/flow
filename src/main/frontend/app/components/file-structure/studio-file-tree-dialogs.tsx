@@ -31,7 +31,7 @@ export default function StudioFileTreeDialogs({
   onCloseContextMenu,
   onCloseNameDialog,
   onCloseDeleteDialog,
-}: StudioFileTreeDialogsProperties) {
+}: StudioFileTreeDialogsProperties): JSX.Element {
   return (
     <>
       {contextMenu && (

@@ -28,7 +28,7 @@ export default function ContextInput({
   attribute,
   enumOptions,
   elements,
-}: Readonly<ContextInputProperties>) {
+}: Readonly<ContextInputProperties>): React.JSX.Element {
   const type = attribute?.type
   const description = attribute?.description
   const required = attribute?.mandatory
@@ -57,13 +57,16 @@ export default function ContextInput({
   )
 }
 
-function DescriptionHelpIcon({ description, elements }: Readonly<{ description: string; elements: Elements | null }>) {
+function DescriptionHelpIcon({
+  description,
+  elements,
+}: Readonly<{ description: string; elements: Elements | null }>): React.JSX.Element {
   const reference = useRef<HTMLDivElement | null>(null)
   const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null)
   const [show, setShow] = useState(false)
   const transformed = useJavadocTransform(description, elements)
 
-  const handleMouseEnter = () => {
+  const handleMouseEnter = (): void => {
     if (!reference.current) {
       return
     }
@@ -72,7 +75,7 @@ function DescriptionHelpIcon({ description, elements }: Readonly<{ description: 
     setShow(true)
   }
 
-  const handleMouseLeave = () => {
+  const handleMouseLeave = (): void => {
     setShow(false)
   }
 
@@ -100,14 +103,14 @@ function DescriptionHelpIcon({ description, elements }: Readonly<{ description: 
   )
 }
 
-function DeprecatedIcon({ deprecated }: Readonly<{ deprecated: DeprecatedInfo }>) {
+function DeprecatedIcon({ deprecated }: Readonly<{ deprecated: DeprecatedInfo }>): React.JSX.Element | null {
   const reference = useRef<HTMLDivElement | null>(null)
   const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null)
   const [show, setShow] = useState(false)
 
   if (!deprecated) return null
 
-  const handleMouseEnter = () => {
+  const handleMouseEnter = (): void => {
     if (!reference.current) {
       return
     }
@@ -116,7 +119,7 @@ function DeprecatedIcon({ deprecated }: Readonly<{ deprecated: DeprecatedInfo }>
     setShow(true)
   }
 
-  const handleMouseLeave = () => {
+  const handleMouseLeave = (): void => {
     setShow(false)
   }
 

@@ -30,8 +30,8 @@ function convertNodesToProperty(
   mappings?: Mapping[],
 ): Target[] {
   return nodes
-    .filter((node) => node.parentId === parentId && (node.type === basicNode || isNodeGroup(node.type)))
-    .map((node) => {
+    .filter((node): boolean => node.parentId === parentId && (node.type === basicNode || isNodeGroup(node.type)))
+    .map((node): Property => {
       const property = nodeToProperty(node as PropertyNode, nodes)
 
       if (isNodeGroup(node.type)) {
@@ -41,15 +41,19 @@ function convertNodesToProperty(
       targetProperty.isAttribute = (node.data.isAttribute as boolean) ?? false
 
       if (mappings)
-        targetProperty.mapping = mappings.findLast((mapping) => mapping.target.internalId == property.internalId)
+        targetProperty.mapping = mappings.findLast(
+          (mapping): boolean => mapping.target.internalId == property.internalId,
+        )
       return property
     })
 }
 
 function convertNodeToMappings(nodes: FlowNode[]): Mapping[] {
   return nodes
-    .filter((node) => node.type === 'mappingNode' || node.type === 'arrayMappingNode')
-    .map((node) => (node.type === 'mappingNode' ? nodeToMapping(nodes, node) : arrayNodeToMapping(nodes, node)))
+    .filter((node): boolean => node.type === 'mappingNode' || node.type === 'arrayMappingNode')
+    .map((node): Mapping =>
+      node.type === 'mappingNode' ? nodeToMapping(nodes, node) : arrayNodeToMapping(nodes, node),
+    )
 }
 
 function nodeToProperty(node: PropertyNode, nodes: FlowNode[]): Property {
@@ -67,7 +71,7 @@ function nodeToMapping(nodes: FlowNode[], node: MappingNode): Mapping {
   const mapping: Mapping = {
     id: node.id,
     sources: [],
-    target: nodeToProperty(nodes.find((n) => n.id === node.data.target) as PropertyNode, nodes),
+    target: nodeToProperty(nodes.find((n): boolean => n.id === node.data.target) as PropertyNode, nodes),
     mutations: node.data.mutations ?? [],
     conditions: node.data.conditions ?? [],
     conditional: node.data.conditional ?? null,
@@ -76,7 +80,7 @@ function nodeToMapping(nodes: FlowNode[], node: MappingNode): Mapping {
 
   if (node.data.sources)
     for (const id of node.data.sources) {
-      const sourceNode = nodes.find((n) => n.id === id)
+      const sourceNode = nodes.find((n): boolean => n.id === id)
       if (sourceNode) {
         mapping.sources.push(nodeToProperty(sourceNode as PropertyNode, nodes))
       }
@@ -88,7 +92,7 @@ function arrayNodeToMapping(nodes: FlowNode[], node: ArrayMappingNode): Mapping 
   const mapping: Mapping = {
     id: node.id,
     sources: [],
-    target: nodeToProperty(nodes.find((n) => n.id === node.data.target) as PropertyNode, nodes),
+    target: nodeToProperty(nodes.find((n): boolean => n.id === node.data.target) as PropertyNode, nodes),
     mutations: [],
     conditions: [],
     conditional: null,
@@ -96,7 +100,7 @@ function arrayNodeToMapping(nodes: FlowNode[], node: ArrayMappingNode): Mapping 
   }
 
   if (node.data.source) {
-    const sourceNode = nodes.find((n) => n.id === node.data.source)
+    const sourceNode = nodes.find((n): boolean => n.id === node.data.source)
     if (sourceNode) {
       mapping.sources.push(nodeToProperty(sourceNode as PropertyNode, nodes))
     }
@@ -106,7 +110,7 @@ function arrayNodeToMapping(nodes: FlowNode[], node: ArrayMappingNode): Mapping 
 }
 
 export function flowToMappingTable(nodes: Node[], edges: Edge[]): MappingRow[] {
-  const nodeMap = new Map<string, Node>(nodes.map((node) => [node.id, node]))
+  const nodeMap = new Map<string, Node>(nodes.map((node): [string, Node] => [node.id, node]))
 
   const getLabel = (nodeId: string): string => {
     const label = nodeMap.get(nodeId)?.data?.label
@@ -116,8 +120,8 @@ export function flowToMappingTable(nodes: Node[], edges: Edge[]): MappingRow[] {
   return nodes
     .filter((node): node is MappingNode => node.type === 'mappingNode')
     .map((mappingNode): MappingRow => {
-      const incomingEdges = edges.filter((edge) => edge.target === mappingNode.id)
-      const outgoingEdges = edges.filter((edge) => edge.source === mappingNode.id)
+      const incomingEdges = edges.filter((edge): boolean => edge.target === mappingNode.id)
+      const outgoingEdges = edges.filter((edge): boolean => edge.source === mappingNode.id)
 
       const mutations = mappingNode.data?.mutations ?? []
       const conditions = mappingNode.data?.conditions ?? []
@@ -125,8 +129,8 @@ export function flowToMappingTable(nodes: Node[], edges: Edge[]): MappingRow[] {
 
       return {
         id: mappingNode.id,
-        sourcesNames: incomingEdges.map((edge) => getLabel(edge.source)),
-        targetsNames: outgoingEdges.map((edge) => getLabel(edge.target)),
+        sourcesNames: incomingEdges.map((edge): string => getLabel(edge.source)),
+        targetsNames: outgoingEdges.map((edge): string => getLabel(edge.target)),
         type: mappingNode.data?.type ?? 'one-to-one',
         mutations,
         conditions,

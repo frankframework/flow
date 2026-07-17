@@ -1,11 +1,11 @@
 import type { Edge, Node } from '@xyflow/react'
 import type { CustomNodeData, NodeLabels } from '~/types/datamapper_types/react-node-types'
 import { findNodeParent } from './generic-node-utils'
-import type { FormatDefinition } from '~/types/datamapper_types/data-types'
+import type { FormatDefinition, PropertyBasicTypes } from '~/types/datamapper_types/data-types'
 import { GROUP_PADDING_TOP, GROUP_WIDTH, ITEM_GAP, OBJECT_HEIGHT } from './constant'
 import type { GetNodeFunc, SequentialRepositionFn } from '~/hooks/use-datamapper-flow-management'
 
-export function recurseFindArray(node: Node, nodes: Node[]) {
+export function recurseFindArray(node: Node, nodes: Node[]): string | undefined {
   const parent = findNodeParent(node, nodes)
   if (!parent) return
 
@@ -56,24 +56,25 @@ export function getNodesByTypeAndId(
   if (!nodes) return []
 
   const newNodes = nodes
-    .filter((node) => {
+    .filter((node): boolean | undefined => {
       if (!options.typeIncludes) return true
 
-      if (Array.isArray(options.typeIncludes)) return options.typeIncludes.some((type) => node.type?.includes(type))
+      if (Array.isArray(options.typeIncludes))
+        return options.typeIncludes.some((type): boolean | undefined => node.type?.includes(type))
 
       return node.type?.includes(options.typeIncludes)
     })
-    .filter((node) => {
+    .filter((node): boolean => {
       if (!edges) return true
 
       if (node.id == options.targetToIncludeOnEdit) return true
 
-      return edges.every((edge) => edge.target !== node.id)
+      return edges.every((edge): boolean => edge.target !== node.id)
     })
-    .filter((node) => (options.idIncludes ? node.id.includes(options.idIncludes) : true))
-    .filter((node) => node.data.isConnectable != false)
+    .filter((node): boolean => (options.idIncludes ? node.id.includes(options.idIncludes) : true))
+    .filter((node): boolean => node.data.isConnectable != false)
     .map(
-      (node) =>
+      (node): NodeLabels =>
         ({
           id: node.id,
           type: node.data.variableTypeBasic,
@@ -87,7 +88,7 @@ export function getNodesByTypeAndId(
 export function getUnsetNodeIds(nodes: Node[], edges: Edge[]): Set<string> {
   const unsetNodes: NodeLabels[] = getNodesByTypeAndId(nodes, { typeIncludes: 'target' }, edges)
 
-  return new Set(unsetNodes.map((n) => n.id))
+  return new Set(unsetNodes.map((n): string => n.id))
 }
 
 export function checkDuplicateLabel(
@@ -96,11 +97,11 @@ export function checkDuplicateLabel(
   label: string,
   formatType?: { duplicateKeysAllowed: boolean },
   ignoreId?: string,
-) {
+): void {
   if (!formatType || formatType.duplicateKeysAllowed) return
 
   const duplicate = nodes.some(
-    (node) => node.parentId === parentId && node.data?.label === label && node.id !== ignoreId,
+    (node): boolean => node.parentId === parentId && node.data?.label === label && node.id !== ignoreId,
   )
 
   if (duplicate) {
@@ -121,9 +122,12 @@ export function generateNodeId(
   return isGroup(variableType) ? `${parentId}-group-${counter}` : `${parentId}-item-${counter}`
 }
 
-export function updateNodeType(data: CustomNodeData, formatType?: FormatDefinition) {
+export function updateNodeType(
+  data: CustomNodeData,
+  formatType?: FormatDefinition,
+): { updatedReactflowType: string; variableTypeBasic: PropertyBasicTypes | undefined } {
   const updatedReactflowType = getReactflowType(data.variableType, data.parentId)
-  const variableTypeBasic = formatType?.properties.find((p) => p.name === data.variableType)?.type
+  const variableTypeBasic = formatType?.properties.find((p): boolean => p.name === data.variableType)?.type
 
   return { updatedReactflowType, variableTypeBasic }
 }
@@ -133,13 +137,13 @@ export function deleteNodeById(
   idToDelete: string,
   sequentialRepositionFunction: SequentialRepositionFn,
 ): { updatedNodes: Node[]; deletedNode?: Node } {
-  const nodeToDelete = nodes.find((node) => node.id === idToDelete)
+  const nodeToDelete = nodes.find((node): boolean => node.id === idToDelete)
   if (!nodeToDelete) return { updatedNodes: nodes }
 
-  let updatedNodes = nodes.filter((node) => node.id !== idToDelete)
+  let updatedNodes = nodes.filter((node): boolean => node.id !== idToDelete)
 
   if (nodeToDelete.type && isNodeGroup(nodeToDelete.type))
-    updatedNodes = updatedNodes.filter((node) => !node.parentId?.startsWith(idToDelete))
+    updatedNodes = updatedNodes.filter((node): boolean => !node.parentId?.startsWith(idToDelete))
 
   if (nodeToDelete.parentId) updatedNodes = sequentialRepositionFunction(updatedNodes, nodeToDelete.parentId)
 
@@ -156,8 +160,8 @@ export function sequentialReposition(nodes: Node[], startParentId: string, getNo
 
     //Get all children of parent and sort them by position
     const children = nodes
-      .filter((node) => node.parentId === parentId)
-      .toSorted((nodeA, nodeB) => (nodeA.position.y ?? 0) - (nodeB.position.y ?? 0))
+      .filter((node): boolean => node.parentId === parentId)
+      .toSorted((nodeA, nodeB): number => (nodeA.position.y ?? 0) - (nodeB.position.y ?? 0))
 
     for (const child of children) {
       //Get height of child, or default to standard if it cannot be found
@@ -169,7 +173,7 @@ export function sequentialReposition(nodes: Node[], startParentId: string, getNo
     }
 
     //Set height for parent
-    nodes = nodes.map((node) => (node.id === parentId ? { ...node, height: yOffset } : node))
+    nodes = nodes.map((node): Node => (node.id === parentId ? { ...node, height: yOffset } : node))
     /*
      * Add padding at the bottom of a group
      * Move up one
@@ -179,8 +183,8 @@ export function sequentialReposition(nodes: Node[], startParentId: string, getNo
 
   return [...nodes]
 }
-export function calculateNodePosition(previous: Node[], parentId: string, getNode: GetNodeFunc) {
-  const futureSiblings = previous.filter((node) => node.parentId === parentId)
+export function calculateNodePosition(previous: Node[], parentId: string, getNode: GetNodeFunc): number {
+  const futureSiblings = previous.filter((node): boolean => node.parentId === parentId)
   const previousItem = futureSiblings.at(-1)
   const parentNode = getNode(parentId)
 

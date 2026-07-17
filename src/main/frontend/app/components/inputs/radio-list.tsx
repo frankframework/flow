@@ -21,18 +21,18 @@ export default function RadioList({
   className,
   id,
   ...properties
-}: Readonly<RadioListProperties>) {
+}: Readonly<RadioListProperties>): JSX.Element {
   const generatedId = useId()
   const uniqueId = id ?? generatedId
   const [selectedValue, setSelectedValue] = useState<string | undefined>(value)
 
   const optionsArray = Object.entries(options)
 
-  useEffect(() => {
+  useEffect((): void => {
     setSelectedValue(value)
   }, [value])
 
-  const handleOptionChange = (optionValue: string) => {
+  const handleOptionChange = (optionValue: string): void => {
     setSelectedValue(optionValue)
     onChange(optionValue)
   }
@@ -40,7 +40,7 @@ export default function RadioList({
   return (
     <div className={clsx('flex flex-col gap-2', className)} role="radiogroup">
       {optionsArray.length > 0 ? (
-        optionsArray.map(([optionValue, optionData]) => {
+        optionsArray.map(([optionValue, optionData]): JSX.Element => {
           const isSelected = selectedValue === optionValue
           const [label, description] =
             typeof optionData === 'string' ? [optionData, undefined] : Object.entries(optionData)[0]
@@ -53,7 +53,7 @@ export default function RadioList({
                   checked={isSelected}
                   name={uniqueId}
                   value={optionValue}
-                  onChange={() => handleOptionChange(optionValue)}
+                  onChange={(): void => handleOptionChange(optionValue)}
                   {...properties}
                 />
               </InputWithLabel>

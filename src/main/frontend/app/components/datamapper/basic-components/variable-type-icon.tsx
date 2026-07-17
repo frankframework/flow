@@ -4,6 +4,7 @@ import BoxMin from '/icons/solar/Box Minimalistic.svg?react'
 import List from '/icons/solar/List.svg?react'
 import PlusMin from '/icons/solar/Plus, Minus.svg?react'
 import Hashtag from '/icons/solar/Hashtag Square.svg?react'
+import type { JSX } from 'react'
 import HoverInfo from './hover-info'
 
 export default function VariableTypeIcon({
@@ -14,8 +15,8 @@ export default function VariableTypeIcon({
   className?: string
   variableType: string
   variableTypeBasic: string
-}) {
-  function getIcon() {
+}): JSX.Element {
+  function getIcon(): JSX.Element | '?' {
     switch (variableTypeBasic) {
       case 'string': {
         return <TextSquare className="fill-foreground h-6" />

@@ -14,7 +14,7 @@ export type LabeledGroupNodeProperties = {
   onHighlight?: (id: string) => void
 }
 
-function LabeledGroupNode({ id, data, onEdit, onDelete, onHighlight }: LabeledGroupNodeProperties) {
+function LabeledGroupNode({ id, data, onEdit, onDelete, onHighlight }: LabeledGroupNodeProperties): JSX.Element {
   return (
     <div
       className={clsx(
@@ -32,19 +32,19 @@ function LabeledGroupNode({ id, data, onEdit, onDelete, onHighlight }: LabeledGr
         <div className="min-w-0 flex-1 truncate rounded-md text-left">{data.label}</div>
         <div className="hidden gap-3 group-hover:flex">
           <HighlightButton
-            onClick={() => {
+            onClick={(): void => {
               onHighlight?.(id)
             }}
           />
 
           <EditButton
-            onClick={() => {
+            onClick={(): void => {
               onEdit?.(data)
             }}
           />
 
           <DeleteButton
-            onClick={() => {
+            onClick={(): void => {
               onDelete?.(id)
             }}
           />

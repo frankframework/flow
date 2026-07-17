@@ -14,14 +14,15 @@ import { DEFAULT_ELEMENTS, NON_CANVAS_ELEMENTS } from './palette-config'
 const ROOT_TYPES = ['PipelineType', 'ReceiverType']
 const PALETTE_LOAD_TIMEOUT_MS = 15_000
 
-export default function StudioContext() {
-  const { setDraggedName, setAllowedOnCanvas } = useNodeContextStore((state) => state)
+export default function StudioContext(): JSX.Element {
+  const { setDraggedName, setAllowedOnCanvas } = useNodeContextStore((state): NodeContextStore => state)
   const [searchTerm, setSearchTerm] = useState('')
-  const project = useProjectStore((state) => state.project)
+  const project = useProjectStore((state): ConfigurationProject | undefined => state.project)
   const { filters, elements, isLoading, error: ffDocumentError, refetch: refetchFDocument } = useFFDoc()
   const { xsdDoc, error: xsdError, refetch: refetchXsd } = useFrankConfigXsd()
 
-  const { allowed, elementsAllowedOnCanvas } = useMemo(() => {
+  const { allowed, elementsAllowedOnCanvas } = useMemo(():
+    { allowed: null; elementsAllowedOnCanvas: never[] } | { allowed: string[]; elementsAllowedOnCanvas: string[] } => {
     if (!xsdDoc) return { allowed: null, elementsAllowedOnCanvas: [] }
 
     const all: string[] = []
@@ -40,14 +41,14 @@ export default function StudioContext() {
 
   const [timedOut, setTimedOut] = useState(false)
 
-  useEffect(() => {
+  useEffect((): (() => void) | undefined => {
     if (isReady || hasError) return
 
-    const timer = setTimeout(() => setTimedOut(true), PALETTE_LOAD_TIMEOUT_MS)
-    return () => clearTimeout(timer)
+    const timer = setTimeout((): void => setTimedOut(true), PALETTE_LOAD_TIMEOUT_MS)
+    return (): void => clearTimeout(timer)
   }, [isReady, hasError])
 
-  const retry = () => {
+  const retry = (): void => {
     setTimedOut(false)
     refetchFDocument()
     refetchXsd()
@@ -71,26 +72,33 @@ export default function StudioContext() {
 
   const enabledFilters = project
     ? Object.entries(project.filters)
-        .filter(([_, enabled]) => enabled)
-        .map(([filterName]) => filterName)
+        .filter(([_, enabled]): boolean => enabled)
+        .map(([filterName]): string => filterName)
     : []
 
   const componentLookup = filters?.Components
-    ? Object.entries(filters.Components).reduce<Record<string, string>>((accumulator, [type, names]) => {
-        for (const name of names) {
-          accumulator[name] = type
-        }
-        return accumulator
-      }, {})
+    ? Object.entries(filters.Components).reduce<Record<string, string>>(
+        (accumulator, [type, names]): Record<string, string> => {
+          for (const name of names) {
+            accumulator[name] = type
+          }
+          return accumulator
+        },
+        {},
+      )
     : {}
 
-  const onDragStart = (value: ElementDetails) => {
+  const onDragStart = (
+    value: ElementDetails,
+  ): ((event: {
+    dataTransfer: { setData: (argument0: string, argument1: string) => void; effectAllowed: string }
+  }) => void) => {
     return (event: {
       dataTransfer: {
         setData: (argument0: string, argument1: string) => void
         effectAllowed: string
       }
-    }) => {
+    }): void => {
       const isAllowedOnCanvas = elementsAllowedOnCanvas.includes(value.name)
 
       setDraggedName(value.name)
@@ -100,24 +108,24 @@ export default function StudioContext() {
     }
   }
 
-  const shouldShowElement = (elementName: string) => {
+  const shouldShowElement = (elementName: string): boolean => {
     if (enabledFilters.length === 0) return true
     if (!filters || !filters.TYPE) return true
 
-    const foundInFilters = Object.values(filters).some((categoryGroup) =>
-      Object.values(categoryGroup).some((items) => items.includes(elementName)),
+    const foundInFilters = Object.values(filters).some((categoryGroup): boolean =>
+      Object.values(categoryGroup).some((items): boolean => items.includes(elementName)),
     )
 
     if (!foundInFilters) return true
 
-    return Object.values(filters).some((categoryGroup) =>
+    return Object.values(filters).some((categoryGroup): boolean =>
       Object.entries(categoryGroup).some(
-        ([categoryName, items]) => enabledFilters.includes(categoryName) && items.includes(elementName),
+        ([categoryName, items]): boolean => enabledFilters.includes(categoryName) && items.includes(elementName),
       ),
     )
   }
 
-  const groupElementsByType = (elementsToGroup: Record<string, ElementDetails>) => {
+  const groupElementsByType = (elementsToGroup: Record<string, ElementDetails>): Record<string, ElementDetails[]> => {
     const grouped: Record<string, ElementDetails[]> = {}
     const seen = new Set<string>()
 
@@ -138,7 +146,7 @@ export default function StudioContext() {
   }
 
   const visibleElements = Object.fromEntries(
-    Object.entries(elements).filter(([_, value]) => {
+    Object.entries(elements).filter(([_, value]): boolean => {
       const name = (value as ElementDetails).name
 
       // Always remove non-canvas elements.
@@ -157,8 +165,8 @@ export default function StudioContext() {
   const groupedElements = groupElementsByType(visibleElements as Record<string, ElementDetails>)
 
   const filteredGroupedElements = Object.entries(groupedElements).reduce(
-    (accumulator, [type, items]) => {
-      const filteredItems = items.filter((item) => item.name.toLowerCase().includes(searchTerm.toLowerCase()))
+    (accumulator, [type, items]): Record<string, ElementDetails[]> => {
+      const filteredItems = items.filter((item): boolean => item.name.toLowerCase().includes(searchTerm.toLowerCase()))
       if (filteredItems.length > 0) accumulator[type] = filteredItems
       return accumulator
     },
@@ -174,15 +182,15 @@ export default function StudioContext() {
         type="search"
         placeholder="Search"
         value={searchTerm}
-        onChange={(event) => setSearchTerm(event.target.value)}
+        onChange={(event): void => setSearchTerm(event.target.value)}
       />
       <ul className="flex-1 overflow-y-auto px-3 py-2">
         {Object.keys(elementsToRender).length === 0 && (
           <li className="text-foreground-muted italic">No results found.</li>
         )}
         {Object.entries(elementsToRender)
-          .toSorted(([typeA], [typeB]) => typeA.localeCompare(typeB))
-          .map(([type, items]) => (
+          .toSorted(([typeA], [typeB]): number => typeA.localeCompare(typeB))
+          .map(([type, items]): JSX.Element => (
             <SortedElements key={type} type={type} items={items} onDragStart={onDragStart} searchTerm={searchTerm} />
           ))}
       </ul>

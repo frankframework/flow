@@ -7,7 +7,9 @@ import type { FileTreeNode } from '~/types/filesystem.types'
 import type { TreeRef } from 'react-complex-tree'
 import { relativeTo } from '~/utils/path-utils'
 
-export function getListenerIcon(listenerType: string | null) {
+export function getListenerIcon(
+  listenerType: string | null,
+): FunctionComponent<SVGProps<SVGSVGElement> & { title?: string; titleId?: string; desc?: string; descId?: string }> {
   if (!listenerType) return CodeIcon
 
   const listenerIconMap: Record<string, React.FC<React.SVGProps<SVGSVGElement>>> = {
@@ -20,7 +22,7 @@ export function getListenerIcon(listenerType: string | null) {
   return listenerIconMap[listenerType] ?? CodeIcon
 }
 
-function getSortRank(child: FileTreeNode) {
+function getSortRank(child: FileTreeNode): 0 | 1 | 2 {
   if (child.type === 'DIRECTORY') return 0
   if (child.type === 'FILE' && child.name.endsWith('.xml')) return 1
   return 2
@@ -28,7 +30,7 @@ function getSortRank(child: FileTreeNode) {
 
 export function getAncestorIds(itemId: string): string[] {
   const parts = itemId.split('/')
-  return parts.slice(0, -1).map((_, index) => parts.slice(0, index + 1).join('/'))
+  return parts.slice(0, -1).map((_, index): string => parts.slice(0, index + 1).join('/'))
 }
 
 export function toTreeItemId(absolutePath: string, rootPath: string): string {
@@ -40,18 +42,18 @@ export function isVisibleInTree(itemId: string | null, expandedItems: string[]):
   if (!itemId) return false
   return getAncestorIds(itemId)
     .slice(1)
-    .every((id) => expandedItems.includes(id))
+    .every((id): boolean => expandedItems.includes(id))
 }
 
 export function selectAndReveal(treeReference: TreeRef, itemId: string): void {
-  setTimeout(() => {
+  setTimeout((): void => {
     treeReference.selectItems([itemId])
     treeReference.focusItem(itemId)
   }, 50)
 }
 
 export function sortChildren(children?: FileTreeNode[]): FileTreeNode[] {
-  return (children ?? []).toSorted((a, b) => {
+  return (children ?? []).toSorted((a, b): number => {
     const diff = getSortRank(a) - getSortRank(b)
     if (diff !== 0) return diff
     return a.name.localeCompare(b.name)

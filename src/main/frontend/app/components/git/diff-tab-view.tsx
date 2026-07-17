@@ -66,20 +66,27 @@ type DiffTabViewProperties = {
   diffData: DiffTabData
 }
 
-export default function DiffTabView({ diffData }: DiffTabViewProperties) {
+export default function DiffTabView({ diffData }: DiffTabViewProperties): JSX.Element {
   const theme = useTheme()
   const { fileHunkStates, toggleFileHunk } = useGitStore(
-    useShallow((s) => ({
-      fileHunkStates: s.fileHunkStates,
-      toggleFileHunk: s.toggleFileHunk,
-    })),
+    useShallow(
+      (
+        s,
+      ): { fileHunkStates: Record<string, FileHunkState>; toggleFileHunk: (file: string, index: number) => void } => ({
+        fileHunkStates: s.fileHunkStates,
+        toggleFileHunk: s.toggleFileHunk,
+      }),
+    ),
   )
 
   const filePath = diffData.filePath
   const hunks = diffData.hunks
   const language = getLanguage(filePath)
   const hunkState = fileHunkStates[filePath]
-  const selectedHunks = useMemo(() => hunkState?.selectedHunks ?? new Set<number>(), [hunkState?.selectedHunks])
+  const selectedHunks = useMemo(
+    (): Set<number> => hunkState?.selectedHunks ?? new Set<number>(),
+    [hunkState?.selectedHunks],
+  )
 
   const containerReference = useRef<HTMLDivElement>(null)
   const diffEditorReference = useRef<monaco.editor.IStandaloneDiffEditor | null>(null)
@@ -93,7 +100,7 @@ export default function DiffTabView({ diffData }: DiffTabViewProperties) {
   const filePathReference = useRef(filePath)
   filePathReference.current = filePath
 
-  useEffect(() => {
+  useEffect((): void => {
     if (!editorReady || !diffEditorReference.current) return
     const modifiedEditor = diffEditorReference.current.getModifiedEditor()
     decorationsReference.current = applyHunkDecorations(
@@ -104,7 +111,7 @@ export default function DiffTabView({ diffData }: DiffTabViewProperties) {
     )
   }, [hunks, selectedHunks, editorReady])
 
-  useEffect(() => {
+  useEffect((): (() => void) | undefined => {
     if (!containerReference.current) return
 
     const diffEditor = monaco.editor.createDiffEditor(containerReference.current, {
@@ -128,7 +135,7 @@ export default function DiffTabView({ diffData }: DiffTabViewProperties) {
       decorationsReference.current,
     )
 
-    modifiedEditor.onMouseDown((e) => {
+    modifiedEditor.onMouseDown((e): void => {
       const targetType = e.target.type
       if (targetType === monaco.editor.MouseTargetType.GUTTER_GLYPH_MARGIN) {
         const lineNumber = e.target.position?.lineNumber
@@ -146,7 +153,7 @@ export default function DiffTabView({ diffData }: DiffTabViewProperties) {
 
     setEditorReady(true)
 
-    return () => {
+    return (): void => {
       diffEditor.dispose()
       diffEditorReference.current = null
       decorationsReference.current = []
@@ -154,7 +161,7 @@ export default function DiffTabView({ diffData }: DiffTabViewProperties) {
     }
   }, [])
 
-  useEffect(() => {
+  useEffect((): (() => void) | undefined => {
     const diffEditor = diffEditorReference.current
     if (!diffEditor || !editorReady) return
 
@@ -162,21 +169,22 @@ export default function DiffTabView({ diffData }: DiffTabViewProperties) {
     const modifiedModel = monaco.editor.createModel(diffData.newContent, language)
     diffEditor.setModel({ original: originalModel, modified: modifiedModel })
 
-    return () => {
+    return (): void => {
       originalModel.dispose()
       modifiedModel.dispose()
     }
   }, [diffData, language, editorReady])
 
-  useEffect(() => {
+  useEffect((): void => {
     monaco.editor.setTheme(theme === 'dark' ? 'vs-dark' : 'vs')
   }, [theme])
 
-  const selectableHunks = hunks.filter((hunk) => hunk.newCount > 0)
-  const allSelected = selectableHunks.length > 0 && selectableHunks.every((hunk) => selectedHunks.has(hunk.index))
-  const someSelected = selectableHunks.some((hunk) => selectedHunks.has(hunk.index))
+  const selectableHunks = hunks.filter((hunk): boolean => hunk.newCount > 0)
+  const allSelected =
+    selectableHunks.length > 0 && selectableHunks.every((hunk): boolean => selectedHunks.has(hunk.index))
+  const someSelected = selectableHunks.some((hunk): boolean => selectedHunks.has(hunk.index))
 
-  const handleToggleAllHunks = () => {
+  const handleToggleAllHunks = (): void => {
     for (const hunk of selectableHunks) {
       const isSelected = selectedHunks.has(hunk.index)
       if (allSelected ? isSelected : !isSelected) {

@@ -106,8 +106,8 @@ export async function importProjectFolder(files: FileList, maxImportBytes: numbe
 }
 
 async function zipAsync(entries: Record<string, Uint8Array>): Promise<Uint8Array<ArrayBuffer>> {
-  return await new Promise<Uint8Array<ArrayBuffer>>((resolve, reject) => {
-    zip(entries, { level: 6 }, (error, data) => {
+  return await new Promise<Uint8Array<ArrayBuffer>>((resolve, reject): void => {
+    zip(entries, { level: 6 }, (error, data): void => {
       if (error) reject(error)
       else resolve(data as Uint8Array<ArrayBuffer>)
     })

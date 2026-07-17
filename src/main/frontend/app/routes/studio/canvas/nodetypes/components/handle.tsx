@@ -35,14 +35,14 @@ export function translateHandleTypeToColour(type: string): string {
   return HANDLE_TYPE_COLOURS.default
 }
 
-export function CustomHandle(properties: Readonly<HandleProperties>) {
+export function CustomHandle(properties: Readonly<HandleProperties>): JSX.Element {
   const connections = useNodeConnections({ handleType: 'source', handleId: properties.index.toString() })
   const type = properties.type
 
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [menuPosition, setMenuPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 })
 
-  const handleClick = (event: React.MouseEvent) => {
+  const handleClick = (event: React.MouseEvent): void => {
     const { clientX, clientY } = event
     setMenuPosition({
       x: clientX,
@@ -51,7 +51,7 @@ export function CustomHandle(properties: Readonly<HandleProperties>) {
     setIsMenuOpen(!isMenuOpen) // Toggle menu visibility
   }
 
-  const handleMenuClick = (newType: string) => {
+  const handleMenuClick = (newType: string): void => {
     properties.onChangeType(newType) // Change the handle type
     setIsMenuOpen(false) // Close the menu after selection
   }
@@ -86,7 +86,7 @@ export function CustomHandle(properties: Readonly<HandleProperties>) {
         <HandleMenu
           title="Change Handle Type"
           position={menuPosition}
-          onClose={() => setIsMenuOpen(false)}
+          onClose={(): void => setIsMenuOpen(false)}
           onSelect={handleMenuClick}
           typesAllowed={properties.typesAllowed}
         />

@@ -9,12 +9,12 @@ import React, { useState } from 'react'
 
 const firstSettingsCategoryKey = SettingsMenuItems['root']?.children?.[0] as string
 
-export default function Settings() {
+export default function Settings(): React.JSX.Element {
   const [settingsCategory, setSettingsCategory] = useState<SettingsMenuItem>(
     SettingsMenuItems[firstSettingsCategoryKey as keyof SettingsMenuItem],
   )
 
-  const setCategory = (category: string) => {
+  const setCategory = (category: string): void => {
     const selectedCategory = SettingsMenuItems[category]
     if (selectedCategory) {
       setSettingsCategory(selectedCategory)

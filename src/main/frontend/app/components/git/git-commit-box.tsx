@@ -14,18 +14,18 @@ export default function GitCommitBox({
   onCommit,
   hasSelectedChunks,
   isLoading,
-}: GitCommitBoxProperties) {
+}: GitCommitBoxProperties): JSX.Element {
   const canCommit = hasSelectedChunks && !!commitMessage.trim() && !isLoading
 
   return (
     <div className="border-t-border border-t p-2">
       <textarea
         value={commitMessage}
-        onChange={(event) => onMessageChange(event.target.value)}
+        onChange={(event): void => onMessageChange(event.target.value)}
         placeholder="Commit message..."
         className="border-border bg-background text-foreground placeholder:text-foreground-muted w-full resize-none rounded border p-2.5 text-xs focus:outline-none"
         rows={4}
-        onKeyDown={(keyboardEvent) => {
+        onKeyDown={(keyboardEvent): void => {
           if (!(keyboardEvent.key === 'Enter' && (keyboardEvent.ctrlKey || keyboardEvent.metaKey))) {
             return
           }

@@ -18,7 +18,7 @@ export type ImportSchematicNodeprops = {
   } & Record<string, unknown>
 }
 
-function ImportSchematicNode({ data }: ImportSchematicNodeprops) {
+function ImportSchematicNode({ data }: ImportSchematicNodeprops): JSX.Element {
   const [isDragging, setIsDragging] = useState(false)
   const [file, setFile] = useState<File | null>(null)
   return (
@@ -28,12 +28,12 @@ function ImportSchematicNode({ data }: ImportSchematicNodeprops) {
         isDragging || file ? 'bg-selected border! border-solid' : 'border-2',
       )}
       style={{ width: `${GROUP_WIDTH}px` }}
-      onDragOver={(e) => {
+      onDragOver={(e): void => {
         e.preventDefault()
         setIsDragging(true)
       }}
-      onDragLeave={() => setIsDragging(false)}
-      onDrop={(e) => {
+      onDragLeave={(): void => setIsDragging(false)}
+      onDrop={(e): void => {
         e.preventDefault()
         setIsDragging(false)
 
@@ -50,7 +50,7 @@ function ImportSchematicNode({ data }: ImportSchematicNodeprops) {
         fileType={data.fileType}
         file={file}
         setFile={setFile}
-        importFunc={(file: File) => data.importFunc(file, data.side, file.name.replace(data.fileType, ''))}
+        importFunc={(file: File): void => data.importFunc(file, data.side, file.name.replace(data.fileType, ''))}
       />
 
       <Handle type="target" position={Position.Top} style={{ opacity: 0 }} />

@@ -22,7 +22,7 @@ export type GroupNode = Node<{
   childrenNames?: string[]
 }>
 
-export default function GroupNodeComponent({ data, selected }: NodeProps<GroupNode>) {
+export default function GroupNodeComponent({ data, selected }: NodeProps<GroupNode>): JSX.Element {
   const [dimensions, setDimensions] = useState({
     width: data.width,
     height: data.height,
@@ -32,7 +32,7 @@ export default function GroupNodeComponent({ data, selected }: NodeProps<GroupNo
   return (
     <>
       <NodeResizeControl
-        onResize={(_event, resizeData) => {
+        onResize={(_event, resizeData): void => {
           setDimensions({
             width: resizeData.width,
             height: resizeData.height,
@@ -70,7 +70,7 @@ export default function GroupNodeComponent({ data, selected }: NodeProps<GroupNo
   )
 }
 
-function HamburgerMenu() {
+function HamburgerMenu(): JSX.Element {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"

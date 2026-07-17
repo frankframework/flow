@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react'
+import { type JSX, useCallback, useEffect } from 'react'
 import { useGitStore } from '~/stores/git-store'
 import {
   fetchGitStatus,
@@ -22,7 +22,7 @@ type GitPanelProperties = {
   hasStoredToken: boolean
 }
 
-export default function GitPanel({ projectName, hasStoredToken }: GitPanelProperties) {
+export default function GitPanel({ projectName, hasStoredToken }: GitPanelProperties): JSX.Element {
   const {
     status,
     selectedFile,
@@ -42,7 +42,7 @@ export default function GitPanel({ projectName, hasStoredToken }: GitPanelProper
   } = useGitStore()
 
   const refreshStatus = useCallback(
-    async (showToast = false) => {
+    async (showToast = false): Promise<void> => {
       try {
         const newStatus = await fetchGitStatus(projectName)
         setStatus(newStatus)
@@ -55,12 +55,12 @@ export default function GitPanel({ projectName, hasStoredToken }: GitPanelProper
     [projectName, setStatus],
   )
 
-  useEffect(() => {
+  useEffect((): void => {
     refreshStatus()
   }, [refreshStatus])
 
   const handleSelectFile = useCallback(
-    async (file: string) => {
+    async (file: string): Promise<void> => {
       setSelectedFile(file)
       try {
         const diff = await fetchFileDiff(projectName, file)
@@ -90,7 +90,7 @@ export default function GitPanel({ projectName, hasStoredToken }: GitPanelProper
   )
 
   const handleToggleFile = useCallback(
-    async (filePath: string) => {
+    async (filePath: string): Promise<void> => {
       const hunkState = useGitStore.getState().fileHunkStates[filePath]
       if (!hunkState) {
         await handleSelectFile(filePath)
@@ -122,7 +122,7 @@ export default function GitPanel({ projectName, hasStoredToken }: GitPanelProper
     [handleSelectFile, initFileHunks, clearFileHunks, selectAllFileHunks],
   )
 
-  const handleCommit = useCallback(async () => {
+  const handleCommit = useCallback(async (): Promise<void> => {
     if (!commitMessage.trim()) return
     setIsLoading(true)
     try {
@@ -131,7 +131,7 @@ export default function GitPanel({ projectName, hasStoredToken }: GitPanelProper
       for (const [filePath, hunkState] of Object.entries(allHunkStates)) {
         const isZeroHunkSelected = hunkState.totalHunks === 0 && hunkState.selected
 
-        if (hunkState.selectedHunks.size === 0 && !isZeroHunkSelected) continue
+        if (!isZeroHunkSelected && hunkState.selectedHunks.size === 0) continue
 
         await (isZeroHunkSelected || hunkState.selectedHunks.size === hunkState.totalHunks
           ? stageFile(projectName, filePath)
@@ -155,7 +155,7 @@ export default function GitPanel({ projectName, hasStoredToken }: GitPanelProper
     }
   }, [projectName, commitMessage, setIsLoading, setCommitMessage, refreshStatus, clearFileHunks])
 
-  const handlePush = useCallback(async () => {
+  const handlePush = useCallback(async (): Promise<void> => {
     if ((status?.ahead ?? 0) === 0) {
       showInfoToast('Nothing to push')
       return
@@ -173,7 +173,7 @@ export default function GitPanel({ projectName, hasStoredToken }: GitPanelProper
     }
   }, [projectName, token, refreshStatus, status?.ahead])
 
-  const handlePull = useCallback(async () => {
+  const handlePull = useCallback(async (): Promise<void> => {
     try {
       const result = await pullChanges(projectName, token || undefined)
       if (result.success) {
@@ -195,14 +195,14 @@ export default function GitPanel({ projectName, hasStoredToken }: GitPanelProper
   }, [projectName, token, refreshStatus])
 
   const hasSelectedChunks = Object.values(fileHunkStates).some(
-    (state) => state.selectedHunks.size > 0 || (state.totalHunks === 0 && state.selected),
+    (state): boolean => state.selectedHunks.size > 0 || (state.totalHunks === 0 && state.selected),
   )
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
       <GitToolbar
         status={status}
-        onRefresh={() => void refreshStatus(true)}
+        onRefresh={(): undefined => void refreshStatus(true)}
         onPush={handlePush}
         onPull={handlePull}
         token={token}

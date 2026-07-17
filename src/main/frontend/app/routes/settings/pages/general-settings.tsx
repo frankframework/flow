@@ -4,7 +4,7 @@ import RadioList from '~/components/inputs/radio-list'
 import Toggle from '~/components/inputs/toggle'
 import ValidatedInput from '~/components/inputs/validatedInput'
 
-export default function GeneralSettings() {
+export default function GeneralSettings(): JSX.Element {
   const { general, setGeneralSettings } = useSettingsStore()
 
   return (
@@ -18,7 +18,7 @@ export default function GeneralSettings() {
             system: { System: 'Use the same theme as your system' },
           }}
           value={general.theme}
-          onChange={(theme) => setGeneralSettings({ theme: theme as GeneralSettingsType['theme'] })}
+          onChange={(theme): void => setGeneralSettings({ theme: theme as GeneralSettingsType['theme'] })}
         />
       </div>
 
@@ -34,7 +34,7 @@ export default function GeneralSettings() {
           <Toggle
             id="enable-autosave"
             checked={general.autoSave.enabled}
-            onChange={(checked) => setGeneralSettings({ autoSave: { ...general.autoSave, enabled: checked } })}
+            onChange={(checked): void => setGeneralSettings({ autoSave: { ...general.autoSave, enabled: checked } })}
           />
         </InputWithLabel>
         <InputWithLabel
@@ -51,13 +51,13 @@ export default function GeneralSettings() {
             patterns={{
               'Must be a positive whole number': /^[1-9]\d*$/,
             }}
-            onChange={(event) => {
+            onChange={(event): void => {
               const value = event.target.value
               if (/^[1-9]\d*$/.test(value)) {
                 setGeneralSettings({
                   autoSave: {
                     ...general.autoSave,
-                    delayMs: Number.parseInt(value, 10),
+                    delayMs: Math.trunc(Number(value)),
                   },
                 })
               }

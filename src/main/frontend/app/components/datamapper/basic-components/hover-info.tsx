@@ -1,6 +1,6 @@
 import clsx from 'clsx'
 
-export default function HoverInfo({ className, info }: { className?: string; info: string }) {
+export default function HoverInfo({ className, info }: { className?: string; info: string }): JSX.Element {
   return (
     <span
       className={clsx(
