@@ -634,22 +634,17 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
             }}
           />
           {sourceHandles.map((handle) => (
-            <>
-              <h1>
-                {handle.index}: {handle.type}
-              </h1>
-              <CustomHandle
-                key={handle.type + handle.index}
-                type={handle.type}
-                index={handle.index}
-                firstHandlePosition={firstHandlePosition}
-                handleSpacing={handleSpacing}
-                onChangeType={(newType) => changeHandleType(handle, newType)}
-                absolutePosition={{ x: properties.positionAbsoluteX, y: properties.positionAbsoluteY }}
-                typesAllowed={handleMenuTypesAllowed}
-                dimmed={dimmedHandleIndices.has(handle.index)}
-              />
-            </>
+            <CustomHandle
+              key={handle.type + handle.index}
+              type={handle.type}
+              index={handle.index}
+              firstHandlePosition={firstHandlePosition}
+              handleSpacing={handleSpacing}
+              onChangeType={(newType) => changeHandleType(handle, newType)}
+              absolutePosition={{ x: properties.positionAbsoluteX, y: properties.positionAbsoluteY }}
+              typesAllowed={handleMenuTypesAllowed}
+              dimmed={dimmedHandleIndices.has(handle.index)}
+            />
           ))}
         </>
       )}
