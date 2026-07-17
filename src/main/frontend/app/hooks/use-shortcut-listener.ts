@@ -16,10 +16,10 @@ function matchesShortcut(event: KeyboardEvent, shortcut: ShortcutDefinition, pla
   if (!key || event.key.toLowerCase() !== key) return false
 
   const mods = getPlatformValue(shortcut.modifiers, platform) ?? {}
-  const cmdOrCtrl = event.metaKey || event.ctrlKey
+  const commandOrCtrl = event.metaKey || event.ctrlKey
 
   return (
-    (mods.cmdOrCtrl ?? false) === cmdOrCtrl &&
+    (mods.cmdOrCtrl ?? false) === commandOrCtrl &&
     (mods.shift ?? false) === event.shiftKey &&
     (mods.alt ?? false) === event.altKey
   )
@@ -45,26 +45,26 @@ function canExecuteShortcut(
 export function useShortcutListener() {
   const location = useLocation()
 
-  const pathnameRef = useRef(location.pathname)
-  const shortcutsRef = useRef(useShortcutStore.getState().shortcuts)
-  const platformRef = useRef(useShortcutStore.getState().platform)
+  const pathnameReference = useRef(location.pathname)
+  const shortcutsReference = useRef(useShortcutStore.getState().shortcuts)
+  const platformReference = useRef(useShortcutStore.getState().platform)
 
   useEffect(() => {
     return useShortcutStore.subscribe((state) => {
-      shortcutsRef.current = state.shortcuts
-      platformRef.current = state.platform
+      shortcutsReference.current = state.shortcuts
+      platformReference.current = state.platform
     })
   }, [])
 
   useEffect(() => {
-    pathnameRef.current = location.pathname
+    pathnameReference.current = location.pathname
   }, [location.pathname])
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      const pathname = pathnameRef.current
-      const shortcuts = shortcutsRef.current
-      const platform = platformRef.current
+      const pathname = pathnameReference.current
+      const shortcuts = shortcutsReference.current
+      const platform = platformReference.current
 
       for (const shortcut of shortcuts.values()) {
         if (!canExecuteShortcut(shortcut, pathname, event, platform)) {

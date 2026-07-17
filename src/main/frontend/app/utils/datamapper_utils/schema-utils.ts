@@ -12,7 +12,7 @@ export async function importJsonSchema(
   addNode: AddNodeFunction,
   format: FormatDefinition,
 ) {
-  let isRootObject = true
+  const isRootObject = true
 
   async function traverseSchema(object: JsonSchema, parentNodeId: string | null, labelPrefix = '') {
     if (!object) return
@@ -56,11 +56,11 @@ export async function importXsdSchema(
   const rootElements: XsdElement[] = []
 
   parser.onopentag = (node: { name: string; attributes: SaxAttributes }) => {
-    const { name: tagName, attributes: attrs } = node
+    const { name: tagName, attributes: attributes } = node
 
     // complexType
     if (tagName.endsWith('complexType')) {
-      const typeName = attrs['name'] || ''
+      const typeName = attributes['name'] || ''
       const complexType: XsdComplexType = { '@_name': typeName || undefined, 'xs:sequence': undefined }
 
       // Attach to current element if unnamed
@@ -80,11 +80,11 @@ export async function importXsdSchema(
     // element
     if (tagName.endsWith('element')) {
       const element: XsdElement = {
-        '@_name': attrs['name'],
-        '@_type': attrs['type'],
-        '@_maxOccurs': attrs['maxOccurs'],
-        '@_minOccurs': attrs['minOccurs'],
-        '@_default': attrs['default'],
+        '@_name': attributes['name'],
+        '@_type': attributes['type'],
+        '@_maxOccurs': attributes['maxOccurs'],
+        '@_minOccurs': attributes['minOccurs'],
+        '@_default': attributes['default'],
       }
 
       if (complexStack.length > 0 && complexStack.at(-1)!['xs:sequence']) {
@@ -99,18 +99,20 @@ export async function importXsdSchema(
       const currentType = complexStack.at(-1)!
       if (!currentType['xs:attribute']) currentType['xs:attribute'] = []
       currentType['xs:attribute'].push({
-        '@_name': attrs['name'],
-        '@_type': attrs['type'],
-        '@_use': attrs['use'],
+        '@_name': attributes['name'],
+        '@_type': attributes['type'],
+        '@_use': attributes['use'],
       })
     }
   }
 
   parser.onclosetag = (tagName: string) => {
-    if (tagName.endsWith('complexType') && complexStack.length > 0) {
-      const completed = complexStack.pop()!
-      if (completed['@_name']) typeMap.set(completed['@_name'], completed)
+    if (!(tagName.endsWith('complexType') && complexStack.length > 0)) {
+      return
     }
+
+    const completed = complexStack.pop()!
+    if (completed['@_name']) typeMap.set(completed['@_name'], completed)
   }
 
   parser.write(xmlText).close()
@@ -166,8 +168,8 @@ async function addElementNode(
     nodeId = await addNode(side, name, isArray ? 'array' : 'object', undefined, parentNodeId)
     await traverseComplexType(element['xs:complexType'], nodeId, side, addNode, format, typeMap, visitedTypes)
   } else {
-    const prop = resolveType(side, format, typeName)
-    nodeId = await addNode(side, name, prop.name, element['@_default'], parentNodeId)
+    const property = resolveType(side, format, typeName)
+    nodeId = await addNode(side, name, property.name, element['@_default'], parentNodeId)
   }
 
   return nodeId
@@ -185,15 +187,15 @@ async function traverseComplexType(
   const sequence = type['xs:sequence']
   if (sequence?.xs?.element) {
     const elements: XsdElement[] = Array.isArray(sequence.xs.element) ? sequence.xs.element : [sequence.xs.element]
-    for (const elem of elements) {
-      await addElementNode(elem, parentNodeId, side, addNode, format, typeMap, visitedTypes)
+    for (const element of elements) {
+      await addElementNode(element, parentNodeId, side, addNode, format, typeMap, visitedTypes)
     }
   }
 
   if (type['xs:attribute']) {
-    for (const attr of type['xs:attribute']) {
-      const prop = resolveType(side, format, attr['@_type'])
-      await addNode(side, attr['@_name'], prop.name, undefined, parentNodeId, null, true)
+    for (const attribute of type['xs:attribute']) {
+      const property = resolveType(side, format, attribute['@_type'])
+      await addNode(side, attribute['@_name'], property.name, undefined, parentNodeId, null, true)
     }
   }
 }
@@ -203,7 +205,7 @@ export async function generateImportButton(
   fileType: string,
   side: string,
   getNode: GetNodeFunc,
-  importFunc: ImportSchematicFunc,
+  importFunction: ImportSchematicFunc,
 ) {
   const newY = calculateNodePosition(nodes, `${side}-table`, getNode)
   return {
@@ -215,7 +217,7 @@ export async function generateImportButton(
     data: {
       fileType,
       side,
-      importFunc,
+      importFunc: importFunction,
     },
   } as Node
 }

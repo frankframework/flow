@@ -34,10 +34,10 @@ export type AdapterInfo = {
 
 export async function getAdaptersFromConfiguration(projectName: string, filepath: string): Promise<AdapterInfo[]> {
   const xmlString = await fetchConfigurationFileCached(projectName, filepath)
-  const xmlDoc = parseConfigurationXml(xmlString)
+  const xmlDocument = parseConfigurationXml(xmlString)
 
   const adapters: AdapterInfo[] = []
-  const adapterElements = xmlDoc.querySelectorAll('Adapter, adapter')
+  const adapterElements = xmlDocument.querySelectorAll('Adapter, adapter')
 
   for (const adapter of adapterElements) {
     const name = adapter.getAttribute('name')
@@ -70,9 +70,9 @@ export async function getAdapterFromConfiguration(
   adapterPosition?: number,
 ): Promise<Element | null> {
   const xmlString = await fetchConfigurationFileCached(projectname, filename)
-  const xmlDoc = parseConfigurationXml(xmlString)
+  const xmlDocument = parseConfigurationXml(xmlString)
 
-  const adapterList = [...xmlDoc.querySelectorAll('Adapter, adapter')]
+  const adapterList = [...xmlDocument.querySelectorAll('Adapter, adapter')]
 
   if (adapterPosition !== undefined) {
     return adapterList[adapterPosition] ?? null
@@ -175,7 +175,7 @@ function buildNameToNodeMap(nodes: FlowNode[]): Map<string, FlowNode> {
  * @returns An array of FrankEdge objects representing all generated edges
  */
 function extractEdgesFromAdapter(adapter: Element, nodes: FlowNode[], elementToId: Map<Element, string>): FrankEdge[] {
-  const pipelineElement = [...adapter.children].find((el) => el.tagName.toLowerCase() === 'pipeline') || null
+  const pipelineElement = [...adapter.children].find((element) => element.tagName.toLowerCase() === 'pipeline') || null
 
   if (!pipelineElement) return []
 
@@ -348,15 +348,15 @@ function addSequentialFallbackEdges(
   sourcesWithSuccessExitForward: Set<string>,
   sourcesWithSuccessPipeForward: Set<string>,
 ) {
-  for (let i = 0; i < nodes.length - 1; i++) {
-    const current = nodes[i]
+  for (let index = 0; index < nodes.length - 1; index++) {
+    const current = nodes[index]
     // skip exit nodes
     if (current.type === 'exitNode') continue
     // skip receivers (they already get edges to first pipeline pipe)
     if (isFrankNode(current) && current.data.type === 'receiver') continue
 
     // find next NON-exit node
-    const next = nodes.slice(i + 1).find((n) => n.type !== 'exitNode')
+    const next = nodes.slice(index + 1).find((n) => n.type !== 'exitNode')
     if (!next) continue
 
     if (sourcesWithSuccessPipeForward.has(current.id)) continue
@@ -419,12 +419,12 @@ function collectPipelineElements(adapter: Element): Element[] {
 
   for (const receiver of receiverElements) elements.push(receiver)
 
-  const pipelineElement = [...adapter.children].find((el) => el.tagName.toLowerCase() === 'pipeline') || null
+  const pipelineElement = [...adapter.children].find((element) => element.tagName.toLowerCase() === 'pipeline') || null
 
   if (!pipelineElement) return elements
 
   const firstPipeName = pipelineElement.getAttribute('firstPipe')
-  let pipeArray = [...pipelineElement.children]
+  const pipeArray = [...pipelineElement.children]
 
   if (firstPipeName) {
     const firstPipeIndex = pipeArray.findIndex((pipe) => pipe.getAttribute('name') === firstPipeName)
@@ -628,8 +628,8 @@ function extractStickyNotesFromAdapter(adapter: Element, idCounter: IdCounter, f
   )
 
   for (const note of notes) {
-    const attrText = note.getAttribute('flow:text')
-    const text = attrText === null ? (note.textContent ?? '') : attrText
+    const attributeText = note.getAttribute('flow:text')
+    const text = attributeText === null ? (note.textContent ?? '') : attributeText
     const color = note.getAttribute('flow:color') ?? undefined
 
     const x = parseNumericAttribute(note.getAttribute('flow:x'), 0)
@@ -741,8 +741,8 @@ function assignParentRelationships(flowNodes: FlowNode[], groupNodes: GroupNode[
 
 function parseNumericAttribute(value: string | null, defaultValue: number): number {
   if (value === null || value.trim() === '') return defaultValue
-  const num = Number(value)
-  return Number.isNaN(num) ? defaultValue : num
+  const number_ = Number(value)
+  return Number.isNaN(number_) ? defaultValue : number_
 }
 
 function isSuccessExit(node: FlowNode): boolean {
@@ -768,7 +768,7 @@ function isNodeTargeted(nodeId: string, edges: FrankEdge[]): boolean {
 }
 
 function parseElementAttributes(
-  attrs: NamedNodeMap,
+  attributes_: NamedNodeMap,
   defaultWidth: number,
   defaultHeight: number,
   skipClassName = false,
@@ -779,50 +779,50 @@ function parseElementAttributes(
   let x = 0
   let y = 0
   let width = defaultWidth
-  let height: number | undefined = undefined
+  let height: number | undefined
   let hiddenForwards = false
 
-  for (const attr of attrs) {
-    const attrName = attr.name
-    const value = attr.value
+  for (const attribute of attributes_) {
+    const attributeName = attribute.name
+    const value = attribute.value
 
     // Capture name attribute
-    if (attrName === 'name') {
+    if (attributeName === 'name') {
       name = value
       continue
     }
 
     // Optionally skip className
-    if (skipClassName && attrName === 'className') continue
+    if (skipClassName && attributeName === 'className') continue
 
     // Flow coordinates
-    if (attrName === 'flow:x') {
+    if (attributeName === 'flow:x') {
       x = parseNumericAttribute(value, 0)
       continue
     }
-    if (attrName === 'flow:y') {
+    if (attributeName === 'flow:y') {
       y = parseNumericAttribute(value, 0)
       continue
     }
 
     // Flow size
-    if (attrName === 'flow:width') {
+    if (attributeName === 'flow:width') {
       width = parseNumericAttribute(value, defaultWidth)
       continue
     }
 
-    if (attrName === 'flow:height') {
+    if (attributeName === 'flow:height') {
       height = parseNumericAttribute(value, defaultHeight)
       continue
     }
 
-    if (attrName === 'flow:hiddenForwards') {
+    if (attributeName === 'flow:hiddenForwards') {
       hiddenForwards = value === 'true'
       continue
     }
 
     // Store all other attributes
-    attributes[attrName] = value
+    attributes[attributeName] = value
   }
 
   return { attributes, name, x, y, width, height, hiddenForwards }

@@ -21,26 +21,28 @@ export default function HandleMenu({
   typesAllowed,
 }: Readonly<HandleMenuProperties>) {
   const handleTypes = useHandleTypes(typesAllowed)
-  const menuRef = useRef<HTMLDivElement>(null)
+  const menuReference = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const handleMouseDown = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+      if (menuReference.current && !menuReference.current.contains(e.target as Node)) {
         onClose()
       }
     }
 
     const handleWheel = (e: WheelEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+      if (menuReference.current && !menuReference.current.contains(e.target as Node)) {
         onClose()
       }
     }
 
     const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.stopPropagation()
-        onClose()
+      if (e.key !== 'Escape') {
+        return
       }
+
+      e.stopPropagation()
+      onClose()
     }
 
     globalThis.addEventListener('keydown', handleEsc, { capture: true })
@@ -56,7 +58,7 @@ export default function HandleMenu({
 
   return createPortal(
     <div
-      ref={menuRef}
+      ref={menuReference}
       className="nodrag bg-background border-border absolute rounded border shadow-md"
       style={{
         left: `${position.x + 10}px`,

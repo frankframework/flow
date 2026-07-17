@@ -3,7 +3,7 @@ import clsx from 'clsx'
 import type { GitStatus, FileHunkState } from '~/types/git.types'
 import Checkbox from '~/components/inputs/checkbox'
 
-type GitChangesProps = {
+type GitChangesProperties = {
   status: GitStatus | null
   selectedFile: string | null
   fileHunkStates: Record<string, FileHunkState>
@@ -112,7 +112,7 @@ export default function GitChanges({
   fileHunkStates,
   onSelectFile,
   onToggleFile,
-}: GitChangesProps) {
+}: GitChangesProperties) {
   if (!status) return null
 
   const changedFiles = [...new Set([...status.staged, ...status.modified])]

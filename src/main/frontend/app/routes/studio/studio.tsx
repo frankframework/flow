@@ -21,7 +21,7 @@ import type { StickyNote } from '~/routes/studio/canvas/nodetypes/sticky-note'
 import { ALL_SHORTCUTS, formatShortcutParts, useShortcutStore } from '~/stores/shortcut-store'
 import GroupContext from '~/routes/studio/context/group-context'
 
-type RightPanelProps = {
+type RightPanelProperties = {
   isMultiSelect: boolean
   selectedStickyId: string | null
   selectedGroupId: string | null
@@ -124,7 +124,7 @@ function RightPanelContent({
   showNodeContext,
   nodeId,
   onShowNodeContext,
-}: RightPanelProps) {
+}: RightPanelProperties) {
   const showPalette = !isMultiSelect && !selectedStickyId && !selectedGroupId && !showNodeContext
 
   return (
@@ -193,10 +193,12 @@ export default function Studio() {
   )
 
   useEffect(() => {
-    if (selectedStickyId && !stickyNodeExists) {
-      useNodeContextStore.getState().setSelectedStickyId(null)
-      setShowNodeContext(false)
+    if (!selectedStickyId || stickyNodeExists) {
+      return
     }
+
+    useNodeContextStore.getState().setSelectedStickyId(null)
+    setShowNodeContext(false)
   }, [selectedStickyId, stickyNodeExists])
 
   const handleOpenInEditor = useCallback(() => {

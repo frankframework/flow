@@ -63,10 +63,10 @@ export default function EditorFileStructure() {
   const [selectedItemId, setSelectedItemId] = useState<TreeItemIndex | null>(null)
   const [rootPath, setRootPath] = useState<string | null>(null)
 
-  const expandedItemsRef = useRef(editorExpandedItems)
+  const expandedItemsReference = useRef(editorExpandedItems)
 
   useEffect(() => {
-    expandedItemsRef.current = editorExpandedItems
+    expandedItemsReference.current = editorExpandedItems
   }, [editorExpandedItems])
 
   useFileWatcher(project?.name ?? null, () => {
@@ -98,8 +98,8 @@ export default function EditorFileStructure() {
       const tab = getTab(oldPath)
       if (tab) {
         removeTab(oldPath)
-        const lastSep = Math.max(oldPath.lastIndexOf('/'), oldPath.lastIndexOf('\\'))
-        const newPath = oldPath.slice(0, Math.max(0, lastSep + 1)) + newName
+        const lastSeparator = Math.max(oldPath.lastIndexOf('/'), oldPath.lastIndexOf('\\'))
+        const newPath = oldPath.slice(0, Math.max(0, lastSeparator + 1)) + newName
         setTabData(newPath, { ...tab, name: newName, configurationPath: newPath })
         setActiveTab(newPath)
       }
@@ -196,7 +196,7 @@ export default function EditorFileStructure() {
 
     const initProvider = async () => {
       const provider = new EditorFilesDataProvider(project.name)
-      await provider.init(expandedItemsRef.current)
+      await provider.init(expandedItemsReference.current)
 
       if (isMounted) {
         setDataProvider(provider)
@@ -287,10 +287,10 @@ export default function EditorFileStructure() {
 
       if (event.key === 'Tab' && !event.shiftKey) {
         event.preventDefault()
-        setActiveMatchIndex((i) => (i + 1) % matchingItemIds.length)
+        setActiveMatchIndex((index) => (index + 1) % matchingItemIds.length)
       } else if (event.key === 'Tab' && event.shiftKey) {
         event.preventDefault()
-        setActiveMatchIndex((i) => (i - 1 < 0 ? matchingItemIds.length - 1 : i - 1))
+        setActiveMatchIndex((index) => (index - 1 < 0 ? matchingItemIds.length - 1 : index - 1))
       } else if (event.key === 'Enter') {
         event.preventDefault()
         const target = highlightedItemId || matchingItemIds[0]

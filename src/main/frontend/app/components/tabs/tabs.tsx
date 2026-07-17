@@ -2,14 +2,14 @@ import { useCallback, useEffect, useRef } from 'react'
 import Tab from './tab'
 import type { TabData } from '~/stores/tab-store'
 
-type TabsViewProps<T extends string = string> = {
+type TabsViewProperties<T extends string = string> = {
   tabs: Record<T, TabData>
   activeTab: T | null
   onSelectTab: (key: T) => void
   onCloseTab: (key: T) => void
 }
 
-export function TabsView<T extends string>({ tabs, activeTab, onSelectTab, onCloseTab }: TabsViewProps<T>) {
+export function TabsView<T extends string>({ tabs, activeTab, onSelectTab, onCloseTab }: TabsViewProperties<T>) {
   const tabsListReference = useRef<HTMLUListElement>(null)
   const shadowLeftReference = useRef<HTMLDivElement>(null)
   const shadowRightReference = useRef<HTMLDivElement>(null)

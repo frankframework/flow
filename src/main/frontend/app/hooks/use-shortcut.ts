@@ -4,18 +4,18 @@ import { useShortcutStore } from '~/stores/shortcut-store'
 type ShortcutHandlers = Record<string, () => boolean | void>
 
 export function useShortcut(handlers: ShortcutHandlers) {
-  const handlersRef = useRef(handlers)
-  handlersRef.current = handlers
+  const handlersReference = useRef(handlers)
+  handlersReference.current = handlers
 
   const ids = Object.keys(handlers).join(',')
 
   useEffect(() => {
     const { setHandler } = useShortcutStore.getState()
-    const handlerIds = Object.keys(handlersRef.current)
+    const handlerIds = Object.keys(handlersReference.current)
 
     for (const id of handlerIds) {
       setHandler(id, () => {
-        return handlersRef.current[id]?.()
+        return handlersReference.current[id]?.()
       })
     }
 

@@ -70,17 +70,17 @@ function extractLocalName(name: string): string {
 }
 
 function findElementRange(lineContent: string, localName: string): { startColumn: number; endColumn: number } | null {
-  const openIdx = lineContent.indexOf(`<${localName}`)
-  if (openIdx !== -1) return { startColumn: openIdx + 1, endColumn: openIdx + 1 + localName.length + 1 }
-  const closeIdx = lineContent.indexOf(`</${localName}`)
-  if (closeIdx !== -1) return { startColumn: closeIdx + 1, endColumn: closeIdx + 2 + localName.length + 1 }
+  const openIndex = lineContent.indexOf(`<${localName}`)
+  if (openIndex !== -1) return { startColumn: openIndex + 1, endColumn: openIndex + 1 + localName.length + 1 }
+  const closeIndex = lineContent.indexOf(`</${localName}`)
+  if (closeIndex !== -1) return { startColumn: closeIndex + 1, endColumn: closeIndex + 2 + localName.length + 1 }
   return null
 }
 
 function findAttributeRange(lineContent: string, localName: string): { startColumn: number; endColumn: number } | null {
-  const idx = lineContent.search(new RegExp(String.raw`\b${localName}\s*=`))
-  if (idx < 0) return null
-  return { startColumn: idx + 1, endColumn: idx + localName.length + 1 }
+  const index = lineContent.search(new RegExp(String.raw`\b${localName}\s*=`))
+  if (index < 0) return null
+  return { startColumn: index + 1, endColumn: index + localName.length + 1 }
 }
 
 function fallbackRange(lineContent: string): { startColumn: number; endColumn: number } {
@@ -95,9 +95,9 @@ function findErrorRange(lineContent: string, message: string): { startColumn: nu
     if (range) return range
   }
 
-  const attrMatch = message.match(ATTRIBUTE_ERROR_RE)
-  if (attrMatch) {
-    const range = findAttributeRange(lineContent, extractLocalName(attrMatch[1]))
+  const attributeMatch = message.match(ATTRIBUTE_ERROR_RE)
+  if (attributeMatch) {
+    const range = findAttributeRange(lineContent, extractLocalName(attributeMatch[1]))
     if (range) return range
   }
 
@@ -175,11 +175,11 @@ async function validateFlow(content: string, model: ITextModel): Promise<Validat
 
   if (model.isDisposed()) return []
 
-  return mapToValidationErrors(flowResult.errors, model).map((err) => ({
-    ...err,
-    lineNumber: err.lineNumber + startLine,
+  return mapToValidationErrors(flowResult.errors, model).map((error) => ({
+    ...error,
+    lineNumber: error.lineNumber + startLine,
     startColumn: 1,
-    endColumn: model.getLineLength(err.lineNumber + startLine),
+    endColumn: model.getLineLength(error.lineNumber + startLine),
   }))
 }
 
@@ -254,17 +254,17 @@ export default function CodeEditor() {
   const [leftTab, setLeftTab] = useState<LeftTab>('files')
   const [editorMounted, setEditorMounted] = useState(false)
   const [xsdLoaded, setXsdLoaded] = useState(false)
-  const containerRef = useRef<HTMLDivElement>(null)
+  const containerReference = useRef<HTMLDivElement>(null)
   const editorReference = useRef<monaco.editor.IStandaloneCodeEditor | null>(null)
-  const xsdContentRef = useRef<string | null>(null)
-  const errorDecorationsRef = useRef<{ clear: () => void } | null>(null)
-  const flowDecorationsRef = useRef<IEditorDecorationsCollection | null>(null)
-  const highlightDecorationsRef = useRef<IEditorDecorationsCollection | null>(null)
-  const frankGlyphsDecorationsRef = useRef<IEditorDecorationsCollection | null>(null)
-  const frankElementsRef = useRef<ReturnType<typeof findFrankElementsForGlyphs>>([])
-  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const validationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const validationCounterRef = useRef(0)
+  const xsdContentReference = useRef<string | null>(null)
+  const errorDecorationsReference = useRef<{ clear: () => void } | null>(null)
+  const flowDecorationsReference = useRef<IEditorDecorationsCollection | null>(null)
+  const highlightDecorationsReference = useRef<IEditorDecorationsCollection | null>(null)
+  const frankGlyphsDecorationsReference = useRef<IEditorDecorationsCollection | null>(null)
+  const frankElementsReference = useRef<ReturnType<typeof findFrankElementsForGlyphs>>([])
+  const debounceTimerReference = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const validationTimerReference = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const validationCounterReference = useRef(0)
   const contentCacheRef = useRef<Map<string, CachedFile>>(new Map())
   const syncingValueRef = useRef(false)
   const navigate = useNavigate()
@@ -306,10 +306,10 @@ export default function CodeEditor() {
 
     const decorations = matches.flatMap((match) => mapMatchToDecorations(match))
 
-    if (flowDecorationsRef.current) {
-      flowDecorationsRef.current.set(decorations)
+    if (flowDecorationsReference.current) {
+      flowDecorationsReference.current.set(decorations)
     } else {
-      flowDecorationsRef.current = editor.createDecorationsCollection(decorations)
+      flowDecorationsReference.current = editor.createDecorationsCollection(decorations)
     }
   }, [fileLanguage])
 
@@ -319,7 +319,7 @@ export default function CodeEditor() {
       if (!editor || fileLanguage !== 'xml') return
 
       const elements = findFrankElementsForGlyphs(content)
-      frankElementsRef.current = elements
+      frankElementsReference.current = elements
 
       const decorations = elements.map((element) => {
         const isAdapter = element.subtype === ADAPTER_GLYPH_SUBTYPE
@@ -334,10 +334,10 @@ export default function CodeEditor() {
         }
       })
 
-      if (frankGlyphsDecorationsRef.current) {
-        frankGlyphsDecorationsRef.current.set(decorations)
+      if (frankGlyphsDecorationsReference.current) {
+        frankGlyphsDecorationsReference.current.set(decorations)
       } else if (decorations.length > 0) {
-        frankGlyphsDecorationsRef.current = editor.createDecorationsCollection(decorations)
+        frankGlyphsDecorationsReference.current = editor.createDecorationsCollection(decorations)
       }
     },
     [fileLanguage],
@@ -384,9 +384,9 @@ export default function CodeEditor() {
   )
 
   const flushPendingSave = useCallback(() => {
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current)
-      debounceTimerRef.current = null
+    if (debounceTimerReference.current) {
+      clearTimeout(debounceTimerReference.current)
+      debounceTimerReference.current = null
       performSave()
     }
   }, [performSave])
@@ -396,17 +396,17 @@ export default function CodeEditor() {
 
   const scheduleSave = useCallback(() => {
     if (!autosaveEnabled) return
-    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current)
-    debounceTimerRef.current = setTimeout(() => {
-      debounceTimerRef.current = null
+    if (debounceTimerReference.current) clearTimeout(debounceTimerReference.current)
+    debounceTimerReference.current = setTimeout(() => {
+      debounceTimerReference.current = null
       performSave()
     }, autosaveDelay)
   }, [performSave, autosaveEnabled, autosaveDelay])
 
   useEffect(() => {
     return () => {
-      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current)
-      if (validationTimerRef.current) clearTimeout(validationTimerRef.current)
+      if (debounceTimerReference.current) clearTimeout(debounceTimerReference.current)
+      if (validationTimerReference.current) clearTimeout(validationTimerReference.current)
     }
   }, [])
 
@@ -417,13 +417,13 @@ export default function CodeEditor() {
     const model = editor.getModel()
     if (!model) return
 
-    if (errorDecorationsRef.current) {
-      errorDecorationsRef.current.clear()
-      errorDecorationsRef.current = null
+    if (errorDecorationsReference.current) {
+      errorDecorationsReference.current.clear()
+      errorDecorationsReference.current = null
     }
 
     if (errors.length > 0) {
-      errorDecorationsRef.current = editor.createDecorationsCollection(errors.map((element) => toDecoration(element)))
+      errorDecorationsReference.current = editor.createDecorationsCollection(errors.map((element) => toDecoration(element)))
     }
 
     monaco.editor.setModelMarkers(
@@ -462,10 +462,10 @@ export default function CodeEditor() {
   const runSchemaValidation = useCallback(
     async (content: string) => {
       const editor = editorReference.current
-      const xsdContent = xsdContentRef.current
+      const xsdContent = xsdContentReference.current
       if (!editor || !xsdContent) return
 
-      const validationId = ++validationCounterRef.current
+      const validationId = ++validationCounterReference.current
       const model = editor.getModel() as ITextModel
       if (!model) return
 
@@ -475,11 +475,11 @@ export default function CodeEditor() {
           validateConfiguration(content, xsdContent, model),
         ])
 
-        if (validationId !== validationCounterRef.current) return
+        if (validationId !== validationCounterReference.current) return
 
         applyValidationDecorations([...frankErrors, ...flowErrors])
       } catch {
-        if (validationId === validationCounterRef.current && !model.isDisposed()) {
+        if (validationId === validationCounterReference.current && !model.isDisposed()) {
           applyValidationDecorations([notWellFormedError(model)])
         }
       }
@@ -489,26 +489,26 @@ export default function CodeEditor() {
 
   const scheduleSchemaValidation = useCallback(
     (content: string) => {
-      if (validationTimerRef.current) clearTimeout(validationTimerRef.current)
-      validationTimerRef.current = setTimeout(() => {
-        validationTimerRef.current = null
+      if (validationTimerReference.current) clearTimeout(validationTimerReference.current)
+      validationTimerReference.current = setTimeout(() => {
+        validationTimerReference.current = null
         runSchemaValidation(content)
       }, 800)
     },
     [runSchemaValidation],
   )
 
-  const performSaveRef = useRef(performSave)
-  const runReformatRef = useRef(runReformat)
+  const performSaveReference = useRef(performSave)
+  const runReformatReference = useRef(runReformat)
   const scheduleSaveRef = useRef(scheduleSave)
   const onChangeRef = useRef<((value: string) => void) | null>(null)
 
   useEffect(() => {
-    performSaveRef.current = performSave
+    performSaveReference.current = performSave
   }, [performSave])
 
   useEffect(() => {
-    runReformatRef.current = runReformat
+    runReformatReference.current = runReformat
   }, [runReformat])
 
   useEffect(() => {
@@ -536,7 +536,7 @@ export default function CodeEditor() {
 
     fetchFrankConfigXsd()
       .then((xsdContent) => {
-        xsdContentRef.current = xsdContent
+        xsdContentReference.current = xsdContent
         xsdManager.set({ path: 'FrankConfig.xsd', value: xsdContent, namespace: 'xs', alwaysInclude: true })
         xsdManager.set({ path: 'FlowConfig.xsd', value: flowXsd, namespace: 'xs', alwaysInclude: true })
         setXsdLoaded(true)
@@ -547,9 +547,9 @@ export default function CodeEditor() {
   const showCodeEditor = !!activeTabFilePath && !isDiffTab
 
   useEffect(() => {
-    if (!showCodeEditor || !containerRef.current || editorReference.current) return
+    if (!showCodeEditor || !containerReference.current || editorReference.current) return
 
-    const editor = monaco.editor.create(containerRef.current, {
+    const editor = monaco.editor.create(containerReference.current, {
       value: '',
       language: 'xml',
       automaticLayout: true,
@@ -561,7 +561,7 @@ export default function CodeEditor() {
     })
 
     editorReference.current = editor
-    frankGlyphsDecorationsRef.current = null
+    frankGlyphsDecorationsReference.current = null
     setEditorMounted(true)
 
     editor.addAction({
@@ -571,11 +571,11 @@ export default function CodeEditor() {
       contextMenuOrder: 1,
       keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS],
       run: () => {
-        if (debounceTimerRef.current) {
-          clearTimeout(debounceTimerRef.current)
-          debounceTimerRef.current = null
+        if (debounceTimerReference.current) {
+          clearTimeout(debounceTimerReference.current)
+          debounceTimerReference.current = null
         }
-        performSaveRef.current()
+        performSaveReference.current()
       },
     })
 
@@ -585,13 +585,13 @@ export default function CodeEditor() {
       contextMenuGroupId: 'navigation',
       contextMenuOrder: 3,
       keybindings: [monaco.KeyMod.Alt | monaco.KeyMod.Shift | monaco.KeyCode.KeyF],
-      run: () => runReformatRef.current(),
+      run: () => runReformatReference.current(),
     })
 
     editor.onMouseDown((event) => {
-      if (highlightDecorationsRef.current) {
-        highlightDecorationsRef.current.clear()
-        highlightDecorationsRef.current = null
+      if (highlightDecorationsReference.current) {
+        highlightDecorationsReference.current.clear()
+        highlightDecorationsReference.current = null
       }
 
       if (event.target.type === monaco.editor.MouseTargetType.GUTTER_GLYPH_MARGIN) {
@@ -601,7 +601,7 @@ export default function CodeEditor() {
         const editorTab = useEditorTabStore.getState().getTab(useEditorTabStore.getState().activeTabFilePath)
         if (!editorTab) return
 
-        const element = frankElementsRef.current.find((element) => element.startLine === lineNumber)
+        const element = frankElementsReference.current.find((element) => element.startLine === lineNumber)
         if (!element) return
 
         const { adapterName, adapterPosition, subtype, name } = element
@@ -682,11 +682,13 @@ export default function CodeEditor() {
     if (isDiffTab) return
 
     function setMonacoContent(content: string, type: string, abortSignal?: AbortSignal) {
-      if (!abortSignal || !abortSignal.aborted) {
-        contentCacheRef.current.set(activeTabFilePath, { type, content })
-        setFileContent(content)
-        setFileLanguage(type)
+      if (abortSignal && abortSignal.aborted) {
+        return
       }
+
+      contentCacheRef.current.set(activeTabFilePath, { type, content })
+      setFileContent(content)
+      setFileLanguage(type)
     }
 
     const abortController = new AbortController()
@@ -722,26 +724,28 @@ export default function CodeEditor() {
           setMonacoContent(content, fileType, abortController.signal)
         })
         .catch((error) => {
-          if (!abortController.signal.aborted) {
-            setMonacoContent('', 'plaintext', abortController.signal)
-            logApiError('Failed to load file:', error)
+          if (abortController.signal.aborted) {
+            return
           }
+
+          setMonacoContent('', 'plaintext', abortController.signal)
+          logApiError('Failed to load file:', error)
         })
     }
     return () => abortController.abort()
   }, [project, activeTabFilePath, isDiffTab, refreshCounter])
 
   useEffect(() => {
-    if (errorDecorationsRef.current) {
-      errorDecorationsRef.current.clear()
-      errorDecorationsRef.current = null
+    if (errorDecorationsReference.current) {
+      errorDecorationsReference.current.clear()
+      errorDecorationsReference.current = null
     }
-    if (flowDecorationsRef.current) {
-      flowDecorationsRef.current.set([])
+    if (flowDecorationsReference.current) {
+      flowDecorationsReference.current.set([])
     }
-    if (frankGlyphsDecorationsRef.current) {
-      frankGlyphsDecorationsRef.current.clear()
-      frankGlyphsDecorationsRef.current = null
+    if (frankGlyphsDecorationsReference.current) {
+      frankGlyphsDecorationsReference.current.clear()
+      frankGlyphsDecorationsReference.current = null
     }
     const editor = editorReference.current
     const model = editor?.getModel()
@@ -807,9 +811,9 @@ export default function CodeEditor() {
     editor.setPosition({ lineNumber: range.startLine, column: 1 })
     editor.focus()
 
-    highlightDecorationsRef.current?.clear()
+    highlightDecorationsReference.current?.clear()
 
-    highlightDecorationsRef.current = editor.createDecorationsCollection([
+    highlightDecorationsReference.current = editor.createDecorationsCollection([
       {
         range: { startLineNumber: range.startLine, startColumn: 1, endLineNumber: range.endLine, endColumn: 1 },
         options: { isWholeLine: true, className: 'highlight-line' },
@@ -860,7 +864,7 @@ export default function CodeEditor() {
                 <SaveStatusIndicator />
               </div>
               <div className="relative min-h-0 flex-1">
-                <div ref={containerRef} className="h-full w-full" />
+                <div ref={containerReference} className="h-full w-full" />
               </div>
             </div>
           )

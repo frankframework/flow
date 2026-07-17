@@ -21,11 +21,13 @@ export default function Toggle({
   }, [checked])
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (!disabled) {
-      const newIsChecked = event.target.checked
-      setIsChecked(newIsChecked)
-      onChange?.(newIsChecked)
+    if (disabled) {
+      return
     }
+
+    const newIsChecked = event.target.checked
+    setIsChecked(newIsChecked)
+    onChange?.(newIsChecked)
   }
 
   return (

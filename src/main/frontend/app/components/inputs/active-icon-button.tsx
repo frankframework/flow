@@ -3,14 +3,14 @@ import clsx from 'clsx'
 
 type IconComponent = React.FC<React.SVGProps<SVGSVGElement>>
 
-type TileViewButtonProps = {
+type TileViewButtonProperties = {
   isActive: boolean
   label: string
   Icon: IconComponent
   onClick: () => void
 }
 
-export function ActiveIconButton({ isActive, label, Icon, onClick }: Readonly<TileViewButtonProps>) {
+export function ActiveIconButton({ isActive, label, Icon, onClick }: Readonly<TileViewButtonProperties>) {
   return (
     <li className="m-0 list-none p-0">
       <button

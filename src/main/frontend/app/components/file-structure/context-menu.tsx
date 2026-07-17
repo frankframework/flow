@@ -2,7 +2,7 @@ import { useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { useContextMenuDismiss } from '~/hooks/use-context-menu-dismiss'
 
-type ContextMenuProps = {
+type ContextMenuProperties = {
   position: { x: number; y: number }
   isFolder: boolean
   isRoot?: boolean
@@ -22,15 +22,15 @@ export default function ContextMenu({
   onRename,
   onDelete,
   onClose,
-}: ContextMenuProps) {
-  const menuRef = useRef<HTMLDivElement>(null)
-  useContextMenuDismiss(menuRef, onClose)
+}: ContextMenuProperties) {
+  const menuReference = useRef<HTMLDivElement>(null)
+  useContextMenuDismiss(menuReference, onClose)
 
   const itemClass = 'px-3 py-1.5 cursor-pointer hover:bg-hover text-sm text-foreground whitespace-nowrap'
 
   return createPortal(
     <div
-      ref={menuRef}
+      ref={menuReference}
       className="bg-background border-border fixed z-50 overflow-hidden rounded-md border py-1 shadow-md"
       style={{ left: position.x, top: position.y }}
     >

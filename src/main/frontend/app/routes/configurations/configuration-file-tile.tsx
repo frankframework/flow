@@ -14,7 +14,7 @@ import { isRootConfiguration } from './configuration-utils'
 import AdapterListItem from './adapter-list-item'
 import ComponentListItem from './component-list-item'
 import { frankdocChipStyle } from '~/utils/flow-utils'
-import clsx from "clsx";
+import clsx from 'clsx'
 
 type ConfigurationFileTileProperties = {
   filepath: string

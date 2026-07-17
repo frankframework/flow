@@ -66,7 +66,7 @@ export async function exportProject(projectName: string): Promise<void> {
 }
 
 export async function importProjectFolder(files: FileList, maxImportBytes: number): Promise<ConfigurationProject> {
-  const projectName = files[0].webkitRelativePath.split('/')[0]
+  const projectName = files[0].webkitRelativePath.split('/', 1)[0]
 
   /*
    * pre-check on the uncompressed size so an oversized folder fails fast,

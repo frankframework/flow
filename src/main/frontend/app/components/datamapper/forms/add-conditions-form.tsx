@@ -211,7 +211,7 @@ function ConditionInputField({
         <Dropdown
           className="max-w-55"
           value={value?.value ?? ''}
-          onChange={(val) => onChange({ type: 'operator', value: val })}
+          onChange={(value_) => onChange({ type: 'operator', value: value_ })}
           options={Object.fromEntries(operatorConfig.allowedValues.map((option) => [option, option]))}
         />
       </div>

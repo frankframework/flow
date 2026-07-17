@@ -10,8 +10,8 @@ import HelpTopics from '~/routes/help/help-topics'
 const firstTopic = HelpTopicTreeItems['root']?.children?.[0] as string
 
 export default function Help() {
-  const params = useParams()
-  const topic: string | null = params.topic ?? null
+  const parameters = useParams()
+  const topic: string | null = parameters.topic ?? null
   const helpTopicKey = topic ?? firstTopic
   const helpTopic: HelpTopicTreeItem | undefined = HelpTopicTreeItems[helpTopicKey]
 

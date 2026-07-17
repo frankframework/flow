@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-type MissingRequirementsProps = {
+type MissingRequirementsProperties = {
   missingChildren: string[]
   isFulfilled: boolean
 }
@@ -24,15 +24,15 @@ function parseRequirement(item: string) {
   }
 }
 
-export default function MissingRequirements({ missingChildren, isFulfilled }: MissingRequirementsProps) {
+export default function MissingRequirements({ missingChildren, isFulfilled }: MissingRequirementsProperties) {
   const [expandedMap, setExpandedMap] = useState<Record<number, boolean>>({})
 
   if (isFulfilled || missingChildren.length === 0) return null
 
   const toggle = (index: number) => {
-    setExpandedMap((prev) => ({
-      ...prev,
-      [index]: !prev[index],
+    setExpandedMap((previous) => ({
+      ...previous,
+      [index]: !previous[index],
     }))
   }
 

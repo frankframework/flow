@@ -125,7 +125,7 @@ export function useStudioContextMenu({ projectName, dataProvider }: UseStudioCon
   const [contextMenu, setContextMenu] = useState<StudioContextMenuState | null>(null)
   const [nameDialog, setNameDialog] = useState<NameDialogState | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<DeleteTargetState | null>(null)
-  const contextMenuRef = useRef<StudioContextMenuState | null>(null)
+  const contextMenuReference = useRef<StudioContextMenuState | null>(null)
 
   const openContextMenu = useCallback(
     async (e: React.MouseEvent, itemId: TreeItemIndex) => {
@@ -148,19 +148,19 @@ export function useStudioContextMenu({ projectName, dataProvider }: UseStudioCon
         folderPath,
         name,
       }
-      contextMenuRef.current = state
+      contextMenuReference.current = state
       setContextMenu(state)
     },
     [dataProvider],
   )
 
   const closeContextMenu = useCallback(() => {
-    contextMenuRef.current = null
+    contextMenuReference.current = null
     setContextMenu(null)
   }, [])
 
   function resolveMenu(menuState?: StudioContextMenuState): StudioContextMenuState | null {
-    return menuState ?? contextMenuRef.current
+    return menuState ?? contextMenuReference.current
   }
 
   const handleNewConfigurationFile = useCallback(

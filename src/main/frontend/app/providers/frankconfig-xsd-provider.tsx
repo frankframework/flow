@@ -30,10 +30,10 @@ export function FrankConfigXsdProvider({ children }: { children: ReactNode }) {
     load()
   }, [load])
 
-  const xsdDoc = useMemo(() => (xsdContent ? parseXsd(xsdContent) : null), [xsdContent])
+  const xsdDocument = useMemo(() => (xsdContent ? parseXsd(xsdContent) : null), [xsdContent])
 
   return (
-    <FrankConfigXsdContext.Provider value={{ xsdContent, xsdDoc, error, refetch: load }}>
+    <FrankConfigXsdContext.Provider value={{ xsdContent, xsdDoc: xsdDocument, error, refetch: load }}>
       {children}
     </FrankConfigXsdContext.Provider>
   )

@@ -185,12 +185,14 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
   }, [availableHandleTypes, properties.data.sourceHandles])
 
   useEffect(() => {
-    if (dragOver && containerReference.current) {
-      updateNodeInternals(properties.id)
-
-      const newHeight = containerReference.current.offsetHeight
-      setDimensions((previous) => ({ ...previous, height: newHeight }))
+    if (!(dragOver && containerReference.current)) {
+      return
     }
+
+    updateNodeInternals(properties.id)
+
+    const newHeight = containerReference.current.offsetHeight
+    setDimensions((previous) => ({ ...previous, height: newHeight }))
   }, [dragOver, properties.id, updateNodeInternals])
 
   useEffect(() => {
@@ -213,17 +215,19 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
   }, [mandatoryChildren, properties.data.children])
 
   useLayoutEffect(() => {
-    if (containerReference.current) {
-      const measuredHeight = containerReference.current.offsetHeight
-      const scrollHeight = containerReference.current.scrollHeight
-      setIsOverflowing(scrollHeight > measuredHeight + 4)
-      setDimensions((previous) => {
-        if (Math.abs(previous.height - measuredHeight) > 2) {
-          return { ...previous, height: measuredHeight }
-        }
-        return previous
-      })
+    if (!containerReference.current) {
+      return
     }
+
+    const measuredHeight = containerReference.current.offsetHeight
+    const scrollHeight = containerReference.current.scrollHeight
+    setIsOverflowing(scrollHeight > measuredHeight + 4)
+    setDimensions((previous) => {
+      if (Math.abs(previous.height - measuredHeight) > 2) {
+        return { ...previous, height: measuredHeight }
+      }
+      return previous
+    })
   }, [properties.data.children, properties.data.sourceHandles.length, dragOver])
 
   useEffect(() => {
@@ -276,7 +280,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
       y: clientY,
     })
 
-    setIsHandleMenuOpen((prev) => !prev)
+    setIsHandleMenuOpen((previous) => !previous)
   }
 
   const editChild = (childId: string) => {
@@ -477,7 +481,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
         className={`bg-background border-border relative flex flex-col items-center overflow-x-visible rounded-md border shadow-md ${isManuallyResized ? 'h-full w-full overflow-y-hidden' : 'overflow-y-visible'}`}
         style={{
           minWidth: `${minNodeWidth}px`,
-          ...(isManuallyResized ? {} : { width: 'max-content', maxWidth: `${maxNodeWidth}px` }),
+          ...(!isManuallyResized && { width: 'max-content', maxWidth: `${maxNodeWidth}px` }),
           ...(properties.selected && { borderColor: `var(${colorVariable})` }),
         }}
         ref={containerReference}

@@ -70,13 +70,13 @@ export default function ConfigurationOverview() {
   const [draggedComponentTagName, setDraggedComponentTagName] = useState<string | null>(null)
   const [tileView, setTileView] = useState<TileView>('list')
 
-  const sidebarVisibleBeforeEditRef = useRef(true)
+  const sidebarVisibleBeforeEditReference = useRef(true)
 
   const setSidebarVisible = useSidebarStore((state) => state.setVisible)
   const getSidebarVisibility = useSidebarStore((state) => state.getVisibility)
 
   const captureSidebarVisibility = useCallback(() => {
-    sidebarVisibleBeforeEditRef.current = getSidebarVisibility(SIDEBAR_NAME)?.[SidebarSide.RIGHT] ?? true
+    sidebarVisibleBeforeEditReference.current = getSidebarVisibility(SIDEBAR_NAME)?.[SidebarSide.RIGHT] ?? true
   }, [getSidebarVisibility])
 
   const openEditor = useCallback(
@@ -156,10 +156,12 @@ export default function ConfigurationOverview() {
       setIsLoading(true)
       fetchProjectTree(currentConfigurationProject.name, signal)
         .then((data) => {
-          if (!signal?.aborted) {
-            setTree(data)
-            setIsLoading(false)
+          if (signal?.aborted) {
+            return
           }
+
+          setTree(data)
+          setIsLoading(false)
         })
         .catch(() => {
           if (!signal?.aborted) {
@@ -246,7 +248,7 @@ export default function ConfigurationOverview() {
     (configurationPath: string, components: NonCanvasComponent[]) => {
       replaceComponents(configurationPath, components)
       closeEditor()
-      setSidebarVisible(SIDEBAR_NAME, SidebarSide.RIGHT, sidebarVisibleBeforeEditRef.current)
+      setSidebarVisible(SIDEBAR_NAME, SidebarSide.RIGHT, sidebarVisibleBeforeEditReference.current)
     },
     [replaceComponents, closeEditor, setSidebarVisible],
   )

@@ -15,8 +15,10 @@ vi.mock('fflate', () => ({
 
 function makeFile(relativePath: string, sizeOverride?: number): File {
   const file = new File([new Uint8Array(4)], relativePath.split('/').pop() ?? 'file')
-  Object.defineProperty(file, 'webkitRelativePath', { value: relativePath })
-  Object.defineProperty(file, 'arrayBuffer', { value: () => Promise.resolve(new ArrayBuffer(4)) })
+  Object.defineProperties(file, {
+    webkitRelativePath: { value: relativePath },
+    arrayBuffer: { value: () => Promise.resolve(new ArrayBuffer(4)) },
+  })
   if (sizeOverride !== undefined) {
     Object.defineProperty(file, 'size', { value: sizeOverride })
   }

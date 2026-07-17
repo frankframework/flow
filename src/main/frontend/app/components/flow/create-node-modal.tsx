@@ -31,7 +31,7 @@ function getElementNamesForType(fullName: string, types: FFDocJson['types'], ele
   const fullNames = new Set(types[fullName])
   return new Set(
     Object.entries(elements)
-      .filter(([_, el]) => fullNames.has(el.className))
+      .filter(([_, element]) => fullNames.has(element.className))
       .map(([name]) => name),
   )
 }

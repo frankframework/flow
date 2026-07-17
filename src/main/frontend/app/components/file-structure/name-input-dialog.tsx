@@ -28,7 +28,7 @@ export const PROJECT_NAME_PATTERNS: Record<string, RegExp> = {
   'Cannot have a file extension': /^(?!.*\.[^.\\/]+$).*$/,
 }
 
-type NameInputDialogProps = {
+type NameInputDialogProperties = {
   title: string
   initialValue?: string
   submitLabel?: string
@@ -44,10 +44,10 @@ export default function NameInputDialog({
   onSubmit,
   onCancel,
   patterns = FOLDER_OR_ADAPTER_NAME_PATTERNS,
-}: NameInputDialogProps) {
+}: NameInputDialogProperties) {
   const [value, setValue] = useState(initialValue)
   const [isValid, setIsValid] = useState(false)
-  const overlayRef = useRef<HTMLDivElement>(null)
+  const overlayReference = useRef<HTMLDivElement>(null)
 
   const handleSubmit = () => {
     if (!isValid) return
@@ -57,19 +57,21 @@ export default function NameInputDialog({
   useSubmitOnEnter(handleSubmit)
 
   const handleKeyDown = (event: React.KeyboardEvent) => {
-    if (event.key === 'Escape') {
-      event.preventDefault()
-      onCancel()
+    if (event.key !== 'Escape') {
+      return
     }
+
+    event.preventDefault()
+    onCancel()
   }
 
   const handleOverlayClick = (event: React.MouseEvent) => {
-    if (event.target === overlayRef.current) onCancel()
+    if (event.target === overlayReference.current) onCancel()
   }
 
   return createPortal(
     <div
-      ref={overlayRef}
+      ref={overlayReference}
       className="fixed inset-0 z-[70] flex items-center justify-center bg-black/30"
       onClick={handleOverlayClick}
     >

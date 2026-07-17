@@ -18,7 +18,7 @@ export default function StudioContext() {
   const { setDraggedName, setAllowedOnCanvas } = useNodeContextStore((state) => state)
   const [searchTerm, setSearchTerm] = useState('')
   const project = useProjectStore((state) => state.project)
-  const { filters, elements, isLoading, error: ffDocError, refetch: refetchFFDoc } = useFFDoc()
+  const { filters, elements, isLoading, error: ffDocumentError, refetch: refetchFDocument } = useFFDoc()
   const { xsdDoc, error: xsdError, refetch: refetchXsd } = useFrankConfigXsd()
 
   const { allowed, elementsAllowedOnCanvas } = useMemo(() => {
@@ -36,7 +36,7 @@ export default function StudioContext() {
   }, [xsdDoc])
 
   const isReady = !isLoading && !!elements && allowed !== null
-  const hasError = ffDocError !== null || xsdError !== null
+  const hasError = ffDocumentError !== null || xsdError !== null
 
   const [timedOut, setTimedOut] = useState(false)
 
@@ -49,7 +49,7 @@ export default function StudioContext() {
 
   const retry = () => {
     setTimedOut(false)
-    refetchFFDoc()
+    refetchFDocument()
     refetchXsd()
   }
 
@@ -76,11 +76,11 @@ export default function StudioContext() {
     : []
 
   const componentLookup = filters?.Components
-    ? Object.entries(filters.Components).reduce<Record<string, string>>((acc, [type, names]) => {
+    ? Object.entries(filters.Components).reduce<Record<string, string>>((accumulator, [type, names]) => {
         for (const name of names) {
-          acc[name] = type
+          accumulator[name] = type
         }
-        return acc
+        return accumulator
       }, {})
     : {}
 

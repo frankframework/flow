@@ -119,7 +119,7 @@ export default function NodeContext({
       if (!child) return
 
       return {
-        ...(child.name ? { name: child.name } : {}),
+        ...(child.name && { name: child.name }),
         ...child.attributes,
       }
     },
@@ -136,7 +136,7 @@ export default function NodeContext({
       if (!child) return
 
       return {
-        ...(child.name ? { name: child.name } : {}),
+        ...(child.name && { name: child.name }),
         ...child.attributes,
       }
     },
@@ -149,7 +149,7 @@ export default function NodeContext({
       const attributes = getAttributes(nodeId.toString())
       const name = getNodeName(nodeId.toString())
       return {
-        ...(name ? { name } : {}),
+        ...(name && { name }),
         ...attributes,
       }
     },
@@ -274,14 +274,14 @@ export default function NodeContext({
     void useNodeContextStore.getState().saveFlow?.()
   }
 
-  const canSaveRef = useRef(canSave)
-  canSaveRef.current = canSave
-  const handleSaveRef = useRef(handleSave)
-  handleSaveRef.current = handleSave
+  const canSaveReference = useRef(canSave)
+  canSaveReference.current = canSave
+  const handleSaveReference = useRef(handleSave)
+  handleSaveReference.current = handleSave
 
   useShortcut({
     'studio.save-node': () => {
-      if (canSaveRef.current) handleSaveRef.current()
+      if (canSaveReference.current) handleSaveReference.current()
     },
   })
 
@@ -360,7 +360,7 @@ export default function NodeContext({
   return (
     <>
       <div className="flex-1 overflow-y-auto px-4">
-        {currentName && <h2 className="mb-2 ms-4 font-semibold">{currentName}</h2>}
+        {currentName && <h2 className="ms-4 mb-2 font-semibold">{currentName}</h2>}
         {canHideForwards && (
           <div className="bg-background flex items-center justify-between gap-2 rounded-md p-4">
             <div>

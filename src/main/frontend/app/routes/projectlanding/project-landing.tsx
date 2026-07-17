@@ -49,7 +49,7 @@ export default function ProjectLanding() {
   const [ffConfiguration, setFFConfiguration] = useState<FFConfiguration[]>([])
   const [ffInstanceName, setFFInstanceName] = useState('')
   const [maxImportBytes, setMaxImportBytes] = useState(DEFAULT_MAX_IMPORT_BYTES)
-  const importInputRef = useRef<HTMLInputElement>(null)
+  const importInputReference = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     clearProjectState()
@@ -163,7 +163,6 @@ export default function ProjectLanding() {
     }
   }
 
-  // eslint-disable-next-line unicorn/consistent-function-scoping
   const onExportProject = async (projectName: string) => {
     try {
       await exportProject(projectName)
@@ -202,8 +201,8 @@ export default function ProjectLanding() {
       setIsOpeningProject(false)
     }
 
-    if (importInputRef.current) {
-      importInputRef.current.value = ''
+    if (importInputReference.current) {
+      importInputReference.current.value = ''
     }
   }
 
@@ -227,7 +226,7 @@ export default function ProjectLanding() {
             onNewClick={() => setIsModalOpen(true)}
             onOpenClick={() => setIsDirectoryPickerOpen(true)}
             onCloneClick={() => setIsCloneModalOpen(true)}
-            onImportClick={() => importInputRef.current?.click()}
+            onImportClick={() => importInputReference.current?.click()}
           />
           <ProjectList
             projects={filteredProjects}
@@ -267,7 +266,7 @@ export default function ProjectLanding() {
       )}
       {!isLocalEnvironment && (
         <input
-          ref={importInputRef}
+          ref={importInputReference}
           type="file"
           /* @ts-expect-error webkitdirectory is a non-standard but widely supported attribute */
           webkitdirectory=""

@@ -1,7 +1,7 @@
 import React from 'react'
 import clsx from 'clsx'
 
-type IconButtonProps = {
+type IconButtonProperties = {
   title?: string
   onClick?: (event: React.MouseEvent) => void
   onContextMenu?: (event: React.MouseEvent) => void
@@ -17,7 +17,7 @@ export default function IconButton({
   className,
   disabled = false,
   children,
-}: Readonly<IconButtonProps>) {
+}: Readonly<IconButtonProperties>) {
   return (
     <div
       role="button"

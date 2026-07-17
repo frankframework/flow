@@ -41,10 +41,12 @@ export abstract class BaseFilesDataProvider<TData = unknown> implements TreeData
   }
 
   public async onChangeItemChildren(itemId: TreeItemIndex, newChildren: TreeItemIndex[]) {
-    if (this.data[itemId]) {
-      this.data[itemId].children = newChildren
-      this.notifyListeners([itemId])
+    if (!this.data[itemId]) {
+      return
     }
+
+    this.data[itemId].children = newChildren
+    this.notifyListeners([itemId])
   }
 
   public onDidChangeTreeData(listener: (changedItemIds: TreeItemIndex[]) => void): Disposable {

@@ -29,7 +29,7 @@ type NodeContextStore = {
   setChildParentId: (id: string | null) => void
   setDraggedName: (name: string | null) => void
   setEditingSubtype: (subtype: string | null) => void
-  registerSaveFlow: (fn: (() => Promise<void>) | null) => void
+  registerSaveFlow: (function_: (() => Promise<void>) | null) => void
   setAllowedOnCanvas: (allowed: boolean) => void
   setDropSuccessful: (successful: boolean) => void
   setIsMultiSelect: (value: boolean) => void

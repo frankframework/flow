@@ -1,14 +1,14 @@
 import React from 'react'
 import clsx from 'clsx'
 
-type IconLabelButtonProps = {
+type IconLabelButtonProperties = {
   icon: React.ReactNode
   label: string
   onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void
   className?: string
 }
 
-export default function IconLabelButton({ icon, label, onClick, className }: Readonly<IconLabelButtonProps>) {
+export default function IconLabelButton({ icon, label, onClick, className }: Readonly<IconLabelButtonProperties>) {
   return (
     <button
       type="button"

@@ -9,7 +9,7 @@ import AltArrowDownIcon from '/icons/solar/Alt Arrow Down.svg?react'
 import AltArrowUpIcon from '/icons/solar/Alt Arrow Up.svg?react'
 import KeyIcon from '/icons/solar/Key.svg?react'
 
-type GitToolbarProps = {
+type GitToolbarProperties = {
   status: GitStatus | null
   onRefresh: () => void
   onPush: () => void
@@ -27,7 +27,7 @@ export default function GitToolbar({
   token,
   onTokenChange,
   hasStoredToken,
-}: GitToolbarProps) {
+}: GitToolbarProperties) {
   const [isPushing, setIsPushing] = useState(false)
   const [isPulling, setIsPulling] = useState(false)
   const [showToken, setShowToken] = useState(false)

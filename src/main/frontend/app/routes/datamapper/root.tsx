@@ -26,18 +26,20 @@ export default function DataMapperRoot() {
 
   useEffect(() => {
     const loadConfig = async () => {
-      if (project) {
-        const config = await fetchDatamapperConfiguration(project.name)
-        if (config) {
-          dispatchMappingListConfig({
-            type: 'IMPORT_CONFIG',
-            payload: config,
-          })
+      if (!project) {
+        return
+      }
 
-          setRoute(config.stage == 'Mapping' ? 'Properties' : 'Initialize')
-        } else {
-          setRoute('Initialize')
-        }
+      const config = await fetchDatamapperConfiguration(project.name)
+      if (config) {
+        dispatchMappingListConfig({
+          type: 'IMPORT_CONFIG',
+          payload: config,
+        })
+
+        setRoute(config.stage == 'Mapping' ? 'Properties' : 'Initialize')
+      } else {
+        setRoute('Initialize')
       }
     }
 

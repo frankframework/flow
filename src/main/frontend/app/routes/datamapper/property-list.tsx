@@ -87,10 +87,10 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
   const [mappingTargets, setMappingTargets] = useState<NodeLabels[]>([])
   const canvasWidth = useRef<HTMLDivElement>(null)
 
-  const editingMappingRef = useRef<MappingNodeData | null>(null)
+  const editingMappingReference = useRef<MappingNodeData | null>(null)
 
   useEffect(() => {
-    editingMappingRef.current = editingMapping
+    editingMappingReference.current = editingMapping
   }, [editingMapping])
 
   const flow = useFlowManagement({
@@ -108,10 +108,10 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
       const { sources, targets, unfilteredSources } = getMappingNodes(
         nodes,
         edges,
-        editingMappingRef.current || undefined,
+        editingMappingReference.current || undefined,
       )
 
-      if (!editingMappingRef.current) {
+      if (!editingMappingReference.current) {
         const error = validateMapping(sources, targets, unfilteredSources)
         if (error) {
           showErrorToast(error)
@@ -136,9 +136,8 @@ function PropertyList({ config, configDispatch }: PropertyListProperties) {
           if (error instanceof Error) {
             showErrorToast(error.message)
             return
-          } else {
-            throw error
           }
+          throw error
         }
       }
 

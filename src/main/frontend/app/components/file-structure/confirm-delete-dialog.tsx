@@ -3,15 +3,15 @@ import { createPortal } from 'react-dom'
 import Button from '~/components/inputs/button'
 import { useSubmitOnEnter } from '~/hooks/use-submit-on-enter'
 
-type ConfirmDeleteDialogProps = {
+type ConfirmDeleteDialogProperties = {
   name: string
   isFolder: boolean
   onConfirm: () => void
   onCancel: () => void
 }
 
-export default function ConfirmDeleteDialog({ name, isFolder, onConfirm, onCancel }: ConfirmDeleteDialogProps) {
-  const overlayRef = useRef<HTMLDivElement>(null)
+export default function ConfirmDeleteDialog({ name, isFolder, onConfirm, onCancel }: ConfirmDeleteDialogProperties) {
+  const overlayReference = useRef<HTMLDivElement>(null)
 
   useSubmitOnEnter(onConfirm)
 
@@ -24,12 +24,12 @@ export default function ConfirmDeleteDialog({ name, isFolder, onConfirm, onCance
   }, [onCancel])
 
   const handleOverlayClick = (e: React.MouseEvent) => {
-    if (e.target === overlayRef.current) onCancel()
+    if (e.target === overlayReference.current) onCancel()
   }
 
   return createPortal(
     <div
-      ref={overlayRef}
+      ref={overlayReference}
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/30"
       onClick={handleOverlayClick}
     >

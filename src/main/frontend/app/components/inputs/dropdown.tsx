@@ -75,7 +75,7 @@ export default function Dropdown({
   useEffect(() => {
     if (!id) return
 
-    const labelElement = document.querySelector(`[for="${id}"]`) as HTMLLabelElement | null
+    const labelElement = document.querySelector(`[for="${CSS.escape(id)}"]`) as HTMLLabelElement | null
 
     labelElement?.addEventListener('click', toggleDropdown)
 
@@ -140,13 +140,13 @@ export default function Dropdown({
       case 'ArrowDown': {
         event.preventDefault()
         event.stopPropagation()
-        setHighlightedIndex((prev) => Math.min(prev + 1, optionsArray.length - 1))
+        setHighlightedIndex((previous) => Math.min(previous + 1, optionsArray.length - 1))
         break
       }
       case 'ArrowUp': {
         event.preventDefault()
         event.stopPropagation()
-        setHighlightedIndex((prev) => Math.max(prev - 1, 0))
+        setHighlightedIndex((previous) => Math.max(previous - 1, 0))
         break
       }
       case 'Enter': {

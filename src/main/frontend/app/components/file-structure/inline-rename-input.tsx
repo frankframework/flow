@@ -1,7 +1,7 @@
 import type { TreeItemIndex } from 'react-complex-tree'
 import Input from '~/components/inputs/input'
 
-type InlineRenameInputProps = {
+type InlineRenameInputProperties = {
   icon: React.ComponentType<{ className?: string }>
   value: string
   onChange: (value: string) => void
@@ -17,7 +17,7 @@ export default function InlineRenameInput({
   onSubmit,
   onCancel,
   itemIndex,
-}: InlineRenameInputProps) {
+}: InlineRenameInputProperties) {
   return (
     <div className="flex items-center" onContextMenu={(e) => e.preventDefault()}>
       <Icon className="fill-foreground w-4 flex-shrink-0" />

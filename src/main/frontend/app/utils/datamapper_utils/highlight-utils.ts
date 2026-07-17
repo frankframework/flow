@@ -5,10 +5,12 @@ export function getHighlightedFromMappingNode(edges: Edge[], id: string): Set<st
   const highlightedNodes = new Set<string>()
 
   for (const edge of edges) {
-    if (edge.id.includes(id)) {
-      highlightedNodes.add(edge.source)
-      highlightedNodes.add(edge.target)
+    if (!edge.id.includes(id)) {
+      continue
     }
+
+    highlightedNodes.add(edge.source)
+    highlightedNodes.add(edge.target)
   }
 
   return highlightedNodes

@@ -36,11 +36,13 @@ export const getNodeTypes = ({
       data={{ ...properties.data, setNodes: setReactFlowNodes }}
       variant="source"
       onEdit={(data) => {
-        if (data) {
-          setEditingNode(data)
-          openModelType.current = 'source'
-          setAddFieldModal(true)
+        if (!data) {
+          return
         }
+
+        setEditingNode(data)
+        openModelType.current = 'source'
+        setAddFieldModal(true)
       }}
       onDelete={(id) => flow.deleteNode(id)}
       onHighlight={(id) => flow.highlightFromPropertyNode(id)}
@@ -52,11 +54,13 @@ export const getNodeTypes = ({
       data={{ ...properties.data, setNodes: setReactFlowNodes }}
       variant="target"
       onEdit={(data) => {
-        if (data) {
-          setEditingNode(data)
-          openModelType.current = 'target'
-          setAddFieldModal(true)
+        if (!data) {
+          return
         }
+
+        setEditingNode(data)
+        openModelType.current = 'target'
+        setAddFieldModal(true)
       }}
       onDelete={(id) => flow.deleteNode(id)}
       onHighlight={(id) => flow.highlightFromPropertyNode(id)}
@@ -67,11 +71,13 @@ export const getNodeTypes = ({
       {...node}
       onHighlight={(id) => flow.highlightFromPropertyNode(id)}
       onEdit={(data) => {
-        if (data) {
-          setEditingNode(data)
-          openModelType.current = 'target'
-          setAddFieldModal(true)
+        if (!data) {
+          return
         }
+
+        setEditingNode(data)
+        openModelType.current = 'target'
+        setAddFieldModal(true)
       }}
       onDelete={(id) => flow.deleteNode(id)}
     />

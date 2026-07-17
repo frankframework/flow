@@ -58,16 +58,18 @@ export default function ContextInput({
 }
 
 function DescriptionHelpIcon({ description, elements }: Readonly<{ description: string; elements: Elements | null }>) {
-  const ref = useRef<HTMLDivElement | null>(null)
+  const reference = useRef<HTMLDivElement | null>(null)
   const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null)
   const [show, setShow] = useState(false)
   const transformed = useJavadocTransform(description, elements)
 
   const handleMouseEnter = () => {
-    if (ref.current) {
-      setAnchorRect(ref.current.getBoundingClientRect())
-      setShow(true)
+    if (!reference.current) {
+      return
     }
+
+    setAnchorRect(reference.current.getBoundingClientRect())
+    setShow(true)
   }
 
   const handleMouseLeave = () => {
@@ -77,7 +79,7 @@ function DescriptionHelpIcon({ description, elements }: Readonly<{ description: 
   return (
     <>
       <div
-        ref={ref}
+        ref={reference}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         className="inline-flex cursor-pointer"
@@ -99,17 +101,19 @@ function DescriptionHelpIcon({ description, elements }: Readonly<{ description: 
 }
 
 function DeprecatedIcon({ deprecated }: Readonly<{ deprecated: DeprecatedInfo }>) {
-  const ref = useRef<HTMLDivElement | null>(null)
+  const reference = useRef<HTMLDivElement | null>(null)
   const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null)
   const [show, setShow] = useState(false)
 
   if (!deprecated) return null
 
   const handleMouseEnter = () => {
-    if (ref.current) {
-      setAnchorRect(ref.current.getBoundingClientRect())
-      setShow(true)
+    if (!reference.current) {
+      return
     }
+
+    setAnchorRect(reference.current.getBoundingClientRect())
+    setShow(true)
   }
 
   const handleMouseLeave = () => {
@@ -118,7 +122,7 @@ function DeprecatedIcon({ deprecated }: Readonly<{ deprecated: DeprecatedInfo }>
 
   return (
     <>
-      <div ref={ref} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} className="inline-flex">
+      <div ref={reference} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} className="inline-flex">
         <DangerTriangle className="text-error h-auto w-4 cursor-pointer fill-current" />
       </div>
 

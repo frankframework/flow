@@ -116,11 +116,11 @@ export default class StudioFilesDataProvider extends BaseFilesDataProvider<Studi
 
     const { path, adapterNames = [] } = item.data
 
-    for (const [i, adapterName] of adapterNames.entries()) {
-      const adapterIndex = `${itemId}/${adapterName}::${i}`
+    for (const [index, adapterName] of adapterNames.entries()) {
+      const adapterIndex = `${itemId}/${adapterName}::${index}`
       this.data[adapterIndex] = {
         index: adapterIndex,
-        data: { adapterName, configPath: path, adapterPosition: i },
+        data: { adapterName, configPath: path, adapterPosition: index },
         isFolder: false,
       }
       item.children!.push(adapterIndex)
@@ -183,11 +183,11 @@ export default class StudioFilesDataProvider extends BaseFilesDataProvider<Studi
     }
 
     if (isFolder && child.name.endsWith('.xml') && child.adapterNames?.length) {
-      for (const [i, adapterName] of child.adapterNames.entries()) {
-        const adapterIndex = `${index}/${adapterName}::${i}`
+      for (const [index_, adapterName] of child.adapterNames.entries()) {
+        const adapterIndex = `${index}/${adapterName}::${index_}`
         this.data[adapterIndex] = {
           index: adapterIndex,
-          data: { adapterName, configPath: child.path, adapterPosition: i },
+          data: { adapterName, configPath: child.path, adapterPosition: index_ },
           isFolder: false,
         }
         this.data[index].children!.push(adapterIndex)

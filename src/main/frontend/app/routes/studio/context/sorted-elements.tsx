@@ -30,21 +30,23 @@ export default function SortedElements({ type, items, onDragStart, searchTerm }:
   const [deprecatedHovered, setDeprecatedHovered] = useState<DeprecatedInfo | null>(null)
   const [lockedElement, setLockedElement] = useState<ElementDetails | null>(null)
 
-  const lockedElementRef = useRef<ElementDetails | null>(null)
-  lockedElementRef.current = lockedElement
-  const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const lockedElementReference = useRef<ElementDetails | null>(null)
+  lockedElementReference.current = lockedElement
+  const closeTimeoutReference = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const cancelClose = useCallback(() => {
-    if (closeTimeoutRef.current !== null) {
-      clearTimeout(closeTimeoutRef.current)
-      closeTimeoutRef.current = null
+    if (closeTimeoutReference.current === null) {
+      return
     }
+
+    clearTimeout(closeTimeoutReference.current)
+    closeTimeoutReference.current = null
   }, [])
 
   const scheduleClose = useCallback(() => {
     cancelClose()
-    closeTimeoutRef.current = setTimeout(() => {
-      if (lockedElementRef.current) return
+    closeTimeoutReference.current = setTimeout(() => {
+      if (lockedElementReference.current) return
 
       setHoveredElement(null)
       setHoveredRect(null)
@@ -160,7 +162,7 @@ export default function SortedElements({ type, items, onDragStart, searchTerm }:
           }}
           onEnter={() => {
             cancelClose()
-            setLockedElement((prev) => prev ?? hoveredElement)
+            setLockedElement((previous) => previous ?? hoveredElement)
           }}
           onLeave={() => {
             setLockedElement(null)

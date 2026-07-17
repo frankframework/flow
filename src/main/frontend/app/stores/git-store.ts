@@ -69,7 +69,7 @@ export const useGitStore = create<GitStoreState>((set, get) => ({
     const state = get().fileHunkStates[file]
     if (!state) return
     const all = new Set<number>()
-    for (let i = 0; i < state.totalHunks; i++) all.add(i)
+    for (let index = 0; index < state.totalHunks; index++) all.add(index)
     set((s) => ({
       fileHunkStates: {
         ...s.fileHunkStates,

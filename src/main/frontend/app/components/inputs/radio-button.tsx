@@ -28,11 +28,13 @@ export default function RadioButton({
   }, [checked])
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (!disabled) {
-      const newIsSelected = event.target.checked
-      onChange?.(newIsSelected)
-      setIsSelected(newIsSelected)
+    if (disabled) {
+      return
     }
+
+    const newIsSelected = event.target.checked
+    onChange?.(newIsSelected)
+    setIsSelected(newIsSelected)
   }
 
   return (

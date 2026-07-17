@@ -13,7 +13,7 @@ type UseAsyncResult<T> = {
 }
 
 export function useAsync<T>(
-  asyncFn: (signal: AbortSignal) => Promise<T>,
+  asyncFunction: (signal: AbortSignal) => Promise<T>,
   options?: UseAsyncOptions,
 ): UseAsyncResult<T> {
   const enabled = options?.enabled ?? true
@@ -23,27 +23,29 @@ export function useAsync<T>(
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<Error | null>(null)
 
-  const asyncFnRef = useRef(asyncFn)
-  asyncFnRef.current = asyncFn
+  const asyncFunctionReference = useRef(asyncFunction)
+  asyncFunctionReference.current = asyncFunction
 
-  const abortControllerRef = useRef<AbortController | null>(null)
+  const abortControllerReference = useRef<AbortController | null>(null)
 
   useEffect(() => {
     if (!enabled) return
 
     const abortController = new AbortController()
-    abortControllerRef.current = abortController
+    abortControllerReference.current = abortController
 
     setIsLoading(true)
     setError(null)
 
-    asyncFnRef
+    asyncFunctionReference
       .current(abortController.signal)
       .then((result) => {
-        if (!abortController.signal.aborted) {
-          setData(result)
-          setIsLoading(false)
+        if (abortController.signal.aborted) {
+          return
         }
+
+        setData(result)
+        setIsLoading(false)
       })
       .catch((error_) => {
         if (error_?.name === 'AbortError' || abortController.signal.aborted) return
@@ -57,20 +59,22 @@ export function useAsync<T>(
   }, [enabled, key])
 
   const refetch = useCallback(() => {
-    abortControllerRef.current?.abort()
+    abortControllerReference.current?.abort()
     const abortController = new AbortController()
-    abortControllerRef.current = abortController
+    abortControllerReference.current = abortController
 
     setIsLoading(true)
     setError(null)
 
-    asyncFnRef
+    asyncFunctionReference
       .current(abortController.signal)
       .then((result) => {
-        if (!abortController.signal.aborted) {
-          setData(result)
-          setIsLoading(false)
+        if (abortController.signal.aborted) {
+          return
         }
+
+        setData(result)
+        setIsLoading(false)
       })
       .catch((error_) => {
         if (error_?.name === 'AbortError' || abortController.signal.aborted) return

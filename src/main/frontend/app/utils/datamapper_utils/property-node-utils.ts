@@ -55,7 +55,7 @@ export function getNodesByTypeAndId(
 ): NodeLabels[] {
   if (!nodes) return []
 
-  let newNodes = nodes
+  const newNodes = nodes
     .filter((node) => {
       if (!options.typeIncludes) return true
 
@@ -68,7 +68,7 @@ export function getNodesByTypeAndId(
 
       if (node.id == options.targetToIncludeOnEdit) return true
 
-      return !edges.some((edge) => edge.target === node.id)
+      return edges.every((edge) => edge.target !== node.id)
     })
     .filter((node) => (options.idIncludes ? node.id.includes(options.idIncludes) : true))
     .filter((node) => node.data.isConnectable != false)
@@ -79,7 +79,7 @@ export function getNodesByTypeAndId(
           type: node.data.variableTypeBasic,
           label: typeof node.data?.label === 'string' ? node.data.label : '',
           parentArray: recurseFindArray(node, nodes),
-          ...(options.includeChecked ? { checked: node.data?.checked as boolean } : {}),
+          ...(options.includeChecked && { checked: node.data?.checked as boolean }),
         }) as NodeLabels,
     )
   return newNodes
@@ -131,7 +131,7 @@ export function updateNodeType(data: CustomNodeData, formatType?: FormatDefiniti
 export function deleteNodeById(
   nodes: Node[],
   idToDelete: string,
-  sequentialRepositionFn: SequentialRepositionFn,
+  sequentialRepositionFunction: SequentialRepositionFn,
 ): { updatedNodes: Node[]; deletedNode?: Node } {
   const nodeToDelete = nodes.find((node) => node.id === idToDelete)
   if (!nodeToDelete) return { updatedNodes: nodes }
@@ -141,16 +141,16 @@ export function deleteNodeById(
   if (nodeToDelete.type && isNodeGroup(nodeToDelete.type))
     updatedNodes = updatedNodes.filter((node) => !node.parentId?.startsWith(idToDelete))
 
-  if (nodeToDelete.parentId) updatedNodes = sequentialRepositionFn(updatedNodes, nodeToDelete.parentId)
+  if (nodeToDelete.parentId) updatedNodes = sequentialRepositionFunction(updatedNodes, nodeToDelete.parentId)
 
   return { updatedNodes, deletedNode: nodeToDelete }
 }
 
-export function sequentialReposition(nodes: Node[], startParentId: string, getNodeFunc: GetNodeFunc): Node[] {
+export function sequentialReposition(nodes: Node[], startParentId: string, getNodeFunction: GetNodeFunc): Node[] {
   let parentId: string | null = startParentId
 
   while (parentId) {
-    const parentNode = getNodeFunc(parentId)
+    const parentNode = getNodeFunction(parentId)
     //Add the correct initial padding for the first item
     let yOffset: number = parentNode && parentNode.type && isNodeGroup(parentNode.type) ? GROUP_PADDING_TOP : ITEM_GAP
 
@@ -161,7 +161,7 @@ export function sequentialReposition(nodes: Node[], startParentId: string, getNo
 
     for (const child of children) {
       //Get height of child, or default to standard if it cannot be found
-      const height: number = getNodeFunc(child.id)?.measured?.height ?? OBJECT_HEIGHT
+      const height: number = getNodeFunction(child.id)?.measured?.height ?? OBJECT_HEIGHT
       //Set position of child, because the children objects is a ref to nodes it also updates the  values in nodes
       child.position = { ...child.position, y: yOffset, x: parentNode?.position.x ?? 0 + ITEM_GAP }
       //Add height and padding to next child height
@@ -174,7 +174,7 @@ export function sequentialReposition(nodes: Node[], startParentId: string, getNo
      * Add padding at the bottom of a group
      * Move up one
      */
-    parentId = getNodeFunc(parentId)?.parentId ?? null
+    parentId = getNodeFunction(parentId)?.parentId ?? null
   }
 
   return [...nodes]

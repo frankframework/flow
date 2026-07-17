@@ -30,7 +30,7 @@ export default function SidebarLayout({
     [visibleRaw, defaultVisible],
   )
   const childrenArray = React.Children.toArray(children)
-  const allotmentRef = useRef<AllotmentHandle>(null)
+  const allotmentReference = useRef<AllotmentHandle>(null)
   const [allotmentReady, setAllotmentReady] = useState(false)
 
   useEffect(() => {
@@ -38,12 +38,12 @@ export default function SidebarLayout({
   }, [initializeInstance, name, defaultVisible])
 
   useLayoutEffect(() => {
-    if (!allotmentReady || !allotmentRef.current) return
+    if (!allotmentReady || !allotmentReference.current) return
     if (sizes.length === 0) return
 
     const target = sizes.map((size, index) => (visible[index] ? size : 0))
     if (hideLeft) target.shift()
-    allotmentRef.current.resize(target)
+    allotmentReference.current.resize(target)
   }, [sizes, visible, allotmentReady, hideLeft])
 
   const handleVisibilityChange = (index: SidebarSide, value: boolean) => {
@@ -68,7 +68,7 @@ export default function SidebarLayout({
       {sizes && visible.length > 0 && (
         <Allotment
           key={name}
-          ref={allotmentRef}
+          ref={allotmentReference}
           onChange={onChangeHandler}
           onDragEnd={saveSizes}
           onVisibleChange={handleVisibilityChange}

@@ -40,20 +40,21 @@ import TreeActionButton from '../inputs/tree-action-button'
 const TREE_ID = 'studio-files-tree'
 
 function studioTabItemId(activeTab: string, dataProvider: StudioFilesDataProvider): string | null {
-  const firstSep = activeTab.indexOf('::')
-  if (firstSep === -1) return null
-  const configPath = activeTab.slice(0, firstSep)
-  const rest = activeTab.slice(firstSep + 2)
-  const lastSep = rest.lastIndexOf('::')
-  const adapterName = lastSep === -1 ? rest : rest.slice(0, lastSep)
-  const position = lastSep === -1 ? '0' : rest.slice(lastSep + 2)
+  const firstSeparator = activeTab.indexOf('::')
+  if (firstSeparator === -1) return null
+  const configPath = activeTab.slice(0, firstSeparator)
+  const rest = activeTab.slice(firstSeparator + 2)
+  const lastSeparator = rest.lastIndexOf('::')
+  const adapterName = lastSeparator === -1 ? rest : rest.slice(0, lastSeparator)
+  const position = lastSeparator === -1 ? '0' : rest.slice(lastSeparator + 2)
   return `${toTreeItemId(configPath, dataProvider.getRootPath())}/${adapterName}::${position}`
 }
 
 function getItemTitle(item: TreeItem<StudioItemData>): string {
   if (typeof item.data === 'string') {
     return item.data
-  } else if (typeof item.data === 'object' && item.data !== null) {
+  }
+  if (typeof item.data === 'object' && item.data !== null) {
     if ('adapterName' in item.data) {
       return (item.data as { adapterName: string }).adapterName
     }
@@ -79,7 +80,7 @@ export default function StudioFileStructure() {
   const [providerLoading, setProviderLoading] = useState(false)
   const [selectedItemId, setSelectedItemId] = useState<TreeItemIndex | null>(null)
   const [selectedItemType, setSelectedItemType] = useState<StudioItemType | null>(null)
-  const treeContainerRef = useRef<HTMLDivElement>(null)
+  const treeContainerReference = useRef<HTMLDivElement>(null)
   const setTabData = useTabStore((state) => state.setTabData)
   const setActiveTab = useTabStore((state) => state.setActiveTab)
   const getTab = useTabStore((state) => state.getTab)
@@ -95,9 +96,9 @@ export default function StudioFileStructure() {
     [activeTabItemId, studioExpandedItems],
   )
 
-  const expandedItemsRef = useRef(studioExpandedItems)
+  const expandedItemsReference = useRef(studioExpandedItems)
   useEffect(() => {
-    expandedItemsRef.current = studioExpandedItems
+    expandedItemsReference.current = studioExpandedItems
   }, [studioExpandedItems])
 
   useFileWatcher(project?.name ?? null, () => {
@@ -178,7 +179,7 @@ export default function StudioFileStructure() {
     },
     'studio-explorer.delete': () => {
       if (!selectedItemId) return false
-      if (!treeContainerRef.current?.contains(document.activeElement)) return false
+      if (!treeContainerReference.current?.contains(document.activeElement)) return false
       triggerExplorerAction(studioContextMenu.handleDelete, true)
     },
     'studio-explorer.reveal': () => void revealActiveTab(),
@@ -193,7 +194,7 @@ export default function StudioFileStructure() {
       setProviderLoading(true)
 
       const provider = new StudioFilesDataProvider(project.name)
-      await provider.init(expandedItemsRef.current)
+      await provider.init(expandedItemsReference.current)
 
       if (isMounted) {
         setDataProvider(provider)
@@ -522,7 +523,7 @@ export default function StudioFileStructure() {
       <Search onChange={(event) => setSearchTerm(event.target.value)} />
 
       <div
-        ref={treeContainerRef}
+        ref={treeContainerReference}
         className="min-h-0 flex-1 overflow-auto pr-2"
         onContextMenu={(mouseEvent) => {
           void studioContextMenu.openContextMenu(mouseEvent, 'root')
@@ -540,7 +541,9 @@ export default function StudioFileStructure() {
           }}
           onCollapseItem={(item) => {
             removeStudioExpandedItem(String(item.index))
-            setSelectedItemId((prev) => (prev && String(prev).startsWith(`${String(item.index)}/`) ? null : prev))
+            setSelectedItemId((previous) =>
+              previous && String(previous).startsWith(`${String(item.index)}/`) ? null : previous,
+            )
           }}
           getItemTitle={getItemTitle}
           dataProvider={dataProvider}

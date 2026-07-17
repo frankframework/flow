@@ -137,9 +137,9 @@ function buildEdgeMaps(edges: Edge[]) {
 
 function getAdapterAttributes(adapterXml: string): string {
   const parser = new DOMParser()
-  const doc = parser.parseFromString(adapterXml, 'application/xml')
-  const adapterElement = doc.documentElement
-  return [...adapterElement.attributes].map((attr) => `${attr.name}="${attr.value}"`).join(' ')
+  const document = parser.parseFromString(adapterXml, 'application/xml')
+  const adapterElement = document.documentElement
+  return [...adapterElement.attributes].map((attribute) => `${attribute.name}="${attribute.value}"`).join(' ')
 }
 
 function topologicalSort(startNodes: string[], outgoing: Record<string, string[]>): string[] {
@@ -178,15 +178,15 @@ function generateXmlElement(
   const attributes = (node.data as NodeData).attributes || {}
   const children = (node.data as NodeData).children || []
 
-  const allAttrs: Record<string, string> = {
+  const allAttributes: Record<string, string> = {
     ...attributes,
     name,
     'flow:x': String(roundedX),
     'flow:y': String(roundedY),
-    ...(height === null ? {} : { 'flow:width': String(width), 'flow:height': String(height) }),
-    ...((node.data as NodeData).hiddenForwards ? { 'flow:hiddenForwards': 'true' } : {}),
+    ...(height !== null && { 'flow:width': String(width), 'flow:height': String(height) }),
+    ...((node.data as NodeData).hiddenForwards && { 'flow:hiddenForwards': 'true' }),
   }
-  const attrStr = Object.entries(allAttrs)
+  const attributeString = Object.entries(allAttributes)
     .map(([k, v]) => `${k}="${escapeXml(v)}"`)
     .join(' ')
 
@@ -217,31 +217,33 @@ function generateXmlElement(
           .join('\n')
 
   const content = [childXml, forwards].filter(Boolean).join('\n')
-  return content ? `  <${subtype} ${attrStr} >\n${content}\n  </${subtype}>` : `  <${subtype} ${attrStr} />`
+  return content
+    ? `  <${subtype} ${attributeString} >\n${content}\n  </${subtype}>`
+    : `  <${subtype} ${attributeString} />`
 }
 
 function generateChildXml(child: ChildNode, indent: number): string {
   const spaces = ' '.repeat(indent)
 
-  const childAttrs: Record<string, string> = {
-    ...(child.name ? { name: child.name } : {}),
+  const childAttributes: Record<string, string> = {
+    ...(child.name && { name: child.name }),
     ...child.attributes,
   }
 
-  const attrStr = Object.entries(childAttrs)
+  const attributeString = Object.entries(childAttributes)
     .map(([k, v]) => `${k}="${escapeXml(v)}"`)
     .join(' ')
 
-  const attrs = attrStr ? ` ${attrStr}` : ''
+  const attributes = attributeString ? ` ${attributeString}` : ''
   const hasChildren = child.children && child.children.length > 0
 
   if (!hasChildren) {
-    return `${spaces}<${child.subtype}${attrs}/>`
+    return `${spaces}<${child.subtype}${attributes}/>`
   }
 
   const childXmlStrings = child.children!.map((nested) => generateChildXml(nested, indent + 2))
 
-  return `${spaces}<${child.subtype}${attrs}>
+  return `${spaces}<${child.subtype}${attributes}>
 ${childXmlStrings.join('\n')}
 ${spaces}</${child.subtype}>`
 }
@@ -261,20 +263,20 @@ function generateExitsXml(exitNodes: FlowNode[]): string {
         height = node.measured.height
       }
 
-      const allAttrs: Record<string, string> = {
+      const allAttributes: Record<string, string> = {
         ...data.attributes,
         name,
         'flow:x': String(roundedX),
         'flow:y': String(roundedY),
         'flow:width': String(width),
         'flow:height': String(height),
-        ...(data.hiddenForwards ? { 'flow:hiddenForwards': 'true' } : {}),
+        ...(data.hiddenForwards && { 'flow:hiddenForwards': 'true' }),
       }
-      const attrStr = Object.entries(allAttrs)
+      const attributeString = Object.entries(allAttributes)
         .map(([k, v]) => `${k}="${escapeXml(v)}"`)
         .join(' ')
 
-      return `      <Exit ${attrStr} />`
+      return `      <Exit ${attributeString} />`
     })
     .join('\n')
 }
@@ -301,7 +303,7 @@ function generateFlowElementsXml(nodes: FlowNode[]): string {
     const roundedY = Math.round(y)
     const text = stickynote.data?.content || ''
     const color = stickynote.data?.color
-    const colorAttr = color ? ` flow:color="${escapeXml(color)}"` : ''
+    const colorAttribute = color ? ` flow:color="${escapeXml(color)}"` : ''
 
     let width: number
     let height: number
@@ -314,17 +316,17 @@ function generateFlowElementsXml(nodes: FlowNode[]): string {
       height = stickynote.measured?.height ?? FlowConfig.STICKY_NOTE_DEFAULT_HEIGHT
     }
 
-    const collapsedAttr = stickynote.data?.collapsed === true ? ` flow:collapsed="true"` : ''
+    const collapsedAttribute = stickynote.data?.collapsed === true ? ` flow:collapsed="true"` : ''
 
-    let attachedToAttr = ''
+    let attachedToAttribute = ''
     if (stickynote.data?.attachedToNodeId) {
       const frankNode = nodes.find((node) => isFrankNode(node) && node.id === stickynote.data.attachedToNodeId)
       if (frankNode && isFrankNode(frankNode)) {
-        attachedToAttr = ` flow:attachedTo="${escapeXml(frankNode.data.name)}"`
+        attachedToAttribute = ` flow:attachedTo="${escapeXml(frankNode.data.name)}"`
       }
     }
 
-    return `    <flow:StickyNote${colorAttr} flow:x="${roundedX}" flow:y="${roundedY}" flow:width="${width}" flow:height="${height}"${collapsedAttr}${attachedToAttr}><![CDATA[${text.replaceAll(']]>', ']]]]><![CDATA[>')}]]></flow:StickyNote>`
+    return `    <flow:StickyNote${colorAttribute} flow:x="${roundedX}" flow:y="${roundedY}" flow:width="${width}" flow:height="${height}"${collapsedAttribute}${attachedToAttribute}><![CDATA[${text.replaceAll(']]>', ']]]]><![CDATA[>')}]]></flow:StickyNote>`
   })
 
   const groupNodesXml = generateGroupNodeXml(groupNodes, groupChildrenMap)
@@ -357,7 +359,7 @@ function generateGroupNodeXml(groupNodes: GroupNode[], groupChildrenMap: Map<str
 
     const groupName = escapeXml(groupNode.data?.label || '')
 
-    const attrParts = [
+    const attributeParts = [
       `flow:children="${childNames}"`,
       `flow:height="${height}"`,
       `flow:width="${width}"`,
@@ -367,13 +369,13 @@ function generateGroupNodeXml(groupNodes: GroupNode[], groupChildrenMap: Map<str
     ]
 
     if (groupNode.data?.description) {
-      attrParts.push(`flow:description="${escapeXml(groupNode.data.description)}"`)
+      attributeParts.push(`flow:description="${escapeXml(groupNode.data.description)}"`)
     }
 
     if (groupNode.data?.color) {
-      attrParts.push(`flow:color="${escapeXml(groupNode.data.color)}"`)
+      attributeParts.push(`flow:color="${escapeXml(groupNode.data.color)}"`)
     }
 
-    return `    <flow:GroupNode ${attrParts.join(' ')} />`
+    return `    <flow:GroupNode ${attributeParts.join(' ')} />`
   })
 }

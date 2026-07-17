@@ -10,8 +10,8 @@ type WatcherEntry = {
 const watchers = new Map<string, WatcherEntry>()
 
 function useSseWatcher(url: string | null, onFileChange?: () => void) {
-  const callbackRef = useRef(onFileChange)
-  callbackRef.current = onFileChange
+  const callbackReference = useRef(onFileChange)
+  callbackReference.current = onFileChange
 
   useEffect(() => {
     if (!url) return
@@ -29,7 +29,7 @@ function useSseWatcher(url: string | null, onFileChange?: () => void) {
       watchers.set(url, entry)
     }
 
-    const handler = () => callbackRef.current?.()
+    const handler = () => callbackReference.current?.()
     entry.handlers.add(handler)
     entry.source.addEventListener('file-change', handler)
 

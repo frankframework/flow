@@ -94,11 +94,11 @@ function analyzeTagStructure(lines: string[], startLine: number): { isSelfClosin
 function extractNameAttribute(lines: string[], startLine: number): string | null {
   const searchLimit = Math.min(startLine + MAX_LOOKAHEAD_LINES, lines.length)
 
-  for (let i = startLine; i < searchLimit; i++) {
-    const match = lines[i].match(REGEX_NAME_ATTR)
+  for (let index = startLine; index < searchLimit; index++) {
+    const match = lines[index].match(REGEX_NAME_ATTR)
     if (match) return match[1]
 
-    const isTagEnding = lines[i].includes('/>') || (/[^/]>\s*$/.test(lines[i]) && i > startLine)
+    const isTagEnding = lines[index].includes('/>') || (/[^/]>\s*$/.test(lines[index]) && index > startLine)
     if (isTagEnding) break
   }
 
@@ -108,12 +108,12 @@ function extractNameAttribute(lines: string[], startLine: number): string | null
 function hasNameAttributeWithinTag(lines: string[], startLine: number, targetName: string): boolean {
   const searchLimit = Math.min(startLine + MAX_LOOKAHEAD_LINES, lines.length)
 
-  for (let i = startLine; i < searchLimit; i++) {
-    if (lines[i].includes(`name="${targetName}"`) || lines[i].includes(`name='${targetName}'`)) {
+  for (let index = startLine; index < searchLimit; index++) {
+    if (lines[index].includes(`name="${targetName}"`) || lines[index].includes(`name='${targetName}'`)) {
       return true
     }
 
-    if (i > startLine && REGEX_NEW_TAG_START.test(lines[i])) {
+    if (index > startLine && REGEX_NEW_TAG_START.test(lines[index])) {
       return false
     }
   }
@@ -137,8 +137,8 @@ export function lineToOffset(xml: string, lineNumber: number): number {
   const lines = xml.split('\n')
   let offset = 0
 
-  for (let i = 0; i < lineNumber - 1 && i < lines.length; i++) {
-    offset += lines[i].length + 1
+  for (let index = 0; index < lineNumber - 1 && index < lines.length; index++) {
+    offset += lines[index].length + 1
   }
 
   return offset
@@ -147,16 +147,16 @@ export function lineToOffset(xml: string, lineNumber: number): number {
 export function offsetToLine(xml: string, offset: number): number {
   let line = 1
 
-  for (let i = 0; i < offset && i < xml.length; i++) {
-    if (xml[i] === '\n') line++
+  for (let index = 0; index < offset && index < xml.length; index++) {
+    if (xml[index] === '\n') line++
   }
 
   return line
 }
 
 export function findAdapterIndexAtOffset(adapters: AdapterLocation[], cursorOffset: number): number {
-  for (let i = adapters.length - 1; i >= 0; i--) {
-    if (adapters[i].offset <= cursorOffset) return i
+  for (let index = adapters.length - 1; index >= 0; index--) {
+    if (adapters[index].offset <= cursorOffset) return index
   }
   return 0
 }
@@ -185,13 +185,13 @@ export function findElementInXml(xml: string, subtype: string, name?: string): n
   const lines = xml.split('\n')
   const targetTag = `<${subtype}`
 
-  for (let i = 0; i < lines.length; i++) {
-    if (!lines[i].includes(targetTag)) continue
+  for (let index = 0; index < lines.length; index++) {
+    if (!lines[index].includes(targetTag)) continue
 
-    if (!name) return i + 1
+    if (!name) return index + 1
 
-    if (hasNameAttributeWithinTag(lines, i, name)) {
-      return i + 1
+    if (hasNameAttributeWithinTag(lines, index, name)) {
+      return index + 1
     }
   }
 

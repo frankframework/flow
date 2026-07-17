@@ -8,22 +8,22 @@ export function cloneWithRemappedIds<T>(value: T, idMap: Map<string, string>, ge
   }
 
   if (value && typeof value === 'object') {
-    const obj = value as Record<string, unknown>
+    const object = value as Record<string, unknown>
 
     return Object.fromEntries(
-      Object.entries(obj).map(([key, val]) => {
-        if (key === 'id' && typeof val === 'string') {
-          if (!idMap.has(val)) {
-            idMap.set(val, generateId())
+      Object.entries(object).map(([key, value_]) => {
+        if (key === 'id' && typeof value_ === 'string') {
+          if (!idMap.has(value_)) {
+            idMap.set(value_, generateId())
           }
-          return [key, idMap.get(val)!]
+          return [key, idMap.get(value_)!]
         }
 
-        if (REFERENCE_KEYS.has(key) && typeof val === 'string') {
-          return [key, idMap.get(val) ?? val]
+        if (REFERENCE_KEYS.has(key) && typeof value_ === 'string') {
+          return [key, idMap.get(value_) ?? value_]
         }
 
-        return [key, cloneWithRemappedIds(val, idMap, generateId)]
+        return [key, cloneWithRemappedIds(value_, idMap, generateId)]
       }),
     ) as T
   }
@@ -137,7 +137,7 @@ export function frankdocChipStyle(name: string): { borderColor: string; backgrou
   const a = s * Math.min(l, 1 - l)
   const f = (n: number) => {
     const k = (n + h / 30) % 12
-    return l - a * Math.max(-1, Math.min(k - 3, Math.min(9 - k, 1)))
+    return l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1))
   }
   const r = Math.round(f(0) * 255)
   const g = Math.round(f(8) * 255)

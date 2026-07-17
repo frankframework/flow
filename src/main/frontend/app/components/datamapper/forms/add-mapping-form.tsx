@@ -20,15 +20,15 @@ export type MappingModalProps = {
 }
 
 const updateArrayItem = <T,>(setter: Dispatch<SetStateAction<T[]>>, index: number, value: T) => {
-  setter((prev) => {
-    const next = [...prev]
+  setter((previous) => {
+    const next = [...previous]
     if (index >= 0 && index < next.length) next[index] = value
     return next
   })
 }
 
 const deleteArrayItem = <T,>(setter: Dispatch<SetStateAction<T[]>>, index: number) => {
-  setter((prev) => prev.filter((_, i) => i !== index))
+  setter((previous) => previous.filter((_, index_) => index_ !== index))
 }
 
 function AddMappingForm({ onSave, sources, targets, initialData }: MappingModalProps) {

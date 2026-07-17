@@ -5,16 +5,16 @@ export function parseXsd(xsdString: string) {
   return parser.parseFromString(xsdString, 'text/xml')
 }
 
-export function getChildrenForType(doc: Document, typeName: string): string[] {
-  const typeNode = getComplexTypeByName(doc, typeName)
+export function getChildrenForType(document: Document, typeName: string): string[] {
+  const typeNode = getComplexTypeByName(document, typeName)
 
   if (!typeNode) return []
 
-  return getChildrenFromNode(doc, typeNode)
+  return getChildrenFromNode(document, typeNode)
 }
 
 function getChildrenFromNode(
-  doc: Document,
+  document: Document,
   node: Element,
   visitedGroups = new Set<string>(),
   visitedTypes = new Set<string>(),
@@ -22,26 +22,31 @@ function getChildrenFromNode(
   const results: string[] = []
 
   for (const child of node.children) {
-    results.push(...handleNode(doc, child, visitedGroups, visitedTypes))
+    results.push(...handleNode(document, child, visitedGroups, visitedTypes))
   }
 
   return results
 }
 
-function handleNode(doc: Document, node: Element, visitedGroups: Set<string>, visitedTypes: Set<string>): string[] {
+function handleNode(
+  document: Document,
+  node: Element,
+  visitedGroups: Set<string>,
+  visitedTypes: Set<string>,
+): string[] {
   switch (node.localName) {
     case 'element': {
-      return handleElement(doc, node, visitedGroups, visitedTypes)
+      return handleElement(document, node, visitedGroups, visitedTypes)
     }
 
     case 'group': {
-      return handleGroup(doc, node, visitedGroups, visitedTypes)
+      return handleGroup(document, node, visitedGroups, visitedTypes)
     }
 
     case 'sequence':
     case 'choice':
     case 'all': {
-      return handleContainer(doc, node, visitedGroups, visitedTypes)
+      return handleContainer(document, node, visitedGroups, visitedTypes)
     }
 
     default: {
@@ -50,7 +55,12 @@ function handleNode(doc: Document, node: Element, visitedGroups: Set<string>, vi
   }
 }
 
-function handleElement(doc: Document, node: Element, visitedGroups: Set<string>, visitedTypes: Set<string>): string[] {
+function handleElement(
+  document: Document,
+  node: Element,
+  visitedGroups: Set<string>,
+  visitedTypes: Set<string>,
+): string[] {
   const results: string[] = []
 
   const name = node.getAttribute('name') || node.getAttribute('ref')
@@ -61,29 +71,34 @@ function handleElement(doc: Document, node: Element, visitedGroups: Set<string>,
   if (baseType && !visitedTypes.has(baseType)) {
     visitedTypes.add(baseType)
 
-    const typeNode = getComplexTypeByName(doc, baseType)
+    const typeNode = getComplexTypeByName(document, baseType)
     if (typeNode) {
-      results.push(...getChildrenFromNode(doc, typeNode, visitedGroups, visitedTypes))
+      results.push(...getChildrenFromNode(document, typeNode, visitedGroups, visitedTypes))
     }
   }
 
   return results
 }
 
-function handleGroup(doc: Document, node: Element, visitedGroups: Set<string>, visitedTypes: Set<string>): string[] {
-  const ref = node.getAttribute('ref')
-  if (!ref || visitedGroups.has(ref)) return []
+function handleGroup(
+  document: Document,
+  node: Element,
+  visitedGroups: Set<string>,
+  visitedTypes: Set<string>,
+): string[] {
+  const reference = node.getAttribute('ref')
+  if (!reference || visitedGroups.has(reference)) return []
 
-  visitedGroups.add(ref)
+  visitedGroups.add(reference)
 
-  const groupDef = getGroupByName(doc, ref)
+  const groupDef = getGroupByName(document, reference)
   if (!groupDef) return []
 
-  return getChildrenFromNode(doc, groupDef, visitedGroups, visitedTypes)
+  return getChildrenFromNode(document, groupDef, visitedGroups, visitedTypes)
 }
 
 function handleContainer(
-  doc: Document,
+  document: Document,
   node: Element,
   visitedGroups: Set<string>,
   visitedTypes: Set<string>,
@@ -91,23 +106,23 @@ function handleContainer(
   const results: string[] = []
 
   for (const child of node.children) {
-    results.push(...handleNode(doc, child, visitedGroups, visitedTypes))
+    results.push(...handleNode(document, child, visitedGroups, visitedTypes))
   }
 
   return results
 }
 
-function getComplexTypeByName(doc: Document, typeName: string): Element | null {
-  return queryOne(doc, `//xs:complexType[@name='${typeName}']`)
+function getComplexTypeByName(document: Document, typeName: string): Element | null {
+  return queryOne(document, `//xs:complexType[@name='${typeName}']`)
 }
 
-function getGroupByName(doc: Document, name: string): Element | null {
-  return queryOne(doc, `//xs:group[@name='${name}']`)
+function getGroupByName(document: Document, name: string): Element | null {
+  return queryOne(document, `//xs:group[@name='${name}']`)
 }
 
 function getBaseTypeFromElement(element: Element): string | null {
-  const ext = queryOne(element, `.//xs:extension`)
-  return ext?.getAttribute('base') || null
+  const extension = queryOne(element, `.//xs:extension`)
+  return extension?.getAttribute('base') || null
 }
 
 const nsResolver = (prefix: string | null) => (prefix === 'xs' ? 'http://www.w3.org/2001/XMLSchema' : null)
@@ -122,27 +137,27 @@ function evaluateXPath(
   xpath: string,
   type: number = XPathResult.FIRST_ORDERED_NODE_TYPE,
 ): XPathResult {
-  const doc = context.ownerDocument ?? context
+  const document = context.ownerDocument ?? context
 
-  return doc.evaluate(xpath, context, nsResolver, type, null)
+  return document.evaluate(xpath, context, nsResolver, type, null)
 }
 
-export function resolveElementTypeName(doc: Document, elementName: string): string | null {
-  const elementNode = queryOne(doc, `//xs:element[@name='${elementName}']`)
+export function resolveElementTypeName(document: Document, elementName: string): string | null {
+  const elementNode = queryOne(document, `//xs:element[@name='${elementName}']`)
   if (!elementNode) return null
 
   return elementNode.getAttribute('type') ?? getBaseTypeFromElement(elementNode) ?? `${elementName}Type`
 }
 
-export function getAllowedChildElementsForElement(doc: Document, elementName: string): string[] {
-  const typeName = resolveElementTypeName(doc, elementName)
+export function getAllowedChildElementsForElement(document: Document, elementName: string): string[] {
+  const typeName = resolveElementTypeName(document, elementName)
   if (!typeName) return []
 
-  return getFirstLevelElementsForType(doc, typeName)
+  return getFirstLevelElementsForType(document, typeName)
 }
 
-export function getFirstLevelElementsForType(doc: Document, typeName: string): string[] {
-  const typeNode = getComplexTypeByName(doc, typeName)
+export function getFirstLevelElementsForType(document: Document, typeName: string): string[] {
+  const typeNode = getComplexTypeByName(document, typeName)
   if (!typeNode) return []
 
   const results = new Set<string>()
@@ -160,12 +175,12 @@ export function getFirstLevelElementsForType(doc: Document, typeName: string): s
         }
 
         case 'group': {
-          const ref = child.getAttribute('ref')
-          if (!ref || visitedGroups.has(ref)) break
+          const reference = child.getAttribute('ref')
+          if (!reference || visitedGroups.has(reference)) break
 
-          visitedGroups.add(ref)
+          visitedGroups.add(reference)
 
-          const groupDef = getGroupByName(doc, ref)
+          const groupDef = getGroupByName(document, reference)
           if (!groupDef) break
 
           extract(groupDef, visitedGroups)
@@ -188,21 +203,21 @@ export function getFirstLevelElementsForType(doc: Document, typeName: string): s
   return [...results]
 }
 
-export function getElementRequirements(doc: Document, elementName: string): Requirement[] {
-  const typeName = resolveElementTypeName(doc, elementName)
+export function getElementRequirements(document: Document, elementName: string): Requirement[] {
+  const typeName = resolveElementTypeName(document, elementName)
   if (!typeName) return []
 
-  const typeNode = getComplexTypeByName(doc, typeName)
+  const typeNode = getComplexTypeByName(document, typeName)
   if (!typeNode) {
     console.warn(`No type found for element "${elementName}" (tried "${typeName}")`)
     return []
   }
 
-  return extractRequirements(doc, typeNode)
+  return extractRequirements(document, typeNode)
 }
 
 function extractRequirements(
-  doc: Document,
+  document: Document,
   node: Element,
   parentRequired = true,
   visitedGroups = new Set<string>(),
@@ -227,15 +242,15 @@ function extractRequirements(
       }
 
       case 'group': {
-        const ref = child.getAttribute('ref')
-        if (!ref || visitedGroups.has(ref)) break
+        const reference = child.getAttribute('ref')
+        if (!reference || visitedGroups.has(reference)) break
 
-        visitedGroups.add(ref)
+        visitedGroups.add(reference)
 
-        const groupDef = getGroupByName(doc, ref)
+        const groupDef = getGroupByName(document, reference)
         if (!groupDef) break
 
-        const children = extractRequirements(doc, groupDef, isRequired, visitedGroups)
+        const children = extractRequirements(document, groupDef, isRequired, visitedGroups)
 
         if (isRequired) {
           // REQUIRED GROUP = "at least one of its children"
@@ -254,7 +269,7 @@ function extractRequirements(
 
       case 'sequence':
       case 'all': {
-        const children = extractRequirements(doc, child, isRequired, visitedGroups)
+        const children = extractRequirements(document, child, isRequired, visitedGroups)
 
         results.push({
           kind: 'group',
@@ -266,7 +281,7 @@ function extractRequirements(
       }
 
       case 'choice': {
-        const children = extractRequirements(doc, child, isRequired, visitedGroups)
+        const children = extractRequirements(document, child, isRequired, visitedGroups)
 
         results.push({
           kind: 'group',
@@ -295,11 +310,11 @@ function evaluateRequirement(requirement: Requirement, children: ChildNode[]): b
 
   if (requirement.kind === 'group') {
     if (requirement.mode === 'all') {
-      return requirement.children.every((childReq) => evaluateRequirement(childReq, children))
+      return requirement.children.every((childRequest) => evaluateRequirement(childRequest, children))
     }
 
     if (requirement.mode === 'one') {
-      return requirement.children.some((childReq) => evaluateRequirement(childReq, children))
+      return requirement.children.some((childRequest) => evaluateRequirement(childRequest, children))
     }
   }
 
@@ -309,8 +324,8 @@ function evaluateRequirement(requirement: Requirement, children: ChildNode[]): b
 export function getMissingRequirements(requirements: Requirement[], children: ChildNode[]): string[] {
   const missing: string[] = []
 
-  for (const req of requirements) {
-    collectMissing(req, children, missing)
+  for (const request of requirements) {
+    collectMissing(request, children, missing)
   }
 
   return missing

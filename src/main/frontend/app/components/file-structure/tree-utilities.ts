@@ -28,7 +28,7 @@ function getSortRank(child: FileTreeNode) {
 
 export function getAncestorIds(itemId: string): string[] {
   const parts = itemId.split('/')
-  return parts.slice(0, -1).map((_, i) => parts.slice(0, i + 1).join('/'))
+  return parts.slice(0, -1).map((_, index) => parts.slice(0, index + 1).join('/'))
 }
 
 export function toTreeItemId(absolutePath: string, rootPath: string): string {
@@ -43,10 +43,10 @@ export function isVisibleInTree(itemId: string | null, expandedItems: string[]):
     .every((id) => expandedItems.includes(id))
 }
 
-export function selectAndReveal(treeRef: TreeRef, itemId: string): void {
+export function selectAndReveal(treeReference: TreeRef, itemId: string): void {
   setTimeout(() => {
-    treeRef.selectItems([itemId])
-    treeRef.focusItem(itemId)
+    treeReference.selectItems([itemId])
+    treeReference.focusItem(itemId)
   }, 50)
 }
 

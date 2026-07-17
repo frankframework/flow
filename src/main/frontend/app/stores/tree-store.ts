@@ -33,7 +33,7 @@ export const useTreeStore = create<TreeStoreState>((set) => ({
     })),
   removeEditorExpandedItem: (item) =>
     set((state) => ({
-      editorExpandedItems: state.editorExpandedItems.filter((i) => i !== item),
+      editorExpandedItems: state.editorExpandedItems.filter((index) => index !== item),
     })),
 
   studioExpandedItems: [],
@@ -43,7 +43,7 @@ export const useTreeStore = create<TreeStoreState>((set) => ({
     })),
   removeStudioExpandedItem: (item) =>
     set((state) => ({
-      studioExpandedItems: state.studioExpandedItems.filter((i) => i !== item),
+      studioExpandedItems: state.studioExpandedItems.filter((index) => index !== item),
     })),
 
   clearExpandedItems: () => set({ editorExpandedItems: [], studioExpandedItems: [] }),

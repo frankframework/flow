@@ -31,9 +31,9 @@ function formatKeybind(shortcut: Omit<ShortcutDefinition, 'handler'>, platform: 
 
   return (
     <>
-      {parts.map((part, i) => (
-        <span key={i}>
-          {i > 0 && ' + '}
+      {parts.map((part, index) => (
+        <span key={index}>
+          {index > 0 && ' + '}
           <span className="key">{part}</span>
         </span>
       ))}
@@ -63,17 +63,17 @@ export function KeybindsTable() {
   return (
     <div className="p-4">
       <div className="grid items-start gap-6 md:grid-cols-2">
-        {[...grouped.entries()].map(([scope, defs]) => (
+        {[...grouped].map(([scope, defs]) => (
           <div key={scope} className="border-border overflow-hidden rounded-md border">
             <h3 className="text-center">{scopeLabels[scope] ?? `${capitalize(scope)} Keybinds`}</h3>
             <div className="border-b-border bg-backdrop flex border-b font-bold">
               <div className="border-r-border flex-1 border-r px-3.25 py-1.5 text-sm">Action</div>
               <div className="flex-1 px-3.25 py-1.5 text-sm">Keybinds</div>
             </div>
-            {defs.map((shortcut, i) => (
+            {defs.map((shortcut, index) => (
               <div
                 key={shortcut.id}
-                className={`border-b-border flex border-b last:border-b-0 ${i % 2 === 1 ? 'bg-backdrop' : 'bg-background'}`}
+                className={`border-b-border flex border-b last:border-b-0 ${index % 2 === 1 ? 'bg-backdrop' : 'bg-background'}`}
               >
                 <div className="border-r-border flex-1 border-r px-3.25 py-1.5 text-sm">{shortcut.label}</div>
                 <div className="flex-1 px-3.25 py-1.5 text-sm">{formatKeybind(shortcut, platform)}</div>

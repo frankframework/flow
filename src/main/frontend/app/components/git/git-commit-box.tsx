@@ -1,6 +1,6 @@
 import Button from '~/components/inputs/button'
 
-type GitCommitBoxProps = {
+type GitCommitBoxProperties = {
   commitMessage: string
   onMessageChange: (message: string) => void
   onCommit: () => void
@@ -14,7 +14,7 @@ export default function GitCommitBox({
   onCommit,
   hasSelectedChunks,
   isLoading,
-}: GitCommitBoxProps) {
+}: GitCommitBoxProperties) {
   const canCommit = hasSelectedChunks && !!commitMessage.trim() && !isLoading
 
   return (
@@ -26,10 +26,12 @@ export default function GitCommitBox({
         className="border-border bg-background text-foreground placeholder:text-foreground-muted w-full resize-none rounded border p-2.5 text-xs focus:outline-none"
         rows={4}
         onKeyDown={(keyboardEvent) => {
-          if (keyboardEvent.key === 'Enter' && (keyboardEvent.ctrlKey || keyboardEvent.metaKey)) {
-            keyboardEvent.preventDefault()
-            if (canCommit) onCommit()
+          if (!(keyboardEvent.key === 'Enter' && (keyboardEvent.ctrlKey || keyboardEvent.metaKey))) {
+            return
           }
+
+          keyboardEvent.preventDefault()
+          if (canCommit) onCommit()
         }}
       />
       <Button

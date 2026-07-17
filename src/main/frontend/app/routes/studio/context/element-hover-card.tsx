@@ -7,7 +7,7 @@ import LinkButton from '~/components/inputs/link-button'
 import { frankdocChipStyle, getFirstLabelGroup } from '~/utils/flow-utils'
 import ExternalLinkIcon from '../../../../icons/solar/External Link.svg?react'
 
-type ElementHoverCardProps = {
+type ElementHoverCardProperties = {
   anchorRect: DOMRect
   element: ElementDetails
   onUnlock?: () => void
@@ -15,8 +15,14 @@ type ElementHoverCardProps = {
   onLeave?: () => void
 }
 
-export default function ElementHoverCard({ anchorRect, element, onUnlock, onEnter, onLeave }: ElementHoverCardProps) {
-  const ref = useRef<HTMLDivElement>(null)
+export default function ElementHoverCard({
+  anchorRect,
+  element,
+  onUnlock,
+  onEnter,
+  onLeave,
+}: ElementHoverCardProperties) {
+  const reference = useRef<HTMLDivElement>(null)
   const [position, setPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 })
   const offset = 10 // distance between anchor and tooltip
   const [labelGroup, label] = getFirstLabelGroup(element.labels)
@@ -28,9 +34,9 @@ export default function ElementHoverCard({ anchorRect, element, onUnlock, onEnte
   })
 
   useLayoutEffect(() => {
-    if (!ref.current || !anchorRect) return
+    if (!reference.current || !anchorRect) return
 
-    const tooltip = ref.current
+    const tooltip = reference.current
     const tooltipHeight = tooltip.offsetHeight
     const tooltipWidth = tooltip.offsetWidth
 
@@ -46,13 +52,13 @@ export default function ElementHoverCard({ anchorRect, element, onUnlock, onEnte
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (!ref.current) return
-      if (!ref.current.contains(event.target as Node)) {
+      if (!reference.current) return
+      if (!reference.current.contains(event.target as Node)) {
         onUnlock?.()
       }
     }
 
-    document.addEventListener('pointerdown', handleClickOutside, true)
+    document.addEventListener('pointerdown', handleClickOutside, { capture: true })
     return () => document.removeEventListener('pointerdown', handleClickOutside, true)
   }, [onUnlock])
 
@@ -62,7 +68,7 @@ export default function ElementHoverCard({ anchorRect, element, onUnlock, onEnte
 
   return createPortal(
     <div
-      ref={ref}
+      ref={reference}
       style={{
         position: 'fixed',
         top: position.top,

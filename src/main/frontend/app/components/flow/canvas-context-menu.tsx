@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import { useContextMenuDismiss } from '~/hooks/use-context-menu-dismiss'
 import { useShortcutStore, formatShortcutParts } from '~/stores/shortcut-store'
 
-type CanvasContextMenuProps = {
+type CanvasContextMenuProperties = {
   position: { x: number; y: number }
   onClose: () => void
   onAddNote: () => void
@@ -40,9 +40,9 @@ export default function CanvasContextMenu({
   hasGroupedSelection,
   hasClipboard,
   hasSingleNodeSelection,
-}: CanvasContextMenuProps) {
-  const menuRef = useRef<HTMLDivElement>(null)
-  useContextMenuDismiss(menuRef, onClose)
+}: CanvasContextMenuProperties) {
+  const menuReference = useRef<HTMLDivElement>(null)
+  useContextMenuDismiss(menuReference, onClose)
 
   const itemClass = 'flex items-center justify-between gap-6 px-3 py-1.5 text-sm whitespace-nowrap'
   const enabledClass = `${itemClass} cursor-pointer hover:bg-hover text-foreground`
@@ -69,7 +69,7 @@ export default function CanvasContextMenu({
 
   return createPortal(
     <div
-      ref={menuRef}
+      ref={menuReference}
       className="bg-background border-border fixed z-50 overflow-hidden rounded-md border py-1 shadow-md"
       style={{ left: position.x, top: position.y }}
     >

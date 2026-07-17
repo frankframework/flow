@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import { useContextMenuDismiss } from '~/hooks/use-context-menu-dismiss'
 import type { StudioItemType } from './use-studio-context-menu'
 
-type StudioContextMenuProps = {
+type StudioContextMenuProperties = {
   position: { x: number; y: number }
   itemType: StudioItemType
   onNewConfiguration: () => void
@@ -23,9 +23,9 @@ export default function StudioContextMenu({
   onRename,
   onDelete,
   onClose,
-}: StudioContextMenuProps) {
-  const menuRef = useRef<HTMLDivElement>(null)
-  useContextMenuDismiss(menuRef, onClose)
+}: StudioContextMenuProperties) {
+  const menuReference = useRef<HTMLDivElement>(null)
+  useContextMenuDismiss(menuReference, onClose)
 
   const itemClass = 'px-3 py-1.5 cursor-pointer hover:bg-hover text-sm text-foreground whitespace-nowrap'
 
@@ -36,7 +36,7 @@ export default function StudioContextMenu({
 
   return createPortal(
     <div
-      ref={menuRef}
+      ref={menuReference}
       className="bg-background border-border fixed z-50 overflow-hidden rounded-md border py-1 shadow-md"
       style={{ left: position.x, top: position.y }}
     >

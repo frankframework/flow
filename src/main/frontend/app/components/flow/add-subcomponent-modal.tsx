@@ -5,13 +5,17 @@ import Search from '~/components/search/search'
 import type { ElementDetails } from '@frankframework/doc-library-core'
 import { useEffect, useMemo, useState, type ChangeEvent } from 'react'
 
-type AddSubcomponentModalProps = {
+type AddSubcomponentModalProperties = {
   onClose: () => void
   possibleChildren: ElementDetails[]
   onAddChild: (element: ElementDetails) => void
 }
 
-export default function AddSubcomponentModal({ onClose, possibleChildren, onAddChild }: AddSubcomponentModalProps) {
+export default function AddSubcomponentModal({
+  onClose,
+  possibleChildren,
+  onAddChild,
+}: AddSubcomponentModalProperties) {
   const [search, setSearch] = useState('')
   const [selectedElement, setSelectedElement] = useState<ElementDetails | null>(null)
 

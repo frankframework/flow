@@ -17,12 +17,12 @@ import GitToolbar from './git-toolbar'
 import GitChanges from './git-changes'
 import GitCommitBox from './git-commit-box'
 
-type GitPanelProps = {
+type GitPanelProperties = {
   projectName: string
   hasStoredToken: boolean
 }
 
-export default function GitPanel({ projectName, hasStoredToken }: GitPanelProps) {
+export default function GitPanel({ projectName, hasStoredToken }: GitPanelProperties) {
   const {
     status,
     selectedFile,

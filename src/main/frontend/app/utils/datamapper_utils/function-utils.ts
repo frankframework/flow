@@ -2,8 +2,8 @@ import type { Condition, Mutation } from '~/types/datamapper_types/function-type
 
 export function generateMutationName(mutation: Mutation) {
   const inputs = mutation.inputs
-    .map((i) => {
-      return i ? i.value : ''
+    .map((index) => {
+      return index ? index.value : ''
     })
     .join(', ')
 
@@ -11,8 +11,8 @@ export function generateMutationName(mutation: Mutation) {
 }
 export function generateConditionName(condition: Condition) {
   const inputs = condition.inputs
-    .map((i) => {
-      return i ? i.value : ''
+    .map((index) => {
+      return index ? index.value : ''
     })
     .join(', ')
 

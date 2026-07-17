@@ -34,8 +34,8 @@ export default function StickyNoteComponent(properties: NodeProps<StickyNote>) {
   const minWidth = FlowConfig.STICKY_NOTE_DEFAULT_WIDTH
   const showNodeContextMenu = useNodeContextMenu()
   const updateNodeInternals = useUpdateNodeInternals()
-  const containerRef = useRef<HTMLDivElement>(null)
-  const contentRef = useRef<HTMLDivElement>(null)
+  const containerReference = useRef<HTMLDivElement>(null)
+  const contentReference = useRef<HTMLDivElement>(null)
   const [isOverflowing, setIsOverflowing] = useState(false)
 
   const color = properties.data.color ?? 'var(--sticky-color-yellow)'
@@ -44,9 +44,9 @@ export default function StickyNoteComponent(properties: NodeProps<StickyNote>) {
   const CONTENT_PADDING_Y = 24
 
   useLayoutEffect(() => {
-    if (properties.data.collapsed || !contentRef.current) return
+    if (properties.data.collapsed || !contentReference.current) return
 
-    const naturalHeight = contentRef.current.scrollHeight + CONTENT_PADDING_Y
+    const naturalHeight = contentReference.current.scrollHeight + CONTENT_PADDING_Y
     const clamped = Math.min(
       FlowConfig.STICKY_NOTE_MAX_HEIGHT,
       Math.max(FlowConfig.STICKY_NOTE_DEFAULT_HEIGHT, naturalHeight),
@@ -61,7 +61,7 @@ export default function StickyNoteComponent(properties: NodeProps<StickyNote>) {
 
   useEffect(() => {
     if (properties.data.collapsed) return
-    const container = containerRef.current
+    const container = containerReference.current
     if (!container) return
     const check = () => setIsOverflowing(container.scrollHeight > container.clientHeight)
     check()
@@ -134,7 +134,7 @@ export default function StickyNoteComponent(properties: NodeProps<StickyNote>) {
         <ResizeIcon />
       </NodeResizeControl>
       <div
-        ref={containerRef}
+        ref={containerReference}
         className={`relative h-full w-full overflow-hidden p-3 text-xs ${properties.selected ? 'ring-1 ring-black/40' : ''}`}
         style={{
           minHeight: `${minHeight}px`,
@@ -145,7 +145,7 @@ export default function StickyNoteComponent(properties: NodeProps<StickyNote>) {
           `,
         }}
       >
-        <div ref={contentRef} className="w-full text-xs leading-snug break-words whitespace-pre-wrap">
+        <div ref={contentReference} className="w-full text-xs leading-snug break-words whitespace-pre-wrap">
           {content}
         </div>
         {isOverflowing && (

@@ -1,8 +1,8 @@
 import { useEffect, useRef } from 'react'
 
 export function useSubmitOnEnter(onSubmit: () => void, enabled = true) {
-  const onSubmitRef = useRef(onSubmit)
-  onSubmitRef.current = onSubmit
+  const onSubmitReference = useRef(onSubmit)
+  onSubmitReference.current = onSubmit
 
   useEffect(() => {
     if (!enabled) return
@@ -11,7 +11,7 @@ export function useSubmitOnEnter(onSubmit: () => void, enabled = true) {
       if (event.key !== 'Enter') return
       if (document.activeElement instanceof HTMLButtonElement) return
       event.preventDefault()
-      onSubmitRef.current()
+      onSubmitReference.current()
     }
 
     document.addEventListener('keydown', handleKeyDown)

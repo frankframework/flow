@@ -58,23 +58,25 @@ export function useFlowManagement({
 
   useEffect(() => {
     const updatePosition = (event: MouseEvent) => {
-      if (scrollIntervalEnabled.current) {
-        const bottomThreshold = window.innerHeight - SCROLL_PANE_HEIGHT
-        if (event.clientY < SCROLL_PANE_HEIGHT) {
-          reactFlowInstance.setViewport({
-            x: reactFlowInstance.getViewport().x,
-            y: reactFlowInstance.getViewport().y + SCROLL_AMOUNT,
-            zoom: 1, //Don't set this to 0, it results in NaN for X & Y
-          })
-        }
+      if (!scrollIntervalEnabled.current) {
+        return
+      }
 
-        if (event.clientY > bottomThreshold) {
-          reactFlowInstance.setViewport({
-            x: reactFlowInstance.getViewport().x,
-            y: reactFlowInstance.getViewport().y - SCROLL_AMOUNT,
-            zoom: 1, //Don't set this to 0, it results in NaN for X & Y
-          })
-        }
+      const bottomThreshold = window.innerHeight - SCROLL_PANE_HEIGHT
+      if (event.clientY < SCROLL_PANE_HEIGHT) {
+        reactFlowInstance.setViewport({
+          x: reactFlowInstance.getViewport().x,
+          y: reactFlowInstance.getViewport().y + SCROLL_AMOUNT,
+          zoom: 1, //Don't set this to 0, it results in NaN for X & Y
+        })
+      }
+
+      if (event.clientY > bottomThreshold) {
+        reactFlowInstance.setViewport({
+          x: reactFlowInstance.getViewport().x,
+          y: reactFlowInstance.getViewport().y - SCROLL_AMOUNT,
+          zoom: 1, //Don't set this to 0, it results in NaN for X & Y
+        })
       }
     }
 
@@ -379,7 +381,7 @@ export function useFlowManagement({
 
   async function clearTarget() {
     setReactFlowNodes((previous: Node[]) => {
-      let updatedNodes = previous.filter((node) => !node.parentId?.startsWith('target'))
+      const updatedNodes = previous.filter((node) => !node.parentId?.startsWith('target'))
       return updatedNodes
     })
   }
