@@ -380,7 +380,7 @@ export default function CodeEditor() {
           })
       }
     },
-    [project, activeTabFilePath, isDiffTab],
+    [project, activeTabFilePath, isDiffTab, setSaving, setSaved, setIdle],
   )
 
   const flushPendingSave = useCallback(() => {

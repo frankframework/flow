@@ -863,8 +863,6 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
     [nodes],
   )
 
-
-
   const groupNodes = useCallback(
     (nodesToGroup: FlowNode[], currentNodes: FlowNode[]) => {
       const minX = Math.min(...nodesToGroup.map((node) => node.position.x))

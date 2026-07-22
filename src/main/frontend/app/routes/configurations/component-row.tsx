@@ -1,5 +1,4 @@
 import { type ReactNode } from 'react'
-import Button from '~/components/inputs/button'
 
 type ComponentRowProperties = {
   typeLabel: string | null

@@ -392,14 +392,16 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
       addChild(properties.id, child)
     },
     [
-      properties.id,
-      addChild,
+      setNodeId,
+      setAttributes,
       setIsNewNode,
       setEditingSubtype,
       showNodeContextMenu,
       setIsEditing,
       setParentId,
+      properties.id,
       setChildParentId,
+      addChild,
     ],
   )
 
