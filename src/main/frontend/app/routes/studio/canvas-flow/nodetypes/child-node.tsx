@@ -137,6 +137,8 @@ export function ChildNodeComponent({
     [
       setDraggedName,
       canAcceptChild,
+      setNodeId,
+      setAttributes,
       showNodeContextMenu,
       setIsEditing,
       setParentId,

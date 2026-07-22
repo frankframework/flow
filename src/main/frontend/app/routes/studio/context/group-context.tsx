@@ -1,5 +1,5 @@
 import useFlowStore, { isGroupNode } from '~/stores/flow-store'
-import { GROUP_COLORS, GROUP_DEFAULT_COLOR } from '~/routes/studio/canvas/nodetypes/group-node'
+import { GROUP_COLORS, GROUP_DEFAULT_COLOR } from '~/routes/studio/canvas-flow/nodetypes/group-node'
 import { ALL_SHORTCUTS, formatShortcutParts, useShortcutStore } from '~/stores/shortcut-store'
 import Button from '~/components/inputs/button'
 import Input from '~/components/inputs/input'

@@ -13,9 +13,9 @@ import DangerIcon from '../../../../../icons/solar/Danger Triangle.svg?react'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import useFlowStore, { isExitNode, isFrankNode } from '~/stores/flow-store'
-import { CustomHandle } from '~/routes/studio/canvas/nodetypes/components/handle'
-import { FlowConfig } from '~/routes/studio/canvas/flow.config'
-import { useNodeContextMenu } from '~/routes/studio/canvas/node-context-menu-context'
+import { CustomHandle } from '~/routes/studio/canvas-flow/nodetypes/components/handle'
+import { FlowConfig } from '~/routes/studio/canvas-flow/flow.config'
+import { useNodeContextMenu } from '~/routes/studio/canvas-flow/node-context-menu-context'
 import useNodeContextStore from '~/stores/node-context-store'
 import { getElementTypeFromName } from '~/routes/studio/node-translator-module'
 import { useSettingsStore } from '~/stores/settings-store'
@@ -392,14 +392,16 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
       addChild(properties.id, child)
     },
     [
-      properties.id,
-      addChild,
+      setNodeId,
+      setAttributes,
       setIsNewNode,
       setEditingSubtype,
       showNodeContextMenu,
       setIsEditing,
       setParentId,
+      properties.id,
       setChildParentId,
+      addChild,
     ],
   )
 

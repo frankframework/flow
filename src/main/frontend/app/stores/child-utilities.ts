@@ -1,4 +1,4 @@
-import type { ChildNode } from '~/routes/studio/canvas/nodetypes/child-node'
+import type { ChildNode } from '~/routes/studio/canvas-flow/nodetypes/child-node'
 
 export function addChildRecursive(children: ChildNode[], targetId: string, newChild: ChildNode): ChildNode[] {
   return children.map((child) => {

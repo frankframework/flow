@@ -74,9 +74,9 @@ public class ConfigurationProjectController {
 	@PostMapping("/clone")
 	public ResponseEntity<ConfigurationProjectDTO> cloneProject(@RequestBody ConfigurationProjectCloneDTO configurationProjectCloneDTO) throws IOException {
 		ConfigurationProject configurationProject = configurationProjectService.cloneAndOpenProject(
-			configurationProjectCloneDTO.repoUrl(),
-			configurationProjectCloneDTO.localPath(),
-			configurationProjectCloneDTO.token()
+				configurationProjectCloneDTO.repoUrl(),
+				configurationProjectCloneDTO.localPath(),
+				configurationProjectCloneDTO.token()
 		);
 		recentProjectsService.addRecentProject(configurationProject.getName(), configurationProject.getRootPath());
 		return ResponseEntity.ok(configurationProjectService.toDto(configurationProject));
@@ -128,7 +128,7 @@ public class ConfigurationProjectController {
 	@GetMapping("/configurations")
 	public Map<String, Object> getFrameworkConfigurations() throws ApiException {
 		if (session.getMemberTarget() == null) {
-			throw new ApiException("No cluster member target found for the current session.", HttpStatus.NOT_FOUND);
+			throw new ApiException("No cluster member target found for the current session.", HttpStatus.NO_CONTENT);
 		}
 
 		RequestMessageBuilder builder = RequestMessageBuilder.create(BusTopic.CONFIGURATION, BusAction.FIND);

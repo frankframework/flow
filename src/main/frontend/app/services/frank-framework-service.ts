@@ -13,6 +13,6 @@ export type FFConfiguration = {
   filename?: string
 }
 
-export async function fetchInstanceConfigurations(signal?: AbortSignal): Promise<FFInstance> {
+export async function fetchInstanceConfigurations(signal?: AbortSignal): Promise<FFInstance | undefined> {
   return apiFetch<FFInstance>('/projects/configurations', { signal })
 }

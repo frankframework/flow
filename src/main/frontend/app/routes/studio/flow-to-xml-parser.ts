@@ -1,10 +1,10 @@
-import type { FlowNode } from '~/routes/studio/canvas/flow'
+import type { FlowNode } from '~/routes/studio/canvas-flow/canvas-flow'
 import type { Edge } from '@xyflow/react'
-import type { ChildNode } from './canvas/nodetypes/child-node'
+import type { ChildNode } from '~/routes/studio/canvas-flow/nodetypes/child-node'
 import { getAdapter } from '~/services/adapter-service'
-import { FlowConfig } from './canvas/flow.config'
+import { FlowConfig } from '~/routes/studio/canvas-flow/flow.config'
 import { isGroupNode, isFrankNode, isStickyNote } from '~/stores/flow-store'
-import type { GroupNode } from './canvas/nodetypes/group-node'
+import type { GroupNode } from '~/routes/studio/canvas-flow/nodetypes/group-node'
 
 type ReactFlowJson = {
   nodes: FlowNode[]

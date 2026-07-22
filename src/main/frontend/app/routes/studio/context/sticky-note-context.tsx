@@ -1,5 +1,5 @@
 import useFlowStore, { isFrankNode, isStickyNote } from '~/stores/flow-store'
-import { STICKY_NOTE_COLORS } from '~/routes/studio/canvas/nodetypes/sticky-note'
+import { STICKY_NOTE_COLORS } from '~/routes/studio/canvas-flow/nodetypes/sticky-note'
 import { useShallow } from 'zustand/react/shallow'
 import Dropdown from '~/components/inputs/dropdown'
 

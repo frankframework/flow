@@ -1,7 +1,7 @@
 import { BaseEdge, EdgeLabelRenderer, getBezierPath, type Position, useReactFlow, useStore } from '@xyflow/react'
 import { type MouseEvent, useEffect, useRef, useState } from 'react'
 import useFlowStore from '~/stores/flow-store'
-import { FlowConfig, getCompactLabelScale } from '~/routes/studio/canvas/flow.config'
+import { FlowConfig, getCompactLabelScale } from '~/routes/studio/canvas-flow/flow.config'
 import { getEdgeLabelPositions } from '~/utils/edge-label-utils'
 import EdgeLabel from './edge-label'
 
