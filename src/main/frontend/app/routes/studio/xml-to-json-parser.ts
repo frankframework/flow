@@ -13,7 +13,7 @@ import type { StickyNote } from './canvas/nodetypes/sticky-note'
 function parseConfigurationXml(xmlString: string): Document {
   const withFlowNamespace = /\bxmlns:flow\s*=/.test(xmlString)
     ? xmlString
-    : xmlString.replace(/<([A-Za-z_][\w.-]*)/, (_match, tagName): string => `<${tagName} xmlns:flow="urn:frank-flow"`)
+    : xmlString.replace(/<([A-Za-z_][\w.-]*)/, (_match, tagName) => `<${tagName} xmlns:flow="urn:frank-flow"`)
 
   return new DOMParser().parseFromString(withFlowNamespace, 'text/xml')
 }
@@ -34,10 +34,10 @@ export type AdapterInfo = {
 
 export async function getAdaptersFromConfiguration(projectName: string, filepath: string): Promise<AdapterInfo[]> {
   const xmlString = await fetchConfigurationFileCached(projectName, filepath)
-  const xmlDocument = parseConfigurationXml(xmlString)
+  const xmlDoc = parseConfigurationXml(xmlString)
 
   const adapters: AdapterInfo[] = []
-  const adapterElements = xmlDocument.querySelectorAll('Adapter, adapter')
+  const adapterElements = xmlDoc.querySelectorAll('Adapter, adapter')
 
   for (const adapter of adapterElements) {
     const name = adapter.getAttribute('name')
@@ -60,7 +60,7 @@ export async function getAdaptersFromConfiguration(projectName: string, filepath
 
 export async function getAdapterNamesFromConfiguration(projectName: string, filepath: string): Promise<string[]> {
   const adapters = await getAdaptersFromConfiguration(projectName, filepath)
-  return adapters.map((a): string => a.name)
+  return adapters.map((a) => a.name)
 }
 
 export async function getAdapterFromConfiguration(
@@ -70,15 +70,15 @@ export async function getAdapterFromConfiguration(
   adapterPosition?: number,
 ): Promise<Element | null> {
   const xmlString = await fetchConfigurationFileCached(projectname, filename)
-  const xmlDocument = parseConfigurationXml(xmlString)
+  const xmlDoc = parseConfigurationXml(xmlString)
 
-  const adapterList = [...xmlDocument.querySelectorAll('Adapter, adapter')]
+  const adapterList = [...xmlDoc.querySelectorAll('Adapter, adapter')]
 
   if (adapterPosition !== undefined) {
     return adapterList[adapterPosition] ?? null
   }
 
-  return adapterList.find((a): boolean => a.getAttribute('name') === adapterName) ?? null
+  return adapterList.find((a) => a.getAttribute('name') === adapterName) ?? null
 }
 
 export async function getAdapterListenerType(
@@ -102,11 +102,11 @@ export async function getAdapterListenerType(
   return null
 }
 
-export async function convertAdapterXmlToJson(adapter: Element): Promise<{ nodes: FlowNode[]; edges: FrankEdge[] }> {
+export async function convertAdapterXmlToJson(adapter: Element) {
   const idCounter: IdCounter = { current: 0 }
   const { nodes: flowNodes, elementToId } = convertAdapterToFlowNodes(adapter, idCounter)
   const stickyNotes = extractStickyNotesFromAdapter(adapter, idCounter, flowNodes)
-  const groupNodes = extractGroupNodesFromAdapter(adapter, idCounter)
+  const groupNodes = extractGroupNodesFromAdapter(adapter, flowNodes, idCounter)
   assignParentRelationships(flowNodes, groupNodes)
   const allNodes: FlowNode[] = [...groupNodes, ...flowNodes, ...stickyNotes]
 
@@ -175,8 +175,7 @@ function buildNameToNodeMap(nodes: FlowNode[]): Map<string, FlowNode> {
  * @returns An array of FrankEdge objects representing all generated edges
  */
 function extractEdgesFromAdapter(adapter: Element, nodes: FlowNode[], elementToId: Map<Element, string>): FrankEdge[] {
-  const pipelineElement =
-    [...adapter.children].find((element): boolean => element.tagName.toLowerCase() === 'pipeline') || null
+  const pipelineElement = [...adapter.children].find((el) => el.tagName.toLowerCase() === 'pipeline') || null
 
   if (!pipelineElement) return []
 
@@ -225,7 +224,7 @@ function addExplicitForwardEdges(
   explicitTargetsBySourceId: Map<string, Set<string>>,
   sourcesWithSuccessExitForward: Set<string>,
   sourcesWithSuccessPipeForward: Set<string>,
-): void {
+) {
   const pipelineChildren = [...pipelineElement.children]
 
   for (const element of pipelineChildren) {
@@ -261,24 +260,23 @@ function addForwardEdges(
   explicitTargetsBySourceId: Map<string, Set<string>>,
   sourcesWithSuccessExitForward: Set<string>,
   sourcesWithSuccessPipeForward: Set<string>,
-): void {
+) {
   for (const forward of forwards) {
     const targetName = forward.getAttribute('path')
     if (!targetName) continue
 
     const targetId = nameToId.get(targetName)
-    let targetNode = targetId ? nodes.find((node): boolean => node.id === targetId) : undefined
+    let targetNode = targetId ? nodes.find((node) => node.id === targetId) : undefined
 
     if (!targetNode || targetNode.id === sourceId) {
       const exitFallback = nodes.find(
-        (node): boolean =>
-          node.type === 'exitNode' && node.data && 'name' in node.data && node.data.name === targetName,
+        (node) => node.type === 'exitNode' && node.data && 'name' in node.data && node.data.name === targetName,
       )
 
       if (exitFallback) {
         targetNode = exitFallback
       } else if (!targetNode) {
-        targetNode = nodes.find((node): boolean => node.data && 'name' in node.data && node.data.name === targetName)
+        targetNode = nodes.find((node) => node.data && 'name' in node.data && node.data.name === targetName)
       }
 
       if (!targetNode || targetNode.id === sourceId) continue
@@ -315,7 +313,7 @@ function addReceiverToFirstPipeEdges(
   nodes: FlowNode[],
   edges: FrankEdge[],
   forwardIndexBySourceId: Map<string, number>,
-): void {
+) {
   // Find all receivers
   const receivers = nodes.filter((n): n is FrankNodeType => isFrankNode(n) && n.data.type === 'receiver')
 
@@ -349,16 +347,16 @@ function addSequentialFallbackEdges(
   explicitTargetsBySourceId: Map<string, Set<string>>,
   sourcesWithSuccessExitForward: Set<string>,
   sourcesWithSuccessPipeForward: Set<string>,
-): void {
-  for (let index = 0; index < nodes.length - 1; index++) {
-    const current = nodes[index]
+) {
+  for (let i = 0; i < nodes.length - 1; i++) {
+    const current = nodes[i]
     // skip exit nodes
     if (current.type === 'exitNode') continue
     // skip receivers (they already get edges to first pipeline pipe)
     if (isFrankNode(current) && current.data.type === 'receiver') continue
 
     // find next NON-exit node
-    const next = nodes.slice(index + 1).find((n): boolean => n.type !== 'exitNode')
+    const next = nodes.slice(i + 1).find((n) => n.type !== 'exitNode')
     if (!next) continue
 
     if (sourcesWithSuccessPipeForward.has(current.id)) continue
@@ -387,7 +385,7 @@ function addImplicitSuccessExitEdge(
   nodes: FlowNode[],
   edges: FrankEdge[],
   forwardIndexBySourceId: Map<string, number>,
-): void {
+) {
   const successExit = findSuccessExit(nodes)
   if (!successExit) return
 
@@ -395,7 +393,7 @@ function addImplicitSuccessExitEdge(
   if (isNodeTargeted(successExit.id, edges)) return
 
   // Find last non-exit node
-  const lastPipelineNode = nodes.findLast((node): boolean => node.type !== 'exitNode')
+  const lastPipelineNode = nodes.toReversed().find((node) => node.type !== 'exitNode')
 
   if (!lastPipelineNode) return
 
@@ -421,16 +419,15 @@ function collectPipelineElements(adapter: Element): Element[] {
 
   for (const receiver of receiverElements) elements.push(receiver)
 
-  const pipelineElement =
-    [...adapter.children].find((element): boolean => element.tagName.toLowerCase() === 'pipeline') || null
+  const pipelineElement = [...adapter.children].find((el) => el.tagName.toLowerCase() === 'pipeline') || null
 
   if (!pipelineElement) return elements
 
   const firstPipeName = pipelineElement.getAttribute('firstPipe')
-  const pipeArray = [...pipelineElement.children]
+  let pipeArray = [...pipelineElement.children]
 
   if (firstPipeName) {
-    const firstPipeIndex = pipeArray.findIndex((pipe): boolean => pipe.getAttribute('name') === firstPipeName)
+    const firstPipeIndex = pipeArray.findIndex((pipe) => pipe.getAttribute('name') === firstPipeName)
     if (firstPipeIndex !== -1) {
       const [firstPipe] = pipeArray.splice(firstPipeIndex, 1)
       pipeArray.unshift(firstPipe)
@@ -447,13 +444,9 @@ function extractSourceHandles(element: Element): SourceHandle[] {
   // Check if forwards are lower case instead
   if (forwardElements.length === 0) {
     forwardElements = [...element.querySelectorAll('forward')]
-    // No forwards? Create a single implicit success handle
-    if (forwardElements.length === 0) {
-      return [{ type: 'success', index: 1 }]
-    }
   }
 
-  const handles: SourceHandle[] = forwardElements.map((forward, index): { type: string; index: number } => {
+  const handles: SourceHandle[] = forwardElements.map((forward, index) => {
     const name = forward.getAttribute('name')?.trim()
 
     return {
@@ -462,24 +455,10 @@ function extractSourceHandles(element: Element): SourceHandle[] {
     }
   })
 
-  // Check if any forward represents SUCCESS
-  const hasSuccessForward = forwardElements.some((forward): boolean => {
-    const name = forward.getAttribute('name')?.toUpperCase()
-    return name === 'SUCCESS'
-  })
-
-  // If not, add implicit fallback handle
-  if (!hasSuccessForward) {
-    handles.push({
-      type: 'success',
-      index: handles.length + 1,
-    })
-  }
-
   return handles
 }
 
-function processExitElements(element: Element, exitNodes: ExitNode[]): void {
+function processExitElements(element: Element, exitNodes: ExitNode[]) {
   const exits = [...element.children]
   for (const exit of exits) {
     const { attributes, name, x, y, width, height, hiddenForwards } = parseElementAttributes(
@@ -594,57 +573,45 @@ function convertElementToNode(element: Element, idCounter: IdCounter, sourceHand
 
 function convertChildren(elements: Element[], idCounter: IdCounter): ChildNode[] {
   return elements
-    .filter((child): boolean => child.tagName.toLowerCase() !== 'forward')
-    .map(
-      (
-        child,
-      ): {
-        id: string
-        name: string | undefined
-        subtype: string
-        type: string
-        attributes: Record<string, string> | undefined
-        children: ChildNode[]
-      } => {
-        const childId = (idCounter.current++).toString()
-        const { subtype, usedClassName } = translateElementFromOldToNewFormat(child)
+    .filter((child) => child.tagName.toLowerCase() !== 'forward')
+    .map((child) => {
+      const childId = (idCounter.current++).toString()
+      const { subtype, usedClassName } = translateElementFromOldToNewFormat(child)
 
-        const childAttributes: Record<string, string> = {}
-        for (const attribute of child.attributes) {
-          if (attribute.name !== 'name' && !(usedClassName && attribute.name === 'className')) {
-            childAttributes[attribute.name] = attribute.value
-          }
+      const childAttributes: Record<string, string> = {}
+      for (const attribute of child.attributes) {
+        if (attribute.name !== 'name' && !(usedClassName && attribute.name === 'className')) {
+          childAttributes[attribute.name] = attribute.value
         }
+      }
 
-        return {
-          id: childId,
-          name: child.getAttribute('name') || undefined,
-          subtype: subtype,
-          type: getElementTypeFromName(subtype),
-          attributes: Object.keys(childAttributes).length > 0 ? childAttributes : undefined,
-          children: convertChildren([...child.children], idCounter),
-        }
-      },
-    )
+      return {
+        id: childId,
+        name: child.getAttribute('name') || undefined,
+        subtype: subtype,
+        type: getElementTypeFromName(subtype),
+        attributes: Object.keys(childAttributes).length > 0 ? childAttributes : undefined,
+        children: convertChildren([...child.children], idCounter),
+      }
+    })
 }
 
 function extractStickyNotesFromAdapter(adapter: Element, idCounter: IdCounter, flowNodes: FlowNode[]): StickyNote[] {
   const stickyNotes: StickyNote[] = []
 
   const elementContainer = [...adapter.children].find(
-    (element): boolean =>
-      element.tagName === 'flow:FlowElements' || element.tagName.toLowerCase().includes('flowelements'),
+    (element) => element.tagName === 'flow:FlowElements' || element.tagName.toLowerCase().includes('flowelements'),
   )
 
   if (!elementContainer) return stickyNotes
 
   const notes = [...elementContainer.children].filter(
-    (element): boolean => element.tagName === 'flow:StickyNote' || element.tagName.toLowerCase().includes('stickynote'),
+    (element) => element.tagName === 'flow:StickyNote' || element.tagName.toLowerCase().includes('stickynote'),
   )
 
   for (const note of notes) {
-    const attributeText = note.getAttribute('flow:text')
-    const text = attributeText === null ? (note.textContent ?? '') : attributeText
+    const attrText = note.getAttribute('flow:text')
+    const text = attrText === null ? (note.textContent ?? '') : attrText
     const color = note.getAttribute('flow:color') ?? undefined
 
     const x = parseNumericAttribute(note.getAttribute('flow:x'), 0)
@@ -662,7 +629,7 @@ function extractStickyNotesFromAdapter(adapter: Element, idCounter: IdCounter, f
     }
 
     if (attachedToName) {
-      const frankNode = flowNodes.find((node): boolean => isFrankNode(node) && node.data.name === attachedToName)
+      const frankNode = flowNodes.find((node) => isFrankNode(node) && node.data.name === attachedToName)
       if (frankNode) {
         const offsetX = x - frankNode.position.x
         const offsetY = y - frankNode.position.y
@@ -694,18 +661,17 @@ function extractStickyNotesFromAdapter(adapter: Element, idCounter: IdCounter, f
   return stickyNotes
 }
 
-function extractGroupNodesFromAdapter(adapter: Element, idCounter: IdCounter): GroupNode[] {
+function extractGroupNodesFromAdapter(adapter: Element, flowNodes: FlowNode[], idCounter: IdCounter): GroupNode[] {
   const groupNodes: GroupNode[] = []
 
   const elementContainer = [...adapter.children].find(
-    (element): boolean =>
-      element.tagName === 'flow:FlowElements' || element.tagName.toLowerCase().includes('flowelements'),
+    (element) => element.tagName === 'flow:FlowElements' || element.tagName.toLowerCase().includes('flowelements'),
   )
 
   if (!elementContainer) return groupNodes
 
   const nodes = [...elementContainer.children].filter(
-    (element): boolean => element.tagName === 'flow:GroupNode' || element.tagName.toLowerCase().includes('groupnode'),
+    (element) => element.tagName === 'flow:GroupNode' || element.tagName.toLowerCase().includes('groupnode'),
   )
 
   for (const node of nodes) {
@@ -738,7 +704,7 @@ function extractGroupNodesFromAdapter(adapter: Element, idCounter: IdCounter): G
   return groupNodes
 }
 
-function assignParentRelationships(flowNodes: FlowNode[], groupNodes: GroupNode[]): void {
+function assignParentRelationships(flowNodes: FlowNode[], groupNodes: GroupNode[]) {
   const nameToNode = buildNameToNodeMap(flowNodes)
 
   for (const group of groupNodes) {
@@ -757,8 +723,8 @@ function assignParentRelationships(flowNodes: FlowNode[], groupNodes: GroupNode[
 
 function parseNumericAttribute(value: string | null, defaultValue: number): number {
   if (value === null || value.trim() === '') return defaultValue
-  const number_ = Number(value)
-  return Number.isNaN(number_) ? defaultValue : number_
+  const num = Number(value)
+  return Number.isNaN(num) ? defaultValue : num
 }
 
 function isSuccessExit(node: FlowNode): boolean {
@@ -776,15 +742,15 @@ function isSuccessExit(node: FlowNode): boolean {
 }
 
 function findSuccessExit(nodes: FlowNode[]): FlowNode | undefined {
-  return nodes.find((node): boolean => isSuccessExit(node))
+  return nodes.find((node) => isSuccessExit(node))
 }
 
 function isNodeTargeted(nodeId: string, edges: FrankEdge[]): boolean {
-  return edges.some((edge): boolean => edge.target === nodeId)
+  return edges.some((edge) => edge.target === nodeId)
 }
 
 function parseElementAttributes(
-  attributes_: NamedNodeMap,
+  attrs: NamedNodeMap,
   defaultWidth: number,
   defaultHeight: number,
   skipClassName = false,
@@ -795,50 +761,50 @@ function parseElementAttributes(
   let x = 0
   let y = 0
   let width = defaultWidth
-  let height: number | undefined
+  let height: number | undefined = undefined
   let hiddenForwards = false
 
-  for (const attribute of attributes_) {
-    const attributeName = attribute.name
-    const value = attribute.value
+  for (const attr of attrs) {
+    const attrName = attr.name
+    const value = attr.value
 
     // Capture name attribute
-    if (attributeName === 'name') {
+    if (attrName === 'name') {
       name = value
       continue
     }
 
     // Optionally skip className
-    if (skipClassName && attributeName === 'className') continue
+    if (skipClassName && attrName === 'className') continue
 
     // Flow coordinates
-    if (attributeName === 'flow:x') {
+    if (attrName === 'flow:x') {
       x = parseNumericAttribute(value, 0)
       continue
     }
-    if (attributeName === 'flow:y') {
+    if (attrName === 'flow:y') {
       y = parseNumericAttribute(value, 0)
       continue
     }
 
     // Flow size
-    if (attributeName === 'flow:width') {
+    if (attrName === 'flow:width') {
       width = parseNumericAttribute(value, defaultWidth)
       continue
     }
 
-    if (attributeName === 'flow:height') {
+    if (attrName === 'flow:height') {
       height = parseNumericAttribute(value, defaultHeight)
       continue
     }
 
-    if (attributeName === 'flow:hiddenForwards') {
+    if (attrName === 'flow:hiddenForwards') {
       hiddenForwards = value === 'true'
       continue
     }
 
     // Store all other attributes
-    attributes[attributeName] = value
+    attributes[attrName] = value
   }
 
   return { attributes, name, x, y, width, height, hiddenForwards }

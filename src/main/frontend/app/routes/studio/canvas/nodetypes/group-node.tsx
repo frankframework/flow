@@ -1,4 +1,4 @@
-import { type Node, type NodeProps, NodeResizeControl } from '@xyflow/react'
+import { type Node, type NodeProps, NodeResizeControl, type ResizeDragEvent, type ResizeParams } from '@xyflow/react'
 import { useState } from 'react'
 import { ResizeIcon } from '~/routes/studio/canvas/nodetypes/frank-node'
 
@@ -22,7 +22,7 @@ export type GroupNode = Node<{
   childrenNames?: string[]
 }>
 
-export default function GroupNodeComponent({ data, selected }: NodeProps<GroupNode>): JSX.Element {
+export default function GroupNodeComponent({ data, selected }: NodeProps<GroupNode>) {
   const [dimensions, setDimensions] = useState({
     width: data.width,
     height: data.height,
@@ -32,10 +32,10 @@ export default function GroupNodeComponent({ data, selected }: NodeProps<GroupNo
   return (
     <>
       <NodeResizeControl
-        onResize={(_event, resizeData): void => {
+        onResize={(_event: ResizeDragEvent, data: ResizeParams) => {
           setDimensions({
-            width: resizeData.width,
-            height: resizeData.height,
+            width: data.width,
+            height: data.height,
           })
         }}
         style={{ background: 'transparent', border: 'none' }}
@@ -70,7 +70,7 @@ export default function GroupNodeComponent({ data, selected }: NodeProps<GroupNo
   )
 }
 
-function HamburgerMenu(): JSX.Element {
+function HamburgerMenu() {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"

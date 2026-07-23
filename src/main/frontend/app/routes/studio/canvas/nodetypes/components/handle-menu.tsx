@@ -19,37 +19,35 @@ export default function HandleMenu({
   onClose,
   onSelect,
   typesAllowed,
-}: Readonly<HandleMenuProperties>): React.ReactPortal {
+}: Readonly<HandleMenuProperties>) {
   const handleTypes = useHandleTypes(typesAllowed)
-  const menuReference = useRef<HTMLDivElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
 
-  useEffect((): (() => void) => {
-    const handleMouseDown = (e: MouseEvent): void => {
-      if (menuReference.current && !menuReference.current.contains(e.target as Node)) {
+  useEffect(() => {
+    const handleMouseDown = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         onClose()
       }
     }
 
-    const handleWheel = (e: WheelEvent): void => {
-      if (menuReference.current && !menuReference.current.contains(e.target as Node)) {
+    const handleWheel = (e: WheelEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         onClose()
       }
     }
 
-    const handleEsc = (e: KeyboardEvent): void => {
-      if (e.key !== 'Escape') {
-        return
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.stopPropagation()
+        onClose()
       }
-
-      e.stopPropagation()
-      onClose()
     }
 
     globalThis.addEventListener('keydown', handleEsc, { capture: true })
     globalThis.addEventListener('mousedown', handleMouseDown, { capture: true })
     globalThis.addEventListener('wheel', handleWheel, { capture: true })
 
-    return (): void => {
+    return () => {
       globalThis.removeEventListener('keydown', handleEsc, { capture: true })
       globalThis.removeEventListener('mousedown', handleMouseDown, { capture: true })
       globalThis.removeEventListener('wheel', handleWheel, { capture: true })
@@ -58,24 +56,24 @@ export default function HandleMenu({
 
   return createPortal(
     <div
-      ref={menuReference}
-      className="nodrag bg-background border-border absolute rounded border shadow-md"
+      ref={menuRef}
+      className="nodrag bg-background border-border absolute z-5 rounded border shadow-md"
       style={{
         left: `${position.x + 10}px`,
         top: `${position.y - 5}px`,
       }}
     >
       <div className="w-70">
-        <div className="border-border text-foreground-muted mt-[1px] flex h-10 items-center border-b p-2 text-xs font-semibold tracking-wide uppercase">
+        <div className="border-border text-foreground-muted mt-px flex h-10 items-center border-b p-2 text-xs font-semibold tracking-wide uppercase">
           {title}
         </div>
         <ul className="w-full">
-          {handleTypes.map((type, index): React.JSX.Element => (
+          {handleTypes.map((type, index) => (
             <HandleMenuItem
               key={type}
               label={type}
               iconColor={translateHandleTypeToColour(type)}
-              onClick={(): void => onSelect(type)}
+              onClick={() => onSelect(type)}
               isLast={index === handleTypes.length - 1}
             />
           ))}
