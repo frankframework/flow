@@ -31,7 +31,6 @@ import type { ElementDetails } from '@frankframework/doc-library-core'
 import { getInheritedProperties } from '@frankframework/doc-library-core'
 import { DeprecatedPopover } from './components/deprecated-popover'
 import { showWarningToast } from '~/components/toast'
-import { useHandleTypes } from '~/hooks/use-handle-types'
 import AddSubcomponentModal from '~/components/flow/add-subcomponent-modal'
 import { useFrankConfigXsd } from '~/providers/frankconfig-xsd-provider'
 import {
@@ -117,8 +116,6 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
 
   useEffect(() => {
     if (!frankElement?.forwards) return
-
-    // console.log(frankElement.name, Object.keys(frankElement.forwards), sourceHandles.map((handle) => handle.type))
 
     if (
       Object.keys(frankElement.forwards).includes('success') &&
