@@ -135,10 +135,10 @@ export default function DiffTabView({ diffData }: DiffTabViewProperties): JSX.El
       decorationsReference.current,
     )
 
-    modifiedEditor.onMouseDown((e): void => {
-      const targetType = e.target.type
+    modifiedEditor.onMouseDown((event): void => {
+      const targetType = event.target.type
       if (targetType === monaco.editor.MouseTargetType.GUTTER_GLYPH_MARGIN) {
-        const lineNumber = e.target.position?.lineNumber
+        const lineNumber = event.target.position?.lineNumber
         if (lineNumber == null) return
 
         for (const hunk of hunksReference.current) {

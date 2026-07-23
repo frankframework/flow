@@ -1,4 +1,4 @@
-import { type ReactNode } from 'react'
+import { type ReactNode, type ReactPortal } from 'react'
 import { createPortal } from 'react-dom'
 import { useTheme } from '~/hooks/use-theme'
 
@@ -24,7 +24,7 @@ function Modal({ isOpen, onClose, title, children }: ModalProperties): ReactPort
       <div
         className="bg-background relative rounded-lg p-5 shadow-lg"
         data-theme={theme}
-        onClick={(e): void => e.stopPropagation()}
+        onClick={(event): void => event.stopPropagation()}
       >
         {title && <h2 className="mb-4 text-xl font-bold">{title}</h2>}
         <div>{children}</div>

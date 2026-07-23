@@ -1,6 +1,6 @@
-import { useEffect, useReducer, useState } from 'react'
+import { type JSX, useEffect, useReducer, useState } from 'react'
+import useToasts from '~/components/toast/use-toasts'
 import PropertyList from './property-list'
-import { showErrorToast, showSuccessToast } from '~/components/toast'
 import {
   DEFAULT_MAPPING_LIST_CONFIG,
   mappingListConfigReducer,
@@ -16,7 +16,8 @@ import { SAVING_THROTTLE } from '~/utils/datamapper_utils/constant'
 export default function DataMapperRoot(): JSX.Element {
   const routes = ['Initialize', 'Properties', 'Mappings']
 
-  const project = useProjectStore.getState().project
+  const { project } = useProjectStore()
+  const { showErrorToast, showSuccessToast } = useToasts()
 
   const [mappingListConfig, dispatchMappingListConfig] = useReducer(
     mappingListConfigReducer,
@@ -68,7 +69,7 @@ export default function DataMapperRoot(): JSX.Element {
     }, SAVING_THROTTLE) //Save **AFTER** 300 MS
 
     return (): void => clearTimeout(timeout) // If another save occurs within the 300MS, Reset timer and save after 300MS
-  }, [mappingListConfig, project])
+  }, [mappingListConfig, project, showErrorToast])
 
   return (
     <ReactFlowProvider>

@@ -1,9 +1,10 @@
 import React, { useEffect } from 'react'
 import ReactDOM from 'react-dom/client'
 import { RouterProvider } from 'react-router'
-import { Toast } from '~/components/toast'
+import { ToastsContainer } from '~/components/toast/toast'
 import { useTheme } from '~/hooks/use-theme'
 import { useProjectStore } from '~/stores/project-store'
+import type { ConfigurationProject } from '~/types/project.types'
 import { router } from './router'
 import 'allotment/dist/style.css'
 import './app.css' // Always last for overwriting variables
@@ -33,6 +34,6 @@ ReactDOM.createRoot(document.querySelector('#root')!).render(
     <TitleSync />
     <ThemeSync />
     <RouterProvider router={router} />
-    <Toast />
+    <ToastsContainer />
   </React.StrictMode>,
 )

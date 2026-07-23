@@ -114,12 +114,12 @@ export const useSettingsStore = create<SettingsState>()(
       projects: { ...defaultProjectSettings },
       general: { ...defaultGeneralSettings },
 
-      setEditorSettings: (settings): void =>
+      setEditorSettings: (settings) =>
         set((state): { editor: { fontSize: number; tabSize: number; wordWrap: boolean; lineNumbers: boolean } } => ({
           editor: { ...state.editor, ...settings },
         })),
 
-      setStudioSettings: (settings): void =>
+      setStudioSettings: (settings) =>
         set(
           (
             state,
@@ -133,12 +133,12 @@ export const useSettingsStore = create<SettingsState>()(
           } => ({ studio: { ...state.studio, ...settings } }),
         ),
 
-      setProjectSettings: (settings): void =>
+      setProjectSettings: (settings) =>
         set((state): { projects: { recentProjects: string[]; defaultLocation: string } } => ({
           projects: { ...state.projects, ...settings },
         })),
 
-      setGeneralSettings: (settings): void =>
+      setGeneralSettings: (settings) =>
         set(
           (
             state,
@@ -153,12 +153,12 @@ export const useSettingsStore = create<SettingsState>()(
           } => ({ general: { ...state.general, ...settings } }),
         ),
 
-      resetEditorSettings: (): void =>
+      resetEditorSettings: () =>
         set((): { editor: { fontSize: number; tabSize: number; wordWrap: boolean; lineNumbers: boolean } } => ({
           editor: { ...defaultEditorSettings },
         })),
 
-      resetStudioSettings: (): void =>
+      resetStudioSettings: () =>
         set(
           (): {
             studio: {
@@ -170,12 +170,12 @@ export const useSettingsStore = create<SettingsState>()(
           } => ({ studio: { ...defaultStudioSettings } }),
         ),
 
-      resetProjectSettings: (): void =>
+      resetProjectSettings: () =>
         set((): { projects: { recentProjects: string[]; defaultLocation: string } } => ({
           projects: { ...defaultProjectSettings },
         })),
 
-      resetGeneralSettings: (): void =>
+      resetGeneralSettings: () =>
         set(
           (): {
             general: {
@@ -188,7 +188,7 @@ export const useSettingsStore = create<SettingsState>()(
           } => ({ general: { ...defaultGeneralSettings } }),
         ),
 
-      resetAllSettings: (): void =>
+      resetAllSettings: () =>
         set(
           (): {
             editor: { fontSize: number; tabSize: number; wordWrap: boolean; lineNumbers: boolean }

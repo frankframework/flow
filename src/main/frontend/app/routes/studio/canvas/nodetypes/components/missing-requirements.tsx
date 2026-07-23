@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { type JSX, useState } from 'react'
 
 type MissingRequirementsProperties = {
   missingChildren: string[]
@@ -35,7 +35,7 @@ export default function MissingRequirements({
   const toggle = (index: number): void => {
     setExpandedMap((previous): Record<number, boolean> => ({
       ...previous,
-      [index]: !previous[index],
+      [index]: !Object.hasOwn(previous, index),
     }))
   }
 

@@ -4,6 +4,7 @@ import { showErrorToast } from '~/components/toast'
 import type { MappingListConfig } from '~/types/datamapper_types/config-types'
 import type { FormatDefinition } from '~/types/datamapper_types/data-types'
 import type { CustomNodeData } from '~/types/datamapper_types/react-node-types'
+import type { JsonSchema } from '~/types/datamapper_types/schema-types'
 import { getTablePositions } from '~/utils/datamapper_utils/canvas-management-utils'
 import { SCROLL_AMOUNT, SCROLL_PANE_HEIGHT, THROTTLE_MS } from '~/utils/datamapper_utils/constant'
 import {
@@ -11,7 +12,7 @@ import {
   applyUnsetHighlightToNodes,
   getHighlightedFromMappingNode,
   getHighlightedFromPropertyNode,
-  resetHighlightElements
+  resetHighlightElements,
 } from '~/utils/datamapper_utils/highlight-utils'
 import { deleteMappingNode } from '~/utils/datamapper_utils/mapping-node-utils'
 import {
@@ -22,7 +23,7 @@ import {
   getGroupWidth,
   getUnsetNodeIds,
   sequentialReposition,
-  updateNodeType
+  updateNodeType,
 } from '~/utils/datamapper_utils/property-node-utils'
 import { generateImportButton, importJsonSchema, importXsdSchema } from '~/utils/datamapper_utils/schema-utils'
 
@@ -33,7 +34,7 @@ type UseFlowManagementProperties = {
   setEdges: Dispatch<SetStateAction<Edge[]>>
 }
 export type SequentialRepositionFn = (nodes: Node[], parentId: string) => Node[]
-export type GetNodeFunc = (id: string) => Node | undefined
+export type GetNodeFunction = (id: string) => Node | undefined
 export type AddNodeFunction = (
   side: 'source' | 'target',
   label: string,
@@ -43,7 +44,7 @@ export type AddNodeFunction = (
   id?: string | null,
   isAttribute?: boolean,
 ) => Promise<string>
-export type ImportSchematicFunc = (file: File, side: 'source' | 'target', name: string) => void
+export type ImportSchematicFunction = (file: File, side: 'source' | 'target', name: string) => void
 
 export function useFlowManagement({
   reactFlowInstance,

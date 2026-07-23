@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { type ReactPortal, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import Button from '~/components/inputs/button'
 import { useSubmitOnEnter } from '~/hooks/use-submit-on-enter'
@@ -21,15 +21,15 @@ export default function ConfirmDeleteDialog({
   useSubmitOnEnter(onConfirm)
 
   useEffect((): (() => void) => {
-    const handleKeyDown = (e: KeyboardEvent): void => {
-      if (e.key === 'Escape') onCancel()
+    const handleKeyDown = (event: KeyboardEvent): void => {
+      if (event.key === 'Escape') onCancel()
     }
     document.addEventListener('keydown', handleKeyDown)
     return (): void => document.removeEventListener('keydown', handleKeyDown)
   }, [onCancel])
 
-  const handleOverlayClick = (e: React.MouseEvent): void => {
-    if (e.target === overlayReference.current) onCancel()
+  const handleOverlayClick = (event: React.MouseEvent): void => {
+    if (event.target === overlayReference.current) onCancel()
   }
 
   return createPortal(

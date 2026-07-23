@@ -3,9 +3,9 @@ import { Handle, Position } from '@xyflow/react'
 import { GROUP_WIDTH } from '~/utils/datamapper_utils/constant'
 
 import ImportButton from '../basic-components/import-button'
-import type { ImportSchematicFunc } from '~/hooks/use-datamapper-flow-management'
+import type { ImportSchematicFunction } from '~/hooks/use-datamapper-flow-management'
 import CodeFile from '/icons/solar/Code File.svg?react'
-import { useState } from 'react'
+import { type JSX, useState } from 'react'
 import clsx from 'clsx'
 import { showErrorToast } from '~/components/toast'
 
@@ -14,7 +14,7 @@ export type ImportSchematicNodeprops = {
   data: {
     fileType: string
     side: 'source' | 'target'
-    importFunc: ImportSchematicFunc
+    importFunc: ImportSchematicFunction
   } & Record<string, unknown>
 }
 
@@ -28,16 +28,16 @@ function ImportSchematicNode({ data }: ImportSchematicNodeprops): JSX.Element {
         isDragging || file ? 'bg-selected border! border-solid' : 'border-2',
       )}
       style={{ width: `${GROUP_WIDTH}px` }}
-      onDragOver={(e): void => {
-        e.preventDefault()
+      onDragOver={(event): void => {
+        event.preventDefault()
         setIsDragging(true)
       }}
       onDragLeave={(): void => setIsDragging(false)}
-      onDrop={(e): void => {
-        e.preventDefault()
+      onDrop={(event): void => {
+        event.preventDefault()
         setIsDragging(false)
 
-        const file = e.dataTransfer.files?.[0]
+        const file = event.dataTransfer.files?.[0]
         if (file.name.endsWith(data.fileType)) setFile(file)
         else showErrorToast(file.name, 'Incorrect filetype!')
       }}

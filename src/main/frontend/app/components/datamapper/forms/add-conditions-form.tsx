@@ -1,4 +1,4 @@
-import { useId, useMemo, useState } from 'react'
+import { type JSX, useId, useMemo, useState } from 'react'
 import Button from '~/components/inputs/button'
 import Dropdown from '~/components/inputs/dropdown'
 import Input from '~/components/inputs/input'
@@ -151,10 +151,10 @@ function ConditionInputField({
   onChange: (value_: ConditionInput) => void
   sources: Source[]
 }>): JSX.Element {
-  let filteredSources = sources
-  if (inputConfig.inputsAllowed !== 'all') {
-    filteredSources = sources.filter((source): boolean => source.type === inputConfig.inputsAllowed)
-  }
+  const filteredSources =
+    inputConfig.inputsAllowed === 'all'
+      ? sources
+      : sources.filter((source): boolean => source.type === inputConfig.inputsAllowed)
 
   if (inputConfig.type === 'source') {
     const selectedIsDefault = value?.type === 'defaultValue'

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { type JSX, useCallback, useEffect, useMemo, useState } from 'react'
 import clsx from 'clsx'
 import useFlowStore from '~/stores/flow-store'
 import { getElementTypeFromName } from '../../node-translator-module'
@@ -110,13 +110,12 @@ export function ChildNodeComponent({
       if (!raw) return
 
       const dropped = JSON.parse(raw)
-      const newId = useFlowStore.getState().getNextNodeId()
-
       if (!canAcceptChild(dropped.name)) {
         console.warn(`Rejected drop: ${dropped.name} is not allowed as child of ${child.subtype}`)
         return
       }
 
+      const newId = useFlowStore.getState().getNextNodeId()
       setNodeId(+newId)
       setAttributes(dropped.attributes)
       showNodeContextMenu(true)
@@ -139,6 +138,8 @@ export function ChildNodeComponent({
     [
       setDraggedName,
       canAcceptChild,
+      setNodeId,
+      setAttributes,
       showNodeContextMenu,
       setIsEditing,
       setParentId,

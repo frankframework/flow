@@ -7,6 +7,7 @@ export const filesystemService = {
   },
 
   async resolveNearestAccessiblePath(path: string): Promise<string> {
+    // eslint-disable-next-line unicorn/no-this-outside-of-class
     const result = await this.browse(path)
     return result.resolvedPath
   },

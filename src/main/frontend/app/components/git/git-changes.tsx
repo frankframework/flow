@@ -56,7 +56,7 @@ function FileSection({
         <div className="pb-1">
           {files.map((file): JSX.Element => {
             const fileName = file.split('/').pop() || file
-            const dirPath = file.includes('/') ? file.slice(0, file.lastIndexOf('/')) : ''
+            const directionPath = file.includes('/') ? file.slice(0, file.lastIndexOf('/')) : ''
 
             const hunkState = fileHunkStates[file]
             const totalHunks = hunkState?.totalHunks ?? 0
@@ -86,7 +86,7 @@ function FileSection({
                 />
                 <span
                   className={clsx(
-                    'flex h-4 w-4 flex-shrink-0 items-center justify-center rounded text-[10px] font-bold',
+                    'flex h-4 w-4 shrink-0 items-center justify-center rounded text-[10px] font-bold',
                     config.badge,
                   )}
                 >
@@ -94,7 +94,7 @@ function FileSection({
                 </span>
                 <span className="text-foreground min-w-0 flex-1 truncate" title={file}>
                   {fileName}
-                  {dirPath && <span className="text-foreground-muted ml-1.5 text-[10px]">{dirPath}</span>}
+                  {directionPath && <span className="text-foreground-muted ml-1.5 text-[10px]">{directionPath}</span>}
                 </span>
               </div>
             )

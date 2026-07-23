@@ -66,8 +66,9 @@ function AddMutationForm({
       <Dropdown
         className="max-w-55"
         value={mutation.mutationType?.name ?? ''}
-        onChange={(e): void => {
-          const mutationType = mutations.mutations.find((mutationToFind): boolean => mutationToFind.name === e) ?? null
+        onChange={(event): void => {
+          const mutationType =
+            mutations.mutations.find((mutationToFind): boolean => mutationToFind.name === event) ?? null
           setMutation({
             id,
             name: mutation.name,

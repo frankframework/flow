@@ -1,6 +1,8 @@
+import type { JSX } from 'react'
+import type { FlowNode } from '~/routes/studio/canvas/flow'
 import useFlowStore, { isGroupNode } from '~/stores/flow-store'
 import { GROUP_COLORS, GROUP_DEFAULT_COLOR } from '~/routes/studio/canvas/nodetypes/group-node'
-import { ALL_SHORTCUTS, formatShortcutParts, useShortcutStore } from '~/stores/shortcut-store'
+import { ALL_SHORTCUTS, formatShortcutParts, type Platform, useShortcutStore } from '~/stores/shortcut-store'
 import Button from '~/components/inputs/button'
 import Input from '~/components/inputs/input'
 
@@ -12,8 +14,8 @@ export default function GroupContext({ nodeId }: Readonly<{ nodeId: string }>): 
 
   const { label, description = '', color = GROUP_DEFAULT_COLOR } = node.data
 
-  const ungroupDef = ALL_SHORTCUTS.find((state): boolean => state.id === 'studio.ungroup')!
-  const ungroupParts = formatShortcutParts(ungroupDef, platform)
+  const ungroupDefinition = ALL_SHORTCUTS.find((state): boolean => state.id === 'studio.ungroup')!
+  const ungroupParts = formatShortcutParts(ungroupDefinition, platform)
   const triggerUngroup = (): boolean | void | undefined =>
     useShortcutStore.getState().shortcuts.get('studio.ungroup')?.handler?.()
 

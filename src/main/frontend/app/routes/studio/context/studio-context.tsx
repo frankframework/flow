@@ -138,7 +138,7 @@ export default function StudioContext(): JSX.Element {
 
       seen.add(value.name)
 
-      if (!grouped[type]) grouped[type] = []
+      if (!Object.hasOwn(grouped, type)) grouped[type] = []
       grouped[type].push(value)
     }
 

@@ -1,7 +1,8 @@
 import React, { type JSX, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import IconButton from '~/components/inputs/icon-button'
+import type { ConfigurationProject } from '~/types/project.types'
 import { getListenerIcon } from './tree-utilities'
-import useTabStore from '~/stores/tab-store'
+import useTabStore, { type TabData } from '~/stores/tab-store'
 import Search from '~/components/search/search'
 import LoadingSpinner from '~/components/loading-spinner'
 import FolderIcon from '../../../icons/solar/Folder.svg?react'
@@ -253,7 +254,7 @@ export default function StudioFileStructure(): JSX.Element {
 
   const loadFolderContents = useCallback(
     async (item: TreeItem<StudioItemData>): Promise<void> => {
-      if (!item.isFolder || !dataProvider) return
+      if (!dataProvider || !item.isFolder) return
 
       const data = item.data
       if (typeof data !== 'object' || !('path' in data)) return
@@ -327,7 +328,7 @@ export default function StudioFileStructure(): JSX.Element {
         setActiveMatchIndex((previous): number => (previous + 1) % matchingItemIds.length)
       } else if (event.key === 'Tab' && event.shiftKey) {
         event.preventDefault()
-        setActiveMatchIndex((previous): number => (previous - 1 < 0 ? matchingItemIds.length - 1 : previous - 1))
+        setActiveMatchIndex((previous): number => (previous < 1 ? matchingItemIds.length : previous) - 1)
       } else if (event.key === 'Enter') {
         event.preventDefault()
         const targetItemId = highlightedItemId || matchingItemIds[0]
@@ -391,6 +392,11 @@ export default function StudioFileStructure(): JSX.Element {
     item: TreeItem<StudioItemData>
     context: TreeItemRenderContext
   }): JSX.Element => {
+    if (!project) return <p className="text-foreground-muted p-4 text-sm">No Project Selected</p>
+    if (providerLoading) return <LoadingSpinner message="Loading configurations..." className="p-8" />
+    if (!dataProvider)
+      return <p className="text-foreground-muted p-4 text-sm">No configurations found in src/main/configurations</p>
+
     const listenerType =
       !item.isFolder && typeof item.data === 'object' && item.data && 'listenerName' in item.data
         ? (item.data as { listenerName: string | null }).listenerName
@@ -495,11 +501,6 @@ export default function StudioFileStructure(): JSX.Element {
     )
   }
 
-  if (!project) return <p className="text-foreground-muted p-4 text-sm">No Project Selected</p>
-  if (providerLoading) return <LoadingSpinner message="Loading configurations..." className="p-8" />
-  if (!dataProvider)
-    return <p className="text-foreground-muted p-4 text-sm">No configurations found in src/main/configurations</p>
-
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="flex items-center justify-between p-4 py-2">
@@ -552,7 +553,7 @@ export default function StudioFileStructure(): JSX.Element {
             )
           }}
           getItemTitle={getItemTitle}
-          dataProvider={dataProvider}
+          dataProvider={dataProvider!}
           onSelectItems={handleItemClick}
           canDragAndDrop={true}
           canDropOnFolder={true}

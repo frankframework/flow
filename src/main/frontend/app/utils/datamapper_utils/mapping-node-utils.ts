@@ -273,14 +273,13 @@ export function validateMapping(
   sources: NodeLabels[],
   targets: NodeLabels[],
   unfilteredSources: NodeLabels[],
-): 'Mapping item in source array only allowed within a for each' | 'Many to Many mapping not supported!' | null {
-  const checkedSources = sources.filter((s): boolean | undefined => s.checked)
-  const checkedTargets = targets.filter((t): boolean | undefined => t.checked)
-
-  if (checkedSources.length !== unfilteredSources.filter((s): boolean | undefined => s.checked).length) {
+): string | null {
+  const checkedSources = sources.filter((labels): boolean | undefined => labels.checked)
+  if (checkedSources.length !== unfilteredSources.filter((labels): boolean | undefined => labels.checked).length) {
     return 'Mapping item in source array only allowed within a for each'
   }
 
+  const checkedTargets = targets.filter((labels): boolean | undefined => labels.checked)
   if (checkedSources.length > 1 && checkedTargets.length > 1) {
     return 'Many to Many mapping not supported!'
   }

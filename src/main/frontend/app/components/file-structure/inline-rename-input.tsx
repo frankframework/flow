@@ -1,3 +1,4 @@
+import { JSX } from 'react'
 import type { TreeItemIndex } from 'react-complex-tree'
 import Input from '~/components/inputs/input'
 
@@ -19,8 +20,8 @@ export default function InlineRenameInput({
   itemIndex,
 }: InlineRenameInputProperties): JSX.Element {
   return (
-    <div className="flex items-center" onContextMenu={(e): void => e.preventDefault()}>
-      <Icon className="fill-foreground w-4 flex-shrink-0" />
+    <div className="flex items-center" onContextMenu={(event): void => event.preventDefault()}>
+      <Icon className="fill-foreground w-4 shrink-0" />
       <Input
         autoFocus
         wrapperClassName="ml-1"
@@ -36,7 +37,7 @@ export default function InlineRenameInput({
           }
         }}
         onBlur={onCancel}
-        onClick={(e): void => e.stopPropagation()}
+        onClick={(event): void => event.stopPropagation()}
       />
     </div>
   )

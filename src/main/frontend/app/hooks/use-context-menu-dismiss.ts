@@ -5,13 +5,13 @@ import { useEffect, type RefObject } from 'react'
  */
 export function useContextMenuDismiss(menuReference: RefObject<HTMLDivElement | null>, onClose: () => void): void {
   useEffect((): (() => void) => {
-    const handleClickOutside = (e: MouseEvent): void => {
-      if (menuReference.current && !menuReference.current.contains(e.target as Node)) {
+    const handleClickOutside = (event: MouseEvent): void => {
+      if (menuReference.current && !menuReference.current.contains(event.target as Node)) {
         onClose()
       }
     }
-    const handleKeyDown = (e: KeyboardEvent): void => {
-      if (e.key === 'Escape') onClose()
+    const handleKeyDown = (event: KeyboardEvent): void => {
+      if (event.key === 'Escape') onClose()
     }
 
     document.addEventListener('mousedown', handleClickOutside)

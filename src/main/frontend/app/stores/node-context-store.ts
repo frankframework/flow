@@ -1,7 +1,7 @@
 import type { Attribute } from '@frankframework/doc-library-core'
 import { create } from 'zustand'
 
-type NodeContextStore = {
+export type NodeContextStore = {
   attributes: Record<string, Attribute> | undefined
   nodeId: number
   isEditing: boolean

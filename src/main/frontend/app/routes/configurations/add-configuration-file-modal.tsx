@@ -44,7 +44,7 @@ export default function AddConfigurationFileModal({
       let configname = filename.trim()
 
       if (!configname.toLowerCase().endsWith('.xml')) {
-        configname = `${configname}.xml`
+        configname += `.xml`
       }
 
       const relativeFolder = relativeTo(currentConfiguration.rootPath, rootLocationName)

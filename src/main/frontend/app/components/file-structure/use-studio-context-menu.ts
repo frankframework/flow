@@ -128,7 +128,7 @@ export function useStudioContextMenu({ projectName, dataProvider }: UseStudioCon
   setNameDialog: React.Dispatch<React.SetStateAction<NameDialogState | null>>
   deleteTarget: DeleteTargetState | null
   setDeleteTarget: React.Dispatch<React.SetStateAction<DeleteTargetState | null>>
-  openContextMenu: (e: React.MouseEvent, itemId: TreeItemIndex) => Promise<void>
+  openContextMenu: (event: React.MouseEvent, itemId: TreeItemIndex) => Promise<void>
   handleNewConfiguration: (menuState?: StudioContextMenuState) => void
   handleNewAdapter: (menuState?: StudioContextMenuState) => void
   handleNewFolder: (menuState?: StudioContextMenuState) => void
@@ -143,9 +143,9 @@ export function useStudioContextMenu({ projectName, dataProvider }: UseStudioCon
   const contextMenuReference = useRef<StudioContextMenuState | null>(null)
 
   const openContextMenu = useCallback(
-    async (e: React.MouseEvent, itemId: TreeItemIndex): Promise<void> => {
-      e.preventDefault()
-      e.stopPropagation()
+    async (event: React.MouseEvent, itemId: TreeItemIndex): Promise<void> => {
+      event.preventDefault()
+      event.stopPropagation()
       if (!dataProvider) return
 
       const item = await dataProvider.getTreeItem(itemId)
@@ -156,7 +156,7 @@ export function useStudioContextMenu({ projectName, dataProvider }: UseStudioCon
       const { path, folderPath } = resolveItemPaths(item.data, itemType, dataProvider)
 
       const state: StudioContextMenuState = {
-        position: { x: e.clientX, y: e.clientY },
+        position: { x: event.clientX, y: event.clientY },
         itemId,
         itemType,
         path,

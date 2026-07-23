@@ -209,8 +209,8 @@ export const ALL_SHORTCUTS: Omit<ShortcutDefinition, 'handler'>[] = [
 
 function buildInitialShortcuts(): Map<string, ShortcutDefinition> {
   const map = new Map<string, ShortcutDefinition>()
-  for (const def of ALL_SHORTCUTS) {
-    map.set(def.id, { ...def })
+  for (const definition of ALL_SHORTCUTS) {
+    map.set(definition.id, { ...definition })
   }
   return map
 }

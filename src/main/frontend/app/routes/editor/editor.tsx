@@ -113,19 +113,19 @@ function mapToValidationErrors(rawErrors: readonly XMLValidationError[], model: 
   const seen = new Set<number>()
 
   return rawErrors
-    .map((e): { message: string; lineNumber: number; startColumn: number; endColumn: number } => {
-      const lineNumber = Math.max(1, Math.min(e.loc?.lineNumber ?? 1, totalLines))
-      const { startColumn, endColumn } = findErrorRange(model.getLineContent(lineNumber), e.message)
-      return { message: e.message, lineNumber, startColumn, endColumn }
+    .map((error): { message: string; lineNumber: number; startColumn: number; endColumn: number } => {
+      const lineNumber = Math.max(1, Math.min(error.loc?.lineNumber ?? 1, totalLines))
+      const { startColumn, endColumn } = findErrorRange(model.getLineContent(lineNumber), error.message)
+      return { message: error.message, lineNumber, startColumn, endColumn }
     })
-    .filter((e): boolean => {
-      if (seen.has(e.lineNumber)) return false
-      seen.add(e.lineNumber)
+    .filter((error): boolean => {
+      if (seen.has(error.lineNumber)) return false
+      seen.add(error.lineNumber)
       return true
     })
 }
 
-function toDecoration(e: ValidationError): {
+function toDecoration(error: ValidationError): {
   range: { startLineNumber: number; startColumn: number; endLineNumber: number; endColumn: number }
   options: {
     inlineClassName: string
@@ -135,21 +135,21 @@ function toDecoration(e: ValidationError): {
 } {
   return {
     range: {
-      startLineNumber: e.lineNumber,
-      startColumn: e.startColumn,
-      endLineNumber: e.lineNumber,
-      endColumn: e.endColumn,
+      startLineNumber: error.lineNumber,
+      startColumn: error.startColumn,
+      endLineNumber: error.lineNumber,
+      endColumn: error.endColumn,
     },
     options: {
       inlineClassName: 'xml-lint xml-lint--fatal-error',
-      hoverMessage: { value: `**XSD:** ${e.message}` },
+      hoverMessage: { value: `**XSD:** ${error.message}` },
       overviewRuler: { color: '#ff2424', position: 4 },
     },
   }
 }
 
 function toMarker(
-  e: ValidationError,
+  error: ValidationError,
   severity: number,
 ): {
   startLineNumber: number
@@ -160,11 +160,11 @@ function toMarker(
   severity: number
 } {
   return {
-    startLineNumber: e.lineNumber,
-    startColumn: e.startColumn,
-    endLineNumber: e.lineNumber,
-    endColumn: e.endColumn,
-    message: e.message,
+    startLineNumber: error.lineNumber,
+    startColumn: error.startColumn,
+    endLineNumber: error.lineNumber,
+    endColumn: error.endColumn,
+    message: error.message,
     severity,
   }
 }
@@ -215,8 +215,8 @@ async function validateConfiguration(content: string, xsd: string, model: ITextM
   }
 
   const filtered = result.errors.filter(
-    (e): boolean =>
-      !e.message.includes('{urn:frank-flow}') && !e.message.includes('Skipping attribute use prohibition'),
+    (error): boolean =>
+      !error.message.includes('{urn:frank-flow}') && !error.message.includes('Skipping attribute use prohibition'),
   )
 
   return mapToValidationErrors(filtered, model)
@@ -416,7 +416,7 @@ export default function CodeEditor(): JSX.Element {
           })
       }
     },
-    [project, activeTabFilePath, isDiffTab],
+    [project, activeTabFilePath, isDiffTab, setSaving, setSaved, setIdle],
   )
 
   const flushPendingSave = useCallback((): void => {

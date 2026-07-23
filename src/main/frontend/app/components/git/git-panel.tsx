@@ -1,4 +1,5 @@
 import { type JSX, useCallback, useEffect } from 'react'
+import useToasts from '~/components/toast/use-toasts'
 import { useGitStore } from '~/stores/git-store'
 import {
   fetchGitStatus,
@@ -10,7 +11,6 @@ import {
   pullChanges,
   refreshOpenDiffs,
 } from '~/services/git-service'
-import { showInfoToast, showSuccessToast, showErrorToast } from '~/components/toast'
 import useEditorTabStore from '~/stores/editor-tab-store'
 import { logApiError } from '~/utils/logger'
 import GitToolbar from './git-toolbar'
@@ -40,6 +40,7 @@ export default function GitPanel({ projectName, hasStoredToken }: GitPanelProper
     setIsLoading,
     setToken,
   } = useGitStore()
+  const { showSuccessToast, showInfoToast, showErrorToast } = useToasts()
 
   const refreshStatus = useCallback(
     async (showToast = false): Promise<void> => {
@@ -52,7 +53,7 @@ export default function GitPanel({ projectName, hasStoredToken }: GitPanelProper
         if (showToast) showErrorToast('Failed to refresh status')
       }
     },
-    [projectName, setStatus],
+    [projectName, setStatus, showErrorToast, showInfoToast],
   )
 
   useEffect((): void => {
@@ -153,7 +154,7 @@ export default function GitPanel({ projectName, hasStoredToken }: GitPanelProper
     } finally {
       setIsLoading(false)
     }
-  }, [projectName, commitMessage, setIsLoading, setCommitMessage, refreshStatus, clearFileHunks])
+  }, [commitMessage, setIsLoading, projectName, setCommitMessage, refreshStatus, showSuccessToast, clearFileHunks])
 
   const handlePush = useCallback(async (): Promise<void> => {
     if ((status?.ahead ?? 0) === 0) {
@@ -171,7 +172,7 @@ export default function GitPanel({ projectName, hasStoredToken }: GitPanelProper
     } catch (error) {
       logApiError('Failed to push', error as Error)
     }
-  }, [projectName, token, refreshStatus, status?.ahead])
+  }, [status?.ahead, showInfoToast, projectName, token, refreshStatus, showSuccessToast, showErrorToast])
 
   const handlePull = useCallback(async (): Promise<void> => {
     try {
@@ -192,7 +193,7 @@ export default function GitPanel({ projectName, hasStoredToken }: GitPanelProper
     } catch (error) {
       logApiError('Failed to pull', error as Error)
     }
-  }, [projectName, token, refreshStatus])
+  }, [projectName, token, refreshStatus, showInfoToast, showSuccessToast, showErrorToast])
 
   const hasSelectedChunks = Object.values(fileHunkStates).some(
     (state): boolean => state.selectedHunks.size > 0 || (state.totalHunks === 0 && state.selected),

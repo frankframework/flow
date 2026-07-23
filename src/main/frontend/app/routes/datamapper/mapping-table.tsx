@@ -1,10 +1,11 @@
-import { useState, useMemo, type Dispatch } from 'react'
-import type { Node, Edge } from '@xyflow/react'
+import { useState, useMemo, type Dispatch, type JSX } from 'react'
+import type { Node, Edge, ReactFlowJsonObject } from '@xyflow/react'
 import AddMappingForm from '~/components/datamapper/forms/add-mapping-form'
 import Modal from '~/components/modal'
-import { showSuccessToast } from '~/components/toast'
+import useToasts from '~/components/toast/use-toasts'
 import type { ConfigActions } from '~/stores/datamapper_state/mappingListConfig/reducer'
 import type { MappingListConfig } from '~/types/datamapper_types/config-types'
+import type { MappingRow } from '~/types/datamapper_types/export-types'
 import type { MappingNodeData } from '~/types/datamapper_types/react-node-types'
 import { createMappingNode, deleteMappingNode } from '~/utils/datamapper_utils/mapping-node-utils'
 import Button from '~/components/inputs/button'
@@ -21,6 +22,7 @@ type PropertyListProperties = {
 function MappingTable({ config, configDispatch }: PropertyListProperties): JSX.Element {
   const [modalOpen, setModalOpen] = useState(false)
   const [editingMapping, setEditingMapping] = useState<MappingNodeData | null>(null)
+  const { showSuccessToast } = useToasts()
 
   const flow: { nodes?: Node[]; edges?: Edge[] } = useMemo((): ReactFlowJsonObject => {
     return config.propertyData ?? {}

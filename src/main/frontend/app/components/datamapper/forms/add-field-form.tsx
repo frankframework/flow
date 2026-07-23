@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, type JSX } from 'react'
 import type {
   FormatDefinition,
   FormatState,
@@ -118,7 +118,7 @@ function AddFieldForm({
             className="max-w-55"
             id="parentId"
             value={parentId}
-            onChange={(e): void => setParent(e)}
+            onChange={(event): void => setParent(event)}
             options={{
               ...Object.fromEntries(parents.map((p): [string, string] => [p.id, p.label])),
             }}

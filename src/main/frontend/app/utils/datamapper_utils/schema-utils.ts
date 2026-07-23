@@ -1,5 +1,5 @@
 import { SAXParser } from 'sax-ts'
-import type { AddNodeFunction, GetNodeFunc, ImportSchematicFunc } from '~/hooks/use-datamapper-flow-management'
+import type { AddNodeFunction, GetNodeFunction, ImportSchematicFunction } from '~/hooks/use-datamapper-flow-management'
 import type { FormatDefinition } from '~/types/datamapper_types/data-types'
 import type { JsonSchema, SaxAttributes, XsdComplexType, XsdElement } from '~/types/datamapper_types/schema-types'
 import { calculateNodePosition } from './property-node-utils'
@@ -17,11 +17,11 @@ export async function importJsonSchema(
   async function traverseSchema(object: JsonSchema, parentNodeId: string | null, labelPrefix = ''): Promise<void> {
     if (!object) return
 
-    let currentNodeId = parentNodeId
-
-    if (object.type === 'object' && object.properties && (!isRootObject || labelPrefix)) {
-      currentNodeId = await addNode(side, labelPrefix || 'Object', 'object', object.defaultValue, parentNodeId)
-    }
+    // This feels fishy
+    const currentNodeId =
+      object.type === 'object' && object.properties && (!isRootObject || labelPrefix)
+        ? await addNode(side, labelPrefix || 'Object', 'object', object.defaultValue, parentNodeId)
+        : parentNodeId
 
     if (object.type === 'object' && object.properties) {
       for (const [key, value] of Object.entries(object.properties)) {
@@ -204,8 +204,8 @@ export async function generateImportButton(
   nodes: Node[],
   fileType: string,
   side: string,
-  getNode: GetNodeFunc,
-  importFunction: ImportSchematicFunc,
+  getNode: GetNodeFunction,
+  importFunction: ImportSchematicFunction,
 ): Promise<Node> {
   const newY = calculateNodePosition(nodes, `${side}-table`, getNode)
   return {

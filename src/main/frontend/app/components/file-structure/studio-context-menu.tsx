@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { type ReactPortal, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { useContextMenuDismiss } from '~/hooks/use-context-menu-dismiss'
 import type { StudioItemType } from './use-studio-context-menu'
@@ -31,8 +31,7 @@ export default function StudioContextMenu({
 
   const showNewConfigurationAndNewFolder = itemType === 'root' || itemType === 'folder'
   const showNewAdapter = itemType === 'configuration'
-  const showRenameAndDelete =
-    itemType === 'configuration' || itemType === 'adapter' || itemType === 'folder' || itemType === 'file'
+  const showRenameAndDelete = ['configuration', 'adapter', 'folder', 'file'].includes(itemType)
 
   return createPortal(
     <div

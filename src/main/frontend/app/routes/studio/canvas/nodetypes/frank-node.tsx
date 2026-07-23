@@ -12,7 +12,7 @@ import {
   useUpdateNodeInternals,
 } from '@xyflow/react'
 import DangerIcon from '../../../../../icons/solar/Danger Triangle.svg?react'
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { type JSX, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import useFlowStore, { isExitNode, isFrankNode } from '~/stores/flow-store'
 import { CustomHandle } from '~/routes/studio/canvas/nodetypes/components/handle'
@@ -68,7 +68,7 @@ function isForwardRevealed(
   return hoveredNodeId !== null && edges.some((edge) => edge.source === hoveredNodeId && edge.target === targetId)
 }
 
-export default function FrankNode(properties: NodeProps<FrankNodeType>) {
+export default function FrankNode(properties: NodeProps<FrankNodeType>): JSX.Element {
   const minNodeWidth = FlowConfig.NODE_DEFAULT_WIDTH
   const maxNodeWidth = FlowConfig.NODE_MAX_WIDTH
   const minNodeHeight = FlowConfig.NODE_MIN_HEIGHT
@@ -205,12 +205,12 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
   }, [dimensions.height, sourceHandles.length])
 
   useEffect(() => {
-    if (dragOver && containerReference.current) {
-      updateNodeInternals(properties.id)
+    if (!(dragOver && containerReference.current)) return
 
-      const newHeight = containerReference.current.offsetHeight
-      setDimensions((previous) => ({ ...previous, height: newHeight }))
-    }
+    updateNodeInternals(properties.id)
+
+    const newHeight = containerReference.current.offsetHeight
+    setDimensions((previous) => ({ ...previous, height: newHeight }))
   }, [dragOver, properties.id, updateNodeInternals])
 
   useEffect(() => {
@@ -233,17 +233,17 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
   }, [mandatoryChildren, properties.data.children])
 
   useLayoutEffect(() => {
-    if (containerReference.current) {
-      const measuredHeight = containerReference.current.offsetHeight
-      const scrollHeight = containerReference.current.scrollHeight
-      setIsOverflowing(scrollHeight > measuredHeight + 4)
-      setDimensions((previous) => {
-        if (Math.abs(previous.height - measuredHeight) > 2) {
-          return { ...previous, height: measuredHeight }
-        }
-        return previous
-      })
-    }
+    if (!containerReference.current) return
+
+    const measuredHeight = containerReference.current.offsetHeight
+    const scrollHeight = containerReference.current.scrollHeight
+    setIsOverflowing(scrollHeight > measuredHeight + 4)
+    setDimensions((previous) => {
+      if (Math.abs(previous.height - measuredHeight) > 2) {
+        return { ...previous, height: measuredHeight }
+      }
+      return previous
+    })
   }, [properties.data.children, sourceHandles.length, dragOver])
 
   useEffect(() => {
@@ -253,7 +253,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
       setIsOverflowing(container.scrollHeight > container.offsetHeight + 4)
     })
     observer.observe(container)
-    return () => observer.disconnect()
+    return (): void => observer.disconnect()
   }, [])
 
   const addChild = useFlowStore((state) => state.addChild)
@@ -270,7 +270,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
     [addHandle, properties.id, sourceHandles.length, updateNodeInternals],
   )
 
-  const toggleHandleMenu = (event: React.MouseEvent) => {
+  const toggleHandleMenu = (event: React.MouseEvent): void => {
     const { clientX, clientY } = event
 
     setHandleMenuPosition({
@@ -278,10 +278,10 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
       y: clientY,
     })
 
-    setIsHandleMenuOpen((prev) => !prev)
+    setIsHandleMenuOpen((previous) => !previous)
   }
 
-  const editChild = (childId: string) => {
+  const editChild = (childId: string): void => {
     const child = findChildRecursive(properties.data.children, childId)
     if (!child) return
 
@@ -298,7 +298,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
     setIsEditing(true)
   }
 
-  const selectChild = (childId: string) => {
+  const selectChild = (childId: string): void => {
     const child = findChildRecursive(properties.data.children, childId)
     if (!child) return
 
@@ -316,7 +316,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
     reactFlow.setNodes((nodes) => nodes.map((node) => ({ ...node, selected: false })))
   }
 
-  const changeHandleType = (currentHandle: { type: string; index: number }, newType: string) => {
+  const changeHandleType = (currentHandle: { type: string; index: number }, newType: string): void => {
     // Prevent changing to a duplicate handle type
     const existing = sourceHandles.some((handle) => handle.type === newType && handle.index !== currentHandle.index)
 
@@ -343,7 +343,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
     [allowedChildNames],
   )
 
-  const handleDragOver = (event: React.DragEvent) => {
+  const handleDragOver = (event: React.DragEvent): void => {
     event.preventDefault()
     event.stopPropagation()
 
@@ -367,7 +367,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
     }
   }
 
-  const handleDragLeave = () => {
+  const handleDragLeave = (): void => {
     setDragOver(false)
   }
 
@@ -484,7 +484,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
         className={`bg-background border-border relative flex flex-col items-center overflow-x-visible rounded-md border shadow-md ${isManuallyResized ? 'h-full w-full overflow-y-hidden' : 'overflow-y-visible'}`}
         style={{
           minWidth: `${minNodeWidth}px`,
-          ...(isManuallyResized ? {} : { width: 'max-content', maxWidth: `${maxNodeWidth}px` }),
+          ...(!isManuallyResized && { width: 'max-content', maxWidth: `${maxNodeWidth}px` }),
           ...(properties.selected && { borderColor: `var(${colorVariable})` }),
         }}
         ref={containerReference}
@@ -681,7 +681,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
   )
 }
 
-export function ResizeIcon({ color = '#999999' }: Readonly<{ color?: string }>) {
+export function ResizeIcon({ color = '#999999' }: Readonly<{ color?: string }>): JSX.Element {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"

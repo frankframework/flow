@@ -1,6 +1,7 @@
 import React, { useCallback, useRef, useState } from 'react'
 import ArrowDownIcon from 'icons/solar/Alt Arrow Down.svg?react'
 import ArrowRightIcon from 'icons/solar/Alt Arrow Right.svg?react'
+import { type NodeContextStore } from '~/stores/node-context-store'
 import { useSettingsStore } from '~/stores/settings-store'
 import useNodeContextStore from '~/stores/node-context-store'
 import type { ElementDetails } from '@frankframework/doc-library-core'
@@ -157,7 +158,7 @@ export default function SortedElements({
         </div>
       )}
 
-      {(hoveredRect && hoveredElement) || lockedElement ? (
+      {lockedElement || (hoveredRect && hoveredElement) ? (
         <ElementHoverCard
           key={(lockedElement ?? hoveredElement)!.name}
           anchorRect={hoveredRect!}

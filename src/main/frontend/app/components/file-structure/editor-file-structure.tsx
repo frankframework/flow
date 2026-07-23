@@ -292,7 +292,7 @@ export default function EditorFileStructure(): JSX.Element {
         setActiveMatchIndex((index): number => (index + 1) % matchingItemIds.length)
       } else if (event.key === 'Tab' && event.shiftKey) {
         event.preventDefault()
-        setActiveMatchIndex((index): number => (index < 1 ? matchingItemIds.length - 1 : index - 1))
+        setActiveMatchIndex((index): number => (index < 1 ? matchingItemIds.length : index) - 1)
       } else if (event.key === 'Enter') {
         event.preventDefault()
         const target = highlightedItemId || matchingItemIds[0]

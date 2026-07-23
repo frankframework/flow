@@ -271,8 +271,8 @@ function AddMappingForm({ onSave, sources, targets, initialData }: MappingModalP
           <Dropdown
             className="max-w-115 p-2"
             value={selectedConditional?.id ?? ''}
-            onChange={(e): void =>
-              setSelectedConditional(conditions.find((condition): boolean => condition.id === e) ?? null)
+            onChange={(event): void =>
+              setSelectedConditional(conditions.find((condition): boolean => condition.id === event) ?? null)
             }
             options={Object.fromEntries(
               conditions.map((condition): [string, string] => [condition.id, condition.name]),

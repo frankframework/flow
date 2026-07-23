@@ -36,7 +36,7 @@ export default defineConfig([
       'unicorn/name-replacements': [
         'warn',
         {
-          replacements: { configuration: false },
+          replacements: { configuration: false, utils: false, doc: false, props: false, ref: false, fn: false },
         },
       ],
       'unicorn/prefer-await': 'off', // preferably only if the function works better as async

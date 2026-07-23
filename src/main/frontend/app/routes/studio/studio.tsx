@@ -66,8 +66,8 @@ function MultiSelectPanel(): JSX.Element {
     return <GroupContext nodeId={groupId} />
   }
 
-  const groupDef = ALL_SHORTCUTS.find((shortCut): boolean => shortCut.id === 'studio.group')!
-  const groupParts = formatShortcutParts(groupDef, platform)
+  const groupDefinition = ALL_SHORTCUTS.find((shortCut): boolean => shortCut.id === 'studio.group')!
+  const groupParts = formatShortcutParts(groupDefinition, platform)
   const triggerGroup = (): boolean | void | undefined =>
     useShortcutStore.getState().shortcuts.get('studio.group')?.handler?.()
 

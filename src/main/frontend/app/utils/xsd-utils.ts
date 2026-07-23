@@ -91,10 +91,10 @@ function handleGroup(
 
   visitedGroups.add(reference)
 
-  const groupDef = getGroupByName(document, reference)
-  if (!groupDef) return []
+  const groupDefinition = getGroupByName(document, reference)
+  if (!groupDefinition) return []
 
-  return getChildrenFromNode(document, groupDef, visitedGroups, visitedTypes)
+  return getChildrenFromNode(document, groupDefinition, visitedGroups, visitedTypes)
 }
 
 function handleContainer(
@@ -181,10 +181,10 @@ export function getFirstLevelElementsForType(document: Document, typeName: strin
 
           visitedGroups.add(reference)
 
-          const groupDef = getGroupByName(document, reference)
-          if (!groupDef) break
+          const groupDefinition = getGroupByName(document, reference)
+          if (!groupDefinition) break
 
-          extract(groupDef, visitedGroups)
+          extract(groupDefinition, visitedGroups)
 
           break
         }
@@ -248,10 +248,10 @@ function extractRequirements(
 
         visitedGroups.add(reference)
 
-        const groupDef = getGroupByName(document, reference)
-        if (!groupDef) break
+        const groupDefinition = getGroupByName(document, reference)
+        if (!groupDefinition) break
 
-        const children = extractRequirements(document, groupDef, isRequired, visitedGroups)
+        const children = extractRequirements(document, groupDefinition, isRequired, visitedGroups)
 
         if (isRequired) {
           // REQUIRED GROUP = "at least one of its children"

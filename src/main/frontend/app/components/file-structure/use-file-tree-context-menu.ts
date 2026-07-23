@@ -84,7 +84,7 @@ export function useFileTreeContextMenu({
   setNameDialog: React.Dispatch<React.SetStateAction<NameDialogState | null>>
   deleteTarget: DeleteTargetState | null
   setDeleteTarget: React.Dispatch<React.SetStateAction<DeleteTargetState | null>>
-  openContextMenu: (e: React.MouseEvent, itemId: TreeItemIndex) => Promise<void>
+  openContextMenu: (event: React.MouseEvent, itemId: TreeItemIndex) => Promise<void>
   handleNewFile: (menuState?: ContextMenuState) => void
   handleNewFolder: (menuState?: ContextMenuState) => void
   handleRename: (menuState?: ContextMenuState) => void
@@ -98,16 +98,16 @@ export function useFileTreeContextMenu({
   const contextMenuReference = useRef<ContextMenuState | null>(null)
 
   const openContextMenu = useCallback(
-    async (e: React.MouseEvent, itemId: TreeItemIndex): Promise<void> => {
-      e.preventDefault()
-      e.stopPropagation()
+    async (event: React.MouseEvent, itemId: TreeItemIndex): Promise<void> => {
+      event.preventDefault()
+      event.stopPropagation()
       if (!dataProvider) return
 
       const item = await dataProvider.getTreeItem(itemId)
       if (!item) return
 
       const state: ContextMenuState = {
-        position: { x: e.clientX, y: e.clientY },
+        position: { x: event.clientX, y: event.clientY },
         itemId,
         isFolder: !!item.isFolder,
         isRoot: !!item.data.projectRoot,

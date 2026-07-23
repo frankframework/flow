@@ -3,7 +3,7 @@ import type { CustomNodeData, NodeLabels } from '~/types/datamapper_types/react-
 import { findNodeParent } from './generic-node-utils'
 import type { FormatDefinition, PropertyBasicTypes } from '~/types/datamapper_types/data-types'
 import { GROUP_PADDING_TOP, GROUP_WIDTH, ITEM_GAP, OBJECT_HEIGHT } from './constant'
-import type { GetNodeFunc, SequentialRepositionFn } from '~/hooks/use-datamapper-flow-management'
+import type { GetNodeFunction, SequentialRepositionFn } from '~/hooks/use-datamapper-flow-management'
 
 export function recurseFindArray(node: Node, nodes: Node[]): string | undefined {
   const parent = findNodeParent(node, nodes)
@@ -150,7 +150,7 @@ export function deleteNodeById(
   return { updatedNodes, deletedNode: nodeToDelete }
 }
 
-export function sequentialReposition(nodes: Node[], startParentId: string, getNodeFunction: GetNodeFunc): Node[] {
+export function sequentialReposition(nodes: Node[], startParentId: string, getNodeFunction: GetNodeFunction): Node[] {
   let parentId: string | null = startParentId
 
   while (parentId) {
@@ -183,7 +183,7 @@ export function sequentialReposition(nodes: Node[], startParentId: string, getNo
 
   return [...nodes]
 }
-export function calculateNodePosition(previous: Node[], parentId: string, getNode: GetNodeFunc): number {
+export function calculateNodePosition(previous: Node[], parentId: string, getNode: GetNodeFunction): number {
   const futureSiblings = previous.filter((node): boolean => node.parentId === parentId)
   const previousItem = futureSiblings.at(-1)
   const parentNode = getNode(parentId)
@@ -202,7 +202,7 @@ export function calculateNodePosition(previous: Node[], parentId: string, getNod
 
   return newY
 }
-export function generateReactFlowObject(previous: Node[], data: CustomNodeData, getNode: GetNodeFunc): Node {
+export function generateReactFlowObject(previous: Node[], data: CustomNodeData, getNode: GetNodeFunction): Node {
   //Calculate the position the node is to be placed at. This isn't always very accurate and will be corrected later after adding
   const newY = calculateNodePosition(previous, data.parentId, getNode)
   //Set the correct type of the node
@@ -225,7 +225,7 @@ export function generateReactFlowObject(previous: Node[], data: CustomNodeData, 
   return newNode
 }
 
-export function getGroupWidth(parentId: string, getNode: GetNodeFunc): number {
+export function getGroupWidth(parentId: string, getNode: GetNodeFunction): number {
   const parentNode = getNode(parentId)
   if (!parentNode) {
     return GROUP_WIDTH

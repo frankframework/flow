@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { type JSX, useCallback, useEffect, useMemo, useState } from 'react'
 import { useFFDoc } from '@frankframework/doc-library-react'
 import {
   flattenInheritedParentElementProperties,
@@ -67,7 +67,8 @@ export default function NonCanvasComponentContext({
 
   const fieldKeys = useMemo((): string[] => {
     const keys = new Set<string>(Object.keys(attributeDefinitions))
-    for (const key of Object.keys(initialAttributes ?? {})) keys.add(key)
+    const initialKeys = Object.keys(initialAttributes ?? {})
+    for (const key of initialKeys) keys.add(key)
     return [...keys]
   }, [attributeDefinitions, initialAttributes])
 
@@ -109,7 +110,7 @@ export default function NonCanvasComponentContext({
 
   const makeEnumOptions = useCallback(
     (attribute: Attribute): Record<string, string> | undefined => {
-      if (attribute.enum && ffDoc?.enums?.[attribute.enum]) {
+      if (ffDoc && attribute.enum && Object.hasOwn(ffDoc.enums, attribute.enum)) {
         return Object.keys(ffDoc.enums[attribute.enum]).reduce(
           (result, key): Record<string, string> => ({ ...result, [key]: key }),
           {} as Record<string, string>,
@@ -135,12 +136,6 @@ export default function NonCanvasComponentContext({
     return { baseKeys: [...leading, ...mandatory, ...filled], restKeys: rest }
   }, [fieldKeys, attributeDefinitions, initiallyFilledKeys])
 
-  const orderedKeys = showAll ? [...baseKeys, ...restKeys] : baseKeys
-
-  const handleChange = (key: string, value: string): void => {
-    setInputValues((previous): Record<string, string> => ({ ...previous, [key]: value }))
-  }
-
   const resolveFilledAttributes = useCallback((): Record<string, string> => {
     const result: Record<string, string> = {}
     for (const key of fieldKeys) {
@@ -149,6 +144,20 @@ export default function NonCanvasComponentContext({
     }
     return result
   }, [fieldKeys, inputValues])
+
+  if (isLoading || !elements) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <LoadingSpinner message="Loading component..." />
+      </div>
+    )
+  }
+
+  const orderedKeys = showAll ? [...baseKeys, ...restKeys] : baseKeys
+
+  const handleChange = (key: string, value: string): void => {
+    setInputValues((previous): Record<string, string> => ({ ...previous, [key]: value }))
+  }
 
   const handleSave = async (): Promise<void> => {
     if (!canSave || isSaving) return
@@ -180,14 +189,6 @@ export default function NonCanvasComponentContext({
       setErrorMessage(error instanceof Error ? error.message : `Failed to delete ${tagName}`)
       setIsSaving(false)
     }
-  }
-
-  if (isLoading || !elements) {
-    return (
-      <div className="flex h-full items-center justify-center">
-        <LoadingSpinner message="Loading component..." />
-      </div>
-    )
   }
 
   return (

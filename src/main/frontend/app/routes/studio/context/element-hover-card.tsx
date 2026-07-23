@@ -1,6 +1,6 @@
 import type { ElementDetails } from '@frankframework/doc-library-core'
 import { useFFDoc, useJavadocTransform } from '@frankframework/doc-library-react'
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { type JSX, type ReactPortal, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useShortcut } from '~/hooks/use-shortcut'
 import LinkButton from '~/components/inputs/link-button'
@@ -34,7 +34,7 @@ export default function ElementHoverCard({
   })
 
   useLayoutEffect((): void => {
-    if (!reference.current || !anchorRect) return
+    if (!anchorRect || !reference.current) return
 
     const tooltip = reference.current
     const tooltipHeight = tooltip.offsetHeight

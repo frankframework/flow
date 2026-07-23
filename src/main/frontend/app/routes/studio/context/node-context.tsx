@@ -1,8 +1,8 @@
 import { useNavigate } from 'react-router'
 import useNodeContextStore from '~/stores/node-context-store'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { type JSX, useCallback, useEffect, useRef, useState } from 'react'
 import { useShortcut } from '~/hooks/use-shortcut'
-import useFlowStore, { isExitNode, isFrankNode } from '~/stores/flow-store'
+import useFlowStore, { type FlowState, isExitNode, isFrankNode } from '~/stores/flow-store'
 import Button from '~/components/inputs/button'
 import Toggle from '~/components/inputs/toggle'
 import ContextEditorFooter from '~/components/context-editor-footer'
@@ -319,7 +319,7 @@ export default function NodeContext({
 
   const handleShowInEditor = useCallback((): void => {
     const tabData = useTabStore.getState().getTab(useTabStore.getState().activeTab)
-    if (!tabData?.configurationPath || !editingSubtype) return
+    if (!editingSubtype || !tabData?.configurationPath) return
     const nodeName = inputValues['name']
     openInEditorAtElement(navigate, { subtype: editingSubtype, name: nodeName, filepath: tabData.configurationPath })
   }, [editingSubtype, inputValues, navigate])
@@ -366,7 +366,7 @@ export default function NodeContext({
   })()
 
   const makeEnumOptions = (attribute: Attribute): Record<string, string> | undefined => {
-    if (attribute.enum && ffDoc?.enums?.[attribute.enum]) {
+    if (ffDoc && attribute.enum && Object.hasOwn(ffDoc.enums, attribute.enum)) {
       return Object.keys(ffDoc.enums[attribute.enum]).reduce(
         (result, key): Record<string, string> => ({ ...result, [key]: key }),
         {} as Record<string, string>,

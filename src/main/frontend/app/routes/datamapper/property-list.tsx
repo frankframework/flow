@@ -34,7 +34,7 @@ import AddFieldForm from '~/components/datamapper/forms/add-field-form'
 import AddMappingForm from '~/components/datamapper/forms/add-mapping-form'
 import Modal from '~/components/modal'
 import { getNodeTypes } from '~/components/datamapper/react-flow/node-types'
-import { showErrorToast, showSuccessToast } from '~/components/toast'
+import useToasts from '~/components/toast/use-toasts'
 import { useFlowManagement } from '~/hooks/use-datamapper-flow-management'
 import { type ConfigActions } from '~/stores/datamapper_state/mappingListConfig/reducer'
 import type { CustomNodeData, MappingNodeData, NodeLabels } from '~/types/datamapper_types/react-node-types'
@@ -86,25 +86,21 @@ const INITIAL_EDGES: Edge[] = []
 
 function PropertyList({ config, configDispatch }: PropertyListProperties): JSX.Element {
   const reactFlowInstance = useReactFlow()
+  const { showSuccessToast, showErrorToast } = useToasts()
 
   const initHasRun = useRef(false)
-
   const [reactFlowNodes, setReactFlowNodes] = useState<Node[]>(INITIAL_NODES)
   const [edges, setEdges] = useState<Edge[]>(INITIAL_EDGES)
   const [canvasSize, setCanvasSize] = useState({ height: 200 })
   const [addFieldModal, setAddFieldModal] = useState(false)
   const [addMappingModal, setAddMappingModal] = useState(false)
-
   const [editingNode, setEditingNode] = useState<CustomNodeData | null>(null)
   const [editingMapping, setEditingMapping] = useState<MappingNodeData | null>(null)
-
   const openModalType = useRef<'source' | 'target'>('source')
-
   const possibleParentGroups = useRef<NodeLabels[]>([])
   const [mappingSources, setMappingSources] = useState<NodeLabels[]>([])
   const [mappingTargets, setMappingTargets] = useState<NodeLabels[]>([])
   const canvasWidth = useRef<HTMLDivElement>(null)
-
   const editingMappingReference = useRef<MappingNodeData | null>(null)
 
   useEffect((): void => {
@@ -161,7 +157,7 @@ function PropertyList({ config, configDispatch }: PropertyListProperties): JSX.E
 
       openMappingModal(sources, targets)
     })
-  }, [reactFlowInstance])
+  }, [reactFlowInstance, showErrorToast])
 
   const nodeTypes: NodeTypes = useMemo((): NodeTypes => {
     return getNodeTypes({

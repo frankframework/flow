@@ -91,8 +91,8 @@ export default function StickyNoteComponent(properties: NodeProps<StickyNote>): 
           </span>
           <button
             className="nodrag ml-1 shrink-0 text-xs hover:cursor-pointer hover:opacity-70"
-            onClick={(e): void => {
-              e.stopPropagation()
+            onClick={(error): void => {
+              error.stopPropagation()
               useFlowStore.getState().setStickyCollapsed(properties.id, false)
             }}
             title="Expand"
@@ -157,8 +157,8 @@ export default function StickyNoteComponent(properties: NodeProps<StickyNote>): 
         <div className="nodrag absolute top-0 right-5 flex items-center">
           <div
             className="px-1 hover:cursor-pointer hover:opacity-50"
-            onClick={(e): void => {
-              e.stopPropagation()
+            onClick={(error): void => {
+              error.stopPropagation()
               useFlowStore.getState().setStickyCollapsed(properties.id, true)
             }}
             title="Collapse"
