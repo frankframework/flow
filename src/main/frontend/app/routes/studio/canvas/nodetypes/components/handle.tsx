@@ -43,12 +43,20 @@ export function CustomHandle(properties: Readonly<HandleProperties>) {
   const [menuPosition, setMenuPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 })
 
   const handleClick = (event: React.MouseEvent) => {
+    if (typesAllowedListIsEmpty()) return
     const { clientX, clientY } = event
     setMenuPosition({
       x: clientX,
       y: clientY,
     })
     setIsMenuOpen(!isMenuOpen) // Toggle menu visibility
+  }
+
+  function typesAllowedListIsEmpty() {
+    return (
+      properties.typesAllowed === undefined ||
+      (properties.typesAllowed && Object.keys(properties.typesAllowed).length <= 0)
+    )
   }
 
   const handleMenuClick = (newType: string) => {

@@ -5,6 +5,8 @@ import {
   type NodeProps,
   NodeResizeControl,
   Position,
+  type ResizeDragEvent,
+  type ResizeParams,
   useReactFlow,
   useStore,
   useUpdateNodeInternals,
@@ -23,20 +25,20 @@ import { useFFDoc } from '@frankframework/doc-library-react'
 import HandleMenu from './components/handle-menu'
 import { NodeHeader } from './components/node-header'
 import { NodeChildrenContainer } from './components/node-children-container'
-import { ChildNodeComponent, type ChildNode } from './child-node'
+import { type ChildNode, ChildNodeComponent } from './child-node'
 import { findChildRecursive } from '~/stores/child-utilities'
 import type { ElementDetails } from '@frankframework/doc-library-core'
+import { getInheritedProperties } from '@frankframework/doc-library-core'
 import { DeprecatedPopover } from './components/deprecated-popover'
 import { showWarningToast } from '~/components/toast'
-import { useHandleTypes } from '~/hooks/use-handle-types'
 import AddSubcomponentModal from '~/components/flow/add-subcomponent-modal'
 import { useFrankConfigXsd } from '~/providers/frankconfig-xsd-provider'
 import {
-  type Requirement,
   getAllowedChildElementsForElement,
   getElementRequirements,
   getMissingRequirements,
   isRequirementFulfilled,
+  type Requirement,
 } from '~/utils/xsd-utils'
 import MissingRequirements from './components/missing-requirements'
 import ZoomedOutNode from './zoomed-out-node'
@@ -77,7 +79,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
   const [dragOver, setDragOver] = useState(false)
   const [canDropDraggedElement, setCanDropDraggedElement] = useState(false)
   const showNodeContextMenu = useNodeContextMenu()
-  const { elements } = useFFDoc()
+  const { elements, ffDoc } = useFFDoc()
   const { xsdDoc } = useFrankConfigXsd()
   const {
     setNodeId,
@@ -94,20 +96,40 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
   const zoom = useStore((state) => state.transform[2])
   const isCompact = zoom < FlowConfig.ZOOM_THRESHOLD
   const [isOverflowing, setIsOverflowing] = useState(false)
+  const sourceHandles = properties.data.sourceHandles
+  const addHandle = useFlowStore.getState().addHandle
 
   const frankElement = useMemo(() => {
-    if (!elements) return null
-    const recordElements = elements as Record<string, ElementDetails>
+    if (!elements || !ffDoc || properties.data.subtype === 'Receiver') return
 
-    return Object.values(recordElements).find((element) => element.name === properties.data.subtype) ?? null
-  }, [elements, properties.data.subtype])
+    const element = elements[properties.data.subtype]
+    if (!element) return
+
+    const inherited = getInheritedProperties(element, ffDoc.elements, ffDoc.enums)
+    // TODO: Remove when https://github.com/frankframework/frank-doc/issues/466 is fixed.
+    const fixedForwardPipeForwards = ffDoc.elements['org.frankframework.pipes.FixedForwardPipe']?.forwards
+    const successForward = element.labels['EIP'] !== 'Router' && fixedForwardPipeForwards
+    element.forwards = { ...element.forwards, ...inherited.forwards, ...successForward }
+
+    return element
+  }, [elements, ffDoc, properties.data.subtype])
+
+  useEffect(() => {
+    if (!frankElement?.forwards) return
+
+    if (
+      Object.keys(frankElement.forwards).includes('success') &&
+      sourceHandles.every((handle) => handle.type !== 'success')
+    ) {
+      addHandle(properties.id, { type: 'success', index: sourceHandles.length + 1 })
+    }
+  }, [addHandle, frankElement?.forwards, properties.id, sourceHandles])
 
   const isDeprecated = frankElement?.deprecated
   const [showDeprecated, setShowDeprecated] = useState(false)
   const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null)
   const [isSubcomponentModalOpen, setIsSubcomponentModalOpen] = useState(false)
   const dangerTriangleReference = useRef<HTMLDivElement>(null)
-  const availableHandleTypes = useHandleTypes(frankElement?.forwards)
 
   const hoveredNodeId = useNodeContextStore((state) => state.hoveredNodeId)
   const showAllForwards = useNodeContextStore((state) => state.showAllForwards)
@@ -161,6 +183,17 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
   const [isHandleMenuOpen, setIsHandleMenuOpen] = useState(false)
   const [handleMenuPosition, setHandleMenuPosition] = useState({ x: 0, y: 0 })
   const [isManuallyResized, setIsManuallyResized] = useState(properties.data.manuallyResized)
+  const { handleMenuTypesAllowed, handleMenuTypesAllowedHasOptions } = useMemo(() => {
+    if (!frankElement?.forwards) return {}
+    const filteredHandles = Object.entries(frankElement.forwards).filter(([type]) =>
+      sourceHandles.every((handle) => handle.type !== type),
+    )
+
+    return {
+      handleMenuTypesAllowed: Object.fromEntries(filteredHandles),
+      handleMenuTypesAllowedHasOptions: filteredHandles.length > 0,
+    }
+  }, [frankElement?.forwards, sourceHandles])
 
   const [dimensions, setDimensions] = useState({
     width: properties.width ?? minNodeWidth,
@@ -168,21 +201,8 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
   })
 
   const firstHandlePosition = useMemo(() => {
-    return (dimensions.height - (properties.data.sourceHandles.length - 1) * handleSpacing) / 2
-  }, [dimensions.height, properties.data.sourceHandles.length])
-
-  const allForwardTypesUsed = useMemo(() => {
-    if (availableHandleTypes.length === 0) return true
-
-    // If custom is allowed, "+" should always remain visible
-    if (availableHandleTypes.includes('custom')) {
-      return false
-    }
-
-    const existingTypesCount = properties.data.sourceHandles.length
-
-    return existingTypesCount >= availableHandleTypes.length
-  }, [availableHandleTypes, properties.data.sourceHandles])
+    return (dimensions.height - (sourceHandles.length - 1) * handleSpacing) / 2
+  }, [dimensions.height, sourceHandles.length])
 
   useEffect(() => {
     if (dragOver && containerReference.current) {
@@ -224,7 +244,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
         return previous
       })
     }
-  }, [properties.data.children, properties.data.sourceHandles.length, dragOver])
+  }, [properties.data.children, sourceHandles.length, dragOver])
 
   useEffect(() => {
     const container = containerReference.current
@@ -236,36 +256,18 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
     return () => observer.disconnect()
   }, [])
 
-  const addHandle = useFlowStore.getState().addHandle
   const addChild = useFlowStore((state) => state.addChild)
-
-  const hasHandleOfType = useCallback(
-    (type: string) => {
-      // Custom handles are never considered duplicates
-      if (type === 'custom') return false
-
-      return properties.data.sourceHandles.some((handle) => handle.type === type)
-    },
-    [properties.data.sourceHandles],
-  )
 
   const handleMenuClick = useCallback(
     (handleType: string) => {
-      // Prevent adding duplicate handle types
-      if (hasHandleOfType(handleType)) {
-        showWarningToast(`Handle of type "${handleType}" is already present!`)
-        console.warn(`Handle of type "${handleType}" is already present!`)
-        return
-      }
-
       addHandle(properties.id, {
         type: handleType,
-        index: properties.data.sourceHandles.length + 1,
+        index: sourceHandles.length + 1,
       })
       updateNodeInternals(properties.id) // Update the edge
       setIsHandleMenuOpen(false) // Close the menu after selection
     },
-    [hasHandleOfType, addHandle, properties.id, properties.data.sourceHandles.length, updateNodeInternals],
+    [addHandle, properties.id, sourceHandles.length, updateNodeInternals],
   )
 
   const toggleHandleMenu = (event: React.MouseEvent) => {
@@ -314,11 +316,9 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
     reactFlow.setNodes((nodes) => nodes.map((node) => ({ ...node, selected: false })))
   }
 
-  const changeHandleType = (handleIndex: number, newType: string) => {
+  const changeHandleType = (currentHandle: { type: string; index: number }, newType: string) => {
     // Prevent changing to a duplicate handle type
-    const existing = properties.data.sourceHandles.some(
-      (handle) => handle.type === newType && handle.index !== handleIndex,
-    )
+    const existing = sourceHandles.some((handle) => handle.type === newType && handle.index !== currentHandle.index)
 
     if (existing) {
       showWarningToast(`Handle of type "${newType}" is already present!`)
@@ -326,7 +326,12 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
       return
     }
 
-    useFlowStore.getState().updateHandle(properties.id, handleIndex, { type: newType, index: handleIndex })
+    if (currentHandle.type === 'success') {
+      addHandle(properties.id, { type: 'success', index: sourceHandles.length + 1 })
+    }
+    useFlowStore
+      .getState()
+      .updateHandle(properties.id, currentHandle.index, { type: newType, index: currentHandle.index })
     // Timeout to prevent bug from edgelabel not properly updating
     setTimeout(() => {
       updateNodeInternals(properties.id)
@@ -392,14 +397,16 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
       addChild(properties.id, child)
     },
     [
-      properties.id,
-      addChild,
+      setNodeId,
+      setAttributes,
       setIsNewNode,
       setEditingSubtype,
       showNodeContextMenu,
       setIsEditing,
       setParentId,
+      properties.id,
       setChildParentId,
+      addChild,
     ],
   )
 
@@ -450,7 +457,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
         colorVariable={colorVariable}
         selected={properties.selected}
         showTargetHandle={properties.data.subtype !== 'Receiver'}
-        sourceHandles={properties.data.sourceHandles}
+        sourceHandles={sourceHandles}
       />
     )
   }
@@ -460,7 +467,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
       <NodeResizeControl
         minWidth={minNodeWidth}
         minHeight={minNodeHeight}
-        onResize={(event, data) => {
+        onResize={(_event: ResizeDragEvent, data: ResizeParams) => {
           setIsManuallyResized(true)
           setDimensions({ width: data.width, height: data.height })
         }}
@@ -592,42 +599,61 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
       </div>
 
       {/* Receivers can only have outgoing connections, so we hide the input handle for them */}
-      {properties.data.subtype !== 'Receiver' && (
-        <Handle
-          type="target"
-          position={Position.Left}
-          isConnectableStart={false}
-          className="flex items-center justify-center text-white"
-          style={{
-            left: '-15px',
-            width: '15px',
-            height: '15px',
-            backgroundColor: '#B2B2B2',
-          }}
-        />
+      {properties.data.subtype === 'Receiver' ? (
+        <></>
+      ) : (
+        /*
+         * TODO: https://github.com/frankframework/flow/issues/613
+         * <Handle
+         *   type="source"
+         *   position={Position.Right}
+         *   isConnectableStart={false}
+         *   className="flex items-center justify-center text-white"
+         *   style={{
+         *     right: '-15px',
+         *     width: '15px',
+         *     height: '15px',
+         *     backgroundColor: '#B2B2B2',
+         *   }}
+         * />
+         */
+        <>
+          <Handle
+            type="target"
+            position={Position.Left}
+            isConnectableStart={false}
+            className="flex items-center justify-center text-white"
+            style={{
+              left: '-15px',
+              width: '15px',
+              height: '15px',
+              backgroundColor: '#B2B2B2',
+            }}
+          />
+          {sourceHandles.map((handle) => (
+            <CustomHandle
+              key={handle.type + handle.index}
+              type={handle.type}
+              index={handle.index}
+              firstHandlePosition={firstHandlePosition}
+              handleSpacing={handleSpacing}
+              onChangeType={(newType) => changeHandleType(handle, newType)}
+              absolutePosition={{ x: properties.positionAbsoluteX, y: properties.positionAbsoluteY }}
+              typesAllowed={handleMenuTypesAllowed}
+              dimmed={dimmedHandleIndices.has(handle.index)}
+            />
+          ))}
+        </>
       )}
-      {properties.data.sourceHandles.map((handle) => (
-        <CustomHandle
-          key={handle.type + handle.index}
-          type={handle.type}
-          index={handle.index}
-          firstHandlePosition={firstHandlePosition}
-          handleSpacing={handleSpacing}
-          onChangeType={(newType) => changeHandleType(handle.index, newType)}
-          absolutePosition={{ x: properties.positionAbsoluteX, y: properties.positionAbsoluteY }}
-          typesAllowed={frankElement?.forwards}
-          dimmed={dimmedHandleIndices.has(handle.index)}
-        />
-      ))}
       {/* Only show the add handle button if there are available handle types that are not yet used on this node */}
-      {!allForwardTypesUsed && (
+      {handleMenuTypesAllowedHasOptions && (
         <div
           onClick={(event) => {
             toggleHandleMenu(event)
           }}
           className="nodrag absolute h-4 w-4 cursor-pointer justify-center rounded-full border bg-gray-400 text-center text-[8px] font-bold text-white"
           style={{
-            top: `${firstHandlePosition + properties.data.sourceHandles.length * handleSpacing + 12.5}px`,
+            top: `${firstHandlePosition + sourceHandles.length * handleSpacing + 12.5}px`,
             right: '-23px',
           }}
         >
@@ -640,7 +666,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>) {
           position={handleMenuPosition}
           onClose={() => setIsHandleMenuOpen(false)}
           onSelect={handleMenuClick}
-          typesAllowed={frankElement?.forwards}
+          typesAllowed={handleMenuTypesAllowed}
         />
       )}
 

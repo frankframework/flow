@@ -57,14 +57,14 @@ export default function HandleMenu({
   return createPortal(
     <div
       ref={menuRef}
-      className="nodrag bg-background border-border absolute rounded border shadow-md"
+      className="nodrag bg-background border-border absolute z-5 rounded border shadow-md"
       style={{
         left: `${position.x + 10}px`,
         top: `${position.y - 5}px`,
       }}
     >
       <div className="w-70">
-        <div className="border-border text-foreground-muted mt-[1px] flex h-10 items-center border-b p-2 text-xs font-semibold tracking-wide uppercase">
+        <div className="border-border text-foreground-muted mt-px flex h-10 items-center border-b p-2 text-xs font-semibold tracking-wide uppercase">
           {title}
         </div>
         <ul className="w-full">
