@@ -46,14 +46,8 @@ export async function getAdaptersFromConfiguration(projectName: string, filepath
     const name = adapter.getAttribute('name')
     if (!name) continue
 
-    let listenerType: string | null = null
     const children = adapter.querySelectorAll('*')
-    for (const child of children) {
-      if (child.tagName.includes('Listener') || child.tagName.includes('listener')) {
-        listenerType = child.tagName
-        break
-      }
-    }
+    const listenerType = getListenerType(children)
 
     adapters.push({ name, listenerType })
   }
@@ -114,6 +108,15 @@ export async function convertAdapterXmlToJson(adapter: Element): Promise<{ nodes
   const allNodes: FlowNode[] = [...groupNodes, ...flowNodes, ...stickyNotes]
 
   return { nodes: allNodes, edges: extractEdgesFromAdapter(adapter, flowNodes, elementToId) }
+}
+
+function getListenerType(children: NodeListOf<Element>): string | null {
+  for (const child of children) {
+    if (child.tagName.includes('Listener') || child.tagName.includes('listener')) {
+      return child.tagName
+    }
+  }
+  return null
 }
 
 function buildNodeNameToIdMap(nodes: FlowNode[]): Map<string, string> {
@@ -716,11 +719,10 @@ function assignParentRelationships(flowNodes: FlowNode[], groupNodes: GroupNode[
 
     for (const childName of childrenNames) {
       const childNode = nameToNode.get(childName.trim())
-
-      if (!childNode) continue
-
-      childNode.parentId = group.id
-      childNode.extent = 'parent'
+      if (childNode) {
+        childNode.parentId = group.id
+        childNode.extent = 'parent'
+      }
     }
   }
 }

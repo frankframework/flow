@@ -161,46 +161,7 @@ export function getFirstLevelElementsForType(document: Document, typeName: strin
   const typeNode = getComplexTypeByName(document, typeName)
   if (!typeNode) return []
 
-  const results = new Set<string>()
-
-  const extract = (node: Element, visitedGroups = new Set<string>()): void => {
-    for (const child of node.children) {
-      const tag = child.localName
-
-      switch (tag) {
-        case 'element': {
-          const name = child.getAttribute('name') || child.getAttribute('ref')
-          if (name) results.add(name)
-
-          break
-        }
-
-        case 'group': {
-          const reference = child.getAttribute('ref')
-          if (!reference || visitedGroups.has(reference)) break
-
-          visitedGroups.add(reference)
-
-          const groupDefinition = getGroupByName(document, reference)
-          if (!groupDefinition) break
-
-          extract(groupDefinition, visitedGroups)
-
-          break
-        }
-
-        case 'sequence':
-        case 'choice':
-        case 'all': {
-          extract(child, visitedGroups)
-          break
-        }
-      }
-    }
-  }
-
-  extract(typeNode)
-
+  const results = extractElement(typeNode)
   return [...results]
 }
 
@@ -217,6 +178,47 @@ export function getElementRequirements(document: Document, elementName: string):
   return extractRequirements(document, typeNode)
 }
 
+function extractElement(node: Element, visitedGroups = new Set<string>()): Set<string> {
+  let results = new Set<string>()
+  for (const child of node.children) {
+    const childResults = extractChild(child, visitedGroups)
+    if (childResults) results = new Set([...results, ...childResults])
+  }
+  return results
+}
+
+function extractChild(child: Element, visitedGroups: Set<string>): Set<string> | null {
+  const tag = child.localName
+
+  switch (tag) {
+    case 'element': {
+      const name = child.getAttribute('name') || child.getAttribute('ref')
+      const result = new Set<string>()
+      if (name) result.add(name)
+      return result
+    }
+
+    case 'group': {
+      const reference = child.getAttribute('ref')
+      if (!reference || visitedGroups.has(reference)) break
+
+      visitedGroups.add(reference)
+
+      const groupDefinition = getGroupByName(document, reference)
+      if (!groupDefinition) break
+
+      return extractElement(groupDefinition, visitedGroups)
+    }
+
+    case 'sequence':
+    case 'choice':
+    case 'all': {
+      return extractElement(child, visitedGroups)
+    }
+  }
+  return null
+}
+
 function extractRequirements(
   document: Document,
   node: Element,
@@ -229,74 +231,7 @@ function extractRequirements(
     const minOccurs = child.getAttribute('minOccurs')
     const isRequired = parentRequired && (minOccurs === null || minOccurs !== '0')
 
-    switch (child.localName) {
-      case 'element': {
-        const name = child.getAttribute('name') || child.getAttribute('ref')
-        if (name) {
-          results.push({
-            kind: 'element',
-            name,
-            required: isRequired,
-          })
-        }
-        break
-      }
-
-      case 'group': {
-        const reference = child.getAttribute('ref')
-        if (!reference || visitedGroups.has(reference)) break
-
-        visitedGroups.add(reference)
-
-        const groupDefinition = getGroupByName(document, reference)
-        if (!groupDefinition) break
-
-        const children = extractRequirements(document, groupDefinition, isRequired, visitedGroups)
-
-        if (isRequired) {
-          // REQUIRED GROUP = "at least one of its children"
-          results.push({
-            kind: 'group',
-            mode: 'one',
-            children,
-          })
-        } else {
-          // optional group -> children optional
-          results.push(
-            ...children.map((c): GroupRequirement | { required: boolean; kind: 'element'; name: string } =>
-              c.kind === 'element' ? { ...c, required: false } : c,
-            ),
-          )
-        }
-
-        break
-      }
-
-      case 'sequence':
-      case 'all': {
-        const children = extractRequirements(document, child, isRequired, visitedGroups)
-
-        results.push({
-          kind: 'group',
-          mode: 'all',
-          children,
-        })
-
-        break
-      }
-
-      case 'choice': {
-        const children = extractRequirements(document, child, isRequired, visitedGroups)
-
-        results.push({
-          kind: 'group',
-          mode: 'one',
-          children,
-        })
-
-        break
-      }
-    }
+    extractChildRequirements(child, document, visitedGroups, isRequired, results)
   }
 
   return results
@@ -304,6 +239,75 @@ function extractRequirements(
 
 export function isRequirementFulfilled(requirements: Requirement[], children: ChildNode[]): boolean {
   return requirements.every((requirement): boolean => evaluateRequirement(requirement, children))
+}
+
+function extractChildRequirements(
+  child: Element,
+  document: Document,
+  visitedGroups: Set<string>,
+  isRequired: boolean,
+  results: Requirement[],
+): void {
+  switch (child.localName) {
+    case 'element': {
+      const name = child.getAttribute('name') || child.getAttribute('ref')
+      if (name) {
+        results.push({
+          kind: 'element',
+          name,
+          required: isRequired,
+        })
+      }
+      break
+    }
+    case 'group': {
+      const reference = child.getAttribute('ref')
+      if (!reference || visitedGroups.has(reference)) break
+
+      visitedGroups.add(reference)
+
+      const groupDefinition = getGroupByName(document, reference)
+      if (!groupDefinition) break
+
+      const children = extractRequirements(document, groupDefinition, isRequired, visitedGroups)
+      if (isRequired) {
+        // REQUIRED GROUP = "at least one of its children"
+        results.push({
+          kind: 'group',
+          mode: 'one',
+          children,
+        })
+      } else {
+        // optional group -> children optional
+        results.push(
+          ...children.map((child): GroupRequirement | { required: boolean; kind: 'element'; name: string } =>
+            child.kind === 'element' ? { ...child, required: false } : child,
+          ),
+        )
+      }
+      break
+    }
+    case 'sequence':
+    case 'all': {
+      const children = extractRequirements(document, child, isRequired, visitedGroups)
+      results.push({
+        kind: 'group',
+        mode: 'all',
+        children,
+      })
+      break
+    }
+
+    case 'choice': {
+      const children = extractRequirements(document, child, isRequired, visitedGroups)
+      results.push({
+        kind: 'group',
+        mode: 'one',
+        children,
+      })
+      break
+    }
+  }
 }
 
 function evaluateRequirement(requirement: Requirement, children: ChildNode[]): boolean {

@@ -1,3 +1,4 @@
+import type { JSX } from 'react'
 import { createBrowserRouter, isRouteErrorResponse, useRouteError } from 'react-router'
 import ConfigurationOverview from '~/routes/configurations/configuration-overview'
 import CodeEditor from '~/routes/editor/editor'

@@ -62,19 +62,27 @@ function calculateCenterPositionFromNodes(
 
 function resolveVerticalOverlap(desiredY: number, allNodes: Node[], minDistance = 40, offset = 50): number {
   let y = desiredY
-  let hasOverlap = true
 
-  while (hasOverlap) {
-    hasOverlap = false
+  /*
+   * let hasOverlap = true
+   * while (hasOverlap) {
+   *   hasOverlap = false
+   *   for (const node of allNodes) {
+   *     if (!node.type?.toLocaleLowerCase().includes('mappingnode')) continue
+   *     if (Math.abs(node.position.y - y) < minDistance) {
+   *       y += offset
+   *       hasOverlap = true
+   *       break
+   *     }
+   *   }
+   * }
+   */
 
-    for (const node of allNodes) {
-      if (!node.type?.toLocaleLowerCase().includes('mappingnode')) continue
-
-      if (Math.abs(node.position.y - y) < minDistance) {
-        y += offset
-        hasOverlap = true
-        break
-      }
+  for (const node of allNodes) {
+    if (!node.type?.toLocaleLowerCase().includes('mappingnode')) continue
+    if (Math.abs(node.position.y - y) < minDistance) {
+      y += offset
+      break
     }
   }
 

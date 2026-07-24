@@ -47,45 +47,64 @@ function toPascalCase(tag: string): string {
 }
 
 function analyzeTagStructure(lines: string[], startLine: number): { isSelfClosing: boolean; endLine: number } {
+  const searchLimit = Math.min(startLine + MAX_TAG_LINES, lines.length)
   let isInsideString = false
   let stringDelimiter = ''
   let isInsideTag = false
-  let previousChar = ''
-
-  const searchLimit = Math.min(startLine + MAX_TAG_LINES, lines.length)
 
   for (let currentLine = startLine; currentLine < searchLimit; currentLine++) {
     const line = lines[currentLine]
-    for (const char of line) {
-      if (!isInsideTag) {
-        if (char === '<') isInsideTag = true
-        continue
-      }
+    const lineResult = analyzeLineForTag(line, currentLine, { isInsideString, stringDelimiter, isInsideTag })
+    if (Object.hasOwn(lineResult, 'isSelfClosing')) return lineResult as { isSelfClosing: boolean; endLine: number }
 
-      if (isInsideString) {
-        if (char === stringDelimiter) isInsideString = false
-        previousChar = char
-        continue
-      }
-
-      if (char === '"' || char === "'") {
-        isInsideString = true
-        stringDelimiter = char
-        previousChar = char
-        continue
-      }
-
-      if (char === '>') {
-        return { isSelfClosing: previousChar === '/', endLine: currentLine + 1 }
-      }
-
-      if (char.trim() !== '') {
-        previousChar = char
-      }
-    }
+    // This sucks, but this file needs a refactor as a whole
+    const lineState = lineResult as { isInsideString: boolean; stringDelimiter: string; isInsideTag: boolean }
+    isInsideString = lineState.isInsideString
+    stringDelimiter = lineState.stringDelimiter
+    isInsideTag = lineState.isInsideTag
   }
 
   return { isSelfClosing: false, endLine: startLine + 1 }
+}
+
+function analyzeLineForTag(
+  line: string,
+  lineNumber: number,
+  searchState: { isInsideString: boolean; stringDelimiter: string; isInsideTag: boolean },
+):
+  | { isSelfClosing: boolean; endLine: number }
+  | { isInsideString: boolean; stringDelimiter: string; isInsideTag: boolean } {
+  let previousChar = ''
+  let { isInsideString, stringDelimiter, isInsideTag } = searchState
+
+  for (const char of line) {
+    if (!isInsideTag) {
+      if (char === '<') isInsideTag = true
+      continue
+    }
+
+    if (isInsideString) {
+      if (char === stringDelimiter) isInsideString = false
+      previousChar = char
+      continue
+    }
+
+    if (char === '"' || char === "'") {
+      isInsideString = true
+      stringDelimiter = char
+      previousChar = char
+      continue
+    }
+
+    if (char === '>') {
+      return { isSelfClosing: previousChar === '/', endLine: lineNumber + 1 }
+    }
+
+    if (char.trim() !== '') {
+      previousChar = char
+    }
+  }
+  return { isInsideString, stringDelimiter, isInsideTag }
 }
 
 /**

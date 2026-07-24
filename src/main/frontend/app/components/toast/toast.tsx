@@ -52,7 +52,7 @@ export function Toast({ options, index }: { options: ToastOptions; index: number
   const { title, message, duration, type } = options
   const styles = useMemo(() => toastStyles[type], [type])
 
-  useEffect((): (() => void) | undefined => {
+  useEffect((): (() => void) | void => {
     if (!styles) return
 
     const timer = setTimeout(() => removeToast(index), duration ?? styles.defaultDuration)

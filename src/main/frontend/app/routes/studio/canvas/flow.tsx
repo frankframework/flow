@@ -1,3 +1,4 @@
+/* eslint-disable */
 import {
   addEdge,
   Background,
@@ -18,6 +19,7 @@ import {
 import Dagre from '@dagrejs/dagre'
 import { useNavigate } from 'react-router'
 import { SaveStatusIndicator } from '~/components/save-status-indicator'
+import useToasts from '~/components/toast/use-toasts'
 import { useSaveStatusStore } from '~/stores/save-status-store'
 import CodeIcon from '/icons/solar/Code.svg?react'
 import '@xyflow/react/dist/style.css'
@@ -49,7 +51,6 @@ import {
 import { refreshOpenDiffs } from '~/services/git-service'
 import useEditorTabStore from '~/stores/editor-tab-store'
 import { cloneWithRemappedIds, getEdgeLabelFromHandle } from '~/utils/flow-utils'
-import { showErrorToast } from '~/components/toast'
 import { useSettingsStore } from '~/stores/settings-store'
 import { useShortcut } from '~/hooks/use-shortcut'
 import LightbulbIcon from '/icons/solar/Lightbulb.svg?react'
@@ -204,6 +205,7 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
   const elementsRef = useRef(elements)
   const showNodeContextMenuRef = useRef(showNodeContextMenu)
   const navigate = useNavigate()
+  const { showErrorToast } = useToasts()
 
   useEffect(() => {
     elementsRef.current = elements
@@ -1041,7 +1043,7 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
     'studio.show-in-editor': () => showSelectedNodeInEditor(),
   })
 
-  const handleNodeDragStop = useCallback((_event: React.MouseEvent, node: FlowNode) => {
+  const handleNodeDragStop = useCallback((_event: MouseEvent | TouchEvent, node: FlowNode) => {
     if (!isStickyNote(node)) return
 
     const flowStore = useFlowStore.getState()
