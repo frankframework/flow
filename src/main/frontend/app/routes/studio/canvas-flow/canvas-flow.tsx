@@ -1271,6 +1271,132 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
     [allowedOnCanvas],
   )
 
+  const onDrop = (event: React.DragEvent) => {
+    event.preventDefault()
+    setDraggedName(null)
+    setParentId(null)
+
+    const data = event.dataTransfer.getData('application/reactflow')
+    if (!data) return
+
+    setDropSuccessful(true)
+
+    const parsedData = JSON.parse(data)
+    const { screenToFlowPosition } = reactFlow
+
+    if (elements) {
+      const elementData = elements[parsedData.name]
+      if (elementData) {
+        setAttributes(elementData.attributes)
+        setNodeId(+useFlowStore.getState().nodeIdCounter)
+      }
+    }
+
+    const position = screenToFlowPosition({ x: event.clientX, y: event.clientY })
+    addNodeAtPosition(position, parsedData.name)
+  }
+
+  const onDragEnd = () => {
+    setDraggedName(null)
+    setParentId(null)
+  }
+
+  function addNodeAtPosition(
+    position: { x: number; y: number },
+    elementName: string,
+    sourceInfo?: { nodeId: string | null; handleId: string | null; handleType: 'source' | 'target' | null },
+  ) {
+    showNodeContextMenu(true)
+    setIsNewNode(true)
+    setEditingSubtype(elementName)
+    setIsEditing(true)
+    setParentId(null)
+    setChildParentId(null)
+
+    const flowStore = useFlowStore.getState()
+    const newId = flowStore.getNextNodeId()
+
+    const elementType = getElementTypeFromName(elementName)
+    const nodeType = elementType === 'exit' ? 'exitNode' : 'frankNode'
+
+    const width = nodeType === 'exitNode' ? FlowConfig.EXIT_DEFAULT_WIDTH : FlowConfig.NODE_DEFAULT_WIDTH
+    const height = nodeType === 'exitNode' ? FlowConfig.EXIT_DEFAULT_HEIGHT : FlowConfig.NODE_MIN_HEIGHT
+
+    const newNode: FrankNodeType = {
+      id: newId.toString(),
+      position: {
+        x: position.x - width / 2,
+        y: position.y - height / 2,
+      },
+      data: {
+        subtype: elementName,
+        type: elementType,
+        name: ``,
+        sourceHandles: [],
+        children: [],
+      },
+      type: nodeType,
+    }
+
+    flowStore.addNode(newNode)
+
+    if (sourceInfo?.nodeId && sourceInfo.handleType === 'source') {
+      const sourceNode = flowStore.nodes.find((node) => node.id === sourceInfo.nodeId)
+
+      if (reactFlow.getZoom() < FlowConfig.ZOOM_THRESHOLD && sourceNode && isFrankNode(sourceNode)) {
+        if (edgeDropHandleType) {
+          const existingHandle = sourceNode.data.sourceHandles.find((handle) => handle.type === edgeDropHandleType)
+          if (existingHandle) {
+            onConnect({
+              source: sourceInfo.nodeId!,
+              sourceHandle: existingHandle.index.toString(),
+              target: newId.toString(),
+              targetHandle: null,
+            })
+          } else {
+            const newIndex = sourceNode.data.sourceHandles.length + 1
+            flowStore.addHandle(sourceInfo.nodeId!, { type: edgeDropHandleType, index: newIndex })
+            onConnect({
+              source: sourceInfo.nodeId!,
+              sourceHandle: newIndex.toString(),
+              target: newId.toString(),
+              targetHandle: null,
+            })
+          }
+          setEdgeDropHandleType(null)
+        } else {
+          setPendingCompactConnection({
+            connection: {
+              source: sourceInfo.nodeId,
+              sourceHandle: null,
+              target: newId.toString(),
+              targetHandle: null,
+            },
+            sourceNodeSubtype: sourceNode.data.subtype,
+            position: reactFlow.flowToScreenPosition(position),
+          })
+        }
+
+        sourceInfoReference.current = { nodeId: null, handleId: null, handleType: null }
+        return
+      }
+
+      const label = getEdgeLabelFromHandle(sourceNode, sourceInfo.handleId)
+
+      const newEdge: Edge = {
+        id: `e${sourceInfo.nodeId}-${newId}`,
+        source: sourceInfo.nodeId,
+        sourceHandle: sourceInfo.handleId ?? undefined,
+        target: newId.toString(),
+        type: 'frankEdge',
+        data: { label },
+      }
+
+      flowStore.setEdges(addEdge(newEdge, flowStore.edges))
+      sourceInfoReference.current = { nodeId: null, handleId: null, handleType: null }
+    }
+  }
+
   const addStickyNote = useCallback(
     (flowPos: { x: number; y: number }) => {
       const newId = getNextNodeId()
@@ -1640,99 +1766,6 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
     setIsMultiSelect(false)
     setParentId(null)
     setChildParentId(null)
-  }
-
-  function onDrop(event: React.DragEvent) {
-    event.preventDefault()
-    setDraggedName(null)
-    setParentId(null)
-
-    const data = event.dataTransfer.getData('application/reactflow')
-    if (!data) return
-
-    setDropSuccessful(true)
-
-    const parsedData = JSON.parse(data)
-    const { screenToFlowPosition } = reactFlow
-
-    if (elements) {
-      const elementData = elements[parsedData.name]
-      if (elementData) {
-        setAttributes(elementData.attributes)
-        setNodeId(+nodeIdCounter)
-      }
-    }
-
-    const position = screenToFlowPosition({ x: event.clientX, y: event.clientY })
-    addNodeAtPosition(position, parsedData.name)
-  }
-
-  function onDragEnd() {
-    setDraggedName(null)
-    setParentId(null)
-  }
-
-  function addNodeAtPosition(
-    position: { x: number; y: number },
-    elementName: string,
-    sourceInfo?: { nodeId: string | null; handleId: string | null; handleType: 'source' | 'target' | null },
-  ) {
-    showNodeContextMenu(true)
-    setIsNewNode(true)
-    setEditingSubtype(elementName)
-    setIsEditing(true)
-    setParentId(null)
-    setChildParentId(null)
-
-    const newId = getNextNodeId()
-    const elementType = getElementTypeFromName(elementName)
-    const nodeType = elementType === 'exit' ? 'exitNode' : 'frankNode'
-
-    const width = nodeType === 'exitNode' ? FlowConfig.EXIT_DEFAULT_WIDTH : FlowConfig.NODE_DEFAULT_WIDTH
-    const height = nodeType === 'exitNode' ? FlowConfig.EXIT_DEFAULT_HEIGHT : FlowConfig.NODE_MIN_HEIGHT
-
-    const newNode: FrankNodeType = {
-      id: newId.toString(),
-      position: {
-        x: position.x - width / 2,
-        y: position.y - height / 2,
-      },
-      data: {
-        subtype: elementName,
-        type: elementType,
-        name: ``,
-        sourceHandles: [{ type: 'success', index: 1 }],
-        children: [],
-      },
-      type: nodeType,
-    }
-
-    addNode(newNode)
-
-    if (sourceInfo?.nodeId && sourceInfo.handleType === 'source') {
-      const sourceNode = nodes.find((node) => node.id === sourceInfo.nodeId)
-
-      if (sourceNode && isFrankNode(sourceNode) && reactFlow.getZoom() < FlowConfig.ZOOM_THRESHOLD) {
-        connectEdgeToSource({ sourceNode, sourceNodeId: sourceInfo.nodeId, newId, position })
-
-        sourceInfoReference.current = { nodeId: null, handleId: null, handleType: null }
-        return
-      }
-
-      const label = getEdgeLabelFromHandle(sourceNode, sourceInfo.handleId)
-
-      const newEdge: Edge = {
-        id: `e${sourceInfo.nodeId}-${newId}`,
-        source: sourceInfo.nodeId,
-        sourceHandle: sourceInfo.handleId ?? undefined,
-        target: newId.toString(),
-        type: 'frankEdge',
-        data: { label },
-      }
-
-      setEdges(addEdge(newEdge, edges))
-      sourceInfoReference.current = { nodeId: null, handleId: null, handleType: null }
-    }
   }
 
   return (

@@ -444,10 +444,6 @@ function extractSourceHandles(element: Element): SourceHandle[] {
   // Check if forwards are lower case instead
   if (forwardElements.length === 0) {
     forwardElements = [...element.querySelectorAll('forward')]
-    // No forwards? Create a single implicit success handle
-    if (forwardElements.length === 0) {
-      return [{ type: 'success', index: 1 }]
-    }
   }
 
   const handles: SourceHandle[] = forwardElements.map((forward, index) => {
@@ -458,20 +454,6 @@ function extractSourceHandles(element: Element): SourceHandle[] {
       index: index + 1,
     }
   })
-
-  // Check if any forward represents SUCCESS
-  const hasSuccessForward = forwardElements.some((forward) => {
-    const name = forward.getAttribute('name')?.toUpperCase()
-    return name === 'SUCCESS'
-  })
-
-  // If not, add implicit fallback handle
-  if (!hasSuccessForward) {
-    handles.push({
-      type: 'success',
-      index: handles.length + 1,
-    })
-  }
 
   return handles
 }

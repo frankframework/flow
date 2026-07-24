@@ -533,6 +533,10 @@ const useFlowStore = create<FlowState>()(
       set({
         nodes: get().nodes.map((node) => {
           if (node.id === nodeId && isFrankNode(node)) {
+            // Prevent duplicate handle types (e.g. double "success" on initial load)
+            if (node.data.sourceHandles.some((existing) => existing.type === handle.type)) {
+              return node
+            }
             return {
               ...node,
               data: {
