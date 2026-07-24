@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useRef, useState } from 'react'
+import { type JSX, type ReactNode, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import clsx from 'clsx'
 import KebabIcon from '/icons/solar/Kebab Vertical.svg?react'
@@ -15,46 +15,46 @@ type KebabMenuProperties = {
   triggerClassName?: string
 }
 
-export default function KebabMenu({ items, triggerClassName }: Readonly<KebabMenuProperties>) {
+export default function KebabMenu({ items, triggerClassName }: Readonly<KebabMenuProperties>): JSX.Element {
   const [menuPosition, setMenuPosition] = useState<{ x: number; y: number } | null>(null)
-  const triggerRef = useRef<HTMLButtonElement>(null)
-  const menuRef = useRef<HTMLDivElement>(null)
+  const triggerReference = useRef<HTMLButtonElement>(null)
+  const menuReference = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
+  useEffect((): (() => void) | undefined => {
     if (!menuPosition) return
 
-    const handleMouseDown = (event: MouseEvent) => {
-      const clickedTrigger = triggerRef.current?.contains(event.target as Node)
-      const clickedMenu = menuRef.current?.contains(event.target as Node)
+    const handleMouseDown = (event: MouseEvent): void => {
+      const clickedTrigger = triggerReference.current?.contains(event.target as Node)
+      const clickedMenu = menuReference.current?.contains(event.target as Node)
       if (!clickedTrigger && !clickedMenu) setMenuPosition(null)
     }
 
-    const handleKeyDown = (event: KeyboardEvent) => {
+    const handleKeyDown = (event: KeyboardEvent): void => {
       if (event.key === 'Escape') setMenuPosition(null)
     }
 
     document.addEventListener('mousedown', handleMouseDown)
     document.addEventListener('keydown', handleKeyDown)
-    return () => {
+    return (): void => {
       document.removeEventListener('mousedown', handleMouseDown)
       document.removeEventListener('keydown', handleKeyDown)
     }
   }, [menuPosition])
 
-  const openMenu = (event: React.MouseEvent) => {
+  const openMenu = (event: React.MouseEvent): void => {
     event.stopPropagation()
     if (menuPosition) {
       setMenuPosition(null)
       return
     }
-    const rect = triggerRef.current?.getBoundingClientRect()
+    const rect = triggerReference.current?.getBoundingClientRect()
     if (rect) setMenuPosition({ x: rect.right, y: rect.bottom })
   }
 
   return (
     <>
       <button
-        ref={triggerRef}
+        ref={triggerReference}
         onClick={openMenu}
         className={clsx(
           'icon-button text-foreground-muted hover:bg-hover hover:text-foreground cursor-pointer rounded p-1',
@@ -68,14 +68,14 @@ export default function KebabMenu({ items, triggerClassName }: Readonly<KebabMen
       {menuPosition &&
         createPortal(
           <div
-            ref={menuRef}
+            ref={menuReference}
             className="bg-background border-border fixed z-50 min-w-max rounded-md border p-1 shadow-md"
             style={{ top: menuPosition.y, right: `calc(100vw - ${menuPosition.x}px)` }}
           >
-            {items.map((item) => (
+            {items.map((item): JSX.Element => (
               <button
                 key={item.label}
-                onClick={(event) => {
+                onClick={(event): void => {
                   event.stopPropagation()
                   item.onClick()
                   setMenuPosition(null)

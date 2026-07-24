@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { type JSX, useEffect, useState } from 'react'
 import Input from '~/components/inputs/input'
 import ContextEditorFooter from '~/components/context-editor-footer'
 import { deleteAdapter, renameAdapter } from '~/services/adapter-service'
@@ -23,19 +23,19 @@ export default function AdapterContext({
   onSaved,
   onDeleted,
   onNameChange,
-}: Readonly<AdapterContextProperties>) {
+}: Readonly<AdapterContextProperties>): JSX.Element {
   const [name, setName] = useState(editor.adapterName)
   const [isSaving, setIsSaving] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
 
-  useEffect(() => {
+  useEffect((): void => {
     onNameChange?.(name)
   }, [name, onNameChange])
 
   const trimmedName = name.trim()
   const canSave = trimmedName !== '' && trimmedName !== editor.adapterName && !isSaving
 
-  const handleSave = async () => {
+  const handleSave = async (): Promise<void> => {
     if (!canSave) return
     setIsSaving(true)
     setErrorMessage('')
@@ -48,7 +48,7 @@ export default function AdapterContext({
     }
   }
 
-  const handleDelete = async () => {
+  const handleDelete = async (): Promise<void> => {
     setIsSaving(true)
     setErrorMessage('')
     try {
@@ -74,7 +74,7 @@ export default function AdapterContext({
               id="adapter-name"
               value={name}
               disabled={isSaving}
-              onChange={(event) => setName(event.target.value)}
+              onChange={(event): void => setName(event.target.value)}
             />
           </div>
         </div>

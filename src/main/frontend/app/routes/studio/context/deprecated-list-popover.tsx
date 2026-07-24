@@ -1,3 +1,4 @@
+import type { ReactPortal } from 'react'
 import { createPortal } from 'react-dom'
 
 export type DeprecatedInfo = {
@@ -6,7 +7,13 @@ export type DeprecatedInfo = {
   description?: string
 }
 
-export function DeprecatedListPopover({ deprecated, anchorRect }: { deprecated: DeprecatedInfo; anchorRect: DOMRect }) {
+export function DeprecatedListPopover({
+  deprecated,
+  anchorRect,
+}: {
+  deprecated: DeprecatedInfo
+  anchorRect: DOMRect
+}): ReactPortal {
   return createPortal(
     <div
       className="bg-background text-foreground fixed z-[9999] w-64 rounded-md border border-red-400 p-3 text-xs shadow-lg"

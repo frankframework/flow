@@ -20,7 +20,7 @@ export default function ContextInputField({
   onKeyDown,
   type,
   enumOptions,
-}: Readonly<ContextInputFieldProperties>) {
+}: Readonly<ContextInputFieldProperties>): React.JSX.Element {
   // Render enum dropdown
   if (enumOptions) {
     return (
@@ -28,7 +28,7 @@ export default function ContextInputField({
         id={id}
         value={value}
         onChange={onChange}
-        options={Object.fromEntries(Object.keys(enumOptions).map((key) => [key, key]))}
+        options={Object.fromEntries(Object.keys(enumOptions).map((key): [string, string] => [key, key]))}
         placeholder="Select option…"
         className="mt-1"
       />
@@ -38,7 +38,7 @@ export default function ContextInputField({
   // Render boolean dropdown
   if (type === 'bool') {
     const checked = value === 'true'
-    return <Toggle checked={checked} onChange={(checked) => onChange(checked.toString())} className="mt-1" />
+    return <Toggle checked={checked} onChange={(checked): void => onChange(checked.toString())} className="mt-1" />
   }
 
   // Render integer-only input
@@ -50,7 +50,7 @@ export default function ContextInputField({
           type="text"
           inputMode="numeric"
           value={value}
-          onChange={(event) => onChange(event.currentTarget.value)}
+          onChange={(event): void => onChange(event.currentTarget.value)}
           onKeyDown={onKeyDown}
           patterns={{
             'Must be a whole number': /^\d+$/,
@@ -66,7 +66,7 @@ export default function ContextInputField({
       id={id}
       type="text"
       value={value}
-      onChange={(event) => onChange(event.currentTarget.value)}
+      onChange={(event): void => onChange(event.currentTarget.value)}
       onKeyDown={onKeyDown}
       wrapperClassName="mt-1"
     />

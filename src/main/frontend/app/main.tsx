@@ -1,27 +1,32 @@
 import React, { useEffect } from 'react'
 import ReactDOM from 'react-dom/client'
 import { RouterProvider } from 'react-router'
-import { Toast } from '~/components/toast'
+import { ToastsContainer } from '~/components/toast/toast'
 import { useTheme } from '~/hooks/use-theme'
 import { useProjectStore } from '~/stores/project-store'
+import type { ConfigurationProject } from '~/types/project.types'
+import dotenv from 'dotenv'
+
+dotenv.config({ quiet: true })
+
 import { router } from './router'
 import 'allotment/dist/style.css'
 import './app.css' // Always last for overwriting variables
 
-function TitleSync() {
-  const project = useProjectStore((state) => state.project)
+function TitleSync(): null {
+  const project = useProjectStore((state): ConfigurationProject | undefined => state.project)
 
-  useEffect(() => {
+  useEffect((): void => {
     document.title = project ? `FF! Flow | ${project.name}` : 'FF! Flow'
   }, [project])
 
   return null
 }
 
-function ThemeSync() {
+function ThemeSync(): null {
   const theme = useTheme()
 
-  useEffect(() => {
+  useEffect((): void => {
     document.documentElement.dataset.theme = theme
   }, [theme])
 
@@ -33,6 +38,6 @@ ReactDOM.createRoot(document.querySelector('#root')!).render(
     <TitleSync />
     <ThemeSync />
     <RouterProvider router={router} />
-    <Toast />
+    <ToastsContainer />
   </React.StrictMode>,
 )

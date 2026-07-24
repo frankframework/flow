@@ -1,3 +1,4 @@
+import type { JSX } from 'react'
 import { type NonCanvasComponent } from '~/services/non-canvas-component-service'
 import ComponentRow from './component-row'
 
@@ -14,7 +15,10 @@ function getComponentLabels(component: NonCanvasComponent): { typeLabel: string 
   return { typeLabel: null, primaryLabel: component.tagName }
 }
 
-export default function ComponentListItem({ component, onConfigure }: Readonly<ComponentListItemProperties>) {
+export default function ComponentListItem({
+  component,
+  onConfigure,
+}: Readonly<ComponentListItemProperties>): JSX.Element {
   const { typeLabel, primaryLabel } = getComponentLabels(component)
   return <ComponentRow typeLabel={typeLabel} primaryLabel={primaryLabel} onConfigure={onConfigure} />
 }

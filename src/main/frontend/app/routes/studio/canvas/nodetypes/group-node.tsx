@@ -1,5 +1,5 @@
 import { type Node, type NodeProps, NodeResizeControl, type ResizeDragEvent, type ResizeParams } from '@xyflow/react'
-import { useState } from 'react'
+import { type JSX, useState } from 'react'
 import { ResizeIcon } from '~/routes/studio/canvas/nodetypes/frank-node'
 
 export const GROUP_COLORS = [
@@ -22,7 +22,7 @@ export type GroupNode = Node<{
   childrenNames?: string[]
 }>
 
-export default function GroupNodeComponent({ data, selected }: NodeProps<GroupNode>) {
+export default function GroupNodeComponent({ data, selected }: NodeProps<GroupNode>): JSX.Element {
   const [dimensions, setDimensions] = useState({
     width: data.width,
     height: data.height,
@@ -70,7 +70,7 @@ export default function GroupNodeComponent({ data, selected }: NodeProps<GroupNo
   )
 }
 
-function HamburgerMenu() {
+function HamburgerMenu(): JSX.Element {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"

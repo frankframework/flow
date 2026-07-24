@@ -1,6 +1,7 @@
 import React, { type JSX, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Search from '~/components/search/search'
 import LoadingSpinner from '~/components/loading-spinner'
+import type { ConfigurationProject } from '~/types/project.types'
 import FolderIcon from '../../../icons/solar/Folder.svg?react'
 import FolderOpenIcon from '../../../icons/solar/Folder Open.svg?react'
 import ListDown from '../../../icons/solar/List Down.svg?react'
@@ -26,7 +27,7 @@ import {
   UncontrolledTreeEnvironment,
 } from 'react-complex-tree'
 
-import useEditorTabStore from '~/stores/editor-tab-store'
+import useEditorTabStore, { type EditorTabData } from '~/stores/editor-tab-store'
 import { useProjectStore } from '~/stores/project-store'
 import { useTreeStore } from '~/stores/tree-store'
 import EditorFilesDataProvider, { type FileNode } from './editor-data-provider'
@@ -40,8 +41,8 @@ function getItemTitle(item: TreeItem<FileNode>): string {
   return typeof item.data.name === 'string' ? item.data.name : 'Unnamed'
 }
 
-export default function EditorFileStructure() {
-  const project = useProjectStore((state) => state.project)
+export default function EditorFileStructure(): JSX.Element {
+  const project = useProjectStore((state): ConfigurationProject | undefined => state.project)
   const { editorExpandedItems, addEditorExpandedItem, removeEditorExpandedItem } = useTreeStore()
 
   const [searchTerm, setSearchTerm] = useState('')
@@ -51,55 +52,57 @@ export default function EditorFileStructure() {
 
   const tree = useRef<TreeRef>(null)
 
-  const setTabData = useEditorTabStore((state) => state.setTabData)
-  const setActiveTab = useEditorTabStore((state) => state.setActiveTab)
-  const getTab = useEditorTabStore((state) => state.getTab)
-  const removeTab = useEditorTabStore((state) => state.removeTab)
-  const removeTabAndSelectFallback = useEditorTabStore((state) => state.removeTabAndSelectFallback)
-  const activeTabFilePath = useEditorTabStore((state) => state.activeTabFilePath)
-  const activeTab = useEditorTabStore((state) => state.tabs[state.activeTabFilePath])
+  const setTabData = useEditorTabStore((state): ((tabId: string, data: EditorTabData) => void) => state.setTabData)
+  const setActiveTab = useEditorTabStore((state): ((tabId: string) => void) => state.setActiveTab)
+  const getTab = useEditorTabStore((state): ((tabId: string) => EditorTabData | undefined) => state.getTab)
+  const removeTab = useEditorTabStore((state): ((tabId: string) => void) => state.removeTab)
+  const removeTabAndSelectFallback = useEditorTabStore(
+    (state): ((tabId: string) => void) => state.removeTabAndSelectFallback,
+  )
+  const activeTabFilePath = useEditorTabStore((state): string => state.activeTabFilePath)
+  const activeTab = useEditorTabStore((state): EditorTabData => state.tabs[state.activeTabFilePath])
 
   const [dataProvider, setDataProvider] = useState<EditorFilesDataProvider | null>(null)
   const [selectedItemId, setSelectedItemId] = useState<TreeItemIndex | null>(null)
   const [rootPath, setRootPath] = useState<string | null>(null)
 
-  const expandedItemsRef = useRef(editorExpandedItems)
+  const expandedItemsReference = useRef(editorExpandedItems)
 
-  useEffect(() => {
-    expandedItemsRef.current = editorExpandedItems
+  useEffect((): void => {
+    expandedItemsReference.current = editorExpandedItems
   }, [editorExpandedItems])
 
-  useFileWatcher(project?.name ?? null, () => {
+  useFileWatcher(project?.name ?? null, (): void => {
     if (dataProvider) void dataProvider.reloadDirectory('root')
   })
 
-  useEffect(() => {
+  useEffect((): void => {
     if (!dataProvider) {
       setRootPath(null)
       return
     }
-    void dataProvider.getTreeItem('root').then((root) => {
+    void dataProvider.getTreeItem('root').then((root): void => {
       if (root) setRootPath((root.data as FileNode).path)
     })
   }, [dataProvider])
 
   const activeTabItemId = useMemo(
-    () => (rootPath && activeTabFilePath ? toTreeItemId(activeTabFilePath, rootPath) : null),
+    (): string | null => (rootPath && activeTabFilePath ? toTreeItemId(activeTabFilePath, rootPath) : null),
     [rootPath, activeTabFilePath],
   )
 
   const isActiveItemVisible = useMemo(
-    () => isVisibleInTree(activeTabItemId, editorExpandedItems),
+    (): boolean => isVisibleInTree(activeTabItemId, editorExpandedItems),
     [activeTabItemId, editorExpandedItems],
   )
 
   const onAfterRename = useCallback(
-    (oldPath: string, newName: string) => {
+    (oldPath: string, newName: string): void => {
       const tab = getTab(oldPath)
       if (tab) {
         removeTab(oldPath)
-        const lastSep = Math.max(oldPath.lastIndexOf('/'), oldPath.lastIndexOf('\\'))
-        const newPath = oldPath.slice(0, Math.max(0, lastSep + 1)) + newName
+        const lastSeparator = Math.max(oldPath.lastIndexOf('/'), oldPath.lastIndexOf('\\'))
+        const newPath = oldPath.slice(0, Math.max(0, lastSeparator + 1)) + newName
         setTabData(newPath, { ...tab, name: newName, configurationPath: newPath })
         setActiveTab(newPath)
       }
@@ -108,7 +111,7 @@ export default function EditorFileStructure() {
   )
 
   const onAfterDelete = useCallback(
-    (path: string) => {
+    (path: string): void => {
       if (getTab(path)) removeTabAndSelectFallback(path)
     },
     [getTab, removeTabAndSelectFallback],
@@ -142,10 +145,10 @@ export default function EditorFileStructure() {
   )
 
   const triggerExplorerAction = useCallback(
-    (action: (menuState: ContextMenuState) => void, requireSelection: boolean) => {
+    (action: (menuState: ContextMenuState) => void, requireSelection: boolean): void => {
       const itemId = selectedItemId ?? (requireSelection ? null : 'root')
       if (!itemId || (itemId === 'root' && requireSelection)) return
-      void buildContextForItem(itemId).then((menuState) => {
+      void buildContextForItem(itemId).then((menuState): void => {
         if (menuState) action(menuState)
       })
     },
@@ -153,15 +156,15 @@ export default function EditorFileStructure() {
   )
 
   const triggerItemAction = useCallback(
-    (itemId: TreeItemIndex, action: (menuState: ContextMenuState) => void) => {
-      void buildContextForItem(itemId).then((menuState) => {
+    (itemId: TreeItemIndex, action: (menuState: ContextMenuState) => void): void => {
+      void buildContextForItem(itemId).then((menuState): void => {
         if (menuState) action(menuState)
       })
     },
     [buildContextForItem],
   )
 
-  const revealActiveFile = useCallback(async () => {
+  const revealActiveFile = useCallback(async (): Promise<void> => {
     if (!dataProvider || !activeTabFilePath || !rootPath || !tree.current) return
     if (activeTab?.type === 'diff') return
 
@@ -176,27 +179,27 @@ export default function EditorFileStructure() {
   }, [dataProvider, activeTabFilePath, rootPath, activeTab])
 
   useShortcut({
-    'explorer.new-file': () => triggerExplorerAction(editorContextMenu.handleNewFile, false),
-    'explorer.new-folder': () => triggerExplorerAction(editorContextMenu.handleNewFolder, false),
-    'explorer.rename': () => {
+    'explorer.new-file': (): void => triggerExplorerAction(editorContextMenu.handleNewFile, false),
+    'explorer.new-folder': (): void => triggerExplorerAction(editorContextMenu.handleNewFolder, false),
+    'explorer.rename': (): false | undefined => {
       if (!selectedItemId) return false
       triggerExplorerAction(editorContextMenu.handleRename, true)
     },
-    'explorer.delete': () => {
+    'explorer.delete': (): false | undefined => {
       if (!selectedItemId) return false
       triggerExplorerAction(editorContextMenu.handleDelete, true)
     },
-    'explorer.reveal': () => void revealActiveFile(),
+    'explorer.reveal': (): undefined => void revealActiveFile(),
   })
 
-  useEffect(() => {
+  useEffect((): (() => void) | undefined => {
     if (!project?.name) return
 
     let isMounted = true
 
-    const initProvider = async () => {
+    const initProvider = async (): Promise<void> => {
       const provider = new EditorFilesDataProvider(project.name)
-      await provider.init(expandedItemsRef.current)
+      await provider.init(expandedItemsReference.current)
 
       if (isMounted) {
         setDataProvider(provider)
@@ -205,13 +208,13 @@ export default function EditorFileStructure() {
 
     initProvider()
 
-    return () => {
+    return (): void => {
       isMounted = false
     }
   }, [project?.name])
 
-  useEffect(() => {
-    const findMatchingItems = async () => {
+  useEffect((): void => {
+    const findMatchingItems = async (): Promise<void> => {
       if (!dataProvider) return
 
       if (!searchTerm) {
@@ -225,8 +228,8 @@ export default function EditorFileStructure() {
       const lower = searchTerm.toLowerCase()
 
       const matches = allItems
-        .filter((item) => getItemTitle(item).toLowerCase().includes(lower))
-        .map((item) => item.index as string)
+        .filter((item): boolean => getItemTitle(item).toLowerCase().includes(lower))
+        .map((item): string => item.index as string)
 
       setMatchingItemIds(matches)
 
@@ -243,7 +246,7 @@ export default function EditorFileStructure() {
   }, [searchTerm, dataProvider])
 
   const openFileTab = useCallback(
-    (filePath: string, fileName: string) => {
+    (filePath: string, fileName: string): void => {
       if (!getTab(filePath)) {
         setTabData(filePath, {
           name: fileName,
@@ -256,7 +259,7 @@ export default function EditorFileStructure() {
   )
 
   const handleItemClickAsync = useCallback(
-    async (itemIds: TreeItemIndex[]) => {
+    async (itemIds: TreeItemIndex[]): Promise<void> => {
       if (!dataProvider || itemIds.length === 0) return
 
       const itemId = itemIds[0]
@@ -273,8 +276,8 @@ export default function EditorFileStructure() {
     [dataProvider, openFileTab],
   )
 
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
+  useEffect((): (() => void) => {
+    const handleKeyDown = (event: KeyboardEvent): void => {
       if (event.key === 'Escape') {
         setSearchTerm('')
         setHighlightedItemId(null)
@@ -287,10 +290,10 @@ export default function EditorFileStructure() {
 
       if (event.key === 'Tab' && !event.shiftKey) {
         event.preventDefault()
-        setActiveMatchIndex((i) => (i + 1) % matchingItemIds.length)
+        setActiveMatchIndex((index): number => (index + 1) % matchingItemIds.length)
       } else if (event.key === 'Tab' && event.shiftKey) {
         event.preventDefault()
-        setActiveMatchIndex((i) => (i - 1 < 0 ? matchingItemIds.length - 1 : i - 1))
+        setActiveMatchIndex((index): number => (index < 1 ? matchingItemIds.length : index) - 1)
       } else if (event.key === 'Enter') {
         event.preventDefault()
         const target = highlightedItemId || matchingItemIds[0]
@@ -301,10 +304,10 @@ export default function EditorFileStructure() {
     }
 
     globalThis.addEventListener('keydown', handleKeyDown)
-    return () => globalThis.removeEventListener('keydown', handleKeyDown)
+    return (): void => globalThis.removeEventListener('keydown', handleKeyDown)
   }, [matchingItemIds, highlightedItemId, handleItemClickAsync])
 
-  useEffect(() => {
+  useEffect((): void => {
     if (!tree.current) return
 
     if (searchTerm) {
@@ -314,7 +317,7 @@ export default function EditorFileStructure() {
     }
   }, [searchTerm])
 
-  useEffect(() => {
+  useEffect((): void => {
     if (activeMatchIndex === -1 || !tree.current) return
 
     const itemId = matchingItemIds[activeMatchIndex]
@@ -323,7 +326,15 @@ export default function EditorFileStructure() {
     setHighlightedItemId(itemId)
   }, [activeMatchIndex, matchingItemIds])
 
-  const renderItemArrow = ({ item, context }: { item: TreeItem; context: TreeItemRenderContext }) => {
+  if (!dataProvider) return <LoadingSpinner message="Loading files..." className="p-8" />
+
+  const renderItemArrow = ({
+    item,
+    context,
+  }: {
+    item: TreeItem
+    context: TreeItemRenderContext
+  }): JSX.Element | null => {
     if (!item.isFolder) return null
 
     const ArrowIcon = context.isExpanded ? AltArrowDownIcon : AltArrowRightIcon
@@ -331,11 +342,11 @@ export default function EditorFileStructure() {
     return (
       <div
         className="rct-tree-item-arrow-isFolder rct-tree-item-arrow"
-        onClick={(mouseEvent) => {
+        onClick={(mouseEvent): void => {
           mouseEvent.stopPropagation()
           context.toggleExpandedState()
         }}
-        onContextMenu={(mouseEvent) => editorContextMenu.openContextMenu(mouseEvent, item.index)}
+        onContextMenu={(mouseEvent): Promise<void> => editorContextMenu.openContextMenu(mouseEvent, item.index)}
       >
         <ArrowIcon className="fill-foreground" />
       </div>
@@ -350,7 +361,7 @@ export default function EditorFileStructure() {
     title: string
     item: TreeItem
     context: TreeItemRenderContext
-  }) => {
+  }): JSX.Element => {
     const ItemIcon = item.isFolder ? (context.isExpanded ? FolderOpenIcon : FolderIcon) : CodeIcon
     const isRoot = (item.data as { projectRoot?: boolean }).projectRoot ?? false
 
@@ -363,7 +374,7 @@ export default function EditorFileStructure() {
       const titleParts = title.split(new RegExp(`(${searchTerm})`, 'gi'))
       highlightedTitle = (
         <>
-          {titleParts.map((part, partIndex) =>
+          {titleParts.map((part, partIndex): JSX.Element =>
             part.toLowerCase() === searchLower ? (
               <mark key={partIndex} className="text-foreground bg-foreground-active rounded-sm">
                 {part}
@@ -381,7 +392,7 @@ export default function EditorFileStructure() {
     return (
       <div
         className="group/row flex h-full w-full items-center"
-        onContextMenu={(mouseEvent) => editorContextMenu.openContextMenu(mouseEvent, item.index)}
+        onContextMenu={(mouseEvent): Promise<void> => editorContextMenu.openContextMenu(mouseEvent, item.index)}
       >
         {ItemIcon && <ItemIcon className="fill-foreground w-4 flex-shrink-0" />}
         <span
@@ -395,7 +406,7 @@ export default function EditorFileStructure() {
           {item.isFolder && (
             <TreeActionButton
               title="New File"
-              onAction={() => triggerItemAction(item.index, editorContextMenu.handleNewFile)}
+              onAction={(): void => triggerItemAction(item.index, editorContextMenu.handleNewFile)}
             >
               <CodeFileIcon className="fill-foreground-muted group-hover:fill-foreground h-3.5 w-3.5" />
             </TreeActionButton>
@@ -403,7 +414,7 @@ export default function EditorFileStructure() {
           {item.isFolder && (
             <TreeActionButton
               title="New Folder"
-              onAction={() => triggerItemAction(item.index, editorContextMenu.handleNewFolder)}
+              onAction={(): void => triggerItemAction(item.index, editorContextMenu.handleNewFolder)}
             >
               <FolderIcon className="fill-foreground-muted group-hover:fill-foreground h-3.5 w-3.5" />
             </TreeActionButton>
@@ -411,7 +422,7 @@ export default function EditorFileStructure() {
           {!isRoot && (
             <TreeActionButton
               title="Rename"
-              onAction={() => triggerItemAction(item.index, editorContextMenu.handleRename)}
+              onAction={(): void => triggerItemAction(item.index, editorContextMenu.handleRename)}
             >
               <Pen className="text-foreground-muted group-hover:text-foreground h-3.5 w-3.5" />
             </TreeActionButton>
@@ -419,7 +430,7 @@ export default function EditorFileStructure() {
           {!isRoot && (
             <TreeActionButton
               title="Delete"
-              onAction={() => triggerItemAction(item.index, editorContextMenu.handleDelete)}
+              onAction={(): void => triggerItemAction(item.index, editorContextMenu.handleDelete)}
             >
               <TrashBinIcon className="text-foreground-muted group-hover:text-foreground h-3.5 w-3.5" />
             </TreeActionButton>
@@ -429,8 +440,6 @@ export default function EditorFileStructure() {
     )
   }
 
-  if (!dataProvider) return <LoadingSpinner message="Loading files..." className="p-8" />
-
   return (
     <>
       <div className="border-border flex items-center justify-between border-b px-2 py-1">
@@ -439,27 +448,30 @@ export default function EditorFileStructure() {
           <IconButton
             title="Open File Tree to Active Tab"
             disabled={!activeTabFilePath || isActiveItemVisible || activeTab?.type === 'diff'}
-            onClick={() => void revealActiveFile()}
+            onClick={(): undefined => void revealActiveFile()}
           >
             <ListDown className="fill-foreground-muted group-hover:fill-foreground h-5 w-5" />
           </IconButton>
-          <IconButton title="New File" onClick={() => triggerExplorerAction(editorContextMenu.handleNewFile, false)}>
+          <IconButton
+            title="New File"
+            onClick={(): void => triggerExplorerAction(editorContextMenu.handleNewFile, false)}
+          >
             <CodeFileIcon className="fill-foreground-muted group-hover:fill-foreground h-4 w-4" />
           </IconButton>
           <IconButton
             title="New Folder"
-            onClick={() => triggerExplorerAction(editorContextMenu.handleNewFolder, false)}
+            onClick={(): void => triggerExplorerAction(editorContextMenu.handleNewFolder, false)}
           >
             <FolderIcon className="fill-foreground-muted group-hover:fill-foreground h-4 w-4" />
           </IconButton>
         </div>
       </div>
       <div className="mt-2">
-        <Search onChange={(changeEvent) => setSearchTerm(changeEvent.target.value)} />
+        <Search onChange={(changeEvent): void => setSearchTerm(changeEvent.target.value)} />
       </div>
       <div
         className="h-full overflow-auto pr-2"
-        onContextMenu={(mouseEvent) => {
+        onContextMenu={(mouseEvent): void => {
           void editorContextMenu.openContextMenu(mouseEvent, 'root')
         }}
       >
@@ -469,13 +481,13 @@ export default function EditorFileStructure() {
               expandedItems: editorExpandedItems,
             },
           }}
-          onExpandItem={async (item) => {
+          onExpandItem={async (item): Promise<void> => {
             addEditorExpandedItem(String(item.index))
             if (dataProvider) await dataProvider.loadDirectory(item.index)
           }}
-          onCollapseItem={(item) => {
+          onCollapseItem={(item): void => {
             removeEditorExpandedItem(String(item.index))
-            setSelectedItemId((previous) =>
+            setSelectedItemId((previous): TreeItemIndex | null =>
               previous && String(previous).startsWith(`${String(item.index)}/`) ? null : previous,
             )
           }}
@@ -500,8 +512,8 @@ export default function EditorFileStructure() {
         onDelete={editorContextMenu.handleDelete}
         onConfirmDelete={editorContextMenu.confirmDelete}
         onCloseContextMenu={editorContextMenu.closeContextMenu}
-        onCloseNameDialog={() => editorContextMenu.setNameDialog(null)}
-        onCloseDeleteDialog={() => editorContextMenu.setDeleteTarget(null)}
+        onCloseNameDialog={(): void => editorContextMenu.setNameDialog(null)}
+        onCloseDeleteDialog={(): void => editorContextMenu.setDeleteTarget(null)}
       />
     </>
   )

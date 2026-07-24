@@ -11,10 +11,17 @@ export type TabProperties = {
   onClose: (event: React.MouseEvent) => void
 } & TabData
 
-export default function Tab({ name, configurationPath, icon, isSelected, onSelect, onClose }: Readonly<TabProperties>) {
+export default function Tab({
+  name,
+  configurationPath,
+  icon,
+  isSelected,
+  onSelect,
+  onClose,
+}: Readonly<TabProperties>): React.JSX.Element {
   const Icon = icon ?? CodeIcon
 
-  const handleClose = (event: React.MouseEvent<Element, MouseEvent>) => {
+  const handleClose = (event: React.MouseEvent<Element, MouseEvent>): void => {
     event.stopPropagation()
     onClose(event)
   }

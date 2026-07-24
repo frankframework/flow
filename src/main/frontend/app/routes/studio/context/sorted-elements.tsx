@@ -1,6 +1,8 @@
 import React, { useCallback, useRef, useState } from 'react'
 import ArrowDownIcon from 'icons/solar/Alt Arrow Down.svg?react'
 import ArrowRightIcon from 'icons/solar/Alt Arrow Right.svg?react'
+import useToasts from '~/components/toast/use-toasts'
+import { type NodeContextStore } from '~/stores/node-context-store'
 import { useSettingsStore } from '~/stores/settings-store'
 import useNodeContextStore from '~/stores/node-context-store'
 import type { ElementDetails } from '@frankframework/doc-library-core'
@@ -8,7 +10,6 @@ import { getElementTypeFromName } from '../node-translator-module'
 import DangerIcon from '../../../../icons/solar/Danger Triangle.svg?react'
 import { DeprecatedListPopover, type DeprecatedInfo } from './deprecated-list-popover'
 import ElementHoverCard from './element-hover-card'
-import { showWarningToast } from '~/components/toast'
 import Button from '~/components/inputs/button'
 
 type Properties = {
@@ -20,44 +21,54 @@ type Properties = {
 
 const CLOSE_DELAY = 200
 
-export default function SortedElements({ type, items, onDragStart, searchTerm }: Readonly<Properties>) {
-  const paletteExpandedByDefault = useSettingsStore((state) => state.studio.paletteExpandedByDefault)
+export default function SortedElements({
+  type,
+  items,
+  onDragStart,
+  searchTerm,
+}: Readonly<Properties>): React.JSX.Element {
+  const paletteExpandedByDefault = useSettingsStore((state): boolean => state.studio.paletteExpandedByDefault)
   const [isExpanded, setIsExpanded] = useState(paletteExpandedByDefault)
-  const { draggedName, setDraggedName, dropSuccessful, setDropSuccessful } = useNodeContextStore((state) => state)
+  const { draggedName, setDraggedName, dropSuccessful, setDropSuccessful } = useNodeContextStore(
+    (state): NodeContextStore => state,
+  )
   const [hoveredRect, setHoveredRect] = useState<DOMRect | null>(null)
   const [hoveredElement, setHoveredElement] = useState<ElementDetails | null>(null)
   const [deprecatedRect, setDeprecatedRect] = useState<DOMRect | null>(null)
   const [deprecatedHovered, setDeprecatedHovered] = useState<DeprecatedInfo | null>(null)
   const [lockedElement, setLockedElement] = useState<ElementDetails | null>(null)
 
-  const lockedElementRef = useRef<ElementDetails | null>(null)
-  lockedElementRef.current = lockedElement
-  const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const lockedElementReference = useRef<ElementDetails | null>(null)
+  lockedElementReference.current = lockedElement
+  const closeTimeoutReference = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const { showWarningToast } = useToasts()
 
-  const cancelClose = useCallback(() => {
-    if (closeTimeoutRef.current !== null) {
-      clearTimeout(closeTimeoutRef.current)
-      closeTimeoutRef.current = null
+  const cancelClose = useCallback((): void => {
+    if (closeTimeoutReference.current === null) {
+      return
     }
+
+    clearTimeout(closeTimeoutReference.current)
+    closeTimeoutReference.current = null
   }, [])
 
-  const scheduleClose = useCallback(() => {
+  const scheduleClose = useCallback((): void => {
     cancelClose()
-    closeTimeoutRef.current = setTimeout(() => {
-      if (lockedElementRef.current) return
+    closeTimeoutReference.current = setTimeout((): void => {
+      if (lockedElementReference.current) return
 
       setHoveredElement(null)
       setHoveredRect(null)
     }, CLOSE_DELAY)
   }, [cancelClose])
 
-  const toggleExpansion = () => {
+  const toggleExpansion = (): void => {
     setIsExpanded(!isExpanded)
   }
 
   const shouldExpand = searchTerm !== '' || isExpanded
 
-  const onDragEnd = (event: React.DragEvent<HTMLLIElement>) => {
+  const onDragEnd = (event: React.DragEvent<HTMLLIElement>): void => {
     setDraggedName(null)
     const x = event.clientX
     const y = event.clientY
@@ -90,7 +101,7 @@ export default function SortedElements({ type, items, onDragStart, searchTerm }:
 
       {shouldExpand && (
         <div className="mt-1 space-y-0.5 pl-3">
-          {items.map((value) => {
+          {items.map((value): React.JSX.Element => {
             const elementType = getElementTypeFromName(value.name)
 
             return (
@@ -99,7 +110,7 @@ export default function SortedElements({ type, items, onDragStart, searchTerm }:
                 className="text-foreground dark:text-foreground-muted hover:text-foreground hover:bg-hover group mb-1 flex cursor-move items-center justify-between rounded-sm py-3 pr-3 pl-3 text-sm"
                 style={{ borderLeft: `3px solid var(--type-${elementType})` }}
                 draggable
-                onDragStart={(event) => {
+                onDragStart={(event): void => {
                   cancelClose()
                   setHoveredRect(null)
                   setHoveredElement(null)
@@ -108,7 +119,7 @@ export default function SortedElements({ type, items, onDragStart, searchTerm }:
                   onDragStart(value)(event)
                 }}
                 onDragEnd={onDragEnd}
-                onMouseEnter={(event) => {
+                onMouseEnter={(event): void => {
                   cancelClose()
                   if (lockedElement?.name !== value.name) {
                     setLockedElement(null)
@@ -117,7 +128,7 @@ export default function SortedElements({ type, items, onDragStart, searchTerm }:
                   setHoveredRect(rect)
                   setHoveredElement(value)
                 }}
-                onMouseLeave={() => {
+                onMouseLeave={(): void => {
                   scheduleClose()
                 }}
               >
@@ -126,12 +137,12 @@ export default function SortedElements({ type, items, onDragStart, searchTerm }:
                 {value.deprecated && (
                   <div
                     className="ml-2 shrink-0 opacity-60 group-hover:opacity-100"
-                    onMouseEnter={(event) => {
+                    onMouseEnter={(event): void => {
                       const rect = event.currentTarget.getBoundingClientRect()
                       setDeprecatedRect(rect)
                       setDeprecatedHovered(value.deprecated!)
                     }}
-                    onMouseLeave={() => {
+                    onMouseLeave={(): void => {
                       setDeprecatedRect(null)
                       setDeprecatedHovered(null)
                     }}
@@ -148,21 +159,21 @@ export default function SortedElements({ type, items, onDragStart, searchTerm }:
         </div>
       )}
 
-      {(hoveredRect && hoveredElement) || lockedElement ? (
+      {lockedElement || (hoveredRect && hoveredElement) ? (
         <ElementHoverCard
           key={(lockedElement ?? hoveredElement)!.name}
           anchorRect={hoveredRect!}
           element={lockedElement ?? hoveredElement!}
-          onUnlock={() => {
+          onUnlock={(): void => {
             setLockedElement(null)
             setHoveredElement(null)
             setHoveredRect(null)
           }}
-          onEnter={() => {
+          onEnter={(): void => {
             cancelClose()
-            setLockedElement((prev) => prev ?? hoveredElement)
+            setLockedElement((previous): ElementDetails | null => previous ?? hoveredElement)
           }}
-          onLeave={() => {
+          onLeave={(): void => {
             setLockedElement(null)
             scheduleClose()
           }}

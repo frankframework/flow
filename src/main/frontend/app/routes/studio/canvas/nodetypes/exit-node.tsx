@@ -7,7 +7,7 @@ import {
   useStore,
   useUpdateNodeInternals,
 } from '@xyflow/react'
-import { useEffect } from 'react'
+import { type JSX, useEffect } from 'react'
 import { ResizeIcon } from '~/routes/studio/canvas/nodetypes/frank-node'
 import { FlowConfig } from '~/routes/studio/canvas/flow.config'
 import { useSettingsStore } from '~/stores/settings-store'
@@ -22,15 +22,15 @@ export type ExitNode = Node<{
   hiddenForwards?: boolean | null
 }>
 
-export default function ExitNodeComponent(properties: NodeProps<ExitNode>) {
+export default function ExitNodeComponent(properties: NodeProps<ExitNode>): JSX.Element {
   const minNodeWidth = FlowConfig.EXIT_DEFAULT_WIDTH
   const minNodeHeight = FlowConfig.EXIT_DEFAULT_HEIGHT
-  const gradientEnabled = useSettingsStore((state) => state.studio.gradient)
-  const zoom = useStore((state) => state.transform[2])
+  const gradientEnabled = useSettingsStore((state): boolean => state.studio.gradient)
+  const zoom = useStore((state): number => state.transform[2])
   const isCompact = zoom < FlowConfig.ZOOM_THRESHOLD
   const updateNodeInternals = useUpdateNodeInternals()
 
-  useEffect(() => {
+  useEffect((): void => {
     updateNodeInternals(properties.id)
   }, [isCompact, properties.id, updateNodeInternals])
 

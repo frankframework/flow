@@ -28,7 +28,7 @@ export const PROJECT_NAME_PATTERNS: Record<string, RegExp> = {
   'Cannot have a file extension': /^(?!.*\.[^.\\/]+$).*$/,
 }
 
-type NameInputDialogProps = {
+type NameInputDialogProperties = {
   title: string
   initialValue?: string
   submitLabel?: string
@@ -44,32 +44,34 @@ export default function NameInputDialog({
   onSubmit,
   onCancel,
   patterns = FOLDER_OR_ADAPTER_NAME_PATTERNS,
-}: NameInputDialogProps) {
+}: NameInputDialogProperties): React.ReactPortal {
   const [value, setValue] = useState(initialValue)
   const [isValid, setIsValid] = useState(false)
-  const overlayRef = useRef<HTMLDivElement>(null)
+  const overlayReference = useRef<HTMLDivElement>(null)
 
-  const handleSubmit = () => {
+  const handleSubmit = (): void => {
     if (!isValid) return
     onSubmit(value.trim())
   }
 
   useSubmitOnEnter(handleSubmit)
 
-  const handleKeyDown = (event: React.KeyboardEvent) => {
-    if (event.key === 'Escape') {
-      event.preventDefault()
-      onCancel()
+  const handleKeyDown = (event: React.KeyboardEvent): void => {
+    if (event.key !== 'Escape') {
+      return
     }
+
+    event.preventDefault()
+    onCancel()
   }
 
-  const handleOverlayClick = (event: React.MouseEvent) => {
-    if (event.target === overlayRef.current) onCancel()
+  const handleOverlayClick = (event: React.MouseEvent): void => {
+    if (event.target === overlayReference.current) onCancel()
   }
 
   return createPortal(
     <div
-      ref={overlayRef}
+      ref={overlayReference}
       className="fixed inset-0 z-[70] flex items-center justify-center bg-black/30"
       onClick={handleOverlayClick}
     >
@@ -77,11 +79,11 @@ export default function NameInputDialog({
         <p className="text-foreground mb-2 text-sm font-medium">{title}</p>
         <ValidatedInput
           autoFocus
-          onFocus={(event) => event.target.select()}
+          onFocus={(event): void => event.target.select()}
           value={value}
           patterns={patterns}
           onValidChange={setIsValid}
-          onChange={(event) => setValue(event.target.value)}
+          onChange={(event): void => setValue(event.target.value)}
           onKeyDown={handleKeyDown}
         />
         <div className="mt-3 flex justify-end gap-2">

@@ -1,8 +1,9 @@
+import type { JSX } from 'react'
 import { useSettingsStore } from '~/stores/settings-store'
 import Toggle from '~/components/inputs/toggle'
 import InputWithLabel from '~/components/inputs/input-with-label'
 
-export default function StudioSettings() {
+export default function StudioSettings(): JSX.Element {
   const { studio, setStudioSettings } = useSettingsStore()
 
   return (
@@ -18,7 +19,7 @@ export default function StudioSettings() {
           <Toggle
             id="gradient-toggle"
             checked={studio.gradient}
-            onChange={(value: boolean) => setStudioSettings({ gradient: value })}
+            onChange={(value: boolean): void => setStudioSettings({ gradient: value })}
           />
         </InputWithLabel>
 
@@ -32,7 +33,7 @@ export default function StudioSettings() {
           <Toggle
             id="palette-expanded-toggle"
             checked={studio.paletteExpandedByDefault}
-            onChange={(value: boolean) => setStudioSettings({ paletteExpandedByDefault: value })}
+            onChange={(value: boolean): void => setStudioSettings({ paletteExpandedByDefault: value })}
           />
         </InputWithLabel>
       </div>

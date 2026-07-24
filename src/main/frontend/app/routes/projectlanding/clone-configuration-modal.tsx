@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, type JSX } from 'react'
 import { useSubmitOnEnter } from '~/hooks/use-submit-on-enter'
 import DirectoryPicker from '~/components/directory-picker/directory-picker'
 import Button from '~/components/inputs/button'
@@ -19,18 +19,18 @@ export default function CloneConfigurationModal({
   onClose,
   onClone,
   initialPath,
-}: Readonly<CloneProjectModalProperties>) {
+}: Readonly<CloneProjectModalProperties>): JSX.Element {
   const [repoUrl, setRepoUrl] = useState('')
   const [location, setLocation] = useState('')
   const [token, setToken] = useState('')
   const [showPicker, setShowPicker] = useState(false)
 
-  useEffect(() => {
+  useEffect((): void => {
     if (isLocal) {
       filesystemService
         .resolveNearestAccessiblePath(initialPath ?? '')
         .then(setLocation)
-        .catch(() => setLocation(''))
+        .catch((): void => setLocation(''))
       return
     }
     setLocation(initialPath ?? '')
@@ -44,7 +44,7 @@ export default function CloneConfigurationModal({
   const targetName = repoName || 'cloned-project'
   const targetPath = location ? joinPath(location, targetName) : targetName
 
-  const handleClone = () => {
+  const handleClone = (): void => {
     if (!repoUrl.trim()) return
     if (isLocal && !location) return
 
@@ -62,7 +62,7 @@ export default function CloneConfigurationModal({
     handleClose()
   }
 
-  const handleClose = () => {
+  const handleClose = (): void => {
     setRepoUrl('')
     setLocation('')
     setToken('')
@@ -88,10 +88,10 @@ export default function CloneConfigurationModal({
                 value={location || (isLocal ? '' : 'Workspace root')}
                 readOnly
                 placeholder={isLocal ? 'Select a parent directory...' : 'Workspace root (or browse for subfolder)'}
-                onDoubleClick={() => setShowPicker(true)}
+                onDoubleClick={(): void => setShowPicker(true)}
               />
 
-              <Button onClick={() => setShowPicker(true)} className="text-sm">
+              <Button onClick={(): void => setShowPicker(true)} className="text-sm">
                 Browse...
               </Button>
             </div>
@@ -101,7 +101,7 @@ export default function CloneConfigurationModal({
             <label className="mb-1 block text-sm font-medium">Repository URL</label>
             <Input
               value={repoUrl}
-              onChange={(event) => setRepoUrl(event.target.value)}
+              onChange={(event): void => setRepoUrl(event.target.value)}
               placeholder="https://github.com/user/repo.git"
               aria-label="repository url"
             />
@@ -113,7 +113,7 @@ export default function CloneConfigurationModal({
               <Input
                 type="password"
                 value={token}
-                onChange={(event) => setToken(event.target.value)}
+                onChange={(event): void => setToken(event.target.value)}
                 placeholder="Personal access token for private repos"
                 aria-label="access token"
               />
@@ -138,11 +138,11 @@ export default function CloneConfigurationModal({
 
       {showPicker && (
         <DirectoryPicker
-          onSelect={(path) => {
+          onSelect={(path): void => {
             setLocation(path)
             setShowPicker(false)
           }}
-          onCancel={() => setShowPicker(false)}
+          onCancel={(): void => setShowPicker(false)}
           initialPath={location}
         />
       )}

@@ -1,5 +1,5 @@
 import { BaseEdge, EdgeLabelRenderer, getBezierPath, type Position, useReactFlow, useStore } from '@xyflow/react'
-import { type MouseEvent, useEffect, useRef, useState } from 'react'
+import { type JSX, type MouseEvent, useEffect, useRef, useState } from 'react'
 import useFlowStore from '~/stores/flow-store'
 import { FlowConfig, getCompactLabelScale } from '~/routes/studio/canvas/flow.config'
 import { getEdgeLabelPositions } from '~/utils/edge-label-utils'
@@ -37,8 +37,8 @@ export default function FrankEdge({
   selected,
   sourceHandleId,
   data,
-}: Readonly<FrankEdgeProperties>) {
-  const deleteEdge = useFlowStore((state) => state.deleteEdge)
+}: Readonly<FrankEdgeProperties>): JSX.Element {
+  const deleteEdge = useFlowStore((state): ((edgeId: string) => void) => state.deleteEdge)
   const faded = data?.faded ?? false
   const { screenToFlowPosition } = useReactFlow()
   const [hoverLabelPosition, setHoverLabelPosition] = useState<{ x: number; y: number } | null>(null)
@@ -46,8 +46,8 @@ export default function FrankEdge({
   const pinnedLabelContainerReference = useRef<HTMLDivElement | null>(null)
   const interactionPathReference = useRef<SVGPathElement | null>(null)
 
-  const sourceHandleType = useFlowStore((state) => {
-    const node = state.nodes.find((n) => n.id === source)
+  const sourceHandleType = useFlowStore((state): string => {
+    const node = state.nodes.find((n): boolean => n.id === source)
     if (!node?.data) return ''
 
     type NodeData = {
@@ -58,14 +58,14 @@ export default function FrankEdge({
     if (Array.isArray(typedData.sourceHandles)) {
       const sourceHandles = typedData.sourceHandles
       const handleIndex = Number(sourceHandleId)
-      const matchedHandle = sourceHandles.find((h) => h.index === handleIndex)
+      const matchedHandle = sourceHandles.find((h): boolean => h.index === handleIndex)
       return matchedHandle?.type?.toUpperCase() ?? ''
     }
 
     return ''
   })
 
-  const zoom = useStore((state) => state.transform[2])
+  const zoom = useStore((state): number => state.transform[2])
   const isCompact = zoom < FlowConfig.ZOOM_THRESHOLD
 
   const [edgePath, labelX, labelY] = getBezierPath({
@@ -82,20 +82,20 @@ export default function FrankEdge({
     { x: labelX, y: labelY },
   )
 
-  const updateHoverLabelPosition = (event: MouseEvent<SVGPathElement>) => {
+  const updateHoverLabelPosition = (event: MouseEvent<SVGPathElement>): void => {
     setHoverLabelPosition(screenToFlowPosition({ x: event.clientX, y: event.clientY - HOVER_LABEL_CURSOR_OFFSET }))
   }
 
-  const pinHoverLabelPosition = (event: MouseEvent<SVGPathElement>) => {
+  const pinHoverLabelPosition = (event: MouseEvent<SVGPathElement>): void => {
     setPinnedLabelPosition(screenToFlowPosition({ x: event.clientX, y: event.clientY - HOVER_LABEL_CURSOR_OFFSET }))
   }
 
-  useEffect(() => {
+  useEffect((): (() => void) | undefined => {
     if (!pinnedLabelPosition) {
       return
     }
 
-    const handlePointerDown = (event: PointerEvent) => {
+    const handlePointerDown = (event: PointerEvent): void => {
       const targetNode = event.target as Node | null
 
       if (!targetNode) return
@@ -107,7 +107,7 @@ export default function FrankEdge({
 
     document.addEventListener('pointerdown', handlePointerDown)
 
-    return () => {
+    return (): void => {
       document.removeEventListener('pointerdown', handlePointerDown)
     }
   }, [pinnedLabelPosition])
@@ -129,11 +129,11 @@ export default function FrankEdge({
         style={{ pointerEvents: faded ? 'none' : 'stroke' }}
         onMouseEnter={updateHoverLabelPosition}
         onMouseMove={updateHoverLabelPosition}
-        onMouseLeave={() => setHoverLabelPosition(null)}
+        onMouseLeave={(): void => setHoverLabelPosition(null)}
         onClick={pinHoverLabelPosition}
       />
       <EdgeLabelRenderer>
-        {labelPositions.map((position) => (
+        {labelPositions.map((position): JSX.Element => (
           <EdgeLabel
             key={`${position.x},${position.y}`}
             position={position}
@@ -141,7 +141,7 @@ export default function FrankEdge({
             selected={selected}
             faded={faded}
             compactScale={isCompact ? getCompactLabelScale(zoom) : undefined}
-            onDelete={() => deleteEdge(id)}
+            onDelete={(): void => deleteEdge(id)}
           />
         ))}
         {!pinnedLabelPosition && hoverLabelPosition && sourceHandleType && !faded && (
@@ -149,7 +149,7 @@ export default function FrankEdge({
             compactScale={isCompact ? getCompactLabelScale(zoom) : undefined}
             position={hoverLabelPosition}
             text={sourceHandleType}
-            onDelete={() => {
+            onDelete={(): void => {
               /* empty */
             }}
           />
@@ -161,7 +161,7 @@ export default function FrankEdge({
               compactScale={isCompact ? getCompactLabelScale(zoom) : undefined}
               text={sourceHandleType}
               selected={true}
-              onDelete={() => deleteEdge(id)}
+              onDelete={(): void => deleteEdge(id)}
             />
           </div>
         )}

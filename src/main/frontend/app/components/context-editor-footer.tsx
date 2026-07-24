@@ -1,4 +1,4 @@
-import { type ReactNode } from 'react'
+import type { JSX, ReactNode } from 'react'
 import Button from '~/components/inputs/button'
 
 type ContextEditorFooterProperties = {
@@ -21,7 +21,7 @@ export default function ContextEditorFooter({
   deleteLabel = 'Delete',
   errorMessage,
   leadingActions,
-}: Readonly<ContextEditorFooterProperties>) {
+}: Readonly<ContextEditorFooterProperties>): JSX.Element {
   return (
     <div className="border-t-border bg-background border-t p-4">
       <div className="flex w-full items-center justify-between">

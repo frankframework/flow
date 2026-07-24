@@ -1,4 +1,5 @@
 import { Handle, Position, useNodeConnections, type Node } from '@xyflow/react'
+import type { JSX } from 'react'
 import type { CustomNodeData } from '~/types/datamapper_types/react-node-types'
 import HighlightButton from '../basic-components/highlight-button'
 import DeleteButton from '../basic-components/delete-button'
@@ -13,7 +14,13 @@ export type ArrayGroupNodeProperties = {
   onHighlight?: (id: string) => void
 }
 
-function ArrayGroupNode({ id, data, variant = 'source', onDelete, onHighlight }: ArrayGroupNodeProperties) {
+function ArrayGroupNode({
+  id,
+  data,
+  variant = 'source',
+  onDelete,
+  onHighlight,
+}: ArrayGroupNodeProperties): JSX.Element {
   const checked = data?.checked
 
   const connections = useNodeConnections({
@@ -22,14 +29,14 @@ function ArrayGroupNode({ id, data, variant = 'source', onDelete, onHighlight }:
 
   const isConnectable = connections.length === 0 || variant === 'source'
 
-  const updateChecked = () => {
+  const updateChecked = (): void => {
     const newChecked = !checked
-    data.setNodes?.((nodes: Node[]) =>
-      nodes.map((node) => (node.id === id ? { ...node, data: { ...node.data, checked: newChecked } } : node)),
+    data.setNodes?.((nodes: Node[]): Node[] =>
+      nodes.map((node): Node => (node.id === id ? { ...node, data: { ...node.data, checked: newChecked } } : node)),
     )
     if (variant != 'source') {
-      data.setNodes?.((nodes: Node[]) =>
-        nodes.map((node) =>
+      data.setNodes?.((nodes: Node[]): Node[] =>
+        nodes.map((node): Node =>
           node.id !== id && node.parentId?.includes('target')
             ? { ...node, data: { ...node.data, checked: false } }
             : node,
@@ -78,13 +85,13 @@ function ArrayGroupNode({ id, data, variant = 'source', onDelete, onHighlight }:
           <div className="min-w-0 flex-1 truncate rounded-md text-left">{data.label}</div>
           <div className="hidden gap-3 group-hover:flex">
             <HighlightButton
-              onClick={() => {
+              onClick={(): void => {
                 onHighlight?.(id)
               }}
             />
 
             <DeleteButton
-              onClick={() => {
+              onClick={(): void => {
                 onDelete?.(id)
               }}
             />

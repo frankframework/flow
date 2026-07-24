@@ -17,22 +17,24 @@ export default function RadioButton({
   id,
   name,
   ...properties
-}: RadioButtonProperties) {
+}: RadioButtonProperties): React.JSX.Element {
   const generatedId = useId()
   const uniqueId = id ?? generatedId
   const groupName = name ?? generatedId
   const [isSelected, setIsSelected] = useState(checked)
 
-  useEffect(() => {
+  useEffect((): void => {
     setIsSelected(checked)
   }, [checked])
 
-  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (!disabled) {
-      const newIsSelected = event.target.checked
-      onChange?.(newIsSelected)
-      setIsSelected(newIsSelected)
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>): void => {
+    if (disabled) {
+      return
     }
+
+    const newIsSelected = event.target.checked
+    onChange?.(newIsSelected)
+    setIsSelected(newIsSelected)
   }
 
   return (

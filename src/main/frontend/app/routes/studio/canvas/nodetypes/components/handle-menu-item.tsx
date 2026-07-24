@@ -1,3 +1,5 @@
+import type { JSX } from 'react'
+
 export type HandleMenuItemProperties = {
   label: string
   iconColor?: string
@@ -10,7 +12,7 @@ export default function HandleMenuItem({
   iconColor: color,
   onClick,
   isLast,
-}: Readonly<HandleMenuItemProperties>) {
+}: Readonly<HandleMenuItemProperties>): JSX.Element {
   return (
     <li
       className={`hover:bg-hover border-border flex h-10 cursor-pointer items-center justify-between p-2 ${

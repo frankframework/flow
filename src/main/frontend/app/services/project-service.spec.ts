@@ -1,22 +1,26 @@
 import { DEFAULT_MAX_IMPORT_BYTES, importProjectFolder, ImportTooLargeError } from './project-service'
 
-vi.mock('../utils/api', () => ({
-  apiFetch: vi.fn(() => Promise.resolve({ name: 'proj', rootPath: '/tmp/proj', filepaths: [] })),
-  apiUrl: (path: string) => path,
+vi.mock('../utils/api', (): { apiFetch: ReturnType<typeof vi.fn>; apiUrl: (path: string) => string } => ({
+  apiFetch: vi.fn((): Promise<{ name: string; rootPath: string; filepaths: never[] }> =>
+    Promise.resolve({ name: 'proj', rootPath: '/tmp/proj', filepaths: [] }),
+  ),
+  apiUrl: (path: string): string => path,
 }))
 
-vi.mock('fflate', () => ({
+vi.mock('fflate', (): { zip: typeof import('fflate').zip } => ({
   zip: (
     _entries: Record<string, Uint8Array>,
     _options: unknown,
     callback: (error: Error | null, data: Uint8Array) => void,
-  ) => callback(null, new Uint8Array(8)),
+  ): void => callback(null, new Uint8Array(8)),
 }))
 
 function makeFile(relativePath: string, sizeOverride?: number): File {
   const file = new File([new Uint8Array(4)], relativePath.split('/').pop() ?? 'file')
-  Object.defineProperty(file, 'webkitRelativePath', { value: relativePath })
-  Object.defineProperty(file, 'arrayBuffer', { value: () => Promise.resolve(new ArrayBuffer(4)) })
+  Object.defineProperties(file, {
+    webkitRelativePath: { value: relativePath },
+    arrayBuffer: { value: () => Promise.resolve(new ArrayBuffer(4)) },
+  })
   if (sizeOverride !== undefined) {
     Object.defineProperty(file, 'size', { value: sizeOverride })
   }

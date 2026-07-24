@@ -1,4 +1,4 @@
-import { useMemo, useState, type ChangeEvent, type DragEvent } from 'react'
+import { useMemo, useState, type ChangeEvent, type DragEvent, type JSX } from 'react'
 import { useFFDoc } from '@frankframework/doc-library-react'
 import Search from '~/components/search/search'
 import LoadingSpinner from '~/components/loading-spinner'
@@ -15,27 +15,32 @@ export default function NonCanvasComponentPalette({
 }: {
   onDragStart?: (tagName: string) => void
   onDragEnd?: () => void
-}) {
+}): JSX.Element {
   const { elements, isLoading } = useFFDoc()
   const { xsdContent } = useFrankConfigXsd()
   const [search, setSearch] = useState('')
 
-  const addableNames = useMemo(() => getAddableNonCanvasComponentNames(xsdContent, elements), [xsdContent, elements])
+  const addableNames = useMemo(
+    (): string[] => getAddableNonCanvasComponentNames(xsdContent, elements),
+    [xsdContent, elements],
+  )
 
   const filteredNames = useMemo(
-    () => addableNames.filter((name) => name.toLowerCase().includes(search.toLowerCase())),
+    (): string[] => addableNames.filter((name): boolean => name.toLowerCase().includes(search.toLowerCase())),
     [addableNames, search],
   )
 
-  const handleSearchChange = (event: ChangeEvent<HTMLInputElement>) => setSearch(event.target.value)
+  const handleSearchChange = (event: ChangeEvent<HTMLInputElement>): void => setSearch(event.target.value)
 
-  const handleDragStart = (tagName: string) => (event: DragEvent<HTMLLIElement>) => {
-    event.dataTransfer.setData('text/plain', tagName)
-    event.dataTransfer.effectAllowed = 'copy'
-    onDragStart?.(tagName)
-  }
+  const handleDragStart =
+    (tagName: string): ((event: DragEvent<HTMLLIElement>) => void) =>
+    (event: DragEvent<HTMLLIElement>): void => {
+      event.dataTransfer.setData('text/plain', tagName)
+      event.dataTransfer.effectAllowed = 'copy'
+      onDragStart?.(tagName)
+    }
 
-  const handleDragEnd = () => onDragEnd?.()
+  const handleDragEnd = (): void | undefined => onDragEnd?.()
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
@@ -52,7 +57,7 @@ export default function NonCanvasComponentPalette({
               {addableNames.length === 0 ? 'No addable components found.' : 'No results found.'}
             </li>
           ) : (
-            filteredNames.map((name) => (
+            filteredNames.map((name): JSX.Element => (
               <li
                 key={name}
                 draggable

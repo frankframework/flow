@@ -2,7 +2,7 @@ import TrashBinIcon from '/icons/solar/Trash Bin.svg?react'
 import CodeIcon from '/icons/solar/Code.svg?react'
 import WidgetIcon from '/icons/solar/Widget.svg?react'
 import { useNavigate } from 'react-router'
-import { useRef, useState, type DragEvent } from 'react'
+import { useRef, useState, type DragEvent, type JSX } from 'react'
 import { openInStudio, openInEditor } from '~/actions/navigationActions'
 import IconButton from '~/components/inputs/icon-button'
 import IconLabelButton from '~/components/inputs/icon-label-button'
@@ -14,7 +14,7 @@ import { isRootConfiguration } from './configuration-utils'
 import AdapterListItem from './adapter-list-item'
 import ComponentListItem from './component-list-item'
 import { frankdocChipStyle } from '~/utils/flow-utils'
-import clsx from "clsx";
+import clsx from 'clsx'
 
 type ConfigurationFileTileProperties = {
   filepath: string
@@ -44,7 +44,7 @@ export default function ConfigurationFileTile({
   onDropComponent,
   draggedTagName = null,
   listViewTile = false,
-}: Readonly<ConfigurationFileTileProperties>) {
+}: Readonly<ConfigurationFileTileProperties>): JSX.Element {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [isDropTarget, setIsDropTarget] = useState(false)
   const dragDepth = useRef(0)
@@ -52,20 +52,20 @@ export default function ConfigurationFileTile({
 
   const isComponentDrag = draggedTagName !== null
 
-  const handleDragOver = (event: DragEvent<HTMLDivElement>) => {
+  const handleDragOver = (event: DragEvent<HTMLDivElement>): void => {
     if (!isComponentDrag) return
     event.preventDefault()
     event.dataTransfer.dropEffect = 'copy'
   }
 
-  const handleDragEnter = (event: DragEvent<HTMLDivElement>) => {
+  const handleDragEnter = (event: DragEvent<HTMLDivElement>): void => {
     if (!isComponentDrag) return
     event.preventDefault()
     dragDepth.current += 1
     setIsDropTarget(true)
   }
 
-  const handleDragLeave = () => {
+  const handleDragLeave = (): void => {
     if (!isComponentDrag) return
     dragDepth.current -= 1
     if (dragDepth.current <= 0) {
@@ -74,7 +74,7 @@ export default function ConfigurationFileTile({
     }
   }
 
-  const handleDrop = (event: DragEvent<HTMLDivElement>) => {
+  const handleDrop = (event: DragEvent<HTMLDivElement>): void => {
     if (!draggedTagName) return
     event.preventDefault()
     dragDepth.current = 0
@@ -82,17 +82,17 @@ export default function ConfigurationFileTile({
     onDropComponent(filepath, draggedTagName)
   }
 
-  const handleOpenInStudio = (adapterName: string, adapterPosition: number) => {
+  const handleOpenInStudio = (adapterName: string, adapterPosition: number): void => {
     openInStudio(navigate, { adapterName, filepath, adapterPosition })
   }
 
-  const handleOpenInEditor = () => {
+  const handleOpenInEditor = (): void => {
     const fileName = getBaseName(relativePath)
     if (!fileName) return
     openInEditor(fileName, filepath, navigate)
   }
 
-  const handleConfirmDelete = async () => {
+  const handleConfirmDelete = async (): Promise<void> => {
     await onDelete()
     setShowDeleteDialog(false)
   }
@@ -116,20 +116,20 @@ export default function ConfigurationFileTile({
   } else if (hasContent) {
     componentList = (
       <ul className="space-y-2">
-        {adapterNames.map((adapterName, adapterPosition) => (
+        {adapterNames.map((adapterName, adapterPosition): JSX.Element => (
           <AdapterListItem
             key={`adapter-${adapterName}-${adapterPosition}`}
             adapterName={adapterName}
             adapterPosition={adapterPosition}
-            onConfigure={() => onConfigureAdapter(filepath, adapterName, adapterPosition)}
+            onConfigure={(): void => onConfigureAdapter(filepath, adapterName, adapterPosition)}
             onOpenInStudio={handleOpenInStudio}
           />
         ))}
-        {nonCanvasComponents.map((component) => (
+        {nonCanvasComponents.map((component): JSX.Element => (
           <ComponentListItem
             key={`component-${component.tagName}-${component.index}`}
             component={component}
-            onConfigure={() => onEditComponent(filepath, component)}
+            onConfigure={(): void => onEditComponent(filepath, component)}
           />
         ))}
       </ul>
@@ -168,7 +168,7 @@ export default function ConfigurationFileTile({
             </span>
           )}
         </div>
-        <IconButton title="Delete configuration" onClick={() => setShowDeleteDialog(true)}>
+        <IconButton title="Delete configuration" onClick={(): void => setShowDeleteDialog(true)}>
           <TrashBinIcon className="text-foreground-muted group-hover:text-foreground h-5 w-5" />
         </IconButton>
       </div>
@@ -184,7 +184,7 @@ export default function ConfigurationFileTile({
         <IconLabelButton
           icon={<WidgetIcon className="h-4 w-4 fill-current" />}
           label="Add non-canvas component"
-          onClick={() => onAddComponent(filepath)}
+          onClick={(): void => onAddComponent(filepath)}
         />
       </div>
 
@@ -192,7 +192,7 @@ export default function ConfigurationFileTile({
         <ConfirmDeleteDialog
           name={getBaseName(relativePath)}
           isFolder={false}
-          onCancel={() => setShowDeleteDialog(false)}
+          onCancel={(): void => setShowDeleteDialog(false)}
           onConfirm={handleConfirmDelete}
         />
       )}

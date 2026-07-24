@@ -47,44 +47,64 @@ function toPascalCase(tag: string): string {
 }
 
 function analyzeTagStructure(lines: string[], startLine: number): { isSelfClosing: boolean; endLine: number } {
+  const searchLimit = Math.min(startLine + MAX_TAG_LINES, lines.length)
   let isInsideString = false
   let stringDelimiter = ''
   let isInsideTag = false
-  let previousChar = ''
-
-  const searchLimit = Math.min(startLine + MAX_TAG_LINES, lines.length)
 
   for (let currentLine = startLine; currentLine < searchLimit; currentLine++) {
-    for (const char of lines[currentLine]) {
-      if (!isInsideTag) {
-        if (char === '<') isInsideTag = true
-        continue
-      }
+    const line = lines[currentLine]
+    const lineResult = analyzeLineForTag(line, currentLine, { isInsideString, stringDelimiter, isInsideTag })
+    if (Object.hasOwn(lineResult, 'isSelfClosing')) return lineResult as { isSelfClosing: boolean; endLine: number }
 
-      if (isInsideString) {
-        if (char === stringDelimiter) isInsideString = false
-        previousChar = char
-        continue
-      }
-
-      if (char === '"' || char === "'") {
-        isInsideString = true
-        stringDelimiter = char
-        previousChar = char
-        continue
-      }
-
-      if (char === '>') {
-        return { isSelfClosing: previousChar === '/', endLine: currentLine + 1 }
-      }
-
-      if (char.trim() !== '') {
-        previousChar = char
-      }
-    }
+    // This sucks, but this file needs a refactor as a whole
+    const lineState = lineResult as { isInsideString: boolean; stringDelimiter: string; isInsideTag: boolean }
+    isInsideString = lineState.isInsideString
+    stringDelimiter = lineState.stringDelimiter
+    isInsideTag = lineState.isInsideTag
   }
 
   return { isSelfClosing: false, endLine: startLine + 1 }
+}
+
+function analyzeLineForTag(
+  line: string,
+  lineNumber: number,
+  searchState: { isInsideString: boolean; stringDelimiter: string; isInsideTag: boolean },
+):
+  | { isSelfClosing: boolean; endLine: number }
+  | { isInsideString: boolean; stringDelimiter: string; isInsideTag: boolean } {
+  let previousChar = ''
+  let { isInsideString, stringDelimiter, isInsideTag } = searchState
+
+  for (const char of line) {
+    if (!isInsideTag) {
+      if (char === '<') isInsideTag = true
+      continue
+    }
+
+    if (isInsideString) {
+      if (char === stringDelimiter) isInsideString = false
+      previousChar = char
+      continue
+    }
+
+    if (char === '"' || char === "'") {
+      isInsideString = true
+      stringDelimiter = char
+      previousChar = char
+      continue
+    }
+
+    if (char === '>') {
+      return { isSelfClosing: previousChar === '/', endLine: lineNumber + 1 }
+    }
+
+    if (char.trim() !== '') {
+      previousChar = char
+    }
+  }
+  return { isInsideString, stringDelimiter, isInsideTag }
 }
 
 /**
@@ -94,11 +114,11 @@ function analyzeTagStructure(lines: string[], startLine: number): { isSelfClosin
 function extractNameAttribute(lines: string[], startLine: number): string | null {
   const searchLimit = Math.min(startLine + MAX_LOOKAHEAD_LINES, lines.length)
 
-  for (let i = startLine; i < searchLimit; i++) {
-    const match = lines[i].match(REGEX_NAME_ATTR)
+  for (let index = startLine; index < searchLimit; index++) {
+    const match = lines[index].match(REGEX_NAME_ATTR)
     if (match) return match[1]
 
-    const isTagEnding = lines[i].includes('/>') || (/[^/]>\s*$/.test(lines[i]) && i > startLine)
+    const isTagEnding = lines[index].includes('/>') || (/[^/]>\s*$/.test(lines[index]) && index > startLine)
     if (isTagEnding) break
   }
 
@@ -108,12 +128,12 @@ function extractNameAttribute(lines: string[], startLine: number): string | null
 function hasNameAttributeWithinTag(lines: string[], startLine: number, targetName: string): boolean {
   const searchLimit = Math.min(startLine + MAX_LOOKAHEAD_LINES, lines.length)
 
-  for (let i = startLine; i < searchLimit; i++) {
-    if (lines[i].includes(`name="${targetName}"`) || lines[i].includes(`name='${targetName}'`)) {
+  for (let index = startLine; index < searchLimit; index++) {
+    if (lines[index].includes(`name="${targetName}"`) || lines[index].includes(`name='${targetName}'`)) {
       return true
     }
 
-    if (i > startLine && REGEX_NEW_TAG_START.test(lines[i])) {
+    if (index > startLine && REGEX_NEW_TAG_START.test(lines[index])) {
       return false
     }
   }
@@ -137,8 +157,8 @@ export function lineToOffset(xml: string, lineNumber: number): number {
   const lines = xml.split('\n')
   let offset = 0
 
-  for (let i = 0; i < lineNumber - 1 && i < lines.length; i++) {
-    offset += lines[i].length + 1
+  for (let index = 0; index < lineNumber - 1 && index < lines.length; index++) {
+    offset += lines[index].length + 1
   }
 
   return offset
@@ -147,16 +167,16 @@ export function lineToOffset(xml: string, lineNumber: number): number {
 export function offsetToLine(xml: string, offset: number): number {
   let line = 1
 
-  for (let i = 0; i < offset && i < xml.length; i++) {
-    if (xml[i] === '\n') line++
+  for (let index = 0; index < offset && index < xml.length; index++) {
+    if (xml[index] === '\n') line++
   }
 
   return line
 }
 
 export function findAdapterIndexAtOffset(adapters: AdapterLocation[], cursorOffset: number): number {
-  for (let i = adapters.length - 1; i >= 0; i--) {
-    if (adapters[i].offset <= cursorOffset) return i
+  for (let index = adapters.length - 1; index >= 0; index--) {
+    if (adapters[index].offset <= cursorOffset) return index
   }
   return 0
 }
@@ -177,7 +197,7 @@ export function wrapFlowXml(fragment: string): string {
 
 export function findFlowElementsStartLine(xml: string): number {
   const lines = xml.split('\n')
-  const index = lines.findIndex((line) => line.includes('<flow:FlowElements'))
+  const index = lines.findIndex((line): boolean => line.includes('<flow:FlowElements'))
   return index === -1 ? 1 : index + 1
 }
 
@@ -185,13 +205,13 @@ export function findElementInXml(xml: string, subtype: string, name?: string): n
   const lines = xml.split('\n')
   const targetTag = `<${subtype}`
 
-  for (let i = 0; i < lines.length; i++) {
-    if (!lines[i].includes(targetTag)) continue
+  for (let index = 0; index < lines.length; index++) {
+    if (!lines[index].includes(targetTag)) continue
 
-    if (!name) return i + 1
+    if (!name) return index + 1
 
-    if (hasNameAttributeWithinTag(lines, i, name)) {
-      return i + 1
+    if (hasNameAttributeWithinTag(lines, index, name)) {
+      return index + 1
     }
   }
 
@@ -217,7 +237,7 @@ function isGlyphNode(tag: string, parentTag: string): boolean {
   return (parentTag === 'adapter' && tag === 'Receiver') || (parentTag === 'pipeline' && tag !== 'Exit')
 }
 
-function processClosingTags(line: string, stack: string[]) {
+function processClosingTags(line: string, stack: string[]): void {
   for (const { 1: rawTag } of line.matchAll(REGEX_CLOSE_TAG)) {
     const tagName = getLocalName(rawTag)
     const index = stack.lastIndexOf(tagName)
@@ -255,13 +275,18 @@ export function findFrankElementsForGlyphs(xml: string): FrankElementLocation[] 
   if (adapters.length === 0) return []
 
   const lines = xml.split('\n')
-  const results: FrankElementLocation[] = adapters.map((adapter, adapterPosition) => ({
-    subtype: ADAPTER_GLYPH_SUBTYPE,
-    name: adapter.name,
-    startLine: offsetToLine(xml, adapter.offset),
-    adapterName: adapter.name,
-    adapterPosition,
-  }))
+  const results: FrankElementLocation[] = adapters.map(
+    (
+      adapter,
+      adapterPosition,
+    ): { subtype: string; name: string; startLine: number; adapterName: string; adapterPosition: number } => ({
+      subtype: ADAPTER_GLYPH_SUBTYPE,
+      name: adapter.name,
+      startLine: offsetToLine(xml, adapter.offset),
+      adapterName: adapter.name,
+      adapterPosition,
+    }),
+  )
   const tagStack: string[] = []
 
   for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {

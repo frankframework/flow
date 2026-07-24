@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { type JSX, useCallback, useEffect, useMemo, useState } from 'react'
 import { useFFDoc } from '@frankframework/doc-library-react'
 import {
   flattenInheritedParentElementProperties,
@@ -40,7 +40,7 @@ export default function NonCanvasComponentContext({
   onSaved,
   onClose,
   onNameChange,
-}: Readonly<NonCanvasComponentContextProperties>) {
+}: Readonly<NonCanvasComponentContextProperties>): JSX.Element {
   const { elements, ffDoc, isLoading } = useFFDoc()
   const { mode, configPath, tagName, index, initialAttributes } = editor
 
@@ -50,7 +50,7 @@ export default function NonCanvasComponentContext({
   const [isSaving, setIsSaving] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
 
-  const attributeDefinitions = useMemo<Record<string, Attribute>>(() => {
+  const attributeDefinitions = useMemo<Record<string, Attribute>>((): Record<string, Attribute> => {
     const element = elements?.[tagName]
     if (!element) return {}
 
@@ -65,34 +65,35 @@ export default function NonCanvasComponentContext({
     }
   }, [elements, ffDoc, tagName])
 
-  const fieldKeys = useMemo(() => {
+  const fieldKeys = useMemo((): string[] => {
     const keys = new Set<string>(Object.keys(attributeDefinitions))
-    for (const key of Object.keys(initialAttributes ?? {})) keys.add(key)
+    const initialKeys = Object.keys(initialAttributes ?? {})
+    for (const key of initialKeys) keys.add(key)
     return [...keys]
   }, [attributeDefinitions, initialAttributes])
 
-  useEffect(() => {
+  useEffect((): void => {
     const values: Record<string, string> = {}
     for (const key of fieldKeys) values[key] = initialAttributes?.[key] ?? ''
     setInputValues(values)
     setInitiallyFilledKeys(
       new Set(
         Object.entries(values)
-          .filter(([, value]) => value.trim())
-          .map(([key]) => key),
+          .filter(([, value]): string => value.trim())
+          .map(([key]): string => key),
       ),
     )
     setShowAll(false)
     setErrorMessage('')
   }, [fieldKeys, initialAttributes, mode, configPath, tagName, index])
 
-  const canSave = useMemo(() => {
-    const mandatoryFilled = fieldKeys.every((key) => {
+  const canSave = useMemo((): boolean => {
+    const mandatoryFilled = fieldKeys.every((key): boolean => {
       if (!attributeDefinitions[key]?.mandatory) return true
       return (inputValues[key] ?? '').trim() !== ''
     })
 
-    const integersValid = fieldKeys.every((key) => {
+    const integersValid = fieldKeys.every((key): boolean => {
       if (attributeDefinitions[key]?.type !== 'int') return true
       const value = (inputValues[key] ?? '').trim()
       return value === '' || /^\d+$/.test(value)
@@ -103,15 +104,15 @@ export default function NonCanvasComponentContext({
 
   const componentName = inputValues['name']?.trim() ?? ''
 
-  useEffect(() => {
+  useEffect((): void => {
     onNameChange?.(componentName)
   }, [componentName, onNameChange])
 
   const makeEnumOptions = useCallback(
-    (attribute: Attribute) => {
-      if (attribute.enum && ffDoc?.enums?.[attribute.enum]) {
+    (attribute: Attribute): Record<string, string> | undefined => {
+      if (ffDoc && attribute.enum && Object.hasOwn(ffDoc.enums, attribute.enum)) {
         return Object.keys(ffDoc.enums[attribute.enum]).reduce(
-          (result, key) => ({ ...result, [key]: key }),
+          (result, key): Record<string, string> => ({ ...result, [key]: key }),
           {} as Record<string, string>,
         )
       }
@@ -120,7 +121,7 @@ export default function NonCanvasComponentContext({
     [ffDoc],
   )
 
-  const { baseKeys, restKeys } = useMemo(() => {
+  const { baseKeys, restKeys } = useMemo((): { baseKeys: string[]; restKeys: string[] } => {
     const mandatory: string[] = []
     const filled: string[] = []
     const rest: string[] = []
@@ -135,13 +136,7 @@ export default function NonCanvasComponentContext({
     return { baseKeys: [...leading, ...mandatory, ...filled], restKeys: rest }
   }, [fieldKeys, attributeDefinitions, initiallyFilledKeys])
 
-  const orderedKeys = showAll ? [...baseKeys, ...restKeys] : baseKeys
-
-  const handleChange = (key: string, value: string) => {
-    setInputValues((previous) => ({ ...previous, [key]: value }))
-  }
-
-  const resolveFilledAttributes = useCallback(() => {
+  const resolveFilledAttributes = useCallback((): Record<string, string> => {
     const result: Record<string, string> = {}
     for (const key of fieldKeys) {
       const value = (inputValues[key] ?? '').trim()
@@ -150,7 +145,21 @@ export default function NonCanvasComponentContext({
     return result
   }, [fieldKeys, inputValues])
 
-  const handleSave = async () => {
+  if (isLoading || !elements) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <LoadingSpinner message="Loading component..." />
+      </div>
+    )
+  }
+
+  const orderedKeys = showAll ? [...baseKeys, ...restKeys] : baseKeys
+
+  const handleChange = (key: string, value: string): void => {
+    setInputValues((previous): Record<string, string> => ({ ...previous, [key]: value }))
+  }
+
+  const handleSave = async (): Promise<void> => {
     if (!canSave || isSaving) return
     setIsSaving(true)
     setErrorMessage('')
@@ -169,7 +178,7 @@ export default function NonCanvasComponentContext({
     }
   }
 
-  const handleDelete = async () => {
+  const handleDelete = async (): Promise<void> => {
     setIsSaving(true)
     setErrorMessage('')
 
@@ -182,14 +191,6 @@ export default function NonCanvasComponentContext({
     }
   }
 
-  if (isLoading || !elements) {
-    return (
-      <div className="flex h-full items-center justify-center">
-        <LoadingSpinner message="Loading component..." />
-      </div>
-    )
-  }
-
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="flex-1 overflow-y-auto px-4">
@@ -200,12 +201,12 @@ export default function NonCanvasComponentContext({
             <p className="text-foreground-muted text-sm italic">This component has no configurable attributes.</p>
           )}
 
-          {orderedKeys.map((key) => (
+          {orderedKeys.map((key): JSX.Element => (
             <ContextInput
               key={key}
               id={`ncc-${key}`}
               value={inputValues[key] ?? ''}
-              onChange={(value: string) => handleChange(key, value)}
+              onChange={(value: string): void => handleChange(key, value)}
               label={key}
               attribute={attributeDefinitions[key] ?? EMPTY_ATTRIBUTE}
               enumOptions={makeEnumOptions(attributeDefinitions[key] ?? EMPTY_ATTRIBUTE)}
@@ -215,7 +216,7 @@ export default function NonCanvasComponentContext({
 
           {restKeys.length > 0 && (
             <div className="pt-4">
-              <Button onClick={() => setShowAll((previous) => !previous)} className="w-full">
+              <Button onClick={(): void => setShowAll((previous): boolean => !previous)} className="w-full">
                 {showAll ? 'Hide empty attributes' : 'Show all attributes'}
               </Button>
             </div>

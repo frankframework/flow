@@ -1,4 +1,5 @@
 import RulerCrossPenIcon from '/icons/solar/Ruler Cross Pen.svg?react'
+import type { JSX } from 'react'
 import IconLabelButton from '~/components/inputs/icon-label-button'
 import ComponentRow from './component-row'
 
@@ -14,7 +15,7 @@ export default function AdapterListItem({
   adapterPosition,
   onConfigure,
   onOpenInStudio,
-}: Readonly<AdapterListItemProperties>) {
+}: Readonly<AdapterListItemProperties>): JSX.Element {
   return (
     <ComponentRow
       typeLabel="Adapter"
@@ -24,7 +25,7 @@ export default function AdapterListItem({
         <IconLabelButton
           icon={<RulerCrossPenIcon className="h-4 w-4 fill-current" />}
           label="Open in Studio"
-          onClick={() => onOpenInStudio(adapterName, adapterPosition)}
+          onClick={(): void => onOpenInStudio(adapterName, adapterPosition)}
         />
       }
     />

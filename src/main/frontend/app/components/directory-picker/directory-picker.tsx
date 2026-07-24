@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useState } from 'react'
+import { type JSX, useCallback, useEffect, useState } from 'react'
 import FolderIcon from '/icons/solar/Folder.svg?react'
 import NameInputDialog from '~/components/file-structure/name-input-dialog'
 import { useSubmitOnEnter } from '~/hooks/use-submit-on-enter'
 import { filesystemService } from '~/services/filesystem-service'
-import type { FilesystemEntry } from '~/types/filesystem.types'
+import type { EntryType, FilesystemEntry } from '~/types/filesystem.types'
 import { ApiError } from '~/utils/api'
 import { useDirectoryWatcher } from '~/hooks/use-file-watcher'
 import { normalizePath } from '~/utils/path-utils'
@@ -22,7 +22,7 @@ export default function DirectoryPicker({
   onCancel,
   rootLabel = 'Computer',
   initialPath,
-}: Readonly<DirectoryPickerProperties>) {
+}: Readonly<DirectoryPickerProperties>): JSX.Element {
   const [currentPath, setCurrentPath] = useState('')
   const [parentPath, setParentPath] = useState('')
   const [entries, setEntries] = useState<FilesystemEntry[]>([])
@@ -31,14 +31,19 @@ export default function DirectoryPicker({
   const [error, setError] = useState<string | null>(null)
   const [isCreatingFolder, setIsCreatingFolder] = useState(false)
 
-  const loadEntries = useCallback(async (path: string) => {
+  const loadEntries = useCallback(async (path: string): Promise<void> => {
     setLoading(true)
     setError(null)
     setSelectedEntry(null)
     setIsCreatingFolder(false)
     try {
       const result = await filesystemService.browse(path)
-      setEntries(result.entries.map((entry) => ({ ...entry, path: normalizePath(entry.path) })))
+      setEntries(
+        result.entries.map((entry): { path: string; name: string; type: EntryType; projectRoot: boolean } => ({
+          ...entry,
+          path: normalizePath(entry.path),
+        })),
+      )
       setCurrentPath(normalizePath(result.resolvedPath))
       setParentPath(normalizePath(result.parentPath))
     } catch (error) {
@@ -52,22 +57,22 @@ export default function DirectoryPicker({
     }
   }, [])
 
-  useDirectoryWatcher(currentPath, () => void loadEntries(currentPath))
+  useDirectoryWatcher(currentPath, (): undefined => void loadEntries(currentPath))
 
-  useEffect(() => {
+  useEffect((): void => {
     setSelectedEntry(null)
     loadEntries(initialPath ?? '')
   }, [loadEntries, initialPath])
 
-  const handleClick = (entry: FilesystemEntry) => {
+  const handleClick = (entry: FilesystemEntry): void => {
     setSelectedEntry(entry.path)
   }
 
-  const handleDoubleClick = (entry: FilesystemEntry) => {
+  const handleDoubleClick = (entry: FilesystemEntry): void => {
     loadEntries(entry.path)
   }
 
-  const handleCreateFolder = async (folderName: string) => {
+  const handleCreateFolder = async (folderName: string): Promise<void> => {
     const basePath = selectedEntry ?? currentPath
     const separator = basePath.includes('\\') ? '\\' : '/'
     const newPath = `${basePath}${separator}${folderName}`
@@ -84,7 +89,7 @@ export default function DirectoryPicker({
   const canGoUp = parentPath !== ''
   const activePath = selectedEntry ?? currentPath
 
-  useSubmitOnEnter(() => onSelect(activePath), !isCreatingFolder && !!activePath)
+  useSubmitOnEnter((): void => onSelect(activePath), !isCreatingFolder && !!activePath)
 
   return (
     <div className="bg-background/50 absolute inset-0 z-60 flex items-center justify-center">
@@ -96,7 +101,7 @@ export default function DirectoryPicker({
 
         <div className="border-border flex items-center gap-2 border-b px-4 py-2">
           <Button
-            onClick={() => loadEntries(parentPath)}
+            onClick={(): Promise<void> => loadEntries(parentPath)}
             disabled={!canGoUp}
             className="disabled:text-foreground-muted text-xs disabled:opacity-30"
           >
@@ -105,7 +110,7 @@ export default function DirectoryPicker({
           <span className="text-foreground-muted flex-1 truncate text-xs">{currentPath || rootLabel}</span>
           {currentPath && !isCreatingFolder && (
             <Button
-              onClick={() => setIsCreatingFolder(true)}
+              onClick={(): void => setIsCreatingFolder(true)}
               className="text-foreground-muted hover:text-foreground shrink-0 text-xs"
               title="Create a new folder here"
             >
@@ -124,11 +129,11 @@ export default function DirectoryPicker({
 
           {!loading &&
             !error &&
-            entries.map((entry) => (
+            entries.map((entry): JSX.Element => (
               <button
                 key={entry.path}
-                onClick={() => handleClick(entry)}
-                onDoubleClick={() => handleDoubleClick(entry)}
+                onClick={(): void => handleClick(entry)}
+                onDoubleClick={(): void => handleDoubleClick(entry)}
                 className={`flex w-full cursor-pointer items-center gap-2 rounded px-3 py-1.5 text-left text-sm ${
                   selectedEntry === entry.path ? 'bg-backdrop font-medium' : 'hover:bg-backdrop/50'
                 }`}
@@ -147,8 +152,8 @@ export default function DirectoryPicker({
             <NameInputDialog
               title="New Folder"
               submitLabel="Create"
-              onSubmit={(name) => void handleCreateFolder(name)}
-              onCancel={() => setIsCreatingFolder(false)}
+              onSubmit={(name): undefined => void handleCreateFolder(name)}
+              onCancel={(): void => setIsCreatingFolder(false)}
             />
           )}
         </div>
@@ -158,7 +163,7 @@ export default function DirectoryPicker({
           <div className="flex gap-2">
             <Button onClick={onCancel}>Cancel</Button>
             <Button
-              onClick={() => onSelect(activePath)}
+              onClick={(): void => onSelect(activePath)}
               disabled={!activePath}
               className="disabled:text-foreground-muted disabled:cursor-not-allowed disabled:opacity-50"
             >

@@ -1,4 +1,4 @@
-import type { Dispatch, RefObject, SetStateAction } from 'react'
+import type { Dispatch, JSX, RefObject, SetStateAction } from 'react'
 import OneEdgeNode, { type OneEdgeNodeProperties } from './one-edge-node'
 import LabeledGroupNode, { type LabeledGroupNodeProperties } from './labeled-group-node'
 import MappingNode, { type MappingNodeProperties } from './mapping-node'
@@ -30,96 +30,102 @@ export const getNodeTypes = ({
   setEditingMapping,
   openMapping,
 }: GetNodeTypesParameters): NodeTypes => ({
-  sourceOnly: (properties: OneEdgeNodeProperties) => (
+  sourceOnly: (properties: OneEdgeNodeProperties): JSX.Element => (
     <OneEdgeNode
       {...properties}
       data={{ ...properties.data, setNodes: setReactFlowNodes }}
       variant="source"
-      onEdit={(data) => {
-        if (data) {
-          setEditingNode(data)
-          openModelType.current = 'source'
-          setAddFieldModal(true)
+      onEdit={(data): void => {
+        if (!data) {
+          return
         }
+
+        setEditingNode(data)
+        openModelType.current = 'source'
+        setAddFieldModal(true)
       }}
-      onDelete={(id) => flow.deleteNode(id)}
-      onHighlight={(id) => flow.highlightFromPropertyNode(id)}
+      onDelete={(id): void => flow.deleteNode(id)}
+      onHighlight={(id): void => flow.highlightFromPropertyNode(id)}
     />
   ),
-  targetOnly: (properties: OneEdgeNodeProperties) => (
+  targetOnly: (properties: OneEdgeNodeProperties): JSX.Element => (
     <OneEdgeNode
       {...properties}
       data={{ ...properties.data, setNodes: setReactFlowNodes }}
       variant="target"
-      onEdit={(data) => {
-        if (data) {
-          setEditingNode(data)
-          openModelType.current = 'target'
-          setAddFieldModal(true)
+      onEdit={(data): void => {
+        if (!data) {
+          return
         }
+
+        setEditingNode(data)
+        openModelType.current = 'target'
+        setAddFieldModal(true)
       }}
-      onDelete={(id) => flow.deleteNode(id)}
-      onHighlight={(id) => flow.highlightFromPropertyNode(id)}
+      onDelete={(id): void => flow.deleteNode(id)}
+      onHighlight={(id): void => flow.highlightFromPropertyNode(id)}
     />
   ),
-  labeledGroup: (node: LabeledGroupNodeProperties) => (
+  labeledGroup: (node: LabeledGroupNodeProperties): JSX.Element => (
     <LabeledGroupNode
       {...node}
-      onHighlight={(id) => flow.highlightFromPropertyNode(id)}
-      onEdit={(data) => {
-        if (data) {
-          setEditingNode(data)
-          openModelType.current = 'target'
-          setAddFieldModal(true)
+      onHighlight={(id): void => flow.highlightFromPropertyNode(id)}
+      onEdit={(data): void => {
+        if (!data) {
+          return
         }
+
+        setEditingNode(data)
+        openModelType.current = 'target'
+        setAddFieldModal(true)
       }}
-      onDelete={(id) => flow.deleteNode(id)}
+      onDelete={(id): void => flow.deleteNode(id)}
     />
   ),
-  sourceArrayGroup: (node: ArrayGroupNodeProperties) => (
+  sourceArrayGroup: (node: ArrayGroupNodeProperties): JSX.Element => (
     <ArrayGroupNode
       {...node}
       variant="source"
-      onHighlight={(id) => flow.highlightFromPropertyNode(id)}
-      onDelete={(id) => flow.deleteNode(id)}
+      onHighlight={(id): void => flow.highlightFromPropertyNode(id)}
+      onDelete={(id): void => flow.deleteNode(id)}
     />
   ),
-  targetArrayGroup: (node: ArrayGroupNodeProperties) => (
+  targetArrayGroup: (node: ArrayGroupNodeProperties): JSX.Element => (
     <ArrayGroupNode
       {...node}
       variant="target"
-      onHighlight={(id) => flow.highlightFromPropertyNode(id)}
-      onDelete={(id) => flow.deleteNode(id)}
+      onHighlight={(id): void => flow.highlightFromPropertyNode(id)}
+      onDelete={(id): void => flow.deleteNode(id)}
     />
   ),
-  extraSourceNode: (node: ExtraSourceNodeProperties) => (
+  extraSourceNode: (node: ExtraSourceNodeProperties): JSX.Element => (
     <ExtraSourceNode
       {...node}
-      onHighlight={(id) => flow.highlightFromPropertyNode(id)}
-      onDelete={(id) => flow.deleteNode(id)}
+      onHighlight={(id): void => flow.highlightFromPropertyNode(id)}
+      onDelete={(id): void => flow.deleteNode(id)}
     />
   ),
-  mappingNode: (node: MappingNodeProperties) => (
+  mappingNode: (node: MappingNodeProperties): JSX.Element => (
     <MappingNode
       {...node}
-      onClick={(id) => flow.highlightFromMappingNode(id)}
-      onEdit={(data) => {
+      onClick={(id): void => flow.highlightFromMappingNode(id)}
+      onEdit={(data): void => {
         setEditingMapping(data)
         openMapping()
       }}
-      onDelete={(id) => {
+      onDelete={(id): void => {
         flow.deleteMapping(id)
       }}
     />
   ),
-  arrayMappingNode: (node: ArrayMappingNodeProperties) => (
+  arrayMappingNode: (node: ArrayMappingNodeProperties): JSX.Element => (
     <ArrayMappingNode
       {...node}
-      onClick={(id) => flow.highlightFromMappingNode(id)}
-      onDelete={(id) => {
+      onClick={(id): void => flow.highlightFromMappingNode(id)}
+      onDelete={(id): void => {
         flow.deleteMapping(id)
       }}
     />
   ),
-  importSchematicNode: (node: ImportSchematicNodeprops) => <ImportSchematicNode {...node} />,
+  importSchematicNode: (node: ImportSchematicNodeprops): JSX.Element => <ImportSchematicNode {...node} />,
 })

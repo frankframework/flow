@@ -39,35 +39,34 @@ export async function exportFlowToXml(
 ): Promise<string> {
   const adapterXml: string =
     existingAdapterXml === undefined
-      ? await getAdapter(projectName, adapterName, configurationPath).then((response) => response.xmlContent)
+      ? await getAdapter(projectName, adapterName, configurationPath).then((response): string => response.xmlContent)
       : existingAdapterXml
   const adapterAttributes = getAdapterAttributes(adapterXml)
 
   const { nodes, edges } = json
   const validNodes = nodes.filter((node) => hasDataProperty(node))
-  const nodeMap = new Map(validNodes.map((n) => [n.id, n]))
+  const nodeMap = new Map(validNodes.map((n): [string, FlowNode & { data: NodeData }] => [n.id, n]))
 
   const { outgoing, incoming, edgeMap } = buildEdgeMaps(edges)
 
-  const receiverNodes = validNodes.filter((n) => n.data.type?.toLowerCase() === 'receiver')
-  const startNodes = receiverNodes.filter((n) => !incoming[n.id])
+  const receiverNodes = validNodes.filter((node) => node.data.type?.toLowerCase() === 'receiver')
+  const startNodes = receiverNodes.filter((node) => !Object.hasOwn(incoming, node.id))
   let sortedIds: string[]
   if (startNodes.length > 0) {
     sortedIds = topologicalSort(
-      startNodes.map((n) => n.id),
+      startNodes.map((node): string => node.id),
       outgoing,
     )
 
     const sortedSet = new Set(sortedIds)
-    const unconnectedIds = validNodes.map((n) => n.id).filter((id) => !sortedSet.has(id))
+    const unconnectedIds = validNodes.map((n): string => n.id).filter((id): boolean => !sortedSet.has(id))
     sortedIds = [...sortedIds, ...unconnectedIds]
   } else {
-    sortedIds = validNodes.map((node) => node.id)
+    sortedIds = validNodes.map((node): string => node.id)
   }
 
-  const exitNodes = validNodes.filter((n) => n.data.type?.toLowerCase() === 'exit')
-  const exitNodeIds = new Set(exitNodes.map((n) => n.id))
-
+  const exitNodes = validNodes.filter((node): boolean => node.data.type?.toLowerCase() === 'exit')
+  new Set(exitNodes.map((node): string => node.id))
   const receivers: string[] = []
   const pipelineParts: string[] = []
 
@@ -77,9 +76,9 @@ export async function exportFlowToXml(
 
     const type = node.data.type?.toLowerCase()
     if (type === 'receiver') {
-      receivers.push(generateXmlElement(node, edgeMap, exitNodeIds, nodeMap))
+      receivers.push(generateXmlElement(node, edgeMap, nodeMap))
     } else if (type === 'pipe') {
-      pipelineParts.push(generateXmlElement(node, edgeMap, exitNodeIds, nodeMap))
+      pipelineParts.push(generateXmlElement(node, edgeMap, nodeMap))
     }
   }
 
@@ -98,6 +97,7 @@ ${pipelineParts.join('\n')}
 }
 
 export function replaceAdapterInXml(configXml: string, adapterIndex: number, newAdapterXml: string): string {
+  // eslint-disable-next-line unicorn/prefer-iterator-to-array
   const matches = [...configXml.matchAll(/<(Adapter|adapter)\b/g)]
 
   if (adapterIndex >= matches.length) return configXml
@@ -111,14 +111,18 @@ export function replaceAdapterInXml(configXml: string, adapterIndex: number, new
   return configXml.slice(0, start) + newAdapterXml + configXml.slice(closeIndex + closingTag.length)
 }
 
-function buildEdgeMaps(edges: Edge[]) {
+function buildEdgeMaps(edges: Edge[]): {
+  outgoing: Record<string, string[]>
+  incoming: Record<string, string[]>
+  edgeMap: Map<string, { targetId: string; label: string }[]>
+} {
   const outgoing: Record<string, string[]> = {}
   const incoming: Record<string, string[]> = {}
   const edgeMap = new Map<string, { targetId: string; label: string }[]>()
 
   for (const edge of edges) {
-    if (!outgoing[edge.source]) outgoing[edge.source] = []
-    if (!incoming[edge.target]) incoming[edge.target] = []
+    if (!Object.hasOwn(outgoing, edge.source)) outgoing[edge.source] = []
+    if (!Object.hasOwn(incoming, edge.target)) incoming[edge.target] = []
     outgoing[edge.source].push(edge.target)
     incoming[edge.target].push(edge.source)
 
@@ -137,19 +141,20 @@ function buildEdgeMaps(edges: Edge[]) {
 
 function getAdapterAttributes(adapterXml: string): string {
   const parser = new DOMParser()
-  const doc = parser.parseFromString(adapterXml, 'application/xml')
-  const adapterElement = doc.documentElement
-  return [...adapterElement.attributes].map((attr) => `${attr.name}="${attr.value}"`).join(' ')
+  const document = parser.parseFromString(adapterXml, 'application/xml')
+  const adapterElement = document.documentElement
+  return [...adapterElement.attributes].map((attribute): string => `${attribute.name}="${attribute.value}"`).join(' ')
 }
 
 function topologicalSort(startNodes: string[], outgoing: Record<string, string[]>): string[] {
   const visited = new Set<string>()
   const sorted: string[] = []
 
-  function dfs(nodeId: string) {
+  function dfs(nodeId: string): void {
     if (visited.has(nodeId)) return
     visited.add(nodeId)
-    for (const target of outgoing[nodeId] || []) {
+    const targets = outgoing[nodeId] || []
+    for (const target of targets) {
       dfs(target)
     }
     sorted.push(nodeId)
@@ -165,7 +170,6 @@ function topologicalSort(startNodes: string[], outgoing: Record<string, string[]
 function generateXmlElement(
   node: FlowNode,
   edgeMap: Map<string, { targetId: string; label: string }[]>,
-  exitNodeIds: Set<string>,
   nodeMap: Map<string, FlowNode>,
 ): string {
   const { subtype, name } = node.data as NodeData
@@ -178,19 +182,19 @@ function generateXmlElement(
   const attributes = (node.data as NodeData).attributes || {}
   const children = (node.data as NodeData).children || []
 
-  const allAttrs: Record<string, string> = {
+  const allAttributes: Record<string, string> = {
     ...attributes,
     name,
     'flow:x': String(roundedX),
     'flow:y': String(roundedY),
-    ...(height === null ? {} : { 'flow:width': String(width), 'flow:height': String(height) }),
-    ...((node.data as NodeData).hiddenForwards ? { 'flow:hiddenForwards': 'true' } : {}),
+    ...(height !== null && { 'flow:width': String(width), 'flow:height': String(height) }),
+    ...((node.data as NodeData).hiddenForwards && { 'flow:hiddenForwards': 'true' }),
   }
-  const attrStr = Object.entries(allAttrs)
-    .map(([k, v]) => `${k}="${escapeXml(v)}"`)
+  const attributeString = Object.entries(allAttributes)
+    .map(([k, v]): string => `${k}="${escapeXml(v)}"`)
     .join(' ')
 
-  const childXml = children.map((child: ChildNode) => generateChildXml(child, 4)).join('\n')
+  const childXml = children.map((child: ChildNode): string => generateChildXml(child, 4)).join('\n')
 
   const type = (node.data as NodeData).type?.toLowerCase()
 
@@ -199,7 +203,7 @@ function generateXmlElement(
     type === 'receiver'
       ? '' // Receivers should never have a <Forward> element
       : (edgeMap.get(node.id) || [])
-          .map(({ label, targetId }) => {
+          .map(({ label, targetId }): string => {
             const forwardTarget = nodeMap.get(targetId)
             const targetName = (forwardTarget?.data as NodeData)?.name || ''
 
@@ -217,38 +221,40 @@ function generateXmlElement(
           .join('\n')
 
   const content = [childXml, forwards].filter(Boolean).join('\n')
-  return content ? `  <${subtype} ${attrStr} >\n${content}\n  </${subtype}>` : `  <${subtype} ${attrStr} />`
+  return content
+    ? `  <${subtype} ${attributeString} >\n${content}\n  </${subtype}>`
+    : `  <${subtype} ${attributeString} />`
 }
 
 function generateChildXml(child: ChildNode, indent: number): string {
   const spaces = ' '.repeat(indent)
 
-  const childAttrs: Record<string, string> = {
-    ...(child.name ? { name: child.name } : {}),
+  const childAttributes: Record<string, string> = {
+    ...(child.name && { name: child.name }),
     ...child.attributes,
   }
 
-  const attrStr = Object.entries(childAttrs)
-    .map(([k, v]) => `${k}="${escapeXml(v)}"`)
+  const attributeString = Object.entries(childAttributes)
+    .map(([k, v]): string => `${k}="${escapeXml(v)}"`)
     .join(' ')
 
-  const attrs = attrStr ? ` ${attrStr}` : ''
+  const attributes = attributeString ? ` ${attributeString}` : ''
   const hasChildren = child.children && child.children.length > 0
 
   if (!hasChildren) {
-    return `${spaces}<${child.subtype}${attrs}/>`
+    return `${spaces}<${child.subtype}${attributes}/>`
   }
 
-  const childXmlStrings = child.children!.map((nested) => generateChildXml(nested, indent + 2))
+  const childXmlStrings = child.children!.map((nested): string => generateChildXml(nested, indent + 2))
 
-  return `${spaces}<${child.subtype}${attrs}>
+  return `${spaces}<${child.subtype}${attributes}>
 ${childXmlStrings.join('\n')}
 ${spaces}</${child.subtype}>`
 }
 
 function generateExitsXml(exitNodes: FlowNode[]): string {
   return exitNodes
-    .map((node) => {
+    .map((node): string => {
       const { name } = node.data as NodeData
       const data = node.data as NodeData
       const { x, y } = node.position
@@ -261,20 +267,20 @@ function generateExitsXml(exitNodes: FlowNode[]): string {
         height = node.measured.height
       }
 
-      const allAttrs: Record<string, string> = {
+      const allAttributes: Record<string, string> = {
         ...data.attributes,
         name,
         'flow:x': String(roundedX),
         'flow:y': String(roundedY),
         'flow:width': String(width),
         'flow:height': String(height),
-        ...(data.hiddenForwards ? { 'flow:hiddenForwards': 'true' } : {}),
+        ...(data.hiddenForwards && { 'flow:hiddenForwards': 'true' }),
       }
-      const attrStr = Object.entries(allAttrs)
-        .map(([k, v]) => `${k}="${escapeXml(v)}"`)
+      const attributeString = Object.entries(allAttributes)
+        .map(([k, v]): string => `${k}="${escapeXml(v)}"`)
         .join(' ')
 
-      return `      <Exit ${attrStr} />`
+      return `      <Exit ${attributeString} />`
     })
     .join('\n')
 }
@@ -295,13 +301,13 @@ function generateFlowElementsXml(nodes: FlowNode[]): string {
     groupChildrenMap.get(node.parentId)!.push(node)
   }
 
-  const stickyXml = stickyNotes.map((stickynote) => {
+  const stickyXml = stickyNotes.map((stickynote): string => {
     const { x, y } = stickynote.position
     const roundedX = Math.round(x)
     const roundedY = Math.round(y)
     const text = stickynote.data?.content || ''
     const color = stickynote.data?.color
-    const colorAttr = color ? ` flow:color="${escapeXml(color)}"` : ''
+    const colorAttribute = color ? ` flow:color="${escapeXml(color)}"` : ''
 
     let width: number
     let height: number
@@ -314,17 +320,17 @@ function generateFlowElementsXml(nodes: FlowNode[]): string {
       height = stickynote.measured?.height ?? FlowConfig.STICKY_NOTE_DEFAULT_HEIGHT
     }
 
-    const collapsedAttr = stickynote.data?.collapsed === true ? ` flow:collapsed="true"` : ''
+    const collapsedAttribute = stickynote.data?.collapsed === true ? ` flow:collapsed="true"` : ''
 
-    let attachedToAttr = ''
+    let attachedToAttribute = ''
     if (stickynote.data?.attachedToNodeId) {
-      const frankNode = nodes.find((node) => isFrankNode(node) && node.id === stickynote.data.attachedToNodeId)
+      const frankNode = nodes.find((node): boolean => isFrankNode(node) && node.id === stickynote.data.attachedToNodeId)
       if (frankNode && isFrankNode(frankNode)) {
-        attachedToAttr = ` flow:attachedTo="${escapeXml(frankNode.data.name)}"`
+        attachedToAttribute = ` flow:attachedTo="${escapeXml(frankNode.data.name)}"`
       }
     }
 
-    return `    <flow:StickyNote${colorAttr} flow:x="${roundedX}" flow:y="${roundedY}" flow:width="${width}" flow:height="${height}"${collapsedAttr}${attachedToAttr}><![CDATA[${text.replaceAll(']]>', ']]]]><![CDATA[>')}]]></flow:StickyNote>`
+    return `    <flow:StickyNote${colorAttribute} flow:x="${roundedX}" flow:y="${roundedY}" flow:width="${width}" flow:height="${height}"${collapsedAttribute}${attachedToAttribute}><![CDATA[${text.replaceAll(']]>', ']]]]><![CDATA[>')}]]></flow:StickyNote>`
   })
 
   const groupNodesXml = generateGroupNodeXml(groupNodes, groupChildrenMap)
@@ -340,7 +346,7 @@ ${allElements.join('\n')}
 }
 
 function generateGroupNodeXml(groupNodes: GroupNode[], groupChildrenMap: Map<string, FlowNode[]>): string[] {
-  return groupNodes.map((groupNode) => {
+  return groupNodes.map((groupNode): string => {
     const { x, y } = groupNode.position
     const roundedX = Math.round(x)
     const roundedY = Math.round(y)
@@ -350,14 +356,14 @@ function generateGroupNodeXml(groupNodes: GroupNode[], groupChildrenMap: Map<str
     const children = groupChildrenMap.get(groupNode.id) || []
 
     const childNames = children
-      .map((child) => (child.data as NodeData)?.name)
-      .filter((name) => name && name.trim() !== '')
-      .map((name) => escapeXml(name))
+      .map((child): string => (child.data as NodeData)?.name)
+      .filter((name): boolean | '' => name && name.trim() !== '')
+      .map((name): string => escapeXml(name))
       .join(',')
 
     const groupName = escapeXml(groupNode.data?.label || '')
 
-    const attrParts = [
+    const attributeParts = [
       `flow:children="${childNames}"`,
       `flow:height="${height}"`,
       `flow:width="${width}"`,
@@ -367,13 +373,13 @@ function generateGroupNodeXml(groupNodes: GroupNode[], groupChildrenMap: Map<str
     ]
 
     if (groupNode.data?.description) {
-      attrParts.push(`flow:description="${escapeXml(groupNode.data.description)}"`)
+      attributeParts.push(`flow:description="${escapeXml(groupNode.data.description)}"`)
     }
 
     if (groupNode.data?.color) {
-      attrParts.push(`flow:color="${escapeXml(groupNode.data.color)}"`)
+      attributeParts.push(`flow:color="${escapeXml(groupNode.data.color)}"`)
     }
 
-    return `    <flow:GroupNode ${attrParts.join(' ')} />`
+    return `    <flow:GroupNode ${attributeParts.join(' ')} />`
   })
 }

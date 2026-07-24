@@ -18,7 +18,8 @@
     ],
     "types": [
       "node",
-      "vite/client"
+      "vite/client",
+      "vitest/globals"
     ],
     "target": "ES2022",
     "module": "ES2022",

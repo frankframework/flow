@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react'
+import React, { type ReactPortal, useEffect, useRef } from 'react'
 import HandleMenuItem from './handle-menu-item'
 import { translateHandleTypeToColour } from './handle'
 import type { ElementProperty } from '@frankframework/doc-library-core'
@@ -19,35 +19,34 @@ export default function HandleMenu({
   onClose,
   onSelect,
   typesAllowed,
-}: Readonly<HandleMenuProperties>) {
+}: Readonly<HandleMenuProperties>): ReactPortal {
   const handleTypes = useHandleTypes(typesAllowed)
   const menuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const handleMouseDown = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+    const handleMouseDown = (error: MouseEvent): void => {
+      if (menuRef.current && !menuRef.current.contains(error.target as Node)) {
         onClose()
       }
     }
 
-    const handleWheel = (e: WheelEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+    const handleWheel = (error: WheelEvent): void => {
+      if (menuRef.current && !menuRef.current.contains(error.target as Node)) {
         onClose()
       }
     }
 
-    const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.stopPropagation()
-        onClose()
-      }
+    const handleEsc = (error: KeyboardEvent): void => {
+      if (error.key !== 'Escape') return
+      error.stopPropagation()
+      onClose()
     }
 
     globalThis.addEventListener('keydown', handleEsc, { capture: true })
     globalThis.addEventListener('mousedown', handleMouseDown, { capture: true })
     globalThis.addEventListener('wheel', handleWheel, { capture: true })
 
-    return () => {
+    return (): void => {
       globalThis.removeEventListener('keydown', handleEsc, { capture: true })
       globalThis.removeEventListener('mousedown', handleMouseDown, { capture: true })
       globalThis.removeEventListener('wheel', handleWheel, { capture: true })

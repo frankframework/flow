@@ -1,15 +1,15 @@
 import React from 'react'
 import IconButton from '~/components/inputs/icon-button'
 
-type TreeActionButtonProps = {
+type TreeActionButtonProperties = {
   title: string
   onAction: () => void
   children: React.ReactNode
 }
 
-export default function TreeActionButton({ title, onAction, children }: TreeActionButtonProps) {
+export default function TreeActionButton({ title, onAction, children }: TreeActionButtonProperties): React.JSX.Element {
   return (
-    <IconButton title={title} onClick={() => onAction()}>
+    <IconButton title={title} onClick={(): void => onAction()}>
       {children}
     </IconButton>
   )

@@ -1,5 +1,5 @@
 import clsx from 'clsx'
-import type { ReactNode } from 'react'
+import type { JSX, ReactNode } from 'react'
 
 type NodeHeaderProperties = {
   subtype: string
@@ -21,7 +21,7 @@ export function NodeHeader({
   gradientEnabled,
   className,
   children,
-}: Readonly<NodeHeaderProperties>) {
+}: Readonly<NodeHeaderProperties>): JSX.Element {
   return (
     <div
       className={clsx('border-b-border relative box-border w-full rounded-t-md border-b p-1', className)}

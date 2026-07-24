@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import type { JSX } from 'react'
 
 type RoundedToggleProperties = {
   label: string
@@ -12,7 +13,7 @@ export default function RoundedToggle({
   enabled = true,
   onClick,
   className,
-}: Readonly<RoundedToggleProperties>) {
+}: Readonly<RoundedToggleProperties>): JSX.Element {
   return (
     <span
       onClick={onClick}

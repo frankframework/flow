@@ -1,5 +1,5 @@
 import { Handle, Position, useNodeConnections } from '@xyflow/react'
-import { useState } from 'react'
+import { type JSX, useState } from 'react'
 import type { ElementProperty } from '@frankframework/doc-library-core'
 import HandleMenu from './handle-menu'
 
@@ -35,14 +35,14 @@ export function translateHandleTypeToColour(type: string): string {
   return HANDLE_TYPE_COLOURS.default
 }
 
-export function CustomHandle(properties: Readonly<HandleProperties>) {
+export function CustomHandle(properties: Readonly<HandleProperties>): JSX.Element {
   const connections = useNodeConnections({ handleType: 'source', handleId: properties.index.toString() })
   const type = properties.type
 
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [menuPosition, setMenuPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 })
 
-  const handleClick = (event: React.MouseEvent) => {
+  const handleClick = (event: React.MouseEvent): void => {
     if (typesAllowedListIsEmpty()) return
     const { clientX, clientY } = event
     setMenuPosition({
@@ -52,14 +52,14 @@ export function CustomHandle(properties: Readonly<HandleProperties>) {
     setIsMenuOpen(!isMenuOpen) // Toggle menu visibility
   }
 
-  function typesAllowedListIsEmpty() {
+  function typesAllowedListIsEmpty(): boolean {
     return (
       properties.typesAllowed === undefined ||
-      (properties.typesAllowed && Object.keys(properties.typesAllowed).length <= 0)
+      (properties.typesAllowed && Object.keys(properties.typesAllowed).length === 0)
     )
   }
 
-  const handleMenuClick = (newType: string) => {
+  const handleMenuClick = (newType: string): void => {
     properties.onChangeType(newType) // Change the handle type
     setIsMenuOpen(false) // Close the menu after selection
   }

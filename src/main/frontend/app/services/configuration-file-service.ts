@@ -3,7 +3,7 @@ import type { AdapterLocationResponse, XmlResponse } from '~/types/project.types
 
 const configCache = new Map<string, string>()
 
-export function clearConfigurationFileCache(projectName?: string, filepath?: string) {
+export function clearConfigurationFileCache(projectName?: string, filepath?: string): void {
   if (projectName && filepath) {
     configCache.delete(`${projectName}:${filepath}`)
   } else {
@@ -41,8 +41,8 @@ export async function saveConfigurationFile(
   content: string,
   format = false,
 ): Promise<XmlResponse> {
-  const formatParam = format ? '&format=true' : ''
-  return apiFetch<XmlResponse>(`${getBaseUrl(projectName)}?path=${encodeURIComponent(filepath)}${formatParam}`, {
+  const formatParameter = format ? '&format=true' : ''
+  return apiFetch<XmlResponse>(`${getBaseUrl(projectName)}?path=${encodeURIComponent(filepath)}${formatParameter}`, {
     method: 'PUT',
     body: content,
   })

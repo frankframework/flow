@@ -1,7 +1,7 @@
 import type { Attribute } from '@frankframework/doc-library-core'
 import { create } from 'zustand'
 
-type NodeContextStore = {
+export type NodeContextStore = {
   attributes: Record<string, Attribute> | undefined
   nodeId: number
   isEditing: boolean
@@ -29,7 +29,7 @@ type NodeContextStore = {
   setChildParentId: (id: string | null) => void
   setDraggedName: (name: string | null) => void
   setEditingSubtype: (subtype: string | null) => void
-  registerSaveFlow: (fn: (() => Promise<void>) | null) => void
+  registerSaveFlow: (function_: (() => Promise<void>) | null) => void
   setAllowedOnCanvas: (allowed: boolean) => void
   setDropSuccessful: (successful: boolean) => void
   setIsMultiSelect: (value: boolean) => void
@@ -40,43 +40,88 @@ type NodeContextStore = {
   toggleShowAllForwards: () => void
 }
 
-const useNodeContextStore = create<NodeContextStore>((set) => ({
-  attributes: undefined,
-  nodeId: 0,
-  isEditing: false,
-  isNewNode: false,
-  isDirty: false,
-  parentId: null,
-  childParentId: null,
-  draggedName: null,
-  editingSubtype: null,
-  allowedOnCanvas: false,
-  dropSuccessful: false,
-  isMultiSelect: false,
-  selectedStickyId: null,
-  selectedGroupId: null,
-  saveFlow: null,
-  hoveredNodeId: null,
-  showAllForwards: false,
-  setNodeId: (nodeId) => set({ nodeId }),
-  setAttributes: (attributes) => set({ attributes }),
-  setIsEditing: (value) => set({ isEditing: value }),
-  setIsNewNode: (value) => set({ isNewNode: value }),
-  setIsDirty: (isDirty) => set({ isDirty }),
-  resetAttributes: () => set({ attributes: undefined }),
-  setParentId: (parentId: string | null) => set({ parentId }),
-  setChildParentId: (childParentId: string | null) => set({ childParentId }),
-  setDraggedName: (draggedName) => set({ draggedName }),
-  setEditingSubtype: (editingSubtype) => set({ editingSubtype }),
-  registerSaveFlow: (saveFlow) => set({ saveFlow }),
-  setAllowedOnCanvas: (allowedOnCanvas) => set({ allowedOnCanvas }),
-  setDropSuccessful: (dropSuccessful) => set({ dropSuccessful }),
-  setIsMultiSelect: (isMultiSelect) => set({ isMultiSelect }),
-  setSelectedStickyId: (selectedStickyId) => set({ selectedStickyId }),
-  setSelectedGroupId: (selectedGroupId) => set({ selectedGroupId }),
-  setHoveredNodeId: (id) => set((state) => (state.hoveredNodeId === id ? state : { hoveredNodeId: id })),
-  setShowAllForwards: (showAllForwards) => set({ showAllForwards }),
-  toggleShowAllForwards: () => set((state) => ({ showAllForwards: !state.showAllForwards })),
-}))
+const useNodeContextStore = create<NodeContextStore>(
+  (
+    set,
+  ): {
+    attributes: undefined
+    nodeId: number
+    isEditing: false
+    isNewNode: false
+    isDirty: false
+    parentId: null
+    childParentId: null
+    draggedName: null
+    editingSubtype: null
+    allowedOnCanvas: false
+    dropSuccessful: false
+    isMultiSelect: false
+    selectedStickyId: null
+    selectedGroupId: null
+    saveFlow: null
+    hoveredNodeId: null
+    showAllForwards: false
+    setNodeId: (nodeId: number) => void
+    setAttributes: (attributes: Record<string, Attribute> | undefined) => void
+    setIsEditing: (value: boolean) => void
+    setIsNewNode: (value: boolean) => void
+    setIsDirty: (isDirty: boolean) => void
+    resetAttributes: () => void
+    setParentId: (parentId: string | null) => void
+    setChildParentId: (childParentId: string | null) => void
+    setDraggedName: (draggedName: string | null) => void
+    setEditingSubtype: (editingSubtype: string | null) => void
+    registerSaveFlow: (saveFlow: (() => Promise<void>) | null) => void
+    setAllowedOnCanvas: (allowedOnCanvas: boolean) => void
+    setDropSuccessful: (dropSuccessful: boolean) => void
+    setIsMultiSelect: (isMultiSelect: boolean) => void
+    setSelectedStickyId: (selectedStickyId: string | null) => void
+    setSelectedGroupId: (selectedGroupId: string | null) => void
+    setHoveredNodeId: (id: string | null) => void
+    setShowAllForwards: (showAllForwards: boolean) => void
+    toggleShowAllForwards: () => void
+  } => ({
+    attributes: undefined,
+    nodeId: 0,
+    isEditing: false,
+    isNewNode: false,
+    isDirty: false,
+    parentId: null,
+    childParentId: null,
+    draggedName: null,
+    editingSubtype: null,
+    allowedOnCanvas: false,
+    dropSuccessful: false,
+    isMultiSelect: false,
+    selectedStickyId: null,
+    selectedGroupId: null,
+    saveFlow: null,
+    hoveredNodeId: null,
+    showAllForwards: false,
+    setNodeId: (nodeId): void => set({ nodeId }),
+    setAttributes: (attributes): void => set({ attributes }),
+    setIsEditing: (value): void => set({ isEditing: value }),
+    setIsNewNode: (value): void => set({ isNewNode: value }),
+    setIsDirty: (isDirty): void => set({ isDirty }),
+    resetAttributes: (): void => set({ attributes: undefined }),
+    setParentId: (parentId: string | null): void => set({ parentId }),
+    setChildParentId: (childParentId: string | null): void => set({ childParentId }),
+    setDraggedName: (draggedName): void => set({ draggedName }),
+    setEditingSubtype: (editingSubtype): void => set({ editingSubtype }),
+    registerSaveFlow: (saveFlow): void => set({ saveFlow }),
+    setAllowedOnCanvas: (allowedOnCanvas): void => set({ allowedOnCanvas }),
+    setDropSuccessful: (dropSuccessful): void => set({ dropSuccessful }),
+    setIsMultiSelect: (isMultiSelect): void => set({ isMultiSelect }),
+    setSelectedStickyId: (selectedStickyId): void => set({ selectedStickyId }),
+    setSelectedGroupId: (selectedGroupId): void => set({ selectedGroupId }),
+    setHoveredNodeId: (id): void =>
+      set((state): NodeContextStore | { hoveredNodeId: string | null } =>
+        state.hoveredNodeId === id ? state : { hoveredNodeId: id },
+      ),
+    setShowAllForwards: (showAllForwards): void => set({ showAllForwards }),
+    toggleShowAllForwards: (): void =>
+      set((state): { showAllForwards: boolean } => ({ showAllForwards: !state.showAllForwards })),
+  }),
+)
 
 export default useNodeContextStore

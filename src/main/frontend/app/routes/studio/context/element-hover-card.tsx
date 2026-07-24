@@ -1,13 +1,13 @@
 import type { ElementDetails } from '@frankframework/doc-library-core'
 import { useFFDoc, useJavadocTransform } from '@frankframework/doc-library-react'
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { type JSX, type ReactPortal, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useShortcut } from '~/hooks/use-shortcut'
 import LinkButton from '~/components/inputs/link-button'
 import { frankdocChipStyle, getFirstLabelGroup } from '~/utils/flow-utils'
 import ExternalLinkIcon from '../../../../icons/solar/External Link.svg?react'
 
-type ElementHoverCardProps = {
+type ElementHoverCardProperties = {
   anchorRect: DOMRect
   element: ElementDetails
   onUnlock?: () => void
@@ -15,22 +15,28 @@ type ElementHoverCardProps = {
   onLeave?: () => void
 }
 
-export default function ElementHoverCard({ anchorRect, element, onUnlock, onEnter, onLeave }: ElementHoverCardProps) {
-  const ref = useRef<HTMLDivElement>(null)
+export default function ElementHoverCard({
+  anchorRect,
+  element,
+  onUnlock,
+  onEnter,
+  onLeave,
+}: ElementHoverCardProperties): ReactPortal {
+  const reference = useRef<HTMLDivElement>(null)
   const [position, setPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 })
   const offset = 10 // distance between anchor and tooltip
   const [labelGroup, label] = getFirstLabelGroup(element.labels)
   const route = element.labels ? [labelGroup, label, element.name].join('/') : element.className
   const frankdocUrl = `https://frankdoc.frankframework.org/#/${route}`
   const { elements } = useFFDoc()
-  const description = useJavadocTransform(element.description ?? '', elements, false, (link) => {
+  const description = useJavadocTransform(element.description ?? '', elements, false, (link): string => {
     return `<a href="https://frankdoc.frankframework.org/#/${link.href}" target="_blank" class="underline hover:opacity-70">${link.text}</a>`
   })
 
-  useLayoutEffect(() => {
-    if (!ref.current || !anchorRect) return
+  useLayoutEffect((): void => {
+    if (!anchorRect || !reference.current) return
 
-    const tooltip = ref.current
+    const tooltip = reference.current
     const tooltipHeight = tooltip.offsetHeight
     const tooltipWidth = tooltip.offsetWidth
 
@@ -44,25 +50,25 @@ export default function ElementHoverCard({ anchorRect, element, onUnlock, onEnte
     setPosition({ top: clampedTop, left })
   }, [anchorRect])
 
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (!ref.current) return
-      if (!ref.current.contains(event.target as Node)) {
+  useEffect((): (() => void) => {
+    function handleClickOutside(event: MouseEvent): void {
+      if (!reference.current) return
+      if (!reference.current.contains(event.target as Node)) {
         onUnlock?.()
       }
     }
 
-    document.addEventListener('pointerdown', handleClickOutside, true)
-    return () => document.removeEventListener('pointerdown', handleClickOutside, true)
+    document.addEventListener('pointerdown', handleClickOutside, { capture: true })
+    return (): void => document.removeEventListener('pointerdown', handleClickOutside, true)
   }, [onUnlock])
 
   useShortcut({
-    'studio.close-palette-card': () => onUnlock?.(),
+    'studio.close-palette-card': (): void | undefined => onUnlock?.(),
   })
 
   return createPortal(
     <div
-      ref={ref}
+      ref={reference}
       style={{
         position: 'fixed',
         top: position.top,
@@ -108,8 +114,8 @@ export default function ElementHoverCard({ anchorRect, element, onUnlock, onEnte
             )}
             {element.labels &&
               Object.entries(element.labels)
-                .toSorted(([a], [b]) => a.localeCompare(b))
-                .map(([key, value]) => (
+                .toSorted(([a], [b]): number => a.localeCompare(b))
+                .map(([key, value]): JSX.Element => (
                   <span
                     key={key}
                     className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px]"

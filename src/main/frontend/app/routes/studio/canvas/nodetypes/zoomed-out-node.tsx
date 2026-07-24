@@ -1,4 +1,5 @@
 import { Handle, Position, useStore } from '@xyflow/react'
+import type { JSX } from 'react'
 import { FlowConfig, getCompactLabelScale } from '~/routes/studio/canvas/flow.config'
 
 const COMPACT_INITIALS_BOX_SIZE = 160
@@ -31,9 +32,9 @@ export default function ZoomedOutNode({
   showTargetHandle = true,
   sourceHandles = [],
   width = FlowConfig.NODE_DEFAULT_WIDTH,
-}: Readonly<ZoomedOutNodeProps>) {
+}: Readonly<ZoomedOutNodeProps>): JSX.Element {
   const abbr = getAbbreviation(subtype)
-  const zoom = useStore((state) => state.transform[2])
+  const zoom = useStore((state): number => state.transform[2])
   const labelFontSize = `${COMPACT_LABEL_BASE_FONT_PX * getCompactLabelScale(zoom)}px`
 
   const compactXOffsetPx = (width - COMPACT_INITIALS_BOX_SIZE) / 2 - COMPACT_HANDLE_SIZE - COMPACT_HANDLE_GAP
@@ -112,7 +113,7 @@ export default function ZoomedOutNode({
         />
       )}
 
-      {sourceHandles.map((handle) => (
+      {sourceHandles.map((handle): JSX.Element => (
         <Handle
           key={handle.type + handle.index}
           type="source"

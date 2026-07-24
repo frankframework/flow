@@ -1,8 +1,8 @@
 import { useNavigate } from 'react-router'
 import useNodeContextStore from '~/stores/node-context-store'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { type JSX, useCallback, useEffect, useRef, useState } from 'react'
 import { useShortcut } from '~/hooks/use-shortcut'
-import useFlowStore, { isExitNode, isFrankNode } from '~/stores/flow-store'
+import useFlowStore, { type FlowState, isExitNode, isFrankNode } from '~/stores/flow-store'
 import Button from '~/components/inputs/button'
 import Toggle from '~/components/inputs/toggle'
 import ContextEditorFooter from '~/components/context-editor-footer'
@@ -21,9 +21,9 @@ export default function NodeContext({
 }: Readonly<{
   setShowNodeContext: (b: boolean) => void
   nodeId: number
-}>) {
+}>): JSX.Element {
   const { nodes, setAttributes, getAttributes, setNodeName, getNodeName, deleteNode, updateChild, deleteChild } =
-    useFlowStore((state) => state)
+    useFlowStore((state): FlowState => state)
   const [canSave, setCanSave] = useState(false)
   const [showAll, setShowAll] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
@@ -45,24 +45,39 @@ export default function NodeContext({
     setIsDirty,
     editingSubtype,
   } = useNodeContextStore(
-    useShallow((s) => ({
-      attributes: s.attributes,
-      isNewNode: s.isNewNode,
-      setIsEditing: s.setIsEditing,
-      setIsNewNode: s.setIsNewNode,
-      parentId: s.parentId,
-      setParentId: s.setParentId,
-      setChildParentId: s.setChildParentId,
-      childParentId: s.childParentId,
-      setIsDirty: s.setIsDirty,
-      editingSubtype: s.editingSubtype,
-    })),
+    useShallow(
+      (
+        s,
+      ): {
+        attributes: Record<string, Attribute> | undefined
+        isNewNode: boolean
+        setIsEditing: (value: boolean) => void
+        setIsNewNode: (value: boolean) => void
+        parentId: string | null
+        setParentId: (id: string | null) => void
+        setChildParentId: (id: string | null) => void
+        childParentId: string | null
+        setIsDirty: (v: boolean) => void
+        editingSubtype: string | null
+      } => ({
+        attributes: s.attributes,
+        isNewNode: s.isNewNode,
+        setIsEditing: s.setIsEditing,
+        setIsNewNode: s.setIsNewNode,
+        parentId: s.parentId,
+        setParentId: s.setParentId,
+        setChildParentId: s.setChildParentId,
+        childParentId: s.childParentId,
+        setIsDirty: s.setIsDirty,
+        editingSubtype: s.editingSubtype,
+      }),
+    ),
   )
 
   const validateMandatoryFields = useCallback(
-    (validations: Record<string, string>) => {
+    (validations: Record<string, string>): boolean => {
       if (!attributes) return true
-      return Object.entries(attributes).every(([key, attribute]) => {
+      return Object.entries(attributes).every(([key, attribute]): boolean | '' => {
         if (attribute.mandatory) {
           const raw = validations[key]
           return raw && raw.toString().trim() !== ''
@@ -74,9 +89,9 @@ export default function NodeContext({
   )
 
   const validateNumberFields = useCallback(
-    (validations: Record<string, string>) => {
+    (validations: Record<string, string>): boolean => {
       if (!attributes) return true
-      return Object.entries(attributes).every(([key, attribute]) => {
+      return Object.entries(attributes).every(([key, attribute]): boolean => {
         if (attribute.type === 'int') {
           const raw = validations[key]
           const value = raw?.toString().trim() ?? ''
@@ -93,7 +108,7 @@ export default function NodeContext({
   )
 
   const validateForm = useCallback(
-    (validations = inputValues) => {
+    (validations = inputValues): void => {
       if (!attributes) {
         setCanSave(true)
         return
@@ -110,16 +125,16 @@ export default function NodeContext({
   )
 
   const getNestedChildAttributes = useCallback(
-    (nodeId: number) => {
+    (nodeId: number): { name?: string | undefined } | undefined => {
       if (!childParentId || !parentId) return
-      const parentNode = nodes.find((n) => n.id === parentId.toString())
+      const parentNode = nodes.find((n): boolean => n.id === parentId.toString())
       if (!parentNode || !isFrankNode(parentNode)) return
 
       const child = findChildRecursive(parentNode.data.children, nodeId.toString())
       if (!child) return
 
       return {
-        ...(child.name ? { name: child.name } : {}),
+        ...(child.name && { name: child.name }),
         ...child.attributes,
       }
     },
@@ -127,16 +142,16 @@ export default function NodeContext({
   )
 
   const getFirstLevelChildAttributes = useCallback(
-    (nodeId: number) => {
+    (nodeId: number): { name?: string | undefined } | undefined => {
       if (!parentId || childParentId) return
-      const parentNode = nodes.find((n) => n.id === parentId.toString())
+      const parentNode = nodes.find((n): boolean => n.id === parentId.toString())
       if (!parentNode || !isFrankNode(parentNode)) return
 
-      const child = parentNode.data.children.find((c) => c.id === nodeId.toString())
+      const child = parentNode.data.children.find((c): boolean => c.id === nodeId.toString())
       if (!child) return
 
       return {
-        ...(child.name ? { name: child.name } : {}),
+        ...(child.name && { name: child.name }),
         ...child.attributes,
       }
     },
@@ -144,12 +159,12 @@ export default function NodeContext({
   )
 
   const getTopLevelNodeAttributes = useCallback(
-    (nodeId: number) => {
+    (nodeId: number): { name?: string | undefined } | undefined => {
       if (parentId || childParentId) return
       const attributes = getAttributes(nodeId.toString())
       const name = getNodeName(nodeId.toString())
       return {
-        ...(name ? { name } : {}),
+        ...(name && { name }),
         ...attributes,
       }
     },
@@ -157,7 +172,7 @@ export default function NodeContext({
   )
 
   // Load existing attribute values into the form (key-based)
-  useEffect(() => {
+  useEffect((): void => {
     if (Number.isNaN(nodeId)) return
     if (!attributes) {
       // Clear stale values so isDirty doesn't carry over from a previous session
@@ -187,7 +202,7 @@ export default function NodeContext({
     }
   }, [attributes, nodeId, getNestedChildAttributes, getFirstLevelChildAttributes, getTopLevelNodeAttributes])
 
-  useEffect(() => {
+  useEffect((): void => {
     if (!attributes) {
       setCanSave(true)
       return
@@ -195,17 +210,17 @@ export default function NodeContext({
     validateForm()
   }, [attributes, validateForm])
 
-  useEffect(() => {
+  useEffect((): void => {
     validateForm()
-    const dirty = isNewNode || Object.keys(inputValues).some((k) => inputValues[k] !== initialValues[k])
+    const dirty = isNewNode || Object.keys(inputValues).some((k): boolean => inputValues[k] !== initialValues[k])
     setIsDirty(dirty)
   }, [inputValues, validateForm, isNewNode, initialValues, setIsDirty])
 
   // Returns only filled attribute key/value pairs for saving
-  function resolveFilledAttributes() {
+  function resolveFilledAttributes(): { name: string; value: string }[] {
     if (!attributes) return []
     return Object.entries(attributes)
-      .map(([key]) => {
+      .map(([key]): { name: string; value: string } | null => {
         const value = (inputValues[key] ?? '').toString().trim()
         if (value) return { name: key, value }
         return null
@@ -213,14 +228,16 @@ export default function NodeContext({
       .filter(Boolean) as { name: string; value: string }[]
   }
 
-  const handleSave = () => {
+  const handleSave = (): void => {
     const filledAttributes = resolveFilledAttributes()
-    const nameField = filledAttributes.find((attribute) => attribute.name === 'name')
-    const filteredAttributes = filledAttributes.filter((attribute) => attribute.name !== 'name')
-    const newAttributesObject = Object.fromEntries(filteredAttributes.map(({ name, value }) => [name, value]))
+    const nameField = filledAttributes.find((attribute): boolean => attribute.name === 'name')
+    const filteredAttributes = filledAttributes.filter((attribute): boolean => attribute.name !== 'name')
+    const newAttributesObject = Object.fromEntries(
+      filteredAttributes.map(({ name, value }): [string, string] => [name, value]),
+    )
 
     if (parentId) {
-      const parentNode = nodes.find((n) => n.id === parentId.toString())
+      const parentNode = nodes.find((n): boolean => n.id === parentId.toString())
       if (!parentNode || !isFrankNode(parentNode)) return
 
       const existingChild = findChildRecursive(parentNode.data.children, nodeId.toString())
@@ -274,18 +291,18 @@ export default function NodeContext({
     void useNodeContextStore.getState().saveFlow?.()
   }
 
-  const canSaveRef = useRef(canSave)
-  canSaveRef.current = canSave
-  const handleSaveRef = useRef(handleSave)
-  handleSaveRef.current = handleSave
+  const canSaveReference = useRef(canSave)
+  canSaveReference.current = canSave
+  const handleSaveReference = useRef(handleSave)
+  handleSaveReference.current = handleSave
 
   useShortcut({
-    'studio.save-node': () => {
-      if (canSaveRef.current) handleSaveRef.current()
+    'studio.save-node': (): void => {
+      if (canSaveReference.current) handleSaveReference.current()
     },
   })
 
-  const handleDiscard = () => {
+  const handleDiscard = (): void => {
     if (parentId) {
       deleteChild(parentId, nodeId.toString())
       setIsEditing(false)
@@ -300,33 +317,34 @@ export default function NodeContext({
     setShowNodeContext(false)
   }
 
-  const handleShowInEditor = useCallback(() => {
+  const handleShowInEditor = useCallback((): void => {
     const tabData = useTabStore.getState().getTab(useTabStore.getState().activeTab)
-    if (!tabData?.configurationPath || !editingSubtype) return
+    if (!editingSubtype || !tabData?.configurationPath) return
     const nodeName = inputValues['name']
     openInEditorAtElement(navigate, { subtype: editingSubtype, name: nodeName, filepath: tabData.configurationPath })
   }, [editingSubtype, inputValues, navigate])
 
   // Build sorted attribute list: mandatory first, then initially-filled, then rest
   const entriesWithIndex: [string, Attribute, number][] = attributes
-    ? Object.entries(attributes).map(([k, v], index) => [k, v as Attribute, index])
+    ? Object.entries(attributes).map(([k, v], index): [string, Attribute, number] => [k, v as Attribute, index])
     : []
 
   const currentName = inputValues['name'] ?? ''
 
-  const editedNode = !parentId && !childParentId ? nodes.find((node) => node.id === nodeId.toString()) : undefined
+  const editedNode =
+    !parentId && !childParentId ? nodes.find((node): boolean => node.id === nodeId.toString()) : undefined
   const isExit = (editedNode && isExitNode(editedNode)) ?? false
   const canHideForwards = (editedNode && !isNewNode && (isFrankNode(editedNode) || isExit)) ?? false
 
   const hiddenForwards =
     editedNode && (isFrankNode(editedNode) || isExitNode(editedNode)) ? Boolean(editedNode.data.hiddenForwards) : false
 
-  const handleToggleHiddenForwards = (value: boolean) => {
+  const handleToggleHiddenForwards = (value: boolean): void => {
     useFlowStore.getState().setNodesHiddenForwards([nodeId.toString()], value)
     void useNodeContextStore.getState().saveFlow?.()
   }
 
-  const categorizedAttributes = (() => {
+  const categorizedAttributes = ((): [string, Attribute, number][] => {
     if (!attributes) return []
 
     const mandatory: [string, Attribute, number][] = []
@@ -347,10 +365,10 @@ export default function NodeContext({
     return [...mandatory, ...filled, ...(showAll ? rest : [])]
   })()
 
-  const makeEnumOptions = (attribute: Attribute) => {
-    if (attribute.enum && ffDoc?.enums?.[attribute.enum]) {
+  const makeEnumOptions = (attribute: Attribute): Record<string, string> | undefined => {
+    if (ffDoc && attribute.enum && Object.hasOwn(ffDoc.enums, attribute.enum)) {
       return Object.keys(ffDoc.enums[attribute.enum]).reduce(
-        (result, key) => ({ ...result, [key]: key }),
+        (result, key): Record<string, string> => ({ ...result, [key]: key }),
         {} as Record<string, string>,
       )
     }
@@ -360,7 +378,7 @@ export default function NodeContext({
   return (
     <>
       <div className="flex-1 overflow-y-auto px-4">
-        {currentName && <h2 className="mb-2 ms-4 font-semibold">{currentName}</h2>}
+        {currentName && <h2 className="ms-4 mb-2 font-semibold">{currentName}</h2>}
         {canHideForwards && (
           <div className="bg-background flex items-center justify-between gap-2 rounded-md p-4">
             <div>
@@ -375,13 +393,13 @@ export default function NodeContext({
           </div>
         )}
         <div className="bg-background w-full space-y-4 rounded-md px-4 py-1">
-          {categorizedAttributes.map(([key, attribute, originalIndex]) => (
+          {categorizedAttributes.map(([key, attribute, originalIndex]): JSX.Element => (
             <div key={originalIndex}>
               <ContextInput
                 id={`ctx-${originalIndex}`}
                 value={inputValues[key] ?? ''}
-                onChange={(value: string) => {
-                  setInputValues((previous) => {
+                onChange={(value: string): void => {
+                  setInputValues((previous): Record<string, string> => {
                     const updated = { ...previous, [key]: value }
                     validateForm(updated)
                     return updated
@@ -396,7 +414,7 @@ export default function NodeContext({
           ))}
 
           <div className="pt-4">
-            <Button onClick={() => setShowAll((p) => !p)} className="w-full">
+            <Button onClick={(): void => setShowAll((p): boolean => !p)} className="w-full">
               {showAll ? 'Hide empty attributes' : 'Show all attributes'}
             </Button>
           </div>

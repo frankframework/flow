@@ -1,9 +1,9 @@
-import { useState } from 'react'
+import { type JSX, useState } from 'react'
 import clsx from 'clsx'
 import type { GitStatus, FileHunkState } from '~/types/git.types'
 import Checkbox from '~/components/inputs/checkbox'
 
-type GitChangesProps = {
+type GitChangesProperties = {
   status: GitStatus | null
   selectedFile: string | null
   fileHunkStates: Record<string, FileHunkState>
@@ -35,16 +35,15 @@ function FileSection({
   onToggleFile: (file: string) => void
   variant: SectionVariant
   fileHunkStates: Record<string, FileHunkState>
-}) {
+}): JSX.Element | null {
   const [collapsed, setCollapsed] = useState(false)
-  const config = variantConfig[variant]
-
   if (files.length === 0) return null
+  const config = variantConfig[variant]
 
   return (
     <div className={clsx('border-l-2', config.accent)}>
       <button
-        onClick={() => setCollapsed(!collapsed)}
+        onClick={(): void => setCollapsed(!collapsed)}
         className="text-foreground hover:bg-hover flex w-full cursor-pointer items-center gap-1.5 px-3 py-1.5 text-left text-xs font-semibold"
       >
         <span className="w-3 text-[10px]">{collapsed ? '▸' : '▾'}</span>
@@ -55,9 +54,9 @@ function FileSection({
       </button>
       {!collapsed && (
         <div className="pb-1">
-          {files.map((file) => {
+          {files.map((file): JSX.Element => {
             const fileName = file.split('/').pop() || file
-            const dirPath = file.includes('/') ? file.slice(0, file.lastIndexOf('/')) : ''
+            const directionPath = file.includes('/') ? file.slice(0, file.lastIndexOf('/')) : ''
 
             const hunkState = fileHunkStates[file]
             const totalHunks = hunkState?.totalHunks ?? 0
@@ -76,18 +75,18 @@ function FileSection({
                   'group mx-2 flex items-center gap-2 rounded px-3 py-1 text-xs hover:cursor-pointer',
                   selectedFile === file ? 'bg-selected' : 'hover:bg-hover',
                 )}
-                onClick={() => onSelectFile(file)}
+                onClick={(): void => onSelectFile(file)}
               >
                 <Checkbox
                   checked={checkboxChecked}
                   indeterminate={checkboxIndeterminate}
-                  onChange={() => onToggleFile(file)}
+                  onChange={(): void => onToggleFile(file)}
                   title={checkboxChecked ? 'Deselect all chunks' : 'Select all chunks'}
-                  onClick={(mouseEvent) => mouseEvent.stopPropagation()}
+                  onClick={(mouseEvent): void => mouseEvent.stopPropagation()}
                 />
                 <span
                   className={clsx(
-                    'flex h-4 w-4 flex-shrink-0 items-center justify-center rounded text-[10px] font-bold',
+                    'flex h-4 w-4 shrink-0 items-center justify-center rounded text-[10px] font-bold',
                     config.badge,
                   )}
                 >
@@ -95,7 +94,7 @@ function FileSection({
                 </span>
                 <span className="text-foreground min-w-0 flex-1 truncate" title={file}>
                   {fileName}
-                  {dirPath && <span className="text-foreground-muted ml-1.5 text-[10px]">{dirPath}</span>}
+                  {directionPath && <span className="text-foreground-muted ml-1.5 text-[10px]">{directionPath}</span>}
                 </span>
               </div>
             )
@@ -112,7 +111,7 @@ export default function GitChanges({
   fileHunkStates,
   onSelectFile,
   onToggleFile,
-}: GitChangesProps) {
+}: GitChangesProperties): JSX.Element | null {
   if (!status) return null
 
   const changedFiles = [...new Set([...status.staged, ...status.modified])]

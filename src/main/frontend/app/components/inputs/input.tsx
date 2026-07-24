@@ -17,7 +17,7 @@ export default function Input({
   value,
   disabled = false,
   ...properties
-}: InputProperties) {
+}: InputProperties): React.JSX.Element {
   return (
     <div
       className={twMerge(

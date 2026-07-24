@@ -1,3 +1,4 @@
+import type { JSX } from 'react'
 import type { Point } from '~/utils/edge-label-utils'
 
 type EdgeLabelProperties = {
@@ -16,7 +17,7 @@ export default function EdgeLabel({
   faded,
   compactScale,
   onDelete,
-}: Readonly<EdgeLabelProperties>) {
+}: Readonly<EdgeLabelProperties>): JSX.Element {
   return (
     <div
       style={{

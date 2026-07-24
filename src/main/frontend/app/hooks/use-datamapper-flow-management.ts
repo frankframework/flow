@@ -1,9 +1,20 @@
+import type { Edge, Node, ReactFlowInstance, Viewport } from '@xyflow/react'
 import { type Dispatch, type SetStateAction, useEffect, useRef } from 'react'
-import type { Node, Edge, ReactFlowInstance, Viewport } from '@xyflow/react'
+import useToasts from '~/components/toast/use-toasts'
 import type { MappingListConfig } from '~/types/datamapper_types/config-types'
+import type { FormatDefinition } from '~/types/datamapper_types/data-types'
 import type { CustomNodeData } from '~/types/datamapper_types/react-node-types'
-import { SCROLL_AMOUNT, SCROLL_PANE_HEIGHT, THROTTLE_MS } from '~/utils/datamapper_utils/constant'
+import type { JsonSchema } from '~/types/datamapper_types/schema-types'
 import { getTablePositions } from '~/utils/datamapper_utils/canvas-management-utils'
+import { SCROLL_AMOUNT, SCROLL_PANE_HEIGHT, THROTTLE_MS } from '~/utils/datamapper_utils/constant'
+import {
+  applyHighlightToElements,
+  applyUnsetHighlightToNodes,
+  getHighlightedFromMappingNode,
+  getHighlightedFromPropertyNode,
+  resetHighlightElements,
+} from '~/utils/datamapper_utils/highlight-utils'
+import { deleteMappingNode } from '~/utils/datamapper_utils/mapping-node-utils'
 import {
   checkDuplicateLabel,
   deleteNodeById,
@@ -14,16 +25,7 @@ import {
   sequentialReposition,
   updateNodeType,
 } from '~/utils/datamapper_utils/property-node-utils'
-import {
-  applyHighlightToElements,
-  applyUnsetHighlightToNodes,
-  getHighlightedFromMappingNode,
-  getHighlightedFromPropertyNode,
-  resetHighlightElements,
-} from '~/utils/datamapper_utils/highlight-utils'
 import { generateImportButton, importJsonSchema, importXsdSchema } from '~/utils/datamapper_utils/schema-utils'
-import { deleteMappingNode } from '~/utils/datamapper_utils/mapping-node-utils'
-import { showErrorToast } from '~/components/toast'
 
 type UseFlowManagementProperties = {
   reactFlowInstance: ReactFlowInstance
@@ -32,7 +34,7 @@ type UseFlowManagementProperties = {
   setEdges: Dispatch<SetStateAction<Edge[]>>
 }
 export type SequentialRepositionFn = (nodes: Node[], parentId: string) => Node[]
-export type GetNodeFunc = (id: string) => Node | undefined
+export type GetNodeFunction = (id: string) => Node | undefined
 export type AddNodeFunction = (
   side: 'source' | 'target',
   label: string,
@@ -42,72 +44,108 @@ export type AddNodeFunction = (
   id?: string | null,
   isAttribute?: boolean,
 ) => Promise<string>
-export type ImportSchematicFunc = (file: File, side: 'source' | 'target', name: string) => void
+export type ImportSchematicFunction = (file: File, side: 'source' | 'target', name: string) => void
 
 export function useFlowManagement({
   reactFlowInstance,
   config,
   setReactFlowNodes,
   setEdges,
-}: UseFlowManagementProperties) {
+}: UseFlowManagementProperties): {
+  addNodeSequential: (
+    side: 'source' | 'target',
+    label: string,
+    variableType: string,
+    defaultValue?: string | null,
+    parentId?: string | null,
+    id?: string | null,
+    isAttribute?: boolean,
+  ) => Promise<string>
+  editNode: (data: CustomNodeData) => void
+  deleteNode: (id: string) => void
+  clearTarget: () => Promise<void>
+  repositionForceUpdate: (editingNode: Node) => void
+  highlightFromMappingNode: (id: string) => void
+  highlightFromPropertyNode: (nodeId: string) => void
+  resetHighlight: () => void
+  forceViewportLocation: () => void
+  importJsonSchema: (
+    schema: JsonSchema,
+    side: 'source' | 'target',
+    parentId: string | null,
+    addNode: AddNodeFunction,
+    format: FormatDefinition,
+  ) => Promise<void>
+  importJsonConfiguration: (jsonConfiguration: string) => void
+  deleteMapping: (id: string) => void
+  calculateTablePositions: (width: number) => void
+  importSchematic: (file: File, side: 'source' | 'target', name?: string) => Promise<void>
+  highlightUnset: () => void
+  checkForDragScroll: () => void
+  endCheckForDragScroll: () => void
+  addSchematicImportButton: (side: 'source' | 'target') => Promise<void>
+} {
+  const { showErrorToast } = useToasts()
   const sourceIdCounter = useRef(0)
   const targetIdCounter = useRef(0)
   const lastUpdate = useRef(0)
   const lastPosition = useRef<Viewport>(reactFlowInstance.getViewport())
   const scrollIntervalEnabled = useRef(false)
 
-  useEffect(() => {
-    const updatePosition = (event: MouseEvent) => {
-      if (scrollIntervalEnabled.current) {
-        const bottomThreshold = window.innerHeight - SCROLL_PANE_HEIGHT
-        if (event.clientY < SCROLL_PANE_HEIGHT) {
-          reactFlowInstance.setViewport({
-            x: reactFlowInstance.getViewport().x,
-            y: reactFlowInstance.getViewport().y + SCROLL_AMOUNT,
-            zoom: 1, //Don't set this to 0, it results in NaN for X & Y
-          })
-        }
+  useEffect((): (() => void) => {
+    const updatePosition = (event: MouseEvent): void => {
+      if (!scrollIntervalEnabled.current) {
+        return
+      }
 
-        if (event.clientY > bottomThreshold) {
-          reactFlowInstance.setViewport({
-            x: reactFlowInstance.getViewport().x,
-            y: reactFlowInstance.getViewport().y - SCROLL_AMOUNT,
-            zoom: 1, //Don't set this to 0, it results in NaN for X & Y
-          })
-        }
+      const bottomThreshold = window.innerHeight - SCROLL_PANE_HEIGHT
+      if (event.clientY < SCROLL_PANE_HEIGHT) {
+        reactFlowInstance.setViewport({
+          x: reactFlowInstance.getViewport().x,
+          y: reactFlowInstance.getViewport().y + SCROLL_AMOUNT,
+          zoom: 1, //Don't set this to 0, it results in NaN for X & Y
+        })
+      }
+
+      if (event.clientY > bottomThreshold) {
+        reactFlowInstance.setViewport({
+          x: reactFlowInstance.getViewport().x,
+          y: reactFlowInstance.getViewport().y - SCROLL_AMOUNT,
+          zoom: 1, //Don't set this to 0, it results in NaN for X & Y
+        })
       }
     }
 
     // Listen globally
     document.addEventListener('mousemove', updatePosition)
 
-    return () => {
+    return (): void => {
       document.removeEventListener('mousemove', updatePosition)
     }
   }, [reactFlowInstance])
-  async function addSchematicImportButton(side: 'source' | 'target') {
+  async function addSchematicImportButton(side: 'source' | 'target'): Promise<void> {
     deleteNode(`${side}-import-button`) //Failsafe to make sure there can never be more then 1
     const fileType = config.formatTypes[side]?.schemaFileExtension
     if (!fileType) {
       showErrorToast('Invalid configuration!')
       return
     }
-    const node = generateImportButton(
+
+    return generateImportButton(
       reactFlowInstance.getNodes(),
       fileType,
       side,
       reactFlowInstance.getNode,
       importSchematic,
     )
-      .then((newNode: Node) => {
-        setReactFlowNodes((previous) => [...previous, newNode])
+      .then((newNode: Node): Promise<Node> => {
+        setReactFlowNodes((previous): Node[] => [...previous, newNode])
 
         return waitForMeasuredNode(newNode.id)
       })
-      .then((measuredNode) => {
+      .then((measuredNode): void => {
         repositionForceUpdate(measuredNode)
       })
-    return node
     // reposition after measurement to ensure proper placement/spacing
   }
 
@@ -121,7 +159,7 @@ export function useFlowManagement({
     isAttribute?: boolean,
   ): Promise<string> {
     //If parent id == null OR parentId == '', initialize parent id, otherwise set parentId to parentId
-    parentId = parentId == null || parentId === '' ? `${side}-table` : parentId
+    parentId = parentId === '' || parentId == null ? `${side}-table` : parentId
 
     const formatType = config?.formatTypes?.[side]
     if (formatType && !formatType.duplicateKeysAllowed) {
@@ -132,7 +170,7 @@ export function useFlowManagement({
     const resolvedId = generateNodeId(side, parentId, variableType, id, sourceIdCounter, targetIdCounter)
 
     //Generate reactflow object from the values
-    setReactFlowNodes((previous) => {
+    setReactFlowNodes((previous): Node[] => {
       const newNode = generateReactFlowObject(
         previous,
         {
@@ -140,7 +178,7 @@ export function useFlowManagement({
           label,
           parentId,
           variableType,
-          variableTypeBasic: formatType?.properties.find((a) => a.name == variableType)?.type,
+          variableTypeBasic: formatType?.properties.find((a): boolean => a.name == variableType)?.type,
           defaultValue: defaultValue ?? '',
           width: getGroupWidth(parentId, reactFlowInstance.getNode),
           isAttribute,
@@ -160,7 +198,7 @@ export function useFlowManagement({
     return resolvedId
   }
 
-  function editNode(data: CustomNodeData) {
+  function editNode(data: CustomNodeData): void {
     if (!data) return
     //Retrieve side variable(Aka if the node is a target or source node)
     const side = data.parentId?.includes('source') ? 'source' : 'target'
@@ -178,8 +216,8 @@ export function useFlowManagement({
     data.width = getGroupWidth(data.parentId, reactFlowInstance.getNode)
     data.variableTypeBasic = variableTypeBasic
     //Persist node to reactflow
-    setReactFlowNodes((previous) =>
-      previous.map((node) =>
+    setReactFlowNodes((previous): Node[] =>
+      previous.map((node): Node =>
         node.id === data.id
           ? {
               ...node,
@@ -196,11 +234,11 @@ export function useFlowManagement({
     if (updatedNode) repositionForceUpdate(updatedNode)
   }
 
-  function deleteNode(id: string) {
+  function deleteNode(id: string): void {
     let deletedNode: Node | undefined
 
-    setReactFlowNodes((previous) => {
-      const result = deleteNodeById(previous, id, (nodes, parentId) =>
+    setReactFlowNodes((previous): Node[] => {
+      const result = deleteNodeById(previous, id, (nodes, parentId): Node[] =>
         sequentialReposition(nodes, parentId, reactFlowInstance.getNode),
       )
       deletedNode = result.deletedNode
@@ -213,21 +251,20 @@ export function useFlowManagement({
     }
   }
 
-  function repositionForceUpdate(editingNode: Node) {
+  function repositionForceUpdate(editingNode: Node): void {
     //This function is VERY inefficient but the animation frame updates are sadly necessery for reactflow to properly calculate the height of an object
 
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        setReactFlowNodes((previous) => {
-          const newNodes = sequentialReposition(previous, editingNode.parentId!, reactFlowInstance.getNode)
-          return newNodes
+    requestAnimationFrame((): void => {
+      requestAnimationFrame((): void => {
+        setReactFlowNodes((previous): Node[] => {
+          return sequentialReposition(previous, editingNode.parentId!, reactFlowInstance.getNode)
         })
 
         // Find the parent of the current node and recurse, this is needed to update parents whenever an edit happens
         if (editingNode.parentId) {
           const parentNode = reactFlowInstance.getNode(editingNode.parentId)
           if (parentNode?.parentId) {
-            requestAnimationFrame(() =>
+            requestAnimationFrame((): void =>
               //Additional animation check here fixes no update after edit
               repositionForceUpdate(parentNode),
             )
@@ -237,7 +274,7 @@ export function useFlowManagement({
     })
   }
 
-  function forceViewportLocation() {
+  function forceViewportLocation(): void {
     //This function forces the viewport back to its initial position to prevent a panning out of the view
     const now = Date.now()
     if (now - lastUpdate.current > THROTTLE_MS) {
@@ -251,17 +288,17 @@ export function useFlowManagement({
     }
   }
 
-  function checkForDragScroll() {
+  function checkForDragScroll(): void {
     lastPosition.current = reactFlowInstance.getViewport()
     scrollIntervalEnabled.current = true
   }
-  function endCheckForDragScroll() {
+  function endCheckForDragScroll(): void {
     scrollIntervalEnabled.current = false
     reactFlowInstance.setViewport(lastPosition.current)
   }
 
   //Apply highlights to all objects in the set. This is done by setting all ids not in the list to opacity 0.1
-  function applyHighlight(highlightedNodes: Set<string>) {
+  function applyHighlight(highlightedNodes: Set<string>): void {
     const nodes = reactFlowInstance.getNodes()
     const edges = reactFlowInstance.getEdges()
 
@@ -272,7 +309,7 @@ export function useFlowManagement({
   }
 
   //Highlights fields from a mapping node
-  function highlightFromMappingNode(id: string) {
+  function highlightFromMappingNode(id: string): void {
     const edges = reactFlowInstance.getEdges()
     const highlighted = getHighlightedFromMappingNode(edges, id)
 
@@ -280,7 +317,7 @@ export function useFlowManagement({
   }
 
   //Highlights fields whenever the button on a property node is pressed
-  function highlightFromPropertyNode(nodeId: string) {
+  function highlightFromPropertyNode(nodeId: string): void {
     const nodes = reactFlowInstance.getNodes()
     const edges = reactFlowInstance.getEdges()
 
@@ -290,7 +327,7 @@ export function useFlowManagement({
   }
 
   //Sets opacity to 1 to fully reset any highlighting
-  function resetHighlight() {
+  function resetHighlight(): void {
     const nodes = reactFlowInstance.getNodes()
     const edges = reactFlowInstance.getEdges()
 
@@ -300,7 +337,7 @@ export function useFlowManagement({
     setReactFlowNodes(result.nodes)
   }
 
-  function highlightUnset() {
+  function highlightUnset(): void {
     const nodes = reactFlowInstance.getNodes()
     const edges = reactFlowInstance.getEdges()
 
@@ -315,20 +352,20 @@ export function useFlowManagement({
   // Resolves primitive type
 
   //Imports a json reactflow configuration into the active reactflow frame
-  function importJsonConfiguration(jsonConfiguration: string) {
+  function importJsonConfiguration(jsonConfiguration: string): void {
     const flow = JSON.parse(jsonConfiguration)
     if (flow) {
       setReactFlowNodes(flow.nodes || [])
       setEdges(flow.edges || [])
-      sourceIdCounter.current = flow.nodes.filter((node: Node) => node.id.includes('source')).length
-      targetIdCounter.current = flow.nodes.filter((node: Node) => node.id.includes('target')).length
+      sourceIdCounter.current = flow.nodes.filter((node: Node): boolean => node.id.includes('source')).length
+      targetIdCounter.current = flow.nodes.filter((node: Node): boolean => node.id.includes('target')).length
     }
   }
 
   //Waits for the node to be measurable(So added fully) before moving on to the next task. Uses
   function waitForMeasuredNode(id: string): Promise<Node> {
-    return new Promise((resolve) => {
-      const loop = () => {
+    return new Promise((resolve): void => {
+      const loop = (): void => {
         const node = reactFlowInstance?.getNode(id)
 
         if (node && node.measured?.height) {
@@ -343,7 +380,7 @@ export function useFlowManagement({
     })
   }
 
-  function deleteMapping(id: string) {
+  function deleteMapping(id: string): void {
     const { remainingNodes, remainingEdges } = deleteMappingNode(
       id,
       reactFlowInstance.getNodes(),
@@ -353,11 +390,11 @@ export function useFlowManagement({
     setEdges(remainingEdges)
   }
 
-  function calculateTablePositions(width: number) {
+  function calculateTablePositions(width: number): void {
     const { sourceX, mappingX, targetX } = getTablePositions(width)
 
-    reactFlowInstance.setNodes((nodes) =>
-      nodes.map((node) => {
+    reactFlowInstance.setNodes((nodes): Node[] =>
+      nodes.map((node): Node => {
         switch (node.id) {
           case 'source-table': {
             return { ...node, position: { ...node.position, x: sourceX } }
@@ -377,14 +414,13 @@ export function useFlowManagement({
     )
   }
 
-  async function clearTarget() {
-    setReactFlowNodes((previous: Node[]) => {
-      let updatedNodes = previous.filter((node) => !node.parentId?.startsWith('target'))
-      return updatedNodes
+  async function clearTarget(): Promise<void> {
+    setReactFlowNodes((previous: Node[]): Node[] => {
+      return previous.filter((node): boolean => !node.parentId?.startsWith('target'))
     })
   }
 
-  async function importSchematic(file: File, side: 'source' | 'target', name = '') {
+  async function importSchematic(file: File, side: 'source' | 'target', name = ''): Promise<void> {
     deleteNode(`${side}-import-button`)
 
     let parentId = null
@@ -395,7 +431,7 @@ export function useFlowManagement({
     if (
       name &&
       side == 'source' &&
-      reactFlowInstance.getNodes().filter((node) => node.id.includes('source') && !node.id.includes('import'))
+      reactFlowInstance.getNodes().filter((node): boolean => node.id.includes('source') && !node.id.includes('import'))
         .length !== 1
     ) {
       parentId = await addNodeSequential(side, name, 'schematic')

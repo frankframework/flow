@@ -86,39 +86,160 @@ const defaultGeneralSettings: GeneralSettings = {
 
 export const useSettingsStore = create<SettingsState>()(
   persist(
-    (set) => ({
+    (
+      set,
+    ): {
+      editor: { fontSize: number; tabSize: number; wordWrap: boolean; lineNumbers: boolean }
+      studio: { previewOnSave: boolean; autoRefresh: boolean; gradient: boolean; paletteExpandedByDefault: boolean }
+      projects: { recentProjects: string[]; defaultLocation: string }
+      general: {
+        theme: 'light' | 'dark' | 'system'
+        language: string
+        telemetry: boolean
+        autoUpdates: boolean
+        autoSave: AutosaveSettings
+      }
+      setEditorSettings: (settings: Partial<EditorSettings>) => unknown
+      setStudioSettings: (settings: Partial<StudioSettings>) => unknown
+      setProjectSettings: (settings: Partial<ProjectSettings>) => unknown
+      setGeneralSettings: (settings: Partial<GeneralSettings>) => unknown
+      resetEditorSettings: () => unknown
+      resetStudioSettings: () => unknown
+      resetProjectSettings: () => unknown
+      resetGeneralSettings: () => unknown
+      resetAllSettings: () => unknown
+    } => ({
       editor: { ...defaultEditorSettings },
       studio: { ...defaultStudioSettings },
       projects: { ...defaultProjectSettings },
       general: { ...defaultGeneralSettings },
 
-      setEditorSettings: (settings) => set((state) => ({ editor: { ...state.editor, ...settings } })),
+      setEditorSettings: (settings) =>
+        set((state): { editor: { fontSize: number; tabSize: number; wordWrap: boolean; lineNumbers: boolean } } => ({
+          editor: { ...state.editor, ...settings },
+        })),
 
-      setStudioSettings: (settings) => set((state) => ({ studio: { ...state.studio, ...settings } })),
+      setStudioSettings: (settings) =>
+        set(
+          (
+            state,
+          ): {
+            studio: {
+              previewOnSave: boolean
+              autoRefresh: boolean
+              gradient: boolean
+              paletteExpandedByDefault: boolean
+            }
+          } => ({ studio: { ...state.studio, ...settings } }),
+        ),
 
-      setProjectSettings: (settings) => set((state) => ({ projects: { ...state.projects, ...settings } })),
+      setProjectSettings: (settings) =>
+        set((state): { projects: { recentProjects: string[]; defaultLocation: string } } => ({
+          projects: { ...state.projects, ...settings },
+        })),
 
-      setGeneralSettings: (settings) => set((state) => ({ general: { ...state.general, ...settings } })),
+      setGeneralSettings: (settings) =>
+        set(
+          (
+            state,
+          ): {
+            general: {
+              theme: 'light' | 'dark' | 'system'
+              language: string
+              telemetry: boolean
+              autoUpdates: boolean
+              autoSave: AutosaveSettings
+            }
+          } => ({ general: { ...state.general, ...settings } }),
+        ),
 
-      resetEditorSettings: () => set(() => ({ editor: { ...defaultEditorSettings } })),
+      resetEditorSettings: () =>
+        set((): { editor: { fontSize: number; tabSize: number; wordWrap: boolean; lineNumbers: boolean } } => ({
+          editor: { ...defaultEditorSettings },
+        })),
 
-      resetStudioSettings: () => set(() => ({ studio: { ...defaultStudioSettings } })),
+      resetStudioSettings: () =>
+        set(
+          (): {
+            studio: {
+              previewOnSave: boolean
+              autoRefresh: boolean
+              gradient: boolean
+              paletteExpandedByDefault: boolean
+            }
+          } => ({ studio: { ...defaultStudioSettings } }),
+        ),
 
-      resetProjectSettings: () => set(() => ({ projects: { ...defaultProjectSettings } })),
+      resetProjectSettings: () =>
+        set((): { projects: { recentProjects: string[]; defaultLocation: string } } => ({
+          projects: { ...defaultProjectSettings },
+        })),
 
-      resetGeneralSettings: () => set(() => ({ general: { ...defaultGeneralSettings } })),
+      resetGeneralSettings: () =>
+        set(
+          (): {
+            general: {
+              theme: 'light' | 'dark' | 'system'
+              language: string
+              telemetry: boolean
+              autoUpdates: boolean
+              autoSave: AutosaveSettings
+            }
+          } => ({ general: { ...defaultGeneralSettings } }),
+        ),
 
       resetAllSettings: () =>
-        set(() => ({
-          editor: { ...defaultEditorSettings },
-          studio: { ...defaultStudioSettings },
-          projects: { ...defaultProjectSettings },
-          general: { ...defaultGeneralSettings },
-        })),
+        set(
+          (): {
+            editor: { fontSize: number; tabSize: number; wordWrap: boolean; lineNumbers: boolean }
+            studio: {
+              previewOnSave: boolean
+              autoRefresh: boolean
+              gradient: boolean
+              paletteExpandedByDefault: boolean
+            }
+            projects: { recentProjects: string[]; defaultLocation: string }
+            general: {
+              theme: 'light' | 'dark' | 'system'
+              language: string
+              telemetry: boolean
+              autoUpdates: boolean
+              autoSave: AutosaveSettings
+            }
+          } => ({
+            editor: { ...defaultEditorSettings },
+            studio: { ...defaultStudioSettings },
+            projects: { ...defaultProjectSettings },
+            general: { ...defaultGeneralSettings },
+          }),
+        ),
     }),
     {
       name: 'application-settings',
-      merge: (persistedState, currentState) => {
+      merge: (
+        persistedState,
+        currentState,
+      ): {
+        general: {
+          autoSave: { enabled: boolean; delayMs: number }
+          theme: 'light' | 'dark' | 'system'
+          language: string
+          telemetry: boolean
+          autoUpdates: boolean
+        }
+        editor: EditorSettings
+        studio: StudioSettings
+        projects: ProjectSettings
+        setEditorSettings: (settings: Partial<EditorSettings>) => void
+        setStudioSettings: (settings: Partial<StudioSettings>) => void
+        setProjectSettings: (settings: Partial<ProjectSettings>) => void
+        setGeneralSettings: (settings: Partial<GeneralSettings>) => void
+        resetEditorSettings: () => void
+        resetStudioSettings: () => void
+        resetProjectSettings: () => void
+        resetGeneralSettings: () => void
+        resetAllSettings: () => void
+      } => {
         const persisted = (persistedState ?? {}) as Partial<SettingsState>
         return {
           ...currentState,

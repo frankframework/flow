@@ -1,8 +1,10 @@
-import type { FrankNodeType } from '~/routes/studio/canvas/nodetypes/frank-node'
+/* eslint-disable unicorn/better-dom-traversing */
+import { expect, describe, beforeEach, it } from 'vitest'
+import { ExitNode } from '../routes/studio/canvas/nodetypes/exit-node'
+import { FrankNodeType } from '../routes/studio/canvas/nodetypes/frank-node'
+import { StickyNote } from '../routes/studio/canvas/nodetypes/sticky-note'
+import { GroupNode } from '../types/datamapper_types/react-node-types'
 import { cloneWithRemappedIds } from './flow-utils'
-import type { StickyNote } from '~/routes/studio/canvas/nodetypes/sticky-note'
-import type { GroupNode } from '~/routes/studio/canvas/nodetypes/group-node'
-import type { ExitNode } from '~/routes/studio/canvas/nodetypes/exit-node'
 
 describe('cloneWithRemappedIds', () => {
   let idMap: Map<string, string>
@@ -12,7 +14,7 @@ describe('cloneWithRemappedIds', () => {
   beforeEach(() => {
     idMap = new Map()
     counter = 10
-    generateId = () => (counter++).toString() // numeric string IDs
+    generateId = (): string => (counter++).toString() // numeric string IDs
   })
 
   it('remaps the id field and stores it in the idMap', () => {
@@ -121,7 +123,7 @@ describe('cloneWithRemappedIds with various node types', () => {
   beforeEach(() => {
     idMap = new Map()
     counter = 10
-    generateId = () => (counter++).toString()
+    generateId = (): string => (counter++).toString()
   })
 
   it('remaps IDs for FrankNode with children', () => {

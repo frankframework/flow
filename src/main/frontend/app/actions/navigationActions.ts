@@ -6,7 +6,7 @@ import { getBaseName } from '~/utils/path-utils'
 export function openInStudio(
   navigate: NavigateFunction,
   { adapterName, filepath, adapterPosition }: { adapterName: string; filepath: string; adapterPosition: number },
-) {
+): void {
   const { setTabData, setActiveTab, getTab } = useTabStore.getState()
 
   const tabId = `${filepath}::${adapterName}::${adapterPosition}`
@@ -28,7 +28,7 @@ export function openInStudio(
   navigate('/studio')
 }
 
-export function openInEditor(relativePath: string, filepath: string, navigate: NavigateFunction) {
+export function openInEditor(relativePath: string, filepath: string, navigate: NavigateFunction): void {
   const { setTabData, setActiveTab, getTab } = useEditorTabStore.getState()
 
   if (!getTab(filepath)) {
@@ -45,7 +45,7 @@ export function openInEditor(relativePath: string, filepath: string, navigate: N
 export function openInEditorAtElement(
   navigate: NavigateFunction,
   { subtype, filepath, name }: { subtype: string; filepath: string; name?: string },
-) {
+): void {
   const editorStore = useEditorTabStore.getState()
   const fileName = getBaseName(filepath)
 
@@ -76,7 +76,7 @@ export function openInStudioAtNode(
     subtype: string
     name: string
   },
-) {
+): void {
   const { setTabData, setActiveTab, getTab } = useTabStore.getState()
 
   const tabId = `${filepath}::${adapterName}::${adapterPosition}`

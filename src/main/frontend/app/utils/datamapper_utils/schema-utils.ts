@@ -1,5 +1,5 @@
 import { SAXParser } from 'sax-ts'
-import type { AddNodeFunction, GetNodeFunc, ImportSchematicFunc } from '~/hooks/use-datamapper-flow-management'
+import type { AddNodeFunction, GetNodeFunction, ImportSchematicFunction } from '~/hooks/use-datamapper-flow-management'
 import type { FormatDefinition } from '~/types/datamapper_types/data-types'
 import type { JsonSchema, SaxAttributes, XsdComplexType, XsdElement } from '~/types/datamapper_types/schema-types'
 import { calculateNodePosition } from './property-node-utils'
@@ -11,17 +11,17 @@ export async function importJsonSchema(
   parentId: string | null,
   addNode: AddNodeFunction,
   format: FormatDefinition,
-) {
-  let isRootObject = true
+): Promise<void> {
+  const isRootObject = true
 
-  async function traverseSchema(object: JsonSchema, parentNodeId: string | null, labelPrefix = '') {
+  async function traverseSchema(object: JsonSchema, parentNodeId: string | null, labelPrefix = ''): Promise<void> {
     if (!object) return
 
-    let currentNodeId = parentNodeId
-
-    if (object.type === 'object' && object.properties && (!isRootObject || labelPrefix)) {
-      currentNodeId = await addNode(side, labelPrefix || 'Object', 'object', object.defaultValue, parentNodeId)
-    }
+    // This feels fishy
+    const currentNodeId =
+      object.type === 'object' && object.properties && (!isRootObject || labelPrefix)
+        ? await addNode(side, labelPrefix || 'Object', 'object', object.defaultValue, parentNodeId)
+        : parentNodeId
 
     if (object.type === 'object' && object.properties) {
       for (const [key, value] of Object.entries(object.properties)) {
@@ -48,19 +48,19 @@ export async function importXsdSchema(
   parentId: string | null,
   addNode: AddNodeFunction,
   format: FormatDefinition,
-) {
+): Promise<void> {
   const parser = new SAXParser(true, { trim: true, normalize: true })
 
   const typeMap = new Map<string, XsdComplexType>()
   const complexStack: XsdComplexType[] = []
   const rootElements: XsdElement[] = []
 
-  parser.onopentag = (node: { name: string; attributes: SaxAttributes }) => {
-    const { name: tagName, attributes: attrs } = node
+  parser.onopentag = (node: { name: string; attributes: SaxAttributes }): void => {
+    const { name: tagName, attributes: attributes } = node
 
     // complexType
     if (tagName.endsWith('complexType')) {
-      const typeName = attrs['name'] || ''
+      const typeName = attributes['name'] || ''
       const complexType: XsdComplexType = { '@_name': typeName || undefined, 'xs:sequence': undefined }
 
       // Attach to current element if unnamed
@@ -80,11 +80,11 @@ export async function importXsdSchema(
     // element
     if (tagName.endsWith('element')) {
       const element: XsdElement = {
-        '@_name': attrs['name'],
-        '@_type': attrs['type'],
-        '@_maxOccurs': attrs['maxOccurs'],
-        '@_minOccurs': attrs['minOccurs'],
-        '@_default': attrs['default'],
+        '@_name': attributes['name'],
+        '@_type': attributes['type'],
+        '@_maxOccurs': attributes['maxOccurs'],
+        '@_minOccurs': attributes['minOccurs'],
+        '@_default': attributes['default'],
       }
 
       if (complexStack.length > 0 && complexStack.at(-1)!['xs:sequence']) {
@@ -99,18 +99,20 @@ export async function importXsdSchema(
       const currentType = complexStack.at(-1)!
       if (!currentType['xs:attribute']) currentType['xs:attribute'] = []
       currentType['xs:attribute'].push({
-        '@_name': attrs['name'],
-        '@_type': attrs['type'],
-        '@_use': attrs['use'],
+        '@_name': attributes['name'],
+        '@_type': attributes['type'],
+        '@_use': attributes['use'],
       })
     }
   }
 
-  parser.onclosetag = (tagName: string) => {
-    if (tagName.endsWith('complexType') && complexStack.length > 0) {
-      const completed = complexStack.pop()!
-      if (completed['@_name']) typeMap.set(completed['@_name'], completed)
+  parser.onclosetag = (tagName: string): void => {
+    if (!(tagName.endsWith('complexType') && complexStack.length > 0)) {
+      return
     }
+
+    const completed = complexStack.pop()!
+    if (completed['@_name']) typeMap.set(completed['@_name'], completed)
   }
 
   parser.write(xmlText).close()
@@ -133,7 +135,7 @@ function resolveType(
   }
 
   const normalized = rawType.replace(/^xs:/, '').replace(/^xsd:/, '').toLowerCase()
-  const property = format.properties.find((property) => property.name.toLowerCase() === normalized)
+  const property = format.properties.find((property): boolean => property.name.toLowerCase() === normalized)
 
   if (!property) throw new Error(`Type "${normalized}" is not configured for format "${format.name}"`)
 
@@ -148,11 +150,11 @@ async function addElementNode(
   format: FormatDefinition,
   typeMap: Map<string, XsdComplexType>,
   visitedTypes: Set<string>,
-) {
+): Promise<string | undefined> {
   const name = element['@_name']
-  const typeName = element['@_type']
   if (!name) return
 
+  const typeName = element['@_type']
   const isArray = element['@_maxOccurs'] && element['@_maxOccurs'] !== '1'
   let nodeId: string
 
@@ -166,8 +168,8 @@ async function addElementNode(
     nodeId = await addNode(side, name, isArray ? 'array' : 'object', undefined, parentNodeId)
     await traverseComplexType(element['xs:complexType'], nodeId, side, addNode, format, typeMap, visitedTypes)
   } else {
-    const prop = resolveType(side, format, typeName)
-    nodeId = await addNode(side, name, prop.name, element['@_default'], parentNodeId)
+    const property = resolveType(side, format, typeName)
+    nodeId = await addNode(side, name, property.name, element['@_default'], parentNodeId)
   }
 
   return nodeId
@@ -181,19 +183,19 @@ async function traverseComplexType(
   format: FormatDefinition,
   typeMap: Map<string, XsdComplexType>,
   visitedTypes: Set<string>,
-) {
+): Promise<void> {
   const sequence = type['xs:sequence']
   if (sequence?.xs?.element) {
     const elements: XsdElement[] = Array.isArray(sequence.xs.element) ? sequence.xs.element : [sequence.xs.element]
-    for (const elem of elements) {
-      await addElementNode(elem, parentNodeId, side, addNode, format, typeMap, visitedTypes)
+    for (const element of elements) {
+      await addElementNode(element, parentNodeId, side, addNode, format, typeMap, visitedTypes)
     }
   }
-
-  if (type['xs:attribute']) {
-    for (const attr of type['xs:attribute']) {
-      const prop = resolveType(side, format, attr['@_type'])
-      await addNode(side, attr['@_name'], prop.name, undefined, parentNodeId, null, true)
+  const attributes = type['xs:attribute']
+  if (attributes) {
+    for (const attribute of attributes) {
+      const property = resolveType(side, format, attribute['@_type'])
+      await addNode(side, attribute['@_name'], property.name, undefined, parentNodeId, null, true)
     }
   }
 }
@@ -202,9 +204,9 @@ export async function generateImportButton(
   nodes: Node[],
   fileType: string,
   side: string,
-  getNode: GetNodeFunc,
-  importFunc: ImportSchematicFunc,
-) {
+  getNode: GetNodeFunction,
+  importFunction: ImportSchematicFunction,
+): Promise<Node> {
   const newY = calculateNodePosition(nodes, `${side}-table`, getNode)
   return {
     id: `${side}-import-button`,
@@ -215,7 +217,7 @@ export async function generateImportButton(
     data: {
       fileType,
       side,
-      importFunc,
+      importFunc: importFunction,
     },
   } as Node
 }

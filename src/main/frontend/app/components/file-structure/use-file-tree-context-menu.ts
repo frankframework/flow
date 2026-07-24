@@ -1,14 +1,13 @@
 import React, { useCallback, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import type { TreeItemIndex } from 'react-complex-tree'
+import useToasts from '~/components/toast/use-toasts'
 import { createFile, deleteFile, renameFile } from '~/services/file-service'
 import { createFolderInProject } from '~/services/file-tree-service'
 import { clearConfigurationFileCache, createConfigurationFile } from '~/services/configuration-file-service'
 import useTabStore from '~/stores/tab-store'
 import useEditorTabStore from '~/stores/editor-tab-store'
-import { showErrorToast } from '~/components/toast'
 import { FILE_NAME_PATTERNS, FOLDER_OR_ADAPTER_NAME_PATTERNS } from '~/components/file-structure/name-input-dialog'
-import { logApiError } from '~/utils/logger'
 import { openInEditor } from '~/actions/navigationActions'
 
 export type ContextMenuState = {
@@ -53,9 +52,9 @@ type UseFileTreeContextMenuOptions = {
 const ALLOWED_EXTENSIONS = ['.xml', '.json', '.yaml', '.yml', '.properties']
 
 export function getParentItemId(itemId: TreeItemIndex): TreeItemIndex {
-  const str = String(itemId)
-  const lastSlash = str.lastIndexOf('/')
-  return lastSlash > 0 ? str.slice(0, Math.max(0, lastSlash)) : 'root'
+  const string_ = String(itemId)
+  const lastSlash = string_.lastIndexOf('/')
+  return lastSlash > 0 ? string_.slice(0, Math.max(0, lastSlash)) : 'root'
 }
 
 function ensureHasCorrectExtension(name: string): boolean {
@@ -66,8 +65,8 @@ function ensureHasCorrectExtension(name: string): boolean {
 }
 
 function buildNewPath(oldPath: string, newName: string): string {
-  const lastSep = Math.max(oldPath.lastIndexOf('/'), oldPath.lastIndexOf('\\'))
-  return oldPath.slice(0, Math.max(0, lastSep + 1)) + newName
+  const lastSeparator = Math.max(oldPath.lastIndexOf('/'), oldPath.lastIndexOf('\\'))
+  return oldPath.slice(0, Math.max(0, lastSeparator + 1)) + newName
 }
 
 export function useFileTreeContextMenu({
@@ -76,47 +75,62 @@ export function useFileTreeContextMenu({
   configurationsRootPath,
   onAfterRename,
   onAfterDelete,
-}: UseFileTreeContextMenuOptions) {
+}: UseFileTreeContextMenuOptions): {
+  contextMenu: ContextMenuState | null
+  setContextMenu: React.Dispatch<React.SetStateAction<ContextMenuState | null>>
+  closeContextMenu: () => void
+  nameDialog: NameDialogState | null
+  setNameDialog: React.Dispatch<React.SetStateAction<NameDialogState | null>>
+  deleteTarget: DeleteTargetState | null
+  setDeleteTarget: React.Dispatch<React.SetStateAction<DeleteTargetState | null>>
+  openContextMenu: (event: React.MouseEvent, itemId: TreeItemIndex) => Promise<void>
+  handleNewFile: (menuState?: ContextMenuState) => void
+  handleNewFolder: (menuState?: ContextMenuState) => void
+  handleRename: (menuState?: ContextMenuState) => void
+  handleDelete: (menuState?: ContextMenuState) => void
+  confirmDelete: () => Promise<void>
+} {
   const navigate = useNavigate()
+  const { showErrorToast, logApiError } = useToasts()
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null)
   const [nameDialog, setNameDialog] = useState<NameDialogState | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<DeleteTargetState | null>(null)
-  const contextMenuRef = useRef<ContextMenuState | null>(null)
+  const contextMenuReference = useRef<ContextMenuState | null>(null)
 
   const openContextMenu = useCallback(
-    async (e: React.MouseEvent, itemId: TreeItemIndex) => {
-      e.preventDefault()
-      e.stopPropagation()
+    async (event: React.MouseEvent, itemId: TreeItemIndex): Promise<void> => {
+      event.preventDefault()
+      event.stopPropagation()
       if (!dataProvider) return
 
       const item = await dataProvider.getTreeItem(itemId)
       if (!item) return
 
       const state: ContextMenuState = {
-        position: { x: e.clientX, y: e.clientY },
+        position: { x: event.clientX, y: event.clientY },
         itemId,
         isFolder: !!item.isFolder,
         isRoot: !!item.data.projectRoot,
         path: item.data.path,
         name: item.data.name,
       }
-      contextMenuRef.current = state
+      contextMenuReference.current = state
       setContextMenu(state)
     },
     [dataProvider],
   )
 
-  const closeContextMenu = useCallback(() => {
-    contextMenuRef.current = null
+  const closeContextMenu = useCallback((): void => {
+    contextMenuReference.current = null
     setContextMenu(null)
   }, [])
 
   function resolveMenu(menuState?: ContextMenuState): ContextMenuState | null {
-    return menuState ?? contextMenuRef.current
+    return menuState ?? contextMenuReference.current
   }
 
   const handleNewFile = useCallback(
-    (menuState?: ContextMenuState) => {
+    (menuState?: ContextMenuState): void => {
       const menu = resolveMenu(menuState)
       if (!menu || !projectName || !dataProvider) return
       const parentPath = menu.isFolder ? menu.path : buildNewPath(menu.path, '').slice(0, -1)
@@ -126,7 +140,7 @@ export function useFileTreeContextMenu({
       setNameDialog({
         title: 'New File',
         submitLabel: 'Create',
-        onSubmit: async (name: string) => {
+        onSubmit: async (name: string): Promise<void> => {
           if (!ensureHasCorrectExtension(name)) {
             showErrorToast(`Filename must have one of the following extensions: ${ALLOWED_EXTENSIONS.join(', ')}`)
             return
@@ -152,11 +166,11 @@ export function useFileTreeContextMenu({
         patterns: FILE_NAME_PATTERNS,
       })
     },
-    [projectName, dataProvider, configurationsRootPath, navigate, closeContextMenu],
+    [projectName, dataProvider, closeContextMenu, configurationsRootPath, showErrorToast, navigate, logApiError],
   )
 
   const handleNewFolder = useCallback(
-    (menuState?: ContextMenuState) => {
+    (menuState?: ContextMenuState): void => {
       const menu = resolveMenu(menuState)
       if (!menu || !projectName || !dataProvider) return
       const parentPath = menu.isFolder ? menu.path : buildNewPath(menu.path, '').slice(0, -1)
@@ -166,7 +180,7 @@ export function useFileTreeContextMenu({
       setNameDialog({
         title: 'New Folder',
         submitLabel: 'Create',
-        onSubmit: async (name: string) => {
+        onSubmit: async (name: string): Promise<void> => {
           try {
             await createFolderInProject(projectName, `${parentPath}/${name}`)
             await dataProvider.reloadDirectory(parentItemId)
@@ -178,11 +192,11 @@ export function useFileTreeContextMenu({
         patterns: FOLDER_OR_ADAPTER_NAME_PATTERNS,
       })
     },
-    [projectName, dataProvider, closeContextMenu],
+    [projectName, dataProvider, closeContextMenu, logApiError],
   )
 
   const handleRename = useCallback(
-    (menuState?: ContextMenuState) => {
+    (menuState?: ContextMenuState): void => {
       const menu = resolveMenu(menuState)
       if (!menu || !projectName || !dataProvider) return
       const itemId = menu.itemId
@@ -193,11 +207,12 @@ export function useFileTreeContextMenu({
       setNameDialog({
         title: 'Rename',
         initialValue: oldName,
-        onSubmit: async (newName: string) => {
+        onSubmit: async (newName: string): Promise<void> => {
           if (newName === oldName) {
             setNameDialog(null)
             return
-          } else if (!menu.isFolder && !ensureHasCorrectExtension(newName)) {
+          }
+          if (!menu.isFolder && !ensureHasCorrectExtension(newName)) {
             showErrorToast(`Filename must have one of the following extensions: ${ALLOWED_EXTENSIONS.join(', ')}`)
             return
           }
@@ -218,11 +233,11 @@ export function useFileTreeContextMenu({
         patterns: menu.isFolder ? FOLDER_OR_ADAPTER_NAME_PATTERNS : FILE_NAME_PATTERNS,
       })
     },
-    [projectName, dataProvider, onAfterRename, closeContextMenu],
+    [projectName, dataProvider, closeContextMenu, showErrorToast, onAfterRename],
   )
 
   const handleDelete = useCallback(
-    (menuState?: ContextMenuState) => {
+    (menuState?: ContextMenuState): void => {
       const menu = resolveMenu(menuState)
       if (!menu) return
       setDeleteTarget({
@@ -236,7 +251,7 @@ export function useFileTreeContextMenu({
     [closeContextMenu],
   )
 
-  const confirmDelete = useCallback(async () => {
+  const confirmDelete = useCallback(async (): Promise<void> => {
     if (!deleteTarget || !projectName || !dataProvider) return
 
     try {
@@ -251,7 +266,7 @@ export function useFileTreeContextMenu({
 
     await dataProvider.reloadDirectory(deleteTarget.parentItemId)
     setDeleteTarget(null)
-  }, [deleteTarget, projectName, dataProvider, onAfterDelete])
+  }, [deleteTarget, projectName, dataProvider, onAfterDelete, logApiError])
 
   return {
     contextMenu,

@@ -4,26 +4,28 @@ const REFERENCE_KEYS = new Set(['source', 'target', 'parentId'])
 
 export function cloneWithRemappedIds<T>(value: T, idMap: Map<string, string>, generateId: () => string): T {
   if (Array.isArray(value)) {
-    return value.map((v) => cloneWithRemappedIds(v, idMap, generateId)) as T
+    return value.map((item): T => cloneWithRemappedIds(item, idMap, generateId)) as T
   }
 
   if (value && typeof value === 'object') {
-    const obj = value as Record<string, unknown>
+    const object = value as Record<string, unknown>
 
     return Object.fromEntries(
-      Object.entries(obj).map(([key, val]) => {
-        if (key === 'id' && typeof val === 'string') {
-          if (!idMap.has(val)) {
-            idMap.set(val, generateId())
+      Object.entries(object).map(([key, value_]): [string, unknown] => {
+        if (typeof value_ === 'string') {
+          if (key === 'id') {
+            if (!idMap.has(value_)) {
+              idMap.set(value_, generateId())
+            }
+            return [key, idMap.get(value_)!]
           }
-          return [key, idMap.get(val)!]
+
+          if (REFERENCE_KEYS.has(key)) {
+            return [key, idMap.get(value_) ?? value_]
+          }
         }
 
-        if (REFERENCE_KEYS.has(key) && typeof val === 'string') {
-          return [key, idMap.get(val) ?? val]
-        }
-
-        return [key, cloneWithRemappedIds(val, idMap, generateId)]
+        return [key, cloneWithRemappedIds(value_, idMap, generateId)]
       }),
     ) as T
   }
@@ -47,7 +49,7 @@ export function getEdgeLabelFromHandle(node: FlowNode | undefined, handleId: str
   const handles = (node.data as { sourceHandles?: { type: string; index: number }[] }).sourceHandles ?? []
   const handleIndex = Number(handleId)
 
-  const matched = handles.find((handle: { index: number }) => handle.index === handleIndex)
+  const matched = handles.find((handle: { index: number }): boolean => handle.index === handleIndex)
 
   return matched?.type?.toLowerCase() ?? 'success'
 }
@@ -135,9 +137,9 @@ export function frankdocChipStyle(name: string): { borderColor: string; backgrou
   const s = 0.9
   const l = 0.78
   const a = s * Math.min(l, 1 - l)
-  const f = (n: number) => {
+  const f = (n: number): number => {
     const k = (n + h / 30) % 12
-    return l - a * Math.max(-1, Math.min(k - 3, Math.min(9 - k, 1)))
+    return l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1))
   }
   const r = Math.round(f(0) * 255)
   const g = Math.round(f(8) * 255)
