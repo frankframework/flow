@@ -1,5 +1,6 @@
 import clsx from 'clsx'
 import LightBulb from '/icons/solar/Lightbulb.svg?react'
+import type { JSX } from 'react'
 
 export default function HighlightButton({
   onClick,

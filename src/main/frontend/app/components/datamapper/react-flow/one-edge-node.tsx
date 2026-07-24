@@ -1,5 +1,6 @@
 import { Handle, Position, type Node, useNodeConnections } from '@xyflow/react'
 import clsx from 'clsx'
+import type { JSX } from 'react'
 import type { CustomNodeData } from '~/types/datamapper_types/react-node-types'
 import EditButton from '../basic-components/edit-button'
 import DeleteButton from '../basic-components/delete-button'

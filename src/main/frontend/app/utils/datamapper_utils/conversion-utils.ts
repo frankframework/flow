@@ -1,5 +1,5 @@
 import type { MappingFile, Mapping, Property, Target, MappingRow } from '~/types/datamapper_types/export-types'
-import type { FlowNode, PropertyNode, MappingNode, ArrayMappingNode } from '~/types/datamapper_types/react-node-types'
+import type { PropertyNode, MappingNode, ArrayMappingNode, FlowNode } from '~/types/datamapper_types/react-node-types'
 import { isNodeGroup, recurseFindArray } from './property-node-utils'
 import type { Edge, Node } from '@xyflow/react'
 import type { MappingListConfig } from '~/types/datamapper_types/config-types'
@@ -52,7 +52,7 @@ function convertNodeToMappings(nodes: FlowNode[]): Mapping[] {
   return nodes
     .filter((node): boolean => node.type === 'mappingNode' || node.type === 'arrayMappingNode')
     .map((node): Mapping =>
-      node.type === 'mappingNode' ? nodeToMapping(nodes, node) : arrayNodeToMapping(nodes, node),
+      node.type === 'mappingNode' ? nodeToMapping(nodes, node) : arrayNodeToMapping(nodes, node as ArrayMappingNode),
     )
 }
 

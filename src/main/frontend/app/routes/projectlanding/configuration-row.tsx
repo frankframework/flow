@@ -1,5 +1,6 @@
 import ArchiveIcon from '/icons/solar/Archive.svg?react'
 import TrashBinIcon from '/icons/solar/Trash Bin.svg?react'
+import type { JSX } from 'react'
 import type { RecentConfigurationProject } from '~/types/project.types'
 import KebabMenu, { type KebabMenuItem } from '~/components/inputs/kebab-menu'
 

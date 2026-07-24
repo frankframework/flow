@@ -1,5 +1,6 @@
+import type { JSX } from 'react'
 import { useShallow } from 'zustand/react/shallow'
-import useTabStore from '~/stores/tab-store'
+import useTabStore, { type TabData } from '~/stores/tab-store'
 import { TabsView } from './tabs'
 
 export default function StudioTabs(): JSX.Element {

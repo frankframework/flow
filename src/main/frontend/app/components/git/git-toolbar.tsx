@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { type JSX, useState } from 'react'
 import clsx from 'clsx'
 import type { GitStatus } from '~/types/git.types'
 import IconButton from '~/components/inputs/icon-button'

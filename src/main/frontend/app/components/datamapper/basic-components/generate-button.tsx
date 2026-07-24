@@ -1,5 +1,6 @@
+import type { JSX } from 'react'
 import Button from '~/components/inputs/button'
-import { showErrorToast, showInfoToast } from '~/components/toast'
+import useToasts from '~/components/toast/use-toasts'
 import { generateDatamapperXSLT } from '~/services/datamapper-service'
 import { useProjectStore } from '~/stores/project-store'
 import type { MappingListConfig } from '~/types/datamapper_types/config-types'
@@ -13,6 +14,7 @@ export default function GenerateButton({
   mappingListConfig: MappingListConfig
 }): JSX.Element {
   const project = useProjectStore.getState().project
+  const { showErrorToast, showInfoToast } = useToasts()
 
   return (
     <Button

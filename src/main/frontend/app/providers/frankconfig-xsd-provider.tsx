@@ -1,7 +1,7 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode, type JSX } from 'react'
+import useToasts from '~/components/toast/use-toasts'
 import { fetchFrankConfigXsd } from '~/services/xsd-service'
 import { parseXsd } from '~/utils/xsd-utils'
-import { logApiWarning } from '~/utils/logger'
 
 type FrankConfigXsdContextValue = {
   xsdContent: string | null
@@ -15,6 +15,7 @@ const FrankConfigXsdContext = createContext<FrankConfigXsdContextValue | null>(n
 export function FrankConfigXsdProvider({ children }: { children: ReactNode }): JSX.Element {
   const [xsdContent, setXsdContent] = useState<string | null>(null)
   const [error, setError] = useState<Error | null>(null)
+  const { logApiWarning } = useToasts()
 
   const load = useCallback((): void => {
     setError(null)
@@ -24,7 +25,7 @@ export function FrankConfigXsdProvider({ children }: { children: ReactNode }): J
         setError(error_ as Error)
         logApiWarning('Failed to load FrankConfig XSD:', error_ as Error)
       })
-  }, [])
+  }, [logApiWarning])
 
   useEffect((): void => {
     load()

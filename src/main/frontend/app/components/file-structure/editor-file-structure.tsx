@@ -1,6 +1,7 @@
 import React, { type JSX, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Search from '~/components/search/search'
 import LoadingSpinner from '~/components/loading-spinner'
+import type { ConfigurationProject } from '~/types/project.types'
 import FolderIcon from '../../../icons/solar/Folder.svg?react'
 import FolderOpenIcon from '../../../icons/solar/Folder Open.svg?react'
 import ListDown from '../../../icons/solar/List Down.svg?react'
@@ -26,7 +27,7 @@ import {
   UncontrolledTreeEnvironment,
 } from 'react-complex-tree'
 
-import useEditorTabStore from '~/stores/editor-tab-store'
+import useEditorTabStore, { type EditorTabData } from '~/stores/editor-tab-store'
 import { useProjectStore } from '~/stores/project-store'
 import { useTreeStore } from '~/stores/tree-store'
 import EditorFilesDataProvider, { type FileNode } from './editor-data-provider'

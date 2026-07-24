@@ -11,6 +11,7 @@ import {
   useStore,
   useUpdateNodeInternals,
 } from '@xyflow/react'
+import useToasts from '~/components/toast/use-toasts'
 import DangerIcon from '../../../../../icons/solar/Danger Triangle.svg?react'
 import { type JSX, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useShallow } from 'zustand/react/shallow'
@@ -30,7 +31,6 @@ import { findChildRecursive } from '~/stores/child-utilities'
 import type { ElementDetails } from '@frankframework/doc-library-core'
 import { getInheritedProperties } from '@frankframework/doc-library-core'
 import { DeprecatedPopover } from './components/deprecated-popover'
-import { showWarningToast } from '~/components/toast'
 import AddSubcomponentModal from '~/components/flow/add-subcomponent-modal'
 import { useFrankConfigXsd } from '~/providers/frankconfig-xsd-provider'
 import {
@@ -92,6 +92,7 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>): JSX.Ele
     draggedName,
     setEditingSubtype,
   } = useNodeContextStore()
+  const { showWarningToast } = useToasts()
   const gradientEnabled = useSettingsStore((state) => state.studio.gradient)
   const zoom = useStore((state) => state.transform[2])
   const isCompact = zoom < FlowConfig.ZOOM_THRESHOLD

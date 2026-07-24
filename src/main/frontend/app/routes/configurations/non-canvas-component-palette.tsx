@@ -1,4 +1,4 @@
-import { useMemo, useState, type ChangeEvent, type DragEvent } from 'react'
+import { useMemo, useState, type ChangeEvent, type DragEvent, type JSX } from 'react'
 import { useFFDoc } from '@frankframework/doc-library-react'
 import Search from '~/components/search/search'
 import LoadingSpinner from '~/components/loading-spinner'

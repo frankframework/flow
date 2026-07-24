@@ -1,4 +1,5 @@
 import RulerCrossPenIcon from '/icons/solar/Ruler Cross Pen.svg?react'
+import type { JSX } from 'react'
 import IconLabelButton from '~/components/inputs/icon-label-button'
 import ComponentRow from './component-row'
 

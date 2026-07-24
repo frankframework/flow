@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from 'react'
+import { type JSX, useEffect, useId, useState } from 'react'
 import clsx from 'clsx'
 import RadioButton, { type RadioButtonProperties } from '~/components/inputs/radio-button'
 import InputWithLabel from '~/components/inputs/input-with-label'

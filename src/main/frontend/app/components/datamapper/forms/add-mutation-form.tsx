@@ -1,4 +1,4 @@
-import { useId, useMemo, useState } from 'react'
+import { type JSX, useId, useMemo, useState } from 'react'
 import mutationConfig from '~/utils/datamapper_utils/config/mutation-config.json'
 import type { Source } from '~/types/datamapper_types/export-types'
 import Input from '~/components/inputs/input'
@@ -9,6 +9,7 @@ import type {
   Mutation,
   MutationInput,
   MutationsConfig,
+  MutationType,
   MutationTypeInput,
 } from '~/types/datamapper_types/function-types'
 import { generateMutationName } from '~/utils/datamapper_utils/function-utils'

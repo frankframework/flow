@@ -1,3 +1,4 @@
+import type { JSX } from 'react'
 import { useNavigate } from 'react-router'
 import FfIcon from '/icons/custom/ff!-icon.svg?react'
 import Button from '~/components/inputs/button'

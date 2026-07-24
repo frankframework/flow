@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import type { JSX } from 'react'
 
 export default function CloseButton({ onClick, className }: { onClick: () => void; className?: string }): JSX.Element {
   return (

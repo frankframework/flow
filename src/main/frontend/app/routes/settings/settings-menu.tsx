@@ -8,7 +8,7 @@ import {
 } from 'react-complex-tree'
 import AltArrowRightIcon from '/icons/solar/Alt Arrow Right.svg?react'
 import AltArrowDownIcon from '/icons/solar/Alt Arrow Down.svg?react'
-import { useRef } from 'react'
+import { type JSX, useRef } from 'react'
 import settingsCategories, { type SettingsMenuItem } from './settings-menu-items'
 import '/styles/editor-files.css'
 import SettingsIcon from '/icons/solar/Settings.svg?react'

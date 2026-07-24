@@ -22,6 +22,7 @@ import SidebarLayout from '~/components/sidebars-layout/sidebar-layout'
 import { SidebarSide } from '~/components/sidebars-layout/sidebar-layout-store'
 import EditorTabs from '~/components/tabs/editor-tabs'
 import { SaveStatusIndicator } from '~/components/save-status-indicator'
+import useToasts from '~/components/toast/use-toasts'
 import { useSaveStatusStore } from '~/stores/save-status-store'
 import { useTheme } from '~/hooks/use-theme'
 import { fetchConfigurationFile, saveConfigurationFile } from '~/services/configuration-file-service'
@@ -31,7 +32,6 @@ import { fetchFrankConfigXsd } from '~/services/xsd-service'
 import useEditorTabStore, { type DiffTabData, type PendingHighlight } from '~/stores/editor-tab-store'
 import { useProjectStore } from '~/stores/project-store'
 import { useSettingsStore } from '~/stores/settings-store'
-import { logApiError } from '~/utils/logger'
 import flowXsd from '../../../src/assets/xsd/FlowConfig.xsd?raw'
 import {
   ADAPTER_GLYPH_SUBTYPE,
@@ -288,6 +288,7 @@ export default function CodeEditor(): JSX.Element {
   const contentCacheReference = useRef<Map<string, CachedFile>>(new Map())
   const syncingValueReference = useRef(false)
   const navigate = useNavigate()
+  const { logApiError } = useToasts()
 
   const [pendingHighlight, setPendingHighlightLocal] = useState<{ subtype: string; name?: string } | null>(
     (): PendingHighlight | null => useEditorTabStore.getState().pendingHighlight,
@@ -416,7 +417,7 @@ export default function CodeEditor(): JSX.Element {
           })
       }
     },
-    [project, activeTabFilePath, isDiffTab, setSaving, setSaved, setIdle],
+    [project, activeTabFilePath, isDiffTab, setSaving, setSaved, logApiError, setIdle],
   )
 
   const flushPendingSave = useCallback((): void => {
@@ -519,7 +520,7 @@ export default function CodeEditor(): JSX.Element {
     } catch (error) {
       logApiError('Failed to reformat XML', error as Error)
     }
-  }, [project, activeTabFilePath])
+  }, [project, activeTabFilePath, logApiError])
 
   const runSchemaValidation = useCallback(
     async (content: string): Promise<void> => {
@@ -795,7 +796,7 @@ export default function CodeEditor(): JSX.Element {
         })
     }
     return (): void => abortController.abort()
-  }, [project, activeTabFilePath, isDiffTab, refreshCounter])
+  }, [project, activeTabFilePath, isDiffTab, refreshCounter, logApiError])
 
   useEffect((): void => {
     if (errorDecorationsReference.current) {

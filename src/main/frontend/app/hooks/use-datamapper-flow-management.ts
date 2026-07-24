@@ -1,6 +1,6 @@
 import type { Edge, Node, ReactFlowInstance, Viewport } from '@xyflow/react'
 import { type Dispatch, type SetStateAction, useEffect, useRef } from 'react'
-import { showErrorToast } from '~/components/toast'
+import useToasts from '~/components/toast/use-toasts'
 import type { MappingListConfig } from '~/types/datamapper_types/config-types'
 import type { FormatDefinition } from '~/types/datamapper_types/data-types'
 import type { CustomNodeData } from '~/types/datamapper_types/react-node-types'
@@ -85,6 +85,7 @@ export function useFlowManagement({
   endCheckForDragScroll: () => void
   addSchematicImportButton: (side: 'source' | 'target') => Promise<void>
 } {
+  const { showErrorToast } = useToasts()
   const sourceIdCounter = useRef(0)
   const targetIdCounter = useRef(0)
   const lastUpdate = useRef(0)
@@ -129,7 +130,8 @@ export function useFlowManagement({
       showErrorToast('Invalid configuration!')
       return
     }
-    const node = generateImportButton(
+
+    return generateImportButton(
       reactFlowInstance.getNodes(),
       fileType,
       side,
@@ -144,7 +146,6 @@ export function useFlowManagement({
       .then((measuredNode): void => {
         repositionForceUpdate(measuredNode)
       })
-    return node
     // reposition after measurement to ensure proper placement/spacing
   }
 
@@ -256,8 +257,7 @@ export function useFlowManagement({
     requestAnimationFrame((): void => {
       requestAnimationFrame((): void => {
         setReactFlowNodes((previous): Node[] => {
-          const newNodes = sequentialReposition(previous, editingNode.parentId!, reactFlowInstance.getNode)
-          return newNodes
+          return sequentialReposition(previous, editingNode.parentId!, reactFlowInstance.getNode)
         })
 
         // Find the parent of the current node and recurse, this is needed to update parents whenever an edit happens

@@ -1,9 +1,9 @@
-import { type Dispatch } from 'react'
+import type { Dispatch, JSX } from 'react'
 import Button from '~/components/inputs/button'
 import Dropdown from '~/components/inputs/dropdown'
 import type { ConfigActions } from '~/stores/datamapper_state/mappingListConfig/reducer'
 import type { MappingListConfig } from '~/types/datamapper_types/config-types'
-import type { DataTypeSchema } from '~/types/datamapper_types/data-types'
+import type { DataTypeSchema, FormatDefinition } from '~/types/datamapper_types/data-types'
 import datatypesJson from '~/utils/datamapper_utils/config/data-types.json'
 
 type InitializeProperties = {

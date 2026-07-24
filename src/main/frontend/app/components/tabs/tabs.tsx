@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react'
+import { type JSX, useCallback, useEffect, useRef } from 'react'
 import Tab from './tab'
 import type { TabData } from '~/stores/tab-store'
 

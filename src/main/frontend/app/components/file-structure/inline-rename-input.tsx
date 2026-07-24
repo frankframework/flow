@@ -1,4 +1,4 @@
-import { JSX } from 'react'
+import type { JSX } from 'react'
 import type { TreeItemIndex } from 'react-complex-tree'
 import Input from '~/components/inputs/input'
 

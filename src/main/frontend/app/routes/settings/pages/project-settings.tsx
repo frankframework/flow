@@ -1,7 +1,9 @@
+import type { JSX } from 'react'
 import { Link } from 'react-router'
 import RoundedToggle from '~/components/inputs/rounded-toggle'
 import { useProjectStore } from '~/stores/project-store'
 import { toggleProjectFilter } from '~/services/project-service'
+import type { ConfigurationProject } from '~/types/project.types'
 
 export default function ProjectSettings(): JSX.Element {
   const project = useProjectStore((state): ConfigurationProject | undefined => state.project)

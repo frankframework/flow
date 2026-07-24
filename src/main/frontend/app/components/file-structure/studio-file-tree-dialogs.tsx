@@ -1,3 +1,4 @@
+import type { JSX } from 'react'
 import StudioContextMenu from './studio-context-menu'
 import NameInputDialog from './name-input-dialog'
 import ConfirmDeleteDialog from './confirm-delete-dialog'

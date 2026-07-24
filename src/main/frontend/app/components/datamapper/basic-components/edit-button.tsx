@@ -1,5 +1,6 @@
 import clsx from 'clsx'
 import TextCircle from '/icons/solar/Text Circle.svg?react'
+import type { JSX } from 'react'
 
 export default function EditButton({ onClick, className }: { onClick: () => void; className?: string }): JSX.Element {
   return (

@@ -1,14 +1,13 @@
 import React, { useCallback, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import type { TreeItemIndex } from 'react-complex-tree'
+import useToasts from '~/components/toast/use-toasts'
 import { createFile, deleteFile, renameFile } from '~/services/file-service'
 import { createFolderInProject } from '~/services/file-tree-service'
 import { clearConfigurationFileCache, createConfigurationFile } from '~/services/configuration-file-service'
 import useTabStore from '~/stores/tab-store'
 import useEditorTabStore from '~/stores/editor-tab-store'
-import { showErrorToast } from '~/components/toast'
 import { FILE_NAME_PATTERNS, FOLDER_OR_ADAPTER_NAME_PATTERNS } from '~/components/file-structure/name-input-dialog'
-import { logApiError } from '~/utils/logger'
 import { openInEditor } from '~/actions/navigationActions'
 
 export type ContextMenuState = {
@@ -92,6 +91,7 @@ export function useFileTreeContextMenu({
   confirmDelete: () => Promise<void>
 } {
   const navigate = useNavigate()
+  const { showErrorToast, logApiError } = useToasts()
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null)
   const [nameDialog, setNameDialog] = useState<NameDialogState | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<DeleteTargetState | null>(null)
@@ -166,7 +166,7 @@ export function useFileTreeContextMenu({
         patterns: FILE_NAME_PATTERNS,
       })
     },
-    [projectName, dataProvider, configurationsRootPath, navigate, closeContextMenu],
+    [projectName, dataProvider, closeContextMenu, configurationsRootPath, showErrorToast, navigate, logApiError],
   )
 
   const handleNewFolder = useCallback(
@@ -192,7 +192,7 @@ export function useFileTreeContextMenu({
         patterns: FOLDER_OR_ADAPTER_NAME_PATTERNS,
       })
     },
-    [projectName, dataProvider, closeContextMenu],
+    [projectName, dataProvider, closeContextMenu, logApiError],
   )
 
   const handleRename = useCallback(
@@ -233,7 +233,7 @@ export function useFileTreeContextMenu({
         patterns: menu.isFolder ? FOLDER_OR_ADAPTER_NAME_PATTERNS : FILE_NAME_PATTERNS,
       })
     },
-    [projectName, dataProvider, onAfterRename, closeContextMenu],
+    [projectName, dataProvider, closeContextMenu, showErrorToast, onAfterRename],
   )
 
   const handleDelete = useCallback(
@@ -266,7 +266,7 @@ export function useFileTreeContextMenu({
 
     await dataProvider.reloadDirectory(deleteTarget.parentItemId)
     setDeleteTarget(null)
-  }, [deleteTarget, projectName, dataProvider, onAfterDelete])
+  }, [deleteTarget, projectName, dataProvider, onAfterDelete, logApiError])
 
   return {
     contextMenu,

@@ -5,6 +5,8 @@ export default function useToasts(): {
   showInfoToast: (message: string, title?: string) => void
   showWarningToast: (message: string, title?: string) => void
   showErrorToast: (message: string, title?: string) => void
+  logApiWarning: (message: string, error: Error) => void
+  logApiError: (message: string, error: Error) => void
 } {
   const { addToast } = useToastStore()
 
@@ -24,10 +26,22 @@ export default function useToasts(): {
     addToast({ type: 'ERROR', title, message })
   }
 
+  function logApiWarning(message: string, error: Error): void {
+    showWarningToast(message)
+    console.warn(message, error)
+  }
+
+  function logApiError(message: string, error: Error): void {
+    showErrorToast(message)
+    console.error(message, error)
+  }
+
   return {
     showSuccessToast,
     showInfoToast,
     showWarningToast,
     showErrorToast,
+    logApiWarning,
+    logApiError,
   }
 }

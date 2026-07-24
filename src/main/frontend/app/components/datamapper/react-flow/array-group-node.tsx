@@ -1,4 +1,5 @@
 import { Handle, Position, useNodeConnections, type Node } from '@xyflow/react'
+import type { JSX } from 'react'
 import type { CustomNodeData } from '~/types/datamapper_types/react-node-types'
 import HighlightButton from '../basic-components/highlight-button'
 import DeleteButton from '../basic-components/delete-button'

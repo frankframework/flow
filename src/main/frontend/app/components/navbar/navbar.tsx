@@ -1,3 +1,4 @@
+import type { JSX } from 'react'
 import NavbarLink from '~/components/navbar/navbar-link'
 import FfIcon from '/icons/custom/ff!-icon.svg?react'
 import ProjectsIcon from '/icons/solar/Widget.svg?react'

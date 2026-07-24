@@ -1,12 +1,13 @@
-import { useEffect, useMemo, useState, type ChangeEvent } from 'react'
+import { useEffect, useMemo, useState, type ChangeEvent, type JSX } from 'react'
 import { useSubmitOnEnter } from '~/hooks/use-submit-on-enter'
+import type { FlowNode } from '~/routes/studio/canvas/flow'
 import useFlowStore from '~/stores/flow-store'
-import useNodeContextStore from '~/stores/node-context-store'
+import useNodeContextStore, { type NodeContextStore } from '~/stores/node-context-store'
 import { useFFDoc } from '@frankframework/doc-library-react'
 import Button from '../inputs/button'
 import CloseButton from '../inputs/close-button'
 import Search from '~/components/search/search'
-import type { Elements, FFDocJson } from '@frankframework/doc-library-core'
+import type { ElementDetails, Elements, FFDocJson } from '@frankframework/doc-library-core'
 
 type CreateNodeModalProperties = {
   onClose: () => void

@@ -8,7 +8,7 @@ import {
 } from 'react-complex-tree'
 import AltArrowRightIcon from '/icons/solar/Alt Arrow Right.svg?react'
 import AltArrowDownIcon from '/icons/solar/Alt Arrow Down.svg?react'
-import { useRef } from 'react'
+import { type JSX, useRef } from 'react'
 import { useNavigate } from 'react-router'
 import helpTopics, { type HelpTopicTreeItem } from './help-topic-tree-items'
 import '/styles/editor-files.css'

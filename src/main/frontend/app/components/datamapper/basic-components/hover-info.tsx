@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import type { JSX } from 'react'
 
 export default function HoverInfo({ className, info }: { className?: string; info: string }): JSX.Element {
   return (

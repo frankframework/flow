@@ -1,4 +1,5 @@
 import { useState, useEffect, type JSX } from 'react'
+import useToasts from '~/components/toast/use-toasts'
 import type {
   FormatDefinition,
   FormatState,
@@ -7,7 +8,6 @@ import type {
   PropertyDefinition,
 } from '~/types/datamapper_types/data-types'
 import type { CustomNodeData, NodeLabels } from '~/types/datamapper_types/react-node-types'
-import { showWarningToast } from '~/components/toast'
 import Input from '~/components/inputs/input'
 import Dropdown from '~/components/inputs/dropdown'
 import Button from '~/components/inputs/button'
@@ -36,6 +36,7 @@ function AddFieldForm({
   const [defaultValueInputType, setDefaultValueInputType] = useState<PropertyBasicTypes>()
   const [availableTypes, setAvailableTypes] = useState<PropertyDefinition[]>([])
   const [isAttribute, setIsAttribute] = useState<boolean>(initialData?.isAttribute || false)
+  const { showWarningToast } = useToasts()
 
   useEffect((): void => {
     const format: FormatDefinition | null = formatDefinition[fieldType]

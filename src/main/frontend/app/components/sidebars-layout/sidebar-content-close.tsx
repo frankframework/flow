@@ -1,6 +1,6 @@
 import SidebarClose, { type SidebarsCloseProperties } from '~/components/sidebars-layout/sidebar-close'
 import { useSidebarStore } from '~/components/sidebars-layout/sidebar-layout-store'
-import { useContext } from 'react'
+import { type JSX, useContext } from 'react'
 import { SidebarContext } from '~/components/sidebars-layout/sidebar-layout'
 
 export default function SidebarContentClose(properties: Readonly<SidebarsCloseProperties>): JSX.Element | null {

@@ -1,3 +1,4 @@
+import type { JSX } from 'react'
 import { type NonCanvasComponent } from '~/services/non-canvas-component-service'
 import ComponentRow from './component-row'
 

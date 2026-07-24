@@ -1,3 +1,4 @@
+import type { JSX } from 'react'
 import ConfigurationRow from '~/routes/projectlanding/configuration-row'
 import type { FFConfiguration } from '~/services/frank-framework-service'
 import type { RecentConfigurationProject } from '~/types/project.types'

@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { type ReactPortal, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { useContextMenuDismiss } from '~/hooks/use-context-menu-dismiss'
 

@@ -32,7 +32,6 @@ import { useShallow } from 'zustand/react/shallow'
 import { FlowConfig } from '~/routes/studio/canvas/flow.config'
 import { getElementTypeFromName } from '~/routes/studio/node-translator-module'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { logApiError } from '~/utils/logger'
 import { NodeContextMenuContext, useNodeContextMenu } from './node-context-menu-context'
 import StickyNoteComponent, { type StickyNote } from '~/routes/studio/canvas/nodetypes/sticky-note'
 import useTabStore, { type TabData } from '~/stores/tab-store'
@@ -205,7 +204,7 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
   const elementsRef = useRef(elements)
   const showNodeContextMenuRef = useRef(showNodeContextMenu)
   const navigate = useNavigate()
-  const { showErrorToast } = useToasts()
+  const { showErrorToast, logApiError } = useToasts()
 
   useEffect(() => {
     elementsRef.current = elements

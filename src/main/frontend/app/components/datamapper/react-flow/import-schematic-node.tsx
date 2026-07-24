@@ -1,4 +1,5 @@
 import { Handle, Position } from '@xyflow/react'
+import useToasts from '~/components/toast/use-toasts'
 
 import { GROUP_WIDTH } from '~/utils/datamapper_utils/constant'
 
@@ -7,7 +8,6 @@ import type { ImportSchematicFunction } from '~/hooks/use-datamapper-flow-manage
 import CodeFile from '/icons/solar/Code File.svg?react'
 import { type JSX, useState } from 'react'
 import clsx from 'clsx'
-import { showErrorToast } from '~/components/toast'
 
 //DataType needed
 export type ImportSchematicNodeprops = {
@@ -21,6 +21,7 @@ export type ImportSchematicNodeprops = {
 function ImportSchematicNode({ data }: ImportSchematicNodeprops): JSX.Element {
   const [isDragging, setIsDragging] = useState(false)
   const [file, setFile] = useState<File | null>(null)
+  const { showErrorToast } = useToasts()
   return (
     <div
       className={clsx(

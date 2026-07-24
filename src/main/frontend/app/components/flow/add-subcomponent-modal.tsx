@@ -3,7 +3,7 @@ import { useSubmitOnEnter } from '~/hooks/use-submit-on-enter'
 import Button from '../inputs/button'
 import Search from '~/components/search/search'
 import type { ElementDetails } from '@frankframework/doc-library-core'
-import { useEffect, useMemo, useState, type ChangeEvent } from 'react'
+import { useEffect, useMemo, useState, type ChangeEvent, type ReactPortal, type JSX } from 'react'
 
 type AddSubcomponentModalProperties = {
   onClose: () => void

@@ -1,3 +1,4 @@
+import type { ReactPortal } from 'react'
 import { createPortal } from 'react-dom'
 
 export type DeprecatedInfo = {

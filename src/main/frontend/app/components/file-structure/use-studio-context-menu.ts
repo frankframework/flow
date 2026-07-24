@@ -1,12 +1,12 @@
 import React, { useCallback, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import type { TreeItemIndex } from 'react-complex-tree'
+import useToasts from '~/components/toast/use-toasts'
 import { deleteFile, renameFile } from '~/services/file-service'
 import { createFolderInProject } from '~/services/file-tree-service'
 import { createAdapter, renameAdapter, deleteAdapter } from '~/services/adapter-service'
 import { clearConfigurationFileCache, createConfigurationFile } from '~/services/configuration-file-service'
 import useTabStore from '~/stores/tab-store'
-import { logApiError } from '~/utils/logger'
 import type { StudioItemData, StudioFolderData, StudioAdapterData } from './studio-files-data-provider'
 import {
   CONFIGURATION_NAME_PATTERNS,
@@ -137,6 +137,7 @@ export function useStudioContextMenu({ projectName, dataProvider }: UseStudioCon
   confirmDelete: () => Promise<void>
 } {
   const navigate = useNavigate()
+  const { logApiError } = useToasts()
   const [contextMenu, setContextMenu] = useState<StudioContextMenuState | null>(null)
   const [nameDialog, setNameDialog] = useState<NameDialogState | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<DeleteTargetState | null>(null)
@@ -206,7 +207,7 @@ export function useStudioContextMenu({ projectName, dataProvider }: UseStudioCon
         patterns: CONFIGURATION_NAME_PATTERNS,
       })
     },
-    [projectName, dataProvider, navigate, closeContextMenu],
+    [projectName, dataProvider, closeContextMenu, navigate, logApiError],
   )
 
   const handleNewAdapter = useCallback(
@@ -232,7 +233,7 @@ export function useStudioContextMenu({ projectName, dataProvider }: UseStudioCon
         patterns: FOLDER_OR_ADAPTER_NAME_PATTERNS,
       })
     },
-    [projectName, dataProvider, navigate, closeContextMenu],
+    [projectName, dataProvider, closeContextMenu, navigate, logApiError],
   )
 
   const handleNewFolder = useCallback(
@@ -256,7 +257,7 @@ export function useStudioContextMenu({ projectName, dataProvider }: UseStudioCon
         patterns: FOLDER_OR_ADAPTER_NAME_PATTERNS,
       })
     },
-    [projectName, dataProvider, closeContextMenu],
+    [projectName, dataProvider, closeContextMenu, logApiError],
   )
 
   const handleRename = useCallback(
@@ -295,7 +296,7 @@ export function useStudioContextMenu({ projectName, dataProvider }: UseStudioCon
         patterns: getRenamePatterns(menu.itemType),
       })
     },
-    [projectName, dataProvider, closeContextMenu],
+    [projectName, dataProvider, closeContextMenu, logApiError],
   )
 
   const handleDelete = useCallback(
@@ -329,7 +330,7 @@ export function useStudioContextMenu({ projectName, dataProvider }: UseStudioCon
     }
     await dataProvider.reloadDirectory('root')
     setDeleteTarget(null)
-  }, [deleteTarget, projectName, dataProvider])
+  }, [deleteTarget, projectName, dataProvider, logApiError])
 
   return {
     contextMenu,

@@ -1,4 +1,5 @@
 import { Handle, Position } from '@xyflow/react'
+import type { JSX } from 'react'
 import type { MappingNodeData } from '~/types/datamapper_types/react-node-types'
 import DeleteButton from '../basic-components/delete-button'
 import EditButton from '../basic-components/edit-button'

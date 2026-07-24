@@ -1,4 +1,5 @@
 import '/styles/markdown.css'
+import type { JSX } from 'react'
 import { useParams } from 'react-router'
 import HelpTopicTreeItems, { type HelpTopicTreeItem } from './help-topic-tree-items'
 import SidebarContentClose from '~/components/sidebars-layout/sidebar-content-close'

@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { useSaveStatusStore } from '~/stores/save-status-store'
+import { type JSX, useEffect, useState } from 'react'
+import { type SaveStatus, useSaveStatusStore } from '~/stores/save-status-store'
 import CloudIcon from '/icons/solar/Cloud.svg?react'
 
 function getTimeAgo(date: Date): string {

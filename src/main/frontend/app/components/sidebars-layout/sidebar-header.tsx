@@ -1,3 +1,4 @@
+import type { JSX } from 'react'
 import SidebarClose, { type SidebarsCloseProperties } from '~/components/sidebars-layout/sidebar-close'
 import { SidebarSide } from '~/components/sidebars-layout/sidebar-layout-store'
 import clsx from 'clsx'

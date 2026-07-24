@@ -12,7 +12,6 @@ import {
   refreshOpenDiffs,
 } from '~/services/git-service'
 import useEditorTabStore from '~/stores/editor-tab-store'
-import { logApiError } from '~/utils/logger'
 import GitToolbar from './git-toolbar'
 import GitChanges from './git-changes'
 import GitCommitBox from './git-commit-box'
@@ -40,7 +39,7 @@ export default function GitPanel({ projectName, hasStoredToken }: GitPanelProper
     setIsLoading,
     setToken,
   } = useGitStore()
-  const { showSuccessToast, showInfoToast, showErrorToast } = useToasts()
+  const { showSuccessToast, showInfoToast, showErrorToast, logApiError } = useToasts()
 
   const refreshStatus = useCallback(
     async (showToast = false): Promise<void> => {
@@ -53,7 +52,7 @@ export default function GitPanel({ projectName, hasStoredToken }: GitPanelProper
         if (showToast) showErrorToast('Failed to refresh status')
       }
     },
-    [projectName, setStatus, showErrorToast, showInfoToast],
+    [logApiError, projectName, setStatus, showErrorToast, showInfoToast],
   )
 
   useEffect((): void => {
@@ -87,7 +86,7 @@ export default function GitPanel({ projectName, hasStoredToken }: GitPanelProper
         logApiError('Failed to load diff', error as Error)
       }
     },
-    [projectName, setSelectedFile, setFileDiff, initFileHunks],
+    [setSelectedFile, projectName, setFileDiff, initFileHunks, logApiError],
   )
 
   const handleToggleFile = useCallback(
@@ -154,7 +153,16 @@ export default function GitPanel({ projectName, hasStoredToken }: GitPanelProper
     } finally {
       setIsLoading(false)
     }
-  }, [commitMessage, setIsLoading, projectName, setCommitMessage, refreshStatus, showSuccessToast, clearFileHunks])
+  }, [
+    commitMessage,
+    setIsLoading,
+    projectName,
+    setCommitMessage,
+    refreshStatus,
+    showSuccessToast,
+    clearFileHunks,
+    logApiError,
+  ])
 
   const handlePush = useCallback(async (): Promise<void> => {
     if ((status?.ahead ?? 0) === 0) {
@@ -172,7 +180,7 @@ export default function GitPanel({ projectName, hasStoredToken }: GitPanelProper
     } catch (error) {
       logApiError('Failed to push', error as Error)
     }
-  }, [status?.ahead, showInfoToast, projectName, token, refreshStatus, showSuccessToast, showErrorToast])
+  }, [status?.ahead, showInfoToast, projectName, token, refreshStatus, showSuccessToast, showErrorToast, logApiError])
 
   const handlePull = useCallback(async (): Promise<void> => {
     try {
@@ -193,7 +201,7 @@ export default function GitPanel({ projectName, hasStoredToken }: GitPanelProper
     } catch (error) {
       logApiError('Failed to pull', error as Error)
     }
-  }, [projectName, token, refreshStatus, showInfoToast, showSuccessToast, showErrorToast])
+  }, [projectName, token, refreshStatus, showInfoToast, showSuccessToast, showErrorToast, logApiError])
 
   const hasSelectedChunks = Object.values(fileHunkStates).some(
     (state): boolean => state.selectedHunks.size > 0 || (state.totalHunks === 0 && state.selected),

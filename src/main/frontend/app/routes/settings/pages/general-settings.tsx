@@ -1,3 +1,4 @@
+import type { JSX } from 'react'
 import { type GeneralSettings as GeneralSettingsType, useSettingsStore } from '../../../stores/settings-store'
 import InputWithLabel from '~/components/inputs/input-with-label'
 import RadioList from '~/components/inputs/radio-list'

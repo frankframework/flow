@@ -1,4 +1,4 @@
-import type { Dispatch, RefObject, SetStateAction } from 'react'
+import type { Dispatch, JSX, RefObject, SetStateAction } from 'react'
 import OneEdgeNode, { type OneEdgeNodeProperties } from './one-edge-node'
 import LabeledGroupNode, { type LabeledGroupNodeProperties } from './labeled-group-node'
 import MappingNode, { type MappingNodeProperties } from './mapping-node'

@@ -1,11 +1,11 @@
 import '~/utils/monaco-setup'
 import * as monaco from 'monaco-editor'
 import { useShallow } from 'zustand/react/shallow'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { type JSX, useEffect, useMemo, useRef, useState } from 'react'
 import { useTheme } from '~/hooks/use-theme'
 import { useGitStore } from '~/stores/git-store'
 import type { DiffTabData } from '~/stores/editor-tab-store'
-import type { GitHunk } from '~/types/git.types'
+import type { FileHunkState, GitHunk } from '~/types/git.types'
 import Checkbox from '~/components/inputs/checkbox'
 
 type CodeEditor = monaco.editor.IStandaloneCodeEditor

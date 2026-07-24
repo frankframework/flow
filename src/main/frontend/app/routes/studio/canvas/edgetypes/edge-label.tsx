@@ -1,3 +1,4 @@
+import type { JSX } from 'react'
 import type { Point } from '~/utils/edge-label-utils'
 
 type EdgeLabelProperties = {

@@ -1,3 +1,4 @@
+import type { FunctionComponent, SVGProps } from 'react'
 import CodeIcon from '../../../icons/solar/Code.svg?react'
 import JavaIcon from '../../../icons/solar/Cup Hot.svg?react'
 import MessageIcon from '../../../icons/solar/Chat Dots.svg?react'

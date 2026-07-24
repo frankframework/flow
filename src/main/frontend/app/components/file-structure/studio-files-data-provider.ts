@@ -1,5 +1,4 @@
 import type { TreeItemIndex } from 'react-complex-tree'
-import { logApiError } from '~/utils/logger'
 import { sortChildren, getAncestorIds } from './tree-utilities'
 import { fetchProjectTree, fetchStudioDirectoryByPath, fetchAncestorPath } from '~/services/file-tree-service'
 import type { FileTreeNode } from '~/types/filesystem.types'
@@ -78,7 +77,7 @@ export default class StudioFilesDataProvider extends BaseFilesDataProvider<Studi
       this.loadedDirectories.add(path)
       this.notifyListeners([itemId])
     } catch (error) {
-      logApiError(`Failed to load directory for ${path}`, error as Error)
+      console.error(`Failed to load directory for ${path}`, error as Error)
     }
   }
 

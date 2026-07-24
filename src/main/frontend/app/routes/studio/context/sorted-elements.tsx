@@ -1,6 +1,7 @@
 import React, { useCallback, useRef, useState } from 'react'
 import ArrowDownIcon from 'icons/solar/Alt Arrow Down.svg?react'
 import ArrowRightIcon from 'icons/solar/Alt Arrow Right.svg?react'
+import useToasts from '~/components/toast/use-toasts'
 import { type NodeContextStore } from '~/stores/node-context-store'
 import { useSettingsStore } from '~/stores/settings-store'
 import useNodeContextStore from '~/stores/node-context-store'
@@ -9,7 +10,6 @@ import { getElementTypeFromName } from '../node-translator-module'
 import DangerIcon from '../../../../icons/solar/Danger Triangle.svg?react'
 import { DeprecatedListPopover, type DeprecatedInfo } from './deprecated-list-popover'
 import ElementHoverCard from './element-hover-card'
-import { showWarningToast } from '~/components/toast'
 import Button from '~/components/inputs/button'
 
 type Properties = {
@@ -41,6 +41,7 @@ export default function SortedElements({
   const lockedElementReference = useRef<ElementDetails | null>(null)
   lockedElementReference.current = lockedElement
   const closeTimeoutReference = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const { showWarningToast } = useToasts()
 
   const cancelClose = useCallback((): void => {
     if (closeTimeoutReference.current === null) {

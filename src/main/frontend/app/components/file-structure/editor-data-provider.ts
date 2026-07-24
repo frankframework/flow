@@ -1,7 +1,6 @@
 import type { TreeItem, TreeItemIndex } from 'react-complex-tree'
 import type { FileTreeNode } from '~/types/filesystem.types'
 import { fetchProjectRootTree, fetchEditorDirectoryByPath } from '~/services/file-tree-service'
-import { logApiError } from '~/utils/logger'
 import { sortChildren } from './tree-utilities'
 import type { DataProviderLike } from './use-file-tree-context-menu'
 import { BaseFilesDataProvider } from './base-files-data-provider'
@@ -49,7 +48,7 @@ export default class EditorFilesDataProvider extends BaseFilesDataProvider<FileN
       this.loadedDirectories.add(item.data.path)
       this.notifyListeners([itemId])
     } catch (error) {
-      logApiError('Failed to load directory', error as Error)
+      console.error('Failed to load directory', error as Error)
     }
   }
 
@@ -127,7 +126,7 @@ export default class EditorFilesDataProvider extends BaseFilesDataProvider<FileN
       this.loadedDirectories.add(tree.path)
       this.notifyListeners(['root'])
     } catch (error) {
-      logApiError('Unexpected error loading project file tree', error as Error)
+      console.error('Unexpected error loading project file tree', error as Error)
       this.data = {}
       this.notifyListeners(['root'])
     }

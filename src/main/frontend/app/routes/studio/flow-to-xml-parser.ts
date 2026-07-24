@@ -44,17 +44,17 @@ export async function exportFlowToXml(
   const adapterAttributes = getAdapterAttributes(adapterXml)
 
   const { nodes, edges } = json
-  const validNodes = nodes.filter((node): boolean => hasDataProperty(node))
+  const validNodes = nodes.filter((node) => hasDataProperty(node))
   const nodeMap = new Map(validNodes.map((n): [string, FlowNode & { data: NodeData }] => [n.id, n]))
 
   const { outgoing, incoming, edgeMap } = buildEdgeMaps(edges)
 
-  const receiverNodes = validNodes.filter((n) => n.data.type?.toLowerCase() === 'receiver')
-  const startNodes = receiverNodes.filter((n) => !Object.hasOwn(incoming, n.id))
+  const receiverNodes = validNodes.filter((node) => node.data.type?.toLowerCase() === 'receiver')
+  const startNodes = receiverNodes.filter((node) => !Object.hasOwn(incoming, node.id))
   let sortedIds: string[]
   if (startNodes.length > 0) {
     sortedIds = topologicalSort(
-      startNodes.map((n): string => n.id),
+      startNodes.map((node): string => node.id),
       outgoing,
     )
 
@@ -65,8 +65,8 @@ export async function exportFlowToXml(
     sortedIds = validNodes.map((node): string => node.id)
   }
 
-  const exitNodes = validNodes.filter((n): boolean => n.data.type?.toLowerCase() === 'exit')
-  new Set(exitNodes.map((n): string => n.id))
+  const exitNodes = validNodes.filter((node): boolean => node.data.type?.toLowerCase() === 'exit')
+  new Set(exitNodes.map((node): string => node.id))
   const receivers: string[] = []
   const pipelineParts: string[] = []
 
@@ -286,8 +286,8 @@ function generateExitsXml(exitNodes: FlowNode[]): string {
 }
 
 function generateFlowElementsXml(nodes: FlowNode[]): string {
-  const stickyNotes = nodes.filter((node): boolean => isStickyNote(node))
-  const groupNodes = nodes.filter((node): boolean => isGroupNode(node))
+  const stickyNotes = nodes.filter((node) => isStickyNote(node))
+  const groupNodes = nodes.filter((node) => isGroupNode(node))
 
   const groupChildrenMap = new Map<string, FlowNode[]>()
 

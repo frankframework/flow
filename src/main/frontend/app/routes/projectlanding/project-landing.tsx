@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router'
 import FfIcon from '/icons/custom/ff!-icon.svg?react'
+import useToasts from '~/components/toast/use-toasts'
 import ProjectList from '~/routes/projectlanding/project-list'
 import Sidebar from '~/routes/projectlanding/sidebar'
 import Toolbar from '~/routes/projectlanding/toolbar'
@@ -8,7 +9,6 @@ import { fetchInstanceConfigurations, type FFConfiguration } from '~/services/fr
 import { useProjectStore } from '~/stores/project-store'
 import type { ConfigurationProject } from '~/types/project.types'
 import { ApiError } from '~/utils/api'
-import { logApiError } from '~/utils/logger'
 import { getParentPath, normalizePath } from '~/utils/path-utils'
 
 import NewConfigurationModal from './new-configuration-modal'
@@ -28,7 +28,6 @@ import {
   openProject,
 } from '~/services/project-service'
 import { useRecentProjects } from '~/hooks/use-projects'
-import { showErrorToast, showWarningToast } from '~/components/toast'
 
 export default function ProjectLanding(): React.JSX.Element {
   const navigate = useNavigate()
@@ -37,6 +36,7 @@ export default function ProjectLanding(): React.JSX.Element {
   const clearTabsState = useTabStore((state): (() => void) => state.clearTabs)
   const clearEditorTabsState = useEditorTabStore((state): (() => void) => state.clearTabs)
   const setProject = useProjectStore((state): ((project: ConfigurationProject) => void) => state.setProject)
+  const { showErrorToast, showWarningToast, logApiError } = useToasts()
 
   const [searchTerm, setSearchTerm] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -67,13 +67,13 @@ export default function ProjectLanding(): React.JSX.Element {
       .catch((_): void => {
         showErrorToast('Failed to fetch environment info, defaulting to local mode.')
       })
-  }, [])
+  }, [showErrorToast])
 
   useEffect((): void => {
     if (apiError) {
       showErrorToast(`Could not load in projects: ${apiError.message}`)
     }
-  }, [apiError])
+  }, [apiError, showErrorToast])
 
   useEffect((): (() => void) | undefined => {
     if (!isLocalEnvironment) return
@@ -98,7 +98,7 @@ export default function ProjectLanding(): React.JSX.Element {
     return (): void => {
       clearInterval(interval)
     }
-  }, [isLocalEnvironment])
+  }, [isLocalEnvironment, logApiError])
 
   const openProjectAndNavigate = useCallback(
     (project: ConfigurationProject): void => {
@@ -120,7 +120,7 @@ export default function ProjectLanding(): React.JSX.Element {
         setIsOpeningProject(false)
       }
     },
-    [openProjectAndNavigate],
+    [openProjectAndNavigate, showErrorToast],
   )
 
   if (isLoading || isOpeningProject) return <LoadingState />

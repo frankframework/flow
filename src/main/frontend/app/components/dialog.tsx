@@ -1,4 +1,4 @@
-import { type MouseEvent, type ReactNode } from 'react'
+import { type MouseEvent, type ReactNode, type ReactPortal } from 'react'
 import { createPortal } from 'react-dom'
 import CloseButton from '~/components/inputs/close-button'
 

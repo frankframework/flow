@@ -1,10 +1,10 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from 'vitest'
 
-const { navigateMock } = vi.hoisted((): { navigateMock: Mock<Procedure> } => ({ navigateMock: vi.fn() }))
+const { navigateMock } = vi.hoisted((): { navigateMock: Mock } => ({ navigateMock: vi.fn() }))
 
-vi.mock('react-router', (): { useNavigate: () => Mock<Procedure> } => ({
-  useNavigate: (): Mock<Procedure> => navigateMock,
+vi.mock('react-router', (): { useNavigate: () => Mock } => ({
+  useNavigate: (): Mock => navigateMock,
 }))
 vi.mock('/icons/custom/ff!-icon.svg?react', (): { default: () => null } => ({ default: (): null => null }))
 

@@ -243,7 +243,7 @@ function PropertyList({ config, configDispatch }: PropertyListProperties): JSX.E
 
   const onEdgesChange = useCallback(
     (changes: EdgeChange[]): void =>
-      setEdges((edges): EdgeBase[] => {
+      setEdges((edges) => {
         return applyEdgeChanges(changes, edges)
       }),
     [],

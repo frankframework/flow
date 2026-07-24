@@ -1,4 +1,4 @@
-import { useMemo, useState, type ChangeEvent } from 'react'
+import { useMemo, useState, type ChangeEvent, type JSX } from 'react'
 import { useFFDoc } from '@frankframework/doc-library-react'
 import Button from '~/components/inputs/button'
 import Dialog from '~/components/dialog'

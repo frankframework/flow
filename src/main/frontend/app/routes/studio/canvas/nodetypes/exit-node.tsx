@@ -7,7 +7,7 @@ import {
   useStore,
   useUpdateNodeInternals,
 } from '@xyflow/react'
-import { useEffect } from 'react'
+import { type JSX, useEffect } from 'react'
 import { ResizeIcon } from '~/routes/studio/canvas/nodetypes/frank-node'
 import { FlowConfig } from '~/routes/studio/canvas/flow.config'
 import { useSettingsStore } from '~/stores/settings-store'

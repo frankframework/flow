@@ -1,6 +1,6 @@
 import Checkbox, { type CheckboxProperties } from '~/components/inputs/checkbox'
 import InputWithLabel from '~/components/inputs/input-with-label'
-import { useId } from 'react'
+import { type JSX, useId } from 'react'
 
 type CheckboxWithLabelProperties = {
   id?: string
