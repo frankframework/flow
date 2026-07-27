@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router'
 import FfIcon from '/icons/custom/ff!-icon.svg?react'
+import useToasts from '~/components/toast/use-toasts'
 import ProjectList from '~/routes/projectlanding/project-list'
 import Sidebar from '~/routes/projectlanding/sidebar'
 import Toolbar from '~/routes/projectlanding/toolbar'
@@ -8,7 +9,6 @@ import { fetchInstanceConfigurations, type FFConfiguration } from '~/services/fr
 import { useProjectStore } from '~/stores/project-store'
 import type { ConfigurationProject } from '~/types/project.types'
 import { ApiError } from '~/utils/api'
-import { logApiError } from '~/utils/logger'
 import { getParentPath, normalizePath } from '~/utils/path-utils'
 
 import NewConfigurationModal from './new-configuration-modal'
@@ -28,15 +28,15 @@ import {
   openProject,
 } from '~/services/project-service'
 import { useRecentProjects } from '~/hooks/use-projects'
-import { showErrorToast, showWarningToast } from '~/components/toast'
 
-export default function ProjectLanding() {
+export default function ProjectLanding(): React.JSX.Element {
   const navigate = useNavigate()
   const { data: recentProjects, isLoading, error: apiError, refetch } = useRecentProjects()
-  const clearProjectState = useProjectStore((state) => state.clearProject)
-  const clearTabsState = useTabStore((state) => state.clearTabs)
-  const clearEditorTabsState = useEditorTabStore((state) => state.clearTabs)
-  const setProject = useProjectStore((state) => state.setProject)
+  const clearProjectState = useProjectStore((state): (() => void) => state.clearProject)
+  const clearTabsState = useTabStore((state): (() => void) => state.clearTabs)
+  const clearEditorTabsState = useEditorTabStore((state): (() => void) => state.clearTabs)
+  const setProject = useProjectStore((state): ((project: ConfigurationProject) => void) => state.setProject)
+  const { showErrorToast, showWarningToast, logApiError } = useToasts()
 
   const [searchTerm, setSearchTerm] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -49,59 +49,59 @@ export default function ProjectLanding() {
   const [ffConfiguration, setFFConfiguration] = useState<FFConfiguration[]>([])
   const [ffInstanceName, setFFInstanceName] = useState('')
   const [maxImportBytes, setMaxImportBytes] = useState(DEFAULT_MAX_IMPORT_BYTES)
-  const importInputRef = useRef<HTMLInputElement>(null)
+  const importInputReference = useRef<HTMLInputElement>(null)
 
-  useEffect(() => {
+  useEffect((): void => {
     clearProjectState()
     clearEditorTabsState()
     clearTabsState()
   }, [clearEditorTabsState, clearProjectState, clearTabsState])
 
-  useEffect(() => {
+  useEffect((): void => {
     fetchAppInfo()
-      .then((info) => {
+      .then((info): void => {
         setIsLocalEnvironment(info.isLocal)
         setRootLocationName(info.isLocal ? 'Computer' : 'Cloud Workspace')
         setMaxImportBytes(info.maxImportSize)
       })
-      .catch((_) => {
+      .catch((_): void => {
         showErrorToast('Failed to fetch environment info, defaulting to local mode.')
       })
-  }, [])
+  }, [showErrorToast])
 
-  useEffect(() => {
+  useEffect((): void => {
     if (apiError) {
       showErrorToast(`Could not load in projects: ${apiError.message}`)
     }
-  }, [apiError])
+  }, [apiError, showErrorToast])
 
-  useEffect(() => {
+  useEffect((): (() => void) | undefined => {
     if (!isLocalEnvironment) return
 
-    const discover = () => {
+    const discover = (): void => {
       setIsDiscovering(true)
       fetchInstanceConfigurations()
-        .then((ffInstance) => {
+        .then((ffInstance): void => {
           setFFInstanceName(ffInstance.name)
           setFFConfiguration(ffInstance.configurations)
         })
-        .catch((error) => {
+        .catch((error): void => {
           if (error instanceof ApiError && error.httpCode === 404) return
           logApiError(error.message, error)
         })
-        .finally(() => setIsDiscovering(false))
+        .finally((): void => setIsDiscovering(false))
     }
 
     discover()
     const interval = setInterval(discover, 60_000)
 
-    return () => {
+    return (): void => {
       clearInterval(interval)
     }
-  }, [isLocalEnvironment])
+  }, [isLocalEnvironment, logApiError])
 
   const openProjectAndNavigate = useCallback(
-    (project: ConfigurationProject) => {
+    (project: ConfigurationProject): void => {
       setProject(project)
       navigate(`/configurations`)
     },
@@ -109,7 +109,7 @@ export default function ProjectLanding() {
   )
 
   const handleOpenProject = useCallback(
-    async (rootPath: string) => {
+    async (rootPath: string): Promise<void> => {
       setIsOpeningProject(true)
       try {
         const project = await openProject(rootPath)
@@ -120,15 +120,23 @@ export default function ProjectLanding() {
         setIsOpeningProject(false)
       }
     },
-    [openProjectAndNavigate],
+    [openProjectAndNavigate, showErrorToast],
   )
 
-  const onOpenFolder = async (selectedPath: string) => {
+  if (isLoading || isOpeningProject) return <LoadingState />
+
+  const projects = recentProjects ?? []
+  const filteredProjects = projects.filter((project): boolean =>
+    project.name.toLowerCase().includes(searchTerm.toLowerCase()),
+  )
+  const lastRecentRootPath = normalizePath(projects[0]?.rootPath ?? '')
+
+  const onOpenFolder = async (selectedPath: string): Promise<void> => {
     setIsDirectoryPickerOpen(false)
     await handleOpenProject(selectedPath)
   }
 
-  const onCreateProject = async (name: string, rootPath: string) => {
+  const onCreateProject = async (name: string, rootPath: string): Promise<void> => {
     setIsOpeningProject(true)
     try {
       const project = await createProject(name, rootPath)
@@ -141,7 +149,7 @@ export default function ProjectLanding() {
     }
   }
 
-  const onCloneProject = async (repoUrl: string, localPath: string, token?: string) => {
+  const onCloneProject = async (repoUrl: string, localPath: string, token?: string): Promise<void> => {
     setIsOpeningProject(true)
     try {
       const project = await cloneProject(repoUrl, localPath, token)
@@ -154,7 +162,7 @@ export default function ProjectLanding() {
     }
   }
 
-  const onRemoveProject = async (rootPath: string) => {
+  const onRemoveProject = async (rootPath: string): Promise<void> => {
     try {
       await removeRecentProject(rootPath)
       refetch()
@@ -163,8 +171,7 @@ export default function ProjectLanding() {
     }
   }
 
-  // eslint-disable-next-line unicorn/consistent-function-scoping
-  const onExportProject = async (projectName: string) => {
+  const onExportProject = async (projectName: string): Promise<void> => {
     try {
       await exportProject(projectName)
     } catch (error) {
@@ -172,8 +179,8 @@ export default function ProjectLanding() {
     }
   }
 
-  const handleImportFolderChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files
+  const handleImportFolderChange = async (error: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
+    const files = error.target.files
     if (!files || files.length === 0) return
 
     setIsOpeningProject(true)
@@ -202,17 +209,10 @@ export default function ProjectLanding() {
       setIsOpeningProject(false)
     }
 
-    if (importInputRef.current) {
-      importInputRef.current.value = ''
+    if (importInputReference.current) {
+      importInputReference.current.value = ''
     }
   }
-
-  const projects = recentProjects ?? []
-  const filteredProjects = projects.filter((project) => project.name.toLowerCase().includes(searchTerm.toLowerCase()))
-
-  const lastRecentRootPath = normalizePath(projects[0]?.rootPath ?? '')
-
-  if (isLoading || isOpeningProject) return <LoadingState />
 
   return (
     <div className="bg-backdrop flex min-h-screen w-full flex-col items-center justify-center pt-8 pb-48">
@@ -224,10 +224,10 @@ export default function ProjectLanding() {
         <div className="flex flex-1 overflow-hidden">
           <Sidebar
             isLocal={isLocalEnvironment}
-            onNewClick={() => setIsModalOpen(true)}
-            onOpenClick={() => setIsDirectoryPickerOpen(true)}
-            onCloneClick={() => setIsCloneModalOpen(true)}
-            onImportClick={() => importInputRef.current?.click()}
+            onNewClick={(): void => setIsModalOpen(true)}
+            onOpenClick={(): void => setIsDirectoryPickerOpen(true)}
+            onCloneClick={(): void => setIsCloneModalOpen(true)}
+            onImportClick={(): void | undefined => importInputReference.current?.click()}
           />
           <ProjectList
             projects={filteredProjects}
@@ -251,7 +251,7 @@ export default function ProjectLanding() {
 
       {isModalOpen && (
         <NewConfigurationModal
-          onClose={() => setIsModalOpen(false)}
+          onClose={(): void => setIsModalOpen(false)}
           onCreate={onCreateProject}
           isLocal={isLocalEnvironment}
           initialPath={getParentPath(lastRecentRootPath)}
@@ -260,14 +260,14 @@ export default function ProjectLanding() {
       {isCloneModalOpen && (
         <CloneConfigurationModal
           isLocal={isLocalEnvironment}
-          onClose={() => setIsCloneModalOpen(false)}
+          onClose={(): void => setIsCloneModalOpen(false)}
           onClone={onCloneProject}
           initialPath={getParentPath(lastRecentRootPath)}
         />
       )}
       {!isLocalEnvironment && (
         <input
-          ref={importInputRef}
+          ref={importInputReference}
           type="file"
           /* @ts-expect-error webkitdirectory is a non-standard but widely supported attribute */
           webkitdirectory=""
@@ -279,7 +279,7 @@ export default function ProjectLanding() {
       {isDirectoryPickerOpen && (
         <DirectoryPicker
           onSelect={onOpenFolder}
-          onCancel={() => setIsDirectoryPickerOpen(false)}
+          onCancel={(): void => setIsDirectoryPickerOpen(false)}
           rootLabel={rootLocationName}
           initialPath={getParentPath(lastRecentRootPath)}
         />
@@ -288,7 +288,7 @@ export default function ProjectLanding() {
   )
 }
 
-const Header = () => (
+const Header = (): React.JSX.Element => (
   <header className="mb-4 flex w-full max-w-5xl lg:w-3/4">
     <div className="flex w-1/4 min-w-50 items-center gap-3 px-4">
       <FfIcon className="h-10 w-auto" />
@@ -297,7 +297,7 @@ const Header = () => (
   </header>
 )
 
-const LoadingState = () => (
+const LoadingState = (): React.JSX.Element => (
   <div className="text-foreground-muted flex h-screen w-full items-center justify-center">
     Initializing workspace...
   </div>

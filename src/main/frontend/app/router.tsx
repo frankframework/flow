@@ -1,3 +1,4 @@
+import type { JSX } from 'react'
 import { createBrowserRouter, isRouteErrorResponse, useRouteError } from 'react-router'
 import ConfigurationOverview from '~/routes/configurations/configuration-overview'
 import CodeEditor from '~/routes/editor/editor'
@@ -8,7 +9,7 @@ import Studio from '~/routes/studio/studio'
 import ProjectLanding from './routes/projectlanding/project-landing'
 import AppLayout from './routes/app-layout'
 
-function RootErrorBoundary() {
+function RootErrorBoundary(): JSX.Element {
   const error = useRouteError()
 
   if (isRouteErrorResponse(error) && error.status === 404) {

@@ -15,7 +15,7 @@ export default function InputWithLabel({
   inputSide = 'left',
   grow = false,
   children,
-}: React.PropsWithChildren<Readonly<InputWithLabelProperties>>) {
+}: React.PropsWithChildren<Readonly<InputWithLabelProperties>>): React.JSX.Element {
   const isLeft = inputSide === 'left'
   return (
     <div className="flex items-center gap-4">

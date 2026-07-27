@@ -1,7 +1,7 @@
-import { useId } from 'react'
+import { type JSX, useId } from 'react'
 import clsx from 'clsx'
+import useToasts from '~/components/toast/use-toasts'
 import Button from '../../inputs/button'
-import { showErrorToast } from '../../toast'
 
 type ImportButtonProperties = {
   fileType: string
@@ -11,8 +11,9 @@ type ImportButtonProperties = {
 }
 
 // Generic import button with visual feedback for uploaded files
-function ImportButton({ fileType, importFunc, file, setFile }: ImportButtonProperties) {
+function ImportButton({ fileType, importFunc, file, setFile }: ImportButtonProperties): JSX.Element {
   const inputId = `UploadImportButton${useId()}`
+  const { showErrorToast } = useToasts()
 
   return (
     <div className="flex w-full flex-col items-center gap-1">
@@ -39,13 +40,13 @@ function ImportButton({ fileType, importFunc, file, setFile }: ImportButtonPrope
         type="file"
         accept={fileType}
         className="hidden"
-        onChange={(event) => setFile(event.target.files?.[0] || null)}
+        onChange={(event): void => setFile(event.target.files?.[0] || null)}
       />
       {
         <Button
           className="m-3 w-full"
           disabled={!file}
-          onClick={() => {
+          onClick={(): void => {
             if (file) importFunc(file)
             else showErrorToast('import file failed')
           }}

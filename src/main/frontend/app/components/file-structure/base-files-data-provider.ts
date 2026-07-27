@@ -5,8 +5,6 @@ export abstract class BaseFilesDataProvider<TData = unknown> implements TreeData
   protected readonly treeChangeListeners: ((changedItemIds: TreeItemIndex[]) => void)[] = []
   protected loadedDirectories = new Set<string>()
 
-  public abstract loadDirectory(itemId: TreeItemIndex): Promise<void>
-
   public async reloadDirectory(itemId: TreeItemIndex): Promise<void> {
     const item = this.data[itemId]
     if (!item || !item.isFolder) return
@@ -17,21 +15,6 @@ export abstract class BaseFilesDataProvider<TData = unknown> implements TreeData
     await this.loadDirectory(itemId)
   }
 
-  private removeSubtree(parentId: TreeItemIndex): void {
-    const item = this.data[parentId]
-    if (!item?.children) return
-
-    for (const childId of item.children) {
-      this.removeSubtree(childId)
-      const child = this.data[childId]
-      const path = (child?.data as { path?: string })?.path
-      if (child?.isFolder && path) {
-        this.loadedDirectories.delete(path)
-      }
-      delete this.data[childId]
-    }
-  }
-
   public async getAllItems(): Promise<TreeItem<TData>[]> {
     return Object.values(this.data) as TreeItem<TData>[]
   }
@@ -40,17 +23,19 @@ export abstract class BaseFilesDataProvider<TData = unknown> implements TreeData
     return this.data[itemId]
   }
 
-  public async onChangeItemChildren(itemId: TreeItemIndex, newChildren: TreeItemIndex[]) {
-    if (this.data[itemId]) {
-      this.data[itemId].children = newChildren
-      this.notifyListeners([itemId])
+  public async onChangeItemChildren(itemId: TreeItemIndex, newChildren: TreeItemIndex[]): Promise<void> {
+    if (!Object.hasOwn(this.data, itemId)) {
+      return
     }
+
+    this.data[itemId].children = newChildren
+    this.notifyListeners([itemId])
   }
 
   public onDidChangeTreeData(listener: (changedItemIds: TreeItemIndex[]) => void): Disposable {
     this.treeChangeListeners.push(listener)
     return {
-      dispose: () => {
+      dispose: (): void => {
         const index = this.treeChangeListeners.indexOf(listener)
         if (index !== -1) {
           this.treeChangeListeners.splice(index, 1)
@@ -59,7 +44,24 @@ export abstract class BaseFilesDataProvider<TData = unknown> implements TreeData
     }
   }
 
-  protected notifyListeners(itemIds: TreeItemIndex[]) {
+  protected notifyListeners(itemIds: TreeItemIndex[]): void {
     for (const listener of this.treeChangeListeners) listener(itemIds)
   }
+
+  private removeSubtree(parentId: TreeItemIndex): void {
+    const item = this.data[parentId]
+    if (!item?.children) return
+
+    for (const childId of item.children) {
+      this.removeSubtree(childId)
+      const child = this.data[childId]
+      const path = (child?.data as { path?: string })?.path
+      if (path && child?.isFolder) {
+        this.loadedDirectories.delete(path)
+      }
+      delete this.data[childId]
+    }
+  }
+
+  public abstract loadDirectory(itemId: TreeItemIndex): Promise<void>
 }

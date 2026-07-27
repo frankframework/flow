@@ -16,34 +16,36 @@ export default function Checkbox({
   onChange,
   className,
   ...properties
-}: CheckboxProperties) {
+}: CheckboxProperties): React.JSX.Element {
   const [isChecked, setIsChecked] = useState(checked)
-  const inputRef = useRef<HTMLInputElement>(null)
+  const inputReference = useRef<HTMLInputElement>(null)
 
-  useEffect(() => {
+  useEffect((): void => {
     setIsChecked(checked)
   }, [checked])
 
-  useEffect(() => {
-    if (inputRef.current) {
-      inputRef.current.indeterminate = indeterminate
+  useEffect((): void => {
+    if (inputReference.current) {
+      inputReference.current.indeterminate = indeterminate
     }
   }, [indeterminate])
 
   const isActive = isChecked || indeterminate
 
-  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (!disabled) {
-      const newChecked = event.target.checked
-      onChange?.(newChecked)
-      setIsChecked(newChecked)
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>): void => {
+    if (disabled) {
+      return
     }
+
+    const newChecked = event.target.checked
+    onChange?.(newChecked)
+    setIsChecked(newChecked)
   }
 
   return (
     <div className={clsx('relative flex aspect-square h-4 items-center', disabled && 'opacity-50', className)}>
       <input
-        ref={inputRef}
+        ref={inputReference}
         type="checkbox"
         checked={isChecked}
         disabled={disabled}

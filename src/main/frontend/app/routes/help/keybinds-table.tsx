@@ -31,9 +31,9 @@ function formatKeybind(shortcut: Omit<ShortcutDefinition, 'handler'>, platform: 
 
   return (
     <>
-      {parts.map((part, i) => (
-        <span key={i}>
-          {i > 0 && ' + '}
+      {parts.map((part, index): JSX.Element => (
+        <span key={index}>
+          {index > 0 && ' + '}
           <span className="key">{part}</span>
         </span>
       ))}
@@ -45,15 +45,15 @@ function capitalize(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1)
 }
 
-export function KeybindsTable() {
-  const detectedPlatform = useShortcutStore((s) => s.platform)
+export function KeybindsTable(): JSX.Element {
+  const detectedPlatform = useShortcutStore((s): Platform => s.platform)
   const [platform, setPlatform] = useState<Platform>(detectedPlatform)
 
   const grouped = new Map<string, Omit<ShortcutDefinition, 'handler'>[]>()
   for (const shortcut of ALL_SHORTCUTS) {
     if (shortcut.id.endsWith('-alt')) continue
 
-    const match = SCOPE_PREFIXES.find((prefix) => shortcut.id.startsWith(prefix.prefix))
+    const match = SCOPE_PREFIXES.find((prefix): boolean => shortcut.id.startsWith(prefix.prefix))
     const displayScope = match ? match.scope : (shortcut.scope as string)
 
     if (!grouped.has(displayScope)) grouped.set(displayScope, [])
@@ -63,17 +63,17 @@ export function KeybindsTable() {
   return (
     <div className="p-4">
       <div className="grid items-start gap-6 md:grid-cols-2">
-        {[...grouped.entries()].map(([scope, defs]) => (
+        {[...grouped].map(([scope, defs]): JSX.Element => (
           <div key={scope} className="border-border overflow-hidden rounded-md border">
             <h3 className="text-center">{scopeLabels[scope] ?? `${capitalize(scope)} Keybinds`}</h3>
             <div className="border-b-border bg-backdrop flex border-b font-bold">
               <div className="border-r-border flex-1 border-r px-3.25 py-1.5 text-sm">Action</div>
               <div className="flex-1 px-3.25 py-1.5 text-sm">Keybinds</div>
             </div>
-            {defs.map((shortcut, i) => (
+            {defs.map((shortcut, index): JSX.Element => (
               <div
                 key={shortcut.id}
-                className={`border-b-border flex border-b last:border-b-0 ${i % 2 === 1 ? 'bg-backdrop' : 'bg-background'}`}
+                className={`border-b-border flex border-b last:border-b-0 ${index % 2 === 1 ? 'bg-backdrop' : 'bg-background'}`}
               >
                 <div className="border-r-border flex-1 border-r px-3.25 py-1.5 text-sm">{shortcut.label}</div>
                 <div className="flex-1 px-3.25 py-1.5 text-sm">{formatKeybind(shortcut, platform)}</div>
@@ -88,7 +88,7 @@ export function KeybindsTable() {
         <RadioList
           options={{ pc: 'PC', mac: 'Mac' }}
           value={platform}
-          onChange={(value) => setPlatform(value as Platform)}
+          onChange={(value): void => setPlatform(value as Platform)}
         />
       </div>
     </div>

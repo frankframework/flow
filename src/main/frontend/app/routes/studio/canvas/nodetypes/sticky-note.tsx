@@ -1,7 +1,7 @@
 import { type Node, type NodeProps, NodeResizeControl, useUpdateNodeInternals } from '@xyflow/react'
 import { FlowConfig } from '~/routes/studio/canvas/flow.config'
 import { ResizeIcon } from '~/routes/studio/canvas/nodetypes/frank-node'
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { type JSX, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import useFlowStore from '~/stores/flow-store'
 import { useNodeContextMenu } from '~/routes/studio/canvas/node-context-menu-context'
 import useNodeContextStore from '~/stores/node-context-store'
@@ -29,13 +29,13 @@ export type StickyNote = Node<{
   height?: number
 }
 
-export default function StickyNoteComponent(properties: NodeProps<StickyNote>) {
+export default function StickyNoteComponent(properties: NodeProps<StickyNote>): JSX.Element {
   const minHeight = FlowConfig.STICKY_NOTE_DEFAULT_HEIGHT
   const minWidth = FlowConfig.STICKY_NOTE_DEFAULT_WIDTH
   const showNodeContextMenu = useNodeContextMenu()
   const updateNodeInternals = useUpdateNodeInternals()
-  const containerRef = useRef<HTMLDivElement>(null)
-  const contentRef = useRef<HTMLDivElement>(null)
+  const containerReference = useRef<HTMLDivElement>(null)
+  const contentReference = useRef<HTMLDivElement>(null)
   const [isOverflowing, setIsOverflowing] = useState(false)
 
   const color = properties.data.color ?? 'var(--sticky-color-yellow)'
@@ -43,10 +43,10 @@ export default function StickyNoteComponent(properties: NodeProps<StickyNote>) {
 
   const CONTENT_PADDING_Y = 24
 
-  useLayoutEffect(() => {
-    if (properties.data.collapsed || !contentRef.current) return
+  useLayoutEffect((): void => {
+    if (properties.data.collapsed || !contentReference.current) return
 
-    const naturalHeight = contentRef.current.scrollHeight + CONTENT_PADDING_Y
+    const naturalHeight = contentReference.current.scrollHeight + CONTENT_PADDING_Y
     const clamped = Math.min(
       FlowConfig.STICKY_NOTE_MAX_HEIGHT,
       Math.max(FlowConfig.STICKY_NOTE_DEFAULT_HEIGHT, naturalHeight),
@@ -55,22 +55,22 @@ export default function StickyNoteComponent(properties: NodeProps<StickyNote>) {
     useFlowStore.getState().setStickyHeight(properties.id, clamped)
   }, [content, properties.data.collapsed, properties.id])
 
-  useEffect(() => {
+  useEffect((): void => {
     updateNodeInternals(properties.id)
   }, [properties.data.collapsed, properties.id, updateNodeInternals])
 
-  useEffect(() => {
+  useEffect((): (() => void) | undefined => {
     if (properties.data.collapsed) return
-    const container = containerRef.current
+    const container = containerReference.current
     if (!container) return
-    const check = () => setIsOverflowing(container.scrollHeight > container.clientHeight)
+    const check = (): void => setIsOverflowing(container.scrollHeight > container.clientHeight)
     check()
     const observer = new ResizeObserver(check)
     observer.observe(container)
-    return () => observer.disconnect()
+    return (): void => observer.disconnect()
   }, [content, properties.data.collapsed])
 
-  const handleDelete = () => {
+  const handleDelete = (): void => {
     useNodeContextStore.getState().setSelectedStickyId(null)
     showNodeContextMenu(false)
     useFlowStore.getState().deleteNode(properties.id)
@@ -91,8 +91,8 @@ export default function StickyNoteComponent(properties: NodeProps<StickyNote>) {
           </span>
           <button
             className="nodrag ml-1 shrink-0 text-xs hover:cursor-pointer hover:opacity-70"
-            onClick={(e) => {
-              e.stopPropagation()
+            onClick={(error): void => {
+              error.stopPropagation()
               useFlowStore.getState().setStickyCollapsed(properties.id, false)
             }}
             title="Expand"
@@ -134,7 +134,7 @@ export default function StickyNoteComponent(properties: NodeProps<StickyNote>) {
         <ResizeIcon />
       </NodeResizeControl>
       <div
-        ref={containerRef}
+        ref={containerReference}
         className={`relative h-full w-full overflow-hidden p-3 text-xs ${properties.selected ? 'ring-1 ring-black/40' : ''}`}
         style={{
           minHeight: `${minHeight}px`,
@@ -145,7 +145,7 @@ export default function StickyNoteComponent(properties: NodeProps<StickyNote>) {
           `,
         }}
       >
-        <div ref={contentRef} className="w-full text-xs leading-snug break-words whitespace-pre-wrap">
+        <div ref={contentReference} className="w-full text-xs leading-snug break-words whitespace-pre-wrap">
           {content}
         </div>
         {isOverflowing && (
@@ -157,8 +157,8 @@ export default function StickyNoteComponent(properties: NodeProps<StickyNote>) {
         <div className="nodrag absolute top-0 right-5 flex items-center">
           <div
             className="px-1 hover:cursor-pointer hover:opacity-50"
-            onClick={(e) => {
-              e.stopPropagation()
+            onClick={(error): void => {
+              error.stopPropagation()
               useFlowStore.getState().setStickyCollapsed(properties.id, true)
             }}
             title="Collapse"

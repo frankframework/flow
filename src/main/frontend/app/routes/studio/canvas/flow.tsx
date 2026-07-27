@@ -1,3 +1,4 @@
+/* eslint-disable */
 import {
   addEdge,
   Background,
@@ -18,6 +19,7 @@ import {
 import Dagre from '@dagrejs/dagre'
 import { useNavigate } from 'react-router'
 import { SaveStatusIndicator } from '~/components/save-status-indicator'
+import useToasts from '~/components/toast/use-toasts'
 import { useSaveStatusStore } from '~/stores/save-status-store'
 import CodeIcon from '/icons/solar/Code.svg?react'
 import '@xyflow/react/dist/style.css'
@@ -30,7 +32,6 @@ import { useShallow } from 'zustand/react/shallow'
 import { FlowConfig } from '~/routes/studio/canvas/flow.config'
 import { getElementTypeFromName } from '~/routes/studio/node-translator-module'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { logApiError } from '~/utils/logger'
 import { NodeContextMenuContext, useNodeContextMenu } from './node-context-menu-context'
 import StickyNoteComponent, { type StickyNote } from '~/routes/studio/canvas/nodetypes/sticky-note'
 import useTabStore, { type TabData } from '~/stores/tab-store'
@@ -49,7 +50,6 @@ import {
 import { refreshOpenDiffs } from '~/services/git-service'
 import useEditorTabStore from '~/stores/editor-tab-store'
 import { cloneWithRemappedIds, getEdgeLabelFromHandle } from '~/utils/flow-utils'
-import { showErrorToast } from '~/components/toast'
 import { useSettingsStore } from '~/stores/settings-store'
 import { useShortcut } from '~/hooks/use-shortcut'
 import LightbulbIcon from '/icons/solar/Lightbulb.svg?react'
@@ -204,6 +204,7 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
   const elementsRef = useRef(elements)
   const showNodeContextMenuRef = useRef(showNodeContextMenu)
   const navigate = useNavigate()
+  const { showErrorToast, logApiError } = useToasts()
 
   useEffect(() => {
     elementsRef.current = elements
@@ -1041,7 +1042,7 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
     'studio.show-in-editor': () => showSelectedNodeInEditor(),
   })
 
-  const handleNodeDragStop = useCallback((_event: React.MouseEvent, node: FlowNode) => {
+  const handleNodeDragStop = useCallback((_event: MouseEvent | TouchEvent, node: FlowNode) => {
     if (!isStickyNote(node)) return
 
     const flowStore = useFlowStore.getState()

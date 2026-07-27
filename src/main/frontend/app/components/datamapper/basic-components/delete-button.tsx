@@ -1,11 +1,12 @@
 import clsx from 'clsx'
 import TrashBinIcon from '/icons/solar/Trash Bin.svg?react'
+import type { JSX } from 'react'
 
-export default function DeleteButton({ onClick, className }: { onClick: () => void; className?: string }) {
+export default function DeleteButton({ onClick, className }: { onClick: () => void; className?: string }): JSX.Element {
   return (
     <button
       className={clsx('hover:opacity-70', className)}
-      onClick={(event) => {
+      onClick={(event): void => {
         event.stopPropagation()
         onClick()
       }}

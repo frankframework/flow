@@ -1,4 +1,4 @@
-import { useId, useMemo, useState } from 'react'
+import { type JSX, useId, useMemo, useState } from 'react'
 import Button from '~/components/inputs/button'
 import Dropdown from '~/components/inputs/dropdown'
 import Input from '~/components/inputs/input'
@@ -20,11 +20,11 @@ type AddConditionFormProperties = {
   conditionToEdit?: Condition
 }
 
-function AddConditionForm({ sources, onSave, conditionToEdit }: Readonly<AddConditionFormProperties>) {
+function AddConditionForm({ sources, onSave, conditionToEdit }: Readonly<AddConditionFormProperties>): JSX.Element {
   const newId = `condition-${useId()}`
   const id = conditionToEdit?.id ?? newId
   const conditionsConfig = conditionConfigJson as ConditionTypeConfig
-  sources = sources.filter((source) => source.id != id)
+  sources = sources.filter((source): boolean => source.id != id)
   const [condition, setCondition] = useState<Condition>({
     id,
     name: conditionToEdit?.name ?? '',
@@ -33,14 +33,14 @@ function AddConditionForm({ sources, onSave, conditionToEdit }: Readonly<AddCond
   })
 
   const isFormIncomplete = !condition.type
-  const placeholder = useMemo(() => generateConditionName(condition), [condition])
+  const placeholder = useMemo((): string => generateConditionName(condition), [condition])
 
-  function handleSave() {
+  function handleSave(): void {
     if (!condition.name) condition.name = placeholder
     onSave(condition)
   }
 
-  const selectedConditionConfig = conditionsConfig.conditions.find((c) => c.name === condition.type?.name)
+  const selectedConditionConfig = conditionsConfig.conditions.find((c): boolean => c.name === condition.type?.name)
 
   return (
     <div className="text-foreground border-black">
@@ -52,7 +52,14 @@ function AddConditionForm({ sources, onSave, conditionToEdit }: Readonly<AddCond
         <Input
           type="text"
           value={condition.name}
-          onChange={(event) => setCondition((condition) => ({ ...condition, name: event.target.value }))}
+          onChange={(event): void =>
+            setCondition(
+              (condition): { name: string; id: string; type: ConditionType | null; inputs: ConditionInput[] } => ({
+                ...condition,
+                name: event.target.value,
+              }),
+            )
+          }
           placeholder={placeholder}
         />
       </div>
@@ -63,20 +70,23 @@ function AddConditionForm({ sources, onSave, conditionToEdit }: Readonly<AddCond
         <Dropdown
           className="max-w-55"
           value={condition.type?.name ?? ''}
-          onChange={(event) => {
-            const conditionType = conditionsConfig.conditions.find((condition) => condition.name === event) ?? null
+          onChange={(event): void => {
+            const conditionType =
+              conditionsConfig.conditions.find((condition): boolean => condition.name === event) ?? null
             setCondition({
               id,
               name: condition.name,
               type: conditionType ?? null,
               inputs:
-                conditionType?.inputs.map(() => ({
+                conditionType?.inputs.map((): { type: ''; value: string } => ({
                   type: '',
                   value: '',
                 })) ?? [],
             })
           }}
-          options={Object.fromEntries(conditionsConfig.conditions.map((condition) => [condition.name, condition.name]))}
+          options={Object.fromEntries(
+            conditionsConfig.conditions.map((condition): [string, string] => [condition.name, condition.name]),
+          )}
         />
       </div>
 
@@ -106,9 +116,9 @@ function ConditionDetailsForm({
   setCondition: React.Dispatch<React.SetStateAction<Condition>>
   sources: Source[]
   conditionConfig: ConditionType
-}>) {
-  function updateInput(index: number, value: ConditionInput) {
-    setCondition((condition) => {
+}>): JSX.Element {
+  function updateInput(index: number, value: ConditionInput): void {
+    setCondition((condition): { inputs: ConditionInput[]; id: string; name: string; type: ConditionType | null } => {
       const newInputs = [...condition.inputs]
       newInputs[index] = value
       return { ...condition, inputs: newInputs }
@@ -117,12 +127,12 @@ function ConditionDetailsForm({
 
   return (
     <div className="max-h-[50vh] space-y-2 overflow-auto">
-      {conditionConfig.inputs.map((inputConfig, index) => (
+      {conditionConfig.inputs.map((inputConfig, index): JSX.Element => (
         <ConditionInputField
           key={index}
           inputConfig={inputConfig}
           value={condition.inputs[index]}
-          onChange={(value) => updateInput(index, value)}
+          onChange={(value): void => updateInput(index, value)}
           sources={sources}
         />
       ))}
@@ -140,20 +150,20 @@ function ConditionInputField({
   value?: ConditionInput
   onChange: (value_: ConditionInput) => void
   sources: Source[]
-}>) {
-  let filteredSources = sources
-  if (inputConfig.inputsAllowed !== 'all') {
-    filteredSources = sources.filter((source) => source.type === inputConfig.inputsAllowed)
-  }
+}>): JSX.Element {
+  const filteredSources =
+    inputConfig.inputsAllowed === 'all'
+      ? sources
+      : sources.filter((source): boolean => source.type === inputConfig.inputsAllowed)
 
   if (inputConfig.type === 'source') {
     const selectedIsDefault = value?.type === 'defaultValue'
-    function handleSourceChange(sourceId: string) {
+    function handleSourceChange(sourceId: string): void {
       if (sourceId === 'defaultValue') {
         onChange({ type: 'defaultValue', value: '' })
         return
       }
-      const source = sources.find((source) => source.id === sourceId)
+      const source = sources.find((source): boolean => source.id === sourceId)
       if (!source) return
       onChange({ type: 'source', sourceId: sourceId, value: source.label })
     }
@@ -167,7 +177,7 @@ function ConditionInputField({
           onChange={handleSourceChange}
           options={Object.fromEntries([
             ...(inputConfig.allowDefaultValue ? [['defaultValue', 'Default Value']] : []),
-            ...filteredSources.map((source) => [source.id, source.label]),
+            ...filteredSources.map((source): string[] => [source.id, source.label]),
           ])}
         />
 
@@ -176,7 +186,7 @@ function ConditionInputField({
             type="text"
             placeholder="Enter default value"
             value={value?.value ?? ''}
-            onChange={(event) => onChange({ type: 'defaultValue', value: event.target.value })}
+            onChange={(event): void => onChange({ type: 'defaultValue', value: event.target.value })}
           />
         )}
       </div>
@@ -190,7 +200,7 @@ function ConditionInputField({
         <Input
           type="text"
           value={value?.value ?? ''}
-          onChange={(event) => onChange({ type: 'attribute', value: event.target.value })}
+          onChange={(event): void => onChange({ type: 'attribute', value: event.target.value })}
         />
       </div>
     )
@@ -211,8 +221,8 @@ function ConditionInputField({
         <Dropdown
           className="max-w-55"
           value={value?.value ?? ''}
-          onChange={(val) => onChange({ type: 'operator', value: val })}
-          options={Object.fromEntries(operatorConfig.allowedValues.map((option) => [option, option]))}
+          onChange={(value_): void => onChange({ type: 'operator', value: value_ })}
+          options={Object.fromEntries(operatorConfig.allowedValues.map((option): [string, string] => [option, option]))}
         />
       </div>
     )
@@ -225,7 +235,7 @@ function ConditionInputField({
       <Input
         type="text"
         value={value?.value ?? ''}
-        onChange={(event) => onChange({ type: 'defaultValue', value: event.target.value })}
+        onChange={(event): void => onChange({ type: 'defaultValue', value: event.target.value })}
       />
     </div>
   )

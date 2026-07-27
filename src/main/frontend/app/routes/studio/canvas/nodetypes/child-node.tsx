@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { type JSX, useCallback, useEffect, useMemo, useState } from 'react'
 import clsx from 'clsx'
 import useFlowStore from '~/stores/flow-store'
 import { getElementTypeFromName } from '../../node-translator-module'
@@ -35,7 +35,7 @@ export function ChildNodeComponent({
   onSelect,
   parentId,
   rootId,
-}: Readonly<ChildNodeProperties>) {
+}: Readonly<ChildNodeProperties>): JSX.Element {
   const {
     setParentId,
     setChildParentId,
@@ -50,18 +50,20 @@ export function ChildNodeComponent({
   } = useNodeContextStore()
   const isSelected = nodeId === +child.id && selectedParentId !== null
   const showNodeContextMenu = useNodeContextMenu()
-  const addChildToChild = useFlowStore((state) => state.addChildToChild)
+  const addChildToChild = useFlowStore(
+    (state): ((nodeId: string, targetChildId: string, newChild: ChildNode) => void) => state.addChildToChild,
+  )
   const [dragOver, setDragOver] = useState(false)
   const [canDropDraggedElement, setCanDropDraggedElement] = useState(false)
   const [dragForbidden, setDragForbidden] = useState(false)
   const { xsdDoc } = useFrankConfigXsd()
 
   const allowedChildNames = useMemo(
-    () => (xsdDoc ? new Set(getAllowedChildElementsForElement(xsdDoc, child.subtype)) : null),
+    (): Set<string> | null => (xsdDoc ? new Set(getAllowedChildElementsForElement(xsdDoc, child.subtype)) : null),
     [xsdDoc, child.subtype],
   )
 
-  const handleDragOver = (event: React.DragEvent) => {
+  const handleDragOver = (event: React.DragEvent): void => {
     event.preventDefault()
     event.stopPropagation()
 
@@ -86,18 +88,18 @@ export function ChildNodeComponent({
     }
   }
 
-  const handleDragLeave = () => {
+  const handleDragLeave = (): void => {
     setDragOver(false)
     setDragForbidden(false)
   }
 
   const canAcceptChild = useCallback(
-    (droppedName: string) => allowedChildNames?.has(droppedName) ?? false,
+    (droppedName: string): boolean => allowedChildNames?.has(droppedName) ?? false,
     [allowedChildNames],
   )
 
   const handleDrop = useCallback(
-    (event: React.DragEvent) => {
+    (event: React.DragEvent): void => {
       event.preventDefault()
       event.stopPropagation()
       setDragOver(false)
@@ -108,13 +110,12 @@ export function ChildNodeComponent({
       if (!raw) return
 
       const dropped = JSON.parse(raw)
-      const newId = useFlowStore.getState().getNextNodeId()
-
       if (!canAcceptChild(dropped.name)) {
         console.warn(`Rejected drop: ${dropped.name} is not allowed as child of ${child.subtype}`)
         return
       }
 
+      const newId = useFlowStore.getState().getNextNodeId()
       setNodeId(+newId)
       setAttributes(dropped.attributes)
       showNodeContextMenu(true)
@@ -137,6 +138,8 @@ export function ChildNodeComponent({
     [
       setDraggedName,
       canAcceptChild,
+      setNodeId,
+      setAttributes,
       showNodeContextMenu,
       setIsEditing,
       setParentId,
@@ -149,7 +152,7 @@ export function ChildNodeComponent({
     ],
   )
 
-  useEffect(() => {
+  useEffect((): void => {
     setCanDropDraggedElement(draggedName !== null && canAcceptChild(draggedName))
   }, [draggedName, canAcceptChild, child.subtype])
 
@@ -166,12 +169,12 @@ export function ChildNodeComponent({
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
-      onClick={(mouseEvent) => {
+      onClick={(mouseEvent): void => {
         mouseEvent.stopPropagation()
         if (isDirty) return
         onSelect(child.id)
       }}
-      onDoubleClick={(event) => {
+      onDoubleClick={(event): void => {
         event.stopPropagation()
         if (isDirty) return
         onEdit(child.id)
@@ -188,7 +191,7 @@ export function ChildNodeComponent({
       {/* Body */}
       <div className="child-node-body border-border/40 relative min-h-25 rounded-b-md border px-1 py-1">
         {child.attributes &&
-          Object.entries(child.attributes).map(([key, value]) => (
+          Object.entries(child.attributes).map(([key, value]): JSX.Element => (
             <div key={key} className="my-1 min-w-0">
               <p className="overflow-hidden text-sm font-bold text-ellipsis whitespace-nowrap">{key}</p>
               <p className="overflow-hidden text-sm text-ellipsis whitespace-nowrap">{value}</p>
@@ -197,7 +200,7 @@ export function ChildNodeComponent({
 
         {((child.children && child.children.length > 0) || dragOver || canDropDraggedElement) && (
           <NodeChildrenContainer className="mt-2">
-            {child.children?.map((nested) => (
+            {child.children?.map((nested): JSX.Element => (
               <ChildNodeComponent
                 key={nested.id}
                 child={nested}

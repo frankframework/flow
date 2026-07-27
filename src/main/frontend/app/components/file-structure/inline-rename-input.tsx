@@ -1,7 +1,8 @@
+import type { JSX } from 'react'
 import type { TreeItemIndex } from 'react-complex-tree'
 import Input from '~/components/inputs/input'
 
-type InlineRenameInputProps = {
+type InlineRenameInputProperties = {
   icon: React.ComponentType<{ className?: string }>
   value: string
   onChange: (value: string) => void
@@ -17,17 +18,17 @@ export default function InlineRenameInput({
   onSubmit,
   onCancel,
   itemIndex,
-}: InlineRenameInputProps) {
+}: InlineRenameInputProperties): JSX.Element {
   return (
-    <div className="flex items-center" onContextMenu={(e) => e.preventDefault()}>
-      <Icon className="fill-foreground w-4 flex-shrink-0" />
+    <div className="flex items-center" onContextMenu={(event): void => event.preventDefault()}>
+      <Icon className="fill-foreground w-4 shrink-0" />
       <Input
         autoFocus
         wrapperClassName="ml-1"
         inputClassName="py-0.5 text-sm"
         value={value}
-        onChange={(changeEvent) => onChange(changeEvent.target.value)}
-        onKeyDown={(keyboardEvent) => {
+        onChange={(changeEvent): void => onChange(changeEvent.target.value)}
+        onKeyDown={(keyboardEvent): void => {
           if (keyboardEvent.key === 'Enter') {
             keyboardEvent.preventDefault()
             void onSubmit(itemIndex, value)
@@ -36,7 +37,7 @@ export default function InlineRenameInput({
           }
         }}
         onBlur={onCancel}
-        onClick={(e) => e.stopPropagation()}
+        onClick={(event): void => event.stopPropagation()}
       />
     </div>
   )

@@ -20,7 +20,7 @@ type MappingEdgeInput = {
 }
 
 function removeEdgesForNode(nodeId: string, allEdges: Edge[]): Edge[] {
-  return allEdges.filter((edge) => edge.source !== nodeId && edge.target !== nodeId)
+  return allEdges.filter((edge): boolean => edge.source !== nodeId && edge.target !== nodeId)
 }
 
 function getMappingHeightPosition(node: Node, allNodes: Node[]): number {
@@ -42,12 +42,14 @@ function calculateCenterPositionFromNodes(
   targetId: string,
   allNodes: Node[],
 ): { x: number; y: number } {
-  const relatedNodes = [...sourceIds.map((id) => findNodeById(id, allNodes)), findNodeById(targetId, allNodes)].filter(
-    Boolean,
-  ) as Node[]
+  const relatedNodes = [
+    ...sourceIds.map((id): Node | undefined => findNodeById(id, allNodes)),
+    findNodeById(targetId, allNodes),
+  ].filter(Boolean) as Node[]
 
   const averageY =
-    relatedNodes.reduce((sum, node) => sum + getMappingHeightPosition(node, allNodes), 0) / (relatedNodes.length || 1)
+    relatedNodes.reduce((sum, node): number => sum + getMappingHeightPosition(node, allNodes), 0) /
+    (relatedNodes.length || 1)
 
   const sourceTableX = findNodeById('source-table', allNodes)?.position.x ?? 0
   const targetTableX = findNodeById('target-table', allNodes)?.position.x ?? 0
@@ -60,30 +62,38 @@ function calculateCenterPositionFromNodes(
 
 function resolveVerticalOverlap(desiredY: number, allNodes: Node[], minDistance = 40, offset = 50): number {
   let y = desiredY
-  let hasOverlap = true
 
-  while (hasOverlap) {
-    hasOverlap = false
+  /*
+   * let hasOverlap = true
+   * while (hasOverlap) {
+   *   hasOverlap = false
+   *   for (const node of allNodes) {
+   *     if (!node.type?.toLocaleLowerCase().includes('mappingnode')) continue
+   *     if (Math.abs(node.position.y - y) < minDistance) {
+   *       y += offset
+   *       hasOverlap = true
+   *       break
+   *     }
+   *   }
+   * }
+   */
 
-    for (const node of allNodes) {
-      if (!node.type?.toLocaleLowerCase().includes('mappingnode')) continue
-
-      if (Math.abs(node.position.y - y) < minDistance) {
-        y += offset
-        hasOverlap = true
-        break
-      }
+  for (const node of allNodes) {
+    if (!node.type?.toLocaleLowerCase().includes('mappingnode')) continue
+    if (Math.abs(node.position.y - y) < minDistance) {
+      y += offset
+      break
     }
   }
 
   return y
 }
 
-function createMappingId() {
+function createMappingId(): string {
   return `mapping-${Math.random().toString(36).slice(2)}`
 }
 
-function createRandomColour() {
+function createRandomColour(): string {
   return `#${Math.floor(Math.random() * 16_777_215)
     .toString(16)
     .padStart(6, '0')}`
@@ -91,14 +101,25 @@ function createRandomColour() {
 
 function buildMappingEdges({ id, sources, target, colour }: MappingEdgeInput): Edge[] {
   return [
-    ...sources.map((sourceId) => ({
-      id: `${sourceId}-${id}`,
-      source: sourceId,
-      target: id!,
-      style: { stroke: colour, strokeWidth: 2 },
-      selectable: true,
-      data: { hidden: false },
-    })),
+    ...sources.map(
+      (
+        sourceId,
+      ): {
+        id: string
+        source: string
+        target: string
+        style: { stroke: string; strokeWidth: number }
+        selectable: boolean
+        data: { hidden: boolean }
+      } => ({
+        id: `${sourceId}-${id}`,
+        source: sourceId,
+        target: id!,
+        style: { stroke: colour, strokeWidth: 2 },
+        selectable: true,
+        data: { hidden: false },
+      }),
+    ),
     {
       id: `${id}-${target}`,
       source: id!,
@@ -125,7 +146,9 @@ function updateExistingMappingNode(
   allNodes: Node[],
   allEdges: Edge[],
 ): MappingNodeResult {
-  const updatedNodes = allNodes.map((node) => (node.id === mappingConfig.id ? { ...node, data: mappingConfig } : node))
+  const updatedNodes = allNodes.map((node): Node =>
+    node.id === mappingConfig.id ? { ...node, data: mappingConfig } : node,
+  )
 
   const cleanedEdges = removeEdgesForNode(mappingConfig.id!, allEdges)
   const mappingEdgeInput: MappingEdgeInput = {
@@ -208,12 +231,16 @@ export function createNewArrayMappingNode(
 
 export function deleteMappingNode(nodeId: string, allNodes: Node[], allEdges: Edge[]): DeleteMappingNodeResult {
   return {
-    remainingNodes: allNodes.filter((node) => node.id !== nodeId),
+    remainingNodes: allNodes.filter((node): boolean => node.id !== nodeId),
     remainingEdges: removeEdgesForNode(nodeId, allEdges),
   }
 }
 
-export function getMappingNodes(nodes: Node[], edges: Edge[], mappingConfig?: MappingNodeData) {
+export function getMappingNodes(
+  nodes: Node[],
+  edges: Edge[],
+  mappingConfig?: MappingNodeData,
+): { sources: NodeLabels[]; targets: NodeLabels[]; unfilteredSources: NodeLabels[] } {
   const unfilteredSources = getNodesByTypeAndId(
     nodes,
     {
@@ -233,31 +260,34 @@ export function getMappingNodes(nodes: Node[], edges: Edge[], mappingConfig?: Ma
     edges,
   )
 
-  const sources = unfilteredSources.filter((s) => s.parentArray == undefined)
+  const sources = unfilteredSources.filter((s): boolean => s.parentArray == undefined)
 
-  let parentArrayId = targets.find((t) => t.checked)?.parentArray
+  let parentArrayId = targets.find((t): boolean | undefined => t.checked)?.parentArray
   if (mappingConfig) {
-    parentArrayId = targets.find((t) => t.id == mappingConfig.target)?.parentArray
+    parentArrayId = targets.find((t): boolean => t.id == mappingConfig.target)?.parentArray
   }
   if (parentArrayId) {
-    const arrayMapping = nodes.find((n) => n.data.target == parentArrayId)
+    const arrayMapping = nodes.find((n): boolean => n.data.target == parentArrayId)
 
     if (arrayMapping) {
-      sources.push(...unfilteredSources.filter((s) => s.parentArray == arrayMapping.data.source))
+      sources.push(...unfilteredSources.filter((s): boolean => s.parentArray == arrayMapping.data.source))
     }
   }
 
   return { sources, targets, unfilteredSources }
 }
 
-export function validateMapping(sources: NodeLabels[], targets: NodeLabels[], unfilteredSources: NodeLabels[]) {
-  const checkedSources = sources.filter((s) => s.checked)
-  const checkedTargets = targets.filter((t) => t.checked)
-
-  if (checkedSources.length !== unfilteredSources.filter((s) => s.checked).length) {
+export function validateMapping(
+  sources: NodeLabels[],
+  targets: NodeLabels[],
+  unfilteredSources: NodeLabels[],
+): string | null {
+  const checkedSources = sources.filter((labels): boolean | undefined => labels.checked)
+  if (checkedSources.length !== unfilteredSources.filter((labels): boolean | undefined => labels.checked).length) {
     return 'Mapping item in source array only allowed within a for each'
   }
 
+  const checkedTargets = targets.filter((labels): boolean | undefined => labels.checked)
   if (checkedSources.length > 1 && checkedTargets.length > 1) {
     return 'Many to Many mapping not supported!'
   }
@@ -272,12 +302,12 @@ export function handleArrayMapping(
   edges: Edge[],
   setNodes: (nodes: Node[]) => void,
   setEdges: (edges: Edge[]) => void,
-) {
-  const arraySources = checkedSources.filter((s) => s.type?.includes('array'))
+): boolean {
+  const arraySources = checkedSources.filter((s): boolean | undefined => s.type?.includes('array'))
 
   const isTargetArray = checkedTargets[0]?.type?.includes('array')
 
-  if (arraySources.length === checkedSources.length && isTargetArray) {
+  if (isTargetArray && arraySources.length === checkedSources.length) {
     const config = {
       source: checkedSources[0].id,
       target: checkedTargets[0].id,
@@ -291,7 +321,7 @@ export function handleArrayMapping(
     return true
   }
 
-  if (arraySources.length > 0 || isTargetArray) {
+  if (isTargetArray || arraySources.length > 0) {
     throw new Error('Invalid mapping configuration, arrays cannot be mapped with normal properties')
   }
 

@@ -34,7 +34,7 @@ export const initialNodes: Node[] = [
           subtype: 'HttpSender',
           type: 'Sender',
           attributes: {
-            url: 'http://api.openweathermap.org/data/2.5/weather?q=Rotterdam&amp;units=metric&amp;mode=xml&amp;appid=${openweathermap.appid}',
+            url: 'https://api.openweathermap.org/data/2.5/weather?q=Rotterdam&amp;units=metric&amp;mode=xml&amp;appid=${openweathermap.appid}',
           },
         },
       ],

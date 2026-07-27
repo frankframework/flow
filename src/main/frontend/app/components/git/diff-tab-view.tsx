@@ -1,11 +1,11 @@
 import '~/utils/monaco-setup'
 import * as monaco from 'monaco-editor'
 import { useShallow } from 'zustand/react/shallow'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { type JSX, useEffect, useMemo, useRef, useState } from 'react'
 import { useTheme } from '~/hooks/use-theme'
 import { useGitStore } from '~/stores/git-store'
 import type { DiffTabData } from '~/stores/editor-tab-store'
-import type { GitHunk } from '~/types/git.types'
+import type { FileHunkState, GitHunk } from '~/types/git.types'
 import Checkbox from '~/components/inputs/checkbox'
 
 type CodeEditor = monaco.editor.IStandaloneCodeEditor
@@ -20,7 +20,7 @@ function applyHunkDecorations(
   modifiedEditor: CodeEditor,
   hunks: GitHunk[],
   selectedHunks: Set<number>,
-  prevDecorations: string[],
+  previousDecorations: string[],
 ): string[] {
   const decorations: Parameters<CodeEditor['deltaDecorations']>[1] = []
 
@@ -59,50 +59,62 @@ function applyHunkDecorations(
     }
   }
 
-  return modifiedEditor.deltaDecorations(prevDecorations, decorations)
+  return modifiedEditor.deltaDecorations(previousDecorations, decorations)
 }
 
-type DiffTabViewProps = {
+type DiffTabViewProperties = {
   diffData: DiffTabData
 }
 
-export default function DiffTabView({ diffData }: DiffTabViewProps) {
+export default function DiffTabView({ diffData }: DiffTabViewProperties): JSX.Element {
   const theme = useTheme()
   const { fileHunkStates, toggleFileHunk } = useGitStore(
-    useShallow((s) => ({
-      fileHunkStates: s.fileHunkStates,
-      toggleFileHunk: s.toggleFileHunk,
-    })),
+    useShallow(
+      (
+        s,
+      ): { fileHunkStates: Record<string, FileHunkState>; toggleFileHunk: (file: string, index: number) => void } => ({
+        fileHunkStates: s.fileHunkStates,
+        toggleFileHunk: s.toggleFileHunk,
+      }),
+    ),
   )
 
   const filePath = diffData.filePath
   const hunks = diffData.hunks
   const language = getLanguage(filePath)
   const hunkState = fileHunkStates[filePath]
-  const selectedHunks = useMemo(() => hunkState?.selectedHunks ?? new Set<number>(), [hunkState?.selectedHunks])
+  const selectedHunks = useMemo(
+    (): Set<number> => hunkState?.selectedHunks ?? new Set<number>(),
+    [hunkState?.selectedHunks],
+  )
 
-  const containerRef = useRef<HTMLDivElement>(null)
-  const diffEditorRef = useRef<monaco.editor.IStandaloneDiffEditor | null>(null)
-  const decorationsRef = useRef<string[]>([])
+  const containerReference = useRef<HTMLDivElement>(null)
+  const diffEditorReference = useRef<monaco.editor.IStandaloneDiffEditor | null>(null)
+  const decorationsReference = useRef<string[]>([])
   const [editorReady, setEditorReady] = useState(false)
 
-  const hunksRef = useRef(hunks)
-  hunksRef.current = hunks
-  const toggleRef = useRef(toggleFileHunk)
-  toggleRef.current = toggleFileHunk
-  const filePathRef = useRef(filePath)
-  filePathRef.current = filePath
+  const hunksReference = useRef(hunks)
+  hunksReference.current = hunks
+  const toggleReference = useRef(toggleFileHunk)
+  toggleReference.current = toggleFileHunk
+  const filePathReference = useRef(filePath)
+  filePathReference.current = filePath
 
-  useEffect(() => {
-    if (!editorReady || !diffEditorRef.current) return
-    const modifiedEditor = diffEditorRef.current.getModifiedEditor()
-    decorationsRef.current = applyHunkDecorations(modifiedEditor, hunks, selectedHunks, decorationsRef.current)
+  useEffect((): void => {
+    if (!editorReady || !diffEditorReference.current) return
+    const modifiedEditor = diffEditorReference.current.getModifiedEditor()
+    decorationsReference.current = applyHunkDecorations(
+      modifiedEditor,
+      hunks,
+      selectedHunks,
+      decorationsReference.current,
+    )
   }, [hunks, selectedHunks, editorReady])
 
-  useEffect(() => {
-    if (!containerRef.current) return
+  useEffect((): (() => void) | undefined => {
+    if (!containerReference.current) return
 
-    const diffEditor = monaco.editor.createDiffEditor(containerRef.current, {
+    const diffEditor = monaco.editor.createDiffEditor(containerReference.current, {
       readOnly: true,
       automaticLayout: true,
       renderSideBySide: true,
@@ -111,28 +123,28 @@ export default function DiffTabView({ diffData }: DiffTabViewProps) {
       glyphMargin: true,
     })
 
-    diffEditorRef.current = diffEditor
+    diffEditorReference.current = diffEditor
 
     const modifiedEditor = diffEditor.getModifiedEditor()
     modifiedEditor.updateOptions({ glyphMargin: true })
 
-    decorationsRef.current = applyHunkDecorations(
+    decorationsReference.current = applyHunkDecorations(
       modifiedEditor,
-      hunksRef.current,
-      useGitStore.getState().fileHunkStates[filePathRef.current]?.selectedHunks ?? new Set(),
-      decorationsRef.current,
+      hunksReference.current,
+      useGitStore.getState().fileHunkStates[filePathReference.current]?.selectedHunks ?? new Set(),
+      decorationsReference.current,
     )
 
-    modifiedEditor.onMouseDown((e) => {
-      const targetType = e.target.type
+    modifiedEditor.onMouseDown((event): void => {
+      const targetType = event.target.type
       if (targetType === monaco.editor.MouseTargetType.GUTTER_GLYPH_MARGIN) {
-        const lineNumber = e.target.position?.lineNumber
+        const lineNumber = event.target.position?.lineNumber
         if (lineNumber == null) return
 
-        for (const hunk of hunksRef.current) {
+        for (const hunk of hunksReference.current) {
           if (hunk.newCount <= 0) continue
           if (lineNumber >= hunk.newStart && lineNumber < hunk.newStart + hunk.newCount) {
-            toggleRef.current(filePathRef.current, hunk.index)
+            toggleReference.current(filePathReference.current, hunk.index)
             return
           }
         }
@@ -141,37 +153,38 @@ export default function DiffTabView({ diffData }: DiffTabViewProps) {
 
     setEditorReady(true)
 
-    return () => {
+    return (): void => {
       diffEditor.dispose()
-      diffEditorRef.current = null
-      decorationsRef.current = []
+      diffEditorReference.current = null
+      decorationsReference.current = []
       setEditorReady(false)
     }
   }, [])
 
-  useEffect(() => {
-    const diffEditor = diffEditorRef.current
+  useEffect((): (() => void) | undefined => {
+    const diffEditor = diffEditorReference.current
     if (!diffEditor || !editorReady) return
 
     const originalModel = monaco.editor.createModel(diffData.oldContent, language)
     const modifiedModel = monaco.editor.createModel(diffData.newContent, language)
     diffEditor.setModel({ original: originalModel, modified: modifiedModel })
 
-    return () => {
+    return (): void => {
       originalModel.dispose()
       modifiedModel.dispose()
     }
   }, [diffData, language, editorReady])
 
-  useEffect(() => {
+  useEffect((): void => {
     monaco.editor.setTheme(theme === 'dark' ? 'vs-dark' : 'vs')
   }, [theme])
 
-  const selectableHunks = hunks.filter((hunk) => hunk.newCount > 0)
-  const allSelected = selectableHunks.length > 0 && selectableHunks.every((hunk) => selectedHunks.has(hunk.index))
-  const someSelected = selectableHunks.some((hunk) => selectedHunks.has(hunk.index))
+  const selectableHunks = hunks.filter((hunk): boolean => hunk.newCount > 0)
+  const allSelected =
+    selectableHunks.length > 0 && selectableHunks.every((hunk): boolean => selectedHunks.has(hunk.index))
+  const someSelected = selectableHunks.some((hunk): boolean => selectedHunks.has(hunk.index))
 
-  const handleToggleAllHunks = () => {
+  const handleToggleAllHunks = (): void => {
     for (const hunk of selectableHunks) {
       const isSelected = selectedHunks.has(hunk.index)
       if (allSelected ? isSelected : !isSelected) {
@@ -192,7 +205,7 @@ export default function DiffTabView({ diffData }: DiffTabViewProps) {
         <span className="text-sm font-medium">{filePath}</span>
       </div>
       <div className="min-h-0 flex-1">
-        <div ref={containerRef} className="h-full w-full" />
+        <div ref={containerReference} className="h-full w-full" />
       </div>
     </>
   )

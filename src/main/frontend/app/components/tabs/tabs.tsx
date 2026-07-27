@@ -1,21 +1,26 @@
-import { useCallback, useEffect, useRef } from 'react'
+import { type JSX, useCallback, useEffect, useRef } from 'react'
 import Tab from './tab'
 import type { TabData } from '~/stores/tab-store'
 
-type TabsViewProps<T extends string = string> = {
+type TabsViewProperties<T extends string = string> = {
   tabs: Record<T, TabData>
   activeTab: T | null
   onSelectTab: (key: T) => void
   onCloseTab: (key: T) => void
 }
 
-export function TabsView<T extends string>({ tabs, activeTab, onSelectTab, onCloseTab }: TabsViewProps<T>) {
+export function TabsView<T extends string>({
+  tabs,
+  activeTab,
+  onSelectTab,
+  onCloseTab,
+}: TabsViewProperties<T>): JSX.Element {
   const tabsListReference = useRef<HTMLUListElement>(null)
   const shadowLeftReference = useRef<HTMLDivElement>(null)
   const shadowRightReference = useRef<HTMLDivElement>(null)
   const entries = Object.entries(tabs) as [T, TabData][]
 
-  const calculateScrollShadows = useCallback(() => {
+  const calculateScrollShadows = useCallback((): void => {
     if (!tabsListReference.current || !shadowLeftReference.current || !shadowRightReference.current) return
 
     const { scrollWidth, clientWidth, scrollLeft } = tabsListReference.current
@@ -30,16 +35,16 @@ export function TabsView<T extends string>({ tabs, activeTab, onSelectTab, onClo
     setShadows(currentScroll, 1 - currentScroll)
   }, [])
 
-  useEffect(() => {
+  useEffect((): (() => void) => {
     calculateScrollShadows()
 
     const resizeObserver = new ResizeObserver(calculateScrollShadows)
     if (tabsListReference.current) resizeObserver.observe(tabsListReference.current)
 
-    return () => resizeObserver.disconnect()
+    return (): void => resizeObserver.disconnect()
   }, [calculateScrollShadows, tabs])
 
-  const setShadows = (left: number, right: number) => {
+  const setShadows = (left: number, right: number): void => {
     if (shadowLeftReference.current) {
       shadowLeftReference.current.style.opacity = left.toString()
     }
@@ -65,14 +70,14 @@ export function TabsView<T extends string>({ tabs, activeTab, onSelectTab, onClo
         className="m-0 flex rotate-x-180 flex-nowrap overflow-x-auto p-0 whitespace-nowrap [&::-webkit-scrollbar]:hidden"
         onScroll={calculateScrollShadows}
       >
-        {entries.map(([key, tab]) => (
+        {entries.map(([key, tab]): JSX.Element => (
           <Tab
             key={key}
             name={tab.name}
             configurationPath={tab.configurationPath}
             isSelected={activeTab === key}
-            onSelect={() => onSelectTab(key as T)}
-            onClose={() => onCloseTab(key as T)}
+            onSelect={(): void => onSelectTab(key as T)}
+            onClose={(): void => onCloseTab(key as T)}
             icon={tab.icon}
           />
         ))}

@@ -8,7 +8,7 @@ type NavbarLinkProperties = {
   Icon?: React.FC<React.SVGProps<SVGSVGElement>>
 }
 
-export default function NavbarLink({ route, label, Icon }: Readonly<NavbarLinkProperties>) {
+export default function NavbarLink({ route, label, Icon }: Readonly<NavbarLinkProperties>): React.JSX.Element {
   const navigate = useNavigate()
   const isActive = useMatch(route)
 
@@ -16,7 +16,7 @@ export default function NavbarLink({ route, label, Icon }: Readonly<NavbarLinkPr
     <li className="m-0 list-none p-0">
       <button
         type="button"
-        onClick={() => navigate(route)}
+        onClick={(): void | Promise<void> => navigate(route)}
         className="group relative flex w-full cursor-pointer flex-col items-center py-1"
       >
         <div

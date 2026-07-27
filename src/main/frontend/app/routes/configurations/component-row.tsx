@@ -1,5 +1,4 @@
-import { type ReactNode } from 'react'
-import Button from '~/components/inputs/button'
+import type { JSX, ReactNode } from 'react'
 
 type ComponentRowProperties = {
   typeLabel: string | null
@@ -13,7 +12,7 @@ export default function ComponentRow({
   primaryLabel,
   onConfigure,
   action,
-}: Readonly<ComponentRowProperties>) {
+}: Readonly<ComponentRowProperties>): JSX.Element {
   return (
     <span className="flex w-full items-stretch gap-2 transition-colors">
       <span

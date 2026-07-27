@@ -97,7 +97,7 @@ export function isGroupNode(node: FlowNode): node is GroupNode {
 function nextFreeNumericId(nodes: FlowNode[]): number {
   let max = -1
 
-  const scan = (ns: FlowNode[]) => {
+  const scan = (ns: FlowNode[]): void => {
     for (const n of ns) {
       max = Math.max(max, Number(n.id) || 0)
       if (isFrankNode(n) && n.data.children?.length) {
@@ -141,7 +141,7 @@ const useFlowStore = create<FlowState>()(
     isInternalChange: false,
     history: [],
     future: [],
-    resetStore: () => {
+    resetStore: (): void => {
       set({
         nodes: [],
         edges: [],
@@ -153,7 +153,7 @@ const useFlowStore = create<FlowState>()(
         future: [],
       })
     },
-    onNodesChange: (changes) => {
+    onNodesChange: (changes): void => {
       const state = get()
 
       // Drag detection
@@ -234,7 +234,7 @@ const useFlowStore = create<FlowState>()(
         return { nodes, isDragging: nextIsDragging, isResizing: nextIsResizing }
       })
     },
-    onEdgesChange: (changes) => {
+    onEdgesChange: (changes): void => {
       const state = get()
 
       const structuralChange = changes.some((change) => change.type === 'remove')
@@ -247,7 +247,7 @@ const useFlowStore = create<FlowState>()(
         edges: applyEdgeChanges(changes, state.edges),
       }))
     },
-    onConnect: (connection) => {
+    onConnect: (connection): void => {
       const { nodes, edges } = get()
       const sourceNode = nodes.find((node) => node.id === connection.source)
       const label = getEdgeLabelFromHandle(sourceNode, connection.sourceHandle)
@@ -257,7 +257,7 @@ const useFlowStore = create<FlowState>()(
       get().saveToHistory()
       set({ edges: addEdge({ ...connection, type: 'frankEdge', data: { label } }, get().edges) })
     },
-    onReconnect: (oldEdge, newConnection) => {
+    onReconnect: (oldEdge, newConnection): void => {
       const { nodes, edges } = get()
       const sourceNode = nodes.find((node) => node.id === newConnection.source)
       const label = getEdgeLabelFromHandle(sourceNode, newConnection.sourceHandle)
@@ -277,37 +277,37 @@ const useFlowStore = create<FlowState>()(
       get().saveToHistory()
       set({ nodes })
     },
-    setEdges: (edges: Edge[]) => {
+    setEdges: (edges: Edge[]): void => {
       get().saveToHistory()
       set({ edges })
     },
-    setViewport: (viewport) => {
+    setViewport: (viewport): void => {
       set({ viewport })
     },
-    getNextNodeId: () => {
+    getNextNodeId: (): string => {
       const current = get().nodeIdCounter
       set({ nodeIdCounter: current + 1 })
       return current.toString()
     },
-    addNode: (newNode: FlowNode) => {
+    addNode: (newNode: FlowNode): void => {
       get().saveToHistory()
       set({
         nodes: [...get().nodes, newNode],
       })
     },
-    deleteNode: (nodeId: string) => {
+    deleteNode: (nodeId: string): void => {
       set((state) => ({
         nodes: state.nodes.filter((node) => node.id !== nodeId),
         edges: state.edges.filter((edge) => edge.source !== nodeId && edge.target !== nodeId),
       }))
     },
-    deleteEdge: (edgeId: string) => {
+    deleteEdge: (edgeId: string): void => {
       get().saveToHistory()
       set({
         edges: get().edges.filter((edge) => edge.id !== edgeId),
       })
     },
-    setAttributes: (nodeId, attributes, { isNewNode = false } = {}) => {
+    setAttributes: (nodeId, attributes, { isNewNode = false } = {}): void => {
       if (!isNewNode) get().saveToHistory()
       set({
         nodes: get().nodes.map((node) => {
@@ -318,17 +318,17 @@ const useFlowStore = create<FlowState>()(
         }),
       })
     },
-    getAttributes: (nodeId: string) => {
+    getAttributes: (nodeId: string): Record<string, string> | null => {
       const node = get().nodes.find((node) => node.id === nodeId)
       if (node && (isFrankNode(node) || isExitNode(node))) {
         return node.data.attributes || null
       }
       return null
     },
-    addChild: (nodeId, child) => {
+    addChild: (nodeId, child): void => {
       get().saveToHistory()
       set({
-        nodes: get().nodes.map((node) => {
+        nodes: get().nodes.map((node): FlowNode => {
           if (node.id === nodeId && isFrankNode(node)) {
             return {
               ...node,
@@ -342,7 +342,7 @@ const useFlowStore = create<FlowState>()(
         }),
       })
     },
-    setStickyText: (nodeId, text) => {
+    setStickyText: (nodeId, text): void => {
       get().saveToHistory()
       set({
         nodes: get().nodes.map((node) => {
@@ -353,7 +353,7 @@ const useFlowStore = create<FlowState>()(
         }),
       })
     },
-    setStickyHeight: (nodeId, height) => {
+    setStickyHeight: (nodeId, height): void => {
       set({
         nodes: get().nodes.map((node) => {
           if (node.id === nodeId && isStickyNote(node)) {
@@ -368,7 +368,7 @@ const useFlowStore = create<FlowState>()(
         }),
       })
     },
-    setStickyColor: (nodeId, color) => {
+    setStickyColor: (nodeId, color): void => {
       get().saveToHistory()
       set({
         nodes: get().nodes.map((node) => {
@@ -379,7 +379,7 @@ const useFlowStore = create<FlowState>()(
         }),
       })
     },
-    setStickyCollapsed: (nodeId, collapsed) => {
+    setStickyCollapsed: (nodeId, collapsed): void => {
       get().saveToHistory()
       set({
         nodes: get().nodes.map((node) => {
@@ -404,31 +404,31 @@ const useFlowStore = create<FlowState>()(
                 preCollapseHeight: height,
               },
             }
-          } else {
-            const expandWidth = node.data.preCollapseWidth ?? FlowConfig.STICKY_NOTE_DEFAULT_WIDTH
-            const expandHeight = node.data.preCollapseHeight ?? FlowConfig.STICKY_NOTE_DEFAULT_HEIGHT
-            return {
-              ...node,
+          }
+
+          const expandWidth = node.data.preCollapseWidth ?? FlowConfig.STICKY_NOTE_DEFAULT_WIDTH
+          const expandHeight = node.data.preCollapseHeight ?? FlowConfig.STICKY_NOTE_DEFAULT_HEIGHT
+          return {
+            ...node,
+            width: expandWidth,
+            height: expandHeight,
+            measured: { width: expandWidth, height: expandHeight },
+            style: {
+              ...node.style,
               width: expandWidth,
               height: expandHeight,
-              measured: { width: expandWidth, height: expandHeight },
-              style: {
-                ...node.style,
-                width: expandWidth,
-                height: expandHeight,
-              },
-              data: {
-                ...node.data,
-                collapsed: false,
-                preCollapseWidth: null,
-                preCollapseHeight: null,
-              },
-            }
+            },
+            data: {
+              ...node.data,
+              collapsed: false,
+              preCollapseWidth: null,
+              preCollapseHeight: null,
+            },
           }
         }),
       })
     },
-    setStickyAttachment: (nodeId, attachedToNodeId) => {
+    setStickyAttachment: (nodeId, attachedToNodeId): void => {
       get().saveToHistory()
       const nodes = get().nodes
       const sticky = nodes.find((node) => node.id === nodeId)
@@ -456,8 +456,8 @@ const useFlowStore = create<FlowState>()(
         })
       }
     },
-    setNodesWithoutHistory: (nodes) => set({ nodes }),
-    setGroupnodeLabel: (nodeId, newLabel) => {
+    setNodesWithoutHistory: (nodes): void => set({ nodes }),
+    setGroupnodeLabel: (nodeId, newLabel): void => {
       get().saveToHistory()
       set({
         nodes: get().nodes.map((node) => {
@@ -468,7 +468,7 @@ const useFlowStore = create<FlowState>()(
         }),
       })
     },
-    setGroupnodeDescription: (nodeId, description) => {
+    setGroupnodeDescription: (nodeId, description): void => {
       get().saveToHistory()
       set({
         nodes: get().nodes.map((node) => {
@@ -479,7 +479,7 @@ const useFlowStore = create<FlowState>()(
         }),
       })
     },
-    setGroupnodeColor: (nodeId, color) => {
+    setGroupnodeColor: (nodeId, color): void => {
       get().saveToHistory()
       set({
         nodes: get().nodes.map((node) => {
@@ -490,7 +490,7 @@ const useFlowStore = create<FlowState>()(
         }),
       })
     },
-    setNodeName: (nodeId, name, { isNewNode = false } = {}) => {
+    setNodeName: (nodeId, name, { isNewNode = false } = {}): void => {
       if (!isNewNode) get().saveToHistory()
 
       const taken = new Set<string>(
@@ -511,13 +511,13 @@ const useFlowStore = create<FlowState>()(
         }),
       }))
     },
-    getNodeName: (nodeId: string) => {
+    getNodeName: (nodeId: string): string | null => {
       const node = get().nodes.find((n) => n.id === nodeId)
       if (!node) return null
       if (isFrankNode(node) || isExitNode(node)) return node.data.name ?? null
       return null
     },
-    setNodesHiddenForwards: (nodeIds: string[], hiddenForwards: boolean) => {
+    setNodesHiddenForwards: (nodeIds: string[], hiddenForwards: boolean): void => {
       get().saveToHistory()
       const ids = new Set(nodeIds)
       set({
@@ -528,7 +528,7 @@ const useFlowStore = create<FlowState>()(
         ),
       })
     },
-    addHandle: (nodeId: string, handle: { type: string; index: number }) => {
+    addHandle: (nodeId: string, handle: { type: string; index: number }): void => {
       get().saveToHistory()
       set({
         nodes: get().nodes.map((node) => {
@@ -549,7 +549,7 @@ const useFlowStore = create<FlowState>()(
         }),
       })
     },
-    updateHandle: (nodeId: string, handleIndex: number, newHandle: { type: string; index: number }) => {
+    updateHandle: (nodeId: string, handleIndex: number, newHandle: { type: string; index: number }): void => {
       const state = get()
       state.saveToHistory()
 
@@ -589,7 +589,7 @@ const useFlowStore = create<FlowState>()(
         edges: updatedEdges,
       })
     },
-    updateChild: (rootNodeId: string, updatedChild: ChildNode, { isNewNode = false } = {}) => {
+    updateChild: (rootNodeId: string, updatedChild: ChildNode, { isNewNode = false } = {}): void => {
       if (!isNewNode) get().saveToHistory()
       set({
         nodes: get().nodes.map((node) => {
@@ -605,7 +605,7 @@ const useFlowStore = create<FlowState>()(
         }),
       })
     },
-    deleteChild: (rootNodeId: string, childId: string) => {
+    deleteChild: (rootNodeId: string, childId: string): void => {
       get().saveToHistory()
       set({
         nodes: get().nodes.map((node) => {
@@ -621,7 +621,7 @@ const useFlowStore = create<FlowState>()(
         }),
       })
     },
-    addChildToChild: (nodeId: string, targetChildId: string, newChild: ChildNode) => {
+    addChildToChild: (nodeId: string, targetChildId: string, newChild: ChildNode): void => {
       get().saveToHistory()
       set({
         nodes: get().nodes.map((node) => {
@@ -639,9 +639,9 @@ const useFlowStore = create<FlowState>()(
         }),
       })
     },
-    setHistory: (history: FlowSnapshot[]) => set({ history }),
-    setFuture: (future: FlowSnapshot[]) => set({ future }),
-    saveToHistory: () => {
+    setHistory: (history: FlowSnapshot[]): void => set({ history }),
+    setFuture: (future: FlowSnapshot[]): void => set({ future }),
+    saveToHistory: (): void => {
       const snapshot = createSnapshot(get())
 
       set((state) => ({
@@ -649,7 +649,7 @@ const useFlowStore = create<FlowState>()(
         future: [],
       }))
     },
-    undo: () => {
+    undo: (): void => {
       const { history } = get()
       if (history.length === 0) return
 
@@ -664,7 +664,7 @@ const useFlowStore = create<FlowState>()(
       }))
     },
 
-    redo: () => {
+    redo: (): void => {
       const { future } = get()
       if (future.length === 0) return
 

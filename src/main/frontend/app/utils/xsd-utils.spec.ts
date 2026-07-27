@@ -47,30 +47,30 @@ const XSD = `<?xml version="1.0"?>
 </xs:schema>`
 
 describe('getAllowedChildElementsForElement', () => {
-  const doc = parseXsd(XSD)
+  const document = parseXsd(XSD)
 
   it('resolves an element to its complexType via an inline extension base', () => {
-    expect(resolveElementTypeName(doc, 'SenderPipe')).toBe('SenderPipeType')
+    expect(resolveElementTypeName(document, 'SenderPipe')).toBe('SenderPipeType')
   })
 
   it('resolves an element to its complexType via the type attribute', () => {
-    expect(resolveElementTypeName(doc, 'EchoSender')).toBe('EchoSenderType')
+    expect(resolveElementTypeName(document, 'EchoSender')).toBe('EchoSenderType')
   })
 
   it('allows Param on SenderPipe because it is inherited through AbstractPipe', () => {
-    const allowed = getAllowedChildElementsForElement(doc, 'SenderPipe')
+    const allowed = getAllowedChildElementsForElement(document, 'SenderPipe')
     expect(allowed).toContain('Param')
     expect(allowed).toContain('BooleanParam')
     expect(allowed).toContain('FixedQuerySender')
   })
 
   it('does not allow Param on an element that lacks the inherited param group', () => {
-    const allowed = getAllowedChildElementsForElement(doc, 'EchoSender')
+    const allowed = getAllowedChildElementsForElement(document, 'EchoSender')
     expect(allowed).not.toContain('Param')
     expect(allowed).toContain('Forward')
   })
 
   it('returns nothing for an unknown element', () => {
-    expect(getAllowedChildElementsForElement(doc, 'DoesNotExist')).toEqual([])
+    expect(getAllowedChildElementsForElement(document, 'DoesNotExist')).toEqual([])
   })
 })

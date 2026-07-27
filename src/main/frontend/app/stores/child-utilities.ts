@@ -1,7 +1,7 @@
 import type { ChildNode } from '~/routes/studio/canvas/nodetypes/child-node'
 
 export function addChildRecursive(children: ChildNode[], targetId: string, newChild: ChildNode): ChildNode[] {
-  return children.map((child) => {
+  return children.map((child): ChildNode => {
     if (child.id === targetId) {
       return { ...child, children: [...(child.children || []), newChild] }
     }
@@ -13,7 +13,7 @@ export function addChildRecursive(children: ChildNode[], targetId: string, newCh
 }
 
 export function updateChildRecursive(children: ChildNode[], updatedChild: ChildNode): ChildNode[] {
-  return children.map((child) => {
+  return children.map((child): ChildNode => {
     if (child.id === updatedChild.id) {
       return {
         ...child,
@@ -34,8 +34,8 @@ export function updateChildRecursive(children: ChildNode[], updatedChild: ChildN
 
 export function deleteChildRecursive(children: ChildNode[], childId: string): ChildNode[] {
   return children
-    .filter((child) => child.id !== childId) // remove if it matches here
-    .map((child) => {
+    .filter((child): boolean => child.id !== childId) // remove if it matches here
+    .map((child): ChildNode => {
       if (child.children && child.children.length > 0) {
         return {
           ...child,

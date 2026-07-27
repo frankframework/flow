@@ -1,13 +1,15 @@
+import type { JSX } from 'react'
 import { Link } from 'react-router'
 import RoundedToggle from '~/components/inputs/rounded-toggle'
 import { useProjectStore } from '~/stores/project-store'
 import { toggleProjectFilter } from '~/services/project-service'
+import type { ConfigurationProject } from '~/types/project.types'
 
-export default function ProjectSettings() {
-  const project = useProjectStore((state) => state.project)
-  const setProject = useProjectStore((state) => state.setProject)
+export default function ProjectSettings(): JSX.Element {
+  const project = useProjectStore((state): ConfigurationProject | undefined => state.project)
+  const setProject = useProjectStore((state): ((project: ConfigurationProject) => void) => state.setProject)
 
-  const handleToggleFilter = async (filter: string) => {
+  const handleToggleFilter = async (filter: string): Promise<void> => {
     if (!project) return
 
     const currentlyEnabled = project.filters[filter]
@@ -36,12 +38,12 @@ export default function ProjectSettings() {
             <h2 className="text-lg font-semibold">Filters</h2>
             <p className="mb-4">Enable or disable filters to only show elements of those types in the studio</p>
             <div className="flex flex-wrap gap-2">
-              {Object.entries(project.filters).map(([filter, enabled]) => (
+              {Object.entries(project.filters).map(([filter, enabled]): JSX.Element => (
                 <RoundedToggle
                   key={filter}
                   label={filter}
                   enabled={enabled}
-                  onClick={() => handleToggleFilter(filter)}
+                  onClick={(): Promise<void> => handleToggleFilter(filter)}
                 />
               ))}
             </div>

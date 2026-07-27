@@ -1,4 +1,5 @@
 import '/styles/markdown.css'
+import type { JSX } from 'react'
 import { useParams } from 'react-router'
 import HelpTopicTreeItems, { type HelpTopicTreeItem } from './help-topic-tree-items'
 import SidebarContentClose from '~/components/sidebars-layout/sidebar-content-close'
@@ -9,9 +10,9 @@ import HelpTopics from '~/routes/help/help-topics'
 
 const firstTopic = HelpTopicTreeItems['root']?.children?.[0] as string
 
-export default function Help() {
-  const params = useParams()
-  const topic: string | null = params.topic ?? null
+export default function Help(): JSX.Element {
+  const parameters = useParams()
+  const topic: string | null = parameters.topic ?? null
   const helpTopicKey = topic ?? firstTopic
   const helpTopic: HelpTopicTreeItem | undefined = HelpTopicTreeItems[helpTopicKey]
 
