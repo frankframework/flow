@@ -1,5 +1,5 @@
 import type { JSX } from 'react'
-import type { FlowNode } from '~/routes/studio/canvas/flow'
+import type { FlowNode } from '~/routes/studio/canvas-flow/canvas-flow'
 import useFlowStore, { isGroupNode } from '~/stores/flow-store'
 import { GROUP_COLORS, GROUP_DEFAULT_COLOR } from '~/routes/studio/canvas-flow/nodetypes/group-node'
 import { ALL_SHORTCUTS, formatShortcutParts, type Platform, useShortcutStore } from '~/stores/shortcut-store'

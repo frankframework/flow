@@ -7,10 +7,6 @@ import FlowCanvas from '~/routes/studio/canvas-flow/canvas-flow'
 import { NodeContextMenuContext } from '~/routes/studio/canvas-flow/node-context-menu-context'
 import RightPanelContent from '~/routes/studio/right-panel-content'
 import useFlowStore from '~/stores/flow-store'
-import StudioContext from '~/routes/studio/context/studio-context'
-import Flow, { type FlowNode } from '~/routes/studio/canvas/flow'
-import NodeContext from '~/routes/studio/context/node-context'
-import StickyNoteContext from '~/routes/studio/context/sticky-note-context'
 import useNodeContextStore from '~/stores/node-context-store'
 import SidebarContentClose from '~/components/sidebars-layout/sidebar-content-close'
 import SidebarHeader from '~/components/sidebars-layout/sidebar-header'
@@ -36,7 +32,7 @@ function getRightPanelTitle(
   return 'Palette'
 }
 
-export default function Studio() {
+export default function Studio(): JSX.Element {
   const setVisibility = useSidebarStore((state) => state.setVisible)
   const [showNodeContext, setShowNodeContext] = useState(false)
   const { nodeId, editingSubtype, isMultiSelect, selectedStickyId, selectedGroupId } = useNodeContextStore(
@@ -67,7 +63,7 @@ export default function Studio() {
   const activeStickyId = stickyNodeExists ? selectedStickyId : null
 
   const { activeTab, activeTabPath } = useTabStore(
-    useShallow((state): { activeTab: string; activeTabPath: string | undefined } => ({
+    useShallow((state): { activeTab: string; activeTabPath: string | null } => ({
       activeTab: state.activeTab,
       activeTabPath: state.activeTab ? state.tabs[state.activeTab]?.configurationPath : null,
     })),

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ChangeEvent, type JSX } from 'react'
 import { useSubmitOnEnter } from '~/hooks/use-submit-on-enter'
-import type { FlowNode } from '~/routes/studio/canvas/flow'
+import type { FlowNode } from '~/routes/studio/canvas-flow/canvas-flow'
 import useFlowStore from '~/stores/flow-store'
 import useNodeContextStore, { type NodeContextStore } from '~/stores/node-context-store'
 import { useFFDoc } from '@frankframework/doc-library-react'

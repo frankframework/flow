@@ -1,4 +1,3 @@
-/* eslint-disable */
 import {
   addEdge,
   Background,
@@ -20,6 +19,7 @@ import Dagre from '@dagrejs/dagre'
 import { useNavigate } from 'react-router'
 import { SaveStatusIndicator } from '~/components/save-status-indicator'
 import useToasts from '~/components/toast/use-toasts'
+import { convertAdapterXmlToJson, getAdapterFromConfiguration } from '~/routes/studio/xml-to-json-parser'
 import { useSaveStatusStore } from '~/stores/save-status-store'
 import CodeIcon from '/icons/solar/Code.svg?react'
 import '@xyflow/react/dist/style.css'
@@ -31,7 +31,7 @@ import useFlowStore, { isStickyNote } from '~/stores/flow-store'
 import { useShallow } from 'zustand/react/shallow'
 import { FlowConfig } from '~/routes/studio/canvas-flow/flow.config'
 import { getElementTypeFromName } from '~/routes/studio/node-translator-module'
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { type JSX, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNodeContextMenu } from './node-context-menu-context'
 import StickyNoteComponent, { type StickyNote } from '~/routes/studio/canvas-flow/nodetypes/sticky-note'
 import useTabStore, { type TabData } from '~/stores/tab-store'
@@ -142,7 +142,7 @@ function computeNodeCenteredViewport(
 
   const zoomToFitWidth = (canvasWidth * viewportPadding) / nodeWidth
   const zoomToFitHeight = (canvasHeight * viewportPadding) / nodeHeight
-  const zoom = Math.max(minZoom, Math.min(maxZoom, Math.min(zoomToFitWidth, zoomToFitHeight)))
+  const zoom = Math.max(minZoom, Math.min(maxZoom, zoomToFitWidth, zoomToFitHeight))
 
   return {
     x: canvasWidth / 2 - nodeCenterX * zoom,
@@ -159,7 +159,7 @@ function stripMeasuredDimensions(nodes: FlowNode[]): FlowNode[] {
   })
 }
 
-export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
+export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }): JSX.Element {
   /* Hooks */
 
   const showNodeContextMenu = useNodeContextMenu()
@@ -168,6 +168,7 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
   const updateNodeInternals = useUpdateNodeInternals()
   const reactFlow = useReactFlow()
   const nodesInitialized = useNodesInitialized()
+  const { showErrorToast, logApiError, showWarningToast } = useToasts()
   useShortcut({
     'studio.copy': () => copySelection(),
     'studio.paste': () => pasteSelection(),
@@ -238,9 +239,7 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
     onReconnect,
     undo,
     redo,
-    nodeIdCounter,
     getNextNodeId,
-    addNode,
     setNodesHiddenForwards,
     setNodesWithoutHistory,
     setViewport,
@@ -330,7 +329,7 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
 
   const displayEdges = useMemo(() => {
     if (hiddenForwardNodeIds.size === 0) return edges
-    const isHiddenAndNotRevealed = (nodeId: string) =>
+    const isHiddenAndNotRevealed = (nodeId: string): boolean =>
       hiddenForwardNodeIds.has(nodeId) && !revealedHiddenIds.has(nodeId)
 
     return edges.map((edge) => {
@@ -451,7 +450,7 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
 
       const zoomToFitWidth = (canvasWidth * viewportPadding) / Math.max(boundsWidth, 1)
       const zoomToFitHeight = (canvasHeight * viewportPadding) / Math.max(boundsHeight, 1)
-      const zoom = Math.max(minZoom, Math.min(maxZoom, Math.min(zoomToFitWidth, zoomToFitHeight)))
+      const zoom = Math.max(minZoom, Math.min(maxZoom, zoomToFitWidth, zoomToFitHeight))
 
       return {
         x: canvasWidth / 2 - boundsCenterX * zoom,
@@ -471,7 +470,7 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
     const REQUIRED_STABLE_FRAMES = 3
     const MINIMUM_TOTAL_FRAMES = 5
 
-    const checkDimensions = () => {
+    const checkDimensions = (): void => {
       const currentWidth = canvasRef.current?.clientWidth ?? 0
       const currentHeight = canvasRef.current?.clientHeight ?? 0
 
@@ -588,7 +587,7 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
         setLoading(false)
       }
     },
-    [activeTab, loadFromApi, loadFromCache, setTabData],
+    [activeTab, loadFromApi, loadFromCache, logApiError, setTabData],
   )
 
   const saveFlow = useCallback(async () => {
@@ -652,7 +651,7 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
       logApiError('Failed to save XML', error as Error)
       setIdle()
     }
-  }, [activeTab, edges, getTab, nodes, setIdle, setSaved, setSaving, setTabData, viewport])
+  }, [activeTab, edges, getTab, logApiError, nodes, setIdle, setSaved, setSaving, setTabData, showErrorToast, viewport])
 
   const scheduleAutoSave = useCallback(() => {
     if (!autosaveEnabled) return
@@ -747,12 +746,13 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
 
     const layoutableIds = new Set<string>()
     for (const node of nodes) {
-      if ((node.type === 'frankNode' || node.type === 'exitNode') && node.position.x === 0 && node.position.y === 0) {
-        const width = node.measured?.width ?? FlowConfig.NODE_DEFAULT_WIDTH
-        const height = node.measured?.height ?? FlowConfig.NODE_MIN_HEIGHT
-        dagreGraph.setNode(node.id, { width: width, height: height })
-        layoutableIds.add(node.id)
-      }
+      if (!((node.type === 'frankNode' || node.type === 'exitNode') && node.position.x === 0 && node.position.y === 0))
+        continue
+
+      const width = node.measured?.width ?? FlowConfig.NODE_DEFAULT_WIDTH
+      const height = node.measured?.height ?? FlowConfig.NODE_MIN_HEIGHT
+      dagreGraph.setNode(node.id, { width: width, height: height })
+      layoutableIds.add(node.id)
     }
 
     for (const edge of edges) {
@@ -979,12 +979,12 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
     navigator.clipboard
       .writeText(JSON.stringify(data))
       .catch(() => showWarningToast('Copy/paste may not work in this browser.', 'Failed to copy'))
-  }, [nodes, edges])
+  }, [nodes, edges, showWarningToast])
 
   const applyClipboardData = useCallback(
     (clipboard: { nodes: FlowNode[]; edges: Edge[] }) => {
       const idMap = new Map<string, string>()
-      const generateId = () => getNextNodeId().toString()
+      const generateId = (): string => getNextNodeId().toString()
 
       const newNodes: FlowNode[] = clipboard.nodes.map((node) => {
         const cloned = cloneWithRemappedIds(node, idMap, generateId)
@@ -1047,7 +1047,7 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
     }
 
     const selectedNodeIds = new Set(nodes.filter((node) => node.selected).map((n) => n.id))
-    const hasSelection = selectedNodeIds.size > 0 || edges.some((e) => e.selected)
+    const hasSelection = selectedNodeIds.size > 0 || edges.some((edge) => edge.selected)
     if (!hasSelection) return false
 
     const { selectedStickyId } = useNodeContextStore.getState()
@@ -1126,7 +1126,7 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
 
   const handleNodeClick = useCallback(
     (event: React.MouseEvent, node: FlowNode) => {
-      if (event.shiftKey || event.ctrlKey || event.metaKey || isDirty) return
+      if (isDirty || event.shiftKey || event.ctrlKey || event.metaKey) return
 
       if (node.type === 'stickyNote') {
         setSelectedStickyId(node.id)
@@ -1270,7 +1270,7 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
     [allowedOnCanvas],
   )
 
-  const onDrop = (event: React.DragEvent) => {
+  const onDrop = (event: React.DragEvent): void => {
     event.preventDefault()
     setDraggedName(null)
     setParentId(null)
@@ -1295,7 +1295,7 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
     addNodeAtPosition(position, parsedData.name)
   }
 
-  const onDragEnd = () => {
+  const onDragEnd = (): void => {
     setDraggedName(null)
     setParentId(null)
   }
@@ -1304,7 +1304,7 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
     position: { x: number; y: number },
     elementName: string,
     sourceInfo?: { nodeId: string | null; handleId: string | null; handleType: 'source' | 'target' | null },
-  ) {
+  ): void {
     showNodeContextMenu(true)
     setIsNewNode(true)
     setEditingSubtype(elementName)
@@ -1342,7 +1342,7 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
     if (sourceInfo?.nodeId && sourceInfo.handleType === 'source') {
       const sourceNode = flowStore.nodes.find((node) => node.id === sourceInfo.nodeId)
 
-      if (reactFlow.getZoom() < FlowConfig.ZOOM_THRESHOLD && sourceNode && isFrankNode(sourceNode)) {
+      if (sourceNode && reactFlow.getZoom() < FlowConfig.ZOOM_THRESHOLD && isFrankNode(sourceNode)) {
         if (edgeDropHandleType) {
           const existingHandle = sourceNode.data.sourceHandles.find((handle) => handle.type === edgeDropHandleType)
           if (existingHandle) {
@@ -1487,8 +1487,7 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
     },
     [reactFlow],
   )
-
-  const connectEdgeToSource = useCallback(
+  useCallback(
     ({
       sourceNode,
       sourceNodeId,
@@ -1535,7 +1534,6 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
     },
     [addFlowHandle, edgeDropHandleType, onConnect, reactFlow],
   )
-
   /* useEffect */
 
   useEffect(() => {
@@ -1556,11 +1554,11 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
       },
     )
 
-    return () => unsubscribe()
+    return (): void => unsubscribe()
   }, [activeTab, getTab, loadFlowFromTab, resetFlowStore, saveFlowToTab])
 
   useEffect(() => {
-    return () => {
+    return (): void => {
       if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current)
     }
   }, [])
@@ -1620,7 +1618,7 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
       }
       await saveFlow()
     })
-    return () => useNodeContextStore.getState().registerSaveFlow(null)
+    return (): void => useNodeContextStore.getState().registerSaveFlow(null)
   }, [saveFlow])
 
   useEffect(() => {
@@ -1668,26 +1666,26 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
         const { selectedStickyId, setSelectedStickyId, selectedGroupId, setSelectedGroupId, setIsEditing } =
           useNodeContextStore.getState()
 
-        if (selectedStickyId && !nodes.some((node) => node.id === selectedStickyId)) {
+        if (selectedStickyId && nodes.every((node) => node.id !== selectedStickyId)) {
           setSelectedStickyId(null)
           showNodeContextMenu(false)
           setIsEditing(false)
         }
 
-        if (selectedGroupId && !nodes.some((node) => node.id === selectedGroupId)) {
+        if (selectedGroupId && nodes.every((node) => node.id !== selectedGroupId)) {
           setSelectedGroupId(null)
           showNodeContextMenu(false)
         }
       },
     )
-    return () => unsub()
+    return (): void => unsub()
   }, [showNodeContextMenu])
 
   useEffect(() => {
     const unsub = useFlowStore.subscribe(
       (state) => state.nodes, // selector: subscribe only to nodes
       (newNodes, oldNodes) => {
-        if (!reactFlowRef.current || !oldNodes) return
+        if (!oldNodes || !reactFlowRef.current) return
 
         // Compare old vs new node data
         for (const newNode of newNodes) {
@@ -1701,7 +1699,7 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
       },
     )
 
-    return () => unsub()
+    return (): void => unsub()
   }, [updateNodeInternals])
 
   /* TODO ????? */
@@ -1714,11 +1712,11 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
 
   /* Functions */
 
-  function handleConnectStart(_: MouseEvent | TouchEvent, params: OnConnectStartParams): void {
+  function handleConnectStart(_: MouseEvent | TouchEvent, parameters: OnConnectStartParams): void {
     sourceInfoReference.current = {
-      nodeId: params.nodeId,
-      handleId: params.handleId,
-      handleType: params.handleType,
+      nodeId: parameters.nodeId,
+      handleId: parameters.handleId,
+      handleType: parameters.handleType,
     }
   }
 
@@ -1816,8 +1814,8 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
         <ReactFlow
           nodes={displayNodes}
           edges={displayEdges}
-          onViewportChange={(viewPort) => {
-            setViewport(viewPort)
+          onViewportChange={(viewport_) => {
+            setViewport(viewport_)
           }}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
