@@ -233,7 +233,7 @@ export function useFileTreeContextMenu({
         patterns: menu.isFolder ? FOLDER_OR_ADAPTER_NAME_PATTERNS : FILE_NAME_PATTERNS,
       })
     },
-    [projectName, dataProvider, closeContextMenu, showErrorToast, onAfterRename],
+    [projectName, dataProvider, closeContextMenu, showErrorToast, onAfterRename, logApiError],
   )
 
   const handleDelete = useCallback(

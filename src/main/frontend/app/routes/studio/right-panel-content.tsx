@@ -1,3 +1,4 @@
+import type { JSX } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import Button from '~/components/inputs/button'
 import type { StickyNote } from '~/routes/studio/canvas-flow/nodetypes/sticky-note'
@@ -25,7 +26,7 @@ export default function RightPanelContent({
   showNodeContext,
   nodeId,
   onShowNodeContext,
-}: RightPanelProps) {
+}: RightPanelProps): JSX.Element {
   const showPalette = !isMultiSelect && !selectedStickyId && !selectedGroupId && !showNodeContext
 
   return (
@@ -47,7 +48,7 @@ export default function RightPanelContent({
   )
 }
 
-function MultiSelectPanel() {
+function MultiSelectPanel(): JSX.Element {
   const { allInSameGroup, groupId } = useFlowStore(
     useShallow((state) => {
       const selected = state.nodes.filter((node) => node.selected)
@@ -62,14 +63,14 @@ function MultiSelectPanel() {
     }),
   )
 
-  const platform = useShortcutStore((shortcut) => shortcut.platform)
-  const groupDef = ALL_SHORTCUTS.find((shortCut) => shortCut.id === 'studio.group')!
-  const groupParts = formatShortcutParts(groupDef, platform)
-  const triggerGroup = () => useShortcutStore.getState().shortcuts.get('studio.group')?.handler?.()
+  const { platform, shortcuts } = useShortcutStore()
 
   if (allInSameGroup && groupId) {
     return <GroupContext nodeId={groupId} />
   }
+  const groupDefinition = ALL_SHORTCUTS.find((shortCut) => shortCut.id === 'studio.group')!
+  const groupParts = formatShortcutParts(groupDefinition, platform)
+  const triggerGroup = (): boolean | null => shortcuts.get('studio.group')?.handler?.() ?? null
 
   return (
     <div className="p-4">
@@ -87,7 +88,7 @@ function MultiSelectPanel() {
   )
 }
 
-function AttachedNotesPanel({ nodeId }: { nodeId: number }) {
+function AttachedNotesPanel({ nodeId }: { nodeId: number }): JSX.Element | null {
   const attachedNotes = useFlowStore(
     useShallow((state) =>
       state.nodes.filter(
