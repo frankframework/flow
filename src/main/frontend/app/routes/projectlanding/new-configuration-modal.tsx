@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, type JSX } from 'react'
 import { useSubmitOnEnter } from '~/hooks/use-submit-on-enter'
 import DirectoryPicker from '~/components/directory-picker/directory-picker'
 import Button from '~/components/inputs/button'
@@ -21,13 +21,13 @@ export default function NewConfigurationModal({
   onClose,
   onCreate,
   initialPath,
-}: Readonly<NewProjectModalProperties>) {
+}: Readonly<NewProjectModalProperties>): JSX.Element {
   const [name, setName] = useState('')
   const [isNameValid, setIsNameValid] = useState(false)
   const [location, setLocation] = useState('')
   const [showPicker, setShowPicker] = useState(false)
 
-  useEffect(() => {
+  useEffect((): void => {
     if (!isLocal) {
       setLocation(initialPath)
       return
@@ -35,18 +35,18 @@ export default function NewConfigurationModal({
 
     filesystemService
       .resolveNearestAccessiblePath(initialPath)
-      .then((resolved) => setLocation(normalizePath(resolved)))
-      .catch(() => setLocation(''))
+      .then((resolved): void => setLocation(normalizePath(resolved)))
+      .catch((): void => setLocation(''))
   }, [isLocal, initialPath])
 
-  const handleCreate = () => {
+  const handleCreate = (): void => {
     if (!isNameValid || !name.trim() || (isLocal && !location)) return
     const trimmedName = name.trim()
     onCreate(trimmedName, stripTrailingSeparators(location ?? ''))
     handleClose()
   }
 
-  const handleClose = () => {
+  const handleClose = (): void => {
     setName('')
     setLocation('')
     setShowPicker(false)
@@ -71,10 +71,10 @@ export default function NewConfigurationModal({
                 value={location || (isLocal ? '' : 'Workspace root')}
                 readOnly
                 placeholder={isLocal ? 'Select a parent directory...' : 'Workspace root (or browse for subfolder)'}
-                onDoubleClick={() => setShowPicker(true)}
+                onDoubleClick={(): void => setShowPicker(true)}
               />
 
-              <Button onClick={() => setShowPicker(true)} className="text-sm">
+              <Button onClick={(): void => setShowPicker(true)} className="text-sm">
                 Browse...
               </Button>
             </div>
@@ -86,7 +86,7 @@ export default function NewConfigurationModal({
               value={name}
               patterns={PROJECT_NAME_PATTERNS}
               onValidChange={setIsNameValid}
-              onChange={(event) => setName(event.target.value)}
+              onChange={(event): void => setName(event.target.value)}
               placeholder="Enter configuration name"
             />
           </div>
@@ -114,11 +114,11 @@ export default function NewConfigurationModal({
 
       {showPicker && (
         <DirectoryPicker
-          onSelect={(path) => {
+          onSelect={(path): void => {
             setLocation(normalizePath(path))
             setShowPicker(false)
           }}
-          onCancel={() => setShowPicker(false)}
+          onCancel={(): void => setShowPicker(false)}
           initialPath={location}
         />
       )}
@@ -126,7 +126,7 @@ export default function NewConfigurationModal({
   )
 }
 
-function getConfigurationPath(location: string, name: string, isLocal: boolean) {
+function getConfigurationPath(location: string, name: string, isLocal: boolean): string {
   const base = isLocal ? normalizePath(location) : location
   return joinPath(base, name.trim())
 }

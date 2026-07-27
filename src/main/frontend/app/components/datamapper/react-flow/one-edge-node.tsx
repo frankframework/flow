@@ -1,5 +1,6 @@
 import { Handle, Position, type Node, useNodeConnections } from '@xyflow/react'
 import clsx from 'clsx'
+import type { JSX } from 'react'
 import type { CustomNodeData } from '~/types/datamapper_types/react-node-types'
 import EditButton from '../basic-components/edit-button'
 import DeleteButton from '../basic-components/delete-button'
@@ -16,7 +17,14 @@ export type OneEdgeNodeProperties = {
   onHighlight?: (id: string) => void
 }
 
-function OneEdgeNode({ id, data, variant = 'source', onEdit, onDelete, onHighlight }: OneEdgeNodeProperties) {
+function OneEdgeNode({
+  id,
+  data,
+  variant = 'source',
+  onEdit,
+  onDelete,
+  onHighlight,
+}: OneEdgeNodeProperties): JSX.Element {
   const checked = data?.checked
 
   const connections = useNodeConnections({
@@ -25,14 +33,14 @@ function OneEdgeNode({ id, data, variant = 'source', onEdit, onDelete, onHighlig
 
   const isConnectable = connections.length === 0 || variant === 'source'
 
-  const updateChecked = () => {
+  const updateChecked = (): void => {
     const newChecked = !checked
-    data.setNodes?.((nodes: Node[]) =>
-      nodes.map((node) => (node.id === id ? { ...node, data: { ...node.data, checked: newChecked } } : node)),
+    data.setNodes?.((nodes: Node[]): Node[] =>
+      nodes.map((node): Node => (node.id === id ? { ...node, data: { ...node.data, checked: newChecked } } : node)),
     )
     if (variant != 'source') {
-      data.setNodes?.((nodes: Node[]) =>
-        nodes.map((node) =>
+      data.setNodes?.((nodes: Node[]): Node[] =>
+        nodes.map((node): Node =>
           node.id !== id && node.parentId?.includes('target')
             ? { ...node, data: { ...node.data, checked: false } }
             : node,
@@ -71,19 +79,19 @@ function OneEdgeNode({ id, data, variant = 'source', onEdit, onDelete, onHighlig
       {/* Right side */}
       <div className="ml-auto hidden items-center gap-1 group-hover:flex">
         <HighlightButton
-          onClick={() => {
+          onClick={(): void => {
             onHighlight?.(id)
           }}
         />
 
         <EditButton
-          onClick={() => {
+          onClick={(): void => {
             onEdit?.(data)
           }}
         />
 
         <DeleteButton
-          onClick={() => {
+          onClick={(): void => {
             onDelete?.(id)
           }}
         />

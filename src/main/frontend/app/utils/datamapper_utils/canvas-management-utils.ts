@@ -1,8 +1,8 @@
 import type { Node } from '@xyflow/react'
 import { MAPPING_TABLE_WIDTH, OBJECT_HEIGHT, TABLE_WIDTH } from './constant'
 
-export function updateCanvasSize(nodes: Node[], currentSize: { height: number }) {
-  const maxY = nodes.reduce((max, node) => {
+export function updateCanvasSize(nodes: Node[], currentSize: { height: number }): { height: number } {
+  const maxY = nodes.reduce((max, node): number => {
     const nodeHeight = node.height ?? OBJECT_HEIGHT
     const nodeBottom = (node.position.y ?? 0) + nodeHeight + 20
     return Math.max(max, nodeBottom)

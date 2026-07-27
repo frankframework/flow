@@ -24,7 +24,7 @@ export default function Search({
   autoFocus,
   onChange,
   onKeyDown,
-}: Readonly<SearchProperties>) {
+}: Readonly<SearchProperties>): React.JSX.Element {
   const generatedId = useId()
   const inputId = id ?? generatedId
   return (

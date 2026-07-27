@@ -1,3 +1,4 @@
+import type { ReactPortal } from 'react'
 import { createPortal } from 'react-dom'
 
 export type DeprecatedInfo = {
@@ -12,7 +13,7 @@ export function DeprecatedPopover({
 }: {
   deprecated: DeprecatedInfo
   anchorRect: DOMRect | null
-}) {
+}): ReactPortal | null {
   if (!anchorRect) return null
 
   // Using a portal so the popover can actually render on top of the canvas. Otherwise it would only render within the node bounds.

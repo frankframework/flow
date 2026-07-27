@@ -8,7 +8,9 @@ export default function LinkButton({
   className,
   variant = 'default',
   ...properties
-}: React.PropsWithChildren<Readonly<React.AnchorHTMLAttributes<HTMLAnchorElement> & { variant?: ButtonVariant }>>) {
+}: React.PropsWithChildren<
+  Readonly<React.AnchorHTMLAttributes<HTMLAnchorElement> & { variant?: ButtonVariant }>
+>): React.JSX.Element {
   return (
     <a className={buttonClasses(variant, false, className)} {...properties}>
       {children}

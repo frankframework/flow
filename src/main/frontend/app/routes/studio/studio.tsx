@@ -1,5 +1,5 @@
 import { ReactFlowProvider } from '@xyflow/react'
-import React, { useCallback, useEffect, useState } from 'react'
+import { type JSX, useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 import StudioTabs from '~/components/tabs/studio-tabs'
 import StudioFileStructure from '~/components/file-structure/studio-file-structure'
@@ -7,6 +7,10 @@ import FlowCanvas from '~/routes/studio/canvas-flow/canvas-flow'
 import { NodeContextMenuContext } from '~/routes/studio/canvas-flow/node-context-menu-context'
 import RightPanelContent from '~/routes/studio/right-panel-content'
 import useFlowStore from '~/stores/flow-store'
+import StudioContext from '~/routes/studio/context/studio-context'
+import Flow, { type FlowNode } from '~/routes/studio/canvas/flow'
+import NodeContext from '~/routes/studio/context/node-context'
+import StickyNoteContext from '~/routes/studio/context/sticky-note-context'
 import useNodeContextStore from '~/stores/node-context-store'
 import SidebarContentClose from '~/components/sidebars-layout/sidebar-content-close'
 import SidebarHeader from '~/components/sidebars-layout/sidebar-header'
@@ -36,40 +40,50 @@ export default function Studio() {
   const setVisibility = useSidebarStore((state) => state.setVisible)
   const [showNodeContext, setShowNodeContext] = useState(false)
   const { nodeId, editingSubtype, isMultiSelect, selectedStickyId, selectedGroupId } = useNodeContextStore(
-    useShallow((state) => ({
-      nodeId: state.nodeId,
-      editingSubtype: state.editingSubtype,
-      isMultiSelect: state.isMultiSelect,
-      selectedStickyId: state.selectedStickyId,
-      selectedGroupId: state.selectedGroupId,
-    })),
+    useShallow(
+      (
+        state,
+      ): {
+        nodeId: number
+        editingSubtype: string | null
+        isMultiSelect: boolean
+        selectedStickyId: string | null
+        selectedGroupId: string | null
+      } => ({
+        nodeId: state.nodeId,
+        editingSubtype: state.editingSubtype,
+        isMultiSelect: state.isMultiSelect,
+        selectedStickyId: state.selectedStickyId,
+        selectedGroupId: state.selectedGroupId,
+      }),
+    ),
   )
   const navigate = useNavigate()
 
   const stickyNodeExists = useFlowStore(
-    (state) => selectedStickyId != null && state.nodes.some((node) => node.id === selectedStickyId),
+    (state): boolean => selectedStickyId != null && state.nodes.some((node): boolean => node.id === selectedStickyId),
   )
 
   const activeStickyId = stickyNodeExists ? selectedStickyId : null
 
   const { activeTab, activeTabPath } = useTabStore(
-    useShallow((state) => ({
+    useShallow((state): { activeTab: string; activeTabPath: string | undefined } => ({
       activeTab: state.activeTab,
       activeTabPath: state.activeTab ? state.tabs[state.activeTab]?.configurationPath : null,
     })),
   )
 
-  const allInSameGroup = useFlowStore((flowStore) => {
-    const selected = flowStore.nodes.filter((node) => node.selected)
+  const allInSameGroup = useFlowStore((flowStore): boolean => {
+    const selected = flowStore.nodes.filter((node): boolean | undefined => node.selected)
     if (selected.length <= 1) return false
-    const content = selected.filter((node) => node.type === 'frankNode' || node.type === 'exitNode')
+    const content = selected.filter((node): boolean => node.type === 'frankNode' || node.type === 'exitNode')
     if (content.length <= 1) return false
     const firstParentId = content[0].parentId
-    return !!firstParentId && content.every((node) => node.parentId === firstParentId)
+    return !!firstParentId && content.every((node): boolean => node.parentId === firstParentId)
   })
 
   const handleShowNodeContext = useCallback(
-    (visible: boolean) => {
+    (visible: boolean): void => {
       setShowNodeContext(visible)
       if (visible) {
         setVisibility('studio', SidebarSide.RIGHT, true)
@@ -78,14 +92,16 @@ export default function Studio() {
     [setVisibility],
   )
 
-  useEffect(() => {
-    if (selectedStickyId && !stickyNodeExists) {
-      useNodeContextStore.getState().setSelectedStickyId(null)
-      setShowNodeContext(false)
+  useEffect((): void => {
+    if (!selectedStickyId || stickyNodeExists) {
+      return
     }
+
+    useNodeContextStore.getState().setSelectedStickyId(null)
+    setShowNodeContext(false)
   }, [selectedStickyId, stickyNodeExists])
 
-  const handleOpenInEditor = useCallback(() => {
+  const handleOpenInEditor = useCallback((): void => {
     if (!activeTabPath) return
 
     const fileName = getBaseName(activeTabPath)

@@ -1,3 +1,4 @@
+import type { JSX } from 'react'
 import SidebarClose, { type SidebarsCloseProperties } from '~/components/sidebars-layout/sidebar-close'
 import { SidebarSide } from '~/components/sidebars-layout/sidebar-layout-store'
 import clsx from 'clsx'
@@ -6,7 +7,7 @@ type SidebarsHeaderProperties = {
   title?: string
 } & SidebarsCloseProperties
 
-export default function SidebarHeader({ title, side }: Readonly<SidebarsHeaderProperties>) {
+export default function SidebarHeader({ title, side }: Readonly<SidebarsHeaderProperties>): JSX.Element {
   const isLeft = side === SidebarSide.LEFT
 
   return (

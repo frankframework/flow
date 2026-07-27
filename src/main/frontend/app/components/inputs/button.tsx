@@ -3,7 +3,7 @@ import clsx from 'clsx'
 
 type ButtonVariant = 'default' | 'ghost' | 'primary' | 'destructive' | 'unstyled'
 
-export function buttonClasses(variant: ButtonVariant = 'default', disabled?: boolean, className?: string) {
+export function buttonClasses(variant: ButtonVariant = 'default', disabled?: boolean, className?: string): string {
   return clsx(
     variant !== 'unstyled' && 'rounded-md px-4 py-2',
     variant === 'default' && 'text-foreground border-border bg-backdrop border',
@@ -23,7 +23,9 @@ export default function Button({
   className,
   variant = 'default',
   ...properties
-}: React.PropsWithChildren<Readonly<React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: ButtonVariant }>>) {
+}: React.PropsWithChildren<
+  Readonly<React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: ButtonVariant }>
+>): React.JSX.Element {
   return (
     <button className={buttonClasses(variant, properties.disabled, className)} {...properties}>
       {children}

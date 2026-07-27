@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { type JSX, useState } from 'react'
 import clsx from 'clsx'
 import type { GitStatus } from '~/types/git.types'
 import IconButton from '~/components/inputs/icon-button'
@@ -9,7 +9,7 @@ import AltArrowDownIcon from '/icons/solar/Alt Arrow Down.svg?react'
 import AltArrowUpIcon from '/icons/solar/Alt Arrow Up.svg?react'
 import KeyIcon from '/icons/solar/Key.svg?react'
 
-type GitToolbarProps = {
+type GitToolbarProperties = {
   status: GitStatus | null
   onRefresh: () => void
   onPush: () => void
@@ -27,12 +27,12 @@ export default function GitToolbar({
   token,
   onTokenChange,
   hasStoredToken,
-}: GitToolbarProps) {
+}: GitToolbarProperties): JSX.Element {
   const [isPushing, setIsPushing] = useState(false)
   const [isPulling, setIsPulling] = useState(false)
   const [showToken, setShowToken] = useState(false)
 
-  const handlePush = async () => {
+  const handlePush = async (): Promise<void> => {
     setIsPushing(true)
     try {
       await onPush()
@@ -41,7 +41,7 @@ export default function GitToolbar({
     }
   }
 
-  const handlePull = async () => {
+  const handlePull = async (): Promise<void> => {
     setIsPulling(true)
     try {
       await onPull()
@@ -92,7 +92,7 @@ export default function GitToolbar({
           />
           {!status?.isLocal && (
             <IconButton
-              onClick={() => setShowToken(!showToken)}
+              onClick={(): void => setShowToken(!showToken)}
               title="Authentication token for private repos"
               className={clsx(showToken && 'bg-selected')}
             >
@@ -107,7 +107,7 @@ export default function GitToolbar({
           <Input
             type="password"
             value={token}
-            onChange={(event) => onTokenChange(event.target.value)}
+            onChange={(event): void => onTokenChange(event.target.value)}
             placeholder={
               hasStoredToken ? 'Using saved token (override here)' : 'Personal access token (for private repos)'
             }

@@ -8,7 +8,7 @@ import {
 } from 'react-complex-tree'
 import AltArrowRightIcon from '/icons/solar/Alt Arrow Right.svg?react'
 import AltArrowDownIcon from '/icons/solar/Alt Arrow Down.svg?react'
-import { useRef } from 'react'
+import { type JSX, useRef } from 'react'
 import { useNavigate } from 'react-router'
 import helpTopics, { type HelpTopicTreeItem } from './help-topic-tree-items'
 import '/styles/editor-files.css'
@@ -19,13 +19,19 @@ type HelpCategoriesProperties = {
 
 const TREE_ID = 'help-topics-tree'
 
-export default function HelpTopics({ selectedTopic }: Readonly<HelpCategoriesProperties>) {
+export default function HelpTopics({ selectedTopic }: Readonly<HelpCategoriesProperties>): JSX.Element {
   const navigate = useNavigate()
   const tree = useRef<TreeRef>(null)
 
-  const navigateToTopic = (items: TreeItemIndex[]) => navigate(`/help/${items[0]}`)
+  const navigateToTopic = (items: TreeItemIndex[]): void | Promise<void> => navigate(`/help/${items[0]}`)
 
-  const renderItemArrow = ({ item, context }: { item: HelpTopicTreeItem; context: TreeItemRenderContext }) => {
+  const renderItemArrow = ({
+    item,
+    context,
+  }: {
+    item: HelpTopicTreeItem
+    context: TreeItemRenderContext
+  }): JSX.Element | null => {
     if (!item.isFolder) return null
 
     const Icon = context.isExpanded ? AltArrowDownIcon : AltArrowRightIcon
@@ -37,7 +43,7 @@ export default function HelpTopics({ selectedTopic }: Readonly<HelpCategoriesPro
     )
   }
 
-  const renderItemTitle = ({ title }: { title: string }) => (
+  const renderItemTitle = ({ title }: { title: string }): JSX.Element => (
     <span className="font-inter ml-1 overflow-hidden text-nowrap text-ellipsis">{title}</span>
   )
 
@@ -46,7 +52,7 @@ export default function HelpTopics({ selectedTopic }: Readonly<HelpCategoriesPro
       <div className="overflow-auto px-2">
         <UncontrolledTreeEnvironment
           dataProvider={new StaticTreeDataProvider(helpTopics)}
-          getItemTitle={({ data }) => data.title}
+          getItemTitle={({ data }): string => data.title}
           viewState={{ [TREE_ID]: { selectedItems: [selectedTopic] } }}
           disableMultiselect={true}
           onSelectItems={navigateToTopic}

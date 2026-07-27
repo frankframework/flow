@@ -15,10 +15,10 @@ export default function SwitchToggle({
   onChange,
   disabled = false,
   className,
-}: Readonly<SwitchToggleProperties>) {
+}: Readonly<SwitchToggleProperties>): React.JSX.Element {
   const [selected, setSelected] = useState<string>(value ?? options[0])
 
-  const handleToggle = () => {
+  const handleToggle = (): void => {
     if (disabled) return
     const newValue = selected === options[0] ? options[1] : options[0]
     setSelected(newValue)

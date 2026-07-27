@@ -9,11 +9,11 @@ type WatcherEntry = {
 
 const watchers = new Map<string, WatcherEntry>()
 
-function useSseWatcher(url: string | null, onFileChange?: () => void) {
-  const callbackRef = useRef(onFileChange)
-  callbackRef.current = onFileChange
+function useSseWatcher(url: string | null, onFileChange?: () => void): void {
+  const callbackReference = useRef(onFileChange)
+  callbackReference.current = onFileChange
 
-  useEffect(() => {
+  useEffect((): (() => void) | undefined => {
     if (!url) return
 
     let entry = watchers.get(url)
@@ -29,18 +29,18 @@ function useSseWatcher(url: string | null, onFileChange?: () => void) {
       watchers.set(url, entry)
     }
 
-    const handler = () => callbackRef.current?.()
+    const handler = (): void | undefined => callbackReference.current?.()
     entry.handlers.add(handler)
     entry.source.addEventListener('file-change', handler)
 
     const currentEntry = entry
 
-    return () => {
+    return (): void => {
       currentEntry.source.removeEventListener('file-change', handler)
       currentEntry.handlers.delete(handler)
 
       if (currentEntry.handlers.size === 0) {
-        currentEntry.closeTimer = setTimeout(() => {
+        currentEntry.closeTimer = setTimeout((): void => {
           currentEntry.source.close()
           watchers.delete(url)
         }, 100)
@@ -49,12 +49,12 @@ function useSseWatcher(url: string | null, onFileChange?: () => void) {
   }, [url])
 }
 
-export function useFileWatcher(projectName: string | null | undefined, onFileChange?: () => void) {
+export function useFileWatcher(projectName: string | null | undefined, onFileChange?: () => void): void {
   const url = projectName ? apiUrl(`/projects/${projectName}/watch`) : null
   useSseWatcher(url, onFileChange)
 }
 
-export function useDirectoryWatcher(path: string | null, onFileChange: () => void) {
+export function useDirectoryWatcher(path: string | null, onFileChange: () => void): void {
   const url = path ? apiUrl(`/filesystem/watch?path=${encodeURIComponent(path)}`) : null
   useSseWatcher(url, onFileChange)
 }

@@ -209,8 +209,8 @@ export const ALL_SHORTCUTS: Omit<ShortcutDefinition, 'handler'>[] = [
 
 function buildInitialShortcuts(): Map<string, ShortcutDefinition> {
   const map = new Map<string, ShortcutDefinition>()
-  for (const def of ALL_SHORTCUTS) {
-    map.set(def.id, { ...def })
+  for (const definition of ALL_SHORTCUTS) {
+    map.set(definition.id, { ...definition })
   }
   return map
 }
@@ -221,15 +221,23 @@ type ShortcutState = {
   setHandler: (id: string, handler: (() => void) | undefined) => void
 }
 
-export const useShortcutStore = create<ShortcutState>((set) => ({
-  platform: detectPlatform(),
-  shortcuts: buildInitialShortcuts(),
-  setHandler: (id, handler) =>
-    set((state) => {
-      const existing = state.shortcuts.get(id)
-      if (!existing) return state
-      const next = new Map(state.shortcuts)
-      next.set(id, { ...existing, handler })
-      return { shortcuts: next }
-    }),
-}))
+export const useShortcutStore = create<ShortcutState>(
+  (
+    set,
+  ): {
+    platform: Platform
+    shortcuts: Map<string, ShortcutDefinition>
+    setHandler: (id: string, handler: (() => void) | undefined) => void
+  } => ({
+    platform: detectPlatform(),
+    shortcuts: buildInitialShortcuts(),
+    setHandler: (id, handler): void =>
+      set((state): ShortcutState | { shortcuts: Map<string, ShortcutDefinition> } => {
+        const existing = state.shortcuts.get(id)
+        if (!existing) return state
+        const next = new Map(state.shortcuts)
+        next.set(id, { ...existing, handler })
+        return { shortcuts: next }
+      }),
+  }),
+)

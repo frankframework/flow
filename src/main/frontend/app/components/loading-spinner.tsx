@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import type { JSX } from 'react'
 
 type LoadingSpinnerProperties = {
   size?: 'sm' | 'md' | 'lg'
@@ -6,7 +7,11 @@ type LoadingSpinnerProperties = {
   className?: string
 }
 
-export default function LoadingSpinner({ size = 'md', message, className }: Readonly<LoadingSpinnerProperties>) {
+export default function LoadingSpinner({
+  size = 'md',
+  message,
+  className,
+}: Readonly<LoadingSpinnerProperties>): JSX.Element {
   const sizeClasses = {
     sm: 'h-4 w-4 border-2',
     md: 'h-8 w-8 border-2',

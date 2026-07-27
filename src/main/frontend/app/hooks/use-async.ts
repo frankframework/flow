@@ -5,7 +5,7 @@ type UseAsyncOptions = {
   key?: string | number | null
 }
 
-type UseAsyncResult<T> = {
+export type UseAsyncResult<T> = {
   data: T | null
   isLoading: boolean
   error: Error | null
@@ -13,7 +13,7 @@ type UseAsyncResult<T> = {
 }
 
 export function useAsync<T>(
-  asyncFn: (signal: AbortSignal) => Promise<T>,
+  asyncFunction: (signal: AbortSignal) => Promise<T>,
   options?: UseAsyncOptions,
 ): UseAsyncResult<T> {
   const enabled = options?.enabled ?? true
@@ -23,56 +23,60 @@ export function useAsync<T>(
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<Error | null>(null)
 
-  const asyncFnRef = useRef(asyncFn)
-  asyncFnRef.current = asyncFn
+  const asyncFunctionReference = useRef(asyncFunction)
+  asyncFunctionReference.current = asyncFunction
 
-  const abortControllerRef = useRef<AbortController | null>(null)
+  const abortControllerReference = useRef<AbortController | null>(null)
 
-  useEffect(() => {
+  useEffect((): (() => void) | undefined => {
     if (!enabled) return
 
     const abortController = new AbortController()
-    abortControllerRef.current = abortController
+    abortControllerReference.current = abortController
 
     setIsLoading(true)
     setError(null)
 
-    asyncFnRef
+    asyncFunctionReference
       .current(abortController.signal)
-      .then((result) => {
-        if (!abortController.signal.aborted) {
-          setData(result)
-          setIsLoading(false)
+      .then((result): void => {
+        if (abortController.signal.aborted) {
+          return
         }
+
+        setData(result)
+        setIsLoading(false)
       })
-      .catch((error_) => {
+      .catch((error_): void => {
         if (error_?.name === 'AbortError' || abortController.signal.aborted) return
         setError(error_ instanceof Error ? error_ : new Error(String(error_)))
         setIsLoading(false)
       })
 
-    return () => {
+    return (): void => {
       abortController.abort()
     }
   }, [enabled, key])
 
-  const refetch = useCallback(() => {
-    abortControllerRef.current?.abort()
+  const refetch = useCallback((): void => {
+    abortControllerReference.current?.abort()
     const abortController = new AbortController()
-    abortControllerRef.current = abortController
+    abortControllerReference.current = abortController
 
     setIsLoading(true)
     setError(null)
 
-    asyncFnRef
+    asyncFunctionReference
       .current(abortController.signal)
-      .then((result) => {
-        if (!abortController.signal.aborted) {
-          setData(result)
-          setIsLoading(false)
+      .then((result): void => {
+        if (abortController.signal.aborted) {
+          return
         }
+
+        setData(result)
+        setIsLoading(false)
       })
-      .catch((error_) => {
+      .catch((error_): void => {
         if (error_?.name === 'AbortError' || abortController.signal.aborted) return
         setError(error_ instanceof Error ? error_ : new Error(String(error_)))
         setIsLoading(false)

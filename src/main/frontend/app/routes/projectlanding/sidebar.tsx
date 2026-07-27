@@ -13,7 +13,7 @@ export default function Sidebar({
   onOpenClick: () => void
   onCloneClick: () => void
   onImportClick: () => void
-}) {
+}): React.JSX.Element {
   return (
     <nav className="border-border flex w-1/4 min-w-50 flex-col border-r p-3">
       <ActionButton

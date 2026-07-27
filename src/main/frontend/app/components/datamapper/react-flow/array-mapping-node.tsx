@@ -1,4 +1,5 @@
 import { Handle, Position } from '@xyflow/react'
+import type { JSX } from 'react'
 import type { ArrayNodeData } from '~/types/datamapper_types/react-node-types'
 import DeleteButton from '../basic-components/delete-button'
 import { MAPPING_WIDTH } from '~/utils/datamapper_utils/constant'
@@ -10,10 +11,10 @@ export type ArrayMappingNodeProperties = {
   onDelete?: (id: string) => void
 }
 
-function ArrayMappingNode({ id, data, onClick, onDelete }: ArrayMappingNodeProperties) {
+function ArrayMappingNode({ id, data, onClick, onDelete }: ArrayMappingNodeProperties): JSX.Element {
   return (
     <div
-      onClick={() => onClick?.(id)}
+      onClick={(): void | undefined => onClick?.(id)}
       className={`group relative flex max-h-12.5 justify-between rounded-md p-2`}
       style={{
         backgroundColor: data.colour || 'var(--color-backdrop)',
@@ -30,7 +31,7 @@ function ArrayMappingNode({ id, data, onClick, onDelete }: ArrayMappingNodePrope
       <div className="absolute right-0 bottom-6 z-10 hidden text-xl group-hover:block">
         <DeleteButton
           className="z-10"
-          onClick={() => {
+          onClick={(): void => {
             onDelete?.(id)
           }}
         />

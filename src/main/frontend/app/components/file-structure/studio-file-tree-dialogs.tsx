@@ -1,9 +1,10 @@
+import type { JSX } from 'react'
 import StudioContextMenu from './studio-context-menu'
 import NameInputDialog from './name-input-dialog'
 import ConfirmDeleteDialog from './confirm-delete-dialog'
 import type { StudioContextMenuState, NameDialogState, DeleteTargetState } from './use-studio-context-menu'
 
-type StudioFileTreeDialogsProps = {
+type StudioFileTreeDialogsProperties = {
   contextMenu: StudioContextMenuState | null
   nameDialog: NameDialogState | null
   deleteTarget: DeleteTargetState | null
@@ -31,7 +32,7 @@ export default function StudioFileTreeDialogs({
   onCloseContextMenu,
   onCloseNameDialog,
   onCloseDeleteDialog,
-}: StudioFileTreeDialogsProps) {
+}: StudioFileTreeDialogsProperties): JSX.Element {
   return (
     <>
       {contextMenu && (

@@ -5,7 +5,16 @@ import {
   SHORT_EDGE_LABEL_THRESHOLD,
 } from './edge-label-utils'
 
-const horizontal = (length: number) => ({
+const horizontal = (
+  length: number,
+): {
+  sourceX: number
+  sourceY: number
+  targetX: number
+  targetY: number
+  sourcePosition: string
+  targetPosition: string
+} => ({
   sourceX: 0,
   sourceY: 0,
   targetX: length,

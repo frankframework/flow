@@ -7,7 +7,11 @@ type ActionButtonProperties = {
   className?: string
 }
 
-export default function ActionButton({ onClick, label, className }: Readonly<ActionButtonProperties>) {
+export default function ActionButton({
+  onClick,
+  label,
+  className,
+}: Readonly<ActionButtonProperties>): React.JSX.Element {
   return (
     <Button
       variant="ghost"

@@ -23,17 +23,17 @@ export function getAddableNonCanvasComponentNames(xsdContent: string | null, ele
 
   const xsdDocument = parseXsd(xsdContent)
 
-  const hasNameAttribute = (name: string) => Boolean(elements[name]?.attributes?.['name'])
-  const isParameter = (name: string) => elements[name]?.labels?.['Components'] === PARAMETER_COMPONENT_LABEL
+  const hasNameAttribute = (name: string): boolean => Boolean(elements[name]?.attributes?.['name'])
+  const isParameter = (name: string): boolean => elements[name]?.labels?.['Components'] === PARAMETER_COMPONENT_LABEL
 
   const addableNames: string[] = []
   const visitedNames = new Set<string>()
 
-  const collect = (name: string) => {
+  const collect = (name: string): void => {
     if (EXCLUDED_NAMES.has(name) || visitedNames.has(name)) return
     visitedNames.add(name)
 
-    if (!elements[name]) return
+    if (!Object.hasOwn(elements, name)) return
 
     if (hasNameAttribute(name) || NON_EXPANDABLE_NAMES.has(name)) {
       addableNames.push(name)
@@ -41,7 +41,7 @@ export function getAddableNonCanvasComponentNames(xsdContent: string | null, ele
     }
 
     const childNames = getAllowedChildElementsForElement(xsdDocument, name).filter(
-      (childName) => childName !== name && elements[childName] && !isParameter(childName),
+      (childName): boolean => childName !== name && elements[childName] && !isParameter(childName),
     )
 
     if (childNames.length === 0) {
@@ -56,7 +56,7 @@ export function getAddableNonCanvasComponentNames(xsdContent: string | null, ele
     for (const name of getFirstLevelElementsForType(xsdDocument, rootType)) collect(name)
   }
 
-  return addableNames.toSorted((first, second) => first.localeCompare(second))
+  return addableNames.toSorted((first, second): number => first.localeCompare(second))
 }
 
 export async function getNonCanvasComponentsFromConfiguration(

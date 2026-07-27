@@ -2,7 +2,7 @@ export function apiUrl(path: string): string {
   return `/api${path}`
 }
 
-const getAnonymousSessionId = () => {
+const getAnonymousSessionId = (): string => {
   const STORAGE_KEY = 'frankflow_anon_session_id'
   let id = sessionStorage.getItem(STORAGE_KEY)
   if (!id) {
@@ -12,7 +12,7 @@ const getAnonymousSessionId = () => {
   return id
 }
 
-const getAuthToken = () => {
+const getAuthToken = (): string | null => {
   return localStorage.getItem('access_token') || null
 }
 
@@ -39,7 +39,7 @@ export async function apiFetch<T>(path: string, options?: RequestInit): Promise<
     ...(options?.headers as Record<string, string>),
     'X-Session-ID': getAnonymousSessionId(),
   }
-  if (options?.body && !isFormData && !headers['Content-Type']) headers['Content-Type'] = 'application/json'
+  if (!isFormData && options?.body && !headers['Content-Type']) headers['Content-Type'] = 'application/json'
 
   if (options?.method && !['GET', 'HEAD', 'OPTIONS'].includes(options?.method)) {
     const xsrfToken = getCookie('XSRF-TOKEN')
@@ -81,7 +81,7 @@ export async function apiFetch<T>(path: string, options?: RequestInit): Promise<
   return response.json()
 }
 
-function getCookie(name: string) {
+function getCookie(name: string): string | undefined {
   const cookieKV = document.cookie.match(String.raw`(^|;)\s*${name}\s*=\s*([^;]+)`)
   return cookieKV ? cookieKV.pop() : ''
 }

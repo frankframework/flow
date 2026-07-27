@@ -22,7 +22,7 @@ export default function Dropdown({
   className,
   disabled = false,
   id,
-}: Readonly<DropdownProperties>) {
+}: Readonly<DropdownProperties>): React.JSX.Element {
   const [isOpen, setIsOpen] = useState(false)
   const [selectedValue, setSelectedValue] = useState<string | undefined>(value)
   const [highlightedIndex, setHighlightedIndex] = useState<number>(-1)
@@ -33,34 +33,34 @@ export default function Dropdown({
 
   const optionsArray = Object.keys(options)
 
-  const getSelectedIndex = useCallback(() => {
+  const getSelectedIndex = useCallback((): number => {
     const index = optionsArray.indexOf(selectedValue ?? '')
     return index === -1 ? 0 : index
   }, [optionsArray, selectedValue])
 
-  const getSelectedLabel = () => {
-    if (selectedValue !== undefined && selectedValue in options) return options[selectedValue]
+  const getSelectedLabel = (): string => {
+    if (selectedValue !== undefined && Object.hasOwn(options, selectedValue)) return options[selectedValue]
     return placeholder
   }
 
-  const toggleDropdown = useCallback(() => {
+  const toggleDropdown = useCallback((): void => {
     if (!disabled) {
       setIsOpen(!isOpen)
     }
   }, [disabled, isOpen])
 
-  useEffect(() => {
+  useEffect((): void => {
     setSelectedValue(value)
   }, [value])
 
-  useEffect(() => {
+  useEffect((): void => {
     if (isOpen) {
       dropdownReference.current?.focus()
     }
   }, [isOpen])
 
-  useEffect(() => {
-    if (isOpen && highlightedIndex >= 0 && optionsReference.current[highlightedIndex]) {
+  useEffect((): void => {
+    if (isOpen && highlightedIndex >= 0 && Object.hasOwn(optionsReference.current, highlightedIndex)) {
       optionsReference.current[highlightedIndex]?.scrollIntoView({
         block: 'nearest',
         behavior: 'smooth',
@@ -68,34 +68,34 @@ export default function Dropdown({
     }
   }, [isOpen, highlightedIndex])
 
-  useEffect(() => {
+  useEffect((): void => {
     optionsReference.current = optionsReference.current.slice(0, optionsArray.length)
   }, [optionsArray.length])
 
-  useEffect(() => {
+  useEffect((): (() => void) | undefined => {
     if (!id) return
 
-    const labelElement = document.querySelector(`[for="${id}"]`) as HTMLLabelElement | null
+    const labelElement = document.querySelector(`[for="${CSS.escape(id)}"]`) as HTMLLabelElement | null
 
     labelElement?.addEventListener('click', toggleDropdown)
 
-    return () => {
+    return (): void => {
       labelElement?.removeEventListener('click', toggleDropdown)
     }
   }, [id, toggleDropdown])
 
-  const handleOptionClick = (optionValue: string) => {
+  const handleOptionClick = (optionValue: string): void => {
     setSelectedValue(optionValue)
     onChange(optionValue)
     closeDropdown()
   }
 
-  const closeDropdown = () => {
+  const closeDropdown = (): void => {
     setIsOpen(false)
     setHighlightedIndex(-1)
   }
 
-  const handleKeyDown = (event: React.KeyboardEvent) => {
+  const handleKeyDown = (event: React.KeyboardEvent): void => {
     if (disabled) return
 
     if (!isOpen) {
@@ -106,7 +106,7 @@ export default function Dropdown({
     handleOpenDropdownKeyDown(event)
   }
 
-  const handleClosedDropdownKeyDown = (event: React.KeyboardEvent) => {
+  const handleClosedDropdownKeyDown = (event: React.KeyboardEvent): void => {
     const openKeys = ['ArrowDown', 'ArrowUp', 'Enter', ' ']
 
     if (openKeys.includes(event.key)) {
@@ -117,10 +117,10 @@ export default function Dropdown({
     }
   }
 
-  useEffect(() => {
+  useEffect((): (() => void) | undefined => {
     if (!isOpen) return
 
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = (event: MouseEvent): void => {
       if (!dropdownReference.current) return
 
       if (!dropdownReference.current.contains(event.target as Node)) {
@@ -130,23 +130,23 @@ export default function Dropdown({
 
     document.addEventListener('mousedown', handleClickOutside)
 
-    return () => {
+    return (): void => {
       document.removeEventListener('mousedown', handleClickOutside)
     }
   }, [isOpen])
 
-  const handleOpenDropdownKeyDown = (event: React.KeyboardEvent) => {
+  const handleOpenDropdownKeyDown = (event: React.KeyboardEvent): void => {
     switch (event.key) {
       case 'ArrowDown': {
         event.preventDefault()
         event.stopPropagation()
-        setHighlightedIndex((prev) => Math.min(prev + 1, optionsArray.length - 1))
+        setHighlightedIndex((previous): number => Math.min(previous + 1, optionsArray.length - 1))
         break
       }
       case 'ArrowUp': {
         event.preventDefault()
         event.stopPropagation()
-        setHighlightedIndex((prev) => Math.max(prev - 1, 0))
+        setHighlightedIndex((previous): number => Math.max(previous - 1, 0))
         break
       }
       case 'Enter': {
@@ -166,9 +166,11 @@ export default function Dropdown({
     }
   }
 
-  const setOptionReference = (index: number) => (element: HTMLLIElement | null) => {
-    optionsReference.current[index] = element
-  }
+  const setOptionReference =
+    (index: number): ((element: HTMLLIElement | null) => void) =>
+    (element: HTMLLIElement | null): void => {
+      optionsReference.current[index] = element
+    }
 
   return (
     <div ref={dropdownReference} className="inline-block w-full">
@@ -207,11 +209,11 @@ export default function Dropdown({
           )}
         >
           {optionsArray.length > 0 ? (
-            Object.entries(options).map(([value, label], index) => (
+            Object.entries(options).map(([value, label], index): React.JSX.Element => (
               <li
                 key={value}
                 ref={setOptionReference(index)}
-                onClick={() => handleOptionClick(value)}
+                onClick={(): void => handleOptionClick(value)}
                 className={clsx(
                   'relative cursor-pointer px-3 py-2 sm:text-sm',
                   value === selectedValue && 'font-medium',

@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import type { ElementProperty } from '@frankframework/doc-library-core'
 
-export function useHandleTypes(typesAllowed?: Record<string, ElementProperty>) {
+export function useHandleTypes(typesAllowed?: Record<string, ElementProperty>): string[] {
   return useMemo(() => {
     const handles = new Set<string>()
 

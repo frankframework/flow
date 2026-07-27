@@ -1,4 +1,4 @@
-import { type MouseEvent, type ReactNode } from 'react'
+import { type MouseEvent, type ReactNode, type ReactPortal } from 'react'
 import { createPortal } from 'react-dom'
 import CloseButton from '~/components/inputs/close-button'
 
@@ -9,8 +9,14 @@ type DialogProperties = {
   className?: string
   overlay?: ReactNode
 }
-export default function Dialog({ onClose, title, children, className, overlay }: Readonly<DialogProperties>) {
-  const handleBackdropClick = (event: MouseEvent<HTMLDivElement>) => {
+export default function Dialog({
+  onClose,
+  title,
+  children,
+  className,
+  overlay,
+}: Readonly<DialogProperties>): ReactPortal {
+  const handleBackdropClick = (event: MouseEvent<HTMLDivElement>): void => {
     if (event.target === event.currentTarget) onClose()
   }
 

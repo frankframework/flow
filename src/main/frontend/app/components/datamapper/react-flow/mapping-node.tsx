@@ -1,4 +1,5 @@
 import { Handle, Position } from '@xyflow/react'
+import type { JSX } from 'react'
 import type { MappingNodeData } from '~/types/datamapper_types/react-node-types'
 import DeleteButton from '../basic-components/delete-button'
 import EditButton from '../basic-components/edit-button'
@@ -14,10 +15,10 @@ export type MappingNodeProperties = {
   onEdit?: (data: MappingNodeData) => void
 }
 
-function MappingNode({ id, data, onClick, onDelete, onEdit }: MappingNodeProperties) {
+function MappingNode({ id, data, onClick, onDelete, onEdit }: MappingNodeProperties): JSX.Element {
   return (
     <div
-      onClick={() => onClick?.(id)}
+      onClick={(): void | undefined => onClick?.(id)}
       className={`group flex max-h-12.5 justify-between rounded-md p-2`}
       style={{
         backgroundColor: data.colour || 'var(--color-backdrop)',
@@ -35,14 +36,14 @@ function MappingNode({ id, data, onClick, onDelete, onEdit }: MappingNodePropert
       <div className="absolute right-0 bottom-6 z-5 hidden text-xl group-hover:block">
         <EditButton
           className=""
-          onClick={() => {
+          onClick={(): void => {
             onEdit?.(data)
           }}
         />
 
         <DeleteButton
           className=""
-          onClick={() => {
+          onClick={(): void => {
             onDelete?.(id)
           }}
         />

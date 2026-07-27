@@ -1,4 +1,5 @@
 import { Handle, Position } from '@xyflow/react'
+import type { JSX } from 'react'
 import type { CustomNodeData } from '~/types/datamapper_types/react-node-types'
 import HighlightButton from '../basic-components/highlight-button'
 import DeleteButton from '../basic-components/delete-button'
@@ -10,7 +11,7 @@ export type ExtraSourceNodeProperties = {
   onHighlight?: (id: string) => void
 }
 
-function ExtraSourceNode({ id, data, onDelete, onHighlight }: ExtraSourceNodeProperties) {
+function ExtraSourceNode({ id, data, onDelete, onHighlight }: ExtraSourceNodeProperties): JSX.Element {
   return (
     <div className="group flex h-full" style={{ width: `${data.width}px` }}>
       {/* Header */}
@@ -19,12 +20,12 @@ function ExtraSourceNode({ id, data, onDelete, onHighlight }: ExtraSourceNodePro
         {data.label ? `extra source: ${data.label}` : 'ExtraSource'}
         <div className="hidden gap-3 group-hover:block">
           <HighlightButton
-            onClick={() => {
+            onClick={(): void => {
               onHighlight?.(id)
             }}
           />
           <DeleteButton
-            onClick={() => {
+            onClick={(): void => {
               onDelete?.(id)
             }}
           />

@@ -23,20 +23,20 @@ export default function AddConfigurationFileModal({
   onSuccess,
   currentConfiguration,
   configurationsDirPath,
-}: Readonly<AddConfigurationModalProperties>) {
+}: Readonly<AddConfigurationModalProperties>): React.JSX.Element {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [filename, setFilename] = useState<string>('')
   const [isOpenPickerOpen, setIsOpenPickerOpen] = useState(false)
   const [rootLocationName, setRootLocationName] = useState('')
   const [isFilenameValid, setIsFilenameValid] = useState(false)
-  const setProject = useProjectStore((s) => s.setProject)
+  const setProject = useProjectStore((s): ((project: ConfigurationProject) => void) => s.setProject)
 
-  useEffect(() => {
+  useEffect((): void => {
     setRootLocationName(configurationsDirPath ?? '')
   }, [configurationsDirPath])
 
-  const handleAdd = async () => {
+  const handleAdd = async (): Promise<void> => {
     setLoading(true)
     setError(null)
 
@@ -44,7 +44,7 @@ export default function AddConfigurationFileModal({
       let configname = filename.trim()
 
       if (!configname.toLowerCase().endsWith('.xml')) {
-        configname = `${configname}.xml`
+        configname += `.xml`
       }
 
       const relativeFolder = relativeTo(currentConfiguration.rootPath, rootLocationName)
@@ -63,27 +63,27 @@ export default function AddConfigurationFileModal({
     }
   }
 
-  const handleClose = () => {
+  const handleClose = (): void => {
     setFilename('')
     setRootLocationName('')
     setError(null)
     onClose()
   }
 
-  const handleClickedOutside = (event: React.MouseEvent<HTMLDivElement>) => {
+  const handleClickedOutside = (event: React.MouseEvent<HTMLDivElement>): void => {
     if (event.target === event.currentTarget) {
       handleClose()
     }
   }
 
-  const handleDirectorySelect = (absolutePath: string) => {
+  const handleDirectorySelect = (absolutePath: string): void => {
     setRootLocationName(absolutePath)
     setIsOpenPickerOpen(false)
   }
 
   const trimmedFilename = filename.trim()
 
-  const displayFilename = (() => {
+  const displayFilename = ((): string => {
     if (!trimmedFilename) return ''
     return trimmedFilename.toLowerCase().endsWith('.xml') ? trimmedFilename : `${trimmedFilename}.xml`
   })()
@@ -103,24 +103,24 @@ export default function AddConfigurationFileModal({
               id="configuration-filename-input"
               aria-label="folder location"
               readOnly={true}
-              onDoubleClick={() => setIsOpenPickerOpen(true)}
+              onDoubleClick={(): void => setIsOpenPickerOpen(true)}
               value={rootLocationName || configurationsDirPath}
             />
-            <Button onClick={() => setIsOpenPickerOpen(true)}>Browse...</Button>
+            <Button onClick={(): void => setIsOpenPickerOpen(true)}>Browse...</Button>
           </InputWithLabel>
 
           <InputWithLabel grow={true} label="Filename" htmlFor="configuration-filename-input" inputSide="right">
             <ValidatedInput
               id="configuration-filename-input"
               value={filename}
-              onChange={(event) => setFilename(event.target.value)}
+              onChange={(event): void => setFilename(event.target.value)}
               placeholder="Choose a filename"
               aria-label="configuration filename"
               patterns={{
                 'Filename cannot be empty': /^.+$/,
                 'Filename may only contain letters, digits, spaces, and . _ - (no "..")': SAFE_NAME_PATTERN,
               }}
-              onValidChange={(isValid) => {
+              onValidChange={(isValid): void => {
                 setIsFilenameValid(isValid)
               }}
             />
@@ -141,7 +141,7 @@ export default function AddConfigurationFileModal({
       {isOpenPickerOpen && (
         <DirectoryPicker
           onSelect={handleDirectorySelect}
-          onCancel={() => setIsOpenPickerOpen(false)}
+          onCancel={(): void => setIsOpenPickerOpen(false)}
           rootLabel={currentConfiguration.rootPath}
           initialPath={rootLocationName === '' ? configurationsDirPath : rootLocationName}
         />
