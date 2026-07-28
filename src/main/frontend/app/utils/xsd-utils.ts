@@ -161,7 +161,8 @@ export function getFirstLevelElementsForType(document: Document, typeName: strin
   const typeNode = getComplexTypeByName(document, typeName)
   if (!typeNode) return []
 
-  const results = extractElement(typeNode)
+  const results = extractElement(document, typeNode)
+
   return [...results]
 }
 
@@ -178,16 +179,16 @@ export function getElementRequirements(document: Document, elementName: string):
   return extractRequirements(document, typeNode)
 }
 
-function extractElement(node: Element, visitedGroups = new Set<string>()): Set<string> {
+function extractElement(document: Document, node: Element, visitedGroups = new Set<string>()): Set<string> {
   let results = new Set<string>()
   for (const child of node.children) {
-    const childResults = extractChild(child, visitedGroups)
+    const childResults = extractChild(child, document, visitedGroups)
     if (childResults) results = new Set([...results, ...childResults])
   }
   return results
 }
 
-function extractChild(child: Element, visitedGroups: Set<string>): Set<string> | null {
+function extractChild(child: Element, document: Document, visitedGroups: Set<string>): Set<string> | null {
   const tag = child.localName
 
   switch (tag) {
@@ -207,13 +208,13 @@ function extractChild(child: Element, visitedGroups: Set<string>): Set<string> |
       const groupDefinition = getGroupByName(document, reference)
       if (!groupDefinition) break
 
-      return extractElement(groupDefinition, visitedGroups)
+      return extractElement(document, groupDefinition, visitedGroups)
     }
 
     case 'sequence':
     case 'choice':
     case 'all': {
-      return extractElement(child, visitedGroups)
+      return extractElement(document, child, visitedGroups)
     }
   }
   return null

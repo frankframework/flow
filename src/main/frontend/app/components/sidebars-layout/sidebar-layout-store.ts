@@ -33,10 +33,10 @@ export const useSidebarStore = create<SidebarState>()(
       get,
     ): {
       instances: Record<string, SidebarInstance>
-      initializeInstance: (name: string, defaultVisible?: VisibilityState | undefined) => unknown
-      toggleSidebar: (name: string, side: SidebarSide) => unknown
-      setSizes: (name: string, sizes: number[]) => unknown
-      setVisible: (name: string, side: SidebarSide, value: boolean) => unknown
+      initializeInstance: (name: string, defaultVisible?: VisibilityState | undefined) => void
+      toggleSidebar: (name: string, side: SidebarSide) => void
+      setSizes: (name: string, sizes: number[]) => void
+      setVisible: (name: string, side: SidebarSide, value: boolean) => void
       getSizes: (name: string) => number[] | undefined
       getVisibility: (name: string) => VisibilityState | undefined
     } => ({
@@ -69,7 +69,8 @@ export const useSidebarStore = create<SidebarState>()(
           if (!instance) return state
 
           const newVisible = [...instance.visible] as VisibilityState
-          newVisible[side] = !Object.hasOwn(newVisible, side)
+          const currentValue = newVisible[side]
+          newVisible[side] = !currentValue
 
           return updateInstanceState(state, name, { visible: newVisible })
         }),
