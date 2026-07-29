@@ -14,7 +14,7 @@ export type CustomNodeData = {
   width?: number
   isHidden?: boolean
   setNodes?: React.Dispatch<React.SetStateAction<Node[]>>
-} & Record<string, unknown>
+}
 
 export type GroupNode = Node & {
   type: 'group'
@@ -46,7 +46,7 @@ export type MappingNodeData = {
   type: string
   output: string
   conditional: Condition | null
-} & Record<string, unknown>
+}
 
 export type ArrayNodeData = {
   id?: string
@@ -54,7 +54,7 @@ export type ArrayNodeData = {
   colour?: string
   source: string
   target: string
-} & Record<string, unknown>
+}
 
 export type PropertyNode = Node<CustomNodeData> & {
   type: 'targetArrayGroup' | 'sourceArrayGroup' | 'targetOnly' | 'sourceOnly' | 'labeledGroup' | 'extraSourceNode'

@@ -32,13 +32,14 @@ function convertNodesToProperty(
   return nodes
     .filter((node): boolean => node.parentId === parentId && (node.type === basicNode || isNodeGroup(node.type)))
     .map((node): Property => {
-      const property = nodeToProperty(node as PropertyNode, nodes)
+      const propertyNode = node as PropertyNode
+      const property = nodeToProperty(propertyNode, nodes)
 
       if (isNodeGroup(node.type)) {
-        property.children = convertNodesToProperty(nodes, node.id, basicNode, mappings)
+        property.children = convertNodesToProperty(nodes, propertyNode.id, basicNode, mappings)
       }
       const targetProperty = property as Target
-      targetProperty.isAttribute = (node.data.isAttribute as boolean) ?? false
+      targetProperty.isAttribute = (propertyNode.data.isAttribute as boolean) ?? false
 
       if (mappings)
         targetProperty.mapping = mappings.findLast(
