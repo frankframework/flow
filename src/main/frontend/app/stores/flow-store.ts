@@ -10,18 +10,18 @@ import {
   type OnReconnect,
 } from '@xyflow/react'
 
-import { initialNodes } from '~/routes/studio/canvas/nodes'
-import { initialEdges } from '~/routes/studio/canvas/edges'
-import type { FlowNode } from '~/routes/studio/canvas/flow'
-import type { FrankNodeType } from '~/routes/studio/canvas/nodetypes/frank-node'
-import type { ExitNode } from '~/routes/studio/canvas/nodetypes/exit-node'
-import type { StickyNote } from '~/routes/studio/canvas/nodetypes/sticky-note'
-import type { ChildNode } from '~/routes/studio/canvas/nodetypes/child-node'
+import { initialNodes } from '~/routes/studio/canvas-flow/nodes'
+import { initialEdges } from '~/routes/studio/canvas-flow/edges'
+import type { FlowNode } from '~/routes/studio/canvas-flow/canvas-flow'
+import type { FrankNodeType } from '~/routes/studio/canvas-flow/nodetypes/frank-node'
+import type { ExitNode } from '~/routes/studio/canvas-flow/nodetypes/exit-node'
+import type { StickyNote } from '~/routes/studio/canvas-flow/nodetypes/sticky-note'
+import type { ChildNode } from '~/routes/studio/canvas-flow/nodetypes/child-node'
 import { addChildRecursive, deleteChildRecursive, updateChildRecursive } from './child-utilities'
-import { FlowConfig } from '~/routes/studio/canvas/flow.config'
+import { FlowConfig } from '~/routes/studio/canvas-flow/flow.config'
 import { subscribeWithSelector } from 'zustand/middleware'
 import { getEdgeLabelFromHandle } from '~/utils/flow-utils'
-import type { GroupNode } from '~/routes/studio/canvas/nodetypes/group-node'
+import type { GroupNode } from '~/routes/studio/canvas-flow/nodetypes/group-node'
 
 export type FlowSnapshot = {
   nodes: FlowNode[]

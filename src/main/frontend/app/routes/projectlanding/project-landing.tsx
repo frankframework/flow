@@ -82,6 +82,7 @@ export default function ProjectLanding(): React.JSX.Element {
       setIsDiscovering(true)
       fetchInstanceConfigurations()
         .then((ffInstance): void => {
+          if (!ffInstance) return
           setFFInstanceName(ffInstance.name)
           setFFConfiguration(ffInstance.configurations)
         })

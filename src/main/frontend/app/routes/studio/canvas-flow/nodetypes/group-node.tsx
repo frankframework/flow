@@ -1,6 +1,6 @@
 import { type Node, type NodeProps, NodeResizeControl, type ResizeDragEvent, type ResizeParams } from '@xyflow/react'
 import { type JSX, useState } from 'react'
-import { ResizeIcon } from '~/routes/studio/canvas/nodetypes/frank-node'
+import { ResizeIcon } from '~/routes/studio/canvas-flow/nodetypes/frank-node'
 
 export const GROUP_COLORS = [
   { label: 'Blue', value: 'var(--group-color-blue)' },

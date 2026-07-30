@@ -5,9 +5,6 @@ import { ToastsContainer } from '~/components/toast/toast'
 import { useTheme } from '~/hooks/use-theme'
 import { useProjectStore } from '~/stores/project-store'
 import type { ConfigurationProject } from '~/types/project.types'
-import dotenv from 'dotenv'
-
-dotenv.config({ quiet: true })
 
 import { router } from './router'
 import 'allotment/dist/style.css'

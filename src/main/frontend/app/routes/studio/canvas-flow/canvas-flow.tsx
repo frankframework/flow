@@ -1,4 +1,3 @@
-/* eslint-disable */
 import {
   addEdge,
   Background,
@@ -7,11 +6,11 @@ import {
   ControlButton,
   Controls,
   type Edge,
+  type FinalConnectionState,
+  type InternalNode,
   type Node,
-  type OnConnectEnd,
-  type OnConnectStart,
+  type OnConnectStartParams,
   ReactFlow,
-  ReactFlowProvider,
   useNodesInitialized,
   useReactFlow,
   useUpdateNodeInternals,
@@ -20,22 +19,22 @@ import Dagre from '@dagrejs/dagre'
 import { useNavigate } from 'react-router'
 import { SaveStatusIndicator } from '~/components/save-status-indicator'
 import useToasts from '~/components/toast/use-toasts'
+import { convertAdapterXmlToJson, getAdapterFromConfiguration } from '~/routes/studio/xml-to-json-parser'
 import { useSaveStatusStore } from '~/stores/save-status-store'
 import CodeIcon from '/icons/solar/Code.svg?react'
 import '@xyflow/react/dist/style.css'
-import FrankNodeComponent, { type FrankNodeType } from '~/routes/studio/canvas/nodetypes/frank-node'
-import FrankEdgeComponent from '~/routes/studio/canvas/edgetypes/frank-edge'
-import ExitNodeComponent, { type ExitNode } from '~/routes/studio/canvas/nodetypes/exit-node'
-import GroupNodeComponent, { type GroupNode } from '~/routes/studio/canvas/nodetypes/group-node'
-import useFlowStore, { type FlowState, isStickyNote } from '~/stores/flow-store'
+import FrankNodeComponent, { type FrankNodeType } from '~/routes/studio/canvas-flow/nodetypes/frank-node'
+import FrankEdgeComponent from '~/routes/studio/canvas-flow/edgetypes/frank-edge'
+import ExitNodeComponent, { type ExitNode } from '~/routes/studio/canvas-flow/nodetypes/exit-node'
+import GroupNodeComponent, { type GroupNode } from '~/routes/studio/canvas-flow/nodetypes/group-node'
+import useFlowStore, { isStickyNote } from '~/stores/flow-store'
 import { useShallow } from 'zustand/react/shallow'
-import { FlowConfig } from '~/routes/studio/canvas/flow.config'
+import { FlowConfig } from '~/routes/studio/canvas-flow/flow.config'
 import { getElementTypeFromName } from '~/routes/studio/node-translator-module'
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { NodeContextMenuContext, useNodeContextMenu } from './node-context-menu-context'
-import StickyNoteComponent, { type StickyNote } from '~/routes/studio/canvas/nodetypes/sticky-note'
+import { type JSX, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useNodeContextMenu } from './node-context-menu-context'
+import StickyNoteComponent, { type StickyNote } from '~/routes/studio/canvas-flow/nodetypes/sticky-note'
 import useTabStore, { type TabData } from '~/stores/tab-store'
-import { convertAdapterXmlToJson, getAdapterFromConfiguration } from '~/routes/studio/xml-to-json-parser'
 import { exportFlowToXml, replaceAdapterInXml } from '~/routes/studio/flow-to-xml-parser'
 import useNodeContextStore from '~/stores/node-context-store'
 import CreateNodeModal from '~/components/flow/create-node-modal'
@@ -56,28 +55,28 @@ import LightbulbIcon from '/icons/solar/Lightbulb.svg?react'
 import CanvasContextMenu from '~/components/flow/canvas-context-menu'
 import { SidebarSide, useSidebarStore } from '~/components/sidebars-layout/sidebar-layout-store'
 import { openInEditorAtElement } from '~/actions/navigationActions'
-import HandleMenu from '~/routes/studio/canvas/nodetypes/components/handle-menu'
+import HandleMenu from '~/routes/studio/canvas-flow/nodetypes/components/handle-menu'
 import IconLabelButton from '~/components/inputs/icon-label-button'
 
 export type FlowNode = FrankNodeType | ExitNode | StickyNote | GroupNode | Node
 
-const selector = (state: FlowState) => ({
-  nodes: state.nodes,
-  edges: state.edges,
-  onNodesChange: state.onNodesChange,
-  onEdgesChange: state.onEdgesChange,
-  onConnect: state.onConnect,
-  onReconnect: state.onReconnect,
-})
-
 const STICKY_SNAP_DISTANCE = 60
+const nodeTypes = {
+  frankNode: FrankNodeComponent,
+  exitNode: ExitNodeComponent,
+  stickyNote: StickyNoteComponent,
+  groupNode: GroupNodeComponent,
+}
+const edgeTypes = { frankEdge: FrankEdgeComponent }
 
-const getStickyCenter = (sticky: StickyNote) => ({
-  x: sticky.position.x + (sticky.measured?.width ?? FlowConfig.STICKY_NOTE_DEFAULT_WIDTH) / 2,
-  y: sticky.position.y + (sticky.measured?.height ?? FlowConfig.STICKY_NOTE_DEFAULT_HEIGHT) / 2,
-})
+function getStickyCenter(sticky: StickyNote): { x: number; y: number } {
+  return {
+    x: sticky.position.x + (sticky.measured?.width ?? FlowConfig.STICKY_NOTE_DEFAULT_WIDTH) / 2,
+    y: sticky.position.y + (sticky.measured?.height ?? FlowConfig.STICKY_NOTE_DEFAULT_HEIGHT) / 2,
+  }
+}
 
-const isWithinSnapDistance = (sticky: StickyNote, frankNode: FlowNode) => {
+function isWithinSnapDistance(sticky: StickyNote, frankNode: FlowNode): boolean {
   const center = getStickyCenter(sticky)
   return (
     center.x >= frankNode.position.x - STICKY_SNAP_DISTANCE &&
@@ -88,30 +87,25 @@ const isWithinSnapDistance = (sticky: StickyNote, frankNode: FlowNode) => {
   )
 }
 
-const distanceToFrankNode = (sticky: StickyNote, frankNode: FlowNode) => {
+function distanceToFrankNode(sticky: StickyNote, frankNode: FlowNode): number {
   const center = getStickyCenter(sticky)
   const dx = center.x - (frankNode.position.x + (frankNode.measured?.width ?? FlowConfig.NODE_DEFAULT_WIDTH) / 2)
   const dy = center.y - (frankNode.position.y + (frankNode.measured?.height ?? FlowConfig.NODE_MIN_HEIGHT) / 2)
   return Math.hypot(dx, dy)
 }
 
-const isFrankNode = (node: FlowNode): node is FrankNodeType => node.type === 'frankNode' || node.type === 'exitNode'
-
-const findNearestFrankNode = (sticky: StickyNote, candidates: FlowNode[]) =>
-  candidates
-    .filter((n) => (n.type === 'frankNode' || n.type === 'exitNode') && isWithinSnapDistance(sticky, n))
-    .reduce<FlowNode | null>((best, n) => {
-      if (best === null) return n
-      return distanceToFrankNode(sticky, n) < distanceToFrankNode(sticky, best) ? n : best
-    }, null)
-
-const nodeTypes = {
-  frankNode: FrankNodeComponent,
-  exitNode: ExitNodeComponent,
-  stickyNote: StickyNoteComponent,
-  groupNode: GroupNodeComponent,
+function isFrankNode(node: FlowNode): node is FrankNodeType {
+  return node.type === 'frankNode' || node.type === 'exitNode'
 }
-const edgeTypes = { frankEdge: FrankEdgeComponent }
+
+function findNearestFrankNode(sticky: StickyNote, candidates: FlowNode[]): FlowNode | null {
+  return candidates
+    .filter((node) => (node.type === 'frankNode' || node.type === 'exitNode') && isWithinSnapDistance(sticky, node))
+    .reduce<FlowNode | null>((best, node) => {
+      if (best === null) return node
+      return distanceToFrankNode(sticky, node) < distanceToFrankNode(sticky, best) ? node : best
+    }, null)
+}
 
 function computeAbsoluteNodePosition(
   targetNode: FlowNode,
@@ -148,7 +142,7 @@ function computeNodeCenteredViewport(
 
   const zoomToFitWidth = (canvasWidth * viewportPadding) / nodeWidth
   const zoomToFitHeight = (canvasHeight * viewportPadding) / nodeHeight
-  const zoom = Math.max(minZoom, Math.min(maxZoom, Math.min(zoomToFitWidth, zoomToFitHeight)))
+  const zoom = Math.max(minZoom, Math.min(maxZoom, zoomToFitWidth, zoomToFitHeight))
 
   return {
     x: canvasWidth / 2 - nodeCenterX * zoom,
@@ -157,9 +151,112 @@ function computeNodeCenteredViewport(
   }
 }
 
-function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
+function stripMeasuredDimensions(nodes: FlowNode[]): FlowNode[] {
+  return nodes.map((node) => {
+    if (!('measured' in node)) return node
+    const { measured: _measured, ...nodeWithoutMeasured } = node as FlowNode & { measured?: unknown }
+    return nodeWithoutMeasured as FlowNode
+  })
+}
+
+export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }): JSX.Element {
+  /* Hooks */
+
   const showNodeContextMenu = useNodeContextMenu()
+  const navigate = useNavigate()
+  const { elements } = useFFDoc()
+  const updateNodeInternals = useUpdateNodeInternals()
+  const reactFlow = useReactFlow()
+  const nodesInitialized = useNodesInitialized()
+  const { showErrorToast, logApiError, showWarningToast } = useToasts()
+  useShortcut({
+    'studio.copy': () => copySelection(),
+    'studio.paste': () => pasteSelection(),
+    'studio.cut': () => cutSelection(),
+    'studio.undo': () => undo(),
+    'studio.redo': () => redo(),
+    'studio.redo-alt': () => redo(),
+    'studio.group': () => handleGrouping(),
+    'studio.ungroup': () => handleUngroup(),
+    'studio.hide': () => toggleSelectedHidden(),
+    'studio.save': () => void saveFlow(),
+    'studio.close-context': () => closeEditNodeContextOnEscape(),
+    'studio.delete': () => deleteSelection(),
+    'studio.show-in-editor': () => showSelectedNodeInEditor(),
+  })
+
+  /* useState */
+
   const [loading, setLoading] = useState(false)
+  const [showCreateNodeModal, setShowCreateNodeModal] = useState(false)
+  const [edgeDropPositions, setEdgeDropPositions] = useState<{ x: number; y: number } | null>(null)
+  const [edgeDropHandleType, setEdgeDropHandleType] = useState<string | null>(null)
+  const [pendingCompactConnection, setPendingCompactConnection] = useState<{
+    connection: Connection
+    sourceNodeSubtype: string
+    position: { x: number; y: number }
+  } | null>(null)
+  const [pendingEdgeDrop, setPendingEdgeDrop] = useState<{
+    position: { x: number; y: number }
+    sourceNodeSubtype: string
+  } | null>(null)
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; flowPos: { x: number; y: number } } | null>(
+    null,
+  )
+
+  /* useRef */
+
+  const showNodeContextMenuRef = useRef(showNodeContextMenu)
+  const clipboardRef = useRef<{
+    nodes: FlowNode[]
+    edges: Edge[]
+  } | null>(null)
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const isLoadingTabRef = useRef(false)
+  const pendingFitViewRef = useRef<string | null>(null)
+  const reactFlowRef = useRef(reactFlow)
+  const canvasRef = useRef<HTMLDivElement>(null)
+  const fitAfterLayoutRef = useRef<{ id: string }[] | null>(null)
+  const pendingInitialRelayoutRef = useRef<{ pendingSelection: { subtype: string; name: string } | null } | null>(null)
+  const sourceInfoReference = useRef<{
+    nodeId: string | null
+    handleId: string | null
+    handleType: 'source' | 'target' | null
+  }>({ nodeId: null, handleId: null, handleType: null })
+
+  /* useStore */
+
+  const { project } = useProjectStore()
+  const { activeTab, getTab, setTabData } = useTabStore()
+  const {
+    nodes,
+    edges,
+    viewport,
+    future,
+    onNodesChange,
+    onEdgesChange,
+    onConnect,
+    onReconnect,
+    undo,
+    redo,
+    getNextNodeId,
+    setNodesHiddenForwards,
+    setNodesWithoutHistory,
+    setViewport,
+    setHistory,
+    setFuture,
+    setEdges,
+    setNodes,
+    setStickyAttachment,
+    deleteChild,
+    deleteNode,
+    history: flowHistory,
+    resetStore: resetFlowStore,
+    addHandle: addFlowHandle,
+  } = useFlowStore()
+  const { setSaving, setSaved, setIdle } = useSaveStatusStore()
+  const autosaveEnabled = useSettingsStore((state) => state.general.autoSave.enabled)
+  const autosaveDelay = useSettingsStore((state) => state.general.autoSave.delayMs)
   const hoveredNodeId = useNodeContextStore((state) => state.hoveredNodeId)
   const showAllForwards = useNodeContextStore((state) => state.showAllForwards)
   const setHoveredNodeId = useNodeContextStore((state) => state.setHoveredNodeId)
@@ -200,87 +297,8 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
       setSelectedGroupId: store.setSelectedGroupId,
     })),
   )
-  const { elements } = useFFDoc()
-  const elementsRef = useRef(elements)
-  const showNodeContextMenuRef = useRef(showNodeContextMenu)
-  const navigate = useNavigate()
-  const { showErrorToast, logApiError } = useToasts()
 
-  useEffect(() => {
-    elementsRef.current = elements
-  }, [elements])
-
-  useEffect(() => {
-    showNodeContextMenuRef.current = showNodeContextMenu
-  }, [showNodeContextMenu])
-
-  const [showCreateNodeModal, setShowCreateNodeModal] = useState(false)
-  const [edgeDropPositions, setEdgeDropPositions] = useState<{ x: number; y: number } | null>(null)
-  const [pendingCompactConnection, setPendingCompactConnection] = useState<{
-    connection: Connection
-    sourceNodeSubtype: string
-    position: { x: number; y: number }
-  } | null>(null)
-  const [pendingEdgeDrop, setPendingEdgeDrop] = useState<{
-    position: { x: number; y: number }
-    sourceNodeSubtype: string
-  } | null>(null)
-
-  const [edgeDropHandleType, setEdgeDropHandleType] = useState<string | null>(null)
-
-  const clipboardRef = useRef<{
-    nodes: FlowNode[]
-    edges: Edge[]
-  } | null>(null)
-
-  const { setSaving, setSaved, setIdle } = useSaveStatusStore()
-  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; flowPos: { x: number; y: number } } | null>(
-    null,
-  )
-  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const isLoadingTabRef = useRef(false)
-  const pendingFitViewRef = useRef<string | null>(null)
-
-  const updateNodeInternals = useUpdateNodeInternals()
-  const reactFlow = useReactFlow()
-  const reactFlowRef = useRef(reactFlow)
-  reactFlowRef.current = reactFlow
-  const nodesInitialized = useNodesInitialized()
-  const canvasRef = useRef<HTMLDivElement>(null)
-  const fitAfterLayoutRef = useRef<{ id: string }[] | null>(null)
-  const pendingInitialRelayoutRef = useRef<{ pendingSelection: { subtype: string; name: string } | null } | null>(null)
-  const [relayoutNonce, setRelayoutNonce] = useState(0)
-  const loadedTabIdRef = useRef<string | null>(null)
-
-  const applySelectionToNodes = useCallback((pendingSelection: { subtype: string; name: string }) => {
-    const currentNodes = useFlowStore.getState().nodes
-    const nodeToSelect = currentNodes.find(
-      (node): node is FrankNodeType =>
-        isFrankNode(node) && node.data.subtype === pendingSelection.subtype && node.data.name === pendingSelection.name,
-    )
-
-    if (!nodeToSelect) return
-
-    useFlowStore.getState().setNodes(
-      currentNodes.map((node) => ({
-        ...node,
-        selected: node.id === nodeToSelect.id,
-      })),
-    )
-
-    pendingFitViewRef.current = nodeToSelect.id
-
-    const nodeContextStore = useNodeContextStore.getState()
-    nodeContextStore.setParentId(null)
-    nodeContextStore.setChildParentId(null)
-    nodeContextStore.setNodeId(+nodeToSelect.id)
-    nodeContextStore.setAttributes(elementsRef.current?.[nodeToSelect.data.subtype]?.attributes)
-    nodeContextStore.setEditingSubtype(nodeToSelect.data.subtype)
-    nodeContextStore.setIsEditing(true)
-    showNodeContextMenuRef.current(true)
-  }, [])
-
-  const { nodes, edges, onNodesChange, onEdgesChange, onConnect, onReconnect } = useFlowStore(useShallow(selector))
+  /* useMemo */
 
   const hiddenForwardNodeIds = useMemo(() => {
     const ids = new Set<string>()
@@ -311,7 +329,7 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
 
   const displayEdges = useMemo(() => {
     if (hiddenForwardNodeIds.size === 0) return edges
-    const isHiddenAndNotRevealed = (nodeId: string) =>
+    const isHiddenAndNotRevealed = (nodeId: string): boolean =>
       hiddenForwardNodeIds.has(nodeId) && !revealedHiddenIds.has(nodeId)
 
     return edges.map((edge) => {
@@ -330,102 +348,118 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
     })
   }, [nodes, hiddenForwardNodeIds, revealedHiddenIds])
 
-  const saveFlow = useCallback(async () => {
-    const { nodes: flowNodes, edges: flowEdges, viewport: flowViewport } = useFlowStore.getState()
-    const flowData = { nodes: flowNodes, edges: flowEdges, viewport: flowViewport }
-    const currentProject = useProjectStore.getState().project
-    const activeTabKey = useTabStore.getState().activeTab
-    const tabData = useTabStore.getState().getTab(activeTabKey)
-    const configurationPath = tabData?.configurationPath
-    const adapterName = tabData?.name
-    const adapterPosition = tabData?.adapterPosition
+  /* useCallback */
 
-    if (!configurationPath || !adapterName || !currentProject) return
+  const saveFlowToTab = useCallback(
+    (tabId: string) => {
+      const tabData = getTab(tabId)
+      if (!tabData) return
 
-    setSaving()
-    try {
-      const fullConfigXml = await fetchConfigurationFileCached(currentProject.name, configurationPath)
-      const configDoc = new DOMParser().parseFromString(fullConfigXml, 'text/xml')
-      const allAdapters = [...configDoc.querySelectorAll('Adapter, adapter')]
+      setTabData(tabId, {
+        ...tabData,
+        flowJson: {
+          nodes,
+          edges,
+          viewport,
+        },
+        history: flowHistory,
+        future,
+      })
+    },
+    [edges, flowHistory, future, getTab, nodes, setTabData, viewport],
+  )
 
-      const existingAdapter =
-        adapterPosition === undefined
-          ? (allAdapters.find((a) => a.getAttribute('name') === adapterName) ?? null)
-          : (allAdapters[adapterPosition] ?? null)
+  const loadFromApi = useCallback(
+    async (tab: TabData, pendingSelection: { subtype: string; name: string } | null) => {
+      if (!project) return
 
-      if (!existingAdapter) {
-        throw new Error(`Could not find adapter "${adapterName}" at position ${adapterPosition} in configuration`)
-      }
+      const adapter = await getAdapterFromConfiguration(
+        project.name,
+        tab.configurationPath,
+        tab.name!,
+        tab.adapterPosition,
+      )
+      if (!adapter) return
 
-      const existingAdapterXml = new XMLSerializer().serializeToString(existingAdapter)
+      const adapterJson = await convertAdapterXmlToJson(adapter)
+      setEdges(adapterJson.edges)
+      setNodes(adapterJson.nodes)
+      setHistory([])
+      setFuture([])
+      pendingInitialRelayoutRef.current = { pendingSelection }
+    },
+    [project, setEdges, setFuture, setHistory, setNodes],
+  )
 
-      const newAdapterXml = await exportFlowToXml(
-        flowData,
-        currentProject.name,
-        configurationPath,
-        adapterName,
-        existingAdapterXml,
+  const applySelectionToNodes = useCallback(
+    (pendingSelection: { subtype: string; name: string }) => {
+      const currentNodes = nodes
+      const nodeToSelect = currentNodes.find(
+        (node): node is FrankNodeType =>
+          isFrankNode(node) &&
+          node.data.subtype === pendingSelection.subtype &&
+          node.data.name === pendingSelection.name,
       )
 
-      const adapterIndex = allAdapters.indexOf(existingAdapter)
-      if (adapterIndex === -1) showErrorToast('Could not determine adapter position for replacement')
+      if (!nodeToSelect) return
 
-      const updatedConfigXml = replaceAdapterInXml(fullConfigXml, adapterIndex, newAdapterXml.trim())
+      setNodes(
+        currentNodes.map((node) => ({
+          ...node,
+          selected: node.id === nodeToSelect.id,
+        })),
+      )
 
-      await saveConfigurationFile(currentProject.name, configurationPath, updatedConfigXml, true)
-      clearConfigurationFileCache(currentProject.name, configurationPath)
-      useEditorTabStore.getState().refreshAllTabs()
-      if (currentProject.isGitRepository) await refreshOpenDiffs(currentProject.name)
+      pendingFitViewRef.current = nodeToSelect.id
 
-      const tabData = useTabStore.getState().getTab(activeTabKey)
+      const nodeContextStore = useNodeContextStore.getState()
+      nodeContextStore.setParentId(null)
+      nodeContextStore.setChildParentId(null)
+      nodeContextStore.setNodeId(+nodeToSelect.id)
+      nodeContextStore.setAttributes(elements?.[nodeToSelect.data.subtype]?.attributes)
+      nodeContextStore.setEditingSubtype(nodeToSelect.data.subtype)
+      nodeContextStore.setIsEditing(true)
+      showNodeContextMenuRef.current(true)
+    },
+    [elements, nodes, setNodes],
+  )
 
-      if (tabData) {
-        const { nodes: savedNodes, edges: savedEdges, viewport: savedViewport } = useFlowStore.getState()
-        useTabStore.getState().setTabData(activeTabKey, {
-          ...tabData,
-          flowJson: { nodes: savedNodes, edges: savedEdges, viewport: savedViewport },
-        })
+  const computeAdapterCenteredViewport = useCallback(
+    (nodes: Node[], canvasWidth: number, canvasHeight: number): { x: number; y: number; zoom: number } => {
+      const layoutNodes = nodes.filter((node) => node.type === 'frankNode' || node.type === 'exitNode')
+      if (layoutNodes.length === 0) return { x: 0, y: 0, zoom: 1 }
+
+      const boundsLeft = Math.min(...layoutNodes.map((node) => node.position.x))
+      const boundsTop = Math.min(...layoutNodes.map((node) => node.position.y))
+      const boundsRight = Math.max(
+        ...layoutNodes.map((node) => node.position.x + (node.measured?.width ?? FlowConfig.NODE_DEFAULT_WIDTH)),
+      )
+      const boundsBottom = Math.max(
+        ...layoutNodes.map((node) => node.position.y + (node.measured?.height ?? FlowConfig.NODE_MIN_HEIGHT)),
+      )
+
+      const boundsWidth = boundsRight - boundsLeft
+      const boundsHeight = boundsBottom - boundsTop
+      const boundsCenterX = boundsLeft + boundsWidth / 2
+      const boundsCenterY = boundsTop + boundsHeight / 2
+
+      const viewportPadding = 0.85
+      const minZoom = 0.2
+      const maxZoom = 1.5
+      const verticalOffset = 40
+
+      const zoomToFitWidth = (canvasWidth * viewportPadding) / Math.max(boundsWidth, 1)
+      const zoomToFitHeight = (canvasHeight * viewportPadding) / Math.max(boundsHeight, 1)
+      const zoom = Math.max(minZoom, Math.min(maxZoom, zoomToFitWidth, zoomToFitHeight))
+
+      return {
+        x: canvasWidth / 2 - boundsCenterX * zoom,
+        y: canvasHeight / 2 - boundsCenterY * zoom - verticalOffset,
+        zoom,
       }
-
-      setSaved()
-    } catch (error) {
-      logApiError('Failed to save XML', error as Error)
-      setIdle()
-    }
-  }, [])
-
-  const autosaveEnabled = useSettingsStore((s) => s.general.autoSave.enabled)
-  const autosaveDelay = useSettingsStore((s) => s.general.autoSave.delayMs)
-
-  const scheduleAutoSave = useCallback(() => {
-    if (!autosaveEnabled) return
-    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current)
-    autoSaveTimerRef.current = setTimeout(() => {
-      autoSaveTimerRef.current = null
-      saveFlow()
-    }, autosaveDelay)
-  }, [saveFlow, autosaveEnabled, autosaveDelay])
-
-  useEffect(() => {
-    return () => {
-      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current)
-    }
-  }, [])
-
-  useEffect(() => {
-    if (nodes.length > 0 && !isLoadingTabRef.current) {
-      scheduleAutoSave()
-    }
-  }, [nodes, edges, scheduleAutoSave])
-
-  useEffect(() => {
-    if (!fitAfterLayoutRef.current) return
-    const nodeIds = fitAfterLayoutRef.current
-    fitAfterLayoutRef.current = null
-    requestAnimationFrame(() => {
-      reactFlowRef.current?.fitView({ nodes: nodeIds, padding: 0.15, duration: 300 })
-    })
-  }, [nodes])
+    },
+    [],
+  )
 
   const waitForStableCanvasDimensions = useCallback((onStable: (canvasWidth: number, canvasHeight: number) => void) => {
     let previousWidth = -1
@@ -436,7 +470,7 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
     const REQUIRED_STABLE_FRAMES = 3
     const MINIMUM_TOTAL_FRAMES = 5
 
-    const checkDimensions = () => {
+    const checkDimensions = (): void => {
       const currentWidth = canvasRef.current?.clientWidth ?? 0
       const currentHeight = canvasRef.current?.clientHeight ?? 0
 
@@ -466,96 +500,173 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
         }
         return
       }
-
-      requestAnimationFrame(checkDimensions)
     }
 
     requestAnimationFrame(checkDimensions)
   }, [])
 
-  useEffect(() => {
-    const nodeId = pendingFitViewRef.current
-    if (!nodeId) return
+  const restoreFlowFromTab = useCallback(
+    (tab: TabData, options: { skipViewport: boolean; forceRemeasure: boolean }) => {
+      const flowJson = tab.flowJson
 
-    const targetNode = nodes.find((node) => node.id === nodeId)
-    if (!targetNode?.measured?.width || !targetNode?.measured?.height) return
-    if (!targetNode.selected) return
+      if (flowJson) {
+        let nodes = Array.isArray(flowJson.nodes) ? flowJson.nodes : []
+        if (options.forceRemeasure) {
+          nodes = stripMeasuredDimensions(nodes)
+        }
+        setNodes(nodes)
+        setEdges(Array.isArray(flowJson.edges) ? flowJson.edges : [])
 
-    pendingFitViewRef.current = null
+        if (!options.skipViewport) {
+          const savedViewport = flowJson.viewport as { x: number; y: number; zoom: number } | undefined
+          const targetViewport = savedViewport ?? { x: 0, y: 0, zoom: 1 }
+          setViewport(targetViewport)
+          requestAnimationFrame(() => reactFlowRef.current?.setViewport(targetViewport))
+        }
 
-    waitForStableCanvasDimensions((canvasWidth, canvasHeight) => {
-      const reactFlowInstance = reactFlowRef.current
-      if (!reactFlowInstance) return
+        setHistory(tab.history ?? [])
+        setFuture(tab.future ?? [])
+      } else {
+        resetFlowStore()
+      }
+    },
+    [resetFlowStore, setEdges, setFuture, setHistory, setNodes, setViewport],
+  )
 
-      const allNodes = useFlowStore.getState().nodes
-      const node = allNodes.find((node) => node.id === nodeId)
-      if (!node?.measured?.width || !node?.measured?.height) return
+  const loadFromCache = useCallback(
+    (tab: TabData, pendingSelection: { subtype: string; name: string } | null, recenter: boolean) => {
+      const hasPendingSelection = !!pendingSelection
+      restoreFlowFromTab(tab, {
+        skipViewport: hasPendingSelection || recenter,
+        forceRemeasure: hasPendingSelection,
+      })
+      if (pendingSelection) {
+        applySelectionToNodes(pendingSelection)
+      } else if (recenter) {
+        const cachedNodes = [...nodes]
+        waitForStableCanvasDimensions((canvasWidth, canvasHeight) => {
+          const viewport = computeAdapterCenteredViewport(cachedNodes, canvasWidth, canvasHeight)
+          setViewport(viewport)
+          reactFlowRef.current?.setViewport(viewport)
+        })
+      }
+    },
+    [
+      applySelectionToNodes,
+      computeAdapterCenteredViewport,
+      nodes,
+      restoreFlowFromTab,
+      setViewport,
+      waitForStableCanvasDimensions,
+    ],
+  )
 
-      const { absoluteX, absoluteY } = computeAbsoluteNodePosition(node, allNodes)
+  const loadFlowFromTab = useCallback(
+    async (tabData: TabData) => {
+      const pendingSelection = tabData.pendingNodeSelection ?? null
+      const recenter = tabData.pendingRecenter ?? false
 
-      const viewport = computeNodeCenteredViewport(
-        absoluteX,
-        absoluteY,
-        node.measured.width,
-        node.measured.height,
-        canvasWidth,
-        canvasHeight,
+      isLoadingTabRef.current = true
+      setLoading(true)
+
+      if (pendingSelection || recenter) {
+        setTabData(activeTab, { ...tabData, pendingNodeSelection: null, pendingRecenter: null })
+      }
+
+      try {
+        const hasCachedFlow = tabData.flowJson && Object.keys(tabData.flowJson).length > 0
+        if (hasCachedFlow) {
+          loadFromCache(tabData, pendingSelection, recenter)
+        } else if (tabData.configurationPath && tabData.name) {
+          await loadFromApi(tabData, pendingSelection)
+        }
+      } catch (error) {
+        logApiError('Error loading tab flow:', error as Error)
+      } finally {
+        isLoadingTabRef.current = false
+        setLoading(false)
+      }
+    },
+    [activeTab, loadFromApi, loadFromCache, logApiError, setTabData],
+  )
+
+  const saveFlow = useCallback(async () => {
+    const tabData = getTab(activeTab)
+    const configurationPath = tabData?.configurationPath
+    const adapterName = tabData?.name
+    const currentProject = useProjectStore.getState().project
+    if (!configurationPath || !adapterName || !currentProject) return
+
+    const flowData = { nodes, edges, viewport }
+    const adapterPosition = tabData?.adapterPosition
+
+    setSaving()
+    const allAdapters: Element[] = []
+    const fullConfigXml = await fetchConfigurationFileCached(currentProject.name, configurationPath)
+    try {
+      const configDoc = new DOMParser().parseFromString(fullConfigXml, 'text/xml')
+      allAdapters.push(...configDoc.querySelectorAll('Adapter, adapter'))
+    } catch (error) {
+      logApiError('Failed to parse configuration XML', error as Error)
+    }
+
+    const existingAdapter =
+      adapterPosition === undefined
+        ? (allAdapters.find((element) => element.getAttribute('name') === adapterName) ?? null)
+        : (allAdapters[adapterPosition] ?? null)
+
+    if (!existingAdapter) {
+      throw new Error(`Could not find adapter "${adapterName}" at position ${adapterPosition} in configuration`)
+    }
+
+    try {
+      const existingAdapterXml = new XMLSerializer().serializeToString(existingAdapter)
+      const newAdapterXml = await exportFlowToXml(
+        flowData,
+        currentProject.name,
+        configurationPath,
+        adapterName,
+        existingAdapterXml,
       )
 
-      reactFlowInstance.setViewport(viewport, { duration: 400 })
-    })
-  }, [nodes, waitForStableCanvasDimensions])
+      const adapterIndex = allAdapters.indexOf(existingAdapter)
+      if (adapterIndex === -1) showErrorToast('Could not determine adapter position for replacement')
 
-  useEffect(() => {
-    useNodeContextStore.getState().registerSaveFlow(async () => {
-      if (autoSaveTimerRef.current) {
-        clearTimeout(autoSaveTimerRef.current)
-        autoSaveTimerRef.current = null
+      const updatedConfigXml = replaceAdapterInXml(fullConfigXml, adapterIndex, newAdapterXml.trim())
+
+      await saveConfigurationFile(currentProject.name, configurationPath, updatedConfigXml, true)
+      clearConfigurationFileCache(currentProject.name, configurationPath)
+      useEditorTabStore.getState().refreshAllTabs()
+      if (currentProject.isGitRepository) await refreshOpenDiffs(currentProject.name)
+
+      if (tabData) {
+        setTabData(activeTab, {
+          ...tabData,
+          flowJson: { nodes, edges, viewport },
+        })
       }
-      await saveFlow()
-    })
-    return () => useNodeContextStore.getState().registerSaveFlow(null)
-  }, [saveFlow])
 
-  const sourceInfoReference = useRef<{
-    nodeId: string | null
-    handleId: string | null
-    handleType: 'source' | 'target' | null
-  }>({ nodeId: null, handleId: null, handleType: null })
-
-  const handleConnectStart: OnConnectStart = (_, params) => {
-    sourceInfoReference.current = {
-      nodeId: params.nodeId,
-      handleId: params.handleId,
-      handleType: params.handleType,
+      setSaved()
+    } catch (error) {
+      logApiError('Failed to save XML', error as Error)
+      setIdle()
     }
-  }
+  }, [activeTab, edges, getTab, logApiError, nodes, setIdle, setSaved, setSaving, setTabData, showErrorToast, viewport])
 
-  const handleConnectEnd: OnConnectEnd = (event, connectionState) => {
-    const mouseEvent = event as MouseEvent
-    if (!connectionState.isValid) {
-      const zoom = reactFlow.getZoom()
-      if (zoom < FlowConfig.ZOOM_THRESHOLD && sourceInfoReference.current.handleType === 'source') {
-        const { nodes } = useFlowStore.getState()
-        const sourceNode = nodes.find((node) => node.id === sourceInfoReference.current.nodeId)
-        if (sourceNode && isFrankNode(sourceNode)) {
-          setPendingEdgeDrop({
-            position: { x: mouseEvent.clientX, y: mouseEvent.clientY },
-            sourceNodeSubtype: sourceNode.data.subtype,
-          })
-          return
-        }
-      }
-      handleEdgeDropOnCanvas(mouseEvent.clientX, mouseEvent.clientY)
-    }
-  }
+  const scheduleAutoSave = useCallback(() => {
+    if (!autosaveEnabled) return
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current)
+    autoSaveTimerRef.current = setTimeout(() => {
+      autoSaveTimerRef.current = null
+      saveFlow()
+    }, autosaveDelay)
+  }, [saveFlow, autosaveEnabled, autosaveDelay])
 
   const handleConnect = useCallback(
     (connection: Connection) => {
       const zoom = reactFlow.getZoom()
 
       if (zoom < FlowConfig.ZOOM_THRESHOLD && connection.source) {
-        const { nodes } = useFlowStore.getState()
         const sourceNode = nodes.find((node) => node.id === connection.source)
 
         if (sourceNode && isFrankNode(sourceNode)) {
@@ -578,14 +689,12 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
 
       onConnect(connection)
     },
-    [onConnect, reactFlow],
+    [nodes, onConnect, reactFlow],
   )
 
   const handleCompactHandleSelect = useCallback(
     (type: string) => {
       if (!pendingCompactConnection) return
-
-      const { nodes } = useFlowStore.getState()
       const sourceNode = nodes.find((node) => node.id === pendingCompactConnection.connection.source)
 
       if (!sourceNode || !isFrankNode(sourceNode)) {
@@ -602,7 +711,7 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
         })
       } else {
         const newIndex = sourceNode.data.sourceHandles.length + 1
-        useFlowStore.getState().addHandle(pendingCompactConnection.connection.source!, { type, index: newIndex })
+        addFlowHandle(pendingCompactConnection.connection.source, { type, index: newIndex })
         onConnect({
           ...pendingCompactConnection.connection,
           sourceHandle: newIndex.toString(),
@@ -611,16 +720,8 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
 
       setPendingCompactConnection(null)
     },
-    [pendingCompactConnection, onConnect],
+    [pendingCompactConnection, nodes, onConnect, addFlowHandle],
   )
-
-  const handleEdgeDropOnCanvas = (x: number, y: number) => {
-    const { screenToFlowPosition } = reactFlow
-    const flowPositions = screenToFlowPosition({ x: x, y: y })
-
-    setEdgeDropPositions(flowPositions)
-    setShowCreateNodeModal(true)
-  }
 
   const handleEdgeDropHandleSelect = useCallback(
     (type: string) => {
@@ -634,43 +735,6 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
     [pendingEdgeDrop, reactFlow],
   )
 
-  const computeAdapterCenteredViewport = useCallback(
-    (nodes: Node[], canvasWidth: number, canvasHeight: number): { x: number; y: number; zoom: number } => {
-      const layoutNodes = nodes.filter((node) => node.type === 'frankNode' || node.type === 'exitNode')
-      if (layoutNodes.length === 0) return { x: 0, y: 0, zoom: 1 }
-
-      const boundsLeft = Math.min(...layoutNodes.map((node) => node.position.x))
-      const boundsTop = Math.min(...layoutNodes.map((node) => node.position.y))
-      const boundsRight = Math.max(
-        ...layoutNodes.map((node) => node.position.x + (node.measured?.width ?? FlowConfig.NODE_DEFAULT_WIDTH)),
-      )
-      const boundsBottom = Math.max(
-        ...layoutNodes.map((node) => node.position.y + (node.measured?.height ?? FlowConfig.NODE_MIN_HEIGHT)),
-      )
-
-      const boundsWidth = boundsRight - boundsLeft
-      const boundsHeight = boundsBottom - boundsTop
-      const boundsCenterX = boundsLeft + boundsWidth / 2
-      const boundsCenterY = boundsTop + boundsHeight / 2
-
-      const viewportPadding = 0.85
-      const minZoom = 0.2
-      const maxZoom = 1.5
-      const verticalOffset = 40
-
-      const zoomToFitWidth = (canvasWidth * viewportPadding) / Math.max(boundsWidth, 1)
-      const zoomToFitHeight = (canvasHeight * viewportPadding) / Math.max(boundsHeight, 1)
-      const zoom = Math.max(minZoom, Math.min(maxZoom, Math.min(zoomToFitWidth, zoomToFitHeight)))
-
-      return {
-        x: canvasWidth / 2 - boundsCenterX * zoom,
-        y: canvasHeight / 2 - boundsCenterY * zoom - verticalOffset,
-        zoom,
-      }
-    },
-    [],
-  )
-
   const layoutGraph = useCallback((nodes: Node[], edges: Edge[], direction: 'TB' | 'LR' = 'LR'): Node[] => {
     const dagreGraph = new Dagre.graphlib.Graph()
     dagreGraph.setDefaultEdgeLabel(() => ({}))
@@ -682,12 +746,13 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
 
     const layoutableIds = new Set<string>()
     for (const node of nodes) {
-      if ((node.type === 'frankNode' || node.type === 'exitNode') && node.position.x === 0 && node.position.y === 0) {
-        const width = node.measured?.width ?? FlowConfig.NODE_DEFAULT_WIDTH
-        const height = node.measured?.height ?? FlowConfig.NODE_MIN_HEIGHT
-        dagreGraph.setNode(node.id, { width: width, height: height })
-        layoutableIds.add(node.id)
-      }
+      if (!((node.type === 'frankNode' || node.type === 'exitNode') && node.position.x === 0 && node.position.y === 0))
+        continue
+
+      const width = node.measured?.width ?? FlowConfig.NODE_DEFAULT_WIDTH
+      const height = node.measured?.height ?? FlowConfig.NODE_MIN_HEIGHT
+      dagreGraph.setNode(node.id, { width: width, height: height })
+      layoutableIds.add(node.id)
     }
 
     for (const edge of edges) {
@@ -718,11 +783,10 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
   }, [])
 
   const handleAutoLayout = useCallback(() => {
-    const flowStore = useFlowStore.getState()
-    const resetNodes = flowStore.nodes.map((node) =>
+    const resetNodes = nodes.map((node) =>
       node.type === 'frankNode' || node.type === 'exitNode' ? { ...node, position: { x: 0, y: 0 } } : node,
     )
-    const laidOut = layoutGraph(resetNodes, flowStore.edges, 'LR')
+    const laidOut = layoutGraph(resetNodes, edges, 'LR')
 
     const nodeIds = laidOut
       .filter((node) => node.type === 'frankNode' || node.type === 'exitNode')
@@ -731,48 +795,14 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
     if (nodeIds.length === 0) return
 
     fitAfterLayoutRef.current = nodeIds
-    flowStore.setNodes(laidOut)
-  }, [layoutGraph])
-
-  useEffect(() => {
-    if (!nodesInitialized || !pendingInitialRelayoutRef.current) return
-
-    const { pendingSelection } = pendingInitialRelayoutRef.current
-    pendingInitialRelayoutRef.current = null
-
-    const flowStore = useFlowStore.getState()
-    const nodesWithResetPositions = flowStore.nodes.map((node) =>
-      node.type === 'frankNode' || node.type === 'exitNode' ? { ...node, position: { x: 0, y: 0 } } : node,
-    )
-    const laidOutNodes = layoutGraph(nodesWithResetPositions, flowStore.edges, 'LR')
-    flowStore.setNodesWithoutHistory(laidOutNodes)
-
-    if (pendingSelection) {
-      applySelectionToNodes(pendingSelection)
-    } else {
-      waitForStableCanvasDimensions((canvasWidth, canvasHeight) => {
-        const freshViewport = computeAdapterCenteredViewport(laidOutNodes, canvasWidth, canvasHeight)
-        useFlowStore.getState().setViewport(freshViewport)
-        reactFlowRef.current?.setViewport(freshViewport)
-      })
-    }
-
-    flowStore.setHistory([])
-    flowStore.setFuture([])
-  }, [
-    nodesInitialized,
-    relayoutNonce,
-    layoutGraph,
-    waitForStableCanvasDimensions,
-    computeAdapterCenteredViewport,
-    applySelectionToNodes,
-  ])
+    setNodes(laidOut)
+  }, [edges, layoutGraph, nodes, setNodes])
 
   const getFullySelectedGroupIds = useCallback(
-    (parentIds: (string | undefined)[], selectedNodes: FlowNode[]) => {
+    (parentIds: string[], selectedNodes: FlowNode[]) => {
       return parentIds.filter((parentId) => {
         const children = nodes.filter((node) => node.parentId === parentId)
-        return children.every((child) => selectedNodes.some((sn) => sn.id === child.id))
+        return children.every((child) => selectedNodes.some((selectedNode) => selectedNode.id === child.id))
       })
     },
     [nodes],
@@ -782,46 +812,40 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
     return selectedNodes.every((node) => node.parentId && node.parentId === selectedNodes[0].parentId)
   }, [])
 
-  const degroupNodes = useCallback(
-    (selectedNodes: FlowNode[], parentId: string | undefined, allNodes: FlowNode[]): FlowNode[] => {
-      const groupNode = allNodes.find((node) => node.id === parentId)
-      if (!groupNode) return allNodes
+  const degroupNodes = useCallback((selectedNodes: FlowNode[], parentId: string, allNodes: FlowNode[]): FlowNode[] => {
+    const groupNode = allNodes.find((node) => node.id === parentId)
+    if (!groupNode) return allNodes
 
-      const groupX = groupNode.position.x
-      const groupY = groupNode.position.y
+    const groupX = groupNode.position.x
+    const groupY = groupNode.position.y
+    const ungroupedNodes = []
 
-      return allNodes
-        .map((node) => {
-          if (node.id === parentId) {
-            return null
-          }
+    for (const node of allNodes) {
+      if (node.id === parentId) continue
+      if (!selectedNodes.includes(node) && node.parentId !== parentId) ungroupedNodes.push(node)
 
-          if (selectedNodes.includes(node) && node.parentId === parentId) {
-            return {
-              ...node,
-              parentId: undefined,
-              extent: undefined,
-              position: {
-                x: node.position.x + groupX,
-                y: node.position.y + groupY,
-              },
-            }
-          }
-
-          return node
-        })
-        .filter((node): node is FlowNode => node !== null)
-    },
-    [],
-  )
+      const ungroupedNode = {
+        ...node,
+        position: {
+          x: node.position.x + groupX,
+          y: node.position.y + groupY,
+        },
+        parentId: undefined,
+        extent: undefined,
+      }
+      ungroupedNodes.push(ungroupedNode)
+    }
+    return ungroupedNodes
+  }, [])
 
   const handleDegroupSingleGroup = useCallback(
     (selectedNodes: FlowNode[]) => {
-      const parentId = selectedNodes[0].parentId!
+      const parentId = selectedNodes[0].parentId
+      if (!parentId) return
       const updatedNodes = degroupNodes(selectedNodes, parentId, nodes)
-      useFlowStore.getState().setNodes(updatedNodes)
+      setNodes(updatedNodes)
     },
-    [nodes, degroupNodes],
+    [degroupNodes, nodes, setNodes],
   )
 
   const shouldMergeUngroupedIntoGroup = useCallback(
@@ -838,24 +862,65 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
     [nodes],
   )
 
+  const groupNodes = useCallback(
+    (nodesToGroup: FlowNode[], currentNodes: FlowNode[]) => {
+      const minX = Math.min(...nodesToGroup.map((node) => node.position.x))
+      const minY = Math.min(...nodesToGroup.map((node) => node.position.y))
+      const maxX = Math.max(...nodesToGroup.map((node) => node.position.x + (node.measured?.width ?? 0)))
+      const maxY = Math.max(...nodesToGroup.map((node) => node.position.y + (node.measured?.height ?? 0)))
+
+      const padding = 30
+      const width = maxX - minX + padding * 2
+      const height = maxY - minY + padding * 2
+
+      const newGroupId = getNextNodeId()
+
+      const groupNode: FlowNode = {
+        id: newGroupId,
+        position: { x: minX - padding, y: minY - padding },
+        type: 'groupNode',
+        data: { label: 'New Group', width: width, height: height },
+        dragHandle: '.drag-handle',
+        selectable: true,
+      }
+
+      const updatedSelectedNodes: FlowNode[] = nodesToGroup.map((node) => ({
+        ...node,
+        position: {
+          x: node.position.x - minX + padding,
+          y: node.position.y - minY + padding,
+        },
+        parentId: newGroupId,
+        extent: 'parent',
+        selected: true,
+      }))
+
+      const allNodes = [...currentNodes.filter((node) => !node.selected), groupNode, ...updatedSelectedNodes]
+
+      setNodes(allNodes)
+    },
+    [getNextNodeId, setNodes],
+  )
+
   const handleMergeUngroupedIntoGroup = useCallback(
     (selectedNodes: FlowNode[]) => {
       const parentId = selectedNodes.find((n) => n.parentId)?.parentId
+      if (!parentId) return
       const updatedNodes = degroupNodes(selectedNodes, parentId, nodes)
       const updatedSelectedNodes = updatedNodes.filter((node) =>
         selectedNodes.some((selectedNode) => selectedNode.id === node.id),
       )
       groupNodes(updatedSelectedNodes, updatedNodes)
     },
-    [nodes, degroupNodes],
+    [degroupNodes, nodes, groupNodes],
   )
 
   const handleMultiGroupMerge = useCallback(
-    (groupIds: (string | undefined)[], selectedNodes: FlowNode[]) => {
+    (groupIds: string[], selectedNodes: FlowNode[]) => {
       let updatedNodes = [...nodes]
       for (const parentId of groupIds) {
         const groupChildren = updatedNodes.filter((node) => node.parentId === parentId)
-        updatedNodes = degroupNodes(groupChildren, parentId!, updatedNodes)
+        updatedNodes = degroupNodes(groupChildren, parentId, updatedNodes)
       }
 
       const degroupedSelectedNodes = updatedNodes.filter((node) =>
@@ -864,14 +929,14 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
 
       groupNodes(degroupedSelectedNodes, updatedNodes)
     },
-    [nodes, degroupNodes],
+    [nodes, groupNodes, degroupNodes],
   )
 
   const handleGrouping = useCallback(() => {
     const selectedNodes = nodes.filter((node) => node.selected)
     if (selectedNodes.length < 2) return
 
-    const parentIds = [...new Set(selectedNodes.map((node) => node.parentId).filter(Boolean))]
+    const parentIds = [...new Set(selectedNodes.map((node) => node.parentId).filter(Boolean))] as string[]
     const fullySelectedGroupIds = getFullySelectedGroupIds(parentIds, selectedNodes)
 
     if (fullySelectedGroupIds.length > 1) {
@@ -892,57 +957,60 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
     showNodeContextMenu(true)
   }, [
     nodes,
-    allSelectedInSameGroup,
     getFullySelectedGroupIds,
-    handleMergeUngroupedIntoGroup,
-    handleMultiGroupMerge,
+    allSelectedInSameGroup,
     shouldMergeUngroupedIntoGroup,
+    groupNodes,
     showNodeContextMenu,
+    handleMultiGroupMerge,
+    handleMergeUngroupedIntoGroup,
   ])
 
   const copySelection = useCallback(() => {
-    const selectedNodes = nodes.filter((n) => n.selected)
+    const selectedNodes = nodes.filter((node) => node.selected)
     if (selectedNodes.length === 0) return
 
-    const selectedNodeIds = new Set(selectedNodes.map((n) => n.id))
-    const selectedEdges = edges.filter((e) => selectedNodeIds.has(e.source) && selectedNodeIds.has(e.target))
+    const selectedNodeIds = new Set(selectedNodes.map((node) => node.id))
+    const selectedEdges = edges.filter((edge) => selectedNodeIds.has(edge.source) && selectedNodeIds.has(edge.target))
 
     const data = { nodes: selectedNodes, edges: selectedEdges }
     clipboardRef.current = data
 
-    navigator.clipboard.writeText(JSON.stringify(data)).catch(() => {
-      // clipboard write failed, ignore
-    })
-  }, [nodes, edges])
+    navigator.clipboard
+      .writeText(JSON.stringify(data))
+      .catch(() => showWarningToast('Copy/paste may not work in this browser.', 'Failed to copy'))
+  }, [nodes, edges, showWarningToast])
 
-  const applyClipboardData = useCallback((clipboard: { nodes: FlowNode[]; edges: Edge[] }) => {
-    const flowStore = useFlowStore.getState()
-    const idMap = new Map<string, string>()
-    const generateId = () => flowStore.getNextNodeId().toString()
+  const applyClipboardData = useCallback(
+    (clipboard: { nodes: FlowNode[]; edges: Edge[] }) => {
+      const idMap = new Map<string, string>()
+      const generateId = (): string => getNextNodeId().toString()
 
-    const newNodes: FlowNode[] = clipboard.nodes.map((node) => {
-      const cloned = cloneWithRemappedIds(node, idMap, generateId)
-      const remappedParentId = node.parentId ? idMap.get(node.parentId) : undefined
-      return {
-        ...cloned,
-        position: {
-          x: node.position.x + FlowConfig.COPY_PASTE_OFFSET,
-          y: node.position.y + FlowConfig.COPY_PASTE_OFFSET,
-        },
-        parentId: remappedParentId,
-        extent: remappedParentId ? 'parent' : undefined,
-        selected: true,
-      }
-    })
+      const newNodes: FlowNode[] = clipboard.nodes.map((node) => {
+        const cloned = cloneWithRemappedIds(node, idMap, generateId)
+        const remappedParentId = node.parentId ? idMap.get(node.parentId) : undefined
+        return {
+          ...cloned,
+          position: {
+            x: node.position.x + FlowConfig.COPY_PASTE_OFFSET,
+            y: node.position.y + FlowConfig.COPY_PASTE_OFFSET,
+          },
+          parentId: remappedParentId,
+          extent: remappedParentId ? 'parent' : undefined,
+          selected: true,
+        }
+      })
 
-    const newEdges: Edge[] = clipboard.edges.map((edge) => cloneWithRemappedIds(edge, idMap, generateId))
+      const newEdges: Edge[] = clipboard.edges.map((edge) => cloneWithRemappedIds(edge, idMap, generateId))
 
-    const deselectedNodes = flowStore.nodes.map((n) => ({ ...n, selected: false }))
-    const deselectedEdges = flowStore.edges.map((e) => ({ ...e, selected: false }))
+      const deselectedNodes = nodes.map((node) => ({ ...node, selected: false }))
+      const deselectedEdges = edges.map((edge) => ({ ...edge, selected: false }))
 
-    flowStore.setNodes([...deselectedNodes, ...newNodes])
-    flowStore.setEdges([...deselectedEdges, ...newEdges])
-  }, [])
+      setNodes([...deselectedNodes, ...newNodes])
+      setEdges([...deselectedEdges, ...newEdges])
+    },
+    [edges, getNextNodeId, nodes, setEdges, setNodes],
+  )
 
   const pasteSelection = useCallback(() => {
     navigator.clipboard
@@ -965,31 +1033,12 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
       })
   }, [applyClipboardData])
 
-  function closeEditNodeContextOnEscape(): void {
-    const { isNewNode, nodeId, parentId } = useNodeContextStore.getState()
-
-    if (isNewNode) {
-      if (parentId) {
-        useFlowStore.getState().deleteChild(parentId, nodeId.toString())
-      } else {
-        useFlowStore.getState().deleteNode(nodeId.toString())
-      }
-      useNodeContextStore.getState().setIsNewNode(false)
-    }
-
-    showNodeContextMenu(false)
-    setIsEditing(false)
-    setIsMultiSelect(false)
-    setParentId(null)
-    setChildParentId(null)
-  }
-
   const deleteSelection = useCallback((): boolean => {
     if (isEditing) return false
 
     const { parentId: storeParentId, nodeId: storeNodeId } = useNodeContextStore.getState()
     if (storeParentId !== null) {
-      useFlowStore.getState().deleteChild(storeParentId, storeNodeId.toString())
+      deleteChild(storeParentId, storeNodeId.toString())
       useNodeContextStore.getState().setParentId(null)
       useNodeContextStore.getState().setChildParentId(null)
       useNodeContextStore.getState().setNodeId(0)
@@ -997,9 +1046,8 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
       return true
     }
 
-    const { nodes, edges, setNodes, setEdges } = useFlowStore.getState()
-    const selectedNodeIds = new Set(nodes.filter((n) => n.selected).map((n) => n.id))
-    const hasSelection = selectedNodeIds.size > 0 || edges.some((e) => e.selected)
+    const selectedNodeIds = new Set(nodes.filter((node) => node.selected).map((n) => n.id))
+    const hasSelection = selectedNodeIds.size > 0 || edges.some((edge) => edge.selected)
     if (!hasSelection) return false
 
     const { selectedStickyId } = useNodeContextStore.getState()
@@ -1008,10 +1056,12 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
       showNodeContextMenu(false)
     }
 
-    setNodes(nodes.filter((n) => !n.selected))
-    setEdges(edges.filter((e) => !e.selected && !selectedNodeIds.has(e.source) && !selectedNodeIds.has(e.target)))
+    setNodes(nodes.filter((node) => !node.selected))
+    setEdges(
+      edges.filter((edge) => !edge.selected && !selectedNodeIds.has(edge.source) && !selectedNodeIds.has(edge.target)),
+    )
     return true
-  }, [isEditing, showNodeContextMenu])
+  }, [deleteChild, edges, isEditing, nodes, setEdges, setNodes, showNodeContextMenu])
 
   const toggleSelectedHidden = useCallback(() => {
     const selected = useFlowStore
@@ -1020,38 +1070,23 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
     if (selected.length === 0) return false
 
     const shouldHide = selected.some((node) => !node.data.hiddenForwards)
-    useFlowStore.getState().setNodesHiddenForwards(
+    setNodesHiddenForwards(
       selected.map((node) => node.id),
       shouldHide,
     )
-  }, [])
+  }, [setNodesHiddenForwards])
 
-  useShortcut({
-    'studio.copy': () => copySelection(),
-    'studio.paste': () => pasteSelection(),
-    'studio.cut': () => cutSelection(),
-    'studio.undo': () => useFlowStore.getState().undo(),
-    'studio.redo': () => useFlowStore.getState().redo(),
-    'studio.redo-alt': () => useFlowStore.getState().redo(),
-    'studio.group': () => handleGrouping(),
-    'studio.ungroup': () => handleUngroup(),
-    'studio.hide': () => toggleSelectedHidden(),
-    'studio.save': () => void saveFlow(),
-    'studio.close-context': () => closeEditNodeContextOnEscape(),
-    'studio.delete': () => deleteSelection(),
-    'studio.show-in-editor': () => showSelectedNodeInEditor(),
-  })
+  const handleNodeDragStop = useCallback(
+    (_event: MouseEvent | TouchEvent, node: FlowNode) => {
+      if (!isStickyNote(node)) return
+      const nearest = findNearestFrankNode(node as StickyNote, nodes)
+      if (!nearest) return
 
-  const handleNodeDragStop = useCallback((_event: MouseEvent | TouchEvent, node: FlowNode) => {
-    if (!isStickyNote(node)) return
-
-    const flowStore = useFlowStore.getState()
-    const nearest = findNearestFrankNode(node as StickyNote, flowStore.nodes)
-    if (!nearest) return
-
-    flowStore.setStickyAttachment(node.id, nearest.id)
-    void useNodeContextStore.getState().saveFlow?.()
-  }, [])
+      setStickyAttachment(node.id, nearest.id)
+      void useNodeContextStore.getState().saveFlow?.()
+    },
+    [nodes, setStickyAttachment],
+  )
 
   const lookupFrankElement = useCallback(
     (subtype: string) => {
@@ -1091,7 +1126,7 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
 
   const handleNodeClick = useCallback(
     (event: React.MouseEvent, node: FlowNode) => {
-      if (event.shiftKey || event.ctrlKey || event.metaKey || isDirty) return
+      if (isDirty || event.shiftKey || event.ctrlKey || event.metaKey) return
 
       if (node.type === 'stickyNote') {
         setSelectedStickyId(node.id)
@@ -1227,43 +1262,6 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
     ],
   )
 
-  const groupNodes = (nodesToGroup: FlowNode[], currentNodes: FlowNode[]) => {
-    const minX = Math.min(...nodesToGroup.map((node) => node.position.x))
-    const minY = Math.min(...nodesToGroup.map((node) => node.position.y))
-    const maxX = Math.max(...nodesToGroup.map((node) => node.position.x + (node.measured?.width ?? 0)))
-    const maxY = Math.max(...nodesToGroup.map((node) => node.position.y + (node.measured?.height ?? 0)))
-
-    const padding = 30
-    const width = maxX - minX + padding * 2
-    const height = maxY - minY + padding * 2
-
-    const newGroupId = useFlowStore.getState().getNextNodeId()
-
-    const groupNode: FlowNode = {
-      id: newGroupId,
-      position: { x: minX - padding, y: minY - padding },
-      type: 'groupNode',
-      data: { label: 'New Group', width: width, height: height },
-      dragHandle: '.drag-handle',
-      selectable: true,
-    }
-
-    const updatedSelectedNodes: FlowNode[] = nodesToGroup.map((node) => ({
-      ...node,
-      position: {
-        x: node.position.x - minX + padding,
-        y: node.position.y - minY + padding,
-      },
-      parentId: newGroupId,
-      extent: 'parent',
-      selected: true,
-    }))
-
-    const allNodes = [...currentNodes.filter((node) => !node.selected), groupNode, ...updatedSelectedNodes]
-
-    useFlowStore.getState().setNodes(allNodes)
-  }
-
   const onDragOver = useCallback(
     (event: React.DragEvent) => {
       event.preventDefault()
@@ -1272,7 +1270,7 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
     [allowedOnCanvas],
   )
 
-  const onDrop = (event: React.DragEvent) => {
+  const onDrop = (event: React.DragEvent): void => {
     event.preventDefault()
     setDraggedName(null)
     setParentId(null)
@@ -1297,7 +1295,7 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
     addNodeAtPosition(position, parsedData.name)
   }
 
-  const onDragEnd = () => {
+  const onDragEnd = (): void => {
     setDraggedName(null)
     setParentId(null)
   }
@@ -1306,7 +1304,7 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
     position: { x: number; y: number },
     elementName: string,
     sourceInfo?: { nodeId: string | null; handleId: string | null; handleType: 'source' | 'target' | null },
-  ) {
+  ): void {
     showNodeContextMenu(true)
     setIsNewNode(true)
     setEditingSubtype(elementName)
@@ -1344,7 +1342,7 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
     if (sourceInfo?.nodeId && sourceInfo.handleType === 'source') {
       const sourceNode = flowStore.nodes.find((node) => node.id === sourceInfo.nodeId)
 
-      if (reactFlow.getZoom() < FlowConfig.ZOOM_THRESHOLD && sourceNode && isFrankNode(sourceNode)) {
+      if (sourceNode && reactFlow.getZoom() < FlowConfig.ZOOM_THRESHOLD && isFrankNode(sourceNode)) {
         if (edgeDropHandleType) {
           const existingHandle = sourceNode.data.sourceHandles.find((handle) => handle.type === edgeDropHandleType)
           if (existingHandle) {
@@ -1400,10 +1398,9 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
 
   const addStickyNote = useCallback(
     (flowPos: { x: number; y: number }) => {
-      const flowStore = useFlowStore.getState()
-      const newId = flowStore.getNextNodeId()
+      const newId = getNextNodeId()
 
-      const deselectedNodes = flowStore.nodes.map((node) => ({
+      const deselectedNodes = nodes.map((node) => ({
         ...node,
         selected: false,
       }))
@@ -1420,37 +1417,35 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
         },
       }
 
-      flowStore.setNodes([...deselectedNodes, stickyNote])
+      setNodes([...deselectedNodes, stickyNote])
       setSelectedStickyId(newId)
       showNodeContextMenu(true)
     },
-    [setSelectedStickyId, showNodeContextMenu],
+    [getNextNodeId, nodes, setNodes, setSelectedStickyId, showNodeContextMenu],
   )
 
   const cutSelection = useCallback(() => {
     copySelection()
-    const flowStore = useFlowStore.getState()
-    const selectedNodes = flowStore.nodes.filter((n) => n.selected)
+    const selectedNodes = nodes.filter((node) => node.selected)
     if (selectedNodes.length === 0) return
 
-    const selectedNodeIds = new Set(selectedNodes.map((n) => n.id))
-    const remainingNodes = flowStore.nodes.filter((n) => !selectedNodeIds.has(n.id))
-    const remainingEdges = flowStore.edges.filter(
-      (e) => !selectedNodeIds.has(e.source) && !selectedNodeIds.has(e.target),
+    const selectedNodeIds = new Set(selectedNodes.map((node) => node.id))
+    const remainingNodes = nodes.filter((node) => !selectedNodeIds.has(node.id))
+    const remainingEdges = edges.filter(
+      (edge) => !selectedNodeIds.has(edge.source) && !selectedNodeIds.has(edge.target),
     )
-    flowStore.setNodes(remainingNodes)
-    flowStore.setEdges(remainingEdges)
-  }, [copySelection])
+    setNodes(remainingNodes)
+    setEdges(remainingEdges)
+  }, [copySelection, edges, nodes, setEdges, setNodes])
 
   const handleUngroup = useCallback(() => {
-    const flowStore = useFlowStore.getState()
-    const selectedNodes = flowStore.nodes.filter((n) => n.selected)
+    const selectedNodes = nodes.filter((node) => node.selected)
 
     if (selectedNodes.length === 0) return
-    const selectedGroupNodes = selectedNodes.filter((n) => n.type === 'groupNode')
+    const selectedGroupNodes = selectedNodes.filter((node) => node.type === 'groupNode')
 
     if (selectedGroupNodes.length > 0) {
-      let updatedNodes = [...flowStore.nodes]
+      let updatedNodes = [...nodes]
       for (const groupNode of selectedGroupNodes) {
         const groupId = groupNode.id
 
@@ -1458,20 +1453,17 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
 
         updatedNodes = degroupNodes(children, groupId, updatedNodes)
       }
-      flowStore.setNodes(updatedNodes)
+      setNodes(updatedNodes)
       return
     }
 
     if (!allSelectedInSameGroup(selectedNodes)) return
 
     handleDegroupSingleGroup(selectedNodes)
-  }, [allSelectedInSameGroup, handleDegroupSingleGroup, degroupNodes])
+  }, [nodes, allSelectedInSameGroup, handleDegroupSingleGroup, setNodes, degroupNodes])
 
   const showSelectedNodeInEditor = useCallback(() => {
-    const flowStore = useFlowStore.getState()
-    const selectedFrankNodes = flowStore.nodes.filter(
-      (node) => node.selected && node.type === 'frankNode',
-    ) as FrankNodeType[]
+    const selectedFrankNodes = nodes.filter((node) => node.selected && node.type === 'frankNode') as FrankNodeType[]
     if (selectedFrankNodes.length !== 1) return
 
     const { data: nodeData } = selectedFrankNodes[0]
@@ -1483,7 +1475,7 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
       name: nodeData.name,
       filepath: tabData.configurationPath,
     })
-  }, [navigate])
+  }, [navigate, nodes])
 
   const handleRightMouseButtonClick = useCallback(
     (event: React.MouseEvent) => {
@@ -1495,169 +1487,177 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
     },
     [reactFlow],
   )
-
-  useEffect(() => {
-    function stripMeasuredDimensions(nodes: FlowNode[]): FlowNode[] {
-      return nodes.map((node) => {
-        if (!('measured' in node)) return node
-        const { measured: _measured, ...nodeWithoutMeasured } = node as FlowNode & { measured?: unknown }
-        return nodeWithoutMeasured as FlowNode
-      })
-    }
-
-    function restoreFlowFromTab(tab: TabData, options: { skipViewport: boolean; forceRemeasure: boolean }) {
-      const flowStore = useFlowStore.getState()
-      const flowJson = tab.flowJson
-
-      if (flowJson) {
-        let nodes = Array.isArray(flowJson.nodes) ? flowJson.nodes : []
-        if (options.forceRemeasure) {
-          nodes = stripMeasuredDimensions(nodes)
+  useCallback(
+    ({
+      sourceNode,
+      sourceNodeId,
+      newId,
+      position,
+    }: {
+      sourceNode: FrankNodeType
+      sourceNodeId: string
+      newId: string
+      position: { x: number; y: number }
+    }) => {
+      if (edgeDropHandleType) {
+        const existingHandle = sourceNode.data.sourceHandles.find((handle) => handle.type === edgeDropHandleType)
+        if (existingHandle) {
+          onConnect({
+            source: sourceNodeId,
+            sourceHandle: existingHandle.index.toString(),
+            target: newId.toString(),
+            targetHandle: null,
+          })
+        } else {
+          const newIndex = sourceNode.data.sourceHandles.length + 1
+          addFlowHandle(sourceNodeId, { type: edgeDropHandleType, index: newIndex })
+          onConnect({
+            source: sourceNodeId,
+            sourceHandle: newIndex.toString(),
+            target: newId.toString(),
+            targetHandle: null,
+          })
         }
-        flowStore.setNodes(nodes)
-        flowStore.setEdges(Array.isArray(flowJson.edges) ? flowJson.edges : [])
-
-        if (!options.skipViewport) {
-          const savedViewport = flowJson.viewport as { x: number; y: number; zoom: number } | undefined
-          const targetViewport = savedViewport ?? { x: 0, y: 0, zoom: 1 }
-          flowStore.setViewport(targetViewport)
-          requestAnimationFrame(() => reactFlowRef.current?.setViewport(targetViewport))
-        }
-
-        flowStore.setHistory(tab.history ?? [])
-        flowStore.setFuture(tab.future ?? [])
+        setEdgeDropHandleType(null)
       } else {
-        clearFlow()
-      }
-    }
-
-    function clearFlow() {
-      const flowStore = useFlowStore.getState()
-      flowStore.resetStore()
-    }
-
-    function loadFromCache(
-      tab: TabData,
-      pendingSelection: { subtype: string; name: string } | null,
-      recenter: boolean,
-    ) {
-      const hasPendingSelection = !!pendingSelection
-      restoreFlowFromTab(tab, {
-        skipViewport: hasPendingSelection || recenter,
-        forceRemeasure: hasPendingSelection,
-      })
-      if (pendingSelection) {
-        applySelectionToNodes(pendingSelection)
-      } else if (recenter) {
-        const cachedNodes = useFlowStore.getState().nodes
-        waitForStableCanvasDimensions((canvasWidth, canvasHeight) => {
-          const viewport = computeAdapterCenteredViewport(cachedNodes, canvasWidth, canvasHeight)
-          useFlowStore.getState().setViewport(viewport)
-          reactFlowRef.current?.setViewport(viewport)
+        setPendingCompactConnection({
+          connection: {
+            source: sourceNodeId,
+            sourceHandle: null,
+            target: newId.toString(),
+            targetHandle: null,
+          },
+          sourceNodeSubtype: sourceNode.data.subtype,
+          position: reactFlow.flowToScreenPosition(position),
         })
       }
-    }
+    },
+    [addFlowHandle, edgeDropHandleType, onConnect, reactFlow],
+  )
+  /* useEffect */
 
-    async function loadFromApi(tab: TabData, pendingSelection: { subtype: string; name: string } | null) {
-      const flowStore = useFlowStore.getState()
-      const currentProject = useProjectStore.getState().project
-      if (!currentProject) return
-
-      const adapter = await getAdapterFromConfiguration(
-        currentProject.name,
-        tab.configurationPath,
-        tab.name!,
-        tab.adapterPosition,
-      )
-      if (!adapter) return
-      const adapterJson = await convertAdapterXmlToJson(adapter)
-
-      flowStore.setEdges(adapterJson.edges)
-      flowStore.setNodes(adapterJson.nodes)
-      flowStore.setHistory([])
-      flowStore.setFuture([])
-      pendingInitialRelayoutRef.current = { pendingSelection }
-      setRelayoutNonce((nonce) => nonce + 1)
-    }
-
-    async function loadFlowFromTab(tab: TabData) {
-      const tabId = useTabStore.getState().activeTab
-      const pendingSelection = tab.pendingNodeSelection ?? null
-      const recenter = tab.pendingRecenter ?? false
-
-      if (tabId === loadedTabIdRef.current && !pendingSelection && !recenter) return
-      loadedTabIdRef.current = tabId
-
-      isLoadingTabRef.current = true
-      setLoading(true)
-
-      if (pendingSelection || recenter) {
-        useTabStore.getState().setTabData(tabId, { ...tab, pendingNodeSelection: null, pendingRecenter: null })
-      }
-
-      try {
-        const hasCachedFlow = tab.flowJson && Object.keys(tab.flowJson).length > 0
-        if (hasCachedFlow) {
-          loadFromCache(tab, pendingSelection, recenter)
-        } else if (tab.configurationPath && tab.name) {
-          await loadFromApi(tab, pendingSelection)
-        }
-      } catch (error) {
-        logApiError('Error loading tab flow:', error as Error)
-      } finally {
-        isLoadingTabRef.current = false
-        setLoading(false)
-      }
-    }
-
-    function saveFlowToTab(tabId: string) {
-      const tabStore = useTabStore.getState()
-      const flowStore = useFlowStore.getState()
-
-      const tabData = tabStore.getTab(tabId)
-      if (!tabData) return
-
-      tabStore.setTabData(tabId, {
-        ...tabData,
-        flowJson: {
-          nodes: flowStore.nodes,
-          edges: flowStore.edges,
-          viewport: flowStore.viewport,
-        },
-        history: flowStore.history,
-        future: flowStore.future,
-      })
-    }
-
-    const tabStore = useTabStore.getState()
-    const currentActiveTabKey = tabStore.activeTab
-
-    if (currentActiveTabKey) {
-      const activeTab = tabStore.getTab(currentActiveTabKey)
-      if (activeTab) {
-        loadFlowFromTab(activeTab)
-      }
-    }
+  useEffect(() => {
+    if (!activeTab) return
+    const tabData = getTab(activeTab)
+    if (!tabData) return
 
     const unsubscribe = useTabStore.subscribe(
       (state) => state.activeTab,
       async (newTab, oldTab) => {
         if (!newTab) {
-          clearFlow()
+          resetFlowStore()
           return
         }
-
         if (oldTab) saveFlowToTab(oldTab)
-
-        const activeTab = useTabStore.getState().getTab(newTab)
-        if (!activeTab) return
-
-        await loadFlowFromTab(activeTab)
+        const activeTab = getTab(newTab)
+        if (activeTab) await loadFlowFromTab(activeTab)
       },
     )
 
-    return () => unsubscribe()
-  }, [layoutGraph, computeAdapterCenteredViewport, applySelectionToNodes, waitForStableCanvasDimensions])
+    return (): void => unsubscribe()
+  }, [activeTab, getTab, loadFlowFromTab, resetFlowStore, saveFlowToTab])
+
+  useEffect(() => {
+    return (): void => {
+      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (nodes.length > 0 && !isLoadingTabRef.current) {
+      scheduleAutoSave()
+    }
+  }, [nodes, edges, scheduleAutoSave])
+
+  useEffect(() => {
+    if (!fitAfterLayoutRef.current) return
+    const nodeIds = fitAfterLayoutRef.current
+    fitAfterLayoutRef.current = null
+    requestAnimationFrame(() => {
+      reactFlowRef.current?.fitView({ nodes: nodeIds, padding: 0.15, duration: 300 })
+    })
+  }, [nodes])
+
+  useEffect(() => {
+    const nodeId = pendingFitViewRef.current
+    if (!nodeId) return
+
+    const targetNode = nodes.find((node) => node.id === nodeId)
+    if (!targetNode?.measured?.width || !targetNode?.measured?.height) return
+    if (!targetNode.selected) return
+
+    pendingFitViewRef.current = null
+
+    waitForStableCanvasDimensions((canvasWidth, canvasHeight) => {
+      const reactFlowInstance = reactFlowRef.current
+      if (!reactFlowInstance) return
+
+      const node = nodes.find((node) => node.id === nodeId)
+      if (!node?.measured?.width || !node?.measured?.height) return
+
+      const { absoluteX, absoluteY } = computeAbsoluteNodePosition(node, nodes)
+
+      const viewport = computeNodeCenteredViewport(
+        absoluteX,
+        absoluteY,
+        node.measured.width,
+        node.measured.height,
+        canvasWidth,
+        canvasHeight,
+      )
+
+      reactFlowInstance.setViewport(viewport, { duration: 400 })
+    })
+  }, [nodes, waitForStableCanvasDimensions])
+
+  useEffect(() => {
+    useNodeContextStore.getState().registerSaveFlow(async () => {
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current)
+        autoSaveTimerRef.current = null
+      }
+      await saveFlow()
+    })
+    return (): void => useNodeContextStore.getState().registerSaveFlow(null)
+  }, [saveFlow])
+
+  useEffect(() => {
+    if (!nodesInitialized || !pendingInitialRelayoutRef.current) return
+
+    const { pendingSelection } = pendingInitialRelayoutRef.current
+    pendingInitialRelayoutRef.current = null
+
+    const nodesWithResetPositions = nodes.map((node) =>
+      node.type === 'frankNode' || node.type === 'exitNode' ? { ...node, position: { x: 0, y: 0 } } : node,
+    )
+    const laidOutNodes = layoutGraph(nodesWithResetPositions, edges, 'LR')
+    setNodesWithoutHistory(laidOutNodes)
+
+    if (pendingSelection) {
+      applySelectionToNodes(pendingSelection)
+    } else {
+      waitForStableCanvasDimensions((canvasWidth, canvasHeight) => {
+        const freshViewport = computeAdapterCenteredViewport(laidOutNodes, canvasWidth, canvasHeight)
+        setViewport(freshViewport)
+        reactFlowRef.current?.setViewport(freshViewport)
+      })
+    }
+
+    setHistory([])
+    setFuture([])
+  }, [
+    nodesInitialized,
+    layoutGraph,
+    waitForStableCanvasDimensions,
+    computeAdapterCenteredViewport,
+    applySelectionToNodes,
+    nodes,
+    edges,
+    setNodesWithoutHistory,
+    setHistory,
+    setFuture,
+    setViewport,
+  ])
 
   useEffect(() => {
     const unsub = useFlowStore.subscribe(
@@ -1666,26 +1666,26 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
         const { selectedStickyId, setSelectedStickyId, selectedGroupId, setSelectedGroupId, setIsEditing } =
           useNodeContextStore.getState()
 
-        if (selectedStickyId && !nodes.some((node) => node.id === selectedStickyId)) {
+        if (selectedStickyId && nodes.every((node) => node.id !== selectedStickyId)) {
           setSelectedStickyId(null)
           showNodeContextMenu(false)
           setIsEditing(false)
         }
 
-        if (selectedGroupId && !nodes.some((node) => node.id === selectedGroupId)) {
+        if (selectedGroupId && nodes.every((node) => node.id !== selectedGroupId)) {
           setSelectedGroupId(null)
           showNodeContextMenu(false)
         }
       },
     )
-    return () => unsub()
+    return (): void => unsub()
   }, [showNodeContextMenu])
 
   useEffect(() => {
     const unsub = useFlowStore.subscribe(
       (state) => state.nodes, // selector: subscribe only to nodes
       (newNodes, oldNodes) => {
-        if (!reactFlowRef.current || !oldNodes) return
+        if (!oldNodes || !reactFlowRef.current) return
 
         // Compare old vs new node data
         for (const newNode of newNodes) {
@@ -1699,8 +1699,71 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
       },
     )
 
-    return () => unsub()
+    return (): void => unsub()
   }, [updateNodeInternals])
+
+  /* TODO ????? */
+  /*
+   * useEffect(() => {
+   *   showNodeContextMenuRef.current = showNodeContextMenu
+   * }, [showNodeContextMenu])
+   * reactFlowRef.current = reactFlow
+   */
+
+  /* Functions */
+
+  function handleConnectStart(_: MouseEvent | TouchEvent, parameters: OnConnectStartParams): void {
+    sourceInfoReference.current = {
+      nodeId: parameters.nodeId,
+      handleId: parameters.handleId,
+      handleType: parameters.handleType,
+    }
+  }
+
+  function handleConnectEnd(event: MouseEvent | TouchEvent, connectionState: FinalConnectionState<InternalNode>): void {
+    const mouseEvent = event as MouseEvent
+    if (!connectionState.isValid) {
+      const zoom = reactFlow.getZoom()
+      if (zoom < FlowConfig.ZOOM_THRESHOLD && sourceInfoReference.current.handleType === 'source') {
+        const sourceNode = nodes.find((node) => node.id === sourceInfoReference.current.nodeId)
+        if (sourceNode && isFrankNode(sourceNode)) {
+          setPendingEdgeDrop({
+            position: { x: mouseEvent.clientX, y: mouseEvent.clientY },
+            sourceNodeSubtype: sourceNode.data.subtype,
+          })
+          return
+        }
+      }
+      handleEdgeDropOnCanvas(mouseEvent.clientX, mouseEvent.clientY)
+    }
+  }
+
+  function handleEdgeDropOnCanvas(x: number, y: number): void {
+    const { screenToFlowPosition } = reactFlow
+    const flowPositions = screenToFlowPosition({ x: x, y: y })
+
+    setEdgeDropPositions(flowPositions)
+    setShowCreateNodeModal(true)
+  }
+
+  function closeEditNodeContextOnEscape(): void {
+    const { isNewNode, nodeId, parentId } = useNodeContextStore.getState()
+
+    if (isNewNode) {
+      if (parentId) {
+        deleteChild(parentId, nodeId.toString())
+      } else {
+        deleteNode(nodeId.toString())
+      }
+      useNodeContextStore.getState().setIsNewNode(false)
+    }
+
+    showNodeContextMenu(false)
+    setIsEditing(false)
+    setIsMultiSelect(false)
+    setParentId(null)
+    setChildParentId(null)
+  }
 
   return (
     <div
@@ -1751,8 +1814,8 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
         <ReactFlow
           nodes={displayNodes}
           edges={displayEdges}
-          onViewportChange={(viewPort) => {
-            useFlowStore.getState().setViewport(viewPort)
+          onViewportChange={(viewport_) => {
+            setViewport(viewport_)
           }}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
@@ -1874,18 +1937,5 @@ function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => void }) {
         )}
       </div>
     </div>
-  )
-}
-
-export default function Flow({
-  showNodeContextMenu,
-  onOpenInEditor,
-}: Readonly<{ showNodeContextMenu: (b: boolean) => void; onOpenInEditor: () => void }>) {
-  return (
-    <NodeContextMenuContext.Provider value={showNodeContextMenu}>
-      <ReactFlowProvider>
-        <FlowCanvas onOpenInEditor={onOpenInEditor} />
-      </ReactFlowProvider>
-    </NodeContextMenuContext.Provider>
   )
 }
