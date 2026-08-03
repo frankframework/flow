@@ -1,26 +1,27 @@
-import { applyNodeChanges, type Edge, type Node, type NodeChange } from '@xyflow/react'
+import {
+  addEdge,
+  applyEdgeChanges,
+  applyNodeChanges,
+  type Edge,
+  type EdgeChange,
+  type Node,
+  type NodeChange,
+  type OnConnect,
+  type OnReconnect,
+} from '@xyflow/react'
 import type { StateCreator } from 'zustand/vanilla'
-import type { FlowNode } from '~/routes/studio/canvas/flow'
+import type { FlowNode } from '~/routes/studio/canvas-flow/canvas-flow'
+import { isStickyNote } from '~/stores/flow-store'
 import type { CanvasSliceState } from '~/stores/flow-store/flow-store-canvas'
+import { getEdgeLabelFromHandle } from '~/utils/flow-utils'
 
 export type ReactFlowSliceState<NodeType extends Node = Node, EdgeType extends Edge = Edge> = {
   nodes: NodeType[]
   edges: EdgeType[]
-  onNodesChange: () => void
-  onEdgesChange: () => void
-  handleConnect: () => void
-  onReconnect: () => void
-  handleNodeClick: () => void
-  handleNodeDoubleClick: () => void
-  handleNodeMouseEnter: () => void
-  handleNodeMouseLeave: () => void
-  handleNodeDragStop: () => void
-  handleEdgeClick: () => void
-  handleSelectionChange: () => void
-  handleConnectStart: () => void
-  handleConnectEnd: () => void
-  nodeTypes: () => void
-  edgeTypes: () => void
+  onNodesChange: (changes: NodeChange<FlowNode>[]) => void
+  onEdgesChange: (changes: EdgeChange<Edge>[]) => void
+  onConnect: OnConnect
+  onReconnect: OnReconnect
 }
 
 export const createReactFlowSlice: StateCreator<ReactFlowSliceState & CanvasSliceState, [], [], ReactFlowSliceState> = (
@@ -29,7 +30,7 @@ export const createReactFlowSlice: StateCreator<ReactFlowSliceState & CanvasSlic
 ): ReactFlowSliceState => ({
   nodes: [],
   edges: [],
-  onNodesChange: (changes: NodeChange<FlowNode>[]): void => {
+  onNodesChange: (changes): void => {
     const state = get()
 
     const dragStart = changes.some(
@@ -45,6 +46,7 @@ export const createReactFlowSlice: StateCreator<ReactFlowSliceState & CanvasSlic
       (change) => change.type === 'dimensions' && 'resizing' in change && change.resizing === false,
     )
 
+    // TODO why not always save to history?
     if (dragStart || resizeStart) {
       state.saveToHistory()
     }
@@ -99,18 +101,44 @@ export const createReactFlowSlice: StateCreator<ReactFlowSliceState & CanvasSlic
 
     set(() => ({ nodes, isDragging: nextIsDragging, isResizing: nextIsResizing }))
   },
-  onEdgesChange: (): void => {},
-  handleConnect: (): void => {},
-  onReconnect: (): void => {},
-  handleNodeClick: (): void => {},
-  handleNodeDoubleClick: (): void => {},
-  handleNodeMouseEnter: (): void => {},
-  handleNodeMouseLeave: (): void => {},
-  handleNodeDragStop: (): void => {},
-  handleEdgeClick: (): void => {},
-  handleSelectionChange: (): void => {},
-  handleConnectStart: (): void => {},
-  handleConnectEnd: (): void => {},
-  nodeTypes: (): void => {},
-  edgeTypes: (): void => {},
+  onEdgesChange: (changes): void => {
+    const { saveToHistory } = get()
+
+    // TODO why not type === 'add' as well?
+    const structuralChange = changes.some((change) => change.type === 'remove')
+
+    if (structuralChange) {
+      saveToHistory()
+    }
+
+    set((state) => ({ edges: applyEdgeChanges(changes, state.edges) }))
+  },
+  onConnect: (connection): void => {
+    const { nodes, edges, saveToHistory } = get()
+    const sourceNode = nodes.find((node) => node.id === connection.source)
+    const label = getEdgeLabelFromHandle(sourceNode, connection.sourceHandle)
+
+    if (wouldCreateDuplicateForward(edges, connection.source, connection.target, label)) return
+
+    saveToHistory()
+    set({ edges: addEdge({ ...connection, type: 'frankEdge', data: { label } }, edges) })
+  },
+  onReconnect: (oldEdge, newConnection): void => {
+    const { nodes, edges, saveToHistory } = get()
+    const sourceNode = nodes.find((node) => node.id === newConnection.source)
+    const label = getEdgeLabelFromHandle(sourceNode, newConnection.sourceHandle)
+
+    const edgesWithoutOld = edges.filter((edge) => edge.id !== oldEdge.id)
+    if (wouldCreateDuplicateForward(edgesWithoutOld, newConnection.source, newConnection.target, label)) return
+
+    saveToHistory()
+    set({
+      edges: [...edgesWithoutOld, { ...newConnection, id: oldEdge.id, type: 'frankEdge', data: { label } }],
+    })
+  },
 })
+
+function wouldCreateDuplicateForward(edges: Edge[], source: string, target: string, label: string): boolean {
+  // TODO create edge type so that data isn't unknown
+  return edges.some((edge) => edge.source === source && edge.target === target && edge.data?.label === label)
+}
