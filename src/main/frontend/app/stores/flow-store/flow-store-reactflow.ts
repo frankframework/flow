@@ -11,17 +11,16 @@ import {
 } from '@xyflow/react'
 import type { StateCreator } from 'zustand/vanilla'
 import type { FlowNode } from '~/routes/studio/canvas-flow/canvas-flow'
-import { isStickyNote } from '~/stores/flow-store'
 import type { CanvasSliceState } from '~/stores/flow-store/flow-store-canvas'
 import { getEdgeLabelFromHandle } from '~/utils/flow-utils'
 
 export type ReactFlowSliceState<NodeType extends Node = Node, EdgeType extends Edge = Edge> = {
   nodes: NodeType[]
   edges: EdgeType[]
-  onNodesChange: (changes: NodeChange<FlowNode>[]) => void
-  onEdgesChange: (changes: EdgeChange<Edge>[]) => void
-  onConnect: OnConnect
-  onReconnect: OnReconnect
+  _onNodesChange: (changes: NodeChange<FlowNode>[]) => void
+  _onEdgesChange: (changes: EdgeChange<Edge>[]) => void
+  _onConnect: OnConnect
+  _onReconnect: OnReconnect
 }
 
 export const createReactFlowSlice: StateCreator<ReactFlowSliceState & CanvasSliceState, [], [], ReactFlowSliceState> = (
@@ -30,7 +29,7 @@ export const createReactFlowSlice: StateCreator<ReactFlowSliceState & CanvasSlic
 ): ReactFlowSliceState => ({
   nodes: [],
   edges: [],
-  onNodesChange: (changes): void => {
+  _onNodesChange: (changes): void => {
     const state = get()
 
     const dragStart = changes.some(
@@ -45,11 +44,6 @@ export const createReactFlowSlice: StateCreator<ReactFlowSliceState & CanvasSlic
     const resizeEnd = changes.some(
       (change) => change.type === 'dimensions' && 'resizing' in change && change.resizing === false,
     )
-
-    // TODO why not always save to history?
-    if (dragStart || resizeStart) {
-      state.saveToHistory()
-    }
     let nextIsDragging = state.isDragging
     let nextIsResizing = state.isResizing
 
@@ -101,37 +95,33 @@ export const createReactFlowSlice: StateCreator<ReactFlowSliceState & CanvasSlic
 
     set(() => ({ nodes, isDragging: nextIsDragging, isResizing: nextIsResizing }))
   },
-  onEdgesChange: (changes): void => {
-    const { saveToHistory } = get()
-
+  _onEdgesChange: (changes): void => {
     // TODO why not type === 'add' as well?
-    const structuralChange = changes.some((change) => change.type === 'remove')
-
-    if (structuralChange) {
-      saveToHistory()
-    }
+    // const structuralChange = changes.some((change) => change.type === 'remove')
+    //
+    // if (structuralChange) {
+    //   saveToHistory()
+    // }
 
     set((state) => ({ edges: applyEdgeChanges(changes, state.edges) }))
   },
-  onConnect: (connection): void => {
-    const { nodes, edges, saveToHistory } = get()
+  _onConnect: (connection): void => {
+    const { nodes, edges } = get()
     const sourceNode = nodes.find((node) => node.id === connection.source)
     const label = getEdgeLabelFromHandle(sourceNode, connection.sourceHandle)
 
     if (wouldCreateDuplicateForward(edges, connection.source, connection.target, label)) return
 
-    saveToHistory()
     set({ edges: addEdge({ ...connection, type: 'frankEdge', data: { label } }, edges) })
   },
-  onReconnect: (oldEdge, newConnection): void => {
-    const { nodes, edges, saveToHistory } = get()
+  _onReconnect: (oldEdge, newConnection): void => {
+    const { nodes, edges } = get()
     const sourceNode = nodes.find((node) => node.id === newConnection.source)
     const label = getEdgeLabelFromHandle(sourceNode, newConnection.sourceHandle)
 
     const edgesWithoutOld = edges.filter((edge) => edge.id !== oldEdge.id)
     if (wouldCreateDuplicateForward(edgesWithoutOld, newConnection.source, newConnection.target, label)) return
 
-    saveToHistory()
     set({
       edges: [...edgesWithoutOld, { ...newConnection, id: oldEdge.id, type: 'frankEdge', data: { label } }],
     })
