@@ -1,6 +1,7 @@
+import type { Viewport } from '@xyflow/react'
 import { create } from 'zustand'
 import { subscribeWithSelector } from 'zustand/middleware'
-import type { FlowSnapshot } from './flow-store'
+import type { HistoryStep } from '~/stores/flow-store/flow-store-canvas'
 
 export type TabData = {
   name: string
@@ -8,8 +9,9 @@ export type TabData = {
   flowJson?: Record<string, unknown>
   configurationPath: string
   adapterPosition?: number
-  history?: FlowSnapshot[]
-  future?: FlowSnapshot[]
+  history: HistoryStep[]
+  historyIndex: number
+  viewport: Viewport
   pendingNodeSelection?: { subtype: string; name: string } | null
   pendingRecenter?: boolean | null
 }

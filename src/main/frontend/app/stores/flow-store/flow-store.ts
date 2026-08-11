@@ -6,8 +6,8 @@ import { createCanvasSlice, type CanvasSliceState } from '~/stores/flow-store/fl
 import { createReactFlowSlice, type ReactFlowSliceState } from '~/stores/flow-store/flow-store-reactflow'
 
 export type SharedSliceState = {
-  undo: (steps: number) => void
-  redo: (steps: number) => void
+  undo: (steps?: number) => void
+  redo: (steps?: number) => void
   onNodesChange: (changes: NodeChange<FlowNode>[]) => void
   onEdgesChange: (changes: EdgeChange<Edge>[]) => void
   onConnect: OnConnect

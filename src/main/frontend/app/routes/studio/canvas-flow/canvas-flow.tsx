@@ -14,6 +14,7 @@ import {
   useNodesInitialized,
   useReactFlow,
   useUpdateNodeInternals,
+  type Viewport,
 } from '@xyflow/react'
 import Dagre from '@dagrejs/dagre'
 import { useNavigate } from 'react-router'
@@ -27,7 +28,7 @@ import FrankNodeComponent, { type FrankNodeType } from '~/routes/studio/canvas-f
 import FrankEdgeComponent from '~/routes/studio/canvas-flow/edgetypes/frank-edge'
 import ExitNodeComponent, { type ExitNode } from '~/routes/studio/canvas-flow/nodetypes/exit-node'
 import GroupNodeComponent, { type GroupNode } from '~/routes/studio/canvas-flow/nodetypes/group-node'
-import useFlowStore, { isStickyNote } from '~/stores/flow-store'
+import useFlowStore from '~/stores//flow-store/flow-store'
 import { useShallow } from 'zustand/react/shallow'
 import { FlowConfig } from '~/routes/studio/canvas-flow/flow.config'
 import { getElementTypeFromName } from '~/routes/studio/node-translator-module'
@@ -188,6 +189,7 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
   /* useState */
 
   const [loading, setLoading] = useState(false)
+  const [viewport, setViewport] = useState<Viewport>({ x: 0, y: 0, zoom: 1 })
   const [showCreateNodeModal, setShowCreateNodeModal] = useState(false)
   const [edgeDropPositions, setEdgeDropPositions] = useState<{ x: number; y: number } | null>(null)
   const [edgeDropHandleType, setEdgeDropHandleType] = useState<string | null>(null)
@@ -231,25 +233,12 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
   const {
     nodes,
     edges,
-    viewport,
-    future,
     onNodesChange,
     onEdgesChange,
     onConnect,
     onReconnect,
     undo,
     redo,
-    getNextNodeId,
-    setNodesHiddenForwards,
-    setNodesWithoutHistory,
-    setViewport,
-    setHistory,
-    setFuture,
-    setEdges,
-    setNodes,
-    setStickyAttachment,
-    deleteChild,
-    deleteNode,
     history: flowHistory,
     resetStore: resetFlowStore,
     addHandle: addFlowHandle,
@@ -360,10 +349,9 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
         flowJson: {
           nodes,
           edges,
-          viewport,
         },
         history: flowHistory,
-        future,
+        viewport,
       })
     },
     [edges, flowHistory, future, getTab, nodes, setTabData, viewport],
@@ -597,7 +585,7 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
     const currentProject = useProjectStore.getState().project
     if (!configurationPath || !adapterName || !currentProject) return
 
-    const flowData = { nodes, edges, viewport }
+    const flowData = { nodes, edges }
     const adapterPosition = tabData?.adapterPosition
 
     setSaving()
@@ -1814,8 +1802,8 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
         <ReactFlow
           nodes={displayNodes}
           edges={displayEdges}
-          onViewportChange={(viewport_) => {
-            setViewport(viewport_)
+          onViewportChange={(newViewport) => {
+            setViewport(newViewport)
           }}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
