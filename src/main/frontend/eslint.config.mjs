@@ -256,7 +256,7 @@ export default defineConfig([
       ...eslintConfigPrettier.rules,
       'prettier/prettier': 'warn',
 
-      '@stylistic/multiline-comment-style': ['error', 'starred-block'],
+      '@stylistic/multiline-comment-style': ['error', 'bare-block'],
 
       'sonarjs/cognitive-complexity': 'warn',
       'sonarjs/no-duplicate-string': 'warn',

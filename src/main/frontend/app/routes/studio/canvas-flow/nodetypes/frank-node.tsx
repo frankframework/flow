@@ -15,7 +15,7 @@ import useToasts from '~/components/toast/use-toasts'
 import DangerIcon from '../../../../../icons/solar/Danger Triangle.svg?react'
 import { type JSX, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useShallow } from 'zustand/react/shallow'
-import useFlowStore, { isExitNode, isFrankNode } from '~/stores/flow-store'
+import useFlowStore from '~/stores/flow-store/flow-store'
 import { CustomHandle } from '~/routes/studio/canvas-flow/nodetypes/components/handle'
 import { FlowConfig } from '~/routes/studio/canvas-flow/flow.config'
 import { useNodeContextMenu } from '~/routes/studio/canvas-flow/node-context-menu-context'
@@ -603,21 +603,19 @@ export default function FrankNode(properties: NodeProps<FrankNodeType>): JSX.Ele
       {properties.data.subtype === 'Receiver' ? (
         <></>
       ) : (
-        /*
-         * TODO: https://github.com/frankframework/flow/issues/613
-         * <Handle
-         *   type="source"
-         *   position={Position.Right}
-         *   isConnectableStart={false}
-         *   className="flex items-center justify-center text-white"
-         *   style={{
-         *     right: '-15px',
-         *     width: '15px',
-         *     height: '15px',
-         *     backgroundColor: '#B2B2B2',
-         *   }}
-         * />
-         */
+        /* TODO: https://github.com/frankframework/flow/issues/613
+           <Handle
+             type="source"
+             position={Position.Right}
+             isConnectableStart={false}
+             className="flex items-center justify-center text-white"
+             style={{
+               right: '-15px',
+               width: '15px',
+               height: '15px',
+               backgroundColor: '#B2B2B2',
+             }}
+           /> */
         <>
           <Handle
             type="target"

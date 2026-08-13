@@ -354,7 +354,7 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
         viewport,
       })
     },
-    [edges, flowHistory, future, getTab, nodes, setTabData, viewport],
+    [edges, flowHistory, getTab, nodes, setTabData, viewport],
   )
 
   const loadFromApi = useCallback(
@@ -373,10 +373,9 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
       setEdges(adapterJson.edges)
       setNodes(adapterJson.nodes)
       setHistory([])
-      setFuture([])
       pendingInitialRelayoutRef.current = { pendingSelection }
     },
-    [project, setEdges, setFuture, setHistory, setNodes],
+    [project],
   )
 
   const applySelectionToNodes = useCallback(
@@ -409,7 +408,7 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
       nodeContextStore.setIsEditing(true)
       showNodeContextMenuRef.current(true)
     },
-    [elements, nodes, setNodes],
+    [elements, nodes],
   )
 
   const computeAdapterCenteredViewport = useCallback(
@@ -513,12 +512,11 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
         }
 
         setHistory(tab.history ?? [])
-        setFuture(tab.future ?? [])
       } else {
         resetFlowStore()
       }
     },
-    [resetFlowStore, setEdges, setFuture, setHistory, setNodes, setViewport],
+    [resetFlowStore, setViewport],
   )
 
   const loadFromCache = useCallback(
@@ -784,7 +782,7 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
 
     fitAfterLayoutRef.current = nodeIds
     setNodes(laidOut)
-  }, [edges, layoutGraph, nodes, setNodes])
+  }, [edges, layoutGraph, nodes])
 
   const getFullySelectedGroupIds = useCallback(
     (parentIds: string[], selectedNodes: FlowNode[]) => {
@@ -833,7 +831,7 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
       const updatedNodes = degroupNodes(selectedNodes, parentId, nodes)
       setNodes(updatedNodes)
     },
-    [degroupNodes, nodes, setNodes],
+    [degroupNodes, nodes],
   )
 
   const shouldMergeUngroupedIntoGroup = useCallback(
@@ -997,7 +995,7 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
       setNodes([...deselectedNodes, ...newNodes])
       setEdges([...deselectedEdges, ...newEdges])
     },
-    [edges, getNextNodeId, nodes, setEdges, setNodes],
+    [edges, nodes],
   )
 
   const pasteSelection = useCallback(() => {
@@ -1049,7 +1047,7 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
       edges.filter((edge) => !edge.selected && !selectedNodeIds.has(edge.source) && !selectedNodeIds.has(edge.target)),
     )
     return true
-  }, [deleteChild, edges, isEditing, nodes, setEdges, setNodes, showNodeContextMenu])
+  }, [edges, isEditing, nodes, showNodeContextMenu])
 
   const toggleSelectedHidden = useCallback(() => {
     const selected = useFlowStore
@@ -1331,39 +1329,12 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
       const sourceNode = flowStore.nodes.find((node) => node.id === sourceInfo.nodeId)
 
       if (sourceNode && reactFlow.getZoom() < FlowConfig.ZOOM_THRESHOLD && isFrankNode(sourceNode)) {
-        if (edgeDropHandleType) {
-          const existingHandle = sourceNode.data.sourceHandles.find((handle) => handle.type === edgeDropHandleType)
-          if (existingHandle) {
-            onConnect({
-              source: sourceInfo.nodeId!,
-              sourceHandle: existingHandle.index.toString(),
-              target: newId.toString(),
-              targetHandle: null,
-            })
-          } else {
-            const newIndex = sourceNode.data.sourceHandles.length + 1
-            flowStore.addHandle(sourceInfo.nodeId!, { type: edgeDropHandleType, index: newIndex })
-            onConnect({
-              source: sourceInfo.nodeId!,
-              sourceHandle: newIndex.toString(),
-              target: newId.toString(),
-              targetHandle: null,
-            })
-          }
-          setEdgeDropHandleType(null)
-        } else {
-          setPendingCompactConnection({
-            connection: {
-              source: sourceInfo.nodeId,
-              sourceHandle: null,
-              target: newId.toString(),
-              targetHandle: null,
-            },
-            sourceNodeSubtype: sourceNode.data.subtype,
-            position: reactFlow.flowToScreenPosition(position),
-          })
-        }
-
+        addConnectionHandler({
+          sourceNode,
+          sourceNodeId: sourceInfo.nodeId,
+          newId: newId.toString(),
+          position,
+        })
         sourceInfoReference.current = { nodeId: null, handleId: null, handleType: null }
         return
       }
@@ -1409,7 +1380,7 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
       setSelectedStickyId(newId)
       showNodeContextMenu(true)
     },
-    [getNextNodeId, nodes, setNodes, setSelectedStickyId, showNodeContextMenu],
+    [nodes, setSelectedStickyId, showNodeContextMenu],
   )
 
   const cutSelection = useCallback(() => {
@@ -1424,7 +1395,7 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
     )
     setNodes(remainingNodes)
     setEdges(remainingEdges)
-  }, [copySelection, edges, nodes, setEdges, setNodes])
+  }, [copySelection, edges, nodes])
 
   const handleUngroup = useCallback(() => {
     const selectedNodes = nodes.filter((node) => node.selected)
@@ -1448,7 +1419,7 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
     if (!allSelectedInSameGroup(selectedNodes)) return
 
     handleDegroupSingleGroup(selectedNodes)
-  }, [nodes, allSelectedInSameGroup, handleDegroupSingleGroup, setNodes, degroupNodes])
+  }, [nodes, allSelectedInSameGroup, handleDegroupSingleGroup, degroupNodes])
 
   const showSelectedNodeInEditor = useCallback(() => {
     const selectedFrankNodes = nodes.filter((node) => node.selected && node.type === 'frankNode') as FrankNodeType[]
@@ -1475,7 +1446,8 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
     },
     [reactFlow],
   )
-  useCallback(
+
+  const addConnectionHandler = useCallback(
     ({
       sourceNode,
       sourceNodeId,
@@ -1522,8 +1494,10 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
     },
     [addFlowHandle, edgeDropHandleType, onConnect, reactFlow],
   )
+
   /* useEffect */
 
+  // saving & loading flows when switching tabs
   useEffect(() => {
     if (!activeTab) return
     const tabData = getTab(activeTab)
@@ -1557,6 +1531,7 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
     }
   }, [nodes, edges, scheduleAutoSave])
 
+  // set the viewport to fit the nodes after layout update
   useEffect(() => {
     if (!fitAfterLayoutRef.current) return
     const nodeIds = fitAfterLayoutRef.current
@@ -1566,6 +1541,7 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
     })
   }, [nodes])
 
+  // zoom viewport to a node when it is selected
   useEffect(() => {
     const nodeId = pendingFitViewRef.current
     if (!nodeId) return
@@ -1598,6 +1574,7 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
     })
   }, [nodes, waitForStableCanvasDimensions])
 
+  // ????
   useEffect(() => {
     useNodeContextStore.getState().registerSaveFlow(async () => {
       if (autoSaveTimerRef.current) {
@@ -1609,6 +1586,7 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
     return (): void => useNodeContextStore.getState().registerSaveFlow(null)
   }, [saveFlow])
 
+  // initial layout and sets history
   useEffect(() => {
     if (!nodesInitialized || !pendingInitialRelayoutRef.current) return
 
@@ -1632,7 +1610,6 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
     }
 
     setHistory([])
-    setFuture([])
   }, [
     nodesInitialized,
     layoutGraph,
@@ -1641,13 +1618,11 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
     applySelectionToNodes,
     nodes,
     edges,
-    setNodesWithoutHistory,
-    setHistory,
-    setFuture,
     setViewport,
   ])
 
-  useEffect(() => {
+  /*useEffect(() => {
+    useFlowStore.subscribe((state) => state.nodes)
     const unsub = useFlowStore.subscribe(
       (state) => state.nodes,
       (nodes) => {
@@ -1667,9 +1642,9 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
       },
     )
     return (): void => unsub()
-  }, [showNodeContextMenu])
+  }, [showNodeContextMenu])*/
 
-  useEffect(() => {
+  /*useEffect(() => {
     const unsub = useFlowStore.subscribe(
       (state) => state.nodes, // selector: subscribe only to nodes
       (newNodes, oldNodes) => {
@@ -1688,15 +1663,13 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
     )
 
     return (): void => unsub()
-  }, [updateNodeInternals])
+  }, [updateNodeInternals])*/
 
   /* TODO ????? */
-  /*
-   * useEffect(() => {
-   *   showNodeContextMenuRef.current = showNodeContextMenu
-   * }, [showNodeContextMenu])
-   * reactFlowRef.current = reactFlow
-   */
+  /* useEffect(() => {
+       showNodeContextMenuRef.current = showNodeContextMenu
+     }, [showNodeContextMenu])
+     reactFlowRef.current = reactFlow */
 
   /* Functions */
 

@@ -3,13 +3,11 @@ import type { Edge } from '@xyflow/react'
 import type { ChildNode } from '~/routes/studio/canvas-flow/nodetypes/child-node'
 import { getAdapter } from '~/services/adapter-service'
 import { FlowConfig } from '~/routes/studio/canvas-flow/flow.config'
-import { isGroupNode, isFrankNode, isStickyNote } from '~/stores/flow-store'
 import type { GroupNode } from '~/routes/studio/canvas-flow/nodetypes/group-node'
 
 type ReactFlowJson = {
   nodes: FlowNode[]
   edges: Edge[]
-  viewport: { x: number; y: number; zoom: number }
 }
 
 type NodeData = {

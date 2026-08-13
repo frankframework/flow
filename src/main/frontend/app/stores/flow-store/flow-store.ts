@@ -8,6 +8,7 @@ import { createReactFlowSlice, type ReactFlowSliceState } from '~/stores/flow-st
 export type SharedSliceState = {
   undo: (steps?: number) => void
   redo: (steps?: number) => void
+  resetStore: () => void
   onNodesChange: (changes: NodeChange<FlowNode>[]) => void
   onEdgesChange: (changes: EdgeChange<Edge>[]) => void
   onConnect: OnConnect
@@ -55,6 +56,14 @@ const createSharedSlice: StateCreator<ReactFlowSliceState & CanvasSliceState, []
 
     // TODO redo react flow state using each snapshot step in history
     setHistoryIndex(historyIndex + steps)
+  },
+  resetStore(): void {
+    set({
+      nodes: [],
+      edges: [],
+      history: [],
+      historyIndex: -1,
+    })
   },
 })
 
