@@ -61,6 +61,12 @@ import IconLabelButton from '~/components/inputs/icon-label-button'
 
 export type FlowNode = FrankNodeType | ExitNode | StickyNote | GroupNode | Node
 
+export type FlowData = {
+  nodes: Node[]
+  edges: Edge[]
+  viewport?: Viewport
+}
+
 const STICKY_SNAP_DISTANCE = 60
 const nodeTypes = {
   frankNode: FrankNodeComponent,
@@ -346,12 +352,12 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
 
       setTabData(tabId, {
         ...tabData,
-        flowJson: {
+        flowData: {
           nodes,
           edges,
+          viewport,
         },
         history: flowHistory,
-        viewport,
       })
     },
     [edges, flowHistory, getTab, nodes, setTabData, viewport],
@@ -494,18 +500,18 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
 
   const restoreFlowFromTab = useCallback(
     (tab: TabData, options: { skipViewport: boolean; forceRemeasure: boolean }) => {
-      const flowJson = tab.flowJson
+      const flowData = tab.flowData
 
-      if (flowJson) {
-        let nodes = Array.isArray(flowJson.nodes) ? flowJson.nodes : []
+      if (flowData) {
+        let nodes = Array.isArray(flowData.nodes) ? flowData.nodes : []
         if (options.forceRemeasure) {
           nodes = stripMeasuredDimensions(nodes)
         }
         setNodes(nodes)
-        setEdges(Array.isArray(flowJson.edges) ? flowJson.edges : [])
+        setEdges(Array.isArray(flowData.edges) ? flowData.edges : [])
 
         if (!options.skipViewport) {
-          const savedViewport = flowJson.viewport as { x: number; y: number; zoom: number } | undefined
+          const savedViewport = flowData.viewport as { x: number; y: number; zoom: number } | undefined
           const targetViewport = savedViewport ?? { x: 0, y: 0, zoom: 1 }
           setViewport(targetViewport)
           requestAnimationFrame(() => reactFlowRef.current?.setViewport(targetViewport))
@@ -628,7 +634,7 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
       if (tabData) {
         setTabData(activeTab, {
           ...tabData,
-          flowJson: { nodes, edges, viewport },
+          flowData: { nodes, edges, viewport },
         })
       }
 
