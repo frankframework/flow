@@ -1,4 +1,4 @@
-import type { Viewport } from '@xyflow/react'
+import type React from 'react'
 import { create } from 'zustand'
 import { subscribeWithSelector } from 'zustand/middleware'
 import type { FlowData } from '~/routes/studio/canvas-flow/canvas-flow'
@@ -49,35 +49,15 @@ const useTabStore = create<TabStoreState>()(
       tabs: {},
       activeTab: '',
       setTabData: (tabId, data): void =>
-        set(
-          (
-            state,
-          ): {
-            tabs: Record<
-              string,
-              | TabData
-              | {
-                  name: string
-                  icon?: React.ComponentType<React.SVGProps<SVGSVGElement>>
-                  flowJson?: Record<string, unknown>
-                  configurationPath: string
-                  adapterPosition?: number
-                  history?: FlowSnapshot[]
-                  future?: FlowSnapshot[]
-                  pendingNodeSelection?: { subtype: string; name: string } | null
-                  pendingRecenter?: boolean | null
-                }
-            >
-          } => ({
-            tabs: {
-              ...state.tabs,
-              [tabId]: {
-                ...state.tabs[tabId],
-                ...data,
-              },
+        set((state) => ({
+          tabs: {
+            ...state.tabs,
+            [tabId]: {
+              ...state.tabs[tabId],
+              ...data,
             },
-          }),
-        ),
+          },
+        })),
       getTab: (tabId): TabData | undefined => (tabId ? get().tabs[tabId] : undefined),
       setActiveTab: (tabId): void => set({ activeTab: tabId ?? '' }),
       removeTab: (tabId): void =>
