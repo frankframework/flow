@@ -14,14 +14,17 @@ import type { FlowNode } from '~/routes/studio/canvas-flow/canvas-flow'
 import type { CanvasSliceState } from '~/stores/flow-store/flow-store-canvas'
 import { getEdgeLabelFromHandle } from '~/utils/flow-utils'
 
-export type ReactFlowSliceState<NodeType extends Node = Node, EdgeType extends Edge = Edge> = {
+export type ReactFlowHistoryState<NodeType extends Node = Node, EdgeType extends Edge = Edge> = {
   nodes: NodeType[]
   edges: EdgeType[]
+}
+
+export type ReactFlowSliceState = {
   _onNodesChange: (changes: NodeChange<FlowNode>[]) => void
   _onEdgesChange: (changes: EdgeChange<Edge>[]) => void
   _onConnect: OnConnect
   _onReconnect: OnReconnect
-}
+} & ReactFlowHistoryState
 
 export const createReactFlowSlice: StateCreator<ReactFlowSliceState & CanvasSliceState, [], [], ReactFlowSliceState> = (
   set,
@@ -97,11 +100,11 @@ export const createReactFlowSlice: StateCreator<ReactFlowSliceState & CanvasSlic
   },
   _onEdgesChange: (changes): void => {
     // TODO why not type === 'add' as well?
-    // const structuralChange = changes.some((change) => change.type === 'remove')
-    //
-    // if (structuralChange) {
-    //   saveToHistory()
-    // }
+    /* const structuralChange = changes.some((change) => change.type === 'remove')
+
+       if (structuralChange) {
+         saveToHistory()
+       } */
 
     set((state) => ({ edges: applyEdgeChanges(changes, state.edges) }))
   },
