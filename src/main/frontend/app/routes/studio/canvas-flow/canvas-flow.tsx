@@ -383,7 +383,7 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
       setNodes(adapterJson.nodes)
       pendingInitialRelayoutRef.current = { pendingSelection }
     },
-    [project, resetFlowStore],
+    [project, resetFlowStore, setEdges, setNodes],
   )
 
   const applySelectionToNodes = useCallback(
@@ -416,7 +416,7 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
       nodeContextStore.setIsEditing(true)
       showNodeContextMenuRef.current(true)
     },
-    [elements, nodes],
+    [elements, nodes, setNodes],
   )
 
   const computeAdapterCenteredViewport = useCallback(
@@ -789,7 +789,7 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
 
     fitAfterLayoutRef.current = nodeIds
     setNodes(laidOut)
-  }, [edges, layoutGraph, nodes])
+  }, [edges, layoutGraph, nodes, setNodes])
 
   const getFullySelectedGroupIds = useCallback(
     (parentIds: string[], selectedNodes: FlowNode[]) => {
@@ -838,7 +838,7 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
       const updatedNodes = degroupNodes(selectedNodes, parentId, nodes)
       setNodes(updatedNodes)
     },
-    [degroupNodes, nodes],
+    [degroupNodes, nodes, setNodes],
   )
 
   const shouldMergeUngroupedIntoGroup = useCallback(
@@ -1002,7 +1002,7 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
       setNodes([...deselectedNodes, ...newNodes])
       setEdges([...deselectedEdges, ...newEdges])
     },
-    [edges, nodes],
+    [edges, nodes, setEdges, setNodes],
   )
 
   const pasteSelection = useCallback(() => {
@@ -1627,6 +1627,7 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
     nodes,
     edges,
     setViewport,
+    resetFlowStore,
   ])
 
   /*useEffect(() => {

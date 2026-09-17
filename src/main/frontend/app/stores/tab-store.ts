@@ -2,7 +2,7 @@ import type React from 'react'
 import { create } from 'zustand'
 import { subscribeWithSelector } from 'zustand/middleware'
 import type { FlowData } from '~/routes/studio/canvas-flow/canvas-flow'
-import type { HistoryStep } from '~/stores/flow-store/flow-store-canvas'
+import type { FlowHistory } from '~/utils/diff'
 
 export type TabData = {
   name: string
@@ -10,7 +10,7 @@ export type TabData = {
   flowData?: FlowData
   configurationPath: string
   adapterPosition?: number
-  history: HistoryStep[]
+  history: FlowHistory
   historyIndex: number
   pendingNodeSelection?: { subtype: string; name: string } | null
   pendingRecenter?: boolean | null

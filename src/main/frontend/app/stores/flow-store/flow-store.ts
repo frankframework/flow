@@ -2,8 +2,9 @@ import type { Edge, EdgeChange, NodeChange, OnConnect, OnReconnect } from '@xyfl
 import { create } from 'zustand'
 import type { StateCreator } from 'zustand/vanilla'
 import type { FlowNode } from '~/routes/studio/canvas-flow/canvas-flow'
-import { createCanvasSlice, type CanvasSliceState, createHistoryStep } from '~/stores/flow-store/flow-store-canvas'
+import { createCanvasSlice, type CanvasSliceState } from '~/stores/flow-store/flow-store-canvas'
 import { createReactFlowSlice, type ReactFlowSliceState } from '~/stores/flow-store/flow-store-reactflow'
+import { createHistoryStep } from '~/utils/diff'
 
 export type SharedSliceState = {
   undo: (steps?: number) => void
@@ -68,14 +69,14 @@ const createSharedSlice: StateCreator<ReactFlowSliceState & CanvasSliceState, []
     })
   },
   setEdges(edges: Edge[]): void {
-    const { addHistory, history } = get()
-    const historyStep = createHistoryStep({ edges }, history)
+    const { addHistory, edges: oldEdges, nodes } = get()
+    const historyStep = createHistoryStep({ edges, nodes }, { edges: oldEdges, nodes })
     set({ edges })
     addHistory(historyStep)
   },
   setNodes(nodes: FlowNode[]): void {
-    const { addHistory, history } = get()
-    const historyStep = createHistoryStep({ nodes }, history)
+    const { addHistory, edges, nodes: oldNodes } = get()
+    const historyStep = createHistoryStep({ nodes, edges }, { nodes: oldNodes, edges })
     set({ nodes })
     addHistory(historyStep)
   },
