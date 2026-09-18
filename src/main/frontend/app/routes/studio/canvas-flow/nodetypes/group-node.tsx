@@ -1,6 +1,7 @@
 import { type Node, type NodeProps, NodeResizeControl, type ResizeDragEvent, type ResizeParams } from '@xyflow/react'
 import { type JSX, useState } from 'react'
 import { ResizeIcon } from '~/routes/studio/canvas-flow/nodetypes/frank-node'
+import type { FrankNodeBase } from '~/routes/studio/canvas-flow/nodetypes/frank-node-base'
 
 export const GROUP_COLORS = [
   { label: 'Blue', value: 'var(--group-color-blue)' },
@@ -13,7 +14,8 @@ export const GROUP_COLORS = [
 
 export const GROUP_DEFAULT_COLOR = 'var(--group-color-blue)'
 
-export type GroupNode = Node<{
+export type GroupNode = FrankNodeBase<{
+  nodeType: 'group-node'
   label: string
   description?: string
   color?: string
@@ -21,6 +23,10 @@ export type GroupNode = Node<{
   height: number
   childrenNames?: string[]
 }>
+
+export function isGroupNode(node: Node): node is GroupNode {
+  return node.type === 'group-node'
+}
 
 export default function GroupNodeComponent({ data, selected }: NodeProps<GroupNode>): JSX.Element {
   const [dimensions, setDimensions] = useState({

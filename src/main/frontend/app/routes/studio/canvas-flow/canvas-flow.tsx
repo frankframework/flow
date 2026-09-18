@@ -20,11 +20,11 @@ import Dagre from '@dagrejs/dagre'
 import { useNavigate } from 'react-router'
 import { SaveStatusIndicator } from '~/components/save-status-indicator'
 import useToasts from '~/components/toast/use-toasts'
+import FrankNodeComponent, { type FrankNode } from '~/routes/studio/canvas-flow/nodetypes/frank-node'
 import { convertAdapterXmlToJson, getAdapterFromConfiguration } from '~/routes/studio/xml-to-json-parser'
 import { useSaveStatusStore } from '~/stores/save-status-store'
 import CodeIcon from '/icons/solar/Code.svg?react'
 import '@xyflow/react/dist/style.css'
-import FrankNodeComponent, { type FrankNodeType } from '~/routes/studio/canvas-flow/nodetypes/frank-node'
 import FrankEdgeComponent from '~/routes/studio/canvas-flow/edgetypes/frank-edge'
 import ExitNodeComponent, { type ExitNode } from '~/routes/studio/canvas-flow/nodetypes/exit-node'
 import GroupNodeComponent, { type GroupNode } from '~/routes/studio/canvas-flow/nodetypes/group-node'
@@ -34,7 +34,7 @@ import { FlowConfig } from '~/routes/studio/canvas-flow/flow.config'
 import { getElementTypeFromName } from '~/routes/studio/node-translator-module'
 import { type JSX, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNodeContextMenu } from './node-context-menu-context'
-import StickyNoteComponent, { type StickyNote } from '~/routes/studio/canvas-flow/nodetypes/sticky-note'
+import StickyNoteComponent, { isStickyNote, type StickyNote } from '~/routes/studio/canvas-flow/nodetypes/sticky-note'
 import useTabStore, { type TabData } from '~/stores/tab-store'
 import { exportFlowToXml, replaceAdapterInXml } from '~/routes/studio/flow-to-xml-parser'
 import useNodeContextStore from '~/stores/node-context-store'
@@ -59,7 +59,7 @@ import { openInEditorAtElement } from '~/actions/navigationActions'
 import HandleMenu from '~/routes/studio/canvas-flow/nodetypes/components/handle-menu'
 import IconLabelButton from '~/components/inputs/icon-label-button'
 
-export type FlowNode = FrankNodeType | ExitNode | StickyNote | GroupNode | Node
+export type FlowNode = FrankNode | ExitNode | StickyNote | GroupNode | Node
 
 export type FlowData = {
   nodes: Node[]
@@ -101,7 +101,7 @@ function distanceToFrankNode(sticky: StickyNote, frankNode: FlowNode): number {
   return Math.hypot(dx, dy)
 }
 
-function isFrankNode(node: FlowNode): node is FrankNodeType {
+function isFrankNode(node: FlowNode): node is FrankNode {
   return node.type === 'frankNode' || node.type === 'exitNode'
 }
 
@@ -390,7 +390,7 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
     (pendingSelection: { subtype: string; name: string }) => {
       const currentNodes = nodes
       const nodeToSelect = currentNodes.find(
-        (node): node is FrankNodeType =>
+        (node): node is FrankNode =>
           isFrankNode(node) &&
           node.data.subtype === pendingSelection.subtype &&
           node.data.name === pendingSelection.name,
@@ -1059,7 +1059,7 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
   const toggleSelectedHidden = useCallback(() => {
     const selected = useFlowStore
       .getState()
-      .nodes.filter((node): node is FrankNodeType => Boolean(node.selected) && isFrankNode(node))
+      .nodes.filter((node): node is FrankNode => Boolean(node.selected) && isFrankNode(node))
     if (selected.length === 0) return false
 
     const shouldHide = selected.some((node) => !node.data.hiddenForwards)
@@ -1102,7 +1102,7 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
   )
 
   const applyNodeContext = useCallback(
-    (node: FrankNodeType, frankElement: ElementDetails) => {
+    (node: FrankNode, frankElement: ElementDetails) => {
       setParentId(null)
       setChildParentId(null)
       setNodeId(+node.id)
@@ -1233,11 +1233,11 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
       setIsMultiSelect(false)
 
       if (frankNodes.length === 1) {
-        const frankElement = lookupFrankElement((frankNodes[0] as FrankNodeType).data.subtype)
+        const frankElement = lookupFrankElement((frankNodes[0] as FrankNode).data.subtype)
         if (!frankElement) return
         setSelectedStickyId(null)
         setSelectedGroupId(null)
-        applyNodeContext(frankNodes[0] as FrankNodeType, frankElement)
+        applyNodeContext(frankNodes[0] as FrankNode, frankElement)
         showContextIfSidebarOpen()
       }
     },
@@ -1314,7 +1314,7 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
     const width = nodeType === 'exitNode' ? FlowConfig.EXIT_DEFAULT_WIDTH : FlowConfig.NODE_DEFAULT_WIDTH
     const height = nodeType === 'exitNode' ? FlowConfig.EXIT_DEFAULT_HEIGHT : FlowConfig.NODE_MIN_HEIGHT
 
-    const newNode: FrankNodeType = {
+    const newNode: FrankNode = {
       id: newId.toString(),
       position: {
         x: position.x - width / 2,
@@ -1374,7 +1374,7 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
       const stickyNote: StickyNote = {
         id: newId,
         position: { x: flowPos.x, y: flowPos.y },
-        data: { content: '' },
+        data: { nodeType: 'sticky-note', content: '' },
         type: 'stickyNote',
         selected: true,
         style: {
@@ -1429,7 +1429,7 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
   }, [nodes, allSelectedInSameGroup, handleDegroupSingleGroup, setNodes, degroupNodes])
 
   const showSelectedNodeInEditor = useCallback(() => {
-    const selectedFrankNodes = nodes.filter((node) => node.selected && node.type === 'frankNode') as FrankNodeType[]
+    const selectedFrankNodes = nodes.filter((node) => node.selected && node.type === 'frankNode') as FrankNode[]
     if (selectedFrankNodes.length !== 1) return
 
     const { data: nodeData } = selectedFrankNodes[0]
@@ -1461,7 +1461,7 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
       newId,
       position,
     }: {
-      sourceNode: FrankNodeType
+      sourceNode: FrankNode
       sourceNodeId: string
       newId: string
       position: { x: number; y: number }

@@ -11,6 +11,7 @@ import {
 } from '@xyflow/react'
 import type { StateCreator } from 'zustand/vanilla'
 import type { FlowNode } from '~/routes/studio/canvas-flow/canvas-flow'
+import { isStickyNote } from '~/routes/studio/canvas-flow/nodetypes/sticky-note'
 import type { CanvasSliceState } from '~/stores/flow-store/flow-store-canvas'
 import { getEdgeLabelFromHandle } from '~/utils/flow-utils'
 

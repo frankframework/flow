@@ -1,6 +1,6 @@
 import type { JSX } from 'react'
 import type { FlowNode } from '~/routes/studio/canvas-flow/canvas-flow'
-import type { FrankNodeType } from '~/routes/studio/canvas-flow/nodetypes/frank-node'
+import type { FrankNode } from '~/routes/studio/canvas-flow/nodetypes/frank-node'
 import useFlowStore, { isFrankNode, isStickyNote } from '~/stores/flow-store'
 import { STICKY_NOTE_COLORS } from '~/routes/studio/canvas-flow/nodetypes/sticky-note'
 import { useShallow } from 'zustand/react/shallow'
@@ -11,7 +11,7 @@ export default function StickyNoteContext({ nodeId }: Readonly<{ nodeId: string 
     flowState.nodes.find((node): boolean => node.id === nodeId),
   )
   const frankNodes = useFlowStore(
-    useShallow((flowState): FrankNodeType[] => flowState.nodes.filter((node) => isFrankNode(node))),
+    useShallow((flowState): FrankNode[] => flowState.nodes.filter((node) => isFrankNode(node))),
   )
 
   if (!node || !isStickyNote(node)) return null

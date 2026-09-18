@@ -1,3 +1,4 @@
+import { type JSX, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import {
   type Edge,
   Handle,
@@ -12,8 +13,8 @@ import {
   useUpdateNodeInternals,
 } from '@xyflow/react'
 import useToasts from '~/components/toast/use-toasts'
+import type { ResizableFrankNodeBase } from '~/routes/studio/canvas-flow/nodetypes/frank-node-base'
 import DangerIcon from '../../../../../icons/solar/Danger Triangle.svg?react'
-import { type JSX, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import useFlowStore from '~/stores/flow-store/flow-store'
 import { CustomHandle } from '~/routes/studio/canvas-flow/nodetypes/components/handle'
@@ -43,7 +44,8 @@ import {
 import MissingRequirements from './components/missing-requirements'
 import ZoomedOutNode from './zoomed-out-node'
 
-export type FrankNodeType = Node<{
+export type FrankNode = ResizableFrankNodeBase<{
+  nodeType: 'frank-node'
   subtype: string
   type: string
   name: string
@@ -52,9 +54,10 @@ export type FrankNodeType = Node<{
   children: ChildNode[]
   manuallyResized?: boolean
   hiddenForwards?: boolean
-}> & {
-  width?: number
-  height?: number
+}>
+
+export function isFrankNode(node: Node): node is FrankNode {
+  return node.type === 'frank-node'
 }
 
 function isForwardRevealed(
@@ -68,7 +71,7 @@ function isForwardRevealed(
   return hoveredNodeId !== null && edges.some((edge) => edge.source === hoveredNodeId && edge.target === targetId)
 }
 
-export default function FrankNode(properties: NodeProps<FrankNodeType>): JSX.Element {
+export default function FrankNodeComponent(properties: NodeProps<FrankNode>): JSX.Element {
   const minNodeWidth = FlowConfig.NODE_DEFAULT_WIDTH
   const maxNodeWidth = FlowConfig.NODE_MAX_WIDTH
   const minNodeHeight = FlowConfig.NODE_MIN_HEIGHT

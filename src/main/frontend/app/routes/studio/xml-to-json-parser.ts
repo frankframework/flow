@@ -1,7 +1,7 @@
 import type { FlowNode } from '~/routes/studio/canvas-flow/canvas-flow'
 import type { ChildNode } from '~/routes/studio/canvas-flow/nodetypes/child-node'
 import type { ExitNode } from '~/routes/studio/canvas-flow/nodetypes/exit-node'
-import type { FrankNodeType } from '~/routes/studio/canvas-flow/nodetypes/frank-node'
+import type { FrankNode } from '~/routes/studio/canvas-flow/nodetypes/frank-node'
 import { getElementTypeFromName } from '~/routes/studio/node-translator-module'
 import { fetchConfigurationFileCached } from '~/services/configuration-file-service'
 import { translateElementFromOldToNewFormat } from '~/utils/flow-utils'
@@ -320,13 +320,13 @@ function addReceiverToFirstPipeEdges(
   forwardIndexBySourceId: Map<string, number>,
 ): void {
   // Find all receivers
-  const receivers = nodes.filter((n): n is FrankNodeType => isFrankNode(n) && n.data.type === 'receiver')
+  const receivers = nodes.filter((n): n is FrankNode => isFrankNode(n) && n.data.type === 'receiver')
 
   if (receivers.length === 0) return
 
   // Find first pipe in the pipeline (exclude exitNodes and receivers)
   const firstPipe = nodes.find(
-    (n): n is FrankNodeType => isFrankNode(n) && n.data.type !== 'receiver' && n.type !== 'exitNode',
+    (n): n is FrankNode => isFrankNode(n) && n.data.type !== 'receiver' && n.type !== 'exitNode',
   )
   if (!firstPipe) return
 
@@ -528,7 +528,7 @@ function convertAdapterToFlowNodes(
     }
 
     const sourceHandles = extractSourceHandles(element)
-    const frankNode: FrankNodeType = convertElementToNode(element, idCounter, sourceHandles)
+    const frankNode: FrankNode = convertElementToNode(element, idCounter, sourceHandles)
     elementToId.set(element, frankNode.id)
     nodes.push(frankNode)
   }
@@ -542,7 +542,7 @@ function convertAdapterToFlowNodes(
   return { nodes, elementToId }
 }
 
-function convertElementToNode(element: Element, idCounter: IdCounter, sourceHandles: SourceHandle[]): FrankNodeType {
+function convertElementToNode(element: Element, idCounter: IdCounter, sourceHandles: SourceHandle[]): FrankNode {
   const thisId = (idCounter.current++).toString()
   const { subtype, usedClassName } = translateElementFromOldToNewFormat(element)
 

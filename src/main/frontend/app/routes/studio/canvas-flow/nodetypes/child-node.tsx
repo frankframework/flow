@@ -1,6 +1,6 @@
-import { type JSX, useCallback, useEffect, useMemo, useState } from 'react'
+import { type JSX, type DragEvent, useCallback, useEffect, useMemo, useState } from 'react'
 import clsx from 'clsx'
-import useFlowStore from '~/stores/flow-store'
+import useFlowStore from '~/stores/flow-store/flow-store'
 import { getElementTypeFromName } from '../../node-translator-module'
 import useNodeContextStore from '~/stores/node-context-store'
 import { useNodeContextMenu } from '../node-context-menu-context'
@@ -9,6 +9,7 @@ import { getAllowedChildElementsForElement } from '~/utils/xsd-utils'
 import { NodeHeader } from './components/node-header'
 import { NodeChildrenContainer } from './components/node-children-container'
 
+// No node??
 export type ChildNode = {
   id: string
   subtype: string
@@ -63,7 +64,7 @@ export function ChildNodeComponent({
     [xsdDoc, child.subtype],
   )
 
-  const handleDragOver = (event: React.DragEvent): void => {
+  const handleDragOver = (event: DragEvent): void => {
     event.preventDefault()
     event.stopPropagation()
 
