@@ -2,25 +2,27 @@ import {
   addEdge,
   applyEdgeChanges,
   applyNodeChanges,
+  type Node,
   type Edge,
   type EdgeChange,
-  type Node,
   type NodeChange,
   type OnConnect,
   type OnReconnect,
 } from '@xyflow/react'
 import type { StateCreator } from 'zustand/vanilla'
 import type { FlowNode } from '~/routes/studio/canvas-flow/canvas-flow'
+import type { FrankNodeBase } from '~/routes/studio/canvas-flow/nodetypes/frank-node-base'
 import { isStickyNote } from '~/routes/studio/canvas-flow/nodetypes/sticky-note'
 import type { CanvasSliceState } from '~/stores/flow-store/flow-store-canvas'
 import { getEdgeLabelFromHandle } from '~/utils/flow-utils'
 
-export type ReactFlowHistoryState<NodeType extends Node = Node, EdgeType extends Edge = Edge> = {
+export type ReactFlowHistoryState<NodeType extends Node = FrankNodeBase, EdgeType extends Edge = Edge> = {
   nodes: NodeType[]
   edges: EdgeType[]
 }
 
 export type ReactFlowSliceState = {
+  updateNode: (nodeId: string, updates: Partial<FlowNode>, nodeType?: string) => void
   _onNodesChange: (changes: NodeChange<FlowNode>[]) => void
   _onEdgesChange: (changes: EdgeChange<Edge>[]) => void
   _onConnect: OnConnect
@@ -33,6 +35,13 @@ export const createReactFlowSlice: StateCreator<ReactFlowSliceState & CanvasSlic
 ): ReactFlowSliceState => ({
   nodes: [],
   edges: [],
+  updateNode: (nodeId, updates, nodeType): void => {
+    set((state) => ({
+      nodes: state.nodes.map((node: FrankNodeBase) =>
+        node.id === nodeId && (!nodeType || nodeType === node.data.nodeType) ? { ...node, ...updates } : node,
+      ),
+    }))
+  },
   _onNodesChange: (changes): void => {
     const state = get()
 

@@ -13,7 +13,8 @@ import {
   useUpdateNodeInternals,
 } from '@xyflow/react'
 import useToasts from '~/components/toast/use-toasts'
-import type { ResizableFrankNodeBase } from '~/routes/studio/canvas-flow/nodetypes/frank-node-base'
+import { isExitNode } from '~/routes/studio/canvas-flow/nodetypes/exit-node'
+import  {isNodeType, type ResizableFrankNodeBase } from '~/routes/studio/canvas-flow/nodetypes/frank-node-base'
 import DangerIcon from '../../../../../icons/solar/Danger Triangle.svg?react'
 import { useShallow } from 'zustand/react/shallow'
 import useFlowStore from '~/stores/flow-store/flow-store'
@@ -57,7 +58,7 @@ export type FrankNode = ResizableFrankNodeBase<{
 }>
 
 export function isFrankNode(node: Node): node is FrankNode {
-  return node.type === 'frank-node'
+  return isNodeType<FrankNode>(node, 'frank-node')
 }
 
 function isForwardRevealed(

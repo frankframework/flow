@@ -3,7 +3,7 @@ import { type Node, type NodeProps, NodeResizeControl, useUpdateNodeInternals } 
 import { FlowConfig } from '~/routes/studio/canvas-flow/flow.config'
 import { ResizeIcon } from '~/routes/studio/canvas-flow/nodetypes/frank-node'
 import { useNodeContextMenu } from '~/routes/studio/canvas-flow/node-context-menu-context'
-import type { ResizableFrankNodeBase } from '~/routes/studio/canvas-flow/nodetypes/frank-node-base'
+import { isNodeType, type ResizableFrankNodeBase } from '~/routes/studio/canvas-flow/nodetypes/frank-node-base'
 import useFlowStore from '~/stores/flow-store/flow-store'
 import useNodeContextStore from '~/stores/node-context-store'
 
@@ -29,7 +29,7 @@ export type StickyNote = ResizableFrankNodeBase<{
 }>
 
 export function isStickyNote(node: Node): node is StickyNote {
-  return node.type === 'sticky-note'
+  return isNodeType<StickyNote>(node, 'sticky-note')
 }
 
 export default function StickyNoteComponent(properties: NodeProps<StickyNote>): JSX.Element {
