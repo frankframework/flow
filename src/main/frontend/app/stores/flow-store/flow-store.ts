@@ -1,9 +1,8 @@
 import type { Edge, EdgeChange, NodeChange, OnConnect, OnReconnect } from '@xyflow/react'
 import { create } from 'zustand'
 import type { StateCreator } from 'zustand/vanilla'
-import type { FlowNode } from '~/routes/studio/canvas-flow/canvas-flow'
 import { createCanvasSlice, type CanvasSliceState } from '~/stores/flow-store/flow-store-canvas'
-import { createReactFlowSlice, type ReactFlowSliceState } from '~/stores/flow-store/flow-store-reactflow'
+import { createReactFlowSlice, type FlowNode, type ReactFlowSliceState } from '~/stores/flow-store/flow-store-reactflow'
 import { createHistoryStep } from '~/utils/diff'
 
 export type SharedSliceState = {
@@ -48,7 +47,8 @@ const createSharedSlice: StateCreator<ReactFlowSliceState & CanvasSliceState, []
     if (historyPosition < steps) steps = historyPosition
     if (steps < 1) return
 
-    // TODO undo react flow state using each snapshot step in history
+    /* TODO undo react flow state using each snapshot step in history
+       diffpatch.unpatch(state, history[historyPosition]) */
     setHistoryIndex(historyPosition - steps)
   },
   redo(steps = 1): void {
@@ -57,7 +57,8 @@ const createSharedSlice: StateCreator<ReactFlowSliceState & CanvasSliceState, []
     const maxIndex = history.length - 1
     if (historyIndex + steps > maxIndex) steps = maxIndex - historyIndex
 
-    // TODO redo react flow state using each snapshot step in history
+    /* TODO redo react flow state using each snapshot step in history
+       diffpatch.patch(state, history[historyIndex + 1]) */
     setHistoryIndex(historyIndex + steps)
   },
   resetStore(): void {

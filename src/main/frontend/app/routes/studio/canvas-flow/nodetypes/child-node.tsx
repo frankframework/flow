@@ -12,8 +12,8 @@ import { NodeChildrenContainer } from './components/node-children-container'
 // No node??
 export type ChildNode = {
   id: string
-  subtype: string
   type: string
+  subtype: string
   name?: string
   attributes?: Record<string, string>
 

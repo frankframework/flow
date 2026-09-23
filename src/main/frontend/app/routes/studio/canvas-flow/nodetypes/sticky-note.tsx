@@ -3,7 +3,6 @@ import { type Node, type NodeProps, NodeResizeControl, useUpdateNodeInternals } 
 import { FlowConfig } from '~/routes/studio/canvas-flow/flow.config'
 import { ResizeIcon } from '~/routes/studio/canvas-flow/nodetypes/frank-node'
 import { useNodeContextMenu } from '~/routes/studio/canvas-flow/node-context-menu-context'
-import { isNodeType, type ResizableFrankNodeBase } from '~/routes/studio/canvas-flow/nodetypes/frank-node-base'
 import useFlowStore from '~/stores/flow-store/flow-store'
 import useNodeContextStore from '~/stores/node-context-store'
 
@@ -16,20 +15,22 @@ export const STICKY_NOTE_COLORS = [
   { label: 'Orange', value: 'var(--sticky-color-orange)' },
 ]
 
-export type StickyNote = ResizableFrankNodeBase<{
-  nodeType: 'sticky-note'
-  content: string
-  color?: string
-  collapsed?: boolean
-  preCollapseWidth?: number
-  preCollapseHeight?: number
-  attachedToNodeId?: string
-  offsetX?: number
-  offsetY?: number
-}>
+export type StickyNote = Node<
+  {
+    content: string
+    color?: string
+    collapsed?: boolean
+    preCollapseWidth?: number
+    preCollapseHeight?: number
+    attachedToNodeId?: string
+    offsetX?: number
+    offsetY?: number
+  },
+  'sticky-note'
+>
 
 export function isStickyNote(node: Node): node is StickyNote {
-  return isNodeType<StickyNote>(node, 'sticky-note')
+  return node.type === 'sticky-note'
 }
 
 export default function StickyNoteComponent(properties: NodeProps<StickyNote>): JSX.Element {

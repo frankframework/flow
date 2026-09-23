@@ -59,8 +59,6 @@ import { openInEditorAtElement } from '~/actions/navigationActions'
 import HandleMenu from '~/routes/studio/canvas-flow/nodetypes/components/handle-menu'
 import IconLabelButton from '~/components/inputs/icon-label-button'
 
-export type FlowNode = FrankNode | ExitNode | StickyNote | GroupNode
-
 export type FlowData = {
   nodes: Node[]
   edges: Edge[]

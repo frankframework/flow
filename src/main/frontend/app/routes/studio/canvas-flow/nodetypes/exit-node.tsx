@@ -10,22 +10,23 @@ import {
 import { type JSX, useEffect } from 'react'
 import { ResizeIcon } from '~/routes/studio/canvas-flow/nodetypes/frank-node'
 import { FlowConfig } from '~/routes/studio/canvas-flow/flow.config'
-import { type FrankNodeBase, isNodeType } from '~/routes/studio/canvas-flow/nodetypes/frank-node-base'
 import { useSettingsStore } from '~/stores/settings-store'
 import { NodeHeader } from './components/node-header'
 import ZoomedOutNode from './zoomed-out-node'
 
-export type ExitNode = FrankNodeBase<{
-  nodeType: 'exit-node'
-  subtype: string
-  type: string
-  name: string
-  attributes: Record<string, string>
-  hiddenForwards?: boolean | null
-}>
+export type ExitNode = Node<
+  {
+    type: string
+    subtype: string
+    name: string
+    attributes: Record<string, string>
+    hiddenForwards?: boolean | null
+  },
+  'exit-node'
+>
 
 export function isExitNode(node: Node): node is ExitNode {
-  return isNodeType<ExitNode>(node, 'exit-node')
+  return node.type === 'exit-node'
 }
 
 export default function ExitNodeComponent(properties: NodeProps<ExitNode>): JSX.Element {

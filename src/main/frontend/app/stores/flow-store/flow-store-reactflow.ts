@@ -10,13 +10,16 @@ import {
   type OnReconnect,
 } from '@xyflow/react'
 import type { StateCreator } from 'zustand/vanilla'
-import type { FlowNode } from '~/routes/studio/canvas-flow/canvas-flow'
-import type { FrankNodeBase } from '~/routes/studio/canvas-flow/nodetypes/frank-node-base'
-import { isStickyNote } from '~/routes/studio/canvas-flow/nodetypes/sticky-note'
+import type { ExitNode } from '~/routes/studio/canvas-flow/nodetypes/exit-node'
+import type { FrankNode } from '~/routes/studio/canvas-flow/nodetypes/frank-node'
+import { isStickyNote, type StickyNote } from '~/routes/studio/canvas-flow/nodetypes/sticky-note'
 import type { CanvasSliceState } from '~/stores/flow-store/flow-store-canvas'
+import type { GroupNode } from '~/types/datamapper_types/react-node-types'
 import { getEdgeLabelFromHandle } from '~/utils/flow-utils'
 
-export type ReactFlowHistoryState<NodeType extends Node = FrankNodeBase, EdgeType extends Edge = Edge> = {
+export type FlowNode = FrankNode | ExitNode | StickyNote | GroupNode
+
+export type ReactFlowHistoryState<NodeType extends Node = FlowNode, EdgeType extends Edge = Edge> = {
   nodes: NodeType[]
   edges: EdgeType[]
 }
@@ -37,8 +40,8 @@ export const createReactFlowSlice: StateCreator<ReactFlowSliceState & CanvasSlic
   edges: [],
   updateNode: (nodeId, updates, nodeType): void => {
     set((state) => ({
-      nodes: state.nodes.map((node: FrankNodeBase) =>
-        node.id === nodeId && (!nodeType || nodeType === node.data.nodeType) ? { ...node, ...updates } : node,
+      nodes: state.nodes.map((node) =>
+        node.id === nodeId && (!nodeType || nodeType === node.type) ? ({ ...node, ...updates } as FlowNode) : node,
       ),
     }))
   },

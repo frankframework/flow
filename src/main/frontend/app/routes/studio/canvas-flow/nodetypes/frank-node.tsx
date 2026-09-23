@@ -14,7 +14,6 @@ import {
 } from '@xyflow/react'
 import useToasts from '~/components/toast/use-toasts'
 import { isExitNode } from '~/routes/studio/canvas-flow/nodetypes/exit-node'
-import  {isNodeType, type ResizableFrankNodeBase } from '~/routes/studio/canvas-flow/nodetypes/frank-node-base'
 import DangerIcon from '../../../../../icons/solar/Danger Triangle.svg?react'
 import { useShallow } from 'zustand/react/shallow'
 import useFlowStore from '~/stores/flow-store/flow-store'
@@ -45,20 +44,24 @@ import {
 import MissingRequirements from './components/missing-requirements'
 import ZoomedOutNode from './zoomed-out-node'
 
-export type FrankNode = ResizableFrankNodeBase<{
-  nodeType: 'frank-node'
-  subtype: string
-  type: string
-  name: string
-  sourceHandles: { type: string; index: number }[]
-  attributes?: Record<string, string>
-  children: ChildNode[]
-  manuallyResized?: boolean
-  hiddenForwards?: boolean
-}>
+export type FrankNode = Node<
+  {
+    name: string
+    type: string
+    subtype: string
+    sourceHandles: { type: string; index: number }[]
+    attributes?: Record<string, string>
+    children: ChildNode[]
+    manuallyResized?: boolean
+    hiddenForwards?: boolean
+    width?: number
+    height?: number
+  },
+  'frank-node'
+>
 
 export function isFrankNode(node: Node): node is FrankNode {
-  return isNodeType<FrankNode>(node, 'frank-node')
+  return node.type === 'frank-node'
 }
 
 function isForwardRevealed(
@@ -201,8 +204,8 @@ export default function FrankNodeComponent(properties: NodeProps<FrankNode>): JS
   }, [frankElement?.forwards, sourceHandles])
 
   const [dimensions, setDimensions] = useState({
-    width: properties.width ?? minNodeWidth,
-    height: properties.height ?? minNodeHeight,
+    width: properties.data.width ?? minNodeWidth,
+    height: properties.data.height ?? minNodeHeight,
   })
 
   const firstHandlePosition = useMemo(() => {
