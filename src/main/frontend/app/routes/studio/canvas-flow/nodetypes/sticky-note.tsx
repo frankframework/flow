@@ -33,6 +33,18 @@ export function isStickyNote(node: Node): node is StickyNote {
   return node.type === 'sticky-note'
 }
 
+export function setStickyHeight(nodeId: string, height: number): void {
+  useFlowStore.getState().updateNode(
+    nodeId,
+    (node) => ({
+      height,
+      measured: { ...node.measured, height },
+      style: { ...node.style, height },
+    }),
+    'sticky-note',
+  )
+}
+
 export default function StickyNoteComponent(properties: NodeProps<StickyNote>): JSX.Element {
   const minHeight = FlowConfig.STICKY_NOTE_DEFAULT_HEIGHT
   const minWidth = FlowConfig.STICKY_NOTE_DEFAULT_WIDTH
@@ -56,7 +68,7 @@ export default function StickyNoteComponent(properties: NodeProps<StickyNote>): 
       Math.max(FlowConfig.STICKY_NOTE_DEFAULT_HEIGHT, naturalHeight),
     )
 
-    useFlowStore.getState().setStickyHeight(properties.id, clamped)
+    setStickyHeight(properties.id, clamped)
   }, [content, properties.data.collapsed, properties.id])
 
   useEffect((): void => {

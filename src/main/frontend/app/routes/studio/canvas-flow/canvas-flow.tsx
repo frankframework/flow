@@ -22,6 +22,7 @@ import { SaveStatusIndicator } from '~/components/save-status-indicator'
 import useToasts from '~/components/toast/use-toasts'
 import FrankNodeComponent, { type FrankNode } from '~/routes/studio/canvas-flow/nodetypes/frank-node'
 import { convertAdapterXmlToJson, getAdapterFromConfiguration } from '~/routes/studio/xml-to-json-parser'
+import type { FlowNode } from '~/stores/flow-store/flow-store-reactflow'
 import { useSaveStatusStore } from '~/stores/save-status-store'
 import CodeIcon from '/icons/solar/Code.svg?react'
 import '@xyflow/react/dist/style.css'
@@ -99,13 +100,13 @@ function distanceToFrankNode(sticky: StickyNote, frankNode: FlowNode): number {
   return Math.hypot(dx, dy)
 }
 
-function isFrankNode(node: FlowNode): node is FrankNode {
-  return node.type === 'frankNode' || node.type === 'exitNode'
+function isFrankComponentNode(node: FlowNode): node is FrankNode {
+  return node.type === 'frank-node' || node.type === 'exit-node'
 }
 
 function findNearestFrankNode(sticky: StickyNote, candidates: FlowNode[]): FlowNode | null {
   return candidates
-    .filter((node) => (node.type === 'frankNode' || node.type === 'exitNode') && isWithinSnapDistance(sticky, node))
+    .filter((node) => isFrankComponentNode(node) && isWithinSnapDistance(sticky, node))
     .reduce<FlowNode | null>((best, node) => {
       if (best === null) return node
       return distanceToFrankNode(sticky, node) < distanceToFrankNode(sticky, best) ? node : best
@@ -298,7 +299,7 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
   const hiddenForwardNodeIds = useMemo(() => {
     const ids = new Set<string>()
     for (const node of nodes) {
-      if (isFrankNode(node) && node.data.hiddenForwards) ids.add(node.id)
+      if (isFrankComponentNode(node) && node.data.hiddenForwards) ids.add(node.id)
     }
 
     return ids
@@ -389,7 +390,7 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
       const currentNodes = nodes
       const nodeToSelect = currentNodes.find(
         (node): node is FrankNode =>
-          isFrankNode(node) &&
+          isFrankComponentNode(node) &&
           node.data.subtype === pendingSelection.subtype &&
           node.data.name === pendingSelection.name,
       )
@@ -660,7 +661,7 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
       if (zoom < FlowConfig.ZOOM_THRESHOLD && connection.source) {
         const sourceNode = nodes.find((node) => node.id === connection.source)
 
-        if (sourceNode && isFrankNode(sourceNode)) {
+        if (sourceNode && isFrankComponentNode(sourceNode)) {
           const targetNode = nodes.find((node) => node.id === connection.target)
           const position = targetNode
             ? reactFlow.flowToScreenPosition({
@@ -688,7 +689,7 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
       if (!pendingCompactConnection) return
       const sourceNode = nodes.find((node) => node.id === pendingCompactConnection.connection.source)
 
-      if (!sourceNode || !isFrankNode(sourceNode)) {
+      if (!sourceNode || !isFrankComponentNode(sourceNode)) {
         setPendingCompactConnection(null)
         return
       }
@@ -1057,7 +1058,7 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
   const toggleSelectedHidden = useCallback(() => {
     const selected = useFlowStore
       .getState()
-      .nodes.filter((node): node is FrankNode => Boolean(node.selected) && isFrankNode(node))
+      .nodes.filter((node): node is FrankNode => Boolean(node.selected) && isFrankComponentNode(node))
     if (selected.length === 0) return false
 
     const shouldHide = selected.some((node) => !node.data.hiddenForwards)
@@ -1133,7 +1134,7 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
         return
       }
 
-      if (isFrankNode(node)) {
+      if (isFrankComponentNode(node)) {
         const frankElement = lookupFrankElement(node.data.subtype)
         if (frankElement) {
           deselectOtherNodes(node.id)
@@ -1165,7 +1166,7 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
         return
       }
 
-      if (!isFrankNode(node)) return
+      if (!isFrankComponentNode(node)) return
       const frankElement = lookupFrankElement(node.data.subtype)
       if (!frankElement) return
 
@@ -1207,7 +1208,7 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
 
   const handleSelectionChange = useCallback(
     ({ nodes: selectedNodes }: { nodes: FlowNode[] }) => {
-      const frankNodes = selectedNodes.filter((node) => isFrankNode(node))
+      const frankNodes = selectedNodes.filter((node) => isFrankComponentNode(node))
 
       if (frankNodes.length > 1) {
         const firstParent = frankNodes[0]?.parentId
@@ -1333,7 +1334,7 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
     if (sourceInfo?.nodeId && sourceInfo.handleType === 'source') {
       const sourceNode = flowStore.nodes.find((node) => node.id === sourceInfo.nodeId)
 
-      if (sourceNode && reactFlow.getZoom() < FlowConfig.ZOOM_THRESHOLD && isFrankNode(sourceNode)) {
+      if (sourceNode && reactFlow.getZoom() < FlowConfig.ZOOM_THRESHOLD && isFrankComponentNode(sourceNode)) {
         addConnectionHandler({
           sourceNode,
           sourceNodeId: sourceInfo.nodeId,
@@ -1694,7 +1695,7 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
       const zoom = reactFlow.getZoom()
       if (zoom < FlowConfig.ZOOM_THRESHOLD && sourceInfoReference.current.handleType === 'source') {
         const sourceNode = nodes.find((node) => node.id === sourceInfoReference.current.nodeId)
-        if (sourceNode && isFrankNode(sourceNode)) {
+        if (sourceNode && isFrankComponentNode(sourceNode)) {
           setPendingEdgeDrop({
             position: { x: mouseEvent.clientX, y: mouseEvent.clientY },
             sourceNodeSubtype: sourceNode.data.subtype,

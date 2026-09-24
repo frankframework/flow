@@ -16,6 +16,7 @@ import { isStickyNote, type StickyNote } from '~/routes/studio/canvas-flow/nodet
 import type { CanvasSliceState } from '~/stores/flow-store/flow-store-canvas'
 import type { GroupNode } from '~/types/datamapper_types/react-node-types'
 import { getEdgeLabelFromHandle } from '~/utils/flow-utils'
+import { createHistoryStep } from '~/utils/diff'
 
 export type FlowNode = FrankNode | ExitNode | StickyNote | GroupNode
 
@@ -25,11 +26,17 @@ export type ReactFlowHistoryState<NodeType extends Node = FlowNode, EdgeType ext
 }
 
 export type ReactFlowSliceState = {
-  updateNode: (nodeId: string, updates: Partial<FlowNode>, nodeType?: string) => void
-  _onNodesChange: (changes: NodeChange<FlowNode>[]) => void
-  _onEdgesChange: (changes: EdgeChange<Edge>[]) => void
-  _onConnect: OnConnect
-  _onReconnect: OnReconnect
+  setEdges: (edges: Edge[]) => void
+  setNodes: (nodes: FlowNode[]) => void
+  updateNode: (
+    nodeId: string,
+    updates: Partial<FlowNode> | ((node: FlowNode) => Partial<FlowNode>),
+    nodeType?: string,
+  ) => void
+  onNodesChange: (changes: NodeChange<FlowNode>[]) => void
+  onEdgesChange: (changes: EdgeChange<Edge>[]) => void
+  onConnect: OnConnect
+  onReconnect: OnReconnect
 } & ReactFlowHistoryState
 
 export const createReactFlowSlice: StateCreator<ReactFlowSliceState & CanvasSliceState, [], [], ReactFlowSliceState> = (
@@ -38,14 +45,24 @@ export const createReactFlowSlice: StateCreator<ReactFlowSliceState & CanvasSlic
 ): ReactFlowSliceState => ({
   nodes: [],
   edges: [],
-  updateNode: (nodeId, updates, nodeType): void => {
-    set((state) => ({
-      nodes: state.nodes.map((node) =>
-        node.id === nodeId && (!nodeType || nodeType === node.type) ? ({ ...node, ...updates } as FlowNode) : node,
-      ),
-    }))
+  setEdges(edges: Edge[]): void {
+    set((state) => addEdgesHistoryStep(edges, state))
   },
-  _onNodesChange: (changes): void => {
+  setNodes(nodes: FlowNode[]): void {
+    set((state) => addNodesHistoryStep(nodes, state))
+  },
+  updateNode: (nodeId, updates, nodeType): void => {
+    set((state) => {
+      const updatedNodes = state.nodes.map((node) => {
+        if (node.id !== nodeId || (nodeType && nodeType !== node.type)) return node
+        const updatedNode: Node =
+          typeof updates === 'function' ? { ...node, ...updates(node) } : { ...node, ...updates }
+        return updatedNode as FlowNode
+      })
+      return addNodesHistoryStep(updatedNodes, state)
+    })
+  },
+  onNodesChange: (changes): void => {
     const state = get()
 
     const dragStart = changes.some(
@@ -110,8 +127,9 @@ export const createReactFlowSlice: StateCreator<ReactFlowSliceState & CanvasSlic
           })
 
     set(() => ({ nodes, isDragging: nextIsDragging, isResizing: nextIsResizing }))
+    // TODO update history
   },
-  _onEdgesChange: (changes): void => {
+  onEdgesChange: (changes): void => {
     // TODO why not type === 'add' as well?
     /* const structuralChange = changes.some((change) => change.type === 'remove')
 
@@ -120,8 +138,9 @@ export const createReactFlowSlice: StateCreator<ReactFlowSliceState & CanvasSlic
        } */
 
     set((state) => ({ edges: applyEdgeChanges(changes, state.edges) }))
+    // TODO update history
   },
-  _onConnect: (connection): void => {
+  onConnect: (connection): void => {
     const { nodes, edges } = get()
     const sourceNode = nodes.find((node) => node.id === connection.source)
     const label = getEdgeLabelFromHandle(sourceNode, connection.sourceHandle)
@@ -129,8 +148,9 @@ export const createReactFlowSlice: StateCreator<ReactFlowSliceState & CanvasSlic
     if (wouldCreateDuplicateForward(edges, connection.source, connection.target, label)) return
 
     set({ edges: addEdge({ ...connection, type: 'frankEdge', data: { label } }, edges) })
+    // TODO update history
   },
-  _onReconnect: (oldEdge, newConnection): void => {
+  onReconnect: (oldEdge, newConnection): void => {
     const { nodes, edges } = get()
     const sourceNode = nodes.find((node) => node.id === newConnection.source)
     const label = getEdgeLabelFromHandle(sourceNode, newConnection.sourceHandle)
@@ -141,10 +161,29 @@ export const createReactFlowSlice: StateCreator<ReactFlowSliceState & CanvasSlic
     set({
       edges: [...edgesWithoutOld, { ...newConnection, id: oldEdge.id, type: 'frankEdge', data: { label } }],
     })
+    // TODO update history
   },
 })
 
 function wouldCreateDuplicateForward(edges: Edge[], source: string, target: string, label: string): boolean {
   // TODO create edge type so that data isn't unknown
   return edges.some((edge) => edge.source === source && edge.target === target && edge.data?.label === label)
+}
+
+function addNodesHistoryStep(
+  updatedNodes: FlowNode[],
+  state: ReactFlowSliceState & CanvasSliceState,
+): Partial<ReactFlowSliceState & CanvasSliceState> {
+  const { nodes, edges, addHistory } = state
+  addHistory(createHistoryStep({ nodes: updatedNodes, edges }, { nodes, edges }))
+  return { nodes: updatedNodes }
+}
+
+function addEdgesHistoryStep(
+  updatedEdges: Edge[],
+  state: ReactFlowSliceState & CanvasSliceState,
+): Partial<ReactFlowSliceState & CanvasSliceState> {
+  const { nodes, edges, addHistory } = state
+  addHistory(createHistoryStep({ nodes, edges: updatedEdges }, { nodes, edges }))
+  return { edges: updatedEdges }
 }
