@@ -80,12 +80,13 @@ function getItemDisplayInfo(
       ? (item.data as { listenerName: string | null }).listenerName
       : null
 
-  const isDataObject = typeof item.data === 'object'
+  const isFolder = item.isFolder ?? false
+  const isDataObject = typeof item.data === 'object' && item.data !== null
   const pathEndsWithXml = (item.data as Partial<StudioFolderData>).path?.endsWith('.xml') ?? false
 
   const isRoot = typeof item.data === 'string'
-  const isConfigFile = Boolean(item.isFolder) && isDataObject && item.data !== null && pathEndsWithXml
-  const isPlainFolder = Boolean(item.isFolder) && !isConfigFile && !isRoot
+  const isConfigFile = isFolder && isDataObject && pathEndsWithXml
+  const isPlainFolder = isFolder && !isConfigFile && !isRoot
 
   let ItemIcon
   if (isConfigFile) {
