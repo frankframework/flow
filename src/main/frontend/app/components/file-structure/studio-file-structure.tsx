@@ -66,6 +66,61 @@ function getItemTitle(item: TreeItem<StudioItemData>): string {
   return 'Unnamed'
 }
 
+function getItemDisplayInfo(
+  item: TreeItem<StudioItemData>,
+  isExpanded: boolean | undefined,
+): {
+  isRoot: boolean
+  isConfigFile: boolean
+  isPlainFolder: boolean
+  ItemIcon: React.FC<React.SVGProps<SVGSVGElement>>
+} {
+  const listenerType =
+    !item.isFolder && typeof item.data === 'object' && item.data && 'listenerName' in item.data
+      ? (item.data as { listenerName: string | null }).listenerName
+      : null
+
+  const isFolder = item.isFolder ?? false
+  const isDataObject = typeof item.data === 'object' && item.data !== null
+  const pathEndsWithXml = (item.data as Partial<StudioFolderData>).path?.endsWith('.xml') ?? false
+
+  const isRoot = typeof item.data === 'string'
+  const isConfigFile = isFolder && isDataObject && pathEndsWithXml
+  const isPlainFolder = isFolder && !isConfigFile && !isRoot
+
+  let ItemIcon
+  if (isConfigFile) {
+    ItemIcon = SettingsIcon
+  } else if (item.isFolder) {
+    ItemIcon = isExpanded ? FolderOpenIcon : FolderIcon
+  } else {
+    ItemIcon = getListenerIcon(listenerType)
+  }
+
+  return { isRoot, isConfigFile, isPlainFolder, ItemIcon }
+}
+
+function highlightSearchTerm(title: string, searchTerm: string): JSX.Element | string {
+  if (!searchTerm) return title
+  const searchLower = searchTerm.toLowerCase()
+  if (!title.toLowerCase().includes(searchLower)) return title
+
+  const titleParts = title.split(new RegExp(`(${searchTerm})`, 'gi'))
+  return (
+    <>
+      {titleParts.map((part, partIndex): JSX.Element =>
+        part.toLowerCase() === searchLower ? (
+          <mark key={`mark-${partIndex}`} className="text-foreground bg-foreground-active rounded-sm">
+            {part}
+          </mark>
+        ) : (
+          <span key={`span-${partIndex}`}>{part}</span>
+        ),
+      )}
+    </>
+  )
+}
+
 export default function StudioFileStructure(): JSX.Element {
   const project = useProjectStore((state): ConfigurationProject | undefined => state.project)
   const { studioExpandedItems, addStudioExpandedItem, removeStudioExpandedItem } = useTreeStore()
@@ -187,9 +242,13 @@ export default function StudioFileStructure(): JSX.Element {
   })
 
   useEffect((): (() => void) | undefined => {
-    if (!project) return
+    if (!project) {
+      setDataProvider(null)
+      return
+    }
 
     let isMounted = true
+    setDataProvider(null)
 
     const initProvider = async (): Promise<void> => {
       setProviderLoading(true)
@@ -392,53 +451,9 @@ export default function StudioFileStructure(): JSX.Element {
     item: TreeItem<StudioItemData>
     context: TreeItemRenderContext
   }): JSX.Element => {
-    if (!project) return <p className="text-foreground-muted p-4 text-sm">No Project Selected</p>
-    if (providerLoading) return <LoadingSpinner message="Loading configurations..." className="p-8" />
-    if (!dataProvider)
-      return <p className="text-foreground-muted p-4 text-sm">No configurations found in src/main/configurations</p>
+    const { isRoot, isConfigFile, isPlainFolder, ItemIcon } = getItemDisplayInfo(item, context.isExpanded)
 
-    const listenerType =
-      !item.isFolder && typeof item.data === 'object' && item.data && 'listenerName' in item.data
-        ? (item.data as { listenerName: string | null }).listenerName
-        : null
-
-    const isDataObject = typeof item.data === 'object'
-    const pathEndsWithXml = (item.data as Partial<StudioFolderData>).path?.endsWith('.xml') ?? false
-
-    const isRoot = typeof item.data === 'string'
-    const isConfigFile = item.isFolder && isDataObject && item.data !== null && pathEndsWithXml
-    const isPlainFolder = item.isFolder && !isConfigFile && !isRoot
-
-    let ItemIcon
-    if (isConfigFile) {
-      ItemIcon = SettingsIcon
-    } else if (item.isFolder) {
-      ItemIcon = context.isExpanded ? FolderOpenIcon : FolderIcon
-    } else {
-      ItemIcon = getListenerIcon(listenerType)
-    }
-
-    const searchLower = searchTerm.toLowerCase()
-    const titleLower = title.toLowerCase()
-
-    let highlightedTitle: JSX.Element | string = title
-
-    if (searchTerm && titleLower.includes(searchLower)) {
-      const titleParts = title.split(new RegExp(`(${searchTerm})`, 'gi'))
-      highlightedTitle = (
-        <>
-          {titleParts.map((part, partIndex): JSX.Element =>
-            part.toLowerCase() === searchLower ? (
-              <mark key={`mark-${partIndex}`} className="text-foreground bg-foreground-active rounded-sm">
-                {part}
-              </mark>
-            ) : (
-              <span key={`span-${partIndex}`}>{part}</span>
-            ),
-          )}
-        </>
-      )
-    }
+    const highlightedTitle = highlightSearchTerm(title, searchTerm)
 
     const isHighlighted = highlightedItemId === item.index
 
@@ -536,33 +551,40 @@ export default function StudioFileStructure(): JSX.Element {
           void studioContextMenu.openContextMenu(mouseEvent, 'root')
         }}
       >
-        <UncontrolledTreeEnvironment
-          viewState={{
-            [TREE_ID]: {
-              expandedItems: studioExpandedItems,
-            },
-          }}
-          onExpandItem={async (item): Promise<void> => {
-            addStudioExpandedItem(String(item.index))
-            if (dataProvider) await loadFolderContents(item)
-          }}
-          onCollapseItem={(item): void => {
-            removeStudioExpandedItem(String(item.index))
-            setSelectedItemId((previous): TreeItemIndex | null =>
-              previous && String(previous).startsWith(`${String(item.index)}/`) ? null : previous,
-            )
-          }}
-          getItemTitle={getItemTitle}
-          dataProvider={dataProvider!}
-          onSelectItems={handleItemClick}
-          canDragAndDrop={true}
-          canDropOnFolder={true}
-          canSearch={false}
-          renderItemArrow={renderItemArrow}
-          renderItemTitle={renderItemTitle}
-        >
-          <Tree treeId={TREE_ID} rootItem="root" ref={tree} treeLabel="Files" />
-        </UncontrolledTreeEnvironment>
+        {!project && <p className="text-foreground-muted p-4 text-sm">No Project Selected</p>}
+        {project && providerLoading && <LoadingSpinner message="Loading configurations..." className="p-8" />}
+        {project && !providerLoading && !dataProvider && (
+          <p className="text-foreground-muted p-4 text-sm">No configurations found in src/main/configurations</p>
+        )}
+        {dataProvider && (
+          <UncontrolledTreeEnvironment
+            viewState={{
+              [TREE_ID]: {
+                expandedItems: studioExpandedItems,
+              },
+            }}
+            onExpandItem={async (item): Promise<void> => {
+              addStudioExpandedItem(String(item.index))
+              await loadFolderContents(item)
+            }}
+            onCollapseItem={(item): void => {
+              removeStudioExpandedItem(String(item.index))
+              setSelectedItemId((previous): TreeItemIndex | null =>
+                previous && String(previous).startsWith(`${String(item.index)}/`) ? null : previous,
+              )
+            }}
+            getItemTitle={getItemTitle}
+            dataProvider={dataProvider}
+            onSelectItems={handleItemClick}
+            canDragAndDrop={true}
+            canDropOnFolder={true}
+            canSearch={false}
+            renderItemArrow={renderItemArrow}
+            renderItemTitle={renderItemTitle}
+          >
+            <Tree treeId={TREE_ID} rootItem="root" ref={tree} treeLabel="Files" />
+          </UncontrolledTreeEnvironment>
+        )}
       </div>
 
       <StudioFileTreeDialogs

@@ -32,6 +32,7 @@ export type FlowState = {
   nodes: FlowNode[]
   edges: Edge[]
   viewport: { x: number; y: number; zoom: number }
+  loadedTabId: string | null
   nodeIdCounter: number
   isDragging: boolean
   isResizing: boolean
@@ -47,6 +48,7 @@ export type FlowState = {
   setNodes: (nodes: FlowNode[]) => void
   setEdges: (edges: Edge[]) => void
   setViewport: (viewport: { x: number; y: number; zoom: number }) => void
+  setLoadedTabId: (tabId: string | null) => void
   getNextNodeId: () => string
   addNode: (newNode: FlowNode) => void
   deleteNode: (nodeId: string) => void
@@ -134,6 +136,7 @@ const useFlowStore = create<FlowState>()(
     nodes: initialNodes,
     edges: initialEdges,
     viewport: { x: 0, y: 0, zoom: 1 },
+    loadedTabId: null,
     nodeIdCounter: nextFreeNumericId(initialNodes),
     isDragging: false,
     isResizing: false,
@@ -283,6 +286,9 @@ const useFlowStore = create<FlowState>()(
     },
     setViewport: (viewport): void => {
       set({ viewport })
+    },
+    setLoadedTabId: (tabId): void => {
+      set({ loadedTabId: tabId })
     },
     getNextNodeId: (): string => {
       const current = get().nodeIdCounter

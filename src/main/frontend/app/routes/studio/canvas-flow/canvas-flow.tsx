@@ -590,6 +590,23 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
     [activeTab, loadFromApi, loadFromCache, logApiError, setTabData],
   )
 
+  const clearLoadedFlow = useCallback((): void => {
+    resetFlowStore()
+    useFlowStore.getState().setLoadedTabId(null)
+  }, [resetFlowStore])
+
+  const syncLoadedFlowWithActiveTab = useCallback((): void => {
+    const { loadedTabId, setLoadedTabId } = useFlowStore.getState()
+    const activeTabAlreadyLoaded = loadedTabId === activeTab
+    if (activeTabAlreadyLoaded) return
+
+    if (loadedTabId) saveFlowToTab(loadedTabId)
+    setLoadedTabId(activeTab)
+
+    const tabData = getTab(activeTab)
+    if (tabData) void loadFlowFromTab(tabData)
+  }, [activeTab, getTab, loadFlowFromTab, saveFlowToTab])
+
   const saveFlow = useCallback(async () => {
     const tabData = getTab(activeTab)
     const configurationPath = tabData?.configurationPath
@@ -1537,25 +1554,12 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
   /* useEffect */
 
   useEffect(() => {
-    if (!activeTab) return
-    const tabData = getTab(activeTab)
-    if (!tabData) return
-
-    const unsubscribe = useTabStore.subscribe(
-      (state) => state.activeTab,
-      async (newTab, oldTab) => {
-        if (!newTab) {
-          resetFlowStore()
-          return
-        }
-        if (oldTab) saveFlowToTab(oldTab)
-        const activeTab = getTab(newTab)
-        if (activeTab) await loadFlowFromTab(activeTab)
-      },
-    )
-
-    return (): void => unsubscribe()
-  }, [activeTab, getTab, loadFlowFromTab, resetFlowStore, saveFlowToTab])
+    if (activeTab) {
+      syncLoadedFlowWithActiveTab()
+    } else {
+      clearLoadedFlow()
+    }
+  }, [activeTab, syncLoadedFlowWithActiveTab, clearLoadedFlow])
 
   useEffect(() => {
     return (): void => {
