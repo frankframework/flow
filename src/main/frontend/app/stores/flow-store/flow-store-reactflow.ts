@@ -11,14 +11,14 @@ import {
 } from '@xyflow/react'
 import type { StateCreator } from 'zustand/vanilla'
 import type { ExitNode } from '~/routes/studio/canvas-flow/nodetypes/exit-node'
-import type { FrankNode } from '~/routes/studio/canvas-flow/nodetypes/frank-node'
+import type { ComponentNode } from '~/routes/studio/canvas-flow/nodetypes/component-node'
 import { isStickyNote, type StickyNote } from '~/routes/studio/canvas-flow/nodetypes/sticky-note'
 import type { CanvasSliceState } from '~/stores/flow-store/flow-store-canvas'
 import type { GroupNode } from '~/types/datamapper_types/react-node-types'
 import { getEdgeLabelFromHandle } from '~/utils/flow-utils'
 import { createHistoryStep } from '~/utils/diff'
 
-export type FlowNode = FrankNode | ExitNode | StickyNote | GroupNode
+export type FlowNode = ComponentNode | ExitNode | StickyNote | GroupNode
 
 export type ReactFlowHistoryState<NodeType extends Node = FlowNode, EdgeType extends Edge = Edge> = {
   nodes: NodeType[]

@@ -1,8 +1,9 @@
 import { useNavigate } from 'react-router'
+import { isComponentNode, isExitComponentNode } from '~/routes/studio/canvas-flow/nodetypes/component-node'
+import useFlowStore from '~/stores/flow-store/flow-store'
 import useNodeContextStore from '~/stores/node-context-store'
 import { type JSX, useCallback, useEffect, useRef, useState } from 'react'
 import { useShortcut } from '~/hooks/use-shortcut'
-import useFlowStore, { type FlowState, isExitNode, isFrankNode } from '~/stores/flow-store'
 import Button from '~/components/inputs/button'
 import Toggle from '~/components/inputs/toggle'
 import ContextEditorFooter from '~/components/context-editor-footer'
@@ -23,7 +24,7 @@ export default function NodeContext({
   nodeId: number
 }>): JSX.Element {
   const { nodes, setAttributes, getAttributes, setNodeName, getNodeName, deleteNode, updateChild, deleteChild } =
-    useFlowStore((state): FlowState => state)
+    useFlowStore()
   const [canSave, setCanSave] = useState(false)
   const [showAll, setShowAll] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
@@ -128,7 +129,7 @@ export default function NodeContext({
     (nodeId: number): { name?: string | undefined } | undefined => {
       if (!childParentId || !parentId) return
       const parentNode = nodes.find((n): boolean => n.id === parentId.toString())
-      if (!parentNode || !isFrankNode(parentNode)) return
+      if (!parentNode || !isComponentNode(parentNode)) return
 
       const child = findChildRecursive(parentNode.data.children, nodeId.toString())
       if (!child) return
@@ -145,9 +146,9 @@ export default function NodeContext({
     (nodeId: number): { name?: string | undefined } | undefined => {
       if (!parentId || childParentId) return
       const parentNode = nodes.find((n): boolean => n.id === parentId.toString())
-      if (!parentNode || !isFrankNode(parentNode)) return
+      if (!parentNode || !isComponentNode(parentNode)) return
 
-      const child = parentNode.data.children.find((c): boolean => c.id === nodeId.toString())
+      const child = parentNode.data.children.find((childNode): boolean => childNode.id === nodeId.toString())
       if (!child) return
 
       return {
@@ -168,7 +169,7 @@ export default function NodeContext({
         ...attributes,
       }
     },
-    [parentId, childParentId, getAttributes, getNodeName],
+    [parentId, childParentId],
   )
 
   // Load existing attribute values into the form (key-based)
@@ -237,8 +238,8 @@ export default function NodeContext({
     )
 
     if (parentId) {
-      const parentNode = nodes.find((n): boolean => n.id === parentId.toString())
-      if (!parentNode || !isFrankNode(parentNode)) return
+      const parentNode = nodes.find((node): boolean => node.id === parentId.toString())
+      if (!parentNode || !isComponentNode(parentNode)) return
 
       const existingChild = findChildRecursive(parentNode.data.children, nodeId.toString())
       if (!existingChild) {
@@ -333,11 +334,10 @@ export default function NodeContext({
 
   const editedNode =
     !parentId && !childParentId ? nodes.find((node): boolean => node.id === nodeId.toString()) : undefined
-  const isExit = (editedNode && isExitNode(editedNode)) ?? false
-  const canHideForwards = (editedNode && !isNewNode && (isFrankNode(editedNode) || isExit)) ?? false
+  const isExit = (editedNode && isExitComponentNode(editedNode)) ?? false
+  const canHideForwards = (editedNode && !isNewNode && (isComponentNode(editedNode) || isExit)) ?? false
 
-  const hiddenForwards =
-    editedNode && (isFrankNode(editedNode) || isExitNode(editedNode)) ? Boolean(editedNode.data.hiddenForwards) : false
+  const hiddenForwards = editedNode && isComponentNode(editedNode) ? Boolean(editedNode.data.hiddenForwards) : false
 
   const handleToggleHiddenForwards = (value: boolean): void => {
     useFlowStore.getState().setNodesHiddenForwards([nodeId.toString()], value)

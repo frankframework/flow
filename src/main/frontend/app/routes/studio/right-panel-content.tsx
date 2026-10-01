@@ -1,12 +1,13 @@
 import type { JSX } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import Button from '~/components/inputs/button'
-import type { StickyNote } from '~/routes/studio/canvas-flow/nodetypes/sticky-note'
+import { isComponentNode } from '~/routes/studio/canvas-flow/nodetypes/component-node'
+import { isStickyNote, type StickyNote } from '~/routes/studio/canvas-flow/nodetypes/sticky-note'
 import GroupContext from '~/routes/studio/context/group-context'
 import NodeContext from '~/routes/studio/context/node-context'
 import StickyNoteContext from '~/routes/studio/context/sticky-note-context'
 import StudioContext from '~/routes/studio/context/studio-context'
-import useFlowStore, { isStickyNote } from '~/stores/flow-store'
+import useFlowStore from '~/stores/flow-store/flow-store'
 import { ALL_SHORTCUTS, formatShortcutParts, useShortcutStore } from '~/stores/shortcut-store'
 
 type RightPanelProps = {
@@ -54,7 +55,7 @@ function MultiSelectPanel(): JSX.Element {
       const selected = state.nodes.filter((node) => node.selected)
       if (selected.length < 2) return { allInSameGroup: false, groupId: null }
 
-      const content = selected.filter((node) => node.type === 'frankNode' || node.type === 'exitNode')
+      const content = selected.filter((node) => isComponentNode(node) || node.type === 'exitNode')
       if (content.length < 2) return { allInSameGroup: false, groupId: null }
 
       const firstParent = content[0].parentId

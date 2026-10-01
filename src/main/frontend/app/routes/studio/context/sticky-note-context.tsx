@@ -1,17 +1,17 @@
 import type { JSX } from 'react'
-import type { FlowNode } from '~/routes/studio/canvas-flow/canvas-flow'
-import type { FrankNode } from '~/routes/studio/canvas-flow/nodetypes/frank-node'
-import useFlowStore, { isFrankNode, isStickyNote } from '~/stores/flow-store'
-import { STICKY_NOTE_COLORS } from '~/routes/studio/canvas-flow/nodetypes/sticky-note'
+import { type ComponentNode, isComponentNode } from '~/routes/studio/canvas-flow/nodetypes/component-node'
+import { isStickyNote, STICKY_NOTE_COLORS } from '~/routes/studio/canvas-flow/nodetypes/sticky-note'
 import { useShallow } from 'zustand/react/shallow'
 import Dropdown from '~/components/inputs/dropdown'
+import useFlowStore from '~/stores/flow-store/flow-store'
+import type { FlowNode } from '~/stores/flow-store/flow-store-reactflow'
 
 export default function StickyNoteContext({ nodeId }: Readonly<{ nodeId: string }>): JSX.Element | null {
   const node = useFlowStore((flowState): FlowNode | undefined =>
     flowState.nodes.find((node): boolean => node.id === nodeId),
   )
-  const frankNodes = useFlowStore(
-    useShallow((flowState): FrankNode[] => flowState.nodes.filter((node) => isFrankNode(node))),
+  const componentNodes = useFlowStore(
+    useShallow((flowState): ComponentNode[] => flowState.nodes.filter((node) => isComponentNode(node))),
   )
 
   if (!node || !isStickyNote(node)) return null
@@ -59,7 +59,7 @@ export default function StickyNoteContext({ nodeId }: Readonly<{ nodeId: string 
           onChange={(value): void => useFlowStore.getState().setStickyAttachment(nodeId, value || null)}
           options={{
             '': 'None',
-            ...Object.fromEntries(frankNodes.map((node): [string, string] => [node.id, node.data.name])),
+            ...Object.fromEntries(componentNodes.map((node): [string, string] => [node.id, node.data.name])),
           }}
         />
       </div>

@@ -1,9 +1,9 @@
-import type { FlowNode } from '~/routes/studio/canvas-flow/canvas-flow'
 import type { ChildNode } from '~/routes/studio/canvas-flow/nodetypes/child-node'
 import type { ExitNode } from '~/routes/studio/canvas-flow/nodetypes/exit-node'
-import type { FrankNode } from '~/routes/studio/canvas-flow/nodetypes/frank-node'
+import  { type ComponentNode, isComponentNode } from '~/routes/studio/canvas-flow/nodetypes/component-node'
 import { getElementTypeFromName } from '~/routes/studio/node-translator-module'
 import { fetchConfigurationFileCached } from '~/services/configuration-file-service'
+import type { FlowNode } from '~/stores/flow-store/flow-store-reactflow'
 import { translateElementFromOldToNewFormat } from '~/utils/flow-utils'
 import { FlowConfig } from '~/routes/studio/canvas-flow/flow.config'
 import type { GroupNode } from '~/routes/studio/canvas-flow/nodetypes/group-node'
@@ -271,7 +271,7 @@ function addForwardEdges(
     if (!targetName) continue
 
     const targetId = nameToId.get(targetName)
-    let targetNode = targetId ? nodes.find((node) => node.id === targetId) : undefined
+    let targetNode = targetId ? nodes.find((node) => node.id === targetId) : null
 
     if (!targetNode || targetNode.id === sourceId) {
       const exitFallback = nodes.find(
@@ -308,7 +308,7 @@ function addForwardEdges(
 
     if (targetNode.type === 'exitNode' && isSuccessExit(targetNode)) {
       sourcesWithSuccessExitForward.add(sourceId)
-    } else if (targetNode.type === 'frankNode' && label.toLowerCase() === 'success') {
+    } else if (isComponentNode(targetNode) && label.toLowerCase() === 'success') {
       sourcesWithSuccessPipeForward.add(sourceId)
     }
   }
@@ -320,13 +320,13 @@ function addReceiverToFirstPipeEdges(
   forwardIndexBySourceId: Map<string, number>,
 ): void {
   // Find all receivers
-  const receivers = nodes.filter((n): n is FrankNode => isFrankNode(n) && n.data.type === 'receiver')
+  const receivers = nodes.filter((node): node is ComponentNode => isComponentNode(node) && node.data.type === 'receiver')
 
   if (receivers.length === 0) return
 
   // Find first pipe in the pipeline (exclude exitNodes and receivers)
   const firstPipe = nodes.find(
-    (n): n is FrankNode => isFrankNode(n) && n.data.type !== 'receiver' && n.type !== 'exitNode',
+    (node): node is ComponentNode => isComponentNode(node) && node.data.type !== 'receiver' && node.type !== 'exitNode',
   )
   if (!firstPipe) return
 
@@ -358,10 +358,10 @@ function addSequentialFallbackEdges(
     // skip exit nodes
     if (current.type === 'exitNode') continue
     // skip receivers (they already get edges to first pipeline pipe)
-    if (isFrankNode(current) && current.data.type === 'receiver') continue
+    if (isComponentNode(current) && current.data.type === 'receiver') continue
 
     // find next NON-exit node
-    const next = nodes.slice(index + 1).find((n) => n.type !== 'exitNode')
+    const next = nodes.slice(index + 1).find((node) => node.type !== 'exitNode')
     if (!next) continue
 
     if (sourcesWithSuccessPipeForward.has(current.id)) continue
@@ -528,7 +528,7 @@ function convertAdapterToFlowNodes(
     }
 
     const sourceHandles = extractSourceHandles(element)
-    const frankNode: FrankNode = convertElementToNode(element, idCounter, sourceHandles)
+    const frankNode: ComponentNode = convertElementToNode(element, idCounter, sourceHandles)
     elementToId.set(element, frankNode.id)
     nodes.push(frankNode)
   }
@@ -542,7 +542,7 @@ function convertAdapterToFlowNodes(
   return { nodes, elementToId }
 }
 
-function convertElementToNode(element: Element, idCounter: IdCounter, sourceHandles: SourceHandle[]): FrankNode {
+function convertElementToNode(element: Element, idCounter: IdCounter, sourceHandles: SourceHandle[]): ComponentNode {
   const thisId = (idCounter.current++).toString()
   const { subtype, usedClassName } = translateElementFromOldToNewFormat(element)
 
@@ -557,7 +557,7 @@ function convertElementToNode(element: Element, idCounter: IdCounter, sourceHand
 
   return {
     id: thisId,
-    type: 'frankNode',
+    type: 'component',
     position: { x, y },
     width: manuallyResized ? width : undefined,
     height,
@@ -567,7 +567,7 @@ function convertElementToNode(element: Element, idCounter: IdCounter, sourceHand
       subtype,
       children: convertChildren([...element.children], idCounter),
       sourceHandles,
-      attributes: Object.keys(attributes).length > 0 ? attributes : undefined,
+      attributes,
       manuallyResized,
       hiddenForwards: hiddenForwards || undefined,
     },
@@ -645,7 +645,7 @@ function extractStickyNotesFromAdapter(adapter: Element, idCounter: IdCounter, f
 
     const sticky: StickyNote = {
       id: (idCounter.current++).toString(),
-      type: 'stickyNote',
+      type: 'sticky-note',
       position: { x, y },
       width,
       height,

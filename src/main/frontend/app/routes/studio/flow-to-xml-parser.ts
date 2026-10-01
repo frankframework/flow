@@ -1,9 +1,11 @@
-import type { FlowNode } from '~/routes/studio/canvas-flow/canvas-flow'
 import type { Edge } from '@xyflow/react'
 import type { ChildNode } from '~/routes/studio/canvas-flow/nodetypes/child-node'
+import { isComponentNode } from '~/routes/studio/canvas-flow/nodetypes/component-node'
+import { isStickyNote } from '~/routes/studio/canvas-flow/nodetypes/sticky-note'
 import { getAdapter } from '~/services/adapter-service'
 import { FlowConfig } from '~/routes/studio/canvas-flow/flow.config'
-import type { GroupNode } from '~/routes/studio/canvas-flow/nodetypes/group-node'
+import { type GroupNode, isGroupNode } from '~/routes/studio/canvas-flow/nodetypes/group-node'
+import type { FlowNode } from '~/stores/flow-store/flow-store-reactflow'
 
 type ReactFlowJson = {
   nodes: FlowNode[]
@@ -322,8 +324,10 @@ function generateFlowElementsXml(nodes: FlowNode[]): string {
 
     let attachedToAttribute = ''
     if (stickynote.data?.attachedToNodeId) {
-      const frankNode = nodes.find((node): boolean => isFrankNode(node) && node.id === stickynote.data.attachedToNodeId)
-      if (frankNode && isFrankNode(frankNode)) {
+      const frankNode = nodes.find(
+        (node): boolean => isComponentNode(node) && node.id === stickynote.data.attachedToNodeId,
+      )
+      if (frankNode && isComponentNode(frankNode)) {
         attachedToAttribute = ` flow:attachedTo="${escapeXml(frankNode.data.name)}"`
       }
     }

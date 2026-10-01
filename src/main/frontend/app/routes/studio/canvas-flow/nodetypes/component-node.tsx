@@ -13,7 +13,6 @@ import {
   useUpdateNodeInternals,
 } from '@xyflow/react'
 import useToasts from '~/components/toast/use-toasts'
-import { isExitNode } from '~/routes/studio/canvas-flow/nodetypes/exit-node'
 import DangerIcon from '../../../../../icons/solar/Danger Triangle.svg?react'
 import { useShallow } from 'zustand/react/shallow'
 import useFlowStore from '~/stores/flow-store/flow-store'
@@ -44,24 +43,28 @@ import {
 import MissingRequirements from './components/missing-requirements'
 import ZoomedOutNode from './zoomed-out-node'
 
-export type FrankNode = Node<
+export type ComponentNode = Node<
   {
     name: string
     type: string
     subtype: string
     sourceHandles: { type: string; index: number }[]
-    attributes?: Record<string, string>
+    attributes: Record<string, string>
     children: ChildNode[]
     manuallyResized?: boolean
     hiddenForwards?: boolean
     width?: number
     height?: number
   },
-  'frank-node'
+  'component'
 >
 
-export function isFrankNode(node: Node): node is FrankNode {
-  return node.type === 'frank-node'
+export function isComponentNode(node: Node): node is ComponentNode {
+  return node.type === 'component'
+}
+
+export function isExitComponentNode(node: ComponentNode): boolean {
+  return node.data.subtype === 'Exit'
 }
 
 function isForwardRevealed(
@@ -75,10 +78,11 @@ function isForwardRevealed(
   return hoveredNodeId !== null && edges.some((edge) => edge.source === hoveredNodeId && edge.target === targetId)
 }
 
-export default function FrankNodeComponent(properties: NodeProps<FrankNode>): JSX.Element {
-  const minNodeWidth = FlowConfig.NODE_DEFAULT_WIDTH
+export default function ComponentNodeComponent(properties: NodeProps<ComponentNode>): JSX.Element {
+  const isExit = useMemo(() => properties.data.subtype === 'Exit', [properties.data.subtype])
+  const minNodeWidth = isExit ? FlowConfig.EXIT_DEFAULT_WIDTH : FlowConfig.NODE_DEFAULT_WIDTH
   const maxNodeWidth = FlowConfig.NODE_MAX_WIDTH
-  const minNodeHeight = FlowConfig.NODE_MIN_HEIGHT
+  const minNodeHeight = isExit ? FlowConfig.EXIT_DEFAULT_HEIGHT : FlowConfig.NODE_MIN_HEIGHT
   const type = properties.data.type.toLowerCase()
   const colorVariable = `--type-${type}`
   const handleSpacing = 20
@@ -145,7 +149,7 @@ export default function FrankNodeComponent(properties: NodeProps<FrankNode>): JS
   const hiddenForwardNodeIds = useFlowStore(
     useShallow((state) =>
       state.nodes
-        .filter((node) => (isFrankNode(node) || isExitNode(node)) && node.data.hiddenForwards)
+        .filter((node) => (isComponentNode(node)) && node.data.hiddenForwards)
         .map((node) => node.id),
     ),
   )
@@ -223,7 +227,7 @@ export default function FrankNodeComponent(properties: NodeProps<FrankNode>): JS
 
   useEffect(() => {
     updateNodeInternals(properties.id)
-  }, [dimensions.height, isCompact, properties.id, updateNodeInternals])
+  }, [properties.id, updateNodeInternals])
 
   useEffect(() => {
     if (!xsdDoc) return
@@ -476,6 +480,7 @@ export default function FrankNodeComponent(properties: NodeProps<FrankNode>): JS
         minWidth={minNodeWidth}
         minHeight={minNodeHeight}
         onResize={(_event: ResizeDragEvent, data: ResizeParams) => {
+          if (isExit) return
           setIsManuallyResized(true)
           setDimensions({ width: data.width, height: data.height })
         }}

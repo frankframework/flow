@@ -1,7 +1,7 @@
 import { type JSX, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { type Node, type NodeProps, NodeResizeControl, useUpdateNodeInternals } from '@xyflow/react'
 import { FlowConfig } from '~/routes/studio/canvas-flow/flow.config'
-import { ResizeIcon } from '~/routes/studio/canvas-flow/nodetypes/frank-node'
+import { ResizeIcon } from '~/routes/studio/canvas-flow/nodetypes/component-node'
 import { useNodeContextMenu } from '~/routes/studio/canvas-flow/node-context-menu-context'
 import useFlowStore from '~/stores/flow-store/flow-store'
 import useNodeContextStore from '~/stores/node-context-store'

@@ -20,15 +20,17 @@ import Dagre from '@dagrejs/dagre'
 import { useNavigate } from 'react-router'
 import { SaveStatusIndicator } from '~/components/save-status-indicator'
 import useToasts from '~/components/toast/use-toasts'
-import FrankNodeComponent, { type FrankNode } from '~/routes/studio/canvas-flow/nodetypes/frank-node'
+import ComponentNodeComponent, {
+  type ComponentNode,
+  isComponentNode,
+} from '~/routes/studio/canvas-flow/nodetypes/component-node'
 import { convertAdapterXmlToJson, getAdapterFromConfiguration } from '~/routes/studio/xml-to-json-parser'
 import type { FlowNode } from '~/stores/flow-store/flow-store-reactflow'
 import { useSaveStatusStore } from '~/stores/save-status-store'
 import CodeIcon from '/icons/solar/Code.svg?react'
 import '@xyflow/react/dist/style.css'
 import FrankEdgeComponent from '~/routes/studio/canvas-flow/edgetypes/frank-edge'
-import ExitNodeComponent, { type ExitNode } from '~/routes/studio/canvas-flow/nodetypes/exit-node'
-import GroupNodeComponent, { type GroupNode } from '~/routes/studio/canvas-flow/nodetypes/group-node'
+import GroupNodeComponent, { type GroupNode, isGroupNode } from '~/routes/studio/canvas-flow/nodetypes/group-node'
 import useFlowStore from '~/stores//flow-store/flow-store'
 import { useShallow } from 'zustand/react/shallow'
 import { FlowConfig } from '~/routes/studio/canvas-flow/flow.config'
@@ -68,8 +70,7 @@ export type FlowData = {
 
 const STICKY_SNAP_DISTANCE = 60
 const nodeTypes = {
-  frankNode: FrankNodeComponent,
-  exitNode: ExitNodeComponent,
+  component: ComponentNodeComponent,
   stickyNote: StickyNoteComponent,
   groupNode: GroupNodeComponent,
 }
@@ -100,8 +101,8 @@ function distanceToFrankNode(sticky: StickyNote, frankNode: FlowNode): number {
   return Math.hypot(dx, dy)
 }
 
-function isFrankComponentNode(node: FlowNode): node is FrankNode {
-  return node.type === 'frank-node' || node.type === 'exit-node'
+function isFrankComponentNode(node: FlowNode): node is ComponentNode {
+  return node.type === 'component'
 }
 
 function findNearestFrankNode(sticky: StickyNote, candidates: FlowNode[]): FlowNode | null {
@@ -389,7 +390,7 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
     (pendingSelection: { subtype: string; name: string }) => {
       const currentNodes = nodes
       const nodeToSelect = currentNodes.find(
-        (node): node is FrankNode =>
+        (node): node is ComponentNode =>
           isFrankComponentNode(node) &&
           node.data.subtype === pendingSelection.subtype &&
           node.data.name === pendingSelection.name,
@@ -420,7 +421,7 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
 
   const computeAdapterCenteredViewport = useCallback(
     (nodes: Node[], canvasWidth: number, canvasHeight: number): { x: number; y: number; zoom: number } => {
-      const layoutNodes = nodes.filter((node) => node.type === 'frankNode' || node.type === 'exitNode')
+      const layoutNodes = nodes.filter((node) => isComponentNode(node))
       if (layoutNodes.length === 0) return { x: 0, y: 0, zoom: 1 }
 
       const boundsLeft = Math.min(...layoutNodes.map((node) => node.position.x))
@@ -738,8 +739,7 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
 
     const layoutableIds = new Set<string>()
     for (const node of nodes) {
-      if (!((node.type === 'frankNode' || node.type === 'exitNode') && node.position.x === 0 && node.position.y === 0))
-        continue
+      if (!(isComponentNode(node) && node.position.x === 0 && node.position.y === 0)) continue
 
       const width = node.measured?.width ?? FlowConfig.NODE_DEFAULT_WIDTH
       const height = node.measured?.height ?? FlowConfig.NODE_MIN_HEIGHT
@@ -775,14 +775,10 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
   }, [])
 
   const handleAutoLayout = useCallback(() => {
-    const resetNodes = nodes.map((node) =>
-      node.type === 'frankNode' || node.type === 'exitNode' ? { ...node, position: { x: 0, y: 0 } } : node,
-    )
+    const resetNodes = nodes.map((node) => (isComponentNode(node) ? { ...node, position: { x: 0, y: 0 } } : node))
     const laidOut = layoutGraph(resetNodes, edges, 'LR')
 
-    const nodeIds = laidOut
-      .filter((node) => node.type === 'frankNode' || node.type === 'exitNode')
-      .map((node) => ({ id: node.id }))
+    const nodeIds = laidOut.filter((node) => isComponentNode(node)).map((node) => ({ id: node.id }))
 
     if (nodeIds.length === 0) return
 
@@ -1058,7 +1054,7 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
   const toggleSelectedHidden = useCallback(() => {
     const selected = useFlowStore
       .getState()
-      .nodes.filter((node): node is FrankNode => Boolean(node.selected) && isFrankComponentNode(node))
+      .nodes.filter((node): node is ComponentNode => Boolean(node.selected) && isFrankComponentNode(node))
     if (selected.length === 0) return false
 
     const shouldHide = selected.some((node) => !node.data.hiddenForwards)
@@ -1101,7 +1097,7 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
   )
 
   const applyNodeContext = useCallback(
-    (node: FrankNode, frankElement: ElementDetails) => {
+    (node: ComponentNode, frankElement: ElementDetails) => {
       setParentId(null)
       setChildParentId(null)
       setNodeId(+node.id)
@@ -1120,14 +1116,14 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
     (event: React.MouseEvent, node: FlowNode) => {
       if (isDirty || event.shiftKey || event.ctrlKey || event.metaKey) return
 
-      if (node.type === 'stickyNote') {
+      if (isStickyNote(node)) {
         setSelectedStickyId(node.id)
         setSelectedGroupId(null)
         showNodeContextMenu(true)
         return
       }
 
-      if (node.type === 'groupNode') {
+      if (isGroupNode(node)) {
         setSelectedGroupId(node.id)
         setSelectedStickyId(null)
         showNodeContextMenu(true)
@@ -1160,7 +1156,7 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
     (_event: React.MouseEvent, node: FlowNode) => {
       if (isDirty) return
 
-      if (node.type === 'stickyNote') {
+      if (isStickyNote(node)) {
         setSelectedStickyId(node.id)
         showNodeContextMenu(true)
         return
@@ -1212,7 +1208,7 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
 
       if (frankNodes.length > 1) {
         const firstParent = frankNodes[0]?.parentId
-        const allInSameGroup = Boolean(firstParent) && frankNodes.every((n) => n.parentId === firstParent)
+        const allInSameGroup = Boolean(firstParent) && frankNodes.every((node) => node.parentId === firstParent)
 
         setIsMultiSelect(true)
         setSelectedStickyId(null)
@@ -1232,11 +1228,11 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
       setIsMultiSelect(false)
 
       if (frankNodes.length === 1) {
-        const frankElement = lookupFrankElement((frankNodes[0] as FrankNode).data.subtype)
+        const frankElement = lookupFrankElement((frankNodes[0] as ComponentNode).data.subtype)
         if (!frankElement) return
         setSelectedStickyId(null)
         setSelectedGroupId(null)
-        applyNodeContext(frankNodes[0] as FrankNode, frankElement)
+        applyNodeContext(frankNodes[0] as ComponentNode, frankElement)
         showContextIfSidebarOpen()
       }
     },
@@ -1308,12 +1304,11 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
     const newId = flowStore.getNextNodeId()
 
     const elementType = getElementTypeFromName(elementName)
-    const nodeType = elementType === 'exit' ? 'exitNode' : 'frankNode'
 
-    const width = nodeType === 'exitNode' ? FlowConfig.EXIT_DEFAULT_WIDTH : FlowConfig.NODE_DEFAULT_WIDTH
-    const height = nodeType === 'exitNode' ? FlowConfig.EXIT_DEFAULT_HEIGHT : FlowConfig.NODE_MIN_HEIGHT
+    const width = elementType === 'exit' ? FlowConfig.EXIT_DEFAULT_WIDTH : FlowConfig.NODE_DEFAULT_WIDTH
+    const height = elementType === 'exit' ? FlowConfig.EXIT_DEFAULT_HEIGHT : FlowConfig.NODE_MIN_HEIGHT
 
-    const newNode: FrankNode = {
+    const newNode: ComponentNode = {
       id: newId.toString(),
       position: {
         x: position.x - width / 2,
@@ -1325,8 +1320,9 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
         name: ``,
         sourceHandles: [],
         children: [],
+        attributes: {},
       },
-      type: nodeType,
+      type: 'component',
     }
 
     flowStore.addNode(newNode)
@@ -1373,8 +1369,8 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
       const stickyNote: StickyNote = {
         id: newId,
         position: { x: flowPos.x, y: flowPos.y },
-        data: { nodeType: 'sticky-note', content: '' },
-        type: 'stickyNote',
+        data: { content: '' },
+        type: 'sticky-note',
         selected: true,
         style: {
           width: FlowConfig.STICKY_NOTE_DEFAULT_WIDTH,
@@ -1407,7 +1403,7 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
     const selectedNodes = nodes.filter((node) => node.selected)
 
     if (selectedNodes.length === 0) return
-    const selectedGroupNodes = selectedNodes.filter((node) => node.type === 'groupNode')
+    const selectedGroupNodes: GroupNode[] = selectedNodes.filter((node) => isGroupNode(node))
 
     if (selectedGroupNodes.length > 0) {
       let updatedNodes = [...nodes]
@@ -1428,7 +1424,7 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
   }, [nodes, allSelectedInSameGroup, handleDegroupSingleGroup, setNodes, degroupNodes])
 
   const showSelectedNodeInEditor = useCallback(() => {
-    const selectedFrankNodes = nodes.filter((node) => node.selected && node.type === 'frankNode') as FrankNode[]
+    const selectedFrankNodes = nodes.filter((node) => node.selected && isComponentNode(node)) as ComponentNode[]
     if (selectedFrankNodes.length !== 1) return
 
     const { data: nodeData } = selectedFrankNodes[0]
@@ -1460,7 +1456,7 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
       newId,
       position,
     }: {
-      sourceNode: FrankNode
+      sourceNode: ComponentNode
       sourceNodeId: string
       newId: string
       position: { x: number; y: number }
@@ -1601,7 +1597,7 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
     resetFlowStore()
 
     const nodesWithResetPositions = nodes.map((node) =>
-      node.type === 'frankNode' || node.type === 'exitNode' ? { ...node, position: { x: 0, y: 0 } } : node,
+      isComponentNode(node) ? { ...node, position: { x: 0, y: 0 } } : node,
     )
     const laidOutNodes = layoutGraph(nodesWithResetPositions, edges, 'LR')
     setNodesWithoutHistory(laidOutNodes) // TODO why??...
@@ -1901,7 +1897,7 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
               nodes.some((node) => node.selected) && allSelectedInSameGroup(nodes.filter((node) => node.selected))
             }
             hasClipboard={clipboardRef.current !== null}
-            hasSingleNodeSelection={nodes.filter((node) => node.selected && node.type === 'frankNode').length === 1}
+            hasSingleNodeSelection={nodes.filter((node) => node.selected && isComponentNode(node)).length === 1}
           />
         )}
       </div>

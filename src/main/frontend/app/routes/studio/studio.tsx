@@ -5,8 +5,9 @@ import StudioTabs from '~/components/tabs/studio-tabs'
 import StudioFileStructure from '~/components/file-structure/studio-file-structure'
 import FlowCanvas from '~/routes/studio/canvas-flow/canvas-flow'
 import { NodeContextMenuContext } from '~/routes/studio/canvas-flow/node-context-menu-context'
+import { isComponentNode } from '~/routes/studio/canvas-flow/nodetypes/component-node'
 import RightPanelContent from '~/routes/studio/right-panel-content'
-import useFlowStore from '~/stores/flow-store'
+import useFlowStore from '~/stores/flow-store/flow-store'
 import useNodeContextStore from '~/stores/node-context-store'
 import SidebarContentClose from '~/components/sidebars-layout/sidebar-content-close'
 import SidebarHeader from '~/components/sidebars-layout/sidebar-header'
@@ -72,7 +73,7 @@ export default function Studio(): JSX.Element {
   const allInSameGroup = useFlowStore((flowStore): boolean => {
     const selected = flowStore.nodes.filter((node): boolean | undefined => node.selected)
     if (selected.length <= 1) return false
-    const content = selected.filter((node): boolean => node.type === 'frankNode' || node.type === 'exitNode')
+    const content = selected.filter((node): boolean => isComponentNode(node) || node.type === 'exitNode')
     if (content.length <= 1) return false
     const firstParentId = content[0].parentId
     return !!firstParentId && content.every((node): boolean => node.parentId === firstParentId)
