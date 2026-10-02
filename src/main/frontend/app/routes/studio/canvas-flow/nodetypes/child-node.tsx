@@ -9,6 +9,8 @@ import { getAllowedChildElementsForElement } from '~/utils/xsd-utils'
 import { NodeHeader } from './components/node-header'
 import { NodeChildrenContainer } from './components/node-children-container'
 
+/* TODO remove */
+
 // No node??
 export type ChildNode = {
   id: string

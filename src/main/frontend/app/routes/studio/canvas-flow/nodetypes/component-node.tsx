@@ -48,9 +48,10 @@ export type ComponentNode = Node<
     name: string
     type: string
     subtype: string
-    sourceHandles: { type: string; index: number }[]
     attributes: Record<string, string>
-    children: ChildNode[]
+    children: NodeProps<ComponentNode>[]
+    sourceHandles: { type: string; index: number }[]
+    parentId?: string
     manuallyResized?: boolean
     hiddenForwards?: boolean
     width?: number
@@ -148,9 +149,7 @@ export default function ComponentNodeComponent(properties: NodeProps<ComponentNo
   const edges = useFlowStore((state) => state.edges)
   const hiddenForwardNodeIds = useFlowStore(
     useShallow((state) =>
-      state.nodes
-        .filter((node) => (isComponentNode(node)) && node.data.hiddenForwards)
-        .map((node) => node.id),
+      state.nodes.filter((node) => isComponentNode(node) && node.data.hiddenForwards).map((node) => node.id),
     ),
   )
 
@@ -543,14 +542,7 @@ export default function ComponentNodeComponent(properties: NodeProps<ComponentNo
             <NodeChildrenContainer>
               {properties.data.children.map((child) => (
                 <div key={child.id} data-child-id={child.id} className="child-drop-zone">
-                  <ChildNodeComponent
-                    child={child}
-                    gradientEnabled={gradientEnabled}
-                    onEdit={editChild}
-                    onSelect={selectChild}
-                    parentId={properties.id}
-                    rootId={properties.id}
-                  />
+                  <ComponentNodeComponent {...child} />
                 </div>
               ))}
 

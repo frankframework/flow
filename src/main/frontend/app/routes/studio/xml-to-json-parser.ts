@@ -1,6 +1,7 @@
+import type { NodeProps } from '@xyflow/react'
 import type { ChildNode } from '~/routes/studio/canvas-flow/nodetypes/child-node'
 import type { ExitNode } from '~/routes/studio/canvas-flow/nodetypes/exit-node'
-import  { type ComponentNode, isComponentNode } from '~/routes/studio/canvas-flow/nodetypes/component-node'
+import  { type ComponentNode, isComponentNode, isExitComponentNode } from '~/routes/studio/canvas-flow/nodetypes/component-node'
 import { getElementTypeFromName } from '~/routes/studio/node-translator-module'
 import { fetchConfigurationFileCached } from '~/services/configuration-file-service'
 import type { FlowNode } from '~/stores/flow-store/flow-store-reactflow'
@@ -320,13 +321,16 @@ function addReceiverToFirstPipeEdges(
   forwardIndexBySourceId: Map<string, number>,
 ): void {
   // Find all receivers
-  const receivers = nodes.filter((node): node is ComponentNode => isComponentNode(node) && node.data.type === 'receiver')
+  const receivers = nodes.filter(
+    (node): node is ComponentNode => isComponentNode(node) && node.data.type === 'receiver',
+  )
 
   if (receivers.length === 0) return
 
   // Find first pipe in the pipeline (exclude exitNodes and receivers)
   const firstPipe = nodes.find(
-    (node): node is ComponentNode => isComponentNode(node) && node.data.type !== 'receiver' && node.type !== 'exitNode',
+    (node): node is ComponentNode =>
+      isComponentNode(node) && node.data.type !== 'receiver' && !isExitComponentNode(node),
   )
   if (!firstPipe) return
 
@@ -542,7 +546,12 @@ function convertAdapterToFlowNodes(
   return { nodes, elementToId }
 }
 
-function convertElementToNode(element: Element, idCounter: IdCounter, sourceHandles: SourceHandle[]): ComponentNode {
+function convertElementToNode(
+  element: Element,
+  idCounter: IdCounter,
+  sourceHandles: SourceHandle[],
+  parent?: NodeProps<ComponentNode>,
+): ComponentNode {
   const thisId = (idCounter.current++).toString()
   const { subtype, usedClassName } = translateElementFromOldToNewFormat(element)
 
@@ -565,6 +574,7 @@ function convertElementToNode(element: Element, idCounter: IdCounter, sourceHand
       name,
       type: getElementTypeFromName(subtype),
       subtype,
+      parent: parent ?? null,
       children: convertChildren([...element.children], idCounter),
       sourceHandles,
       attributes,
@@ -574,7 +584,7 @@ function convertElementToNode(element: Element, idCounter: IdCounter, sourceHand
   }
 }
 
-function convertChildren(elements: Element[], idCounter: IdCounter): ChildNode[] {
+function convertChildren(elements: Element[], idCounter: IdCounter, parentId?: string): NodeProps<ComponentNode>[] {
   return elements
     .filter((child) => child.tagName.toLowerCase() !== 'forward')
     .map((child) => {
@@ -589,12 +599,15 @@ function convertChildren(elements: Element[], idCounter: IdCounter): ChildNode[]
       }
 
       return {
-        id: childId,
-        name: child.getAttribute('name') || undefined,
-        subtype: subtype,
-        type: getElementTypeFromName(subtype),
-        attributes: Object.keys(childAttributes).length > 0 ? childAttributes : undefined,
-        children: convertChildren([...child.children], idCounter),
+        data: {
+          id: childId,
+          name: child.getAttribute('name') || undefined,
+          subtype: subtype,
+          type: getElementTypeFromName(subtype),
+          attributes: childAttributes,
+          parent,
+          children: convertChildren([...child.children], idCounter),
+        },
       }
     })
 }
