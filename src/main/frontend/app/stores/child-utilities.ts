@@ -1,4 +1,5 @@
 import type { ChildNode } from '~/routes/studio/canvas-flow/nodetypes/child-node'
+import type { ComponentNodeData } from '~/routes/studio/canvas-flow/nodetypes/component-node'
 
 export function addChildRecursive(children: ChildNode[], targetId: string, newChild: ChildNode): ChildNode[] {
   return children.map((child): ChildNode => {
@@ -32,10 +33,10 @@ export function updateChildRecursive(children: ChildNode[], updatedChild: ChildN
   })
 }
 
-export function deleteChildRecursive(children: ChildNode[], childId: string): ChildNode[] {
+export function deleteChildRecursive(children: ComponentNodeData[], childId: string): ComponentNodeData[] {
   return children
     .filter((child): boolean => child.id !== childId) // remove if it matches here
-    .map((child): ChildNode => {
+    .map((child): ComponentNodeData => {
       if (child.children && child.children.length > 0) {
         return {
           ...child,
@@ -46,7 +47,7 @@ export function deleteChildRecursive(children: ChildNode[], childId: string): Ch
     })
 }
 
-export function findChildRecursive(children: ChildNode[], targetId: string): ChildNode | null {
+export function findChildRecursive(children: ComponentNodeData[], targetId: string): ComponentNodeData | null {
   for (const child of children) {
     if (child.id === targetId) return child
     if (child.children?.length) {

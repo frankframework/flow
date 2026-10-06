@@ -1,4 +1,4 @@
-import { type ChildNode } from '~/routes/studio/canvas-flow/nodetypes/child-node'
+import type { ComponentNodeData } from '~/routes/studio/canvas-flow/nodetypes/component-node'
 
 export function parseXsd(xsdString: string): Document {
   const parser = new DOMParser()
@@ -238,7 +238,7 @@ function extractRequirements(
   return results
 }
 
-export function isRequirementFulfilled(requirements: Requirement[], children: ChildNode[]): boolean {
+export function isRequirementFulfilled(requirements: Requirement[], children: ComponentNodeData[]): boolean {
   return requirements.every((requirement): boolean => evaluateRequirement(requirement, children))
 }
 
@@ -311,7 +311,7 @@ function extractChildRequirements(
   }
 }
 
-function evaluateRequirement(requirement: Requirement, children: ChildNode[]): boolean {
+function evaluateRequirement(requirement: Requirement, children: ComponentNodeData[]): boolean {
   if (requirement.kind === 'element') {
     if (!requirement.required) return true
 
@@ -331,7 +331,7 @@ function evaluateRequirement(requirement: Requirement, children: ChildNode[]): b
   return true
 }
 
-export function getMissingRequirements(requirements: Requirement[], children: ChildNode[]): string[] {
+export function getMissingRequirements(requirements: Requirement[], children: ComponentNodeData[]): string[] {
   const missing: string[] = []
 
   for (const request of requirements) {
@@ -341,7 +341,7 @@ export function getMissingRequirements(requirements: Requirement[], children: Ch
   return missing
 }
 
-function collectMissing(requirement: Requirement, children: ChildNode[], missing: string[]): void {
+function collectMissing(requirement: Requirement, children: ComponentNodeData[], missing: string[]): void {
   if (requirement.kind === 'element') {
     if (!requirement.required) return
 

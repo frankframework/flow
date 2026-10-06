@@ -26,8 +26,6 @@ import { useFFDoc } from '@frankframework/doc-library-react'
 import HandleMenu from './components/handle-menu'
 import { NodeHeader } from './components/node-header'
 import { NodeChildrenContainer } from './components/node-children-container'
-import { type ChildNode, ChildNodeComponent } from './child-node'
-import { findChildRecursive } from '~/stores/child-utilities'
 import type { ElementDetails } from '@frankframework/doc-library-core'
 import { getInheritedProperties } from '@frankframework/doc-library-core'
 import { DeprecatedPopover } from './components/deprecated-popover'
@@ -43,22 +41,21 @@ import {
 import MissingRequirements from './components/missing-requirements'
 import ZoomedOutNode from './zoomed-out-node'
 
-export type ComponentNode = Node<
-  {
-    name: string
-    type: string
-    subtype: string
-    attributes: Record<string, string>
-    children: NodeProps<ComponentNode>[]
-    sourceHandles: { type: string; index: number }[]
-    parentId?: string
-    manuallyResized?: boolean
-    hiddenForwards?: boolean
-    width?: number
-    height?: number
-  },
-  'component'
->
+export type ComponentNodeData = {
+  name: string
+  type: string
+  subtype: string
+  attributes: Record<string, string>
+  children: ComponentNodeData[]
+  sourceHandles: { type: string; index: number }[]
+  parentId?: string
+  manuallyResized?: boolean
+  hiddenForwards?: boolean
+  width?: number
+  height?: number
+}
+
+export type ComponentNode = Node<ComponentNodeData, 'component'>
 
 export function isComponentNode(node: Node): node is ComponentNode {
   return node.type === 'component'
@@ -290,41 +287,6 @@ export default function ComponentNodeComponent(properties: NodeProps<ComponentNo
     })
 
     setIsHandleMenuOpen((previous) => !previous)
-  }
-
-  const editChild = (childId: string): void => {
-    const child = findChildRecursive(properties.data.children, childId)
-    if (!child) return
-
-    const recordElements = elements as Record<string, ElementDetails>
-    const attributes = Object.values(recordElements).find((element) => element.name === child.subtype)?.attributes
-
-    const isFirstLevel = properties.data.children.some((c) => c.id === childId)
-    setParentId(properties.id)
-    setChildParentId(isFirstLevel ? null : properties.id)
-    setNodeId(+childId)
-    setAttributes(attributes)
-    setEditingSubtype(child.subtype)
-    showNodeContextMenu(true)
-    setIsEditing(true)
-  }
-
-  const selectChild = (childId: string): void => {
-    const child = findChildRecursive(properties.data.children, childId)
-    if (!child) return
-
-    const recordElements = elements as Record<string, ElementDetails>
-    const attributes = Object.values(recordElements).find((element) => element.name === child.subtype)?.attributes
-
-    const isFirstLevel = properties.data.children.some((childNode) => childNode.id === childId)
-    setParentId(properties.id)
-    setChildParentId(isFirstLevel ? null : properties.id)
-    setNodeId(+childId)
-    setAttributes(attributes)
-    setEditingSubtype(child.subtype)
-    showNodeContextMenu(true)
-
-    reactFlow.setNodes((nodes) => nodes.map((node) => ({ ...node, selected: false })))
   }
 
   const changeHandleType = (currentHandle: { type: string; index: number }, newType: string): void => {

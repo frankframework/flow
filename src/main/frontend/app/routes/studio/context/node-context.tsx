@@ -169,7 +169,7 @@ export default function NodeContext({
         ...attributes,
       }
     },
-    [parentId, childParentId],
+    [parentId, childParentId, getAttributes, getNodeName],
   )
 
   // Load existing attribute values into the form (key-based)

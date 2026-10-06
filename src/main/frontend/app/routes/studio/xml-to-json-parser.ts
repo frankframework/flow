@@ -1,7 +1,9 @@
-import type { NodeProps } from '@xyflow/react'
-import type { ChildNode } from '~/routes/studio/canvas-flow/nodetypes/child-node'
-import type { ExitNode } from '~/routes/studio/canvas-flow/nodetypes/exit-node'
-import  { type ComponentNode, isComponentNode, isExitComponentNode } from '~/routes/studio/canvas-flow/nodetypes/component-node'
+import {
+  type ComponentNode,
+  type ComponentNodeData,
+  isComponentNode,
+  isExitComponentNode,
+} from '~/routes/studio/canvas-flow/nodetypes/component-node'
 import { getElementTypeFromName } from '~/routes/studio/node-translator-module'
 import { fetchConfigurationFileCached } from '~/services/configuration-file-service'
 import type { FlowNode } from '~/stores/flow-store/flow-store-reactflow'
@@ -465,7 +467,7 @@ function extractSourceHandles(element: Element): SourceHandle[] {
   })
 }
 
-function processExitElements(element: Element, exitNodes: ExitNode[]): void {
+function processExitElements(element: Element, exitNodes: ComponentNode[]): void {
   const exits = [...element.children]
   for (const exit of exits) {
     const { attributes, name, x, y, width, height, hiddenForwards } = parseElementAttributes(
@@ -474,9 +476,9 @@ function processExitElements(element: Element, exitNodes: ExitNode[]): void {
       FlowConfig.EXIT_DEFAULT_HEIGHT,
     )
 
-    const exitNode: ExitNode = {
+    const exitNode: ComponentNode = {
       id: '',
-      type: 'exitNode',
+      type: 'component',
       position: { x, y },
       width,
       height,
@@ -485,7 +487,9 @@ function processExitElements(element: Element, exitNodes: ExitNode[]): void {
         type: 'Exit',
         subtype: 'Exit',
         attributes,
-        hiddenForwards: hiddenForwards || null,
+        hiddenForwards: hiddenForwards,
+        children: [],
+        sourceHandles: [],
       },
     }
     exitNodes.push(exitNode)
@@ -497,7 +501,7 @@ function convertAdapterToFlowNodes(
   idCounter: IdCounter,
 ): { nodes: FlowNode[]; elementToId: Map<Element, string> } {
   const nodes: FlowNode[] = []
-  const exitNodes: ExitNode[] = []
+  const exitNodes: ComponentNode[] = []
   const elements = collectPipelineElements(adapter)
   const elementToId = new Map<Element, string>()
 
@@ -513,9 +517,9 @@ function convertAdapterToFlowNodes(
         FlowConfig.EXIT_DEFAULT_HEIGHT,
       )
 
-      const exitNode: ExitNode = {
+      const exitNode: ComponentNode = {
         id: '',
-        type: 'exitNode',
+        type: 'component',
         position: { x, y },
         width,
         height,
@@ -524,7 +528,9 @@ function convertAdapterToFlowNodes(
           type: 'Exit',
           subtype: 'Exit',
           attributes,
-          hiddenForwards: hiddenForwards || null,
+          hiddenForwards: hiddenForwards,
+          children: [],
+          sourceHandles: [],
         },
       }
       exitNodes.push(exitNode)
@@ -550,7 +556,7 @@ function convertElementToNode(
   element: Element,
   idCounter: IdCounter,
   sourceHandles: SourceHandle[],
-  parent?: NodeProps<ComponentNode>,
+  parentId?: string,
 ): ComponentNode {
   const thisId = (idCounter.current++).toString()
   const { subtype, usedClassName } = translateElementFromOldToNewFormat(element)
@@ -574,8 +580,8 @@ function convertElementToNode(
       name,
       type: getElementTypeFromName(subtype),
       subtype,
-      parent: parent ?? null,
-      children: convertChildren([...element.children], idCounter),
+      parentId,
+      children: convertChildren([...element.children], idCounter, thisId),
       sourceHandles,
       attributes,
       manuallyResized,
@@ -584,7 +590,7 @@ function convertElementToNode(
   }
 }
 
-function convertChildren(elements: Element[], idCounter: IdCounter, parentId?: string): NodeProps<ComponentNode>[] {
+function convertChildren(elements: Element[], idCounter: IdCounter, parentId?: string): ComponentNodeData[] {
   return elements
     .filter((child) => child.tagName.toLowerCase() !== 'forward')
     .map((child) => {
@@ -599,15 +605,14 @@ function convertChildren(elements: Element[], idCounter: IdCounter, parentId?: s
       }
 
       return {
-        data: {
-          id: childId,
-          name: child.getAttribute('name') || undefined,
-          subtype: subtype,
-          type: getElementTypeFromName(subtype),
-          attributes: childAttributes,
-          parent,
-          children: convertChildren([...child.children], idCounter),
-        },
+        id: childId,
+        name: child.getAttribute('name') ?? '',
+        subtype: subtype,
+        type: getElementTypeFromName(subtype),
+        attributes: childAttributes,
+        parentId,
+        children: convertChildren([...child.children], idCounter, childId),
+        sourceHandles: [],
       }
     })
 }
@@ -648,7 +653,7 @@ function extractStickyNotesFromAdapter(adapter: Element, idCounter: IdCounter, f
     }
 
     if (attachedToName) {
-      const frankNode = flowNodes.find((node) => isFrankNode(node) && node.data.name === attachedToName)
+      const frankNode = flowNodes.find((node) => isComponentNode(node) && node.data.name === attachedToName)
       if (frankNode) {
         const offsetX = x - frankNode.position.x
         const offsetY = y - frankNode.position.y
@@ -705,7 +710,7 @@ function extractGroupNodesFromAdapter(adapter: Element, idCounter: IdCounter): G
 
     const groupNode: GroupNode = {
       id: (idCounter.current++).toString(),
-      type: 'groupNode',
+      type: 'group-node',
       position: { x, y },
       data: {
         label,

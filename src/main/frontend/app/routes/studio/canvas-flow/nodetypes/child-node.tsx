@@ -9,28 +9,6 @@ import { getAllowedChildElementsForElement } from '~/utils/xsd-utils'
 import { NodeHeader } from './components/node-header'
 import { NodeChildrenContainer } from './components/node-children-container'
 
-/* TODO remove */
-
-// No node??
-export type ChildNode = {
-  id: string
-  type: string
-  subtype: string
-  name?: string
-  attributes?: Record<string, string>
-
-  children?: ChildNode[]
-}
-
-type ChildNodeProperties = {
-  child: ChildNode
-  gradientEnabled: boolean
-  onEdit: (id: string) => void
-  onSelect: (id: string) => void
-  parentId: string
-  rootId: string
-}
-
 export function ChildNodeComponent({
   child,
   gradientEnabled,
