@@ -13,6 +13,7 @@ import {
   useUpdateNodeInternals,
 } from '@xyflow/react'
 import useToasts from '~/components/toast/use-toasts'
+import ComponentChildrenComponent from '~/routes/studio/canvas-flow/nodetypes/component-child-node'
 import DangerIcon from '../../../../../icons/solar/Danger Triangle.svg?react'
 import { useShallow } from 'zustand/react/shallow'
 import useFlowStore from '~/stores/flow-store/flow-store'
@@ -25,7 +26,6 @@ import { useSettingsStore } from '~/stores/settings-store'
 import { useFFDoc } from '@frankframework/doc-library-react'
 import HandleMenu from './components/handle-menu'
 import { NodeHeader } from './components/node-header'
-import { NodeChildrenContainer } from './components/node-children-container'
 import type { ElementDetails } from '@frankframework/doc-library-core'
 import { getInheritedProperties } from '@frankframework/doc-library-core'
 import { DeprecatedPopover } from './components/deprecated-popover'
@@ -499,46 +499,11 @@ export default function ComponentNodeComponent(properties: NodeProps<ComponentNo
               <p className="text-foreground overflow-hidden text-sm text-ellipsis whitespace-nowrap">{value}</p>
             </div>
           ))}
-        {(properties.data.children.length > 0 || dragOver || canDropDraggedElement) && (
-          <div className="w-full min-w-0 p-4">
-            <NodeChildrenContainer>
-              {properties.data.children.map((child) => (
-                <div key={child.id} data-child-id={child.id} className="child-drop-zone">
-                  <ComponentNodeComponent {...child} />
-                </div>
-              ))}
-
-              {/* Drop zone */}
-              {dragOver && (
-                <div
-                  className="border-foreground-muted bg-foreground-muted/20 flex items-center justify-center border-2 border-dashed text-center text-xs italic"
-                  style={{
-                    height: '100px',
-                    width: '100%',
-                    marginTop: '8px',
-                    borderRadius: '6px',
-                  }}
-                >
-                  Drop to add child
-                </div>
-              )}
-              {canDropDraggedElement && !dragOver && (
-                <div className="mt-2 pl-4">
-                  <div
-                    className="border-foreground-muted bg-foreground-muted/20 flex items-center justify-center border-2 border-dashed text-center text-xs italic"
-                    style={{
-                      height: '20px', // half height
-                      width: '100%', // full width
-                      borderRadius: '6px',
-                    }}
-                  >
-                    Can drop here
-                  </div>
-                </div>
-              )}
-            </NodeChildrenContainer>
-          </div>
-        )}
+        <ComponentChildrenComponent
+          children={properties.data.children}
+          dragOver={dragOver}
+          canDropDraggedElement={canDropDraggedElement}
+        />
         {/* Show missing mandatory children if the node is missing any */}
         <MissingRequirements missingChildren={missingChildren} isFulfilled={mandatoryChildrenFulfilled} />
 

@@ -1,6 +1,5 @@
 import type { Edge } from '@xyflow/react'
-import type { ChildNode } from '~/routes/studio/canvas-flow/nodetypes/child-node'
-import { isComponentNode } from '~/routes/studio/canvas-flow/nodetypes/component-node'
+import { type ComponentNodeData, isComponentNode } from '~/routes/studio/canvas-flow/nodetypes/component-node'
 import { isStickyNote } from '~/routes/studio/canvas-flow/nodetypes/sticky-note'
 import { getAdapter } from '~/services/adapter-service'
 import { FlowConfig } from '~/routes/studio/canvas-flow/flow.config'
@@ -12,17 +11,7 @@ type ReactFlowJson = {
   edges: Edge[]
 }
 
-type NodeData = {
-  subtype: string
-  type: string
-  name: string
-  attributes?: Record<string, string>
-  sourceHandles?: []
-  children?: ChildNode[]
-  hiddenForwards?: boolean
-}
-
-function hasDataProperty(node: FlowNode): node is FlowNode & { data: NodeData } {
+function hasDataProperty(node: FlowNode): node is FlowNode & { data: ComponentNodeData } {
   return (node as FlowNode).data != undefined
 }
 
@@ -45,7 +34,7 @@ export async function exportFlowToXml(
 
   const { nodes, edges } = json
   const validNodes = nodes.filter((node) => hasDataProperty(node))
-  const nodeMap = new Map(validNodes.map((n): [string, FlowNode & { data: NodeData }] => [n.id, n]))
+  const nodeMap = new Map(validNodes.map((n): [string, FlowNode & { data: ComponentNodeData }] => [n.id, n]))
 
   const { outgoing, incoming, edgeMap } = buildEdgeMaps(edges)
 
@@ -172,15 +161,15 @@ function generateXmlElement(
   edgeMap: Map<string, { targetId: string; label: string }[]>,
   nodeMap: Map<string, FlowNode>,
 ): string {
-  const { subtype, name } = node.data as NodeData
+  const { subtype, name } = node.data as ComponentNodeData
   const { x, y } = node.position
   const roundedX = Math.round(x)
   const roundedY = Math.round(y)
 
   const width = node.measured?.width ?? FlowConfig.NODE_DEFAULT_WIDTH
   const height: number | null = node.height ?? null
-  const attributes = (node.data as NodeData).attributes || {}
-  const children = (node.data as NodeData).children || []
+  const attributes = (node.data as ComponentNodeData).attributes || {}
+  const children = (node.data as ComponentNodeData).children || []
 
   const allAttributes: Record<string, string> = {
     ...attributes,
@@ -188,15 +177,15 @@ function generateXmlElement(
     'flow:x': String(roundedX),
     'flow:y': String(roundedY),
     ...(height !== null && { 'flow:width': String(width), 'flow:height': String(height) }),
-    ...((node.data as NodeData).hiddenForwards && { 'flow:hiddenForwards': 'true' }),
+    ...((node.data as ComponentNodeData).hiddenForwards && { 'flow:hiddenForwards': 'true' }),
   }
   const attributeString = Object.entries(allAttributes)
     .map(([k, v]): string => `${k}="${escapeXml(v)}"`)
     .join(' ')
 
-  const childXml = children.map((child: ChildNode): string => generateChildXml(child, 4)).join('\n')
+  const childXml = children.map((child: ComponentNodeData): string => generateChildXml(child, 4)).join('\n')
 
-  const type = (node.data as NodeData).type?.toLowerCase()
+  const type = (node.data as ComponentNodeData).type?.toLowerCase()
 
   const seenForwards = new Set<string>()
   const forwards =
@@ -205,7 +194,7 @@ function generateXmlElement(
       : (edgeMap.get(node.id) || [])
           .map(({ label, targetId }): string => {
             const forwardTarget = nodeMap.get(targetId)
-            const targetName = (forwardTarget?.data as NodeData)?.name || ''
+            const targetName = (forwardTarget?.data as ComponentNodeData)?.name || ''
 
             if (targetName === '') {
               console.warn(`Target node with ID ${targetId} does not have a name attribute.`)
@@ -226,7 +215,7 @@ function generateXmlElement(
     : `  <${subtype} ${attributeString} />`
 }
 
-function generateChildXml(child: ChildNode, indent: number): string {
+function generateChildXml(child: ComponentNodeData, indent: number): string {
   const spaces = ' '.repeat(indent)
 
   const childAttributes: Record<string, string> = {
@@ -255,8 +244,8 @@ ${spaces}</${child.subtype}>`
 function generateExitsXml(exitNodes: FlowNode[]): string {
   return exitNodes
     .map((node): string => {
-      const { name } = node.data as NodeData
-      const data = node.data as NodeData
+      const { name } = node.data as ComponentNodeData
+      const data = node.data as ComponentNodeData
       const { x, y } = node.position
       const roundedX = Math.round(x)
       const roundedY = Math.round(y)
@@ -358,7 +347,7 @@ function generateGroupNodeXml(groupNodes: GroupNode[], groupChildrenMap: Map<str
     const children = groupChildrenMap.get(groupNode.id) || []
 
     const childNames = children
-      .map((child): string => (child.data as NodeData)?.name)
+      .map((child): string => (child.data as ComponentNodeData)?.name)
       .filter((name): boolean | '' => name && name.trim() !== '')
       .map((name): string => escapeXml(name))
       .join(',')

@@ -1,5 +1,6 @@
 import { type JSX, type DragEvent, useCallback, useEffect, useMemo, useState } from 'react'
 import clsx from 'clsx'
+import type { ComponentNodeData } from '~/routes/studio/canvas-flow/nodetypes/component-node'
 import useFlowStore from '~/stores/flow-store/flow-store'
 import { getElementTypeFromName } from '../../node-translator-module'
 import useNodeContextStore from '~/stores/node-context-store'
@@ -7,16 +8,14 @@ import { useNodeContextMenu } from '../node-context-menu-context'
 import { useFrankConfigXsd } from '~/providers/frankconfig-xsd-provider'
 import { getAllowedChildElementsForElement } from '~/utils/xsd-utils'
 import { NodeHeader } from './components/node-header'
-import { NodeChildrenContainer } from './components/node-children-container'
 
-export function ChildNodeComponent({
-  child,
-  gradientEnabled,
-  onEdit,
-  onSelect,
-  parentId,
-  rootId,
-}: Readonly<ChildNodeProperties>): JSX.Element {
+export type ComponentChildNodeComponentProperties = {
+  children: ComponentNodeData[]
+  dragOver: boolean
+  canDropDraggedElement: boolean
+}
+
+export function ComponentChildNodeComponent(properties: Readonly<ComponentNodeData>): JSX.Element {
   const {
     setParentId,
     setChildParentId,
@@ -29,19 +28,16 @@ export function ChildNodeComponent({
     parentId: selectedParentId,
     isDirty,
   } = useNodeContextStore()
-  const isSelected = nodeId === +child.id && selectedParentId !== null
+  const isSelected = nodeId === +properties.id && selectedParentId !== null
   const showNodeContextMenu = useNodeContextMenu()
-  const addChildToChild = useFlowStore(
-    (state): ((nodeId: string, targetChildId: string, newChild: ChildNode) => void) => state.addChildToChild,
-  )
   const [dragOver, setDragOver] = useState(false)
   const [canDropDraggedElement, setCanDropDraggedElement] = useState(false)
   const [dragForbidden, setDragForbidden] = useState(false)
   const { xsdDoc } = useFrankConfigXsd()
 
   const allowedChildNames = useMemo(
-    (): Set<string> | null => (xsdDoc ? new Set(getAllowedChildElementsForElement(xsdDoc, child.subtype)) : null),
-    [xsdDoc, child.subtype],
+    (): Set<string> | null => (xsdDoc ? new Set(getAllowedChildElementsForElement(xsdDoc, properties.subtype)) : null),
+    [xsdDoc, properties.subtype],
   )
 
   const handleDragOver = (event: DragEvent): void => {
@@ -59,7 +55,7 @@ export function ChildNodeComponent({
 
     // If we are dragging over a nested ChildNode, do NOT show the drop zone
     const nestedNode = (event.target as HTMLElement).closest('[data-childnode-id]')
-    const isThisNode = nestedNode instanceof HTMLElement && nestedNode.dataset.childnodeId === child.id
+    const isThisNode = nestedNode instanceof HTMLElement && nestedNode.dataset.childnodeId === properties.id
 
     event.dataTransfer.dropEffect = allowed ? 'copy' : 'none'
 
@@ -92,7 +88,7 @@ export function ChildNodeComponent({
 
       const dropped = JSON.parse(raw)
       if (!canAcceptChild(dropped.name)) {
-        console.warn(`Rejected drop: ${dropped.name} is not allowed as child of ${child.subtype}`)
+        console.warn(`Rejected drop: ${dropped.name} is not allowed as child of ${properties.subtype}`)
         return
       }
 
@@ -104,7 +100,7 @@ export function ChildNodeComponent({
       setParentId(rootId)
       setChildParentId(parentId)
 
-      const newChild: ChildNode = {
+      const newChild: ComponentNodeData = {
         id: newId,
         subtype: dropped.name,
         type: getElementTypeFromName(dropped.name),
@@ -135,93 +131,105 @@ export function ChildNodeComponent({
 
   useEffect((): void => {
     setCanDropDraggedElement(draggedName !== null && canAcceptChild(draggedName))
-  }, [draggedName, canAcceptChild, child.subtype])
+  }, [draggedName, canAcceptChild])
 
   return (
     <div
-      data-childnode-id={child.id}
+      data-childnode-id={properties.id}
       className={clsx(
         'bg-background relative mr-0.5 mb-2 rounded-md border shadow-md',
         isSelected && 'border-1',
         !isSelected && dragForbidden && 'border-2 border-dashed',
         !isSelected && !dragForbidden && 'border-border',
       )}
-      style={isSelected ? { borderColor: `var(--type-${child.type?.toLowerCase()})` } : undefined}
+      style={isSelected ? { borderColor: `var(--type-${properties.type?.toLowerCase()})` } : undefined}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       onClick={(mouseEvent): void => {
         mouseEvent.stopPropagation()
         if (isDirty) return
-        onSelect(child.id)
+        onSelect(properties.id)
       }}
       onDoubleClick={(event): void => {
         event.stopPropagation()
         if (isDirty) return
-        onEdit(child.id)
+        onEdit(properties.id)
       }}
     >
       {/* Header */}
       <NodeHeader
-        subtype={child.subtype}
-        name={child.name}
-        colorVariable={`--type-${child.type?.toLowerCase()}`}
+        subtype={properties.subtype}
+        name={properties.name}
+        colorVariable={`--type-${properties.type?.toLowerCase()}`}
         gradientEnabled={gradientEnabled}
       />
 
       {/* Body */}
       <div className="child-node-body border-border/40 relative min-h-25 rounded-b-md border px-1 py-1">
-        {child.attributes &&
-          Object.entries(child.attributes).map(([key, value]): JSX.Element => (
+        {properties.attributes &&
+          Object.entries(properties.attributes).map(([key, value]): JSX.Element => (
             <div key={key} className="my-1 min-w-0">
               <p className="overflow-hidden text-sm font-bold text-ellipsis whitespace-nowrap">{key}</p>
               <p className="overflow-hidden text-sm text-ellipsis whitespace-nowrap">{value}</p>
             </div>
           ))}
 
-        {((child.children && child.children.length > 0) || dragOver || canDropDraggedElement) && (
-          <NodeChildrenContainer className="mt-2">
-            {child.children?.map((nested): JSX.Element => (
-              <ChildNodeComponent
-                key={nested.id}
-                child={nested}
-                gradientEnabled={gradientEnabled}
-                onEdit={onEdit}
-                onSelect={onSelect}
-                parentId={child.id}
-                rootId={rootId}
-              />
-            ))}
+        <ComponentChildrenComponent
+          children={properties.children}
+          dragOver={dragOver}
+          canDropDraggedElement={canDropDraggedElement}
+        />
+      </div>
+    </div>
+  )
+}
 
-            {/* Drop zone */}
-            {dragOver && (
-              <div
-                className="border-foreground-muted bg-foreground-muted/20 flex items-center justify-center border-2 border-dashed text-center text-xs italic"
-                style={{
-                  height: '100px',
-                  width: '100%',
-                  marginTop: '8px',
-                  borderRadius: '6px',
-                }}
-              >
-                Drop to add child
-              </div>
-            )}
-            {canDropDraggedElement && !dragOver && (
-              <div className="mt-2 pl-4">
-                <div
-                  className="border-foreground-muted bg-foreground-muted/20 flex items-center justify-center border-2 border-dashed text-center text-xs italic"
-                  style={{
-                    height: '20px', // half height
-                    width: '100%', // full width
-                    borderRadius: '6px',
-                  }}
-                >
-                  Can drop here
-                </div>
-              </div>
-            )}
-          </NodeChildrenContainer>
+export default function ComponentChildrenComponent(
+  properties: Readonly<ComponentChildNodeComponentProperties>,
+): JSX.Element {
+  const { children, dragOver, canDropDraggedElement } = properties
+
+  if (!children || (!dragOver && !canDropDraggedElement && children.length === 0)) {
+    return <></>
+  }
+
+  return (
+    <div className="w-full min-w-0 p-4">
+      <div className="border-border/40 bg-background w-full rounded-md border p-4 inset-shadow-sm">
+        {children.map((child) => (
+          <div key={child.id} data-child-id={child.id} className="child-drop-zone">
+            <ComponentChildNodeComponent {...child} />
+          </div>
+        ))}
+
+        {/* Drop zone */}
+        {dragOver && (
+          <div
+            className="border-foreground-muted bg-foreground-muted/20 flex items-center justify-center border-2 border-dashed text-center text-xs italic"
+            style={{
+              height: '100px',
+              width: '100%',
+              marginTop: '8px',
+              borderRadius: '6px',
+            }}
+          >
+            Drop to add child
+          </div>
+        )}
+        {canDropDraggedElement && !dragOver && (
+          <div className="mt-2 pl-4">
+            <div
+              className="border-foreground-muted bg-foreground-muted/20 flex items-center justify-center border-2 border-dashed text-center text-xs italic"
+              style={{
+                height: '20px', // half height
+                width: '100%', // full width
+                borderRadius: '6px',
+              }}
+            >
+              Can drop here
+            </div>
+          </div>
         )}
       </div>
     </div>

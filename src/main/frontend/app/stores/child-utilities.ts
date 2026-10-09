@@ -1,8 +1,11 @@
-import type { ChildNode } from '~/routes/studio/canvas-flow/nodetypes/child-node'
 import type { ComponentNodeData } from '~/routes/studio/canvas-flow/nodetypes/component-node'
 
-export function addChildRecursive(children: ChildNode[], targetId: string, newChild: ChildNode): ChildNode[] {
-  return children.map((child): ChildNode => {
+export function addChildRecursive(
+  children: ComponentNodeData[],
+  targetId: string,
+  newChild: ComponentNodeData,
+): ComponentNodeData[] {
+  return children.map((child): ComponentNodeData => {
     if (child.id === targetId) {
       return { ...child, children: [...(child.children || []), newChild] }
     }
@@ -13,8 +16,11 @@ export function addChildRecursive(children: ChildNode[], targetId: string, newCh
   })
 }
 
-export function updateChildRecursive(children: ChildNode[], updatedChild: ChildNode): ChildNode[] {
-  return children.map((child): ChildNode => {
+export function updateChildRecursive(
+  children: ComponentNodeData[],
+  updatedChild: ComponentNodeData,
+): ComponentNodeData[] {
+  return children.map((child): ComponentNodeData => {
     if (child.id === updatedChild.id) {
       return {
         ...child,
