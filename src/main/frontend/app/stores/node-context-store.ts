@@ -3,7 +3,7 @@ import { create } from 'zustand'
 
 export type NodeContextStore = {
   attributes: Record<string, Attribute> | undefined
-  nodeId: number
+  nodeId: string
   isEditing: boolean
   isNewNode: boolean
   isDirty: boolean
@@ -19,14 +19,13 @@ export type NodeContextStore = {
   saveFlow: (() => Promise<void>) | null
   hoveredNodeId: string | null
   showAllForwards: boolean
-  setNodeId: (nodeId: number) => void
+  setNodeId: (nodeId: string) => void
   setAttributes: (attributes?: Record<string, Attribute>) => void
   setIsEditing: (value: boolean) => void
   setIsNewNode: (value: boolean) => void
   setIsDirty: (v: boolean) => void
   resetAttributes: () => void
   setParentId: (id: string | null) => void
-  setChildParentId: (id: string | null) => void
   setDraggedName: (name: string | null) => void
   setEditingSubtype: (subtype: string | null) => void
   registerSaveFlow: (function_: (() => Promise<void>) | null) => void
@@ -45,7 +44,7 @@ const useNodeContextStore = create<NodeContextStore>(
     set,
   ): {
     attributes: undefined
-    nodeId: number
+    nodeId: string
     isEditing: false
     isNewNode: false
     isDirty: false
@@ -61,14 +60,13 @@ const useNodeContextStore = create<NodeContextStore>(
     saveFlow: null
     hoveredNodeId: null
     showAllForwards: false
-    setNodeId: (nodeId: number) => void
+    setNodeId: (nodeId: string) => void
     setAttributes: (attributes: Record<string, Attribute> | undefined) => void
     setIsEditing: (value: boolean) => void
     setIsNewNode: (value: boolean) => void
     setIsDirty: (isDirty: boolean) => void
     resetAttributes: () => void
     setParentId: (parentId: string | null) => void
-    setChildParentId: (childParentId: string | null) => void
     setDraggedName: (draggedName: string | null) => void
     setEditingSubtype: (editingSubtype: string | null) => void
     registerSaveFlow: (saveFlow: (() => Promise<void>) | null) => void
@@ -82,7 +80,7 @@ const useNodeContextStore = create<NodeContextStore>(
     toggleShowAllForwards: () => void
   } => ({
     attributes: undefined,
-    nodeId: 0,
+    nodeId: '',
     isEditing: false,
     isNewNode: false,
     isDirty: false,
@@ -105,7 +103,6 @@ const useNodeContextStore = create<NodeContextStore>(
     setIsDirty: (isDirty): void => set({ isDirty }),
     resetAttributes: (): void => set({ attributes: undefined }),
     setParentId: (parentId: string | null): void => set({ parentId }),
-    setChildParentId: (childParentId: string | null): void => set({ childParentId }),
     setDraggedName: (draggedName): void => set({ draggedName }),
     setEditingSubtype: (editingSubtype): void => set({ editingSubtype }),
     registerSaveFlow: (saveFlow): void => set({ saveFlow }),

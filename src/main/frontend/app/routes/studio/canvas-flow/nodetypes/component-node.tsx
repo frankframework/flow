@@ -48,6 +48,7 @@ export type ComponentNodeData = {
   attributes: Record<string, string>
   children: ComponentNodeData[]
   sourceHandles: { type: string; index: number }[]
+  id?: string // id to set when the node is created, otherwise a new id will be generated
   parentId?: string
   manuallyResized?: boolean
   hiddenForwards?: boolean
@@ -95,7 +96,6 @@ export default function ComponentNodeComponent(properties: NodeProps<ComponentNo
     setIsNewNode,
     setAttributes,
     setParentId,
-    setChildParentId,
     setIsEditing,
     setDraggedName,
     draggedName,
@@ -348,7 +348,7 @@ export default function ComponentNodeComponent(properties: NodeProps<ComponentNo
     (element: ElementDetails) => {
       const newId = useFlowStore.getState().getNextNodeId()
 
-      setNodeId(+newId)
+      setNodeId(newId)
       setAttributes(element.attributes)
 
       setIsNewNode(true)
@@ -356,7 +356,6 @@ export default function ComponentNodeComponent(properties: NodeProps<ComponentNo
       showNodeContextMenu(true)
       setIsEditing(true)
       setParentId(properties.id)
-      setChildParentId(null)
 
       const child: ChildNode = {
         id: newId,
@@ -378,7 +377,6 @@ export default function ComponentNodeComponent(properties: NodeProps<ComponentNo
       setIsEditing,
       setParentId,
       properties.id,
-      setChildParentId,
       addChild,
     ],
   )

@@ -18,7 +18,6 @@ export type ComponentChildNodeComponentProperties = {
 export function ComponentChildNodeComponent(properties: Readonly<ComponentNodeData>): JSX.Element {
   const {
     setParentId,
-    setChildParentId,
     setIsEditing,
     setDraggedName,
     draggedName,
@@ -28,7 +27,7 @@ export function ComponentChildNodeComponent(properties: Readonly<ComponentNodeDa
     parentId: selectedParentId,
     isDirty,
   } = useNodeContextStore()
-  const isSelected = nodeId === +properties.id && selectedParentId !== null
+  const isSelected = nodeId === properties.id && selectedParentId !== null
   const showNodeContextMenu = useNodeContextMenu()
   const [dragOver, setDragOver] = useState(false)
   const [canDropDraggedElement, setCanDropDraggedElement] = useState(false)
@@ -93,12 +92,11 @@ export function ComponentChildNodeComponent(properties: Readonly<ComponentNodeDa
       }
 
       const newId = useFlowStore.getState().getNextNodeId()
-      setNodeId(+newId)
+      setNodeId(newId)
       setAttributes(dropped.attributes)
       showNodeContextMenu(true)
       setIsEditing(true)
-      setParentId(rootId)
-      setChildParentId(parentId)
+      setParentId(properties.id ?? null) // should never be null, but just in case
 
       const newChild: ComponentNodeData = {
         id: newId,
@@ -107,9 +105,10 @@ export function ComponentChildNodeComponent(properties: Readonly<ComponentNodeDa
         name: '',
         attributes: {},
         children: [],
+        sourceHandles: [],
       }
 
-      // Add child recursively
+      // TODO ???
       addChildToChild(rootId, child.id, newChild)
     },
     [
@@ -120,12 +119,8 @@ export function ComponentChildNodeComponent(properties: Readonly<ComponentNodeDa
       showNodeContextMenu,
       setIsEditing,
       setParentId,
-      rootId,
-      setChildParentId,
-      parentId,
-      addChildToChild,
-      child.id,
-      child.subtype,
+      properties.id,
+      properties.subtype,
     ],
   )
 
