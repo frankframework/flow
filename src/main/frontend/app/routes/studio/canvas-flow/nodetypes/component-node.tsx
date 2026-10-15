@@ -186,7 +186,6 @@ export default function ComponentNodeComponent(properties: NodeProps<ComponentNo
   const [mandatoryChildrenFulfilled, setMandatoryChildrenFulfilled] = useState(false)
   const [missingChildren, setMissingChildren] = useState<string[]>([])
 
-  const reactFlow = useReactFlow()
   const updateNodeInternals = useUpdateNodeInternals()
   const [isHandleMenuOpen, setIsHandleMenuOpen] = useState(false)
   const [handleMenuPosition, setHandleMenuPosition] = useState({ x: 0, y: 0 })
