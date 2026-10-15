@@ -10,15 +10,14 @@ import {
   type OnReconnect,
 } from '@xyflow/react'
 import type { StateCreator } from 'zustand/vanilla'
-import type { ExitNode } from '~/routes/studio/canvas-flow/nodetypes/exit-node'
-import type { ComponentNode } from '~/routes/studio/canvas-flow/nodetypes/component-node'
+import type { ComponentNode, ComponentNodeData } from '~/routes/studio/canvas-flow/nodetypes/component-node'
 import { isStickyNote, type StickyNote } from '~/routes/studio/canvas-flow/nodetypes/sticky-note'
 import type { CanvasSliceState } from '~/stores/flow-store/flow-store-canvas'
 import type { GroupNode } from '~/types/datamapper_types/react-node-types'
 import { getEdgeLabelFromHandle } from '~/utils/flow-utils'
 import { createHistoryStep } from '~/utils/diff'
 
-export type FlowNode = ComponentNode | ExitNode | StickyNote | GroupNode
+export type FlowNode = ComponentNode | StickyNote | GroupNode
 
 export type ReactFlowHistoryState<NodeType extends Node = FlowNode, EdgeType extends Edge = Edge> = {
   nodes: NodeType[]
@@ -37,6 +36,9 @@ export type ReactFlowSliceState = {
   onEdgesChange: (changes: EdgeChange<Edge>[]) => void
   onConnect: OnConnect
   onReconnect: OnReconnect
+  addChild: (parentId: string, child: ComponentNodeData) => void
+  addHandle: (nodeId: string, handle: { type: string; index: number }) => void
+  updateHandle: (nodeId: string, handleIndex: number, newHandle: { type: string; index: number }) => void
 } & ReactFlowHistoryState
 
 export const createReactFlowSlice: StateCreator<ReactFlowSliceState & CanvasSliceState, [], [], ReactFlowSliceState> = (
@@ -65,27 +67,6 @@ export const createReactFlowSlice: StateCreator<ReactFlowSliceState & CanvasSlic
   onNodesChange: (changes): void => {
     const state = get()
 
-    const dragStart = changes.some(
-      (change) => change.type === 'position' && 'dragging' in change && change.dragging === true && !state.isDragging,
-    )
-    const dragEnd = changes.some(
-      (change) => change.type === 'position' && 'dragging' in change && change.dragging === false,
-    )
-    const resizeStart = changes.some(
-      (change) => change.type === 'dimensions' && 'resizing' in change && change.resizing === true && !state.isResizing,
-    )
-    const resizeEnd = changes.some(
-      (change) => change.type === 'dimensions' && 'resizing' in change && change.resizing === false,
-    )
-    let nextIsDragging = state.isDragging
-    let nextIsResizing = state.isResizing
-
-    if (dragStart) nextIsDragging = true
-    if (dragEnd) nextIsDragging = false
-
-    if (resizeStart) nextIsResizing = true
-    if (resizeEnd) nextIsResizing = false
-
     const movedNodeIds = new Set(
       changes.filter((nodeChange) => nodeChange.type === 'position').map((nodeChangePosition) => nodeChangePosition.id),
     )
@@ -110,7 +91,7 @@ export const createReactFlowSlice: StateCreator<ReactFlowSliceState & CanvasSlic
               }
             }
 
-            if (dragEnd && movedNodeIds.has(node.id)) {
+            if (movedNodeIds.has(node.id)) {
               const parent = updatedNodes.find((updatedNode) => updatedNode.id === node.data.attachedToNodeId)
               if (!parent) return node
               return {
@@ -126,7 +107,7 @@ export const createReactFlowSlice: StateCreator<ReactFlowSliceState & CanvasSlic
             return node
           })
 
-    set(() => ({ nodes, isDragging: nextIsDragging, isResizing: nextIsResizing }))
+    set(() => ({ nodes }))
     // TODO update history
   },
   onEdgesChange: (changes): void => {
@@ -162,6 +143,25 @@ export const createReactFlowSlice: StateCreator<ReactFlowSliceState & CanvasSlic
       edges: [...edgesWithoutOld, { ...newConnection, id: oldEdge.id, type: 'frankEdge', data: { label } }],
     })
     // TODO update history
+  },
+  addChild: (parentId, child): void => {
+    const { updateNode } = get()
+    updateNode(
+      parentId,
+      (parentNode) => ({
+        data: {
+          ...parentNode.data,
+          children: [...(parentNode as ComponentNode).data.children, child],
+        },
+      }),
+      'component',
+    )
+  },
+  addHandle: (_nodeId, _handle): void => {
+    /* To be implemented */
+  },
+  updateHandle: (_nodeId, _handleIndex, _newHandle): void => {
+    /* To be implemented */
   },
 })
 

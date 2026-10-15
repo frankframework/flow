@@ -108,8 +108,8 @@ export function ComponentChildNodeComponent(properties: Readonly<ComponentNodeDa
         sourceHandles: [],
       }
 
-      // TODO ???
-      addChildToChild(rootId, child.id, newChild)
+      // TODO addChild to parent node in flow store
+      addChild(properties.id, newChild)
     },
     [
       setDraggedName,

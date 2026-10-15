@@ -63,7 +63,7 @@ import HandleMenu from '~/routes/studio/canvas-flow/nodetypes/components/handle-
 import IconLabelButton from '~/components/inputs/icon-label-button'
 
 export type FlowData = {
-  nodes: Node[]
+  nodes: FlowNode[]
   edges: Edge[]
   viewport?: Viewport
 }
@@ -172,7 +172,6 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
   const showNodeContextMenu = useNodeContextMenu()
   const navigate = useNavigate()
   const { elements } = useFFDoc()
-  const updateNodeInternals = useUpdateNodeInternals()
   const reactFlow = useReactFlow()
   const nodesInitialized = useNodesInitialized()
   const { showErrorToast, logApiError, showWarningToast } = useToasts()
@@ -1100,7 +1099,7 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
     (node: ComponentNode, frankElement: ElementDetails) => {
       setParentId(null)
       setChildParentId(null)
-      setNodeId(+node.id)
+      setNodeId(node.id)
       setAttributes(frankElement.attributes)
       setEditingSubtype(node.data.subtype)
     },
@@ -1275,7 +1274,7 @@ export default function FlowCanvas({ onOpenInEditor }: { onOpenInEditor: () => v
       const elementData = elements[parsedData.name]
       if (elementData) {
         setAttributes(elementData.attributes)
-        setNodeId(+useFlowStore.getState().nodeIdCounter)
+        setNodeId(useFlowStore.getState().nodeIdCounter)
       }
     }
 

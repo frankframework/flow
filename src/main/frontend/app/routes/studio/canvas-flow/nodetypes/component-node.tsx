@@ -8,7 +8,6 @@ import {
   Position,
   type ResizeDragEvent,
   type ResizeParams,
-  useReactFlow,
   useStore,
   useUpdateNodeInternals,
 } from '@xyflow/react'
@@ -107,7 +106,7 @@ export default function ComponentNodeComponent(properties: NodeProps<ComponentNo
   const isCompact = zoom < FlowConfig.ZOOM_THRESHOLD
   const [isOverflowing, setIsOverflowing] = useState(false)
   const sourceHandles = properties.data.sourceHandles
-  const addHandle = useFlowStore.getState().addHandle
+  const { addHandle, updateHandle, getNextNodeId, addChild } = useFlowStore()
 
   const frankElement = useMemo(() => {
     if (!elements || !ffDoc || properties.data.subtype === 'Receiver') return
@@ -186,7 +185,6 @@ export default function ComponentNodeComponent(properties: NodeProps<ComponentNo
   const [mandatoryChildrenFulfilled, setMandatoryChildrenFulfilled] = useState(false)
   const [missingChildren, setMissingChildren] = useState<string[]>([])
 
-  const reactFlow = useReactFlow()
   const updateNodeInternals = useUpdateNodeInternals()
   const [isHandleMenuOpen, setIsHandleMenuOpen] = useState(false)
   const [handleMenuPosition, setHandleMenuPosition] = useState({ x: 0, y: 0 })
@@ -264,8 +262,6 @@ export default function ComponentNodeComponent(properties: NodeProps<ComponentNo
     return (): void => observer.disconnect()
   }, [])
 
-  const addChild = useFlowStore((state) => state.addChild)
-
   const handleMenuClick = useCallback(
     (handleType: string) => {
       addHandle(properties.id, {
@@ -302,9 +298,7 @@ export default function ComponentNodeComponent(properties: NodeProps<ComponentNo
     if (currentHandle.type === 'success') {
       addHandle(properties.id, { type: 'success', index: sourceHandles.length + 1 })
     }
-    useFlowStore
-      .getState()
-      .updateHandle(properties.id, currentHandle.index, { type: newType, index: currentHandle.index })
+    updateHandle(properties.id, currentHandle.index, { type: newType, index: currentHandle.index })
     // Timeout to prevent bug from edgelabel not properly updating
     setTimeout(() => {
       updateNodeInternals(properties.id)
@@ -346,7 +340,7 @@ export default function ComponentNodeComponent(properties: NodeProps<ComponentNo
 
   const createChildFromElement = useCallback(
     (element: ElementDetails) => {
-      const newId = useFlowStore.getState().getNextNodeId()
+      const newId = getNextNodeId()
 
       setNodeId(newId)
       setAttributes(element.attributes)
@@ -357,18 +351,20 @@ export default function ComponentNodeComponent(properties: NodeProps<ComponentNo
       setIsEditing(true)
       setParentId(properties.id)
 
-      const child: ChildNode = {
+      const child: ComponentNodeData = {
         id: newId,
         subtype: element.name,
         type: getElementTypeFromName(element.name),
         name: '',
         attributes: {},
         children: [],
+        sourceHandles: [],
       }
 
       addChild(properties.id, child)
     },
     [
+      getNextNodeId,
       setNodeId,
       setAttributes,
       setIsNewNode,
