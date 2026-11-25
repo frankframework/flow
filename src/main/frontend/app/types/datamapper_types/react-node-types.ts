@@ -16,16 +16,6 @@ export type CustomNodeData = {
   setNodes?: React.Dispatch<React.SetStateAction<Node[]>>
 }
 
-export type GroupNode = Node & {
-  type: 'group'
-  width: number
-  height: number
-}
-
-export type GroupNodeData = {
-  label?: string
-  children?: React.ReactNode
-}
 export type NodeLabels = {
   id: string
   label: string
