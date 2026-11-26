@@ -11,9 +11,9 @@ import {
 } from '@xyflow/react'
 import type { StateCreator } from 'zustand/vanilla'
 import type { ComponentNode, ComponentNodeData } from '~/routes/studio/canvas-flow/nodetypes/component-node'
+import type { GroupNode } from '~/routes/studio/canvas-flow/nodetypes/group-node'
 import { isStickyNote, type StickyNote } from '~/routes/studio/canvas-flow/nodetypes/sticky-note'
 import type { CanvasSliceState } from '~/stores/flow-store/flow-store-canvas'
-import type { GroupNode } from '~/types/datamapper_types/react-node-types'
 import { getEdgeLabelFromHandle } from '~/utils/flow-utils'
 import { createHistoryStep } from '~/utils/diff'
 
@@ -32,13 +32,14 @@ export type ReactFlowSliceState = {
     updates: Partial<FlowNode> | ((node: FlowNode) => Partial<FlowNode>),
     nodeType?: string,
   ) => void
-  onNodesChange: (changes: NodeChange<FlowNode>[]) => void
   onEdgesChange: (changes: EdgeChange<Edge>[]) => void
+  onNodesChange: (changes: NodeChange<FlowNode>[]) => void
   onConnect: OnConnect
   onReconnect: OnReconnect
   addChild: (parentId: string, child: ComponentNodeData) => void
   addHandle: (nodeId: string, handle: { type: string; index: number }) => void
   updateHandle: (nodeId: string, handleIndex: number, newHandle: { type: string; index: number }) => void
+  createNodeId: (nodeType: string, parent?: FlowNode) => string
 } & ReactFlowHistoryState
 
 export const createReactFlowSlice: StateCreator<ReactFlowSliceState & CanvasSliceState, [], [], ReactFlowSliceState> = (
@@ -146,14 +147,31 @@ export const createReactFlowSlice: StateCreator<ReactFlowSliceState & CanvasSlic
   },
   addChild: (parentId, child): void => {
     const { updateNode } = get()
+
     updateNode(
       parentId,
-      (parentNode) => ({
-        data: {
-          ...parentNode.data,
-          children: [...(parentNode as ComponentNode).data.children, child],
-        },
-      }),
+      (parentNode) => {
+        const updatedParentNode = { ...parentNode }
+
+        let data =
+        if (parentNode.type === 'group-node')
+          return {
+            ...parentNode,
+            data: {
+              ...parentNode.data,
+              childrenNames: [...(parentNode.data.childrenNames ?? []), child.name],
+            },
+          }
+        if (parentNode.type === 'component') {
+          return {
+            ...parentNode,
+            data: {
+              ...parentNode.data,
+              children: [...(parentNode.data.children ?? []), child],
+            },
+          }
+        }
+      },
       'component',
     )
   },
@@ -163,12 +181,11 @@ export const createReactFlowSlice: StateCreator<ReactFlowSliceState & CanvasSlic
   updateHandle: (_nodeId, _handleIndex, _newHandle): void => {
     /* To be implemented */
   },
+  createNodeId: (nodeType: string, parent?: FlowNode): string => {
+    // TODO
+    return ''
+  },
 })
-
-function wouldCreateDuplicateForward(edges: Edge[], source: string, target: string, label: string): boolean {
-  // TODO create edge type so that data isn't unknown
-  return edges.some((edge) => edge.source === source && edge.target === target && edge.data?.label === label)
-}
 
 function addNodesHistoryStep(
   updatedNodes: FlowNode[],
@@ -186,4 +203,9 @@ function addEdgesHistoryStep(
   const { nodes, edges, addHistory } = state
   addHistory(createHistoryStep({ nodes, edges: updatedEdges }, { nodes, edges }))
   return { edges: updatedEdges }
+}
+
+function wouldCreateDuplicateForward(edges: Edge[], source: string, target: string, label: string): boolean {
+  // TODO create edge type so that data isn't unknown
+  return edges.some((edge) => edge.source === source && edge.target === target && edge.data?.label === label)
 }

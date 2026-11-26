@@ -1,4 +1,4 @@
-import { type JSX, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import React, { type JSX, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import {
   type Edge,
   Handle,
@@ -106,7 +106,7 @@ export default function ComponentNodeComponent(properties: NodeProps<ComponentNo
   const isCompact = zoom < FlowConfig.ZOOM_THRESHOLD
   const [isOverflowing, setIsOverflowing] = useState(false)
   const sourceHandles = properties.data.sourceHandles
-  const { addHandle, updateHandle, getNextNodeId, addChild } = useFlowStore()
+  const { addHandle, updateHandle, addChild } = useFlowStore()
 
   const frankElement = useMemo(() => {
     if (!elements || !ffDoc || properties.data.subtype === 'Receiver') return
